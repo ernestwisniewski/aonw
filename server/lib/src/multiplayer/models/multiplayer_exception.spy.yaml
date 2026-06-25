@@ -1,0 +1,4 @@
+exception: MultiplayerException
+fields:
+  code: String
+  message: String?

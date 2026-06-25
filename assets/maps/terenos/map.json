@@ -1,0 +1,3045 @@
+{
+  "cols": 20,
+  "rows": 15,
+  "mapName": "terenos",
+  "objectives": [
+    {
+      "id": "terenos_old_pass",
+      "type": "strategicPass",
+      "hex": {
+        "col": 9,
+        "row": 6
+      },
+      "requiredHoldTurns": 2,
+      "victoryPoints": 4,
+      "goldPerTurn": 1
+    },
+    {
+      "id": "terenos_sunken_shrine",
+      "type": "holySite",
+      "hex": {
+        "col": 12,
+        "row": 8
+      },
+      "requiredHoldTurns": 3,
+      "victoryPoints": 3,
+      "goldPerTurn": 2
+    }
+  ],
+  "tiles": [
+    {
+      "col": 0,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "hills",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 0,
+      "terrains": [
+        "coast",
+        "mountain"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 8,
+      "row": 0,
+      "terrains": [
+        "mountain",
+        "coast"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 9,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "hills",
+        "snow"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 10,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "coast",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "coast",
+        "snow",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "coast",
+        "snow",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 0,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 0,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 1,
+      "terrains": [
+        "coast",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 1,
+      "terrains": [
+        "coast",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 1,
+      "terrains": [
+        "coast",
+        "mountain"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 7,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 5
+    },
+    {
+      "col": 8,
+      "row": 1,
+      "terrains": [
+        "hills",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 9,
+      "row": 1,
+      "terrains": [
+        "snow",
+        "forest",
+        "tundra"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 1,
+      "terrains": [
+        "snow",
+        "tundra",
+        "hills"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 11,
+      "row": 1,
+      "terrains": [
+        "coast",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 1,
+      "terrains": [
+        "hills",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 1,
+      "terrains": [
+        "snow",
+        "hills"
+      ],
+      "resources": [
+        "uranium"
+      ],
+      "height": 1
+    },
+    {
+      "col": 14,
+      "row": 1,
+      "terrains": [
+        "coast",
+        "snow",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 1,
+      "terrains": [
+        "snow",
+        "hills"
+      ],
+      "resources": [
+        "silver"
+      ],
+      "height": 2
+    },
+    {
+      "col": 16,
+      "row": 1,
+      "terrains": [
+        "hills",
+        "snow"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 17,
+      "row": 1,
+      "terrains": [
+        "snow",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 1,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 1,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 2,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 2,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 2,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 2,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [
+        "fish"
+      ],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 2,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 2,
+      "terrains": [
+        "coast",
+        "mountain"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 6,
+      "row": 2,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 4
+    },
+    {
+      "col": 7,
+      "row": 2,
+      "terrains": [
+        "forest",
+        "hills"
+      ],
+      "resources": [],
+      "height": 3
+    },
+    {
+      "col": 8,
+      "row": 2,
+      "terrains": [
+        "coast",
+        "lake",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 9,
+      "row": 2,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 2,
+      "terrains": [
+        "forest",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 2,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 2,
+      "terrains": [
+        "snow",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 2,
+      "terrains": [
+        "coast",
+        "lake",
+        "snow",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 2,
+      "terrains": [
+        "snow",
+        "tundra"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 15,
+      "row": 2,
+      "terrains": [
+        "forest",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 2,
+      "terrains": [
+        "hills",
+        "snow",
+        "forest"
+      ],
+      "resources": [
+        "iron"
+      ],
+      "height": 2
+    },
+    {
+      "col": 17,
+      "row": 2,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 18,
+      "row": 2,
+      "terrains": [
+        "snow",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 2,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 3,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 3,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 3,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [
+        "pearls"
+      ],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "hills"
+      ],
+      "resources": [
+        "marble"
+      ],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 4
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 4
+    },
+    {
+      "col": 7,
+      "row": 3,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 8,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "lake"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 3,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 3,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 12,
+      "row": 3,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 3,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "forest",
+        "snow"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 3,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [
+        "deer"
+      ],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 3,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [
+        "apple"
+      ],
+      "height": 2
+    },
+    {
+      "col": 17,
+      "row": 3,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 18,
+      "row": 3,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 3,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 4,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 4,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [
+        "deer"
+      ],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 4,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "terrains": [
+        "coast",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 7,
+      "row": 4,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 4,
+      "terrains": [
+        "coast",
+        "lake"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 4,
+      "terrains": [
+        "river",
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 4,
+      "terrains": [
+        "forest",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 11,
+      "row": 4,
+      "terrains": [
+        "forest",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 12,
+      "row": 4,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 4,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 4,
+      "terrains": [
+        "forest",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 15,
+      "row": 4,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 4,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 17,
+      "row": 4,
+      "terrains": [
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 18,
+      "row": 4,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 4,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 5,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 5,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 5,
+      "terrains": [
+        "hills",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 5,
+      "terrains": [
+        "ocean",
+        "forest",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 5,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "terrains": [
+        "coast",
+        "forest",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 5,
+      "terrains": [
+        "hills",
+        "jungle"
+      ],
+      "resources": [],
+      "height": 3
+    },
+    {
+      "col": 8,
+      "row": 5,
+      "terrains": [
+        "forest",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 5,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 5,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 5,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 5,
+      "terrains": [
+        "river",
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 5,
+      "terrains": [
+        "river",
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 14,
+      "row": 5,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 15,
+      "row": 5,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 16,
+      "row": 5,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 5,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 5,
+      "terrains": [
+        "river",
+        "coast",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 5,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 6,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 6,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 6,
+      "terrains": [
+        "hills",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 6,
+      "terrains": [
+        "coast",
+        "hills"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 6,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 6,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 6,
+      "terrains": [
+        "hills",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 7,
+      "row": 6,
+      "terrains": [
+        "hills"
+      ],
+      "resources": [
+        "iron"
+      ],
+      "height": 2
+    },
+    {
+      "col": 8,
+      "row": 6,
+      "terrains": [
+        "river",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 9,
+      "row": 6,
+      "terrains": [
+        "hills",
+        "river",
+        "plains",
+        "forest"
+      ],
+      "resources": [
+        "coal"
+      ],
+      "height": 2
+    },
+    {
+      "col": 10,
+      "row": 6,
+      "terrains": [
+        "forest",
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 6,
+      "terrains": [
+        "river",
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 6,
+      "terrains": [
+        "river",
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 6,
+      "terrains": [
+        "river",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 6,
+      "terrains": [
+        "plains",
+        "river"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 6,
+      "terrains": [
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 6,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 6,
+      "terrains": [
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 18,
+      "row": 6,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 6,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 7,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 7,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 7,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 7,
+      "terrains": [
+        "coast",
+        "grassland"
+      ],
+      "resources": [
+        "horses"
+      ],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 7,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 7,
+      "terrains": [
+        "forest",
+        "grassland",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 6,
+      "row": 7,
+      "terrains": [
+        "hills",
+        "forest",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 7,
+      "row": 7,
+      "terrains": [
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 7,
+      "terrains": [
+        "hills",
+        "river",
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 7,
+      "terrains": [
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 10,
+      "row": 7,
+      "terrains": [
+        "forest",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 11,
+      "row": 7,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 7,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 7,
+      "terrains": [
+        "plains",
+        "river"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 14,
+      "row": 7,
+      "terrains": [
+        "river",
+        "jungle",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 15,
+      "row": 7,
+      "terrains": [
+        "forest",
+        "river"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 16,
+      "row": 7,
+      "terrains": [
+        "river",
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 7,
+      "terrains": [
+        "hills",
+        "coast"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 18,
+      "row": 7,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 7,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 8,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 8,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 8,
+      "terrains": [
+        "ocean",
+        "forest",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 8,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 8,
+      "terrains": [
+        "forest",
+        "grassland",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 5,
+      "row": 8,
+      "terrains": [
+        "plains",
+        "forest",
+        "grassland",
+        "river"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 8,
+      "terrains": [
+        "river",
+        "forest",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 8,
+      "terrains": [
+        "hills"
+      ],
+      "resources": [],
+      "height": 3
+    },
+    {
+      "col": 8,
+      "row": 8,
+      "terrains": [
+        "plains",
+        "forest",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 8,
+      "terrains": [
+        "river",
+        "forest",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 8,
+      "terrains": [
+        "forest",
+        "river"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 8,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 12,
+      "row": 8,
+      "terrains": [
+        "river",
+        "desert",
+        "hills"
+      ],
+      "resources": [
+        "oil"
+      ],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 8,
+      "terrains": [
+        "hills"
+      ],
+      "resources": [],
+      "height": 3
+    },
+    {
+      "col": 14,
+      "row": 8,
+      "terrains": [
+        "river",
+        "forest",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 15,
+      "row": 8,
+      "terrains": [
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 8,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 8,
+      "terrains": [
+        "plains",
+        "hills"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 18,
+      "row": 8,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 8,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 9,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 9,
+      "terrains": [
+        "ocean",
+        "coast",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 9,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 9,
+      "terrains": [
+        "plains",
+        "grassland",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 9,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 9,
+      "terrains": [
+        "plains",
+        "river"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 6,
+      "row": 9,
+      "terrains": [
+        "river",
+        "plains",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 9,
+      "terrains": [
+        "hills",
+        "coast",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 8,
+      "row": 9,
+      "terrains": [
+        "hills"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 9,
+      "row": 9,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 9,
+      "terrains": [
+        "plains",
+        "grassland",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 9,
+      "terrains": [
+        "plains",
+        "grassland",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 9,
+      "terrains": [
+        "river",
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 9,
+      "terrains": [
+        "forest",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 9,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 15,
+      "row": 9,
+      "terrains": [
+        "lake",
+        "coast"
+      ],
+      "resources": [
+        "fish"
+      ],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 9,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 9,
+      "terrains": [
+        "coast",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 9,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 9,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 10,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 10,
+      "terrains": [
+        "plains",
+        "grassland",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 4,
+      "row": 10,
+      "terrains": [
+        "mountain"
+      ],
+      "resources": [],
+      "height": 3
+    },
+    {
+      "col": 5,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 10,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 10,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 9,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 10,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "grassland",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 10,
+      "terrains": [
+        "river",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 13,
+      "row": 10,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 14,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "lake",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "lake",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 10,
+      "terrains": [
+        "lake"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 10,
+      "terrains": [
+        "coast",
+        "forest",
+        "hills",
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 19,
+      "row": 10,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 11,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 2,
+      "row": 11,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 3,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 11,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 11,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 11,
+      "terrains": [
+        "coast",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 11,
+      "terrains": [
+        "coast",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 11,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 11,
+      "terrains": [
+        "coast",
+        "plains"
+      ],
+      "resources": [
+        "grapes"
+      ],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 11,
+      "terrains": [
+        "plains",
+        "grassland"
+      ],
+      "resources": [
+        "wheat"
+      ],
+      "height": 1
+    },
+    {
+      "col": 16,
+      "row": 11,
+      "terrains": [
+        "coast",
+        "plains"
+      ],
+      "resources": [
+        "horses"
+      ],
+      "height": 1
+    },
+    {
+      "col": 17,
+      "row": 11,
+      "terrains": [
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 18,
+      "row": 11,
+      "terrains": [
+        "forest"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 19,
+      "row": 11,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 12,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 1
+    },
+    {
+      "col": 2,
+      "row": 12,
+      "terrains": [
+        "hills",
+        "mountain"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 3,
+      "row": 12,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 12,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 12,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 12,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 12,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 12,
+      "terrains": [
+        "plains",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast",
+        "forest",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 12,
+      "terrains": [
+        "forest",
+        "plains",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 12,
+      "terrains": [
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 12,
+      "terrains": [
+        "hills",
+        "grassland",
+        "plains"
+      ],
+      "resources": [
+        "aluminium"
+      ],
+      "height": 2
+    },
+    {
+      "col": 18,
+      "row": 12,
+      "terrains": [
+        "hills",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 2
+    },
+    {
+      "col": 19,
+      "row": 12,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 13,
+      "terrains": [
+        "coast",
+        "ocean",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 13,
+      "terrains": [
+        "coast",
+        "plains",
+        "grassland"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast",
+        "grassland",
+        "plains"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 13,
+      "terrains": [
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 13,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 13,
+      "terrains": [
+        "coast",
+        "forest",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 13,
+      "terrains": [
+        "plains",
+        "forest"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 13,
+      "terrains": [
+        "plains",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 13,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 0,
+      "row": 14,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 1,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 2,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 3,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 4,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 5,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 6,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 7,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 8,
+      "row": 14,
+      "terrains": [
+        "ocean",
+        "coast"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 9,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 10,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 11,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 12,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 13,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 14,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 15,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 16,
+      "row": 14,
+      "terrains": [
+        "coast",
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 17,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 18,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    },
+    {
+      "col": 19,
+      "row": 14,
+      "terrains": [
+        "ocean"
+      ],
+      "resources": [],
+      "height": 0
+    }
+  ]
+}

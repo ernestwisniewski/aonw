@@ -1,0 +1,8 @@
+class: CreateMatchRequest
+fields:
+  name: String
+  mapName: String
+  maxPlayers: int
+  minPlayers: int
+  private: bool
+  countryId: String?

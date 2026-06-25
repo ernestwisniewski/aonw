@@ -1,0 +1,5 @@
+PRODUCT_NAME = aonw
+
+PRODUCT_BUNDLE_IDENTIFIER = aonw.net.game
+
+PRODUCT_COPYRIGHT = Copyright © 2026 dev.ernest. All rights reserved.

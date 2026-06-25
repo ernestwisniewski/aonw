@@ -1,0 +1,16 @@
+class: GameEvent
+table: aonw_event
+fields:
+  match: GameMatch?, relation(name=match_events, onDelete=Cascade)
+  offset: int
+  actorPlayerId: String?
+  clientMessageId: String?
+  event: WireEvent
+  createdAt: DateTime
+indexes:
+  aonw_event_match_offset_idx:
+    fields: matchId, offset
+    unique: true
+  aonw_event_match_actor_client_message_idx:
+    fields: matchId, actorPlayerId, clientMessageId
+    unique: true

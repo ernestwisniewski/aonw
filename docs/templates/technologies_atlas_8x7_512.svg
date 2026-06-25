@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="3584" viewBox="0 0 4096 3584">
+  <title>Technologies atlas template - 8 x 7, 512 x 512 cells</title>
+  <defs>
+    <pattern id="cell" width="512" height="512" patternUnits="userSpaceOnUse">
+      <rect width="512" height="512" fill="#111827" stroke="#38bdf8" stroke-width="4"/>
+      <rect x="56" y="56" width="400" height="400" fill="none" stroke="#facc15" stroke-width="3" stroke-dasharray="18 12"/>
+      <line x1="256" y1="0" x2="256" y2="512" stroke="#f472b6" stroke-width="3" stroke-dasharray="14 14"/>
+      <line x1="0" y1="256" x2="512" y2="256" stroke="#22d3ee" stroke-width="3" stroke-dasharray="14 14"/>
+    </pattern>
+  </defs>
+  <rect width="4096" height="3584" fill="url(#cell)"/>
+  <rect width="4096" height="3584" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <text x="24" y="58" font-family="Inter, Arial, sans-serif" font-size="44" fill="#ffffff">Technologies - slots 00-54, slot 55 empty</text>
+  <text x="24" y="3552" font-family="Inter, Arial, sans-serif" font-size="34" fill="#fde68a">8 x 7 cells, 512 x 512 each. Export exactly 4096 x 3584.</text>
+</svg>

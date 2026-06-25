@@ -1,0 +1,109 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.tmp
+*.bak
+*.orig
+*.rej
+*.meta
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+
+# Local workspace state
+migrate_working_dir/
+.worktrees/
+backups/
+.claude/
+.codex/
+.superpowers/
+
+# Local environment files
+.env
+*.env
+!.env.example
+!*.env.example
+server/config/passwords.yaml
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code local workspace state.
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+**/build/
+coverage/
+lcov.info
+
+# Flutter platform-generated files
+**/ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/.symlinks/
+ios/Pods/
+ios/Runner/GeneratedPluginRegistrant.*
+
+macos/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral/
+macos/Flutter/flutter_export_environment.sh
+macos/Pods/
+
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# Android/Gradle generated files
+android/.gradle/
+android/.kotlin/
+android/**/.cxx/
+android/captures/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Signing secrets and release artifacts
+dist/
+key.properties
+android/key.properties
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
+*.apk
+*.aab
+*.ipa
+*.xcarchive/
+*.dSYM/
+*.dSYM.zip
+*.app.dSYM.zip

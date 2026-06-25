@@ -1,0 +1,29 @@
+class: GameMatch
+table: aonw_match
+fields:
+  publicId: String
+  ownerUserIdentifier: String
+  name: String
+  mapName: String
+  state: String
+  turn: int
+  maxPlayers: int
+  minPlayers: int
+  private: bool
+  quickplay: bool
+  createdAt: DateTime
+  startedAt: DateTime?
+  autoStartAt: DateTime?
+  inviteCode: String?
+  players: List<GamePlayer>?, relation(name=match_players)
+  snapshots: List<GameSnapshot>?, relation(name=match_snapshots)
+  events: List<GameEvent>?, relation(name=match_events)
+indexes:
+  aonw_match_public_id_idx:
+    fields: publicId
+    unique: true
+  aonw_match_invite_code_idx:
+    fields: inviteCode
+    unique: true
+  aonw_match_state_idx:
+    fields: state

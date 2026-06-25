@@ -1,0 +1,7 @@
+# English is the source language: app_en.arb is the template that defines the
+# canonical key set and placeholder metadata. Other locales fall back to it.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-dir: lib/l10n/generated
+nullable-getter: false

@@ -1,0 +1,6 @@
+class: MultiplayerClientMessage
+fields:
+  clientMessageId: String
+  lastSeenOffset: int
+  requestSnapshot: bool
+  command: WireCommand?

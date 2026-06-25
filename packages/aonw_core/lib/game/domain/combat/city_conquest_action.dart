@@ -1,0 +1,1 @@
+enum CityConquestAction { capture, destroy }

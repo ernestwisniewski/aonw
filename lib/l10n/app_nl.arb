@@ -1,0 +1,4611 @@
+{
+  "@@locale": "nl",
+  "appTitle": "Tijdperk van Nieuwe Werelden",
+  "defaultPlayerName": "Speler {index}",
+  "@defaultPlayerName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultCityName": "Plaats {index}",
+  "@defaultCityName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameTitle": "NIEUW SPEL",
+  "gameModeSinglePlayerMenuLabel": "Singleplayer",
+  "gameModeMultiplayerMenuLabel": "Multiplayer",
+  "gameModeHotSeatMenuLabel": "Hete stoel",
+  "gameModeSinglePlayerSummaryLabel": "Singleplayer",
+  "gameModeMultiplayerSummaryLabel": "Multiplayer",
+  "gameModeHotSeatSummaryLabel": "Hete stoel",
+  "gameModeSinglePlayerMapTitle": "Kies een kaart om solo te spelen",
+  "gameModeMultiplayerMapTitle": "Kies een kaart om online te spelen",
+  "gameModeHotSeatMapTitle": "Kies een kaart voor hot-seat-spel",
+  "gameModeSinglePlayerMapSubtitle": "Een lokale wedstrijd tegen AI.",
+  "gameModeMultiplayerMapSubtitle": "Startscenario en wereldkaart voor een online wedstrijd.",
+  "gameModeHotSeatMapSubtitle": "Startscenario en wereldkaart voor hot-seat-play op één apparaat.",
+  "newGameIntroTitle": "Bereid de expeditie voor",
+  "newGameIntroSubtitle": "Kies eerst de speelstijl, daarna de kaart en verfijn vervolgens de spelers en het wedstrijdtempo.",
+  "newGameStepPlan": "Spelplan",
+  "newGameStepMap": "Kaart",
+  "newGameStepReview": "Beoordeling",
+  "newGamePlanTitle": "Welk verhaal wil je beginnen?",
+  "newGamePremiseTitle": "Van nederzetting tot imperium",
+  "newGamePremiseBody": "Elke wedstrijd begint met een paar beslissende keuzes: waar we de eerste stad kunnen stichten, hoe we het onderzoek vorm moeten geven, wanneer we het risico moeten nemen om uit te breiden en hoe we de controle over de kaart kunnen behouden.",
+  "newGameCountryTitle": "Kies beschaving",
+  "newGameCountrySubtitle": "De naam van je heerser volgt de beschaving die je kiest.",
+  "newGameSinglePlayerSettingsTitle": "Match-instellingen",
+  "newGameGameLengthLabel": "Spellengte",
+  "newGameLeaderLabel": "LEIDER",
+  "newGamePillarCities": "Steden",
+  "newGamePillarUnits": "Eenheden",
+  "newGamePillarResearch": "Onderzoek",
+  "newGameVictoryTypesTitle": "Overwinningspaden",
+  "newGameVictoryDominationTitle": "Overheersing",
+  "newGameVictoryDominationBody": "Beheers {controlPercent}% van de kaart en houd deze vast voor {holdTurns}-beurten. Verovering kan de wedstrijd nog steeds beëindigen door rivalen uit te schakelen.",
+  "@newGameVictoryDominationBody": {
+    "placeholders": {
+      "controlPercent": {
+        "type": "String"
+      },
+      "holdTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameVictoryArtifactsTitle": "Artefacten",
+  "newGameVictoryArtifactsBody": "Plaats unieke wereldartefacten van {artifactCount} in uw steden en bewaar de volledige collectie voor {holdTurns}-beurten.",
+  "@newGameVictoryArtifactsBody": {
+    "placeholders": {
+      "artifactCount": {
+        "type": "int"
+      },
+      "holdTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameModeSinglePlayerDescription": "Een rustige wedstrijd tegen AI. Het beste voor leersystemen, testen, en experimenteren met groei.",
+  "newGameModeMultiplayerDescription": "Een online match met netwerklobby, spelerbereidheid en een gedeelde toegang tot de kaart.",
+  "newGameModeMultiplayerAlphaDisabled": "Niet beschikbaar in de alfaversie.",
+  "newGameModeHotSeatDescription": "Hotseat spelen op één apparaat. Spelers passeren de beurt, terwijl het scherm elke overdracht begeleidt.",
+  "newGameMapTitle": "Kies de wereld",
+  "newGameMapSubtitle": "De kaart definieert het tempo van het eerste contact, de beschikbare middelen, de stadsruimte en de vorm van het conflict.",
+  "newGameReviewTitle": "Bevestig de expeditie",
+  "newGameReviewSubtitle": "Nadat je hebt bevestigd, ga je naar de lobby om de spelnaam, wedstrijdduur en spelers in te stellen.",
+  "newGameReviewSinglePlayerSubtitle": "Singleplayer begint onmiddellijk met jou en {aiCount} AI-spelers.",
+  "@newGameReviewSinglePlayerSubtitle": {
+    "placeholders": {
+      "aiCount": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameReviewMissingMap": "Kies een kaart voordat je spelers configureert.",
+  "newGameExpeditionReady": "Expeditie klaar",
+  "newGameSelectedMapLabel": "Kaart",
+  "newGameMapPickLabel": "Kaartkeuze",
+  "newGameMapPickRandom": "Willekeurige standaard",
+  "newGameMapPickManual": "Handmatig gekozen",
+  "newGameWorldSourceLabel": "Bron",
+  "newGameSinglePlayerAiSummary": "Jij + {aiCount} AI",
+  "@newGameSinglePlayerAiSummary": {
+    "placeholders": {
+      "aiCount": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameChangeMapAction": "Wijzig kaart",
+  "newGameStartSetupAction": "Ga naar de lobby",
+  "mainMenuLoadGame": "Spel laden",
+  "mainMenuDeveloper": "Hulpmiddelen",
+  "mainMenuSettings": "Instellingen",
+  "mainMenuSettingsSublabel": "Tekst en audio",
+  "mainMenuExit": "Uitgang",
+  "mainMenuAiSublabel": "AI",
+  "mainMenuOnlineSublabel": "Netwerk",
+  "mainMenuLocalSublabel": "Lokaal",
+  "mainMenuToolsSublabel": "Redacteuren",
+  "mainMenuToolsTitle": "Hulpmiddelen",
+  "mainMenuMapEditor": "Kaarteditor",
+  "mainMenuAssetsEditor": "Activa-editor",
+  "mainMenuTextSize": "Tekstgrootte",
+  "mainMenuTextSample": "Voorbeeld speltekst",
+  "mainMenuManual": "Handmatig",
+  "mainMenuCredits": "Kredieten",
+  "mainMenuFeedback": "Feedback",
+  "manualTitle": "Bedieningshandleiding",
+  "manualSubtitle": "Een snelle referentie voor kaartbeweging, selectie, bestellingen, panelen en turnflow op desktop en mobiel.",
+  "manualMetaDesktop": "Bureaublad",
+  "manualMetaMobile": "Mobiel",
+  "manualMetaAlpha": "Alfa voor één speler",
+  "manualCommandLoopTitle": "Kernopdrachtlus",
+  "manualCommandLoopSelectTitle": "Selecteer",
+  "manualCommandLoopSelectBody": "Kies een eenheid, stad, artefact of kaarttegel om de acties te onthullen die er nu toe doen.",
+  "manualCommandLoopPreviewTitle": "Voorbeeld",
+  "manualCommandLoopPreviewBody": "Beweeg of tik één keer om doelen, intentiekleuren, routes en geblokkeerde acties te inspecteren.",
+  "manualCommandLoopConfirmTitle": "Bevestigen",
+  "manualCommandLoopConfirmBody": "Gebruik een actiechip of kies opnieuw het gemarkeerde doelwit om de bestelling uit te voeren.",
+  "manualCommandLoopAdvanceTitle": "Voorschot",
+  "manualCommandLoopAdvanceBody": "Gebruik de onderste actieknop om naar de volgende beslissing te gaan of de beurt te voltooien.",
+  "manualDesktopTitle": "Bureaubladbediening",
+  "manualDesktopSubtitle": "Speel met de muis eerst met snelle kaartinspectie, nauwkeurige targeting en permanente panelen.",
+  "manualMobileTitle": "Mobiele bediening",
+  "manualMobileSubtitle": "Touch-first play afgestemd op leesbare panelen, weloverwogen opdrachten en een snelle beurtstroom.",
+  "manualMapCameraGroup": "Kaart en camera",
+  "manualOrdersGroup": "Selectie & bestellingen",
+  "manualPanelsGroup": "Panelen en hulp",
+  "manualTurnFlowGroup": "Draai stroom",
+  "manualDesktopLeftClickAction": "Klik met de linkermuisknop",
+  "manualDesktopLeftClickBody": "Selecteer eenheden, steden, artefacten en tegels; bij een actieve bestelling kiest u het doel.",
+  "manualDesktopDragAction": "Sleep de kaart",
+  "manualDesktopDragBody": "Pan de camera zonder de huidige selectie of opdrachtmodus te wijzigen.",
+  "manualDesktopZoomAction": "Muiswiel / trackpad",
+  "manualDesktopZoomBody": "Zoom tussen strategisch overzicht en tactische details op de kaart.",
+  "manualDesktopHoverAction": "Zweven",
+  "manualDesktopHoverBody": "Bekijk een voorbeeld van tooltips, doelhints en redenen voor geblokkeerde volgorde voordat u een commit maakt.",
+  "manualDesktopActionChipsAction": "Actiechips",
+  "manualDesktopActionChipsBody": "Verplaats, val aan, verbeter, vind een stad, sla over, versterk of annuleer de huidige modus.",
+  "manualDesktopSecondClickAction": "Twee keer hetzelfde doel",
+  "manualDesktopSecondClickBody": "Voor beweging geeft de eerste klik een voorbeeld van de route weer; de tweede klik wordt uitgevoerd of in de wachtrij geplaatst.",
+  "manualDesktopHoldAction": "Klik en houd vast",
+  "manualDesktopHoldBody": "Open gedetailleerde opdrachtuitleg voor acties, uitgeschakelde opties en contextchips.",
+  "manualDesktopRailAction": "Linker rail",
+  "manualDesktopRailBody": "Open kaartopties, hulp, doelstellingen, activiteitenlogboek, onderzoek en imperiumpanelen.",
+  "manualDesktopTopPillsAction": "Topbronnen",
+  "manualDesktopTopPillsBody": "Inspecteer de mislukkingen van de economie, de wetenschap, de hulpbronnen en de overwinningsdruk.",
+  "manualDesktopCloseAction": "Klik naar buiten",
+  "manualDesktopCloseBody": "Sluit pop-ups, optiepanelen en helpkaarten en breng de focus terug naar de kaart.",
+  "manualDesktopHelpAction": "?",
+  "manualDesktopHelpBody": "Open elke geminimaliseerde hint- en instructiekaart op elk gewenst moment, ongeacht de selectie.",
+  "manualDesktopTurnAction": "Volgende beslissing",
+  "manualDesktopTurnBody": "Focus op de volgende eenheid, onderzoek of stadskeuze; beëindig de beurt wanneer niets de voortgang blokkeert.",
+  "manualMobileTapAction": "Kraan",
+  "manualMobileTapBody": "Selecteer eenheden, steden, artefacten en tegels; bij een actieve bestelling kiest u het doel.",
+  "manualMobileDragAction": "Met één vinger slepen",
+  "manualMobileDragBody": "Pan de camera terwijl de geselecteerde eenheid of paneelstatus intact blijft.",
+  "manualMobilePinchAction": "Kneep",
+  "manualMobilePinchBody": "Zoom in op de kaart voor scouting, stadswerk, bewegingsplanning of gevechtstargeting.",
+  "manualMobileSecondTapAction": "Twee keer hetzelfde doel",
+  "manualMobileSecondTapBody": "Bekijk eerst een voorbeeld van een verplaatsingsroute en tik vervolgens opnieuw op hetzelfde vak om deze uit te voeren of in de wachtrij te plaatsen.",
+  "manualMobileActionChipsAction": "Actiechips",
+  "manualMobileActionChipsBody": "Gebruik de onderste commandorij voor eenheidsorders, stadskeuzes, arbeiders en annuleringsacties.",
+  "manualMobileHoldAction": "Houd ingedrukt",
+  "manualMobileHoldBody": "Open uitleg voor opdrachten, uitgeschakelde opties, bronnen en contextuele gebruikersinterface.",
+  "manualMobileScrollAction": "Schuifpanelen",
+  "manualMobileScrollBody": "Blader door lange stads-, onderzoeks-, log-, diplomatie- en hulplijsten zonder de kaartstatus te verliezen.",
+  "manualMobileRailAction": "Linker rail",
+  "manualMobileRailBody": "Tik om kaartopties, hulp, doelstellingen, activiteitenlogboek, onderzoek en imperiumpanelen te openen.",
+  "manualMobileHelpAction": "?",
+  "manualMobileHelpBody": "Bekijk elke geminimaliseerde hint en instructiekaart wanneer u een opfriscursus nodig heeft.",
+  "manualMobileTurnAction": "Onderste actie",
+  "manualMobileTurnBody": "Spring naar de volgende vereiste beslissing of beëindig de beurt zodra alle actiepunten zijn opgebruikt.",
+  "mainMenuWhatsNew": "Wat is er nieuw",
+  "mainMenuWhatsNewBody": "Welkom in het tijdperk van de nieuwe werelden. Bouw steden, leid commandanten, ontdek nieuwe landen en schrijf de geschiedenis van je beschaving.",
+  "gameModeLabel": "MODUS",
+  "gameNameLabel": "SPELNAAM",
+  "playersLabel": "SPELERS",
+  "countryLabel": "LAND",
+  "countryPoland": "Polen",
+  "countryUkraine": "Oekraïne",
+  "countryGermany": "Duitsland",
+  "countryFrance": "Frankrijk",
+  "countryUnitedKingdom": "Verenigd Koninkrijk",
+  "countryItaly": "Italië",
+  "countrySpain": "Spanje",
+  "countryNetherlands": "Nederland",
+  "countrySweden": "Zweden",
+  "countryRussia": "Rusland",
+  "countryUnitedStates": "Verenigde Staten",
+  "countryCanada": "Canada",
+  "countryChina": "China",
+  "countryKorea": "Korea",
+  "countryJapan": "Japan",
+  "countryPortugal": "Portugal",
+  "countryLeaderPoland": "Casimir III de Grote",
+  "countryLeaderUkraine": "Jaroslav de Wijze",
+  "countryLeaderGermany": "Otto von Bismarck",
+  "countryLeaderFrance": "Napoleon Bonaparte",
+  "countryLeaderUnitedKingdom": "Koningin Victoria",
+  "countryLeaderItaly": "Julius Caesar",
+  "countryLeaderSpain": "Isabella I",
+  "countryLeaderNetherlands": "Willem van Oranje",
+  "countryLeaderSweden": "Gustaaf Adolf",
+  "countryLeaderRussia": "Catharina de Grote",
+  "countryLeaderUnitedStates": "Abraham Lincoln",
+  "countryLeaderCanada": "Wilfrid Laurier",
+  "countryLeaderChina": "Qin Shi Huang",
+  "countryLeaderKorea": "Sejong de Grote",
+  "countryLeaderJapan": "Tokugawa Ieyasu",
+  "countryLeaderPortugal": "Hendrik de Zeevaarder",
+  "addPlayerAction": "+ SPELER TOEVOEGEN",
+  "startGameAction": "BEGIN",
+  "removePlayerTooltip": "Speler verwijderen",
+  "multiplayerSearchTitle": "SERVER ZOEKEN",
+  "multiplayerSearchBody": "De lijst met online games verschijnt hier.",
+  "multiplayerPlayersTitle": "Spelers",
+  "multiplayerStatusTooltip": "Spelerstatus",
+  "multiplayerAvatarTooltip": "{playerName} {status}",
+  "@multiplayerAvatarTooltip": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerAvatarTooltipWithRelation": "{playerName} {status}\nRelaties: {relation}",
+  "@multiplayerAvatarTooltipWithRelation": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "relation": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerPlayerTooltip": "{playerName}\n{defaultName}",
+  "@multiplayerPlayerTooltip": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "defaultName": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerPlayerTooltipWithRelation": "{playerName}\n{defaultName}\nRelaties: {relation}",
+  "@multiplayerPlayerTooltipWithRelation": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "defaultName": {
+        "type": "String"
+      },
+      "relation": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerStatusActive": "speelt nu",
+  "multiplayerStatusSubmitted": "beurt verzonden",
+  "multiplayerStatusThinking": "denken",
+  "multiplayerStatusWaiting": "wachten",
+  "multiplayerStatusTimeout": "time-out",
+  "diplomacyRelationFriendly": "vriendelijk",
+  "diplomacyRelationNeutral": "neutrale",
+  "diplomacyRelationHostile": "gewelddadig",
+  "diplomacyRelationTruce": "bestand",
+  "diplomacyRelationWar": "oorlog",
+  "diplomacyRelationFriendlyShort": "fr.",
+  "diplomacyRelationNeutralShort": "neut.",
+  "diplomacyRelationHostileShort": "gastheer.",
+  "diplomacyRelationTruceShort": "bestand",
+  "diplomacyRelationWarShort": "oorlog",
+  "commonDiplomacy": "Diplomatie",
+  "diplomacyScoreLabel": "Betrekkingen",
+  "diplomacyScoreDriversTitle": "Wat relaties verandert",
+  "diplomacyScoreReasonManual": "Handmatige wijziging",
+  "diplomacyScoreReasonUnitAttack": "Aanval op eenheid",
+  "diplomacyScoreReasonCityAttack": "Aanval op stad",
+  "diplomacyScoreReasonDeclarationOfWar": "Oorlogsverklaring",
+  "diplomacyScoreReasonProposalAccepted": "Voorstel geaccepteerd",
+  "diplomacyScoreReasonProposalRejected": "Voorstel afgewezen",
+  "diplomacyScoreReasonMessageResponse": "Reactie op bericht",
+  "diplomacyScoreReasonPromiseBroken": "Belofte gebroken",
+  "diplomacyStatsTitle": "Statistieken",
+  "diplomacyHistoryTitle": "Geschiedenis",
+  "diplomacyMessagesTitle": "Verzendingen",
+  "diplomacyIncomingMessageTitle": "Nieuw bericht",
+  "diplomacyIncomingMessageFrom": "Van: {playerName}",
+  "@diplomacyIncomingMessageFrom": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyIncomingProposalTitle": "Nieuw voorstel",
+  "diplomacyIncomingProposalFrom": "Van: {playerName}",
+  "@diplomacyIncomingProposalFrom": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyIncomingMessageLater": "Later",
+  "diplomacyActionsTitle": "Acties",
+  "diplomacyProposalsTitle": "Voorstellen",
+  "diplomacyNoHistory": "Geen geregistreerde incidenten.",
+  "diplomacyNoMessages": "Geen verzendingen.",
+  "diplomacyMilitaryStat": "Militair",
+  "diplomacyCitiesStat": "Steden",
+  "diplomacyExpansionStat": "Uitbreiding",
+  "diplomacyArtifactsStat": "Artefacten",
+  "diplomacyLastAggressionStat": "Laatste agressie",
+  "diplomacyOwnArtifactsLabel": "Jouw artefacten",
+  "diplomacyTargetArtifactsLabel": "Rivaliserende artefacten",
+  "diplomacyTurnsRemaining": "Draait naar links: {turns}",
+  "@diplomacyTurnsRemaining": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyProposalFriendship": "Vriendschapsvoorstel",
+  "diplomacyProposalTruce": "Wapenstilstandsvoorstel",
+  "diplomacySendFriendship": "Stel vriendschap voor",
+  "diplomacySendTruce": "Stel een wapenstilstand voor",
+  "diplomacyDeclareWar": "Verklaar de oorlog",
+  "diplomacyAccept": "Accepteren",
+  "diplomacyDecline": "Afwijzen",
+  "diplomacyMessageTroopsNearCities": "Er zijn te veel troepen in de buurt van mijn steden geplaatst.",
+  "diplomacyMessageCitiesTooClose": "Jullie stichten steden te dicht bij mijn grenzen.",
+  "diplomacyMessageBlockedRoutes": "Jouw eenheden blokkeren mijn routes.",
+  "diplomacyMessageWithdrawScouts": "Trek alstublieft uw verkenners terug uit mijn territorium.",
+  "diplomacyMessageAvoidEscalation": "Onze beschavingen moeten verdere escalatie vermijden.",
+  "diplomacyMessageCommonEnemy": "Een gemeenschappelijke vijand bedreigt ons allebei.",
+  "diplomacyMessageExpansionProvocation": "Uw expansie wordt gezien als een provocatie.",
+  "diplomacyMessagePeacefulPraise": "Wij waarderen de vreedzame betrekkingen tussen onze volkeren.",
+  "diplomacyResponseConciliatory": "Verzoenend",
+  "diplomacyResponseNeutral": "Neutrale",
+  "diplomacyResponseEvasive": "Ontwijkend",
+  "diplomacyResponseAggressive": "Agressief",
+  "diplomacyStrategicResourcesTitle": "Strategische grondstoffen",
+  "diplomacyResourceTradeBlockedByWar": "Grondstoffenhandel is geblokkeerd door oorlog.",
+  "diplomacyResourceTradeNoAvailableResources": "Er zijn geen vrije strategische grondstoffen beschikbaar voor handel.",
+  "diplomacyResourceTradeImportOffer": "Importaanbod: {goldPerTurn} goud/beurt gedurende {durationTurns} beurten.",
+  "@diplomacyResourceTradeImportOffer": {
+    "placeholders": {
+      "goldPerTurn": {
+        "type": "int"
+      },
+      "durationTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeImportAction": "{resourceName} importeren",
+  "@diplomacyResourceTradeImportAction": {
+    "placeholders": {
+      "resourceName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyResourceTradeExchangeOffer": "Ruilhandel: grondstof voor grondstof gedurende {durationTurns} beurten.",
+  "@diplomacyResourceTradeExchangeOffer": {
+    "placeholders": {
+      "durationTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeExchangeAction": "{offeredResource} ruilen voor {requestedResource}",
+  "@diplomacyResourceTradeExchangeAction": {
+    "placeholders": {
+      "offeredResource": {
+        "type": "String"
+      },
+      "requestedResource": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyResourceTradeNoActiveAgreements": "Geen actieve grondstoffenakkoorden.",
+  "diplomacyResourceTradeImportDirection": "Importeert",
+  "diplomacyResourceTradeExportDirection": "Exporteert",
+  "diplomacyResourceTradeBarterPrice": "ruil",
+  "diplomacyResourceTradeGoldPerTurnPrice": "{goldPerTurn} goud/beurt",
+  "@diplomacyResourceTradeGoldPerTurnPrice": {
+    "placeholders": {
+      "goldPerTurn": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeAgreementLabel": "{direction} {resourceName} · {price} · {remainingTurns} beurten",
+  "@diplomacyResourceTradeAgreementLabel": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      },
+      "resourceName": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "remainingTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "notFoundScreenTitle": "Scherm niet gevonden",
+  "notFoundBackToMenuAction": "MENU",
+  "loadGameTitle": "LAAD SPEL",
+  "loadGameHeaderTitle": "Opgeslagen spellen",
+  "loadGameHeaderEmptySubtitle": "Er is nog geen spel gestart.",
+  "loadGameHeaderSavesSubtitle": "Keer terug naar recente wedstrijden en ga verder vanaf de opgeslagen beurt.",
+  "loadGameSavesCount": "Opgeslagen: {count}",
+  "@loadGameSavesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameCorruptedStatus": "Beschadigde save",
+  "loadGameCorruptedAction": "Niet beschikbaar",
+  "loadGameCorruptedBody": "Deze save kan niet worden gelezen. U kunt deze uit de lijst verwijderen.",
+  "replayTitle": "HERHAAL",
+  "replayAction": "HERHAAL",
+  "replayUnavailableAction": "GEEN HERHAAL",
+  "replayErrorTitle": "Herhaling niet beschikbaar",
+  "replayErrorBody": "Herhaling kan niet worden geopend: {error}",
+  "@replayErrorBody": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "replayMissingInitialSnapshotBody": "Deze opslag bevat geen momentopname van het herhalingszaad. Start een nieuw spel om de volledige herhalingsgegevens van de wedstrijd vast te leggen.",
+  "replayCorruptLogBody": "Het replay-opdrachtlogboek is onvolledig of kan niet worden gelezen.",
+  "replayStepCounter": "Stap {step}/{total}",
+  "@replayStepCounter": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "endTurnButtonTurnLabel": "BEURT {turn}",
+  "@endTurnButtonTurnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "replayTurnLabel": "Draai {turn}",
+  "@replayTurnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "replayEventCount": "{count, plural, =0{0 gebeurtenissen} =1{1 gebeurtenis} other{{count} gebeurtenissen}}",
+  "@replayEventCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replayInitialStateLabel": "Initiële staat",
+  "replayPreviousAction": "Vorige stap",
+  "replayNextAction": "Volgende stap",
+  "replayPlayAction": "Speel herhaling",
+  "replayPauseAction": "Pauzeer het opnieuw afspelen",
+  "replaySpeedLabel": "Snelheid",
+  "replayPerspectiveLabel": "Perspectief",
+  "replayAllPlayers": "Alle spelers",
+  "replayShowTurnsLabel": "Beurten tonen",
+  "replayFreeCameraLabel": "Vrije camera",
+  "mapsLoadError": "Kan kaarten niet laden: {error}",
+  "@mapsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "editorMapPickerTitle": "Editor kaarten",
+  "editorMapPickerSubtitle": "Creëer nieuwe werelden of verfijn bestaande kaarten.",
+  "editorMapPickerEmptyTitle": "Geen opgeslagen kaarten",
+  "editorMapPickerEmptyMessage": "Maak een nieuwe kaart vanuit de schermkop.",
+  "editorNewMapAction": "Nieuwe kaart",
+  "editorDeleteMapTooltip": "Kaart verwijderen",
+  "editorDeleteMapTitle": "Kaart verwijderen?",
+  "editorDeleteMapMessage": "Hierdoor worden “{name}” en alle kaartbestanden permanent verwijderd.",
+  "@editorDeleteMapMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "editorOpenMapErrorTitle": "Kon de kaart niet openen",
+  "editorCollapseToolbarTooltip": "Editorvenster samenvouwen",
+  "editorExpandToolbarTooltip": "Vouw het editorpaneel uit",
+  "officialMapsCount": "Officieel: {count}",
+  "@officialMapsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yourMapsCount": "Van jou: {count}",
+  "@yourMapsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "officialMapsSection": "Officieel",
+  "yourMapsSection": "Jouw kaarten",
+  "playAction": "Toneelstuk",
+  "editAction": "Bewerking",
+  "noMapsTitle": "Geen kaarten",
+  "noMapsMessage": "Er zijn geen kaarten gevonden om een ​​spel te starten.",
+  "gameLengthLabel": "Spellengte",
+  "gameLengthPresetHint": "Spelvoorinstelling",
+  "gameLengthPresetUnlimited": "Onbeperkt",
+  "gameLengthPresetShort60": "Kort",
+  "gameLengthPresetNormal90": "Normaal",
+  "gameLengthPresetStandard60": "Standaard 60 min",
+  "gameLengthPresetLong120": "Lang",
+  "gameLengthPresetVeryLong": "Heel lang",
+  "gameLengthUnlimitedSummary": "Geen beurtlimiet - huidig ​​speltempo",
+  "gameLengthTimedSummary": "{minutes} min doel - {turns} beurtlimiet",
+  "@gameLengthTimedSummary": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "gameLengthScoreFallbackOn": "met scoreterugval",
+  "gameLengthScoreFallbackOff": "zonder scoreterugval",
+  "aiDifficultyLabel": "AI-moeilijkheid",
+  "aiDifficultyEasy": "Eenvoudig",
+  "aiDifficultyNormal": "Normaal",
+  "aiDifficultyHard": "Moeilijk",
+  "aiDifficultyVeryHard": "Heel moeilijk",
+  "gameLengthVictoryRules": "Verovering + overheersing {controlPercent}%/{holdTurns} beurten - {fallback}",
+  "@gameLengthVictoryRules": {
+    "placeholders": {
+      "controlPercent": {
+        "type": "String"
+      },
+      "holdTurns": {
+        "type": "int"
+      },
+      "fallback": {
+        "type": "String"
+      }
+    }
+  },
+  "mapValidationErrorTitle": "Kaart heeft reparaties nodig",
+  "mapValidationLoadingTitle": "Kaart controleren",
+  "mapValidationWarningTitle": "De kaart is mogelijk te langzaam voor deze voorinstelling",
+  "mapValidationLoadError": "Kan kaart niet controleren: {error}",
+  "@mapValidationLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mapValidationLoadingMessage": "Validatie van starts, bronnen en tempo bij het eerste contact.",
+  "mapValidationIssueSlowFirstContact": "De startposities liggen ver uit elkaar; 60 minuten kunnen het eerste contact te veel vertragen.",
+  "mapValidationIssueLargeMap": "De kaart heeft veel tegels per speler; voeg spelers toe of kies een langer spel.",
+  "mapValidationIssueInvalidPlayerCount": "Het aantal spelers komt niet overeen met het bereik dat door deze kaart wordt ondersteund.",
+  "mapValidationIssueNoTiles": "De kaart heeft geen tegels.",
+  "mapValidationIssueLowPassableTileRatio": "De kaart heeft te weinig tegels die door landeenheden kunnen worden begaanbaar.",
+  "mapValidationIssueLowFoodResourceDensity": "De kaart heeft te weinig voedselbronnen voor dit spelersaantal.",
+  "mapValidationIssueLowStrategicResourceDensity": "De kaart heeft te weinig strategische middelen.",
+  "mapValidationIssueLowLuxuryResourceDensity": "De kaart heeft te weinig luxe middelen.",
+  "mapValidationIssueStartSiteNotFoundable": "De startende kolonist kan geen stad op zijn tegel vinden.",
+  "mapValidationIssueStartSiteLowLandRing": "De start heeft te weinig begaanbare tegels in de eerste ring.",
+  "mapValidationIssueStartSiteLowFood": "De start heeft geen zichtbare voedselbron in de buurt.",
+  "mapValidationIssueStartSiteLowCityControl": "De start heeft te weinig legale tegels voor initiële stadscontrole.",
+  "mapValidationIssueStartSitesTooClose": "De spelersstarts zijn te dicht bij elkaar.",
+  "lobbyMapPlayersSummary": "{mapName} {playerCount}-spelers",
+  "@lobbyMapPlayersSummary": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "playerCount": {
+        "type": "int"
+      }
+    }
+  },
+  "lobbyHeaderTitle": "Bereid de tafel voor",
+  "lobbyHeaderSubtitle": "Bevestig eerst de beschaving en stem vervolgens de wedstrijd en stoelen af ​​vóór de eerste beurt.",
+  "lobbyCivilizationTitle": "Kies beschaving",
+  "lobbyCivilizationSubtitle": "Dit is de identiteit van de speler voor de openingsbeurt.",
+  "lobbyStepCivilization": "Beschaving",
+  "lobbyStepSetup": "Installatie",
+  "lobbyStepOnline": "Online",
+  "lobbyStepPlayers": "Spelers",
+  "lobbySetupTitle": "Wedstrijdopstelling",
+  "lobbySetupSubtitle": "Geef het spel een naam, kies het tempo en controleer of de kaart past bij het geselecteerde spelersaantal.",
+  "lobbyPlayersSetupTitle": "Spelers aan tafel",
+  "lobbyPlayersSetupSubtitle": "De startspeler neemt de openingsbeurt. Extra zitplaatsen kunnen mensen op dit apparaat of AI zijn.",
+  "lobbyPlayerYou": "Jij",
+  "lobbyPlayerHost": "Gastheer",
+  "lobbyPlayerReady": "klaar",
+  "lobbyPlayerConnected": "aangesloten",
+  "lobbyPlayerConnecting": "verbinden",
+  "lobbyPlayerReconnecting": "opnieuw verbinden",
+  "lobbyPlayerOffline": "offline",
+  "lobbyPlayerOpenSlot": "Open stoel {slotNumber}",
+  "@lobbyPlayerOpenSlot": {
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "lobbyPlayerRequiredSlot": "Nodig om te beginnen",
+  "lobbyPlayerOptionalSlot": "Kan vóór aanvang meedoen",
+  "playerKindHuman": "Menselijk",
+  "playerKindAi": "AI",
+  "multiplayerServerTitle": "Online gameserver",
+  "connectAction": "Verbinden",
+  "refreshAction": "Vernieuwen",
+  "createMatchAction": "Match creëren",
+  "noOpenMatches": "Geen open wedstrijden",
+  "matchStatusRunning": "Klaar",
+  "matchStatusFinished": "Afgerond",
+  "matchStatusAbandoned": "Verlaten",
+  "matchPlayersCount": "{players}/{maxPlayers}-spelers",
+  "@matchPlayersCount": {
+    "placeholders": {
+      "players": {
+        "type": "int"
+      },
+      "maxPlayers": {
+        "type": "int"
+      }
+    }
+  },
+  "matchReadyCount": "{readyPlayers}/{players} gereed",
+  "@matchReadyCount": {
+    "placeholders": {
+      "readyPlayers": {
+        "type": "int"
+      },
+      "players": {
+        "type": "int"
+      }
+    }
+  },
+  "matchTurnInfo": "{mapName} {status} draai {turn}",
+  "@matchTurnInfo": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "openMatchInfo": "{mapName} {players}/{maxPlayers} draai {turn}",
+  "@openMatchInfo": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "players": {
+        "type": "int"
+      },
+      "maxPlayers": {
+        "type": "int"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "enterMatchAction": "Binnenkomen",
+  "hideMatchAction": "Verbergen",
+  "joinMatchAction": "Meedoen",
+  "cancelAction": "ANNULEREN",
+  "copyAction": "Kopiëren",
+  "shareAction": "Deel",
+  "multiplayerHomeSubtitle": "Kies een snelle wachtrij of een privécodematch voor vrienden.",
+  "multiplayerProfileTitle": "Jouw profiel",
+  "multiplayerProfileSubtitle": "Stel de naam en beschaving in die je in online wedstrijden gaat gebruiken.",
+  "multiplayerProfileOptionsSubtitle": "Je bijnaam wordt gebruikt in multiplayerwedstrijden en moet uniek zijn.",
+  "multiplayerProfileSaveAction": "Bijnaam opslaan",
+  "multiplayerProfileSaved": "Bijnaam opgeslagen.",
+  "multiplayerLobbyHeaderTitle": "Onlinelobby",
+  "multiplayerLobbyHeaderSubtitle": "Kies eerst de beschaving en voer vervolgens quickplay in of maak een privétafel aan. De kaart wordt automatisch geselecteerd.",
+  "multiplayerCountryPickTitle": "Kies beschaving",
+  "multiplayerCountryPickSubtitle": "Dit is de belangrijkste keuze voordat u in de wachtrij gaat. Multiplayer-kaarten worden willekeurig geselecteerd.",
+  "multiplayerRandomMapLabel": "Willekeurige kaart",
+  "multiplayerNicknameLabel": "Bijnaam",
+  "multiplayerQuickplayTitle": "Snel spel",
+  "multiplayerQuickplaySubtitle": "Vindt spelers automatisch en begint vanaf 2 spelers.",
+  "multiplayerCreatePrivateTitle": "Code maken",
+  "multiplayerCreatePrivateSubtitle": "Privéwedstrijd zonder tijdslimiet, alleen voor vrienden.",
+  "multiplayerJoinPrivateTitle": "Doe mee met code",
+  "multiplayerJoinPrivateSubtitle": "Voer de code van een vriend in en wacht op de host.",
+  "multiplayerQueueReadyTitle": "Wedstrijd klaar",
+  "multiplayerQueueSearchingTitle": "Spelers zoeken",
+  "multiplayerQueueCountdownTitle": "Binnenkort van start",
+  "multiplayerQueueConnectingSubtitle": "Verbinding maken met de server en zoeken naar een wachtrij.",
+  "multiplayerQueueWaitingForPlayers": "Wachten op minimaal {minPlayers}-spelers.",
+  "@multiplayerQueueWaitingForPlayers": {
+    "placeholders": {
+      "minPlayers": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerQueuePreparingStart": "Spelers gevonden. Wedstrijdstart voorbereiden.",
+  "multiplayerQueueStartingNow": "Startwedstrijd...",
+  "multiplayerQueueStartingIn": "Beginnend met {seconds}s. Er kunnen nog steeds meer spelers meedoen.",
+  "@multiplayerQueueStartingIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerPrivateTitle": "Vrienden komen overeen",
+  "multiplayerPrivateHostReady": "Je kunt de wedstrijd nu beginnen.",
+  "multiplayerPrivateWaitingForHost": "Wachten tot de gastheer de wedstrijd begint.",
+  "multiplayerJoinCodeHelp": "Voer de code in die je van een vriend hebt ontvangen.",
+  "multiplayerInviteCodeHint": "Matchcode",
+  "multiplayerInviteCodeLabel": "Matchcode",
+  "multiplayerInviteCopied": "Matchcode gekopieerd.",
+  "multiplayerInviteShareText": "Doe mee met mijn AONW-wedstrijd. Code: {inviteCode}",
+  "@multiplayerInviteShareText": {
+    "placeholders": {
+      "inviteCode": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerInviteCodeRequired": "Voer een wedstrijdcode in.",
+  "multiplayerMapNotReady": "Deze kaart is niet klaar voor multiplayer.",
+  "multiplayerRequestRejected": "De server heeft het verzoek afgewezen ({statusCode}).",
+  "@multiplayerRequestRejected": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerRequestRejectedWithReason": "De server heeft het verzoek afgewezen ({statusCode}: {reason}).",
+  "@multiplayerRequestRejectedWithReason": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerConnectionError": "Kan geen verbinding maken met {host}. Controleer uw internetverbinding en probeer het opnieuw.",
+  "@multiplayerConnectionError": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerSignInRequired": "Meld je aan of maak een account aan om multiplayer te spelen.",
+  "multiplayerSessionExpired": "Je multiplayersessie is verlopen. Meld u opnieuw aan en probeer het opnieuw.",
+  "multiplayerAccountTitle": "Multiplayeraccount",
+  "multiplayerAccountSubtitle": "Meld je aan of maak een account aan om door te gaan.",
+  "multiplayerAccountEmailLabel": "Email",
+  "multiplayerAccountPasswordLabel": "Wachtwoord",
+  "multiplayerAccountSignInTab": "Aanmelden",
+  "multiplayerAccountCreateTab": "Account maken",
+  "multiplayerAccountSignInAction": "Aanmelden",
+  "multiplayerAccountCreateAction": "Account maken",
+  "multiplayerAccountSignOutAction": "Afmelden",
+  "multiplayerAccountSignedOut": "Afgemeld bij multiplayer.",
+  "multiplayerAccountInvalidEmail": "Voer een geldig emailadres in.",
+  "multiplayerAccountInvalidCredentials": "Email of wachtwoord is ongeldig.",
+  "multiplayerAccountExists": "Er bestaat al een account met deze email.",
+  "multiplayerAccountWeakPassword": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
+  "multiplayerAccountInvalidNickname": "Gebruik 3-24 letters, cijfers, spaties, _ of -.",
+  "multiplayerAccountNicknameTaken": "Deze bijnaam is al in gebruik.",
+  "multiplayerAccountGenericError": "Authenticatie is mislukt. Probeer het opnieuw.",
+  "multiplayerMatchUnavailable": "Deze wedstrijd is niet langer beschikbaar.",
+  "multiplayerMatchFull": "Deze wedstrijd is vol.",
+  "multiplayerCountryUnavailable": "Meerdere spelers hebben jouw beschaving gekozen. Probeer een andere.",
+  "multiplayerMatchNotReady": "De wedstrijd is nog niet klaar om te beginnen.",
+  "multiplayerMatchAccessDenied": "Je bent geen speler in deze wedstrijd.",
+  "multiplayerQueueGenericError": "Kon niet in de multiplayer-wachtrij komen. Probeer het opnieuw.",
+  "multiplayerResumeAction": "Hervat het spel",
+  "multiplayerResumeSublabel": "Keer terug naar de laatste multiplayersessie",
+  "multiplayerResumeLoading": "Verbinden met match...",
+  "multiplayerResumeFailed": "Kan de laatste multiplayersessie niet hervatten.",
+  "optionsTooltip": "Opties",
+  "optionsOpenMenuTooltip": "Menu openen",
+  "optionsTooltipWithCollapseHint": "{tooltip}. Houd ingedrukt om het menu samen te vouwen.",
+  "@optionsTooltipWithCollapseHint": {
+    "placeholders": {
+      "tooltip": {
+        "type": "String"
+      }
+    }
+  },
+  "optionsTitle": "Opties",
+  "optionsSubtitle": "Tekst, taal, audio en uitvoering",
+  "languageSectionTitle": "Taal",
+  "languagePolish": "Pools",
+  "languageEnglish": "Engels",
+  "languageGerman": "Duits",
+  "languageSpanish": "Spaans",
+  "languageDutch": "Nederlands",
+  "textScaleStandard": "Standaard",
+  "textScaleLarge": "Groot",
+  "textScaleExtraLarge": "Extra groot",
+  "textScaleSemanticLabel": "Tekstgrootte {label}",
+  "@textScaleSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "textScaleTooltip": "Tekstgrootte: {label}",
+  "@textScaleTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "languageSemanticLabel": "Taal {label}",
+  "@languageSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "languageTooltip": "Taal: {label}",
+  "@languageTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "audioSectionTitle": "Audio",
+  "gameSoundsLabel": "Spelgeluiden",
+  "soundVolumeLabel": "Geluidsvolume",
+  "gameMusicLabel": "Spelmuziek",
+  "musicVolumeLabel": "Muziekvolume",
+  "natureSoundsLabel": "Natuur klinkt",
+  "natureVolumeLabel": "Natuurvolume",
+  "aiSectionTitle": "AI",
+  "aiBatterySaverLabel": "AI-batterijbesparing",
+  "gameplaySectionTitle": "Gameplay",
+  "followUnitMovementCameraLabel": "Volg eenheidsbeweging met de camera",
+  "followEnemyUnitCameraLabel": "Volg vijandelijke eenheden met de camera",
+  "cinematicCameraLabel": "Filmische camera",
+  "performanceSectionTitle": "Prestatie",
+  "showFpsLabel": "FPS tonen",
+  "showMapZoomLabel": "Toon kaartzoom",
+  "mapViewModeTooltip": "Wijzig de kaartweergavemodus",
+  "mapViewGraphicUnavailableTooltip": "De grafische modus is niet beschikbaar voor deze kaart",
+  "mapViewModeGraphic": "Grafisch",
+  "mapViewModeTiles": "Tegels",
+  "gameOptionTerrain": "Terrein",
+  "gameOptionResources": "Bronnen",
+  "gameOptionHeight": "Hoogte",
+  "gameOptionCitySites": "Stadssites",
+  "gameOptionCityGrowth": "Groei van de stad",
+  "gameOptionShowHexes": "Hexen tonen",
+  "gameOptionShowHeight": "Hoogte tonen",
+  "gameOptionDiceTest": "Dobbelstenen test",
+  "gameOptionAutoActionFlow": "Acties automatisch afronden",
+  "gameOptionAutoTurnFlow": "Beurten automatisch beëindigen",
+  "helpPopupsTitle": "Hints",
+  "autoTurnHintTitle": "Beurten automatisch beëindigen",
+  "autoTurnHintBody": "Automatisch beurten beëindigen verstuurt de beurt wanneer er geen belangrijke acties meer over zijn. Automatisch acties afronden kun je apart regelen in de kaartopties.",
+  "autoTurnHintEnableAction": "Inschakelen",
+  "autoTurnHintDisableAction": "Uitzetten",
+  "autoTurnHintStatusOn": "Ingeschakeld",
+  "autoTurnHintStatusOff": "Gehandicapt",
+  "autoTurnHintMinimizedSubtitle": "Snelle schakelaar voor automatische draaistroom.",
+  "visibilityShowAction": "Toon {label}",
+  "@visibilityShowAction": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "visibilityHideAction": "{label} verbergen",
+  "@visibilityHideAction": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "resignAction": "Ontslag nemen",
+  "resignMatchTitle": "Opzeggen van de wedstrijd?",
+  "resignMatchMessage": "De wedstrijd zal worden beëindigd.",
+  "resignMatchError": "Kon de wedstrijd niet opgeven.",
+  "creditsTitle": "Kredieten",
+  "creditsCreatedBy": "Gemaakt door {name}",
+  "@creditsCreatedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGameTitle": "Spel verwijderen",
+  "deleteGameMessage": "'{name}' verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "@deleteGameMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAction": "VERWIJDEREN",
+  "retryAction": "OPNIEUW PROBEREN",
+  "noSavedGames": "Geen opgeslagen spellen.",
+  "resumeAction": "CV",
+  "newGameAction": "NIEUW SPEL",
+  "turnActionButtonLabel": "Actie",
+  "endTurnButtonLabel": "Einde beurt",
+  "waitingTurnButtonLabel": "Wachten",
+  "waitingForPlayersTooltip": "Wachten op andere spelers",
+  "submitTurnTooltip": "Gereedheid indienen bij beurt {turn}",
+  "@submitTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "endTurnTooltip": "Einde beurt {turn}",
+  "@endTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "nextActionTooltip": "Ga naar de volgende actie",
+  "nextActionWithCountTooltip": "Ga naar de volgende actie ({count} links)",
+  "@nextActionWithCountTooltip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnActionListTooltip": "Kies een actie uit de lijst",
+  "hudActionDeckCollapseTooltip": "Onderste werkbalk samenvouwen",
+  "hudActionDeckExpandTooltip": "Vouw de onderste werkbalk uit",
+  "turnActionUnitKind": "Eenheid",
+  "turnActionCityProductionKind": "Stad",
+  "turnActionResearchKind": "Onderzoek",
+  "turnActionCityProductionLabel": "{cityName}-productie",
+  "@turnActionCityProductionLabel": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "turnActionResearchLabel": "Kies voor onderzoek",
+  "turnLabel": "DRAAI {turn}",
+  "@turnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameError": "Laadfout: {error}",
+  "@loadGameError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backAction": "Rug",
+  "continueAction": "Doorgaan",
+  "gameLoadingTitle": "Wereld laden",
+  "gameLoadingMessage": "De kaart, eenheden en interface voorbereiden. Het spel verschijnt zodra de middelen gereed zijn.",
+  "firstTurnTutorialPopupTitle": "Handleiding",
+  "firstTurnTutorialPopupSubtitle": "Gids voor de eerste beurt",
+  "firstTurnTutorialSemantics": "Eerste beurt: {title}",
+  "@firstTurnTutorialSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "firstTurnCoachmarkProgressLabel": "Stap {current}/{total}",
+  "@firstTurnCoachmarkProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "firstTurnCoachmarkMinimizeTooltip": "Minimaliseer",
+  "firstTurnCoachmarkSkipAction": "Overslaan",
+  "firstTurnCoachmarkNextAction": "Volgende",
+  "firstTurnCoachmarkDoneAction": "Klaar",
+  "firstTurnCoachmarkSelectionTitle": "Stap 1: lees de selectie",
+  "firstTurnCoachmarkSelectionBody": "Het spel begint met het automatisch selecteren van je eerste eenheid. Het onderste paneel vertelt je wat je beveelt, hoeveel acties er nog over zijn en welke orders je nu kunt geven.",
+  "firstTurnCoachmarkSelectionBodyUnit": "De onderste werkbalk beschrijft de geselecteerde eenheid: type, beweging, actiewachtrij en beschikbare orders. Gebruik het om naar de Verplaatsmodus te gaan en annuleer het als je wilt dat zeskantige tikken terugkeren naar inspectie.",
+  "firstTurnCoachmarkSelectionBodyCity": "Je hebt een stad geselecteerd. Het onderste paneel toont de productie, bevolking, gebouwen en economische beslissingen. Dat is een andere context dan eenheidsbestellingen, dus de tutorial zal over de stad gaan.",
+  "firstTurnCoachmarkSelectionBodyNone": "Als er niets is geselecteerd, toont het onderste paneel de algemene beurtstatus. Tik op een van je eenheden of steden om concrete orders en informatie te zien.",
+  "firstTurnCoachmarkResourcesTitle": "Stap 2: controleer je imperium",
+  "firstTurnCoachmarkResourcesBody": "De bovenste balk toont de beurt, het goud, de wetenschap en de grondstoffen. Goud ondersteunt de economie, wetenschap stimuleert onderzoek en hulpbronnen geven aan wat de moeite waard is om te bouwen.",
+  "firstTurnCoachmarkMenuTitle": "Stap 3: leer het linkermenu",
+  "firstTurnCoachmarkMenuBody": "Het linkermenu bevat weergaven die je elke beurt opnieuw bezoekt: kaartopties, geminimaliseerde pop-upantwoorden, doelstellingen, logboek, onderzoek en imperium. Druk lang op de menuknop om de rail in te klappen en tik vervolgens op de enkele knop om deze weer te openen.",
+  "firstTurnCoachmarkActionTitle": "Stap 4: geef de juiste volgorde",
+  "firstTurnCoachmarkActionBodyActive": "Als de kolonist op een goede tegel staat, gebruik dan de actie Stad gevonden. Als de locatie zwak is, verplaats je de eenheid en maak je terrein zichtbaar. Beweging en speciale acties duren de beurt van die eenheid.",
+  "firstTurnCoachmarkActionBodyWaiting": "Als een eenheid een opdracht heeft, wordt deze hier weergegeven. In de eerste beurten beweeg je één voor één door eenheden en steden totdat er geen belangrijke beslissing meer overblijft.",
+  "firstTurnCoachmarkActionBodySettler": "De kolonist bepaalt de start van je rijk. Als de tegel groei, productie en ruimte biedt om uit te breiden, zoek dan een stad. Als het terrein zwak is, verplaats dan de kolonist en inspecteer eerst het nabijgelegen land.",
+  "firstTurnCoachmarkActionBodyWorker": "Een arbeider vindt geen steden. Het is zijn taak om tegels binnen de stadsgrenzen te verbeteren: boerderijen helpen de groei, mijnen stimuleren de productie en verbeteringen van hulpbronnen versterken de economie.",
+  "firstTurnCoachmarkActionBodyUnit": "Voor gevechts- en verkenningseenheden zijn beweging, zicht en veiligheid het belangrijkst. Onthul terrein, bescherm stadsgrenzen en val alleen aan als het voorspelde resultaat gunstig is.",
+  "firstTurnCoachmarkActionBodyCity": "Wanneer een stad wordt geselecteerd, leidt dit gebied tot productie en beheer. Kies een bouwdoel, controleer de groei van de stad en zorg ervoor dat de stad niet stilstaat.",
+  "firstTurnCoachmarkResearchTitle": "Stap 5: kies voor onderzoek",
+  "firstTurnCoachmarkResearchBody": "Open Onderzoek voordat je de beurt beëindigt. Landbouw ondersteunt de groei, mijnbouw stimuleert de productie en jacht verbetert de verkenning en verdediging. Het allerbelangrijkste is dat de wetenschap niet zonder doel mag opereren.",
+  "firstTurnCoachmarkResearchBodyAvailable": "Onderzoek is klaar om te kiezen. Open onderzoek voordat de beurt eindigt: landbouw ondersteunt de groei, mijnbouw verhoogt de productie en jacht verbetert de verkenning en verdediging.",
+  "firstTurnCoachmarkCityTitle": "Stap 6: richt de stad in",
+  "firstTurnCoachmarkCityBody": "Kies na de oprichting van de hoofdstad voor productie. Een arbeider ontwikkelt tegels, een krijger beveiligt het gebied en gebouwen versterken de economie. De stad moet altijd iets bouwen.",
+  "firstTurnCoachmarkCityBodySelected": "Dit is het stadspaneel. Controleer productie, groei, gebouwen en beschikbare projecten. De hoofdregel voor nieuwe beurten: elke stad moet een productiedoel hebben.",
+  "firstTurnCoachmarkCityBodyNeedsProduction": "Een van je steden wacht op productie. Gebruik de actieknop of selecteer de stad, kies een eenheid, gebouw of project en beëindig dan pas de beurt.",
+  "firstTurnCoachmarkCityBodyExisting": "Aan jouw steden is al productie toegewezen. In latere beurten kom je hier terug om groei, gebouwen, specialisatie en defensiebehoeften te bekijken.",
+  "firstTurnCoachmarkCityBodyFuture": "Nadat je de eerste stad hebt gevonden, keer je hier terug om de productie te kiezen. Een arbeider ontwikkelt tegels, een krijger beveiligt het gebied en gebouwen versterken de economie.",
+  "firstTurnCoachmarkActionFlowTitle": "Stap 7: maak de actiewachtrij leeg",
+  "firstTurnCoachmarkActionFlowBodyReady": "Alle belangrijke beslissingen voor deze beurt zijn klaar. Voordat je de beurt beëindigt, bevestig je snel dat onderzoek en stadsproductie beide een doelwit hebben.",
+  "firstTurnCoachmarkActionFlowBodyPending": "De actieknop leidt naar de volgende eenheid, stad of ontbrekende keuze. Blijf erop drukken totdat het spel laat zien dat het veilig is om de beurt te beëindigen.",
+  "firstTurnCoachmarkEndTurnTitle": "Stap 8: beëindig de beurt en herhaal",
+  "firstTurnCoachmarkEndTurnBody": "Als niets jouw reactie nodig heeft, beëindig je de beurt. Het ritme van de volgende beurten is hetzelfde: grondstoffen, eenheden, stad, onderzoek en dan de eindbeurt.",
+  "firstTurnCoachmarkVictoryBody": "Je kunt winnen door dominantie of artefacten: plaats 6 unieke artefacten in je steden en houd de collectie 5 beurten vast.",
+  "firstTurnCoachmarkHexTapBody": "Klik of tik meerdere keren op dezelfde hex om de informatie te wisselen: tegelkeuze, artefact, kaartdoel en hexbeschrijving.",
+  "gameLoadMapErrorTitle": "Kan kaart niet laden",
+  "gameLoadMapErrorMessage": "Kan kaart \"{mapName}\" niet laden: {error}",
+  "@gameLoadMapErrorMessage": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeVictoryTitle": "Overwinning",
+  "gameOutcomeDefeatTitle": "Verlies",
+  "gameOutcomeDrawTitle": "Tekenen",
+  "gameOutcomeCompleteTitle": "Spel voorbij",
+  "gameOutcomeConditionConquest": "Verovering",
+  "gameOutcomeConditionScore": "Scoren",
+  "gameOutcomeConditionScoreDraw": "Score gelijkspel",
+  "gameOutcomeConditionDomination": "Overheersing",
+  "gameOutcomeConquestNoWinner": "Eén imperium blijft op de kaart staan.",
+  "gameOutcomeConquestWinner": "{winner} is het laatste imperium op de kaart.",
+  "@gameOutcomeConquestWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeScoreNoWinner": "De beurtlimiet bepaalde het resultaat.",
+  "gameOutcomeScoreWinner": "{winner} wint na de beurtlimiet.",
+  "@gameOutcomeScoreWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeScoreDrawSubtitle": "Draailimiet bereikt. De hoogste score is gelijk.",
+  "gameOutcomeDominationNoWinner": "Kaartcontrole werd gehouden.",
+  "gameOutcomeDominationWinner": "{winner} heeft territoriale overheersing.",
+  "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeWinnerMetric": "Winnaar",
+  "gameOutcomeConditionMetric": "Voorwaarde",
+  "gameOutcomeEliminationMetric": "Eliminatie",
+  "gameOutcomeMapControlMetric": "Kaartcontrole",
+  "gameOutcomeHoldMetric": "Uitstel",
+  "gameOutcomeThresholdMetric": "Drempelwaarde",
+  "gameOutcomeTurnsValue": "{held}/{required} bochten",
+  "@gameOutcomeTurnsValue": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryConquestPrimary": "Verovering",
+  "victoryGoalCompact": "Doel",
+  "victoryNoLimit": "Geen limiet",
+  "victoryConquestTooltip": "Doel: rivalen elimineren. Geen draailimiet.",
+  "victoryLimitLabel": "Beperken",
+  "victoryNoneValue": "Geen",
+  "victoryScoreCapPrimary": "SCORE CAP",
+  "victoryScoreRemainingPrimary": "SCORE {turns}T",
+  "@victoryScoreRemainingPrimary": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreCapCompact": "GLB",
+  "victoryTurnsCompact": "{turns}T",
+  "@victoryTurnsCompact": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryTurns": "{count, plural, =1{1 beurt} other{{count} beurten}}",
+  "@victoryTurns": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryRemainingLabel": "Overig",
+  "victoryScoreLeaderLabel": "Score leider",
+  "victoryScoreDrawLabel": "TEKEN {score}",
+  "@victoryScoreDrawLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreLimitReachedTooltip": "Beurlimiet {turnLimit} bereikt. Score bepaalt het resultaat.",
+  "@victoryScoreLimitReachedTooltip": {
+    "placeholders": {
+      "turnLimit": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreFallbackTooltip": "Scoor terugval in {remainingTurns}-beurten. Limiet: {turnLimit}.",
+  "@victoryScoreFallbackTooltip": {
+    "placeholders": {
+      "remainingTurns": {
+        "type": "int"
+      },
+      "turnLimit": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryLeaderTooltip": "Leider: {leader}.",
+  "@victoryLeaderTooltip": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryDominationTooltip": "Dominantie: {leader} beheert {control}% van de kaart. Drempel: {required}%, vasthouden: {hold}.",
+  "@victoryDominationTooltip": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryLeaderLabel": "Leider",
+  "victoryControlLabel": "Controle",
+  "victoryHoldLabel": "Uitstel",
+  "victoryYouLabel": "Jij",
+  "victoryPressureLabel": "Druk",
+  "victoryFallbackLabel": "Terugval",
+  "victoryYourGoalGainControl": "Jouw doel: {points} pp meer kaartcontrole krijgen.",
+  "@victoryYourGoalGainControl": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryYourGoalReady": "Jouw doel: de overheersingstoestand is klaar om te worden opgelost.",
+  "victoryYourGoalHold": "Jouw doel: de drempel voor {turns} meer vasthouden.",
+  "@victoryYourGoalHold": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryLeaderAboveThreshold": "{leader} ligt boven de drempel; verbreek die controle voordat het doel wordt vastgehouden.",
+  "@victoryLeaderAboveThreshold": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryYourProgress": "Je voortgang: {control}% / {required}%.",
+  "@victoryYourProgress": {
+    "placeholders": {
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureReachThreshold": "Bereik de drempel: ontbrekende {points} pp",
+  "@victoryPressureReachThreshold": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryConditionReady": "Conditie gereed",
+  "victoryPressureHold": "Houd vast voor {turns}",
+  "@victoryPressureHold": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureLeaderHolding": "{leader} boven drempelwaarde: {turns}",
+  "@victoryPressureLeaderHolding": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureYourGap": "Jouw doel: ontbrekende {points} pp",
+  "@victoryPressureYourGap": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryPressureLeaderGap": "{leader}-leads: ontbrekende {points}-pp",
+  "@victoryPressureLeaderGap": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatApproaching": "Rival nadert dominantie: {player} controleert {control}% op de {required}%-drempel; ontbrekende {points} pag.",
+  "@victoryThreatApproaching": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatHolding": "Rival houdt de dominantiedrempel vast: {player} {hold}.",
+  "@victoryThreatHolding": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryThreatImminent": "Rival is bijna dominant: {player} {hold}.",
+  "@victoryThreatImminent": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryThreatPressureApproaching": "{player} nabij drempel: ontbrekende {points} pp",
+  "@victoryThreatPressureApproaching": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatPressureBreak": "Onderbreek {player}: {turns}",
+  "@victoryThreatPressureBreak": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryBelowThreshold": "onder de drempel",
+  "victoryHoldProgress": "{held}/{required} bochten",
+  "@victoryHoldProgress": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryHoldCompact": "{held}/{required}T",
+  "@victoryHoldCompact": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryReady": "klaar",
+  "victoryRemainingTurns": "{count, plural, =1{1 beurt resterend} other{{count} beurten resterend}}",
+  "@victoryRemainingTurns": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "returnToMenuAction": "Terug naar menu",
+  "today": "Vandaag",
+  "yesterday": "gisteren",
+  "objectivesPanelTitle": "DOELSTELLINGEN",
+  "objectivesCloseTooltip": "Doelstellingen sluiten",
+  "objectivesMenuClosePrefix": "Doelstellingen sluiten",
+  "objectivesMenuOpenPrefix": "Doelstellingen",
+  "objectivesMenuTooltip": "{prefix}: {descriptor} {title} ({progress}, {count})",
+  "@objectivesMenuTooltip": {
+    "placeholders": {
+      "prefix": {
+        "type": "String"
+      },
+      "descriptor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "objectivesMenuCount": "{count, plural, =1{1 doel} other{{count} doelen}}",
+  "@objectivesMenuCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "objectivesMenuBadgeScore": "PTS",
+  "objectivesMenuBadgeDomination": "DOM",
+  "objectivesMenuDescriptorDomination": "overheersing",
+  "objectivesMenuDescriptorDominationThreat": "overheersingsdreiging",
+  "objectivesMenuDescriptorScoreLead": "verdediging leiden",
+  "objectivesMenuDescriptorScorePressure": "druk scoren",
+  "objectivesMenuDescriptorActiveObjective": "actieve doelstelling",
+  "objectiveMicroTooltipLabel": "Waarom",
+  "objectiveOverviewGuidanceLabel": "ACTIEF DOEL",
+  "objectiveOverviewStrategicLabel": "DRINGEND",
+  "objectiveOverviewScoreCatchUpLabel": "SCOREDRUK",
+  "objectiveOverviewScoreProtectLabel": "VERDEDIG LEID",
+  "objectiveOverviewDominationHoldLabel": "OVERHEERSING",
+  "objectiveOverviewDominationThreatLabel": "DOMINATIE BEDREIGING",
+  "objectiveOverviewTitleLabel": "Topprioriteit: {title}",
+  "@objectiveOverviewTitleLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "objectiveOverviewProgressLabel": "Voortgang {progress}",
+  "@objectiveOverviewProgressLabel": {
+    "placeholders": {
+      "progress": {
+        "type": "String"
+      }
+    }
+  },
+  "objectivePhaseFoundation": "Fundering",
+  "objectivePhaseExpansion": "Uitbreiding",
+  "objectivePhasePressure": "Druk",
+  "objectivePhaseEndgame": "Eindspel",
+  "objectiveChooseResearchTitle": "Kies voor onderzoek",
+  "objectiveChooseResearchHint": "Bepaal uw ontwikkelingsrichting voordat de eerste beurt eindigt.",
+  "objectiveChooseResearchReward": "+ wetenschappelijk tempo",
+  "objectiveChooseResearchTooltip": "Onderzoek leidt elke volgende wending in de richting van een specifiek ontwikkelingspad.",
+  "objectiveFoundCapitalTitle": "Je eerste stad gevonden",
+  "objectiveFoundCapitalHint": "Je kolonist moet goed terrein snel in een hoofdstad veranderen.",
+  "objectiveFoundCapitalReward": "+ productiebasis",
+  "objectiveFoundCapitalTooltip": "Het kapitaal ontsluit productie, groei en territoriaal bereik.",
+  "objectiveExploreNearbyTitle": "Verken nabijgelegen land",
+  "objectiveExploreNearbyHint": "Je krijger moet nabijgelegen hulpbronnen en stadslocaties onthullen.",
+  "objectiveExploreNearbyReward": "+ betere beslissingen",
+  "objectiveExploreNearbyTooltip": "Vroegtijdig scouten helpt bij het kiezen van locaties in de stad en het vermijden van blinde bewegingen.",
+  "objectiveQueueWorkerTitle": "Zet een medewerker in de wachtrij",
+  "objectiveQueueWorkerHint": "Een arbeider verandert voedsel en productie op de kaart in een echt voordeel.",
+  "objectiveQueueWorkerReward": "+ veldontwikkeling",
+  "objectiveQueueWorkerTooltip": "Een arbeider verandert goede tegels in een gestage groei van grondstoffen.",
+  "objectiveImproveFirstHexTitle": "Verbeter je eerste tegel",
+  "objectiveImproveFirstHexHint": "De eerste verbetering zou voedsel, productie of goud moeten ondersteunen.",
+  "objectiveImproveFirstHexReward": "+ sterkere economie",
+  "objectiveImproveFirstHexTooltip": "De eerste verbetering laat zien welk deel van de stadseconomie het snelst zou moeten groeien.",
+  "objectiveFoundSecondCityTitle": "Ik heb een tweede stad gevonden",
+  "objectiveFoundSecondCityHint": "Een tweede nederzetting opent uitbreiding zonder de kaart te overspoelen met eenheden.",
+  "objectiveFoundSecondCityReward": "+ imperiumschaal",
+  "objectiveFoundSecondCityTooltip": "Een tweede stad verhoogt het productietempo zonder op één hoofdstad te wachten.",
+  "objectiveBuildFirstBuildingTitle": "Bouw je eerste gebouw",
+  "objectiveBuildFirstBuildingHint": "Het eerste gebouw moet voedsel, productie of goud versterken.",
+  "objectiveBuildFirstBuildingReward": "+ blijvend stadsvoordeel",
+  "objectiveBuildFirstBuildingTooltip": "Gebouwen blijven in de stad en schalen over vele beurten heen.",
+  "objectiveImproveThreeHexesTitle": "Verbeter drie tegels",
+  "objectiveImproveThreeHexesHint": "Verschillende verbeteringen maken van een startkamp een economie.",
+  "objectiveImproveThreeHexesReward": "+ stabiel inkomen",
+  "objectiveImproveThreeHexesTooltip": "Drie verbeteringen creëren een stabiele basis voor legers, onderzoek of uitbreiding.",
+  "objectiveFoundThirdCityTitle": "Ik heb een derde stad gevonden",
+  "objectiveFoundThirdCityHint": "Een derde nederzetting creëert een echt imperium en een tweede uitbreidingsrichting.",
+  "objectiveFoundThirdCityReward": "+ kaartschaal",
+  "objectiveFoundThirdCityTooltip": "Een derde stad geeft je een tweede ontwikkelingsfront en elke beurt meer beslissingen.",
+  "objectiveExploreRegionTitle": "Verken de regio",
+  "objectiveExploreRegionHint": "Een bredere kaart onthult hulpbronnen, rivalen en plaatsen die de moeite waard zijn om te verdedigen.",
+  "objectiveExploreRegionReward": "+ strategisch plan",
+  "objectiveExploreRegionTooltip": "Een bredere kaart onthult rivalen, strategische hulpbronnen en veilige grenzen.",
+  "objectiveBuildCombatForceTitle": "Bouw een verdedigingsmacht",
+  "objectiveBuildCombatForceHint": "Met verschillende troepen kun je expansie- en drukrivalen beschermen.",
+  "objectiveBuildCombatForceReward": "+ grensbeveiliging",
+  "objectiveBuildCombatForceTooltip": "Een stabiel scherm beschermt kolonisten, arbeiders en ontwikkelde steden.",
+  "objectiveHoldDominationTitle": "Houd de dominantie vast",
+  "objectiveHoldDominationHint": "U bevindt zich boven de kaartdrempel. Houd de controle totdat het aftellen eindigt.",
+  "objectiveHoldDominationReward": "+ kaartoverwinning",
+  "objectiveHoldDominationTooltip": "Dominantie beëindigt het spel vóór de scorelimiet als je het vereiste kaartpercentage gedurende opeenvolgende beurten vasthoudt.",
+  "objectiveBreakDominationHoldTitle": "Doorbreek de dominantie van een rivaal",
+  "objectiveBreakDominationHoldHint": "Een rivaal bevindt zich boven de kaartdrempel. Verover territorium voordat ze het doel in handen hebben.",
+  "objectiveBreakDominationHoldReward": "+ aftellen gestopt",
+  "objectiveBreakDominationHoldTooltip": "Als een rivaal onder de controledrempel valt, wordt zijn hold-beurt teruggezet naar nul.",
+  "objectiveHoldScoreLeadTitle": "Houd de leiding vast",
+  "objectiveHoldScoreLeadHint": "De beurtlimiet is dichtbij. Bescherm je score en voorkom dat je je voorsprong verliest in de laatste beurten.",
+  "objectiveHoldScoreLeadReward": "+ scorelimiet-overwinning",
+  "objectiveHoldScoreLeadTooltip": "De scorelimiet beslist de wedstrijd wanneer de beurtlimiet verstreken is, dus de puntenvoorsprong moet tot het einde duren.",
+  "objectiveOvertakeScoreLeaderTitle": "Vang de scoreleider",
+  "objectiveOvertakeScoreLeaderHint": "De beurtlimiet is dichtbij. Je hebt een snelle scoregroei of een zwakkere leider nodig.",
+  "objectiveOvertakeScoreLeaderReward": "+ scorelimietkans",
+  "objectiveOvertakeScoreLeaderTooltip": "Bouw steden, bevolking, technologieën, eenheden en verbeteringen; als de scores gelijk zijn, eindigt de scorelimiet in een gelijkspel.",
+  "objectiveSecureMapObjectiveTitle": "Stel het kaartdoel veilig",
+  "objectiveSecureMapObjectiveHint": "Houd een eenheid of stadsinvloed op het doel totdat de hold voltooid is.",
+  "objectiveSecureMapObjectiveReward": "+ doelbeloningen",
+  "objectiveSecureMapObjectiveTooltip": "Kaartdoelen gebruiken driehoekige markers en geven overwinningspunten of goud pas na opeenvolgende controle.",
+  "objectiveBreakMapObjectiveHoldTitle": "Breek het doel van de rivaal",
+  "objectiveBreakMapObjectiveHoldHint": "Een rivaal houdt een kaartdoel vast. Betwist de driehoekige marker voordat de hold voltooid is.",
+  "objectiveBreakMapObjectiveHoldReward": "+ doel ontzegd",
+  "objectiveBreakMapObjectiveHoldTooltip": "Een eigen eenheid op het doel betwist de controle en reset de voortgang van de rivaal.",
+  "objectiveAdviceFoundCity": "Grootste gat: een nieuwe of veroverde stad.",
+  "objectiveAdviceGrowPopulation": "Grootste kloof: bevolkingsgroei.",
+  "objectiveAdviceClaimTerritory": "Grootste kloof: meer gecontroleerde tegels.",
+  "objectiveAdviceConstructBuilding": "Grootste gat: een stadsgebouw.",
+  "objectiveAdviceTrainUnit": "Grootste gat: een snelle eenheid.",
+  "objectiveAdviceUnlockTechnology": "Grootste kloof: het voltooien van een technologie.",
+  "objectiveAdviceImproveField": "Grootste gat: een tegelverbetering.",
+  "objectiveAdviceCollectGold": "Grootste gat: goud voor score.",
+  "objectiveAdviceProtectLead": "Prioriteit: geef geen steden op en stel de volgende scorewinst veilig.",
+  "objectiveScoreBreakdownCatchUpHeader": "Scoreverschil: {delta} punten",
+  "@objectiveScoreBreakdownCatchUpHeader": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectHeader": "Score voorsprong: {delta} punten",
+  "@objectiveScoreBreakdownProtectHeader": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownCatchUpTotals": "Jij {playerScore} / leider {comparisonScore}",
+  "@objectiveScoreBreakdownCatchUpTotals": {
+    "placeholders": {
+      "playerScore": {
+        "type": "int"
+      },
+      "comparisonScore": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectTotals": "Jij {playerScore} / rivaal {comparisonScore}",
+  "@objectiveScoreBreakdownProtectTotals": {
+    "placeholders": {
+      "playerScore": {
+        "type": "int"
+      },
+      "comparisonScore": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownCatchUpDelta": "kort door {delta}",
+  "@objectiveScoreBreakdownCatchUpDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectDelta": "+{delta}",
+  "@objectiveScoreBreakdownProtectDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreCategoryCity": "Steden",
+  "objectiveScoreCategoryPopulation": "Bevolking",
+  "objectiveScoreCategoryTerritory": "Grondgebied",
+  "objectiveScoreCategoryBuilding": "Gebouwen",
+  "objectiveScoreCategoryUnit": "Eenheden",
+  "objectiveScoreCategoryTechnology": "Technologieën",
+  "objectiveScoreCategoryImprovement": "Verbeteringen",
+  "objectiveScoreCategoryGold": "Goud",
+  "cityBuildingGranary": "Graanschuur",
+  "cityBuildingWaterMill": "Watermolen",
+  "cityBuildingWorkshop": "Werkplaats",
+  "cityBuildingStorehouse": "Pakhuis",
+  "cityBuildingHousing": "Huisvesting",
+  "cityBuildingMerchantHall": "Koopmanszaal",
+  "cityBuildingStonemason": "Steenhouwer",
+  "cityBuildingBarracks": "Kazerne",
+  "cityBuildingMarketplace": "Marktplaats",
+  "cityBuildingPort": "Haven",
+  "cityBuildingAqueduct": "Aquaduct",
+  "cityBuildingForge": "Smederij",
+  "cityBuildingStable": "Stabiel",
+  "cityBuildingBank": "Bank",
+  "cityBuildingBuildersGuild": "Bouwersgilde",
+  "cityBuildingFactory": "Fabriek",
+  "cityBuildingLighthouse": "Vuurtoren",
+  "cityBuildingTrainingGrounds": "Oefenterreinen",
+  "cityBuildingTownHall": "Stadhuis",
+  "cityBuildingMonument": "Monument",
+  "cityBuildingArchive": "Archief",
+  "cityBuildingAcademy": "Academie",
+  "cityBuildingUniversity": "Universiteit",
+  "cityBuildingObservatory": "Observatorium",
+  "cityBuildingLaboratory": "Laboratorium",
+  "cityBuildingReactor": "Reactor",
+  "cityBuildingCourthouse": "Gerechtsgebouw",
+  "cityBuildingCourt": "Rechtbank",
+  "cityBuildingGovernorsOffice": "Gouverneurskantoor",
+  "cityBuildingSurveyorsOffice": "Landmeter kantoor",
+  "cityBuildingPlanningOffice": "Planbureau",
+  "cityBuildingApothecary": "Apotheker",
+  "cityBuildingPublicBaths": "Openbare baden",
+  "cityBuildingHospital": "Ziekenhuis",
+  "cityBuildingMinistries": "Ministeries",
+  "cityBuildingWalls": "Muren",
+  "cityBuildingArmory": "Arsenaal",
+  "cityBuildingSiegeWorkshop": "Belegeringswerkplaats",
+  "cityBuildingCitadel": "Citadel",
+  "cityBuildingWarCollege": "Oorlogscollege",
+  "cityBuildingConscriptionOffice": "Dienstplichtbureau",
+  "cityBuildingBorderFort": "Grensfort",
+  "cityBuildingAirfield": "Vliegveld",
+  "cityBuildingArtisansGuild": "Ambachtsliedengilde",
+  "cityBuildingMasterWorkshop": "Meester Workshop",
+  "cityBuildingSteelworks": "Staalfabrieken",
+  "cityBuildingRailDepot": "Spoorwegdepot",
+  "cityBuildingPowerPlant": "Elektriciteitscentrale",
+  "cityBuildingAssemblyPlant": "Assemblagefabriek",
+  "cityBuildingRefinery": "Raffinaderij",
+  "cityBuildingMapRoom": "Kaart Kamer",
+  "cityBuildingShipyard": "Scheepswerf",
+  "cityBuildingDryDock": "Droogdok",
+  "cityBuildingNavalAcademy": "Marine Academie",
+  "cityBuildingHarborCustoms": "Haven douane",
+  "cityBuildingMuseum": "Museum",
+  "cityBuildingParliament": "Parlement",
+  "cityBuildingBroadcastTower": "Omroeptoren",
+  "cityBuildingWorldFairGrounds": "Terrein van de Wereldtentoonstelling",
+  "cityBuildingGranaryDescription": "Een vroeg voedselgebouw dat de groei van de stad stabiliseert.",
+  "cityBuildingWaterMillDescription": "Gebruikt gecontroleerde riviertegels om het stadsvoedsel te verhogen.",
+  "cityBuildingWorkshopDescription": "Een fundamenteel ambachtscentrum dat de stadsproductie verhoogt.",
+  "cityBuildingStorehouseDescription": "Verbetert de oogstopslag en verhoogt het opgeslagen voedsel.",
+  "cityBuildingHousingDescription": "Breidt de leefruimte uit en geeft de stad controle over meer tegels.",
+  "cityBuildingMerchantHallDescription": "Organiseert de lokale handel en verhoogt de stadsinkomsten.",
+  "cityBuildingStonemasonDescription": "Versterkt de stadsconstructie en defensieve basis.",
+  "cityBuildingBarracksDescription": "Biedt militaire infrastructuur en extra verdediging.",
+  "cityBuildingMarketplaceDescription": "Ontwikkelt stedelijke handel en verhoogt de goudinkomsten aanzienlijk.",
+  "cityBuildingPortDescription": "Opent de stad voor zeehandel en kustvoedsel.",
+  "cityBuildingAqueductDescription": "Levert water, ondersteunt groei en verdere stadsuitbreiding.",
+  "cityBuildingForgeDescription": "Concentreert de metaalbewerking en verhoogt de productie aanzienlijk.",
+  "cityBuildingStableDescription": "Ondersteunt de fokkerij en logistiek, door voedsel en productie toe te voegen.",
+  "cityBuildingBankDescription": "Centraliseert de financiën en verhoogt de stadsinkomsten aanzienlijk.",
+  "cityBuildingBuildersGuildDescription": "Verzamelt bouwspecialisten, waardoor de productie en territoriale groei worden versneld.",
+  "cityBuildingFactoryDescription": "Een industrieel gebouw uit de latere game dat een grote productiebonus toekent.",
+  "cityBuildingLighthouseDescription": "Versterkt de kusteconomie door navigatie en handel.",
+  "cityBuildingTrainingGroundsDescription": "Ontwikkelt militaire training en verbetert de stadsverdediging.",
+  "cityBuildingTownHallDescription": "Het stadsbestuurcentrum, dat de economie en territoriale controle versterkt.",
+  "cityBuildingMonumentDescription": "Een symbool van het prestige van de stad, dat goud en verdediging biedt.",
+  "cityBuildingArchiveDescription": "De eerste kennisopbouw, het organiseren van dossiers en het ondersteunen van onderzoek.",
+  "cityBuildingAcademyDescription": "Versterkt wetenschapssteden en bereidt de weg naar het hoger onderwijs voor.",
+  "cityBuildingUniversityDescription": "Een later wetenschappelijk gebouw voor grote, ontwikkelde steden.",
+  "cityBuildingObservatoryDescription": "Verbindt geografie met wetenschap en ondersteunt geavanceerd onderzoek.",
+  "cityBuildingLaboratoryDescription": "Ondersteuning voor late technologieprojecten en moderne wetenschap.",
+  "cityBuildingReactorDescription": "Een krachtig eindspelgebouw waarvoor uranium en een sterke infrastructuur nodig zijn.",
+  "cityBuildingCourthouseDescription": "Stabiliseert grote of veroverde steden door middel van juridisch bestuur.",
+  "cityBuildingCourtDescription": "Ontwikkelt wetten, stadsbeleid en civiele controle.",
+  "cityBuildingGovernorsOfficeDescription": "Versterkt stadsspecialisatie en territoriaal beheer.",
+  "cityBuildingSurveyorsOfficeDescription": "Vereenvoudigt de grensplanning en vergroot het bereik van de stadscontrole.",
+  "cityBuildingPlanningOfficeDescription": "Ontwikkelt de stad door middel van planning, productie en territoriale controle.",
+  "cityBuildingApothecaryDescription": "Vroege stadsgezondheid die helpt bij het handhaven van een gestage groei.",
+  "cityBuildingPublicBathsDescription": "Verbeter de stabiliteit en groei in grotere steden.",
+  "cityBuildingHospitalDescription": "Late bevolkingsinfrastructuur voor ontwikkeling op lange termijn.",
+  "cityBuildingMinistriesDescription": "Een beperkt rijksgebouw dat het bestuur en het goud versterkt.",
+  "cityBuildingWallsDescription": "Vroege stadsverdediging tegen de eerste aanvallen.",
+  "cityBuildingArmoryDescription": "Een beter rekruterings- en uitrustingscentrum voor troepen.",
+  "cityBuildingSiegeWorkshopDescription": "Produceert en onderhoudt de ondersteuningsbasis voor belegeringsmotoren.",
+  "cityBuildingCitadelDescription": "Late strategische verdediging voor steden aan belangrijke grenzen.",
+  "cityBuildingWarCollegeDescription": "Een militaire academie die de leger- en algemene coördinatie versterkt.",
+  "cityBuildingConscriptionOfficeDescription": "Mobiliseert het leger en versnelt de voorbereiding van nieuwe troepen.",
+  "cityBuildingBorderFortDescription": "Versterkt de verdediging en zichtbaarheid aan de grenzen van het imperium.",
+  "cityBuildingAirfieldDescription": "Een militair vliegveld voor luchtvaart, verkenning en moderne krachtprojectie.",
+  "cityBuildingArtisansGuildDescription": "Een productiefase vóór de fabriek, gebaseerd op ambachten en workshops.",
+  "cityBuildingMasterWorkshopDescription": "Een gespecialiseerde werkplaats voor productiegerichte steden.",
+  "cityBuildingSteelworksDescription": "Zware industrie op basis van ijzer of steenkool.",
+  "cityBuildingRailDepotDescription": "Een spoordepot dat de logistiek en mobiliteit tussen steden verbetert.",
+  "cityBuildingPowerPlantDescription": "Late energie-infrastructuur voor sterke industriële productie.",
+  "cityBuildingAssemblyPlantDescription": "Een eindspel industrieel gebouw voor massaproductie.",
+  "cityBuildingRefineryDescription": "Verwerkt olie voor moderne legers en late projecten.",
+  "cityBuildingMapRoomDescription": "Ondersteunt verkenning, zichtbaarheid en expeditieplanning.",
+  "cityBuildingShipyardDescription": "Ontwikkelt vloten en productie in havensteden.",
+  "cityBuildingDryDockDescription": "Een late marinehaven voor grotere oorlogsschepen.",
+  "cityBuildingNavalAcademyDescription": "Een marine-militaire academie voor gespecialiseerde havens.",
+  "cityBuildingHarborCustomsDescription": "Een havenkantoor dat de handel en kustcontrole versterkt.",
+  "cityBuildingMuseumDescription": "Een prestigieus imperiumgebouw dat de invloed van de stad versterkt.",
+  "cityBuildingParliamentDescription": "Een beperkt burgergebouw voor een volwassen staat.",
+  "cityBuildingBroadcastTowerDescription": "Versterkt de invloed, zichtbaarheid en communicatie van het imperium.",
+  "cityBuildingWorldFairGroundsDescription": "Een vreedzaam prestigeproject voor een rijke, ontwikkelde stad.",
+  "unitCommander": "Algemeen",
+  "unitWarrior": "Strijder",
+  "unitArcher": "Boogschutter",
+  "unitSettler": "Kolonist",
+  "unitWorker": "Werknemer",
+  "unitMerchant": "Handelaar",
+  "unitScout": "Verkenner",
+  "unitSpearman": "Speerman",
+  "unitCavalry": "Cavalerie",
+  "unitCatapult": "Katapult",
+  "unitHeavyInfantry": "Zware infanterie",
+  "unitFieldCannon": "Veldkanon",
+  "unitRifleman": "Schutter",
+  "unitTank": "Tank",
+  "unitScoutShip": "Verkenningsschip",
+  "unitWarship": "Oorlogsschip",
+  "unitReconPlane": "Verkenningsvliegtuig",
+  "unitCommanderDescription": "Een generaal voert het bevel over een leger, leidt verkenningen en kan sneller handelen dan reguliere troepen.",
+  "unitWarriorDescription": "Een basisgevechtseenheid voor stadsverdediging en melee-gevechten.",
+  "unitArcherDescription": "Een afstandseenheid die van verder weg aanvalt, maar slecht verdedigt in gevechten.",
+  "unitSettlerDescription": "Sticht nieuwe steden en breidt het rijk uit, maar heeft onderweg bescherming nodig.",
+  "unitWorkerDescription": "Verbetert tegels rond steden, waardoor voedsel, productie en goud toenemen.",
+  "unitMerchantDescription": "Reist automatisch tussen je steden via een handelsroute en kan bezette bevriende stadscentra betreden.",
+  "unitScoutDescription": "Een snelle verkenningseenheid voor het verkennen van de kaart en het detecteren van bedreigingen.",
+  "unitSpearmanDescription": "Vroege defensieve infanterie, goed voor het dekken van steden en het tegenhouden van aanvallen.",
+  "unitCavalryDescription": "Een mobiele aanvalseenheid die snel reageert op zwakke punten aan het front.",
+  "unitCatapultDescription": "Een belegeringsmotor met een groter bereik, effectief tegen vestingwerken.",
+  "unitHeavyInfantryDescription": "Duurzame frontlinie-infanterie met hoge verdediging en solide aanval.",
+  "unitFieldCannonDescription": "Moderne veldartillerie voor afstandsbombardementen.",
+  "unitRiflemanDescription": "Een moderne afstandssoldaat, stabiel in aanval en verdediging.",
+  "unitTankDescription": "Een zware gepantserde eenheid met hoge sterkte en hoge mobiliteit.",
+  "unitScoutShipDescription": "Een licht schip voor kustverkenning en het beschermen van vroege zeeroutes.",
+  "unitWarshipDescription": "Een sterk gevechtsschip voor zeecontrole en afstandsbombardementen.",
+  "unitReconPlaneDescription": "Een verkenningsvliegtuig met groot zichtbereik en zeer hoge mobiliteit.",
+  "unitRankRecruit": "Werven",
+  "unitRankSeasoned": "Gekruid",
+  "unitRankVeteran": "Veteraan",
+  "unitRankElite": "Elite",
+  "troopWarrior": "Strijders",
+  "troopArcher": "Boogschutters",
+  "troopSettler": "Kolonisten",
+  "fieldImprovementFarm": "Boerderij",
+  "fieldImprovementRiverFarm": "Rivier boerderij",
+  "fieldImprovementMine": "De mijne",
+  "fieldImprovementLumberMill": "Houtzagerij",
+  "fieldImprovementPasture": "Weiland",
+  "fieldImprovementCamp": "Kamp",
+  "fieldImprovementQuarry": "Groeve",
+  "fieldImprovementFishingBoats": "Vissersboten",
+  "fieldImprovementOrchard": "Boomgaard",
+  "fieldImprovementPlantation": "Plantage",
+  "fieldImprovementVineyard": "Wijngaard",
+  "fieldImprovementTradingPost": "Handelspost",
+  "fieldImprovementProspectorCamp": "Goudzoeker kamp",
+  "fieldImprovementHorseRanch": "Paardenranch",
+  "fieldImprovementPearlDivers": "Parel duikers",
+  "fieldImprovementCoalShaft": "Kolenschacht",
+  "fieldImprovementOilWell": "Oliebron",
+  "fieldImprovementBauxiteMine": "Bauxietmijn",
+  "fieldImprovementUraniumMine": "Uraniummijn",
+  "resourceWheat": "tarwe",
+  "resourceFish": "vis",
+  "resourceDeer": "hert",
+  "resourceSheep": "schaap",
+  "resourceRice": "rijst",
+  "resourceCow": "vee",
+  "resourceApple": "appels",
+  "resourceBanana": "bananen",
+  "resourceCitrus": "citrus",
+  "resourceGold": "goud",
+  "resourceSilver": "zilver",
+  "resourceGems": "edelstenen",
+  "resourceSilk": "zijde",
+  "resourceSpices": "specerijen",
+  "resourceCotton": "katoen",
+  "resourceGrapes": "druiven",
+  "resourceIvory": "ivoor",
+  "resourcePearls": "parels",
+  "resourceCoffee": "koffie",
+  "resourceCocoa": "cacao",
+  "resourceTobacco": "tabak",
+  "resourceSugar": "suiker",
+  "resourceIron": "ijzer",
+  "resourceCoal": "kolen",
+  "resourceOil": "olie",
+  "resourceAluminium": "aluminium",
+  "resourceUranium": "uranium",
+  "resourceHorses": "paarden",
+  "resourceMarble": "marmer",
+  "technologyAgriculture": "Landbouw",
+  "technologyWoodworking": "Houtbewerking",
+  "technologyMining": "Mijnbouw",
+  "technologyAnimalHusbandry": "Veehouderij",
+  "technologyHunting": "Jacht",
+  "technologyFishing": "Vissen",
+  "technologyCraftsmanship": "Vakmanschap",
+  "technologyTrade": "Handel",
+  "technologyStorage": "Opslag",
+  "technologyWaterEngineering": "Watertechniek",
+  "technologyStoneworking": "Steenbewerking",
+  "technologyMilitaryOrganization": "Militaire organisatie",
+  "technologyAdvancedTrade": "Geavanceerde handel",
+  "technologyConstruction": "Bouw",
+  "technologyNavigation": "Navigatie",
+  "technologyIrrigation": "Irrigatie",
+  "technologyBanking": "Bankieren",
+  "technologyEngineering": "Engineering",
+  "technologyMetallurgy": "Metallurgie",
+  "technologyHorsebackRiding": "Paardrijden",
+  "technologyIronWorking": "Ijzer werken",
+  "technologyCoalMining": "Kolenwinning",
+  "technologyMachinery": "Machines",
+  "technologyAdministration": "Administratie",
+  "technologyLogistics": "Logistiek",
+  "technologyShipbuilding": "Scheepsbouw",
+  "technologyTactics": "Tactiek",
+  "technologyEconomy": "Economie",
+  "technologyUrbanization": "Verstedelijking",
+  "technologyFortifications": "Vestingwerken",
+  "technologyStrategy": "Strategie",
+  "technologySpecialization": "Specialisatie",
+  "technologyWriting": "Schrijven",
+  "technologyMathematics": "Wiskunde",
+  "technologyMedicine": "Geneesmiddel",
+  "technologyCivilService": "Ambtenarenzaken",
+  "technologySiegecraft": "Belegering",
+  "technologyCartography": "Cartografie",
+  "technologyGuilds": "Gilden",
+  "technologyLaw": "Wet",
+  "technologyEducation": "Onderwijs",
+  "technologyUrbanPlanning": "Stedelijke planning",
+  "technologyNavalDoctrine": "Marinedoctrine",
+  "technologySteel": "Staal",
+  "technologyBureaucracy": "Bureaucratie",
+  "technologyNationalism": "Nationalisme",
+  "technologyScientificMethod": "Wetenschappelijke methode",
+  "technologySteamPower": "Stoomkracht",
+  "technologyElectricity": "Elektriciteit",
+  "technologyCombustion": "Verbranding",
+  "technologyFlight": "Vlucht",
+  "technologyMassProduction": "Massaproductie",
+  "technologyRadio": "Radio",
+  "technologyNuclearPhysics": "Kernfysica",
+  "technologyAgricultureDescription": "Opent het basisgroeipad. Boerderijen en rivierboerderijen laten de bevolking sneller groeien en stabiliseren de eerste stad.",
+  "technologyWoodworkingDescription": "Ontwikkelt de productiekant van de mijnbouw. Houtzagerijen zetten bossen om in productie zonder diep in de metallurgie te duiken.",
+  "technologyMiningDescription": "Opent het pad van industrie en infrastructuur. Mijnen zijn de eerste grote sprong voorwaarts in de stadsproductie.",
+  "technologyAnimalHusbandryDescription": "Versterkt de groei via dierlijke hulpbronnen. Weilanden bouwen een voedseleconomie op en bereiden de weg voor paardrijden voor.",
+  "technologyHuntingDescription": "Opent de militaire en verkenningsafdeling. Biedt kampen en de eerste afstandseenheid voor stadsproductie.",
+  "technologyFishingDescription": "Ontwikkelt steden aan het water. Vissersboten helpen kuststeden sneller te groeien en de weg naar de haven voor te bereiden.",
+  "technologyCraftsmanshipDescription": "De eerste upgrade van de stadsproductie. De werkplaats zorgt ervoor dat latere gebouwen en eenheden de wachtrij niet te lang blokkeren.",
+  "technologyTradeDescription": "De eerste stap in de goudeconomie. De koopmanszaal geeft een stad een eenvoudige financiële beloning na het kiezen van een groeitak.",
+  "technologyStorageDescription": "Stabiliseert de groei van de stad. Opslag helpt het voedseltempo op peil te houden en vermindert het risico dat de ontwikkeling stagneert.",
+  "technologyWaterEngineeringDescription": "Vergroot het watergroeipad. De watermolen beloont steden die rivieren beheersen.",
+  "technologyStoneworkingDescription": "Combineert productie en verdediging. Steengroeven en steenhouwers versterken steden in de infrastructuursector.",
+  "technologyMilitaryOrganizationDescription": "Bouwt de eerste militaire kern van een stad. Kazernes versterken de productie en verdediging voordat latere legerbonussen verschijnen.",
+  "technologyAdvancedTradeDescription": "Ontwikkelt de economie na de handel. De markt is een sterker goudgebouw en bereidt de weg naar het bankwezen voor.",
+  "technologyConstructionDescription": "Vergroot de volwassenheid van het territorium en de stad. Huisvesting vergroot de tegelcontrole en leidt tot administratie en engineering.",
+  "technologyNavigationDescription": "Opent een stadsuitbetaling voor de kust. De haven heeft toegang tot de kust/oceaan nodig en beloont steden aan het water met voedsel en goud.",
+  "technologyIrrigationDescription": "Gespecialiseerd in kweken op waterbasis. Het aquaduct biedt een sterke voedselbonus en extra territoriale controle.",
+  "technologyBankingDescription": "Gespecialiseerd in de handelsbranche. De bank verandert eerdere markten in sterke stadsinkomsten en ontsluit de bredere economie.",
+  "technologyEngineeringDescription": "Specialisatie bouw. Het bouwersgilde versnelt de productie en verhoogt de gecontroleerde tegellimiet.",
+  "technologyMetallurgyDescription": "Een sterke industriële uitbetaling na steenbewerking. De smederij verhoogt de productie en bereidt de weg voor naar ijzer en steenkool.",
+  "technologyHorsebackRidingDescription": "Een technologie die groei en oorlog met elkaar verbindt. De stal ondersteunt steden die eerder investeerden in dieren en jacht.",
+  "technologyIronWorkingDescription": "Een industrieel hulpbronneneffect. Elke gecontroleerde ijzerbron verhoogt de stadsproductie.",
+  "technologyCoalMiningDescription": "Een later industrieel hulpbronneneffect. Gecontroleerde steenkool verhoogt de stadsproductie en ondersteunt het fabriekspad.",
+  "technologyMachineryDescription": "Een late uitbetaling van de infrastructuur. De fabriek geeft een grote productieverhoging aan steden die de techniek zijn ingegaan.",
+  "technologyAdministrationDescription": "Verbindt infrastructuur met economie. Stadhuizen en monumenten versterken volwassen steden en leiden tot verstedelijking.",
+  "technologyLogisticsDescription": "Versnelt de productie van eenheden. Dit is de belangrijkste technologie voor spelers die vaker legers uit steden willen inzetten.",
+  "technologyShipbuildingDescription": "Ontwikkelt de deeltak kust/exploratie. De vuurtoren vereist toegang tot de kust en versterkt steden aan het water.",
+  "technologyTacticsDescription": "Specialisatie militaire stad. Oefenterreinen voegen defensie en productie voor militaire centra toe.",
+  "technologyEconomyDescription": "Een systemische uitbetaling voor het bankwezen. Verhoogt het goud gegenereerd door stadseconomieën.",
+  "technologyUrbanizationDescription": "De definitieve richting voor de groei van grote steden. Verhoogt de bevolkingslimiet zodra het bevolkingssysteem harde limieten gaat gebruiken.",
+  "technologyFortificationsDescription": "Versterkt de stadsverdediging. Geeft een defensieve bonus aan de stadseconomie, waarvan de volle betekenis toeneemt na uitbreiding van gevechten en belegeringen.",
+  "technologyStrategyDescription": "De laatste militaire richting. Versterkt de effectiviteit van het leger als uitbetaling in de late game na logistiek.",
+  "technologySpecializationDescription": "De uiteindelijke maatschappelijke/economische uitbetaling. Ontgrendelt stadsspecialisaties, voegt stadswetenschap toe en helpt bij het voltooien van late technologieën in langere wedstrijden.",
+  "technologyWritingDescription": "De eerste stap richting wetenschap, recht en bestuur. Het archief geeft een stad een permanente onderzoeksbasis.",
+  "technologyMathematicsDescription": "Verbindt wetenschap met territoriale planning. Het landmeterkantoor helpt steden hun grenzen effectiever te controleren.",
+  "technologyMedicineDescription": "Ontwikkelt de gezondheidszorg en groei op lange termijn in grote steden via apotheken, baden en ziekenhuizen.",
+  "technologyCivilServiceDescription": "Verbetert het beheer van een groot imperium en ontgrendelt rechtbanken die steden stabiliseren.",
+  "technologySiegecraftDescription": "Opent een belegeringsoorlog. Katapulten en belegeringswerkplaatsen breken vestingsteden.",
+  "technologyCartographyDescription": "Ontwikkelt verkenning, kaarten en de kust. Geeft de kaartenkamer en de eerste verkenningsschepen.",
+  "technologyGuildsDescription": "Geeft productiesteden een podium tussen werkplaats en industrie.",
+  "technologyLawDescription": "Introduceert orde, beleid en civiel bestuur via rechtbanken.",
+  "technologyEducationDescription": "Bouwt het volledige wetenschapspad voor steden via academies en universiteiten.",
+  "technologyUrbanPlanningDescription": "Ontwikkelt grote steden en territoriale controle door middel van ruimtelijke planning.",
+  "technologyNavalDoctrineDescription": "Verandert havens in centra van vloten, scheepswerven en krachtprojectie op zee.",
+  "technologySteelDescription": "Introduceert zware industrie en zware infanterie voor het latere front.",
+  "technologyBureaucracyDescription": "Biedt na de regering een belangrijk maatschappelijk doel: kantoren, ministeries, musea en parlement.",
+  "technologyNationalismDescription": "Combineert grensverdediging, mobilisatie en imperiumidentiteit.",
+  "technologyScientificMethodDescription": "Bereidt late wetenschappelijke, laboratoria, observatoria en technologieprojecten voor.",
+  "technologySteamPowerDescription": "Opent spoor-, zwaardere logistiek- en stoomindustrie.",
+  "technologyElectricityDescription": "Introduceert stroom, infrastructuur en informatiebereik.",
+  "technologyCombustionDescription": "Geeft olie belang en ontgrendelt moderne frontlinie-eenheden.",
+  "technologyFlightDescription": "Introduceert luchtvaart, verkenning en krachtprojectie over het front.",
+  "technologyMassProductionDescription": "Ontwikkelt de uiteindelijke industriële productie, tanks en assemblagefabrieken.",
+  "technologyRadioDescription": "Versterkt de communicatie, zichtbaarheid en invloed van het imperium via zendmasten.",
+  "technologyNuclearPhysicsDescription": "Opent de reactor-, uranium- en late eindspelprojecten.",
+  "technologyEraFoundation": "Fundering",
+  "technologyEraSettlement": "Schikking",
+  "technologyEraExpansion": "Uitbreiding",
+  "technologyEraSpecialization": "Specialisatie",
+  "technologyEraIndustry": "Industrie",
+  "technologyEraStrategy": "Strategie",
+  "technologyUnlockEffect": "Effect",
+  "technologyPrerequisitesNone": "Geen",
+  "technologyStateCompleted": "Voltooid",
+  "technologyStateInProgress": "In uitvoering",
+  "technologyStateAvailable": "Beschikbaar",
+  "technologyButtonResearched": "ONDERZOEKEN",
+  "technologyButtonActive": "ACTIEF",
+  "technologyButtonResearch": "ONDERZOEK",
+  "technologyButtonLocked": "GESLOTEN",
+  "technologyTreeTitle": "TECHNOLOGIE BOOM",
+  "technologyTreeEmptyTitle": "Er zijn geen technologieën om weer te geven",
+  "technologyTreeEmptyBody": "De onderzoeksboom zal hier verschijnen wanneer de regelset technologieën voor dit tijdperk biedt.",
+  "technologyResearchPointsShort": "{points} punten",
+  "@technologyResearchPointsShort": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyDetailsTooltip": "Technologiedetails",
+  "technologyDetailsStatus": "Status",
+  "technologyDetailsCost": "Kosten",
+  "technologyDetailsProgress": "Voortgang",
+  "technologyDetailsPrerequisites": "Vereisten",
+  "technologyDetailsUnlocks": "Ontgrendelt",
+  "technologyDetailsEffects": "Effecten",
+  "technologyDetailsBoosts": "Verhoogt",
+  "technologyDetailsUnlockStatus": "Ontgrendelen",
+  "technologyDetailsNoEffects": "Geen passieve effecten",
+  "technologyDetailsNoBoosts": "Geen boosts",
+  "technologyUnlocksNone": "Geen directe ontgrendelingen",
+  "technologyBoostActiveBadge": "Boost",
+  "technologyBoostActiveBest": "De best beschikbare boost is actief.",
+  "technologyBoostLine": "{condition} (-{discount} kosten)",
+  "@technologyBoostLine": {
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyUnlockFieldImprovementCategory": "Veldverbetering",
+  "technologyEffectStrategicResourceProductionBonus": "+{production}-productie voor elke gecontroleerde hulpbron: {resource}",
+  "@technologyEffectStrategicResourceProductionBonus": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      },
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectGlobalGoldMultiplier": "+{percent} goud in de stadseconomie",
+  "@technologyEffectGlobalGoldMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectCityDefenseBonus": "+{amount} stadsverdediging",
+  "@technologyEffectCityDefenseBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectArmyProductionMultiplier": "+{percent} eenheidsproductie in steden",
+  "@technologyEffectArmyProductionMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectArmyStrengthMultiplier": "+{percent} legersterkte",
+  "@technologyEffectArmyStrengthMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectMaxCityPopulationBonus": "+{amount} maximale stadsbevolking",
+  "@technologyEffectMaxCityPopulationBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectMaxControlledHexesBonus": "+{amount} max. stadsgebied",
+  "@technologyEffectMaxControlledHexesBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectCityScienceBonus": "+{amount} wetenschap per stad",
+  "@technologyEffectCityScienceBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyBoostConditionImprovementCount": "Heb {count}x {improvement}",
+  "@technologyBoostConditionImprovementCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionHasImprovement": "Heb {improvement}",
+  "@technologyBoostConditionHasImprovement": {
+    "placeholders": {
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionControlsResource": "Controle {resource}",
+  "@technologyBoostConditionControlsResource": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionControlsAnyResource": "Controle: {resources}",
+  "@technologyBoostConditionControlsAnyResource": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectAttackBonus": "{value}-aanval",
+  "@technologyEffectAttackBonus": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectDefenseBonus": "{value}-verdediging",
+  "@technologyEffectDefenseBonus": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectNoArmyStatsBonus": "Geen legerstatistiekenbonus",
+  "technologyEffectArmyStatsBonus": "{parts} voor legers",
+  "@technologyEffectArmyStatsBonus": {
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
+  "commonListOr": "{first} of {last}",
+  "@commonListOr": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsTooltip": "Details van het gebouw",
+  "buildingDetailsNoRequirements": "Geen",
+  "buildingDetailsYieldImpact": "Impact van de stad",
+  "buildingDetailsRequirementTechnology": "Technologie: {technology}",
+  "@buildingDetailsRequirementTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRequirementCoastalAccess": "Toegang tot de kust",
+  "buildingDetailsRequirementResources": "Bron: {resources}",
+  "@buildingDetailsRequirementResources": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsFlatYieldEffect": "{yield} naar stadsrendement",
+  "@buildingDetailsFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRiverHexYieldEffect": "{yield} per gecontroleerde riviertegel",
+  "@buildingDetailsRiverHexYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRiverHexYieldEffectWithMax": "{yield} per gecontroleerde riviertegel (max {maxApplications})",
+  "@buildingDetailsRiverHexYieldEffectWithMax": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      },
+      "maxApplications": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsMaxControlledHexesEffect": "+{amount} door de stad gecontroleerde tegellimiet",
+  "@buildingDetailsMaxControlledHexesEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsFoodDepositMultiplierEffect": "+{percent}% voedsel dat na de beurt wordt bewaard",
+  "@buildingDetailsFoodDepositMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsYieldFood": "{value} eten",
+  "buildingDetailsYieldProduction": "{value}-productie",
+  "buildingDetailsYieldGold": "{value} goud",
+  "buildingDetailsYieldDefense": "{value}-verdediging",
+  "buildingDetailsYieldScience": "{value} wetenschap",
+  "@buildingDetailsYieldFood": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldProduction": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldGold": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldDefense": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldScience": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsNoYieldChange": "Geen wijziging van de middelen",
+  "unitDetailsTooltip": "Eenheidsdetails",
+  "unitDetailsMovement": "Beweging",
+  "unitDetailsCombat": "Gevecht",
+  "unitDetailsMovementPerTurn": "{movement} tegels/beurt",
+  "@unitDetailsMovementPerTurn": {
+    "placeholders": {
+      "movement": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsPace": "Tempo",
+  "unitDetailsRequirementTechnology": "Technologie: {technology}",
+  "@unitDetailsRequirementTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "unitDetailsAttackLine": "Aanval: {value}",
+  "@unitDetailsAttackLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsDefenseLine": "Verdediging: {value}",
+  "@unitDetailsDefenseLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsHpLine": "PK: {value}",
+  "@unitDetailsHpLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsRangeLine": "Bereik: {value}",
+  "@unitDetailsRangeLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "sciencePerTurn": "{science} wetenschap/beurt",
+  "@sciencePerTurn": {
+    "placeholders": {
+      "science": {
+        "type": "int"
+      }
+    }
+  },
+  "activeResearchLabel": "ONDERZOEK",
+  "requirementTechnology": "Vereist technologie",
+  "requirementTechnologyName": "Vereist: {technology}",
+  "@requirementTechnologyName": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "requirementResourcesName": "Vereist: {resources}",
+  "@requirementResourcesName": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBlockedBy": "Geblokkeerd door: {technology}",
+  "@technologyBlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "requirementCoastalAccess": "Vereist: toegang tot de kust",
+  "productionCategoryBuilding": "Gebouw",
+  "productionCategoryUnit": "Eenheid",
+  "productionTitle": "PRODUCTIE",
+  "productionInProgressLabel": "IN UITVOERING",
+  "productionPerTurn": "{production} productie/beurt",
+  "@productionPerTurn": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "productionNoProduction": "geen productie",
+  "productionButtonProduce": "PRODUCEREN",
+  "productionButtonLocked": "GESLOTEN",
+  "productionEmptyState": "Er is momenteel geen productie beschikbaar.",
+  "buildingsSection": "Gebouwen",
+  "unitsSection": "Eenheden",
+  "futureBuildingsSection": "Toekomstige gebouwen ({count})",
+  "@futureBuildingsSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureBuildingsSubtitle": "Ontgrendeld door technologieën",
+  "workerPanelTitle": "Werknemer - {unitName}",
+  "@workerPanelTitle": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOpenAction": "Open",
+  "commonShowDetailsAction": "Details weergeven",
+  "commonExecuteAction": "Uitvoeren",
+  "colorPickerChangeTooltip": "Kleur wijzigen: {label}",
+  "@colorPickerChangeTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "colorPickerColorSelected": "#{hex} geselecteerd",
+  "@colorPickerColorSelected": {
+    "placeholders": {
+      "hex": {
+        "type": "String"
+      }
+    }
+  },
+  "colorPickerSelectColor": "Selecteer #{hex}",
+  "@colorPickerSelectColor": {
+    "placeholders": {
+      "hex": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDescription": "Beschrijving",
+  "commonSummary": "Samenvatting",
+  "commonStatus": "Status",
+  "commonTerrain": "Terrein",
+  "commonResources": "Bronnen",
+  "commonImprovements": "Verbeteringen",
+  "commonCities": "Steden",
+  "commonBuildings": "Gebouwen",
+  "commonGold": "Goud",
+  "commonScience": "Wetenschap",
+  "commonProduction": "Productie",
+  "commonResearch": "Onderzoek",
+  "commonEmpire": "Empire",
+  "commonTurn": "Draai",
+  "commonProjects": "Projecten",
+  "commonPopulation": "Bevolking",
+  "commonTechnologies": "Technologieën",
+  "commonFields": "Velden",
+  "commonMultipliers": "Vermenigvuldigers",
+  "commonOther": "Ander",
+  "commonReady": "Klaar",
+  "commonDone": "Klaar",
+  "commonDefault": "Standaard",
+  "commonAvailable": "Beschikbaar",
+  "commonBlocked": "Geblokkeerd",
+  "commonSelectAction": "Selecteer",
+  "commonSelectedAction": "Gekozen",
+  "commonOk": "OK",
+  "commonDoNotShowAgain": "Niet meer tonen",
+  "commonNoneLower": "geen",
+  "visualCurrentLabel": "Nu",
+  "visualAfterLabel": "Na verandering",
+  "terrainDetailEmpty": "Geen terreininformatie",
+  "yieldFoodShort": "VOEDSEL",
+  "yieldProductionShort": "ART",
+  "yieldGoldShort": "GOUD",
+  "yieldDefenseShort": "DEF",
+  "selectionChipBadgeSuffix": "Zichtbare teller: {badge}.",
+  "@selectionChipBadgeSuffix": {
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionChipDisabledDescription": "Deze informatiesnelkoppeling is niet beschikbaar voor de huidige selectie.{badge}",
+  "@selectionChipDisabledDescription": {
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionChipOpenDescription": "Opent “{label}”-details voor de huidige kaartcontext.{badge}",
+  "@selectionChipOpenDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "gameGoalTitle": "Doel van het spel",
+  "globalHudCloseResearch": "Sluit onderzoek",
+  "globalHudResearchActive": "Onderzoek: {technologyName}",
+  "@globalHudResearchActive": {
+    "placeholders": {
+      "technologyName": {
+        "type": "String"
+      }
+    }
+  },
+  "globalHudResearchActiveWithEta": "Onderzoek: {technologyName} · {eta}",
+  "@globalHudResearchActiveWithEta": {
+    "placeholders": {
+      "technologyName": {
+        "type": "String"
+      },
+      "eta": {
+        "type": "String"
+      }
+    }
+  },
+  "globalHudChooseResearch": "Kies voor onderzoek",
+  "globalHudCloseEmpire": "Sluit imperium",
+  "globalHudCloseActivityLog": "Sluit het activiteitenlogboek",
+  "bottomToolbarWaiting": "Wachten",
+  "bottomToolbarPlan": "Plan",
+  "bottomToolbarMove": "Beweging",
+  "bottomToolbarResolvingTurn": "De beurt oplossen",
+  "bottomToolbarWaitingFor": "Wachten: {players}",
+  "@bottomToolbarWaitingFor": {
+    "placeholders": {
+      "players": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintNextUnit": "Volgende stap: {unit}",
+  "@turnHintNextUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintNextCityProduction": "Volgende stap: productie in {city}",
+  "@turnHintNextCityProduction": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintChooseResearch": "Volgende stap: kies voor onderzoek",
+  "turnHintCheckAction": "Volgende stap: actie controleren",
+  "turnHintObjective": "Doelstelling: {objective}",
+  "@turnHintObjective": {
+    "placeholders": {
+      "objective": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintObjectiveWithAdvice": "Doelstelling: {objective} · {advice}",
+  "@turnHintObjectiveWithAdvice": {
+    "placeholders": {
+      "objective": {
+        "type": "String"
+      },
+      "advice": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintImproveFieldWithWorker": "Doel: een tegel verbeteren met een arbeider",
+  "turnHintFoundCityWithSettler": "Doel: een stad vinden met een kolonist",
+  "turnHintClaimTerritoryWithSettler": "Doel: gebied claimen met een kolonist",
+  "turnHintTrainUnit": "Doel: eenheid instellen: {unit}",
+  "@turnHintTrainUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintProtectLeadUnit": "Doel: de voorsprong veiligstellen: {unit}",
+  "@turnHintProtectLeadUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintConstructBuildingInCity": "Doel: een gebouw in {city} in de wachtrij plaatsen",
+  "turnHintTrainUnitInCity": "Doel: een eenheid in {city} in de wachtrij plaatsen",
+  "turnHintPrepareSettlerInCity": "Doel: bereid een kolonist voor in {city}",
+  "turnHintGrowPopulationInCity": "Doelstelling: groei realiseren in {city}",
+  "turnHintPrepareWorkerInCity": "Doel: een werknemer voorbereiden in {city}",
+  "turnHintCollectGoldInCity": "Doelstelling: goud sluiten in {city}",
+  "turnHintProtectLeadProductionInCity": "Doel: veilige productie in {city}",
+  "@turnHintConstructBuildingInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintTrainUnitInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintPrepareSettlerInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintGrowPopulationInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintPrepareWorkerInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintCollectGoldInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintProtectLeadProductionInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintUnlockTechnologyForScore": "Doel: kies een scoretechnologie",
+  "turnHintProtectLeadResearch": "Doel: veilig onderzoek afronden",
+  "topResourceTurnShortLabel": "T{turn}",
+  "@topResourceTurnShortLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceTurnTooltip": "Draai {turn}",
+  "@topResourceTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceScienceTooltip": "Wetenschap: {scienceTurnLabel} / beurt",
+  "@topResourceScienceTooltip": {
+    "placeholders": {
+      "scienceTurnLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceResourcesTooltip": "Grondstoffen: {resourceTotal}-stortingen • {resourceTypes}-gecontroleerde typen",
+  "@topResourceResourcesTooltip": {
+    "placeholders": {
+      "resourceTotal": {
+        "type": "int"
+      },
+      "resourceTypes": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceGoldTooltip": "Goud: {gold} • inkomen +{goldIncome} • onderhoud -{unitUpkeep} • netto {net} / beurt",
+  "@topResourceGoldTooltip": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      },
+      "goldIncome": {
+        "type": "int"
+      },
+      "unitUpkeep": {
+        "type": "int"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceGoldTooltipNegativeTreasury": "{base} • schatkist onder nul",
+  "@topResourceGoldTooltipNegativeTreasury": {
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceGoldTooltipBankruptcy": "{base} • faillissementsrisico binnen 3 beurten",
+  "@topResourceGoldTooltipBankruptcy": {
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceBreakdownTreasury": "Schatkist",
+  "resourceBreakdownCityIncome": "Inkomen van de stad",
+  "resourceBreakdownUpkeep": "Onderhoud",
+  "resourceBreakdownNetPerTurn": "Netto / beurt",
+  "resourceBreakdownNoCityIncome": "Geen stadsinkomsten",
+  "resourceBreakdownFreeLimit": "Gratis limiet",
+  "resourceBreakdownNextWorkerUpkeep": "Onderhoud van de volgende werknemer",
+  "resourceBreakdownNextWorkerUpkeepValue": "-{upkeep} goud/draai",
+  "@resourceBreakdownNextWorkerUpkeepValue": {
+    "placeholders": {
+      "upkeep": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceBreakdownInsideFreeLimit": "Binnen de vrije limiet",
+  "resourceBreakdownNoActiveTechnology": "Geen technologie geselecteerd",
+  "resourceBreakdownScienceTitle": "Wetenschap en onderzoek",
+  "resourceBreakdownSciencePerTurn": "Wetenschap / beurt",
+  "resourceBreakdownActiveResearch": "Actief onderzoek",
+  "resourceBreakdownTurnsToComplete": "Om te voltooien",
+  "resourceBreakdownNoScienceSources": "Geen wetenschappelijke bronnen",
+  "resourceBreakdownCityResearchProject": "{cityName}: Onderzoek",
+  "@resourceBreakdownCityResearchProject": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceBreakdownNoControlledResources": "Geen gecontroleerde middelen",
+  "resourceBreakdownGrowCitiesWithFood": "Laat steden groeien met voedsel",
+  "resourceBreakdownControlledDeposits": "Gecontroleerde stortingen",
+  "resourceBreakdownResourceTypes": "Resourcetypen",
+  "resourceBreakdownTypesSection": "Soorten",
+  "resourceBreakdownSourcesSection": "Bronnen",
+  "technologyRecommendationsTitle": "Aanbevolen onderzoek",
+  "technologyShowTreeAction": "Boom laten zien",
+  "technologyShowTreeCountAction": "Boom weergeven ({count})",
+  "@technologyShowTreeCountAction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyRecommendationUnlocks": "Ontgrendelt",
+  "technologyRecommendationReasonBoost": "Actieve boost verlaagt de onderzoekskosten.",
+  "technologyRecommendationReasonSection": "Waarom nu",
+  "technologyRecommendationReasonImprovements": "Nieuwe tegelverbeteringen zetten grondstoffen snel om in opbrengst.",
+  "technologyRecommendationReasonBuilding": "Een nieuw stadsgebouw opent een nieuwe ontwikkelingsrichting.",
+  "technologyRecommendationReasonUnit": "Een nieuwe eenheid versterkt de veiligheid en kaartcontrole.",
+  "technologyRecommendationReasonEffect": "Een permanente bonus geldt voor de hele economie.",
+  "technologyRecommendationReasonFast": "Snel onderzoek zonder extra eisen.",
+  "technologyRecommendationReasonDefault": "Beschikbaar onderzoek dat de volgende stap netjes afsluit.",
+  "technologyNoRecommendations": "Er is momenteel geen nieuw onderzoek beschikbaar.",
+  "technologyFullTreeTitle": "Volledige technologieboom",
+  "technologyRecommendationsBackAction": "Aanbevelingen",
+  "empireUnitsEmptyTitle": "Geen eenheden",
+  "empireUnitsEmptyBody": "Nieuwe eenheden zullen hier verschijnen na stadsproductie of evenementenrekrutering.",
+  "empireCitiesEmptyTitle": "Geen steden",
+  "empireCitiesEmptyBody": "Vind je eerste stad met een kolonist om productie-, wetenschaps- en imperiumgrenzen te ontgrendelen.",
+  "empireCityCenters": "Stadscentra",
+  "empireShowFirstUnitTooltip": "Toon de eerste eenheid op de kaart",
+  "empireShowUnitTooltip": "Toon eenheid op de kaart",
+  "empireShowFirstCityTooltip": "Toon de eerste stad op de kaart",
+  "empireShowCityTooltip": "Toon stad op de kaart",
+  "empireUnitCountLabel": "{count, plural, =1{1 eenheid} other{{count} eenheden}}",
+  "@empireUnitCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireCityCountLabel": "{count, plural, =1{1 stad} other{{count} steden}}",
+  "@empireCityCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireUnitMovement": "Beweging {movement}",
+  "@empireUnitMovement": {
+    "placeholders": {
+      "movement": {
+        "type": "int"
+      }
+    }
+  },
+  "empireUnitBuilding": "Gebouw",
+  "empireUnitWorking": "Werken",
+  "empireUnitFortifying": "Versterkend",
+  "empireUnitHealing": "Genezing",
+  "empireUnitEnRoute": "Onderweg",
+  "empireUnitNoMovement": "geen beweging",
+  "empireUnitsWithMovement": "{count} met beweging",
+  "@empireUnitsWithMovement": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireCitySubtitle": "Bevolking {population} {hexes} tegels - {buildings} gebouw. - produceren: {production}",
+  "@empireCitySubtitle": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "hexes": {
+        "type": "int"
+      },
+      "buildings": {
+        "type": "int"
+      },
+      "production": {
+        "type": "String"
+      }
+    }
+  },
+  "empireCityStoredArtifact": "Artefact: {artifactName}",
+  "@empireCityStoredArtifact": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "empireCityGroupSubtitle": "{cityLabel} populatie {population}",
+  "@empireCityGroupSubtitle": {
+    "placeholders": {
+      "cityLabel": {
+        "type": "String"
+      },
+      "population": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsTitle": "Empire-status",
+  "empireStatsSubtitle": "Een snelle lezing van paraatheid, compositie en stadsgroei",
+  "empireStatsReadinessTitle": "Eenheid gereed",
+  "empireStatsUnitCompositionTitle": "Samenstelling van de eenheid",
+  "empireStatsCityDevelopmentTitle": "Ontwikkeling van de stad",
+  "empireStatsCityComparisonTitle": "Vergelijking van steden",
+  "empireStatsOrders": "Met bestellingen",
+  "empireStatsNoMovement": "Geen beweging",
+  "empireStatsAveragePopulation": "Gem. knal.",
+  "empireStatsTotalBuildings": "Gebouwen",
+  "empireStatsStoredArtifacts": "Artefacten",
+  "empireStatsTerritory": "Grondgebied",
+  "empireStatsCitiesProducing": "Productie",
+  "empireStatsOther": "Ander",
+  "empireStatsEmptyUnits": "Geen eenheden om te analyseren",
+  "empireStatsEmptyCities": "Geen steden om te analyseren",
+  "empireStatsCityBarDetail": "Knal. {population} • gebouw. {buildings}",
+  "@empireStatsCityBarDetail": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "buildings": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsCityComparisonDetail": "Knal. {population} • Prod. {production} • Voedsel {food} • Goud {gold}",
+  "@empireStatsCityComparisonDetail": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "production": {
+        "type": "int"
+      },
+      "food": {
+        "type": "int"
+      },
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsMetricPopulation": "Knal.",
+  "empireStatsMetricProduction": "Prod.",
+  "empireStatsMetricFood": "Voedsel",
+  "empireStatsMetricGold": "Goud",
+  "activityLogTitle": "Activiteitenlogboek",
+  "activityLogShowAllAction": "Toon alles",
+  "activityLogShowMoreAction": "Meer weergeven ({visible}/{total})",
+  "@activityLogShowMoreAction": {
+    "placeholders": {
+      "visible": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "activityLogLoadingHistory": "Volledige geschiedenis laden...",
+  "activityLogHistoryErrorTitle": "Kan de geschiedenis niet laden",
+  "activityLogHistoryErrorBody": "Het gebeurtenisjournaal is niet beschikbaar: {error}",
+  "@activityLogHistoryErrorBody": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "activityLogFilterAll": "Alle",
+  "activityLogFilterAllShort": "Alle",
+  "activityLogFilterCombat": "Gevecht",
+  "activityLogFilterCities": "Steden",
+  "activityLogFilterDiplomacy": "Diplomatie",
+  "activityLogFilterDiplomacyShort": "Dipl.",
+  "activityLogFilterTechnology": "Wetenschap",
+  "activityLogEmptyAllTitle": "Geen geregistreerde gebeurtenissen",
+  "activityLogEmptyCombatTitle": "Geen geregistreerde gevechten",
+  "activityLogEmptyCityTitle": "Geen geregistreerde stadsevenementen",
+  "activityLogEmptyDiplomacyTitle": "Geen geregistreerde diplomatie",
+  "activityLogEmptyTechnologyTitle": "Geen geregistreerde ontdekkingen",
+  "activityLogEmptyAllBody": "De eerste ontdekkingen, gevechten en builds verschijnen hier nadat je acties hebt gespeeld.",
+  "activityLogEmptyCombatBody": "Gevechten worden opgenomen na aanvallen of verdedigingen die zichtbaar zijn voor de speler.",
+  "activityLogEmptyCityBody": "Gestichte steden, gebouwen en geclaimde tegels vormen hier de tijdlijn van het rijk.",
+  "activityLogEmptyDiplomacyBody": "Berichten, voorstellen, antwoorden en relatieveranderingen verschijnen hier na diplomatieke acties.",
+  "activityLogEmptyTechnologyBody": "Ontdekte technologieën zullen hier verschijnen nadat het onderzoek is voltooid.",
+  "turnTimelineTitle": "Draai de tijdlijn",
+  "turnTimelineSubtitle": "Zet {turn} • gebeurtenissen: {count}",
+  "@turnTimelineSubtitle": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnTimelineChartTitle": "Gebeurtenissen over beurten",
+  "turnTimelineMetricEvents": "Evenementen",
+  "turnTimelineMetricActiveTurns": "Actieve bochten",
+  "turnTimelineMetricCurrentTurn": "Huidige beurt",
+  "technologyDiscoveryEyebrow": "Technologie ontdekt",
+  "unitSelectionMovementSubtitle": "Verplaats {current}/{max}",
+  "@unitSelectionMovementSubtitle": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "unitSelectionMovementHpSubtitle": "{current}/{max} verplaatsen • HP {hp}/{maxHp}",
+  "@unitSelectionMovementHpSubtitle": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      },
+      "hp": {
+        "type": "int"
+      },
+      "maxHp": {
+        "type": "int"
+      }
+    }
+  },
+  "unitSelectionAttackLabel": "Aanval",
+  "unitSelectionDefenseLabel": "Verdediging",
+  "unitSelectionHpLabel": "PK",
+  "unitSelectionRangeLabel": "Bereik",
+  "unitSelectionConstructionLabel": "Bouw",
+  "unitSelectionWorkLabel": "Werk",
+  "unitSelectionFieldBonusValue": "Veldbonus",
+  "tileSelectionYieldTitle": "Tegelpotentieel",
+  "tileSelectionYieldTooltip": "Inspectieschatting voor deze tegel, niet de werkelijke stadsopbrengst.",
+  "tileSelectionBonusLabel": "Bonus",
+  "tileSelectionDefenseBonusValue": "+verdediging",
+  "tileSelectionRiverBonusValue": "+rivier",
+  "citySelectionYieldTitle": "Inkomen van de stad",
+  "citySelectionYieldTooltip": "Werkelijke stadsopbrengst per beurt uit de stadseconomie.",
+  "citySelectionSubtitle": "Bevolking {population} • {territoryHexCount}/{maxHexes}-velden • Productie: {production}",
+  "@citySelectionSubtitle": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "territoryHexCount": {
+        "type": "int"
+      },
+      "maxHexes": {
+        "type": "int"
+      },
+      "production": {
+        "type": "String"
+      }
+    }
+  },
+  "citySelectionTerritoryLabel": "Grondgebied",
+  "citySelectionFoodLabel": "Voedsel",
+  "citySelectionNetFoodLabel": "Netto eten",
+  "citySelectionBuildingsLabel": "Gebouwen",
+  "citySelectionArtifactLabel": "Artefact",
+  "worldArtifactBonusTitle": "Bonus",
+  "worldArtifactHeritageTitle": "Erfenis",
+  "worldArtifactHeritageBody": "Verzamel en plaats 6 unieke artefacten in je steden, en houd de collectie vervolgens 5 beurten vast.",
+  "worldArtifactAncientImperialCrown": "Oude keizerlijke kroon",
+  "worldArtifactAstronomersTablets": "Tabletten van astronomen",
+  "worldArtifactProphetMask": "Masker van de Profeet",
+  "worldArtifactHeroSword": "Heldenzwaard",
+  "worldArtifactMerchantsSeal": "Koopmanszegel",
+  "worldArtifactFirstPeoplesChronicle": "Eerste Volkskroniek",
+  "worldArtifactTempleReliquary": "Tempelreliekschrijn",
+  "worldArtifactQueensMirror": "Koninginnespiegel",
+  "worldArtifactAncientImperialCrownShortBonus": "+1 verdediging",
+  "worldArtifactAstronomersTabletsShortBonus": "+1 wetenschap",
+  "worldArtifactProphetMaskShortBonus": "+1 goud, diplomatie",
+  "worldArtifactHeroSwordShortBonus": "+2 XP voor geproduceerde eenheden",
+  "worldArtifactMerchantsSealShortBonus": "+2 goud",
+  "worldArtifactFirstPeoplesChronicleShortBonus": "+1 eten",
+  "worldArtifactTempleReliquaryShortBonus": "+1 eten, +1 verdediging",
+  "worldArtifactQueensMirrorShortBonus": "+1 goud, diplomatie",
+  "worldArtifactAncientImperialCrownDescription": "Een symbool van oude heerschappij. Eenmaal opgeslagen in een stad versterkt het de verdediging en het prestige van de collectie.",
+  "worldArtifactAstronomersTabletsDescription": "Stenen tabletten met oude kaarten van de hemel. In een stad ondersteunen ze de wetenschap.",
+  "worldArtifactProphetMaskDescription": "Een ritueel masker van groot politiek gewicht. In een stad verleent het goud en diplomatieke waarde.",
+  "worldArtifactHeroSwordDescription": "Het wapen van een legendarische commandant. Eenheden die in deze stad worden geproduceerd, krijgen extra ervaring.",
+  "worldArtifactMerchantsSealDescription": "Het kenmerk van de eerste koopmansgilden. In een stad versterkt het de goudinkomsten.",
+  "worldArtifactFirstPeoplesChronicleDescription": "Een verslag van de oudste geslachten en grenzen. In een stad ondersteunt het de groei.",
+  "worldArtifactTempleReliquaryDescription": "Een heilig reliekschrijn dat de stad stabiliteit, voedsel en verdediging geeft.",
+  "worldArtifactQueensMirrorDescription": "Een hofschat die handel met diplomatie verbindt. In een stad schenkt het goud en prestige.",
+  "worldArtifactLocationMap": "Artefact op de kaart",
+  "worldArtifactLocationExcavation": "Opgraving bezig",
+  "worldArtifactLocationCarried": "Gedragen door een eenheid",
+  "worldArtifactLocationStored": "Opgeslagen in een stad",
+  "worldArtifactStepExcavate": "Opgraven",
+  "worldArtifactStepMove": "Beweging",
+  "worldArtifactStepStore": "Winkel",
+  "artifactGuidanceUnknownCityName": "een stad",
+  "artifactGuidanceStoredTitle": "Artefact opgeslagen",
+  "artifactGuidanceStoredBody": "{artifactName} versterkt {cityName}. Voor een culturele overwinning zijn 6 artefacten in steden nodig gedurende 5 beurten.",
+  "@artifactGuidanceStoredBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      },
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactGuidanceCarriedTitle": "Artefact gedragen",
+  "artifactGuidanceCarriedBody": "Het apparaat is voorzien van {artifactName}. Breng het naar een van je steden met een gratis slot en gebruik de winkelactie.",
+  "@artifactGuidanceCarriedBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactGuidanceReachedTitle": "Artefact ontdekt",
+  "artifactGuidanceReachedBody": "{artifactName} bevindt zich onder de unit. Gebruik de actie Opgraven om het op te rapen.",
+  "@artifactGuidanceReachedBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "citySelectionSpecializationLabel": "Specialisatie",
+  "fieldImprovementOutsideActiveCity": "Buiten actieve stad",
+  "fieldImprovementYieldTitle": "Verbeteringsbonus",
+  "fieldImprovementYieldTooltip": "Extra opbrengst door de veldverbetering.",
+  "hexKindIdealCitySite": "Ideale stadscamping",
+  "hexKindGoodCitySite": "Goede stadssite",
+  "hexKindFertileField": "Vruchtbaar veld",
+  "hexKindFertilePlains": "Vruchtbare vlaktes",
+  "hexKindRichPlain": "Rijke vlakte",
+  "hexKindStrategicBorderland": "Strategisch grensgebied",
+  "hexKindStrategicField": "Strategisch veld",
+  "hexKindDefensivePosition": "Defensieve positie",
+  "hexKindFertileForest": "Vruchtbaar bos",
+  "hexKindForestBackline": "Bos achterlijn",
+  "hexKindForestForge": "Bos smederij",
+  "hexKindWildLand": "Wild land",
+  "hexKindRichWilds": "Rijke wildernis",
+  "hexKindExoticBackline": "Exotische ruglijn",
+  "hexKindDifficultStrategicTerrain": "Moeilijk strategisch terrein",
+  "hexKindHighGround": "Hoge grond",
+  "hexKindRiverHills": "Rivier heuvels",
+  "hexKindIndustrialStronghold": "Industrieel bolwerk",
+  "hexKindRichHills": "Rijke heuvels",
+  "hexKindBarrenLand": "Onvruchtbaar land",
+  "hexKindOasis": "Oase",
+  "hexKindTradeOasis": "Handel oase",
+  "hexKindDesertDeposits": "Woestijnafzettingen",
+  "hexKindHarshLand": "Ruw land",
+  "hexKindColdPastures": "Koude weilanden",
+  "hexKindResourceOutpost": "Hulpbron buitenpost",
+  "hexKindHostileLand": "Vijandig land",
+  "hexKindArcticDeposits": "Arctische afzettingen",
+  "hexKindCoast": "Kust",
+  "hexKindFishingCoast": "Visserijkust",
+  "hexKindRichCoast": "Rijke kust",
+  "hexKindRiverPort": "Rivierhaven",
+  "hexKindRegionalPortHeart": "Regionaal havenknooppunt",
+  "hexKindOpenSea": "Open zee",
+  "hexKindNaturalBarrier": "Natuurlijke barrière",
+  "hexKindPromisingLand": "Veelbelovend land",
+  "hexKindWeakLand": "Zwak land",
+  "hexKindOrdinaryLand": "Gewone grond",
+  "hexKindMapTile": "Kaart tegel",
+  "hexKindIdealCitySiteDescription": "Een waardevolle nederzettingstegel waarop voedsel, groei en expansiedruk al op een rij staan.",
+  "hexKindGoodCitySiteDescription": "Solide terrein voor een stadscentrum met voldoende basiswaarde om vroege groei te ondersteunen.",
+  "hexKindFertileFieldDescription": "Door rivieren gevoed grasland dat voedsel, bevolkingsgroei en verbetering van de werknemers bevordert.",
+  "hexKindFertilePlainsDescription": "Open vlaktes met rivierondersteuning, nuttig voor evenwichtige voeding en productie.",
+  "hexKindRichPlainDescription": "Een waardevolle open tegel met luxe- of handelswaarde die de moeite waard is om binnen de grenzen te brengen.",
+  "hexKindStrategicBorderlandDescription": "Goed land met strategische waarde, nuttig voor uitbreiding voordat rivalen het claimen.",
+  "hexKindStrategicFieldDescription": "Een vlaktegel die is gekoppeld aan strategische hulpbronnen of druk op de grens.",
+  "hexKindDefensivePositionDescription": "Terrein dat de defensieve controle verbetert en helpt bij het vasthouden van naderingen in de buurt.",
+  "hexKindFertileForestDescription": "Een bos met rivierondersteuning, dat groeipotentieel combineert met natuurlijke dekking.",
+  "hexKindForestBacklineDescription": "Een veiliger bostegel die groei of jachtgerichte verbeteringen kan ondersteunen.",
+  "hexKindForestForgeDescription": "Bos met industriële waarde, veelbelovend voor productie zodra het is verbeterd.",
+  "hexKindWildLandDescription": "Dicht terrein met wrijving; alleen nuttig als u een duidelijk werknemers- of uitbreidingsplan heeft.",
+  "hexKindRichWildsDescription": "Wild terrein met voldoende vruchtbaarheid of hulpbronnen om een ​​zorgvuldige ontwikkeling te rechtvaardigen.",
+  "hexKindExoticBacklineDescription": "Een jungle- of moerastegel met luxewaarde voor latere grenzen en handel.",
+  "hexKindDifficultStrategicTerrainDescription": "Hard terrein met strategische hulpbronnenwaarde; krachtig later, onhandig vroeg.",
+  "hexKindHighGroundDescription": "Heuvels die meer de voorkeur geven aan verdediging en kaartcontrole dan aan snelle groei.",
+  "hexKindRiverHillsDescription": "Heuvels naast een rivier, die verdediging combineren met een beter economisch potentieel.",
+  "hexKindIndustrialStrongholdDescription": "Heuvels met industriële hulpbronnen, een sterk productiedoel voor een stad.",
+  "hexKindRichHillsDescription": "Heuvels met rijkdommen, nuttig voor goud of productiegerichte expansie.",
+  "hexKindBarrenLandDescription": "Droog land met weinig directe waarde, tenzij technologie of grenzen het plan later veranderen.",
+  "hexKindOasisDescription": "Woestijn verzacht door toegang tot de rivier, waardoor zwak land een bruikbare groeitegel wordt.",
+  "hexKindTradeOasisDescription": "Een woestijnhandelszak die waardevol kan worden met de juiste verbetering.",
+  "hexKindDesertDepositsDescription": "Arme nederzettingsgrond met een strategische afzetting die er in latere tijdperken meer toe doet.",
+  "hexKindHarshLandDescription": "Koud of ruig land met beperkte vroege economie en trage ontwikkeling.",
+  "hexKindColdPasturesDescription": "Koud terrein met voldoende weidewaarde om een ​​grensstad te ondersteunen.",
+  "hexKindResourceOutpostDescription": "Afgelegen, koud land dat vooral de moeite waard is om te claimen vanwege de hulpbron die het beschermt.",
+  "hexKindHostileLandDescription": "Onvriendelijk terrein met een zwakke schikkingswaarde en weinig directe opbrengsten.",
+  "hexKindArcticDepositsDescription": "Besneeuwd land dat moeilijk te gebruiken is, maar van strategisch belang kan zijn.",
+  "hexKindCoastDescription": "Kustgebied dat maritieme toegang en flexibele stadsgroei mogelijk maakt.",
+  "hexKindFishingCoastDescription": "Kust met voedselwaarde, een sterke reden om aan het water te werken of te vestigen.",
+  "hexKindRichCoastDescription": "Kustluxe of handelswaarde die de moeite waard is om binnen de stadsgrenzen te vouwen.",
+  "hexKindRiverPortDescription": "Een riviermonding met handels- en bewegingswaarde voor een kuststad.",
+  "hexKindRegionalPortHeartDescription": "Een sterk kustcentrum waar de waarde van rivieren en hulpbronnen samenkomt.",
+  "hexKindOpenSeaDescription": "Water dat nuttig is voor schepen en verkenning, maar niet voor landbezetting.",
+  "hexKindNaturalBarrierDescription": "Geblokkeerd terrein dat beweging en verdediging vormgeeft in plaats van economie.",
+  "hexKindPromisingLandDescription": "Een over het algemeen bruikbare tegel met voldoende waarde om te inspecteren voordat je verder gaat.",
+  "hexKindWeakLandDescription": "Terrein met een laag rendement dat zelden vroege werktijd verdient.",
+  "hexKindOrdinaryLandDescription": "Een normale tegel zonder opvallende sterkte, handig als deze in het stadsplan past.",
+  "hexKindMapTileDescription": "Een eenvoudige kaarttegel zonder voldoende informatie om een ​​sterk oordeel te vellen.",
+  "hexTagCity": "Stadssite",
+  "hexTagDefense": "Defensieve positie",
+  "hexTagTrade": "Handelsroute",
+  "hexTagFertile": "Vruchtbaar veld",
+  "hexTagProduction": "Goede productie",
+  "hexTagHostile": "Vijandig land",
+  "hexTagStrategic": "Strategische hulpbron",
+  "hexTagWater": "Waterdoorgang",
+  "hexRecommendationFoundCity": "Goede ontwikkelsite",
+  "hexRecommendationDefendHere": "Goede defensieve positie",
+  "hexRecommendationExploitEconomy": "De moeite waard om te exploiteren",
+  "hexRecommendationAvoid": "Vermijd zonder plan",
+  "hexRecommendationNeutral": "Inspecteer voordat u verhuist",
+  "hexRecommendationFoundCityDetail": "Als de grenzen vrij zijn, overweeg dan om hier een kolonist op te richten of aan te sturen.",
+  "hexRecommendationDefendHereDetail": "Gebruik het om eenheden te verankeren, grenzen te beschermen of nabijgelegen steden te bedekken.",
+  "hexRecommendationExploitEconomyDetail": "Breng het binnen de grenzen en wijs een arbeider toe als de stad hiervan kan profiteren.",
+  "hexRecommendationAvoidDetail": "Sla het vroegtijdig over, tenzij een hulpbron, route of militaire behoefte de waarde verandert.",
+  "hexRecommendationNeutralDetail": "Verken aangrenzende tegels en vergelijk grondstoffen voordat je een arbeider of kolonist inzet.",
+  "selectionActionLockedReason": "U kunt nu geen bestellingen plaatsen.",
+  "selectionActionFoundCity": "Stad gevonden",
+  "selectionActionCancel": "Annuleren",
+  "selectionActionCancelAttack": "Aanval annuleren",
+  "selectionActionCancelWorkerBuild": "Verbetering annuleren",
+  "selectionActionCancelCityFounding": "Stadsstichting annuleren",
+  "selectionActionCancelAutoExplore": "Verkenning annuleren",
+  "selectionActionCancelArtifactExcavation": "Artefactopgraving annuleren",
+  "selectionActionCancelTradeRouteSelection": "Handelsrouteselectie annuleren",
+  "selectionActionCancelMerchantMoveToCity": "Stadsreis annuleren",
+  "selectionActionCancelCommanderMerge": "Troepen samenvoegen annuleren",
+  "selectionActionConfirm": "Bevestigen",
+  "selectionActionConfirmWithTurns": "Bevestigen ({turns})",
+  "@selectionActionConfirmWithTurns": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionMinimize": "Minimaliseer",
+  "selectionActionConfirmAttack": "Bevestig aanval",
+  "selectionActionCaptureCity": "Stad veroveren",
+  "selectionActionDestroyCity": "Vernietig de stad",
+  "selectionActionStopFortifying": "Stop met versterken",
+  "selectionActionStopHealing": "Stop met genezen",
+  "selectionActionMove": "Beweging",
+  "selectionActionAttack": "Aanval",
+  "selectionActionAutoExplore": "Ontdekken",
+  "selectionActionTradeRoute": "Handelsroute",
+  "selectionActionTradeRouteToCity": "Handel met {cityName}",
+  "@selectionActionTradeRouteToCity": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionMerchantMoveToCity": "Ga naar stad",
+  "selectionActionMerchantMoveToCityTarget": "Ga naar {cityName}",
+  "@selectionActionMerchantMoveToCityTarget": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionArmy": "Leger",
+  "selectionArmyEmpty": "Geen troepen",
+  "selectionTroopDetachTooltip": "Maak {troop} los",
+  "@selectionTroopDetachTooltip": {
+    "placeholders": {
+      "troop": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionImprove": "Verbeteren",
+  "selectionActionSkip": "Overslaan",
+  "selectionActionFortify": "Versterken",
+  "selectionActionHeal": "Genezen",
+  "selectionActionCancelCityGrowth": "Annuleer de groei",
+  "selectionActionCityGrowth": "Groei van de stad",
+  "selectionActionProduction": "Productie",
+  "selectionActionExcavateArtifact": "Opgraven",
+  "selectionActionStoreArtifact": "Winkel",
+  "selectionActionCancelCurrentMoveFirst": "Annuleer eerst de huidige zet.",
+  "selectionActionArtifactAlreadyCarried": "De eenheid heeft al een artefact bij zich.",
+  "selectionActionStoreArtifactOwnCityRequired": "Verhuis naar een van je steden.",
+  "selectionActionStoreArtifactCityOccupied": "Deze stad heeft al een artefact opgeslagen.",
+  "selectionActionNoBuildAvailable": "Er is geen bebouwing beschikbaar op deze tegel.",
+  "selectionActionUnitWorking": "Het apparaat werkt al.",
+  "selectionActionUnitFortified": "De eenheid is versterkt.",
+  "selectionActionUnitHealing": "De eenheid is aan het genezen.",
+  "selectionActionNoMovement": "Er zijn geen bewegingspunten meer over deze beurt.",
+  "selectionActionNoAttack": "Deze eenheid heeft geen aanval.",
+  "selectionActionNoVisibleEnemy": "Geen zichtbare vijand binnen bereik.",
+  "selectionActionMerchantNoOriginCity": "Verplaats de handelaar naar een van je steden.",
+  "selectionActionMerchantNoDestinationCity": "Je hebt een tweede verbonden stad nodig.",
+  "selectionActionMerchantNoRoute": "Geen handelsroute kan deze stad bereiken.",
+  "selectionActionMerchantNoCityPath": "De handelaar kan deze stad niet bereiken.",
+  "selectionActionCannotFoundCityHere": "Kan hier geen stad vinden.",
+  "selectionActionFoundCityNoCommander": "Alleen een kolonist of een commandant met kolonisten kan een stad stichten.",
+  "selectionActionFoundCityNoSettlers": "Kolonisten zijn verplicht een stad te stichten.",
+  "selectionActionFoundCityInvalidCenter": "Op deze tegel kan geen stad worden gesticht.",
+  "selectionActionFoundCityCityAlreadyExists": "Er staat al een stad op deze tegel.",
+  "selectionActionFoundCityCenterOccupied": "Deze tegel hoort al bij een stad.",
+  "selectionActionFoundCityTooCloseToCity": "Een stad kan niet aangrenzend zijn aan een andere stad.",
+  "selectionActionFoundCityInvalidControlledHexes": "Kies eerst geldige stadstegels.",
+  "selectionActionCannotImproveCityCenter": "Er kunnen geen verbeteringen in het stadscentrum worden gebouwd.",
+  "selectionActionTileAlreadyImproved": "Deze tegel heeft al een verbetering.",
+  "selectionActionTileMustBelongToCity": "De tegel moet bij een stad horen.",
+  "selectionActionNoWorkerTile": "Geen tegel onder de arbeider.",
+  "hudFeedbackNoTurnCostDetail": "Actie heeft de beurt niet verbruikt",
+  "hudFeedbackAutoExploreNoTargetTitle": "Geen verkenningsroute",
+  "hudFeedbackAutoExploreNoTargetBody": "De verkenner heeft deze beurt geen zet die nieuwe tegels zou onthullen.",
+  "hudFeedbackArtifactGuidanceTitle": "Wereld artefact",
+  "hudFeedbackArtifactGuidanceBody": "Lever het af in een van je steden en plaats het in een leeg artefactvak.",
+  "hudFeedbackActionBlockedTitle": "Actie niet beschikbaar",
+  "hudFeedbackActionBlockedBody": "Deze actie is momenteel geblokkeerd. Kies een andere tegel of een ander commando.",
+  "hudFeedbackAttackProtectedByTreatyTitle": "Verdrag blokkeert aanval",
+  "hudFeedbackAttackProtectedByTreatyBody": "Je kunt geen eenheid aanvallen van een beschaving waarmee je een alliantie of wapenstilstand hebt. Verander eerst de diplomatieke relaties.",
+  "hudFeedbackMovementCityOccupiedTitle": "Stad bezet",
+  "hudFeedbackMovementCityOccupiedBody": "Er kan slechts één eenheid in een stad staan. Verplaats eerst het garnizoen of kies een andere tegel.",
+  "hudFeedbackMovementEnemyOccupiedTitle": "Vijand op deze tegel",
+  "hudFeedbackMovementEnemyOccupiedBody": "Je kunt een vijandelijke tegel niet betreden met een normale beweging. Gebruik Aanval of kies een aangrenzende tegel.",
+  "hudFeedbackMovementForeignCityTitle": "Buitenlandse stad",
+  "hudFeedbackMovementForeignCityBody": "Je kunt een vreemde stad niet betreden met een normale beweging. Gebruik Aanval of kies een andere tegel.",
+  "hudFeedbackMovementHiddenRouteTooFarTitle": "Route te ver",
+  "hudFeedbackMovementHiddenRouteTooFarBody": "Je kunt zo'n lange route door onontdekt terrein niet uitstippelen. Kies een korter segment of gebruik automatische verkenning van scout.",
+  "hudFeedbackMovementBlockedTerrainTitle": "Terrein blokkeert beweging",
+  "hudFeedbackMovementBlockedTerrainBody": "Deze eenheid kan dat terreintype niet betreden. Kies een andere tegel of een route eromheen.",
+  "hudFeedbackMovementInsufficientUnitMovementTitle": "Niet genoeg beweging",
+  "hudFeedbackMovementInsufficientUnitMovementBody": "Deze eenheid heeft niet genoeg beweging om dat gebied te betreden. Verbeter haar of gebruik een andere eenheid.",
+  "hudFeedbackMovementNoRouteTitle": "Geen traject",
+  "hudFeedbackMovementNoRouteBody": "Er is geen beschikbare route naar die tegel. Probeer een dichterbij gelegen doelwit of een andere benadering.",
+  "selectionCommandUnavailableDescription": "Actie \"{label}\" is niet beschikbaar voor de huidige selectie.",
+  "@selectionCommandUnavailableDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandActiveDescription": "Actie \"{label}\" is een actieve modus. Kies een doel op de kaart of annuleer de modus als je van gedachten bent veranderd.",
+  "@selectionCommandActiveDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandProminentDescription": "Actie \"{label}\" is momenteel het belangrijkste commando voor deze selectie.",
+  "@selectionCommandProminentDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandDefaultDescription": "Voert actie \"{label}\" uit voor de momenteel geselecteerde eenheid, stad of tegel.",
+  "@selectionCommandDefaultDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionInfoChipDisabledDescription": "Dit informatiepaneel is niet beschikbaar voor de huidige selectie.",
+  "selectionInfoChipOpenDescription": "Opent \"{label}\"-details voor de momenteel geselecteerde tegel, eenheid of stad.",
+  "@selectionInfoChipOpenDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "turnCountLabel": "{count, plural, =0{0 beurten} =1{1 beurt} other{{count} beurten}}",
+  "@turnCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnPillLabel": "T{turn}",
+  "@turnPillLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "turnEtaNoProgress": "geen vooruitgang",
+  "turnEtaDetailLabel": "{turnsLabel} • draai {turn}",
+  "@turnEtaDetailLabel": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "turnEtaTooltipNoTurn": "{turnsLabel} om te voltooien",
+  "@turnEtaTooltipNoTurn": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "turnEtaTooltipExpectedTurn": "{turnsLabel} voltooid • verwachte beurt {turn}",
+  "@turnEtaTooltipExpectedTurn": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "modeBannerWorkedTilesTitle": "Bewerkte tegels",
+  "modeBannerWorkedTilesInstruction": "Tik op gecontroleerde tegels om stadswerk in of uit te schakelen.",
+  "modeBannerCityGrowthTitle": "Groei van de stad",
+  "modeBannerCityGrowthInstructionSelected": "De geselecteerde tegel wordt geclaimd bij de volgende stadsgroei. Bevestig het of kies een andere tegel.",
+  "modeBannerCityGrowthInstructionEmpty": "Tik op een omlijnde tegel om het volgende groeiveld te kiezen. Zonder keuze zal de stad gebruik maken van haar aanbeveling.",
+  "modeBannerWorkerActionTitle": "Verbetering van tegels",
+  "modeBannerWorkerActionInstructionPicked": "Bevestig de verbetering in de werknemerspop-up.",
+  "modeBannerWorkerActionInstructionEmpty": "Kies een verbeteringstype in de werknemerspop-up.",
+  "modeBannerMerchantTradeRouteTitle": "Handelsroute",
+  "modeBannerMerchantTradeRouteInstruction": "Kies een van je steden. De handelaar reist er automatisch heen en keert terug na aankomst.",
+  "modeBannerMerchantMoveToCityTitle": "Ga naar stad",
+  "modeBannerMerchantMoveToCityInstruction": "Kies een van je steden. De handelaar plant een pad naar het centrum zonder een handelsroute te maken.",
+  "workerActionSelectedImprovement": "Geselecteerd: {title}",
+  "@workerActionSelectedImprovement": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "workerActionSelectImprovement": "Kies voor verbetering",
+  "workerActionBuildDetailTitle": "Tegelverbetering",
+  "workerActionBuildImprovement": "Bouw {title}",
+  "@workerActionBuildImprovement": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "workerActionSelectionHint": "Klik op een verbetering voor deze tegel, inspecteer de opbrengsten en bevestig de build.",
+  "workerActionNoYieldChange": "geen opbrengstverandering",
+  "modeBannerResearchSelectionTitle": "Kies voor onderzoek",
+  "modeBannerResearchSelectionInstruction": "Open de technologieboom en kies een onderzoeksdoel om de beurt voort te zetten.",
+  "modeBannerUnitTurnSkipTitle": "Beurt overgeslagen",
+  "modeBannerUnitTurnSkipInstruction": "De eenheid wacht tot de volgende beurt. De staat ervan is zichtbaar in de onderste balk.",
+  "modeBannerCommanderMergeTitle": "Troepen samenvoegen",
+  "modeBannerCommanderMergeInstruction": "Selecteer een bevriende eenheid die de commandant aan het leger kan toevoegen.",
+  "modeBannerAttackTargetingTitle": "Aanval",
+  "modeBannerAttackTargetingInstructionSelected": "Controleer de gevechtsvoorspelling in de pop-up en bevestig de aanval.",
+  "modeBannerAttackTargetingInstructionEmpty": "Selecteer een vijand binnen bereik of zijn vakje om de gevechtsvoorspelling te zien.",
+  "modeBannerAttackRetreatProgress": "Toevluchtsoord",
+  "modeBannerActionToolbarHint": "Gebruik de onderste werkbalk voor acties wanneer je ze nodig hebt.",
+  "combatPreviewConfirmBody": "De geselecteerde eenheid zal na bevestiging onmiddellijk aanvallen.",
+  "combatPreviewOutcomeLabel": "Resultaat",
+  "combatPreviewTargetLabel": "Doel",
+  "combatPreviewRetaliationLabel": "Wraak",
+  "combatPreviewStrengthLabel": "Kracht",
+  "combatPreviewAttackerRole": "Aanvaller",
+  "combatPreviewDefenderRole": "Verdediger",
+  "combatPreviewCityRole": "Stad",
+  "combatPreviewOutcomeLine": "Resultaat: {outcome}",
+  "@combatPreviewOutcomeLine": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewOutcomeCityFalls": "stad valt",
+  "combatPreviewOutcomeDefenderKilled": "verdediger sterft",
+  "combatPreviewOutcomeAttackerKilled": "aanvaller sterft als vergelding",
+  "combatPreviewOutcomeDefenderRetreated": "verdediger zal zich terugtrekken",
+  "combatPreviewOutcomeCitySurvives": "stad overleeft",
+  "combatPreviewOutcomeDefenderSurvives": "verdediger overleeft",
+  "combatPreviewTargetLine": "Doel: HP {hpBefore}->{hpAfter}/{hpMax}, aanval {attack} versus verdediging {defense} (-{damage})",
+  "@combatPreviewTargetLine": {
+    "placeholders": {
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewNoRetaliationLine": "Vergelding: geen (afstandsaanval, afstand {distance}, bereik {range})",
+  "@combatPreviewNoRetaliationLine": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "range": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewRetaliationLine": "Vergelding: aanval {attack} versus verdediging {defense} (-{damage}), HP {hpBefore}->{hpAfter}/{hpMax}",
+  "@combatPreviewRetaliationLine": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      },
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewHpDamageValue": "{hpBefore} → {hpAfter}/{hpMax} HP, -{damage}",
+  "@combatPreviewHpDamageValue": {
+    "placeholders": {
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewForecastTitle": "Gevechtsvoorspelling",
+  "combatPreviewNoHpLoss": "geen schade",
+  "combatPreviewHpAfterSemantics": "{hpAfter} van {hpMax} HP na gevecht verloor {loss} HP",
+  "@combatPreviewHpAfterSemantics": {
+    "placeholders": {
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "loss": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewStrengthValue": "{attack}-aanval versus {defense}-verdediging",
+  "@combatPreviewStrengthValue": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageTitle": "Waarom deze voorspelling?",
+  "combatPreviewAdvantageAttacker": "Aanvalsvoordeel: {country} heeft {attack}-aanval tegen {defense}-verdediging; het doelwit verliest ongeveer {damage} HP.",
+  "@combatPreviewAdvantageAttacker": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageDefender": "Verdedigingsvoordeel: {country} heeft {defense}-verdediging tegen {attack}-aanvallen; de hit gaat over {damage} HP.",
+  "@combatPreviewAdvantageDefender": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageEven": "Gelijkmatig vechten: {attack}-aanval tegen {defense}-verdediging; de voorspelde schade bedraagt ​​ongeveer {damage} HP.",
+  "@combatPreviewAdvantageEven": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewTerrainLine": "Posities: {attackerCountry}-aanvallen vanuit {attackerTerrain}. {defenderCountry} verdedigt op {defenderTerrain}.",
+  "@combatPreviewTerrainLine": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "attackerTerrain": {
+        "type": "String"
+      },
+      "defenderCountry": {
+        "type": "String"
+      },
+      "defenderTerrain": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewSourcesLine": "De rand komt van: {sources}.",
+  "@combatPreviewSourcesLine": {
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewPositiveSourcesLine": "Helpt de aanval ({attackerCountry}): {sources}.",
+  "@combatPreviewPositiveSourcesLine": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewNegativeSourcesLine": "Helpt de verdediging ({defenderCountry}): {sources}.",
+  "@combatPreviewNegativeSourcesLine": {
+    "placeholders": {
+      "defenderCountry": {
+        "type": "String"
+      },
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewNoSourcesLine": "Er zijn geen aanpassingen van toepassing: de statistieken van de basiseenheid en het gevechtsresultaat bepalen deze voorspelling.",
+  "combatPreviewNoRetaliationReason": "Geen vergelding: dit is een afstandsaanval (afstand {distance}, aanvalsbereik {range}).",
+  "@combatPreviewNoRetaliationReason": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "range": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewNoRetaliationDefenderDefeated": "Geen vergelding: het doelwit wordt verslagen voordat het kan antwoorden.",
+  "combatPreviewNoRetaliationDefenderRetreats": "Geen vergelding: het doelwit trekt zich terug na de treffer.",
+  "combatPreviewNoRetaliationNoAttack": "Geen vergelding: het doelwit heeft in deze voorspelling geen aanvalskracht.",
+  "combatPreviewRetaliationRisk": "Vergelding: {defenderCountry} antwoordt en {attackerCountry} verliest ongeveer {damage} HP.",
+  "@combatPreviewRetaliationRisk": {
+    "placeholders": {
+      "defenderCountry": {
+        "type": "String"
+      },
+      "attackerCountry": {
+        "type": "String"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewSourceAttackTerrain": "aanvaller terrein",
+  "combatPreviewSourceDefenseTerrain": "verdediger terrein",
+  "combatPreviewSourceTechnology": "technologie",
+  "combatPreviewSourceVeterancy": "ervaring",
+  "combatPreviewSourceCityGarrison": "stadsgarnizoen",
+  "combatPreviewSourceMixedArmy": "samenstelling van de eenheid",
+  "combatCounterSpearmanVsMountedAttack": "speerdragers tegen bereden eenheden",
+  "combatCounterSpearmanVsMountedDefense": "speerdragers houden stand tegen bereden eenheden",
+  "combatCounterArcherDefensiveTerrainDefense": "boogschutters in verdedigend terrein",
+  "combatCounterCavalryRoughAttack": "cavalerie vertraagd door ruw terrein",
+  "combatCounterCavalryOpenRaid": "cavalerieaanval op open terrein",
+  "combatCounterHeavyInfantryBreakthrough": "zware infanterie breekt de linie",
+  "terrainOcean": "oceaan",
+  "terrainCoast": "kust",
+  "terrainLake": "meer",
+  "terrainPlains": "vlaktes",
+  "terrainGrassland": "grasland",
+  "terrainDesert": "woestijn",
+  "terrainTundra": "toendra",
+  "terrainSnow": "sneeuw",
+  "terrainMountain": "bergen",
+  "terrainHills": "heuvels",
+  "terrainWetlands": "wetlands",
+  "terrainJungle": "oerwoud",
+  "terrainForest": "woud",
+  "terrainRiver": "rivier",
+  "modeBannerMoveTargetingTitle": "Bewegingsmodus",
+  "modeBannerMoveTargetingInstruction": "De eerste tik op een vakje stippelt de route uit. Tik nogmaals op hetzelfde vakje om te bewegen; een langere route staat in de wachtrij voor toekomstige afslagen.",
+  "modeBannerMoveTargetingCancelAction": "Exit beweging",
+  "modeBannerWorkerFindTileTitle": "Werker: zoek een tegel",
+  "modeBannerWorkerFindTileInstruction": "{reason} Verplaats de arbeider naar een van je stadstegels zonder verbetering, of naar terrein dat overeenkomt met een ontgrendeld bouwwerk.",
+  "@modeBannerWorkerFindTileInstruction": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "modeBannerWorkerFindTileDetailOwnCity": "Eigen stadstegel",
+  "modeBannerWorkerFindTileDetailNoImprovement": "Geen verbetering",
+  "modeBannerWorkerFindTileDetailMatchingTerrain": "Bijpassend terrein",
+  "modeBannerWorkerImproveTileTitle": "Werker: verbeter de tegel",
+  "modeBannerWorkerImproveTileInstruction": "Deze tegel kan worden verbeterd. Als je wilt handelen, gebruik dan de onderste werkbalk, kies de beste build en bevestig deze in het onderste paneel.",
+  "modeBannerWorkerImproveTileDetailYields": "Verhoogt de tegelopbrengst",
+  "modeBannerWorkerImproveTileDetailMovement": "Maakt gebruik van beweging",
+  "modeBannerScoutExploreTitle": "Verkennen: verkennen",
+  "modeBannerScoutExploreInstruction": "Schakel verkenning in via de onderste werkbalk zodat de verkenner automatisch de dichtstbijzijnde onbekende tegels ontdekt. Je kunt het later annuleren via eenheidsacties.",
+  "modeBannerScoutExploreDetailAuto": "Automatische verkenning",
+  "modeBannerScoutExploreDetailReveal": "Onthult de kaart",
+  "modeBannerSettlerFindSiteTitle": "Settler: zoek een site",
+  "modeBannerSettlerFindSiteInstruction": "{reason} Verplaats de kolonist naar een vrije tegel buiten de stadsgrenzen; vermijd water, bergen en bezette centra.",
+  "@modeBannerSettlerFindSiteInstruction": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "modeBannerSettlerFindSiteDetailFreeHex": "Gratis zeshoek",
+  "modeBannerSettlerFindSiteDetailOutsideBorders": "Buiten grenzen",
+  "modeBannerSettlerFindSiteDetailLandOrCoast": "Land of kust",
+  "modeBannerSettlerFoundCityTitle": "Kolonist: gevonden stad",
+  "modeBannerSettlerFoundCityInstruction": "Deze tegel kan een stad worden. Als je er een wilt stichten, gebruik dan de onderste werkbalk en kies vervolgens de starttegels van de stad op de kaart.",
+  "modeBannerSettlerFoundCityDetailNewCity": "Nieuwe stad",
+  "modeBannerSettlerFoundCityDetailChooseTiles": "Kies tegels na het tikken",
+  "modeBannerCityFoundingTitle": "Een stad stichten",
+  "modeBannerCityFoundingInstructionReady": "Klaar. Bevestig de oprichting van de stad in de onderste werkbalk of wijzig de geselecteerde tegels op de kaart.",
+  "modeBannerCityFoundingInstructionPick": "Kies {count} verbonden tegels rond de kolonist. Nadat je ze hebt gekozen, is de stadsstichtingsactie beschikbaar in de onderste werkbalk.",
+  "@modeBannerCityFoundingInstructionPick": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionImprovementListTitle": "Tegelverbeteringen",
+  "mapInspectionPossibleImprovementsTitle": "Mogelijke verbeteringen",
+  "mapInspectionNoPossibleImprovements": "Geen mogelijke verbeteringen",
+  "mapInspectionImprovementAvailableFromStart": "vanaf het begin",
+  "mapInspectionObjectiveTitle": "Kaartdoel",
+  "mapObjectiveRuins": "Ruïnes",
+  "mapObjectiveStrategicPass": "Strategische pas",
+  "mapObjectiveHolySite": "Heilige plaats",
+  "mapObjectiveLegendaryResource": "Legendarische afzetting",
+  "mapObjectiveRuinsDescription": "Een neutraal verkenningspunt. Vasthouden verhoogt de overwinningsdruk.",
+  "mapObjectiveStrategicPassDescription": "Een belangrijke doorgang door het terrein. Controle maakt beweging tot voordeel.",
+  "mapObjectiveHolySiteDescription": "Een cultureel belangrijke plek. Controle geeft goud en overwinningspunten.",
+  "mapObjectiveLegendaryResourceDescription": "Een zeldzame afzetting die uitbreiding of conflict waard is. Controle geeft de grootste beloning.",
+  "mapObjectiveStatusNeutral": "Houd {turns} beurten vast",
+  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "mapObjectiveStatusHolding": "Vasthouden {held}/{required}",
+  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "mapObjectiveStatusCompleted": "Gecontroleerd {held}/{required}",
+  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "mapObjectiveStatusContested": "Betwist",
+  "mapObjectiveRewardVictoryPoints": "+{points} OP",
+  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "mapObjectiveRewardGoldPerTurn": "+{gold} goud/beurt",
+  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "selectionImprovementStateBuilt": "GEBOUWD",
+  "selectionImprovementStateAvailable": "BESCHIKBAAR",
+  "selectionImprovementStateNeedsTechnology": "TECH",
+  "selectionImprovementStateNeedsCity": "STAD",
+  "selectionImprovementStateBlocked": "BEPERKEN",
+  "selectionImprovementNoBonus": "Geen bonus",
+  "workerImprovementYieldFood": "+{value} eten",
+  "workerImprovementYieldProduction": "+{value} productie",
+  "workerImprovementYieldGold": "+{value} goud",
+  "workerImprovementYieldDefense": "+{value} verdediging",
+  "@workerImprovementYieldFood": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldProduction": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldGold": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "workerImprovementNoBonus": "Geen extra bonus.",
+  "workerImprovementOnlyWorker": "Alleen een arbeider kan dit bouwen.",
+  "workerImprovementWorkerBusy": "De arbeider is al aan het bouwen.",
+  "workerImprovementStopQueuedMove": "Stop eerst de geplande beweging.",
+  "workerImprovementMissingTile": "Geen tegel onder de unit.",
+  "workerImprovementMissingResource": "Deze verbetering vereist een bijpassende hulpbron.",
+  "workerImprovementInvalidTerrain": "Verkeerd basisterrein voor deze verbetering.",
+  "workerImprovementMissingRiver": "Voor deze verbetering is een rivier nodig.",
+  "workerImprovementBlocked": "Deze actie is nu geblokkeerd.",
+  "unitSelectionWorkerJobTurns": "{name} ({turns}T)",
+  "@unitSelectionWorkerJobTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueNoMatchingImprovement": "Geen overeenkomstige verbetering",
+  "resourceValueSelectWorkerOrCity": "Selecteer werknemer of stad",
+  "resourceValueTileAlreadyImproved": "Tile heeft al een verbetering",
+  "resourceValueCityCenter": "Stadscentrum",
+  "resourceValueWorksForCity": "Werkt voor: {city}",
+  "@resourceValueWorksForCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueOutsideCityBorders": "Buiten de stadsgrenzen",
+  "resourceValueNoLegalImprovementForTile": "Geen juridische verbetering voor deze tegel",
+  "resourceValueRequiresTechnology": "Vereist: {technology}",
+  "@resourceValueRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueAvailableForWorker": "Beschikbaar voor werknemer",
+  "resourceDetailNoResourcesOnTile": "Geen grondstoffen op deze tegel",
+  "resourceDetailValueSection": "Waarde",
+  "resourceDetailCurrentSection": "Nu",
+  "resourceDetailAfterImprovementSection": "Na verbetering",
+  "resourceDetailYieldComparison": "Tegelopbrengsten",
+  "resourceDetailRequiresSection": "Vereist",
+  "resourceDetailBestMoveSection": "Beste zet",
+  "resourceDetailNoMatchingImprovementBody": "Geen overeenkomende verbetering voor deze bron.",
+  "resourceDetailRequirementNoneCanBuild": "Niets. Je kunt meteen bouwen.",
+  "resourceDetailRequirementOutsideCity": "De tegel moet binnen de stadsgrenzen liggen.",
+  "resourceDetailRequirementAlreadyImproved": "Niets. De tegel is al verbeterd.",
+  "resourceDetailRequirementCityCenter": "Er wordt geen arbeider gebouwd in het stadscentrum.",
+  "resourceDetailRequirementSelectWorkerOrCity": "Een arbeiders- of stadsselectie.",
+  "resourceDetailRequirementNoLegalImprovement": "Geen beschikbare build voor deze tegel.",
+  "resourceDetailBestMoveRequiresTechnology": "Ontgrendel eerst {technology} en bouw vervolgens {improvement}.",
+  "@resourceDetailBestMoveRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceDetailBestMoveAvailable": "Stuur een arbeider en bouw {improvement}.",
+  "@resourceDetailBestMoveAvailable": {
+    "placeholders": {
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceDetailBestMoveOutsideCity": "Breid de stadsgrenzen uit of zoek een stad dichter bij de bron.",
+  "resourceDetailBestMoveAlreadyImproved": "Bewaar de tegel binnen de grenzen en bewerk hem wanneer dit in het stadsplan past.",
+  "resourceDetailBestMoveCityCenter": "Behandel de hulpbron als waarde in het stadscentrum; werknemers verbeteren deze tegel niet.",
+  "resourceDetailBestMoveSelectWorkerOrCity": "Selecteer een arbeider of stad om de legale constructie te controleren.",
+  "resourceDetailBestMoveNoLegalImprovement": "Behandel de hulpbron als een uitbreidingsdoel; er is hier geen aparte constructie.",
+  "resourceValueUnlockedByTechnology": "Ontgrendeld door {technology}: {improvement}.",
+  "@resourceValueUnlockedByTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueUnlocksFullYieldAfterTechnology": "Na {technology}: {improvement} ontgrendelt de volledige tegelopbrengst.",
+  "@resourceValueUnlocksFullYieldAfterTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueResearchBoostLine": "Onderzoeksboost: het beheersen van deze hulpbron versnelt {technology} (kosten -{discount}).",
+  "@resourceValueResearchBoostLine": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueTechnologyControlledResourceBonus": "Na {technology}: +{production} PROD voor elke gecontroleerde bron.",
+  "@resourceValueTechnologyControlledResourceBonus": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueNoBaseYieldSummary": "De hulpbron zelf voegt geen basisopbrengst toe. De hele hex heeft nu {yield}; de volledige waarde komt van verbeteringen en ontgrendelingen.",
+  "@resourceValueNoBaseYieldSummary": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueBaseYieldSummary": "De bron geeft {resourceYield}. De hele hex heeft nu {tileYield} vóór verbetering.",
+  "@resourceValueBaseYieldSummary": {
+    "placeholders": {
+      "resourceYield": {
+        "type": "String"
+      },
+      "tileYield": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueExpansionStrategic": "Claim het voordat een rivaal dat doet: dit is een strategische hulpbron voor productie, legers of latere technologieën.",
+  "resourceValueExpansionFood": "Een goed uitbreidingsdoel voor de groei van de stad: meer voedsel betekent een snellere bevolking en meer bewerkte tegels.",
+  "resourceValueExpansionProduction": "Een goed uitbreidingsdoel voor het productietempo: gebouwen, eenheden en kaartdruk komen sneller aan.",
+  "resourceValueExpansionTrade": "Een goede expansiedoelstelling voor de handel: na verbetering ondersteunt het goud en het voortzetten van de groei sterk.",
+  "resourceValueExpansionEconomy": "Een goed expansiedoel voor de economie: goud helpt legers in stand te houden, reserves op te bouwen en doelpunten te dichten.",
+  "resourceValueYieldFood": "+{amount} VOEDSEL",
+  "@resourceValueYieldFood": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldProduction": "+{amount} ART",
+  "@resourceValueYieldProduction": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldGold": "+{amount} GOUD",
+  "@resourceValueYieldGold": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldDefense": "+{amount} DEF",
+  "@resourceValueYieldDefense": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueZeroBaseYield": "0 basisopbrengst",
+  "resourceValueCategoryBonus": "Bonus",
+  "resourceValueCategoryLuxury": "Luxe",
+  "resourceValueCategoryStrategic": "Strategisch",
+  "resourceValueCategoryBonusFuture": "Waarde werkt meestal meteen: snellere groei en een betere start van de stad.",
+  "resourceValueCategoryLuxuryFuture": "De grootste waarde verschijnt na grensclaim en de juiste verbetering.",
+  "resourceValueCategoryStrategicFuture": "Dit is een strategische hulpbron: stel deze veilig voor latere productie en militaire druk.",
+  "cityYieldBreakdownTitle": "Stedelijke economie",
+  "cityYieldBreakdownSubtitle": "Reëel rendement/omzet • groei {growth} • {eta}",
+  "@cityYieldBreakdownSubtitle": {
+    "placeholders": {
+      "growth": {
+        "type": "String"
+      },
+      "eta": {
+        "type": "String"
+      }
+    }
+  },
+  "cityYieldBreakdownProductionSources": "Productiebronnen",
+  "cityYieldBreakdownScienceSources": "Wetenschappelijke bronnen",
+  "cityYieldBreakdownPerTurnSuffix": "/draai",
+  "cityYieldBreakdownNoProduction": "Geen productie",
+  "cityYieldBreakdownNoScience": "Geen wetenschap",
+  "cityYieldBreakdownCenter": "Centrum",
+  "cityYieldBreakdownPopulationFields": "Bevolkingsvelden",
+  "cityYieldBreakdownWorkers": "Werknemers",
+  "cityYieldBreakdownBuildings": "Gebouwen",
+  "cityYieldBreakdownTechnologies": "Technologieën",
+  "cityYieldBreakdownSpecialization": "Specialisatie",
+  "cityYieldBreakdownGoldMultiplier": "Gouden vermenigvuldiger",
+  "cityYieldBreakdownUpkeep": "Onderhoud",
+  "cityYieldBreakdownFieldsBucket": "Velden",
+  "cityYieldBreakdownCenterDetail": "Vast rendement vanuit het centrum",
+  "cityYieldBreakdownGoldMultiplierDetail": "Percentage bonus na optelling van goudbronnen",
+  "cityYieldBreakdownBaseScience": "Basis van de stad",
+  "cityYieldBreakdownBaseScienceDetail": "Vaste wetenschap gegenereerd door elke stad",
+  "cityYieldBreakdownResearchProject": "Onderzoeksproject",
+  "cityYieldBreakdownResearchProjectDetail": "Huidige stadsproductie omgezet in wetenschap",
+  "cityYieldBreakdownScienceSpecializationDetail": "Stadswetenschappelijk profiel",
+  "cityYieldBreakdownScienceTechnologyDetail": "Wetenschapsbonus van ontgrendelde technologieën",
+  "cityYieldBreakdownNoWorkedPopulationFields": "Geen bewerkte populatievelden",
+  "cityYieldBreakdownOneWorkedPopulationField": "1 bewerkt bevolkingsveld",
+  "cityYieldBreakdownManyWorkedPopulationFields": "{count} bewerkte populatievelden",
+  "@cityYieldBreakdownManyWorkedPopulationFields": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoAssignedWorkers": "Geen toegewezen werknemers",
+  "cityYieldBreakdownOneAssignedWorker": "1 veld geactiveerd door een arbeider",
+  "cityYieldBreakdownManyAssignedWorkers": "{count}-velden geactiveerd door werknemers",
+  "@cityYieldBreakdownManyAssignedWorkers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoPassiveImprovements": "Geen passieve verbeteringen",
+  "cityYieldBreakdownOnePassiveImprovement": "1 onbewerkte verbetering, halve opbrengst",
+  "cityYieldBreakdownManyPassiveImprovements": "{count} onbewerkte verbeteringen, halve opbrengst",
+  "@cityYieldBreakdownManyPassiveImprovements": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoBuildings": "Geen gebouwen",
+  "cityYieldBreakdownBuildingsNoDirectYield": "Gebouwen zonder direct rendement",
+  "cityYieldBreakdownOneBuildingEconomicEffect": "1 gebouw met een economisch effect",
+  "cityYieldBreakdownManyBuildingEconomicEffects": "{count} gebouwen met economische effecten",
+  "@cityYieldBreakdownManyBuildingEconomicEffects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoTechnologyYield": "Geen technologie-opbrengstbonus",
+  "cityYieldBreakdownTechnologyYield": "Bonussen van ontgrendelde technologieën",
+  "cityYieldBreakdownNoScienceBuildings": "Geen wetenschapsgebouwen",
+  "cityYieldBreakdownOneScienceBuilding": "1 wetenschapsgebouw",
+  "cityYieldBreakdownManyScienceBuildings": "{count} wetenschappelijke gebouwen met afnemende opbrengsten",
+  "@cityYieldBreakdownManyScienceBuildings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownGrowthFood": "{storedFood}/{growthCost} voedsel",
+  "@cityYieldBreakdownGrowthFood": {
+    "placeholders": {
+      "storedFood": {
+        "type": "int"
+      },
+      "growthCost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownStagnation": "stagnatie",
+  "cityYieldBreakdownUpkeepBlocked": "Bevolking {population}: kosten {cost}, groei gestopt",
+  "@cityYieldBreakdownUpkeepBlocked": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownUpkeepCost": "Voedselonderhoud voor bevolking {population}",
+  "@cityYieldBreakdownUpkeepCost": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownGrowthSpecializationDetail": "Groeiprofiel van de stad",
+  "cityYieldBreakdownIndustrySpecializationDetail": "Profiel van de stadsindustrie",
+  "cityYieldBreakdownCommerceSpecializationDetail": "Stadshandelsprofiel",
+  "cityYieldBreakdownScienceSpecializationCityDetail": "Stadswetenschappelijk profiel",
+  "cityYieldBreakdownMilitarySpecializationDetail": "Profiel van het stadsgarnizoen",
+  "cityYieldBreakdownNoSpecialization": "Geen specialisatie",
+  "cityProjectWealth": "Rijkdom",
+  "cityProjectResearch": "Onderzoek",
+  "cityProductionProjectsSection": "Stadsprojecten",
+  "cityProductionSpecializationSection": "Specialisatie van de stad",
+  "cityProductionSortLabel": "Soort",
+  "cityProductionHeaderSubtitle": "{title} • {productionPerTurn} • {gold} goud",
+  "@cityProductionHeaderSubtitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "productionPerTurn": {
+        "type": "String"
+      },
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionBuiltLabel": "Gebouwd",
+  "cityProductionAvailableLabel": "Beschikbaar",
+  "cityProductionAvailableUnitLabel": "Beschikbaar",
+  "cityProductionUnitSupplyLimit": "Voedsellimiet {used}/{capacity}",
+  "@cityProductionUnitSupplyLimit": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionUnitSupplyCost": "voedsel {cost}",
+  "@cityProductionUnitSupplyCost": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionUnitSupplyUsed": "limiet {used}/{capacity}",
+  "@cityProductionUnitSupplyUsed": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionNextWorkerUpkeep": "volgende onderhoud: {upkeep}",
+  "@cityProductionNextWorkerUpkeep": {
+    "placeholders": {
+      "upkeep": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionCostShort": "{production}-artikelnr.",
+  "@cityProductionCostShort": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionPaceShort": "{production} prod./beurt",
+  "@cityProductionPaceShort": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "cityBuildingSortRecommended": "Aanbevolen",
+  "cityBuildingReplaceProgressWarning": "Als u een ander gebouw kiest, wordt {building} vervangen. De vooruitgang zal behouden blijven.",
+  "@cityBuildingReplaceProgressWarning": {
+    "placeholders": {
+      "building": {
+        "type": "String"
+      }
+    }
+  },
+  "cityBuildingSortFastestImpact": "Snelste impact",
+  "cityBuildingSortBestReturn": "Beste rendement",
+  "cityBuildingSortGrowth": "Groei",
+  "cityBuildingSortIndustry": "Industrie",
+  "cityBuildingSortScience": "Wetenschap",
+  "cityBuildingSortDefenseMilitary": "Defensie/militair",
+  "cityBuildingSortEconomy": "Economie",
+  "cityBuildingRequiresTechnology": "Vereist technologie",
+  "cityProductionContinuous": "continu",
+  "cityProductionNoProduction": "geen productie",
+  "cityProductionReady": "klaar",
+  "cityProductionTurnOne": "1 beurt",
+  "cityProductionTurns": "{turns} bochten",
+  "@cityProductionTurns": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionTreasuryGold": "Schatkist: {gold} goud",
+  "@cityProductionTreasuryGold": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionRushAction": "Spoed -{gold}",
+  "@cityProductionRushAction": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProjectGoldPerTurn": "+{gold} goud / beurt",
+  "@cityProjectGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProjectSciencePerTurn": "+{science} wetenschap / beurt",
+  "@cityProjectSciencePerTurn": {
+    "placeholders": {
+      "science": {
+        "type": "int"
+      }
+    }
+  },
+  "citySpecializationGrowth": "Groei",
+  "citySpecializationIndustry": "Industrie",
+  "citySpecializationCommerce": "Handel",
+  "citySpecializationMilitary": "Garnizoen",
+  "citySpecializationGrowthBonus": "+2 eten",
+  "citySpecializationIndustryBonus": "+2 productie",
+  "citySpecializationCommerceBonus": "+3 goud",
+  "citySpecializationScienceBonus": "+2 wetenschap",
+  "citySpecializationMilitaryProductionBonus": "+1 productie",
+  "citySpecializationMilitaryDefenseBonus": "+2 verdediging",
+  "citySpecializationMilitaryUnitProductionBonus": "+1 eenheidsprod.",
+  "citySpecializationBestFit": "Beste match",
+  "eventCityFoundedTitle": "Stad gesticht",
+  "eventCityBuiltBuildingTitle": "Bouw voltooid",
+  "eventCityProducedUnitTitle": "Eenheid getraind",
+  "eventCityClaimedHexTitle": "Stadsgrenzen",
+  "eventCityClaimedHexBody": "{cityName}: nieuwe tegel",
+  "@eventCityClaimedHexBody": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventUnitMovedTitle": "Eenheid beweging",
+  "eventUnitPromotedTitle": "Eenheid gepromoveerd",
+  "eventUnitExperienceTitle": "Ervaring",
+  "eventUnitExperienceBody": "{unitName}: +{amount} XP ({rank})",
+  "@eventUnitExperienceBody": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "int"
+      },
+      "rank": {
+        "type": "String"
+      }
+    }
+  },
+  "eventUnitAttackedTitle": "Aanval",
+  "eventCombatTitle": "Gevecht",
+  "eventCombatDamageLine": "{unitName}: -{damage} PK -> {result}",
+  "@eventCombatDamageLine": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      },
+      "damage": {
+        "type": "int"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "eventCombatNoRetaliationLine": "{unitName}: geen vergelding",
+  "@eventCombatNoRetaliationLine": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventCombatSimpleBody": "{attackerName} ({attackerCountry}) viel {defenderName} ({defenderCountry}) aan - HP {attackerHp}:{defenderHp}",
+  "@eventCombatSimpleBody": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "attackerName": {
+        "type": "String"
+      },
+      "defenderCountry": {
+        "type": "String"
+      },
+      "defenderName": {
+        "type": "String"
+      },
+      "attackerHp": {
+        "type": "int"
+      },
+      "defenderHp": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDiplomaticProposalAcceptedStatus": "Geaccepteerd",
+  "eventDiplomaticProposalRejectedStatus": "Afgewezen",
+  "eventDiplomaticProposalExpiredStatus": "Verlopen",
+  "eventUnitKilledTitle": "Eenheid verslagen",
+  "eventUnitRetreatedTitle": "Toevluchtsoord",
+  "eventCityCapturedTitle": "Stad veroverd",
+  "eventCityDestroyedTitle": "Stad vernietigd",
+  "eventTurnEndedTitle": "De beurt is geëindigd",
+  "eventWorkerCompletedJobTitle": "Werk voltooid",
+  "eventResearchPointsTitle": "Wetenschap",
+  "eventResearchPointsBody": "{playerName}: +{points} wetenschap",
+  "@eventResearchPointsBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "eventTechnologyResearchedTitle": "Technologie ontdekt",
+  "eventStrategicResourceDiscoveredTitle": "Strategische grondstof ontdekt",
+  "eventStrategicResourceDiscoveredBody": "{playerName}: {resourceName}",
+  "@eventStrategicResourceDiscoveredBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "resourceName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventStrategicResourceControlledDetail": "Onder controle: {count}",
+  "@eventStrategicResourceControlledDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourceRivalDetail": "Rivalen: {count}",
+  "@eventStrategicResourceRivalDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourceUnclaimedDetail": "Niet opgeëist: {count}",
+  "@eventStrategicResourceUnclaimedDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourcePressureSecured": "Voorraad veiliggesteld; verdedig de bron.",
+  "eventStrategicResourcePressureExpansionRace": "Kolonisatierace: claim de dichtstbijzijnde afzetting voor je rivalen.",
+  "eventStrategicResourcePressureContested": "Betwiste voorraad: rivalen beheersen ook bronnen.",
+  "eventStrategicResourcePressureRivalMonopoly": "Rivaal monopolie: bereid handel of een expeditie voor.",
+  "eventStrategicResourceSettleHint": "Afzetting buiten grenzen op {col}:{row}; overweeg daar een stad te stichten.",
+  "@eventStrategicResourceSettleHint": {
+    "placeholders": {
+      "col": {
+        "type": "int"
+      },
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveSecuredTitle": "Kaartdoel veiliggesteld",
+  "eventMapObjectiveSecuredBody": "{playerName}: {objectiveName}",
+  "@eventMapObjectiveSecuredBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "objectiveName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventMapObjectiveHoldDetail": "Vastgehouden: {holdTurns}/{requiredHoldTurns}",
+  "@eventMapObjectiveHoldDetail": {
+    "placeholders": {
+      "holdTurns": {
+        "type": "int"
+      },
+      "requiredHoldTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveLocationDetail": "Positie: {col}:{row}",
+  "@eventMapObjectiveLocationDetail": {
+    "placeholders": {
+      "col": {
+        "type": "int"
+      },
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveVictoryRewardDetail": "+{points} overwinningspunten",
+  "@eventMapObjectiveVictoryRewardDetail": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveGoldRewardDetail": "+{gold} goud/beurt",
+  "@eventMapObjectiveGoldRewardDetail": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCivilizationMetTitle": "Nieuwe beschaving",
+  "eventCivilizationMetBody": "{civilizationName} ({playerName})",
+  "@eventCivilizationMetBody": {
+    "placeholders": {
+      "civilizationName": {
+        "type": "String"
+      },
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "civilizationMetPopupEyebrow": "Beschaving tegengekomen",
+  "civilizationMetPopupBody": "De beschaving van {civilizationName} is aan de horizon verschenen. Een nieuwe buur, rivaal of toekomstige bondgenoot maakt nu deel uit van jouw wereld.",
+  "@civilizationMetPopupBody": {
+    "placeholders": {
+      "civilizationName": {
+        "type": "String"
+      }
+    }
+  },
+  "civilizationMetPopupOk": "OK",
+  "eventCommandRejectedTitle": "Commando afgewezen",
+  "eventAllPlayersSubmittedTitle": "Iedereen klaar",
+  "eventAllPlayersSubmittedBody": "Draai {turn} ({players})",
+  "@eventAllPlayersSubmittedBody": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      },
+      "players": {
+        "type": "int"
+      }
+    }
+  },
+  "eventPlayerTimedOutTitle": "Automatisch indienen",
+  "eventPlayerTimedOutBody": "{playerName}: time-out tijdens beurt {turn}",
+  "@eventPlayerTimedOutBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatDefenderKilledDetail": "Verdediger verslagen",
+  "eventCombatAttackerKilledDetail": "Aanvaller verslagen",
+  "eventCombatDefenderRetreatedDetail": "Verdediger trok zich terug",
+  "eventCombatAttackDamageDetail": "Aanval: -{damage} HP",
+  "@eventCombatAttackDamageDetail": {
+    "placeholders": {
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatRetaliationDamageDetail": "Vergelding: -{damage} HP",
+  "@eventCombatRetaliationDamageDetail": {
+    "placeholders": {
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatRollDetail": "Rol {value}",
+  "@eventCombatRollDetail": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatNoRetaliationDetail": "Geen vergelding",
+  "eventDominationStartedTitle": "De overheersing begon",
+  "eventDominationRivalAboveTitle": "Rival boven de drempel",
+  "eventDominationBody": "{playerName}: {control}% / {required}%",
+  "@eventDominationBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "eventDominationHoldProgressDetail": "{held}/{required}-beurten vastgehouden",
+  "@eventDominationHoldProgressDetail": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDominationReadyDetail": "Conditie gereed",
+  "eventDominationKeepHoldingDetail": "Houd langer vast voor {turns}",
+  "eventDominationInterruptDetail": "Onderbreken binnen {turns}",
+  "@eventDominationKeepHoldingDetail": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "@eventDominationInterruptDetail": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "eventTurnCountLabel": "{count, plural, =0{0 beurten} =1{1 beurt} other{{count} beurten}}",
+  "@eventTurnCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatDefeatedResult": "verslagen",
+  "eventCombatDefenderRetreatedResult": "{hp} HP, terugtrekken",
+  "eventCombatHpResult": "{hp} PK",
+  "@eventCombatDefenderRetreatedResult": {
+    "placeholders": {
+      "hp": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventCombatHpResult": {
+    "placeholders": {
+      "hp": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatTerrainModifierLabel": "Terrein {terrain}",
+  "eventCombatTechModifierLabel": "Technologie {technology}",
+  "eventCombatRankModifierLabel": "Rang {rank}",
+  "eventCombatCityGarrisonModifier": "Stad garnizoen",
+  "eventCombatMixedArmyModifier": "Gemengd leger",
+  "eventCombatStatAttack": "aanval",
+  "eventCombatStatDefense": "verdediging",
+  "eventCombatStatHp": "PK",
+  "eventCombatStatRange": "bereik",
+  "eventCombatStatMobility": "beweging",
+  "closeAction": "Dichtbij"
+}

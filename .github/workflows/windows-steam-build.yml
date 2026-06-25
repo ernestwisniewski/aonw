@@ -1,0 +1,85 @@
+name: Windows Steam Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_name:
+        description: Optional Flutter build name override, for example 0.1.0
+        required: false
+        type: string
+      build_number:
+        description: Optional Flutter build number override, for example 57
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  AONW_RELEASE_API_BASE_URL: https://api.aonw.net
+
+jobs:
+  build-windows:
+    name: Build Windows release
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+          cache: true
+
+      - name: Prepare Flutter
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+
+      - name: Build Windows release
+        shell: pwsh
+        run: |
+          Write-Host "Building Windows release with AONW_API_BASE_URL=$env:AONW_RELEASE_API_BASE_URL"
+
+          $flutterArgs = @(
+            "build",
+            "windows",
+            "--release",
+            "--no-pub",
+            "--dart-define=AONW_API_BASE_URL=$env:AONW_RELEASE_API_BASE_URL"
+          )
+
+          if ("${{ inputs.build_name }}" -ne "") {
+            $flutterArgs += "--build-name=${{ inputs.build_name }}"
+          }
+
+          if ("${{ inputs.build_number }}" -ne "") {
+            $flutterArgs += "--build-number=${{ inputs.build_number }}"
+          }
+
+          flutter @flutterArgs
+
+      - name: Package Steam artifact
+        shell: pwsh
+        run: |
+          $releasePath = "build/windows/x64/runner/Release"
+          $artifactRoot = "dist/steam-windows"
+          $zipPath = "dist/aonw-windows-steam.zip"
+
+          Remove-Item -Recurse -Force "dist" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force $artifactRoot | Out-Null
+          Copy-Item -Recurse -Force "$releasePath/*" $artifactRoot
+          Compress-Archive -Path "$artifactRoot/*" -DestinationPath $zipPath -Force
+
+      - name: Upload Windows Steam artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aonw-windows-steam-${{ github.run_number }}
+          path: |
+            dist/aonw-windows-steam.zip
+            dist/steam-windows/**
+          retention-days: 30

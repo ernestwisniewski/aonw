@@ -1,0 +1,1499 @@
+{
+  "version": 1,
+  "frames": {
+    "assets/sprites/improvements.png|field-improvement.camp.era-0|0": {
+      "offsetX": 0.3123085390873896,
+      "offsetY": -20.690779100489646,
+      "cropTop": 211.80149406934314,
+      "cropBottom": -57.51770643248176
+    },
+    "assets/sprites/improvements.png|field-improvement.farm.era-0|0": {
+      "offsetX": 0.13529257550335572,
+      "offsetY": -4.21183330868551,
+      "cropTop": 26.164901426174495,
+      "cropBottom": -29.698127304667523
+    },
+    "assets/sprites/improvements.png|field-improvement.farm.era-1|0": {
+      "offsetX": 0.10313286493288598,
+      "offsetY": -5.772710823619079,
+      "cropTop": 28.30241102470685,
+      "cropBottom": -36.32879192591342
+    },
+    "assets/sprites/improvements.png|field-improvement.farm.era-2|0": {
+      "offsetX": 0.0643194211409396,
+      "offsetY": -5.369506008835136,
+      "cropTop": 17.474111262583893,
+      "cropBottom": -37.32595955155521
+    },
+    "assets/sprites/improvements.png|field-improvement.farm.era-3|0": {
+      "offsetY": -6.587427704297305,
+      "cropTop": 42.96282508389261,
+      "cropBottom": -40.87229042227084
+    },
+    "assets/sprites/improvements.png|field-improvement.lumberMill.era-0|0": {
+      "offsetX": -0.27873791436464085,
+      "offsetY": -28.619746691266513,
+      "cropTop": 172.43558964416067,
+      "cropBottom": -175.12571281934314
+    },
+    "assets/sprites/improvements.png|field-improvement.lumberMill.era-1|0": {
+      "offsetX": 2.0152547750231884,
+      "offsetY": -29.10866426388811,
+      "cropLeft": -9.61784329379562,
+      "cropTop": 165.22710424270076,
+      "cropRight": 15.820797217153284,
+      "cropBottom": -178.72342609489053
+    },
+    "assets/sprites/improvements.png|field-improvement.lumberMill.era-2|0": {
+      "offsetX": 1.8179001933197565,
+      "offsetY": -28.926914470587466,
+      "cropLeft": -10.989022582116787,
+      "cropTop": 142.85076414233583,
+      "cropRight": 13.006614963503646,
+      "cropBottom": -176.7711279653285
+    },
+    "assets/sprites/improvements.png|field-improvement.lumberMill.era-3|0": {
+      "offsetX": 1.0132224916320516,
+      "offsetY": -28.513460262435707,
+      "cropLeft": -9.84637317518248,
+      "cropTop": 169.26881843065692,
+      "cropRight": 10.07490305656934,
+      "cropBottom": -175.99412636861322
+    },
+    "assets/sprites/improvements.png|field-improvement.mine.era-0|0": {
+      "offsetX": -0.24729708473154366,
+      "offsetY": -19.33299791025174,
+      "cropTop": 92.80852820889262,
+      "cropBottom": -117.2865195050335
+    },
+    "assets/sprites/improvements.png|field-improvement.mine.era-1|0": {
+      "offsetY": -18.962431671608194,
+      "cropTop": 91.49174182046978,
+      "cropBottom": -116.75980494966443
+    },
+    "assets/sprites/improvements.png|field-improvement.mine.era-2|0": {
+      "offsetX": 0.4879404362416108,
+      "offsetY": -19.298435683928158,
+      "cropTop": 82.50200555788582,
+      "cropBottom": -119.96991663171138
+    },
+    "assets/sprites/improvements.png|field-improvement.mine.era-3|0": {
+      "offsetX": 1.9244785557214517,
+      "offsetY": -18.648244905834183,
+      "cropLeft": -9.65049041970803,
+      "cropTop": 93.21424077181209,
+      "cropRight": 14.971971943430654,
+      "cropBottom": -116.38256344379194
+    },
+    "assets/sprites/improvements.png|field-improvement.orchard.era-0|0": {
+      "offsetX": 0.14416421979865773,
+      "offsetY": -11.662246924853898,
+      "cropTop": 60.69427178794612,
+      "cropBottom": -74.59595755621623
+    },
+    "assets/sprites/improvements.png|field-improvement.orchard.era-1|0": {
+      "offsetX": 0.07097315436241612,
+      "offsetY": -14.589154545046883,
+      "cropTop": 61.552175799053416,
+      "cropBottom": -90.01137375095855
+    },
+    "assets/sprites/improvements.png|field-improvement.orchard.era-2|0": {
+      "offsetX": 0.28721948406040276,
+      "offsetY": -14.178036098019884,
+      "cropTop": 68.62948301174498,
+      "cropBottom": -84.50209731543629
+    },
+    "assets/sprites/improvements.png|field-improvement.orchard.era-3|0": {
+      "offsetX": 0.07762688758389263,
+      "offsetY": -14.128018004000868,
+      "cropTop": 65.89626153523487,
+      "cropBottom": -90.63761010906046
+    },
+    "assets/sprites/improvements.png|field-improvement.pasture.era-0|0": {
+      "offsetX": -0.45173080412953204,
+      "offsetY": -32.4471209934632,
+      "cropTop": 187.2067746350364,
+      "cropBottom": -200.70266879562044
+    },
+    "assets/sprites/improvements.png|field-improvement.pasture.era-1|0": {
+      "offsetX": 1.7137410775497037,
+      "offsetY": -30.54034246023885,
+      "cropLeft": -8.02862682481752,
+      "cropTop": 176.21373175182478,
+      "cropRight": 15.628193430656939,
+      "cropBottom": -192.4985173357663
+    },
+    "assets/sprites/improvements.png|field-improvement.pasture.era-2|0": {
+      "offsetX": 3.97138224886075,
+      "offsetY": -30.8857733539389,
+      "cropLeft": -15.485173357664225,
+      "cropTop": 198.77839872262768,
+      "cropRight": 30.976847627737232,
+      "cropBottom": -184.24235857664235
+    },
+    "assets/sprites/improvements.png|field-improvement.pasture.era-3|0": {
+      "offsetX": 1.9902489464451338,
+      "offsetY": -33.178371623819025,
+      "cropLeft": -18.319571167883215,
+      "cropTop": 185.94559762773727,
+      "cropRight": 9.809876824817522,
+      "cropBottom": -204.07664233576637
+    },
+    "assets/sprites/improvements.png|field-improvement.prospectorCamp.era-0|0": {
+      "offsetX": 0.0033268666107382234,
+      "offsetY": -23.907023713502227,
+      "cropTop": 124.57511010906042,
+      "cropBottom": -146.99606753355704
+    },
+    "assets/sprites/improvements.png|field-improvement.prospectorCamp.era-1|0": {
+      "offsetX": 1.135404106343509,
+      "offsetY": -24.003727087145336,
+      "cropLeft": -5.86382299270073,
+      "cropTop": 132.91115419708024,
+      "cropRight": 5.772810218978104,
+      "cropBottom": -149.07892335766422
+    },
+    "assets/sprites/improvements.png|field-improvement.prospectorCamp.era-2|0": {
+      "offsetX": 1.3916549885066742,
+      "offsetY": -24.45650727396448,
+      "cropLeft": -7.411040145985403,
+      "cropTop": 113.22639142335765,
+      "cropRight": 6.916970802919708,
+      "cropBottom": -149.0919251824818
+    },
+    "assets/sprites/improvements.png|field-improvement.prospectorCamp.era-3|0": {
+      "offsetX": 2.51996914949389,
+      "offsetY": -24.43843858106326,
+      "cropLeft": -15.784215328467159,
+      "cropTop": 129.0951186131387,
+      "cropRight": 16.161268248175187,
+      "cropBottom": -146.92062043795622
+    },
+    "assets/sprites/improvements.png|field-improvement.riverFarm.era-0|0": {
+      "offsetX": 0.17521497483221493,
+      "offsetY": -10.042750272006842,
+      "cropTop": 59.718042156040276,
+      "cropBottom": -59.66015408300067
+    },
+    "assets/sprites/improvements.png|field-improvement.riverFarm.era-1|0": {
+      "offsetX": -0.49570312500000047,
+      "offsetY": -9.821644183439975,
+      "cropTop": 45.482513632550344,
+      "cropBottom": -60.483092221373184
+    },
+    "assets/sprites/improvements.png|field-improvement.riverFarm.era-2|0": {
+      "offsetY": -10.578795222443054,
+      "cropTop": 53.94138234927202,
+      "cropBottom": -68.06719117115183
+    },
+    "assets/sprites/improvements.png|field-improvement.riverFarm.era-3|0": {
+      "offsetX": 2.0643194211409392,
+      "offsetY": -9.726954923332801,
+      "cropLeft": -12.547799331442468,
+      "cropTop": 66.16568679347326,
+      "cropRight": 14.919849068071313,
+      "cropBottom": -58.236082106840065
+    },
+    "assets/sprites/units/archer.png|attack|0": {
+      "offsetX": 4.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/archer.png|attack|1": {
+      "offsetX": 10.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/archer.png|attack|2": {
+      "offsetX": 4.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/archer.png|attack|3": {
+      "offsetX": 2.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/archer.png|attack|4": {
+      "offsetX": 8.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/archer.png|attack|5": {
+      "offsetX": 8.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/archer.png|die|0": {
+      "offsetX": 4.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/archer.png|die|1": {
+      "offsetX": 10.0,
+      "offsetY": 20.0,
+      "cropRight": 56.0
+    },
+    "assets/sprites/units/archer.png|die|2": {
+      "offsetX": 10.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/archer.png|die|3": {
+      "offsetX": 4.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/archer.png|die|4": {
+      "offsetX": 4.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/archer.png|die|5": {
+      "offsetX": 4.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/archer.png|idle|0": {
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/archer.png|idle|1": {
+      "offsetX": 4.0,
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/archer.png|idle|2": {
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/archer.png|idle|3": {
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/archer.png|idle|4": {
+      "offsetX": 2.0,
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/archer.png|idle|5": {
+      "offsetX": 2.0,
+      "offsetY": -6.0,
+      "cropRight": 11.992928832116789
+    },
+    "assets/sprites/units/archer.png|walk|0": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/archer.png|walk|1": {
+      "offsetX": 6.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/archer.png|walk|2": {
+      "offsetX": 2.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/archer.png|walk|3": {
+      "offsetX": 2.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/archer.png|walk|4": {
+      "offsetX": 4.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/archer.png|walk|5": {
+      "offsetX": 6.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/catapult.png|attack|0": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|attack|1": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|attack|2": {
+      "offsetX": 2.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|attack|3": {
+      "offsetX": 2.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|attack|4": {
+      "offsetX": 4.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|attack|5": {
+      "offsetX": 2.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/catapult.png|idle|0": {
+      "offsetX": -2.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|idle|1": {
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|idle|2": {
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|idle|3": {
+      "offsetX": 4.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|idle|4": {
+      "offsetX": 4.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|idle|5": {
+      "offsetX": 4.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/catapult.png|walk|0": {
+      "offsetX": -4.0
+    },
+    "assets/sprites/units/catapult.png|walk|1": {
+      "offsetX": -2.0
+    },
+    "assets/sprites/units/catapult.png|walk|2": {
+      "offsetX": -2.0
+    },
+    "assets/sprites/units/cavalry.png|attack|0": {
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/cavalry.png|attack|1": {
+      "offsetY": 12.0,
+      "cropLeft": 36.0
+    },
+    "assets/sprites/units/cavalry.png|attack|2": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|attack|3": {
+      "offsetX": 6.0
+    },
+    "assets/sprites/units/cavalry.png|attack|4": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/cavalry.png|attack|5": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/cavalry.png|idle|0": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/cavalry.png|idle|1": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/cavalry.png|idle|2": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/cavalry.png|idle|3": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/cavalry.png|idle|4": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/cavalry.png|idle|5": {
+      "offsetY": 4.0,
+      "cropTop": 4.0
+    },
+    "assets/sprites/units/cavalry.png|walk|0": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|walk|1": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|walk|2": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|walk|3": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|walk|4": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/cavalry.png|walk|5": {
+      "offsetX": 4.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/commander.png|attack|0": {
+      "offsetX": -4.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/commander.png|attack|1": {
+      "offsetX": -4.0,
+      "offsetY": 6.0,
+      "cropLeft": 22.0
+    },
+    "assets/sprites/units/commander.png|attack|2": {
+      "offsetX": -4.0,
+      "offsetY": 6.0,
+      "cropLeft": 90.0
+    },
+    "assets/sprites/units/commander.png|attack|3": {
+      "offsetY": 6.0,
+      "cropLeft": 42.0
+    },
+    "assets/sprites/units/commander.png|attack|4": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/commander.png|attack|5": {
+      "offsetX": 6.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/commander.png|die|0": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/commander.png|die|1": {
+      "offsetX": 6.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/commander.png|die|2": {
+      "offsetX": 8.0,
+      "offsetY": 10.0,
+      "cropRight": 68.0
+    },
+    "assets/sprites/units/commander.png|die|3": {
+      "offsetX": 16.0,
+      "offsetY": 10.0,
+      "cropRight": 106.0
+    },
+    "assets/sprites/units/commander.png|die|4": {
+      "offsetX": 16.0,
+      "offsetY": 10.0,
+      "cropRight": 96.0
+    },
+    "assets/sprites/units/commander.png|die|5": {
+      "offsetX": 10.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/commander.png|idle|0": {
+      "offsetX": -2.0,
+      "offsetY": -4.0,
+      "cropLeft": 24.634124087591246
+    },
+    "assets/sprites/units/commander.png|idle|1": {
+      "offsetY": -4.0,
+      "cropLeft": 13.497833029197082,
+      "cropRight": -4.607322080291965
+    },
+    "assets/sprites/units/commander.png|idle|2": {
+      "offsetY": -4.0
+    },
+    "assets/sprites/units/commander.png|idle|3": {
+      "offsetX": 2.0,
+      "offsetY": -4.0,
+      "cropRight": 24.54151459854015
+    },
+    "assets/sprites/units/commander.png|idle|4": {
+      "offsetX": 4.0,
+      "offsetY": -4.0,
+      "cropRight": 44.105269160583944
+    },
+    "assets/sprites/units/commander.png|idle|5": {
+      "offsetX": 6.0,
+      "offsetY": -4.0,
+      "cropRight": 68.73939324817522
+    },
+    "assets/sprites/units/commander.png|walk|0": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/commander.png|walk|1": {
+      "offsetX": 6.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/commander.png|walk|2": {
+      "offsetX": 8.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/commander.png|walk|3": {
+      "offsetX": 8.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/commander.png|walk|4": {
+      "offsetX": 12.0,
+      "offsetY": 4.0,
+      "cropRight": 34.0
+    },
+    "assets/sprites/units/commander.png|walk|5": {
+      "offsetX": 14.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|0": {
+      "offsetX": -2.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|1": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|2": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|3": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|4": {
+      "offsetY": 16.0,
+      "cropLeft": 18.0
+    },
+    "assets/sprites/units/fieldCannon.png|attack|5": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/fieldCannon.png|idle|0": {
+      "offsetX": -4.0,
+      "offsetY": 4.0,
+      "cropLeft": 46.32789689781023,
+      "cropRight": -29.102531934306572,
+      "cropBottom": 40.77132755474452
+    },
+    "assets/sprites/units/fieldCannon.png|idle|1": {
+      "offsetY": 4.0,
+      "cropBottom": 30.491674270072988
+    },
+    "assets/sprites/units/fieldCannon.png|idle|2": {
+      "offsetX": 2.0,
+      "offsetY": 4.0,
+      "cropBottom": 27.620780109489054
+    },
+    "assets/sprites/units/fieldCannon.png|idle|3": {
+      "offsetX": 2.0,
+      "offsetY": 4.0,
+      "cropBottom": 55.75091240875913
+    },
+    "assets/sprites/units/fieldCannon.png|idle|4": {
+      "offsetX": 4.0,
+      "offsetY": 4.0,
+      "cropBottom": 49.638686131386876
+    },
+    "assets/sprites/units/fieldCannon.png|idle|5": {
+      "offsetX": 6.0,
+      "offsetY": 4.0,
+      "cropLeft": -27.204037408759117,
+      "cropRight": 40.19251824817518,
+      "cropBottom": 38.64130930656934
+    },
+    "assets/sprites/units/fieldCannon.png|walk|0": {
+      "offsetX": -6.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/fieldCannon.png|walk|1": {
+      "offsetX": -2.0,
+      "offsetY": 10.0,
+      "cropLeft": 20.0
+    },
+    "assets/sprites/units/fieldCannon.png|walk|2": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/fieldCannon.png|walk|3": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/fieldCannon.png|walk|4": {
+      "offsetX": 6.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/fieldCannon.png|walk|5": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|0": {
+      "offsetY": 10.0,
+      "cropBottom": 16.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|1": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|2": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|3": {
+      "offsetX": 2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|4": {
+      "offsetX": 8.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|attack|5": {
+      "offsetX": 10.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|0": {
+      "offsetY": -8.0,
+      "cropBottom": -44.869297445255484
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|1": {
+      "offsetY": -8.0,
+      "cropBottom": -58.25136861313868
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|2": {
+      "offsetX": 2.0,
+      "offsetY": -8.0,
+      "cropBottom": -43.92005018248176
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|3": {
+      "offsetX": 4.0,
+      "offsetY": -8.0,
+      "cropRight": 41.88264142335767,
+      "cropBottom": -43.01710766423359
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|4": {
+      "offsetX": 8.0,
+      "offsetY": -8.0,
+      "cropRight": 64.73403284671534,
+      "cropBottom": -48.1106295620438
+    },
+    "assets/sprites/units/heavyInfantry.png|idle|5": {
+      "offsetX": 12.0,
+      "offsetY": -8.0,
+      "cropLeft": -23.846943430656935,
+      "cropRight": 90.78045164233578,
+      "cropBottom": -61.839986313868614
+    },
+    "assets/sprites/units/heavyInfantry.png|walk|0": {
+      "offsetX": -4.0
+    },
+    "assets/sprites/units/heavyInfantry.png|walk|1": {
+      "offsetX": -4.0
+    },
+    "assets/sprites/units/heavyInfantry.png|walk|2": {
+      "offsetX": -2.0
+    },
+    "assets/sprites/units/heavyInfantry.png|walk|4": {
+      "offsetX": 2.0
+    },
+    "assets/sprites/units/heavyInfantry.png|walk|5": {
+      "offsetX": 4.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|0": {
+      "offsetX": -6.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|1": {
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|2": {
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|3": {
+      "offsetX": 10.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|4": {
+      "offsetX": 4.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|attack|5": {
+      "offsetX": 8.0,
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/reconPlane.png|idle|0": {
+      "offsetX": -4.0,
+      "offsetY": 4.0,
+      "cropLeft": 33.68670164233577,
+      "cropRight": -39.150661496350374,
+      "cropBottom": 64.94240419708028
+    },
+    "assets/sprites/units/reconPlane.png|idle|1": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/reconPlane.png|idle|2": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/reconPlane.png|idle|3": {
+      "offsetX": 4.0,
+      "offsetY": 4.0,
+      "cropLeft": -27.342951642335766,
+      "cropRight": 26.0
+    },
+    "assets/sprites/units/reconPlane.png|idle|4": {
+      "offsetX": 8.0,
+      "offsetY": 4.0,
+      "cropLeft": -69.41081204379562,
+      "cropRight": 62.928147810219,
+      "cropBottom": 26.949361313868614
+    },
+    "assets/sprites/units/reconPlane.png|idle|5": {
+      "offsetX": 6.0,
+      "offsetY": 4.0,
+      "cropLeft": -37.4373859489051,
+      "cropRight": 44.45255474452556,
+      "cropBottom": 56.09819799270073
+    },
+    "assets/sprites/units/reconPlane.png|walk|0": {
+      "offsetX": -8.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|walk|1": {
+      "offsetX": -6.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|walk|2": {
+      "offsetX": -2.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|walk|3": {
+      "offsetX": 4.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|walk|4": {
+      "offsetX": 8.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/reconPlane.png|walk|5": {
+      "offsetX": 10.0,
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/rifleman.png|attack|0": {
+      "offsetY": 20.0,
+      "cropBottom": 70.0
+    },
+    "assets/sprites/units/rifleman.png|attack|1": {
+      "offsetY": 20.0,
+      "cropLeft": 62.0,
+      "cropBottom": 46.0
+    },
+    "assets/sprites/units/rifleman.png|attack|2": {
+      "offsetY": 20.0,
+      "cropLeft": 140.0
+    },
+    "assets/sprites/units/rifleman.png|attack|3": {
+      "offsetY": 20.0,
+      "cropLeft": 40.0
+    },
+    "assets/sprites/units/rifleman.png|attack|4": {
+      "offsetX": 10.0,
+      "offsetY": 20.0,
+      "cropRight": 74.0
+    },
+    "assets/sprites/units/rifleman.png|attack|5": {
+      "offsetX": 16.0,
+      "offsetY": 20.0
+    },
+    "assets/sprites/units/rifleman.png|idle|0": {
+      "offsetX": -4.0,
+      "cropLeft": 35.30736770072993,
+      "cropRight": -67.14187956204381
+    },
+    "assets/sprites/units/rifleman.png|idle|1": {
+      "offsetX": -2.0,
+      "cropLeft": 30.47901459854014,
+      "cropRight": -17.155907846715348
+    },
+    "assets/sprites/units/rifleman.png|idle|2": {
+      "offsetX": 2.0
+    },
+    "assets/sprites/units/rifleman.png|idle|3": {
+      "offsetX": 6.0,
+      "cropRight": 26.0
+    },
+    "assets/sprites/units/rifleman.png|idle|4": {
+      "offsetX": 10.0,
+      "cropLeft": -59.1311587591241,
+      "cropRight": 60.0
+    },
+    "assets/sprites/units/rifleman.png|idle|5": {
+      "offsetX": 14.0,
+      "cropLeft": -78.90328467153284,
+      "cropRight": 44.84614507299271
+    },
+    "assets/sprites/units/rifleman.png|walk|0": {
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/rifleman.png|walk|1": {
+      "offsetY": 6.0,
+      "cropLeft": 50.0
+    },
+    "assets/sprites/units/rifleman.png|walk|2": {
+      "offsetX": 4.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/rifleman.png|walk|3": {
+      "offsetX": 8.0,
+      "offsetY": 6.0,
+      "cropRight": 36.0
+    },
+    "assets/sprites/units/rifleman.png|walk|4": {
+      "offsetX": 12.0,
+      "offsetY": 6.0,
+      "cropRight": 68.0
+    },
+    "assets/sprites/units/rifleman.png|walk|5": {
+      "offsetX": 16.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/scout.png|attack|0": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/scout.png|attack|1": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/scout.png|attack|2": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/scout.png|attack|3": {
+      "offsetY": 12.0,
+      "cropRight": 16.0
+    },
+    "assets/sprites/units/scout.png|attack|4": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/scout.png|attack|5": {
+      "offsetY": 12.0,
+      "cropLeft": 46.0
+    },
+    "assets/sprites/units/scout.png|idle|0": {
+      "offsetX": -4.0,
+      "offsetY": -2.0,
+      "cropLeft": 37.59945255474452,
+      "cropRight": -35.81671989051095,
+      "cropBottom": -15.558394160583942
+    },
+    "assets/sprites/units/scout.png|idle|1": {
+      "offsetX": -4.0,
+      "offsetY": -2.0,
+      "cropLeft": 30.561131386861312,
+      "cropRight": -31.880816605839417,
+      "cropBottom": -5.278740875912409
+    },
+    "assets/sprites/units/scout.png|idle|2": {
+      "offsetY": -2.0,
+      "cropRight": -17.34112682481752,
+      "cropBottom": -19.05440237226277
+    },
+    "assets/sprites/units/scout.png|idle|3": {
+      "offsetY": -2.0,
+      "cropBottom": -24.79619069343066
+    },
+    "assets/sprites/units/scout.png|idle|4": {
+      "offsetX": 2.0,
+      "offsetY": -2.0,
+      "cropBottom": -23.360743613138688
+    },
+    "assets/sprites/units/scout.png|idle|5": {
+      "offsetX": 4.0,
+      "offsetY": -2.0,
+      "cropLeft": -17.781021897810223,
+      "cropRight": 25.722285583941606,
+      "cropBottom": -7.3856067518248185
+    },
+    "assets/sprites/units/scout.png|walk|0": {
+      "offsetX": -4.0
+    },
+    "assets/sprites/units/scout.png|walk|1": {
+      "offsetX": -4.0,
+      "cropLeft": 32.0,
+      "cropRight": 2.0
+    },
+    "assets/sprites/units/scout.png|walk|2": {
+      "offsetX": -4.0,
+      "cropLeft": 26.0
+    },
+    "assets/sprites/units/scout.png|walk|3": {
+      "offsetX": -4.0,
+      "cropLeft": 26.0,
+      "cropRight": 6.0
+    },
+    "assets/sprites/units/scout.png|walk|5": {
+      "offsetX": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|0": {
+      "offsetX": -6.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|1": {
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|2": {
+      "offsetX": 4.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|3": {
+      "offsetX": 8.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|4": {
+      "offsetX": 10.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|attack|5": {
+      "offsetX": 12.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|0": {
+      "offsetY": -6.0,
+      "cropTop": 6.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|1": {
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|2": {
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|3": {
+      "offsetX": 6.0,
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|4": {
+      "offsetX": 8.0,
+      "offsetY": -6.0
+    },
+    "assets/sprites/units/scoutShip.png|idle|5": {
+      "offsetX": 10.0,
+      "offsetY": -6.0,
+      "cropBottom": -42.27623175182483
+    },
+    "assets/sprites/units/scoutShip.png|walk|0": {
+      "offsetX": -12.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/scoutShip.png|walk|1": {
+      "offsetX": -10.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/scoutShip.png|walk|2": {
+      "offsetX": -2.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/scoutShip.png|walk|3": {
+      "offsetX": 4.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/scoutShip.png|walk|4": {
+      "offsetX": 8.0,
+      "offsetY": -2.0,
+      "cropRight": 24.0
+    },
+    "assets/sprites/units/scoutShip.png|walk|5": {
+      "offsetX": 12.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/settler.png|idle|0": {
+      "offsetX": -10.0,
+      "offsetY": -6.0,
+      "cropRight": -67.02611770072991,
+      "cropBottom": -56.584397810219
+    },
+    "assets/sprites/units/settler.png|idle|1": {
+      "offsetX": -6.0,
+      "offsetY": -6.0,
+      "cropLeft": 42.0,
+      "cropRight": -57.811473540146004,
+      "cropBottom": -52.92632299270072
+    },
+    "assets/sprites/units/settler.png|idle|2": {
+      "offsetX": -4.0,
+      "offsetY": -6.0,
+      "cropLeft": 22.0,
+      "cropRight": -27.505018248175183,
+      "cropBottom": -33.909329379562045
+    },
+    "assets/sprites/units/settler.png|idle|3": {
+      "offsetX": 2.0,
+      "offsetY": -6.0,
+      "cropRight": 30.0,
+      "cropBottom": -47.25399178832117
+    },
+    "assets/sprites/units/settler.png|idle|4": {
+      "offsetX": 6.0,
+      "offsetY": -6.0,
+      "cropLeft": -46.67518248175183,
+      "cropRight": 67.64210766423358,
+      "cropBottom": -59.987796532846716
+    },
+    "assets/sprites/units/settler.png|idle|5": {
+      "offsetX": 10.0,
+      "offsetY": -6.0,
+      "cropLeft": -67.09557481751824,
+      "cropRight": 75.84717153284672,
+      "cropBottom": -42.78558394160585
+    },
+    "assets/sprites/units/settler.png|walk|0": {
+      "offsetX": -4.0
+    },
+    "assets/sprites/units/settler.png|walk|1": {
+      "offsetX": -2.0
+    },
+    "assets/sprites/units/settler.png|walk|2": {
+      "offsetX": 2.0
+    },
+    "assets/sprites/units/settler.png|walk|3": {
+      "offsetX": 6.0,
+      "cropRight": 14.0
+    },
+    "assets/sprites/units/settler.png|walk|4": {
+      "offsetX": 12.0,
+      "cropRight": 64.0
+    },
+    "assets/sprites/units/settler.png|walk|5": {
+      "offsetX": 16.0
+    },
+    "assets/sprites/units/settler.png|work|0": {
+      "offsetX": -6.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/settler.png|work|1": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/settler.png|work|2": {
+      "offsetX": 8.0,
+      "offsetY": 10.0,
+      "cropRight": 48.0
+    },
+    "assets/sprites/units/settler.png|work|3": {
+      "offsetX": 10.0,
+      "offsetY": 10.0,
+      "cropRight": 76.0
+    },
+    "assets/sprites/units/settler.png|work|4": {
+      "offsetX": 10.0,
+      "offsetY": 6.0,
+      "cropRight": 76.0
+    },
+    "assets/sprites/units/settler.png|work|5": {
+      "offsetX": 10.0,
+      "offsetY": 6.0
+    },
+    "assets/sprites/units/spearman.png|attack|0": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/spearman.png|attack|1": {
+      "offsetX": 2.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/spearman.png|attack|2": {
+      "offsetX": 4.0,
+      "offsetY": 16.0,
+      "cropRight": 16.0
+    },
+    "assets/sprites/units/spearman.png|attack|3": {
+      "offsetX": 6.0,
+      "offsetY": 16.0,
+      "cropRight": 80.0
+    },
+    "assets/sprites/units/spearman.png|attack|4": {
+      "offsetX": 8.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/spearman.png|attack|5": {
+      "offsetX": 8.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/spearman.png|idle|0": {
+      "offsetX": -6.0,
+      "offsetY": 4.0,
+      "cropLeft": 74.45802919708035,
+      "cropRight": -55.05634124087594
+    },
+    "assets/sprites/units/spearman.png|idle|1": {
+      "offsetX": -6.0,
+      "offsetY": 4.0,
+      "cropLeft": 66.51482664233575,
+      "cropRight": -52.301208941605836
+    },
+    "assets/sprites/units/spearman.png|idle|2": {
+      "offsetY": 4.0,
+      "cropLeft": 40.0,
+      "cropRight": -3.0561131386861304
+    },
+    "assets/sprites/units/spearman.png|idle|3": {
+      "offsetX": 4.0,
+      "offsetY": 4.0,
+      "cropRight": 18.10515510948905
+    },
+    "assets/sprites/units/spearman.png|idle|4": {
+      "offsetX": 6.0,
+      "offsetY": 4.0,
+      "cropLeft": -39.75262317518249,
+      "cropRight": 40.53980383211679
+    },
+    "assets/sprites/units/spearman.png|idle|5": {
+      "offsetX": 10.0,
+      "offsetY": 4.0,
+      "cropLeft": -61.14541514598541,
+      "cropRight": 65.03501368613139
+    },
+    "assets/sprites/units/spearman.png|walk|0": {
+      "offsetX": -6.0,
+      "offsetY": 14.0
+    },
+    "assets/sprites/units/spearman.png|walk|1": {
+      "offsetX": -4.0,
+      "offsetY": 12.0,
+      "cropLeft": 26.0
+    },
+    "assets/sprites/units/spearman.png|walk|2": {
+      "offsetY": 12.0
+    },
+    "assets/sprites/units/spearman.png|walk|3": {
+      "offsetX": 8.0,
+      "offsetY": 14.0,
+      "cropRight": 22.0
+    },
+    "assets/sprites/units/spearman.png|walk|4": {
+      "offsetX": 10.0,
+      "offsetY": 12.0,
+      "cropRight": 30.0
+    },
+    "assets/sprites/units/spearman.png|walk|5": {
+      "offsetX": 12.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/tank.png|attack|0": {
+      "offsetX": -6.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/tank.png|attack|1": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/tank.png|attack|2": {
+      "offsetY": 10.0,
+      "cropLeft": 32.0
+    },
+    "assets/sprites/units/tank.png|attack|3": {
+      "offsetX": -2.0,
+      "offsetY": 10.0,
+      "cropLeft": 50.0
+    },
+    "assets/sprites/units/tank.png|attack|4": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/tank.png|attack|5": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/tank.png|idle|0": {
+      "offsetX": -2.0,
+      "offsetY": -4.0,
+      "cropLeft": 0.6945711678832117,
+      "cropRight": -27.204037408759117,
+      "cropBottom": -26.185333029197082
+    },
+    "assets/sprites/units/tank.png|idle|1": {
+      "offsetY": -4.0,
+      "cropBottom": -12.20130018248175
+    },
+    "assets/sprites/units/tank.png|idle|2": {
+      "offsetX": 2.0,
+      "offsetY": -4.0
+    },
+    "assets/sprites/units/tank.png|idle|3": {
+      "offsetX": 4.0,
+      "offsetY": -4.0,
+      "cropLeft": -17.642107664233578,
+      "cropRight": 19.748973540145986
+    },
+    "assets/sprites/units/tank.png|idle|4": {
+      "offsetX": 8.0,
+      "offsetY": -4.0,
+      "cropLeft": -38.9422901459854,
+      "cropRight": 42.667997262773724
+    },
+    "assets/sprites/units/tank.png|idle|5": {
+      "offsetX": 10.0,
+      "offsetY": -4.0,
+      "cropLeft": -71.03147810218978,
+      "cropRight": 48.22639142335766
+    },
+    "assets/sprites/units/tank.png|walk|0": {
+      "offsetX": -2.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/tank.png|walk|1": {
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/tank.png|walk|2": {
+      "offsetX": 4.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/tank.png|walk|3": {
+      "offsetX": 6.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/tank.png|walk|4": {
+      "offsetX": 8.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/tank.png|walk|5": {
+      "offsetX": 10.0,
+      "offsetY": 4.0
+    },
+    "assets/sprites/units/warrior.png|attack|0": {
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|attack|1": {
+      "offsetY": 18.0,
+      "cropBottom": 62.0
+    },
+    "assets/sprites/units/warrior.png|attack|2": {
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|attack|3": {
+      "offsetY": 18.0,
+      "cropLeft": 10.0
+    },
+    "assets/sprites/units/warrior.png|attack|4": {
+      "offsetY": 16.0,
+      "cropLeft": 12.0
+    },
+    "assets/sprites/units/warrior.png|attack|5": {
+      "offsetY": 16.0,
+      "cropLeft": 44.0
+    },
+    "assets/sprites/units/warrior.png|die|0": {
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|die|1": {
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|die|2": {
+      "offsetX": 2.0,
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|die|3": {
+      "offsetX": 2.0,
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|die|4": {
+      "offsetX": 4.0,
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|die|5": {
+      "offsetX": 4.0,
+      "offsetY": 18.0
+    },
+    "assets/sprites/units/warrior.png|idle|0": {
+      "offsetX": -2.0,
+      "offsetY": -2.0,
+      "cropLeft": 18.545050182481752
+    },
+    "assets/sprites/units/warrior.png|idle|1": {
+      "offsetX": -2.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warrior.png|idle|2": {
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warrior.png|idle|3": {
+      "offsetX": 2.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warrior.png|idle|4": {
+      "offsetX": 2.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warrior.png|idle|5": {
+      "offsetX": 6.0,
+      "offsetY": -2.0,
+      "cropRight": 44.45255474452554
+    },
+    "assets/sprites/units/warrior.png|walk|0": {
+      "offsetX": -4.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warrior.png|walk|1": {
+      "offsetX": -4.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warrior.png|walk|2": {
+      "offsetX": -2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warrior.png|walk|3": {
+      "offsetX": -2.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warrior.png|walk|4": {
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warrior.png|walk|5": {
+      "offsetX": 4.0,
+      "offsetY": 10.0
+    },
+    "assets/sprites/units/warship.png|attack|0": {
+      "offsetX": -4.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/warship.png|attack|1": {
+      "offsetY": 2.0,
+      "cropLeft": 22.0
+    },
+    "assets/sprites/units/warship.png|attack|2": {
+      "offsetX": 2.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/warship.png|attack|3": {
+      "offsetX": 6.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/warship.png|attack|4": {
+      "offsetX": 10.0,
+      "offsetY": 2.0,
+      "cropRight": 36.0
+    },
+    "assets/sprites/units/warship.png|attack|5": {
+      "offsetX": 14.0,
+      "offsetY": 2.0
+    },
+    "assets/sprites/units/warship.png|idle|0": {
+      "offsetX": -6.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warship.png|idle|1": {
+      "offsetX": -6.0,
+      "offsetY": -2.0,
+      "cropLeft": 42.0
+    },
+    "assets/sprites/units/warship.png|idle|2": {
+      "offsetX": -6.0,
+      "offsetY": -2.0,
+      "cropLeft": 36.0
+    },
+    "assets/sprites/units/warship.png|idle|3": {
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warship.png|idle|4": {
+      "offsetX": 4.0,
+      "offsetY": -2.0,
+      "cropRight": 36.0
+    },
+    "assets/sprites/units/warship.png|idle|5": {
+      "offsetX": 10.0,
+      "offsetY": -2.0
+    },
+    "assets/sprites/units/warship.png|walk|0": {
+      "offsetX": -10.0
+    },
+    "assets/sprites/units/warship.png|walk|1": {
+      "offsetX": -8.0,
+      "cropLeft": 48.0
+    },
+    "assets/sprites/units/warship.png|walk|2": {
+      "offsetX": -4.0,
+      "cropLeft": 30.0
+    },
+    "assets/sprites/units/warship.png|walk|4": {
+      "offsetX": 6.0,
+      "cropRight": 32.0
+    },
+    "assets/sprites/units/warship.png|walk|5": {
+      "offsetX": 12.0
+    },
+    "assets/sprites/units/worker.png|idle|0": {
+      "offsetX": -4.0,
+      "offsetY": -8.0,
+      "cropRight": -33.87192062043796,
+      "cropBottom": -86.77509124087592
+    },
+    "assets/sprites/units/worker.png|idle|1": {
+      "offsetX": -4.0,
+      "offsetY": -8.0,
+      "cropLeft": 34.821167883211686,
+      "cropRight": -42.62351733576643,
+      "cropBottom": -97.23996350364966
+    },
+    "assets/sprites/units/worker.png|idle|2": {
+      "offsetX": -6.0,
+      "offsetY": -8.0,
+      "cropLeft": 46.42050638686131,
+      "cropRight": -56.908531021897815,
+      "cropBottom": -90.01642335766424
+    },
+    "assets/sprites/units/worker.png|idle|3": {
+      "offsetY": -8.0,
+      "cropBottom": -79.9219890510949
+    },
+    "assets/sprites/units/worker.png|idle|4": {
+      "offsetX": 6.0,
+      "offsetY": -8.0,
+      "cropLeft": -46.97616332116789,
+      "cropRight": 38.43293795620438,
+      "cropBottom": -86.56671989051092
+    },
+    "assets/sprites/units/worker.png|idle|5": {
+      "offsetX": 6.0,
+      "offsetY": -8.0,
+      "cropLeft": -40.09990875912409,
+      "cropRight": 50.26380018248176,
+      "cropBottom": -99.85618156934311
+    },
+    "assets/sprites/units/worker.png|walk|0": {
+      "cropTop": 80.0
+    },
+    "assets/sprites/units/worker.png|walk|1": {
+      "cropTop": 72.0
+    },
+    "assets/sprites/units/worker.png|walk|2": {
+      "cropTop": 78.0
+    },
+    "assets/sprites/units/worker.png|walk|3": {
+      "cropTop": 72.0
+    },
+    "assets/sprites/units/worker.png|walk|4": {
+      "cropTop": 78.0
+    },
+    "assets/sprites/units/worker.png|walk|5": {
+      "cropTop": 84.0
+    },
+    "assets/sprites/units/worker.png|work|0": {
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/worker.png|work|1": {
+      "offsetX": 4.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/worker.png|work|2": {
+      "offsetX": 6.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/worker.png|work|3": {
+      "offsetX": 6.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/worker.png|work|4": {
+      "offsetX": 10.0,
+      "offsetY": 16.0
+    },
+    "assets/sprites/units/worker.png|work|5": {
+      "offsetX": 10.0,
+      "offsetY": 16.0
+    }
+  },
+  "animations": {
+    "assets/sprites/units/archer.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/catapult.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/cavalry.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/commander.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/fieldCannon.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/heavyInfantry.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/merchant.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/reconPlane.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/rifleman.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/scout.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/scoutShip.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/settler.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/spearman.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/tank.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/warrior.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/warship.png|idle": {
+      "frameDuration": 0.30333333333333334
+    },
+    "assets/sprites/units/worker.png|idle": {
+      "frameDuration": 0.30333333333333334
+    }
+  }
+}

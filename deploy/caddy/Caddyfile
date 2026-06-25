@@ -1,0 +1,72 @@
+{
+	admin off
+}
+
+{$AONW_API_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+
+	@serverpodWeb path /auth/*
+	reverse_proxy @serverpodWeb {$AONW_WEB_UPSTREAM}
+
+	reverse_proxy {$AONW_UPSTREAM}
+}
+
+{$AONW_INSIGHTS_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+
+	reverse_proxy {$AONW_INSIGHTS_UPSTREAM}
+}
+
+{$AONW_HOMEPAGE_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		?Cache-Control "public, max-age=86400"
+	}
+
+	@homepageHtml {
+		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html
+	}
+	header @homepageHtml {
+		Cache-Control "no-cache, must-revalidate"
+	}
+
+	redir /privacy-policy/ /privacy-policy 308
+
+	root * /srv/homepage
+	try_files {path} {path}/index.html /index.html
+	file_server
+}
+
+{$AONW_DEMO_HOST} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		?Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	@demoHtml {
+		path / /index.html /flutter_service_worker.js
+	}
+	header @demoHtml {
+		Cache-Control "no-cache, must-revalidate"
+	}
+
+	root * /srv/demo
+	try_files {path} /index.html
+	file_server
+}

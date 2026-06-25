@@ -1,0 +1,20 @@
+class: GamePlayer
+table: aonw_player
+fields:
+  match: GameMatch?, relation(name=match_players, onDelete=Cascade)
+  publicPlayerId: String
+  userIdentifier: String
+  displayName: String
+  colorValue: int
+  countryId: String
+  kind: String
+  connectionState: String
+  ready: bool
+  seatOrder: int
+indexes:
+  aonw_player_match_user_idx:
+    fields: matchId, userIdentifier
+    unique: true
+  aonw_player_match_public_idx:
+    fields: matchId, publicPlayerId
+    unique: true

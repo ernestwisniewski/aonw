@@ -1,0 +1,13 @@
+type: server
+
+client_package_path: ../packages/aonw_server_client
+server_test_tools_path: test/integration/test_tools
+
+extraClasses:
+  - package:aonw_core/protocol.dart:WireAiPlayer
+  - package:aonw_core/protocol.dart:WireCommand
+  - package:aonw_core/protocol.dart:WireCommandAck
+  - package:aonw_core/protocol.dart:WireEvent
+  - package:aonw_core/protocol.dart:WireMatch
+  - package:aonw_core/protocol.dart:WirePlayer
+  - package:aonw_core/protocol.dart:WireSnapshot

@@ -1,0 +1,27 @@
+# Keep the server image context small. The Flutter client is built outside Docker.
+**
+
+!pubspec.yaml
+!server/
+!server/**
+!packages/
+!packages/aonw_core/
+!packages/aonw_core/**
+!assets/
+!assets/maps/
+!assets/maps/**
+
+**/.dart_tool/
+**/build/
+**/.pub-cache/
+**/coverage/
+**/*.iml
+**/.idea/
+**/.vscode/
+**/test/
+**/.git/
+
+# Never bake real or example secrets into the image. Secrets come from the
+# environment (SERVERPOD_PASSWORD_* / AONW_*_B64); see .env.example.
+server/config/passwords.yaml
+server/config/passwords.example.yaml

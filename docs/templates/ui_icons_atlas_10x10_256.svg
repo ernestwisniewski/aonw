@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="2560" viewBox="0 0 2560 2560">
+  <title>UI icons atlas template - 10 x 10, 256 x 256 cells</title>
+  <defs>
+    <pattern id="cell" width="256" height="256" patternUnits="userSpaceOnUse">
+      <rect width="256" height="256" fill="#111827" stroke="#38bdf8" stroke-width="3"/>
+      <rect x="24" y="24" width="208" height="208" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="10 8"/>
+      <line x1="128" y1="0" x2="128" y2="256" stroke="#f472b6" stroke-width="2" stroke-dasharray="10 8"/>
+      <line x1="0" y1="128" x2="256" y2="128" stroke="#22d3ee" stroke-width="2" stroke-dasharray="10 8"/>
+    </pattern>
+  </defs>
+  <rect width="2560" height="2560" fill="url(#cell)"/>
+  <rect width="2560" height="2560" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="38" fill="#ffffff">UI icons - 100 slots</text>
+  <text x="24" y="2528" font-family="Inter, Arial, sans-serif" font-size="28" fill="#fde68a">10 x 10 cells, 256 x 256 each. Keep icon centered.</text>
+</svg>

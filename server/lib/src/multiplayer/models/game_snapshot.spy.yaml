@@ -1,0 +1,11 @@
+class: GameSnapshot
+table: aonw_snapshot
+fields:
+  match: GameMatch?, relation(name=match_snapshots, onDelete=Cascade)
+  offset: int
+  snapshot: WireSnapshot
+  createdAt: DateTime
+indexes:
+  aonw_snapshot_match_offset_idx:
+    fields: matchId, offset
+    unique: true

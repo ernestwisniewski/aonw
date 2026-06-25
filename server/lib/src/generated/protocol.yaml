@@ -1,0 +1,33 @@
+accountProfile:
+  - ensureAccount:
+appleIdp:
+  - login:
+  - hasAccount:
+emailIdp:
+  - login:
+  - createAccount:
+  - displayName:
+  - updateDisplayName:
+  - hasAccount:
+googleIdp:
+  - login:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+steamAuth:
+  - start:
+  - poll:
+multiplayer:
+  - listMatches:
+  - createMatch:
+  - quickplay:
+  - joinMatch:
+  - joinPrivateMatch:
+  - loadMatch:
+  - loadSnapshot:
+  - listEvents:
+  - startMatch:
+  - markMapLoaded:
+  - resignMatch:
+  - leaveMatch:
+  - connect:

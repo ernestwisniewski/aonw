@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="2048" viewBox="0 0 2560 2048">
+  <title>Buildings atlas A template - slots 00-19</title>
+  <defs>
+    <pattern id="cell" width="512" height="512" patternUnits="userSpaceOnUse">
+      <rect width="512" height="512" fill="#111827" stroke="#38bdf8" stroke-width="4"/>
+      <rect x="48" y="48" width="416" height="416" fill="none" stroke="#facc15" stroke-width="3" stroke-dasharray="18 12"/>
+      <line x1="256" y1="0" x2="256" y2="512" stroke="#f472b6" stroke-width="3" stroke-dasharray="14 14"/>
+      <line x1="0" y1="368" x2="512" y2="368" stroke="#22d3ee" stroke-width="3" stroke-dasharray="14 14"/>
+      <circle cx="256" cy="368" r="10" fill="#22d3ee"/>
+    </pattern>
+  </defs>
+  <rect width="2560" height="2048" fill="url(#cell)"/>
+  <rect width="2560" height="2048" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <text x="24" y="58" font-family="Inter, Arial, sans-serif" font-size="44" fill="#ffffff">Buildings A - slots 00-19</text>
+  <text x="24" y="2016" font-family="Inter, Arial, sans-serif" font-size="34" fill="#fde68a">5 x 4 cells, 512 x 512 each. Order: left-to-right, top-to-bottom.</text>
+</svg>

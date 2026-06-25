@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "templates": {
+    "unitSheet": {
+      "template": "unit_sheet_6x4_512x768.svg",
+      "outputPattern": "assets/sprites/units/<unit>.png",
+      "columns": 6,
+      "rows": 4,
+      "cellWidth": 512,
+      "cellHeight": 768,
+      "width": 3072,
+      "height": 3072,
+      "rowOrder": ["idle", "walk", "attack_or_work", "die"]
+    },
+    "buildingsA": {
+      "template": "buildings_atlas_a_5x4_512.svg",
+      "output": "assets/sprites/buildings_atlas_a_5x4_512.png",
+      "runtimeOutput": "assets/sprites/buildings_atlas_a_5x4_512.webp",
+      "runtimeFormat": "webp-lossless",
+      "slotRange": [0, 19],
+      "columns": 5,
+      "rows": 4,
+      "cellWidth": 512,
+      "cellHeight": 512,
+      "width": 2560,
+      "height": 2048
+    },
+    "buildingsB": {
+      "template": "buildings_atlas_b_5x4_512.svg",
+      "output": "assets/sprites/buildings_atlas_b_5x4_512.png",
+      "runtimeOutput": "assets/sprites/buildings_atlas_b_5x4_512.webp",
+      "runtimeFormat": "webp-lossless",
+      "slotRange": [20, 39],
+      "columns": 5,
+      "rows": 4,
+      "cellWidth": 512,
+      "cellHeight": 512,
+      "width": 2560,
+      "height": 2048
+    },
+    "buildingsC": {
+      "template": "buildings_atlas_c_5x4_512.svg",
+      "output": "assets/sprites/buildings_atlas_c_5x4_512.png",
+      "runtimeOutput": "assets/sprites/buildings_atlas_c_5x4_512.webp",
+      "runtimeFormat": "webp-lossless",
+      "slotRange": [40, 58],
+      "emptySlots": [59],
+      "columns": 5,
+      "rows": 4,
+      "cellWidth": 512,
+      "cellHeight": 512,
+      "width": 2560,
+      "height": 2048
+    },
+    "technologies": {
+      "template": "technologies_atlas_8x7_512.svg",
+      "output": "assets/sprites/technologies_atlas_8x7_512.png",
+      "runtimeOutput": "assets/sprites/technologies_atlas_8x7_512.webp",
+      "runtimeFormat": "webp-lossless",
+      "slotRange": [0, 54],
+      "emptySlots": [55],
+      "columns": 8,
+      "rows": 7,
+      "cellWidth": 512,
+      "cellHeight": 512,
+      "width": 4096,
+      "height": 3584
+    },
+    "cities": {
+      "template": "cities_atlas_6x4_512x320.svg",
+      "output": "assets/sprites/cities_atlas_6x4_512x320.jpg",
+      "runtimeFormat": "jpg",
+      "columns": 6,
+      "rows": 4,
+      "cellWidth": 512,
+      "cellHeight": 320,
+      "width": 3072,
+      "height": 1280,
+      "columnOrder": ["level_0", "level_1", "level_2", "level_3", "level_4", "level_5"],
+      "rowOrder": ["growth_civic", "trade_knowledge_maritime", "military_fortified", "industry_modern"]
+    },
+    "fieldImprovementsA": {
+      "template": "field_improvements_atlas_a_4x10_512x288.svg",
+      "outputFamily": [
+        "assets/sprites/improvements1.jpg",
+        "assets/sprites/improvements2.jpg",
+        "assets/sprites/improvements3.jpg",
+        "assets/sprites/improvements4.jpg"
+      ],
+      "runtimeFormat": "jpg",
+      "slotRange": [0, 9],
+      "columns": 4,
+      "rows": 10,
+      "cellWidth": 512,
+      "cellHeight": 288,
+      "width": 2048,
+      "height": 2880,
+      "columnOrder": ["early", "developed", "industrial", "modern"]
+    },
+    "fieldImprovementsB": {
+      "template": "field_improvements_atlas_b_4x9_512x288.svg",
+      "outputFamily": [
+        "assets/sprites/improvements1.jpg",
+        "assets/sprites/improvements2.jpg",
+        "assets/sprites/improvements3.jpg",
+        "assets/sprites/improvements4.jpg"
+      ],
+      "runtimeFormat": "jpg",
+      "slotRange": [10, 18],
+      "columns": 4,
+      "rows": 9,
+      "cellWidth": 512,
+      "cellHeight": 288,
+      "width": 2048,
+      "height": 2592,
+      "columnOrder": ["early", "developed", "industrial", "modern"]
+    },
+    "uiIcons": {
+      "template": "ui_icons_atlas_10x10_256.svg",
+      "output": "assets/sprites/ui_icons.png",
+      "columns": 10,
+      "rows": 10,
+      "cellWidth": 256,
+      "cellHeight": 256,
+      "width": 2560,
+      "height": 2560
+    }
+  }
+}

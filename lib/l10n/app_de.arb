@@ -1,0 +1,4611 @@
+{
+  "@@locale": "de",
+  "appTitle": "Age of New Worlds",
+  "defaultPlayerName": "Spieler {index}",
+  "@defaultPlayerName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultCityName": "Stadt {index}",
+  "@defaultCityName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameTitle": "NEUES SPIEL",
+  "gameModeSinglePlayerMenuLabel": "Einzelspieler",
+  "gameModeMultiplayerMenuLabel": "Mehrspieler",
+  "gameModeHotSeatMenuLabel": "Hot Seat",
+  "gameModeSinglePlayerSummaryLabel": "Einzelspieler",
+  "gameModeMultiplayerSummaryLabel": "Mehrspieler",
+  "gameModeHotSeatSummaryLabel": "Hot Seat",
+  "gameModeSinglePlayerMapTitle": "Wähle eine Karte für das Solospiel",
+  "gameModeMultiplayerMapTitle": "Wähle eine Karte für das Onlinespiel",
+  "gameModeHotSeatMapTitle": "Wähle eine Karte für Hot-Seat-Spiel",
+  "gameModeSinglePlayerMapSubtitle": "Ein lokales Spiel gegen die KI.",
+  "gameModeMultiplayerMapSubtitle": "Start-Szenario und Weltkarte für ein Onlinespiel.",
+  "gameModeHotSeatMapSubtitle": "Start-Szenario und Weltkarte für Hot-Seat-Spiel auf einem Gerät.",
+  "newGameIntroTitle": "Bereite die Expedition vor",
+  "newGameIntroSubtitle": "Wähle zuerst den Spielstil, dann die Karte, und passe anschließend Spieler und Spieltempo an.",
+  "newGameStepPlan": "Spielplan",
+  "newGameStepMap": "Karte",
+  "newGameStepReview": "Überprüfung",
+  "newGamePlanTitle": "Welche Geschichte möchtest du beginnen?",
+  "newGamePremiseTitle": "Von der Siedlung zum Imperium",
+  "newGamePremiseBody": "Jede Partie beginnt mit einigen entscheidenden Entscheidungen: wo die erste Stadt gegründet wird, wie die Forschung ausgerichtet wird, wann Expansion riskiert wird und wie die Kartenkontrolle gehalten wird.",
+  "newGameCountryTitle": "Zivilisation wählen",
+  "newGameCountrySubtitle": "Dein Herrschername richtet sich nach der gewählten Zivilisation.",
+  "newGameSinglePlayerSettingsTitle": "Partieeinstellungen",
+  "newGameGameLengthLabel": "Spieldauer",
+  "newGameLeaderLabel": "HERRSCHER",
+  "newGamePillarCities": "Städte",
+  "newGamePillarUnits": "Einheiten",
+  "newGamePillarResearch": "Forschung",
+  "newGameVictoryTypesTitle": "Siegpfade",
+  "newGameVictoryDominationTitle": "Dominanz",
+  "newGameVictoryDominationBody": "Kontrolliere {controlPercent}% der Karte und halte sie {holdTurns} Züge lang. Eroberung kann die Partie weiterhin beenden, indem Rivalen ausgeschaltet werden.",
+  "@newGameVictoryDominationBody": {
+    "placeholders": {
+      "controlPercent": {
+        "type": "String"
+      },
+      "holdTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameVictoryArtifactsTitle": "Artefakte",
+  "newGameVictoryArtifactsBody": "Platziere {artifactCount} einzigartige Weltartefakte in deinen Städten und halte die vollständige Sammlung {holdTurns} Züge lang.",
+  "@newGameVictoryArtifactsBody": {
+    "placeholders": {
+      "artifactCount": {
+        "type": "int"
+      },
+      "holdTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameModeSinglePlayerDescription": "Eine ruhige Partie gegen die KI. Ideal, um Systeme zu lernen, Starts zu testen und mit Wachstum zu experimentieren.",
+  "newGameModeMultiplayerDescription": "Eine Onlinepartie mit Netzwerk-Lobby, Bereitschaft der Spieler und gemeinsamem Einstieg auf die Karte.",
+  "newGameModeMultiplayerAlphaDisabled": "In der Alpha-Version nicht verfügbar.",
+  "newGameModeHotSeatDescription": "Hot-Seat-Spiel auf einem Gerät. Die Spieler geben den Zug weiter, während der Bildschirm jede Übergabe erklärt.",
+  "newGameMapTitle": "Welt wählen",
+  "newGameMapSubtitle": "Die Karte bestimmt das Tempo des Erstkontakts, verfügbare Ressourcen, Stadtraum und die Form des Konflikts.",
+  "newGameReviewTitle": "Expedition bestätigen",
+  "newGameReviewSubtitle": "Nach der Bestätigung gelangst du in die Lobby, um Spielname, Spieldauer und Spieler festzulegen.",
+  "newGameReviewSinglePlayerSubtitle": "Der Einzelspieler startet sofort mit dir und {aiCount} KI-Spielern.",
+  "@newGameReviewSinglePlayerSubtitle": {
+    "placeholders": {
+      "aiCount": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameReviewMissingMap": "Wähle eine Karte, bevor du die Spieler konfigurierst.",
+  "newGameExpeditionReady": "Expedition bereit",
+  "newGameSelectedMapLabel": "Karte",
+  "newGameMapPickLabel": "Kartenauswahl",
+  "newGameMapPickRandom": "Zufälliger Standard",
+  "newGameMapPickManual": "Manuell gewählt",
+  "newGameWorldSourceLabel": "Quelle",
+  "newGameSinglePlayerAiSummary": "Du + {aiCount} KI",
+  "@newGameSinglePlayerAiSummary": {
+    "placeholders": {
+      "aiCount": {
+        "type": "int"
+      }
+    }
+  },
+  "newGameChangeMapAction": "Karte ändern",
+  "newGameStartSetupAction": "Zur Lobby",
+  "mainMenuLoadGame": "Spiel laden",
+  "mainMenuDeveloper": "Werkzeuge",
+  "mainMenuSettings": "Einstellungen",
+  "mainMenuSettingsSublabel": "Text und Audio",
+  "mainMenuExit": "Beenden",
+  "mainMenuAiSublabel": "KI",
+  "mainMenuOnlineSublabel": "Netzwerk",
+  "mainMenuLocalSublabel": "Lokal",
+  "mainMenuToolsSublabel": "Editoren",
+  "mainMenuToolsTitle": "Werkzeuge",
+  "mainMenuMapEditor": "Karteneditor",
+  "mainMenuAssetsEditor": "Asset-Editor",
+  "mainMenuTextSize": "Textgröße",
+  "mainMenuTextSample": "Beispiel-Spieltext",
+  "mainMenuManual": "Handbuch",
+  "mainMenuCredits": "Credits",
+  "mainMenuFeedback": "Feedback",
+  "manualTitle": "Steuerungshandbuch",
+  "manualSubtitle": "Eine kurze Übersicht zu Kartenbewegung, Auswahl, Befehlen, Bereichen und Zugablauf auf Desktop und Mobilgerät.",
+  "manualMetaDesktop": "Desktop",
+  "manualMetaMobile": "Mobil",
+  "manualMetaAlpha": "Einzelspieler-Alpha",
+  "manualCommandLoopTitle": "Zentraler Befehlsablauf",
+  "manualCommandLoopSelectTitle": "Auswählen",
+  "manualCommandLoopSelectBody": "Wähle eine Einheit, Stadt, ein Artefakt oder Kartenfeld aus, um die jetzt wichtigen Aktionen anzuzeigen.",
+  "manualCommandLoopPreviewTitle": "Vorschau",
+  "manualCommandLoopPreviewBody": "Fahre darüber oder tippe einmal, um Ziele, Absichtsfarben, Routen und blockierte Aktionen zu prüfen.",
+  "manualCommandLoopConfirmTitle": "Bestätigen",
+  "manualCommandLoopConfirmBody": "Nutze einen Aktionschip oder wähle das hervorgehobene Ziel erneut, um den Befehl auszuführen.",
+  "manualCommandLoopAdvanceTitle": "Fortfahren",
+  "manualCommandLoopAdvanceBody": "Nutze die untere Aktionstaste, um zur nächsten Entscheidung zu springen oder den Zug zu beenden.",
+  "manualDesktopTitle": "Desktop-Steuerung",
+  "manualDesktopSubtitle": "Mausorientiertes Spiel mit schneller Kartenprüfung, präziser Zielwahl und dauerhaften Bereichen.",
+  "manualMobileTitle": "Mobilsteuerung",
+  "manualMobileSubtitle": "Touchorientiertes Spiel, abgestimmt auf gut lesbare Bereiche, bewusste Befehle und schnellen Zugablauf.",
+  "manualMapCameraGroup": "Karte & Kamera",
+  "manualOrdersGroup": "Auswahl & Befehle",
+  "manualPanelsGroup": "Bereiche & Hilfe",
+  "manualTurnFlowGroup": "Zugablauf",
+  "manualDesktopLeftClickAction": "Linksklick",
+  "manualDesktopLeftClickBody": "Wähle Einheiten, Städte, Artefakte und Felder; bei aktivem Befehl wählst du das Ziel.",
+  "manualDesktopDragAction": "Karte ziehen",
+  "manualDesktopDragBody": "Verschiebe die Kamera, ohne die aktuelle Auswahl oder den Befehlsmodus zu ändern.",
+  "manualDesktopZoomAction": "Mausrad / Trackpad",
+  "manualDesktopZoomBody": "Zoome auf der Karte zwischen strategischer Übersicht und taktischen Details.",
+  "manualDesktopHoverAction": "Darüberfahren",
+  "manualDesktopHoverBody": "Zeige Tooltips, Zielhinweise und Gründe für blockierte Befehle an, bevor du bestätigst.",
+  "manualDesktopActionChipsAction": "Aktionschips",
+  "manualDesktopActionChipsBody": "Bewegen, angreifen, verbessern, eine Stadt gründen, überspringen, befestigen oder den aktuellen Modus abbrechen.",
+  "manualDesktopSecondClickAction": "Dasselbe Ziel zweimal",
+  "manualDesktopSecondClickBody": "Bei Bewegung zeigt der erste Klick die Route an; der zweite Klick führt sie aus oder reiht sie ein.",
+  "manualDesktopHoldAction": "Klicken und halten",
+  "manualDesktopHoldBody": "Öffne detaillierte Befehlserklärungen für Aktionen, deaktivierte Optionen und Kontextchips.",
+  "manualDesktopRailAction": "Linke Leiste",
+  "manualDesktopRailBody": "Öffne Kartenoptionen, Hilfe, Ziele, Aktivitätsprotokoll, Forschung und Imperiumsbereiche.",
+  "manualDesktopTopPillsAction": "Obere Ressourcen",
+  "manualDesktopTopPillsBody": "Prüfe Aufschlüsselungen zu Wirtschaft, Wissenschaft, Ressourcen und Siegdruck.",
+  "manualDesktopCloseAction": "Außerhalb klicken",
+  "manualDesktopCloseBody": "Schließe Pop-ups, Optionsbereiche und Hilfekarten und setze den Fokus zurück auf die Karte.",
+  "manualDesktopHelpAction": "?",
+  "manualDesktopHelpBody": "Öffne jederzeit alle minimierten Hinweise und Tutorialkarten, unabhängig von der Auswahl.",
+  "manualDesktopTurnAction": "Nächste Entscheidung",
+  "manualDesktopTurnBody": "Fokussiere die nächste Einheit, Forschung oder Stadtentscheidung; beende den Zug, wenn nichts den Fortschritt blockiert.",
+  "manualMobileTapAction": "Tippen",
+  "manualMobileTapBody": "Wähle Einheiten, Städte, Artefakte und Felder; bei aktivem Befehl wählst du das Ziel.",
+  "manualMobileDragAction": "Mit einem Finger ziehen",
+  "manualMobileDragBody": "Verschiebe die Kamera, während die ausgewählte Einheit oder der Bereichszustand erhalten bleibt.",
+  "manualMobilePinchAction": "Zusammenziehen",
+  "manualMobilePinchBody": "Zoome die Karte für Erkundung, Stadtarbeit, Bewegungsplanung oder Zielwahl im Kampf.",
+  "manualMobileSecondTapAction": "Dasselbe Ziel zweimal",
+  "manualMobileSecondTapBody": "Zeige zuerst eine Bewegungsroute an und tippe dann erneut auf dasselbe Hex-Feld, um sie auszuführen oder einzureihen.",
+  "manualMobileActionChipsAction": "Aktionschips",
+  "manualMobileActionChipsBody": "Nutze die untere Befehlsreihe für Einheitsbefehle, Stadtentscheidungen, Arbeiter und Abbrechen-Aktionen.",
+  "manualMobileHoldAction": "Drücken und halten",
+  "manualMobileHoldBody": "Öffne Erklärungen zu Befehlen, deaktivierten Optionen, Ressourcen und kontextbezogener Oberfläche.",
+  "manualMobileScrollAction": "Bereiche scrollen",
+  "manualMobileScrollBody": "Durchsuche lange Stadt-, Forschungs-, Protokoll-, Diplomatie- und Hilfelisten, ohne den Kartenzustand zu verlieren.",
+  "manualMobileRailAction": "Linke Leiste",
+  "manualMobileRailBody": "Tippe, um Kartenoptionen, Hilfe, Ziele, Aktivitätsprotokoll, Forschung und Imperiumsbereiche zu öffnen.",
+  "manualMobileHelpAction": "?",
+  "manualMobileHelpBody": "Sieh dir alle minimierten Hinweise und Tutorialkarten erneut an, wenn du eine Auffrischung brauchst.",
+  "manualMobileTurnAction": "Untere Aktion",
+  "manualMobileTurnBody": "Springe zur nächsten erforderlichen Entscheidung oder beende den Zug, sobald alle Aktionspunkte ausgegeben sind.",
+  "mainMenuWhatsNew": "Was ist neu?",
+  "mainMenuWhatsNewBody": "Willkommen bei Age of New Worlds. Baue Städte, führe Kommandanten, entdecke neue Länder und schreibe die Geschichte deiner Zivilisation.",
+  "gameModeLabel": "MODUS",
+  "gameNameLabel": "SPIELNAME",
+  "playersLabel": "SPIELER",
+  "countryLabel": "LAND",
+  "countryPoland": "Polen",
+  "countryUkraine": "Ukraine",
+  "countryGermany": "Deutschland",
+  "countryFrance": "Frankreich",
+  "countryUnitedKingdom": "Vereinigtes Königreich",
+  "countryItaly": "Italien",
+  "countrySpain": "Spanien",
+  "countryNetherlands": "Niederlande",
+  "countrySweden": "Schweden",
+  "countryRussia": "Russland",
+  "countryUnitedStates": "Vereinigte Staaten",
+  "countryCanada": "Kanada",
+  "countryChina": "China",
+  "countryKorea": "Korea",
+  "countryJapan": "Japan",
+  "countryPortugal": "Portugal",
+  "countryLeaderPoland": "Kasimir III. der Große",
+  "countryLeaderUkraine": "Jaroslaw der Weise",
+  "countryLeaderGermany": "Otto von Bismarck",
+  "countryLeaderFrance": "Napoleon Bonaparte",
+  "countryLeaderUnitedKingdom": "Königin Victoria",
+  "countryLeaderItaly": "Julius Cäsar",
+  "countryLeaderSpain": "Isabella I.",
+  "countryLeaderNetherlands": "Wilhelm von Oranien",
+  "countryLeaderSweden": "Gustav II. Adolf",
+  "countryLeaderRussia": "Katharina die Große",
+  "countryLeaderUnitedStates": "Abraham Lincoln",
+  "countryLeaderCanada": "Wilfrid Laurier",
+  "countryLeaderChina": "Qin Shi Huang",
+  "countryLeaderKorea": "Sejong der Große",
+  "countryLeaderJapan": "Tokugawa Ieyasu",
+  "countryLeaderPortugal": "Heinrich der Seefahrer",
+  "addPlayerAction": "+ SPIELER HINZUFÜGEN",
+  "startGameAction": "START",
+  "removePlayerTooltip": "Spieler entfernen",
+  "multiplayerSearchTitle": "SERVERSUCHE",
+  "multiplayerSearchBody": "Die Liste der Onlinepartien wird hier angezeigt.",
+  "multiplayerPlayersTitle": "Spieler",
+  "multiplayerStatusTooltip": "Spielerstatus",
+  "multiplayerAvatarTooltip": "{playerName} - {status}",
+  "@multiplayerAvatarTooltip": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerAvatarTooltipWithRelation": "{playerName} - {status}\nBeziehungen: {relation}",
+  "@multiplayerAvatarTooltipWithRelation": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "relation": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerPlayerTooltip": "{playerName}\n{defaultName}",
+  "@multiplayerPlayerTooltip": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "defaultName": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerPlayerTooltipWithRelation": "{playerName}\n{defaultName}\nBeziehungen: {relation}",
+  "@multiplayerPlayerTooltipWithRelation": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "defaultName": {
+        "type": "String"
+      },
+      "relation": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerStatusActive": "spielt gerade",
+  "multiplayerStatusSubmitted": "Zug gesendet",
+  "multiplayerStatusThinking": "überlegt",
+  "multiplayerStatusWaiting": "wartet",
+  "multiplayerStatusTimeout": "Zeitüberschreitung",
+  "diplomacyRelationFriendly": "freundlich",
+  "diplomacyRelationNeutral": "neutral",
+  "diplomacyRelationHostile": "feindselig",
+  "diplomacyRelationTruce": "Waffenruhe",
+  "diplomacyRelationWar": "Krieg",
+  "diplomacyRelationFriendlyShort": "frdl.",
+  "diplomacyRelationNeutralShort": "neutr.",
+  "diplomacyRelationHostileShort": "feindl.",
+  "diplomacyRelationTruceShort": "Waffenr.",
+  "diplomacyRelationWarShort": "Krieg",
+  "commonDiplomacy": "Diplomatie",
+  "diplomacyScoreLabel": "Beziehungen",
+  "diplomacyScoreDriversTitle": "Was Beziehungen verändert",
+  "diplomacyScoreReasonManual": "Manuelle Änderung",
+  "diplomacyScoreReasonUnitAttack": "Angriff auf Einheit",
+  "diplomacyScoreReasonCityAttack": "Angriff auf Stadt",
+  "diplomacyScoreReasonDeclarationOfWar": "Kriegserklärung",
+  "diplomacyScoreReasonProposalAccepted": "Vorschlag angenommen",
+  "diplomacyScoreReasonProposalRejected": "Vorschlag abgelehnt",
+  "diplomacyScoreReasonMessageResponse": "Antwort auf Depesche",
+  "diplomacyScoreReasonPromiseBroken": "Versprechen gebrochen",
+  "diplomacyStatsTitle": "Statistiken",
+  "diplomacyHistoryTitle": "Verlauf",
+  "diplomacyMessagesTitle": "Depeschen",
+  "diplomacyIncomingMessageTitle": "Neue Depesche",
+  "diplomacyIncomingMessageFrom": "Von: {playerName}",
+  "@diplomacyIncomingMessageFrom": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyIncomingProposalTitle": "Neuer Vorschlag",
+  "diplomacyIncomingProposalFrom": "Von: {playerName}",
+  "@diplomacyIncomingProposalFrom": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyIncomingMessageLater": "Später",
+  "diplomacyActionsTitle": "Aktionen",
+  "diplomacyProposalsTitle": "Vorschläge",
+  "diplomacyNoHistory": "Keine Vorfälle aufgezeichnet.",
+  "diplomacyNoMessages": "Keine Depeschen.",
+  "diplomacyMilitaryStat": "Militär",
+  "diplomacyCitiesStat": "Städte",
+  "diplomacyExpansionStat": "Expansion",
+  "diplomacyArtifactsStat": "Artefakte",
+  "diplomacyLastAggressionStat": "Letzte Aggression",
+  "diplomacyOwnArtifactsLabel": "Deine Artefakte",
+  "diplomacyTargetArtifactsLabel": "Artefakte des Rivalen",
+  "diplomacyTurnsRemaining": "Verbleibende Züge: {turns}",
+  "@diplomacyTurnsRemaining": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyProposalFriendship": "Freundschaftsvorschlag",
+  "diplomacyProposalTruce": "Waffenstillstandsvorschlag",
+  "diplomacySendFriendship": "Freundschaft vorschlagen",
+  "diplomacySendTruce": "Waffenruhe vorschlagen",
+  "diplomacyDeclareWar": "Krieg erklären",
+  "diplomacyAccept": "Annehmen",
+  "diplomacyDecline": "Ablehnen",
+  "diplomacyMessageTroopsNearCities": "Zu viele Truppen stehen nahe bei meinen Städten.",
+  "diplomacyMessageCitiesTooClose": "Du gründest Städte zu nahe an meinen Grenzen.",
+  "diplomacyMessageBlockedRoutes": "Deine Einheiten blockieren meine Routen.",
+  "diplomacyMessageWithdrawScouts": "Bitte ziehe deine Späher aus meinem Gebiet zurück.",
+  "diplomacyMessageAvoidEscalation": "Unsere Zivilisationen sollten eine weitere Eskalation vermeiden.",
+  "diplomacyMessageCommonEnemy": "Ein gemeinsamer Feind bedroht uns beide.",
+  "diplomacyMessageExpansionProvocation": "Deine Expansion wird als Provokation gesehen.",
+  "diplomacyMessagePeacefulPraise": "Wir schätzen die friedlichen Beziehungen zwischen unseren Völkern.",
+  "diplomacyResponseConciliatory": "Versöhnlich",
+  "diplomacyResponseNeutral": "Neutral",
+  "diplomacyResponseEvasive": "Ausweichend",
+  "diplomacyResponseAggressive": "Aggressiv",
+  "diplomacyStrategicResourcesTitle": "Strategische Ressourcen",
+  "diplomacyResourceTradeBlockedByWar": "Ressourcenhandel ist durch Krieg blockiert.",
+  "diplomacyResourceTradeNoAvailableResources": "Keine freien strategischen Ressourcen für den Handel verfügbar.",
+  "diplomacyResourceTradeImportOffer": "Importangebot: {goldPerTurn} Gold/Zug für {durationTurns} Züge.",
+  "@diplomacyResourceTradeImportOffer": {
+    "placeholders": {
+      "goldPerTurn": {
+        "type": "int"
+      },
+      "durationTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeImportAction": "{resourceName} importieren",
+  "@diplomacyResourceTradeImportAction": {
+    "placeholders": {
+      "resourceName": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyResourceTradeExchangeOffer": "Tauschhandel: Ressource gegen Ressource für {durationTurns} Züge.",
+  "@diplomacyResourceTradeExchangeOffer": {
+    "placeholders": {
+      "durationTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeExchangeAction": "{offeredResource} gegen {requestedResource} tauschen",
+  "@diplomacyResourceTradeExchangeAction": {
+    "placeholders": {
+      "offeredResource": {
+        "type": "String"
+      },
+      "requestedResource": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyResourceTradeNoActiveAgreements": "Keine aktiven Ressourcenabkommen.",
+  "diplomacyResourceTradeImportDirection": "Importiert",
+  "diplomacyResourceTradeExportDirection": "Exportiert",
+  "diplomacyResourceTradeBarterPrice": "Tausch",
+  "diplomacyResourceTradeGoldPerTurnPrice": "{goldPerTurn} Gold/Zug",
+  "@diplomacyResourceTradeGoldPerTurnPrice": {
+    "placeholders": {
+      "goldPerTurn": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyResourceTradeAgreementLabel": "{direction} {resourceName} · {price} · {remainingTurns} Züge",
+  "@diplomacyResourceTradeAgreementLabel": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      },
+      "resourceName": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "remainingTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "notFoundScreenTitle": "Bildschirm nicht gefunden",
+  "notFoundBackToMenuAction": "MENÜ",
+  "loadGameTitle": "SPIEL LADEN",
+  "loadGameHeaderTitle": "Gespeicherte Spiele",
+  "loadGameHeaderEmptySubtitle": "Es wurde noch kein Spiel gestartet.",
+  "loadGameHeaderSavesSubtitle": "Kehre zu aktuellen Partien zurück und setze beim gespeicherten Zug fort.",
+  "loadGameSavesCount": "Spielstände: {count}",
+  "@loadGameSavesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameCorruptedStatus": "Beschädigter Spielstand",
+  "loadGameCorruptedAction": "Nicht verfügbar",
+  "loadGameCorruptedBody": "Dieser Spielstand kann nicht gelesen werden. Du kannst ihn aus der Liste entfernen.",
+  "replayTitle": "WIEDERHOLUNG",
+  "replayAction": "WIEDERHOLUNG",
+  "replayUnavailableAction": "KEINE WIEDERHOLUNG",
+  "replayErrorTitle": "Wiederholung nicht verfügbar",
+  "replayErrorBody": "Wiederholung kann nicht geöffnet werden: {error}",
+  "@replayErrorBody": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "replayMissingInitialSnapshotBody": "Dieser Spielstand enthält keinen Start-Snapshot für die Wiederholung. Starte ein neues Spiel, um Wiederholungsdaten für die ganze Partie aufzuzeichnen.",
+  "replayCorruptLogBody": "Das Befehlsprotokoll der Wiederholung ist unvollständig oder kann nicht gelesen werden.",
+  "replayStepCounter": "Schritt {step}/{total}",
+  "@replayStepCounter": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "endTurnButtonTurnLabel": "ZUG {turn}",
+  "@endTurnButtonTurnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "replayTurnLabel": "Zug {turn}",
+  "@replayTurnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "replayEventCount": "{count, plural, =0{0 Ereignisse} =1{1 Ereignis} other{{count} Ereignisse}}",
+  "@replayEventCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replayInitialStateLabel": "Ausgangszustand",
+  "replayPreviousAction": "Vorheriger Schritt",
+  "replayNextAction": "Nächster Schritt",
+  "replayPlayAction": "Wiederholung abspielen",
+  "replayPauseAction": "Wiederholung pausieren",
+  "replaySpeedLabel": "Geschwindigkeit",
+  "replayPerspectiveLabel": "Perspektive",
+  "replayAllPlayers": "Alle Spieler",
+  "replayShowTurnsLabel": "Züge anzeigen",
+  "replayFreeCameraLabel": "Freie Kamera",
+  "mapsLoadError": "Karten konnten nicht geladen werden: {error}",
+  "@mapsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "editorMapPickerTitle": "Editorkarten",
+  "editorMapPickerSubtitle": "Erstelle neue Welten oder verfeinere bestehende Karten.",
+  "editorMapPickerEmptyTitle": "Keine gespeicherten Karten",
+  "editorMapPickerEmptyMessage": "Erstelle eine neue Karte über die Kopfzeile des Bildschirms.",
+  "editorNewMapAction": "Neue Karte",
+  "editorDeleteMapTooltip": "Karte löschen",
+  "editorDeleteMapTitle": "Karte löschen?",
+  "editorDeleteMapMessage": "Dadurch werden „{name}“ und alle Kartendateien dauerhaft gelöscht.",
+  "@editorDeleteMapMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "editorOpenMapErrorTitle": "Karte konnte nicht geöffnet werden",
+  "editorCollapseToolbarTooltip": "Editorbereich einklappen",
+  "editorExpandToolbarTooltip": "Editorbereich ausklappen",
+  "officialMapsCount": "Offiziell: {count}",
+  "@officialMapsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yourMapsCount": "Deine: {count}",
+  "@yourMapsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "officialMapsSection": "Offiziell",
+  "yourMapsSection": "Deine Karten",
+  "playAction": "Spielen",
+  "editAction": "Bearbeiten",
+  "noMapsTitle": "Keine Karten",
+  "noMapsMessage": "Es wurden keine Karten gefunden, um ein Spiel zu starten.",
+  "gameLengthLabel": "Spieldauer",
+  "gameLengthPresetHint": "Spielvoreinstellung",
+  "gameLengthPresetUnlimited": "Unbegrenzt",
+  "gameLengthPresetShort60": "Kurz",
+  "gameLengthPresetNormal90": "Normal",
+  "gameLengthPresetStandard60": "Standard 60 Min.",
+  "gameLengthPresetLong120": "Lang",
+  "gameLengthPresetVeryLong": "Sehr lang",
+  "gameLengthUnlimitedSummary": "Kein Zuglimit - aktuelles Spieltempo",
+  "gameLengthTimedSummary": "Ziel {minutes} Min. - Limit {turns} Züge",
+  "@gameLengthTimedSummary": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "gameLengthScoreFallbackOn": "mit Punkte-Ausweichwertung",
+  "gameLengthScoreFallbackOff": "ohne Punkte-Ausweichwertung",
+  "aiDifficultyLabel": "KI-Schwierigkeit",
+  "aiDifficultyEasy": "Einfach",
+  "aiDifficultyNormal": "Normal",
+  "aiDifficultyHard": "Schwer",
+  "aiDifficultyVeryHard": "Sehr schwer",
+  "gameLengthVictoryRules": "Eroberung + Dominanz {controlPercent}%/{holdTurns} Züge - {fallback}",
+  "@gameLengthVictoryRules": {
+    "placeholders": {
+      "controlPercent": {
+        "type": "String"
+      },
+      "holdTurns": {
+        "type": "int"
+      },
+      "fallback": {
+        "type": "String"
+      }
+    }
+  },
+  "mapValidationErrorTitle": "Karte braucht Korrekturen",
+  "mapValidationLoadingTitle": "Karte wird geprüft",
+  "mapValidationWarningTitle": "Karte könnte für diese Voreinstellung zu langsam sein",
+  "mapValidationLoadError": "Karte konnte nicht geprüft werden: {error}",
+  "@mapValidationLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mapValidationLoadingMessage": "Starts, Ressourcen und Tempo des Erstkontakts werden validiert.",
+  "mapValidationIssueSlowFirstContact": "Startpositionen liegen weit auseinander; 60 Min. könnten den Erstkontakt zu stark verzögern.",
+  "mapValidationIssueLargeMap": "Die Karte hat viele Felder pro Spieler; füge Spieler hinzu oder wähle ein längeres Spiel.",
+  "mapValidationIssueInvalidPlayerCount": "Die Spielerzahl passt nicht zum von dieser Karte unterstützten Bereich.",
+  "mapValidationIssueNoTiles": "Die Karte hat keine Felder.",
+  "mapValidationIssueLowPassableTileRatio": "Die Karte hat zu wenige Felder, die von Landeinheiten passiert werden können.",
+  "mapValidationIssueLowFoodResourceDensity": "Die Karte hat für diese Spielerzahl zu wenige Nahrungsressourcen.",
+  "mapValidationIssueLowStrategicResourceDensity": "Die Karte hat zu wenige strategische Ressourcen.",
+  "mapValidationIssueLowLuxuryResourceDensity": "Die Karte hat zu wenige Luxusressourcen.",
+  "mapValidationIssueStartSiteNotFoundable": "Der Start-Siedler kann auf seinem Feld keine Stadt gründen.",
+  "mapValidationIssueStartSiteLowLandRing": "Der Start hat zu wenige passierbare Felder im ersten Ring.",
+  "mapValidationIssueStartSiteLowFood": "In der Nähe des Starts ist keine sichtbare Nahrungsressource.",
+  "mapValidationIssueStartSiteLowCityControl": "Der Start hat zu wenige gültige Felder für die anfängliche Stadtkontrolle.",
+  "mapValidationIssueStartSitesTooClose": "Die Spielerstarts liegen zu nah beieinander.",
+  "lobbyMapPlayersSummary": "{mapName} - {playerCount} Spieler",
+  "@lobbyMapPlayersSummary": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "playerCount": {
+        "type": "int"
+      }
+    }
+  },
+  "lobbyHeaderTitle": "Bereite den Tisch vor",
+  "lobbyHeaderSubtitle": "Bestätige zuerst die Zivilisation und passe dann Partie und Plätze vor dem ersten Zug an.",
+  "lobbyCivilizationTitle": "Zivilisation wählen",
+  "lobbyCivilizationSubtitle": "Dies ist die Identität von Spieler eins für den Eröffnungszug.",
+  "lobbyStepCivilization": "Zivilisation",
+  "lobbyStepSetup": "Einrichtung",
+  "lobbyStepOnline": "Online",
+  "lobbyStepPlayers": "Spieler",
+  "lobbySetupTitle": "Partie einrichten",
+  "lobbySetupSubtitle": "Benenne das Spiel, wähle das Tempo und prüfe, ob die Karte zur ausgewählten Spielerzahl passt.",
+  "lobbyPlayersSetupTitle": "Spieler am Tisch",
+  "lobbyPlayersSetupSubtitle": "Der erste Spieler übernimmt den Eröffnungszug. Zusätzliche Plätze können Personen auf diesem Gerät oder KI sein.",
+  "lobbyPlayerYou": "Du",
+  "lobbyPlayerHost": "Host",
+  "lobbyPlayerReady": "bereit",
+  "lobbyPlayerConnected": "verbunden",
+  "lobbyPlayerConnecting": "verbindet",
+  "lobbyPlayerReconnecting": "verbindet erneut",
+  "lobbyPlayerOffline": "offline",
+  "lobbyPlayerOpenSlot": "Offener Platz {slotNumber}",
+  "@lobbyPlayerOpenSlot": {
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "lobbyPlayerRequiredSlot": "Zum Start erforderlich",
+  "lobbyPlayerOptionalSlot": "Kann vor dem Start beitreten",
+  "playerKindHuman": "Mensch",
+  "playerKindAi": "KI",
+  "multiplayerServerTitle": "Online-Spielserver",
+  "connectAction": "Verbinden",
+  "refreshAction": "Aktualisieren",
+  "createMatchAction": "Partie erstellen",
+  "noOpenMatches": "Keine offenen Partien",
+  "matchStatusRunning": "Bereit",
+  "matchStatusFinished": "Beendet",
+  "matchStatusAbandoned": "Aufgegeben",
+  "matchPlayersCount": "{players}/{maxPlayers} Spieler",
+  "@matchPlayersCount": {
+    "placeholders": {
+      "players": {
+        "type": "int"
+      },
+      "maxPlayers": {
+        "type": "int"
+      }
+    }
+  },
+  "matchReadyCount": "{readyPlayers}/{players} bereit",
+  "@matchReadyCount": {
+    "placeholders": {
+      "readyPlayers": {
+        "type": "int"
+      },
+      "players": {
+        "type": "int"
+      }
+    }
+  },
+  "matchTurnInfo": "{mapName} - {status} - Zug {turn}",
+  "@matchTurnInfo": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "openMatchInfo": "{mapName} - {players}/{maxPlayers} - Zug {turn}",
+  "@openMatchInfo": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "players": {
+        "type": "int"
+      },
+      "maxPlayers": {
+        "type": "int"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "enterMatchAction": "Betreten",
+  "hideMatchAction": "Ausblenden",
+  "joinMatchAction": "Beitreten",
+  "cancelAction": "ABBRECHEN",
+  "copyAction": "Kopieren",
+  "shareAction": "Teilen",
+  "multiplayerHomeSubtitle": "Wähle eine schnelle Warteschlange oder eine private Code-Partie für Freunde.",
+  "multiplayerProfileTitle": "Dein Profil",
+  "multiplayerProfileSubtitle": "Lege den Namen und die Zivilisation fest, die du in Onlinepartien verwendest.",
+  "multiplayerProfileOptionsSubtitle": "Dein Spitzname wird in Mehrspielerpartien verwendet und muss eindeutig sein.",
+  "multiplayerProfileSaveAction": "Spitzname speichern",
+  "multiplayerProfileSaved": "Spitzname gespeichert.",
+  "multiplayerLobbyHeaderTitle": "Online-Lobby",
+  "multiplayerLobbyHeaderSubtitle": "Wähle zuerst die Zivilisation und tritt dann dem Schnellspiel bei oder erstelle einen privaten Tisch. Die Karte wird automatisch ausgewählt.",
+  "multiplayerCountryPickTitle": "Zivilisation wählen",
+  "multiplayerCountryPickSubtitle": "Dies ist die zentrale Wahl vor dem Betreten der Warteschlange. Mehrspielerkarten werden zufällig ausgewählt.",
+  "multiplayerRandomMapLabel": "Zufällige Karte",
+  "multiplayerNicknameLabel": "Spitzname",
+  "multiplayerQuickplayTitle": "Schnelles Spiel",
+  "multiplayerQuickplaySubtitle": "Findet Spieler automatisch und startet ab 2 Spielern.",
+  "multiplayerCreatePrivateTitle": "Code erstellen",
+  "multiplayerCreatePrivateSubtitle": "Private Partie ohne Zeitlimit, nur für Freunde.",
+  "multiplayerJoinPrivateTitle": "Mit Code beitreten",
+  "multiplayerJoinPrivateSubtitle": "Gib den Code eines Freundes ein und warte auf den Host.",
+  "multiplayerQueueReadyTitle": "Partie bereit",
+  "multiplayerQueueSearchingTitle": "Suche nach Spielern",
+  "multiplayerQueueCountdownTitle": "Startet bald",
+  "multiplayerQueueConnectingSubtitle": "Verbindung zum Server wird hergestellt und nach einer Warteschlange gesucht.",
+  "multiplayerQueueWaitingForPlayers": "Warte auf mindestens {minPlayers} Spieler.",
+  "@multiplayerQueueWaitingForPlayers": {
+    "placeholders": {
+      "minPlayers": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerQueuePreparingStart": "Spieler gefunden. Partiestart wird vorbereitet.",
+  "multiplayerQueueStartingNow": "Partie startet...",
+  "multiplayerQueueStartingIn": "Start in {seconds}s. Weitere Spieler können noch beitreten.",
+  "@multiplayerQueueStartingIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerPrivateTitle": "Freundespartie",
+  "multiplayerPrivateHostReady": "Du kannst die Partie jetzt starten.",
+  "multiplayerPrivateWaitingForHost": "Warte darauf, dass der Host die Partie startet.",
+  "multiplayerJoinCodeHelp": "Gib den Code ein, den du von einem Freund erhalten hast.",
+  "multiplayerInviteCodeHint": "Partiecode",
+  "multiplayerInviteCodeLabel": "Partiecode",
+  "multiplayerInviteCopied": "Partiecode kopiert.",
+  "multiplayerInviteShareText": "Tritt meiner AONW-Partie bei. Code: {inviteCode}",
+  "@multiplayerInviteShareText": {
+    "placeholders": {
+      "inviteCode": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerInviteCodeRequired": "Gib einen Partiecode ein.",
+  "multiplayerMapNotReady": "Diese Karte ist nicht bereit für Mehrspieler.",
+  "multiplayerRequestRejected": "Der Server hat die Anfrage abgelehnt ({statusCode}).",
+  "@multiplayerRequestRejected": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "multiplayerRequestRejectedWithReason": "Der Server hat die Anfrage abgelehnt ({statusCode}: {reason}).",
+  "@multiplayerRequestRejectedWithReason": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerConnectionError": "Verbindung zu {host} konnte nicht hergestellt werden. Prüfe deine Internetverbindung und versuche es erneut.",
+  "@multiplayerConnectionError": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "multiplayerSignInRequired": "Melde dich an oder erstelle ein Konto, um Mehrspieler zu spielen.",
+  "multiplayerSessionExpired": "Deine Mehrspielersitzung ist abgelaufen. Melde dich erneut an und versuche es noch einmal.",
+  "multiplayerAccountTitle": "Mehrspieler-Konto",
+  "multiplayerAccountSubtitle": "Melde dich an oder erstelle ein Konto, um fortzufahren.",
+  "multiplayerAccountEmailLabel": "E-Mail",
+  "multiplayerAccountPasswordLabel": "Passwort",
+  "multiplayerAccountSignInTab": "Anmelden",
+  "multiplayerAccountCreateTab": "Konto erstellen",
+  "multiplayerAccountSignInAction": "Anmelden",
+  "multiplayerAccountCreateAction": "Konto erstellen",
+  "multiplayerAccountSignOutAction": "Abmelden",
+  "multiplayerAccountSignedOut": "Vom Mehrspieler abgemeldet.",
+  "multiplayerAccountInvalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+  "multiplayerAccountInvalidCredentials": "E-Mail oder Passwort ist ungültig.",
+  "multiplayerAccountExists": "Ein Konto mit dieser E-Mail existiert bereits.",
+  "multiplayerAccountWeakPassword": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+  "multiplayerAccountInvalidNickname": "Verwende 3-24 Buchstaben, Zahlen, Leerzeichen, _ oder -.",
+  "multiplayerAccountNicknameTaken": "Dieser Spitzname ist bereits vergeben.",
+  "multiplayerAccountGenericError": "Authentifizierung fehlgeschlagen. Versuche es erneut.",
+  "multiplayerMatchUnavailable": "Diese Partie ist nicht mehr verfügbar.",
+  "multiplayerMatchFull": "Diese Partie ist voll.",
+  "multiplayerCountryUnavailable": "Mehrere Spieler haben deine Zivilisation gewählt. Versuch eine andere.",
+  "multiplayerMatchNotReady": "Die Partie ist noch nicht startbereit.",
+  "multiplayerMatchAccessDenied": "Du bist kein Spieler in dieser Partie.",
+  "multiplayerQueueGenericError": "Mehrspieler-Warteschlange konnte nicht betreten werden. Versuche es erneut.",
+  "multiplayerResumeAction": "Spiel fortsetzen",
+  "multiplayerResumeSublabel": "Zur letzten Mehrspielersitzung zurückkehren",
+  "multiplayerResumeLoading": "Verbindung zur Partie wird hergestellt...",
+  "multiplayerResumeFailed": "Die letzte Mehrspielersitzung konnte nicht fortgesetzt werden.",
+  "optionsTooltip": "Optionen",
+  "optionsOpenMenuTooltip": "Menü öffnen",
+  "optionsTooltipWithCollapseHint": "{tooltip}. Halten, um das Menü einzuklappen.",
+  "@optionsTooltipWithCollapseHint": {
+    "placeholders": {
+      "tooltip": {
+        "type": "String"
+      }
+    }
+  },
+  "optionsTitle": "Optionen",
+  "optionsSubtitle": "Text, Sprache, Audio und Leistung",
+  "languageSectionTitle": "Sprache",
+  "languagePolish": "Polnisch",
+  "languageEnglish": "Englisch",
+  "languageGerman": "Deutsch",
+  "languageSpanish": "Spanisch",
+  "languageDutch": "Niederländisch",
+  "textScaleStandard": "Standard",
+  "textScaleLarge": "Groß",
+  "textScaleExtraLarge": "Sehr groß",
+  "textScaleSemanticLabel": "Textgröße {label}",
+  "@textScaleSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "textScaleTooltip": "Textgröße: {label}",
+  "@textScaleTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "languageSemanticLabel": "Sprache {label}",
+  "@languageSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "languageTooltip": "Sprache: {label}",
+  "@languageTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "audioSectionTitle": "Audio",
+  "gameSoundsLabel": "Spielgeräusche",
+  "soundVolumeLabel": "Lautstärke der Geräusche",
+  "gameMusicLabel": "Spielmusik",
+  "musicVolumeLabel": "Musiklautstärke",
+  "natureSoundsLabel": "Naturgeräusche",
+  "natureVolumeLabel": "Naturlautstärke",
+  "aiSectionTitle": "KI",
+  "aiBatterySaverLabel": "KI-Akkusparmodus",
+  "gameplaySectionTitle": "Gameplay",
+  "followUnitMovementCameraLabel": "Einheitenbewegung mit der Kamera verfolgen",
+  "followEnemyUnitCameraLabel": "Feindeinheiten mit der Kamera verfolgen",
+  "cinematicCameraLabel": "Filmische Kamera",
+  "performanceSectionTitle": "Leistung",
+  "showFpsLabel": "FPS anzeigen",
+  "showMapZoomLabel": "Kartenzoom anzeigen",
+  "mapViewModeTooltip": "Kartenansichtsmodus ändern",
+  "mapViewGraphicUnavailableTooltip": "Grafikmodus ist für diese Karte nicht verfügbar",
+  "mapViewModeGraphic": "Grafik",
+  "mapViewModeTiles": "Kacheln",
+  "gameOptionTerrain": "Gelände",
+  "gameOptionResources": "Ressourcen",
+  "gameOptionHeight": "Höhe",
+  "gameOptionCitySites": "Stadtstandorte",
+  "gameOptionCityGrowth": "Stadtwachstum",
+  "gameOptionShowHexes": "Hexfelder anzeigen",
+  "gameOptionShowHeight": "Höhe anzeigen",
+  "gameOptionDiceTest": "Würfeltest",
+  "gameOptionAutoActionFlow": "Aktionen automatisch abschließen",
+  "gameOptionAutoTurnFlow": "Züge automatisch beenden",
+  "helpPopupsTitle": "Hinweise",
+  "autoTurnHintTitle": "Züge automatisch beenden",
+  "autoTurnHintBody": "Das automatische Beenden von Zügen schickt den Zug ab, wenn keine wichtigen Aktionen mehr übrig sind. Das automatische Abschließen von Aktionen kannst du separat in den Kartenoptionen steuern.",
+  "autoTurnHintEnableAction": "Aktivieren",
+  "autoTurnHintDisableAction": "Deaktivieren",
+  "autoTurnHintStatusOn": "Aktiviert",
+  "autoTurnHintStatusOff": "Deaktiviert",
+  "autoTurnHintMinimizedSubtitle": "Schneller Schalter für automatischen Zugablauf.",
+  "visibilityShowAction": "{label} anzeigen",
+  "@visibilityShowAction": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "visibilityHideAction": "{label} ausblenden",
+  "@visibilityHideAction": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "resignAction": "Aufgeben",
+  "resignMatchTitle": "Partie aufgeben?",
+  "resignMatchMessage": "Die Partie wird beendet.",
+  "resignMatchError": "Partie konnte nicht aufgegeben werden.",
+  "creditsTitle": "Credits",
+  "creditsCreatedBy": "Erstellt von {name}",
+  "@creditsCreatedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteGameTitle": "Spiel löschen",
+  "deleteGameMessage": "„{name}“ löschen? Dies kann nicht rückgängig gemacht werden.",
+  "@deleteGameMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAction": "LÖSCHEN",
+  "retryAction": "ERNEUT VERSUCHEN",
+  "noSavedGames": "Keine gespeicherten Spiele.",
+  "resumeAction": "FORTSETZEN",
+  "newGameAction": "NEUES SPIEL",
+  "turnActionButtonLabel": "Aktion",
+  "endTurnButtonLabel": "Zug beenden",
+  "waitingTurnButtonLabel": "Warten",
+  "waitingForPlayersTooltip": "Warte auf andere Spieler",
+  "submitTurnTooltip": "Bereitschaft in Zug {turn} senden",
+  "@submitTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "endTurnTooltip": "Zug {turn} beenden",
+  "@endTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "nextActionTooltip": "Zur nächsten Aktion gehen",
+  "nextActionWithCountTooltip": "Zur nächsten Aktion gehen ({count} übrig)",
+  "@nextActionWithCountTooltip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnActionListTooltip": "Eine Aktion aus der Liste wählen",
+  "hudActionDeckCollapseTooltip": "Untere Werkzeugleiste einklappen",
+  "hudActionDeckExpandTooltip": "Untere Werkzeugleiste ausklappen",
+  "turnActionUnitKind": "Einheit",
+  "turnActionCityProductionKind": "Stadt",
+  "turnActionResearchKind": "Forschung",
+  "turnActionCityProductionLabel": "Produktion von {cityName}",
+  "@turnActionCityProductionLabel": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "turnActionResearchLabel": "Forschung wählen",
+  "turnLabel": "ZUG {turn}",
+  "@turnLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "loadGameError": "Ladefehler: {error}",
+  "@loadGameError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backAction": "Zurück",
+  "continueAction": "Weiter",
+  "gameLoadingTitle": "Welt wird geladen",
+  "gameLoadingMessage": "Karte, Einheiten und Oberfläche werden vorbereitet. Das Spiel erscheint, sobald die Assets bereit sind.",
+  "firstTurnTutorialPopupTitle": "Tutorial",
+  "firstTurnTutorialPopupSubtitle": "Anleitung für den ersten Zug",
+  "firstTurnTutorialSemantics": "Erster Zug: {title}",
+  "@firstTurnTutorialSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "firstTurnCoachmarkProgressLabel": "Schritt {current}/{total}",
+  "@firstTurnCoachmarkProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "firstTurnCoachmarkMinimizeTooltip": "Minimieren",
+  "firstTurnCoachmarkSkipAction": "Überspringen",
+  "firstTurnCoachmarkNextAction": "Weiter",
+  "firstTurnCoachmarkDoneAction": "Fertig",
+  "firstTurnCoachmarkSelectionTitle": "Schritt 1: Auswahl lesen",
+  "firstTurnCoachmarkSelectionBody": "Das Spiel beginnt, indem deine erste Einheit automatisch ausgewählt wird. Der untere Bereich zeigt, was du befehligst, wie viele Aktionen übrig sind und welche Befehle du jetzt geben kannst.",
+  "firstTurnCoachmarkSelectionBodyUnit": "Die untere Werkzeugleiste beschreibt die ausgewählte Einheit: Typ, Bewegung, Aktionswarteschlange und verfügbare Befehle. Nutze sie, um den Bewegungsmodus zu starten, und brich ihn ab, wenn Tippen auf Hex-Felder wieder zur Prüfung dienen soll.",
+  "firstTurnCoachmarkSelectionBodyCity": "Du hast eine Stadt ausgewählt. Der untere Bereich zeigt ihre Produktion, Bevölkerung, Gebäude und wirtschaftlichen Entscheidungen. Das ist ein anderer Kontext als Einheitsbefehle, daher behandelt das Tutorial die Stadt.",
+  "firstTurnCoachmarkSelectionBodyNone": "Wenn nichts ausgewählt ist, zeigt der untere Bereich den allgemeinen Zugstatus. Tippe eine deiner Einheiten oder Städte an, um konkrete Befehle und Informationen zu sehen.",
+  "firstTurnCoachmarkResourcesTitle": "Schritt 2: Imperium prüfen",
+  "firstTurnCoachmarkResourcesBody": "Die obere Leiste zeigt Zug, Gold, Wissenschaft und Ressourcen. Gold stützt die Wirtschaft, Wissenschaft treibt Forschung an und Ressourcen zeigen, was sich zu bauen lohnt.",
+  "firstTurnCoachmarkMenuTitle": "Schritt 3: linkes Menü kennenlernen",
+  "firstTurnCoachmarkMenuBody": "Das linke Menü sammelt Ansichten, die du in jedem Zug erneut nutzt: Kartenoptionen, minimierte Pop-up-Antworten, Ziele, Protokoll, Forschung und Imperium. Halte die Menütaste gedrückt, um die Leiste einzuklappen, und tippe dann auf die einzelne Taste, um sie wieder zu öffnen.",
+  "firstTurnCoachmarkActionTitle": "Schritt 4: richtigen Befehl geben",
+  "firstTurnCoachmarkActionBodyActive": "Wenn der Siedler auf einem guten Feld steht, nutze die Stadtgründungsaktion. Ist der Standort schwach, bewege die Einheit und decke Gelände auf. Bewegung und Spezialaktionen verbrauchen den Zug dieser Einheit.",
+  "firstTurnCoachmarkActionBodyWaiting": "Wenn eine Einheit einen Befehl hat, erscheint er hier. Gehe in den ersten Zügen Einheiten und Städte nacheinander durch, bis keine wichtige Entscheidung zurückbleibt.",
+  "firstTurnCoachmarkActionBodySettler": "Der Siedler entscheidet über den Start deines Imperiums. Wenn das Feld Wachstum, Produktion und Raum zur Expansion bietet, gründe eine Stadt. Ist das Gelände schwach, bewege den Siedler und prüfe zuerst das nahe Land.",
+  "firstTurnCoachmarkActionBodyWorker": "Ein Arbeiter gründet keine Städte. Seine Aufgabe ist es, Felder innerhalb von Stadtgrenzen zu verbessern: Bauernhöfe fördern Wachstum, Minen erhöhen Produktion und Ressourcenverbesserungen stärken die Wirtschaft.",
+  "firstTurnCoachmarkActionBodyUnit": "Bei Kampf- und Späheinheiten zählen Bewegung, Sicht und Sicherheit am meisten. Decke Gelände auf, schütze Stadtgrenzen und greife nur an, wenn das vorhergesagte Ergebnis günstig ist.",
+  "firstTurnCoachmarkActionBodyCity": "Bei ausgewählter Stadt führt dieser Bereich zu Produktion und Verwaltung. Wähle ein Bauziel, prüfe Stadtwachstum und verhindere, dass die Stadt untätig bleibt.",
+  "firstTurnCoachmarkResearchTitle": "Schritt 5: Forschung wählen",
+  "firstTurnCoachmarkResearchBody": "Öffne die Forschung vor dem Beenden des Zuges. Landwirtschaft unterstützt Wachstum, Bergbau erhöht Produktion und Jagd verbessert Erkundung und Verteidigung. Vor allem sollte Wissenschaft nicht ohne Ziel laufen.",
+  "firstTurnCoachmarkResearchBodyAvailable": "Forschung kann gewählt werden. Öffne die Forschung vor dem Beenden des Zuges: Landwirtschaft unterstützt Wachstum, Bergbau erhöht Produktion und Jagd verbessert Erkundung und Verteidigung.",
+  "firstTurnCoachmarkCityTitle": "Schritt 6: Stadt einrichten",
+  "firstTurnCoachmarkCityBody": "Nach der Gründung der Hauptstadt wählst du Produktion. Ein Arbeiter entwickelt Felder, ein Krieger sichert das Gebiet und Gebäude stärken die Wirtschaft. Die Stadt sollte immer etwas bauen.",
+  "firstTurnCoachmarkCityBodySelected": "Dies ist der Stadtbereich. Prüfe Produktion, Wachstum, Gebäude und verfügbare Projekte. Die Hauptregel für neue Züge: Jede Stadt sollte ein Produktionsziel haben.",
+  "firstTurnCoachmarkCityBodyNeedsProduction": "Eine deiner Städte wartet auf Produktion. Nutze die Aktionstaste oder wähle die Stadt, entscheide dich für eine Einheit, ein Gebäude oder Projekt und beende erst dann den Zug.",
+  "firstTurnCoachmarkCityBodyExisting": "Deinen Städten ist bereits Produktion zugewiesen. Kehre in späteren Zügen hierher zurück, um Wachstum, Gebäude, Spezialisierung und Verteidigungsbedarf zu beobachten.",
+  "firstTurnCoachmarkCityBodyFuture": "Nachdem du die erste Stadt gegründet hast, kehrst du hierher zurück, um Produktion zu wählen. Ein Arbeiter entwickelt Felder, ein Krieger sichert das Gebiet und Gebäude stärken die Wirtschaft.",
+  "firstTurnCoachmarkActionFlowTitle": "Schritt 7: Aktionswarteschlange leeren",
+  "firstTurnCoachmarkActionFlowBodyReady": "Alle wichtigen Entscheidungen für diesen Zug sind bereit. Bestätige vor dem Beenden des Zuges kurz, dass Forschung und Stadtproduktion jeweils ein Ziel haben.",
+  "firstTurnCoachmarkActionFlowBodyPending": "Die Aktionstaste führt zur nächsten Einheit, Stadt oder fehlenden Wahl. Drücke sie weiter, bis das Spiel zeigt, dass der Zug sicher beendet werden kann.",
+  "firstTurnCoachmarkEndTurnTitle": "Schritt 8: Zug beenden und wiederholen",
+  "firstTurnCoachmarkEndTurnBody": "Wenn nichts deine Reaktion erfordert, beende den Zug. Der Rhythmus der nächsten Züge ist derselbe: Ressourcen, Einheiten, Stadt, Forschung, dann Zug beenden.",
+  "firstTurnCoachmarkVictoryBody": "Du kannst durch Dominanz oder Artefakte gewinnen: Platziere 6 einzigartige Artefakte in deinen Städten und halte die Sammlung 5 Züge lang.",
+  "firstTurnCoachmarkHexTapBody": "Klicke oder tippe denselben Hex mehrmals an, um seine Informationen zu wechseln: Feldauswahl, Artefakt, Kartenziel und Hexbeschreibung.",
+  "gameLoadMapErrorTitle": "Karte konnte nicht geladen werden",
+  "gameLoadMapErrorMessage": "Karte „{mapName}“ konnte nicht geladen werden: {error}",
+  "@gameLoadMapErrorMessage": {
+    "placeholders": {
+      "mapName": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeVictoryTitle": "Sieg",
+  "gameOutcomeDefeatTitle": "Niederlage",
+  "gameOutcomeDrawTitle": "Unentschieden",
+  "gameOutcomeCompleteTitle": "Spiel vorbei",
+  "gameOutcomeConditionConquest": "Eroberung",
+  "gameOutcomeConditionScore": "Punktzahl",
+  "gameOutcomeConditionScoreDraw": "Punkte-Unentschieden",
+  "gameOutcomeConditionDomination": "Dominanz",
+  "gameOutcomeConquestNoWinner": "Ein Imperium bleibt auf der Karte.",
+  "gameOutcomeConquestWinner": "{winner} ist das letzte Imperium auf der Karte.",
+  "@gameOutcomeConquestWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeScoreNoWinner": "Das Zuglimit hat das Ergebnis entschieden.",
+  "gameOutcomeScoreWinner": "{winner} gewinnt nach Erreichen des Zuglimits.",
+  "@gameOutcomeScoreWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeScoreDrawSubtitle": "Zuglimit erreicht. Die höchste Punktzahl ist gleichauf.",
+  "gameOutcomeDominationNoWinner": "Kartenkontrolle wurde gehalten.",
+  "gameOutcomeDominationWinner": "{winner} hält territoriale Dominanz.",
+  "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeWinnerMetric": "Gewinner",
+  "gameOutcomeConditionMetric": "Bedingung",
+  "gameOutcomeEliminationMetric": "Ausschaltung",
+  "gameOutcomeMapControlMetric": "Kartenkontrolle",
+  "gameOutcomeHoldMetric": "Halten",
+  "gameOutcomeThresholdMetric": "Schwelle",
+  "gameOutcomeTurnsValue": "{held}/{required} Züge",
+  "@gameOutcomeTurnsValue": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryConquestPrimary": "Eroberung",
+  "victoryGoalCompact": "Ziel",
+  "victoryNoLimit": "Kein Limit",
+  "victoryConquestTooltip": "Ziel: Rivalen ausschalten. Kein Zuglimit.",
+  "victoryLimitLabel": "Limit",
+  "victoryNoneValue": "Keine",
+  "victoryScoreCapPrimary": "PUNKTELIMIT",
+  "victoryScoreRemainingPrimary": "PUNKTE {turns}Z",
+  "@victoryScoreRemainingPrimary": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreCapCompact": "LIMIT",
+  "victoryTurnsCompact": "{turns}Z",
+  "@victoryTurnsCompact": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryTurns": "{count, plural, =1{1 Zug} other{{count} Züge}}",
+  "@victoryTurns": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryRemainingLabel": "Verbleibend",
+  "victoryScoreLeaderLabel": "Punkteführer",
+  "victoryScoreDrawLabel": "UNENTSCHIEDEN {score}",
+  "@victoryScoreDrawLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreLimitReachedTooltip": "Zuglimit {turnLimit} erreicht. Die Punktzahl entscheidet das Ergebnis.",
+  "@victoryScoreLimitReachedTooltip": {
+    "placeholders": {
+      "turnLimit": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryScoreFallbackTooltip": "Punkte-Ausweichwertung in {remainingTurns} Zügen. Limit: {turnLimit}.",
+  "@victoryScoreFallbackTooltip": {
+    "placeholders": {
+      "remainingTurns": {
+        "type": "int"
+      },
+      "turnLimit": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryLeaderTooltip": "Führender: {leader}.",
+  "@victoryLeaderTooltip": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryDominationTooltip": "Dominanz: {leader} kontrolliert {control}% der Karte. Schwelle: {required}%, halten: {hold}.",
+  "@victoryDominationTooltip": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryLeaderLabel": "Führender",
+  "victoryControlLabel": "Kontrolle",
+  "victoryHoldLabel": "Halten",
+  "victoryYouLabel": "Du",
+  "victoryPressureLabel": "Druck",
+  "victoryFallbackLabel": "Ausweichwertung",
+  "victoryYourGoalGainControl": "Dein Ziel: {points} PP mehr Kartenkontrolle gewinnen.",
+  "@victoryYourGoalGainControl": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryYourGoalReady": "Dein Ziel: Die Dominanzbedingung ist bereit zur Auswertung.",
+  "victoryYourGoalHold": "Dein Ziel: die Schwelle noch {turns} halten.",
+  "@victoryYourGoalHold": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryLeaderAboveThreshold": "{leader} liegt über der Schwelle; brich diese Kontrolle, bevor das Ziel gehalten wird.",
+  "@victoryLeaderAboveThreshold": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryYourProgress": "Dein Fortschritt: {control}% / {required}%.",
+  "@victoryYourProgress": {
+    "placeholders": {
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureReachThreshold": "Schwelle erreichen: es fehlen {points} PP",
+  "@victoryPressureReachThreshold": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryConditionReady": "Bedingung bereit",
+  "victoryPressureHold": "Für {turns} halten",
+  "@victoryPressureHold": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureLeaderHolding": "{leader} über Schwelle: {turns}",
+  "@victoryPressureLeaderHolding": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryPressureYourGap": "Dein Ziel: es fehlen {points} PP",
+  "@victoryPressureYourGap": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryPressureLeaderGap": "{leader} führt: es fehlen {points} PP",
+  "@victoryPressureLeaderGap": {
+    "placeholders": {
+      "leader": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatApproaching": "Rivale nähert sich der Dominanz: {player} kontrolliert {control}% bei einer Schwelle von {required}%; es fehlen {points} PP.",
+  "@victoryThreatApproaching": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatHolding": "Rivale hält die Dominanzschwelle: {player} {hold}.",
+  "@victoryThreatHolding": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryThreatImminent": "Rivale steht kurz vor der Dominanz: {player} {hold}.",
+  "@victoryThreatImminent": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "hold": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryThreatPressureApproaching": "{player} nahe an der Schwelle: es fehlen {points} PP",
+  "@victoryThreatPressureApproaching": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryThreatPressureBreak": "{player} brechen: {turns}",
+  "@victoryThreatPressureBreak": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "victoryBelowThreshold": "unter der Schwelle",
+  "victoryHoldProgress": "{held}/{required} Züge",
+  "@victoryHoldProgress": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryHoldCompact": "{held}/{required}Z",
+  "@victoryHoldCompact": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "victoryReady": "bereit",
+  "victoryRemainingTurns": "{count, plural, =1{1 Zug übrig} other{{count} Züge übrig}}",
+  "@victoryRemainingTurns": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "returnToMenuAction": "Zurück zum Menü",
+  "today": "heute",
+  "yesterday": "gestern",
+  "objectivesPanelTitle": "ZIELE",
+  "objectivesCloseTooltip": "Ziele schließen",
+  "objectivesMenuClosePrefix": "Ziele schließen",
+  "objectivesMenuOpenPrefix": "Ziele",
+  "objectivesMenuTooltip": "{prefix}: {descriptor} - {title} ({progress}, {count})",
+  "@objectivesMenuTooltip": {
+    "placeholders": {
+      "prefix": {
+        "type": "String"
+      },
+      "descriptor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "objectivesMenuCount": "{count, plural, =1{1 Ziel} other{{count} Ziele}}",
+  "@objectivesMenuCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "objectivesMenuBadgeScore": "PTS",
+  "objectivesMenuBadgeDomination": "DOM",
+  "objectivesMenuDescriptorDomination": "Dominanz",
+  "objectivesMenuDescriptorDominationThreat": "Dominanzbedrohung",
+  "objectivesMenuDescriptorScoreLead": "Führung verteidigen",
+  "objectivesMenuDescriptorScorePressure": "Punktedruck",
+  "objectivesMenuDescriptorActiveObjective": "aktives Ziel",
+  "objectiveMicroTooltipLabel": "Warum",
+  "objectiveOverviewGuidanceLabel": "AKTIVES ZIEL",
+  "objectiveOverviewStrategicLabel": "DRINGEND",
+  "objectiveOverviewScoreCatchUpLabel": "PUNKTEDRUCK",
+  "objectiveOverviewScoreProtectLabel": "FÜHRUNG VERTEIDIGEN",
+  "objectiveOverviewDominationHoldLabel": "DOMINANZ",
+  "objectiveOverviewDominationThreatLabel": "DOMINANZBEDROHUNG",
+  "objectiveOverviewTitleLabel": "Höchste Priorität: {title}",
+  "@objectiveOverviewTitleLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "objectiveOverviewProgressLabel": "Fortschritt {progress}",
+  "@objectiveOverviewProgressLabel": {
+    "placeholders": {
+      "progress": {
+        "type": "String"
+      }
+    }
+  },
+  "objectivePhaseFoundation": "Fundament",
+  "objectivePhaseExpansion": "Expansion",
+  "objectivePhasePressure": "Druck",
+  "objectivePhaseEndgame": "Endspiel",
+  "objectiveChooseResearchTitle": "Forschung wählen",
+  "objectiveChooseResearchHint": "Lege deine Entwicklungsrichtung fest, bevor der erste Zug endet.",
+  "objectiveChooseResearchReward": "+ Wissenschaftstempo",
+  "objectiveChooseResearchTooltip": "Forschung richtet jeden folgenden Zug auf einen bestimmten Entwicklungspfad aus.",
+  "objectiveFoundCapitalTitle": "Gründe deine erste Stadt",
+  "objectiveFoundCapitalHint": "Dein Siedler sollte gutes Gelände schnell in eine Hauptstadt verwandeln.",
+  "objectiveFoundCapitalReward": "+ Produktionsbasis",
+  "objectiveFoundCapitalTooltip": "Die Hauptstadt schaltet Produktion, Wachstum und territoriale Reichweite frei.",
+  "objectiveExploreNearbyTitle": "Nahegelegenes Land erkunden",
+  "objectiveExploreNearbyHint": "Dein Krieger sollte nahe Ressourcen und Stadtstandorte aufdecken.",
+  "objectiveExploreNearbyReward": "+ bessere Entscheidungen",
+  "objectiveExploreNearbyTooltip": "Frühe Erkundung hilft bei der Wahl von Stadtstandorten und vermeidet blinde Züge.",
+  "objectiveQueueWorkerTitle": "Arbeiter einreihen",
+  "objectiveQueueWorkerHint": "Ein Arbeiter verwandelt Nahrung und Produktion auf der Karte in einen echten Vorteil.",
+  "objectiveQueueWorkerReward": "+ Feldentwicklung",
+  "objectiveQueueWorkerTooltip": "Ein Arbeiter verwandelt gute Felder in stetiges Ressourcenwachstum.",
+  "objectiveImproveFirstHexTitle": "Verbessere dein erstes Feld",
+  "objectiveImproveFirstHexHint": "Die erste Verbesserung sollte Nahrung, Produktion oder Gold unterstützen.",
+  "objectiveImproveFirstHexReward": "+ stärkere Wirtschaft",
+  "objectiveImproveFirstHexTooltip": "Die erste Verbesserung zeigt, welcher Teil der Stadtwirtschaft am schnellsten wachsen sollte.",
+  "objectiveFoundSecondCityTitle": "Gründe eine zweite Stadt",
+  "objectiveFoundSecondCityHint": "Eine zweite Siedlung eröffnet Expansion, ohne die Karte mit Einheiten zu überfluten.",
+  "objectiveFoundSecondCityReward": "+ Imperiumsgröße",
+  "objectiveFoundSecondCityTooltip": "Eine zweite Stadt erhöht das Produktionstempo, ohne auf eine einzige Hauptstadt warten zu müssen.",
+  "objectiveBuildFirstBuildingTitle": "Baue dein erstes Gebäude",
+  "objectiveBuildFirstBuildingHint": "Das erste Gebäude sollte Nahrung, Produktion oder Gold stärken.",
+  "objectiveBuildFirstBuildingReward": "+ dauerhafter Stadtvorteil",
+  "objectiveBuildFirstBuildingTooltip": "Gebäude bleiben in der Stadt und skalieren über viele Züge.",
+  "objectiveImproveThreeHexesTitle": "Verbessere drei Felder",
+  "objectiveImproveThreeHexesHint": "Mehrere Verbesserungen verwandeln ein Startlager in eine Wirtschaft.",
+  "objectiveImproveThreeHexesReward": "+ stabiles Einkommen",
+  "objectiveImproveThreeHexesTooltip": "Drei Verbesserungen schaffen eine stabile Basis für Armeen, Forschung oder Expansion.",
+  "objectiveFoundThirdCityTitle": "Gründe eine dritte Stadt",
+  "objectiveFoundThirdCityHint": "Eine dritte Siedlung schafft ein echtes Imperium und eine zweite Expansionsrichtung.",
+  "objectiveFoundThirdCityReward": "+ Kartenmaßstab",
+  "objectiveFoundThirdCityTooltip": "Eine dritte Stadt gibt dir eine zweite Entwicklungsfront und mehr Entscheidungen in jedem Zug.",
+  "objectiveExploreRegionTitle": "Region erkunden",
+  "objectiveExploreRegionHint": "Eine weitere Karte enthüllt Ressourcen, Rivalen und verteidigungswerte Orte.",
+  "objectiveExploreRegionReward": "+ strategischer Plan",
+  "objectiveExploreRegionTooltip": "Eine weitere Karte enthüllt Rivalen, strategische Ressourcen und sichere Grenzen.",
+  "objectiveBuildCombatForceTitle": "Defensive Streitmacht aufbauen",
+  "objectiveBuildCombatForceHint": "Mehrere Truppen lassen dich Expansion schützen und Rivalen unter Druck setzen.",
+  "objectiveBuildCombatForceReward": "+ Grenzsicherheit",
+  "objectiveBuildCombatForceTooltip": "Ein stabiler Schutzschirm schützt Siedler, Arbeiter und entwickelte Städte.",
+  "objectiveHoldDominationTitle": "Dominanz halten",
+  "objectiveHoldDominationHint": "Du liegst über der Kartenschwelle. Behalte die Kontrolle, bis der Countdown endet.",
+  "objectiveHoldDominationReward": "+ Kartensieg",
+  "objectiveHoldDominationTooltip": "Dominanz beendet das Spiel vor dem Punktelimit, wenn du den erforderlichen Kartenanteil über aufeinanderfolgende Züge hältst.",
+  "objectiveBreakDominationHoldTitle": "Dominanz eines Rivalen brechen",
+  "objectiveBreakDominationHoldHint": "Ein Rivale liegt über der Kartenschwelle. Nimm Gebiet ein, bevor er das Ziel hält.",
+  "objectiveBreakDominationHoldReward": "+ Countdown gestoppt",
+  "objectiveBreakDominationHoldTooltip": "Wenn ein Rivale unter die Kontrollschwelle fällt, werden seine Haltezüge auf null zurückgesetzt.",
+  "objectiveHoldScoreLeadTitle": "Führung halten",
+  "objectiveHoldScoreLeadHint": "Das Zuglimit ist nahe. Schütze deine Punktzahl und verliere deinen Vorsprung in den letzten Zügen nicht.",
+  "objectiveHoldScoreLeadReward": "+ Punktelimit-Sieg",
+  "objectiveHoldScoreLeadTooltip": "Das Punktelimit entscheidet die Partie, wenn das Zuglimit überschritten wird; daher muss die Punktführung bis zum Ende halten.",
+  "objectiveOvertakeScoreLeaderTitle": "Punkteführer einholen",
+  "objectiveOvertakeScoreLeaderHint": "Das Zuglimit ist nahe. Du brauchst schnelles Punktewachstum oder einen schwächeren Führenden.",
+  "objectiveOvertakeScoreLeaderReward": "+ Chance auf Punktelimit",
+  "objectiveOvertakeScoreLeaderTooltip": "Baue Städte, Bevölkerung, Technologien, Einheiten und Verbesserungen; bei Gleichstand endet das Punktelimit unentschieden.",
+  "objectiveSecureMapObjectiveTitle": "Kartenziel sichern",
+  "objectiveSecureMapObjectiveHint": "Halte eine Einheit oder Stadteinfluss auf dem Ziel, bis das Halten abgeschlossen ist.",
+  "objectiveSecureMapObjectiveReward": "+ Zielbelohnungen",
+  "objectiveSecureMapObjectiveTooltip": "Kartenziele nutzen Dreiecksmarker und geben Siegpunkte oder Gold erst nach aufeinanderfolgender Kontrolle.",
+  "objectiveBreakMapObjectiveHoldTitle": "Kartenziel des Rivalen brechen",
+  "objectiveBreakMapObjectiveHoldHint": "Ein Rivale hält ein Kartenziel. Bestreite den Dreiecksmarker, bevor das Halten abgeschlossen ist.",
+  "objectiveBreakMapObjectiveHoldReward": "+ Ziel verweigert",
+  "objectiveBreakMapObjectiveHoldTooltip": "Eine eigene Einheit auf dem Ziel bestreitet die Kontrolle und setzt den Fortschritt des Rivalen zurück.",
+  "objectiveAdviceFoundCity": "Größte Lücke: eine neue oder eroberte Stadt.",
+  "objectiveAdviceGrowPopulation": "Größte Lücke: Bevölkerungswachstum.",
+  "objectiveAdviceClaimTerritory": "Größte Lücke: mehr kontrollierte Felder.",
+  "objectiveAdviceConstructBuilding": "Größte Lücke: ein Stadtgebäude.",
+  "objectiveAdviceTrainUnit": "Größte Lücke: eine schnelle Einheit.",
+  "objectiveAdviceUnlockTechnology": "Größte Lücke: eine Technologie abschließen.",
+  "objectiveAdviceImproveField": "Größte Lücke: eine Feldverbesserung.",
+  "objectiveAdviceCollectGold": "Größte Lücke: Gold für Punkte.",
+  "objectiveAdviceProtectLead": "Priorität: Städte nicht aufgeben und den nächsten Punktegewinn sichern.",
+  "objectiveScoreBreakdownCatchUpHeader": "Punkterückstand: {delta} Pkt.",
+  "@objectiveScoreBreakdownCatchUpHeader": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectHeader": "Punktevorsprung: {delta} Pkt.",
+  "@objectiveScoreBreakdownProtectHeader": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownCatchUpTotals": "Du {playerScore} / Führender {comparisonScore}",
+  "@objectiveScoreBreakdownCatchUpTotals": {
+    "placeholders": {
+      "playerScore": {
+        "type": "int"
+      },
+      "comparisonScore": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectTotals": "Du {playerScore} / Rivale {comparisonScore}",
+  "@objectiveScoreBreakdownProtectTotals": {
+    "placeholders": {
+      "playerScore": {
+        "type": "int"
+      },
+      "comparisonScore": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownCatchUpDelta": "um {delta} zurück",
+  "@objectiveScoreBreakdownCatchUpDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreBreakdownProtectDelta": "+{delta}",
+  "@objectiveScoreBreakdownProtectDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "int"
+      }
+    }
+  },
+  "objectiveScoreCategoryCity": "Städte",
+  "objectiveScoreCategoryPopulation": "Bevölkerung",
+  "objectiveScoreCategoryTerritory": "Gebiet",
+  "objectiveScoreCategoryBuilding": "Gebäude",
+  "objectiveScoreCategoryUnit": "Einheiten",
+  "objectiveScoreCategoryTechnology": "Technologien",
+  "objectiveScoreCategoryImprovement": "Verbesserungen",
+  "objectiveScoreCategoryGold": "Gold",
+  "cityBuildingGranary": "Kornspeicher",
+  "cityBuildingWaterMill": "Wassermühle",
+  "cityBuildingWorkshop": "Werkstatt",
+  "cityBuildingStorehouse": "Lagerhaus",
+  "cityBuildingHousing": "Wohnraum",
+  "cityBuildingMerchantHall": "Kaufmannshalle",
+  "cityBuildingStonemason": "Steinmetz",
+  "cityBuildingBarracks": "Kaserne",
+  "cityBuildingMarketplace": "Marktplatz",
+  "cityBuildingPort": "Hafen",
+  "cityBuildingAqueduct": "Aquädukt",
+  "cityBuildingForge": "Schmiede",
+  "cityBuildingStable": "Stall",
+  "cityBuildingBank": "Bank",
+  "cityBuildingBuildersGuild": "Baumeistergilde",
+  "cityBuildingFactory": "Fabrik",
+  "cityBuildingLighthouse": "Leuchtturm",
+  "cityBuildingTrainingGrounds": "Übungsplätze",
+  "cityBuildingTownHall": "Rathaus",
+  "cityBuildingMonument": "Monument",
+  "cityBuildingArchive": "Archiv",
+  "cityBuildingAcademy": "Akademie",
+  "cityBuildingUniversity": "Universität",
+  "cityBuildingObservatory": "Observatorium",
+  "cityBuildingLaboratory": "Labor",
+  "cityBuildingReactor": "Reaktor",
+  "cityBuildingCourthouse": "Gerichtsgebäude",
+  "cityBuildingCourt": "Gericht",
+  "cityBuildingGovernorsOffice": "Gouverneursbüro",
+  "cityBuildingSurveyorsOffice": "Vermessungsbüro",
+  "cityBuildingPlanningOffice": "Planungsbüro",
+  "cityBuildingApothecary": "Apotheke",
+  "cityBuildingPublicBaths": "Öffentliche Bäder",
+  "cityBuildingHospital": "Krankenhaus",
+  "cityBuildingMinistries": "Ministerien",
+  "cityBuildingWalls": "Mauern",
+  "cityBuildingArmory": "Waffenkammer",
+  "cityBuildingSiegeWorkshop": "Belagerungswerkstatt",
+  "cityBuildingCitadel": "Zitadelle",
+  "cityBuildingWarCollege": "Kriegsakademie",
+  "cityBuildingConscriptionOffice": "Rekrutierungsbüro",
+  "cityBuildingBorderFort": "Grenzfort",
+  "cityBuildingAirfield": "Flugfeld",
+  "cityBuildingArtisansGuild": "Handwerkergilde",
+  "cityBuildingMasterWorkshop": "Meisterwerkstatt",
+  "cityBuildingSteelworks": "Stahlwerk",
+  "cityBuildingRailDepot": "Bahndepot",
+  "cityBuildingPowerPlant": "Kraftwerk",
+  "cityBuildingAssemblyPlant": "Montagewerk",
+  "cityBuildingRefinery": "Raffinerie",
+  "cityBuildingMapRoom": "Kartenraum",
+  "cityBuildingShipyard": "Werft",
+  "cityBuildingDryDock": "Trockendock",
+  "cityBuildingNavalAcademy": "Marineakademie",
+  "cityBuildingHarborCustoms": "Hafenzoll",
+  "cityBuildingMuseum": "Museum",
+  "cityBuildingParliament": "Parlament",
+  "cityBuildingBroadcastTower": "Sendeturm",
+  "cityBuildingWorldFairGrounds": "Weltausstellungsgelände",
+  "cityBuildingGranaryDescription": "Ein frühes Nahrungsgebäude, das das Stadtwachstum stabilisiert.",
+  "cityBuildingWaterMillDescription": "Nutzt kontrollierte Flussfelder, um die Stadtnahrung zu erhöhen.",
+  "cityBuildingWorkshopDescription": "Ein einfaches Handwerkszentrum, das die Stadtproduktion steigert.",
+  "cityBuildingStorehouseDescription": "Verbessert die Lagerung der Ernte und erhöht gespeicherte Nahrung.",
+  "cityBuildingHousingDescription": "Erweitert den Wohnraum und lässt die Stadt mehr Felder kontrollieren.",
+  "cityBuildingMerchantHallDescription": "Organisiert lokalen Handel und erhöht das Stadteinkommen.",
+  "cityBuildingStonemasonDescription": "Stärkt Stadtbau und Verteidigungsbasis.",
+  "cityBuildingBarracksDescription": "Bietet militärische Infrastruktur und zusätzliche Verteidigung.",
+  "cityBuildingMarketplaceDescription": "Entwickelt städtischen Handel und erhöht das Goldeinkommen stark.",
+  "cityBuildingPortDescription": "Öffnet die Stadt für Seehandel und Küstennahrung.",
+  "cityBuildingAqueductDescription": "Leitet Wasser heran und unterstützt Wachstum sowie weitere Stadterweiterung.",
+  "cityBuildingForgeDescription": "Bündelt Metallverarbeitung und erhöht die Produktion stark.",
+  "cityBuildingStableDescription": "Unterstützt Zucht und Logistik und fügt Nahrung sowie Produktion hinzu.",
+  "cityBuildingBankDescription": "Zentralisiert Finanzen und erhöht das Stadteinkommen deutlich.",
+  "cityBuildingBuildersGuildDescription": "Versammelt Bauspezialisten und beschleunigt Produktion und territoriales Wachstum.",
+  "cityBuildingFactoryDescription": "Ein Industriegebäude für das spätere Spiel, das einen großen Produktionsbonus gewährt.",
+  "cityBuildingLighthouseDescription": "Stärkt die Küstenwirtschaft durch Navigation und Handel.",
+  "cityBuildingTrainingGroundsDescription": "Entwickelt militärische Ausbildung und verbessert die Stadtverteidigung.",
+  "cityBuildingTownHallDescription": "Das Verwaltungszentrum der Stadt stärkt Wirtschaft und territoriale Kontrolle.",
+  "cityBuildingMonumentDescription": "Ein Symbol städtischen Prestiges, das Gold und Verteidigung bietet.",
+  "cityBuildingArchiveDescription": "Das erste Wissensgebäude, das Aufzeichnungen organisiert und Forschung unterstützt.",
+  "cityBuildingAcademyDescription": "Stärkt Wissenschaftsstädte und bereitet den Weg zu höherer Bildung.",
+  "cityBuildingUniversityDescription": "Ein späteres Wissenschaftsgebäude für große, entwickelte Städte.",
+  "cityBuildingObservatoryDescription": "Verbindet Geografie mit Wissenschaft und unterstützt fortgeschrittene Forschung.",
+  "cityBuildingLaboratoryDescription": "Unterstützung für späte Technologieprojekte und moderne Wissenschaft.",
+  "cityBuildingReactorDescription": "Ein mächtiges Endspielgebäude, das Uran und starke Infrastruktur erfordert.",
+  "cityBuildingCourthouseDescription": "Stabilisiert große oder eroberte Städte durch Rechtsverwaltung.",
+  "cityBuildingCourtDescription": "Entwickelt Recht, Stadtpolitik und zivile Kontrolle.",
+  "cityBuildingGovernorsOfficeDescription": "Stärkt Stadtspezialisierung und Gebietsverwaltung.",
+  "cityBuildingSurveyorsOfficeDescription": "Erleichtert Grenzplanung und erhöht die Kontrollreichweite der Stadt.",
+  "cityBuildingPlanningOfficeDescription": "Entwickelt die Stadt durch Planung, Produktion und territoriale Kontrolle.",
+  "cityBuildingApothecaryDescription": "Frühe Stadtgesundheit, die stetiges Wachstum unterstützt.",
+  "cityBuildingPublicBathsDescription": "Verbessern Stabilität und Wachstum in größeren Städten.",
+  "cityBuildingHospitalDescription": "Späte Bevölkerungsinfrastruktur für langfristige Entwicklung.",
+  "cityBuildingMinistriesDescription": "Ein begrenztes Imperiumsgebäude, das Verwaltung und Gold stärkt.",
+  "cityBuildingWallsDescription": "Frühe Stadtverteidigung gegen die ersten Angriffe.",
+  "cityBuildingArmoryDescription": "Ein besseres Rekrutierungs- und Ausrüstungszentrum für Truppen.",
+  "cityBuildingSiegeWorkshopDescription": "Produziert und unterhält die Unterstützungsbasis für Belagerungsmaschinen.",
+  "cityBuildingCitadelDescription": "Späte strategische Verteidigung für Städte an wichtigen Grenzen.",
+  "cityBuildingWarCollegeDescription": "Eine Militärakademie, die Armee und Koordination der Generäle stärkt.",
+  "cityBuildingConscriptionOfficeDescription": "Mobilisiert die Armee und beschleunigt die Vorbereitung neuer Truppen.",
+  "cityBuildingBorderFortDescription": "Stärkt Verteidigung und Sicht an Imperiumsgrenzen.",
+  "cityBuildingAirfieldDescription": "Ein militärisches Flugfeld für Luftfahrt, Aufklärung und moderne Machtprojektion.",
+  "cityBuildingArtisansGuildDescription": "Eine Produktionsstufe vor der Fabrik, basierend auf Handwerk und Werkstätten.",
+  "cityBuildingMasterWorkshopDescription": "Eine spezialisierte Werkstatt für produktionsorientierte Städte.",
+  "cityBuildingSteelworksDescription": "Schwerindustrie auf Grundlage von Eisen oder Kohle.",
+  "cityBuildingRailDepotDescription": "Ein Bahndepot, das Logistik und Mobilität zwischen Städten verbessert.",
+  "cityBuildingPowerPlantDescription": "Späte Energieinfrastruktur für starke Industrieproduktion.",
+  "cityBuildingAssemblyPlantDescription": "Ein Endspiel-Industriegebäude für Massenproduktion.",
+  "cityBuildingRefineryDescription": "Verarbeitet Öl für moderne Armeen und späte Projekte.",
+  "cityBuildingMapRoomDescription": "Unterstützt Erkundung, Sicht und Expeditionsplanung.",
+  "cityBuildingShipyardDescription": "Entwickelt Flotten und Produktion in Hafenstädten.",
+  "cityBuildingDryDockDescription": "Ein später Marinehafen für größere Kriegsschiffe.",
+  "cityBuildingNavalAcademyDescription": "Eine Marineakademie für spezialisierte Häfen.",
+  "cityBuildingHarborCustomsDescription": "Ein Hafenamt, das Handel und Küstenkontrolle stärkt.",
+  "cityBuildingMuseumDescription": "Ein prestigeträchtiges Imperiumsgebäude, das den Stadteinfluss stärkt.",
+  "cityBuildingParliamentDescription": "Ein begrenztes Zivilgebäude für einen reifen Staat.",
+  "cityBuildingBroadcastTowerDescription": "Stärkt Imperiumseinfluss, Sicht und Kommunikation.",
+  "cityBuildingWorldFairGroundsDescription": "Ein friedliches Prestigeprojekt für eine reiche, entwickelte Stadt.",
+  "unitCommander": "General",
+  "unitWarrior": "Krieger",
+  "unitArcher": "Bogenschütze",
+  "unitSettler": "Siedler",
+  "unitWorker": "Arbeiter",
+  "unitMerchant": "Händler",
+  "unitScout": "Späher",
+  "unitSpearman": "Speerträger",
+  "unitCavalry": "Kavallerie",
+  "unitCatapult": "Katapult",
+  "unitHeavyInfantry": "Schwere Infanterie",
+  "unitFieldCannon": "Feldkanone",
+  "unitRifleman": "Schütze",
+  "unitTank": "Panzer",
+  "unitScoutShip": "Spähschiff",
+  "unitWarship": "Kriegsschiff",
+  "unitReconPlane": "Aufklärungsflugzeug",
+  "unitCommanderDescription": "Ein General befehligt eine Armee, führt Aufklärung an und kann schneller handeln als reguläre Truppen.",
+  "unitWarriorDescription": "Eine grundlegende Kampfeinheit für Stadtverteidigung und Nahkampf.",
+  "unitArcherDescription": "Eine Fernkampfeinheit, die aus größerer Entfernung angreift, sich im Nahkampf aber schlecht verteidigt.",
+  "unitSettlerDescription": "Gründet neue Städte und erweitert das Imperium, braucht unterwegs aber Schutz.",
+  "unitWorkerDescription": "Verbessert Felder rund um Städte und erhöht Nahrung, Produktion und Gold.",
+  "unitMerchantDescription": "Reist automatisch zwischen deinen Städten auf einer Handelsroute und kann besetzte befreundete Stadtzentren betreten.",
+  "unitScoutDescription": "Eine schnelle Aufklärungseinheit zum Erkunden der Karte und Erkennen von Bedrohungen.",
+  "unitSpearmanDescription": "Frühe Verteidigungsinfanterie, gut zum Abdecken von Städten und Stoppen von Angriffen.",
+  "unitCavalryDescription": "Eine mobile Angriffseinheit, die schnell auf Schwachpunkte an der Front reagiert.",
+  "unitCatapultDescription": "Eine Belagerungsmaschine mit größerer Reichweite, effektiv gegen Befestigungen.",
+  "unitHeavyInfantryDescription": "Robuste Frontinfanterie mit hoher Verteidigung und solidem Angriff.",
+  "unitFieldCannonDescription": "Moderne Feldartillerie für Fernbeschuss.",
+  "unitRiflemanDescription": "Ein moderner Fernkampfsoldat, zuverlässig in Angriff und Verteidigung.",
+  "unitTankDescription": "Eine schwere gepanzerte Einheit mit hoher Stärke und hoher Mobilität.",
+  "unitScoutShipDescription": "Ein leichtes Schiff für Küstenaufklärung und den Schutz früher Seewege.",
+  "unitWarshipDescription": "Ein starkes Kampfschiff für Seekontrolle und Fernbeschuss.",
+  "unitReconPlaneDescription": "Ein Aufklärungsflugzeug mit großer Sichtweite und sehr hoher Mobilität.",
+  "unitRankRecruit": "Rekrut",
+  "unitRankSeasoned": "Erfahren",
+  "unitRankVeteran": "Veteran",
+  "unitRankElite": "Elite",
+  "troopWarrior": "Krieger",
+  "troopArcher": "Bogenschützen",
+  "troopSettler": "Siedler",
+  "fieldImprovementFarm": "Bauernhof",
+  "fieldImprovementRiverFarm": "Flussbauernhof",
+  "fieldImprovementMine": "Mine",
+  "fieldImprovementLumberMill": "Sägewerk",
+  "fieldImprovementPasture": "Weide",
+  "fieldImprovementCamp": "Lager",
+  "fieldImprovementQuarry": "Steinbruch",
+  "fieldImprovementFishingBoats": "Fischerboote",
+  "fieldImprovementOrchard": "Obstgarten",
+  "fieldImprovementPlantation": "Plantage",
+  "fieldImprovementVineyard": "Weinberg",
+  "fieldImprovementTradingPost": "Handelsposten",
+  "fieldImprovementProspectorCamp": "Prospektorenlager",
+  "fieldImprovementHorseRanch": "Pferderanch",
+  "fieldImprovementPearlDivers": "Perlentaucher",
+  "fieldImprovementCoalShaft": "Kohleschacht",
+  "fieldImprovementOilWell": "Ölquelle",
+  "fieldImprovementBauxiteMine": "Bauxitmine",
+  "fieldImprovementUraniumMine": "Uranmine",
+  "resourceWheat": "Weizen",
+  "resourceFish": "Fisch",
+  "resourceDeer": "Wild",
+  "resourceSheep": "Schafe",
+  "resourceRice": "Reis",
+  "resourceCow": "Rinder",
+  "resourceApple": "Äpfel",
+  "resourceBanana": "Bananen",
+  "resourceCitrus": "Zitrusfrüchte",
+  "resourceGold": "Gold",
+  "resourceSilver": "Silber",
+  "resourceGems": "Edelsteine",
+  "resourceSilk": "Seide",
+  "resourceSpices": "Gewürze",
+  "resourceCotton": "Baumwolle",
+  "resourceGrapes": "Trauben",
+  "resourceIvory": "Elfenbein",
+  "resourcePearls": "Perlen",
+  "resourceCoffee": "Kaffee",
+  "resourceCocoa": "Kakao",
+  "resourceTobacco": "Tabak",
+  "resourceSugar": "Zucker",
+  "resourceIron": "Eisen",
+  "resourceCoal": "Kohle",
+  "resourceOil": "Öl",
+  "resourceAluminium": "Aluminium",
+  "resourceUranium": "Uran",
+  "resourceHorses": "Pferde",
+  "resourceMarble": "Marmor",
+  "technologyAgriculture": "Landwirtschaft",
+  "technologyWoodworking": "Holzbearbeitung",
+  "technologyMining": "Bergbau",
+  "technologyAnimalHusbandry": "Tierhaltung",
+  "technologyHunting": "Jagd",
+  "technologyFishing": "Fischerei",
+  "technologyCraftsmanship": "Handwerkskunst",
+  "technologyTrade": "Handel",
+  "technologyStorage": "Lagerung",
+  "technologyWaterEngineering": "Wasserbau",
+  "technologyStoneworking": "Steinbearbeitung",
+  "technologyMilitaryOrganization": "Militärorganisation",
+  "technologyAdvancedTrade": "Fortgeschrittener Handel",
+  "technologyConstruction": "Bauwesen",
+  "technologyNavigation": "Navigation",
+  "technologyIrrigation": "Bewässerung",
+  "technologyBanking": "Bankwesen",
+  "technologyEngineering": "Ingenieurwesen",
+  "technologyMetallurgy": "Metallurgie",
+  "technologyHorsebackRiding": "Reitkunst",
+  "technologyIronWorking": "Eisenverarbeitung",
+  "technologyCoalMining": "Kohlebergbau",
+  "technologyMachinery": "Maschinenbau",
+  "technologyAdministration": "Verwaltung",
+  "technologyLogistics": "Logistik",
+  "technologyShipbuilding": "Schiffbau",
+  "technologyTactics": "Taktik",
+  "technologyEconomy": "Wirtschaft",
+  "technologyUrbanization": "Urbanisierung",
+  "technologyFortifications": "Befestigungen",
+  "technologyStrategy": "Strategie",
+  "technologySpecialization": "Spezialisierung",
+  "technologyWriting": "Schrift",
+  "technologyMathematics": "Mathematik",
+  "technologyMedicine": "Medizin",
+  "technologyCivilService": "Staatsdienst",
+  "technologySiegecraft": "Belagerungskunst",
+  "technologyCartography": "Kartografie",
+  "technologyGuilds": "Gilden",
+  "technologyLaw": "Recht",
+  "technologyEducation": "Bildung",
+  "technologyUrbanPlanning": "Stadtplanung",
+  "technologyNavalDoctrine": "Marinedoktrin",
+  "technologySteel": "Stahl",
+  "technologyBureaucracy": "Bürokratie",
+  "technologyNationalism": "Nationalismus",
+  "technologyScientificMethod": "Wissenschaftliche Methode",
+  "technologySteamPower": "Dampfkraft",
+  "technologyElectricity": "Elektrizität",
+  "technologyCombustion": "Verbrennung",
+  "technologyFlight": "Flug",
+  "technologyMassProduction": "Massenproduktion",
+  "technologyRadio": "Radio",
+  "technologyNuclearPhysics": "Kernphysik",
+  "technologyAgricultureDescription": "Öffnet den grundlegenden Wachstumspfad. Bauernhöfe und Flussbauernhöfe lassen die Bevölkerung schneller wachsen und stabilisieren die erste Stadt.",
+  "technologyWoodworkingDescription": "Entwickelt die Produktionsseite des Bergbaus. Sägewerke verwandeln Wälder in Produktion, ohne tief in die Metallurgie einzusteigen.",
+  "technologyMiningDescription": "Öffnet den Pfad von Industrie und Infrastruktur. Minen sind der erste große Sprung in der Stadtproduktion.",
+  "technologyAnimalHusbandryDescription": "Stärkt Wachstum durch Tierressourcen. Weiden bauen eine Nahrungswirtschaft auf und bereiten den Weg zur Reitkunst.",
+  "technologyHuntingDescription": "Öffnet den Militär- und Erkundungszweig. Bietet Lager und die erste Fernkampfeinheit für Stadtproduktion.",
+  "technologyFishingDescription": "Entwickelt Städte am Wasser. Fischerboote helfen Küstenstädten, schneller zu wachsen, und bereiten den Weg zum Hafen.",
+  "technologyCraftsmanshipDescription": "Die erste Aufwertung der Stadtproduktion. Die Werkstatt verhindert, dass spätere Gebäude und Einheiten die Warteschlange zu lange blockieren.",
+  "technologyTradeDescription": "Der erste Schritt in der Goldwirtschaft. Die Kaufmannshalle gibt einer Stadt nach der Wahl eines Wachstumspfads einen einfachen finanziellen Nutzen.",
+  "technologyStorageDescription": "Stabilisiert Stadtwachstum. Lagerung hilft, das Nahrungstempo zu halten und das Risiko von Entwicklungsstillständen zu senken.",
+  "technologyWaterEngineeringDescription": "Erweitert den wasserbasierten Wachstumspfad. Die Wassermühle belohnt Städte, die Flüsse kontrollieren.",
+  "technologyStoneworkingDescription": "Verbindet Produktion und Verteidigung. Steinbrüche und der Steinmetz stärken Städte im Infrastrukturzweig.",
+  "technologyMilitaryOrganizationDescription": "Baut den ersten militärischen Kern einer Stadt auf. Kasernen stärken Produktion und Verteidigung, bevor spätere Armeeboni erscheinen.",
+  "technologyAdvancedTradeDescription": "Entwickelt die Wirtschaft nach dem Handel. Der Marktplatz ist ein stärkeres Goldgebäude und bereitet den Weg zum Bankwesen.",
+  "technologyConstructionDescription": "Erweitert Gebiet und Stadtreife. Wohnraum erhöht die Feldkontrolle und führt zu Verwaltung und Ingenieurwesen.",
+  "technologyNavigationDescription": "Öffnet einen Stadtnutzen für die Küste. Der Hafen erfordert Küsten-/Ozeanzugang und belohnt Uferstädte mit Nahrung und Gold.",
+  "technologyIrrigationDescription": "Spezialisiert wasserbasiertes Wachstum. Das Aquädukt gewährt einen starken Nahrungsbonus und zusätzliche territoriale Kontrolle.",
+  "technologyBankingDescription": "Spezialisiert den Handelszweig. Die Bank macht frühere Märkte zu starkem Stadteinkommen und schaltet die breitere Wirtschaft frei.",
+  "technologyEngineeringDescription": "Spezialisierung im Bauwesen. Die Baumeistergilde beschleunigt Produktion und erhöht das Limit kontrollierter Felder.",
+  "technologyMetallurgyDescription": "Ein starker industrieller Ertrag nach Steinbearbeitung. Die Schmiede erhöht Produktion und bereitet den Weg zu Eisen und Kohle.",
+  "technologyHorsebackRidingDescription": "Eine Technologie, die Wachstum und Krieg verbindet. Der Stall unterstützt Städte, die zuvor in Tiere und Jagd investiert haben.",
+  "technologyIronWorkingDescription": "Ein Effekt industrieller Ressourcen. Jede kontrollierte Eisenressource erhöht die Stadtproduktion.",
+  "technologyCoalMiningDescription": "Ein späterer Effekt industrieller Ressourcen. Kontrollierte Kohle erhöht die Stadtproduktion und unterstützt den Fabrikpfad.",
+  "technologyMachineryDescription": "Ein später Infrastrukturertrag. Die Fabrik gibt Städten, die Ingenieurwesen erreicht haben, einen großen Produktionszuwachs.",
+  "technologyAdministrationDescription": "Verbindet Infrastruktur mit Wirtschaft. Rathäuser und Monumente stärken reife Städte und führen zur Urbanisierung.",
+  "technologyLogisticsDescription": "Beschleunigt Einheitsproduktion. Dies ist die Haupttechnologie für Spieler, die häufiger Armeen aus Städten aufstellen wollen.",
+  "technologyShipbuildingDescription": "Entwickelt den Küsten-/Erkundungsunterzweig. Der Leuchtturm benötigt Küstenzugang und stärkt Uferstädte.",
+  "technologyTacticsDescription": "Militärische Stadtspezialisierung. Übungsplätze fügen Verteidigung und Produktion für Militärzentren hinzu.",
+  "technologyEconomyDescription": "Ein systemischer Ertrag für Bankwesen. Erhöht das von Stadtwirtschaften erzeugte Gold.",
+  "technologyUrbanizationDescription": "Die finale Richtung für Großstadtwachstum. Erhöht das Bevölkerungslimit, sobald das Bevölkerungssystem harte Grenzen nutzt.",
+  "technologyFortificationsDescription": "Stärkt die Stadtverteidigung. Gewährt der Stadtwirtschaft einen Verteidigungsbonus, dessen volle Bedeutung mit Kampf- und Belagerungserweiterung wächst.",
+  "technologyStrategyDescription": "Die finale militärische Richtung. Stärkt die Armeewirksamkeit als später Ertrag nach Logistik.",
+  "technologySpecializationDescription": "Der finale zivile/wirtschaftliche Ertrag. Schaltet Stadtspezialisierungen frei, fügt Stadtwissenschaft hinzu und hilft, späte Technologien in längeren Partien abzuschließen.",
+  "technologyWritingDescription": "Der erste Schritt zu Wissenschaft, Recht und Verwaltung. Das Archiv gibt einer Stadt eine dauerhafte Forschungsbasis.",
+  "technologyMathematicsDescription": "Verbindet Wissenschaft mit Gebietsplanung. Das Vermessungsbüro hilft Städten, Grenzen wirksamer zu kontrollieren.",
+  "technologyMedicineDescription": "Entwickelt Gesundheit und langfristiges Wachstum in großen Städten durch Apotheken, Bäder und Krankenhäuser.",
+  "technologyCivilServiceDescription": "Verbessert die Verwaltung eines großen Imperiums und schaltet Gerichte frei, die Städte stabilisieren.",
+  "technologySiegecraftDescription": "Öffnet die Belagerungskriegsführung. Katapulte und Belagerungswerkstätten brechen Festungsstädte.",
+  "technologyCartographyDescription": "Entwickelt Erkundung, Karten und die Küste. Gewährt den Kartenraum und die ersten Spähschiffe.",
+  "technologyGuildsDescription": "Gibt Produktionsstädten eine Stufe zwischen Werkstatt und Industrie.",
+  "technologyLawDescription": "Führt Ordnung, Politik und zivile Verwaltung durch Gerichte ein.",
+  "technologyEducationDescription": "Baut den vollständigen Wissenschaftspfad für Städte über Akademien und Universitäten auf.",
+  "technologyUrbanPlanningDescription": "Entwickelt große Städte und territoriale Kontrolle durch räumliche Planung.",
+  "technologyNavalDoctrineDescription": "Macht Häfen zu Zentren für Flotten, Werften und Machtprojektion auf See.",
+  "technologySteelDescription": "Führt Schwerindustrie und schwere Infanterie für die spätere Front ein.",
+  "technologyBureaucracyDescription": "Bietet nach Verwaltung ein großes ziviles Ziel: Büros, Ministerien, Museen und Parlament.",
+  "technologyNationalismDescription": "Kombiniert Grenzverteidigung, Mobilisierung und Imperiumsidentität.",
+  "technologyScientificMethodDescription": "Bereitet späte Wissenschaft, Labore, Observatorien und Technologieprojekte vor.",
+  "technologySteamPowerDescription": "Öffnet Bahn, schwerere Logistik und Dampfindustrie.",
+  "technologyElectricityDescription": "Führt Strom, Infrastruktur und Informationsreichweite ein.",
+  "technologyCombustionDescription": "Gibt Öl Bedeutung und schaltet moderne Fronteinheiten frei.",
+  "technologyFlightDescription": "Führt Luftfahrt, Aufklärung und Machtprojektion über die Front ein.",
+  "technologyMassProductionDescription": "Entwickelt finale Industrieproduktion, Panzer und Montagewerke.",
+  "technologyRadioDescription": "Stärkt Imperiumskommunikation, Sicht und Einfluss durch Sendetürme.",
+  "technologyNuclearPhysicsDescription": "Öffnet Reaktor, Uran und späte Endspielprojekte.",
+  "technologyEraFoundation": "Fundament",
+  "technologyEraSettlement": "Siedlung",
+  "technologyEraExpansion": "Expansion",
+  "technologyEraSpecialization": "Spezialisierung",
+  "technologyEraIndustry": "Industrie",
+  "technologyEraStrategy": "Strategie",
+  "technologyUnlockEffect": "Effekt",
+  "technologyPrerequisitesNone": "Keine",
+  "technologyStateCompleted": "Abgeschlossen",
+  "technologyStateInProgress": "In Arbeit",
+  "technologyStateAvailable": "Verfügbar",
+  "technologyButtonResearched": "ERFORSCHT",
+  "technologyButtonActive": "AKTIV",
+  "technologyButtonResearch": "ERFORSCHEN",
+  "technologyButtonLocked": "GESPERRT",
+  "technologyTreeTitle": "TECHNOLOGIEBAUM",
+  "technologyTreeEmptyTitle": "Keine Technologien anzuzeigen",
+  "technologyTreeEmptyBody": "Der Forschungsbaum wird hier angezeigt, sobald das Regelwerk Technologien für diese Ära bereitstellt.",
+  "technologyResearchPointsShort": "{points} Pkt.",
+  "@technologyResearchPointsShort": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyDetailsTooltip": "Technologiedetails",
+  "technologyDetailsStatus": "Status",
+  "technologyDetailsCost": "Kosten",
+  "technologyDetailsProgress": "Fortschritt",
+  "technologyDetailsPrerequisites": "Voraussetzungen",
+  "technologyDetailsUnlocks": "Schaltet frei",
+  "technologyDetailsEffects": "Effekte",
+  "technologyDetailsBoosts": "Boosts",
+  "technologyDetailsUnlockStatus": "Freischaltung",
+  "technologyDetailsNoEffects": "Keine passiven Effekte",
+  "technologyDetailsNoBoosts": "Keine Boosts",
+  "technologyUnlocksNone": "Keine direkten Freischaltungen",
+  "technologyBoostActiveBadge": "Boost",
+  "technologyBoostActiveBest": "Der beste verfügbare Boost ist aktiv.",
+  "technologyBoostLine": "{condition} (-{discount} Kosten)",
+  "@technologyBoostLine": {
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyUnlockFieldImprovementCategory": "Feldverbesserung",
+  "technologyEffectStrategicResourceProductionBonus": "+{production} Produktion für jede kontrollierte Ressource: {resource}",
+  "@technologyEffectStrategicResourceProductionBonus": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      },
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectGlobalGoldMultiplier": "+{percent} Gold in der Stadtwirtschaft",
+  "@technologyEffectGlobalGoldMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectCityDefenseBonus": "+{amount} Stadtverteidigung",
+  "@technologyEffectCityDefenseBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectArmyProductionMultiplier": "+{percent} Einheitsproduktion in Städten",
+  "@technologyEffectArmyProductionMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectArmyStrengthMultiplier": "+{percent} Armeestärke",
+  "@technologyEffectArmyStrengthMultiplier": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectMaxCityPopulationBonus": "+{amount} max. Stadtbevölkerung",
+  "@technologyEffectMaxCityPopulationBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectMaxControlledHexesBonus": "+{amount} max. Stadtgebiet",
+  "@technologyEffectMaxControlledHexesBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyEffectCityScienceBonus": "+{amount} Wissenschaft pro Stadt",
+  "@technologyEffectCityScienceBonus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyBoostConditionImprovementCount": "Habe {count}x {improvement}",
+  "@technologyBoostConditionImprovementCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionHasImprovement": "Habe {improvement}",
+  "@technologyBoostConditionHasImprovement": {
+    "placeholders": {
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionControlsResource": "Kontrolliere {resource}",
+  "@technologyBoostConditionControlsResource": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBoostConditionControlsAnyResource": "Kontrolliere: {resources}",
+  "@technologyBoostConditionControlsAnyResource": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectAttackBonus": "{value} Angriff",
+  "@technologyEffectAttackBonus": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectDefenseBonus": "{value} Verteidigung",
+  "@technologyEffectDefenseBonus": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyEffectNoArmyStatsBonus": "Kein Armeewert-Bonus",
+  "technologyEffectArmyStatsBonus": "{parts} für Armeen",
+  "@technologyEffectArmyStatsBonus": {
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
+  "commonListOr": "{first} oder {last}",
+  "@commonListOr": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsTooltip": "Gebäudedetails",
+  "buildingDetailsNoRequirements": "Keine",
+  "buildingDetailsYieldImpact": "Stadtauswirkung",
+  "buildingDetailsRequirementTechnology": "Technologie: {technology}",
+  "@buildingDetailsRequirementTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRequirementCoastalAccess": "Küstenzugang",
+  "buildingDetailsRequirementResources": "Ressource: {resources}",
+  "@buildingDetailsRequirementResources": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsFlatYieldEffect": "{yield} zum Stadtertrag",
+  "@buildingDetailsFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRiverHexYieldEffect": "{yield} pro kontrolliertem Flussfeld",
+  "@buildingDetailsRiverHexYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsRiverHexYieldEffectWithMax": "{yield} pro kontrolliertem Flussfeld (max. {maxApplications})",
+  "@buildingDetailsRiverHexYieldEffectWithMax": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      },
+      "maxApplications": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsMaxControlledHexesEffect": "+{amount} Limit kontrollierter Stadtfelder",
+  "@buildingDetailsMaxControlledHexesEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsFoodDepositMultiplierEffect": "+{percent}% Nahrung nach dem Zug gespeichert",
+  "@buildingDetailsFoodDepositMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "buildingDetailsYieldFood": "{value} Nahrung",
+  "buildingDetailsYieldProduction": "{value} Produktion",
+  "buildingDetailsYieldGold": "{value} Gold",
+  "buildingDetailsYieldDefense": "{value} Verteidigung",
+  "buildingDetailsYieldScience": "{value} Wissenschaft",
+  "@buildingDetailsYieldFood": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldProduction": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldGold": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldDefense": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@buildingDetailsYieldScience": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "buildingDetailsNoYieldChange": "Keine Ressourcenänderung",
+  "unitDetailsTooltip": "Einheitsdetails",
+  "unitDetailsMovement": "Bewegung",
+  "unitDetailsCombat": "Kampf",
+  "unitDetailsMovementPerTurn": "{movement} Felder/Zug",
+  "@unitDetailsMovementPerTurn": {
+    "placeholders": {
+      "movement": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsPace": "Tempo",
+  "unitDetailsRequirementTechnology": "Technologie: {technology}",
+  "@unitDetailsRequirementTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "unitDetailsAttackLine": "Angriff: {value}",
+  "@unitDetailsAttackLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsDefenseLine": "Verteidigung: {value}",
+  "@unitDetailsDefenseLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsHpLine": "LP: {value}",
+  "@unitDetailsHpLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDetailsRangeLine": "Reichweite: {value}",
+  "@unitDetailsRangeLine": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "sciencePerTurn": "{science} Wissenschaft/Zug",
+  "@sciencePerTurn": {
+    "placeholders": {
+      "science": {
+        "type": "int"
+      }
+    }
+  },
+  "activeResearchLabel": "FORSCHUNG",
+  "requirementTechnology": "Benötigt Technologie",
+  "requirementTechnologyName": "Benötigt: {technology}",
+  "@requirementTechnologyName": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "requirementResourcesName": "Benötigt: {resources}",
+  "@requirementResourcesName": {
+    "placeholders": {
+      "resources": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyBlockedBy": "Blockiert durch: {technology}",
+  "@technologyBlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "requirementCoastalAccess": "Benötigt: Küstenzugang",
+  "productionCategoryBuilding": "Gebäude",
+  "productionCategoryUnit": "Einheit",
+  "productionTitle": "PRODUKTION",
+  "productionInProgressLabel": "IN ARBEIT",
+  "productionPerTurn": "{production} Produktion/Zug",
+  "@productionPerTurn": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "productionNoProduction": "keine Produktion",
+  "productionButtonProduce": "PRODUZIEREN",
+  "productionButtonLocked": "GESPERRT",
+  "productionEmptyState": "Derzeit ist keine Produktion verfügbar.",
+  "buildingsSection": "Gebäude",
+  "unitsSection": "Einheiten",
+  "futureBuildingsSection": "Künftige Gebäude ({count})",
+  "@futureBuildingsSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureBuildingsSubtitle": "Durch Technologien freigeschaltet",
+  "workerPanelTitle": "Arbeiter - {unitName}",
+  "@workerPanelTitle": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOpenAction": "Öffnen",
+  "commonShowDetailsAction": "Details anzeigen",
+  "commonExecuteAction": "Ausführen",
+  "colorPickerChangeTooltip": "Farbe ändern: {label}",
+  "@colorPickerChangeTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "colorPickerColorSelected": "#{hex} ausgewählt",
+  "@colorPickerColorSelected": {
+    "placeholders": {
+      "hex": {
+        "type": "String"
+      }
+    }
+  },
+  "colorPickerSelectColor": "#{hex} auswählen",
+  "@colorPickerSelectColor": {
+    "placeholders": {
+      "hex": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDescription": "Beschreibung",
+  "commonSummary": "Zusammenfassung",
+  "commonStatus": "Status",
+  "commonTerrain": "Gelände",
+  "commonResources": "Ressourcen",
+  "commonImprovements": "Verbesserungen",
+  "commonCities": "Städte",
+  "commonBuildings": "Gebäude",
+  "commonGold": "Gold",
+  "commonScience": "Wissenschaft",
+  "commonProduction": "Produktion",
+  "commonResearch": "Forschung",
+  "commonEmpire": "Imperium",
+  "commonTurn": "Zug",
+  "commonProjects": "Projekte",
+  "commonPopulation": "Bevölkerung",
+  "commonTechnologies": "Technologien",
+  "commonFields": "Felder",
+  "commonMultipliers": "Multiplikatoren",
+  "commonOther": "Sonstiges",
+  "commonReady": "Bereit",
+  "commonDone": "Fertig",
+  "commonDefault": "Standard",
+  "commonAvailable": "Verfügbar",
+  "commonBlocked": "Blockiert",
+  "commonSelectAction": "Auswählen",
+  "commonSelectedAction": "Ausgewählt",
+  "commonOk": "OK",
+  "commonDoNotShowAgain": "Nicht erneut anzeigen",
+  "commonNoneLower": "keine",
+  "visualCurrentLabel": "Jetzt",
+  "visualAfterLabel": "Nach Änderung",
+  "terrainDetailEmpty": "Keine Geländeinformationen",
+  "yieldFoodShort": "NAHRUNG",
+  "yieldProductionShort": "PROD",
+  "yieldGoldShort": "GOLD",
+  "yieldDefenseShort": "VER",
+  "selectionChipBadgeSuffix": " Sichtbarer Zähler: {badge}.",
+  "@selectionChipBadgeSuffix": {
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionChipDisabledDescription": "Diese Informationsabkürzung ist für die aktuelle Auswahl nicht verfügbar.{badge}",
+  "@selectionChipDisabledDescription": {
+    "placeholders": {
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionChipOpenDescription": "Öffnet Details zu „{label}“ für den aktuellen Kartenkontext.{badge}",
+  "@selectionChipOpenDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "badge": {
+        "type": "String"
+      }
+    }
+  },
+  "gameGoalTitle": "Spielziel",
+  "globalHudCloseResearch": "Forschung schließen",
+  "globalHudResearchActive": "Forschung: {technologyName}",
+  "@globalHudResearchActive": {
+    "placeholders": {
+      "technologyName": {
+        "type": "String"
+      }
+    }
+  },
+  "globalHudResearchActiveWithEta": "Forschung: {technologyName} · {eta}",
+  "@globalHudResearchActiveWithEta": {
+    "placeholders": {
+      "technologyName": {
+        "type": "String"
+      },
+      "eta": {
+        "type": "String"
+      }
+    }
+  },
+  "globalHudChooseResearch": "Forschung wählen",
+  "globalHudCloseEmpire": "Imperium schließen",
+  "globalHudCloseActivityLog": "Aktivitätsprotokoll schließen",
+  "bottomToolbarWaiting": "Warten",
+  "bottomToolbarPlan": "Plan",
+  "bottomToolbarMove": "Bewegen",
+  "bottomToolbarResolvingTurn": "Zug wird ausgewertet",
+  "bottomToolbarWaitingFor": "Warte auf: {players}",
+  "@bottomToolbarWaitingFor": {
+    "placeholders": {
+      "players": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintNextUnit": "Nächster Schritt: {unit}",
+  "@turnHintNextUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintNextCityProduction": "Nächster Schritt: Produktion in {city}",
+  "@turnHintNextCityProduction": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintChooseResearch": "Nächster Schritt: Forschung wählen",
+  "turnHintCheckAction": "Nächster Schritt: Aktion prüfen",
+  "turnHintObjective": "Ziel: {objective}",
+  "@turnHintObjective": {
+    "placeholders": {
+      "objective": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintObjectiveWithAdvice": "Ziel: {objective} · {advice}",
+  "@turnHintObjectiveWithAdvice": {
+    "placeholders": {
+      "objective": {
+        "type": "String"
+      },
+      "advice": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintImproveFieldWithWorker": "Ziel: ein Feld mit einem Arbeiter verbessern",
+  "turnHintFoundCityWithSettler": "Ziel: eine Stadt mit einem Siedler gründen",
+  "turnHintClaimTerritoryWithSettler": "Ziel: Gebiet mit einem Siedler beanspruchen",
+  "turnHintTrainUnit": "Ziel: Einheit festlegen: {unit}",
+  "@turnHintTrainUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintProtectLeadUnit": "Ziel: Führung sichern: {unit}",
+  "@turnHintProtectLeadUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintConstructBuildingInCity": "Ziel: ein Gebäude in {city} einreihen",
+  "turnHintTrainUnitInCity": "Ziel: eine Einheit in {city} einreihen",
+  "turnHintPrepareSettlerInCity": "Ziel: einen Siedler in {city} vorbereiten",
+  "turnHintGrowPopulationInCity": "Ziel: Wachstum in {city} festlegen",
+  "turnHintPrepareWorkerInCity": "Ziel: einen Arbeiter in {city} vorbereiten",
+  "turnHintCollectGoldInCity": "Ziel: Gold in {city} sichern",
+  "turnHintProtectLeadProductionInCity": "Ziel: Produktion in {city} sichern",
+  "@turnHintConstructBuildingInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintTrainUnitInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintPrepareSettlerInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintGrowPopulationInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintPrepareWorkerInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintCollectGoldInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "@turnHintProtectLeadProductionInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "turnHintUnlockTechnologyForScore": "Ziel: eine punktbringende Technologie wählen",
+  "turnHintProtectLeadResearch": "Ziel: sichere Forschung abschließen",
+  "topResourceTurnShortLabel": "Z{turn}",
+  "@topResourceTurnShortLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceTurnTooltip": "Zug {turn}",
+  "@topResourceTurnTooltip": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceScienceTooltip": "Wissenschaft: {scienceTurnLabel} / Zug",
+  "@topResourceScienceTooltip": {
+    "placeholders": {
+      "scienceTurnLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceResourcesTooltip": "Ressourcen: {resourceTotal} Vorkommen • {resourceTypes} kontrollierte Typen",
+  "@topResourceResourcesTooltip": {
+    "placeholders": {
+      "resourceTotal": {
+        "type": "int"
+      },
+      "resourceTypes": {
+        "type": "int"
+      }
+    }
+  },
+  "topResourceGoldTooltip": "Gold: {gold} • Einkommen +{goldIncome} • Unterhalt -{unitUpkeep} • Netto {net} / Zug",
+  "@topResourceGoldTooltip": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      },
+      "goldIncome": {
+        "type": "int"
+      },
+      "unitUpkeep": {
+        "type": "int"
+      },
+      "net": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceGoldTooltipNegativeTreasury": "{base} • Schatzkammer unter null",
+  "@topResourceGoldTooltipNegativeTreasury": {
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
+  },
+  "topResourceGoldTooltipBankruptcy": "{base} • Insolvenzrisiko innerhalb von 3 Zügen",
+  "@topResourceGoldTooltipBankruptcy": {
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceBreakdownTreasury": "Schatzkammer",
+  "resourceBreakdownCityIncome": "Stadteinkommen",
+  "resourceBreakdownUpkeep": "Unterhalt",
+  "resourceBreakdownNetPerTurn": "Netto / Zug",
+  "resourceBreakdownNoCityIncome": "Kein Stadteinkommen",
+  "resourceBreakdownFreeLimit": "Freigrenze",
+  "resourceBreakdownNextWorkerUpkeep": "Unterhalt des nächsten Arbeiters",
+  "resourceBreakdownNextWorkerUpkeepValue": "-{upkeep} Gold/Zug",
+  "@resourceBreakdownNextWorkerUpkeepValue": {
+    "placeholders": {
+      "upkeep": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceBreakdownInsideFreeLimit": "Innerhalb der Freigrenze",
+  "resourceBreakdownNoActiveTechnology": "Keine Technologie ausgewählt",
+  "resourceBreakdownScienceTitle": "Wissenschaft und Forschung",
+  "resourceBreakdownSciencePerTurn": "Wissenschaft / Zug",
+  "resourceBreakdownActiveResearch": "Aktive Forschung",
+  "resourceBreakdownTurnsToComplete": "Bis Abschluss",
+  "resourceBreakdownNoScienceSources": "Keine Wissenschaftsquellen",
+  "resourceBreakdownCityResearchProject": "{cityName}: Forschung",
+  "@resourceBreakdownCityResearchProject": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceBreakdownNoControlledResources": "Keine kontrollierten Ressourcen",
+  "resourceBreakdownGrowCitiesWithFood": "Städte mit Nahrung wachsen lassen",
+  "resourceBreakdownControlledDeposits": "Kontrollierte Vorkommen",
+  "resourceBreakdownResourceTypes": "Ressourcentypen",
+  "resourceBreakdownTypesSection": "Typen",
+  "resourceBreakdownSourcesSection": "Quellen",
+  "technologyRecommendationsTitle": "Empfohlene Forschung",
+  "technologyShowTreeAction": "Baum anzeigen",
+  "technologyShowTreeCountAction": "Baum anzeigen ({count})",
+  "@technologyShowTreeCountAction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyRecommendationUnlocks": "Schaltet frei",
+  "technologyRecommendationReasonBoost": "Aktiver Boost senkt die Forschungskosten.",
+  "technologyRecommendationReasonSection": "Warum jetzt",
+  "technologyRecommendationReasonImprovements": "Neue Feldverbesserungen verwandeln Ressourcen schnell in Ertrag.",
+  "technologyRecommendationReasonBuilding": "Ein neues Stadtgebäude eröffnet eine weitere Entwicklungsrichtung.",
+  "technologyRecommendationReasonUnit": "Eine neue Einheit stärkt Sicherheit und Kartenkontrolle.",
+  "technologyRecommendationReasonEffect": "Ein dauerhafter Bonus gilt für die gesamte Wirtschaft.",
+  "technologyRecommendationReasonFast": "Schnelle Forschung ohne zusätzliche Voraussetzungen.",
+  "technologyRecommendationReasonDefault": "Verfügbare Forschung, die den nächsten Schritt sauber abschließt.",
+  "technologyNoRecommendations": "Derzeit ist keine neue Forschung verfügbar.",
+  "technologyFullTreeTitle": "Vollständiger Technologiebaum",
+  "technologyRecommendationsBackAction": "Empfehlungen",
+  "empireUnitsEmptyTitle": "Keine Einheiten",
+  "empireUnitsEmptyBody": "Neue Einheiten erscheinen hier nach Stadtproduktion oder Ereignisrekrutierung.",
+  "empireCitiesEmptyTitle": "Keine Städte",
+  "empireCitiesEmptyBody": "Gründe deine erste Stadt mit einem Siedler, um Produktion, Wissenschaft und Imperiumsgrenzen freizuschalten.",
+  "empireCityCenters": "Stadtzentren",
+  "empireShowFirstUnitTooltip": "Erste Einheit auf der Karte anzeigen",
+  "empireShowUnitTooltip": "Einheit auf der Karte anzeigen",
+  "empireShowFirstCityTooltip": "Erste Stadt auf der Karte anzeigen",
+  "empireShowCityTooltip": "Stadt auf der Karte anzeigen",
+  "empireUnitCountLabel": "{count, plural, =1{1 Einheit} other{{count} Einheiten}}",
+  "@empireUnitCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireCityCountLabel": "{count, plural, =1{1 Stadt} other{{count} Städte}}",
+  "@empireCityCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireUnitMovement": "Bewegung {movement}",
+  "@empireUnitMovement": {
+    "placeholders": {
+      "movement": {
+        "type": "int"
+      }
+    }
+  },
+  "empireUnitBuilding": "Baut",
+  "empireUnitWorking": "Arbeitet",
+  "empireUnitFortifying": "Befestigt",
+  "empireUnitHealing": "Heilt",
+  "empireUnitEnRoute": "Unterwegs",
+  "empireUnitNoMovement": "keine Bewegung",
+  "empireUnitsWithMovement": "{count} mit Bewegung",
+  "@empireUnitsWithMovement": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "empireCitySubtitle": "Bevölkerung {population} - {hexes} Felder - {buildings} Geb. - produziert: {production}",
+  "@empireCitySubtitle": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "hexes": {
+        "type": "int"
+      },
+      "buildings": {
+        "type": "int"
+      },
+      "production": {
+        "type": "String"
+      }
+    }
+  },
+  "empireCityStoredArtifact": "Artefakt: {artifactName}",
+  "@empireCityStoredArtifact": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "empireCityGroupSubtitle": "{cityLabel} - Bevölkerung {population}",
+  "@empireCityGroupSubtitle": {
+    "placeholders": {
+      "cityLabel": {
+        "type": "String"
+      },
+      "population": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsTitle": "Imperiumsstatus",
+  "empireStatsSubtitle": "Ein schneller Überblick über Bereitschaft, Zusammensetzung und Stadtwachstum",
+  "empireStatsReadinessTitle": "Einheitsbereitschaft",
+  "empireStatsUnitCompositionTitle": "Einheitszusammensetzung",
+  "empireStatsCityDevelopmentTitle": "Stadtentwicklung",
+  "empireStatsCityComparisonTitle": "Stadtvergleich",
+  "empireStatsOrders": "Mit Befehlen",
+  "empireStatsNoMovement": "Keine Bewegung",
+  "empireStatsAveragePopulation": "Ø Bev.",
+  "empireStatsTotalBuildings": "Gebäude",
+  "empireStatsStoredArtifacts": "Artefakte",
+  "empireStatsTerritory": "Gebiet",
+  "empireStatsCitiesProducing": "Produktion",
+  "empireStatsOther": "Sonstiges",
+  "empireStatsEmptyUnits": "Keine Einheiten zur Analyse",
+  "empireStatsEmptyCities": "Keine Städte zur Analyse",
+  "empireStatsCityBarDetail": "Bev. {population} • Geb. {buildings}",
+  "@empireStatsCityBarDetail": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "buildings": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsCityComparisonDetail": "Bev. {population} • Prod. {production} • Nahrung {food} • Gold {gold}",
+  "@empireStatsCityComparisonDetail": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "production": {
+        "type": "int"
+      },
+      "food": {
+        "type": "int"
+      },
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "empireStatsMetricPopulation": "Bev.",
+  "empireStatsMetricProduction": "Prod.",
+  "empireStatsMetricFood": "Nahrung",
+  "empireStatsMetricGold": "Gold",
+  "activityLogTitle": "Aktivitätsprotokoll",
+  "activityLogShowAllAction": "Alle anzeigen",
+  "activityLogShowMoreAction": "Mehr anzeigen ({visible}/{total})",
+  "@activityLogShowMoreAction": {
+    "placeholders": {
+      "visible": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "activityLogLoadingHistory": "Vollständiger Verlauf wird geladen...",
+  "activityLogHistoryErrorTitle": "Verlauf konnte nicht geladen werden",
+  "activityLogHistoryErrorBody": "Das Ereignisjournal ist nicht verfügbar: {error}",
+  "@activityLogHistoryErrorBody": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "activityLogFilterAll": "Alle",
+  "activityLogFilterAllShort": "Alle",
+  "activityLogFilterCombat": "Kampf",
+  "activityLogFilterCities": "Städte",
+  "activityLogFilterDiplomacy": "Diplomatie",
+  "activityLogFilterDiplomacyShort": "Dipl.",
+  "activityLogFilterTechnology": "Wissenschaft",
+  "activityLogEmptyAllTitle": "Keine Ereignisse aufgezeichnet",
+  "activityLogEmptyCombatTitle": "Keine Kämpfe aufgezeichnet",
+  "activityLogEmptyCityTitle": "Keine Stadtereignisse aufgezeichnet",
+  "activityLogEmptyDiplomacyTitle": "Keine Diplomatie aufgezeichnet",
+  "activityLogEmptyTechnologyTitle": "Keine Entdeckungen aufgezeichnet",
+  "activityLogEmptyAllBody": "Erste Entdeckungen, Kämpfe und Bauvorhaben erscheinen hier, nachdem du Aktionen spielst.",
+  "activityLogEmptyCombatBody": "Kämpfe werden nach Angriffen oder Verteidigungen aufgezeichnet, die für den Spieler sichtbar sind.",
+  "activityLogEmptyCityBody": "Gegründete Städte, Bauvorhaben und beanspruchte Felder erstellen hier die Zeitleiste des Imperiums.",
+  "activityLogEmptyDiplomacyBody": "Depeschen, Vorschläge, Antworten und Beziehungsänderungen erscheinen hier nach diplomatischen Aktionen.",
+  "activityLogEmptyTechnologyBody": "Entdeckte Technologien erscheinen hier, nachdem die Forschung abgeschlossen ist.",
+  "turnTimelineTitle": "Zugzeitleiste",
+  "turnTimelineSubtitle": "Zug {turn} • Ereignisse: {count}",
+  "@turnTimelineSubtitle": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnTimelineChartTitle": "Ereignisse über Züge hinweg",
+  "turnTimelineMetricEvents": "Ereignisse",
+  "turnTimelineMetricActiveTurns": "Aktive Züge",
+  "turnTimelineMetricCurrentTurn": "Aktueller Zug",
+  "technologyDiscoveryEyebrow": "Technologie entdeckt",
+  "unitSelectionMovementSubtitle": "Bewegung {current}/{max}",
+  "@unitSelectionMovementSubtitle": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "unitSelectionMovementHpSubtitle": "Bewegung {current}/{max} • LP {hp}/{maxHp}",
+  "@unitSelectionMovementHpSubtitle": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      },
+      "hp": {
+        "type": "int"
+      },
+      "maxHp": {
+        "type": "int"
+      }
+    }
+  },
+  "unitSelectionAttackLabel": "Angriff",
+  "unitSelectionDefenseLabel": "Verteidigung",
+  "unitSelectionHpLabel": "LP",
+  "unitSelectionRangeLabel": "Reichweite",
+  "unitSelectionConstructionLabel": "Bau",
+  "unitSelectionWorkLabel": "Arbeit",
+  "unitSelectionFieldBonusValue": "Feldbonus",
+  "tileSelectionYieldTitle": "Feldpotenzial",
+  "tileSelectionYieldTooltip": "Schätzung bei der Prüfung dieses Feldes, nicht der tatsächliche Stadtertrag.",
+  "tileSelectionBonusLabel": "Bonus",
+  "tileSelectionDefenseBonusValue": "+Verteidigung",
+  "tileSelectionRiverBonusValue": "+Fluss",
+  "citySelectionYieldTitle": "Stadteinkommen",
+  "citySelectionYieldTooltip": "Tatsächlicher Stadtertrag pro Zug aus der Stadtwirtschaft.",
+  "citySelectionSubtitle": "Bevölkerung {population} • {territoryHexCount}/{maxHexes} Felder • Produktion: {production}",
+  "@citySelectionSubtitle": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "territoryHexCount": {
+        "type": "int"
+      },
+      "maxHexes": {
+        "type": "int"
+      },
+      "production": {
+        "type": "String"
+      }
+    }
+  },
+  "citySelectionTerritoryLabel": "Gebiet",
+  "citySelectionFoodLabel": "Nahrung",
+  "citySelectionNetFoodLabel": "Nettonahrung",
+  "citySelectionBuildingsLabel": "Gebäude",
+  "citySelectionArtifactLabel": "Artefakt",
+  "worldArtifactBonusTitle": "Bonus",
+  "worldArtifactHeritageTitle": "Erbe",
+  "worldArtifactHeritageBody": "Sammle und platziere 6 einzigartige Artefakte in deinen Städten und halte die Sammlung dann 5 Züge lang.",
+  "worldArtifactAncientImperialCrown": "Alte Kaiserkrone",
+  "worldArtifactAstronomersTablets": "Tafeln der Astronomen",
+  "worldArtifactProphetMask": "Maske des Propheten",
+  "worldArtifactHeroSword": "Schwert des Helden",
+  "worldArtifactMerchantsSeal": "Siegel des Kaufmanns",
+  "worldArtifactFirstPeoplesChronicle": "Chronik der ersten Völker",
+  "worldArtifactTempleReliquary": "Tempelreliquiar",
+  "worldArtifactQueensMirror": "Spiegel der Königin",
+  "worldArtifactAncientImperialCrownShortBonus": "+1 Verteidigung",
+  "worldArtifactAstronomersTabletsShortBonus": "+1 Wissenschaft",
+  "worldArtifactProphetMaskShortBonus": "+1 Gold, Diplomatie",
+  "worldArtifactHeroSwordShortBonus": "+2 EP für produzierte Einheiten",
+  "worldArtifactMerchantsSealShortBonus": "+2 Gold",
+  "worldArtifactFirstPeoplesChronicleShortBonus": "+1 Nahrung",
+  "worldArtifactTempleReliquaryShortBonus": "+1 Nahrung, +1 Verteidigung",
+  "worldArtifactQueensMirrorShortBonus": "+1 Gold, Diplomatie",
+  "worldArtifactAncientImperialCrownDescription": "Ein Symbol alter Herrschaft. In einer Stadt gelagert, stärkt es die Verteidigung und das Prestige der Sammlung.",
+  "worldArtifactAstronomersTabletsDescription": "Steintafeln mit alten Karten des Himmels. In einer Stadt unterstützen sie die Wissenschaft.",
+  "worldArtifactProphetMaskDescription": "Eine rituelle Maske von großem politischem Gewicht. In einer Stadt gewährt sie Gold und diplomatischen Wert.",
+  "worldArtifactHeroSwordDescription": "Die Waffe eines legendären Kommandanten. Einheiten, die in dieser Stadt produziert werden, erhalten zusätzliche Erfahrung.",
+  "worldArtifactMerchantsSealDescription": "Das Zeichen der ersten Kaufmannsgilden. In einer Stadt stärkt es das Goldeinkommen.",
+  "worldArtifactFirstPeoplesChronicleDescription": "Eine Aufzeichnung der ältesten Abstammungslinien und Grenzen. In einer Stadt unterstützt sie Wachstum.",
+  "worldArtifactTempleReliquaryDescription": "Ein heiliges Reliquiar, das der Stadt Stabilität, Nahrung und Verteidigung gibt.",
+  "worldArtifactQueensMirrorDescription": "Ein Hofschatz, der Handel mit Diplomatie verbindet. In einer Stadt gewährt er Gold und Prestige.",
+  "worldArtifactLocationMap": "Artefakt auf der Karte",
+  "worldArtifactLocationExcavation": "Ausgrabung läuft",
+  "worldArtifactLocationCarried": "Von einer Einheit getragen",
+  "worldArtifactLocationStored": "In einer Stadt gelagert",
+  "worldArtifactStepExcavate": "Ausgraben",
+  "worldArtifactStepMove": "Bewegen",
+  "worldArtifactStepStore": "Lagern",
+  "artifactGuidanceUnknownCityName": "eine Stadt",
+  "artifactGuidanceStoredTitle": "Artefakt gelagert",
+  "artifactGuidanceStoredBody": "{artifactName} stärkt {cityName}. Für den Kultursieg brauchst du 6 Artefakte in Städten für 5 Züge.",
+  "@artifactGuidanceStoredBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      },
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactGuidanceCarriedTitle": "Artefakt getragen",
+  "artifactGuidanceCarriedBody": "Die Einheit trägt {artifactName}. Bringe es in eine deiner Städte mit freiem Platz und nutze die Lagern-Aktion.",
+  "@artifactGuidanceCarriedBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactGuidanceReachedTitle": "Artefakt entdeckt",
+  "artifactGuidanceReachedBody": "{artifactName} liegt unter der Einheit. Nutze die Ausgrabungsaktion, um es aufzunehmen.",
+  "@artifactGuidanceReachedBody": {
+    "placeholders": {
+      "artifactName": {
+        "type": "String"
+      }
+    }
+  },
+  "citySelectionSpecializationLabel": "Spezialisierung",
+  "fieldImprovementOutsideActiveCity": "Außerhalb der aktiven Stadt",
+  "fieldImprovementYieldTitle": "Verbesserungsbonus",
+  "fieldImprovementYieldTooltip": "Zusätzlicher Ertrag durch die Feldverbesserung.",
+  "hexKindIdealCitySite": "Idealer Stadtstandort",
+  "hexKindGoodCitySite": "Guter Stadtstandort",
+  "hexKindFertileField": "Fruchtbares Feld",
+  "hexKindFertilePlains": "Fruchtbare Ebenen",
+  "hexKindRichPlain": "Reiche Ebene",
+  "hexKindStrategicBorderland": "Strategisches Grenzland",
+  "hexKindStrategicField": "Strategisches Feld",
+  "hexKindDefensivePosition": "Verteidigungsposition",
+  "hexKindFertileForest": "Fruchtbarer Wald",
+  "hexKindForestBackline": "Wald-Hinterland",
+  "hexKindForestForge": "Waldschmiede",
+  "hexKindWildLand": "Wildes Land",
+  "hexKindRichWilds": "Reiche Wildnis",
+  "hexKindExoticBackline": "Exotisches Hinterland",
+  "hexKindDifficultStrategicTerrain": "Schwieriges strategisches Gelände",
+  "hexKindHighGround": "Hochland",
+  "hexKindRiverHills": "Flusshügel",
+  "hexKindIndustrialStronghold": "Industrielle Hochburg",
+  "hexKindRichHills": "Reiche Hügel",
+  "hexKindBarrenLand": "Karges Land",
+  "hexKindOasis": "Oase",
+  "hexKindTradeOasis": "Handelsoase",
+  "hexKindDesertDeposits": "Wüstenvorkommen",
+  "hexKindHarshLand": "Raues Land",
+  "hexKindColdPastures": "Kalte Weiden",
+  "hexKindResourceOutpost": "Ressourcenaußenposten",
+  "hexKindHostileLand": "Feindliches Land",
+  "hexKindArcticDeposits": "Arktische Vorkommen",
+  "hexKindCoast": "Küste",
+  "hexKindFishingCoast": "Fischerküste",
+  "hexKindRichCoast": "Reiche Küste",
+  "hexKindRiverPort": "Flusshafen",
+  "hexKindRegionalPortHeart": "Regionales Hafenzentrum",
+  "hexKindOpenSea": "Offene See",
+  "hexKindNaturalBarrier": "Natürliche Barriere",
+  "hexKindPromisingLand": "Vielversprechendes Land",
+  "hexKindWeakLand": "Schwaches Land",
+  "hexKindOrdinaryLand": "Gewöhnliches Land",
+  "hexKindMapTile": "Kartenfeld",
+  "hexKindIdealCitySiteDescription": "Ein Siedlungsfeld von hohem Wert mit Nahrung, Wachstum und Expansionsdruck bereits in guter Lage.",
+  "hexKindGoodCitySiteDescription": "Solides Gelände für ein Stadtzentrum mit genug Grundwert, um frühes Wachstum zu unterstützen.",
+  "hexKindFertileFieldDescription": "Flussgespeistes Grasland, das Nahrung, Bevölkerungswachstum und Arbeiterverbesserungen begünstigt.",
+  "hexKindFertilePlainsDescription": "Offene Ebenen mit Flussunterstützung, nützlich für ausgewogene Nahrung und Produktion.",
+  "hexKindRichPlainDescription": "Ein wertvolles offenes Feld mit Luxus- oder Handelswert, das in die Grenzen aufgenommen werden sollte.",
+  "hexKindStrategicBorderlandDescription": "Gutes Land mit strategischem Wert, nützlich für Expansion, bevor Rivalen es beanspruchen.",
+  "hexKindStrategicFieldDescription": "Ein Ebenenfeld, das mit strategischen Ressourcen oder Druck an der Grenze verbunden ist.",
+  "hexKindDefensivePositionDescription": "Gelände, das defensive Kontrolle verbessert und hilft, nahe Zugänge zu halten.",
+  "hexKindFertileForestDescription": "Ein Wald mit Flussunterstützung, der Wachstumspotenzial mit natürlicher Deckung verbindet.",
+  "hexKindForestBacklineDescription": "Ein sichereres Waldfeld, das Wachstum oder jagdorientierte Verbesserungen unterstützen kann.",
+  "hexKindForestForgeDescription": "Wald mit industriellem Ressourcenwert, vielversprechend für Produktion nach Verbesserung.",
+  "hexKindWildLandDescription": "Dichtes Gelände mit Reibung; nur nützlich, wenn du einen klaren Arbeiter- oder Expansionsplan hast.",
+  "hexKindRichWildsDescription": "Wildes Gelände mit genug Fruchtbarkeit oder Ressourcen, um sorgfältige Entwicklung zu rechtfertigen.",
+  "hexKindExoticBacklineDescription": "Ein Dschungel- oder Feuchtgebietsfeld mit Luxuswert für spätere Grenzen und Handel.",
+  "hexKindDifficultStrategicTerrainDescription": "Schwieriges Gelände mit strategischem Ressourcenwert; später mächtig, früh aber umständlich.",
+  "hexKindHighGroundDescription": "Hügel, die Verteidigung und Kartenkontrolle stärker begünstigen als schnelles Wachstum.",
+  "hexKindRiverHillsDescription": "Hügel an einem Fluss, die Verteidigung mit besserem wirtschaftlichem Potenzial verbinden.",
+  "hexKindIndustrialStrongholdDescription": "Hügel mit industriellen Ressourcen, ein starkes Produktionsziel für eine Stadt.",
+  "hexKindRichHillsDescription": "Hügel mit Wohlstandsressourcen, nützlich für gold- oder produktionsorientierte Expansion.",
+  "hexKindBarrenLandDescription": "Trockenes Land mit geringem unmittelbarem Wert, sofern spätere Technologie oder Grenzen den Plan nicht ändern.",
+  "hexKindOasisDescription": "Durch Flusszugang gemilderte Wüste, die schwaches Land in ein nutzbares Wachstumsfeld verwandelt.",
+  "hexKindTradeOasisDescription": "Eine Handelsnische in der Wüste, die mit der richtigen Verbesserung wertvoll werden kann.",
+  "hexKindDesertDepositsDescription": "Schlechtes Siedlungsland mit einem strategischen Vorkommen, das in späteren Ären wichtiger wird.",
+  "hexKindHarshLandDescription": "Kaltes oder raues Land mit begrenzter früher Wirtschaft und langsamer Entwicklung.",
+  "hexKindColdPasturesDescription": "Kaltes Gelände mit genug Weidewert, um eine Grenzstadt zu unterstützen.",
+  "hexKindResourceOutpostDescription": "Abgelegenes kaltes Land, das vor allem wegen der geschützten Ressource beansprucht werden sollte.",
+  "hexKindHostileLandDescription": "Unfreundlicher Boden mit schwachem Siedlungswert und wenigen unmittelbaren Erträgen.",
+  "hexKindArcticDepositsDescription": "Schneebedecktes Ressourcenland, schwer zu nutzen, aber strategisch potenziell wichtig.",
+  "hexKindCoastDescription": "Küstenland, das Marinezugang und flexibles Stadtwachstum eröffnet.",
+  "hexKindFishingCoastDescription": "Küste mit Nahrungswert, ein starker Grund, am Wasser zu arbeiten oder zu siedeln.",
+  "hexKindRichCoastDescription": "Küstenluxus oder Handelswert, der in Stadtgrenzen aufgenommen werden sollte.",
+  "hexKindRiverPortDescription": "Eine Flussmündung mit Handels- und Bewegungswert für eine Küstenstadt.",
+  "hexKindRegionalPortHeartDescription": "Ein starkes Küstenzentrum, in dem Fluss- und Ressourcenwert zusammenkommen.",
+  "hexKindOpenSeaDescription": "Wasser, das für Schiffe und Erkundung nützlich ist, aber nicht für Landsiedlungen.",
+  "hexKindNaturalBarrierDescription": "Blockiertes Gelände, das Bewegung und Verteidigung statt Wirtschaft formt.",
+  "hexKindPromisingLandDescription": "Ein allgemein nützliches Feld mit genug Wert, um es vor dem Weiterziehen zu prüfen.",
+  "hexKindWeakLandDescription": "Gelände mit geringem Ertrag, das frühe Arbeiterzeit selten verdient.",
+  "hexKindOrdinaryLandDescription": "Ein normales Feld ohne herausragende Stärke, nützlich, wenn es zum Stadtplan passt.",
+  "hexKindMapTileDescription": "Ein einfaches Kartenfeld ohne genug Informationen für ein starkes Urteil.",
+  "hexTagCity": "Stadtstandort",
+  "hexTagDefense": "Verteidigungsposition",
+  "hexTagTrade": "Handelsroute",
+  "hexTagFertile": "Fruchtbares Feld",
+  "hexTagProduction": "Gute Produktion",
+  "hexTagHostile": "Feindliches Land",
+  "hexTagStrategic": "Strategische Ressource",
+  "hexTagWater": "Wasserpassage",
+  "hexRecommendationFoundCity": "Guter Entwicklungsstandort",
+  "hexRecommendationDefendHere": "Gute Verteidigungsposition",
+  "hexRecommendationExploitEconomy": "Ausbeutung lohnt sich",
+  "hexRecommendationAvoid": "Ohne Plan vermeiden",
+  "hexRecommendationNeutral": "Vor Bewegung prüfen",
+  "hexRecommendationFoundCityDetail": "Wenn Grenzen frei sind, erwäge hier eine Gründung oder lenke einen Siedler hierher.",
+  "hexRecommendationDefendHereDetail": "Nutze es, um Einheiten zu verankern, Grenzen zu schützen oder nahe Städte abzudecken.",
+  "hexRecommendationExploitEconomyDetail": "Nimm es in die Grenzen auf und weise einen Arbeiter zu, wenn die Stadt profitieren kann.",
+  "hexRecommendationAvoidDetail": "Überspringe es früh, sofern Ressource, Route oder militärischer Bedarf den Wert nicht ändern.",
+  "hexRecommendationNeutralDetail": "Erkunde Nachbarfelder und vergleiche Ressourcen, bevor du einen Arbeiter oder Siedler bindest.",
+  "selectionActionLockedReason": "Du kannst jetzt keine Befehle erteilen.",
+  "selectionActionFoundCity": "Stadt gründen",
+  "selectionActionCancel": "Abbrechen",
+  "selectionActionCancelAttack": "Angriff abbrechen",
+  "selectionActionCancelWorkerBuild": "Verbesserung abbrechen",
+  "selectionActionCancelCityFounding": "Stadtgründung abbrechen",
+  "selectionActionCancelAutoExplore": "Erkundung abbrechen",
+  "selectionActionCancelArtifactExcavation": "Artefaktausgrabung abbrechen",
+  "selectionActionCancelTradeRouteSelection": "Handelsroutenauswahl abbrechen",
+  "selectionActionCancelMerchantMoveToCity": "Weg zur Stadt abbrechen",
+  "selectionActionCancelCommanderMerge": "Truppenzusammenführung abbrechen",
+  "selectionActionConfirm": "Bestätigen",
+  "selectionActionConfirmWithTurns": "Bestätigen ({turns})",
+  "@selectionActionConfirmWithTurns": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionMinimize": "Minimieren",
+  "selectionActionConfirmAttack": "Angriff bestätigen",
+  "selectionActionCaptureCity": "Stadt erobern",
+  "selectionActionDestroyCity": "Stadt zerstören",
+  "selectionActionStopFortifying": "Befestigen stoppen",
+  "selectionActionStopHealing": "Heilung stoppen",
+  "selectionActionMove": "Bewegen",
+  "selectionActionAttack": "Angriff",
+  "selectionActionAutoExplore": "Erkunden",
+  "selectionActionTradeRoute": "Handelsroute",
+  "selectionActionTradeRouteToCity": "Mit {cityName} handeln",
+  "@selectionActionTradeRouteToCity": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionMerchantMoveToCity": "Zur Stadt gehen",
+  "selectionActionMerchantMoveToCityTarget": "Zu {cityName} gehen",
+  "@selectionActionMerchantMoveToCityTarget": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionArmy": "Armee",
+  "selectionArmyEmpty": "Keine Truppen",
+  "selectionTroopDetachTooltip": "{troop} abtrennen",
+  "@selectionTroopDetachTooltip": {
+    "placeholders": {
+      "troop": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionActionImprove": "Verbessern",
+  "selectionActionSkip": "Überspringen",
+  "selectionActionFortify": "Befestigen",
+  "selectionActionHeal": "Heilen",
+  "selectionActionCancelCityGrowth": "Wachstum abbrechen",
+  "selectionActionCityGrowth": "Stadtwachstum",
+  "selectionActionProduction": "Produktion",
+  "selectionActionExcavateArtifact": "Ausgraben",
+  "selectionActionStoreArtifact": "Lagern",
+  "selectionActionCancelCurrentMoveFirst": "Brich zuerst die aktuelle Bewegung ab.",
+  "selectionActionArtifactAlreadyCarried": "Die Einheit trägt bereits ein Artefakt.",
+  "selectionActionStoreArtifactOwnCityRequired": "Bewege dich in eine deiner Städte.",
+  "selectionActionStoreArtifactCityOccupied": "Diese Stadt lagert bereits ein Artefakt.",
+  "selectionActionNoBuildAvailable": "Auf diesem Feld ist kein Bau verfügbar.",
+  "selectionActionUnitWorking": "Die Einheit arbeitet bereits.",
+  "selectionActionUnitFortified": "Die Einheit ist befestigt.",
+  "selectionActionUnitHealing": "Die Einheit heilt.",
+  "selectionActionNoMovement": "In diesem Zug sind keine Bewegungspunkte mehr übrig.",
+  "selectionActionNoAttack": "Diese Einheit hat keinen Angriff.",
+  "selectionActionNoVisibleEnemy": "Kein sichtbarer Gegner in Reichweite.",
+  "selectionActionMerchantNoOriginCity": "Bewege den Händler in eine deiner Städte.",
+  "selectionActionMerchantNoDestinationCity": "Du brauchst eine zweite verbundene Stadt.",
+  "selectionActionMerchantNoRoute": "Keine Handelsroute kann diese Stadt erreichen.",
+  "selectionActionMerchantNoCityPath": "Der Händler kann diese Stadt nicht erreichen.",
+  "selectionActionCannotFoundCityHere": "Hier kann keine Stadt gegründet werden.",
+  "selectionActionFoundCityNoCommander": "Nur ein Siedler oder ein Kommandant mit Siedlern kann eine Stadt gründen.",
+  "selectionActionFoundCityNoSettlers": "Siedler sind erforderlich, um eine Stadt zu gründen.",
+  "selectionActionFoundCityInvalidCenter": "Auf diesem Feld kann keine Stadt gegründet werden.",
+  "selectionActionFoundCityCityAlreadyExists": "Auf diesem Feld gibt es bereits eine Stadt.",
+  "selectionActionFoundCityCenterOccupied": "Dieses Feld gehört bereits zu einer Stadt.",
+  "selectionActionFoundCityTooCloseToCity": "Eine Stadt kann nicht direkt neben einer anderen Stadt gegründet werden.",
+  "selectionActionFoundCityInvalidControlledHexes": "Wähle zuerst gültige Stadtfelder.",
+  "selectionActionCannotImproveCityCenter": "Im Stadtzentrum können keine Verbesserungen gebaut werden.",
+  "selectionActionTileAlreadyImproved": "Dieses Feld hat bereits eine Verbesserung.",
+  "selectionActionTileMustBelongToCity": "Das Feld muss zu einer Stadt gehören.",
+  "selectionActionNoWorkerTile": "Kein Feld unter dem Arbeiter.",
+  "hudFeedbackNoTurnCostDetail": "Aktion hat den Zug nicht verbraucht",
+  "hudFeedbackAutoExploreNoTargetTitle": "Keine Erkundungsroute",
+  "hudFeedbackAutoExploreNoTargetBody": "Der Späher hat in diesem Zug keine Bewegung, die neue Felder aufdecken würde.",
+  "hudFeedbackArtifactGuidanceTitle": "Weltartefakt",
+  "hudFeedbackArtifactGuidanceBody": "Bringe es in eine deiner Städte und platziere es in einem leeren Artefaktplatz.",
+  "hudFeedbackActionBlockedTitle": "Aktion nicht verfügbar",
+  "hudFeedbackActionBlockedBody": "Diese Aktion ist derzeit blockiert. Wähle ein anderes Feld oder einen anderen Befehl.",
+  "hudFeedbackAttackProtectedByTreatyTitle": "Vertrag blockiert Angriff",
+  "hudFeedbackAttackProtectedByTreatyBody": "Du kannst keine Einheit einer Zivilisation angreifen, mit der du ein Bündnis oder einen Waffenstillstand hast. Ändere zuerst die diplomatischen Beziehungen.",
+  "hudFeedbackMovementCityOccupiedTitle": "Stadt besetzt",
+  "hudFeedbackMovementCityOccupiedBody": "Nur eine Einheit kann in einer Stadt stehen. Bewege zuerst die Garnison hinaus oder wähle ein anderes Feld.",
+  "hudFeedbackMovementEnemyOccupiedTitle": "Gegner auf diesem Feld",
+  "hudFeedbackMovementEnemyOccupiedBody": "Du kannst ein gegnerisches Feld nicht mit einer normalen Bewegung betreten. Nutze Angriff oder wähle ein angrenzendes Feld.",
+  "hudFeedbackMovementForeignCityTitle": "Fremde Stadt",
+  "hudFeedbackMovementForeignCityBody": "Du kannst eine fremde Stadt nicht mit einer normalen Bewegung betreten. Nutze Angriff oder wähle ein anderes Feld.",
+  "hudFeedbackMovementHiddenRouteTooFarTitle": "Route zu weit",
+  "hudFeedbackMovementHiddenRouteTooFarBody": "Du kannst keine so lange Route durch unentdecktes Gelände planen. Wähle ein kürzeres Segment oder nutze die automatische Erkundung des Spähers.",
+  "hudFeedbackMovementBlockedTerrainTitle": "Gelände blockiert Bewegung",
+  "hudFeedbackMovementBlockedTerrainBody": "Diese Einheit kann diesen Geländetyp nicht betreten. Wähle ein anderes Feld oder eine Route darum herum.",
+  "hudFeedbackMovementInsufficientUnitMovementTitle": "Nicht genug Bewegung",
+  "hudFeedbackMovementInsufficientUnitMovementBody": "Diese Einheit hat nicht genug Bewegung, um dieses Gebiet zu betreten. Verbessere sie oder nutze eine andere Einheit.",
+  "hudFeedbackMovementNoRouteTitle": "Keine Route",
+  "hudFeedbackMovementNoRouteBody": "Es gibt keine verfügbare Route zu diesem Feld. Versuche ein näheres Ziel oder einen anderen Ansatz.",
+  "selectionCommandUnavailableDescription": "Aktion „{label}“ ist für die aktuelle Auswahl nicht verfügbar.",
+  "@selectionCommandUnavailableDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandActiveDescription": "Aktion „{label}“ ist ein aktiver Modus. Wähle ein Ziel auf der Karte oder brich den Modus ab, wenn du es dir anders überlegt hast.",
+  "@selectionCommandActiveDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandProminentDescription": "Aktion „{label}“ ist derzeit der wichtigste Befehl für diese Auswahl.",
+  "@selectionCommandProminentDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionCommandDefaultDescription": "Führt Aktion „{label}“ für die aktuell ausgewählte Einheit, Stadt oder das Feld aus.",
+  "@selectionCommandDefaultDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionInfoChipDisabledDescription": "Dieser Informationsbereich ist für die aktuelle Auswahl nicht verfügbar.",
+  "selectionInfoChipOpenDescription": "Öffnet Details zu „{label}“ für das aktuell ausgewählte Feld, die Einheit oder Stadt.",
+  "@selectionInfoChipOpenDescription": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "turnCountLabel": "{count, plural, =0{0 Züge} =1{1 Zug} other{{count} Züge}}",
+  "@turnCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnPillLabel": "Z{turn}",
+  "@turnPillLabel": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "turnEtaNoProgress": "kein Fortschritt",
+  "turnEtaDetailLabel": "{turnsLabel} • Zug {turn}",
+  "@turnEtaDetailLabel": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "turnEtaTooltipNoTurn": "{turnsLabel} bis Abschluss",
+  "@turnEtaTooltipNoTurn": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "turnEtaTooltipExpectedTurn": "{turnsLabel} bis Abschluss • erwarteter Zug {turn}",
+  "@turnEtaTooltipExpectedTurn": {
+    "placeholders": {
+      "turnsLabel": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "modeBannerWorkedTilesTitle": "Bearbeitete Felder",
+  "modeBannerWorkedTilesInstruction": "Tippe auf kontrollierte Felder, um Stadtarbeit umzuschalten.",
+  "modeBannerCityGrowthTitle": "Stadtwachstum",
+  "modeBannerCityGrowthInstructionSelected": "Das ausgewählte Feld wird beim nächsten Stadtwachstum beansprucht. Bestätige es oder wähle ein anderes Feld.",
+  "modeBannerCityGrowthInstructionEmpty": "Tippe auf ein umrandetes Feld, um das nächste Wachstums-Hex zu wählen. Ohne Wahl nutzt die Stadt ihre Empfehlung.",
+  "modeBannerWorkerActionTitle": "Feldverbesserung",
+  "modeBannerWorkerActionInstructionPicked": "Bestätige die Verbesserung im Arbeiter-Pop-up.",
+  "modeBannerWorkerActionInstructionEmpty": "Wähle im Arbeiter-Pop-up einen Verbesserungstyp.",
+  "modeBannerMerchantTradeRouteTitle": "Handelsroute",
+  "modeBannerMerchantTradeRouteInstruction": "Wähle eine deiner Städte. Der Händler reist automatisch dorthin und kehrt nach der Ankunft um.",
+  "modeBannerMerchantMoveToCityTitle": "Zur Stadt gehen",
+  "modeBannerMerchantMoveToCityInstruction": "Wähle eine deiner Städte. Der Händler plant einen Weg zu ihrem Zentrum, ohne eine Handelsroute zu erstellen.",
+  "workerActionSelectedImprovement": "Ausgewählt: {title}",
+  "@workerActionSelectedImprovement": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "workerActionSelectImprovement": "Verbesserung wählen",
+  "workerActionBuildDetailTitle": "Geländeverbesserung",
+  "workerActionBuildImprovement": "{title} bauen",
+  "@workerActionBuildImprovement": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "workerActionSelectionHint": "Klicke eine Verbesserung für dieses Feld an, prüfe Erträge und bestätige den Bau.",
+  "workerActionNoYieldChange": "keine Ertragsänderung",
+  "modeBannerResearchSelectionTitle": "Forschung wählen",
+  "modeBannerResearchSelectionInstruction": "Öffne den Technologiebaum und wähle ein Forschungsziel, um den Zug fortzusetzen.",
+  "modeBannerUnitTurnSkipTitle": "Zug übersprungen",
+  "modeBannerUnitTurnSkipInstruction": "Die Einheit wartet bis zum nächsten Zug. Ihr Zustand ist in der unteren Leiste sichtbar.",
+  "modeBannerCommanderMergeTitle": "Truppen zusammenführen",
+  "modeBannerCommanderMergeInstruction": "Wähle eine befreundete Einheit, damit der Kommandant sie der Armee hinzufügt.",
+  "modeBannerAttackTargetingTitle": "Angriff",
+  "modeBannerAttackTargetingInstructionSelected": "Prüfe die Kampfprognose im Pop-up und bestätige den Angriff.",
+  "modeBannerAttackTargetingInstructionEmpty": "Wähle einen Gegner in Reichweite oder sein Hex-Feld, um die Kampfprognose zu sehen.",
+  "modeBannerAttackRetreatProgress": "Rückzug",
+  "modeBannerActionToolbarHint": "Nutze bei Bedarf die untere Werkzeugleiste für Aktionen.",
+  "combatPreviewConfirmBody": "Die ausgewählte Einheit greift sofort nach der Bestätigung an.",
+  "combatPreviewOutcomeLabel": "Ergebnis",
+  "combatPreviewTargetLabel": "Ziel",
+  "combatPreviewRetaliationLabel": "Gegenschlag",
+  "combatPreviewStrengthLabel": "Stärke",
+  "combatPreviewAttackerRole": "Angreifer",
+  "combatPreviewDefenderRole": "Verteidiger",
+  "combatPreviewCityRole": "Stadt",
+  "combatPreviewOutcomeLine": "Ergebnis: {outcome}",
+  "@combatPreviewOutcomeLine": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewOutcomeCityFalls": "Stadt fällt",
+  "combatPreviewOutcomeDefenderKilled": "Verteidiger stirbt",
+  "combatPreviewOutcomeAttackerKilled": "Angreifer stirbt im Gegenschlag",
+  "combatPreviewOutcomeDefenderRetreated": "Verteidiger wird sich zurückziehen",
+  "combatPreviewOutcomeCitySurvives": "Stadt überlebt",
+  "combatPreviewOutcomeDefenderSurvives": "Verteidiger überlebt",
+  "combatPreviewTargetLine": "Ziel: LP {hpBefore}->{hpAfter}/{hpMax}, Angriff {attack} gegen Verteidigung {defense} (-{damage})",
+  "@combatPreviewTargetLine": {
+    "placeholders": {
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewNoRetaliationLine": "Gegenschlag: keiner (Fernangriff, Distanz {distance}, Reichweite {range})",
+  "@combatPreviewNoRetaliationLine": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "range": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewRetaliationLine": "Gegenschlag: Angriff {attack} gegen Verteidigung {defense} (-{damage}), LP {hpBefore}->{hpAfter}/{hpMax}",
+  "@combatPreviewRetaliationLine": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      },
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewHpDamageValue": "{hpBefore} → {hpAfter}/{hpMax} LP, -{damage}",
+  "@combatPreviewHpDamageValue": {
+    "placeholders": {
+      "hpBefore": {
+        "type": "int"
+      },
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewForecastTitle": "Kampfprognose",
+  "combatPreviewNoHpLoss": "kein Schaden",
+  "combatPreviewHpAfterSemantics": "{hpAfter} von {hpMax} LP nach dem Kampf, {loss} LP verloren",
+  "@combatPreviewHpAfterSemantics": {
+    "placeholders": {
+      "hpAfter": {
+        "type": "int"
+      },
+      "hpMax": {
+        "type": "int"
+      },
+      "loss": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewStrengthValue": "{attack} Angriff gegen {defense} Verteidigung",
+  "@combatPreviewStrengthValue": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageTitle": "Warum diese Prognose?",
+  "combatPreviewAdvantageAttacker": "Angriffsvorteil: {country} hat {attack} Angriff gegen {defense} Verteidigung; das Ziel verliert etwa {damage} LP.",
+  "@combatPreviewAdvantageAttacker": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageDefender": "Verteidigungsvorteil: {country} hat {defense} Verteidigung gegen {attack} Angriff; der Treffer verursacht etwa {damage} LP.",
+  "@combatPreviewAdvantageDefender": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      },
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewAdvantageEven": "Ausgeglichener Kampf: {attack} Angriff gegen {defense} Verteidigung; prognostizierter Schaden beträgt etwa {damage} LP.",
+  "@combatPreviewAdvantageEven": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewTerrainLine": "Positionen: {attackerCountry} greift von {attackerTerrain} an. {defenderCountry} verteidigt auf {defenderTerrain}.",
+  "@combatPreviewTerrainLine": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "attackerTerrain": {
+        "type": "String"
+      },
+      "defenderCountry": {
+        "type": "String"
+      },
+      "defenderTerrain": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewSourcesLine": "Der Vorteil kommt von: {sources}.",
+  "@combatPreviewSourcesLine": {
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewPositiveSourcesLine": "Hilft dem Angriff ({attackerCountry}): {sources}.",
+  "@combatPreviewPositiveSourcesLine": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewNegativeSourcesLine": "Hilft der Verteidigung ({defenderCountry}): {sources}.",
+  "@combatPreviewNegativeSourcesLine": {
+    "placeholders": {
+      "defenderCountry": {
+        "type": "String"
+      },
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "combatPreviewNoSourcesLine": "Keine Modifikatoren gelten: Basiswerte der Einheit und das Kampfergebnis entscheiden diese Prognose.",
+  "combatPreviewNoRetaliationReason": "Kein Gegenschlag: Dies ist ein Fernangriff (Distanz {distance}, Angriffsreichweite {range}).",
+  "@combatPreviewNoRetaliationReason": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "range": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewNoRetaliationDefenderDefeated": "Kein Gegenschlag: Das Ziel wird besiegt, bevor es antworten kann.",
+  "combatPreviewNoRetaliationDefenderRetreats": "Kein Gegenschlag: Das Ziel zieht sich nach dem Treffer zurück.",
+  "combatPreviewNoRetaliationNoAttack": "Kein Gegenschlag: Das Ziel hat in dieser Prognose keine Angriffsstärke.",
+  "combatPreviewRetaliationRisk": "Gegenschlag: {defenderCountry} antwortet und {attackerCountry} verliert etwa {damage} LP.",
+  "@combatPreviewRetaliationRisk": {
+    "placeholders": {
+      "defenderCountry": {
+        "type": "String"
+      },
+      "attackerCountry": {
+        "type": "String"
+      },
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "combatPreviewSourceAttackTerrain": "Gelände des Angreifers",
+  "combatPreviewSourceDefenseTerrain": "Gelände des Verteidigers",
+  "combatPreviewSourceTechnology": "Technologie",
+  "combatPreviewSourceVeterancy": "Erfahrung",
+  "combatPreviewSourceCityGarrison": "Stadtgarnison",
+  "combatPreviewSourceMixedArmy": "Einheitszusammensetzung",
+  "combatCounterSpearmanVsMountedAttack": "Speerträger gegen berittene Einheiten",
+  "combatCounterSpearmanVsMountedDefense": "Speerträger halten gegen berittene Einheiten",
+  "combatCounterArcherDefensiveTerrainDefense": "Bogenschützen in Verteidigungsgelände",
+  "combatCounterCavalryRoughAttack": "Kavallerie durch schweres Gelände gebremst",
+  "combatCounterCavalryOpenRaid": "Kavallerieangriff auf offenem Gelände",
+  "combatCounterHeavyInfantryBreakthrough": "schwere Infanterie bricht die Linie",
+  "terrainOcean": "Ozean",
+  "terrainCoast": "Küste",
+  "terrainLake": "See",
+  "terrainPlains": "Ebenen",
+  "terrainGrassland": "Grasland",
+  "terrainDesert": "Wüste",
+  "terrainTundra": "Tundra",
+  "terrainSnow": "Schnee",
+  "terrainMountain": "Gebirge",
+  "terrainHills": "Hügel",
+  "terrainWetlands": "Feuchtgebiete",
+  "terrainJungle": "Dschungel",
+  "terrainForest": "Wald",
+  "terrainRiver": "Fluss",
+  "modeBannerMoveTargetingTitle": "Bewegungsmodus",
+  "modeBannerMoveTargetingInstruction": "Das erste Tippen auf ein Hex-Feld plant die Route. Tippe dasselbe Hex-Feld erneut an, um zu ziehen; eine längere Route wird für künftige Züge eingereiht.",
+  "modeBannerMoveTargetingCancelAction": "Bewegung verlassen",
+  "modeBannerWorkerFindTileTitle": "Arbeiter: Feld finden",
+  "modeBannerWorkerFindTileInstruction": "{reason} Bewege den Arbeiter auf eines deiner Stadtfelder ohne Verbesserung oder auf Gelände, das zu einem freigeschalteten Bau passt.",
+  "@modeBannerWorkerFindTileInstruction": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "modeBannerWorkerFindTileDetailOwnCity": "Eigenes Stadtfeld",
+  "modeBannerWorkerFindTileDetailNoImprovement": "Keine Verbesserung",
+  "modeBannerWorkerFindTileDetailMatchingTerrain": "Passendes Gelände",
+  "modeBannerWorkerImproveTileTitle": "Arbeiter: Feld verbessern",
+  "modeBannerWorkerImproveTileInstruction": "Dieses Feld kann verbessert werden. Wenn du handeln möchtest, nutze die untere Werkzeugleiste, wähle den besten Bau und bestätige ihn im unteren Bereich.",
+  "modeBannerWorkerImproveTileDetailYields": "Erhöht Felderträge",
+  "modeBannerWorkerImproveTileDetailMovement": "Verbraucht Bewegung",
+  "modeBannerScoutExploreTitle": "Späher: erkunden",
+  "modeBannerScoutExploreInstruction": "Aktiviere Erkundung in der unteren Werkzeugleiste, damit der Späher automatisch die nächsten unbekannten Felder entdeckt. Du kannst sie später über Einheitsaktionen abbrechen.",
+  "modeBannerScoutExploreDetailAuto": "Automatische Erkundung",
+  "modeBannerScoutExploreDetailReveal": "Deckt die Karte auf",
+  "modeBannerSettlerFindSiteTitle": "Siedler: Standort finden",
+  "modeBannerSettlerFindSiteInstruction": "{reason} Bewege den Siedler auf ein freies Feld außerhalb von Stadtgrenzen; vermeide Wasser, Gebirge und besetzte Zentren.",
+  "@modeBannerSettlerFindSiteInstruction": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "modeBannerSettlerFindSiteDetailFreeHex": "Freies Hex-Feld",
+  "modeBannerSettlerFindSiteDetailOutsideBorders": "Außerhalb der Grenzen",
+  "modeBannerSettlerFindSiteDetailLandOrCoast": "Land oder Küste",
+  "modeBannerSettlerFoundCityTitle": "Siedler: Stadt gründen",
+  "modeBannerSettlerFoundCityInstruction": "Dieses Feld kann eine Stadt werden. Wenn du eine gründen möchtest, nutze die untere Werkzeugleiste und wähle dann die Startfelder der Stadt auf der Karte.",
+  "modeBannerSettlerFoundCityDetailNewCity": "Neue Stadt",
+  "modeBannerSettlerFoundCityDetailChooseTiles": "Felder nach dem Tippen wählen",
+  "modeBannerCityFoundingTitle": "Stadtgründung",
+  "modeBannerCityFoundingInstructionReady": "Bereit. Bestätige die Stadtgründung in der unteren Werkzeugleiste oder ändere die ausgewählten Felder auf der Karte.",
+  "modeBannerCityFoundingInstructionPick": "Wähle {count} verbundene Felder um den Siedler. Nach der Auswahl ist die Stadtgründungsaktion in der unteren Werkzeugleiste verfügbar.",
+  "@modeBannerCityFoundingInstructionPick": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionImprovementListTitle": "Feldverbesserungen",
+  "mapInspectionPossibleImprovementsTitle": "Mögliche Verbesserungen",
+  "mapInspectionNoPossibleImprovements": "Keine möglichen Verbesserungen",
+  "mapInspectionImprovementAvailableFromStart": "von Beginn an",
+  "mapInspectionObjectiveTitle": "Kartenziel",
+  "mapObjectiveRuins": "Ruinen",
+  "mapObjectiveStrategicPass": "Strategischer Pass",
+  "mapObjectiveHolySite": "Heilige Stätte",
+  "mapObjectiveLegendaryResource": "Legendäre Lagerstätte",
+  "mapObjectiveRuinsDescription": "Ein neutraler Erkundungspunkt. Halten erhöht den Siegpunktdruck.",
+  "mapObjectiveStrategicPassDescription": "Ein wichtiger Geländedurchgang. Kontrolle macht Bewegung zu Einfluss.",
+  "mapObjectiveHolySiteDescription": "Eine kulturell wichtige Stätte. Kontrolle gewährt Gold und Siegpunkte.",
+  "mapObjectiveLegendaryResourceDescription": "Eine seltene Lagerstätte, die Expansion oder Konflikt lohnt. Kontrolle gibt die größte Belohnung.",
+  "mapObjectiveStatusNeutral": "{turns} Runden halten",
+  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "mapObjectiveStatusHolding": "Halten {held}/{required}",
+  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "mapObjectiveStatusCompleted": "Kontrolliert {held}/{required}",
+  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "mapObjectiveStatusContested": "Umkämpft",
+  "mapObjectiveRewardVictoryPoints": "+{points} SP",
+  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "mapObjectiveRewardGoldPerTurn": "+{gold} Gold/Runde",
+  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "selectionImprovementStateBuilt": "GEBAUT",
+  "selectionImprovementStateAvailable": "VERFÜGBAR",
+  "selectionImprovementStateNeedsTechnology": "TECH",
+  "selectionImprovementStateNeedsCity": "STADT",
+  "selectionImprovementStateBlocked": "LIMIT",
+  "selectionImprovementNoBonus": "Kein Bonus",
+  "workerImprovementYieldFood": "+{value} Nahrung",
+  "workerImprovementYieldProduction": "+{value} Produktion",
+  "workerImprovementYieldGold": "+{value} Gold",
+  "workerImprovementYieldDefense": "+{value} Verteidigung",
+  "@workerImprovementYieldFood": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldProduction": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldGold": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "@workerImprovementYieldDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "workerImprovementNoBonus": "Kein zusätzlicher Bonus.",
+  "workerImprovementOnlyWorker": "Nur ein Arbeiter kann dies bauen.",
+  "workerImprovementWorkerBusy": "Der Arbeiter baut bereits.",
+  "workerImprovementStopQueuedMove": "Stoppe zuerst die geplante Bewegung.",
+  "workerImprovementMissingTile": "Kein Feld unter der Einheit.",
+  "workerImprovementMissingResource": "Diese Verbesserung benötigt eine passende Ressource.",
+  "workerImprovementInvalidTerrain": "Falsches Grundgelände für diese Verbesserung.",
+  "workerImprovementMissingRiver": "Diese Verbesserung benötigt einen Fluss.",
+  "workerImprovementBlocked": "Diese Aktion ist jetzt blockiert.",
+  "unitSelectionWorkerJobTurns": "{name} ({turns}Z)",
+  "@unitSelectionWorkerJobTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueNoMatchingImprovement": "Keine passende Verbesserung",
+  "resourceValueSelectWorkerOrCity": "Arbeiter oder Stadt auswählen",
+  "resourceValueTileAlreadyImproved": "Feld hat bereits eine Verbesserung",
+  "resourceValueCityCenter": "Stadtzentrum",
+  "resourceValueWorksForCity": "Arbeitet für: {city}",
+  "@resourceValueWorksForCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueOutsideCityBorders": "Außerhalb der Stadtgrenzen",
+  "resourceValueNoLegalImprovementForTile": "Keine gültige Verbesserung für dieses Feld",
+  "resourceValueRequiresTechnology": "Benötigt: {technology}",
+  "@resourceValueRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueAvailableForWorker": "Für Arbeiter verfügbar",
+  "resourceDetailNoResourcesOnTile": "Keine Ressourcen auf diesem Feld",
+  "resourceDetailValueSection": "Wert",
+  "resourceDetailCurrentSection": "Jetzt",
+  "resourceDetailAfterImprovementSection": "Nach Verbesserung",
+  "resourceDetailYieldComparison": "Felderträge",
+  "resourceDetailRequiresSection": "Benötigt",
+  "resourceDetailBestMoveSection": "Bester Zug",
+  "resourceDetailNoMatchingImprovementBody": "Keine passende Verbesserung für diese Ressource.",
+  "resourceDetailRequirementNoneCanBuild": "Nichts. Du kannst sofort bauen.",
+  "resourceDetailRequirementOutsideCity": "Das Feld muss innerhalb der Stadtgrenzen liegen.",
+  "resourceDetailRequirementAlreadyImproved": "Nichts. Das Feld ist bereits verbessert.",
+  "resourceDetailRequirementCityCenter": "Kein Arbeiterbau im Stadtzentrum.",
+  "resourceDetailRequirementSelectWorkerOrCity": "Eine Arbeiter- oder Stadtauswahl.",
+  "resourceDetailRequirementNoLegalImprovement": "Kein verfügbarer Bau für dieses Feld.",
+  "resourceDetailBestMoveRequiresTechnology": "Schalte zuerst {technology} frei und baue dann {improvement}.",
+  "@resourceDetailBestMoveRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceDetailBestMoveAvailable": "Schicke einen Arbeiter und baue {improvement}.",
+  "@resourceDetailBestMoveAvailable": {
+    "placeholders": {
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceDetailBestMoveOutsideCity": "Erweitere Stadtgrenzen oder gründe eine Stadt näher an der Ressource.",
+  "resourceDetailBestMoveAlreadyImproved": "Halte das Feld in den Grenzen und bearbeite es, wenn es zum Stadtplan passt.",
+  "resourceDetailBestMoveCityCenter": "Behandle die Ressource als Stadtzentrum-Wert; Arbeiter verbessern dieses Feld nicht.",
+  "resourceDetailBestMoveSelectWorkerOrCity": "Wähle einen Arbeiter oder eine Stadt, um den gültigen Bau zu prüfen.",
+  "resourceDetailBestMoveNoLegalImprovement": "Behandle die Ressource als Expansionsziel; hier gibt es keinen separaten Bau.",
+  "resourceValueUnlockedByTechnology": "Durch {technology} freigeschaltet: {improvement}.",
+  "@resourceValueUnlockedByTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueUnlocksFullYieldAfterTechnology": "Nach {technology}: {improvement} schaltet den vollen Feldertrag frei.",
+  "@resourceValueUnlocksFullYieldAfterTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueResearchBoostLine": "Forschungsboost: Kontrolle dieser Ressource beschleunigt {technology} (-{discount} Kosten).",
+  "@resourceValueResearchBoostLine": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "discount": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueTechnologyControlledResourceBonus": "Nach {technology}: +{production} PROD für jede kontrollierte Ressource.",
+  "@resourceValueTechnologyControlledResourceBonus": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      },
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueNoBaseYieldSummary": "Die Ressource selbst fügt keinen Grundertrag hinzu. Das ganze Hex-Feld hat jetzt {yield}; der volle Wert kommt durch Verbesserungen und Freischaltungen.",
+  "@resourceValueNoBaseYieldSummary": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueBaseYieldSummary": "Die Ressource gibt {resourceYield}. Das ganze Hex-Feld hat vor Verbesserung jetzt {tileYield}.",
+  "@resourceValueBaseYieldSummary": {
+    "placeholders": {
+      "resourceYield": {
+        "type": "String"
+      },
+      "tileYield": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceValueExpansionStrategic": "Beanspruche sie, bevor ein Rivale es tut: Dies ist eine strategische Ressource für Produktion, Armeen oder spätere Technologien.",
+  "resourceValueExpansionFood": "Ein gutes Expansionsziel für Stadtwachstum: mehr Nahrung bedeutet schnellere Bevölkerung und mehr bearbeitete Felder.",
+  "resourceValueExpansionProduction": "Ein gutes Expansionsziel für Produktionstempo: Gebäude, Einheiten und Kartendruck kommen schneller.",
+  "resourceValueExpansionTrade": "Ein gutes Expansionsziel für Handel: Nach Verbesserung unterstützt es Gold und weiteren Wachstumsunterhalt stark.",
+  "resourceValueExpansionEconomy": "Ein gutes Expansionsziel für die Wirtschaft: Gold hilft, Armeen zu unterhalten, Reserven aufzubauen und Punkteziele zu erreichen.",
+  "resourceValueYieldFood": "+{amount} NAHRUNG",
+  "@resourceValueYieldFood": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldProduction": "+{amount} PROD",
+  "@resourceValueYieldProduction": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldGold": "+{amount} GOLD",
+  "@resourceValueYieldGold": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueYieldDefense": "+{amount} VER",
+  "@resourceValueYieldDefense": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "resourceValueZeroBaseYield": "0 Grundertrag",
+  "resourceValueCategoryBonus": "Bonus",
+  "resourceValueCategoryLuxury": "Luxus",
+  "resourceValueCategoryStrategic": "Strategisch",
+  "resourceValueCategoryBonusFuture": "Der Wert wirkt meist sofort: schnelleres Wachstum und ein besserer Stadtstart.",
+  "resourceValueCategoryLuxuryFuture": "Der größte Wert erscheint nach Grenzbeanspruchung und passender Verbesserung.",
+  "resourceValueCategoryStrategicFuture": "Dies ist eine strategische Ressource: Sichere sie für spätere Produktion und militärischen Druck.",
+  "cityYieldBreakdownTitle": "Stadtwirtschaft",
+  "cityYieldBreakdownSubtitle": "Echter Ertrag/Zug • Wachstum {growth} • {eta}",
+  "@cityYieldBreakdownSubtitle": {
+    "placeholders": {
+      "growth": {
+        "type": "String"
+      },
+      "eta": {
+        "type": "String"
+      }
+    }
+  },
+  "cityYieldBreakdownProductionSources": "Produktionsquellen",
+  "cityYieldBreakdownScienceSources": "Wissenschaftsquellen",
+  "cityYieldBreakdownPerTurnSuffix": "/Zug",
+  "cityYieldBreakdownNoProduction": "Keine Produktion",
+  "cityYieldBreakdownNoScience": "Keine Wissenschaft",
+  "cityYieldBreakdownCenter": "Zentrum",
+  "cityYieldBreakdownPopulationFields": "Bevölkerungsfelder",
+  "cityYieldBreakdownWorkers": "Arbeiter",
+  "cityYieldBreakdownBuildings": "Gebäude",
+  "cityYieldBreakdownTechnologies": "Technologien",
+  "cityYieldBreakdownSpecialization": "Spezialisierung",
+  "cityYieldBreakdownGoldMultiplier": "Goldmultiplikator",
+  "cityYieldBreakdownUpkeep": "Unterhalt",
+  "cityYieldBreakdownFieldsBucket": "Felder",
+  "cityYieldBreakdownCenterDetail": "Fester Ertrag aus dem Stadtzentrum",
+  "cityYieldBreakdownGoldMultiplierDetail": "Prozentualer Bonus nach Summierung der Goldquellen",
+  "cityYieldBreakdownBaseScience": "Stadtbasis",
+  "cityYieldBreakdownBaseScienceDetail": "Feste Wissenschaft, die von jeder Stadt erzeugt wird",
+  "cityYieldBreakdownResearchProject": "Forschungsprojekt",
+  "cityYieldBreakdownResearchProjectDetail": "Aktuelle Stadtproduktion wird in Wissenschaft umgewandelt",
+  "cityYieldBreakdownScienceSpecializationDetail": "Wissenschaftsprofil der Stadt",
+  "cityYieldBreakdownScienceTechnologyDetail": "Wissenschaftsbonus durch freigeschaltete Technologien",
+  "cityYieldBreakdownNoWorkedPopulationFields": "Keine bearbeiteten Bevölkerungsfelder",
+  "cityYieldBreakdownOneWorkedPopulationField": "1 bearbeitetes Bevölkerungsfeld",
+  "cityYieldBreakdownManyWorkedPopulationFields": "{count} bearbeitete Bevölkerungsfelder",
+  "@cityYieldBreakdownManyWorkedPopulationFields": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoAssignedWorkers": "Keine zugewiesenen Arbeiter",
+  "cityYieldBreakdownOneAssignedWorker": "1 Feld durch einen Arbeiter aktiviert",
+  "cityYieldBreakdownManyAssignedWorkers": "{count} Felder durch Arbeiter aktiviert",
+  "@cityYieldBreakdownManyAssignedWorkers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoPassiveImprovements": "Keine passiven Verbesserungen",
+  "cityYieldBreakdownOnePassiveImprovement": "1 unbearbeitete Verbesserung, halber Ertrag",
+  "cityYieldBreakdownManyPassiveImprovements": "{count} unbearbeitete Verbesserungen, halber Ertrag",
+  "@cityYieldBreakdownManyPassiveImprovements": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoBuildings": "Keine Gebäude",
+  "cityYieldBreakdownBuildingsNoDirectYield": "Gebäude ohne direkten Ertrag",
+  "cityYieldBreakdownOneBuildingEconomicEffect": "1 Gebäude mit Wirtschaftseffekt",
+  "cityYieldBreakdownManyBuildingEconomicEffects": "{count} Gebäude mit Wirtschaftseffekten",
+  "@cityYieldBreakdownManyBuildingEconomicEffects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownNoTechnologyYield": "Kein Technologie-Ertragsbonus",
+  "cityYieldBreakdownTechnologyYield": "Boni aus freigeschalteten Technologien",
+  "cityYieldBreakdownNoScienceBuildings": "Keine Wissenschaftsgebäude",
+  "cityYieldBreakdownOneScienceBuilding": "1 Wissenschaftsgebäude",
+  "cityYieldBreakdownManyScienceBuildings": "{count} Wissenschaftsgebäude mit abnehmendem Ertrag",
+  "@cityYieldBreakdownManyScienceBuildings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownGrowthFood": "{storedFood}/{growthCost} Nahrung",
+  "@cityYieldBreakdownGrowthFood": {
+    "placeholders": {
+      "storedFood": {
+        "type": "int"
+      },
+      "growthCost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownStagnation": "Stagnation",
+  "cityYieldBreakdownUpkeepBlocked": "Bevölkerung {population}: Kosten {cost}, Wachstum gestoppt",
+  "@cityYieldBreakdownUpkeepBlocked": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownUpkeepCost": "Nahrungsunterhalt für Bevölkerung {population}",
+  "@cityYieldBreakdownUpkeepCost": {
+    "placeholders": {
+      "population": {
+        "type": "int"
+      }
+    }
+  },
+  "cityYieldBreakdownGrowthSpecializationDetail": "Wachstumsprofil der Stadt",
+  "cityYieldBreakdownIndustrySpecializationDetail": "Industrieprofil der Stadt",
+  "cityYieldBreakdownCommerceSpecializationDetail": "Handelsprofil der Stadt",
+  "cityYieldBreakdownScienceSpecializationCityDetail": "Wissenschaftsprofil der Stadt",
+  "cityYieldBreakdownMilitarySpecializationDetail": "Garnisonsprofil der Stadt",
+  "cityYieldBreakdownNoSpecialization": "Keine Spezialisierung",
+  "cityProjectWealth": "Wohlstand",
+  "cityProjectResearch": "Forschung",
+  "cityProductionProjectsSection": "Stadtprojekte",
+  "cityProductionSpecializationSection": "Stadtspezialisierung",
+  "cityProductionSortLabel": "Sortieren",
+  "cityProductionHeaderSubtitle": "{title} • {productionPerTurn} • {gold} Gold",
+  "@cityProductionHeaderSubtitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "productionPerTurn": {
+        "type": "String"
+      },
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionBuiltLabel": "Gebaut",
+  "cityProductionAvailableLabel": "Verfügbar",
+  "cityProductionAvailableUnitLabel": "Verfügbar",
+  "cityProductionUnitSupplyLimit": "Nahrungslimit {used}/{capacity}",
+  "@cityProductionUnitSupplyLimit": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionUnitSupplyCost": "Nahrung {cost}",
+  "@cityProductionUnitSupplyCost": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionUnitSupplyUsed": "Limit {used}/{capacity}",
+  "@cityProductionUnitSupplyUsed": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionNextWorkerUpkeep": "nächster Unterhalt: {upkeep}",
+  "@cityProductionNextWorkerUpkeep": {
+    "placeholders": {
+      "upkeep": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionCostShort": "{production} Prod.",
+  "@cityProductionCostShort": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionPaceShort": "{production} Prod./Zug",
+  "@cityProductionPaceShort": {
+    "placeholders": {
+      "production": {
+        "type": "int"
+      }
+    }
+  },
+  "cityBuildingSortRecommended": "Empfohlen",
+  "cityBuildingReplaceProgressWarning": "Die Wahl eines anderen Gebäudes ersetzt {building}. Der Fortschritt bleibt erhalten.",
+  "@cityBuildingReplaceProgressWarning": {
+    "placeholders": {
+      "building": {
+        "type": "String"
+      }
+    }
+  },
+  "cityBuildingSortFastestImpact": "Schnellste Wirkung",
+  "cityBuildingSortBestReturn": "Beste Rendite",
+  "cityBuildingSortGrowth": "Wachstum",
+  "cityBuildingSortIndustry": "Industrie",
+  "cityBuildingSortScience": "Wissenschaft",
+  "cityBuildingSortDefenseMilitary": "Verteidigung / Militär",
+  "cityBuildingSortEconomy": "Wirtschaft",
+  "cityBuildingRequiresTechnology": "Benötigt Technologie",
+  "cityProductionContinuous": "fortlaufend",
+  "cityProductionNoProduction": "keine Produktion",
+  "cityProductionReady": "bereit",
+  "cityProductionTurnOne": "1 Zug",
+  "cityProductionTurns": "{turns} Züge",
+  "@cityProductionTurns": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionTreasuryGold": "Schatzkammer: {gold} Gold",
+  "@cityProductionTreasuryGold": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProductionRushAction": "Beschleunigen -{gold}",
+  "@cityProductionRushAction": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProjectGoldPerTurn": "+{gold} Gold / Zug",
+  "@cityProjectGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "cityProjectSciencePerTurn": "+{science} Wissenschaft / Zug",
+  "@cityProjectSciencePerTurn": {
+    "placeholders": {
+      "science": {
+        "type": "int"
+      }
+    }
+  },
+  "citySpecializationGrowth": "Wachstum",
+  "citySpecializationIndustry": "Industrie",
+  "citySpecializationCommerce": "Handel",
+  "citySpecializationMilitary": "Garnison",
+  "citySpecializationGrowthBonus": "+2 Nahrung",
+  "citySpecializationIndustryBonus": "+2 Produktion",
+  "citySpecializationCommerceBonus": "+3 Gold",
+  "citySpecializationScienceBonus": "+2 Wissenschaft",
+  "citySpecializationMilitaryProductionBonus": "+1 Produktion",
+  "citySpecializationMilitaryDefenseBonus": "+2 Verteidigung",
+  "citySpecializationMilitaryUnitProductionBonus": "+1 Einheitsprod.",
+  "citySpecializationBestFit": "Beste Eignung",
+  "eventCityFoundedTitle": "Stadt gegründet",
+  "eventCityBuiltBuildingTitle": "Bau abgeschlossen",
+  "eventCityProducedUnitTitle": "Einheit ausgebildet",
+  "eventCityClaimedHexTitle": "Stadtgrenzen",
+  "eventCityClaimedHexBody": "{cityName}: neues Feld",
+  "@eventCityClaimedHexBody": {
+    "placeholders": {
+      "cityName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventUnitMovedTitle": "Einheitenbewegung",
+  "eventUnitPromotedTitle": "Einheit befördert",
+  "eventUnitExperienceTitle": "Erfahrung",
+  "eventUnitExperienceBody": "{unitName}: +{amount} EP ({rank})",
+  "@eventUnitExperienceBody": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "int"
+      },
+      "rank": {
+        "type": "String"
+      }
+    }
+  },
+  "eventUnitAttackedTitle": "Angriff",
+  "eventCombatTitle": "Kampf",
+  "eventCombatDamageLine": "{unitName}: -{damage} LP -> {result}",
+  "@eventCombatDamageLine": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      },
+      "damage": {
+        "type": "int"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "eventCombatNoRetaliationLine": "{unitName}: kein Gegenschlag",
+  "@eventCombatNoRetaliationLine": {
+    "placeholders": {
+      "unitName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventCombatSimpleBody": "{attackerName} ({attackerCountry}) griff {defenderName} ({defenderCountry}) an - LP {attackerHp}:{defenderHp}",
+  "@eventCombatSimpleBody": {
+    "placeholders": {
+      "attackerCountry": {
+        "type": "String"
+      },
+      "attackerName": {
+        "type": "String"
+      },
+      "defenderCountry": {
+        "type": "String"
+      },
+      "defenderName": {
+        "type": "String"
+      },
+      "attackerHp": {
+        "type": "int"
+      },
+      "defenderHp": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDiplomaticProposalAcceptedStatus": "Angenommen",
+  "eventDiplomaticProposalRejectedStatus": "Abgelehnt",
+  "eventDiplomaticProposalExpiredStatus": "Abgelaufen",
+  "eventUnitKilledTitle": "Einheit besiegt",
+  "eventUnitRetreatedTitle": "Rückzug",
+  "eventCityCapturedTitle": "Stadt erobert",
+  "eventCityDestroyedTitle": "Stadt zerstört",
+  "eventTurnEndedTitle": "Zug beendet",
+  "eventWorkerCompletedJobTitle": "Arbeit abgeschlossen",
+  "eventResearchPointsTitle": "Wissenschaft",
+  "eventResearchPointsBody": "{playerName}: +{points} Wissenschaft",
+  "@eventResearchPointsBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "eventTechnologyResearchedTitle": "Technologie entdeckt",
+  "eventStrategicResourceDiscoveredTitle": "Strategische Ressource entdeckt",
+  "eventStrategicResourceDiscoveredBody": "{playerName}: {resourceName}",
+  "@eventStrategicResourceDiscoveredBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "resourceName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventStrategicResourceControlledDetail": "Kontrolliert: {count}",
+  "@eventStrategicResourceControlledDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourceRivalDetail": "Rivalen: {count}",
+  "@eventStrategicResourceRivalDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourceUnclaimedDetail": "Unbeansprucht: {count}",
+  "@eventStrategicResourceUnclaimedDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventStrategicResourcePressureSecured": "Versorgung gesichert; verteidige die Quelle.",
+  "eventStrategicResourcePressureExpansionRace": "Siedlungsrennen: sichere das nächste Vorkommen vor den Rivalen.",
+  "eventStrategicResourcePressureContested": "Umkämpfte Versorgung: Rivalen kontrollieren ebenfalls Quellen.",
+  "eventStrategicResourcePressureRivalMonopoly": "Rivalenmonopol: bereite Handel oder eine Expedition vor.",
+  "eventStrategicResourceSettleHint": "Vorkommen außerhalb der Grenzen bei {col}:{row}; gründe dort eine Stadt.",
+  "@eventStrategicResourceSettleHint": {
+    "placeholders": {
+      "col": {
+        "type": "int"
+      },
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveSecuredTitle": "Kartenziel gesichert",
+  "eventMapObjectiveSecuredBody": "{playerName}: {objectiveName}",
+  "@eventMapObjectiveSecuredBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "objectiveName": {
+        "type": "String"
+      }
+    }
+  },
+  "eventMapObjectiveHoldDetail": "Gehalten: {holdTurns}/{requiredHoldTurns}",
+  "@eventMapObjectiveHoldDetail": {
+    "placeholders": {
+      "holdTurns": {
+        "type": "int"
+      },
+      "requiredHoldTurns": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveLocationDetail": "Position: {col}:{row}",
+  "@eventMapObjectiveLocationDetail": {
+    "placeholders": {
+      "col": {
+        "type": "int"
+      },
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveVictoryRewardDetail": "+{points} Siegpunkte",
+  "@eventMapObjectiveVictoryRewardDetail": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "eventMapObjectiveGoldRewardDetail": "+{gold} Gold/Runde",
+  "@eventMapObjectiveGoldRewardDetail": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCivilizationMetTitle": "Neue Zivilisation",
+  "eventCivilizationMetBody": "{civilizationName} ({playerName})",
+  "@eventCivilizationMetBody": {
+    "placeholders": {
+      "civilizationName": {
+        "type": "String"
+      },
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "civilizationMetPopupEyebrow": "Zivilisation begegnet",
+  "civilizationMetPopupBody": "Die Zivilisation {civilizationName} ist am Horizont erschienen. Ein neuer Nachbar, Rivale oder künftiger Verbündeter ist nun Teil deiner Welt.",
+  "@civilizationMetPopupBody": {
+    "placeholders": {
+      "civilizationName": {
+        "type": "String"
+      }
+    }
+  },
+  "civilizationMetPopupOk": "OK",
+  "eventCommandRejectedTitle": "Befehl abgelehnt",
+  "eventAllPlayersSubmittedTitle": "Alle bereit",
+  "eventAllPlayersSubmittedBody": "Zug {turn} ({players})",
+  "@eventAllPlayersSubmittedBody": {
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      },
+      "players": {
+        "type": "int"
+      }
+    }
+  },
+  "eventPlayerTimedOutTitle": "Automatisch senden",
+  "eventPlayerTimedOutBody": "{playerName}: Zeitüberschreitung in Zug {turn}",
+  "@eventPlayerTimedOutBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatDefenderKilledDetail": "Verteidiger besiegt",
+  "eventCombatAttackerKilledDetail": "Angreifer besiegt",
+  "eventCombatDefenderRetreatedDetail": "Verteidiger zog sich zurück",
+  "eventCombatAttackDamageDetail": "Angriff: -{damage} LP",
+  "@eventCombatAttackDamageDetail": {
+    "placeholders": {
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatRetaliationDamageDetail": "Gegenschlag: -{damage} LP",
+  "@eventCombatRetaliationDamageDetail": {
+    "placeholders": {
+      "damage": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatRollDetail": "Wurf {value}",
+  "@eventCombatRollDetail": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatNoRetaliationDetail": "Kein Gegenschlag",
+  "eventDominationStartedTitle": "Dominanz begonnen",
+  "eventDominationRivalAboveTitle": "Rivale über Schwelle",
+  "eventDominationBody": "{playerName}: {control}% / {required}%",
+  "@eventDominationBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "control": {
+        "type": "String"
+      },
+      "required": {
+        "type": "String"
+      }
+    }
+  },
+  "eventDominationHoldProgressDetail": "{held}/{required} Züge gehalten",
+  "@eventDominationHoldProgressDetail": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDominationReadyDetail": "Bedingung bereit",
+  "eventDominationKeepHoldingDetail": "Noch {turns} halten",
+  "eventDominationInterruptDetail": "Innerhalb von {turns} unterbrechen",
+  "@eventDominationKeepHoldingDetail": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "@eventDominationInterruptDetail": {
+    "placeholders": {
+      "turns": {
+        "type": "String"
+      }
+    }
+  },
+  "eventTurnCountLabel": "{count, plural, =0{0 Züge} =1{1 Zug} other{{count} Züge}}",
+  "@eventTurnCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatDefeatedResult": "besiegt",
+  "eventCombatDefenderRetreatedResult": "{hp} LP, Rückzug",
+  "eventCombatHpResult": "{hp} LP",
+  "@eventCombatDefenderRetreatedResult": {
+    "placeholders": {
+      "hp": {
+        "type": "int"
+      }
+    }
+  },
+  "@eventCombatHpResult": {
+    "placeholders": {
+      "hp": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCombatTerrainModifierLabel": "Gelände {terrain}",
+  "eventCombatTechModifierLabel": "Technologie {technology}",
+  "eventCombatRankModifierLabel": "Rang {rank}",
+  "eventCombatCityGarrisonModifier": "Stadtgarnison",
+  "eventCombatMixedArmyModifier": "Gemischte Armee",
+  "eventCombatStatAttack": "Angriff",
+  "eventCombatStatDefense": "Verteidigung",
+  "eventCombatStatHp": "LP",
+  "eventCombatStatRange": "Reichweite",
+  "eventCombatStatMobility": "Bewegung",
+  "closeAction": "Schließen"
+}

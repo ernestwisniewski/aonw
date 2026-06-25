@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3072" height="3072" viewBox="0 0 3072 3072">
+  <title>Unit animation sheet template - 6 x 4, 512 x 768 cells</title>
+  <defs>
+    <pattern id="cell" width="512" height="768" patternUnits="userSpaceOnUse">
+      <rect width="512" height="768" fill="#101827" stroke="#38bdf8" stroke-width="4"/>
+      <rect x="48" y="72" width="416" height="624" fill="none" stroke="#facc15" stroke-width="3" stroke-dasharray="18 12"/>
+      <line x1="256" y1="0" x2="256" y2="768" stroke="#f472b6" stroke-width="3" stroke-dasharray="14 14"/>
+      <line x1="0" y1="624" x2="512" y2="624" stroke="#22d3ee" stroke-width="3" stroke-dasharray="14 14"/>
+      <circle cx="256" cy="624" r="10" fill="#22d3ee"/>
+    </pattern>
+  </defs>
+  <rect width="3072" height="3072" fill="url(#cell)"/>
+  <rect x="0" y="0" width="3072" height="3072" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <g font-family="Inter, Arial, sans-serif" font-size="46" fill="#ffffff">
+    <text x="24" y="62">row 0: idle</text>
+    <text x="24" y="830">row 1: walk</text>
+    <text x="24" y="1598">row 2: attack / work</text>
+    <text x="24" y="2366">row 3: die</text>
+  </g>
+  <g font-family="Inter, Arial, sans-serif" font-size="34" fill="#dbeafe" opacity="0.9">
+    <text x="210" y="746">frame 0</text>
+    <text x="722" y="746">frame 1</text>
+    <text x="1234" y="746">frame 2</text>
+    <text x="1746" y="746">frame 3</text>
+    <text x="2258" y="746">frame 4</text>
+    <text x="2770" y="746">frame 5</text>
+  </g>
+  <text x="24" y="3040" font-family="Inter, Arial, sans-serif" font-size="36" fill="#fde68a">
+    Keep pivot and baseline identical in every frame. Export transparent PNG/WebP at exactly 3072 x 3072.
+  </text>
+</svg>

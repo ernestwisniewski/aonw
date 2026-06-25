@@ -1,0 +1,23 @@
+name: aonw_server
+description: Serverpod backend for Age of New Worlds multiplayer.
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  aonw_core:
+    path: ../packages/aonw_core
+  serverpod: 3.4.10
+  serverpod_auth_core_server: 3.4.10
+  serverpod_auth_idp_server: 3.4.10
+
+dev_dependencies:
+  lints: ^6.0.0
+  serverpod_test: 3.4.10
+  test: ^1.25.15
+
+serverpod:
+  scripts:
+    start: dart bin/main.dart --apply-migrations
+    generate: serverpod generate
