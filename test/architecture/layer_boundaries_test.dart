@@ -16,6 +16,7 @@ void main() {
               _ImportRule.frameworks,
               _ImportRule.pathProvider,
               _ImportRule.sharedPreferences,
+              _ImportRule.appShell,
               _ImportRule.gameApplication,
               _ImportRule.gameInfrastructure,
               _ImportRule.gamePresentation,
@@ -77,6 +78,19 @@ void main() {
       },
     );
 
+    test(
+      'game application use cases do not import reducer implementations',
+      () {
+        expect(
+          _violations(
+            roots: const ['lib/game/application/use_cases'],
+            disallowed: const [_ImportRule.gameReducer],
+          ),
+          isEmpty,
+        );
+      },
+    );
+
     test('game infrastructure does not depend on presentation', () {
       expect(
         _violations(
@@ -117,7 +131,11 @@ void main() {
       expect(
         _violations(
           roots: const ['lib/map/domain'],
-          disallowed: const [_ImportRule.frameworks, _ImportRule.gameLayer],
+          disallowed: const [
+            _ImportRule.frameworks,
+            _ImportRule.appShell,
+            _ImportRule.gameLayer,
+          ],
         ),
         isEmpty,
       );
@@ -253,10 +271,12 @@ enum _ImportRule {
   frameworks('depends on Flutter, Flame, or Riverpod'),
   pathProvider('depends on path_provider'),
   sharedPreferences('depends on shared_preferences'),
+  appShell('depends on app/API/developer/menu/shared shell code'),
   gameLayer('depends on game layer'),
   gameApplication('depends on game application'),
   gameInfrastructure('depends on game infrastructure'),
   gamePresentation('depends on game presentation'),
+  gameReducer('depends on game reducer implementation'),
   flutterApp('depends on Flutter app package'),
   serverRuntimePackage('depends on Serverpod server package'),
   generatedServerClient('depends on generated Serverpod client package'),
@@ -275,10 +295,12 @@ enum _ImportRule {
       _ImportRule.sharedPreferences => uri.startsWith(
         'package:shared_preferences/',
       ),
+      _ImportRule.appShell => _isAppShellUri(uri),
       _ImportRule.gameLayer => _isGameLayerUri(uri),
       _ImportRule.gameApplication => _isGameLayerUri(uri, 'application'),
       _ImportRule.gameInfrastructure => _isGameInfrastructureUri(uri),
       _ImportRule.gamePresentation => _isGameLayerUri(uri, 'presentation'),
+      _ImportRule.gameReducer => _isGameReducerUri(uri),
       _ImportRule.flutterApp => _isFlutterAppUri(uri),
       _ImportRule.serverRuntimePackage => _isServerRuntimePackageUri(uri),
       _ImportRule.generatedServerClient => _isGeneratedServerClientUri(uri),
@@ -289,6 +311,12 @@ enum _ImportRule {
   static bool _isFrameworkUri(String uri) {
     return RegExp(
       r'^package:(flutter|flame|hooks_riverpod|flutter_riverpod|riverpod|riverpod_annotation)/',
+    ).hasMatch(uri);
+  }
+
+  static bool _isAppShellUri(String uri) {
+    return RegExp(
+      r'^package:aonw/(app|api|developer|l10n|menu|shared)/',
     ).hasMatch(uri);
   }
 
@@ -304,6 +332,11 @@ enum _ImportRule {
     return _isGameLayerUri(uri, 'infrastructure') ||
         uri.startsWith('package:aonw/game/infrastructure/') ||
         uri.contains('/game/infrastructure/');
+  }
+
+  static bool _isGameReducerUri(String uri) {
+    return uri.startsWith('package:aonw/game/domain/reducer/') ||
+        uri.contains('/game/domain/reducer/');
   }
 
   static bool _isFlutterAppUri(String uri) {

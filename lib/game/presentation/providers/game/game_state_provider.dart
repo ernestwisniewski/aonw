@@ -5,15 +5,16 @@ import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/api/transport/live_wire_command_dispatcher.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
+import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart' show GameMode;
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
@@ -84,10 +85,12 @@ class GameStateNotifier extends _$GameStateNotifier {
     final bootstrap = BootstrapGameStateUseCase(
       repository: repository,
       dispatchCommand: _dispatchCommand!,
-      eventLog: session.gameMode == GameMode.multiplayer
-          ? eventLogForSave(ref, saveId)
+      eventReplay: session.gameMode == GameMode.multiplayer
+          ? EventLogReplayService(
+              eventLog: eventLogForSave(ref, saveId),
+              reducer: reducer,
+            )
           : null,
-      replayReducer: session.gameMode == GameMode.multiplayer ? reducer : null,
     );
     final bootstrapped = await bootstrap.executeWithResult(
       saveId: saveId,

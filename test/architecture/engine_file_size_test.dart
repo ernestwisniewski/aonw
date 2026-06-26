@@ -20,5 +20,5 @@ void main() {
 }
 
 const _engineFileBaselines = <String, int>{
-  'lib/game/presentation/engine/game_renderer.dart': 1519,
+  'lib/game/presentation/engine/game_renderer.dart': 601,
 };
