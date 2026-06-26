@@ -527,38 +527,26 @@ class GameRenderer extends HexWorld
     _clearHoverIntent();
   }
 
-  /// Updates visual layers without running renderer effects.
-  void applyState(GameState state, {int? currentTurn}) {
-    _applyState(state, suppressCameraFocus: false, currentTurn: currentTurn);
-  }
+  void applyState(GameState state, {int? currentTurn}) =>
+      _applyState(state, suppressCameraFocus: false, currentTurn: currentTurn);
 
-  /// Updates visual layers while preserving the current camera.
-  ///
-  /// This is used for turn-start selection refreshes where the HUD should
-  /// prepare the next action without moving the map away from the player.
-  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) {
-    _applyState(state, suppressCameraFocus: true, currentTurn: currentTurn);
-  }
+  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) =>
+      _applyState(state, suppressCameraFocus: true, currentTurn: currentTurn);
 
-  /// Applies state and effects in one pass so move animations keep their
-  /// previous marker position until the Flame effect takes over.
   Future<void> applyTransition(
     GameState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
-  }) async {
-    await _enqueueTransition(
+  }) {
+    return _enqueueTransition(
       () => _applyTransitionNow(state, effects, currentTurn: currentTurn),
     );
   }
 
-  Future<void> handleEffects(Iterable<RendererEffect> effects) async {
-    await _enqueueTransition(() => _handleEffectsNow(effects));
-  }
+  Future<void> handleEffects(Iterable<RendererEffect> effects) =>
+      _enqueueTransition(() => _handleEffectsNow(effects));
 
-  Future<void> handleEffect(RendererEffect effect) async {
-    await handleEffects([effect]);
-  }
+  Future<void> handleEffect(RendererEffect effect) => handleEffects([effect]);
 
   @override
   Future<void> buildWorld() async {
