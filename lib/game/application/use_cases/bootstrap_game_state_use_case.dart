@@ -1,11 +1,9 @@
-import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
 class BootstrapGameStateResult {
@@ -18,14 +16,12 @@ class BootstrapGameStateResult {
 class BootstrapGameStateUseCase {
   final GameRepository repository;
   final DispatchCommandUseCase dispatchCommand;
-  final EventLog? eventLog;
-  final GameStateReducer? replayReducer;
+  final EventLogReplayService? eventReplay;
 
   const BootstrapGameStateUseCase({
     required this.repository,
     required this.dispatchCommand,
-    this.eventLog,
-    this.replayReducer,
+    this.eventReplay,
   });
 
   Future<GameState> execute({
@@ -56,8 +52,9 @@ class BootstrapGameStateUseCase {
       activePlayerId: control.activePlayerId,
       activePlayerCanAct: control.canAct,
     );
-    if (snapshot.save.gameMode == GameMode.multiplayer) {
-      final replayed = await _replayEventsSinceSnapshot(
+    final replay = eventReplay;
+    if (snapshot.save.gameMode == GameMode.multiplayer && replay != null) {
+      final replayed = await replay.replaySinceSnapshot(
         saveId: saveId,
         state: initialState,
         offset: offset,
@@ -93,38 +90,6 @@ class BootstrapGameStateUseCase {
     );
     offset = _maxOffset(offset, focused.offset);
     return BootstrapGameStateResult(state: focused.state, offset: offset);
-  }
-
-  Future<BootstrapGameStateResult> _replayEventsSinceSnapshot({
-    required String saveId,
-    required GameState state,
-    required int offset,
-  }) async {
-    final log = eventLog;
-    final reducer = replayReducer;
-    if (log == null || reducer == null) {
-      return BootstrapGameStateResult(state: state, offset: offset);
-    }
-
-    var currentState = state;
-    var currentOffset = offset;
-    await for (final logged in log.readSince(saveId, offset: offset + 1)) {
-      if (logged.offset <= currentOffset) continue;
-      if (logged.offset != currentOffset + 1) {
-        throw StateError(
-          'Missing multiplayer event between offsets $currentOffset and '
-          '${logged.offset}.',
-        );
-      }
-      final transition = reducer.reduce(
-        currentState,
-        logged.command,
-        context: GameCommandContext(actorPlayerId: logged.actorPlayerId),
-      );
-      currentState = transition.state;
-      currentOffset = logged.offset;
-    }
-    return BootstrapGameStateResult(state: currentState, offset: currentOffset);
   }
 
   int _maxOffset(int first, int second) => first > second ? first : second;

@@ -4,11 +4,12 @@ import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
@@ -233,16 +234,18 @@ void main() {
         },
       ),
       dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
-      eventLog: _FakeEventLog([
-        LoggedCommand(
-          offset: 2,
-          timestamp: DateTime.utc(2026, 4, 16, 12),
-          turn: 1,
-          actorPlayerId: 'player_1',
-          command: MoveUnitCommand(commander.id, 1, 0),
-        ),
-      ]),
-      replayReducer: GameStateReducer(mapData: _map()),
+      eventReplay: EventLogReplayService(
+        eventLog: _FakeEventLog([
+          LoggedCommand(
+            offset: 2,
+            timestamp: DateTime.utc(2026, 4, 16, 12),
+            turn: 1,
+            actorPlayerId: 'player_1',
+            command: MoveUnitCommand(commander.id, 1, 0),
+          ),
+        ]),
+        reducer: GameStateReducer(mapData: _map()),
+      ),
     );
 
     final result = await useCase.executeWithResult(saveId: save.id);
