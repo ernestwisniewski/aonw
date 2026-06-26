@@ -3,7 +3,7 @@ import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';

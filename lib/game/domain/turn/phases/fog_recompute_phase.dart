@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/reducer_player_ids.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/game/domain/turn/turn_phase.dart';
 import 'package:aonw_core/game/domain/fog.dart';

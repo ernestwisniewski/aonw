@@ -5,7 +5,7 @@ import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/confirm_handoff_use_case.dart';
 import 'package:aonw/game/application/use_cases/end_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';

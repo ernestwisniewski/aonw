@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
 import 'package:aonw/game/presentation/services/turn_start_focus_coordinator.dart';
 import 'package:aonw_core/game/domain/command.dart';

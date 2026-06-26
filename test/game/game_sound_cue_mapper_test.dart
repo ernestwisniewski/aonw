@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
 import 'package:aonw_core/game/domain/city.dart';

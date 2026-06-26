@@ -4,7 +4,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/artifact_marker_tap_cycle.dart';
 import 'package:aonw/game/presentation/engine/city_description_tap_tracker.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';

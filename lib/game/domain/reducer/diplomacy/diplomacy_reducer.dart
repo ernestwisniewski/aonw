@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/reducer_player_ids.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';

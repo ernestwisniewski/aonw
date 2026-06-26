@@ -1,6 +1,6 @@
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
-import 'package:aonw/game/domain/reducer/game_state_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';

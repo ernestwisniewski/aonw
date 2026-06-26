@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/ports/game_logger.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/ai_turn_follow_up_runner.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/ai.dart';

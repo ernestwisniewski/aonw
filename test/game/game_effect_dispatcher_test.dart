@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';

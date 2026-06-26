@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:flutter_test/flutter_test.dart';

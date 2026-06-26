@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';

@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 

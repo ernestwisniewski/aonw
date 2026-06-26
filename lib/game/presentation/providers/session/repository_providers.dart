@@ -15,7 +15,7 @@ import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/domain/reducer/game_state_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/logging/developer_game_logger.dart';
 import 'package:aonw/game/infrastructure/persistence/platform_persistence_adapters_io.dart'
     if (dart.library.js_interop) 'package:aonw/game/infrastructure/persistence/web/platform_persistence_adapters_web.dart';

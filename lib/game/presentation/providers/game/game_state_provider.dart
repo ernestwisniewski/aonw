@@ -11,9 +11,9 @@ import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.da
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart' show GameMode;
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';

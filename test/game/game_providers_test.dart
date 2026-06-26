@@ -18,7 +18,7 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/json_game_repository.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';

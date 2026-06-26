@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final hudFeedbackProvider =

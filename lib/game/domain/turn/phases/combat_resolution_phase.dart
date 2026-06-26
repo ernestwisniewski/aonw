@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/reducer/combat_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/reducer_environment.dart';
+import 'package:aonw/game/domain/reducer/combat/combat_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/game/domain/turn/turn_phase.dart';
 import 'package:aonw_core/game/domain/combat.dart';

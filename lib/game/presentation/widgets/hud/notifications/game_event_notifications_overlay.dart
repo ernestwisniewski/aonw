@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_focus_target.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
 import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';

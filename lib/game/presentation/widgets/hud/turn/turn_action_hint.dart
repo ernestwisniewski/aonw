@@ -1,5 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/turn_reducer.dart';
+import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_objective_labels.dart';

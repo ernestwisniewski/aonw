@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
 import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
