@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: root
+            working-directory: .
+            get: flutter pub get
+            analyze: flutter analyze --no-pub
+            test: flutter test --no-pub
+            format: dart format --set-exit-if-changed .
+          - package: core
+            working-directory: packages/aonw_core
+            get: dart pub get
+            analyze: dart analyze --fatal-infos
+            test: dart test
+            format: ""
+          - package: server_client
+            working-directory: packages/aonw_server_client
+            get: dart pub get
+            analyze: dart analyze --fatal-infos
+            test: dart test
+            format: ""
+          - package: server
+            working-directory: server
+            get: dart pub get
+            analyze: dart analyze --fatal-infos
+            test: dart test
+            format: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ matrix.package }}-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-${{ matrix.package }}-
+            ${{ runner.os }}-pub-
+
+      - name: Get dependencies
+        working-directory: ${{ matrix.working-directory }}
+        run: ${{ matrix.get }}
+
+      - name: Check formatting
+        if: matrix.format != ''
+        working-directory: ${{ matrix.working-directory }}
+        run: ${{ matrix.format }}
+
+      - name: Analyze
+        working-directory: ${{ matrix.working-directory }}
+        run: ${{ matrix.analyze }}
+
+      - name: Test
+        working-directory: ${{ matrix.working-directory }}
+        run: ${{ matrix.test }}

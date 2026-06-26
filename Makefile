@@ -266,6 +266,7 @@ core-test:
 
 client-test:
 	@cd packages/aonw_server_client && dart analyze --fatal-infos
+	@cd packages/aonw_server_client && dart test
 
 server-test:
 	@cd server && dart analyze --fatal-infos

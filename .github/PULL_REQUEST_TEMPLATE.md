@@ -8,8 +8,7 @@
 
 ## Checklist
 
-- [ ] `dart format --set-exit-if-changed .` passes.
-- [ ] `make check` passes (Flutter app, `aonw_core`, generated client, server unit tests).
+- [ ] `make ci` passes (format, Flutter app, `aonw_core`, generated client, server unit tests).
 - [ ] Generated files (`*.g.dart`, `*.freezed.dart`, localization, Serverpod protocol) are in sync with their sources.
 - [ ] Docs updated when behavior, persistence, APIs, game rules, or build/deploy flows changed.
 - [ ] Architecture boundaries respected (see `test/architecture/layer_boundaries_test.dart`).
