@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_objective_button_signal.dart';
+import 'package:aonw/game/presentation/widgets/hud/objective/hud_objective_button_signal.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
 import 'package:aonw_core/game/domain/objective.dart';

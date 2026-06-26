@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_resource_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';

@@ -46,11 +46,12 @@ const _legacyRawBoxDecorationBaseline = <String, int>{
   'lib/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart':
       1,
   'lib/game/presentation/widgets/empire/empire_overview_statistics.dart': 2,
-  'lib/game/presentation/widgets/hud/game_objectives_overlay.dart': 2,
-  'lib/game/presentation/widgets/hud/hud_action_deck_combat_modal.dart': 1,
-  'lib/game/presentation/widgets/hud/hud_game_outcome_overlay.dart': 4,
-  'lib/game/presentation/widgets/hud/hud_map_inspection_menu.dart': 8,
-  'lib/game/presentation/widgets/hud/turn_start_banner_overlay.dart': 2,
+  'lib/game/presentation/widgets/hud/objective/game_objectives_overlay.dart': 2,
+  'lib/game/presentation/widgets/hud/action_deck/hud_action_deck_combat_modal.dart':
+      1,
+  'lib/game/presentation/widgets/hud/outcome/hud_game_outcome_overlay.dart': 4,
+  'lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart': 8,
+  'lib/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart': 2,
   'lib/game/presentation/widgets/multiplayer/multiplayer_avatar_tile.dart': 1,
   'lib/game/presentation/widgets/multiplayer/multiplayer_status_sheet.dart': 3,
   'lib/game/presentation/widgets/resources/resource_breakdown_popup_widgets.dart':

@@ -96,16 +96,19 @@ const _legacyWidgetLineCountBaseline = <String, int>{
       444,
   'lib/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart':
       376,
-  'lib/game/presentation/widgets/hud/hud_map_inspection_menu.dart': 870,
-  'lib/game/presentation/widgets/hud/hud_combat_preview.dart': 486,
-  'lib/game/presentation/widgets/hud/game_objectives_overlay.dart': 586,
-  'lib/game/presentation/widgets/hud/hud_overlay_frame.dart': 644,
+  'lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart': 870,
+  'lib/game/presentation/widgets/hud/combat/hud_combat_preview.dart': 486,
+  'lib/game/presentation/widgets/hud/objective/game_objectives_overlay.dart':
+      586,
+  'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': 644,
   'lib/game/presentation/widgets/hud/game_hud.dart': 416,
-  'lib/game/presentation/widgets/hud/game_hud_overlay_host.dart': 370,
-  'lib/game/presentation/widgets/hud/turn_action_hint.dart': 370,
-  'lib/game/presentation/widgets/hud/hud_victory_status_summary.dart': 617,
-  'lib/game/presentation/widgets/hud/hud_mode_banner.dart': 711,
-  'lib/game/presentation/widgets/hud/hud_game_outcome_summary.dart': 355,
+  'lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart': 370,
+  'lib/game/presentation/widgets/hud/turn/turn_action_hint.dart': 370,
+  'lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart':
+      617,
+  'lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart': 711,
+  'lib/game/presentation/widgets/hud/outcome/hud_game_outcome_summary.dart':
+      355,
 };
 
 const _legacyScreenLineCountBaseline = <String, int>{

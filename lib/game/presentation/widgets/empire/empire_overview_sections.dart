@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_entity_groups.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_empty_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_empty_state.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';

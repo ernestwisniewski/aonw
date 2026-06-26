@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_objective_summary.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_modes.dart';
+import 'package:aonw/game/presentation/widgets/hud/objective/hud_objective_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';

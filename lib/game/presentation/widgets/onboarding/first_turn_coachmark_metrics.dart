@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_action_deck.dart';
+import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_step.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';

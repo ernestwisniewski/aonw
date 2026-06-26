@@ -11,7 +11,7 @@ import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/map_inspection_binder.dart';
 import 'package:aonw/game/presentation/widgets.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_action_hint.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';

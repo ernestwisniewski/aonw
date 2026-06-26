@@ -3,7 +3,7 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
 import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/widgets/hud/game_event_notification_card.dart';
+import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notification_card.dart';
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';

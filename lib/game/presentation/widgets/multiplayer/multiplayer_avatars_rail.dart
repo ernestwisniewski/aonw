@@ -6,7 +6,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_side_menu_metrics.dart';
+import 'package:aonw/game/presentation/widgets/hud/layout/hud_side_menu_metrics.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatar_models.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail_layouts.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail_metrics.dart';

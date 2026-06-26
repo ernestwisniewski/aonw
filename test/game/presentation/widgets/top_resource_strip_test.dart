@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';

@@ -1,5 +1,5 @@
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_action_hint.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/theme/city_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';

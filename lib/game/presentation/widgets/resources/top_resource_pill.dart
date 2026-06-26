@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/widgets/hud/hud_long_press_info_sheet.dart';
+import 'package:aonw/game/presentation/widgets/hud/selection/hud_long_press_info_sheet.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_delta_badge.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';

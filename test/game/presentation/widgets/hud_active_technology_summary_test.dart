@@ -1,5 +1,5 @@
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_active_technology_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_active_technology_summary.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter_test/flutter_test.dart';

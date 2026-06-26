@@ -42,10 +42,11 @@ const _legacyRawAlphaBaseline = <String, int>{
   'lib/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart':
       1,
   'lib/game/presentation/widgets/empire/empire_overview_statistics.dart': 4,
-  'lib/game/presentation/widgets/hud/hud_action_deck_combat_modal.dart': 10,
-  'lib/game/presentation/widgets/hud/hud_game_outcome_overlay.dart': 8,
-  'lib/game/presentation/widgets/hud/hud_map_inspection_menu.dart': 21,
-  'lib/game/presentation/widgets/hud/turn_start_banner_overlay.dart': 9,
+  'lib/game/presentation/widgets/hud/action_deck/hud_action_deck_combat_modal.dart':
+      10,
+  'lib/game/presentation/widgets/hud/outcome/hud_game_outcome_overlay.dart': 8,
+  'lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart': 21,
+  'lib/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart': 9,
   'lib/game/presentation/widgets/multiplayer/multiplayer_avatar_tile.dart': 2,
   'lib/game/presentation/widgets/multiplayer/multiplayer_status_sheet.dart': 6,
   'lib/game/presentation/widgets/options/game_options_overlay.dart': 1,

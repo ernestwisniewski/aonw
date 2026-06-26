@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/widgets/hud/hud_side_menu_metrics.dart';
+import 'package:aonw/game/presentation/widgets/hud/layout/hud_side_menu_metrics.dart';
 import 'package:flutter/material.dart';
 
 class GameOptionsOverlayLayout {

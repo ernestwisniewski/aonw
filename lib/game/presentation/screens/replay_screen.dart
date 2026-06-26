@@ -12,7 +12,7 @@ import 'package:aonw/game/presentation/replay/replay_playback_policy.dart';
 import 'package:aonw/game/presentation/replay/replay_renderer_effect_planner.dart';
 import 'package:aonw/game/presentation/replay/replay_turn_banner_policy.dart';
 import 'package:aonw/game/presentation/widgets.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_start_banner_overlay.dart';
+import 'package:aonw/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_selection.dart';

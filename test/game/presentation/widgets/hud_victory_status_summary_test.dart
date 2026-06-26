@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';

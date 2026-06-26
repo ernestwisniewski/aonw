@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_overlay_panel_slot.dart';
+import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

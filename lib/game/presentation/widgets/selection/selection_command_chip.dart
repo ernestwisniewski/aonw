@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/widgets/hud/hud_long_press_info_sheet.dart';
+import 'package:aonw/game/presentation/widgets/hud/selection/hud_long_press_info_sheet.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';

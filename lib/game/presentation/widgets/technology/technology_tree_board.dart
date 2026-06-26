@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_empty_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_empty_state.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_horizontal_scrollbar.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_node.dart';

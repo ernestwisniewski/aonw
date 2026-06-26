@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_action_hint.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';

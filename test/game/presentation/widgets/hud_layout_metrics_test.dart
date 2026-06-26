@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_layout_metrics.dart';
+import 'package:aonw/game/presentation/widgets/hud/layout/hud_layout_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

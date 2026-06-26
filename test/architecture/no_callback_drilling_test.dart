@@ -7,9 +7,9 @@ void main() {
     expect(
       _domainCallbackViolations(const {
         'lib/game/presentation/widgets/hud/game_hud.dart',
-        'lib/game/presentation/widgets/hud/game_hud_overlay_host.dart',
-        'lib/game/presentation/widgets/hud/hud_action_deck.dart',
-        'lib/game/presentation/widgets/hud/hud_overlay_panels.dart',
+        'lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart',
+        'lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart',
+        'lib/game/presentation/widgets/hud/overlay/hud_overlay_panels.dart',
       }),
       isEmpty,
     );
