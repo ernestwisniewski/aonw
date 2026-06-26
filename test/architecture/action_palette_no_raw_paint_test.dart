@@ -31,9 +31,9 @@ const _migratedHudCanvasFiles = [
   'lib/game/presentation/engine/rendering_layers/units/unit_move_preview.dart',
   'lib/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart',
   'lib/game/presentation/engine/rendering_layers/city/city_management_overlay.dart',
-  'lib/game/presentation/engine/rendering_layers/'
+  'lib/game/presentation/engine/rendering_layers/city/'
       'city_territory_overlay_layer.dart',
-  'lib/game/presentation/engine/rendering_layers/'
+  'lib/game/presentation/engine/rendering_layers/units/'
       'unit_marker_fallback_painter.dart',
   'lib/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart',
   'lib/game/presentation/engine/rendering_layers/units/unit_marker_renderer.dart',
