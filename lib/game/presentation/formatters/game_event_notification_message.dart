@@ -32,10 +32,72 @@ class GameEventNotificationMessage {
     GameEventNotification notification,
     GameSave? save,
   ) {
-    final state = notification.state;
-    final previousState = notification.previousState;
-    final activityContext = notification.context;
-    return switch (notification.event) {
+    return _GameEventNotificationMessageFormatter(
+      l10n: l10n,
+      notification: notification,
+      save: save,
+    ).message();
+  }
+}
+
+class _GameEventNotificationMessageFormatter {
+  final AppLocalizations l10n;
+  final GameEventNotification notification;
+  final GameSave? save;
+
+  const _GameEventNotificationMessageFormatter({
+    required this.l10n,
+    required this.notification,
+    required this.save,
+  });
+
+  GameState get state => notification.state;
+
+  GameState? get previousState => notification.previousState;
+
+  GameActivityContext get activityContext => notification.context;
+
+  GameEventNotificationMessage message() {
+    final event = notification.event;
+    return switch (event) {
+      CityFoundedEvent() ||
+      CityBuiltBuildingEvent() ||
+      CityProducedUnitEvent() ||
+      CityClaimedHexEvent() => _cityEventMessage(event),
+      UnitMovedEvent() ||
+      UnitGainedExperienceEvent() ||
+      WorkerCompletedJobEvent() => _unitEventMessage(event),
+      UnitAttackedEvent() ||
+      CombatResolvedEvent() ||
+      UnitKilledEvent() ||
+      UnitRetreatedEvent() ||
+      CityCapturedEvent() ||
+      CityDestroyedEvent() => _combatEventMessage(event),
+      TurnEndedEvent() ||
+      DominationThresholdReachedEvent() => _turnEventMessage(event),
+      ResearchPointsGainedEvent() ||
+      TechnologyResearchedEvent() ||
+      StrategicResourceDiscoveredEvent() => _researchEventMessage(event),
+      MapObjectiveSecuredEvent() => _objectiveEventMessage(event),
+      CivilizationMetEvent() ||
+      DiplomaticProposalSentEvent() ||
+      DiplomaticProposalRespondedEvent() ||
+      DiplomaticProposalExpiredEvent() ||
+      DiplomaticRelationChangedEvent() ||
+      DiplomaticMessageSentEvent() ||
+      DiplomaticMessageRespondedEvent() ||
+      DiplomaticScoreChangedEvent() ||
+      DiplomaticPromiseBrokenEvent() => _diplomacyEventMessage(event),
+      CommandRejectedEvent() ||
+      AllPlayersSubmittedEvent() ||
+      PlayerTimedOutEvent() ||
+      TurnAutoResolvedEvent() ||
+      PlayerKickedEvent() => _systemEventMessage(event),
+    };
+  }
+
+  GameEventNotificationMessage _cityEventMessage(GameEvent event) {
+    return switch (event) {
       CityFoundedEvent(:final cityId, :final ownerPlayerId) =>
         GameEventNotificationMessage(
           title: l10n.eventCityFoundedTitle,
@@ -64,6 +126,12 @@ class GameEventNotificationMessage {
         ),
         thumbnail: const CityEventNotificationThumbnail(),
       ),
+      _ => _unsupportedEvent('city', event),
+    };
+  }
+
+  GameEventNotificationMessage _unitEventMessage(GameEvent event) {
+    return switch (event) {
       UnitMovedEvent(:final unitId) => GameEventNotificationMessage(
         title: l10n.eventUnitMovedTitle,
         body: _unitName(l10n, state, unitId, previousState, activityContext),
@@ -96,6 +164,19 @@ class GameEventNotificationMessage {
             activityContext,
           ),
         ),
+      WorkerCompletedJobEvent(:final unitId) => GameEventNotificationMessage(
+        title: l10n.eventWorkerCompletedJobTitle,
+        body: _unitName(l10n, state, unitId, previousState, activityContext),
+        thumbnail:
+            _unitThumbnail(state, unitId, previousState, activityContext) ??
+            const UnitEventNotificationThumbnail(GameUnitType.worker),
+      ),
+      _ => _unsupportedEvent('unit', event),
+    };
+  }
+
+  GameEventNotificationMessage _combatEventMessage(GameEvent event) {
+    return switch (event) {
       UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) =>
         GameEventNotificationMessage(
           title: l10n.eventUnitAttackedTitle,
@@ -160,19 +241,18 @@ class GameEventNotificationMessage {
               '${_cityName(l10n, previousState ?? state, cityId, activityContext)} (${_playerName(l10n, save, attackerOwnerPlayerId)})',
           thumbnail: const CityEventNotificationThumbnail(),
         ),
+      _ => _unsupportedEvent('combat', event),
+    };
+  }
+
+  GameEventNotificationMessage _turnEventMessage(GameEvent event) {
+    return switch (event) {
       TurnEndedEvent(:final playerId) => GameEventNotificationMessage(
         title: l10n.eventTurnEndedTitle,
         body: _playerName(l10n, save, playerId),
         thumbnail: const IconEventNotificationThumbnail(
           EventNotificationIconThumbnailKind.turn,
         ),
-      ),
-      WorkerCompletedJobEvent(:final unitId) => GameEventNotificationMessage(
-        title: l10n.eventWorkerCompletedJobTitle,
-        body: _unitName(l10n, state, unitId, previousState, activityContext),
-        thumbnail:
-            _unitThumbnail(state, unitId, previousState, activityContext) ??
-            const UnitEventNotificationThumbnail(GameUnitType.worker),
       ),
       DominationThresholdReachedEvent(
         :final playerId,
@@ -191,6 +271,12 @@ class GameEventNotificationMessage {
           holdTurns: holdTurns,
           requiredHoldTurns: requiredHoldTurns,
         ),
+      _ => _unsupportedEvent('turn', event),
+    };
+  }
+
+  GameEventNotificationMessage _researchEventMessage(GameEvent event) {
+    return switch (event) {
       ResearchPointsGainedEvent(:final playerId, :final points) =>
         GameEventNotificationMessage(
           title: l10n.eventResearchPointsTitle,
@@ -240,6 +326,12 @@ class GameEventNotificationMessage {
             EventNotificationIconThumbnailKind.science,
           ),
         ),
+      _ => _unsupportedEvent('research', event),
+    };
+  }
+
+  GameEventNotificationMessage _objectiveEventMessage(GameEvent event) {
+    return switch (event) {
       MapObjectiveSecuredEvent(
         :final playerId,
         :final objectiveType,
@@ -268,6 +360,12 @@ class GameEventNotificationMessage {
             EventNotificationIconThumbnailKind.success,
           ),
         ),
+      _ => _unsupportedEvent('objective', event),
+    };
+  }
+
+  GameEventNotificationMessage _diplomacyEventMessage(GameEvent event) {
+    return switch (event) {
       CivilizationMetEvent(:final metPlayerId) => _civilizationMetMessage(
         l10n: l10n,
         save: save,
@@ -286,6 +384,12 @@ class GameEventNotificationMessage {
         notification: notification,
         save: save,
       ),
+      _ => _unsupportedEvent('diplomacy', event),
+    };
+  }
+
+  GameEventNotificationMessage _systemEventMessage(GameEvent event) {
+    return switch (event) {
       CommandRejectedEvent(:final reason) => GameEventNotificationMessage(
         title: l10n.eventCommandRejectedTitle,
         body: reason,
@@ -334,8 +438,15 @@ class GameEventNotificationMessage {
             EventNotificationIconThumbnailKind.warning,
           ),
         ),
+      _ => _unsupportedEvent('system', event),
     };
   }
+}
+
+Never _unsupportedEvent(String group, GameEvent event) {
+  throw StateError(
+    'Unsupported $group notification event: ${event.runtimeType}',
+  );
 }
 
 String _strategicResourcePressureDetail(
