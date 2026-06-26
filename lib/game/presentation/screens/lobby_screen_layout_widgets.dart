@@ -22,7 +22,7 @@ class _LobbyStepRail extends StatelessWidget {
   });
 
   final NewGameFlow flow;
-  final _MultiplayerLobbyMode multiplayerMode;
+  final LobbyMultiplayerMode multiplayerMode;
   final WireMatch? activeMatch;
 
   @override
@@ -31,7 +31,7 @@ class _LobbyStepRail extends StatelessWidget {
     final network = flow == NewGameFlow.multiplayer;
     final onlineActive =
         network &&
-        (multiplayerMode != _MultiplayerLobbyMode.home || activeMatch != null);
+        (multiplayerMode != LobbyMultiplayerMode.home || activeMatch != null);
     final playersActive = !network || activeMatch != null;
     final steps = [
       (
