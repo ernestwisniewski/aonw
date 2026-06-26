@@ -177,10 +177,11 @@ class _SpyGameRenderer extends GameRenderer {
   @override
   Future<void> applyTransition(
     GameState state,
-    Iterable<RendererEffect> effects,
-  ) async {
+    Iterable<RendererEffect> effects, {
+    int? currentTurn,
+  }) async {
     appliedStates.add(state);
-    applyState(state);
+    applyState(state, currentTurn: currentTurn);
     handledEffects.addAll(effects);
   }
 

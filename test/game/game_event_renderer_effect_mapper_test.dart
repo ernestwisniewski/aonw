@@ -321,6 +321,7 @@ void main() {
         ],
         state: state,
         previousState: previousState,
+        turn: 31,
       );
 
       final shake = effects[0] as ShakeCameraEffect;
@@ -332,11 +333,13 @@ void main() {
       expect(alerts[0].id, 'attacker:attacker');
       expect(alerts[0].unitId, 'attacker');
       expect(alerts[0].kind, CombatHexAlertKind.attacker);
+      expect(alerts[0].turn, 31);
       expect(alerts[0].col, 2);
       expect(alerts[0].row, 3);
       expect(alerts[1].id, 'defender:defender');
       expect(alerts[1].unitId, 'defender');
       expect(alerts[1].kind, CombatHexAlertKind.attacked);
+      expect(alerts[1].turn, 31);
       expect(alerts[1].col, 6);
       expect(alerts[1].row, 7);
 

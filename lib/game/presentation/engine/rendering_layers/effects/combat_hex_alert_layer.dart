@@ -35,6 +35,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
           cityId: effect.cityId,
           hex: CityHex(col: effect.col, row: effect.row),
           kind: effect.kind,
+          turn: effect.turn,
           reduceMotion: reduceMotion,
           ownerSubmittedAtAttack: effect.ownerSubmittedAtAttack,
         )
@@ -49,6 +50,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
       ownerPlayerId: effect.ownerPlayerId,
       hex: CityHex(col: effect.col, row: effect.row),
       kind: effect.kind,
+      turn: effect.turn,
       reduceMotion: reduceMotion,
       ownerSubmittedAtAttack: effect.ownerSubmittedAtAttack,
     )..priority = _priorityFor(effect.col, effect.row, effect.kind);
@@ -59,6 +61,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
   void syncState({
     required Component parent,
     required GameState state,
+    int? currentTurn,
     bool reduceMotion = false,
   }) {
     ensureAttachedTo(parent);
@@ -88,7 +91,10 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
       final ownerSubmitted = state.submittedPlayerIds.contains(
         overlay.ownerPlayerId,
       );
-      if (overlay.shouldExpireForOwnerSubmission(ownerSubmitted)) {
+      if (overlay.shouldExpire(
+        ownerSubmitted: ownerSubmitted,
+        currentTurn: currentTurn,
+      )) {
         overlay.removeFromParent();
         _overlays.remove(entry.key);
         continue;
@@ -184,6 +190,7 @@ class CombatHexAlertOverlay extends Component {
   String ownerPlayerId;
   CityHex hex;
   CombatHexAlertKind kind;
+  int? turn;
   bool reduceMotion;
   bool _lastOwnerSubmitted;
   int _submissionsRemaining;
@@ -197,6 +204,7 @@ class CombatHexAlertOverlay extends Component {
     required this.ownerPlayerId,
     required this.hex,
     required this.kind,
+    this.turn,
     this.reduceMotion = false,
     bool ownerSubmittedAtAttack = false,
   }) : _lastOwnerSubmitted = ownerSubmittedAtAttack,
@@ -208,6 +216,7 @@ class CombatHexAlertOverlay extends Component {
     required String? cityId,
     required CityHex hex,
     required CombatHexAlertKind kind,
+    required int? turn,
     required bool reduceMotion,
     required bool ownerSubmittedAtAttack,
   }) {
@@ -216,13 +225,18 @@ class CombatHexAlertOverlay extends Component {
     this.cityId = cityId;
     this.hex = hex;
     this.kind = kind;
+    this.turn = turn;
     this.reduceMotion = reduceMotion;
     _lastOwnerSubmitted = ownerSubmittedAtAttack;
     _submissionsRemaining = ownerSubmittedAtAttack ? 1 : 2;
     restartPulse();
   }
 
-  bool shouldExpireForOwnerSubmission(bool ownerSubmitted) {
+  bool shouldExpire({required bool ownerSubmitted, required int? currentTurn}) {
+    final attackTurn = turn;
+    if (attackTurn != null && currentTurn != null) {
+      return currentTurn >= attackTurn + 2;
+    }
     if (!_lastOwnerSubmitted && ownerSubmitted) {
       _submissionsRemaining -= 1;
     }

@@ -41,6 +41,7 @@ final class HiddenAiRendererPlayback {
     required GameState commandState,
     required Iterable<UiEffect> uiEffects,
     required Iterable<GameEvent> events,
+    int? turn,
   }) async {
     final rendererState = withActionContext(
       commandState,
@@ -52,6 +53,7 @@ final class HiddenAiRendererPlayback {
       state: rendererState,
       previousState: previousRendererState,
       l10n: localizationReader(),
+      turn: turn,
     );
 
     if (rendererEffects.isNotEmpty) {

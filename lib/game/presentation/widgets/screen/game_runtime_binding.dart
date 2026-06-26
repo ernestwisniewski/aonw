@@ -73,7 +73,7 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
   void _applyCurrentStateIfReady() {
     final state = ref.read(gameStateProvider(widget.session.saveId)).value;
     if (state == null || !_canApplyState(state)) return;
-    widget.renderer.applyState(state);
+    widget.renderer.applyState(state, currentTurn: _currentTurn());
     _appliedState = state;
   }
 
@@ -103,9 +103,15 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
         if (!identical(ref.read(activeGameSessionProvider), widget.session)) {
           return;
         }
-        widget.renderer.applyState(state);
+        widget.renderer.applyState(state, currentTurn: _currentTurn());
         _appliedState = state;
       },
     );
+  }
+
+  int? _currentTurn() {
+    final saveId = widget.session.saveId;
+    if (saveId.isEmpty) return null;
+    return ref.read(gameSaveProvider(saveId)).value?.turn;
   }
 }

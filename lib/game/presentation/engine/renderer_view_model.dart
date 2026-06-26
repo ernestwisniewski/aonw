@@ -11,9 +11,10 @@ abstract interface class RendererViewModel {
   Future<void> handleEffect(RendererEffect effect);
   Future<void> applyTransition(
     GameState state,
-    Iterable<RendererEffect> effects,
-  );
-  void applyStateWithoutCameraFocus(GameState state);
+    Iterable<RendererEffect> effects, {
+    int? currentTurn,
+  });
+  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn});
 }
 
 final class GameRendererViewModel implements RendererViewModel {
@@ -42,13 +43,14 @@ final class GameRendererViewModel implements RendererViewModel {
   @override
   Future<void> applyTransition(
     GameState state,
-    Iterable<RendererEffect> effects,
-  ) {
-    return _renderer.applyTransition(state, effects);
+    Iterable<RendererEffect> effects, {
+    int? currentTurn,
+  }) {
+    return _renderer.applyTransition(state, effects, currentTurn: currentTurn);
   }
 
   @override
-  void applyStateWithoutCameraFocus(GameState state) {
-    _renderer.applyStateWithoutCameraFocus(state);
+  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) {
+    _renderer.applyStateWithoutCameraFocus(state, currentTurn: currentTurn);
   }
 }

@@ -426,8 +426,13 @@ class GameStateNotifier extends _$GameStateNotifier {
         nextState: nextState,
         events: liveEvents,
         viewerPlayerId: viewerPlayerId,
+        turn: _eventTurnFor(liveEvents, fallbackTurn: snapshot.save.turn),
       );
-      await renderer.applyTransition(nextState, transitionEffects);
+      await renderer.applyTransition(
+        nextState,
+        transitionEffects,
+        currentTurn: snapshot.save.turn,
+      );
     }
     if (previousState != null && ref.mounted) {
       ref
@@ -478,6 +483,7 @@ class GameStateNotifier extends _$GameStateNotifier {
     required GameState nextState,
     required Iterable<GameEvent> events,
     String? viewerPlayerId,
+    int? turn,
   }) {
     final movementEffects = QueuedMovementEffectBuilder.fromUnitDelta(
       beforeUnits: previousState.units,
@@ -494,8 +500,16 @@ class GameStateNotifier extends _$GameStateNotifier {
         previousState: previousState,
         skipUnitMoveIds: animatedUnitIds,
         viewerPlayerId: viewerPlayerId,
+        turn: turn,
       ),
     ];
+  }
+
+  int? _eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
+    for (final event in events) {
+      if (event is AllPlayersSubmittedEvent) return event.turn;
+    }
+    return fallbackTurn;
   }
 
   Future<void> _closeLiveEvents() async {

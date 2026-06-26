@@ -11,6 +11,7 @@ abstract final class GameRendererEffectSequenceBuilder {
     required GameState state,
     GameState? previousState,
     AppLocalizations? l10n,
+    int? turn,
   }) {
     final visibleCommandEffects = commandEffects.toList(growable: false);
     return [
@@ -20,6 +21,7 @@ abstract final class GameRendererEffectSequenceBuilder {
         state: state,
         previousState: previousState,
         l10n: l10n,
+        turn: turn,
         skipUnitMoveIds: _animatedUnitIds(visibleCommandEffects),
       ),
     ];
