@@ -10,6 +10,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import 'initial_multiplayer_snapshot_factory.dart';
+import 'match_connection_registry.dart';
 import 'multiplayer_match_store.dart';
 import 'player_seat_allocator.dart';
 import 'quickplay_lobby_policy.dart';
@@ -208,19 +209,18 @@ class RealtimeMatchHub {
     PlayerSeatAllocator seatAllocator = const PlayerSeatAllocator(),
     QuickplayLobbyPolicy quickplayLobbyPolicy = const QuickplayLobbyPolicy(),
     DateTime Function()? nowUtc,
+    MatchConnectionRegistry? connectionRegistry,
   }) : _commandReducer = commandReducer,
        _seatAllocator = seatAllocator,
        _quickplayLobbyPolicy = quickplayLobbyPolicy,
-       _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
+       _nowUtc = nowUtc ?? (() => DateTime.now().toUtc()),
+       _connectionRegistry = connectionRegistry ?? MatchConnectionRegistry();
 
   final ServerCommandReducer _commandReducer;
   final PlayerSeatAllocator _seatAllocator;
   final QuickplayLobbyPolicy _quickplayLobbyPolicy;
   final DateTime Function() _nowUtc;
-  final Map<String, List<void Function(MultiplayerServerMessage)>>
-  _subscribers = {};
-  final Map<String, Future<void>> _matchQueues = {};
-  final Map<String, Map<String, int>> _connectionCounts = {};
+  final MatchConnectionRegistry _connectionRegistry;
 
   Future<List<WireMatch>> listMatches({
     required MultiplayerMatchStore store,
@@ -664,136 +664,17 @@ class RealtimeMatchHub {
     required int afterOffset,
     required Stream<MultiplayerClientMessage> input,
   }) {
-    StreamSubscription<MultiplayerClientMessage>? inputSubscription;
-    final controller = StreamController<MultiplayerServerMessage>();
-    var connectionRegistered = false;
-    var disconnected = false;
-
-    void emit(MultiplayerServerMessage message) {
-      if (!controller.isClosed) controller.add(message);
-    }
-
-    Future<void> disconnect({bool cancelInput = true}) async {
-      if (disconnected) return;
-      disconnected = true;
-      _subscribers[matchId]?.remove(emit);
-      if (cancelInput) await inputSubscription?.cancel();
-      if (!connectionRegistered) return;
-      final remaining = _releaseConnection(matchId, userIdentifier);
-      if (remaining > 0) return;
-      try {
-        await _setParticipantConnectionState(
-          store: store,
-          matchId: matchId,
-          userIdentifier: userIdentifier,
-          connectionState: WirePlayerConnectionState.offline,
-        );
-      } catch (_) {
-        // The match may already be gone or terminal; disconnect cleanup should
-        // not surface as a stream error after the client has left.
-      }
-    }
-
-    controller.onListen = () {
-      unawaited(
-        _connect(
-          store: store,
-          userIdentifier: userIdentifier,
-          matchId: matchId,
-          afterOffset: afterOffset,
-          input: input,
-          emit: emit,
-          controller: controller,
-          setInputSubscription: (subscription) {
-            inputSubscription = subscription;
-          },
-          registerConnection: () {
-            _retainConnection(matchId, userIdentifier);
-            connectionRegistered = true;
-          },
-          disconnect: disconnect,
-        ),
-      );
-    };
-
-    controller.onCancel = () => disconnect();
-
-    return controller.stream;
-  }
-
-  Future<void> _connect({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-    required int afterOffset,
-    required Stream<MultiplayerClientMessage> input,
-    required void Function(MultiplayerServerMessage message) emit,
-    required StreamController<MultiplayerServerMessage> controller,
-    required void Function(StreamSubscription<MultiplayerClientMessage>)
-    setInputSubscription,
-    required void Function() registerConnection,
-    required Future<void> Function({bool cancelInput}) disconnect,
-  }) async {
-    try {
-      var state = await _requireMatch(store, matchId);
-      final player = _requireParticipant(state, userIdentifier);
-      registerConnection();
-      if (player.connectionState != WirePlayerConnectionState.connected) {
-        state = await _setParticipantConnectionState(
-          store: store,
-          matchId: matchId,
-          userIdentifier: userIdentifier,
-          connectionState: WirePlayerConnectionState.connected,
-        );
-      }
-      final backlogAfterOffset = afterOffset > state.offset
-          ? afterOffset
-          : state.offset;
-      final backlog = await store.listEvents(matchId, backlogAfterOffset);
-      setInputSubscription(
-        input.listen(
-          (message) {
-            unawaited(
-              _enqueueMatch(
-                matchId,
-                () => _handleClientMessage(
-                  store: store,
-                  matchId: matchId,
-                  userIdentifier: userIdentifier,
-                  message: message,
-                  emitToCaller: emit,
-                ),
-              ).catchError((Object error, StackTrace stackTrace) {
-                if (!controller.isClosed) {
-                  controller.addError(error, stackTrace);
-                }
-              }),
-            );
-          },
-          onError: controller.addError,
-          onDone: () async {
-            await disconnect(cancelInput: false);
-            await controller.close();
-          },
-        ),
-      );
-      _subscribers.putIfAbsent(matchId, () => []).add(emit);
-      emit(
-        _message(
-          matchId: matchId,
-          offset: state.offset,
-          match: state.match,
-          snapshot: state.snapshot,
-        ),
-      );
-      for (final event in backlog) {
-        emit(_message(matchId: matchId, offset: event.offset, event: event));
-      }
-    } catch (error, stackTrace) {
-      await disconnect();
-      controller.addError(error, stackTrace);
-      await controller.close();
-    }
+    return _connectionRegistry.connect(
+      store: store,
+      userIdentifier: userIdentifier,
+      matchId: matchId,
+      afterOffset: afterOffset,
+      input: input,
+      authorize: _authorizeConnection,
+      updateConnectionState: _setParticipantConnectionState,
+      handleClientMessage: _handleClientMessage,
+      createMessage: _message,
+    );
   }
 
   Future<void> _handleClientMessage({
@@ -908,7 +789,7 @@ class RealtimeMatchHub {
         snapshot: updated.snapshot,
         event: event,
       );
-      _broadcast(update, except: emitToCaller);
+      _connectionRegistry.broadcast(update, except: emitToCaller);
 
       emitToCaller(
         _message(
@@ -926,21 +807,6 @@ class RealtimeMatchHub {
     });
   }
 
-  Future<void> _enqueueMatch(
-    String matchId,
-    Future<void> Function() action,
-  ) async {
-    final previous = _matchQueues[matchId] ?? Future<void>.value();
-    final barrier = previous.then<void>((_) {}, onError: (_, _) {});
-    final next = barrier.then((_) => action());
-    _matchQueues[matchId] = next.whenComplete(() {
-      if (identical(_matchQueues[matchId], next)) {
-        _matchQueues.remove(matchId);
-      }
-    });
-    await next;
-  }
-
   Future<StoredMatchState> _requireMatch(
     MultiplayerMatchStore store,
     String matchId, {
@@ -951,6 +817,16 @@ class RealtimeMatchHub {
       throw _multiplayerException('match_not_found', 'Match not found.');
     }
     return state;
+  }
+
+  Future<MatchConnectionAuthorization> _authorizeConnection({
+    required MultiplayerMatchStore store,
+    required String matchId,
+    required String userIdentifier,
+  }) async {
+    final state = await _requireMatch(store, matchId);
+    final player = _requireParticipant(state, userIdentifier);
+    return MatchConnectionAuthorization(state: state, participant: player);
   }
 
   Future<StoredMatchState> _setParticipantConnectionState({
@@ -1145,30 +1021,6 @@ class RealtimeMatchHub {
         .length;
   }
 
-  void _retainConnection(String matchId, String userIdentifier) {
-    final matchConnections = _connectionCounts.putIfAbsent(
-      matchId,
-      () => <String, int>{},
-    );
-    matchConnections[userIdentifier] =
-        (matchConnections[userIdentifier] ?? 0) + 1;
-  }
-
-  int _releaseConnection(String matchId, String userIdentifier) {
-    final matchConnections = _connectionCounts[matchId];
-    if (matchConnections == null) return 0;
-    final current = matchConnections[userIdentifier] ?? 0;
-    if (current <= 1) {
-      matchConnections.remove(userIdentifier);
-    } else {
-      matchConnections[userIdentifier] = current - 1;
-    }
-    if (matchConnections.isEmpty) {
-      _connectionCounts.remove(matchId);
-    }
-    return matchConnections[userIdentifier] ?? 0;
-  }
-
   bool _sameInstant(DateTime? a, DateTime b) {
     return a != null && a.toUtc().isAtSameMomentAs(b.toUtc());
   }
@@ -1213,7 +1065,7 @@ class RealtimeMatchHub {
   }
 
   void _broadcastState(StoredMatchState state) {
-    _broadcast(
+    _connectionRegistry.broadcast(
       _message(
         matchId: state.match.id,
         offset: state.offset,
@@ -1221,18 +1073,6 @@ class RealtimeMatchHub {
         snapshot: state.snapshot,
       ),
     );
-  }
-
-  void _broadcast(
-    MultiplayerServerMessage update, {
-    void Function(MultiplayerServerMessage)? except,
-  }) {
-    for (final subscriber in List.of(
-      _subscribers[update.matchId] ?? const [],
-    )) {
-      if (identical(subscriber, except)) continue;
-      subscriber(update);
-    }
   }
 }
 
