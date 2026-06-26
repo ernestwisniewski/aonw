@@ -23,6 +23,7 @@ import 'package:aonw/game/presentation/services/turn_start_focus_coordinator.dar
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/providers/language_settings_provider.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -236,6 +237,13 @@ class GameCommandController extends _$GameCommandController {
   int? _turnFor(DispatchCommandResult result) =>
       result.snapshot?.save.turn ?? _currentSaveTurn();
 
+  int? _eventTurnFor(DispatchCommandResult result) {
+    for (final event in result.events) {
+      if (event is AllPlayersSubmittedEvent) return event.turn;
+    }
+    return _turnFor(result);
+  }
+
   Future<DispatchCommandResult> _dispatchAndHandle(
     GameCommand command, {
     GameCommandContext context = const GameCommandContext(),
@@ -306,6 +314,8 @@ class GameCommandController extends _$GameCommandController {
     final result = record.result;
     final session = ref.read(activeGameSessionProvider);
     if (session == null || session.saveId.isEmpty) return;
+    final eventTurn = _eventTurnFor(result);
+    final currentTurn = _turnFor(result);
     final renderer = ref.read(activeRendererViewModelProvider);
     if (renderer != null) {
       final commandRendererEffects = GameCameraEffectNormalizer.forCommand(
@@ -324,6 +334,7 @@ class GameCommandController extends _$GameCommandController {
         state: result.state,
         previousState: previousState,
         l10n: renderer.l10n,
+        turn: eventTurn,
       );
       _playCommandAndTransitionSounds(
         command: command,
@@ -331,7 +342,11 @@ class GameCommandController extends _$GameCommandController {
         result: result,
         rendererEffects: rendererEffects,
       );
-      await renderer.applyTransition(result.state, rendererEffects);
+      await renderer.applyTransition(
+        result.state,
+        rendererEffects,
+        currentTurn: currentTurn,
+      );
     } else {
       _playCommandAndTransitionSounds(
         command: command,

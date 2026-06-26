@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CombatHexAlertLayer', () {
-    test('shows attacked city hex through the owners next submitted turn', () {
+    test('shows attacked city hex through the following turn only', () {
       final layer = CombatHexAlertLayer();
       final parent = Component();
       const city = GameCity(
@@ -27,6 +27,7 @@ void main() {
           col: 2,
           row: 3,
           kind: CombatHexAlertKind.attacked,
+          turn: 31,
         ),
       );
 
@@ -36,6 +37,7 @@ void main() {
       layer.syncState(
         parent: parent,
         state: const GameState(cities: [city]),
+        currentTurn: 31,
       );
 
       expect(layer.hasAlertForTesting('city_1'), isTrue);
@@ -46,6 +48,7 @@ void main() {
           cities: [city],
           submittedPlayerIds: {'player_1'},
         ),
+        currentTurn: 32,
       );
 
       expect(layer.hasAlertForTesting('city_1'), isTrue);
@@ -53,19 +56,63 @@ void main() {
       layer.syncState(
         parent: parent,
         state: const GameState(cities: [city]),
-      );
-
-      expect(layer.hasAlertForTesting('city_1'), isTrue);
-
-      layer.syncState(
-        parent: parent,
-        state: const GameState(
-          cities: [city],
-          submittedPlayerIds: {'player_1'},
-        ),
+        currentTurn: 33,
       );
 
       expect(layer.hasAlertForTesting('city_1'), isFalse);
+    });
+
+    test('shows attacker unit alert through the following turn only', () {
+      final layer = CombatHexAlertLayer();
+      final parent = Component();
+
+      layer
+        ..show(
+          parent: parent,
+          effect: const ShowCombatHexAlertEffect(
+            id: 'attacker:unit_1',
+            unitId: 'unit_1',
+            ownerPlayerId: 'player_1',
+            col: 4,
+            row: 5,
+            kind: CombatHexAlertKind.attacker,
+            turn: 31,
+          ),
+        )
+        ..syncState(
+          parent: parent,
+          state: GameState(units: [_unitAt(col: 4, row: 5)]),
+          currentTurn: 31,
+        );
+
+      expect(layer.hasAlertForTesting('attacker:unit_1'), isTrue);
+      expect(
+        layer.alertHexForTesting('attacker:unit_1'),
+        const CityHex(col: 4, row: 5),
+      );
+
+      layer.syncState(
+        parent: parent,
+        state: GameState(
+          units: [_movedUnit],
+          submittedPlayerIds: const {'player_1'},
+        ),
+        currentTurn: 32,
+      );
+
+      expect(layer.hasAlertForTesting('attacker:unit_1'), isTrue);
+      expect(
+        layer.alertHexForTesting('attacker:unit_1'),
+        const CityHex(col: 6, row: 7),
+      );
+
+      layer.syncState(
+        parent: parent,
+        state: GameState(units: [_movedUnit]),
+        currentTurn: 33,
+      );
+
+      expect(layer.hasAlertForTesting('attacker:unit_1'), isFalse);
     });
 
     test('keeps alert if the attack arrived after owner already submitted', () {
@@ -277,3 +324,14 @@ final _movedUnit = GameUnit(
   col: 6,
   row: 7,
 );
+
+GameUnit _unitAt({required int col, required int row}) {
+  return GameUnit(
+    id: 'unit_1',
+    ownerPlayerId: 'player_1',
+    type: GameUnitType.warrior,
+    name: 'Warrior',
+    col: col,
+    row: row,
+  );
+}

@@ -1,8 +1,13 @@
 part of 'game_renderer.dart';
 
 extension GameRendererStateSync on GameRenderer {
-  void _applyState(GameState state, {required bool suppressCameraFocus}) {
+  void _applyState(
+    GameState state, {
+    required bool suppressCameraFocus,
+    int? currentTurn,
+  }) {
     if (_isDisposed) return;
+    if (currentTurn != null) _currentTurn = currentTurn;
     _renderState = state;
     if (_isReady) {
       _syncAfterAction(suppressCameraFocus: suppressCameraFocus);
@@ -13,8 +18,9 @@ extension GameRendererStateSync on GameRenderer {
 
   Future<void> _applyTransitionNow(
     GameState state,
-    Iterable<RendererEffect> effects,
-  ) async {
+    Iterable<RendererEffect> effects, {
+    int? currentTurn,
+  }) async {
     if (_isDisposed) return;
     final pending = effects.toList(growable: false);
     final transitionControlsCamera = _transitionControlsCamera(pending);
@@ -32,7 +38,11 @@ extension GameRendererStateSync on GameRenderer {
     _unitMarkerLayer
       ..pinPendingMovePositions(animatedIds)
       ..retainPendingAnimationMarkers(combatAnimatedIds);
-    _applyState(state, suppressCameraFocus: transitionControlsCamera);
+    _applyState(
+      state,
+      suppressCameraFocus: transitionControlsCamera,
+      currentTurn: currentTurn,
+    );
     await _handleEffectsNow(pending);
   }
 
@@ -80,6 +90,7 @@ extension GameRendererStateSync on GameRenderer {
     _combatHexAlertLayer.syncState(
       parent: _sceneBuilder.grid,
       state: _renderState,
+      currentTurn: _currentTurn,
       reduceMotion: _reduceMotion,
     );
     _syncCityProductionParticles();

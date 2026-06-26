@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 
 typedef HiddenAiCommandDispatch =
     Future<DispatchCommandResult> Function(
@@ -46,6 +47,7 @@ final class HiddenAiCommandPresenter {
         commandState: result.state,
         uiEffects: result.uiEffects,
         events: result.events,
+        turn: _eventTurnFor(result),
       );
     }
 
@@ -66,4 +68,11 @@ final class HiddenAiCommandPresenter {
     EndTurnCommand() || SubmitTurnCommand() => true,
     _ => false,
   };
+
+  static int? _eventTurnFor(DispatchCommandResult result) {
+    for (final event in result.events) {
+      if (event is AllPlayersSubmittedEvent) return event.turn;
+    }
+    return result.snapshot?.save.turn;
+  }
 }

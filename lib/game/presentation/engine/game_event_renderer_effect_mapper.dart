@@ -23,6 +23,7 @@ abstract final class GameEventRendererEffectMapper {
     Set<String> skipUnitMoveIds = const {},
     AppLocalizations? l10n,
     String? viewerPlayerId,
+    int? turn,
   }) {
     final effects = <RendererEffect>[];
     for (final event in events) {
@@ -34,6 +35,7 @@ abstract final class GameEventRendererEffectMapper {
           skipUnitMoveIds: skipUnitMoveIds,
           l10n: l10n,
           viewerPlayerId: viewerPlayerId,
+          turn: turn,
         ),
       );
     }
@@ -47,6 +49,7 @@ abstract final class GameEventRendererEffectMapper {
     required Set<String> skipUnitMoveIds,
     AppLocalizations? l10n,
     String? viewerPlayerId,
+    int? turn,
   }) {
     final localizations = l10n;
     return switch (event) {
@@ -128,6 +131,7 @@ abstract final class GameEventRendererEffectMapper {
         previousState,
         event,
         viewerPlayerId: viewerPlayerId,
+        turn: turn,
       ),
       WorkerCompletedJobEvent(:final unitId) => _single(
         _workerCompletedJobEffect(
@@ -158,6 +162,7 @@ abstract final class GameEventRendererEffectMapper {
     GameState? previousState,
     CombatResolvedEvent event, {
     String? viewerPlayerId,
+    int? turn,
   }) {
     final effects = <RendererEffect>[const ShakeCameraEffect()];
     var defenderDamage = 0;
@@ -201,6 +206,7 @@ abstract final class GameEventRendererEffectMapper {
           row: attackerAlertUnit.row,
           kind: CombatHexAlertKind.attacker,
           state: state,
+          turn: turn,
         ),
       );
     }
@@ -221,6 +227,7 @@ abstract final class GameEventRendererEffectMapper {
           row: defenderAlertUnit.row,
           kind: CombatHexAlertKind.attacked,
           state: state,
+          turn: turn,
         ),
       );
     } else if (defenderCity != null &&
@@ -239,6 +246,7 @@ abstract final class GameEventRendererEffectMapper {
           row: defenderCity.center.row,
           kind: CombatHexAlertKind.attacked,
           state: state,
+          turn: turn,
         ),
       );
     }
@@ -322,6 +330,7 @@ abstract final class GameEventRendererEffectMapper {
     required int row,
     required CombatHexAlertKind kind,
     required GameState state,
+    required int? turn,
     String? unitId,
     String? cityId,
   }) {
@@ -333,6 +342,7 @@ abstract final class GameEventRendererEffectMapper {
       col: col,
       row: row,
       kind: kind,
+      turn: turn,
       ownerSubmittedAtAttack: state.submittedPlayerIds.contains(ownerPlayerId),
     );
   }

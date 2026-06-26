@@ -136,6 +136,7 @@ class ShowCombatHexAlertEffect extends RendererEffect {
   final int col;
   final int row;
   final CombatHexAlertKind kind;
+  final int? turn;
   final bool ownerSubmittedAtAttack;
   final String? unitId;
   final String? cityId;
@@ -146,6 +147,7 @@ class ShowCombatHexAlertEffect extends RendererEffect {
     required this.col,
     required this.row,
     required this.kind,
+    this.turn,
     this.ownerSubmittedAtAttack = false,
     this.unitId,
     this.cityId,
