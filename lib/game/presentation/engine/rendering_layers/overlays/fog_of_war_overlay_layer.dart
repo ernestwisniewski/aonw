@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/engine/rendering_layers/fog_of_war_overlay.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';

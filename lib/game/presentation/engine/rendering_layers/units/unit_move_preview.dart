@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_sprite_controller.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview_style.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_sprite_controller.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_style.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';

@@ -73,7 +73,7 @@ void main() {
     final roots = [
       Directory('lib/game/presentation/widgets'),
       File(
-        'lib/game/presentation/engine/rendering_layers/city_management_overlay.dart',
+        'lib/game/presentation/engine/rendering_layers/city/city_management_overlay.dart',
       ),
     ];
 

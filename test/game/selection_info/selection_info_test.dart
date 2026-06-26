@@ -1,5 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_yield_breakdown_view_model.dart';

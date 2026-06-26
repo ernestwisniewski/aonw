@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_definition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart';
 import 'package:flame/components.dart';
 
 class UnitSpriteFrameSequencer {

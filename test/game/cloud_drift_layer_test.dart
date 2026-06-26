@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/cloud_drift_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';

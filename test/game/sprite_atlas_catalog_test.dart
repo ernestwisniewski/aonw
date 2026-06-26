@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';

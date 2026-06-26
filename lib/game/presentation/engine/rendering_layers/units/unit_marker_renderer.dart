@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/marker_health_bar.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/sprite_shadow.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_badges.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_fallback_painter.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_type_icon_resolver.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/sprite_shadow.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_bar.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_fallback_painter.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_type_icon_resolver.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';

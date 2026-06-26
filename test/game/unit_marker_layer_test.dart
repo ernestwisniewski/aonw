@@ -2,11 +2,11 @@ import 'dart:ui';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';

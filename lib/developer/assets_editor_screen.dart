@@ -3,11 +3,11 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/developer/asset_adjustment_file_store.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';

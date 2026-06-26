@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/sprite_frame_stabilizer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_definition.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_frame_sequencer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/sprite_frame_stabilizer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_frame_sequencer.dart';
 import 'package:flame/components.dart';
 
-export 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_definition.dart';
+export 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart';
 
 class UnitSpriteComponent extends SpriteAnimationComponent {
   final UnitSpriteDefinition definition;

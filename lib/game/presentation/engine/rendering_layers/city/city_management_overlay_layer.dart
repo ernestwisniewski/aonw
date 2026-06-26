@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_management_overlay.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_management_overlay.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';

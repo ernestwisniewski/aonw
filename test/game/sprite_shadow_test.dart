@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/sprite_shadow.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/sprite_shadow.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

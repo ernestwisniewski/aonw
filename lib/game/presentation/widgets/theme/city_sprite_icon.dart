@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/city_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
 import 'package:flutter/material.dart';
 

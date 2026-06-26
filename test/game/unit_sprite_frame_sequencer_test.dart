@@ -1,6 +1,6 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_catalog.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_frame_sequencer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_frame_sequencer.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 

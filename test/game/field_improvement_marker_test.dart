@@ -1,10 +1,10 @@
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_marker.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_cache.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';

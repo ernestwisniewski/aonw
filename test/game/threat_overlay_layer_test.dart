@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/threat_overlay.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/threat_overlay_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';

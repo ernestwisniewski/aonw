@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_sprite_catalog.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/marker_health_bar.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_bar.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';

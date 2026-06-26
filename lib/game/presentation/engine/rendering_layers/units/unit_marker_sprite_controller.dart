@@ -1,5 +1,5 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';

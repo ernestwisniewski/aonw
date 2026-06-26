@@ -4,7 +4,7 @@ import 'dart:ui';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/reducer/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';

@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/engine/rendering_layers/marker_health_fraction.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_layer_animator.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_fraction.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer_animator.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';

@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/map_pill.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/map_pill.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_config.dart';

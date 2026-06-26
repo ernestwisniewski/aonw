@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_badges.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_input_handler.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_renderer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_sprite_controller.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_input_handler.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_renderer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_sprite_controller.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
@@ -15,7 +15,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
-export 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_badges.dart'
+export 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart'
     show UnitMarkerStateBadge;
 
 class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {

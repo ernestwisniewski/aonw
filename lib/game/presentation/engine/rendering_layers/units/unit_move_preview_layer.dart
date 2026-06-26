@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/map_pill.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/map_pill.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';

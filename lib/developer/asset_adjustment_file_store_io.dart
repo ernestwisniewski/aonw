@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustment_paths.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_paths.dart';
 import 'package:aonw/shared/persistence/app_data_directory.dart';
 
 class AssetAdjustmentSaveResult {

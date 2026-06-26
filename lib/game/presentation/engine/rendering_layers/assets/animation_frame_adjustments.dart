@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustment_external_loader.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustment_paths.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_paths.dart';
 import 'package:flutter/services.dart';
 
 class AnimationFrameAdjustment {
