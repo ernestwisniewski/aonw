@@ -1,10 +1,10 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_action_deck.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_combat_preview.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_selection_context_line.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_action_hint.dart';
+import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
+import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
+import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_context_line.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_info.dart';

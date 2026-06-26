@@ -1,5 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_city_production_commands.dart';
+import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_commands.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';

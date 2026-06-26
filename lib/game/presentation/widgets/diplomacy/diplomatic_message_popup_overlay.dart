@@ -5,12 +5,12 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
-import 'package:aonw/game/presentation/providers/game_actions_provider.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/providers/game_state_provider.dart';
-import 'package:aonw/game/presentation/providers/handoff_provider.dart';
-import 'package:aonw/game/presentation/providers/hud_minimized_popups_provider.dart';
-import 'package:aonw/game/presentation/providers/player_control_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
+import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
@@ -29,12 +29,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'diplomatic_dialog_results.dart';
 part 'diplomatic_event_dialog.dart';
-part 'diplomatic_proposal_dialog.dart';
 part 'diplomatic_message_dialog.dart';
 part 'diplomatic_popup_event_policy.dart';
 part 'diplomatic_popup_inbox.dart';
 part 'diplomatic_popup_notification_router.dart';
 part 'diplomatic_popup_payloads.dart';
+part 'diplomatic_proposal_dialog.dart';
 
 class DiplomaticMessagePopupOverlay extends ConsumerStatefulWidget {
   final GameSave? gameSave;

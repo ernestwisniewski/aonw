@@ -95,7 +95,7 @@ void main() {
             roots: const ['lib/game/presentation'],
             disallowed: const [_ImportRule.gameInfrastructure],
             allowedPaths: const {
-              'lib/game/presentation/providers/repository_providers.dart',
+              'lib/game/presentation/providers/session/repository_providers.dart',
             },
           ),
           isEmpty,

@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_controller.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_modes.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

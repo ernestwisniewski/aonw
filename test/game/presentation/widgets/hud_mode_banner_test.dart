@@ -1,5 +1,5 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_combat_preview.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_mode_banner.dart';
+import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
+import 'package:aonw/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';

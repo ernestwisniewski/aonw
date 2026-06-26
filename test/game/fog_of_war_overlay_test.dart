@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/fog_of_war_overlay.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/fog_of_war_overlay_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/fog.dart';

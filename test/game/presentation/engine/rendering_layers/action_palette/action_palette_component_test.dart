@@ -1,9 +1,9 @@
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_cache.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:flame/components.dart';

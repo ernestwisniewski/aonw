@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/providers/hud_feedback_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/combat_hex_alert_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/floating_text_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/particle_effects_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';

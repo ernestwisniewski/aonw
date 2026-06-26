@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_delta_badge.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_pill.dart';

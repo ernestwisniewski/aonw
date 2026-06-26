@@ -8,7 +8,7 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';

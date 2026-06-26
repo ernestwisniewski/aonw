@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';

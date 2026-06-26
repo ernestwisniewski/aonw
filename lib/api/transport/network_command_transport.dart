@@ -10,9 +10,9 @@ import 'package:aonw/game/application/services/authoritative_command_policy.dart
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';

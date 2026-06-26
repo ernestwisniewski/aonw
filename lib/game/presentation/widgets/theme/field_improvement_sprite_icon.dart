@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:flutter/material.dart';

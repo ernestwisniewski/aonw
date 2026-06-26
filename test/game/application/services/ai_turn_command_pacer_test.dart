@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/services/ai_turn_command_pacer.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

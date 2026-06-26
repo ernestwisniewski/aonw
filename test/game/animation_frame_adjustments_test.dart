@@ -3,9 +3,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:aonw/developer/asset_adjustment_file_store.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';

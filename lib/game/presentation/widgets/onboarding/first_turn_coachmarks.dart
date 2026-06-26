@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/providers/hud_minimized_popups_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_step.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_widgets.dart';
 import 'package:aonw/l10n/l10n.dart';

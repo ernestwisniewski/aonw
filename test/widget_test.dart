@@ -1,6 +1,6 @@
 import 'package:aonw/app/app.dart' show HexApp;
 import 'package:aonw/developer/assets_editor_screen.dart';
-import 'package:aonw/game/presentation/screens/new_game_screen.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_screen.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/menu/main_menu_screen.dart';

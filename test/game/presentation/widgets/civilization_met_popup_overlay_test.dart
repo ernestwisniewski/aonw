@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/providers/civilization_met_popup_settings_provider.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/providers/player_control_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/civilization_met_popup_settings_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_selection.dart';

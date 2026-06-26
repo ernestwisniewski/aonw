@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_map_focus_target.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_target.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';

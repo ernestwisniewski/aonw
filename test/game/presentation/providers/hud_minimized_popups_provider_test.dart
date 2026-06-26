@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:aonw/game/presentation/providers/hud_minimized_popups_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

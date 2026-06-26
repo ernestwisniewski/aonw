@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/providers/hud_minimized_popups_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';

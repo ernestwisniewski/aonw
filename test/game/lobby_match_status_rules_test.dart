@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/screens/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';

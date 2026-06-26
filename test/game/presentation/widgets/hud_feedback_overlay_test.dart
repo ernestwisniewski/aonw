@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
-import 'package:aonw/game/presentation/providers/hud_feedback_provider.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_feedback_overlay.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
+import 'package:aonw/game/presentation/widgets/hud/overlay/hud_feedback_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

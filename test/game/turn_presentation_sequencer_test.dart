@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/turn_presentation_sequencer.dart';
 import 'package:flutter_test/flutter_test.dart';
 

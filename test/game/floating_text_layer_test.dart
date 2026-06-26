@@ -1,5 +1,5 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/floating_text_layer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter_test/flutter_test.dart';

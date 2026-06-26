@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/hud_resource_breakdown_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/shared/assets/sprite_atlas_frame_bounds.dart';
 import 'package:aonw/shared/assets/sprite_atlas_geometry.dart';
 import 'package:aonw/shared/assets/ui_image_cache.dart';

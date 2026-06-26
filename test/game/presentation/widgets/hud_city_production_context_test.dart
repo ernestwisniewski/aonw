@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_city_production_context.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_panel_modes.dart';
+import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_context.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:flutter_test/flutter_test.dart';
 

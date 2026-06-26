@@ -4,7 +4,7 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/providers.dart';
-import 'package:aonw/game/presentation/screens/new_game_flow.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/menu/app_exit.dart';

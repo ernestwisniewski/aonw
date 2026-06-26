@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_player_action_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/hud_player_action_state.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 

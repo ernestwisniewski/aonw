@@ -1,5 +1,5 @@
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/presentation/providers/multiplayer_status_sheet_provider.dart';
+import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_status_sheet_provider.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

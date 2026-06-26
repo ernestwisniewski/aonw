@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:aonw/game/application/services/game_session.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/fog_of_war_overlay.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:flutter/foundation.dart';

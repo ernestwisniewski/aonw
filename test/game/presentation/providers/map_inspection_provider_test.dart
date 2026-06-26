@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/providers/map_inspection_provider.dart';
+import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_chip_id.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';

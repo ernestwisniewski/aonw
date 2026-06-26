@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_command_line_view_model.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line_view_model.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/player.dart';

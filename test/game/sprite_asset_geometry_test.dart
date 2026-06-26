@@ -2,12 +2,12 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/city_sprite_catalog.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/field_improvement_sprite_catalog.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/map/domain/map_config.dart';

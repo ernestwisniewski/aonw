@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 
 typedef TurnAdvanceEffectsPlayer =
     Future<int> Function(Iterable<UiEffect> effects);

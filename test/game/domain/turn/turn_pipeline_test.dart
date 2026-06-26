@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';

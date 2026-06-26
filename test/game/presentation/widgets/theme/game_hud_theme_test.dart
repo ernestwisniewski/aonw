@@ -73,7 +73,7 @@ void main() {
     final roots = [
       Directory('lib/game/presentation/widgets'),
       File(
-        'lib/game/presentation/engine/rendering_layers/city_management_overlay.dart',
+        'lib/game/presentation/engine/rendering_layers/city/city_management_overlay.dart',
       ),
     ];
 
@@ -212,6 +212,7 @@ const _legacyMaterialIconBaseline = <String, int>{
   'lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart': 1,
   'lib/game/presentation/widgets/diplomacy/diplomacy_player_modal_actions.dart':
       3,
-  'lib/game/presentation/widgets/hud/hud_action_deck_combat_modal.dart': 5,
+  'lib/game/presentation/widgets/hud/action_deck/hud_action_deck_combat_modal.dart':
+      5,
   'lib/game/presentation/widgets/options/game_options_overlay.dart': 1,
 };

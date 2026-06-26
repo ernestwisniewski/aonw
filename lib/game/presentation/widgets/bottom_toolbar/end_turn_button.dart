@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/widgets/hud/turn_action_hint.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn_hint_objective_matcher.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
+import 'package:aonw/game/presentation/widgets/hud/turn/turn_hint_objective_matcher.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/theme/city_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';

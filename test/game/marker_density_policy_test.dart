@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/marker_density_policy.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/marker_density_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

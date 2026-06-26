@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/widgets/hud/turn_start_banner_overlay.dart';
+import 'package:aonw/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

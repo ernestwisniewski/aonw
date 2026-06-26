@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/unit_command_validator.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';

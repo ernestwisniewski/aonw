@@ -7,7 +7,7 @@ import 'package:aonw/game/domain/ai/city_threat_assessor.dart';
 import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/movement_reducer.dart';
+import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/command.dart';

@@ -1,5 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/widgets/hud/hud_pending_action_commands.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_pending_action_commands.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
