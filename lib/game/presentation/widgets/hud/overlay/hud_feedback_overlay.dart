@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/reducer/game_state_transition.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
-import 'package:aonw/game/presentation/providers/handoff_provider.dart';
-import 'package:aonw/game/presentation/providers/hud_feedback_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
+import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notification_card.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';

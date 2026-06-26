@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

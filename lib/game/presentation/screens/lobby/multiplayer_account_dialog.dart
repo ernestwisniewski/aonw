@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';

@@ -9,7 +9,7 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
-import 'package:aonw/game/presentation/providers/map_inspection_binder.dart';
+import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';

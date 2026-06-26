@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

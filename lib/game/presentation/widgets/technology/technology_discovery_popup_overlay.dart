@@ -3,11 +3,11 @@ import 'dart:collection';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/providers/handoff_provider.dart';
-import 'package:aonw/game/presentation/providers/hud_minimized_popups_provider.dart';
-import 'package:aonw/game/presentation/providers/player_control_provider.dart';
-import 'package:aonw/game/presentation/providers/technology_discovery_popup_settings_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/technology_discovery_popup_settings_provider.dart';
+import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';

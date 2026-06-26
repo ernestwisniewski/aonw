@@ -1,6 +1,6 @@
-import 'package:aonw/game/presentation/providers/game_state_provider.dart';
-import 'package:aonw/game/presentation/providers/ruleset_providers.dart';
-import 'package:aonw/game/presentation/providers/session_providers.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
+import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
+import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

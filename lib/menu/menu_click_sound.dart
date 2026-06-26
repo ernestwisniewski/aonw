@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
-import 'package:aonw/game/presentation/providers/game_audio_provider.dart';
+import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

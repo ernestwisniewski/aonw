@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/app/router.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
-import 'package:aonw/game/presentation/providers/game_audio_provider.dart';
+import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/performance/dev_performance.dart';
 import 'package:aonw/shared/performance/fps_counter_overlay.dart';

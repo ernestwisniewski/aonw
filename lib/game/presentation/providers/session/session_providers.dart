@@ -3,7 +3,7 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/game_session_factory.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/engine.dart';
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/providers/map_providers.dart';

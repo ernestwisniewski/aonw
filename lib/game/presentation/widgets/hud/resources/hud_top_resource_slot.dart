@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
-import 'package:aonw/game/presentation/providers/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_activity_log_entries.dart';

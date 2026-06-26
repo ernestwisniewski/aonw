@@ -6,12 +6,12 @@ import 'package:aonw/game/application/use_cases/confirm_handoff_use_case.dart';
 import 'package:aonw/game/application/use_cases/end_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/reducer/game_state_transition.dart';
-import 'package:aonw/game/presentation/providers/game_actions_provider.dart';
-import 'package:aonw/game/presentation/providers/game_state_provider.dart';
-import 'package:aonw/game/presentation/providers/handoff_provider.dart';
-import 'package:aonw/game/presentation/providers/renderer_provider.dart';
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
-import 'package:aonw/game/presentation/providers/session_providers.dart';
+import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
+import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
+import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/providers/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 
 abstract final class HudActivityLogEntries {
   static List<GameEventNotification> visibleTo({

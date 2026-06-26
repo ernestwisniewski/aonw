@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
-import 'package:aonw/game/presentation/providers/map_inspection_provider.dart';
+import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';

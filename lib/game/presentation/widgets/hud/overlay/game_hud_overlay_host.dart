@@ -3,7 +3,7 @@ import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers.dart';
-import 'package:aonw/game/presentation/providers/game_options_overlay_open_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/game_options_overlay_open_provider.dart';
 import 'package:aonw/game/presentation/widgets/hud/global_hud_actions.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart';
 import 'package:aonw/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart';

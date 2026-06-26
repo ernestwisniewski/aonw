@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/providers/multiplayer_status_sheet_provider.dart';
+import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_status_sheet_provider.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/ai.dart';

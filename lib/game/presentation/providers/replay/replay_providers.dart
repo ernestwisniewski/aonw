@@ -1,9 +1,9 @@
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/reducer/game_state_reducer.dart';
-import 'package:aonw/game/presentation/providers/repository_providers.dart';
-import 'package:aonw/game/presentation/providers/ruleset_providers.dart';
-import 'package:aonw/game/presentation/providers/session_providers.dart';
+import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:flutter/foundation.dart';
