@@ -4,12 +4,14 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/marker_health_bar.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/sprite_shadow.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_badges.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_fallback_painter.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_input_handler.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_sprite_controller.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_type_icon_resolver.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_sprite.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
-import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -18,7 +20,8 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
-enum UnitMarkerStateBadge { fortified, healing, skippedTurn, exhausted }
+export 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_badges.dart'
+    show UnitMarkerStateBadge;
 
 class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   final int colorValue;
@@ -51,13 +54,6 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   // Mirrors MarkerHealthBar's type/owner + health stack above the unit sprite.
   static const double _statusBarsExtentAboveTop = 27.0;
   static const double _workBadgeGapAboveBars = 3.0;
-  static const double _stateBadgeRadius = 5.5;
-  static const double _stateBadgeOnCityRadius = 5.0;
-  static const double _artifactBadgeRadius = 5.8;
-  static const double _artifactBadgeOnCityRadius = 5.2;
-  static const int _stateBadgeBackgroundAlpha = 205;
-  static const int _artifactBadgeBackgroundAlpha = 226;
-  static const int _workBadgeBackgroundAlpha = 186;
   static const double _spriteVerticalLiftFactor = 0.16;
   static const double _fallbackSpriteStatusInset = 9.0;
   static const double _fallbackSmallSpriteStatusInset = 6.0;
@@ -291,17 +287,18 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    if (super.containsLocalPoint(point)) return true;
-    if (carryingArtifact &&
-        _artifactBadgeHitRectForTesting.contains(Offset(point.x, point.y))) {
-      return true;
-    }
-    return _typeIconHitRectForTesting.contains(Offset(point.x, point.y));
+    return UnitMarkerInputHandler.containsLocalPoint(
+      point: point,
+      markerContainsPoint: super.containsLocalPoint(point),
+      typeIconRect: _typeIconRect,
+      artifactBadgeRect: _artifactBadgeRect,
+      carryingArtifact: carryingArtifact,
+    );
   }
 
   @override
   void onTapUp(TapUpEvent event) {
-    onTap?.call();
+    UnitMarkerInputHandler.handleTap(onTap);
   }
 
   void _renderNormal(Canvas canvas, Color playerColor) {
@@ -333,7 +330,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
         canvas,
         center: center,
         playerColor: playerColor,
-        icon: _iconFor(unitType),
+        icon: _typeIcon,
         markerSize: fallbackSize,
         selected: false,
       ),
@@ -351,7 +348,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
       top: statusTop,
       width: statusWidth,
       playerColor: playerColor,
-      typeIcon: _iconFor(unitType),
+      typeIcon: _typeIcon,
     );
     _drawWorkBadge(
       canvas,
@@ -388,7 +385,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
         canvas,
         center: center,
         playerColor: playerColor,
-        icon: _iconFor(unitType),
+        icon: _typeIcon,
         markerSize: UnitMarkerFallbackSize.small,
         selected: false,
       ),
@@ -409,7 +406,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
       top: statusTop,
       width: statusWidth,
       playerColor: playerColor,
-      typeIcon: _iconFor(unitType),
+      typeIcon: _typeIcon,
     );
     _drawWorkBadge(
       canvas,
@@ -472,7 +469,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
       top: statusTop,
       width: statusWidth,
       playerColor: playerColor,
-      typeIcon: _iconFor(unitType),
+      typeIcon: _typeIcon,
     );
     _drawWorkBadge(
       canvas,
@@ -597,7 +594,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
         final fallbackSize = width * 0.58;
         GameIconRenderer.paintIcon(
           canvas,
-          _iconFor(unitType),
+          _typeIcon,
           topLeft: Offset(
             center.dx - fallbackSize / 2,
             center.dy - fallbackSize / 2,
@@ -679,12 +676,12 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
 
   double get typeIconPulseForTesting => _typeIconPulse;
 
-  Rect get _typeIconHitRectForTesting => _typeIconRect.inflate(7);
+  Rect get _artifactBadgeRect => UnitMarkerBadgeStyle.artifactBadgeRect(
+    center: const Offset(_radius, _radius),
+    onCity: onCity,
+  );
 
-  Rect get _artifactBadgeHitRectForTesting => _artifactBadgeRect.inflate(7);
-
-  Rect get _artifactBadgeRect =>
-      _artifactBadgeRectFor(center: const Offset(_radius, _radius));
+  GameIconData get _typeIcon => UnitMarkerTypeIconResolver.iconFor(unitType);
 
   double get _typeIconPulse {
     if (!_selected && !_attackTarget) return 0;
@@ -806,14 +803,16 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   UnitMarkerStateBadge? get stateBadgeForTesting => _stateBadge;
 
   double get stateBadgeRadiusForTesting =>
-      onCity ? _stateBadgeOnCityRadius : _stateBadgeRadius;
+      UnitMarkerBadgeStyle.stateBadgeRadiusFor(onCity: onCity);
 
-  int get stateBadgeBackgroundAlphaForTesting => _stateBadgeBackgroundAlpha;
+  int get stateBadgeBackgroundAlphaForTesting =>
+      UnitMarkerBadgeStyle.stateBadgeBackgroundAlpha;
 
   int get artifactBadgeBackgroundAlphaForTesting =>
-      _artifactBadgeBackgroundAlpha;
+      UnitMarkerBadgeStyle.artifactBadgeBackgroundAlpha;
 
-  int get workBadgeBackgroundAlphaForTesting => _workBadgeBackgroundAlpha;
+  int get workBadgeBackgroundAlphaForTesting =>
+      UnitMarkerBadgeStyle.workBadgeBackgroundAlpha;
 
   double get healthFractionForTesting => _healthFraction;
 
@@ -908,14 +907,12 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   }
 
   UnitMarkerStateBadge? get _stateBadge {
-    if (fortified) {
-      return _healthFraction < 0.995
-          ? UnitMarkerStateBadge.healing
-          : UnitMarkerStateBadge.fortified;
-    }
-    if (skippedTurn) return UnitMarkerStateBadge.skippedTurn;
-    if (exhausted) return UnitMarkerStateBadge.exhausted;
-    return null;
+    return UnitMarkerStateBadgeResolver.resolve(
+      fortified: fortified,
+      skippedTurn: skippedTurn,
+      exhausted: exhausted,
+      healthFraction: _healthFraction,
+    );
   }
 
   static double _normalizeMarkerWorldScale(double value) =>
@@ -940,88 +937,22 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
     final badge = _stateBadge;
     if (badge == null || !paintsStateBadgeForTesting) return;
 
-    final spec = _UnitMarkerStateBadgeSpec.forBadge(badge);
-    final radius = stateBadgeRadiusForTesting;
-    final badgeCenter = Offset(
-      center.dx + (onCity ? 8.0 : 10.0),
-      center.dy + (onCity ? 6.5 : 8.5),
-    );
-    final rect = Rect.fromCircle(center: badgeCenter, radius: radius);
-
-    canvas
-      ..drawCircle(
-        badgeCenter.translate(0, 1.2),
-        radius + 1.0,
-        HudPaint.shadow(alpha: MapAlpha.soft),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius + 0.6,
-        HudPaint.fill(HudPalette.surfaceDeep, alpha: MapAlpha.solid),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius,
-        HudPaint.fill(spec.background, alpha: _stateBadgeBackgroundAlpha),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius,
-        HudPaint.stroke(HudPalette.goldLight, alpha: MapAlpha.regular),
-      );
-    GameIconRenderer.paintIcon(
+    UnitMarkerBadgePainter.paintStateBadge(
       canvas,
-      spec.icon,
-      topLeft: rect.deflate(2).topLeft,
-      size: rect.deflate(2).width,
-      color: HudPaint.color(HudPalette.goldLight, alpha: MapAlpha.solid),
+      center: center,
+      badge: badge,
+      onCity: onCity,
     );
   }
 
   void _drawArtifactBadge(Canvas canvas, {required Offset center}) {
     if (!carryingArtifact) return;
 
-    final radius = onCity ? _artifactBadgeOnCityRadius : _artifactBadgeRadius;
-    final rect = _artifactBadgeRectFor(center: center);
-    final badgeCenter = rect.center;
-
-    canvas
-      ..drawCircle(
-        badgeCenter.translate(0, 1.2),
-        radius + 1.0,
-        HudPaint.shadow(alpha: MapAlpha.soft),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius + 0.8,
-        HudPaint.fill(HudPalette.surfaceDeep, alpha: MapAlpha.solid),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius,
-        HudPaint.fill(HudPalette.gold, alpha: _artifactBadgeBackgroundAlpha),
-      )
-      ..drawCircle(
-        badgeCenter,
-        radius,
-        HudPaint.stroke(HudPalette.goldLight, alpha: MapAlpha.strong),
-      );
-    GameIconRenderer.paintIcon(
+    UnitMarkerBadgePainter.paintArtifactBadge(
       canvas,
-      GameIcons.resources,
-      topLeft: rect.deflate(2.0).topLeft,
-      size: rect.deflate(2.0).width,
-      color: HudPaint.color(HudPalette.bg, alpha: MapAlpha.solid),
+      center: center,
+      onCity: onCity,
     );
-  }
-
-  Rect _artifactBadgeRectFor({required Offset center}) {
-    final radius = onCity ? _artifactBadgeOnCityRadius : _artifactBadgeRadius;
-    final badgeCenter = Offset(
-      center.dx - (onCity ? 8.0 : 10.0),
-      center.dy + (onCity ? 6.5 : 8.5),
-    );
-    return Rect.fromCircle(center: badgeCenter, radius: radius);
   }
 
   void _drawWorkBadge(
@@ -1033,102 +964,14 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
     final label = workBadgeLabel;
     if (label == null || label.isEmpty) return;
 
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: const TextStyle(
-          color: HudPalette.textBright,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          fontFeatures: GameUiTheme.tabularFigures,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    final width = math.max(28.0, textPainter.width + 12);
-    final height = textPainter.height + 6;
-    final bottom = top - _statusBarsExtentAboveTop - _workBadgeGapAboveBars;
-    final rect = Rect.fromLTWH(
-      center.dx - width / 2,
-      bottom - height,
-      width,
-      height,
-    );
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(5));
-
-    canvas
-      ..drawRRect(
-        rrect.shift(const Offset(0, 1.5)),
-        HudPaint.shadow(alpha: MapAlpha.soft),
-      )
-      ..drawRRect(
-        rrect,
-        HudPaint.fill(playerColor, alpha: _workBadgeBackgroundAlpha),
-      )
-      ..drawRRect(
-        rrect,
-        HudPaint.stroke(HudPalette.textBright, alpha: MapAlpha.regular),
-      );
-    textPainter.paint(
+    UnitMarkerBadgePainter.paintWorkBadge(
       canvas,
-      Offset(
-        rect.center.dx - textPainter.width / 2,
-        rect.center.dy - textPainter.height / 2,
-      ),
+      center: center,
+      top: top,
+      playerColor: playerColor,
+      label: label,
+      statusBarsExtentAboveTop: _statusBarsExtentAboveTop,
+      gapAboveBars: _workBadgeGapAboveBars,
     );
-  }
-
-  GameIconData _iconFor(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => GameIcons.army,
-      GameUnitType.warrior => GameIcons.warrior,
-      GameUnitType.archer => GameIcons.archer,
-      GameUnitType.settler => GameIcons.settler,
-      GameUnitType.worker => GameIcons.production,
-      GameUnitType.merchant => GameIcons.commerce,
-      GameUnitType.scout => GameIcons.visibility,
-      GameUnitType.spearman => GameIcons.attack,
-      GameUnitType.cavalry => GameIcons.move,
-      GameUnitType.catapult => GameIcons.production,
-      GameUnitType.heavyInfantry => GameIcons.defense,
-      GameUnitType.fieldCannon => GameIcons.attack,
-      GameUnitType.rifleman => GameIcons.archer,
-      GameUnitType.tank => GameIcons.defense,
-      GameUnitType.scoutShip => GameIcons.visibility,
-      GameUnitType.warship => GameIcons.attack,
-      GameUnitType.reconPlane => GameIcons.visibility,
-    };
-  }
-}
-
-class _UnitMarkerStateBadgeSpec {
-  final GameIconData icon;
-  final Color background;
-
-  const _UnitMarkerStateBadgeSpec({
-    required this.icon,
-    required this.background,
-  });
-
-  factory _UnitMarkerStateBadgeSpec.forBadge(UnitMarkerStateBadge badge) {
-    return switch (badge) {
-      UnitMarkerStateBadge.fortified => const _UnitMarkerStateBadgeSpec(
-        icon: GameIcons.defense,
-        background: HudPalette.info,
-      ),
-      UnitMarkerStateBadge.healing => const _UnitMarkerStateBadgeSpec(
-        icon: GameIcons.heartPlus,
-        background: HudPalette.success,
-      ),
-      UnitMarkerStateBadge.skippedTurn => const _UnitMarkerStateBadgeSpec(
-        icon: GameIcons.skipTurn,
-        background: HudPalette.textSecondary,
-      ),
-      UnitMarkerStateBadge.exhausted => const _UnitMarkerStateBadgeSpec(
-        icon: GameIcons.hourglass,
-        background: HudPalette.textTertiary,
-      ),
-    };
   }
 }
