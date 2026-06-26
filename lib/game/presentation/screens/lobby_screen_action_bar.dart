@@ -28,7 +28,7 @@ final class _LobbyActionBarBuilder {
   final bool canStartLocalGame;
   final bool starting;
   final bool hasMapValidationErrors;
-  final _MultiplayerLobbyMode multiplayerMode;
+  final LobbyMultiplayerMode multiplayerMode;
   final bool networkBusy;
   final WireMatch? activeMatch;
   final String? currentUserId;
@@ -42,12 +42,12 @@ final class _LobbyActionBarBuilder {
   Widget? build() {
     if (flow.startsLocally) return _localGameActionBar();
     return switch (multiplayerMode) {
-      _MultiplayerLobbyMode.home => null,
-      _MultiplayerLobbyMode.quickplay => _quickplayActionBar(),
-      _MultiplayerLobbyMode.privateJoin when activeMatch == null =>
+      LobbyMultiplayerMode.home => null,
+      LobbyMultiplayerMode.quickplay => _quickplayActionBar(),
+      LobbyMultiplayerMode.privateJoin when activeMatch == null =>
         _privateJoinActionBar(),
-      _MultiplayerLobbyMode.privateHost ||
-      _MultiplayerLobbyMode.privateJoin => _privateMatchActionBar(),
+      LobbyMultiplayerMode.privateHost ||
+      LobbyMultiplayerMode.privateJoin => _privateMatchActionBar(),
     };
   }
 
