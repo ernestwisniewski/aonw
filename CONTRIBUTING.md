@@ -23,9 +23,12 @@ and use Docker Compose for PostgreSQL and Redis.
 Before opening a pull request, run:
 
 ```sh
-dart format --set-exit-if-changed .
-make check
+make ci
 ```
+
+`make ci` runs `dart format --set-exit-if-changed .` first, then analyzes and
+tests the Flutter app, `aonw_core`, the generated Serverpod client package, and
+the Serverpod backend unit tests that do not require external services.
 
 When touching Serverpod schemas, generated protocol files, migrations, Compose
 files, or deployment behavior, also run:

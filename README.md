@@ -18,6 +18,7 @@ package, a generated Serverpod client package, and a Serverpod backend.
 ## Public Links
 
 - Website: [aonw.net](https://aonw.net/)
+- Devlog: [ernest.dev](https://ernest.dev)
 - GitHub: [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw)
 - iOS: [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591)
 - Windows/macOS: [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/)
@@ -36,12 +37,12 @@ flutter test
 For the full local quality gate:
 
 ```sh
-make check
+make ci
 ```
 
-`make check` analyzes and tests the Flutter app, the shared core package, the
-generated Serverpod client package, and the Serverpod backend tests that do not
-require external services.
+`make ci` checks formatting, then analyzes and tests the Flutter app, the
+shared core package, the generated Serverpod client package, and the Serverpod
+backend tests that do not require external services.
 
 ## New Contributor Path
 

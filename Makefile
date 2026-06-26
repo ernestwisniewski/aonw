@@ -113,7 +113,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -123,6 +123,7 @@ help:
 	@echo "  make deploy steam  Build Steam macOS + Windows ZIPs into dist/"
 	@echo ""
 	@echo "Individual targets:"
+	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
 	@echo "  make deploy        Pull repo, rebuild Docker, restart staging, check health"
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
@@ -247,6 +248,11 @@ build:
 	@if [ "$(CHECK_MIGRATIONS)" = "1" ]; then \
 		$(MAKE) --no-print-directory check-migrations PROFILE="$(PROFILE)" SERVER_SERVICE="$(SERVER_SERVICE)" COMPOSE="$(COMPOSE)"; \
 	fi
+
+ci: format-check check
+
+format-check:
+	@dart format --set-exit-if-changed .
 
 check: flutter-test core-test client-test server-test
 
