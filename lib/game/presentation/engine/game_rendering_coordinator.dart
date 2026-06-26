@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/engine/game_planning_marker_coordinator.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
-import 'package:aonw/game/presentation/engine/recommended_city_site_planner.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/artifact_marker_layer.dart';
@@ -18,13 +18,9 @@ import 'package:aonw/game/presentation/engine/rendering_layers/threat_overlay_la
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/unit_move_preview_layer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
-import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/combat.dart';
-import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -48,8 +44,7 @@ class GameRenderingCoordinator {
   final ThreatOverlayLayer threatOverlay;
   final ActionPaletteLayer actionPalette;
   final HexGrid grid;
-  final RecommendedCitySitePlanner _recommendedCitySitePlanner =
-      RecommendedCitySitePlanner();
+  final GamePlanningMarkerCoordinator _planningMarkers;
 
   GameRenderingCoordinator({
     required this.unitMarkers,
@@ -66,7 +61,7 @@ class GameRenderingCoordinator {
     required this.threatOverlay,
     required this.actionPalette,
     required this.grid,
-  });
+  }) : _planningMarkers = GamePlanningMarkerCoordinator(grid: grid);
 
   void syncAll({
     required GameState state,
@@ -83,7 +78,7 @@ class GameRenderingCoordinator {
     final viewModel = GameRenderViewModel.fromState(state);
     _publishViewModel(viewModel, viewModelNotifier);
     _syncGridSelection(grid, viewModel);
-    _syncPlanningMarkers(state);
+    _planningMarkers.sync(state);
     _syncFieldImprovementMarkers(state, parent);
     _syncArtifactMarkers(state, parent);
     _syncMapObjectiveMarkers(state, parent);
@@ -131,202 +126,6 @@ class GameRenderingCoordinator {
     } else {
       hexGrid.clearSelection();
     }
-  }
-
-  void _syncPlanningMarkers(GameState state) {
-    final markersByCoordinate = <(int, int), HexTileMarkers>{};
-    final visibility = state.activePlayerVisibility;
-    final attackTargetingUnit = _selectedAttackTargetingUnit(state);
-    final selectedWorker = _selectedControllableWorker(state);
-    final selectedCityFounder = _selectedControllableCityFounder(state);
-    final forceCitySiteMarkers = selectedCityFounder != null;
-    final recommendedCitySites = selectedCityFounder == null
-        ? const <(int, int)>{}
-        : _recommendedCitySitePlanner.coordinates(
-            state: state,
-            founder: selectedCityFounder,
-            mapData: grid.mapData,
-          );
-
-    for (final tile in grid.mapData.tiles) {
-      if (visibility.isEnabled && !visibility.canInspectTile(tile)) continue;
-
-      final canGrowCity = _canUseAsCityGrowthTile(tile, state.cities);
-      if (attackTargetingUnit != null) {
-        final canAttackTarget = _canAttackTargetTile(
-          state,
-          attackTargetingUnit,
-          tile,
-        );
-        if (canAttackTarget || canGrowCity) {
-          markersByCoordinate[(tile.col, tile.row)] = HexTileMarkers(
-            canAttackTarget: canAttackTarget,
-            canGrowCity: canGrowCity,
-          );
-        }
-        continue;
-      }
-
-      final canFoundCity = _canUseAsCityCenter(tile, state.cities);
-      final workerHex = CityHex(col: tile.col, row: tile.row);
-      final workerAvailability = selectedWorker == null
-          ? WorkerImprovementTileAvailability.unavailable
-          : WorkerImprovementRules.availabilityForTile(
-              unit: selectedWorker,
-              targetHex: workerHex,
-              cities: state.cities,
-              fieldImprovements: state.fieldImprovements,
-              mapData: grid.mapData,
-              research: state.research,
-            );
-      final canImproveNow =
-          workerAvailability == WorkerImprovementTileAvailability.availableNow;
-      final canImproveAfterTechnology =
-          workerAvailability ==
-          WorkerImprovementTileAvailability.technologyLocked;
-      final workerBuildAvailable = selectedWorker != null && canImproveNow;
-      final workerBuildBlocked =
-          selectedWorker != null &&
-          !workerBuildAvailable &&
-          _shouldShowWorkerBuildBlockedMarker(
-            state: state,
-            worker: selectedWorker,
-            hex: workerHex,
-            tile: tile,
-            availability: workerAvailability,
-          );
-      if (!canFoundCity &&
-          !canGrowCity &&
-          !canImproveNow &&
-          !canImproveAfterTechnology &&
-          !workerBuildAvailable &&
-          !workerBuildBlocked) {
-        continue;
-      }
-
-      markersByCoordinate[(tile.col, tile.row)] = HexTileMarkers(
-        canFoundCity: canFoundCity,
-        forceShowCitySite: forceCitySiteMarkers && canFoundCity,
-        recommendedCitySite:
-            forceCitySiteMarkers &&
-            canFoundCity &&
-            recommendedCitySites.contains((tile.col, tile.row)),
-        canGrowCity: canGrowCity,
-        canImproveNow: canImproveNow,
-        canImproveAfterTechnology: canImproveAfterTechnology,
-        workerImprovementCandidate: canImproveNow,
-        workerBuildAvailable: workerBuildAvailable,
-        workerBuildBlocked: workerBuildBlocked,
-      );
-    }
-
-    grid.setTileMarkers(markersByCoordinate);
-  }
-
-  bool _shouldShowWorkerBuildBlockedMarker({
-    required GameState state,
-    required GameUnit worker,
-    required CityHex hex,
-    required TileData tile,
-    required WorkerImprovementTileAvailability availability,
-  }) {
-    if (worker.occupies(tile.col, tile.row)) return true;
-    if (availability == WorkerImprovementTileAvailability.technologyLocked) {
-      return true;
-    }
-    return WorkerImprovementRules.cityForImprovementHex(
-          playerId: worker.ownerPlayerId,
-          hex: hex,
-          cities: state.cities,
-        ) !=
-        null;
-  }
-
-  GameUnit? _selectedAttackTargetingUnit(GameState state) {
-    final pending = state.pendingAction;
-    if (pending is! PendingAttackTargeting) return null;
-    for (final unit in state.units) {
-      if (unit.id != pending.attackerUnitId) continue;
-      if (!state.canControlUnit(unit) ||
-          unit.isWorking ||
-          unit.movementPoints <= 0) {
-        return null;
-      }
-      return unit;
-    }
-    return null;
-  }
-
-  bool _canAttackTargetTile(GameState state, GameUnit attacker, TileData tile) {
-    final defender = state.unitAt(tile.col, tile.row);
-    if (defender == null ||
-        defender.id == attacker.id ||
-        defender.ownerPlayerId == attacker.ownerPlayerId) {
-      return false;
-    }
-
-    final visibility = state.activePlayerVisibility;
-    if (visibility.isEnabled &&
-        !visibility.canSeeDynamicAt(tile.col, tile.row)) {
-      return false;
-    }
-
-    final attackerTile = grid.mapData.tileAt(attacker.col, attacker.row);
-    if (attackerTile == null) return false;
-
-    final attackerStats = UnitCombatStats.derive(attacker).applyAll(
-      CombatModifierCollector.forAttacker(
-        unit: attacker,
-        tile: attackerTile,
-        research: state.research.forPlayer(attacker.ownerPlayerId),
-        technologyRuleset: TechnologyRulesets.standard,
-      ),
-    );
-    if (attackerStats.attack <= 0) return false;
-
-    final distance = HexDistance.between(
-      HexCoordinate(col: attacker.col, row: attacker.row),
-      HexCoordinate(col: tile.col, row: tile.row),
-    );
-    return distance <= attackerStats.range;
-  }
-
-  GameUnit? _selectedControllableWorker(GameState state) {
-    final unit = state.selectedUnit;
-    if (unit == null ||
-        !unit.isWorker ||
-        unit.isWorking ||
-        !state.canControlUnit(unit)) {
-      return null;
-    }
-    return unit;
-  }
-
-  GameUnit? _selectedControllableCityFounder(GameState state) {
-    final unit = state.selectedUnit;
-    if (unit == null || !state.canControlUnit(unit)) return null;
-    if (unit.hasSettlers || unit.type == GameUnitType.settler) return unit;
-    return null;
-  }
-
-  bool _canUseAsCityCenter(TileData tile, Iterable<GameCity> cities) {
-    if (!CitySiteRules.canFoundCityOn(tile)) return false;
-    final hex = CityHex(col: tile.col, row: tile.row);
-    return !_isControlledByAnyCity(hex, cities) &&
-        CityFoundingRules.isCenterFarEnoughFromCities(hex, cities);
-  }
-
-  bool _canUseAsCityGrowthTile(TileData tile, Iterable<GameCity> cities) {
-    if (!CityTileYieldRules.canCityControlTile(tile)) return false;
-    final hex = CityHex(col: tile.col, row: tile.row);
-    return !_isControlledByAnyCity(hex, cities);
-  }
-
-  bool _isControlledByAnyCity(CityHex hex, Iterable<GameCity> cities) {
-    for (final city in cities) {
-      if (city.controlsHex(hex)) return true;
-    }
-    return false;
   }
 
   void _syncCityMarkers(
@@ -578,14 +377,15 @@ class GameRenderingCoordinator {
   }
 
   Set<String> _attackTargetUnitIds(GameState state) {
-    final attacker = _selectedAttackTargetingUnit(state);
+    final attacker = _planningMarkers.selectedAttackTargetingUnit(state);
     if (attacker == null) return const {};
 
     return {
       for (final unit in state.unitsVisibleToActivePlayer)
         if (unit.ownerPlayerId != attacker.ownerPlayerId)
           if (grid.mapData.tileAt(unit.col, unit.row) case final tile?)
-            if (_canAttackTargetTile(state, attacker, tile)) unit.id,
+            if (_planningMarkers.canAttackTargetTile(state, attacker, tile))
+              unit.id,
     };
   }
 

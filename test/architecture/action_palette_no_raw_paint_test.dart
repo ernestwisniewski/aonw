@@ -35,6 +35,7 @@ const _migratedHudCanvasFiles = [
       'city_territory_overlay_layer.dart',
   'lib/game/presentation/engine/rendering_layers/'
       'unit_marker_fallback_painter.dart',
+  'lib/game/presentation/engine/rendering_layers/unit_marker_badges.dart',
   'lib/game/presentation/engine/rendering_layers/city_marker.dart',
   'lib/game/presentation/engine/rendering_layers/unit_marker.dart',
   'lib/game/presentation/engine/rendering_layers/sprite_shadow.dart',
