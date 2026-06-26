@@ -1114,6 +1114,61 @@ void main() {
     await ownerInput.close();
   });
 
+  test('deduplicates retry bursts under duplicate delivery patterns', () async {
+    for (final duplicateCount in [2, 3, 5, 8]) {
+      final fixture = await _startRunningMatch('retry-burst-$duplicateCount');
+      final owner = fixture.match.players.first;
+      final ownerInput = StreamController<MultiplayerClientMessage>();
+      final ownerStream = fixture.hub
+          .connect(
+            store: fixture.store,
+            userIdentifier: owner.userId,
+            matchId: fixture.match.id,
+            afterOffset: 0,
+            input: ownerInput.stream,
+          )
+          .asBroadcastStream();
+      expect((await ownerStream.first).snapshot?.offset, 0);
+
+      final acks = ownerStream
+          .where((message) => message.ack != null)
+          .take(duplicateCount)
+          .toList();
+      final retryMessage = MultiplayerClientMessage(
+        clientMessageId: 'owner-submit-retry-burst-$duplicateCount',
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: fixture.match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+        ),
+      );
+
+      for (var i = 0; i < duplicateCount; i++) {
+        ownerInput.add(retryMessage);
+      }
+
+      final ackMessages = await acks.timeout(const Duration(seconds: 1));
+
+      expect(
+        ackMessages.map((message) => message.ack?.accepted),
+        everyElement(isTrue),
+      );
+      expect(ackMessages.map((message) => message.ack?.offset).toSet(), {1});
+      expect(
+        ackMessages.map((message) => message.ack?.events).toSet(),
+        hasLength(1),
+      );
+      expect(await fixture.store.listEvents(fixture.match.id, 0), hasLength(1));
+      expect((await fixture.store.findState(fixture.match.id))!.offset, 1);
+
+      await ownerInput.close();
+    }
+  });
+
   test(
     'throws typed multiplayer exceptions for rejected lobby actions',
     () async {
@@ -1181,6 +1236,49 @@ Matcher _multiplayerError(String code) {
     'code',
     code,
   );
+}
+
+Future<_RunningMatchFixture> _startRunningMatch(String suffix) async {
+  final mapCatalog = _FakeMapCatalog(_testMap());
+  final hub = RealtimeMatchHub(
+    commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+  );
+  final store = _MemoryMatchStore();
+  final openMatch = await hub.createMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    request: CreateMatchRequest(
+      name: 'Retry burst $suffix',
+      mapName: 'test_map',
+      maxPlayers: 2,
+      minPlayers: 2,
+      private: false,
+    ),
+  );
+  final joined = await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-user-$suffix',
+    matchId: openMatch.id,
+  );
+  final match = await hub.startMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: joined.id,
+    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
+  );
+  return _RunningMatchFixture(hub: hub, store: store, match: match);
+}
+
+final class _RunningMatchFixture {
+  const _RunningMatchFixture({
+    required this.hub,
+    required this.store,
+    required this.match,
+  });
+
+  final RealtimeMatchHub hub;
+  final _MemoryMatchStore store;
+  final WireMatch match;
 }
 
 class _MemoryMatchStore implements MultiplayerMatchStore {

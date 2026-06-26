@@ -56,6 +56,31 @@ Completion criteria for that decision:
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
 
+## Protocol Version Migration
+
+All wire payloads currently carry `v: 1` and are validated by
+`kProtocolVersion`. There are no long-lived public multiplayer sessions yet, so
+the next protocol bump should be a clean coordinated cutover rather than a
+backward-compatible bridge.
+
+Use this path for the first `v1 -> v2` migration:
+
+1. Stop creating new multiplayer sessions during the deploy window and let any
+   internal test sessions be discarded.
+2. Update the shared wire models, bump `kProtocolVersion`, and regenerate the
+   Serverpod protocol output in the same change.
+3. Update the Flutter client and Serverpod server together so they both read
+   and write only `v: 2`.
+4. Clear or migrate non-production persisted match snapshots/events that still
+   contain `v: 1`; production rollout should happen only while there are no
+   player sessions requiring replay.
+5. Re-run command retry, reconnect, generated client, and server tests before
+   enabling matchmaking again.
+
+After public sessions exist, revisit this section before a protocol bump. At
+that point the project may need a temporary dual-version reader, replay
+migration, or forced client update policy.
+
 ## Removed Legacy Surface
 
 - `ApiHttpClient`, custom TLS pinning, and custom WebSocket client.

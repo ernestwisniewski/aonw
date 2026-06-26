@@ -287,7 +287,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   Future<StoredMatchState?> _findStateBy({
-    required Expression Function(GameMatchTable table) where,
+    required Expression<dynamic> Function(GameMatchTable table) where,
     required bool lock,
   }) async {
     final row = await GameMatch.db.findFirstRow(
