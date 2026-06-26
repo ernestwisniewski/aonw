@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/presentation/screens/lobby_auto_start_coordinator.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_auto_start_coordinator.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 

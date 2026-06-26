@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/game/presentation/screens/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';

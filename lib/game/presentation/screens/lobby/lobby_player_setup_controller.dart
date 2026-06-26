@@ -1,4 +1,4 @@
-import 'package:aonw/game/presentation/screens/new_game_flow.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';

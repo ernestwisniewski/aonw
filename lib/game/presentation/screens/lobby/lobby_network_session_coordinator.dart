@@ -4,7 +4,7 @@ import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_store.dart';
-import 'package:aonw/game/presentation/screens/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;

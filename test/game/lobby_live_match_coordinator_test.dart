@@ -1,7 +1,7 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/game/presentation/screens/lobby_live_match_coordinator.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_live_match_coordinator.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/screens/new_game_flow.dart';
-import 'package:aonw/game/presentation/screens/new_game_single_player_setup.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_single_player_setup.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';

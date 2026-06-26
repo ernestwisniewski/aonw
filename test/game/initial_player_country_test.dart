@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/presentation/screens/initial_player_country.dart';
+import 'package:aonw/game/presentation/screens/new_game/initial_player_country.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 

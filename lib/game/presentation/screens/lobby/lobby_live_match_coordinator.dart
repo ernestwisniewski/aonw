@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
-import 'package:aonw/game/presentation/screens/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
 
 typedef LobbyLiveMatchReader = WireMatch? Function();

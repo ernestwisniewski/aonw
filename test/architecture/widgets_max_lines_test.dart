@@ -112,11 +112,11 @@ const _legacyWidgetLineCountBaseline = <String, int>{
 };
 
 const _legacyScreenLineCountBaseline = <String, int>{
-  'lib/game/presentation/screens/lobby_screen.dart': 1124,
-  'lib/game/presentation/screens/new_game_screen.dart': 1881,
-  'lib/game/presentation/screens/game_screen.dart': 852,
-  'lib/game/presentation/screens/replay_screen.dart': 1398,
-  'lib/game/presentation/screens/load_game_screen.dart': 360,
+  'lib/game/presentation/screens/lobby/lobby_screen.dart': 1124,
+  'lib/game/presentation/screens/new_game/new_game_screen.dart': 1881,
+  'lib/game/presentation/screens/game/game_screen.dart': 852,
+  'lib/game/presentation/screens/replay/replay_screen.dart': 1398,
+  'lib/game/presentation/screens/game/load_game_screen.dart': 360,
 };
 
 Iterable<File> _dartFiles(String root) {
