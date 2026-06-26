@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/combat_hex_alert_effect_factory.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
@@ -198,7 +199,7 @@ abstract final class GameEventRendererEffectMapper {
           viewerPlayerId: viewerPlayerId,
         )) {
       effects.add(
-        _combatHexAlertEffect(
+        CombatHexAlertEffectFactory.build(
           id: 'attacker:${event.attackerUnitId}',
           unitId: event.attackerUnitId,
           ownerPlayerId: attackerAlertUnit.ownerPlayerId,
@@ -219,7 +220,7 @@ abstract final class GameEventRendererEffectMapper {
           viewerPlayerId: viewerPlayerId,
         )) {
       effects.add(
-        _combatHexAlertEffect(
+        CombatHexAlertEffectFactory.build(
           id: 'defender:${event.defenderUnitId}',
           unitId: event.defenderUnitId,
           ownerPlayerId: defenderAlertUnit.ownerPlayerId,
@@ -238,7 +239,7 @@ abstract final class GameEventRendererEffectMapper {
           viewerPlayerId: viewerPlayerId,
         )) {
       effects.add(
-        _combatHexAlertEffect(
+        CombatHexAlertEffectFactory.build(
           id: 'city:${defenderCity.id}',
           cityId: defenderCity.id,
           ownerPlayerId: defenderCity.ownerPlayerId,
@@ -320,30 +321,6 @@ abstract final class GameEventRendererEffectMapper {
       col: unit.col,
       row: unit.row,
       colorValue: _damageTextColor,
-    );
-  }
-
-  static ShowCombatHexAlertEffect _combatHexAlertEffect({
-    required String id,
-    required String ownerPlayerId,
-    required int col,
-    required int row,
-    required CombatHexAlertKind kind,
-    required GameState state,
-    required int? turn,
-    String? unitId,
-    String? cityId,
-  }) {
-    return ShowCombatHexAlertEffect(
-      id: id,
-      unitId: unitId,
-      cityId: cityId,
-      ownerPlayerId: ownerPlayerId,
-      col: col,
-      row: row,
-      kind: kind,
-      turn: turn,
-      ownerSubmittedAtAttack: state.submittedPlayerIds.contains(ownerPlayerId),
     );
   }
 

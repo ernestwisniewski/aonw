@@ -29,6 +29,7 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'game_state_provider.g.dart';
+part 'game_state_provider_renderer_effects.dart';
 
 Duration? _doNotRetry(int retryCount, Object error) => null;
 const _liveSnapshotRetryDelays = [
@@ -476,40 +477,6 @@ class GameStateNotifier extends _$GameStateNotifier {
     ref
         .read(gameLoggerProvider)
         .warn('GameStateNotifier', message, error, stackTrace);
-  }
-
-  List<RendererEffect> _rendererEffectsForExternalSnapshot({
-    required GameState previousState,
-    required GameState nextState,
-    required Iterable<GameEvent> events,
-    String? viewerPlayerId,
-    int? turn,
-  }) {
-    final movementEffects = QueuedMovementEffectBuilder.fromUnitDelta(
-      beforeUnits: previousState.units,
-      afterUnits: nextState.units,
-    );
-    final animatedUnitIds = {
-      for (final effect in movementEffects) effect.unitId,
-    };
-    return [
-      ...movementEffects,
-      ...GameEventRendererEffectMapper.effectsFor(
-        events: events,
-        state: nextState,
-        previousState: previousState,
-        skipUnitMoveIds: animatedUnitIds,
-        viewerPlayerId: viewerPlayerId,
-        turn: turn,
-      ),
-    ];
-  }
-
-  int? _eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
-    for (final event in events) {
-      if (event is AllPlayersSubmittedEvent) return event.turn;
-    }
-    return fallbackTurn;
   }
 
   Future<void> _closeLiveEvents() async {

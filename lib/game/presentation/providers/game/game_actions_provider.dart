@@ -28,6 +28,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'game_actions_provider.g.dart';
+part 'game_actions_provider_turns.dart';
 
 /// Coordinates player commands with the active save and renderer view model.
 @Riverpod(
@@ -220,29 +221,9 @@ class GameCommandController extends _$GameCommandController {
     ref.invalidate(gameSaveSnapshotProvider(saveId));
   }
 
-  GameState? _currentGameState() {
-    if (!ref.mounted) return null;
-    final session = ref.read(activeGameSessionProvider);
-    if (session == null || session.saveId.isEmpty) return null;
-    return ref.read(gameStateProvider(session.saveId)).value;
-  }
+  GameState? _currentGameState() => _currentGameStateFor(ref);
 
-  int? _currentSaveTurn() {
-    if (!ref.mounted) return null;
-    final session = ref.read(activeGameSessionProvider);
-    if (session == null || session.saveId.isEmpty) return null;
-    return ref.read(gameSaveProvider(session.saveId)).value?.turn;
-  }
-
-  int? _turnFor(DispatchCommandResult result) =>
-      result.snapshot?.save.turn ?? _currentSaveTurn();
-
-  int? _eventTurnFor(DispatchCommandResult result) {
-    for (final event in result.events) {
-      if (event is AllPlayersSubmittedEvent) return event.turn;
-    }
-    return _turnFor(result);
-  }
+  int? _currentSaveTurn() => _currentSaveTurnFor(ref);
 
   Future<DispatchCommandResult> _dispatchAndHandle(
     GameCommand command, {
