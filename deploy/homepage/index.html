@@ -24,6 +24,14 @@
         font-display: swap;
         font-family: "Aonw Lato";
         font-style: normal;
+        font-weight: 300;
+        src: url("/assets/fonts/Lato-Light.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-display: swap;
+        font-family: "Aonw Lato";
+        font-style: normal;
         font-weight: 400;
         src: url("/assets/fonts/Lato-Regular.ttf") format("truetype");
       }
@@ -142,6 +150,39 @@
         }
       }
 
+      @keyframes logo-outline-pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(1.018);
+        }
+
+        50% {
+          opacity: 0.58;
+          transform: scale(1.03);
+        }
+      }
+
+      @keyframes logo-trace-flow {
+        0% {
+          background-position:
+            -120% 48%,
+            0 0;
+          opacity: 0.12;
+        }
+
+        44% {
+          opacity: 0.52;
+        }
+
+        100% {
+          background-position:
+            220% 48%,
+            2.6rem 1.4rem;
+          opacity: 0.16;
+        }
+      }
+
       @keyframes scroll-pulse {
         0%,
         100% {
@@ -212,16 +253,46 @@
         margin-top: -2svh;
       }
 
+      .hero-screen {
+        overflow: hidden;
+      }
+
       .screen-copy {
+        background:
+          radial-gradient(ellipse at 50% 54%, rgba(9, 13, 18, 0.54), rgba(9, 13, 18, 0.24) 60%, transparent 76%),
+          linear-gradient(90deg, transparent, rgba(241, 223, 170, 0.05) 32%, rgba(217, 184, 93, 0.07) 70%, transparent);
         display: grid;
-        gap: 0.45rem;
+        gap: 0.54rem;
         justify-items: center;
+        max-width: min(90vw, 46rem);
+        padding: clamp(0.94rem, 2vw, 1.24rem) clamp(1.08rem, 3.6vw, 2.35rem);
+        position: relative;
         text-align: center;
       }
 
+      .screen-copy::before,
+      .screen-copy::after {
+        background: linear-gradient(90deg, transparent, rgba(217, 184, 93, 0.38), rgba(241, 223, 170, 0.22), transparent);
+        content: "";
+        height: 1px;
+        left: 50%;
+        opacity: 0.56;
+        position: absolute;
+        transform: translateX(-50%);
+        width: min(70%, 28rem);
+      }
+
+      .screen-copy::before {
+        top: 0;
+      }
+
+      .screen-copy::after {
+        bottom: 0;
+      }
+
       .screen-kicker {
-        color: rgba(217, 184, 93, 0.86);
-        font: 800 0.76rem var(--font-display);
+        color: rgba(217, 184, 93, 0.78);
+        font: 700 0.74rem var(--font-body);
         letter-spacing: 0;
         margin: 0;
         text-transform: uppercase;
@@ -231,34 +302,74 @@
       }
 
       .screen-title {
-        color: #f1dfaa;
-        font: 800 2.55rem var(--font-display);
-        line-height: 1.08;
+        color: rgba(248, 235, 198, 0.94);
+        font: 300 clamp(2rem, 4vw, 2.85rem) var(--font-body);
+        line-height: 1.12;
         margin: 0;
         text-align: center;
+        text-wrap: balance;
         text-shadow:
-          0 0.18rem 0.5rem rgba(0, 0, 0, 0.96),
-          0 0.72rem 1.6rem rgba(0, 0, 0, 0.78);
+          0 0.14rem 0.42rem rgba(0, 0, 0, 0.98),
+          0 0.62rem 1.4rem rgba(0, 0, 0, 0.8),
+          0 0 1.35rem rgba(217, 184, 93, 0.12);
       }
 
       .screen-text {
-        color: rgba(241, 223, 170, 0.76);
-        font: 700 1.02rem var(--font-body);
-        line-height: 1.5;
+        color: rgba(248, 235, 198, 0.76);
+        font: 300 1.04rem var(--font-body);
+        line-height: 1.58;
         margin: 0;
-        max-width: 37rem;
+        max-width: 38rem;
         text-align: center;
+        text-wrap: balance;
         text-shadow:
-          0 0.14rem 0.42rem rgba(0, 0, 0, 0.96),
-          0 0.62rem 1.35rem rgba(0, 0, 0, 0.76);
+          0 0.12rem 0.34rem rgba(0, 0, 0, 0.98),
+          0 0.54rem 1.2rem rgba(0, 0, 0, 0.76);
       }
 
       .logo-link {
         animation: logo-breathe 7s ease-in-out infinite;
         display: inline-grid;
         place-items: center;
-        width: min(78vw, 38rem);
+        width: min(80vw, 40rem);
         outline-offset: 1rem;
+        position: relative;
+      }
+
+      .logo-link::before,
+      .logo-link::after {
+        content: "";
+        inset: 0;
+        mask-image: url("/assets/logo.png");
+        mask-position: center;
+        mask-repeat: no-repeat;
+        mask-size: contain;
+        pointer-events: none;
+        position: absolute;
+        -webkit-mask-image: url("/assets/logo.png");
+        -webkit-mask-position: center;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-size: contain;
+      }
+
+      .logo-link::before {
+        animation: logo-outline-pulse 6.8s ease-in-out infinite;
+        background: rgba(241, 223, 170, 0.42);
+        filter:
+          drop-shadow(0 0 0.42rem rgba(217, 184, 93, 0.28))
+          drop-shadow(0 0 1.2rem rgba(217, 184, 93, 0.16));
+        transform-origin: center;
+        z-index: 0;
+      }
+
+      .logo-link::after {
+        animation: logo-trace-flow 7.4s ease-in-out infinite;
+        background:
+          linear-gradient(100deg, transparent 32%, rgba(241, 223, 170, 0.86) 48%, transparent 64%) -120% 48% / 48% 190% no-repeat,
+          repeating-linear-gradient(110deg, transparent 0 1.14rem, rgba(217, 184, 93, 0.22) 1.18rem 1.24rem, transparent 1.3rem 2.56rem);
+        filter: drop-shadow(0 0 0.8rem rgba(217, 184, 93, 0.2));
+        mix-blend-mode: screen;
+        z-index: 2;
       }
 
       .logo-link:focus-visible,
@@ -271,31 +382,62 @@
         width: auto;
         height: auto;
         max-width: 100%;
-        max-height: min(32svh, 18rem);
+        max-height: min(33svh, 18.5rem);
         object-fit: contain;
         filter:
-          drop-shadow(0 1.25rem 2.5rem rgba(0, 0, 0, 0.58))
-          drop-shadow(0 0 1.7rem var(--gold-soft));
+          drop-shadow(0 1.25rem 2.5rem rgba(0, 0, 0, 0.6))
+          drop-shadow(0 0 2rem rgba(217, 184, 93, 0.26));
+        position: relative;
+        z-index: 1;
       }
 
       .game-summary {
-        color: rgba(241, 223, 170, 0.82);
-        font: 700 1.05rem var(--font-body);
-        line-height: 1.5;
-        margin: -0.15rem 0 0;
-        max-width: min(90vw, 45rem);
+        background:
+          radial-gradient(ellipse at 50% 54%, rgba(9, 13, 18, 0.54), rgba(9, 13, 18, 0.24) 60%, transparent 76%),
+          linear-gradient(90deg, transparent, rgba(241, 223, 170, 0.05) 32%, rgba(217, 184, 93, 0.07) 70%, transparent);
+        color: rgba(248, 235, 198, 0.9);
+        font: 300 clamp(1.02rem, 1.45vw, 1.18rem) var(--font-body);
+        line-height: 1.64;
+        margin: -0.05rem 0 0;
+        max-width: min(90vw, 44rem);
+        padding: clamp(0.9rem, 1.8vw, 1.1rem) clamp(1.08rem, 3.4vw, 2.15rem);
+        position: relative;
         text-align: center;
+        text-wrap: balance;
         text-shadow:
-          0 0.14rem 0.42rem rgba(0, 0, 0, 0.96),
-          0 0.62rem 1.35rem rgba(0, 0, 0, 0.76);
+          0 0.11rem 0.34rem rgba(0, 0, 0, 0.98),
+          0 0.48rem 1.1rem rgba(0, 0, 0, 0.82),
+          0 0 1.2rem rgba(217, 184, 93, 0.14);
+      }
+
+      .game-summary::before,
+      .game-summary::after {
+        background: linear-gradient(90deg, transparent, rgba(217, 184, 93, 0.38), rgba(241, 223, 170, 0.22), transparent);
+        content: "";
+        height: 1px;
+        left: 50%;
+        opacity: 0.56;
+        position: absolute;
+        transform: translateX(-50%);
+        width: min(70%, 28rem);
+      }
+
+      .game-summary::before {
+        top: 0;
+      }
+
+      .game-summary::after {
+        bottom: 0;
       }
 
       .scroll-marker {
         animation: scroll-pulse 2.2s ease-in-out infinite;
         bottom: clamp(1rem, 3svh, 2rem);
+        color: rgba(241, 223, 170, 0.56);
+        display: block;
         height: 2.3rem;
         position: absolute;
-        width: 1px;
+        width: 2.3rem;
       }
 
       .scroll-marker::before,
@@ -307,18 +449,36 @@
       }
 
       .scroll-marker::before {
-        background: rgba(241, 223, 170, 0.48);
+        background: currentColor;
         height: 100%;
         width: 1px;
       }
 
       .scroll-marker::after {
-        border-bottom: 1px solid rgba(241, 223, 170, 0.56);
-        border-right: 1px solid rgba(241, 223, 170, 0.56);
+        border-bottom: 1px solid currentColor;
+        border-right: 1px solid currentColor;
         bottom: 0;
         height: 0.45rem;
         transform: translateX(-50%) rotate(45deg);
         width: 0.45rem;
+      }
+
+      a.scroll-marker {
+        outline-offset: 0.28rem;
+        text-decoration: none;
+        transition:
+          color 180ms ease,
+          filter 180ms ease,
+          transform 180ms ease;
+      }
+
+      a.scroll-marker:hover {
+        color: rgba(241, 223, 170, 0.9);
+        filter: drop-shadow(0 0 0.7rem rgba(217, 184, 93, 0.28));
+      }
+
+      a.scroll-marker:focus-visible {
+        outline: 2px solid var(--gold);
       }
 
       .media-carousel {
@@ -336,7 +496,10 @@
       .carousel-viewport {
         aspect-ratio: 16 / 9;
         border-radius: 0.45rem;
+        cursor: grab;
         overflow: hidden;
+        touch-action: pan-y;
+        user-select: none;
         width: 100%;
       }
 
@@ -345,6 +508,14 @@
         height: 100%;
         transition: transform 520ms ease;
         width: 100%;
+      }
+
+      .media-carousel.is-dragging .carousel-viewport {
+        cursor: grabbing;
+      }
+
+      .media-carousel.is-dragging .carousel-track {
+        transition: none;
       }
 
       .carousel-slide {
@@ -371,6 +542,8 @@
         max-height: 100%;
         max-width: 100%;
         object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
         width: auto;
         filter:
           drop-shadow(0 1rem 1.6rem rgba(0, 0, 0, 0.54))
@@ -499,7 +672,8 @@
 
       .platform-grid {
         display: grid;
-        gap: 0.7rem;
+        column-gap: 0.7rem;
+        row-gap: 1.8rem;
         grid-template-areas:
           "web steam"
           "android ios";
@@ -516,6 +690,61 @@
         min-height: 4.2rem;
       }
 
+      .platform-label {
+        align-items: center;
+        display: inline-flex;
+        gap: 0.5rem;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .platform-icon {
+        background: currentColor;
+        display: block;
+        flex: 0 0 auto;
+        height: 1.18rem;
+        mask: var(--platform-icon) center / contain no-repeat;
+        opacity: 0.86;
+        width: 1.18rem;
+        -webkit-mask: var(--platform-icon) center / contain no-repeat;
+      }
+
+      .platform-icon-web {
+        --platform-icon: url("/assets/platform-icons/web.svg");
+      }
+
+      .platform-icon-steam {
+        --platform-icon: url("/assets/platform-icons/steam.svg");
+      }
+
+      .platform-icon-android {
+        --platform-icon: url("/assets/platform-icons/android.svg");
+      }
+
+      .platform-icon-ios {
+        --platform-icon: url("/assets/platform-icons/apple.svg");
+      }
+
+      .platform-icon-devlog {
+        --platform-icon: url("/assets/platform-icons/devlog.svg");
+      }
+
+      .platform-icon-github {
+        --platform-icon: url("/assets/platform-icons/github.svg");
+      }
+
+      .platform-icon-reddit {
+        --platform-icon: url("/assets/platform-icons/reddit.svg");
+      }
+
+      .platform-icon-contact {
+        --platform-icon: url("/assets/platform-icons/contact.svg");
+      }
+
+      .platform-ios .platform-label {
+        text-transform: none;
+      }
+
       .platform-web {
         grid-area: web;
       }
@@ -530,24 +759,46 @@
 
       .platform-android {
         grid-area: android;
-      }
-
-      .platform-release-line {
-        align-items: center;
-        display: inline-flex;
-        justify-content: center;
+        overflow: visible;
+        position: relative;
       }
 
       .platform-countdown-link {
-        flex-direction: column;
-        gap: 0.36rem;
+        color: rgba(241, 223, 170, 0.72);
       }
 
       .platform-countdown-row {
         align-items: center;
+        background:
+          linear-gradient(180deg, rgba(241, 223, 170, 0.12), rgba(9, 13, 18, 0.76)),
+          rgba(9, 13, 18, 0.72);
+        border: 1px solid rgba(217, 184, 93, 0.34);
+        border-radius: 999px;
+        box-shadow:
+          0 0.55rem 1.25rem rgba(0, 0, 0, 0.28),
+          0 0 0.85rem rgba(217, 184, 93, 0.12);
         display: inline-flex;
         gap: 0.34rem;
         justify-content: center;
+        left: 50%;
+        padding: 0.26rem 0.5rem 0.28rem;
+        position: absolute;
+        top: calc(100% - 0.36rem);
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+
+      .platform-countdown-row::before {
+        background: rgba(9, 13, 18, 0.76);
+        border-left: 1px solid rgba(217, 184, 93, 0.28);
+        border-top: 1px solid rgba(217, 184, 93, 0.28);
+        content: "";
+        height: 0.44rem;
+        left: 50%;
+        position: absolute;
+        top: -0.27rem;
+        transform: translateX(-50%) rotate(45deg);
+        width: 0.44rem;
       }
 
       .platform-countdown {
@@ -674,7 +925,7 @@
         border-radius: 0.35rem;
         color: #f1dfaa;
         display: inline-flex;
-        font: 800 0.86rem var(--font-display);
+        font: 700 0.86rem var(--font-body);
         gap: 0.48rem;
         justify-content: center;
         line-height: 1;
@@ -702,7 +953,7 @@
       }
 
       .nav-link.primary {
-        font-size: 1.08rem;
+        font-size: 1.02rem;
         min-height: 3.35rem;
         padding: 0.95rem 1.2rem;
       }
@@ -730,6 +981,7 @@
         padding: 0.58rem 0.78rem;
         background: rgba(9, 13, 18, 0.54);
         box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.24);
+        text-transform: none;
       }
 
       @media (max-width: 700px) {
@@ -761,8 +1013,13 @@
           width: min(100%, 34rem);
         }
 
+        .screen-copy {
+          gap: 0.44rem;
+          padding: 0.82rem 0.9rem;
+        }
+
         .logo-link {
-          width: min(88vw, 30rem);
+          width: min(88vw, 31rem);
         }
 
         .logo-link img {
@@ -771,6 +1028,8 @@
 
         .game-summary {
           font-size: 0.95rem;
+          line-height: 1.5;
+          padding: 0.82rem 0.95rem;
         }
 
         .screen-kicker {
@@ -778,11 +1037,13 @@
         }
 
         .screen-title {
-          font-size: 1.72rem;
+          font-size: 1.78rem;
+          line-height: 1.14;
         }
 
         .screen-text {
           font-size: 0.94rem;
+          line-height: 1.48;
         }
 
         .media-carousel {
@@ -795,6 +1056,7 @@
         }
 
         .platform-grid {
+          row-gap: 1.55rem;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           width: min(100%, 22rem);
         }
@@ -806,8 +1068,23 @@
           padding: 0.74rem 0.5rem;
         }
 
+        .platform-label {
+          gap: 0.34rem;
+        }
+
+        .platform-icon {
+          height: 1rem;
+          width: 1rem;
+        }
+
         .platform-countdown {
           font-size: 0.6rem;
+          min-width: 11.8ch;
+        }
+
+        .platform-countdown-row {
+          gap: 0.28rem;
+          padding: 0.23rem 0.42rem 0.25rem;
         }
 
         .footer-main {
@@ -851,6 +1128,11 @@
           transform: scale(1.012);
         }
 
+        .logo-link::before,
+        .logo-link::after {
+          animation: none;
+        }
+
         .screen-inner,
         .logo-link,
         .scroll-marker {
@@ -883,7 +1165,7 @@
   </head>
   <body>
     <main>
-      <section class="homepage-screen hero-screen" aria-label="Age of New Worlds">
+      <section id="hero" class="homepage-screen hero-screen" aria-label="Age of New Worlds">
         <div class="screen-inner hero-inner">
           <a
             class="logo-link reveal-item"
@@ -900,10 +1182,11 @@
             by every turn.
           </p>
         </div>
-        <span class="scroll-marker" aria-hidden="true"></span>
+        <a class="scroll-marker" href="#media" aria-label="Go to gameplay section"></a>
       </section>
 
       <section
+        id="media"
         class="homepage-screen media-screen"
         aria-labelledby="media-title"
       >
@@ -928,6 +1211,7 @@
                     class="mobile-capture"
                     src="/assets/aonw-mobile.png"
                     alt="Age of New Worlds mobile gameplay"
+                    draggable="false"
                   >
                 </div>
                 <div
@@ -1033,10 +1317,11 @@
             </div>
           </div>
         </div>
-        <span class="scroll-marker" aria-hidden="true"></span>
+        <a class="scroll-marker" href="#platforms" aria-label="Go to platforms section"></a>
       </section>
 
       <section
+        id="platforms"
         class="homepage-screen platforms-screen"
         aria-labelledby="platforms-title"
       >
@@ -1052,18 +1337,27 @@
           <nav class="reveal-item" aria-label="Age of New Worlds platform links">
             <div class="platform-links">
               <div class="platform-grid">
-                <a class="nav-link primary platform-web" href="https://demo.aonw.net/">Web</a>
+                <a class="nav-link primary platform-web" href="https://demo.aonw.net/">
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-web" aria-hidden="true"></span>
+                    Web
+                  </span>
+                </a>
                 <a
                   class="nav-link primary platform-steam"
                   href="https://store.steampowered.com/app/4833240/Age_of_New_Worlds/"
                 >
-                  Steam
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-steam" aria-hidden="true"></span>
+                    Steam
+                  </span>
                 </a>
                 <span
                   class="nav-link primary is-disabled platform-android platform-countdown-link"
                   aria-disabled="true"
                 >
-                  <span class="platform-release-line">
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-android" aria-hidden="true"></span>
                     Android
                   </span>
                   <span class="platform-countdown-row">
@@ -1078,12 +1372,17 @@
                 <a
                   class="nav-link primary platform-ios"
                   href="https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591"
-                >iOS</a>
+                >
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-ios" aria-hidden="true"></span>
+                    iOS
+                  </span>
+                </a>
               </div>
             </div>
           </nav>
         </div>
-        <span class="scroll-marker" aria-hidden="true"></span>
+        <a class="scroll-marker" href="#community-title" aria-label="Go to community section"></a>
       </section>
 
       <section
@@ -1103,16 +1402,36 @@
             </div>
             <nav class="reveal-item" aria-label="Age of New Worlds footer links">
               <div class="secondary-links">
-                <a class="nav-link" href="https://ernest.dev/">Devlog</a>
-                <a class="nav-link" href="https://github.com/ernestwisniewski/aonw">GitHub</a>
-                <a class="nav-link" href="https://www.reddit.com/r/aonw/">Reddit</a>
+                <a class="nav-link" href="https://ernest.dev/">
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-devlog" aria-hidden="true"></span>
+                    Devlog
+                  </span>
+                </a>
+                <a class="nav-link" href="https://github.com/ernestwisniewski/aonw">
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-github" aria-hidden="true"></span>
+                    GitHub
+                  </span>
+                </a>
+                <a class="nav-link" href="https://www.reddit.com/r/aonw/">
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-reddit" aria-hidden="true"></span>
+                    Reddit
+                  </span>
+                </a>
                 <a
                   class="nav-link"
                   href="#contact"
                   data-contact-link
                   data-contact-local="contact"
                   data-contact-domain="aonw.net"
-                >Contact</a>
+                >
+                  <span class="platform-label">
+                    <span class="platform-icon platform-icon-contact" aria-hidden="true"></span>
+                    Contact
+                  </span>
+                </a>
               </div>
             </nav>
           </div>
@@ -1301,15 +1620,23 @@
         if (!carousel) return;
 
         const track = carousel.querySelector("[data-carousel-track]");
+        const viewport = carousel.querySelector(".carousel-viewport");
         const slides = [...carousel.querySelectorAll("[data-carousel-slide]")];
         const dots = [...carousel.querySelectorAll("[data-carousel-dot]")];
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const firstRotationDelayMs = 4000;
         const rotationIntervalMs = 7000;
+        const dragIntentThresholdPx = 8;
+        const swipeDistanceThresholdPx = 46;
+        const quickSwipeThresholdPx = 24;
+        const quickSwipeVelocityPxPerMs = 0.45;
         let index = 0;
         let timer = null;
         let paused = false;
         let carouselFullyVisible = false;
+        let dragState = null;
+        let suppressCoverClick = false;
+        let suppressCoverClickTimer = null;
         const videoPlayers = new Map();
 
         const clearRotationTimer = () => {
@@ -1341,6 +1668,18 @@
             }
           });
           if (options.userInitiated) stopRotation();
+        };
+
+        const suppressNextCoverClick = () => {
+          suppressCoverClick = true;
+          window.clearTimeout(suppressCoverClickTimer);
+          suppressCoverClickTimer = window.setTimeout(() => {
+            suppressCoverClick = false;
+          }, 350);
+        };
+
+        const restoreDragPosition = () => {
+          track.style.transform = `translateX(${-index * 100}%)`;
         };
 
         const scheduleNextSlide = (delayMs) => {
@@ -1403,6 +1742,103 @@
           }
         });
 
+        const finishDrag = (event, options = {}) => {
+          if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+          const state = dragState;
+          dragState = null;
+          carousel.classList.remove("is-dragging");
+          if (viewport?.hasPointerCapture?.(state.pointerId)) {
+            viewport.releasePointerCapture(state.pointerId);
+          }
+
+          if (!state.isHorizontalSwipe || options.cancelled) {
+            restoreDragPosition();
+            return;
+          }
+
+          const deltaX = event.clientX - state.startX;
+          const distance = Math.abs(deltaX);
+          const elapsedMs = Math.max(event.timeStamp - state.startTime, 1);
+          const velocity = distance / elapsedMs;
+          const isSwipe =
+            distance >= swipeDistanceThresholdPx ||
+            (distance >= quickSwipeThresholdPx && velocity >= quickSwipeVelocityPxPerMs);
+
+          if (isSwipe) {
+            showSlide(index + (deltaX < 0 ? 1 : -1), { userInitiated: true });
+            return;
+          }
+
+          restoreDragPosition();
+        };
+
+        if (viewport && slides.length > 1) {
+          viewport.addEventListener(
+            "pointerdown",
+            (event) => {
+              if (event.pointerType === "mouse" && event.button !== 0) return;
+              if (event.target instanceof HTMLImageElement) event.preventDefault();
+              dragState = {
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                startTime: event.timeStamp,
+                isDecided: false,
+                isHorizontalSwipe: false,
+              };
+              viewport.setPointerCapture?.(event.pointerId);
+            },
+            { passive: false },
+          );
+
+          viewport.addEventListener("dragstart", (event) => {
+            event.preventDefault();
+          });
+
+          viewport.addEventListener(
+            "pointermove",
+            (event) => {
+              if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+              const deltaX = event.clientX - dragState.startX;
+              const deltaY = event.clientY - dragState.startY;
+              const absX = Math.abs(deltaX);
+              const absY = Math.abs(deltaY);
+
+              if (!dragState.isDecided) {
+                if (Math.max(absX, absY) < dragIntentThresholdPx) return;
+                dragState.isDecided = true;
+                dragState.isHorizontalSwipe = absX > absY * 1.2;
+                if (dragState.isHorizontalSwipe) {
+                  stopRotation();
+                  carousel.classList.add("is-dragging");
+                }
+              }
+
+              if (!dragState.isHorizontalSwipe) return;
+
+              event.preventDefault();
+              suppressNextCoverClick();
+              const viewportWidth = Math.max(viewport.clientWidth, 1);
+              const isAtStart = index === 0 && deltaX > 0;
+              const isAtEnd = index === slides.length - 1 && deltaX < 0;
+              const visualDeltaX = isAtStart || isAtEnd ? deltaX * 0.38 : deltaX;
+              const offsetPercent = (visualDeltaX / viewportWidth) * 100;
+              track.style.transform = `translateX(calc(${-index * 100}% + ${offsetPercent}%))`;
+            },
+            { passive: false },
+          );
+
+          viewport.addEventListener("pointerup", finishDrag);
+          viewport.addEventListener("pointercancel", (event) => {
+            finishDrag(event, { cancelled: true });
+          });
+          viewport.addEventListener("lostpointercapture", (event) => {
+            finishDrag(event, { cancelled: true });
+          });
+        }
+
         const videoSlides = [...carousel.querySelectorAll("[data-video-slide]")];
         videoSlides.forEach((videoSlide) => {
           videoSlide.addEventListener("pointerdown", stopRotation, {
@@ -1425,7 +1861,14 @@
         };
 
         videoCovers.forEach((cover) => {
-          cover.addEventListener("click", () => unlockVideo(cover));
+          cover.addEventListener("click", (event) => {
+            if (suppressCoverClick) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            unlockVideo(cover);
+          });
         });
 
         if (videos.length > 0) {

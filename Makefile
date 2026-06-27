@@ -345,13 +345,22 @@ build-homepage:
 	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
 	@test -f assets/aonw-mobile.png || { echo "assets/aonw-mobile.png not found"; exit 1; }
 	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "assets/fonts/Cinzel-VariableFont_wght.ttf not found"; exit 1; }
+	@test -f assets/fonts/Lato-Light.ttf || { echo "assets/fonts/Lato-Light.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Regular.ttf || { echo "assets/fonts/Lato-Regular.ttf not found"; exit 1; }
 	@test -f assets/fonts/Lato-Bold.ttf || { echo "assets/fonts/Lato-Bold.ttf not found"; exit 1; }
 	@test -f assets/main_menu/background.png || { echo "assets/main_menu/background.png not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/android.svg || { echo "assets/homepage/platform-icons/android.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/apple.svg || { echo "assets/homepage/platform-icons/apple.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/contact.svg || { echo "assets/homepage/platform-icons/contact.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/devlog.svg || { echo "assets/homepage/platform-icons/devlog.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/github.svg || { echo "assets/homepage/platform-icons/github.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/reddit.svg || { echo "assets/homepage/platform-icons/reddit.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/steam.svg || { echo "assets/homepage/platform-icons/steam.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/web.svg || { echo "assets/homepage/platform-icons/web.svg not found"; exit 1; }
 	@test -f web/favicon.png || { echo "web/favicon.png not found"; exit 1; }
 	@test -f web/icons/Icon-192.png || { echo "web/icons/Icon-192.png not found"; exit 1; }
 	@rm -rf "$(HOMEPAGE_BUILD_DIR)"
-	@mkdir -p "$(HOMEPAGE_BUILD_DIR)/assets/main_menu" "$(HOMEPAGE_BUILD_DIR)/assets/fonts"
+	@mkdir -p "$(HOMEPAGE_BUILD_DIR)/assets/main_menu" "$(HOMEPAGE_BUILD_DIR)/assets/fonts" "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/index.html" "$(HOMEPAGE_BUILD_DIR)/index.html"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html" "$(HOMEPAGE_BUILD_DIR)/privacy-policy"
 	@cp web/favicon.png "$(HOMEPAGE_BUILD_DIR)/favicon.png"
@@ -359,9 +368,11 @@ build-homepage:
 	@cp assets/logo.png "$(HOMEPAGE_BUILD_DIR)/assets/logo.png"
 	@cp assets/aonw-mobile.png "$(HOMEPAGE_BUILD_DIR)/assets/aonw-mobile.png"
 	@cp assets/fonts/Cinzel-VariableFont_wght.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Cinzel-VariableFont_wght.ttf"
+	@cp assets/fonts/Lato-Light.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Light.ttf"
 	@cp assets/fonts/Lato-Regular.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Regular.ttf"
 	@cp assets/fonts/Lato-Bold.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Bold.ttf"
 	@cp assets/main_menu/background.png "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.png"
+	@cp assets/homepage/platform-icons/*.svg "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons/"
 	@echo "Static homepage staged in $(HOMEPAGE_BUILD_DIR)/"
 
 deploy-homepage: build-homepage
