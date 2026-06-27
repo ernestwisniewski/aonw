@@ -44,6 +44,58 @@ void main() {
     expect(theme.showDuration, const Duration(seconds: 5));
   });
 
+  testWidgets('app starts in a supported system language without an override', (
+    WidgetTester tester,
+  ) async {
+    tester.binding.platformDispatcher.localesTestValue = const [Locale('pl')];
+    addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+
+    await tester.pumpWidget(const ProviderScope(child: HexApp()));
+    await tester.pump();
+
+    final context = tester.element(find.byType(MainMenuScreen));
+    final container = ProviderScope.containerOf(context, listen: false);
+
+    expect(Localizations.localeOf(context), const Locale('pl'));
+    expect(container.read(languageSettingsProvider).selectedLanguage, isNull);
+  });
+
+  testWidgets('app falls back to English for unsupported system languages', (
+    WidgetTester tester,
+  ) async {
+    tester.binding.platformDispatcher.localesTestValue = const [Locale('fr')];
+    addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+
+    await tester.pumpWidget(const ProviderScope(child: HexApp()));
+    await tester.pump();
+
+    expect(
+      Localizations.localeOf(tester.element(find.byType(MainMenuScreen))),
+      const Locale('en'),
+    );
+  });
+
+  testWidgets('saved language override wins over the system language', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'language.locale': 'de'});
+    tester.binding.platformDispatcher.localesTestValue = const [Locale('pl')];
+    addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+
+    await tester.pumpWidget(const ProviderScope(child: HexApp()));
+    await tester.pump();
+    await tester.pump();
+
+    final context = tester.element(find.byType(MainMenuScreen));
+    final container = ProviderScope.containerOf(context, listen: false);
+
+    expect(Localizations.localeOf(context), const Locale('de'));
+    expect(
+      container.read(languageSettingsProvider).selectedLanguage,
+      GameLanguage.german,
+    );
+  });
+
   testWidgets('main menu settings can scale text globally', (
     WidgetTester tester,
   ) async {
@@ -110,9 +162,11 @@ void main() {
     final container = ProviderScope.containerOf(context, listen: false);
 
     expect(
-      container.read(languageSettingsProvider).language,
+      container.read(languageSettingsProvider).selectedLanguage,
       GameLanguage.polish,
     );
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('language.locale'), 'pl');
     expect(find.byType(OptionsScreen), findsOneWidget);
   });
 

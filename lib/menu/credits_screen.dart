@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
@@ -8,6 +10,9 @@ import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+final Uri _devlogUrl = Uri.parse('https://ernest.dev');
 
 class CreditsScreen extends ConsumerWidget {
   const CreditsScreen({super.key});
@@ -46,11 +51,39 @@ class CreditsScreen extends ConsumerWidget {
               child: MenuRouteSection(
                 icon: Icons.history_edu_outlined,
                 title: l10n.creditsTitle,
-                child: Text(
-                  l10n.creditsCreatedBy('Ernest'),
-                  style: GameUiTheme.body.copyWith(
-                    color: GameUiTheme.textPrimary,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.creditsCreatedBy('Ernest'),
+                      style: GameUiTheme.body.copyWith(
+                        color: GameUiTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      key: const Key('credits.devlogLink'),
+                      onPressed: ref.withMenuClick(
+                        () => unawaited(_openDevlogUrl()),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: GameUiTheme.goldLight,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 8,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.centerLeft,
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                      label: Text(
+                        'Devlog: ernest.dev',
+                        style: GameUiTheme.bodyStrong.copyWith(
+                          color: GameUiTheme.goldLight,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -59,4 +92,8 @@ class CreditsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _openDevlogUrl() async {
+  await launchUrl(_devlogUrl, mode: LaunchMode.externalApplication);
 }
