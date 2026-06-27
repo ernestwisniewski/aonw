@@ -10,9 +10,7 @@ abstract final class InteractionReducer {
     StartCityWorkedHexSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final city = state.cities
-        .where((city) => city.id == command.cityId)
-        .firstOrNull;
+    final city = state.cityById(command.cityId);
     if (city == null ||
         city.controlledHexes.isEmpty ||
         !context.canControlCity(state, city)) {
@@ -44,9 +42,7 @@ abstract final class InteractionReducer {
     StartCityExpansionSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final city = state.cities
-        .where((city) => city.id == command.cityId)
-        .firstOrNull;
+    final city = state.cityById(command.cityId);
     if (city == null || !context.canControlCity(state, city)) {
       return state;
     }
@@ -184,6 +180,6 @@ abstract final class InteractionReducer {
   }
 
   static GameUnit? _findUnit(GameState state, String unitId) {
-    return state.units.where((unit) => unit.id == unitId).firstOrNull;
+    return state.unitById(unitId);
   }
 }

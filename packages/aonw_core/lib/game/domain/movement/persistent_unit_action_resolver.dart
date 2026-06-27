@@ -1,6 +1,7 @@
 import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -27,7 +28,7 @@ class PersistentUnitActionResolver {
     required CancelUnitActionCommand command,
     required String actorPlayerId,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -69,7 +70,7 @@ class PersistentUnitActionResolver {
     required SkipUnitTurnCommand command,
     required String actorPlayerId,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -90,7 +91,7 @@ class PersistentUnitActionResolver {
     required FortifyUnitCommand command,
     required String actorPlayerId,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -109,7 +110,7 @@ class PersistentUnitActionResolver {
     required String actorPlayerId,
     required MapDefinition mapDefinition,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -142,7 +143,7 @@ class PersistentUnitActionResolver {
     );
     if (!moved.accepted) return _reject(state, moved.reason ?? 'move_failed');
 
-    final movedUnit = _unitById(moved.state.units, unit.id);
+    final movedUnit = moved.state.units.byId(unit.id);
     if (movedUnit == null) return _reject(state, 'unit_not_found');
     return PersistentUnitActionResult(
       accepted: true,
@@ -259,13 +260,6 @@ class PersistentUnitActionResolver {
         else
           artifact,
     ];
-  }
-
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 
   static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {

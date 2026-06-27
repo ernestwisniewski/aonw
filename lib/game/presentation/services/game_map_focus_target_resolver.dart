@@ -60,19 +60,11 @@ class GameMapFocusTargetResolver {
 
   GameUnit? unitById(String unitId) {
     final state = this.state;
-    if (state == null || unitId.isEmpty) return null;
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return state == null || unitId.isEmpty ? null : state.unitById(unitId);
   }
 
   GameCity? cityById(String cityId) {
     final state = this.state;
-    if (state == null || cityId.isEmpty) return null;
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
+    return state == null || cityId.isEmpty ? null : state.cityById(cityId);
   }
 }

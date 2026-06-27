@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 
 abstract final class AiTurnFollowUpPlanner {
@@ -39,7 +40,7 @@ abstract final class AiTurnFollowUpPlanner {
     );
     if (nextPlayerId.isEmpty) return const AiTurnFollowUpNone();
 
-    final nextPlayer = _playerById(updatedSave, nextPlayerId);
+    final nextPlayer = updatedSave.playerById(nextPlayerId);
     if (nextPlayer == null) return const AiTurnFollowUpNone();
 
     if (nextPlayer.kind == PlayerKind.ai && nextPlayer.ai != null) {
@@ -96,18 +97,11 @@ abstract final class AiTurnFollowUpPlanner {
         save.playerStates[playerId] == PlayerTurnState.active;
   }
 
-  static Player? _playerById(GameSave save, String playerId) {
-    for (final player in save.players) {
-      if (player.id == playerId) return player;
-    }
-    return null;
-  }
-
   static String? _localHumanPlayerId({
     required GameSave save,
     required String controlPlayerId,
   }) {
-    final controlPlayer = _playerById(save, controlPlayerId);
+    final controlPlayer = save.playerById(controlPlayerId);
     if (controlPlayer != null && controlPlayer.kind == PlayerKind.human) {
       return controlPlayer.id;
     }

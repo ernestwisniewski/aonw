@@ -186,13 +186,8 @@ class ReplayStep {
     required GameState state,
     required GameState previousState,
   }) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit.ownerPlayerId;
-    }
-    for (final unit in previousState.units) {
-      if (unit.id == unitId) return unit.ownerPlayerId;
-    }
-    return null;
+    return state.unitById(unitId)?.ownerPlayerId ??
+        previousState.unitById(unitId)?.ownerPlayerId;
   }
 
   static String? _cityOwner(
@@ -200,13 +195,8 @@ class ReplayStep {
     required GameState state,
     required GameState previousState,
   }) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city.ownerPlayerId;
-    }
-    for (final city in previousState.cities) {
-      if (city.id == cityId) return city.ownerPlayerId;
-    }
-    return null;
+    return state.cityById(cityId)?.ownerPlayerId ??
+        previousState.cityById(cityId)?.ownerPlayerId;
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 
 abstract final class AiPrecomputeTargets {
@@ -28,7 +29,7 @@ abstract final class AiPrecomputeTargets {
         break;
       }
 
-      final nextPlayer = _playerById(save, nextPlayerId);
+      final nextPlayer = save.playerById(nextPlayerId);
       if (nextPlayer == null) break;
       if (nextPlayer.kind != PlayerKind.ai || nextPlayer.ai == null) {
         break;
@@ -52,14 +53,7 @@ abstract final class AiPrecomputeTargets {
       return false;
     }
 
-    final currentPlayer = _playerById(save, control.activePlayerId);
+    final currentPlayer = save.playerById(control.activePlayerId);
     return currentPlayer != null && currentPlayer.kind == PlayerKind.human;
-  }
-
-  static Player? _playerById(GameSave save, String playerId) {
-    for (final player in save.players) {
-      if (player.id == playerId) return player;
-    }
-    return null;
   }
 }

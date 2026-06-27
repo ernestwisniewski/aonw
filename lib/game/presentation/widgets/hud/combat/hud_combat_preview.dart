@@ -150,7 +150,7 @@ abstract final class HudCombatPreviewFactory {
     final pendingAction = state.pendingAction;
     if (pendingAction is! PendingAttackTargeting) return null;
 
-    final attacker = _unitById(state.units, pendingAction.attackerUnitId);
+    final attacker = state.unitById(pendingAction.attackerUnitId);
     if (attacker == null ||
         !state.canControlUnit(attacker) ||
         attacker.isWorking ||
@@ -399,13 +399,6 @@ abstract final class HudCombatPreviewFactory {
       return left.id.compareTo(right.id);
     });
     return candidates.isEmpty ? null : candidates.first;
-  }
-
-  static GameUnit? _unitById(Iterable<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 
   static GameCity? _cityAt(GameState state, int col, int row) {

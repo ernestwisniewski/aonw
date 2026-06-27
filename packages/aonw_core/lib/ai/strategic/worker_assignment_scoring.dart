@@ -172,10 +172,7 @@ final class _WorkerTargetRanker {
     required GameUnit worker,
     required StrategicWorkerTarget target,
   }) {
-    final city = WorkerAssignmentPlanner._cityById(
-      view.ownCities,
-      target.cityId,
-    );
+    final city = view.ownCities.byId(target.cityId);
     final currentHex = CityHex(col: worker.col, row: worker.row);
     final currentCityBonus = city != null && city.controlsHex(currentHex)
         ? WorkerAssignmentPlanner._distancePenalty * 2

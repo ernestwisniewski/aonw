@@ -22,6 +22,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
@@ -545,7 +546,7 @@ class _DiplomaticMessagePopupOverlayState
   }
 
   Color _playerColor(String playerId) {
-    final player = _playerById(widget.gameSave, playerId);
+    final player = widget.gameSave?.playerById(playerId);
     if (player != null) return Color(player.colorValue);
     final save = widget.gameSave;
     if (save != null) {

@@ -1,9 +1,7 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 sealed class GameEventNotificationFocusTarget {
   const GameEventNotificationFocusTarget({
@@ -178,7 +176,7 @@ UnitNotificationFocusTarget? _unitTarget(
   String unitId, {
   String? viewerPlayerId,
 }) {
-  final unit = _unitById(state, unitId);
+  final unit = state.unitById(unitId);
   if (unit == null) return null;
   if (!MapFocusVisibility.canFocusUnit(
     state,
@@ -195,7 +193,7 @@ CityNotificationFocusTarget? _cityTarget(
   String cityId, {
   String? viewerPlayerId,
 }) {
-  final city = _cityById(state, cityId);
+  final city = state.cityById(cityId);
   if (city == null) return null;
   if (!MapFocusVisibility.canAutoFocusCity(
     state,
@@ -209,20 +207,6 @@ CityNotificationFocusTarget? _cityTarget(
     col: city.center.col,
     row: city.center.row,
   );
-}
-
-GameUnit? _unitById(GameState state, String unitId) {
-  for (final unit in state.units) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
-}
-
-GameCity? _cityById(GameState state, String cityId) {
-  for (final city in state.cities) {
-    if (city.id == cityId) return city;
-  }
-  return null;
 }
 
 GameEventNotificationFocusTarget? _playerAnchorTarget(

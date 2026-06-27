@@ -4,16 +4,14 @@ import 'package:aonw/game/application/services/ai_runtime_mode.dart'
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 
 final class GameAiTurnAutoPilotRules {
   const GameAiTurnAutoPilotRules._();
 
   static Player? playerById(GameSave save, String playerId) {
-    for (final player in save.players) {
-      if (player.id == playerId) return player;
-    }
-    return null;
+    return save.playerById(playerId);
   }
 
   static Player? aiPlayerToRun({

@@ -18,7 +18,7 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
@@ -225,20 +225,13 @@ class DiplomacyPlayerModal extends StatelessWidget {
     );
   }
 
-  Player? _playerById(String playerId) {
-    for (final player in gameSave.players) {
-      if (player.id == playerId) return player;
-    }
-    return null;
-  }
-
   String _playerName(AppLocalizations l10n, String playerId) {
-    final player = _playerById(playerId);
+    final player = gameSave.playerById(playerId);
     return player == null ? playerId : GameDisplayNames.player(l10n, player);
   }
 
   String _playerCountryName(AppLocalizations l10n, String playerId) {
-    final player = _playerById(playerId);
+    final player = gameSave.playerById(playerId);
     final country = player?.country ?? gameState.playerCountries[playerId];
     if (country == null) return playerId;
     return GameDisplayNames.playerCountry(l10n, country);

@@ -431,7 +431,7 @@ abstract final class CombatReducer {
     AttackHexCommand command, {
     required GameCommandContext context,
   }) {
-    final attacker = _unitById(state.units, command.attackerUnitId);
+    final attacker = state.unitById(command.attackerUnitId);
     if (attacker == null ||
         !context.canControlUnit(state, attacker) ||
         attacker.isWorking ||
@@ -559,13 +559,6 @@ abstract final class CombatReducer {
     return result;
   }
 
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
   static bool _isProtectedRelation(
     GameState state,
     String attackerPlayerId,
@@ -615,7 +608,7 @@ abstract final class CombatReducer {
   ) {
     final selectedId = selection.unit?.id;
     if (selectedId == null) return state.copyWithInteraction(selection: null);
-    final unit = _unitById(state.units, selectedId);
+    final unit = state.unitById(selectedId);
     if (unit == null) return state.copyWithInteraction(selection: null);
     return state.copyWithInteraction(
       selection: GameSelection.unit(

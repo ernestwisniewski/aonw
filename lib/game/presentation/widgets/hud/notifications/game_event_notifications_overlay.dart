@@ -230,10 +230,7 @@ bool _isCriticalNotification(GameEventNotification notification) {
 }
 
 bool _unitBelongsTo(GameState state, String unitId, String playerId) {
-  for (final unit in state.units) {
-    if (unit.id == unitId) return unit.ownerPlayerId == playerId;
-  }
-  return false;
+  return state.unitById(unitId)?.ownerPlayerId == playerId;
 }
 
 class _NotificationOverflowPill extends StatelessWidget {

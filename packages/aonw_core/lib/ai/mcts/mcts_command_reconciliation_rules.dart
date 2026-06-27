@@ -6,6 +6,7 @@ import 'package:aonw_core/ai/strategic/war_goal.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -290,10 +291,7 @@ final class MctsCommandReconciliationRules {
   }
 
   GameUnit? unitById(Iterable<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return units.byId(unitId);
   }
 
   GameUnit? unitAt(Iterable<GameUnit> units, int col, int row) {
@@ -311,10 +309,7 @@ final class MctsCommandReconciliationRules {
   }
 
   GameCity? cityById(Iterable<GameCity> cities, String cityId) {
-    for (final city in cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
+    return cities.byId(cityId);
   }
 
   bool isStrategicSupportUnit(GameUnit unit) =>

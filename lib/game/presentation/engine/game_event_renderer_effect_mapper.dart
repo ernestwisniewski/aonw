@@ -180,16 +180,16 @@ abstract final class GameEventRendererEffectMapper {
     }
 
     final attacker =
-        _unitById(previousState ?? state, event.attackerUnitId) ??
-        _unitById(state, event.attackerUnitId);
+        (previousState ?? state).unitById(event.attackerUnitId) ??
+        state.unitById(event.attackerUnitId);
     final defender =
-        _unitById(previousState ?? state, event.defenderUnitId) ??
-        _unitById(state, event.defenderUnitId);
-    final attackerAlertUnit = _unitById(state, event.attackerUnitId);
-    final defenderAlertUnit = _unitById(state, event.defenderUnitId);
+        (previousState ?? state).unitById(event.defenderUnitId) ??
+        state.unitById(event.defenderUnitId);
+    final attackerAlertUnit = state.unitById(event.attackerUnitId);
+    final defenderAlertUnit = state.unitById(event.defenderUnitId);
     final defenderCity =
-        _cityById(previousState ?? state, event.defenderUnitId) ??
-        _cityById(state, event.defenderUnitId);
+        (previousState ?? state).cityById(event.defenderUnitId) ??
+        state.cityById(event.defenderUnitId);
 
     if (attackerAlertUnit != null &&
         _canRenderTransientAt(
@@ -344,7 +344,7 @@ abstract final class GameEventRendererEffectMapper {
     String? viewerPlayerId,
   }) {
     if (previousState == null) return null;
-    final job = _unitById(previousState, unitId)?.workerJob;
+    final job = previousState.unitById(unitId)?.workerJob;
     if (job == null) return null;
     final yieldLabel = _yieldLabelFor(job.improvementType, l10n: l10n);
     if (yieldLabel == null && l10n == null) return null;
@@ -373,7 +373,7 @@ abstract final class GameEventRendererEffectMapper {
     String ownerPlayerId, {
     String? viewerPlayerId,
   }) {
-    final city = _cityById(state, cityId);
+    final city = state.cityById(cityId);
     if (city == null) return null;
     if (!_canRenderTransientAt(
       state,
@@ -396,7 +396,7 @@ abstract final class GameEventRendererEffectMapper {
     String cityId, {
     String? viewerPlayerId,
   }) {
-    final city = _cityById(state, cityId);
+    final city = state.cityById(cityId);
     if (city == null) return null;
     if (!_canRenderTransientAt(
       state,
@@ -421,7 +421,7 @@ abstract final class GameEventRendererEffectMapper {
     int row, {
     String? viewerPlayerId,
   }) {
-    final city = _cityById(state, cityId);
+    final city = state.cityById(cityId);
     if (city == null) return null;
     if (!_canRenderTransientAt(
       state,
@@ -447,7 +447,7 @@ abstract final class GameEventRendererEffectMapper {
     String? viewerPlayerId,
   }) {
     final unit =
-        _unitById(previousState ?? state, unitId) ?? _unitById(state, unitId);
+        (previousState ?? state).unitById(unitId) ?? state.unitById(unitId);
     if (unit == null) return const [];
     if (!_canRenderTransientAt(
       state,
@@ -507,20 +507,6 @@ abstract final class GameEventRendererEffectMapper {
       if (unit.ownerPlayerId == playerId) {
         return (col: unit.col, row: unit.row);
       }
-    }
-    return null;
-  }
-
-  static GameUnit? _unitById(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(GameState state, String cityId) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
     }
     return null;
   }

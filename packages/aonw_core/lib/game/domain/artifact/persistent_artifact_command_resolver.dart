@@ -2,6 +2,7 @@ import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -27,7 +28,7 @@ class PersistentArtifactCommandResolver {
     required StartArtifactExcavationCommand command,
     required String actorPlayerId,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -68,7 +69,7 @@ class PersistentArtifactCommandResolver {
     required StoreArtifactInCityCommand command,
     required String actorPlayerId,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -85,7 +86,7 @@ class PersistentArtifactCommandResolver {
     }
     final city = command.cityId == null
         ? _cityAt(state, unit.col, unit.row)
-        : _cityById(state, command.cityId!);
+        : state.cities.byId(command.cityId!);
     if (city == null) return _reject(state, 'city_not_found');
     if (city.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'city_not_controlled');
@@ -182,13 +183,6 @@ class PersistentArtifactCommandResolver {
     );
   }
 
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
   static WorldArtifact? _artifactById(
     List<WorldArtifact> artifacts,
     String artifactId,
@@ -220,13 +214,6 @@ class PersistentArtifactCommandResolver {
     return null;
   }
 
-  static GameCity? _cityById(PersistentGameState state, String cityId) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
-  }
-
   static WorldArtifact? _storedArtifactInCity(
     Iterable<WorldArtifact> artifacts,
     String cityId, {
@@ -248,7 +235,7 @@ class PersistentArtifactCommandResolver {
   ) {
     final cityId = artifact.location.cityId;
     if (!artifact.location.isStored || cityId == null) return false;
-    final city = _cityById(state, cityId);
+    final city = state.cities.byId(cityId);
     return city?.ownerPlayerId == playerId;
   }
 

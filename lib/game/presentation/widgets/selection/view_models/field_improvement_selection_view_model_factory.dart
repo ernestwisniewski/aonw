@@ -96,9 +96,7 @@ abstract final class FieldImprovementSelectionViewModelFactory {
     if (gameState == null) return null;
     final builtByCityId = improvement.builtByCityId;
     if (builtByCityId != null) {
-      for (final city in gameState.cities) {
-        if (city.id == builtByCityId) return city;
-      }
+      return gameState.cityById(builtByCityId);
     }
     for (final city in gameState.cities) {
       if (city.controlsHex(improvement.hex)) return city;

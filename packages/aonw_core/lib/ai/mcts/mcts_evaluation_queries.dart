@@ -5,6 +5,7 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/military_assessment.dart';
 import 'package:aonw_core/ai/strategic/strategic_plan.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -154,10 +155,7 @@ double mctsSettlerFrontierScore(SimulatedState state, int col, int row) {
 }
 
 GameUnit? mctsOwnUnitById(Iterable<GameUnit> units, String unitId) {
-  for (final unit in units) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
+  return units.byId(unitId);
 }
 
 GameUnit? mctsEnemyAt(Iterable<GameUnit> units, int col, int row) {

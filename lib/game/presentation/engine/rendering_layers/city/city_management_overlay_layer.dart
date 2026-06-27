@@ -96,7 +96,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     required CityRuleset cityRuleset,
     required bool Function(CityHex hex)? canShowHex,
   }) {
-    final city = state.cities.where((city) => city.id == cityId).firstOrNull;
+    final city = state.cityById(cityId);
     if (city == null) return const [];
 
     return switch (pending) {

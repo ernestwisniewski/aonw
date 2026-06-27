@@ -486,17 +486,12 @@ class GameRenderingCoordinator {
   }
 
   GameUnitType? _unitTypeForPlan(GameState state, UnitMovementPlan plan) {
-    for (final unit in state.units) {
-      if (unit.id == plan.unitId) return unit.type;
-    }
-    return null;
+    return state.unitById(plan.unitId)?.type;
   }
 
   bool _canShowPathForUnit(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return state.canControlUnit(unit);
-    }
-    return false;
+    final unit = state.unitById(unitId);
+    return unit != null && state.canControlUnit(unit);
   }
 
   bool _shouldShowThreatOverlay(GameState state) {

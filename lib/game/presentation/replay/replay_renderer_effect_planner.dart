@@ -1,12 +1,10 @@
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class ReplayRendererEffectPlanner {
   static const int _artifactCueColor = 0xFFFFD166;
@@ -92,8 +90,8 @@ abstract final class ReplayRendererEffectPlanner {
       if (perspective == null || perspective.isEmpty) return true;
 
       final unit =
-          _unitById(state, effect.unitId) ??
-          _unitById(previousState, effect.unitId);
+          state.unitById(effect.unitId) ??
+          previousState.unitById(effect.unitId);
       if (unit?.ownerPlayerId == perspective) return true;
 
       if (_canSeeMovement(effect, previousState) ||
@@ -153,8 +151,8 @@ abstract final class ReplayRendererEffectPlanner {
 
     if (!previousLocation.isCarried && location.isCarried) {
       final unit =
-          _unitById(state, location.unitId ?? '') ??
-          _unitById(previousState, location.unitId ?? '');
+          state.unitById(location.unitId ?? '') ??
+          previousState.unitById(location.unitId ?? '');
       return _ArtifactCue(
         text: l10n?.artifactGuidanceCarriedTitle ?? 'Artifact carried',
         col: unit?.col ?? previousLocation.col ?? 0,
@@ -169,11 +167,11 @@ abstract final class ReplayRendererEffectPlanner {
             previousLocation.cityId != location.cityId;
     if (movedIntoStorage) {
       final city =
-          _cityById(state, location.cityId ?? '') ??
-          _cityById(previousState, location.cityId ?? '');
+          state.cityById(location.cityId ?? '') ??
+          previousState.cityById(location.cityId ?? '');
       final unit = previousLocation.unitId == null
           ? null
-          : _unitById(previousState, previousLocation.unitId!);
+          : previousState.unitById(previousLocation.unitId!);
       return _ArtifactCue(
         text: l10n?.artifactGuidanceStoredTitle ?? 'Artifact stored',
         col: city?.center.col ?? unit?.col ?? 0,
@@ -254,20 +252,6 @@ abstract final class ReplayRendererEffectPlanner {
       return true;
     }
     return visibility.canSeeDynamicAt(col, row);
-  }
-
-  static GameUnit? _unitById(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(GameState state, String cityId) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
   }
 }
 

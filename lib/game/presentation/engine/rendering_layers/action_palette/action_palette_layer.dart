@@ -201,12 +201,8 @@ class ActionPaletteLayer extends Component with LayerAttachment {
   }
 
   GameUnit? _workerFor(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId && unit.type == GameUnitType.worker) {
-        return unit;
-      }
-    }
-    return null;
+    final unit = state.unitById(unitId);
+    return unit?.type == GameUnitType.worker ? unit : null;
   }
 
   Vector2 _worldPositionFor(GameUnit unit) {
@@ -215,10 +211,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
   }
 
   GameUnit? _unitFor(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return state.unitById(unitId);
   }
 
   String _moveConfirmationLabel(UnitMovementPlan preview, GameUnit unit) {

@@ -1,11 +1,9 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class GameSoundCueMapper {
   static List<GameSoundCue> forCommand({
@@ -153,28 +151,12 @@ abstract final class GameSoundCueMapper {
     return const [];
   }
 
-  static GameUnit? _unitById(GameState? state, String unitId) {
-    if (state == null) return null;
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(GameState? state, String cityId) {
-    if (state == null) return null;
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
-  }
-
   static String? _cityOwner(
     GameState state,
     GameState? previousState,
     String cityId,
   ) {
-    return (_cityById(state, cityId) ?? _cityById(previousState, cityId))
+    return (state.cityById(cityId) ?? previousState?.cityById(cityId))
         ?.ownerPlayerId;
   }
 
@@ -183,9 +165,8 @@ abstract final class GameSoundCueMapper {
     GameState? previousState,
     String id,
   ) {
-    return (_unitById(state, id) ?? _unitById(previousState, id))
-            ?.ownerPlayerId ??
-        (_cityById(state, id) ?? _cityById(previousState, id))?.ownerPlayerId;
+    return (state.unitById(id) ?? previousState?.unitById(id))?.ownerPlayerId ??
+        (state.cityById(id) ?? previousState?.cityById(id))?.ownerPlayerId;
   }
 
   static bool _combatInvolvesPlayer(
@@ -255,12 +236,12 @@ abstract final class GameSoundCueMapper {
       CancelWorkerJobCommand(:final unitId) ||
       AssignWorkerToHexCommand(:final unitId) ||
       CancelWorkerAssignmentCommand(:final unitId) => _belongsToPlayer(
-        (_unitById(previousState, unitId) ?? _unitById(state, unitId))
+        (previousState?.unitById(unitId) ?? state.unitById(unitId))
             ?.ownerPlayerId,
         playerId,
       ),
       FoundCityCommand(:final founderId) => _belongsToPlayer(
-        (_unitById(previousState, founderId) ?? _unitById(state, founderId))
+        (previousState?.unitById(founderId) ?? state.unitById(founderId))
             ?.ownerPlayerId,
         playerId,
       ),
@@ -277,7 +258,7 @@ abstract final class GameSoundCueMapper {
       StartCityExpansionSelectionCommand(:final cityId) ||
       CancelCityExpansionSelectionCommand(:final cityId) ||
       SelectCityExpansionHexCommand(:final cityId) => _belongsToPlayer(
-        (_cityById(state, cityId) ?? _cityById(previousState, cityId))
+        (state.cityById(cityId) ?? previousState?.cityById(cityId))
             ?.ownerPlayerId,
         playerId,
       ),

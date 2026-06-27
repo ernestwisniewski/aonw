@@ -110,7 +110,7 @@ abstract final class _AutoExploreProcessor {
     String unitId,
     MapData mapData,
   ) {
-    final moved = MovementReducer._unitById(transition.state.units, unitId);
+    final moved = transition.state.unitById(unitId);
     if (moved == null) return transition;
 
     final exploring = moved.copyWith(posture: UnitPosture.autoExploring);

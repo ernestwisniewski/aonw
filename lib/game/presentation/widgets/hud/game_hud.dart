@@ -35,6 +35,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -302,9 +303,7 @@ class _GameHudState extends ConsumerState<GameHud> {
 
     final control = PlayerControlCoordinator.initial(save);
     if (control.activePlayerId.isEmpty) return null;
-    final player = save.players
-        .where((p) => p.id == control.activePlayerId)
-        .firstOrNull;
+    final player = save.playerById(control.activePlayerId);
     if (player == null) return null;
     if (player.isAi) return null;
 
