@@ -27,6 +27,11 @@ Platform launcher icons, web icons, and generated platform scaffolding are kept
 in the relevant platform folders and `docs/marketing/`. Platform vendor files
 remain subject to their upstream licenses and terms.
 
+Homepage platform icons under `assets/homepage/platform-icons/` include Android,
+Apple, and Steam marks from Simple Icons (CC0-1.0) and the web globe from
+Bootstrap Icons (MIT). Brand marks remain subject to their owners' trademark
+guidelines.
+
 ## Vendored Package Patches
 
 - `third_party/sign_in_with_apple/` vendors `sign_in_with_apple` 7.0.1 under
