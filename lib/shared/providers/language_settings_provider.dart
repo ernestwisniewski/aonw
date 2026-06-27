@@ -16,24 +16,58 @@ enum GameLanguage {
 
   const GameLanguage(this.storageValue, this.locale);
 
-  static GameLanguage fromStorageValue(String? value) {
+  static GameLanguage? fromStorageValue(String? value) {
     for (final language in values) {
       if (language.storageValue == value) return language;
     }
-    return GameLanguage.english;
+    return null;
+  }
+
+  static GameLanguage? fromLocale(Locale locale) {
+    for (final language in values) {
+      if (language.locale.languageCode == locale.languageCode) return language;
+    }
+    return null;
   }
 }
 
-class LanguageSettings {
-  final GameLanguage language;
+const gameFallbackLocale = Locale('en');
 
-  const LanguageSettings({this.language = GameLanguage.english});
-
-  Locale get locale => language.locale;
-
-  LanguageSettings copyWith({GameLanguage? language}) {
-    return LanguageSettings(language: language ?? this.language);
+Locale resolveGameLocale(
+  Iterable<Locale>? preferredLocales,
+  Iterable<Locale> supportedLocales, {
+  Locale fallbackLocale = gameFallbackLocale,
+}) {
+  for (final locale in preferredLocales ?? const <Locale>[]) {
+    final supported = _supportedLocaleFor(locale, supportedLocales);
+    if (supported != null) return supported;
   }
+  final supportedFallback = _supportedLocaleFor(
+    fallbackLocale,
+    supportedLocales,
+  );
+  if (supportedFallback != null) return supportedFallback;
+  for (final supported in supportedLocales) {
+    return supported;
+  }
+  return fallbackLocale;
+}
+
+Locale? _supportedLocaleFor(Locale locale, Iterable<Locale> supportedLocales) {
+  for (final supported in supportedLocales) {
+    if (supported.languageCode == locale.languageCode) return supported;
+  }
+  return null;
+}
+
+class LanguageSettings {
+  final GameLanguage? selectedLanguage;
+
+  const LanguageSettings({this.selectedLanguage});
+
+  Locale? get locale => selectedLanguage?.locale;
+
+  bool get followsSystemLocale => selectedLanguage == null;
 }
 
 final languageSettingsProvider =
@@ -53,9 +87,9 @@ class LanguageSettingsController extends Notifier<LanguageSettings> {
   }
 
   void setLanguage(GameLanguage language) {
-    if (state.language == language) return;
+    if (state.selectedLanguage == language) return;
     _pendingLanguage = language;
-    state = state.copyWith(language: language);
+    state = LanguageSettings(selectedLanguage: language);
     unawaited(_saveLanguage(language));
   }
 
@@ -63,8 +97,10 @@ class LanguageSettingsController extends Notifier<LanguageSettings> {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (_pendingLanguage != null) return;
-      state = state.copyWith(
-        language: GameLanguage.fromStorageValue(prefs.getString(_languageKey)),
+      state = LanguageSettings(
+        selectedLanguage: GameLanguage.fromStorageValue(
+          prefs.getString(_languageKey),
+        ),
       );
     } on Object {
       return;

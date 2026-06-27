@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/use_cases/autosave_camera_use_case.dart';
@@ -450,9 +451,14 @@ class GameCommandController extends _$GameCommandController {
     if (!ref.mounted) return;
     final previousState = record.previousState;
     if (previousState == null) return;
-    final l10n = lookupAppLocalizations(
-      ref.read(languageSettingsProvider).locale,
-    );
+    final languageSettings = ref.read(languageSettingsProvider);
+    final locale =
+        languageSettings.locale ??
+        resolveGameLocale(
+          ui.PlatformDispatcher.instance.locales,
+          AppLocalizations.supportedLocales,
+        );
+    final l10n = lookupAppLocalizations(locale);
     final content = ArtifactGuidanceResolver(l10n: l10n).resolve(
       previousState: previousState,
       state: record.result.state,

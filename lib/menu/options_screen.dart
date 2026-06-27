@@ -437,14 +437,18 @@ class _LanguageSection extends ConsumerWidget {
     final settings = ref.watch(languageSettingsProvider);
     final controller = ref.read(languageSettingsProvider.notifier);
     final languages = _sortedLanguages(l10n);
+    final selectedLanguage =
+        settings.selectedLanguage ??
+        GameLanguage.fromLocale(Localizations.localeOf(context)) ??
+        GameLanguage.english;
     return _SettingsSection(
       icon: Icons.language_outlined,
       title: l10n.languageSectionTitle,
       child: Tooltip(
-        message: l10n.languageTooltip(_languageLabel(l10n, settings.language)),
+        message: l10n.languageTooltip(_languageLabel(l10n, selectedLanguage)),
         child: DropdownButtonFormField<GameLanguage>(
-          key: ValueKey('options.language.${settings.language.storageValue}'),
-          initialValue: settings.language,
+          key: ValueKey('options.language.${selectedLanguage.storageValue}'),
+          initialValue: selectedLanguage,
           isExpanded: true,
           dropdownColor: GameUiTheme.surface,
           iconEnabledColor: GameUiTheme.goldLight,
@@ -458,7 +462,7 @@ class _LanguageSection extends ConsumerWidget {
                 alignment: Alignment.centerLeft,
                 child: _LanguageDropdownLabel(
                   language: language,
-                  selected: language == settings.language,
+                  selected: language == selectedLanguage,
                 ),
               ),
           ],
@@ -468,12 +472,12 @@ class _LanguageSection extends ConsumerWidget {
                 value: language,
                 child: _LanguageDropdownLabel(
                   language: language,
-                  selected: language == settings.language,
+                  selected: language == selectedLanguage,
                 ),
               ),
           ],
           onChanged: (language) {
-            if (language == null || language == settings.language) return;
+            if (language == null || language == selectedLanguage) return;
             ref.playMenuClick();
             controller.setLanguage(language);
           },

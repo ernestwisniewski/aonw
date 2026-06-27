@@ -52,6 +52,8 @@ class _HexAppState extends ConsumerState<HexApp> {
       showPerformanceOverlay: DevPerformance.isEnabled,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       locale: language.locale,
+      localeListResolutionCallback: (locales, supportedLocales) =>
+          resolveGameLocale(locales, supportedLocales),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
