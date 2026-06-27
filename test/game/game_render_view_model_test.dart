@@ -18,9 +18,11 @@ void main() {
       final state = GameState(
         activePlayerId: commander.ownerPlayerId,
         units: [commander],
-        selection: selection,
-        moveCommandActive: true,
-        cityFoundingDraft: draft,
+        interaction: GameInteractionState(
+          selection: selection,
+          moveCommandActive: true,
+          cityFoundingDraft: draft,
+        ),
       );
 
       final viewModel = GameRenderViewModel.fromState(state);

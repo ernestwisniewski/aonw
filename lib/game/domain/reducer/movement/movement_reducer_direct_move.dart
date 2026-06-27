@@ -118,10 +118,10 @@ abstract final class _DirectMoveProcessor {
 
     var next = withDiscoveredDiplomaticContacts(
       state.copyWith(units: updatedUnits, fogOfWar: newFog),
-    ).copyWith(movePreview: null);
+    ).copyWithInteraction(movePreview: null);
 
     if (state.selectedUnitId == unit.id) {
-      next = next.copyWith(
+      next = next.copyWithInteraction(
         selection: GameSelection.unit(
           movedUnit,
           tile: mapData.tileAt(movedUnit.col, movedUnit.row),

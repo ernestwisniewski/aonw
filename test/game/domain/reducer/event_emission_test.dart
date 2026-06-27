@@ -85,13 +85,13 @@ void main() {
         playerCountries: const {'player_1': PlayerCountry.france},
         units: [settler],
         activePlayerId: 'player_1',
-      ).copyWith(selection: GameSelection.unit(settler));
+      ).copyWithInteraction(selection: GameSelection.unit(settler));
 
       final started = CityFoundingReducer.startCityFounding(
         stateWithUnit,
         mapData,
       );
-      final stateWithDraft = started.copyWith(
+      final stateWithDraft = started.copyWithInteraction(
         cityFoundingDraft: started.cityFoundingDraft!.copyWith(
           controlledHexes: const [
             CityHex(col: 3, row: 2),

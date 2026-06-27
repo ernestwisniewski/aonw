@@ -125,8 +125,13 @@ void main() {
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(commander, tile: mapData.tileAt(0, 0)),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(
+              commander,
+              tile: mapData.tileAt(0, 0),
+            ),
+            moveCommandActive: true,
+          ),
         );
 
         final preview = await transport.dispatch(

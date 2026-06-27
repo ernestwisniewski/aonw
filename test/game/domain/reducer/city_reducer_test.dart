@@ -82,7 +82,7 @@ GameCity _city({
 
 GameState _withCompleteFoundingDraft(GameState state) {
   final draft = state.cityFoundingDraft!;
-  return state.copyWith(
+  return state.copyWithInteraction(
     cityFoundingDraft: draft.copyWith(
       controlledHexes: const [CityHex(col: 3, row: 2), CityHex(col: 4, row: 3)],
     ),
@@ -102,7 +102,9 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       final next = CityFoundingReducer.startCityFounding(state, mapData);
@@ -118,7 +120,9 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       final next = CityFoundingReducer.startCityFounding(state, mapData);
@@ -134,7 +138,9 @@ void main() {
         GameState(
           units: [settler],
           activePlayerId: 'player_1',
-          selection: GameSelection.unit(settler),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+          ),
         ),
         mapData,
       );
@@ -162,7 +168,9 @@ void main() {
         GameState(
           units: [settler],
           activePlayerId: 'player_1',
-          selection: GameSelection.unit(settler),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+          ),
         ),
         mapData,
       );
@@ -182,8 +190,10 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+          moveCommandActive: true,
+        ),
       );
 
       final next = CityFoundingReducer.startCityFounding(state, mapData);
@@ -197,7 +207,9 @@ void main() {
       final state = GameState(
         units: [commander],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(commander),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+        ),
       );
 
       final next = CityFoundingReducer.startCityFounding(state, mapData);
@@ -218,7 +230,9 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_2',
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       final next = CityFoundingReducer.startCityFounding(state, mapData);
@@ -242,7 +256,7 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        cityFoundingDraft: draft,
+        interaction: GameInteractionState(cityFoundingDraft: draft),
       );
 
       final next = CityFoundingReducer.cancelCityFounding(state);
@@ -264,8 +278,10 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
-        cityFoundingDraft: draft,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+          cityFoundingDraft: draft,
+        ),
       );
 
       final next = CityFoundingReducer.cancelCityFounding(state);
@@ -284,7 +300,9 @@ void main() {
           GameState(
             units: [settler],
             activePlayerId: 'player_1',
-            selection: GameSelection.unit(settler),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler),
+            ),
           ),
           mapData,
         ),
@@ -311,7 +329,9 @@ void main() {
           GameState(
             units: [settler],
             activePlayerId: 'player_1',
-            selection: GameSelection.unit(settler),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler),
+            ),
           ),
           mapData,
         ),
@@ -354,7 +374,9 @@ void main() {
             GameState(
               units: [settler],
               activePlayerId: 'player_1',
-              selection: GameSelection.unit(settler),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler),
+              ),
             ),
             mapData,
           ),
@@ -386,7 +408,9 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       final result = CityFoundingReducer.confirmCityFounding(state, mapData);
@@ -408,7 +432,7 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        cityFoundingDraft: draft,
+        interaction: GameInteractionState(cityFoundingDraft: draft),
       );
 
       final result = CityFoundingReducer.confirmCityFounding(state, mapData);
@@ -635,11 +659,13 @@ void main() {
       final state = GameState(
         cities: [city],
         activePlayerId: 'player_1',
-        selection: GameSelection.city(
-          city,
-          cityYield: cityYield,
-          cityEconomy: cityEconomy,
-          playerColor: 0xFFFF0000,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: cityYield,
+            cityEconomy: cityEconomy,
+            playerColor: 0xFFFF0000,
+          ),
         ),
       );
       const command = StartBuildingCommand('city_1', CityBuildingType.granary);
@@ -671,11 +697,13 @@ void main() {
       final state = GameState(
         cities: [city1, city2],
         activePlayerId: 'player_1',
-        selection: GameSelection.city(
-          city2,
-          cityYield: cityYield,
-          cityEconomy: cityEconomy,
-          playerColor: 0xFFFF0000,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city2,
+            cityYield: cityYield,
+            cityEconomy: cityEconomy,
+            playerColor: 0xFFFF0000,
+          ),
         ),
       );
       const command = StartBuildingCommand('city_1', CityBuildingType.granary);
@@ -954,11 +982,13 @@ void main() {
       final state = GameState(
         cities: [city],
         activePlayerId: 'player_1',
-        selection: GameSelection.city(
-          city,
-          cityYield: cityYield,
-          cityEconomy: cityEconomy,
-          playerColor: 0xFFFF0000,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: cityYield,
+            cityEconomy: cityEconomy,
+            playerColor: 0xFFFF0000,
+          ),
         ),
       );
 
@@ -1043,7 +1073,9 @@ void main() {
       final state = GameState(
         units: [commander],
         activePlayerId: '',
-        selection: GameSelection.unit(commander),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+        ),
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
@@ -1082,7 +1114,9 @@ void main() {
       final state = GameState(
         units: [commander],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(commander),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+        ),
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
@@ -1101,7 +1135,9 @@ void main() {
       final state = GameState(
         units: [commander],
         activePlayerId: '',
-        selection: GameSelection.unit(commander),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+        ),
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
@@ -1121,8 +1157,10 @@ void main() {
       final state = GameState(
         units: [commander],
         activePlayerId: '',
-        selection: GameSelection.unit(commander),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+          moveCommandActive: true,
+        ),
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
@@ -1145,7 +1183,9 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       final result = reducer.reduce(state, const StartCityFoundingCommand());
@@ -1160,7 +1200,9 @@ void main() {
             GameState(
               units: [settler],
               activePlayerId: 'player_1',
-              selection: GameSelection.unit(settler),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler),
+              ),
             ),
             const StartCityFoundingCommand(),
           )
@@ -1199,7 +1241,7 @@ void main() {
       final state = GameState(
         units: [settler],
         activePlayerId: 'player_1',
-        cityFoundingDraft: draft,
+        interaction: GameInteractionState(cityFoundingDraft: draft),
       );
 
       final result = reducer.reduce(state, const CancelCityFoundingCommand());
@@ -1214,7 +1256,9 @@ void main() {
           GameState(
             units: [settler],
             activePlayerId: 'player_1',
-            selection: GameSelection.unit(settler),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler),
+            ),
           ),
           mapData,
         ),
@@ -1290,11 +1334,13 @@ void main() {
             ),
           },
         ),
-        selection: GameSelection.city(
-          city,
-          cityYield: cityYield,
-          cityEconomy: cityEconomy,
-          playerColor: 0xFFFF0000,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: cityYield,
+            cityEconomy: cityEconomy,
+            playerColor: 0xFFFF0000,
+          ),
         ),
       );
 

@@ -49,7 +49,7 @@ abstract final class _ActivePlayerReducer {
     GameSelection? selection,
   ) {
     if (selection == null || _canKeepSelection(state, selection)) return state;
-    return state.copyWith(selection: null);
+    return state.copyWithInteraction(selection: null);
   }
 
   static bool _canKeepSelection(GameState state, GameSelection selection) {

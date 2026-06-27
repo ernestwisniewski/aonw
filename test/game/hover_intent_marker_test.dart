@@ -72,8 +72,10 @@ void main() {
         ..applyState(
           GameState(
             units: [commander],
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              moveCommandActive: true,
+            ),
           ),
         )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -101,8 +103,10 @@ void main() {
             activePlayerId: 'player_1',
             fogOfWar: fog,
             units: [commander],
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              moveCommandActive: true,
+            ),
           ),
         )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -132,8 +136,13 @@ void main() {
               activePlayerId: 'player_1',
               fogOfWar: fog,
               units: [commander],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-              moveCommandActive: true,
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
+              ),
             ),
           )
           ..syncHoverIntentForTesting(_tile(map, 4, 4));
@@ -159,8 +168,13 @@ void main() {
           ..applyState(
             GameState(
               units: [commander],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-              moveCommandActive: true,
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
+              ),
             ),
           )
           ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -184,9 +198,11 @@ void main() {
         ..applyState(
           GameState(
             units: [attacker],
-            pendingAction: PendingAttackTargeting(
-              ownerPlayerId: attacker.ownerPlayerId,
-              attackerUnitId: attacker.id,
+            interaction: GameInteractionState(
+              pendingAction: PendingAttackTargeting(
+                ownerPlayerId: attacker.ownerPlayerId,
+                attackerUnitId: attacker.id,
+              ),
             ),
           ),
         )
@@ -211,9 +227,11 @@ void main() {
           ..applyState(
             GameState(
               units: [attacker],
-              pendingAction: PendingAttackTargeting(
-                ownerPlayerId: attacker.ownerPlayerId,
-                attackerUnitId: attacker.id,
+              interaction: GameInteractionState(
+                pendingAction: PendingAttackTargeting(
+                  ownerPlayerId: attacker.ownerPlayerId,
+                  attackerUnitId: attacker.id,
+                ),
               ),
             ),
           )
@@ -236,10 +254,12 @@ void main() {
         ..applyState(
           GameState(
             playerColors: const {'player_1': 0xFF123456},
-            cityFoundingDraft: CityFoundingDraft(
-              unitId: 'settler_1',
-              ownerPlayerId: 'player_1',
-              center: const CityHex(col: 0, row: 0),
+            interaction: GameInteractionState(
+              cityFoundingDraft: CityFoundingDraft(
+                unitId: 'settler_1',
+                ownerPlayerId: 'player_1',
+                center: const CityHex(col: 0, row: 0),
+              ),
             ),
           ),
         )
@@ -257,10 +277,12 @@ void main() {
       game
         ..applyState(
           GameState(
-            cityFoundingDraft: CityFoundingDraft(
-              unitId: 'settler_1',
-              ownerPlayerId: 'player_1',
-              center: const CityHex(col: 0, row: 0),
+            interaction: GameInteractionState(
+              cityFoundingDraft: CityFoundingDraft(
+                unitId: 'settler_1',
+                ownerPlayerId: 'player_1',
+                center: const CityHex(col: 0, row: 0),
+              ),
             ),
           ),
         )
@@ -281,9 +303,11 @@ void main() {
       game
         ..applyState(
           const GameState(
-            pendingAction: PendingCityWorkedHexSelection(
-              ownerPlayerId: 'player_1',
-              cityId: 'city_1',
+            interaction: GameInteractionState(
+              pendingAction: PendingCityWorkedHexSelection(
+                ownerPlayerId: 'player_1',
+                cityId: 'city_1',
+              ),
             ),
           ),
         )
@@ -304,9 +328,11 @@ void main() {
       game
         ..applyState(
           const GameState(
-            pendingAction: PendingCityExpansionSelection(
-              ownerPlayerId: 'player_1',
-              cityId: 'city_1',
+            interaction: GameInteractionState(
+              pendingAction: PendingCityExpansionSelection(
+                ownerPlayerId: 'player_1',
+                cityId: 'city_1',
+              ),
             ),
           ),
         )
@@ -332,10 +358,12 @@ void main() {
         ..applyState(
           GameState(
             units: [worker],
-            pendingAction: const PendingWorkerActionSelection(
-              ownerPlayerId: 'player_1',
-              unitId: 'worker_1',
-              improvementType: FieldImprovementType.farm,
+            interaction: const GameInteractionState(
+              pendingAction: PendingWorkerActionSelection(
+                ownerPlayerId: 'player_1',
+                unitId: 'worker_1',
+                improvementType: FieldImprovementType.farm,
+              ),
             ),
           ),
         )
@@ -378,8 +406,13 @@ void main() {
               activePlayerId: 'player_1',
               fogOfWar: fog,
               units: [commander],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-              moveCommandActive: true,
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
+              ),
             ),
           )
           ..syncHoverIntentForTesting(_tile(map, 1, 1), forceInspect: true);
@@ -511,8 +544,10 @@ void main() {
       final tile = _tile(map, 2, 1);
       final movingState = GameState(
         units: [commander],
-        selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
       );
 
       game
@@ -524,7 +559,7 @@ void main() {
       expect(commands, [const ToggleMoveTargetingCommand()]);
 
       game
-        ..applyState(movingState.copyWith(moveCommandActive: false))
+        ..applyState(movingState.copyWithInteraction(moveCommandActive: false))
         ..handleViewportPointerDown(99, Vector2.zero())
         ..handleViewportPointerUp(99)
         ..handleTileLongPressedForTesting(tile)
@@ -554,10 +589,12 @@ void main() {
         ..applyState(
           GameState(
             cities: [city],
-            selection: GameSelection.city(
-              city,
-              cityYield: TileYield.zero,
-              playerColor: 0xFF4477AA,
+            interaction: GameInteractionState(
+              selection: GameSelection.city(
+                city,
+                cityYield: TileYield.zero,
+                playerColor: 0xFF4477AA,
+              ),
             ),
           ),
         )
@@ -604,7 +641,7 @@ void main() {
           GameState(
             activePlayerId: 'player_1',
             fogOfWar: fog,
-            moveCommandActive: true,
+            interaction: const GameInteractionState(moveCommandActive: true),
           ),
         )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -622,7 +659,11 @@ void main() {
       final game = await _loadedGame(map);
 
       game
-        ..applyState(const GameState(moveCommandActive: true))
+        ..applyState(
+          const GameState(
+            interaction: GameInteractionState(moveCommandActive: true),
+          ),
+        )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
 
       expect(game.hoverIntentKindForTesting, HoverIntentKind.move);

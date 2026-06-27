@@ -22,11 +22,7 @@ abstract final class AiPrecomputeScheduleKey {
           activePlayerId: '',
           activePlayerCanAct: true,
           submittedPlayerIds: const {},
-          selection: null,
-          movePreview: null,
-          cityFoundingDraft: null,
-          pendingAction: null,
-          moveCommandActive: false,
+          interaction: GameInteractionState.empty,
           intendedAttacks: const <IntendedAttack>[],
         )
         .hashCode;

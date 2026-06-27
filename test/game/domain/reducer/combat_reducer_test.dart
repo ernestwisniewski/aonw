@@ -31,7 +31,7 @@ void main() {
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 1, row: 0),
         ]),
-      ).copyWith(selection: GameSelection.unit(attacker));
+      ).copyWithInteraction(selection: GameSelection.unit(attacker));
 
       final result = _reducer(
         mapData,
@@ -149,14 +149,16 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [attacker, defender],
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'a',
-        ),
         fogOfWar: _visible('p1', const [
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 1, row: 0),
         ]),
+        interaction: const GameInteractionState(
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'a',
+          ),
+        ),
       );
 
       final result = _reducer(
@@ -185,15 +187,17 @@ void main() {
           activePlayerId: 'p1',
           units: [attacker],
           cities: const [city],
-          selection: GameSelection.unit(attacker),
-          pendingAction: const PendingAttackTargeting(
-            ownerPlayerId: 'p1',
-            attackerUnitId: 'a',
-          ),
           fogOfWar: _visible('p1', const [
             HexCoordinate(col: 0, row: 0),
             HexCoordinate(col: 1, row: 0),
           ]),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(attacker),
+            pendingAction: const PendingAttackTargeting(
+              ownerPlayerId: 'p1',
+              attackerUnitId: 'a',
+            ),
+          ),
         );
 
         final result = _reducer(
@@ -218,15 +222,17 @@ void main() {
         final state = GameState(
           activePlayerId: 'p1',
           units: [attacker, defender],
-          selection: GameSelection.unit(attacker),
-          pendingAction: const PendingAttackTargeting(
-            ownerPlayerId: 'p1',
-            attackerUnitId: 'a',
-          ),
           fogOfWar: _visible('p1', const [
             HexCoordinate(col: 0, row: 0),
             HexCoordinate(col: 1, row: 0),
           ]),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(attacker),
+            pendingAction: const PendingAttackTargeting(
+              ownerPlayerId: 'p1',
+              attackerUnitId: 'a',
+            ),
+          ),
         );
 
         final result = _reducer(
@@ -249,11 +255,6 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [attacker, defender],
-        selection: GameSelection.unit(attacker),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'a',
-        ),
         diplomacy: DiplomacyState.empty.setStatus(
           'p1',
           'p2',
@@ -263,6 +264,13 @@ void main() {
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 1, row: 0),
         ]),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(attacker),
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'a',
+          ),
+        ),
       );
 
       final result = _reducer(
@@ -284,17 +292,19 @@ void main() {
         final state = GameState(
           activePlayerId: 'p1',
           units: [attacker, defender],
-          selection: GameSelection.unit(attacker),
-          pendingAction: const PendingAttackTargeting(
-            ownerPlayerId: 'p1',
-            attackerUnitId: 'a',
-            defenderCol: 1,
-            defenderRow: 0,
-          ),
           fogOfWar: _visible('p1', const [
             HexCoordinate(col: 0, row: 0),
             HexCoordinate(col: 1, row: 0),
           ]),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(attacker),
+            pendingAction: const PendingAttackTargeting(
+              ownerPlayerId: 'p1',
+              attackerUnitId: 'a',
+              defenderCol: 1,
+              defenderRow: 0,
+            ),
+          ),
         );
 
         final result = _reducer(
@@ -314,15 +324,17 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [attacker, defender],
-        selection: GameSelection.unit(attacker),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'a',
-        ),
         fogOfWar: _visible('p1', const [
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 2, row: 0),
         ]),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(attacker),
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'a',
+          ),
+        ),
       );
 
       final result = _reducer(
@@ -690,14 +702,16 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [attacker, defender],
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'a',
-        ),
         fogOfWar: _visible('p1', const [
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 1, row: 0),
         ]),
+        interaction: const GameInteractionState(
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'a',
+          ),
+        ),
       );
 
       final result = _simultaneousReducer(mapData).reduce(
@@ -735,14 +749,16 @@ void main() {
         activePlayerId: 'p1',
         units: [attacker],
         cities: const [city],
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'a',
-        ),
         fogOfWar: _visible('p1', const [
           HexCoordinate(col: 0, row: 0),
           HexCoordinate(col: 1, row: 0),
         ]),
+        interaction: const GameInteractionState(
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'a',
+          ),
+        ),
       );
 
       final result = _simultaneousReducer(mapData).reduce(

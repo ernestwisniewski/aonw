@@ -33,7 +33,9 @@ void main() {
           parent: Component(),
           state: GameState(
             units: [selected, enemy],
-            selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            ),
           ),
           mapData: map,
         );
@@ -91,7 +93,9 @@ void main() {
             activePlayerId: 'player_1',
             units: [selected, hiddenEnemy, worker],
             fogOfWar: fog,
-            selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            ),
           ),
           mapData: map,
         );
@@ -118,7 +122,9 @@ void main() {
           parent: Component(),
           state: GameState(
             units: [selected, enemy],
-            selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
+            ),
           ),
           mapData: map,
         );

@@ -617,7 +617,7 @@ abstract final class CityProductionReducer {
       return state;
     }
 
-    return state.copyWith(
+    return state.copyWithInteraction(
       selection: _citySelection(
         state,
         city,

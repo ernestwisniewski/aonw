@@ -64,7 +64,9 @@ void main() {
           research: _research({TechnologyId.agriculture}),
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         );
         final reducer = GameStateReducer(mapData: _map());
 
@@ -106,7 +108,9 @@ void main() {
           research: _research({TechnologyId.agriculture}),
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         );
         final reducer = GameStateReducer(mapData: _map());
 
@@ -151,7 +155,9 @@ void main() {
         research: _research({TechnologyId.agriculture}),
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(worker),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+        ),
       );
       final reducer = GameStateReducer(mapData: _map());
 
@@ -184,11 +190,13 @@ void main() {
         research: _research({TechnologyId.agriculture}),
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(worker),
-        pendingAction: const PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'worker_1',
-          improvementType: FieldImprovementType.farm,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
+            improvementType: FieldImprovementType.farm,
+          ),
         ),
       );
       final reducer = GameStateReducer(mapData: _map());
@@ -217,7 +225,9 @@ void main() {
         cities: [_city()],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(worker),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+        ),
       );
       final reducer = GameStateReducer(mapData: _map());
 
@@ -243,7 +253,9 @@ void main() {
         ],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(worker),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+        ),
       );
       final reducer = GameStateReducer(mapData: _map());
 
@@ -270,7 +282,9 @@ void main() {
         cities: [_city()],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(worker),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+        ),
       );
       final reducer = GameStateReducer(mapData: _map());
 

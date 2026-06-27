@@ -43,7 +43,9 @@ void main() {
           .syncWithGameState(
             GameState(
               units: [commander],
-              selection: GameSelection.unit(commander),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(commander),
+              ),
             ),
           );
 

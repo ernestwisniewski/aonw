@@ -47,7 +47,7 @@ abstract final class ResearchReducer {
     var updatedState = state.copyWith(research: updatedResearch);
     if (pendingAction is PendingResearchSelection &&
         pendingAction.ownerPlayerId == command.playerId) {
-      updatedState = updatedState.copyWith(pendingAction: null);
+      updatedState = updatedState.copyWithInteraction(pendingAction: null);
     }
 
     return GameStateTransition(state: updatedState);
@@ -64,7 +64,7 @@ abstract final class ResearchReducer {
         pendingAction.ownerPlayerId != command.playerId) {
       return state;
     }
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static bool _canControlPlayer(

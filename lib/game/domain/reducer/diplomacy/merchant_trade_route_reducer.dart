@@ -52,7 +52,7 @@ abstract final class MerchantTradeRouteReducer {
 
     final tile = mapData.tileAt(unit.col, unit.row);
     return GameStateTransition(
-      state: _clearTransientModes(state).copyWith(
+      state: _clearTransientModes(state).copyWithInteraction(
         pendingAction: PendingMerchantTradeRouteSelection(
           ownerPlayerId: unit.ownerPlayerId,
           unitId: unit.id,
@@ -73,7 +73,9 @@ abstract final class MerchantTradeRouteReducer {
     if (pending.unitId != command.unitId) {
       return GameStateTransition(state: state);
     }
-    return GameStateTransition(state: state.copyWith(pendingAction: null));
+    return GameStateTransition(
+      state: state.copyWithInteraction(pendingAction: null),
+    );
   }
 
   static GameStateTransition assignRoute(
@@ -119,15 +121,20 @@ abstract final class MerchantTradeRouteReducer {
         .copyWithMerchantTradeRoute(route);
     var next = state.copyWith(units: replaceUnit(state.units, updated));
     if (next.pendingAction?.ownsUnit(updated.id) ?? false) {
-      next = next.copyWith(pendingAction: null);
+      next = next.copyWithInteraction(pendingAction: null);
     }
-    next = next.copyWith(moveCommandActive: false, movePreview: null);
+    next = next.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+    );
     if (next.cityFoundingDraft?.unitId == updated.id) {
-      next = next.copyWith(cityFoundingDraft: null);
+      next = next.copyWithInteraction(cityFoundingDraft: null);
     }
     if (next.selectedUnitId == updated.id) {
       final tile = mapData.tileAt(updated.col, updated.row);
-      next = next.copyWith(selection: GameSelection.unit(updated, tile: tile));
+      next = next.copyWithInteraction(
+        selection: GameSelection.unit(updated, tile: tile),
+      );
     }
     return GameStateTransition(state: next);
   }
@@ -168,7 +175,7 @@ abstract final class MerchantTradeRouteReducer {
 
     final tile = mapData.tileAt(unit.col, unit.row);
     return GameStateTransition(
-      state: _clearTransientModes(state).copyWith(
+      state: _clearTransientModes(state).copyWithInteraction(
         pendingAction: PendingMerchantMoveToCitySelection(
           ownerPlayerId: unit.ownerPlayerId,
           unitId: unit.id,
@@ -189,7 +196,9 @@ abstract final class MerchantTradeRouteReducer {
     if (pending.unitId != command.unitId) {
       return GameStateTransition(state: state);
     }
-    return GameStateTransition(state: state.copyWith(pendingAction: null));
+    return GameStateTransition(
+      state: state.copyWithInteraction(pendingAction: null),
+    );
   }
 
   static GameStateTransition moveToCity(
@@ -230,15 +239,20 @@ abstract final class MerchantTradeRouteReducer {
         .copyWithMerchantTradeRoute(null);
     var next = state.copyWith(units: replaceUnit(state.units, updated));
     if (next.pendingAction?.ownsUnit(updated.id) ?? false) {
-      next = next.copyWith(pendingAction: null);
+      next = next.copyWithInteraction(pendingAction: null);
     }
-    next = next.copyWith(moveCommandActive: false, movePreview: null);
+    next = next.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+    );
     if (next.cityFoundingDraft?.unitId == updated.id) {
-      next = next.copyWith(cityFoundingDraft: null);
+      next = next.copyWithInteraction(cityFoundingDraft: null);
     }
     if (next.selectedUnitId == updated.id) {
       final tile = mapData.tileAt(updated.col, updated.row);
-      next = next.copyWith(selection: GameSelection.unit(updated, tile: tile));
+      next = next.copyWithInteraction(
+        selection: GameSelection.unit(updated, tile: tile),
+      );
     }
     return GameStateTransition(state: next);
   }
@@ -249,11 +263,8 @@ abstract final class MerchantTradeRouteReducer {
     steps: plan.steps,
   );
 
-  static GameState _clearTransientModes(GameState state) => state.copyWith(
-    moveCommandActive: false,
-    movePreview: null,
-    cityFoundingDraft: null,
-  );
+  static GameState _clearTransientModes(GameState state) =>
+      state.copyWith(interaction: state.interaction.clearTransientModes());
 
   static GameUnit? _findUnit(GameState state, String unitId) {
     for (final unit in state.units) {

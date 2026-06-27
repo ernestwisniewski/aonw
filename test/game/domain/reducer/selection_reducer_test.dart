@@ -89,8 +89,8 @@ void main() {
       );
       final state = const GameState(
         activePlayerId: 'p1',
-        moveCommandActive: true,
-      ).copyWith(cityFoundingDraft: draft);
+        interaction: GameInteractionState(moveCommandActive: true),
+      ).copyWithInteraction(cityFoundingDraft: draft);
 
       final result = SelectionReducer.selectTile(
         state,
@@ -257,7 +257,7 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         fogOfWar: fog,
-      ).copyWith(selection: selection);
+      ).copyWithInteraction(selection: selection);
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -279,12 +279,15 @@ void main() {
         final mapData = _mapWith([tile11, tile33]);
         // Only (1,1) visible; (3,3) is hidden
         final fog = _fogVisible('p1', [tile11]);
-        final state = GameState(
-          activePlayerId: 'p1',
-          units: [unit],
-          moveCommandActive: true,
-          fogOfWar: fog,
-        ).copyWith(selection: GameSelection.unit(unit, tile: tile11));
+        final state =
+            GameState(
+              activePlayerId: 'p1',
+              units: [unit],
+              fogOfWar: fog,
+              interaction: const GameInteractionState(moveCommandActive: true),
+            ).copyWithInteraction(
+              selection: GameSelection.unit(unit, tile: tile11),
+            );
 
         final result = SelectionReducer.handleTileTapped(
           state,
@@ -309,7 +312,7 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         fogOfWar: fog,
-      ).copyWith(cityFoundingDraft: draft);
+      ).copyWithInteraction(cityFoundingDraft: draft);
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -330,9 +333,9 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [unit],
-        moveCommandActive: true,
         fogOfWar: fog,
-      ).copyWith(selection: GameSelection.unit(unit, tile: tile));
+        interaction: const GameInteractionState(moveCommandActive: true),
+      ).copyWithInteraction(selection: GameSelection.unit(unit, tile: tile));
 
       // Step 2: Tap the unit's own tile -> selects the hex.
       var result = SelectionReducer.handleTileTapped(
@@ -363,12 +366,15 @@ void main() {
         final mapData = _mapWith([tile11, tile33]);
         final fog = _fogVisible('p1', [tile11, tile33]);
 
-        final state = GameState(
-          activePlayerId: 'p1',
-          units: [unit1, unit2],
-          moveCommandActive: true,
-          fogOfWar: fog,
-        ).copyWith(selection: GameSelection.unit(unit1, tile: tile11));
+        final state =
+            GameState(
+              activePlayerId: 'p1',
+              units: [unit1, unit2],
+              fogOfWar: fog,
+              interaction: const GameInteractionState(moveCommandActive: true),
+            ).copyWithInteraction(
+              selection: GameSelection.unit(unit1, tile: tile11),
+            );
 
         final result = SelectionReducer.handleTileTapped(
           state,
@@ -413,11 +419,14 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
-        activePlayerId: 'p1',
-        units: [enemyUnit],
-        fogOfWar: fog,
-      ).copyWith(selection: GameSelection.unit(enemyUnit, tile: tile));
+      final state =
+          GameState(
+            activePlayerId: 'p1',
+            units: [enemyUnit],
+            fogOfWar: fog,
+          ).copyWithInteraction(
+            selection: GameSelection.unit(enemyUnit, tile: tile),
+          );
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -513,12 +522,15 @@ void main() {
       final mapData = _mapWith([tile11, tile33]);
       final fog = _fogVisible('p1', [tile11, tile33]);
 
-      final state = GameState(
-        activePlayerId: 'p1',
-        units: [ownUnit, enemyUnit],
-        moveCommandActive: true,
-        fogOfWar: fog,
-      ).copyWith(selection: GameSelection.unit(ownUnit, tile: tile11));
+      final state =
+          GameState(
+            activePlayerId: 'p1',
+            units: [ownUnit, enemyUnit],
+            fogOfWar: fog,
+            interaction: const GameInteractionState(moveCommandActive: true),
+          ).copyWithInteraction(
+            selection: GameSelection.unit(ownUnit, tile: tile11),
+          );
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -704,7 +716,7 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         cities: [city],
-      ).copyWith(cityFoundingDraft: draft);
+      ).copyWithInteraction(cityFoundingDraft: draft);
 
       final result = SelectionReducer.handleCityTapped(state, city, mapData);
       expect(result, same(state));

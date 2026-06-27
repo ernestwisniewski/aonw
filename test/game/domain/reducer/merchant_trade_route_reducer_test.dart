@@ -26,7 +26,9 @@ void main() {
         units: [merchant],
         cities: [city],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(merchant),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(merchant),
+        ),
       );
 
       final result = reducer.reduce(
@@ -51,10 +53,12 @@ void main() {
         units: [merchant, guard],
         cities: [city],
         activePlayerId: 'player_1',
-        selection: GameSelection.unit(merchant),
-        pendingAction: PendingMerchantMoveToCitySelection(
-          ownerPlayerId: merchant.ownerPlayerId,
-          unitId: merchant.id,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(merchant),
+          pendingAction: PendingMerchantMoveToCitySelection(
+            ownerPlayerId: merchant.ownerPlayerId,
+            unitId: merchant.id,
+          ),
         ),
       );
 

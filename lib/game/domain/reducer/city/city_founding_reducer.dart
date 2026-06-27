@@ -46,15 +46,16 @@ abstract final class CityFoundingReducer {
       center: center,
     );
 
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: draft);
-    next = next.copyWith(pendingAction: null);
-    return next;
+    return state.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: draft,
+      pendingAction: null,
+    );
   }
 
   static GameState cancelCityFounding(GameState state) {
-    return state.copyWith(cityFoundingDraft: null);
+    return state.copyWithInteraction(cityFoundingDraft: null);
   }
 
   static GameState toggleControlledHex(
@@ -70,7 +71,7 @@ abstract final class CityFoundingReducer {
 
     final target = CityHex(col: command.col, row: command.row);
     if (draft.controlledHexes.contains(target)) {
-      return state.copyWith(
+      return state.copyWithInteraction(
         cityFoundingDraft: draft.copyWith(
           controlledHexes: [
             for (final hex in draft.controlledHexes)
@@ -94,7 +95,7 @@ abstract final class CityFoundingReducer {
       return state;
     }
 
-    return state.copyWith(
+    return state.copyWithInteraction(
       cityFoundingDraft: draft.copyWith(
         controlledHexes: [...draft.controlledHexes, target],
       ),
@@ -119,7 +120,7 @@ abstract final class CityFoundingReducer {
         founder.isWorking ||
         !CityFoundingRules.canFoundCityWith(founder)) {
       return GameStateTransition(
-        state: state.copyWith(cityFoundingDraft: null),
+        state: state.copyWithInteraction(cityFoundingDraft: null),
       );
     }
     final startFailure = CityFoundingRules.startFailure(
@@ -129,7 +130,7 @@ abstract final class CityFoundingReducer {
     );
     if (startFailure != null) {
       return GameStateTransition(
-        state: state.copyWith(cityFoundingDraft: null),
+        state: state.copyWithInteraction(cityFoundingDraft: null),
       );
     }
     final draft = _foundingDraftFor(state, command, founder);
@@ -151,19 +152,20 @@ abstract final class CityFoundingReducer {
             totalTurns: 1,
           ),
         );
-    var next = state.copyWith(
-      units: replaceUnit(state.units, updatedFounder),
-      moveCommandActive: false,
-    );
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
+    var next = state
+        .copyWith(units: replaceUnit(state.units, updatedFounder))
+        .copyWithInteraction(
+          moveCommandActive: false,
+          movePreview: null,
+          cityFoundingDraft: null,
+          pendingAction: null,
+        );
     if (state.selectedUnitId == founder.id) {
       final founderTile = mapData.tileAt(
         updatedFounder.col,
         updatedFounder.row,
       );
-      next = next.copyWith(
+      next = next.copyWithInteraction(
         selection: GameSelection.unit(updatedFounder, tile: founderTile),
       );
     }

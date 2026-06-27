@@ -108,7 +108,9 @@ void main() {
           state: GameState(
             activePlayerId: 'player_1',
             units: [unit],
-            selection: GameSelection.unit(unit),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(unit),
+            ),
           ),
           events: const [],
           uiEffects: const [],
@@ -135,10 +137,12 @@ void main() {
           state: GameState(
             activePlayerId: 'player_1',
             cities: const [city],
-            selection: GameSelection.city(
-              city,
-              cityYield: TileYield.zero,
-              playerColor: 0,
+            interaction: GameInteractionState(
+              selection: GameSelection.city(
+                city,
+                cityYield: TileYield.zero,
+                playerColor: 0,
+              ),
             ),
           ),
           events: const [],
@@ -193,14 +197,14 @@ void main() {
       final previous = GameState(
         activePlayerId: 'player_1',
         units: [unit],
-        selection: GameSelection.unit(unit),
+        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
       );
 
       expect(
         GameSoundCueMapper.forCommand(
           command: const ToggleMoveTargetingCommand(),
           previousState: previous,
-          state: previous.copyWith(moveCommandActive: true),
+          state: previous.copyWithInteraction(moveCommandActive: true),
           events: const [],
           uiEffects: const [],
         ),
@@ -209,7 +213,7 @@ void main() {
       expect(
         GameSoundCueMapper.forCommand(
           command: const ToggleMoveTargetingCommand(),
-          previousState: previous.copyWith(moveCommandActive: true),
+          previousState: previous.copyWithInteraction(moveCommandActive: true),
           state: previous,
           events: const [],
           uiEffects: const [],
@@ -235,7 +239,9 @@ void main() {
           state: GameState(
             activePlayerId: 'player_1',
             units: [unit],
-            selection: GameSelection.unit(unit),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(unit),
+            ),
           ),
           events: const [],
           uiEffects: const [],

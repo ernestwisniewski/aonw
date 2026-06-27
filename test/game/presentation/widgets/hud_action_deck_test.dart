@@ -698,9 +698,11 @@ void main() {
     await _pumpDeck(
       tester,
       gameState: const GameState(
-        pendingAction: PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'worker_1',
+        interaction: GameInteractionState(
+          pendingAction: PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
+          ),
         ),
       ),
       selection: SelectionViewModel(
@@ -743,11 +745,13 @@ void main() {
     await _pumpDeck(
       tester,
       gameState: const GameState(
-        pendingAction: PendingAttackTargeting(
-          ownerPlayerId: 'player_1',
-          attackerUnitId: 'attacker_1',
-          defenderCol: 1,
-          defenderRow: 0,
+        interaction: GameInteractionState(
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'attacker_1',
+            defenderCol: 1,
+            defenderRow: 0,
+          ),
         ),
       ),
       combatPreview: const HudCombatPreview(
@@ -835,11 +839,13 @@ void main() {
         screenSize: scenario.size,
         textScaleFactor: scenario.textScale,
         gameState: const GameState(
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: 'player_1',
-            attackerUnitId: 'attacker_1',
-            defenderCol: 1,
-            defenderRow: 0,
+          interaction: GameInteractionState(
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: 'player_1',
+              attackerUnitId: 'attacker_1',
+              defenderCol: 1,
+              defenderRow: 0,
+            ),
           ),
         ),
         combatPreview: const HudCombatPreview(
@@ -1007,9 +1013,11 @@ void main() {
         tester,
         gameState: const GameState(
           cities: [city],
-          pendingAction: PendingCityExpansionSelection(
-            ownerPlayerId: 'player_1',
-            cityId: 'city_1',
+          interaction: GameInteractionState(
+            pendingAction: PendingCityExpansionSelection(
+              ownerPlayerId: 'player_1',
+              cityId: 'city_1',
+            ),
           ),
         ),
       );
@@ -1053,9 +1061,11 @@ void main() {
       tester,
       gameState: const GameState(
         cities: [city],
-        pendingAction: PendingCityExpansionSelection(
-          ownerPlayerId: 'player_1',
-          cityId: 'city_1',
+        interaction: GameInteractionState(
+          pendingAction: PendingCityExpansionSelection(
+            ownerPlayerId: 'player_1',
+            cityId: 'city_1',
+          ),
         ),
       ),
     );

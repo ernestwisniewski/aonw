@@ -40,7 +40,10 @@ void main() {
       gameSave: _save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: GameState(units: [unit], selection: GameSelection.unit(unit)),
+      gameState: GameState(
+        units: [unit],
+        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+      ),
       isUnitAnimating: false,
       readyToEndTurn: true,
       actionHintLabel: null,

@@ -159,8 +159,6 @@ void main() {
       const pendingAction = PendingResearchSelection(ownerPlayerId: 'p1');
       final state = GameState(
         activePlayerId: 'p1',
-        pendingAction: pendingAction,
-        moveCommandActive: true,
         fogOfWar: FogOfWarState(
           players: {
             'p1': PlayerFogOfWar(
@@ -168,6 +166,10 @@ void main() {
               visibleHexes: {const HexCoordinate(col: 2, row: 3)},
             ),
           },
+        ),
+        interaction: const GameInteractionState(
+          pendingAction: pendingAction,
+          moveCommandActive: true,
         ),
       );
 
@@ -278,12 +280,14 @@ void main() {
       final state = const GameState(
         activePlayerId: 'p1',
         activePlayerCanAct: true,
-        moveCommandActive: true,
-        pendingAction: PendingAttackTargeting(
-          ownerPlayerId: 'p1',
-          attackerUnitId: 'u1',
+        interaction: GameInteractionState(
+          moveCommandActive: true,
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'p1',
+            attackerUnitId: 'u1',
+          ),
         ),
-      ).copyWith(movePreview: plan);
+      ).copyWithInteraction(movePreview: plan);
 
       final result = reducer.reduce(state, const SubmitTurnCommand('p1'));
 
@@ -315,7 +319,10 @@ void main() {
     });
 
     test('clears moveCommandActive', () {
-      const state = GameState(activePlayerId: 'p1', moveCommandActive: true);
+      const state = GameState(
+        activePlayerId: 'p1',
+        interaction: GameInteractionState(moveCommandActive: true),
+      );
       final result = reducer.reduce(
         state,
         const SetActivePlayerCommand('p2', canAct: true),
@@ -336,7 +343,7 @@ void main() {
       );
       final state = const GameState(
         activePlayerId: 'p1',
-      ).copyWith(movePreview: plan);
+      ).copyWithInteraction(movePreview: plan);
 
       final result = reducer.reduce(
         state,
@@ -355,7 +362,7 @@ void main() {
       final state = GameState(
         activePlayerId: 'p1',
         units: [unit],
-      ).copyWith(cityFoundingDraft: draft);
+      ).copyWithInteraction(cityFoundingDraft: draft);
 
       final result = reducer.reduce(
         state,
@@ -370,9 +377,11 @@ void main() {
         const state = GameState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: 'p1',
-            attackerUnitId: 'u1',
+          interaction: GameInteractionState(
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: 'p1',
+              attackerUnitId: 'u1',
+            ),
           ),
         );
 
@@ -394,7 +403,7 @@ void main() {
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           units: [unit],
-        ).copyWith(selection: selection);
+        ).copyWithInteraction(selection: selection);
 
         final result = reducer.reduce(
           state,
@@ -417,7 +426,7 @@ void main() {
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           cities: [city],
-        ).copyWith(selection: selection);
+        ).copyWithInteraction(selection: selection);
 
         final result = reducer.reduce(
           state,
@@ -433,7 +442,7 @@ void main() {
       final state = const GameState(
         activePlayerId: 'p1',
         activePlayerCanAct: true,
-      ).copyWith(selection: selection);
+      ).copyWithInteraction(selection: selection);
 
       final result = reducer.reduce(
         state,
@@ -452,7 +461,7 @@ void main() {
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           units: [unit],
-        ).copyWith(selection: selection);
+        ).copyWithInteraction(selection: selection);
 
         final result = reducer.reduce(
           state,
@@ -470,7 +479,7 @@ void main() {
         activePlayerId: 'p1',
         activePlayerCanAct: true,
         units: [unit],
-      ).copyWith(selection: selection);
+      ).copyWithInteraction(selection: selection);
 
       final result = reducer.reduce(
         state,
@@ -495,7 +504,7 @@ void main() {
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           cities: [city],
-        ).copyWith(selection: selection);
+        ).copyWithInteraction(selection: selection);
 
         final result = reducer.reduce(
           state,

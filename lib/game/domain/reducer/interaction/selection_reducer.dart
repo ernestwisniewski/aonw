@@ -21,12 +21,10 @@ abstract final class SelectionReducer {
     if (tile == null) return state;
     final visibleTile = _visibleTileForActivePlayer(state, tile);
 
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(selection: GameSelection.tile(visibleTile));
-    return next;
+    return _withFreshInteractionSelection(
+      state,
+      GameSelection.tile(visibleTile),
+    );
   }
 
   /// Selects a unit by ID. Auto-starts move targeting for controllable units.
@@ -43,11 +41,9 @@ abstract final class SelectionReducer {
         ? null
         : _visibleTileForActivePlayer(state, tile);
 
-    var next = state.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(
-      selection: GameSelection.unit(unit, tile: visibleTile),
+    var next = _withFreshInteractionSelection(
+      state,
+      GameSelection.unit(unit, tile: visibleTile),
     );
 
     if (next.canControlUnit(unit) &&
@@ -55,9 +51,9 @@ abstract final class SelectionReducer {
         !unit.isMerchant &&
         unit.workerJob == null &&
         !unit.isFortified) {
-      next = next.copyWith(moveCommandActive: true);
+      next = next.copyWithInteraction(moveCommandActive: true);
     } else {
-      next = next.copyWith(moveCommandActive: false);
+      next = next.copyWithInteraction(moveCommandActive: false);
     }
 
     return next;
@@ -109,11 +105,7 @@ abstract final class SelectionReducer {
           return GameStateTransition(state: state);
         }
       }
-      var next = state.copyWith(moveCommandActive: false);
-      next = next.copyWith(movePreview: null);
-      next = next.copyWith(cityFoundingDraft: null);
-      next = next.copyWith(pendingAction: null);
-      next = next.copyWith(selection: null);
+      final next = _withFreshInteractionSelection(state, null);
       return GameStateTransition(state: next);
     }
 
@@ -140,8 +132,10 @@ abstract final class SelectionReducer {
 
         return GameStateTransition(state: state);
       }
-      var next = state.copyWith(moveCommandActive: false);
-      next = next.copyWith(movePreview: null);
+      final next = state.copyWithInteraction(
+        moveCommandActive: false,
+        movePreview: null,
+      );
       return GameStateTransition(
         state: _handleStandardSelection(
           next,
@@ -352,12 +346,10 @@ abstract final class SelectionReducer {
 
   static GameState _selectTileDirect(GameState state, TileData tileData) {
     final visibleTile = _visibleTileForActivePlayer(state, tileData);
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(selection: GameSelection.tile(visibleTile));
-    return next;
+    return _withFreshInteractionSelection(
+      state,
+      GameSelection.tile(visibleTile),
+    );
   }
 
   static GameState _selectUnitDirect(
@@ -370,17 +362,15 @@ abstract final class SelectionReducer {
         ? null
         : _visibleTileForActivePlayer(state, tile);
 
-    var next = state.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(
-      selection: GameSelection.unit(unit, tile: visibleTile),
+    var next = _withFreshInteractionSelection(
+      state,
+      GameSelection.unit(unit, tile: visibleTile),
     );
 
     if (next.canControlUnit(unit) && !unit.isMerchant) {
-      next = next.copyWith(moveCommandActive: true);
+      next = next.copyWithInteraction(moveCommandActive: true);
     } else {
-      next = next.copyWith(moveCommandActive: false);
+      next = next.copyWithInteraction(moveCommandActive: false);
     }
 
     return next;
@@ -392,14 +382,10 @@ abstract final class SelectionReducer {
     TileData tileData,
   ) {
     final visibleTile = _visibleTileForActivePlayer(state, tileData);
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(
-      selection: GameSelection.fieldImprovement(improvement, tile: visibleTile),
+    return _withFreshInteractionSelection(
+      state,
+      GameSelection.fieldImprovement(improvement, tile: visibleTile),
     );
-    return next;
   }
 
   static GameState _selectCityDirect(
@@ -431,12 +417,9 @@ abstract final class SelectionReducer {
       ),
     );
 
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(
-      selection: GameSelection.city(
+    return _withFreshInteractionSelection(
+      state,
+      GameSelection.city(
         city,
         cityYield: cityYield,
         cityEconomy: cityEconomy,
@@ -444,7 +427,6 @@ abstract final class SelectionReducer {
             state.colorForPlayer(city.ownerPlayerId) ?? Player.palette.first,
       ),
     );
-    return next;
   }
 
   static GameState _selectCityCenterTile(
@@ -459,12 +441,7 @@ abstract final class SelectionReducer {
         _visibleTileForActivePlayer(state, centerTile),
       );
     }
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(selection: null);
-    return next;
+    return _withFreshInteractionSelection(state, null);
   }
 
   static bool _isActivePlayerOwned(GameState state, String ownerPlayerId) {
@@ -495,4 +472,15 @@ abstract final class SelectionReducer {
     }
     return null;
   }
+}
+
+GameState _withFreshInteractionSelection(
+  GameState state,
+  GameSelection? selection,
+) {
+  return state.copyWith(
+    interaction: state.interaction
+        .clearMapState(clearPendingAction: true)
+        .copyWith(selection: selection),
+  );
 }

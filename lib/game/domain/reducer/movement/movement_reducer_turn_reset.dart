@@ -219,12 +219,14 @@ abstract final class _MovementTurnResetProcessor {
       for (final unit in units) {
         if (unit.id == selectedId) {
           final tile = mapData.tileAt(unit.col, unit.row);
-          next = next.copyWith(selection: GameSelection.unit(unit, tile: tile));
+          next = next.copyWithInteraction(
+            selection: GameSelection.unit(unit, tile: tile),
+          );
           final unitWasReset =
               resetPlayerId == null || unit.ownerPlayerId == resetPlayerId;
           if (unitWasReset &&
               MovementReducer._canAutoActivateMoveTargeting(next, unit)) {
-            next = next.copyWith(moveCommandActive: true);
+            next = next.copyWithInteraction(moveCommandActive: true);
           }
           break;
         }

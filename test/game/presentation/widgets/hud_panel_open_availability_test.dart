@@ -11,10 +11,12 @@ void main() {
     test('allows city production only for selected city and closed panel', () {
       final state = GameState(
         cities: [_city()],
-        selection: GameSelection.city(
-          _city(),
-          cityYield: TileYield.zero,
-          playerColor: 0,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            _city(),
+            cityYield: TileYield.zero,
+            playerColor: 0,
+          ),
         ),
       );
 

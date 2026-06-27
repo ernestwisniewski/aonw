@@ -56,7 +56,7 @@ abstract final class CityExpansionReducer {
         research: next.research,
         ruleset: technologyRuleset,
       );
-      next = next.copyWith(
+      next = next.copyWithInteraction(
         selection: GameSelection.city(
           updatedCity,
           cityYield: cityYield,

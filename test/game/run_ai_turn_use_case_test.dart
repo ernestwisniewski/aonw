@@ -719,7 +719,7 @@ class _RecordingCommandTransport implements CommandTransport {
         ).state,
       SubmitTurnCommand() ||
       EndTurnCommand() => currentState.copyWith(activePlayerCanAct: false),
-      _ => currentState.copyWith(moveCommandActive: true),
+      _ => currentState.copyWithInteraction(moveCommandActive: true),
     };
     return CommandTransportResult(
       state: nextState,

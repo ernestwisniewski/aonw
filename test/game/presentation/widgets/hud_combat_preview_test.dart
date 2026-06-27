@@ -249,17 +249,19 @@ GameState _state({
   return GameState(
     activePlayerId: attacker.ownerPlayerId,
     units: [attacker, ...enemies],
-    pendingAction: PendingAttackTargeting(
-      ownerPlayerId: attacker.ownerPlayerId,
-      attackerUnitId: attacker.id,
-      defenderCol: defenderCol,
-      defenderRow: defenderRow,
-    ),
     fogOfWar: _visible(attacker.ownerPlayerId, [
       HexCoordinate(col: attacker.col, row: attacker.row),
       for (final enemy in enemies)
         HexCoordinate(col: enemy.col, row: enemy.row),
     ]),
+    interaction: GameInteractionState(
+      pendingAction: PendingAttackTargeting(
+        ownerPlayerId: attacker.ownerPlayerId,
+        attackerUnitId: attacker.id,
+        defenderCol: defenderCol,
+        defenderRow: defenderRow,
+      ),
+    ),
   );
 }
 

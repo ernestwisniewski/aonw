@@ -24,8 +24,9 @@ abstract final class TurnReducer {
       submittedPlayerIds: {...state.submittedPlayerIds, playerId},
     );
     if (state.activePlayerId == playerId) {
-      next = next.copyWith(
-        activePlayerCanAct: false,
+      next = next
+          .copyWith(activePlayerCanAct: false)
+          .copyWithInteraction(
         moveCommandActive: false,
         movePreview: null,
         cityFoundingDraft: null,
@@ -352,14 +353,13 @@ abstract final class TurnReducer {
     MapData mapData,
   ) {
     final tileData = mapData.tileAt(unit.col, unit.row);
-    final newState = state
-        .copyWith(
-          moveCommandActive: state.canControlUnit(unit) && !unit.isMerchant,
-        )
-        .copyWith(movePreview: null)
-        .copyWith(cityFoundingDraft: null)
-        .copyWith(pendingAction: null)
-        .copyWith(selection: GameSelection.unit(unit, tile: tileData));
+    final newState = state.copyWithInteraction(
+      moveCommandActive: state.canControlUnit(unit) && !unit.isMerchant,
+      movePreview: null,
+      cityFoundingDraft: null,
+      pendingAction: null,
+      selection: GameSelection.unit(unit, tile: tileData),
+    );
 
     return GameStateTransition(
       state: newState,
@@ -398,21 +398,20 @@ abstract final class TurnReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final newState = state
-        .copyWith(moveCommandActive: false)
-        .copyWith(movePreview: null)
-        .copyWith(cityFoundingDraft: null)
-        .copyWith(pendingAction: null)
-        .copyWith(
-          selection: _citySelection(
-            state,
-            city,
-            mapData,
-            cityRuleset: cityRuleset,
-            technologyRuleset: technologyRuleset,
-            paceBalance: paceBalance,
-          ),
-        );
+    final newState = state.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: null,
+      pendingAction: null,
+      selection: _citySelection(
+        state,
+        city,
+        mapData,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        paceBalance: paceBalance,
+      ),
+    );
 
     return GameStateTransition(
       state: newState,
@@ -424,13 +423,12 @@ abstract final class TurnReducer {
     GameState state,
     String playerId,
   ) {
-    final newState = state
-        .copyWith(moveCommandActive: false)
-        .copyWith(movePreview: null)
-        .copyWith(cityFoundingDraft: null)
-        .copyWith(
-          pendingAction: PendingResearchSelection(ownerPlayerId: playerId),
-        );
+    final newState = state.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: null,
+      pendingAction: PendingResearchSelection(ownerPlayerId: playerId),
+    );
 
     return GameStateTransition(state: newState);
   }

@@ -61,7 +61,7 @@ void main() {
       cities: [city],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      moveCommandActive: true,
+      interaction: const GameInteractionState(moveCommandActive: true),
     );
 
     final result = reducer.reduce(
@@ -81,9 +81,11 @@ void main() {
 
   test('cancel city worked hex selection clears matching pending mode', () {
     const state = GameState(
-      pendingAction: PendingCityWorkedHexSelection(
-        ownerPlayerId: 'player_1',
-        cityId: 'city_1',
+      interaction: GameInteractionState(
+        pendingAction: PendingCityWorkedHexSelection(
+          ownerPlayerId: 'player_1',
+          cityId: 'city_1',
+        ),
       ),
     );
 
@@ -101,7 +103,7 @@ void main() {
       cities: [city],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      moveCommandActive: true,
+      interaction: const GameInteractionState(moveCommandActive: true),
     );
 
     final result = reducer.reduce(
@@ -121,9 +123,11 @@ void main() {
 
   test('cancel city expansion selection clears matching pending mode', () {
     const state = GameState(
-      pendingAction: PendingCityExpansionSelection(
-        ownerPlayerId: 'player_1',
-        cityId: 'city_1',
+      interaction: GameInteractionState(
+        pendingAction: PendingCityExpansionSelection(
+          ownerPlayerId: 'player_1',
+          cityId: 'city_1',
+        ),
       ),
     );
 
@@ -234,10 +238,12 @@ void main() {
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      selection: selected,
-      pendingAction: const PendingAttackTargeting(
-        ownerPlayerId: 'player_1',
-        attackerUnitId: 'commander_player_1',
+      interaction: GameInteractionState(
+        selection: selected,
+        pendingAction: const PendingAttackTargeting(
+          ownerPlayerId: 'player_1',
+          attackerUnitId: 'commander_player_1',
+        ),
       ),
     );
 
@@ -255,7 +261,6 @@ void main() {
       units: [worker],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      selection: selected,
       fogOfWar: FogOfWarState(
         players: {
           'player_1': PlayerFogOfWar(
@@ -267,9 +272,12 @@ void main() {
           ),
         },
       ),
-      pendingAction: PendingWorkerActionSelection(
-        ownerPlayerId: worker.ownerPlayerId,
-        unitId: worker.id,
+      interaction: GameInteractionState(
+        selection: selected,
+        pendingAction: PendingWorkerActionSelection(
+          ownerPlayerId: worker.ownerPlayerId,
+          unitId: worker.id,
+        ),
       ),
     );
 
@@ -289,9 +297,11 @@ void main() {
   test('set active player clears pending interaction mode', () {
     const state = GameState(
       activePlayerId: 'player_1',
-      pendingAction: PendingCommanderMergeSelection(
-        ownerPlayerId: 'player_1',
-        commanderUnitId: 'commander_player_1',
+      interaction: GameInteractionState(
+        pendingAction: PendingCommanderMergeSelection(
+          ownerPlayerId: 'player_1',
+          commanderUnitId: 'commander_player_1',
+        ),
       ),
     );
 
