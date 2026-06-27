@@ -11,7 +11,7 @@ mobile micromanagement without taking turn control away from the player.
 | Explicit cancellation | An active unit mode can be interrupted by using the active action again or issuing a manual movement command. |
 | Legal commands | Automation ultimately produces normal movement effects and does not bypass pathfinding. |
 | Save state | Persistent unit modes are stored explicitly in `GameUnit.posture`. |
-| No legacy path | New actions use current domain contracts and do not add old-save compatibility. |
+| Current contracts | New actions use current domain commands and avoid compatibility branches. |
 | Readable no-op | If no meaningful legal action exists, the system issues no command and shows light local feedback. |
 
 ## Scout Auto-Explore

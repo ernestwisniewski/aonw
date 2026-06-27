@@ -49,7 +49,7 @@ backend tests that do not require external services.
 If you are new to the project, read the docs in this order:
 
 1. [docs/README.md](docs/README.md) for the architecture map and document index.
-2. [docs/protocols-impl.md](docs/protocols-impl.md) if you are touching
+2. [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) if you are touching
    multiplayer or generated Serverpod code.
 3. [docs/game-design/pace-profiles.md](docs/game-design/pace-profiles.md) and
    [docs/game-design/scoring-and-outcomes.md](docs/game-design/scoring-and-outcomes.md)
