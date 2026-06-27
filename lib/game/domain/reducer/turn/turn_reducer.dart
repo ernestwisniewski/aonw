@@ -27,11 +27,11 @@ abstract final class TurnReducer {
       next = next
           .copyWith(activePlayerCanAct: false)
           .copyWithInteraction(
-        moveCommandActive: false,
-        movePreview: null,
-        cityFoundingDraft: null,
-        pendingAction: null,
-      );
+            moveCommandActive: false,
+            movePreview: null,
+            cityFoundingDraft: null,
+            pendingAction: null,
+          );
     }
     return GameStateTransition(state: next);
   }
