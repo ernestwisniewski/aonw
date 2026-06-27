@@ -257,6 +257,7 @@ void main() {
       [
         GameLanguage.dutch,
         GameLanguage.english,
+        GameLanguage.french,
         GameLanguage.german,
         GameLanguage.polish,
         GameLanguage.spanish,

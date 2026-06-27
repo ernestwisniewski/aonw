@@ -47,8 +47,8 @@ make server-integration-test
 
 English is the source language. `lib/l10n/app_en.arb` is the template that
 defines the canonical key set and placeholder metadata; the other locales
-(`app_pl.arb`, `app_de.arb`, `app_es.arb`, `app_nl.arb`) translate it and fall
-back to English for any missing key.
+(`app_pl.arb`, `app_de.arb`, `app_es.arb`, `app_nl.arb`, `app_fr.arb`)
+translate it and fall back to English for any missing key.
 
 When you add or change user-facing text:
 

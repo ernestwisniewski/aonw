@@ -60,10 +60,25 @@ void main() {
     expect(container.read(languageSettingsProvider).selectedLanguage, isNull);
   });
 
-  testWidgets('app falls back to English for unsupported system languages', (
+  testWidgets('app starts in French when the system language is French', (
     WidgetTester tester,
   ) async {
     tester.binding.platformDispatcher.localesTestValue = const [Locale('fr')];
+    addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+
+    await tester.pumpWidget(const ProviderScope(child: HexApp()));
+    await tester.pump();
+
+    final context = tester.element(find.byType(MainMenuScreen));
+
+    expect(Localizations.localeOf(context), const Locale('fr'));
+    expect(find.text('NOUVELLE PARTIE'), findsOneWidget);
+  });
+
+  testWidgets('app falls back to English for unsupported system languages', (
+    WidgetTester tester,
+  ) async {
+    tester.binding.platformDispatcher.localesTestValue = const [Locale('it')];
     addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
 
     await tester.pumpWidget(const ProviderScope(child: HexApp()));
@@ -146,13 +161,14 @@ void main() {
     for (final label in const [
       'Polish',
       'English',
+      'French',
       'German',
       'Spanish',
       'Dutch',
     ]) {
       expect(find.text(label), findsWidgets);
     }
-    for (final code in const ['PL', 'EN', 'DE', 'ES', 'NL']) {
+    for (final code in const ['PL', 'EN', 'FR', 'DE', 'ES', 'NL']) {
       expect(find.text(code), findsWidgets);
     }
     await tester.tap(find.text('Polish').last);

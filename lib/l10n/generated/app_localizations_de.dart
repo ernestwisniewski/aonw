@@ -1658,6 +1658,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languageEnglish => 'Englisch';
 
   @override
+  String get languageFrench => 'Französisch';
+
+  @override
   String get languageGerman => 'Deutsch';
 
   @override

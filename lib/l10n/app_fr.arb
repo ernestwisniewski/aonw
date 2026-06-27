@@ -1,0 +1,94 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Age of New Worlds",
+  "mainMenuLoadGame": "Charger une partie",
+  "mainMenuDeveloper": "Outils",
+  "mainMenuSettings": "Paramètres",
+  "mainMenuSettingsSublabel": "Texte et audio",
+  "mainMenuExit": "Quitter",
+  "mainMenuAiSublabel": "IA",
+  "mainMenuOnlineSublabel": "Réseau",
+  "mainMenuLocalSublabel": "Local",
+  "mainMenuToolsSublabel": "Éditeurs",
+  "mainMenuToolsTitle": "Outils",
+  "mainMenuMapEditor": "Éditeur de carte",
+  "mainMenuAssetsEditor": "Éditeur de ressources",
+  "mainMenuTextSize": "Taille du texte",
+  "mainMenuTextSample": "Exemple de texte de jeu",
+  "mainMenuManual": "Manuel",
+  "mainMenuCredits": "Crédits",
+  "mainMenuFeedback": "Retour",
+  "mainMenuWhatsNew": "Nouveautés",
+  "mainMenuWhatsNewBody": "Bienvenue dans Age of New Worlds. Construisez des villes, dirigez des commandants, découvrez de nouvelles terres et écrivez l'histoire de votre civilisation.",
+  "newGameAction": "NOUVELLE PARTIE",
+  "optionsTooltip": "Options",
+  "optionsOpenMenuTooltip": "Ouvrir le menu",
+  "optionsTooltipWithCollapseHint": "{tooltip}. Maintenez pour réduire le menu.",
+  "@optionsTooltipWithCollapseHint": {
+    "placeholders": {
+      "tooltip": {
+        "type": "String"
+      }
+    }
+  },
+  "optionsTitle": "Options",
+  "optionsSubtitle": "Texte, langue, audio et performances",
+  "languageSectionTitle": "Langue",
+  "languagePolish": "Polonais",
+  "languageEnglish": "Anglais",
+  "languageFrench": "Français",
+  "languageGerman": "Allemand",
+  "languageSpanish": "Espagnol",
+  "languageDutch": "Néerlandais",
+  "languageSemanticLabel": "Langue {label}",
+  "@languageSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "languageTooltip": "Langue: {label}",
+  "@languageTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "textScaleStandard": "Standard",
+  "textScaleLarge": "Grand",
+  "textScaleExtraLarge": "Très grand",
+  "textScaleSemanticLabel": "Taille du texte {label}",
+  "@textScaleSemanticLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "textScaleTooltip": "Taille du texte: {label}",
+  "@textScaleTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "audioSectionTitle": "Audio",
+  "gameSoundsLabel": "Sons du jeu",
+  "soundVolumeLabel": "Volume des sons",
+  "gameMusicLabel": "Musique du jeu",
+  "musicVolumeLabel": "Volume de la musique",
+  "natureSoundsLabel": "Ambiance naturelle",
+  "natureVolumeLabel": "Volume de l'ambiance",
+  "aiSectionTitle": "IA",
+  "aiBatterySaverLabel": "Économie de batterie pour l'IA",
+  "gameplaySectionTitle": "Gameplay",
+  "followUnitMovementCameraLabel": "Suivre les déplacements des unités avec la caméra",
+  "followEnemyUnitCameraLabel": "Suivre les unités ennemies avec la caméra",
+  "cinematicCameraLabel": "Caméra cinématique",
+  "performanceSectionTitle": "Performances",
+  "showFpsLabel": "Afficher les FPS",
+  "showMapZoomLabel": "Afficher le zoom de la carte"
+}

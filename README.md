@@ -122,7 +122,7 @@ references are under `docs/game-design/`.
 
 ## Localization
 
-The app ships English, Polish, German, Spanish, and Dutch. English
+The app ships English, Polish, German, Spanish, Dutch, and French. English
 (`lib/l10n/app_en.arb`) is the source language and template; other locales
 translate it and fall back to English. See [CONTRIBUTING.md](CONTRIBUTING.md)
 for how to add or change localized text.

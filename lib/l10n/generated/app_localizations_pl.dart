@@ -1645,6 +1645,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languageEnglish => 'Angielski';
 
   @override
+  String get languageFrench => 'Francuski';
+
+  @override
   String get languageGerman => 'Niemiecki';
 
   @override

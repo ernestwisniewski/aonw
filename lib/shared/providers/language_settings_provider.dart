@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum GameLanguage {
   polish('pl', Locale('pl')),
   english('en', Locale('en')),
+  french('fr', Locale('fr')),
   german('de', Locale('de')),
   spanish('es', Locale('es')),
   dutch('nl', Locale('nl'));

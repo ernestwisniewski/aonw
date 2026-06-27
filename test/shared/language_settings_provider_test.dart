@@ -45,12 +45,18 @@ void main() {
       ], AppLocalizations.supportedLocales),
       const Locale('pl'),
     );
+    expect(
+      resolveGameLocale(const [
+        Locale('fr', 'FR'),
+      ], AppLocalizations.supportedLocales),
+      const Locale('fr'),
+    );
   });
 
   test('falls back to English when the system locale is unsupported', () {
     expect(
       resolveGameLocale(const [
-        Locale('fr', 'FR'),
+        Locale('it', 'IT'),
       ], AppLocalizations.supportedLocales),
       const Locale('en'),
     );
