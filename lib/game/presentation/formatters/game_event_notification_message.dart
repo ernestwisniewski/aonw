@@ -406,39 +406,21 @@ class _GameEventNotificationMessageFormatter {
             EventNotificationIconThumbnailKind.success,
           ),
         ),
-      PlayerTimedOutEvent(:final turn, :final playerId) =>
-        GameEventNotificationMessage(
-          title: l10n.eventPlayerTimedOutTitle,
-          body: l10n.eventPlayerTimedOutBody(
-            _playerName(l10n, save, playerId),
-            turn,
-          ),
-          thumbnail: const IconEventNotificationThumbnail(
-            EventNotificationIconThumbnailKind.warning,
-          ),
+      PlayerTimedOutEvent(:final turn, :final playerId) ||
+      TurnAutoResolvedEvent(:final turn, :final playerId) ||
+      PlayerKickedEvent(
+        :final turn,
+        :final playerId,
+      ) => GameEventNotificationMessage(
+        title: l10n.eventPlayerTimedOutTitle,
+        body: l10n.eventPlayerTimedOutBody(
+          _playerName(l10n, save, playerId),
+          turn,
         ),
-      TurnAutoResolvedEvent(:final turn, :final playerId) =>
-        GameEventNotificationMessage(
-          title: l10n.eventPlayerTimedOutTitle,
-          body: l10n.eventPlayerTimedOutBody(
-            _playerName(l10n, save, playerId),
-            turn,
-          ),
-          thumbnail: const IconEventNotificationThumbnail(
-            EventNotificationIconThumbnailKind.warning,
-          ),
+        thumbnail: const IconEventNotificationThumbnail(
+          EventNotificationIconThumbnailKind.warning,
         ),
-      PlayerKickedEvent(:final turn, :final playerId) =>
-        GameEventNotificationMessage(
-          title: l10n.eventPlayerTimedOutTitle,
-          body: l10n.eventPlayerTimedOutBody(
-            _playerName(l10n, save, playerId),
-            turn,
-          ),
-          thumbnail: const IconEventNotificationThumbnail(
-            EventNotificationIconThumbnailKind.warning,
-          ),
-        ),
+      ),
       _ => _unsupportedEvent('system', event),
     };
   }
