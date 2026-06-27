@@ -64,9 +64,8 @@ intentional, update this document and the architecture test in the same change.
 
 - [Build And Deploy Runbook](build-and-deploy.md) - local builds, release
   packaging, server deploys, web deploys, and store build commands.
-- [Protocols Implementation - Serverpod](protocols-impl.md) -
-  client/server protocol boundaries and generated Serverpod implementation
-  notes.
+- [Multiplayer Protocol](multiplayer-protocol.md) - client/server protocol
+  boundaries, generated Serverpod surfaces, and live stream invariants.
 
 ### Multiplayer And Backend
 

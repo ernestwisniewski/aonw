@@ -18,5 +18,6 @@ Serverpod multiplayer client.
   startup fallback only.
 
 Server-side persistence is owned by Serverpod ORM tables for matches, players,
-snapshots, and events. Client-side adapters should not depend on legacy REST
-routes or custom WebSocket channels for multiplayer runtime state.
+snapshots, and events. Client-side adapters should stay behind application
+ports and use the generated Serverpod endpoint and stream contracts for
+multiplayer runtime state.
