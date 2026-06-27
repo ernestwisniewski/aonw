@@ -67,9 +67,7 @@ abstract final class _GameStateTapReducer {
       }
     }
 
-    return GameStateTransition(
-      state: SelectionReducer.selectUnit(state, command, environment.mapData),
-    );
+    return environment.selectUnit(state, command);
   }
 
   static GameStateTransition _selectTappedTile(
@@ -77,15 +75,7 @@ abstract final class _GameStateTapReducer {
     TileTappedCommand command,
     ReducerEnvironment environment,
   ) {
-    final ruleset = environment.ruleset;
-    return SelectionReducer.handleTileTapped(
-      state,
-      command,
-      environment.mapData,
-      cityRuleset: ruleset.city,
-      technologyRuleset: ruleset.technology,
-      paceBalance: environment.context.paceBalance,
-    );
+    return environment.handleSelectionTileTapped(state, command);
   }
 
   static GameStateTransition _selectTappedCity(
@@ -93,17 +83,7 @@ abstract final class _GameStateTapReducer {
     GameCity city,
     ReducerEnvironment environment,
   ) {
-    final ruleset = environment.ruleset;
-    return GameStateTransition(
-      state: SelectionReducer.handleCityTapped(
-        state,
-        city,
-        environment.mapData,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
-        paceBalance: environment.context.paceBalance,
-      ),
-    );
+    return environment.handleSelectionCityTapped(state, city);
   }
 
   static GameStateTransition? _pendingTileTap(
@@ -160,14 +140,9 @@ abstract final class _GameStateTapReducer {
     PendingCityWorkedHexSelection pendingAction,
     ReducerEnvironment environment,
   ) {
-    final ruleset = environment.ruleset;
-    return CityWorkedHexReducer.toggleWorkedHex(
+    return environment.toggleWorkedHex(
       state,
       ToggleWorkedHexCommand(pendingAction.cityId, command.col, command.row),
-      environment.mapData,
-      context: environment.context,
-      cityRuleset: ruleset.city,
-      technologyRuleset: ruleset.technology,
     );
   }
 
@@ -177,18 +152,13 @@ abstract final class _GameStateTapReducer {
     PendingCityExpansionSelection pendingAction,
     ReducerEnvironment environment,
   ) {
-    final ruleset = environment.ruleset;
-    return CityExpansionReducer.selectExpansionHex(
+    return environment.selectCityExpansionHex(
       state,
       SelectCityExpansionHexCommand(
         pendingAction.cityId,
         command.col,
         command.row,
       ),
-      environment.mapData,
-      context: environment.context,
-      cityRuleset: ruleset.city,
-      technologyRuleset: ruleset.technology,
     );
   }
 
@@ -279,7 +249,7 @@ abstract final class _GameStateTapReducer {
       moveResult: moveResult,
       context: environment.context,
     )) {
-      return _selectTappedOwnUnit(state, tileData, environment.mapData);
+      return _selectTappedOwnUnit(state, tileData, environment);
     }
 
     return moveResult;
@@ -320,16 +290,10 @@ abstract final class _GameStateTapReducer {
   static GameStateTransition _selectTappedOwnUnit(
     GameState state,
     TileData tileData,
-    MapData mapData,
+    ReducerEnvironment environment,
   ) {
     final tappedUnit = state.unitAt(tileData.col, tileData.row)!;
-    return GameStateTransition(
-      state: SelectionReducer.selectUnit(
-        state,
-        SelectUnitCommand(tappedUnit.id),
-        mapData,
-      ),
-    );
+    return environment.selectUnit(state, SelectUnitCommand(tappedUnit.id));
   }
 
   static bool _canRetargetWorkerAction(
@@ -377,11 +341,9 @@ abstract final class _GameStateTapReducer {
     PendingMerchantTradeRouteSelection pendingAction,
     ReducerEnvironment environment,
   ) {
-    return MerchantTradeRouteReducer.assignRoute(
+    return environment.assignMerchantTradeRoute(
       state,
       AssignMerchantTradeRouteCommand(pendingAction.unitId, command.cityId),
-      environment.mapData,
-      context: environment.context,
     );
   }
 
@@ -391,11 +353,9 @@ abstract final class _GameStateTapReducer {
     PendingMerchantMoveToCitySelection pendingAction,
     ReducerEnvironment environment,
   ) {
-    return MerchantTradeRouteReducer.moveToCity(
+    return environment.moveMerchantToCity(
       state,
       MoveMerchantToCityCommand(pendingAction.unitId, command.cityId),
-      environment.mapData,
-      context: environment.context,
     );
   }
 

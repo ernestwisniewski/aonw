@@ -24,11 +24,9 @@ abstract final class _AutoExploreProcessor {
     final exploring = unit
         .copyWith(posture: UnitPosture.autoExploring)
         .copyWithQueuedPath(null);
-    var primed = state.copyWith(units: replaceUnit(state.units, exploring))
-        .copyWithInteraction(
-      pendingAction: null,
-      cityFoundingDraft: null,
-    );
+    var primed = state
+        .copyWith(units: replaceUnit(state.units, exploring))
+        .copyWithInteraction(pendingAction: null, cityFoundingDraft: null);
     primed = MovementReducer._clearMoveTargeting(primed);
     if (primed.selectedUnitId == unit.id) {
       primed = MovementReducer._selectUpdatedUnit(primed, exploring, mapData);

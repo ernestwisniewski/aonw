@@ -81,19 +81,21 @@ GameState _prepareCycleState(
   required Set<String> humanPlayerIds,
 }) {
   if (save.gameMode != GameMode.multiplayer) return state;
-  return state.copyWith(
-    activePlayerId: '',
-    activePlayerCanAct: true,
-    submittedPlayerIds: {
-      for (final playerId in humanPlayerIds)
-        if (playerId.isNotEmpty) playerId,
-    },
-  ).copyWithInteraction(
-    moveCommandActive: false,
-    movePreview: null,
-    cityFoundingDraft: null,
-    pendingAction: null,
-  );
+  return state
+      .copyWith(
+        activePlayerId: '',
+        activePlayerCanAct: true,
+        submittedPlayerIds: {
+          for (final playerId in humanPlayerIds)
+            if (playerId.isNotEmpty) playerId,
+        },
+      )
+      .copyWithInteraction(
+        moveCommandActive: false,
+        movePreview: null,
+        cityFoundingDraft: null,
+        pendingAction: null,
+      );
 }
 
 List<String> _activePlayerIds(GameSave save) {

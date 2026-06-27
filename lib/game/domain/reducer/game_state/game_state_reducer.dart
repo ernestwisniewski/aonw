@@ -1,26 +1,15 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/artifact/artifact_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_expansion_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_worked_hex_reducer.dart';
 import 'package:aonw/game/domain/reducer/combat/combat_reducer.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/diplomacy_reducer.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/merchant_trade_route_reducer.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/resource_trade_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment_dispatch.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment_interaction_dispatch.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
-import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
-import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
-import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
-import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
-import 'package:aonw/game/domain/reducer/worker/worker_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -57,10 +46,6 @@ class GameStateReducer {
     GameCommand command,
     ReducerEnvironment environment,
   ) {
-    final mapData = environment.mapData;
-    final ruleset = environment.ruleset;
-    final context = environment.context;
-
     return switch (command) {
       SetActivePlayerCommand() => _ActivePlayerReducer.handleSetActivePlayer(
         state,
@@ -105,143 +90,58 @@ class GameStateReducer {
           environment,
         ),
       StartMerchantTradeRouteSelectionCommand() =>
-        MerchantTradeRouteReducer.startSelection(
-          state,
-          command,
-          mapData,
-          context: context,
-        ),
+        environment.startMerchantTradeRouteSelection(state, command),
       CancelMerchantTradeRouteSelectionCommand() =>
-        MerchantTradeRouteReducer.cancelSelection(state, command),
-      AssignMerchantTradeRouteCommand() =>
-        MerchantTradeRouteReducer.assignRoute(
-          state,
-          command,
-          mapData,
-          context: context,
-        ),
+        environment.cancelMerchantTradeRouteSelection(state, command),
+      AssignMerchantTradeRouteCommand() => environment.assignMerchantTradeRoute(
+        state,
+        command,
+      ),
       StartMerchantMoveToCitySelectionCommand() =>
-        MerchantTradeRouteReducer.startMoveToCitySelection(
-          state,
-          command,
-          mapData,
-          context: context,
-        ),
+        environment.startMerchantMoveToCitySelection(state, command),
       CancelMerchantMoveToCitySelectionCommand() =>
-        MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command),
-      MoveMerchantToCityCommand() => MerchantTradeRouteReducer.moveToCity(
+        environment.cancelMerchantMoveToCitySelection(state, command),
+      MoveMerchantToCityCommand() => environment.moveMerchantToCity(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      StartArtifactExcavationCommand() => ArtifactReducer.startExcavation(
+      StartArtifactExcavationCommand() => environment.startArtifactExcavation(
         state,
         command,
-        context: context,
       ),
-      StoreArtifactInCityCommand() => ArtifactReducer.storeInCity(
+      StoreArtifactInCityCommand() => environment.storeArtifactInCity(
         state,
         command,
-        context: context,
       ),
-      TradeArtifactCommand() => ArtifactReducer.tradeArtifact(
+      TradeArtifactCommand() => environment.tradeArtifact(state, command),
+      OpenResourceTradeCommand() => environment.openResourceTrade(
         state,
         command,
-        context: context,
       ),
-      OpenResourceTradeCommand() => ResourceTradeReducer.openTrade(
+      OpenResourceExchangeCommand() => environment.openResourceExchange(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      OpenResourceExchangeCommand() => ResourceTradeReducer.openExchange(
+      FoundCityCommand() => environment.foundCity(state, command),
+      StartBuildingCommand() => environment.startBuilding(state, command),
+      StartUnitProductionCommand() => environment.startUnitProduction(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      FoundCityCommand() => CityFoundingReducer.confirmCityFounding(
-        state,
-        mapData,
-        command: command,
-        context: context,
-        cityRuleset: ruleset.city,
-      ),
-      StartBuildingCommand() => CityProductionReducer.startBuilding(
+      StartCityProjectCommand() => environment.startCityProject(state, command),
+      SetCitySpecializationCommand() => environment.setCitySpecialization(
         state,
         command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
       ),
-      StartUnitProductionCommand() => CityProductionReducer.startUnitProduction(
+      RushProductionCommand() => environment.rushProduction(state, command),
+      SelectTechnologyCommand() => environment.selectTechnology(state, command),
+      CancelResearchSelectionCommand() => environment.cancelResearchSelection(
         state,
         command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
       ),
-      StartCityProjectCommand() => CityProductionReducer.startCityProject(
-        state,
-        command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
-      ),
-      SetCitySpecializationCommand() =>
-        CityProductionReducer.setCitySpecialization(
-          state,
-          command,
-          mapData,
-          context: context,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-        ),
-      RushProductionCommand() => CityProductionReducer.rushProduction(
-        state,
-        command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
-      ),
-      SelectTechnologyCommand() => ResearchReducer.selectTechnology(
-        state,
-        command,
-        context: context,
-        mapData: mapData,
-        ruleset: ruleset.technology,
-      ),
-      CancelResearchSelectionCommand() => GameStateTransition(
-        state: ResearchReducer.cancelResearchSelection(
-          state,
-          command,
-          context: context,
-        ),
-      ),
-      DetachTroopCommand() => UnitAttachmentReducer.detachTroop(
-        state,
-        command,
-        mapData,
-        context: context,
-      ),
-      EndTurnCommand(:final playerId) => TurnReducer.advanceCitiesForPlayer(
-        state,
-        playerId,
-        mapData,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
-        paceBalance: context.paceBalance,
-      ),
-      SubmitTurnCommand(:final playerId) => TurnReducer.submitTurn(
-        state,
-        playerId,
-      ),
+      DetachTroopCommand() => environment.detachTroop(state, command),
+      EndTurnCommand() => environment.endTurn(state, command),
+      SubmitTurnCommand() => environment.submitTurn(state, command),
       ResetUnitMovementCommand(:final playerId) =>
         MovementReducer.resetUnitMovementForNewTurnWithEnvironment(
           state,
@@ -254,192 +154,84 @@ class GameStateReducer {
           environment,
         ),
       ),
-      StartCityFoundingCommand() => GameStateTransition(
-        state: CityFoundingReducer.startCityFounding(
-          state,
-          mapData,
-          context: context,
-          cityRuleset: ruleset.city,
-        ),
-      ),
-      CancelCityFoundingCommand() => GameStateTransition(
-        state: CityFoundingReducer.cancelCityFounding(state),
-      ),
-      StartCityWorkedHexSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.startCityWorkedHexSelection(
-          state,
-          command,
-          context: context,
-        ),
-      ),
-      CancelCityWorkedHexSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.cancelCityWorkedHexSelection(state, command),
-      ),
-      ToggleWorkedHexCommand() => CityWorkedHexReducer.toggleWorkedHex(
+      StartCityFoundingCommand() => environment.startCityFounding(state),
+      CancelCityFoundingCommand() => environment.cancelCityFounding(state),
+      StartCityWorkedHexSelectionCommand() =>
+        environment.startCityWorkedHexSelection(state, command),
+      CancelCityWorkedHexSelectionCommand() =>
+        environment.cancelCityWorkedHexSelection(state, command),
+      ToggleWorkedHexCommand() => environment.toggleWorkedHex(state, command),
+      StartCityExpansionSelectionCommand() =>
+        environment.startCityExpansionSelection(state, command),
+      CancelCityExpansionSelectionCommand() =>
+        environment.cancelCityExpansionSelection(state, command),
+      SelectCityExpansionHexCommand() => environment.selectCityExpansionHex(
         state,
         command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
       ),
-      StartCityExpansionSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.startCityExpansionSelection(
-          state,
-          command,
-          context: context,
-        ),
-      ),
-      CancelCityExpansionSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.cancelCityExpansionSelection(state, command),
-      ),
-      SelectCityExpansionHexCommand() =>
-        CityExpansionReducer.selectExpansionHex(
-          state,
-          command,
-          mapData,
-          context: context,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-        ),
-      StartWorkerActionSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.startWorkerActionSelection(
-          state,
-          command,
-          context: context,
-        ),
-      ),
-      SelectWorkerImprovementCommand() => WorkerReducer.selectWorkerImprovement(
+      StartWorkerActionSelectionCommand() =>
+        environment.startWorkerActionSelection(state, command),
+      SelectWorkerImprovementCommand() => environment.selectWorkerImprovement(
         state,
         command,
-        mapData,
-        context: context,
-        cityRuleset: ruleset.city,
-        technologyRuleset: ruleset.technology,
-        paceBalance: context.paceBalance,
       ),
-      ConfirmWorkerImprovementCommand() =>
-        WorkerReducer.confirmWorkerImprovement(
-          state,
-          command,
-          mapData,
-          context: context,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: context.paceBalance,
-        ),
-      CancelWorkerActionSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.cancelWorkerActionSelection(state, command),
-      ),
-      CancelWorkerJobCommand() => WorkerReducer.cancelWorkerJob(
+      ConfirmWorkerImprovementCommand() => environment.confirmWorkerImprovement(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      AssignWorkerToHexCommand() => WorkerReducer.assignWorkerToHex(
+      CancelWorkerActionSelectionCommand() =>
+        environment.cancelWorkerActionSelection(state, command),
+      CancelWorkerJobCommand() => environment.cancelWorkerJob(state, command),
+      AssignWorkerToHexCommand() => environment.assignWorkerToHex(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      CancelWorkerAssignmentCommand() => WorkerReducer.cancelWorkerAssignment(
+      CancelWorkerAssignmentCommand() => environment.cancelWorkerAssignment(
         state,
         command,
-        mapData,
-        context: context,
       ),
-      StartAttackTargetingCommand() => GameStateTransition(
-        state: InteractionReducer.startAttackTargeting(
-          state,
-          command,
-          context: context,
-        ),
-      ),
-      CancelAttackTargetingCommand() => GameStateTransition(
-        state: InteractionReducer.cancelAttackTargeting(state, command),
-      ),
-      AttackHexCommand() => CombatReducer.attackHexWithEnvironment(
+      StartAttackTargetingCommand() => environment.startAttackTargeting(
         state,
         command,
-        environment,
       ),
-      StartCommanderMergeSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.startCommanderMergeSelection(
-          state,
-          command,
-          context: context,
-        ),
+      CancelAttackTargetingCommand() => environment.cancelAttackTargeting(
+        state,
+        command,
       ),
-      CancelCommanderMergeSelectionCommand() => GameStateTransition(
-        state: InteractionReducer.cancelCommanderMergeSelection(state, command),
-      ),
-      SelectTileCommand() => GameStateTransition(
-        state: SelectionReducer.selectTile(state, command, mapData),
-      ),
+      AttackHexCommand() => environment.attackHex(state, command),
+      StartCommanderMergeSelectionCommand() =>
+        environment.startCommanderMergeSelection(state, command),
+      CancelCommanderMergeSelectionCommand() =>
+        environment.cancelCommanderMergeSelection(state, command),
+      SelectTileCommand() => environment.selectTile(state, command),
       SelectUnitCommand() => _GameStateTapReducer.handleUnitSelected(
         state,
         command,
         environment,
       ),
-      SelectCityCommand() => GameStateTransition(
-        state: SelectionReducer.selectCity(
-          state,
-          command,
-          mapData,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: context.paceBalance,
-        ),
-      ),
-      FocusNextPendingActionCommand(
-        :final playerId,
-        :final preferredObjectiveAdvice,
-        :final actionIndex,
-      ) =>
-        TurnReducer.focusNextPendingAction(
-          state,
-          playerId,
-          mapData,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: context.paceBalance,
-          preferredObjectiveAdvice: preferredObjectiveAdvice,
-          actionIndex: actionIndex,
-        ),
-      FocusTurnStartActionCommand(:final playerId) =>
-        TurnReducer.focusTurnStartAction(
-          state,
-          playerId,
-          mapData,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: context.paceBalance,
-        ),
-      SendDiplomaticProposalCommand() => DiplomacyReducer.sendProposal(
+      SelectCityCommand() => environment.selectCity(state, command),
+      FocusNextPendingActionCommand() => environment.focusNextPendingAction(
         state,
         command,
-        context: context,
       ),
-      RespondDiplomaticProposalCommand() => DiplomacyReducer.respondProposal(
+      FocusTurnStartActionCommand() => environment.focusTurnStartAction(
         state,
         command,
-        context: context,
       ),
-      DeclareWarCommand() => DiplomacyReducer.declareWar(
+      SendDiplomaticProposalCommand() => environment.sendDiplomaticProposal(
         state,
         command,
-        context: context,
       ),
-      SendDiplomaticMessageCommand() => DiplomacyReducer.sendMessage(
+      RespondDiplomaticProposalCommand() =>
+        environment.respondDiplomaticProposal(state, command),
+      DeclareWarCommand() => environment.declareWar(state, command),
+      SendDiplomaticMessageCommand() => environment.sendDiplomaticMessage(
         state,
         command,
-        context: context,
       ),
-      RespondDiplomaticMessageCommand() => DiplomacyReducer.respondMessage(
+      RespondDiplomaticMessageCommand() => environment.respondDiplomaticMessage(
         state,
         command,
-        context: context,
       ),
     };
   }
