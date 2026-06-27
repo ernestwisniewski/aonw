@@ -32,6 +32,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -426,10 +427,7 @@ class HudOverlayFrame {
   }
 
   static Player? _activePlayer(GameSave gameSave, String activePlayerId) {
-    for (final player in gameSave.players) {
-      if (player.id == activePlayerId) return player;
-    }
-    return null;
+    return gameSave.playerById(activePlayerId);
   }
 
   static bool _cityExpansionHexSelected(GameState? gameState) {

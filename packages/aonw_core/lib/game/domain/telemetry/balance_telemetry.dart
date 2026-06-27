@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/combat.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules/game_length_config.dart';

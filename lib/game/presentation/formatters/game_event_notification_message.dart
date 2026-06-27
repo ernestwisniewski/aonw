@@ -9,6 +9,7 @@ import 'package:aonw/game/presentation/providers/game/game_event_notifications_p
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -613,12 +614,10 @@ GameEventNotificationMessage _combatMessage({
 }) {
   final defenderUnitSnapshot = activityContext.units[defenderUnitId];
   final defenderUnit =
-      _unitById(previousState, defenderUnitId) ??
-      _unitById(state, defenderUnitId);
+      previousState?.unitById(defenderUnitId) ?? state.unitById(defenderUnitId);
   final defenderCitySnapshot = activityContext.cities[defenderUnitId];
   final defenderCity =
-      _cityByIdOrNull(previousState, defenderUnitId) ??
-      _cityByIdOrNull(state, defenderUnitId);
+      previousState?.cityById(defenderUnitId) ?? state.cityById(defenderUnitId);
   final attackerName = _combatUnitName(
     l10n,
     state,
@@ -833,20 +832,8 @@ String _cityName(
 ]) {
   final citySnapshot = activityContext.cities[cityId];
   if (citySnapshot != null) return _citySnapshotName(l10n, citySnapshot);
-  final city = _cityById(state, cityId);
+  final city = state.cityById(cityId);
   return city == null ? cityId : GameDisplayNames.city(l10n, city);
-}
-
-GameCity? _cityById(GameState state, String cityId) {
-  for (final city in state.cities) {
-    if (city.id == cityId) return city;
-  }
-  return null;
-}
-
-GameCity? _cityByIdOrNull(GameState? state, String cityId) {
-  if (state == null) return null;
-  return _cityById(state, cityId);
 }
 
 String _unitName(
@@ -869,7 +856,7 @@ String? _unitNameOrNull(
 ]) {
   final unitSnapshot = activityContext.units[unitId];
   if (unitSnapshot != null) return _unitSnapshotName(l10n, unitSnapshot);
-  final unit = _unitById(state, unitId) ?? _unitById(previousState, unitId);
+  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
   return unit == null ? null : GameDisplayNames.unit(l10n, unit);
 }
 
@@ -899,7 +886,7 @@ String? _combatUnitNameOrNull(
 ]) {
   final unitSnapshot = activityContext.units[unitId];
   if (unitSnapshot != null) return _unitSnapshotName(l10n, unitSnapshot);
-  final unit = _unitById(state, unitId) ?? _unitById(previousState, unitId);
+  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
   return unit == null ? null : GameDisplayNames.unitWithType(l10n, unit);
 }
 
@@ -911,7 +898,7 @@ String? _unitOwnerPlayerId(
 ]) {
   final unitSnapshot = activityContext.units[unitId];
   if (unitSnapshot != null) return unitSnapshot.ownerPlayerId;
-  final unit = _unitById(state, unitId) ?? _unitById(previousState, unitId);
+  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
   return unit?.ownerPlayerId;
 }
 
@@ -923,8 +910,7 @@ String? _cityOwnerPlayerId(
 ]) {
   final citySnapshot = activityContext.cities[cityId];
   if (citySnapshot != null) return citySnapshot.ownerPlayerId;
-  final city =
-      _cityByIdOrNull(state, cityId) ?? _cityByIdOrNull(previousState, cityId);
+  final city = state.cityById(cityId) ?? previousState?.cityById(cityId);
   return city?.ownerPlayerId;
 }
 
@@ -932,14 +918,6 @@ String _percentLabel(double value) => value.round().toString();
 
 String _turnsLabel(AppLocalizations l10n, int count) =>
     l10n.eventTurnCountLabel(count);
-
-GameUnit? _unitById(GameState? state, String unitId) {
-  if (state == null) return null;
-  for (final unit in state.units) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
-}
 
 UnitEventNotificationThumbnail? _unitThumbnail(
   GameState state,
@@ -951,7 +929,7 @@ UnitEventNotificationThumbnail? _unitThumbnail(
   if (unitSnapshot != null) {
     return UnitEventNotificationThumbnail(unitSnapshot.type);
   }
-  final unit = _unitById(state, unitId) ?? _unitById(previousState, unitId);
+  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
   return unit == null ? null : UnitEventNotificationThumbnail(unit.type);
 }
 
@@ -982,7 +960,7 @@ String _citySnapshotName(AppLocalizations l10n, GameActivityCitySnapshot city) {
 }
 
 String _playerName(AppLocalizations l10n, GameSave? save, String playerId) {
-  final player = _playerById(save, playerId);
+  final player = save?.playerById(playerId);
   return player == null ? playerId : GameDisplayNames.player(l10n, player);
 }
 
@@ -993,7 +971,7 @@ String _playerCountryName(
   String? playerId,
 ) {
   if (playerId == null || playerId.isEmpty) return '';
-  final player = _playerById(save, playerId);
+  final player = save?.playerById(playerId);
   if (player != null) {
     return GameDisplayNames.playerCountry(l10n, player.country);
   }
@@ -1005,14 +983,6 @@ String _playerCountryName(
 }
 
 PlayerCountry _playerCountry(GameSave? save, GameState state, String playerId) {
-  return _playerById(save, playerId)?.country ??
+  return save?.playerById(playerId)?.country ??
       state.countryForPlayer(playerId);
-}
-
-Player? _playerById(GameSave? save, String playerId) {
-  if (save == null) return null;
-  for (final player in save.players) {
-    if (player.id == playerId) return player;
-  }
-  return null;
 }

@@ -5,6 +5,7 @@ import 'package:aonw_core/ai/strategic/defensive_stance.dart';
 import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -29,17 +30,11 @@ int distanceImprovement({
 }
 
 GameUnit? ownUnitById(GameView view, String unitId) {
-  for (final unit in view.ownUnits) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
+  return view.ownUnits.byId(unitId);
 }
 
 GameCity? ownCityById(GameView view, String cityId) {
-  for (final city in view.ownCities) {
-    if (city.id == cityId) return city;
-  }
-  return null;
+  return view.ownCities.byId(cityId);
 }
 
 GameCity? nearestOwnCity(GameView view, int col, int row) {

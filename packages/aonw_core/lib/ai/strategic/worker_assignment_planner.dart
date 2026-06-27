@@ -4,6 +4,7 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategic/strategic_mode.dart';
 import 'package:aonw_core/ai/strategic/worker_assignment_plan.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -332,13 +333,6 @@ class WorkerAssignmentPlanner {
   ) {
     for (final improvement in improvements) {
       if (improvement.hex == hex) return improvement;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(Iterable<GameCity> cities, String id) {
-    for (final city in cities) {
-      if (city.id == id) return city;
     }
     return null;
   }

@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
@@ -345,10 +346,7 @@ class HudGameOutcomeSummary {
   }
 
   static String _playerName(GameSave save, String playerId) {
-    for (final player in save.players) {
-      if (player.id == playerId) return player.name;
-    }
-    return playerId;
+    return save.playerById(playerId)?.name ?? playerId;
   }
 
   static String _percent(double value) => value.round().toString();

@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/objective.dart';
@@ -313,29 +314,15 @@ class GameView {
         final unitId = location.unitId;
         if (unitId == null) return false;
         if (ownUnitIds.contains(unitId)) return true;
-        final unit = _unitById(units, unitId);
+        final unit = units.byId(unitId);
         return unit != null && visibility.canSeeDynamicAt(unit.col, unit.row);
       case WorldArtifactLocationKind.stored:
         final cityId = location.cityId;
         if (cityId == null) return false;
         if (ownCityIds.contains(cityId)) return true;
-        final city = _cityById(cities, cityId);
+        final city = cities.byId(cityId);
         return city != null &&
             visibility.canSeeDynamicAt(city.center.col, city.center.row);
     }
-  }
-
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(List<GameCity> cities, String cityId) {
-    for (final city in cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
   }
 }

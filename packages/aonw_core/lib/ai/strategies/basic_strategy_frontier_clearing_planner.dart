@@ -5,6 +5,7 @@ import 'package:aonw_core/ai/military_assessment.dart';
 import 'package:aonw_core/ai/strategic/frontier_clearing_plan.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -49,7 +50,7 @@ final class BasicStrategyFrontierClearingPlanner {
 
     for (final assignment in sorted) {
       if (usedUnitIds.contains(assignment.unitId)) continue;
-      final unit = _ownUnitById(view, assignment.unitId);
+      final unit = view.ownUnits.byId(assignment.unitId);
       if (unit == null ||
           unit.isWorking ||
           unit.queuedPath != null ||
@@ -165,13 +166,6 @@ final class BasicStrategyFrontierClearingPlanner {
       command: MoveUnitCommand(unit.id, step.col, step.row),
       reservedHexes: _reservedHexesFor(plan),
     );
-  }
-
-  GameUnit? _ownUnitById(GameView view, String unitId) {
-    for (final unit in view.ownUnits) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 
   GameUnit? _visibleEnemyAt(GameView view, HexCoordinate hex) {

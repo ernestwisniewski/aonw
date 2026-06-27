@@ -34,7 +34,7 @@ abstract final class UnitCommandValidator {
     required String unitId,
     required GameCommandContext context,
   }) {
-    final unit = _unitById(state, unitId);
+    final unit = state.unitById(unitId);
     if (unit == null) {
       return const InvalidUnit(UnitCommandValidationFailureReason.missingUnit);
     }
@@ -101,12 +101,5 @@ abstract final class UnitCommandValidator {
       return const InvalidUnit(UnitCommandValidationFailureReason.queuedPath);
     }
     return result;
-  }
-
-  static GameUnit? _unitById(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 }

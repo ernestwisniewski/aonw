@@ -33,7 +33,7 @@ abstract final class SelectionReducer {
     SelectUnitCommand command,
     MapData mapData,
   ) {
-    final unit = state.units.where((u) => u.id == command.unitId).firstOrNull;
+    final unit = state.unitById(command.unitId);
     if (unit == null) return state;
 
     final tile = mapData.tileAt(unit.col, unit.row);
@@ -68,7 +68,7 @@ abstract final class SelectionReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final city = state.cities.where((c) => c.id == command.cityId).firstOrNull;
+    final city = state.cityById(command.cityId);
     if (city == null) return state;
 
     return _selectCityDirect(

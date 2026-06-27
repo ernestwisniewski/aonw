@@ -112,9 +112,7 @@ abstract final class CityFoundingReducer {
   }) {
     final founderId = command?.founderId ?? state.cityFoundingDraft?.unitId;
     if (founderId == null) return GameStateTransition(state: state);
-    final founder = state.units
-        .where((unit) => unit.id == founderId)
-        .firstOrNull;
+    final founder = state.unitById(founderId);
     if (founder == null ||
         !context.canControlUnit(state, founder) ||
         founder.isWorking ||

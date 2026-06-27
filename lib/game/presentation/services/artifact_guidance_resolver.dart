@@ -96,7 +96,7 @@ class _ArtifactGuidanceChangeDetector {
     for (final artifact in state.artifacts) {
       final location = artifact.location;
       if (!location.isStored || location.cityId == null) continue;
-      final city = _cityById(state, location.cityId!);
+      final city = state.cityById(location.cityId!);
       if (city?.ownerPlayerId != playerId) continue;
       final previous = _artifactById(previousState, artifact.id);
       if (previous?.location == artifact.location) continue;
@@ -110,7 +110,7 @@ class _ArtifactGuidanceChangeDetector {
       if (unit.ownerPlayerId != playerId) continue;
       final artifactId = unit.carriedArtifactId;
       if (artifactId == null) continue;
-      final previousUnit = _unitById(previousState, unit.id);
+      final previousUnit = previousState.unitById(unit.id);
       if (previousUnit?.carriedArtifactId == artifactId) continue;
       final artifact = _artifactById(state, artifactId);
       return artifact == null
@@ -122,7 +122,7 @@ class _ArtifactGuidanceChangeDetector {
 
   _ReachedArtifactGuidance? _artifactReachedByMovedUnit() {
     for (final event in events.whereType<UnitMovedEvent>()) {
-      final unit = _unitById(state, event.unitId);
+      final unit = state.unitById(event.unitId);
       if (!_canDiscoverArtifact(unit)) continue;
       final artifact = _mapArtifactAt(state, event.toCol, event.toRow);
       if (artifact != null) {
@@ -152,20 +152,6 @@ class _ArtifactGuidanceChangeDetector {
       if (location.isOnMap && location.col == col && location.row == row) {
         return artifact;
       }
-    }
-    return null;
-  }
-
-  GameCity? _cityById(GameState state, String cityId) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
-  }
-
-  GameUnit? _unitById(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
     }
     return null;
   }

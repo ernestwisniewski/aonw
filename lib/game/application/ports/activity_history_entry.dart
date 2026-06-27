@@ -67,13 +67,13 @@ class GameActivityContext {
     final cities = <String, GameActivityCitySnapshot>{};
 
     for (final unitId in unitIds) {
-      final unit = _unitById(state, unitId) ?? _unitById(previousState, unitId);
+      final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
       if (unit != null) {
         units[unitId] = GameActivityUnitSnapshot.fromUnit(unit);
       }
     }
     for (final cityId in cityIds) {
-      final city = _cityById(state, cityId) ?? _cityById(previousState, cityId);
+      final city = state.cityById(cityId) ?? previousState?.cityById(cityId);
       if (city != null) {
         cities[cityId] = GameActivityCitySnapshot.fromCity(city);
       }
@@ -277,20 +277,4 @@ Set<String> _cityIdsFor(GameEvent event) {
     TurnAutoResolvedEvent() ||
     PlayerKickedEvent() => const <String>{},
   };
-}
-
-GameUnit? _unitById(GameState? state, String unitId) {
-  if (state == null) return null;
-  for (final unit in state.units) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
-}
-
-GameCity? _cityById(GameState? state, String cityId) {
-  if (state == null) return null;
-  for (final city in state.cities) {
-    if (city.id == cityId) return city;
-  }
-  return null;
 }

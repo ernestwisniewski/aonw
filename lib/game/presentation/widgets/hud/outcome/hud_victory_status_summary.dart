@@ -4,6 +4,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
@@ -392,10 +393,7 @@ class HudVictoryStatusSummary {
   }
 
   static String _playerName(GameSave save, String playerId) {
-    for (final player in save.players) {
-      if (player.id == playerId) return player.name;
-    }
-    return playerId;
+    return save.playerById(playerId)?.name ?? playerId;
   }
 
   static String _tooltip({

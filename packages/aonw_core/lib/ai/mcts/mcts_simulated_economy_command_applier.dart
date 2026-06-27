@@ -89,7 +89,7 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartBuilding(StartBuildingCommand command) {
-    final lookup = _cityById(command.cityId);
+    final lookup = _cityLookup(command.cityId);
     if (lookup == null) return ownCities;
     final (:cityIndex, :city) = lookup;
 
@@ -123,7 +123,7 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartUnitProduction(StartUnitProductionCommand command) {
-    final lookup = _cityById(command.cityId);
+    final lookup = _cityLookup(command.cityId);
     if (lookup == null) return ownCities;
     final (:cityIndex, :city) = lookup;
 
@@ -177,7 +177,7 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartCityProject(StartCityProjectCommand command) {
-    final lookup = _cityById(command.cityId);
+    final lookup = _cityLookup(command.cityId);
     if (lookup == null) return ownCities;
     final (:cityIndex, :city) = lookup;
     return _replaceCity(
@@ -189,7 +189,7 @@ final class MctsSimulatedEconomyCommandApplier {
   List<GameCity> applySetCitySpecialization(
     SetCitySpecializationCommand command,
   ) {
-    final lookup = _cityById(command.cityId);
+    final lookup = _cityLookup(command.cityId);
     if (lookup == null) return ownCities;
     final (:cityIndex, :city) = lookup;
     if (!_researchState
@@ -223,7 +223,7 @@ final class MctsSimulatedEconomyCommandApplier {
     return ResearchState(players: {view.forPlayerId: ownResearch});
   }
 
-  ({int cityIndex, GameCity city})? _cityById(String cityId) {
+  ({int cityIndex, GameCity city})? _cityLookup(String cityId) {
     for (var i = 0; i < ownCities.length; i++) {
       final city = ownCities[i];
       if (city.id == cityId) return (cityIndex: i, city: city);

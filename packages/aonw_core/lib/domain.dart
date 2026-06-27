@@ -6,6 +6,7 @@ export 'game/domain/city.dart';
 export 'game/domain/combat.dart';
 export 'game/domain/command.dart';
 export 'game/domain/diplomacy.dart';
+export 'game/domain/entity_lookup.dart';
 export 'game/domain/event.dart';
 export 'game/domain/fog.dart';
 export 'game/domain/hex.dart';

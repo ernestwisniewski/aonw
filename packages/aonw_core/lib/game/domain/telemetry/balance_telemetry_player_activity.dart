@@ -256,19 +256,11 @@ bool _eventBelongsToPlayer({
 }
 
 String? _unitOwner(PersistentGameState? state, String unitId) {
-  if (state == null) return null;
-  for (final unit in state.units) {
-    if (unit.id == unitId) return unit.ownerPlayerId;
-  }
-  return null;
+  return state?.units.byId(unitId)?.ownerPlayerId;
 }
 
 String? _cityOwner(PersistentGameState? state, String cityId) {
-  if (state == null) return null;
-  for (final city in state.cities) {
-    if (city.id == cityId) return city.ownerPlayerId;
-  }
-  return null;
+  return state?.cities.byId(cityId)?.ownerPlayerId;
 }
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {

@@ -12,6 +12,7 @@ import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -81,7 +82,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
         }
       }
       if (unitId != null) {
-        unit = _unitById(state, unitId);
+        unit = state.unitById(unitId);
         if (unit == null || unit.ownerPlayerId != overlay.ownerPlayerId) {
           overlay.removeFromParent();
           _overlays.remove(entry.key);
@@ -169,17 +170,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
   }
 
   GameCity? _knownCityById(GameState state, String cityId) {
-    for (final city in state.citiesKnownToActivePlayer) {
-      if (city.id == cityId) return city;
-    }
-    return null;
-  }
-
-  GameUnit? _unitById(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return state.citiesKnownToActivePlayer.byId(cityId);
   }
 }
 

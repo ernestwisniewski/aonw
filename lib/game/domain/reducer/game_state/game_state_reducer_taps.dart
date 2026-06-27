@@ -16,7 +16,7 @@ abstract final class _GameStateTapReducer {
     CityTappedCommand command,
     ReducerEnvironment environment,
   ) {
-    final city = state.cities.where((c) => c.id == command.cityId).firstOrNull;
+    final city = state.cityById(command.cityId);
     if (city == null) return GameStateTransition(state: state);
 
     final pendingAction = state.pendingAction;
@@ -51,9 +51,7 @@ abstract final class _GameStateTapReducer {
   ) {
     final pendingAction = state.pendingAction;
     if (pendingAction is PendingAttackTargeting) {
-      final target = state.units
-          .where((unit) => unit.id == command.unitId)
-          .firstOrNull;
+      final target = state.unitById(command.unitId);
       if (_canSelectUnitAsAttackTarget(target, pendingAction)) {
         return CombatReducer.selectAttackTargetWithEnvironment(
           state,
@@ -188,9 +186,7 @@ abstract final class _GameStateTapReducer {
       return GameStateTransition(state: state);
     }
 
-    final worker = state.units
-        .where((unit) => unit.id == pendingAction.unitId)
-        .firstOrNull;
+    final worker = state.unitById(pendingAction.unitId);
     if (!_canRetargetWorkerAction(state, worker, environment.context)) {
       return GameStateTransition(state: state);
     }

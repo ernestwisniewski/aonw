@@ -3,9 +3,9 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 bool isLegalMctsCommandCandidate(
   GameCommand command,
@@ -25,7 +25,7 @@ bool isLegalMctsCommandCandidate(
 }
 
 bool _canApplyAttackCandidate(AttackHexCommand command, GameView view) {
-  final unit = _ownUnitById(view, command.attackerUnitId);
+  final unit = view.ownUnits.byId(command.attackerUnitId);
   if (unit == null || unit.isWorking || unit.movementPoints <= 0) {
     return false;
   }
@@ -71,7 +71,7 @@ bool _canApplyMoveCandidate(
   GameView view, {
   bool allowNonVisibleTarget = false,
 }) {
-  final unit = _ownUnitById(view, command.unitId);
+  final unit = view.ownUnits.byId(command.unitId);
   if (unit == null || unit.isWorking || unit.movementPoints <= 0) {
     return false;
   }
@@ -112,7 +112,7 @@ bool _canApplyMoveCandidate(
 }
 
 bool _canApplyFoundCityCandidate(FoundCityCommand command, GameView view) {
-  final founder = _ownUnitById(view, command.founderId);
+  final founder = view.ownUnits.byId(command.founderId);
   if (founder == null || founder.isWorking) return false;
 
   final cities = _knownCities(view);
@@ -158,13 +158,6 @@ bool _canApplyFoundCityCandidate(FoundCityCommand command, GameView view) {
   }
 
   return true;
-}
-
-GameUnit? _ownUnitById(GameView view, String unitId) {
-  for (final unit in view.ownUnits) {
-    if (unit.id == unitId) return unit;
-  }
-  return null;
 }
 
 List<GameCity> _knownCities(GameView view) {

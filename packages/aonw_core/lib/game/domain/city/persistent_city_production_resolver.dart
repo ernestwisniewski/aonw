@@ -45,7 +45,7 @@ class PersistentCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityById(state.cities, command.cityId);
+    final lookup = _cityLookup(state.cities, command.cityId);
     if (lookup == null) return _reject(state, 'city_not_found');
     final (:cityIndex, :city) = lookup;
     if (city.ownerPlayerId != actorPlayerId) {
@@ -101,7 +101,7 @@ class PersistentCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityById(state.cities, command.cityId);
+    final lookup = _cityLookup(state.cities, command.cityId);
     if (lookup == null) return _reject(state, 'city_not_found');
     final (:cityIndex, :city) = lookup;
     if (city.ownerPlayerId != actorPlayerId) {
@@ -181,7 +181,7 @@ class PersistentCityProductionResolver {
     CityRuleset cityRuleset = CityRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityById(state.cities, command.cityId);
+    final lookup = _cityLookup(state.cities, command.cityId);
     if (lookup == null) return _reject(state, 'city_not_found');
     final (:cityIndex, :city) = lookup;
     if (city.ownerPlayerId != actorPlayerId) {
@@ -210,7 +210,7 @@ class PersistentCityProductionResolver {
     required SetCitySpecializationCommand command,
     required String actorPlayerId,
   }) {
-    final lookup = _cityById(state.cities, command.cityId);
+    final lookup = _cityLookup(state.cities, command.cityId);
     if (lookup == null) return _reject(state, 'city_not_found');
     final (:cityIndex, :city) = lookup;
     if (city.ownerPlayerId != actorPlayerId) {
@@ -252,7 +252,7 @@ class PersistentCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityById(state.cities, command.cityId);
+    final lookup = _cityLookup(state.cities, command.cityId);
     if (lookup == null) return _reject(state, 'city_not_found');
     final (:cityIndex, :city) = lookup;
     if (city.ownerPlayerId != actorPlayerId) {
@@ -443,7 +443,7 @@ class PersistentCityProductionResolver {
     );
   }
 
-  static ({int cityIndex, GameCity city})? _cityById(
+  static ({int cityIndex, GameCity city})? _cityLookup(
     List<GameCity> cities,
     String cityId,
   ) {

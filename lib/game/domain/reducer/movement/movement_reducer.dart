@@ -411,13 +411,6 @@ abstract final class MovementReducer {
     steps: plan.steps,
   );
 
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
   static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
     for (final unit in units) {
       if (unit.col == col && unit.row == row) return unit;

@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -168,12 +169,12 @@ abstract class GameState with _$GameState {
 
   GameUnit? get selectedUnit {
     final id = selectedUnitId;
-    if (id == null) return null;
-    for (final unit in units) {
-      if (unit.id == id) return unit;
-    }
-    return null;
+    return id == null ? null : unitById(id);
   }
+
+  GameUnit? unitById(String unitId) => units.byId(unitId);
+
+  GameCity? cityById(String cityId) => cities.byId(cityId);
 
   int? colorForPlayer(String playerId) => playerColors[playerId];
 

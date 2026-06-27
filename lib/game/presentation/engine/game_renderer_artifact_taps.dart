@@ -2,7 +2,7 @@ part of 'game_renderer.dart';
 
 void _handleRendererUnitMarkerTapped(GameRenderer renderer, String unitId) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
-  final unit = renderer._unitById(unitId);
+  final unit = renderer._renderState.unitById(unitId);
   if (unit == null) {
     renderer._artifactTapCycle.clear();
     return;
@@ -99,7 +99,7 @@ bool _handleStackedMapObjectTap(
 
   final unit = preferredUnitId == null
       ? _unitAt(renderer, col, row)
-      : renderer._unitById(preferredUnitId);
+      : renderer._renderState.unitById(preferredUnitId);
   final artifact = preferredArtifact ?? _mapArtifactAt(renderer, col, row);
   final objective = preferredObjective ?? _mapObjectiveAt(renderer, col, row);
   final occupiedHexTapCycle =

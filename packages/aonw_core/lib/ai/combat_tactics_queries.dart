@@ -9,10 +9,7 @@ abstract final class _CombatTacticsQueries {
   }
 
   static GameUnit? ownUnitById(GameView view, String unitId) {
-    for (final unit in view.ownUnits) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return view.ownUnits.byId(unitId);
   }
 
   static GameUnit? targetableEnemyUnitAt({

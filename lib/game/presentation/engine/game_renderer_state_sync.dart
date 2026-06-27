@@ -132,7 +132,7 @@ extension GameRendererStateSync on GameRenderer {
     if (builder == null) return const [];
     final pending = _renderState.pendingAction;
     if (pending is! PendingWorkerActionSelection) return const [];
-    final worker = _unitById(pending.unitId);
+    final worker = _renderState.unitById(pending.unitId);
     if (worker == null || worker.type != GameUnitType.worker) return const [];
     return builder(
       state: _renderState,
@@ -313,13 +313,6 @@ extension GameRendererStateSync on GameRenderer {
     final viewModel = GameRenderViewModel.fromState(_renderState);
     if (_viewModelNotifier.value == viewModel) return;
     _viewModelNotifier.value = viewModel;
-  }
-
-  GameUnit? _unitById(String unitId) {
-    for (final unit in _renderState.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 
   int _colorForPlayer(String playerId) {

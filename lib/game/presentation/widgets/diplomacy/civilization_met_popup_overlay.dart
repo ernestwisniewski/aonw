@@ -16,6 +16,7 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
@@ -205,7 +206,7 @@ class _CivilizationMetPopupModel {
     required GameState state,
     required String playerId,
   }) {
-    final player = _playerById(save, playerId);
+    final player = save?.playerById(playerId);
     final country = player?.country ?? state.countryForPlayer(playerId);
     return _CivilizationMetPopupModel(
       civilizationName: GameDisplayNames.playerCountry(l10n, country),
@@ -444,12 +445,4 @@ class _CivilizationMetFooter extends StatelessWidget {
       ),
     );
   }
-}
-
-Player? _playerById(GameSave? save, String playerId) {
-  if (save == null) return null;
-  for (final player in save.players) {
-    if (player.id == playerId) return player;
-  }
-  return null;
 }

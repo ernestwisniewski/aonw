@@ -11,6 +11,7 @@ import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 
@@ -43,7 +44,7 @@ final class AiTurnPreparationBuilder {
     final resolvedSnapshot = snapshot ?? await repository.load(saveId);
     if (resolvedSnapshot.save.id != saveId) return null;
 
-    final player = _playerById(resolvedSnapshot.save.players, playerId);
+    final player = resolvedSnapshot.save.playerById(playerId);
     if (player == null || player.kind != PlayerKind.ai || player.ai == null) {
       return null;
     }
@@ -194,13 +195,6 @@ final class AiTurnPreparationBuilder {
   ) {
     if (preparationCommands.isEmpty) return strategy;
     return _PreparedAiStrategy(strategy, preparationCommands);
-  }
-
-  static Player? _playerById(List<Player> players, String playerId) {
-    for (final player in players) {
-      if (player.id == playerId) return player;
-    }
-    return null;
   }
 
   static DateTime? _deadlineFor(GameSave save, DateTime? turnStartedAt) {

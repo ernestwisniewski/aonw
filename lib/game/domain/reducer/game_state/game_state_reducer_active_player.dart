@@ -84,7 +84,7 @@ abstract final class _ActivePlayerReducer {
   static bool _canKeepUnitSelection(GameState state, GameSelection selection) {
     final unit = selection.unit;
     if (unit == null) return false;
-    final liveUnit = state.units.where((u) => u.id == unit.id).firstOrNull;
+    final liveUnit = state.unitById(unit.id);
     if (liveUnit == null) return false;
     return state.canControlUnit(liveUnit) ||
         _isActivePlayerOwned(state, liveUnit.ownerPlayerId);

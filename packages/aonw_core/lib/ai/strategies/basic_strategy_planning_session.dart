@@ -2,9 +2,9 @@ import 'package:aonw_core/ai/ai_turn_plan.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city/city_founding.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
 import 'package:aonw_core/game/domain/movement.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyPlanningSession {
   final GameView view;
@@ -140,7 +140,7 @@ abstract final class BasicStrategyCommandAnalysis {
     final reserved = {
       HexCoordinate(col: command.targetCol, row: command.targetRow),
     };
-    final unit = _ownUnitById(view, command.unitId);
+    final unit = view.ownUnits.byId(command.unitId);
     if (unit == null) return reserved;
     final targetTile = view.mapData.tileAt(
       command.targetCol,
@@ -167,12 +167,5 @@ abstract final class BasicStrategyCommandAnalysis {
       reserved.add(HexCoordinate(col: step.col, row: step.row));
     }
     return reserved;
-  }
-
-  static GameUnit? _ownUnitById(GameView view, String unitId) {
-    for (final unit in view.ownUnits) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
   }
 }

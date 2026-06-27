@@ -172,10 +172,7 @@ abstract final class _CombatSetupFactory {
     required GameCommandContext context,
     required bool allowExistingTargetOverride,
   }) {
-    final attacker = CombatReducer._unitById(
-      state.units,
-      command.attackerUnitId,
-    );
+    final attacker = state.unitById(command.attackerUnitId);
     if (attacker == null || !_canUseAttacker(state, attacker, context)) {
       return null;
     }

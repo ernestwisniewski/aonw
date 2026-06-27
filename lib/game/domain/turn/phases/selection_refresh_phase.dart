@@ -34,9 +34,7 @@ class SelectionRefreshPhase extends TurnPhase {
     final selectedId = state.selection?.unit?.id;
     if (selectedId == null) return state;
 
-    final updatedUnit = state.units
-        .where((unit) => unit.id == selectedId)
-        .firstOrNull;
+    final updatedUnit = state.unitById(selectedId);
     if (updatedUnit == null) {
       final previousUnit = state.selection?.unit;
       final foundedCity = previousUnit == null
@@ -103,9 +101,7 @@ class SelectionRefreshPhase extends TurnPhase {
     final selectedId = state.selection?.city?.id;
     if (selectedId == null) return state;
 
-    final updatedCity = state.cities
-        .where((city) => city.id == selectedId)
-        .firstOrNull;
+    final updatedCity = state.cityById(selectedId);
     if (updatedCity == null) return state;
 
     return state.copyWithInteraction(

@@ -440,9 +440,7 @@ abstract final class DiplomacyReducer {
     String playerBId,
     GameState state,
   ) {
-    final attacker = state.units
-        .where((unit) => unit.id == attack.attackerUnitId)
-        .firstOrNull;
+    final attacker = state.unitById(attack.attackerUnitId);
     if (attacker == null) return false;
     final defenderOwner =
         state.unitAt(attack.defenderCol, attack.defenderRow)?.ownerPlayerId ??

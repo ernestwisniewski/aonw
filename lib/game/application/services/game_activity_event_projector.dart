@@ -290,18 +290,10 @@ abstract final class GameActivityEventProjector {
   }
 
   static String? _cityOwner(GameState? state, String cityId) {
-    if (state == null) return null;
-    for (final city in state.cities) {
-      if (city.id == cityId) return city.ownerPlayerId;
-    }
-    return null;
+    return state?.cityById(cityId)?.ownerPlayerId;
   }
 
   static String? _unitOwner(GameState? state, String unitId) {
-    if (state == null) return null;
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit.ownerPlayerId;
-    }
-    return null;
+    return state?.unitById(unitId)?.ownerPlayerId;
   }
 }

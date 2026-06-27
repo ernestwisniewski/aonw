@@ -267,16 +267,10 @@ abstract final class MerchantTradeRouteReducer {
       state.copyWith(interaction: state.interaction.clearTransientModes());
 
   static GameUnit? _findUnit(GameState state, String unitId) {
-    for (final unit in state.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
+    return state.unitById(unitId);
   }
 
   static GameCity? _findCity(GameState state, String cityId) {
-    for (final city in state.cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
+    return state.cityById(cityId);
   }
 }

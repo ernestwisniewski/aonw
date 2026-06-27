@@ -1,5 +1,5 @@
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
@@ -28,7 +28,7 @@ class PersistentMerchantTradeRouteResolver {
     required String actorPlayerId,
     required MapData mapData,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -46,7 +46,7 @@ class PersistentMerchantTradeRouteResolver {
     );
     if (origin == null) return _reject(state, 'merchant_not_in_city');
 
-    final destination = _cityById(state.cities, command.destinationCityId);
+    final destination = state.cities.byId(command.destinationCityId);
     if (destination == null) {
       return _reject(state, 'destination_city_not_found');
     }
@@ -83,7 +83,7 @@ class PersistentMerchantTradeRouteResolver {
     required String actorPlayerId,
     required MapData mapData,
   }) {
-    final unit = _unitById(state.units, command.unitId);
+    final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
     if (unit.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'unit_not_controlled');
@@ -95,7 +95,7 @@ class PersistentMerchantTradeRouteResolver {
       return _reject(state, 'unit_unavailable');
     }
 
-    final destination = _cityById(state.cities, command.destinationCityId);
+    final destination = state.cities.byId(command.destinationCityId);
     if (destination == null) {
       return _reject(state, 'destination_city_not_found');
     }
@@ -142,20 +142,6 @@ class PersistentMerchantTradeRouteResolver {
       state: state,
       reason: reason,
     );
-  }
-
-  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
-    for (final unit in units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(List<GameCity> cities, String cityId) {
-    for (final city in cities) {
-      if (city.id == cityId) return city;
-    }
-    return null;
   }
 
   static List<GameUnit> _replaceUnit(List<GameUnit> units, GameUnit updated) {

@@ -9,14 +9,6 @@ TechnologyId? _technologyIdFromName(String? name) {
 }
 
 String _playerName(AppLocalizations l10n, GameSave? save, String playerId) {
-  final player = _playerById(save, playerId);
+  final player = save?.playerById(playerId);
   return player == null ? playerId : GameDisplayNames.player(l10n, player);
-}
-
-Player? _playerById(GameSave? save, String playerId) {
-  if (save == null) return null;
-  for (final player in save.players) {
-    if (player.id == playerId) return player;
-  }
-  return null;
 }

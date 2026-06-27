@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
@@ -158,8 +159,8 @@ abstract final class MerchantTradeRouteRules {
         unit.isWorking ||
         unit.isFortified ||
         route.steps.length < 2 ||
-        _cityById(cities, route.originCityId) == null ||
-        _cityById(cities, route.destinationCityId) == null) {
+        cities.byId(route.originCityId) == null ||
+        cities.byId(route.destinationCityId) == null) {
       return MerchantTradeRouteAdvanceResult(
         unit: unit.copyWithMerchantTradeRoute(null),
         routeInvalidated: true,
@@ -307,13 +308,6 @@ abstract final class MerchantTradeRouteRules {
   static GameCity? _cityAt(Iterable<GameCity> cities, int col, int row) {
     for (final city in cities) {
       if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
-  }
-
-  static GameCity? _cityById(Iterable<GameCity> cities, String cityId) {
-    for (final city in cities) {
-      if (city.id == cityId) return city;
     }
     return null;
   }
