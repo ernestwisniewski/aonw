@@ -548,6 +548,7 @@ String _languageLabel(AppLocalizations l10n, GameLanguage language) {
   return switch (language) {
     GameLanguage.polish => l10n.languagePolish,
     GameLanguage.english => l10n.languageEnglish,
+    GameLanguage.french => l10n.languageFrench,
     GameLanguage.german => l10n.languageGerman,
     GameLanguage.spanish => l10n.languageSpanish,
     GameLanguage.dutch => l10n.languageDutch,
@@ -558,6 +559,7 @@ String _languageCode(GameLanguage language) {
   return switch (language) {
     GameLanguage.polish => 'PL',
     GameLanguage.english => 'EN',
+    GameLanguage.french => 'FR',
     GameLanguage.german => 'DE',
     GameLanguage.spanish => 'ES',
     GameLanguage.dutch => 'NL',

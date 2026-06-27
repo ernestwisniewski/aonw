@@ -4,9 +4,9 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for French (`fr`).
+class AppLocalizationsFr extends AppLocalizations {
+  AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
   String get appTitle => 'Age of New Worlds';
@@ -201,55 +201,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newGameStartSetupAction => 'Go to lobby';
 
   @override
-  String get mainMenuLoadGame => 'Load game';
+  String get mainMenuLoadGame => 'Charger une partie';
 
   @override
-  String get mainMenuDeveloper => 'Tools';
+  String get mainMenuDeveloper => 'Outils';
 
   @override
-  String get mainMenuSettings => 'Settings';
+  String get mainMenuSettings => 'Paramètres';
 
   @override
-  String get mainMenuSettingsSublabel => 'Text and audio';
+  String get mainMenuSettingsSublabel => 'Texte et audio';
 
   @override
-  String get mainMenuExit => 'Exit';
+  String get mainMenuExit => 'Quitter';
 
   @override
-  String get mainMenuAiSublabel => 'AI';
+  String get mainMenuAiSublabel => 'IA';
 
   @override
-  String get mainMenuOnlineSublabel => 'Network';
+  String get mainMenuOnlineSublabel => 'Réseau';
 
   @override
   String get mainMenuLocalSublabel => 'Local';
 
   @override
-  String get mainMenuToolsSublabel => 'Editors';
+  String get mainMenuToolsSublabel => 'Éditeurs';
 
   @override
-  String get mainMenuToolsTitle => 'Tools';
+  String get mainMenuToolsTitle => 'Outils';
 
   @override
-  String get mainMenuMapEditor => 'Map editor';
+  String get mainMenuMapEditor => 'Éditeur de carte';
 
   @override
-  String get mainMenuAssetsEditor => 'Asset editor';
+  String get mainMenuAssetsEditor => 'Éditeur de ressources';
 
   @override
-  String get mainMenuTextSize => 'Text size';
+  String get mainMenuTextSize => 'Taille du texte';
 
   @override
-  String get mainMenuTextSample => 'Sample game text';
+  String get mainMenuTextSample => 'Exemple de texte de jeu';
 
   @override
-  String get mainMenuManual => 'Manual';
+  String get mainMenuManual => 'Manuel';
 
   @override
-  String get mainMenuCredits => 'Credits';
+  String get mainMenuCredits => 'Crédits';
 
   @override
-  String get mainMenuFeedback => 'Feedback';
+  String get mainMenuFeedback => 'Retour';
 
   @override
   String get manualTitle => 'Controls manual';
@@ -479,11 +479,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Jump to the next required decision or end the turn once all action points are spent.';
 
   @override
-  String get mainMenuWhatsNew => 'What\'s new';
+  String get mainMenuWhatsNew => 'Nouveautés';
 
   @override
   String get mainMenuWhatsNewBody =>
-      'Welcome to the Age of New Worlds. Build cities, lead commanders, discover new lands, and write the history of your civilization.';
+      'Bienvenue dans Age of New Worlds. Construisez des villes, dirigez des commandants, découvrez de nouvelles terres et écrivez l\'histoire de votre civilisation.';
 
   @override
   String get gameModeLabel => 'MODE';
@@ -1622,117 +1622,118 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionsTooltip => 'Options';
 
   @override
-  String get optionsOpenMenuTooltip => 'Open menu';
+  String get optionsOpenMenuTooltip => 'Ouvrir le menu';
 
   @override
   String optionsTooltipWithCollapseHint(String tooltip) {
-    return '$tooltip. Hold to collapse the menu.';
+    return '$tooltip. Maintenez pour réduire le menu.';
   }
 
   @override
   String get optionsTitle => 'Options';
 
   @override
-  String get optionsSubtitle => 'Text, language, audio, and performance';
+  String get optionsSubtitle => 'Texte, langue, audio et performances';
 
   @override
-  String get languageSectionTitle => 'Language';
+  String get languageSectionTitle => 'Langue';
 
   @override
-  String get languagePolish => 'Polish';
+  String get languagePolish => 'Polonais';
 
   @override
-  String get languageEnglish => 'English';
+  String get languageEnglish => 'Anglais';
 
   @override
-  String get languageFrench => 'French';
+  String get languageFrench => 'Français';
 
   @override
-  String get languageGerman => 'German';
+  String get languageGerman => 'Allemand';
 
   @override
-  String get languageSpanish => 'Spanish';
+  String get languageSpanish => 'Espagnol';
 
   @override
-  String get languageDutch => 'Dutch';
+  String get languageDutch => 'Néerlandais';
 
   @override
   String get textScaleStandard => 'Standard';
 
   @override
-  String get textScaleLarge => 'Large';
+  String get textScaleLarge => 'Grand';
 
   @override
-  String get textScaleExtraLarge => 'Extra large';
+  String get textScaleExtraLarge => 'Très grand';
 
   @override
   String textScaleSemanticLabel(String label) {
-    return 'Text size $label';
+    return 'Taille du texte $label';
   }
 
   @override
   String textScaleTooltip(String label) {
-    return 'Text size: $label';
+    return 'Taille du texte: $label';
   }
 
   @override
   String languageSemanticLabel(String label) {
-    return 'Language $label';
+    return 'Langue $label';
   }
 
   @override
   String languageTooltip(String label) {
-    return 'Language: $label';
+    return 'Langue: $label';
   }
 
   @override
   String get audioSectionTitle => 'Audio';
 
   @override
-  String get gameSoundsLabel => 'Game sounds';
+  String get gameSoundsLabel => 'Sons du jeu';
 
   @override
-  String get soundVolumeLabel => 'Sound volume';
+  String get soundVolumeLabel => 'Volume des sons';
 
   @override
-  String get gameMusicLabel => 'Game music';
+  String get gameMusicLabel => 'Musique du jeu';
 
   @override
-  String get musicVolumeLabel => 'Music volume';
+  String get musicVolumeLabel => 'Volume de la musique';
 
   @override
-  String get natureSoundsLabel => 'Nature sounds';
+  String get natureSoundsLabel => 'Ambiance naturelle';
 
   @override
-  String get natureVolumeLabel => 'Nature volume';
+  String get natureVolumeLabel => 'Volume de l\'ambiance';
 
   @override
-  String get aiSectionTitle => 'AI';
+  String get aiSectionTitle => 'IA';
 
   @override
-  String get aiBatterySaverLabel => 'AI battery saver';
+  String get aiBatterySaverLabel => 'Économie de batterie pour l\'IA';
 
   @override
   String get gameplaySectionTitle => 'Gameplay';
 
   @override
   String get followUnitMovementCameraLabel =>
-      'Follow unit movement with camera';
+      'Suivre les déplacements des unités avec la caméra';
 
   @override
-  String get followEnemyUnitCameraLabel => 'Follow enemy units with camera';
+  String get followEnemyUnitCameraLabel =>
+      'Suivre les unités ennemies avec la caméra';
 
   @override
-  String get cinematicCameraLabel => 'Cinematic camera';
+  String get cinematicCameraLabel => 'Caméra cinématique';
 
   @override
-  String get performanceSectionTitle => 'Performance';
+  String get performanceSectionTitle => 'Performances';
 
   @override
-  String get showFpsLabel => 'Show FPS';
+  String get showFpsLabel => 'Afficher les FPS';
 
   @override
-  String get showMapZoomLabel => 'Show map zoom';
+  String get showMapZoomLabel => 'Afficher le zoom de la carte';
 
   @override
   String get mapViewModeTooltip => 'Change map view mode';
@@ -1854,7 +1855,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resumeAction => 'RESUME';
 
   @override
-  String get newGameAction => 'NEW GAME';
+  String get newGameAction => 'NOUVELLE PARTIE';
 
   @override
   String get turnActionButtonLabel => 'Action';
