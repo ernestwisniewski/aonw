@@ -193,8 +193,10 @@ void main() {
             units: [commander, worker],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
+              moveCommandActive: true,
+            ),
           ),
           map,
         );
@@ -224,8 +226,10 @@ void main() {
             units: [commander, enemy],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
+              moveCommandActive: true,
+            ),
           ),
           map,
         );
@@ -250,19 +254,21 @@ void main() {
           cities: [city],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.city(
-            city,
-            cityYield: const TileYield(
-              food: 2,
-              production: 1,
-              gold: 0,
-              defense: 0,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: const TileYield(
+                food: 2,
+                production: 1,
+                gold: 0,
+                defense: 0,
+              ),
+              playerColor: 0xFF4a7fc4,
             ),
-            playerColor: 0xFF4a7fc4,
-          ),
-          pendingAction: const PendingCityWorkedHexSelection(
-            ownerPlayerId: 'player_1',
-            cityId: 'city_player_1_1_1',
+            pendingAction: const PendingCityWorkedHexSelection(
+              ownerPlayerId: 'player_1',
+              cityId: 'city_player_1_1_1',
+            ),
           ),
         ),
         map,
@@ -305,19 +311,21 @@ void main() {
               unlockedTechnologyIds: {TechnologyId.urbanization},
             ),
           ),
-          selection: GameSelection.city(
-            city,
-            cityYield: const TileYield(
-              food: 2,
-              production: 1,
-              gold: 0,
-              defense: 0,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: const TileYield(
+                food: 2,
+                production: 1,
+                gold: 0,
+                defense: 0,
+              ),
+              playerColor: 0xFF4a7fc4,
             ),
-            playerColor: 0xFF4a7fc4,
-          ),
-          pendingAction: const PendingCityExpansionSelection(
-            ownerPlayerId: 'player_1',
-            cityId: 'city_player_1_1_1',
+            pendingAction: const PendingCityExpansionSelection(
+              ownerPlayerId: 'player_1',
+              cityId: 'city_player_1_1_1',
+            ),
           ),
         );
 
@@ -364,7 +372,9 @@ void main() {
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(commander),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander),
+          ),
         ),
         map,
       );
@@ -431,7 +441,9 @@ void main() {
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(commander),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander),
+          ),
         ),
         map,
       );
@@ -889,12 +901,14 @@ void main() {
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          moveCommandActive: true,
+          interaction: const GameInteractionState(moveCommandActive: true),
         ),
         map,
       );
       // Select unit
-      state = state.copyWith(selection: GameSelection.unit(commander));
+      state = state.copyWithInteraction(
+        selection: GameSelection.unit(commander),
+      );
 
       // Switch to player_2 — commander owned by player_1 should be deselected
       state = _dispatch(

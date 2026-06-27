@@ -26,7 +26,7 @@ abstract final class WorkerReducer {
         return GameStateTransition(state: state);
       }
       return GameStateTransition(
-        state: state.copyWith(
+        state: state.copyWithInteraction(
           pendingAction: pending.copyWith(
             improvementType: command.improvementType,
           ),
@@ -123,10 +123,11 @@ abstract final class WorkerReducer {
         );
     final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
 
-    var next = state.copyWith(units: updatedUnits, moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(pendingAction: null);
-    next = next.copyWith(
+    var next = state.copyWith(units: updatedUnits);
+    next = next.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+      pendingAction: null,
       selection: GameSelection.unit(
         updatedWorker,
         tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
@@ -158,7 +159,7 @@ abstract final class WorkerReducer {
     final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
 
     var next = state.copyWith(units: updatedUnits);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       selection: GameSelection.unit(
         updatedWorker,
         tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
@@ -200,13 +201,11 @@ abstract final class WorkerReducer {
         .copyWithWorkerAssignment(WorkerAssignment(targetHex: targetHex));
     final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
 
-    var next = state.copyWith(
-      units: updatedUnits,
-      moveCommandActive: false,
-      pendingAction: null,
-    );
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(
+    var next = state
+        .copyWith(units: updatedUnits)
+        .copyWithInteraction(moveCommandActive: false, pendingAction: null);
+    next = next.copyWithInteraction(
+      movePreview: null,
       selection: GameSelection.unit(
         updatedWorker,
         tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
@@ -239,7 +238,7 @@ abstract final class WorkerReducer {
     final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
 
     var next = state.copyWith(units: updatedUnits);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       selection: GameSelection.unit(
         updatedWorker,
         tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),

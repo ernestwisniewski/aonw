@@ -13,7 +13,9 @@ void main() {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final state = GameState(
         units: [commander],
-        selection: GameSelection.unit(commander),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+        ),
       );
 
       final result = normalizeHudPanelModes(
@@ -31,10 +33,12 @@ void main() {
       final city = _city();
       final state = GameState(
         cities: [city],
-        selection: GameSelection.city(
-          city,
-          cityYield: TileYield.zero,
-          playerColor: 0,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: TileYield.zero,
+            playerColor: 0,
+          ),
         ),
       );
 
@@ -50,10 +54,12 @@ void main() {
       final worker = _worker();
       final state = GameState(
         units: [worker],
-        selection: GameSelection.unit(worker),
-        pendingAction: const PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'worker_1',
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
+          ),
         ),
       );
 
@@ -69,10 +75,12 @@ void main() {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final state = GameState(
         units: [commander],
-        selection: GameSelection.unit(commander),
-        pendingAction: const PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'worker_1',
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
+          ),
         ),
       );
 

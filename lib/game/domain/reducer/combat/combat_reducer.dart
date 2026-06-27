@@ -142,7 +142,7 @@ abstract final class CombatReducer {
       return GameStateTransition(state: state);
     }
 
-    final next = state.copyWith(
+    final next = state.copyWithInteraction(
       pendingAction: pendingAction.copyWith(
         defenderCol: defenderCol,
         defenderRow: defenderRow,
@@ -527,7 +527,7 @@ abstract final class CombatReducer {
     required MapData mapData,
     String? changedCityId,
   }) {
-    var next = state.copyWith(
+    var next = state.copyWithInteraction(
       movePreview: null,
       cityFoundingDraft: null,
       moveCommandActive: false,
@@ -535,7 +535,7 @@ abstract final class CombatReducer {
     final pendingAction = next.pendingAction;
     if (pendingAction is PendingAttackTargeting &&
         pendingAction.attackerUnitId == attackerUnitId) {
-      next = next.copyWith(pendingAction: null);
+      next = next.copyWithInteraction(pendingAction: null);
     }
     return _refreshSelection(next, mapData, changedCityId: changedCityId);
   }
@@ -603,7 +603,7 @@ abstract final class CombatReducer {
       ),
       GameSelectionType.city =>
         selection.city?.id == changedCityId
-            ? state.copyWith(selection: null)
+            ? state.copyWithInteraction(selection: null)
             : state,
     };
   }
@@ -614,10 +614,10 @@ abstract final class CombatReducer {
     MapData mapData,
   ) {
     final selectedId = selection.unit?.id;
-    if (selectedId == null) return state.copyWith(selection: null);
+    if (selectedId == null) return state.copyWithInteraction(selection: null);
     final unit = _unitById(state.units, selectedId);
-    if (unit == null) return state.copyWith(selection: null);
-    return state.copyWith(
+    if (unit == null) return state.copyWithInteraction(selection: null);
+    return state.copyWithInteraction(
       selection: GameSelection.unit(
         unit,
         tile: mapData.tileAt(unit.col, unit.row),

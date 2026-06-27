@@ -12,10 +12,12 @@ void main() {
     test('prefers pending attack unit before selected unit', () {
       final state = GameState(
         units: [_unit('selected')],
-        selection: GameSelection.unit(_unit('selected')),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'player_1',
-          attackerUnitId: 'pending',
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(_unit('selected')),
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'pending',
+          ),
         ),
       );
 
@@ -27,7 +29,9 @@ void main() {
       () {
         final state = GameState(
           units: [_unit('selected')],
-          selection: GameSelection.unit(_unit('selected')),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(_unit('selected')),
+          ),
         );
 
         expect(HudPendingActionTargets.attackUnitId(state), 'selected');
@@ -38,10 +42,12 @@ void main() {
     test('prefers pending worker action unit before selected unit', () {
       final state = GameState(
         units: [_unit('selected')],
-        selection: GameSelection.unit(_unit('selected')),
-        pendingAction: const PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'pending_worker',
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(_unit('selected')),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'pending_worker',
+          ),
         ),
       );
 
@@ -50,14 +56,16 @@ void main() {
 
     test('prefers pending worked-hex city before selected city', () {
       final state = GameState(
-        selection: GameSelection.city(
-          _city('selected_city'),
-          cityYield: TileYield.zero,
-          playerColor: 0xFF4488cc,
-        ),
-        pendingAction: const PendingCityWorkedHexSelection(
-          ownerPlayerId: 'player_1',
-          cityId: 'pending_city',
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            _city('selected_city'),
+            cityYield: TileYield.zero,
+            playerColor: 0xFF4488cc,
+          ),
+          pendingAction: const PendingCityWorkedHexSelection(
+            ownerPlayerId: 'player_1',
+            cityId: 'pending_city',
+          ),
         ),
       );
 
@@ -69,14 +77,16 @@ void main() {
 
     test('prefers pending expansion city before selected city', () {
       final state = GameState(
-        selection: GameSelection.city(
-          _city('selected_city'),
-          cityYield: TileYield.zero,
-          playerColor: 0xFF4488cc,
-        ),
-        pendingAction: const PendingCityExpansionSelection(
-          ownerPlayerId: 'player_1',
-          cityId: 'pending_city',
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            _city('selected_city'),
+            cityYield: TileYield.zero,
+            playerColor: 0xFF4488cc,
+          ),
+          pendingAction: const PendingCityExpansionSelection(
+            ownerPlayerId: 'player_1',
+            cityId: 'pending_city',
+          ),
         ),
       );
 

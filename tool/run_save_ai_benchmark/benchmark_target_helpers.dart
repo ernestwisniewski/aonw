@@ -88,6 +88,7 @@ GameState _prepareCycleState(
       for (final playerId in humanPlayerIds)
         if (playerId.isNotEmpty) playerId,
     },
+  ).copyWithInteraction(
     moveCommandActive: false,
     movePreview: null,
     cityFoundingDraft: null,

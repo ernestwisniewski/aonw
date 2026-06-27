@@ -12,7 +12,11 @@ void main() {
       expect(
         HudNextActionPanelResolver.afterFocus(
           state: const GameState(
-            pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
+            interaction: GameInteractionState(
+              pendingAction: PendingResearchSelection(
+                ownerPlayerId: 'player_1',
+              ),
+            ),
           ),
           activePlayerId: 'player_1',
         ),
@@ -24,7 +28,11 @@ void main() {
       expect(
         HudNextActionPanelResolver.afterFocus(
           state: const GameState(
-            pendingAction: PendingResearchSelection(ownerPlayerId: 'player_2'),
+            interaction: GameInteractionState(
+              pendingAction: PendingResearchSelection(
+                ownerPlayerId: 'player_2',
+              ),
+            ),
           ),
           activePlayerId: 'player_1',
         ),
@@ -41,10 +49,12 @@ void main() {
           HudNextActionPanelResolver.afterFocus(
             state: GameState(
               cities: [city],
-              selection: GameSelection.city(
-                city,
-                cityYield: TileYield.zero,
-                playerColor: 0xFF4488cc,
+              interaction: GameInteractionState(
+                selection: GameSelection.city(
+                  city,
+                  cityYield: TileYield.zero,
+                  playerColor: 0xFF4488cc,
+                ),
               ),
             ),
             activePlayerId: 'player_1',
@@ -61,10 +71,12 @@ void main() {
         HudNextActionPanelResolver.afterFocus(
           state: GameState(
             cities: [city],
-            selection: GameSelection.city(
-              city,
-              cityYield: TileYield.zero,
-              playerColor: 0xFF4488cc,
+            interaction: GameInteractionState(
+              selection: GameSelection.city(
+                city,
+                cityYield: TileYield.zero,
+                playerColor: 0xFF4488cc,
+              ),
             ),
           ),
           activePlayerId: 'player_1',

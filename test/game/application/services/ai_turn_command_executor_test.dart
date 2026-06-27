@@ -29,7 +29,9 @@ void main() {
               commands.add(command);
               contexts.add(context);
               return DispatchCommandResult(
-                state: currentState.copyWith(moveCommandActive: true),
+                state: currentState.copyWithInteraction(
+                  moveCommandActive: true,
+                ),
                 uiEffects: const [JumpCameraEffect(col: 1, row: 1)],
               );
             },
@@ -71,7 +73,9 @@ void main() {
             }) async {
               commands.add(command);
               return DispatchCommandResult(
-                state: currentState.copyWith(moveCommandActive: true),
+                state: currentState.copyWithInteraction(
+                  moveCommandActive: true,
+                ),
               );
             },
         delay: (_) async {

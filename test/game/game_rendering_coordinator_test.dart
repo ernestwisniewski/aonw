@@ -132,7 +132,9 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [enemy],
-          selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -152,7 +154,9 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [commander],
-          selection: GameSelection.unit(commander, tile: _tile(map, 0)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander, tile: _tile(map, 0)),
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -282,7 +286,9 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [merchant],
-          selection: GameSelection.unit(merchant, tile: _tile(map, 1)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(merchant, tile: _tile(map, 1)),
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -318,9 +324,11 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [commander],
-          selection: GameSelection.unit(commander, tile: _tile(map, 0)),
-          movePreview: preview,
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander, tile: _tile(map, 0)),
+            movePreview: preview,
+            moveCommandActive: true,
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -356,8 +364,10 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [commander],
-          movePreview: preview,
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            movePreview: preview,
+            moveCommandActive: true,
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -398,8 +408,10 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [enemy],
-          selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
-          movePreview: preview,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
+            movePreview: preview,
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -573,9 +585,11 @@ void main() {
       coordinator.syncAll(
         state: GameState(
           fieldImprovements: const [improvement],
-          selection: GameSelection.fieldImprovement(
-            improvement,
-            tile: _tile(map, 1),
+          interaction: GameInteractionState(
+            selection: GameSelection.fieldImprovement(
+              improvement,
+              tile: _tile(map, 1),
+            ),
           ),
         ),
         parent: Component(),
@@ -877,9 +891,11 @@ void main() {
           state: GameState(
             cities: const [city],
             fieldImprovements: const [improvement],
-            selection: GameSelection.fieldImprovement(
-              improvement,
-              tile: _tile(map, 1),
+            interaction: GameInteractionState(
+              selection: GameSelection.fieldImprovement(
+                improvement,
+                tile: _tile(map, 1),
+              ),
             ),
           ),
           parent: Component(),
@@ -968,10 +984,12 @@ void main() {
       final state = GameState(
         activePlayerId: 'player_1',
         units: [warrior],
-        selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
-        pendingAction: PendingAttackTargeting(
-          ownerPlayerId: warrior.ownerPlayerId,
-          attackerUnitId: warrior.id,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: warrior.ownerPlayerId,
+            attackerUnitId: warrior.id,
+          ),
         ),
       );
 
@@ -1003,7 +1021,9 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [warrior],
-          selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -1033,7 +1053,9 @@ void main() {
       ).syncAll(
         state: GameState(
           units: [worker, enemy],
-          selection: GameSelection.unit(worker, tile: _tile(map, 0)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker, tile: _tile(map, 0)),
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -1060,8 +1082,10 @@ void main() {
       ).syncAll(
         state: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
+            moveCommandActive: true,
+          ),
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -1096,8 +1120,10 @@ void main() {
           state: GameState(
             activePlayerId: 'player_1',
             units: [worker],
-            selection: GameSelection.unit(worker, tile: _tile(map, 0)),
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(worker, tile: _tile(map, 0)),
+              moveCommandActive: true,
+            ),
           ),
           parent: Component(),
           viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
@@ -1131,12 +1157,14 @@ void main() {
       ).syncAll(
         state: GameState(
           units: [attacker],
-          selection: GameSelection.unit(attacker, tile: _tile(map, 0)),
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: attacker.ownerPlayerId,
-            attackerUnitId: attacker.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(attacker, tile: _tile(map, 0)),
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: attacker.ownerPlayerId,
+              attackerUnitId: attacker.id,
+            ),
+            movePreview: preview,
           ),
-          movePreview: preview,
         ),
         parent: Component(),
         viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),

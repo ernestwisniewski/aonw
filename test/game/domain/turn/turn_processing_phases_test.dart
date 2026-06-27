@@ -512,7 +512,9 @@ void main() {
       final updatedUnit = previousUnit.copyWith(col: 2, row: 2);
       final state = GameState(
         units: [updatedUnit],
-        selection: GameSelection.unit(previousUnit),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(previousUnit),
+        ),
       );
 
       final next = const SelectionRefreshPhase().apply(_context(state: state));

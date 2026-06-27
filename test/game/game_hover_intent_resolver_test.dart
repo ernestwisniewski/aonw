@@ -16,8 +16,10 @@ void main() {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final state = GameState(
         units: [commander],
-        selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
       );
 
       final intent = _resolver(state, map).resolve(_tile(map, 1, 1));
@@ -56,13 +58,17 @@ void main() {
       );
       final scoutState = GameState(
         units: [scout],
-        selection: GameSelection.unit(scout, tile: _tile(map, 0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(scout, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
       );
       final cavalryState = GameState(
         units: [cavalry],
-        selection: GameSelection.unit(cavalry, tile: _tile(map, 0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(cavalry, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
       );
 
       final scoutIntent = _resolver(scoutState, map).resolve(_tile(map, 1, 0));
@@ -107,8 +113,10 @@ void main() {
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        selection: GameSelection.unit(carrier, tile: _tile(map, 0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(carrier, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
       );
 
       final intent = _resolver(state, map).resolve(_tile(map, 1, 0));
@@ -122,10 +130,12 @@ void main() {
       final map = _map();
       final state = GameState(
         playerColors: {'player_1': 0xFF123456},
-        cityFoundingDraft: CityFoundingDraft(
-          unitId: 'settler_1',
-          ownerPlayerId: 'player_1',
-          center: const CityHex(col: 0, row: 0),
+        interaction: GameInteractionState(
+          cityFoundingDraft: CityFoundingDraft(
+            unitId: 'settler_1',
+            ownerPlayerId: 'player_1',
+            center: const CityHex(col: 0, row: 0),
+          ),
         ),
       );
 

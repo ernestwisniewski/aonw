@@ -49,7 +49,7 @@ class SelectionRefreshPhase extends TurnPhase {
                 )
                 .firstOrNull;
       if (foundedCity != null) {
-        return state.copyWith(
+        return state.copyWithInteraction(
           selection: _citySelection(
             state,
             foundedCity,
@@ -60,10 +60,10 @@ class SelectionRefreshPhase extends TurnPhase {
           ),
         );
       }
-      return state.copyWith(selection: null);
+      return state.copyWithInteraction(selection: null);
     }
 
-    return state.copyWith(
+    return state.copyWithInteraction(
       selection: GameSelection.unit(
         updatedUnit,
         tile: context.mapData.tileAt(updatedUnit.col, updatedUnit.row),
@@ -74,7 +74,7 @@ class SelectionRefreshPhase extends TurnPhase {
   GameState _refreshFieldImprovementSelection(TurnContext context) {
     final state = context.state;
     final selected = state.selection?.fieldImprovement;
-    if (selected == null) return state.copyWith(selection: null);
+    if (selected == null) return state.copyWithInteraction(selection: null);
 
     final updatedImprovement = state.fieldImprovements
         .where(
@@ -84,10 +84,10 @@ class SelectionRefreshPhase extends TurnPhase {
         )
         .firstOrNull;
     if (updatedImprovement == null) {
-      return state.copyWith(selection: null);
+      return state.copyWithInteraction(selection: null);
     }
 
-    return state.copyWith(
+    return state.copyWithInteraction(
       selection: GameSelection.fieldImprovement(
         updatedImprovement,
         tile: context.mapData.tileAt(
@@ -108,7 +108,7 @@ class SelectionRefreshPhase extends TurnPhase {
         .firstOrNull;
     if (updatedCity == null) return state;
 
-    return state.copyWith(
+    return state.copyWithInteraction(
       selection: _citySelection(
         state,
         updatedCity,

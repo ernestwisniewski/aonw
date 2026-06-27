@@ -72,7 +72,11 @@ void main() {
   test('DetachTroopUseCase dispatches detach for the selected unit', () async {
     final commands = <GameCommand>[];
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(selection: GameSelection.unit(commander));
+    final state = GameState(
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(commander),
+      ),
+    );
 
     final dispatched = await const DetachTroopUseCase().execute(
       state: state,

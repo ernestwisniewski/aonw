@@ -53,11 +53,12 @@ void main() {
     });
 
     test('selecting research clears research pending action', () {
-      final state = const GameState(activePlayerId: 'player_1').copyWith(
-        pendingAction: const PendingResearchSelection(
-          ownerPlayerId: 'player_1',
-        ),
-      );
+      final state = const GameState(activePlayerId: 'player_1')
+          .copyWithInteraction(
+            pendingAction: const PendingResearchSelection(
+              ownerPlayerId: 'player_1',
+            ),
+          );
 
       final result = reducer.reduce(
         state,
@@ -72,11 +73,12 @@ void main() {
     });
 
     test('cancel research selection clears matching pending action', () {
-      final state = const GameState(activePlayerId: 'player_1').copyWith(
-        pendingAction: const PendingResearchSelection(
-          ownerPlayerId: 'player_1',
-        ),
-      );
+      final state = const GameState(activePlayerId: 'player_1')
+          .copyWithInteraction(
+            pendingAction: const PendingResearchSelection(
+              ownerPlayerId: 'player_1',
+            ),
+          );
 
       final result = reducer.reduce(
         state,
@@ -87,11 +89,12 @@ void main() {
     });
 
     test('cancel research selection ignores other players pending action', () {
-      final state = const GameState(activePlayerId: 'player_1').copyWith(
-        pendingAction: const PendingResearchSelection(
-          ownerPlayerId: 'player_2',
-        ),
-      );
+      final state = const GameState(activePlayerId: 'player_1')
+          .copyWithInteraction(
+            pendingAction: const PendingResearchSelection(
+              ownerPlayerId: 'player_2',
+            ),
+          );
 
       final result = reducer.reduce(
         state,

@@ -28,7 +28,7 @@ void main() {
                 declaringPlayerId: 'p1',
               ),
             ],
-          ).copyWith(
+          ).copyWithInteraction(
             pendingAction: const PendingCityWorkedHexSelection(
               ownerPlayerId: 'p1',
               cityId: 'city_1',

@@ -76,7 +76,12 @@ void main() {
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(
+                commander,
+                tile: _map().tileAt(0, 0),
+              ),
+            ),
           ),
         );
         final transport = _transport(server);
@@ -411,8 +416,10 @@ void main() {
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
-        moveCommandActive: true,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
+          moveCommandActive: true,
+        ),
       );
       final server = _FakeCommandServer(save: _save(), state: state);
       final transport = _transport(server);
@@ -436,8 +443,10 @@ void main() {
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
+            moveCommandActive: true,
+          ),
         );
         final server = _FakeCommandServer(save: _save(), state: state);
         final transport = _transport(server);
@@ -476,7 +485,6 @@ void main() {
         units: [settler],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(settler, tile: _map().tileAt(1, 1)),
         fogOfWar: FogOfWarState(
           players: {
             'player_1': PlayerFogOfWar(
@@ -485,10 +493,13 @@ void main() {
             ),
           },
         ),
-        cityFoundingDraft: CityFoundingDraft(
-          unitId: 'settler_player_1',
-          ownerPlayerId: 'player_1',
-          center: const CityHex(col: 1, row: 1),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler, tile: _map().tileAt(1, 1)),
+          cityFoundingDraft: CityFoundingDraft(
+            unitId: 'settler_player_1',
+            ownerPlayerId: 'player_1',
+            center: const CityHex(col: 1, row: 1),
+          ),
         ),
       );
       final server = _FakeCommandServer(save: _save(), state: state);
@@ -526,11 +537,6 @@ void main() {
         units: [attacker, defender],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'player_1',
-          attackerUnitId: 'warrior_player_1',
-        ),
         fogOfWar: FogOfWarState(
           players: {
             'player_1': PlayerFogOfWar(
@@ -541,6 +547,13 @@ void main() {
               },
             ),
           },
+        ),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'warrior_player_1',
+          ),
         ),
       );
       final server = _FakeCommandServer(save: _save(), state: state);
@@ -577,11 +590,6 @@ void main() {
         cities: const [city],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'player_1',
-          attackerUnitId: 'warrior_player_1',
-        ),
         fogOfWar: FogOfWarState(
           players: {
             'player_1': PlayerFogOfWar(
@@ -592,6 +600,13 @@ void main() {
               },
             ),
           },
+        ),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'warrior_player_1',
+          ),
         ),
       );
       final server = _FakeCommandServer(save: _save(), state: state);

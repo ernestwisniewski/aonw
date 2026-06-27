@@ -120,8 +120,10 @@ class SaveSnapshot {
           runtimeState.culturalVictoryHoldTurnsByPlayerId,
       mapObjectiveHoldStatesByObjectiveId:
           runtimeState.mapObjectiveHoldStatesByObjectiveId,
-      cityFoundingDraft: runtimeState.cityFoundingDraft,
-      pendingAction: runtimeState.pendingAction,
+      interaction: GameInteractionState(
+        cityFoundingDraft: runtimeState.cityFoundingDraft,
+        pendingAction: runtimeState.pendingAction,
+      ),
     );
   }
 

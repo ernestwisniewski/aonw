@@ -11,12 +11,13 @@ void main() {
         activePlayerCanAct: true,
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2')],
       );
-      final uiOnlyState = baseState.copyWith(
-        activePlayerId: 'player_2',
-        activePlayerCanAct: false,
-        submittedPlayerIds: const {'player_1'},
-        moveCommandActive: true,
-      );
+      final uiOnlyState = baseState
+          .copyWith(
+            activePlayerId: 'player_2',
+            activePlayerCanAct: false,
+            submittedPlayerIds: const {'player_1'},
+          )
+          .copyWithInteraction(moveCommandActive: true);
       final changedWorldState = baseState.copyWith(
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2', col: 1)],
       );

@@ -20,7 +20,7 @@ abstract final class InteractionReducer {
     }
 
     var next = _clearTransientModes(state);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       pendingAction: PendingCityWorkedHexSelection(
         ownerPlayerId: city.ownerPlayerId,
         cityId: city.id,
@@ -36,7 +36,7 @@ abstract final class InteractionReducer {
     final pending = state.pendingAction;
     if (pending is! PendingCityWorkedHexSelection) return state;
     if (pending.cityId != command.cityId) return state;
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static GameState startCityExpansionSelection(
@@ -52,7 +52,7 @@ abstract final class InteractionReducer {
     }
 
     var next = _clearTransientModes(state);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       pendingAction: PendingCityExpansionSelection(
         ownerPlayerId: city.ownerPlayerId,
         cityId: city.id,
@@ -68,7 +68,7 @@ abstract final class InteractionReducer {
     final pending = state.pendingAction;
     if (pending is! PendingCityExpansionSelection) return state;
     if (pending.cityId != command.cityId) return state;
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static GameState startWorkerActionSelection(
@@ -85,7 +85,7 @@ abstract final class InteractionReducer {
     }
 
     var next = _clearTransientModes(state);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       pendingAction: PendingWorkerActionSelection(
         ownerPlayerId: unit.ownerPlayerId,
         unitId: unit.id,
@@ -102,7 +102,11 @@ abstract final class InteractionReducer {
     if (pending is! PendingWorkerActionSelection) return state;
     if (pending.unitId != command.unitId) return state;
     return state.copyWith(
-      pendingAction: pending.copyWith(improvementType: command.improvementType),
+      interaction: state.interaction.copyWith(
+        pendingAction: pending.copyWith(
+          improvementType: command.improvementType,
+        ),
+      ),
     );
   }
 
@@ -113,7 +117,7 @@ abstract final class InteractionReducer {
     final pending = state.pendingAction;
     if (pending is! PendingWorkerActionSelection) return state;
     if (pending.unitId != command.unitId) return state;
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static GameState startAttackTargeting(
@@ -125,7 +129,7 @@ abstract final class InteractionReducer {
     if (unit == null || !context.canControlUnit(state, unit)) return state;
 
     var next = _clearTransientModes(state);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       pendingAction: PendingAttackTargeting(
         ownerPlayerId: unit.ownerPlayerId,
         attackerUnitId: unit.id,
@@ -141,7 +145,7 @@ abstract final class InteractionReducer {
     final pending = state.pendingAction;
     if (pending is! PendingAttackTargeting) return state;
     if (pending.attackerUnitId != command.attackerUnitId) return state;
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static GameState startCommanderMergeSelection(
@@ -156,7 +160,7 @@ abstract final class InteractionReducer {
     if (!context.canControlUnit(state, commander)) return state;
 
     var next = _clearTransientModes(state);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       pendingAction: PendingCommanderMergeSelection(
         ownerPlayerId: commander.ownerPlayerId,
         commanderUnitId: commander.id,
@@ -172,14 +176,11 @@ abstract final class InteractionReducer {
     final pending = state.pendingAction;
     if (pending is! PendingCommanderMergeSelection) return state;
     if (pending.commanderUnitId != command.commanderUnitId) return state;
-    return state.copyWith(pendingAction: null);
+    return state.copyWithInteraction(pendingAction: null);
   }
 
   static GameState _clearTransientModes(GameState state) {
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    return next;
+    return state.copyWith(interaction: state.interaction.clearTransientModes());
   }
 
   static GameUnit? _findUnit(GameState state, String unitId) {

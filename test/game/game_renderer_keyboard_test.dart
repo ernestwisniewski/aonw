@@ -420,7 +420,9 @@ void main() {
         units: [unit],
         artifacts: [artifact],
         fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
-        selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        ),
       );
       late final GameRenderer game;
       game = GameRenderer(
@@ -534,7 +536,9 @@ void main() {
       var state = GameState(
         activePlayerId: 'player_1',
         units: [unit],
-        selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        ),
       );
       late final GameRenderer game;
       game = GameRenderer(
@@ -762,7 +766,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [const CityTappedCommand('city_1')]);
-      state = state.copyWith(
+      state = state.copyWithInteraction(
         selection: GameSelection.city(
           city,
           cityYield: TileYield.zero,
@@ -887,9 +891,11 @@ void main() {
               },
             )..applyState(
               const GameState(
-                pendingAction: PendingCityExpansionSelection(
-                  ownerPlayerId: 'player_1',
-                  cityId: 'city_1',
+                interaction: GameInteractionState(
+                  pendingAction: PendingCityExpansionSelection(
+                    ownerPlayerId: 'player_1',
+                    cityId: 'city_1',
+                  ),
                 ),
               ),
             );
@@ -921,9 +927,11 @@ void main() {
           GameState(
             units: [commander],
             activePlayerId: 'player_1',
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-            moveCommandActive: true,
-            movePreview: preview,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              moveCommandActive: true,
+              movePreview: preview,
+            ),
           ),
         );
 
@@ -1151,7 +1159,9 @@ void main() {
         final transition = game.applyTransition(
           GameState(
             units: [attacker, defender],
-            selection: GameSelection.unit(attacker, tile: _tile(map, 1, 1)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(attacker, tile: _tile(map, 1, 1)),
+            ),
           ),
           const [
             PlayCombatAnimationEffect(
@@ -1515,7 +1525,9 @@ void main() {
             GameState(
               activePlayerId: 'player_1',
               units: [commander, settler],
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 0)),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler, tile: _tile(map, 1, 0)),
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -1526,7 +1538,12 @@ void main() {
             GameState(
               activePlayerId: 'player_1',
               units: [commander, settler],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+              ),
             ),
           );
 
@@ -1559,7 +1576,9 @@ void main() {
         game.applyState(
           GameState(
             units: [commander],
-            selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+            ),
           ),
         );
 
@@ -1598,7 +1617,9 @@ void main() {
       game.applyStateWithoutCameraFocus(
         GameState(
           units: [commander],
-          selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+          ),
         ),
       );
 
@@ -1631,15 +1652,17 @@ void main() {
         game.applyState(
           GameState(
             cities: const [city],
-            selection: GameSelection.city(
-              city,
-              cityYield: const TileYield(
-                food: 0,
-                production: 0,
-                gold: 0,
-                defense: 0,
+            interaction: GameInteractionState(
+              selection: GameSelection.city(
+                city,
+                cityYield: const TileYield(
+                  food: 0,
+                  production: 0,
+                  gold: 0,
+                  defense: 0,
+                ),
+                playerColor: 0xFF0000FF,
               ),
-              playerColor: 0xFF0000FF,
             ),
           ),
         );
@@ -1682,15 +1705,17 @@ void main() {
       game.applyState(
         GameState(
           cities: const [city],
-          selection: GameSelection.city(
-            city,
-            cityYield: const TileYield(
-              food: 0,
-              production: 0,
-              gold: 0,
-              defense: 0,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: const TileYield(
+                food: 0,
+                production: 0,
+                gold: 0,
+                defense: 0,
+              ),
+              playerColor: 0xFF0000FF,
             ),
-            playerColor: 0xFF0000FF,
           ),
         ),
       );
@@ -1892,9 +1917,11 @@ void main() {
           activePlayerId: 'player_1',
           cities: [playerCity, enemyCity],
           fogOfWar: knownCitiesFog,
-          pendingAction: const PendingAttackTargeting(
-            ownerPlayerId: 'player_1',
-            attackerUnitId: 'unit_1',
+          interaction: const GameInteractionState(
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: 'player_1',
+              attackerUnitId: 'unit_1',
+            ),
           ),
         ),
       );
@@ -1949,7 +1976,12 @@ void main() {
           ..applyState(
             GameState(
               units: [commander],
-              selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 1, 1),
+                ),
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -2003,7 +2035,6 @@ void main() {
             GameState(
               activePlayerId: 'player_1',
               units: [attacker, defender],
-              selection: GameSelection.unit(attacker, tile: _tile(map, 0, 0)),
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -2015,9 +2046,12 @@ void main() {
                   ),
                 },
               ),
-              pendingAction: const PendingAttackTargeting(
-                ownerPlayerId: 'player_1',
-                attackerUnitId: 'attacker_1',
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(attacker, tile: _tile(map, 0, 0)),
+                pendingAction: const PendingAttackTargeting(
+                  ownerPlayerId: 'player_1',
+                  attackerUnitId: 'attacker_1',
+                ),
               ),
             ),
           )
@@ -2069,8 +2103,6 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [commander, unitOnTarget],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-              moveCommandActive: true,
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -2081,6 +2113,13 @@ void main() {
                     },
                   ),
                 },
+              ),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
               ),
             ),
           )
@@ -2130,7 +2169,6 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler, unitOnTarget],
-              selection: GameSelection.unit(settler, tile: _tile(map, 0, 0)),
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -2142,10 +2180,13 @@ void main() {
                   ),
                 },
               ),
-              cityFoundingDraft: CityFoundingDraft(
-                unitId: 'settler_1',
-                ownerPlayerId: 'player_1',
-                center: const CityHex(col: 0, row: 0),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler, tile: _tile(map, 0, 0)),
+                cityFoundingDraft: CityFoundingDraft(
+                  unitId: 'settler_1',
+                  ownerPlayerId: 'player_1',
+                  center: const CityHex(col: 0, row: 0),
+                ),
               ),
             ),
           )
@@ -2195,8 +2236,6 @@ void main() {
               activePlayerCanAct: true,
               units: [commander],
               cities: const [city],
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-              moveCommandActive: true,
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -2207,6 +2246,13 @@ void main() {
                     },
                   ),
                 },
+              ),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
               ),
             ),
           )
@@ -2251,7 +2297,6 @@ void main() {
               activePlayerCanAct: true,
               units: [worker],
               cities: const [city],
-              selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -2263,9 +2308,12 @@ void main() {
                   ),
                 },
               ),
-              pendingAction: const PendingWorkerActionSelection(
-                ownerPlayerId: 'player_1',
-                unitId: 'worker_1',
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
+                pendingAction: const PendingWorkerActionSelection(
+                  ownerPlayerId: 'player_1',
+                  unitId: 'worker_1',
+                ),
               ),
             ),
           )
@@ -2325,10 +2373,12 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [worker],
-              selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
-              pendingAction: const PendingWorkerActionSelection(
-                ownerPlayerId: 'player_1',
-                unitId: 'worker_1',
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+                pendingAction: const PendingWorkerActionSelection(
+                  ownerPlayerId: 'player_1',
+                  unitId: 'worker_1',
+                ),
               ),
             ),
           )
@@ -2390,9 +2440,11 @@ void main() {
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
             units: [commander],
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
-            movePreview: preview,
-            moveCommandActive: true,
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              movePreview: preview,
+              moveCommandActive: true,
+            ),
           ),
         )
         ..onGameResize(Vector2(800, 600));
@@ -2461,9 +2513,11 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [commander],
-              selection: GameSelection.tile(_tile(map, 2, 0)),
-              movePreview: preview,
-              moveCommandActive: true,
+              interaction: GameInteractionState(
+                selection: GameSelection.tile(_tile(map, 2, 0)),
+                movePreview: preview,
+                moveCommandActive: true,
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -2508,8 +2562,10 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler],
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
-              cityFoundingDraft: draft,
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
+                cityFoundingDraft: draft,
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -2548,8 +2604,10 @@ void main() {
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler],
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
-              cityFoundingDraft: draft,
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
+                cityFoundingDraft: draft,
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -2604,11 +2662,13 @@ void main() {
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         units: [worker],
-        selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
-        pendingAction: PendingWorkerActionSelection(
-          ownerPlayerId: 'player_1',
-          unitId: 'worker_1',
-          improvementType: improvementType,
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+          pendingAction: PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
+            improvementType: improvementType,
+          ),
         ),
       );
 
@@ -2676,10 +2736,12 @@ void main() {
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
             units: [worker],
-            selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
-            pendingAction: const PendingWorkerActionSelection(
-              ownerPlayerId: 'player_1',
-              unitId: 'worker_1',
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+              pendingAction: const PendingWorkerActionSelection(
+                ownerPlayerId: 'player_1',
+                unitId: 'worker_1',
+              ),
             ),
           ),
         )
@@ -2717,15 +2779,17 @@ void main() {
           ..applyState(
             GameState(
               cities: const [city],
-              selection: GameSelection.city(
-                city,
-                cityYield: const TileYield(
-                  food: 0,
-                  production: 0,
-                  gold: 0,
-                  defense: 0,
+              interaction: GameInteractionState(
+                selection: GameSelection.city(
+                  city,
+                  cityYield: const TileYield(
+                    food: 0,
+                    production: 0,
+                    gold: 0,
+                    defense: 0,
+                  ),
+                  playerColor: 0xFF0000FF,
                 ),
-                playerColor: 0xFF0000FF,
               ),
             ),
           )
@@ -2916,7 +2980,12 @@ void main() {
 
       game
         ..applyState(
-          GameState(units: [settler], selection: GameSelection.unit(settler)),
+          GameState(
+            units: [settler],
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler),
+            ),
+          ),
         )
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
@@ -2994,7 +3063,9 @@ void main() {
             activePlayerId: 'player_1',
             fogOfWar: fogOfWar,
             units: [settler],
-            selection: GameSelection.unit(settler, tile: _tile(map, 2, 0)),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler, tile: _tile(map, 2, 0)),
+            ),
           ),
         )
         ..onGameResize(Vector2(800, 600));
@@ -3079,7 +3150,9 @@ void main() {
               fogOfWar: fogOfWar,
               units: [settler],
               cities: [ownCity, enemyCity],
-              selection: GameSelection.unit(settler, tile: _tile(map, 3, 1)),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler, tile: _tile(map, 3, 1)),
+              ),
             ),
           )
           ..onGameResize(Vector2(800, 600));
@@ -3136,7 +3209,6 @@ void main() {
             GameState(
               activePlayerId: 'player_1',
               units: [attacker, defender, distantEnemy],
-              selection: GameSelection.unit(attacker),
               fogOfWar: FogOfWarState(
                 players: {
                   'player_1': PlayerFogOfWar(
@@ -3148,9 +3220,12 @@ void main() {
                   ),
                 },
               ),
-              pendingAction: const PendingAttackTargeting(
-                ownerPlayerId: 'player_1',
-                attackerUnitId: 'warrior_1',
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(attacker),
+                pendingAction: const PendingAttackTargeting(
+                  ownerPlayerId: 'player_1',
+                  attackerUnitId: 'warrior_1',
+                ),
               ),
             ),
           )
@@ -3174,7 +3249,6 @@ void main() {
           GameState(
             activePlayerId: 'player_1',
             units: [attacker, defender, distantEnemy],
-            selection: GameSelection.unit(attacker),
             fogOfWar: FogOfWarState(
               players: {
                 'player_1': PlayerFogOfWar(
@@ -3185,6 +3259,9 @@ void main() {
                   },
                 ),
               },
+            ),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(attacker),
             ),
           ),
         );
@@ -3247,13 +3324,15 @@ void main() {
                 builtByCityId: 'city_1',
               ),
             ],
-            selection: GameSelection.unit(worker),
             research: ResearchState(
               players: {
                 'player_1': PlayerResearchState(
                   unlockedTechnologyIds: {TechnologyId.agriculture},
                 ),
               },
+            ),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(worker),
             ),
           ),
         )
@@ -3354,13 +3433,15 @@ void main() {
             GameState(
               units: [worker],
               cities: const [city],
-              selection: GameSelection.unit(worker),
               research: ResearchState(
                 players: {
                   'player_1': PlayerResearchState(
                     unlockedTechnologyIds: {TechnologyId.agriculture},
                   ),
                 },
+              ),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(worker),
               ),
             ),
           )

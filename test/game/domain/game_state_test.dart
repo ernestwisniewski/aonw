@@ -38,28 +38,29 @@ void main() {
           col: 1,
           row: 2,
         );
-        final updated = state.copyWith(
-          activePlayerId: 'p1',
-          activePlayerCanAct: true,
-          units: [unit],
-          intendedAttacks: const [
-            IntendedAttack(
-              attackerUnitId: 'warrior_1',
-              defenderCol: 4,
-              defenderRow: 5,
-              declaredAtTick: 7,
-              declaringPlayerId: 'p1',
-            ),
-          ],
-          research: ResearchState(
-            players: {
-              'p1': PlayerResearchState(
-                activeTechnologyId: TechnologyId.agriculture,
+        final updated = state
+            .copyWith(
+              activePlayerId: 'p1',
+              activePlayerCanAct: true,
+              units: [unit],
+              intendedAttacks: const [
+                IntendedAttack(
+                  attackerUnitId: 'warrior_1',
+                  defenderCol: 4,
+                  defenderRow: 5,
+                  declaredAtTick: 7,
+                  declaringPlayerId: 'p1',
+                ),
+              ],
+              research: ResearchState(
+                players: {
+                  'p1': PlayerResearchState(
+                    activeTechnologyId: TechnologyId.agriculture,
+                  ),
+                },
               ),
-            },
-          ),
-          moveCommandActive: true,
-        );
+            )
+            .copyWithInteraction(moveCommandActive: true);
         expect(updated.activePlayerId, equals('p1'));
         expect(updated.activePlayerCanAct, isTrue);
         expect(updated.units, equals([unit]));
@@ -89,15 +90,15 @@ void main() {
         const state = GameState();
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
-        final updated = state.copyWith(selection: sel);
+        final updated = state.copyWithInteraction(selection: sel);
         expect(updated.selection, equals(sel));
       });
 
       test('clears selection when null passed', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
-        final state = const GameState().copyWith(selection: sel);
-        final cleared = state.copyWith(selection: null);
+        final state = const GameState().copyWithInteraction(selection: sel);
+        final cleared = state.copyWithInteraction(selection: null);
         expect(cleared.selection, isNull);
       });
     });
@@ -113,7 +114,7 @@ void main() {
           availableMovementPoints: 4,
           steps: const [],
         );
-        final updated = state.copyWith(movePreview: plan);
+        final updated = state.copyWithInteraction(movePreview: plan);
         expect(updated.movePreview, equals(plan));
       });
 
@@ -126,8 +127,8 @@ void main() {
           availableMovementPoints: 4,
           steps: const [],
         );
-        final state = const GameState().copyWith(movePreview: plan);
-        final cleared = state.copyWith(movePreview: null);
+        final state = const GameState().copyWithInteraction(movePreview: plan);
+        final cleared = state.copyWithInteraction(movePreview: null);
         expect(cleared.movePreview, isNull);
       });
     });
@@ -140,7 +141,7 @@ void main() {
           ownerPlayerId: 'p1',
           center: const CityHex(col: 0, row: 0),
         );
-        final updated = state.copyWith(cityFoundingDraft: draft);
+        final updated = state.copyWithInteraction(cityFoundingDraft: draft);
         expect(updated.cityFoundingDraft, equals(draft));
       });
 
@@ -150,8 +151,10 @@ void main() {
           ownerPlayerId: 'p1',
           center: const CityHex(col: 0, row: 0),
         );
-        final state = const GameState().copyWith(cityFoundingDraft: draft);
-        final cleared = state.copyWith(cityFoundingDraft: null);
+        final state = const GameState().copyWithInteraction(
+          cityFoundingDraft: draft,
+        );
+        final cleared = state.copyWithInteraction(cityFoundingDraft: null);
         expect(cleared.cityFoundingDraft, isNull);
       });
     });
@@ -201,7 +204,9 @@ void main() {
       test('selectedUnitId returns unit id when unit is selected', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
-        final state = GameState(units: [unit]).copyWith(selection: sel);
+        final state = GameState(
+          units: [unit],
+        ).copyWithInteraction(selection: sel);
         expect(state.selectedUnitId, equals(unit.id));
       });
 
@@ -212,7 +217,9 @@ void main() {
           row: 0,
         );
         final sel = GameSelection.unit(unit);
-        final state = GameState(units: [unit]).copyWith(selection: sel);
+        final state = GameState(
+          units: [unit],
+        ).copyWithInteraction(selection: sel);
         expect(state.selectedUnit, equals(unit));
       });
 

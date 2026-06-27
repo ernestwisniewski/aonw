@@ -97,9 +97,11 @@ void main() {
         parent: parent,
         state: const GameState(
           cities: [city],
-          pendingAction: PendingCityExpansionSelection(
-            ownerPlayerId: 'player_1',
-            cityId: 'city_1',
+          interaction: GameInteractionState(
+            pendingAction: PendingCityExpansionSelection(
+              ownerPlayerId: 'player_1',
+              cityId: 'city_1',
+            ),
           ),
         ),
         mapData: _map(),

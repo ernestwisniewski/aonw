@@ -25,7 +25,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         ),
         actionsLocked: true,
         workerAction: _workerAction(),
@@ -50,7 +52,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         ),
         workerAction: _workerAction(),
       );
@@ -69,7 +73,9 @@ void main() {
         gameState: GameState(
           units: [unit],
           cities: [city],
-          selection: GameSelection.unit(unit),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(unit),
+          ),
         ),
       );
       final action = _action(actions, 'Store');
@@ -92,7 +98,9 @@ void main() {
           _actions(
             gameState: GameState(
               units: [worker],
-              selection: GameSelection.unit(worker),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(worker),
+              ),
             ),
             workerAction: _workerAction(),
           ),
@@ -104,7 +112,9 @@ void main() {
           _actions(
             gameState: GameState(
               units: [warrior],
-              selection: GameSelection.unit(warrior),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(warrior),
+              ),
             ),
           ),
         ),
@@ -115,7 +125,9 @@ void main() {
           _actions(
             gameState: GameState(
               units: [scout],
-              selection: GameSelection.unit(scout),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(scout),
+              ),
             ),
           ),
         ),
@@ -126,7 +138,9 @@ void main() {
           _actions(
             gameState: GameState(
               units: [settler],
-              selection: GameSelection.unit(settler),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler),
+              ),
             ),
             canStartCityFounding: true,
           ),
@@ -138,7 +152,9 @@ void main() {
           _actions(
             gameState: GameState(
               units: [commander],
-              selection: GameSelection.unit(commander),
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(commander),
+              ),
             ),
             armyDetailActive: true,
             canStartCityFounding: true,
@@ -170,7 +186,9 @@ void main() {
         gameState: GameState(
           units: [merchant],
           cities: [origin, destination],
-          selection: GameSelection.unit(merchant),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(merchant),
+          ),
         ),
         mapData: _mapData(cols: 3, rows: 1),
         onStartMerchantTradeRouteSelection: () {
@@ -206,10 +224,12 @@ void main() {
         gameState: GameState(
           units: [merchant],
           cities: [origin, destination],
-          selection: GameSelection.unit(merchant),
-          pendingAction: PendingMerchantTradeRouteSelection(
-            ownerPlayerId: merchant.ownerPlayerId,
-            unitId: merchant.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(merchant),
+            pendingAction: PendingMerchantTradeRouteSelection(
+              ownerPlayerId: merchant.ownerPlayerId,
+              unitId: merchant.id,
+            ),
           ),
         ),
         mapData: _mapData(cols: 3, rows: 1),
@@ -237,10 +257,12 @@ void main() {
         gameState: GameState(
           units: [merchant],
           cities: [destination],
-          selection: GameSelection.unit(merchant),
-          pendingAction: PendingMerchantMoveToCitySelection(
-            ownerPlayerId: merchant.ownerPlayerId,
-            unitId: merchant.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(merchant),
+            pendingAction: PendingMerchantMoveToCitySelection(
+              ownerPlayerId: merchant.ownerPlayerId,
+              unitId: merchant.id,
+            ),
           ),
         ),
         mapData: _mapData(cols: 3, rows: 1),
@@ -260,27 +282,35 @@ void main() {
       final worker = _actions(
         gameState: GameState(
           units: [_worker()],
-          selection: GameSelection.unit(_worker()),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(_worker()),
+          ),
         ),
         workerAction: _workerAction(),
       );
       final scout = _actions(
         gameState: GameState(
           units: [_scout()],
-          selection: GameSelection.unit(_scout()),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(_scout()),
+          ),
         ),
       );
       final settler = _actions(
         gameState: GameState(
           units: [_settler()],
-          selection: GameSelection.unit(_settler()),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(_settler()),
+          ),
         ),
         canStartCityFounding: true,
       );
       final warrior = _actions(
         gameState: GameState(
           units: [_warrior()],
-          selection: GameSelection.unit(_warrior()),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(_warrior()),
+          ),
         ),
       );
 
@@ -305,7 +335,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         ),
         workerAction: _workerAction(),
         onStartWorkerActionSelection: () => improveStarted = true,
@@ -328,7 +360,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         ),
         workerAction: _workerAction(),
       );
@@ -345,7 +379,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [scout],
-          selection: GameSelection.unit(scout),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(scout),
+          ),
         ),
         onAutoExploreSelectedUnit: () => autoExploreStarted = true,
       );
@@ -373,7 +409,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [scout],
-          selection: GameSelection.unit(scout),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(scout),
+          ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
       );
@@ -398,10 +436,12 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
-          pendingAction: PendingWorkerActionSelection(
-            ownerPlayerId: worker.ownerPlayerId,
-            unitId: worker.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+            pendingAction: PendingWorkerActionSelection(
+              ownerPlayerId: worker.ownerPlayerId,
+              unitId: worker.id,
+            ),
           ),
         ),
         workerAction: _workerAction(selectionActive: true),
@@ -429,7 +469,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [worker],
-          selection: GameSelection.unit(worker),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker),
+          ),
         ),
         workerAction: _workerAction(activeJob: true),
         onCancelWorkerJob: () => cancelled = true,
@@ -467,7 +509,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [settler],
-          selection: GameSelection.unit(settler),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+          ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
       );
@@ -493,7 +537,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [scout],
-          selection: GameSelection.unit(scout),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(scout),
+          ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
       );
@@ -515,7 +561,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -555,7 +603,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -595,7 +645,9 @@ void main() {
         final actions = _actions(
           gameState: GameState(
             units: [warrior],
-            selection: GameSelection.unit(warrior),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(warrior),
+            ),
           ),
         );
 
@@ -609,7 +661,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -623,13 +677,17 @@ void main() {
       final lowMovementActions = _actions(
         gameState: GameState(
           units: [lowMovement],
-          selection: GameSelection.unit(lowMovement),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(lowMovement),
+          ),
         ),
       );
       final freshActions = _actions(
         gameState: GameState(
           units: [fresh],
-          selection: GameSelection.unit(fresh),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(fresh),
+          ),
         ),
       );
 
@@ -644,11 +702,13 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
-          pendingAction: PendingUnitTurnSkip(
-            ownerPlayerId: warrior.ownerPlayerId,
-            unitId: warrior.id,
-            restoreMovementPoints: warrior.movementPoints,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+            pendingAction: PendingUnitTurnSkip(
+              ownerPlayerId: warrior.ownerPlayerId,
+              unitId: warrior.id,
+              restoreMovementPoints: warrior.movementPoints,
+            ),
           ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
@@ -670,7 +730,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
       );
@@ -692,7 +754,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [commander],
-          selection: GameSelection.unit(commander),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander),
+          ),
         ),
         armyDetailActive: true,
       );
@@ -718,10 +782,12 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [commander],
-          selection: GameSelection.unit(commander),
-          pendingAction: PendingCommanderMergeSelection(
-            ownerPlayerId: commander.ownerPlayerId,
-            commanderUnitId: commander.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander),
+            pendingAction: PendingCommanderMergeSelection(
+              ownerPlayerId: commander.ownerPlayerId,
+              commanderUnitId: commander.id,
+            ),
           ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
@@ -746,7 +812,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [settler],
-          selection: GameSelection.unit(settler),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+          ),
         ),
         canStartCityFounding: true,
       );
@@ -766,7 +834,9 @@ void main() {
         final actions = _actions(
           gameState: GameState(
             units: [settler],
-            selection: GameSelection.unit(settler),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(settler),
+            ),
           ),
         );
 
@@ -789,7 +859,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [settler],
-          selection: GameSelection.unit(settler),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+          ),
         ),
         cityFoundingActive: true,
         onStartCityFounding: () => started = true,
@@ -820,8 +892,10 @@ void main() {
         gameState:
             GameState(
               units: [settler],
-              selection: GameSelection.unit(settler),
-            ).copyWith(
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(settler),
+              ),
+            ).copyWithInteraction(
               cityFoundingDraft: CityFoundingDraft(
                 unitId: settler.id,
                 ownerPlayerId: settler.ownerPlayerId,
@@ -871,7 +945,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior, enemy],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -893,7 +969,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior, enemy],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -920,7 +998,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior, enemy1, enemy2],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
       );
 
@@ -934,10 +1014,12 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: warrior.ownerPlayerId,
-            attackerUnitId: warrior.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: warrior.ownerPlayerId,
+              attackerUnitId: warrior.id,
+            ),
           ),
         ),
         onCancelAttackTargeting: () => cancelled = true,
@@ -969,7 +1051,9 @@ void main() {
         final actions = _actions(
           gameState: GameState(
             units: [warrior],
-            selection: GameSelection.unit(warrior),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(warrior),
+            ),
           ),
           onCancelSelectedUnitAction: () => cancelled = true,
         );
@@ -1000,7 +1084,9 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           units: [warrior],
-          selection: GameSelection.unit(warrior),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior),
+          ),
         ),
         onCancelSelectedUnitAction: () => cancelled = true,
       );
@@ -1029,10 +1115,12 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           cities: [city],
-          selection: GameSelection.city(
-            city,
-            cityYield: TileYield.zero,
-            playerColor: 0,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: TileYield.zero,
+              playerColor: 0,
+            ),
           ),
         ),
         cityDescriptionActive: true,
@@ -1068,14 +1156,16 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           cities: [city],
-          selection: GameSelection.city(
-            city,
-            cityYield: TileYield.zero,
-            playerColor: 0,
-          ),
-          pendingAction: PendingCityExpansionSelection(
-            ownerPlayerId: city.ownerPlayerId,
-            cityId: city.id,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: TileYield.zero,
+              playerColor: 0,
+            ),
+            pendingAction: PendingCityExpansionSelection(
+              ownerPlayerId: city.ownerPlayerId,
+              cityId: city.id,
+            ),
           ),
         ),
       );
@@ -1101,10 +1191,12 @@ void main() {
           gameState: GameState(
             cities: [city],
             research: research,
-            selection: GameSelection.city(
-              city,
-              cityYield: TileYield.zero,
-              playerColor: 0,
+            interaction: GameInteractionState(
+              selection: GameSelection.city(
+                city,
+                cityYield: TileYield.zero,
+                playerColor: 0,
+              ),
             ),
           ),
         );
@@ -1119,10 +1211,12 @@ void main() {
       final actions = _actions(
         gameState: GameState(
           cities: [city],
-          selection: GameSelection.city(
-            city,
-            cityYield: TileYield.zero,
-            playerColor: 0,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: TileYield.zero,
+              playerColor: 0,
+            ),
           ),
         ),
       );

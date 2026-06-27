@@ -68,15 +68,12 @@ abstract final class UnitAttachmentReducer {
       detachment.updatedSource.row,
     );
     var next = withDiscoveredDiplomaticContacts(
-      state.copyWith(
-        units: updatedUnits,
-        fogOfWar: newFog,
-        moveCommandActive: false,
-      ),
+      state.copyWith(units: updatedUnits, fogOfWar: newFog),
     );
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(
+    next = next.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: null,
       selection: GameSelection.unit(detachment.updatedSource, tile: sourceTile),
     );
 

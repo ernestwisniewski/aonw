@@ -92,8 +92,10 @@ abstract final class ArtifactReducer {
           persistent.runtimeState.dominationHoldTurnsByPlayerId,
       culturalVictoryHoldTurnsByPlayerId:
           persistent.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      cityFoundingDraft: persistent.runtimeState.cityFoundingDraft,
-      pendingAction: persistent.runtimeState.pendingAction,
+      interaction: GameInteractionState(
+        cityFoundingDraft: persistent.runtimeState.cityFoundingDraft,
+        pendingAction: persistent.runtimeState.pendingAction,
+      ),
     );
   }
 }

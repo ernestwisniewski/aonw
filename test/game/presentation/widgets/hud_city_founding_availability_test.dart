@@ -13,7 +13,9 @@ void main() {
       final state = GameState(
         activePlayerId: 'player_1',
         units: [settler],
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       expect(
@@ -41,7 +43,9 @@ void main() {
       final state = GameState(
         activePlayerId: 'player_1',
         units: [settler],
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       expect(
@@ -55,7 +59,9 @@ void main() {
       final state = GameState(
         activePlayerId: 'player_1',
         units: [settler],
-        selection: GameSelection.unit(settler),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(settler),
+        ),
       );
 
       expect(

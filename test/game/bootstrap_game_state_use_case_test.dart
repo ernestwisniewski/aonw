@@ -76,7 +76,7 @@ class _FakeCommandTransport implements CommandTransport {
     this.context = context;
     this.currentState = currentState;
     return CommandTransportResult(
-      state: currentState.copyWith(moveCommandActive: true),
+      state: currentState.copyWithInteraction(moveCommandActive: true),
       snapshot: SaveSnapshot(save: _save),
       offset: 1,
     );

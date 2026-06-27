@@ -278,16 +278,18 @@ void main() {
         final state = GameState(
           units: [warrior, worker],
           activePlayerId: 'player_1',
-          selection: GameSelection.unit(
-            warrior,
-            tile: mapData.tileAt(warrior.col, warrior.row),
-          ),
           research: ResearchState(
             players: {
               'player_1': PlayerResearchState(
                 activeTechnologyId: TechnologyId.agriculture,
               ),
             },
+          ),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(
+              warrior,
+              tile: mapData.tileAt(warrior.col, warrior.row),
+            ),
           ),
         );
 
@@ -372,16 +374,18 @@ void main() {
           units: [worker],
           cities: [city],
           activePlayerId: 'player_1',
-          selection: GameSelection.unit(
-            worker,
-            tile: mapData.tileAt(worker.col, worker.row),
-          ),
           research: ResearchState(
             players: {
               'player_1': PlayerResearchState(
                 activeTechnologyId: TechnologyId.agriculture,
               ),
             },
+          ),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(
+              worker,
+              tile: mapData.tileAt(worker.col, worker.row),
+            ),
           ),
         );
 
@@ -566,10 +570,12 @@ void main() {
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
-        selection: GameSelection.city(
-          city,
-          cityYield: TileYield.zero,
-          playerColor: 0xFF4a7fc4,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: TileYield.zero,
+            playerColor: 0xFF4a7fc4,
+          ),
         ),
       );
 
@@ -664,16 +670,18 @@ void main() {
           units: [unit],
           cities: [city],
           activePlayerId: 'player_1',
-          selection: GameSelection.unit(
-            unit,
-            tile: mapData.tileAt(unit.col, unit.row),
-          ),
           research: ResearchState(
             players: {
               'player_1': PlayerResearchState(
                 activeTechnologyId: TechnologyId.agriculture,
               ),
             },
+          ),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(
+              unit,
+              tile: mapData.tileAt(unit.col, unit.row),
+            ),
           ),
         );
 

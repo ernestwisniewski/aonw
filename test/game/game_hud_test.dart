@@ -1675,10 +1675,12 @@ void main() {
           units: [unit],
           cities: const [city],
           activePlayerId: 'player_1',
-          selection: GameSelection.city(
-            city,
-            cityYield: TileYield.zero,
-            playerColor: 0xFF4a7fc4,
+          interaction: GameInteractionState(
+            selection: GameSelection.city(
+              city,
+              cityYield: TileYield.zero,
+              playerColor: 0xFF4a7fc4,
+            ),
           ),
         ),
       ),
@@ -1917,7 +1919,9 @@ void main() {
           save: _save,
           state: GameState(
             activePlayerId: 'player_1',
-            selection: GameSelection.tile(map.tileAt(1, 1)!),
+            interaction: GameInteractionState(
+              selection: GameSelection.tile(map.tileAt(1, 1)!),
+            ),
           ),
         ),
       );
@@ -2404,8 +2408,10 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [settler],
-          selection: GameSelection.unit(settler),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+            moveCommandActive: true,
+          ),
         ),
       ),
     );
@@ -2608,8 +2614,10 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [settler],
-          selection: GameSelection.unit(settler),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+            moveCommandActive: true,
+          ),
         ),
       ),
     );
@@ -2733,8 +2741,10 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [settler],
-          selection: GameSelection.unit(settler),
-          moveCommandActive: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+            moveCommandActive: true,
+          ),
         ),
       ),
     );
@@ -3654,15 +3664,17 @@ void main() {
       activePlayerId: 'player_1',
       cities: [city],
       playerGold: const {'player_1': 4496},
-      selection: GameSelection.city(
-        city,
-        cityYield: const TileYield(
-          food: 10,
-          production: 35,
-          gold: 0,
-          defense: 0,
+      interaction: GameInteractionState(
+        selection: GameSelection.city(
+          city,
+          cityYield: const TileYield(
+            food: 10,
+            production: 35,
+            gold: 0,
+            defense: 0,
+          ),
+          playerColor: _player.colorValue,
         ),
-        playerColor: _player.colorValue,
       ),
     );
     const scenarios = [
@@ -3955,15 +3967,17 @@ void main() {
               activePlayerId: 'player_1',
               cities: const [city],
               research: activeResearch,
-              selection: GameSelection.city(
-                city,
-                cityYield: const TileYield(
-                  food: 10,
-                  production: 35,
-                  gold: 0,
-                  defense: 0,
+              interaction: GameInteractionState(
+                selection: GameSelection.city(
+                  city,
+                  cityYield: const TileYield(
+                    food: 10,
+                    production: 35,
+                    gold: 0,
+                    defense: 0,
+                  ),
+                  playerColor: _player.colorValue,
                 ),
-                playerColor: _player.colorValue,
               ),
             ),
           ),
@@ -5612,7 +5626,6 @@ void main() {
         state: GameState(
           activePlayerId: 'player_1',
           units: [attacker, defender],
-          selection: GameSelection.unit(attacker),
           fogOfWar: FogOfWarState(
             players: {
               'player_1': PlayerFogOfWar(
@@ -5623,6 +5636,9 @@ void main() {
                 },
               ),
             },
+          ),
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(attacker),
           ),
         ),
       ),
@@ -6188,9 +6204,11 @@ void main() {
             units: [firstUnit, nextUnit],
             cities: [city],
             research: research,
-            selection: GameSelection.unit(
-              firstUnit,
-              tile: map.tileAt(firstUnit.col, firstUnit.row),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(
+                firstUnit,
+                tile: map.tileAt(firstUnit.col, firstUnit.row),
+              ),
             ),
           ),
         ),
@@ -6741,7 +6759,7 @@ void main() {
           save: _save,
           state: const GameState(
             activePlayerId: 'player_1',
-            pendingAction: pendingResearch,
+            interaction: GameInteractionState(pendingAction: pendingResearch),
           ),
         ),
       );

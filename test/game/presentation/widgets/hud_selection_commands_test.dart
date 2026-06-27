@@ -74,10 +74,12 @@ void main() {
       final city = _city('city_1');
       final state = GameState(
         cities: [city],
-        selection: GameSelection.city(
-          city,
-          cityYield: TileYield.zero,
-          playerColor: 0xFF4488cc,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: TileYield.zero,
+            playerColor: 0xFF4488cc,
+          ),
         ),
       );
 
@@ -91,10 +93,12 @@ void main() {
       final city = _city('city_1');
       final state = GameState(
         cities: [city],
-        selection: GameSelection.city(
-          city,
-          cityYield: TileYield.zero,
-          playerColor: 0xFF4488cc,
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            city,
+            cityYield: TileYield.zero,
+            playerColor: 0xFF4488cc,
+          ),
         ),
       );
 
@@ -126,7 +130,7 @@ GameState _stateWithUnit(GameUnit unit, {List<GameCity> cities = const []}) {
   return GameState(
     units: [unit],
     cities: cities,
-    selection: GameSelection.unit(unit),
+    interaction: GameInteractionState(selection: GameSelection.unit(unit)),
   );
 }
 

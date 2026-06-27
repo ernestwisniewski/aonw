@@ -226,7 +226,7 @@ abstract final class _GameStateTapReducer {
     }
 
     final workerTile = mapData.tileAt(worker!.col, worker.row);
-    final workState = state.copyWith(
+    final workState = state.copyWithInteraction(
       moveCommandActive: true,
       selection: GameSelection.unit(worker, tile: workerTile),
     );
@@ -410,9 +410,9 @@ abstract final class _GameStateTapReducer {
     final next = _clearMapInteractionState(state);
 
     if (!state.activePlayerVisibility.canInspectTile(tileData)) {
-      return next.copyWith(selection: null);
+      return next.copyWithInteraction(selection: null);
     }
 
-    return next.copyWith(selection: GameSelection.tile(tileData));
+    return next.copyWithInteraction(selection: GameSelection.tile(tileData));
   }
 }

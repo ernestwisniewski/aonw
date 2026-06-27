@@ -15,6 +15,92 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'game_state.freezed.dart';
 
+class GameInteractionState {
+  static const empty = GameInteractionState();
+  static const Object unset = Object();
+
+  const GameInteractionState({
+    this.selection,
+    this.movePreview,
+    this.cityFoundingDraft,
+    this.pendingAction,
+    this.moveCommandActive = false,
+  });
+
+  final GameSelection? selection;
+  final UnitMovementPlan? movePreview;
+  final CityFoundingDraft? cityFoundingDraft;
+  final PendingPlayerAction? pendingAction;
+  final bool moveCommandActive;
+
+  GameInteractionMode get mode {
+    if (cityFoundingDraft != null) return GameInteractionMode.cityFounding;
+    if (pendingAction != null) return pendingAction!.mode;
+    if (moveCommandActive) return GameInteractionMode.moveTargeting;
+    return GameInteractionMode.standard;
+  }
+
+  GameInteractionState copyWith({
+    Object? selection = unset,
+    Object? movePreview = unset,
+    Object? cityFoundingDraft = unset,
+    Object? pendingAction = unset,
+    bool? moveCommandActive,
+  }) {
+    return GameInteractionState(
+      selection: identical(selection, unset)
+          ? this.selection
+          : selection as GameSelection?,
+      movePreview: identical(movePreview, unset)
+          ? this.movePreview
+          : movePreview as UnitMovementPlan?,
+      cityFoundingDraft: identical(cityFoundingDraft, unset)
+          ? this.cityFoundingDraft
+          : cityFoundingDraft as CityFoundingDraft?,
+      pendingAction: identical(pendingAction, unset)
+          ? this.pendingAction
+          : pendingAction as PendingPlayerAction?,
+      moveCommandActive: moveCommandActive ?? this.moveCommandActive,
+    );
+  }
+
+  GameInteractionState clearMapState({bool clearPendingAction = false}) {
+    return copyWith(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: null,
+      pendingAction: clearPendingAction ? null : pendingAction,
+    );
+  }
+
+  GameInteractionState clearTransientModes() {
+    return copyWith(
+      moveCommandActive: false,
+      movePreview: null,
+      cityFoundingDraft: null,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GameInteractionState &&
+        other.selection == selection &&
+        other.movePreview == movePreview &&
+        other.cityFoundingDraft == cityFoundingDraft &&
+        other.pendingAction == pendingAction &&
+        other.moveCommandActive == moveCommandActive;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    selection,
+    movePreview,
+    cityFoundingDraft,
+    pendingAction,
+    moveCommandActive,
+  );
+}
+
 @freezed
 abstract class GameState with _$GameState {
   const GameState._();
@@ -39,12 +125,36 @@ abstract class GameState with _$GameState {
     @Default('') String activePlayerId,
     @Default(true) bool activePlayerCanAct,
     @Default({}) Set<String> submittedPlayerIds,
-    GameSelection? selection,
-    UnitMovementPlan? movePreview,
-    CityFoundingDraft? cityFoundingDraft,
-    PendingPlayerAction? pendingAction,
-    @Default(false) bool moveCommandActive,
+    @Default(GameInteractionState.empty) GameInteractionState interaction,
   }) = _GameState;
+
+  GameSelection? get selection => interaction.selection;
+
+  UnitMovementPlan? get movePreview => interaction.movePreview;
+
+  CityFoundingDraft? get cityFoundingDraft => interaction.cityFoundingDraft;
+
+  PendingPlayerAction? get pendingAction => interaction.pendingAction;
+
+  bool get moveCommandActive => interaction.moveCommandActive;
+
+  GameState copyWithInteraction({
+    Object? selection = GameInteractionState.unset,
+    Object? movePreview = GameInteractionState.unset,
+    Object? cityFoundingDraft = GameInteractionState.unset,
+    Object? pendingAction = GameInteractionState.unset,
+    bool? moveCommandActive,
+  }) {
+    return copyWith(
+      interaction: interaction.copyWith(
+        selection: selection,
+        movePreview: movePreview,
+        cityFoundingDraft: cityFoundingDraft,
+        pendingAction: pendingAction,
+        moveCommandActive: moveCommandActive,
+      ),
+    );
+  }
 
   String? get selectedUnitId {
     if (selection?.type == GameSelectionType.unit) {
@@ -112,10 +222,7 @@ abstract class GameState with _$GameState {
   }
 
   GameInteractionMode get interactionMode {
-    if (cityFoundingDraft != null) return GameInteractionMode.cityFounding;
-    if (pendingAction != null) return pendingAction!.mode;
-    if (moveCommandActive) return GameInteractionMode.moveTargeting;
-    return GameInteractionMode.standard;
+    return interaction.mode;
   }
 
   GameRuntimeState get runtimeState => GameRuntimeState(

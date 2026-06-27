@@ -147,11 +147,7 @@ abstract final class MovementReducer {
       return _clearMoveTargeting(state);
     }
 
-    var next = state.copyWith(moveCommandActive: true);
-    next = next.copyWith(movePreview: null);
-    next = next.copyWith(cityFoundingDraft: null);
-    next = next.copyWith(pendingAction: null);
-    return next;
+    return _startMoveTargeting(state);
   }
 
   /// Handles a tile tap while move mode is active.
@@ -173,7 +169,9 @@ abstract final class MovementReducer {
     if (selected.occupies(tileData.col, tileData.row)) {
       final tile = mapData.tileAt(selected.col, selected.row);
       var next = _clearMoveTargeting(state);
-      next = next.copyWith(selection: GameSelection.unit(selected, tile: tile));
+      next = next.copyWithInteraction(
+        selection: GameSelection.unit(selected, tile: tile),
+      );
       return GameStateTransition(state: next);
     }
 
@@ -303,14 +301,15 @@ abstract final class MovementReducer {
         .copyWithPosture(UnitPosture.active);
     final cleanup =
         _UnitActionStateCleanup(
-            state.copyWith(
-              units: replaceUnit(state.units, updatedUnit),
-              pendingAction: PendingUnitTurnSkip(
-                ownerPlayerId: unit.ownerPlayerId,
-                unitId: unit.id,
-                restoreMovementPoints: unit.movementPoints,
-              ),
-            ),
+            state
+                .copyWith(units: replaceUnit(state.units, updatedUnit))
+                .copyWithInteraction(
+                  pendingAction: PendingUnitTurnSkip(
+                    ownerPlayerId: unit.ownerPlayerId,
+                    unitId: unit.id,
+                    restoreMovementPoints: unit.movementPoints,
+                  ),
+                ),
             unit,
             updatedUnit,
             mapData,
@@ -338,10 +337,9 @@ abstract final class MovementReducer {
     final updatedUnit = UnitFortificationRules.fortify(unit);
     final cleanup =
         _UnitActionStateCleanup(
-            state.copyWith(
-              units: replaceUnit(state.units, updatedUnit),
-              pendingAction: null,
-            ),
+            state
+                .copyWith(units: replaceUnit(state.units, updatedUnit))
+                .copyWithInteraction(pendingAction: null),
             unit,
             updatedUnit,
             mapData,
@@ -395,9 +393,9 @@ abstract final class MovementReducer {
         .copyWithQueuedPath(_queuedPathFor(plan));
     final updatedUnits = replaceUnit(state.units, withPath);
     var next = state.copyWith(units: updatedUnits);
-    next = next.copyWith(movePreview: null);
+    next = next.copyWithInteraction(movePreview: null);
     if (state.selectedUnitId == unit.id) {
-      next = next.copyWith(
+      next = next.copyWithInteraction(
         selection: GameSelection.unit(
           withPath,
           tile: mapData.tileAt(withPath.col, withPath.row),
@@ -476,9 +474,10 @@ abstract final class MovementReducer {
   }
 
   static GameState _clearMoveTargeting(GameState state) {
-    var next = state.copyWith(moveCommandActive: false);
-    next = next.copyWith(movePreview: null);
-    return next;
+    return state.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+    );
   }
 
   static GameState _selectUpdatedUnit(
@@ -486,11 +485,19 @@ abstract final class MovementReducer {
     GameUnit unit,
     MapData mapData,
   ) {
-    return state.copyWith(
+    return state.copyWithInteraction(
       selection: GameSelection.unit(
         unit,
         tile: mapData.tileAt(unit.col, unit.row),
       ),
     );
   }
+}
+
+GameState _startMoveTargeting(GameState state) {
+  return state.copyWith(
+    interaction: state.interaction
+        .clearMapState(clearPendingAction: true)
+        .copyWith(moveCommandActive: true),
+  );
 }

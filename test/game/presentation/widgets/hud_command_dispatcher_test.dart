@@ -148,8 +148,10 @@ void main() {
         .autoExploreSelectedUnit(
           GameState(
             units: [scout],
-            selection: GameSelection.unit(scout),
             fogOfWar: _fullyDiscoveredFog(cols: 2, rows: 1),
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(scout),
+            ),
           ),
           _grassMap(cols: 2, rows: 1),
         );

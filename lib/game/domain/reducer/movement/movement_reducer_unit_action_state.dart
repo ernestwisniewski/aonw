@@ -47,13 +47,13 @@ final class _UnitActionStateCleanup {
 
   void clearPendingActionOwnedByUnit() {
     if (state.pendingAction?.ownsUnit(previousUnit.id) ?? false) {
-      state = state.copyWith(pendingAction: null);
+      state = state.copyWithInteraction(pendingAction: null);
     }
   }
 
   void clearCityFoundingDraftOwnedByUnit() {
     if (state.cityFoundingDraft?.unitId == previousUnit.id) {
-      state = state.copyWith(cityFoundingDraft: null);
+      state = state.copyWithInteraction(cityFoundingDraft: null);
     }
   }
 
@@ -67,7 +67,7 @@ final class _UnitActionStateCleanup {
     if (!shouldActivate) return;
     if (state.selectedUnitId == previousUnit.id &&
         MovementReducer._canAutoActivateMoveTargeting(state, updatedUnit)) {
-      state = state.copyWith(moveCommandActive: true);
+      state = state.copyWithInteraction(moveCommandActive: true);
     }
   }
 }

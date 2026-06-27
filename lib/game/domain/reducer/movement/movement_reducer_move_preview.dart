@@ -65,8 +65,10 @@ abstract final class _MovePreviewReducer {
     }
 
     final tile = mapData.tileAt(selected.col, selected.row);
-    var next = state.copyWith(movePreview: plan);
-    next = next.copyWith(selection: GameSelection.unit(selected, tile: tile));
+    final next = state.copyWithInteraction(
+      movePreview: plan,
+      selection: GameSelection.unit(selected, tile: tile),
+    );
     return GameStateTransition(state: next);
   }
 
@@ -89,7 +91,7 @@ abstract final class _MovePreviewReducer {
         ? preview.reachableSteps.skip(1).toList()
         : preview.steps.skip(1).toList();
 
-    final workState = state.copyWith(movePreview: null);
+    final workState = state.copyWithInteraction(movePreview: null);
 
     // The preview has already applied visibility checks; execution re-plans
     // against current blockers so queued moves cannot walk through new units.
@@ -121,7 +123,7 @@ abstract final class _MovePreviewReducer {
           workState,
         ).copyWith(units: updatedUnits);
         final tile = mapData.tileAt(withPath.col, withPath.row);
-        next = next.copyWith(
+        next = next.copyWithInteraction(
           selection: GameSelection.unit(withPath, tile: tile),
         );
         return GameStateTransition(state: next);
@@ -152,7 +154,9 @@ abstract final class _MovePreviewReducer {
         workState,
       ).copyWith(units: updatedUnits);
       final tile = mapData.tileAt(withPath.col, withPath.row);
-      next = next.copyWith(selection: GameSelection.unit(withPath, tile: tile));
+      next = next.copyWithInteraction(
+        selection: GameSelection.unit(withPath, tile: tile),
+      );
       return GameStateTransition(state: next);
     }
 
@@ -186,13 +190,11 @@ abstract final class _MovePreviewReducer {
     final destTile = mapData.tileAt(movedWithPath.col, movedWithPath.row);
     final keepMoveTargetingActive = !isPartialMove;
     var next = withDiscoveredDiplomaticContacts(
-      workState.copyWith(
-        units: updatedUnits,
-        fogOfWar: newFog,
-        moveCommandActive: keepMoveTargetingActive,
-      ),
+      workState
+          .copyWith(units: updatedUnits, fogOfWar: newFog)
+          .copyWithInteraction(moveCommandActive: keepMoveTargetingActive),
     );
-    next = next.copyWith(
+    next = next.copyWithInteraction(
       selection: GameSelection.unit(movedWithPath, tile: destTile),
     );
 

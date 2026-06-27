@@ -77,13 +77,15 @@ void main() {
     test('prefers city founding over other mode flags', () {
       final state =
           GameState(
-            moveCommandActive: true,
-            cityFoundingDraft: CityFoundingDraft(
-              unitId: 'commander_1',
-              ownerPlayerId: 'player_1',
-              center: const CityHex(col: 2, row: 3),
+            interaction: GameInteractionState(
+              moveCommandActive: true,
+              cityFoundingDraft: CityFoundingDraft(
+                unitId: 'commander_1',
+                ownerPlayerId: 'player_1',
+                center: const CityHex(col: 2, row: 3),
+              ),
             ),
-          ).copyWith(
+          ).copyWithInteraction(
             pendingAction: const PendingAttackTargeting(
               ownerPlayerId: 'player_1',
               attackerUnitId: 'commander_1',
@@ -94,7 +96,7 @@ void main() {
     });
 
     test('uses pending action mode when present', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingCommanderMergeSelection(
           ownerPlayerId: 'player_1',
           commanderUnitId: 'commander_1',
@@ -105,7 +107,7 @@ void main() {
     });
 
     test('uses city worked hex pending action mode', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingCityWorkedHexSelection(
           ownerPlayerId: 'player_1',
           cityId: 'city_1',
@@ -120,7 +122,7 @@ void main() {
     });
 
     test('uses city expansion pending action mode', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingCityExpansionSelection(
           ownerPlayerId: 'player_1',
           cityId: 'city_1',
@@ -135,7 +137,7 @@ void main() {
     });
 
     test('uses research selection pending action mode', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingResearchSelection(
           ownerPlayerId: 'player_1',
         ),
@@ -149,7 +151,7 @@ void main() {
     });
 
     test('uses merchant move-to-city pending action mode', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingMerchantMoveToCitySelection(
           ownerPlayerId: 'player_1',
           unitId: 'merchant_1',
@@ -167,7 +169,7 @@ void main() {
     });
 
     test('uses unit turn skip pending action mode', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingUnitTurnSkip(
           ownerPlayerId: 'player_1',
           unitId: 'warrior_1',
@@ -183,7 +185,7 @@ void main() {
     });
 
     test('runtimeState getter exposes persistent interaction slice', () {
-      final state = const GameState().copyWith(
+      final state = const GameState().copyWithInteraction(
         pendingAction: const PendingCityWorkedHexSelection(
           ownerPlayerId: 'player_1',
           cityId: 'city_1',
