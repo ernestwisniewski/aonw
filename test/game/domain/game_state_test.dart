@@ -5,11 +5,61 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('GameInteractionState', () {
+    test('keeps manual copyWith, equality, and hashCode contract in sync', () {
+      final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
+      final selection = GameSelection.unit(unit);
+      final movePreview = UnitMovementPlan(
+        unitId: unit.id,
+        targetCol: 2,
+        targetRow: 3,
+        totalCost: 2,
+        availableMovementPoints: 4,
+        steps: const [],
+      );
+      final cityFoundingDraft = CityFoundingDraft(
+        unitId: unit.id,
+        ownerPlayerId: 'p1',
+        center: const CityHex(col: 1, row: 1),
+      );
+      const pendingAction = PendingResearchSelection(ownerPlayerId: 'p1');
+
+      final state = GameInteractionState(
+        selection: selection,
+        movePreview: movePreview,
+        cityFoundingDraft: cityFoundingDraft,
+        pendingAction: pendingAction,
+        moveCommandActive: true,
+      );
+      final sameState = GameInteractionState(
+        selection: selection,
+        movePreview: movePreview,
+        cityFoundingDraft: cityFoundingDraft,
+        pendingAction: pendingAction,
+        moveCommandActive: true,
+      );
+
+      expect(state.copyWith(), equals(state));
+      expect(sameState, equals(state));
+      expect(sameState.hashCode, equals(state.hashCode));
+      expect(state.copyWith(selection: null).selection, isNull);
+      expect(state.copyWith(movePreview: null).movePreview, isNull);
+      expect(state.copyWith(cityFoundingDraft: null).cityFoundingDraft, isNull);
+      expect(state.copyWith(pendingAction: null).pendingAction, isNull);
+      expect(
+        state.copyWith(moveCommandActive: false).moveCommandActive,
+        isFalse,
+      );
+      expect(state.copyWith(selection: null), isNot(equals(state)));
+    });
+  });
+
   group('GameState', () {
     group('default constructor', () {
       test('produces empty/default state', () {
