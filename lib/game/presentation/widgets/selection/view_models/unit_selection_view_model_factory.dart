@@ -7,6 +7,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_i
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_value_formatters.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_view_model.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -59,7 +60,7 @@ abstract final class UnitSelectionViewModelFactory {
       paceBalance: paceBalance,
     );
     return SelectionViewModel(
-      icon: _iconFor(unit.type),
+      icon: gameIconForUnitType(unit.type),
       color: const Color(0xFFd48f74),
       title: GameText.uppercase(
         unitName?.call(unit) ?? GameDisplayNames.unit(l10n, unit),
@@ -215,27 +216,5 @@ abstract final class UnitSelectionViewModelFactory {
     final job = unit.workerJob!;
     final name = improvementName(job.improvementType);
     return l10n.unitSelectionWorkerJobTurns(name, job.remainingTurns);
-  }
-
-  static GameIconData _iconFor(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => GameIcons.army,
-      GameUnitType.warrior => GameIcons.warrior,
-      GameUnitType.archer => GameIcons.archer,
-      GameUnitType.settler => GameIcons.settler,
-      GameUnitType.worker => GameIcons.production,
-      GameUnitType.merchant => GameIcons.commerce,
-      GameUnitType.scout => GameIcons.visibility,
-      GameUnitType.spearman => GameIcons.attack,
-      GameUnitType.cavalry => GameIcons.move,
-      GameUnitType.catapult => GameIcons.production,
-      GameUnitType.heavyInfantry => GameIcons.defense,
-      GameUnitType.fieldCannon => GameIcons.attack,
-      GameUnitType.rifleman => GameIcons.archer,
-      GameUnitType.tank => GameIcons.defense,
-      GameUnitType.scoutShip => GameIcons.ship,
-      GameUnitType.warship => GameIcons.ship,
-      GameUnitType.reconPlane => GameIcons.visibility,
-    };
   }
 }

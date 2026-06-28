@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -10,7 +11,6 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
-part 'empire_overview_entity_icons.dart';
 part 'empire_overview_group_shell.dart';
 
 class EmpireUnitGroupBlock extends StatelessWidget {
@@ -30,7 +30,7 @@ class EmpireUnitGroupBlock extends StatelessWidget {
     final label = GameDisplayNames.unitType(l10n, group.type);
     final first = group.units.first;
     return _GroupShell(
-      icon: _iconForUnit(group.type),
+      icon: gameIconForUnitType(group.type),
       title: label,
       subtitle: empireUnitGroupSubtitle(l10n, group),
       focusTooltip: l10n.empireShowFirstUnitTooltip,
@@ -39,7 +39,7 @@ class EmpireUnitGroupBlock extends StatelessWidget {
         for (final unit in group.units)
           _EmpireEntityRow(
             key: Key('empire.unit.${unit.id}'),
-            icon: _iconForUnit(unit.type),
+            icon: gameIconForUnitType(unit.type),
             title: GameDisplayNames.unit(l10n, unit),
             subtitle: empireUnitSubtitle(l10n, unit),
             focusTooltip: l10n.empireShowUnitTooltip,

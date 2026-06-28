@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -103,7 +104,7 @@ class CityProductionItem {
       projectType: null,
       title: title,
       emoji: null,
-      icon: _iconForUnit(type),
+      icon: gameIconForUnitType(type),
       active: active,
       investedProduction: investedProduction,
       totalCost: totalCost,
@@ -235,26 +236,6 @@ int _rushGoldCost({
     productionPerTurn: productionPerTurn,
   );
 }
-
-GameIconData _iconForUnit(GameUnitType type) => switch (type) {
-  GameUnitType.warrior => GameIcons.warrior,
-  GameUnitType.archer => GameIcons.archer,
-  GameUnitType.settler => GameIcons.settler,
-  GameUnitType.worker => GameIcons.production,
-  GameUnitType.merchant => GameIcons.commerce,
-  GameUnitType.commander => GameIcons.army,
-  GameUnitType.scout => GameIcons.visibility,
-  GameUnitType.spearman => GameIcons.attack,
-  GameUnitType.cavalry => GameIcons.move,
-  GameUnitType.catapult => GameIcons.production,
-  GameUnitType.heavyInfantry => GameIcons.defense,
-  GameUnitType.fieldCannon => GameIcons.attack,
-  GameUnitType.rifleman => GameIcons.archer,
-  GameUnitType.tank => GameIcons.defense,
-  GameUnitType.scoutShip => GameIcons.visibility,
-  GameUnitType.warship => GameIcons.attack,
-  GameUnitType.reconPlane => GameIcons.visibility,
-};
 
 String _projectTitle(CityProjectType type, AppLocalizations l10n) =>
     switch (type) {
