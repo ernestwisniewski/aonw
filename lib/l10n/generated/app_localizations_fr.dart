@@ -13,192 +13,196 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String defaultPlayerName(int index) {
-    return 'Player $index';
+    return 'Joueur $index';
   }
 
   @override
   String defaultCityName(int index) {
-    return 'City $index';
+    return 'Ville $index';
   }
 
   @override
-  String get newGameTitle => 'NEW GAME';
+  String get newGameTitle => 'NOUVEAU JEU';
 
   @override
-  String get gameModeSinglePlayerMenuLabel => 'Singleplayer';
+  String get gameModeSinglePlayerMenuLabel => 'Joueur unique';
 
   @override
-  String get gameModeMultiplayerMenuLabel => 'Multiplayer';
+  String get gameModeMultiplayerMenuLabel => 'Multijoueur';
 
   @override
   String get gameModeHotSeatMenuLabel => 'Hot Seat';
 
   @override
-  String get gameModeSinglePlayerSummaryLabel => 'Singleplayer';
+  String get gameModeSinglePlayerSummaryLabel => 'Joueur unique';
 
   @override
-  String get gameModeMultiplayerSummaryLabel => 'Multiplayer';
+  String get gameModeMultiplayerSummaryLabel => 'Multijoueur';
 
   @override
   String get gameModeHotSeatSummaryLabel => 'Hot Seat';
 
   @override
-  String get gameModeSinglePlayerMapTitle => 'Choose a map for solo play';
+  String get gameModeSinglePlayerMapTitle =>
+      'Choisissez une carte pour jouer en solo';
 
   @override
-  String get gameModeMultiplayerMapTitle => 'Choose a map for online play';
+  String get gameModeMultiplayerMapTitle =>
+      'Choisissez une carte pour jouer en ligne';
 
   @override
-  String get gameModeHotSeatMapTitle => 'Choose a map for hot seat play';
+  String get gameModeHotSeatMapTitle =>
+      'Choisissez une carte pour jouer au Hot Seat';
 
   @override
-  String get gameModeSinglePlayerMapSubtitle => 'A local match against AI.';
+  String get gameModeSinglePlayerMapSubtitle =>
+      'Une partie locale contre l\'IA.';
 
   @override
   String get gameModeMultiplayerMapSubtitle =>
-      'Starting scenario and world map for an online match.';
+      'Scénario de départ et carte du monde pour un partie en ligne.';
 
   @override
   String get gameModeHotSeatMapSubtitle =>
-      'Starting scenario and world map for one-device hot seat play.';
+      'Scénario de départ et carte du monde pour un seul appareil de jeu de Hot Seat.';
 
   @override
-  String get newGameIntroTitle => 'Prepare the expedition';
+  String get newGameIntroTitle => 'Préparez l\'expédition';
 
   @override
   String get newGameIntroSubtitle =>
-      'Choose the play style first, then the map, then refine players and match pace.';
+      'Choisissez d\'abord le style de jeu, puis la carte, puis raffinez les joueurs et allumez le rythme.';
 
   @override
-  String get newGameStepPlan => 'Game plan';
+  String get newGameStepPlan => 'Plan de jeu';
 
   @override
-  String get newGameStepMap => 'Map';
+  String get newGameStepMap => 'Carte';
 
   @override
-  String get newGameStepReview => 'Review';
+  String get newGameStepReview => 'Révision';
 
   @override
-  String get newGamePlanTitle => 'What story do you want to begin?';
+  String get newGamePlanTitle => 'Quelle histoire voulez-vous commencer ?';
 
   @override
-  String get newGamePremiseTitle => 'From settlement to empire';
+  String get newGamePremiseTitle => 'De la colonisation à l\'empire';
 
   @override
   String get newGamePremiseBody =>
-      'Every match starts with a few decisive choices: where to found the first city, how to shape research, when to risk expansion, and how to hold map control.';
+      'Chaque partie commence par quelques choix décisifs: où trouver la première ville, comment façonner la recherche, quand risquer l\'expansion, et comment garder le contrôle de la carte.';
 
   @override
-  String get newGameCountryTitle => 'Choose civilization';
+  String get newGameCountryTitle => 'Choisir la civilisation';
 
   @override
   String get newGameCountrySubtitle =>
-      'Your ruler name follows the civilization you choose.';
+      'Votre nom de chef suit la civilisation que vous choisissez.';
 
   @override
-  String get newGameSinglePlayerSettingsTitle => 'Match settings';
+  String get newGameSinglePlayerSettingsTitle => 'Paramètres de partie';
 
   @override
-  String get newGameGameLengthLabel => 'Game length';
+  String get newGameGameLengthLabel => 'Longueur du jeu';
 
   @override
   String get newGameLeaderLabel => 'LEADER';
 
   @override
-  String get newGamePillarCities => 'Cities';
+  String get newGamePillarCities => 'Villes';
 
   @override
-  String get newGamePillarUnits => 'Units';
+  String get newGamePillarUnits => 'Unités';
 
   @override
-  String get newGamePillarResearch => 'Research';
+  String get newGamePillarResearch => 'Recherche';
 
   @override
-  String get newGameVictoryTypesTitle => 'Victory paths';
+  String get newGameVictoryTypesTitle => 'Chemins de la victoire';
 
   @override
   String get newGameVictoryDominationTitle => 'Domination';
 
   @override
   String newGameVictoryDominationBody(String controlPercent, int holdTurns) {
-    return 'Control $controlPercent% of the map and hold it for $holdTurns turns. Conquest can still end the match by eliminating rivals.';
+    return 'Contrôlez $controlPercent% de la carte et conservez ce seuil pendant $holdTurns tours. La conquête peut encore mettre fin à la partie en éliminant les rivaux.';
   }
 
   @override
-  String get newGameVictoryArtifactsTitle => 'Artifacts';
+  String get newGameVictoryArtifactsTitle => 'Artefacts';
 
   @override
   String newGameVictoryArtifactsBody(int artifactCount, int holdTurns) {
-    return 'Place $artifactCount unique world artifacts in your cities and keep the full collection for $holdTurns turns.';
+    return 'Placez des artefacts uniques du monde $artifactCount dans vos villes et conservez la collection complète pour les tours $holdTurns.';
   }
 
   @override
   String get newGameModeSinglePlayerDescription =>
-      'A calm match against AI. Best for learning systems, testing starts, and experimenting with growth.';
+      'Un partie calme contre l\'IA. Meilleur pour les systèmes d\'apprentissage, les mises à l\'essai et l\'expérimentation de la croissance.';
 
   @override
   String get newGameModeMultiplayerDescription =>
-      'An online match with network lobby, player readiness, and a shared entry onto the map.';
+      'Un partie en ligne avec lobby réseau, préparation du joueur, et une entrée partagée sur la carte.';
 
   @override
   String get newGameModeMultiplayerAlphaDisabled =>
-      'Unavailable in the alpha release.';
+      'Indisponible dans la version alpha.';
 
   @override
   String get newGameModeHotSeatDescription =>
-      'Hot seat play on one device. Players pass the turn, while the screen guides each handoff.';
+      'Le Hot Seat joue sur un seul appareil. Les joueurs passent le tour, tandis que l\'écran guide chaque sortie.';
 
   @override
-  String get newGameMapTitle => 'Choose the world';
+  String get newGameMapTitle => 'Choisir le monde';
 
   @override
   String get newGameMapSubtitle =>
-      'The map defines first-contact pace, available resources, city space, and the shape of conflict.';
+      'La carte définit le rythme du premier contact, les ressources disponibles, l\'espace urbain et la forme du conflit.';
 
   @override
-  String get newGameReviewTitle => 'Confirm the expedition';
+  String get newGameReviewTitle => 'Confirmer l\'expédition';
 
   @override
   String get newGameReviewSubtitle =>
-      'After confirming, you will enter the lobby to set game name, match length, and players.';
+      'Après confirmation, vous entrez dans le lobby pour définir le nom du jeu, la longueur du partie, et les joueurs.';
 
   @override
   String newGameReviewSinglePlayerSubtitle(int aiCount) {
-    return 'Singleplayer starts immediately with you and $aiCount AI players.';
+    return 'Un seul joueur commence immédiatement avec vous et $aiCount IA.';
   }
 
   @override
   String get newGameReviewMissingMap =>
-      'Choose a map before configuring players.';
+      'Choisissez une carte avant de configurer les joueurs.';
 
   @override
-  String get newGameExpeditionReady => 'Expedition ready';
+  String get newGameExpeditionReady => 'Expédition prête';
 
   @override
-  String get newGameSelectedMapLabel => 'Map';
+  String get newGameSelectedMapLabel => 'Carte';
 
   @override
-  String get newGameMapPickLabel => 'Map pick';
+  String get newGameMapPickLabel => 'Choix de la carte';
 
   @override
-  String get newGameMapPickRandom => 'Random default';
+  String get newGameMapPickRandom => 'Par défaut aléatoire';
 
   @override
-  String get newGameMapPickManual => 'Chosen manually';
+  String get newGameMapPickManual => 'Sélection manuelle';
 
   @override
   String get newGameWorldSourceLabel => 'Source';
 
   @override
   String newGameSinglePlayerAiSummary(int aiCount) {
-    return 'You + $aiCount AI';
+    return 'Vous + $aiCount IA';
   }
 
   @override
-  String get newGameChangeMapAction => 'Change map';
+  String get newGameChangeMapAction => 'Modifier la carte';
 
   @override
-  String get newGameStartSetupAction => 'Go to lobby';
+  String get newGameStartSetupAction => 'Allez dans le hall';
 
   @override
   String get mainMenuLoadGame => 'Charger une partie';
@@ -252,231 +256,231 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mainMenuFeedback => 'Retour';
 
   @override
-  String get manualTitle => 'Controls manual';
+  String get manualTitle => 'Manuel des commandes';
 
   @override
   String get manualSubtitle =>
-      'A quick reference for map movement, selection, orders, panels, and turn flow across desktop and mobile.';
+      'Une référence rapide pour le mouvement de carte, la sélection, les commandes, les panneaux, et le flux de tour sur le bureau et mobile.';
 
   @override
-  String get manualMetaDesktop => 'Desktop';
+  String get manualMetaDesktop => 'Bureau';
 
   @override
   String get manualMetaMobile => 'Mobile';
 
   @override
-  String get manualMetaAlpha => 'Single-player alpha';
+  String get manualMetaAlpha => 'Un seul joueur alpha';
 
   @override
-  String get manualCommandLoopTitle => 'Core command loop';
+  String get manualCommandLoopTitle => 'Boucle de commande de base';
 
   @override
-  String get manualCommandLoopSelectTitle => 'Select';
+  String get manualCommandLoopSelectTitle => 'Sélectionner';
 
   @override
   String get manualCommandLoopSelectBody =>
-      'Choose a unit, city, artifact, or map tile to reveal the actions that matter now.';
+      'Choisissez une unité, une ville, un artefact ou une carte pour révéler les actions qui comptent maintenant.';
 
   @override
-  String get manualCommandLoopPreviewTitle => 'Preview';
+  String get manualCommandLoopPreviewTitle => 'Aperçu';
 
   @override
   String get manualCommandLoopPreviewBody =>
-      'Hover or tap once to inspect targets, intent colors, routes, and blocked actions.';
+      'Plongez ou tapez une fois pour inspecter les cibles, les couleurs d\'intention, les itinéraires et les actions bloquées.';
 
   @override
-  String get manualCommandLoopConfirmTitle => 'Confirm';
+  String get manualCommandLoopConfirmTitle => 'Confirmer';
 
   @override
   String get manualCommandLoopConfirmBody =>
-      'Use an action chip or choose the highlighted target again to commit the order.';
+      'Utilisez une puce d\'action ou choisissez à nouveau la cible surlignée pour lancer l\'ordre.';
 
   @override
-  String get manualCommandLoopAdvanceTitle => 'Advance';
+  String get manualCommandLoopAdvanceTitle => 'Avances';
 
   @override
   String get manualCommandLoopAdvanceBody =>
-      'Use the bottom action button to jump to the next decision or finish the turn.';
+      'Utilisez le bouton d\'action en bas pour passer à la prochaine décision ou terminer le tour.';
 
   @override
-  String get manualDesktopTitle => 'Desktop controls';
+  String get manualDesktopTitle => 'Commandes de bureau';
 
   @override
   String get manualDesktopSubtitle =>
-      'Mouse-first play with fast map inspection, precise targeting, and persistent panels.';
+      'Mouse-premier jeu avec inspection rapide de la carte, ciblage précis, et panneaux persistants.';
 
   @override
-  String get manualMobileTitle => 'Mobile controls';
+  String get manualMobileTitle => 'Commandes mobiles';
 
   @override
   String get manualMobileSubtitle =>
-      'Touch-first play tuned for readable panels, deliberate orders, and quick turn flow.';
+      'Touch-premier jeu accordé pour des panneaux lisibles, des ordres délibérés, et un flux de tour rapide.';
 
   @override
-  String get manualMapCameraGroup => 'Map & camera';
+  String get manualMapCameraGroup => 'Carte & appareil photo';
 
   @override
-  String get manualOrdersGroup => 'Selection & orders';
+  String get manualOrdersGroup => 'Sélection & commandes';
 
   @override
-  String get manualPanelsGroup => 'Panels & help';
+  String get manualPanelsGroup => 'Panneaux & aide';
 
   @override
-  String get manualTurnFlowGroup => 'Turn flow';
+  String get manualTurnFlowGroup => 'Courroie';
 
   @override
-  String get manualDesktopLeftClickAction => 'Left click';
+  String get manualDesktopLeftClickAction => 'Cliquez à gauche';
 
   @override
   String get manualDesktopLeftClickBody =>
-      'Select units, cities, artifacts, and tiles; with an active order, choose the target.';
+      'Sélectionnez les unités, les villes, les artefacts et les tuiles; avec un ordre actif, choisissez la cible.';
 
   @override
-  String get manualDesktopDragAction => 'Drag the map';
+  String get manualDesktopDragAction => 'Faites glisser la carte';
 
   @override
   String get manualDesktopDragBody =>
-      'Pan the camera without changing the current selection or command mode.';
+      'Panifiez la caméra sans changer le mode de sélection ou de commande actuel.';
 
   @override
-  String get manualDesktopZoomAction => 'Mouse wheel / trackpad';
+  String get manualDesktopZoomAction => 'Roue de la souris / piste';
 
   @override
   String get manualDesktopZoomBody =>
-      'Zoom between strategic overview and tactical detail on the map.';
+      'Zoom entre aperçu stratégique et détails tactiques sur la carte.';
 
   @override
-  String get manualDesktopHoverAction => 'Hover';
+  String get manualDesktopHoverAction => 'Coucher';
 
   @override
   String get manualDesktopHoverBody =>
-      'Preview tooltips, target hints, and blocked-order reasons before committing.';
+      'Prévisualiser les bouts d\'outils, les conseils de la cible et les raisons de l\'ordre bloqué avant de commettre.';
 
   @override
-  String get manualDesktopActionChipsAction => 'Action chips';
+  String get manualDesktopActionChipsAction => 'puces d\'action';
 
   @override
   String get manualDesktopActionChipsBody =>
-      'Move, attack, improve, found a city, skip, fortify, or cancel the current mode.';
+      'Déplacer, attaquer, améliorer, trouver une ville, sauter, fortifier ou annuler le mode actuel.';
 
   @override
-  String get manualDesktopSecondClickAction => 'Same target twice';
+  String get manualDesktopSecondClickAction => 'Même cible deux fois';
 
   @override
   String get manualDesktopSecondClickBody =>
-      'For movement, the first click previews the route; the second click executes or queues it.';
+      'Pour le mouvement, le premier clic prévisualise l\'itinéraire; le second clic l\'exécute ou le file d\'attente.';
 
   @override
-  String get manualDesktopHoldAction => 'Click and hold';
+  String get manualDesktopHoldAction => 'Cliquez et maintenez';
 
   @override
   String get manualDesktopHoldBody =>
-      'Open detailed command explanations for actions, disabled options, and context chips.';
+      'Ouvrez des explications de commande détaillées pour les actions, les options désactivées et les puces contextuelles.';
 
   @override
-  String get manualDesktopRailAction => 'Left rail';
+  String get manualDesktopRailAction => 'Rail gauche';
 
   @override
   String get manualDesktopRailBody =>
-      'Open map options, help, objectives, activity log, research, and empire panels.';
+      'Ouvrir les options de carte, l\'aide, les objectifs, le journal des activités, la recherche et les panneaux empire.';
 
   @override
-  String get manualDesktopTopPillsAction => 'Top resources';
+  String get manualDesktopTopPillsAction => 'Ressources principales';
 
   @override
   String get manualDesktopTopPillsBody =>
-      'Inspect economy, science, resources, and victory pressure breakdowns.';
+      'Inspecter l\'économie, la science, les ressources et la victoire.';
 
   @override
-  String get manualDesktopCloseAction => 'Click outside';
+  String get manualDesktopCloseAction => 'Cliquez à l\'extérieur';
 
   @override
   String get manualDesktopCloseBody =>
-      'Close popups, option panels, and help cards, then return focus to the map.';
+      'Fermez les popups, les panneaux d\'option et les cartes d\'aide, puis retournez le focus sur la carte.';
 
   @override
   String get manualDesktopHelpAction => '?';
 
   @override
   String get manualDesktopHelpBody =>
-      'Open every minimized hint and tutorial card at any time, regardless of selection.';
+      'Ouvrez chaque conseil minimisé et chaque carte de tutoriel à tout moment, indépendamment de la sélection.';
 
   @override
-  String get manualDesktopTurnAction => 'Next decision';
+  String get manualDesktopTurnAction => 'Décision suivante';
 
   @override
   String get manualDesktopTurnBody =>
-      'Focus the next unit, research, or city choice; end the turn when nothing blocks progress.';
+      'Concentrez-vous sur la prochaine unité, la recherche ou le choix de la ville; terminez le tour quand rien ne bloque les progrès.';
 
   @override
-  String get manualMobileTapAction => 'Tap';
+  String get manualMobileTapAction => 'Appuyez sur';
 
   @override
   String get manualMobileTapBody =>
-      'Select units, cities, artifacts, and tiles; with an active order, choose the target.';
+      'Sélectionnez les unités, les villes, les artefacts et les tuiles; avec un ordre actif, choisissez la cible.';
 
   @override
-  String get manualMobileDragAction => 'One-finger drag';
+  String get manualMobileDragAction => 'Traîne à un doigt';
 
   @override
   String get manualMobileDragBody =>
-      'Pan the camera while keeping the selected unit or panel state intact.';
+      'Panifiez la caméra tout en maintenant l\'unité ou le panneau sélectionné intact.';
 
   @override
-  String get manualMobilePinchAction => 'Pinch';
+  String get manualMobilePinchAction => 'Pince';
 
   @override
   String get manualMobilePinchBody =>
-      'Zoom the map for scouting, city work, movement planning, or battle targeting.';
+      'Zoomez la carte pour le scoutisme, le travail urbain, la planification des mouvements ou le ciblage de la bataille.';
 
   @override
-  String get manualMobileSecondTapAction => 'Same target twice';
+  String get manualMobileSecondTapAction => 'Même cible deux fois';
 
   @override
   String get manualMobileSecondTapBody =>
-      'Preview a movement route first, then tap the same hex again to execute or queue it.';
+      'Prévisualisez un itinéraire de mouvement d\'abord, puis tapez de nouveau sur le même hexagone pour l\'exécuter ou la file d\'attente.';
 
   @override
-  String get manualMobileActionChipsAction => 'Action chips';
+  String get manualMobileActionChipsAction => 'puces d\'action';
 
   @override
   String get manualMobileActionChipsBody =>
-      'Use the bottom command row for unit orders, city choices, workers, and cancel actions.';
+      'Utilisez la ligne de commande inférieure pour les commandes d\'unité, les choix de ville, les travailleurs et annuler les actions.';
 
   @override
-  String get manualMobileHoldAction => 'Press and hold';
+  String get manualMobileHoldAction => 'Presser et tenir';
 
   @override
   String get manualMobileHoldBody =>
-      'Open explanations for commands, disabled options, resources, and contextual UI.';
+      'Ouvrez des explications pour les commandes, les options désactivées, les ressources et l\'interface utilisateur contextuelle.';
 
   @override
-  String get manualMobileScrollAction => 'Scroll panels';
+  String get manualMobileScrollAction => 'Panneaux de défilement';
 
   @override
   String get manualMobileScrollBody =>
-      'Browse long city, research, log, diplomacy, and help lists without losing map state.';
+      'Parcourez la longue ville, la recherche, le journal, la diplomatie et les listes d\'aide sans perdre l\'état de carte.';
 
   @override
-  String get manualMobileRailAction => 'Left rail';
+  String get manualMobileRailAction => 'Rail gauche';
 
   @override
   String get manualMobileRailBody =>
-      'Tap to open map options, help, objectives, activity log, research, and empire panels.';
+      'Appuyez sur pour ouvrir les options de cartes, l\'aide, les objectifs, le journal des activités, la recherche et les panneaux empire.';
 
   @override
   String get manualMobileHelpAction => '?';
 
   @override
   String get manualMobileHelpBody =>
-      'Review every minimized hint and tutorial card whenever you need a refresher.';
+      'Passez en revue chaque conseil minimisé et chaque carte de tutoriel chaque fois que vous avez besoin d\'un rafraîchissement.';
 
   @override
-  String get manualMobileTurnAction => 'Bottom action';
+  String get manualMobileTurnAction => 'Action de fond';
 
   @override
   String get manualMobileTurnBody =>
-      'Jump to the next required decision or end the turn once all action points are spent.';
+      'Aller à la prochaine décision requise ou terminer le tour une fois que tous les points d\'action sont dépensés.';
 
   @override
   String get mainMenuWhatsNew => 'Nouveautés';
@@ -496,91 +500,91 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gameModeLabel => 'MODE';
 
   @override
-  String get gameNameLabel => 'GAME NAME';
+  String get gameNameLabel => 'NOM DU JEU';
 
   @override
-  String get playersLabel => 'PLAYERS';
+  String get playersLabel => 'JEUNES';
 
   @override
-  String get countryLabel => 'COUNTRY';
+  String get countryLabel => 'PAYS';
 
   @override
-  String get countryPoland => 'Poland';
+  String get countryPoland => 'Pologne';
 
   @override
   String get countryUkraine => 'Ukraine';
 
   @override
-  String get countryGermany => 'Germany';
+  String get countryGermany => 'Allemagne';
 
   @override
   String get countryFrance => 'France';
 
   @override
-  String get countryUnitedKingdom => 'United Kingdom';
+  String get countryUnitedKingdom => 'Royaume-Uni';
 
   @override
-  String get countryItaly => 'Italy';
+  String get countryItaly => 'Italie';
 
   @override
-  String get countrySpain => 'Spain';
+  String get countrySpain => 'Espagne';
 
   @override
-  String get countryNetherlands => 'Netherlands';
+  String get countryNetherlands => 'Belgique';
 
   @override
-  String get countrySweden => 'Sweden';
+  String get countrySweden => 'Suède';
 
   @override
-  String get countryRussia => 'Russia';
+  String get countryRussia => 'Russie';
 
   @override
-  String get countryUnitedStates => 'United States';
+  String get countryUnitedStates => 'États-Unis';
 
   @override
   String get countryCanada => 'Canada';
 
   @override
-  String get countryChina => 'China';
+  String get countryChina => 'Chine';
 
   @override
-  String get countryKorea => 'Korea';
+  String get countryKorea => 'Corée';
 
   @override
-  String get countryJapan => 'Japan';
+  String get countryJapan => 'Japon';
 
   @override
   String get countryPortugal => 'Portugal';
 
   @override
-  String get countryLeaderPoland => 'Casimir III the Great';
+  String get countryLeaderPoland => 'Casimir III le Grand';
 
   @override
-  String get countryLeaderUkraine => 'Yaroslav the Wise';
+  String get countryLeaderUkraine => 'Yaroslav le Sage';
 
   @override
   String get countryLeaderGermany => 'Otto von Bismarck';
 
   @override
-  String get countryLeaderFrance => 'Napoleon Bonaparte';
+  String get countryLeaderFrance => 'Napoléon Bonaparte';
 
   @override
-  String get countryLeaderUnitedKingdom => 'Queen Victoria';
+  String get countryLeaderUnitedKingdom => 'Reine Victoria';
 
   @override
-  String get countryLeaderItaly => 'Julius Caesar';
+  String get countryLeaderItaly => 'Jules César';
 
   @override
   String get countryLeaderSpain => 'Isabella I';
 
   @override
-  String get countryLeaderNetherlands => 'William of Orange';
+  String get countryLeaderNetherlands => 'Guillaume d\'Orange';
 
   @override
-  String get countryLeaderSweden => 'Gustavus Adolphus';
+  String get countryLeaderSweden => 'Gustavus Adolphe';
 
   @override
-  String get countryLeaderRussia => 'Catherine the Great';
+  String get countryLeaderRussia => 'Catherine la Grande';
 
   @override
   String get countryLeaderUnitedStates => 'Abraham Lincoln';
@@ -592,35 +596,35 @@ class AppLocalizationsFr extends AppLocalizations {
   String get countryLeaderChina => 'Qin Shi Huang';
 
   @override
-  String get countryLeaderKorea => 'Sejong the Great';
+  String get countryLeaderKorea => 'Sejong le Grand';
 
   @override
   String get countryLeaderJapan => 'Tokugawa Ieyasu';
 
   @override
-  String get countryLeaderPortugal => 'Henry the Navigator';
+  String get countryLeaderPortugal => 'Henry le navigateur';
 
   @override
-  String get addPlayerAction => '+ ADD PLAYER';
+  String get addPlayerAction => '+ AJOUTER';
 
   @override
-  String get startGameAction => 'START';
+  String get startGameAction => 'DÉPÔT';
 
   @override
-  String get removePlayerTooltip => 'Remove player';
+  String get removePlayerTooltip => 'Supprimer le joueur';
 
   @override
-  String get multiplayerSearchTitle => 'SERVER SEARCH';
+  String get multiplayerSearchTitle => 'RECHERCHE DES SERVEURS';
 
   @override
   String get multiplayerSearchBody =>
-      'The list of online games will appear here.';
+      'La liste des jeux en ligne apparaîtra ici.';
 
   @override
-  String get multiplayerPlayersTitle => 'Players';
+  String get multiplayerPlayersTitle => 'Joueurs';
 
   @override
-  String get multiplayerStatusTooltip => 'Player status';
+  String get multiplayerStatusTooltip => 'État du joueur';
 
   @override
   String multiplayerAvatarTooltip(String playerName, String status) {
@@ -651,237 +655,237 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get multiplayerStatusActive => 'playing now';
+  String get multiplayerStatusActive => 'jouer maintenant';
 
   @override
-  String get multiplayerStatusSubmitted => 'turn sent';
+  String get multiplayerStatusSubmitted => 'tour envoyé';
 
   @override
-  String get multiplayerStatusThinking => 'thinking';
+  String get multiplayerStatusThinking => 'penser';
 
   @override
-  String get multiplayerStatusWaiting => 'waiting';
+  String get multiplayerStatusWaiting => 'attendre';
 
   @override
-  String get multiplayerStatusTimeout => 'timeout';
+  String get multiplayerStatusTimeout => 'temps mort';
 
   @override
-  String get diplomacyRelationFriendly => 'friendly';
+  String get diplomacyRelationFriendly => 'amical';
 
   @override
-  String get diplomacyRelationNeutral => 'neutral';
+  String get diplomacyRelationNeutral => 'neutre';
 
   @override
   String get diplomacyRelationHostile => 'hostile';
 
   @override
-  String get diplomacyRelationTruce => 'truce';
+  String get diplomacyRelationTruce => 'trêve';
 
   @override
-  String get diplomacyRelationWar => 'war';
+  String get diplomacyRelationWar => 'guerre';
 
   @override
   String get diplomacyRelationFriendlyShort => 'fr.';
 
   @override
-  String get diplomacyRelationNeutralShort => 'neut.';
+  String get diplomacyRelationNeutralShort => 'Neut. Je ne sais pas.';
 
   @override
-  String get diplomacyRelationHostileShort => 'host.';
+  String get diplomacyRelationHostileShort => 'hôte.';
 
   @override
-  String get diplomacyRelationTruceShort => 'truce';
+  String get diplomacyRelationTruceShort => 'trêve';
 
   @override
-  String get diplomacyRelationWarShort => 'war';
+  String get diplomacyRelationWarShort => 'guerre';
 
   @override
-  String get commonDiplomacy => 'Diplomacy';
+  String get commonDiplomacy => 'Diplomatie';
 
   @override
   String get diplomacyScoreLabel => 'Relations';
 
   @override
-  String get diplomacyScoreDriversTitle => 'What changes relations';
+  String get diplomacyScoreDriversTitle => 'Ce qui change les relations';
 
   @override
-  String get diplomacyScoreReasonManual => 'Manual change';
+  String get diplomacyScoreReasonManual => 'Changement manuel';
 
   @override
-  String get diplomacyScoreReasonUnitAttack => 'Unit attack';
+  String get diplomacyScoreReasonUnitAttack => 'Attaque d\'unité';
 
   @override
-  String get diplomacyScoreReasonCityAttack => 'City attack';
+  String get diplomacyScoreReasonCityAttack => 'Attaque de la ville';
 
   @override
-  String get diplomacyScoreReasonDeclarationOfWar => 'Declaration of war';
+  String get diplomacyScoreReasonDeclarationOfWar => 'Déclaration de guerre';
 
   @override
-  String get diplomacyScoreReasonProposalAccepted => 'Proposal accepted';
+  String get diplomacyScoreReasonProposalAccepted => 'Proposition acceptée';
 
   @override
-  String get diplomacyScoreReasonProposalRejected => 'Proposal rejected';
+  String get diplomacyScoreReasonProposalRejected => 'Proposition rejetée';
 
   @override
-  String get diplomacyScoreReasonMessageResponse => 'Dispatch response';
+  String get diplomacyScoreReasonMessageResponse => 'Réponse d \' expédition';
 
   @override
-  String get diplomacyScoreReasonPromiseBroken => 'Promise broken';
+  String get diplomacyScoreReasonPromiseBroken => 'La promesse brisée';
 
   @override
-  String get diplomacyStatsTitle => 'Stats';
+  String get diplomacyStatsTitle => 'Statistiques';
 
   @override
-  String get diplomacyHistoryTitle => 'History';
+  String get diplomacyHistoryTitle => 'Historique';
 
   @override
-  String get diplomacyMessagesTitle => 'Dispatches';
+  String get diplomacyMessagesTitle => 'Expéditions';
 
   @override
-  String get diplomacyIncomingMessageTitle => 'New dispatch';
+  String get diplomacyIncomingMessageTitle => 'Nouvelle expédition';
 
   @override
   String diplomacyIncomingMessageFrom(String playerName) {
-    return 'From: $playerName';
+    return 'De: $playerName';
   }
 
   @override
-  String get diplomacyIncomingProposalTitle => 'New proposal';
+  String get diplomacyIncomingProposalTitle => 'Nouvelle proposition';
 
   @override
   String diplomacyIncomingProposalFrom(String playerName) {
-    return 'From: $playerName';
+    return 'De: $playerName';
   }
 
   @override
-  String get diplomacyIncomingMessageLater => 'Later';
+  String get diplomacyIncomingMessageLater => 'Plus tard';
 
   @override
   String get diplomacyActionsTitle => 'Actions';
 
   @override
-  String get diplomacyProposalsTitle => 'Proposals';
+  String get diplomacyProposalsTitle => 'Propositions';
 
   @override
-  String get diplomacyNoHistory => 'No recorded incidents.';
+  String get diplomacyNoHistory => 'Aucun incident enregistré.';
 
   @override
-  String get diplomacyNoMessages => 'No dispatches.';
+  String get diplomacyNoMessages => 'Pas de dépêches.';
 
   @override
-  String get diplomacyMilitaryStat => 'Military';
+  String get diplomacyMilitaryStat => 'Militaire';
 
   @override
-  String get diplomacyCitiesStat => 'Cities';
+  String get diplomacyCitiesStat => 'Villes';
 
   @override
   String get diplomacyExpansionStat => 'Expansion';
 
   @override
-  String get diplomacyArtifactsStat => 'Artifacts';
+  String get diplomacyArtifactsStat => 'Artefacts';
 
   @override
-  String get diplomacyLastAggressionStat => 'Last aggression';
+  String get diplomacyLastAggressionStat => 'Dernière agression';
 
   @override
-  String get diplomacyOwnArtifactsLabel => 'Your artifacts';
+  String get diplomacyOwnArtifactsLabel => 'Vos artefacts';
 
   @override
-  String get diplomacyTargetArtifactsLabel => 'Rival artifacts';
+  String get diplomacyTargetArtifactsLabel => 'Artefacts rivaux';
 
   @override
   String diplomacyTurnsRemaining(int turns) {
-    return 'Turns left: $turns';
+    return 'Tours restants: $turns';
   }
 
   @override
-  String get diplomacyProposalFriendship => 'Friendship proposal';
+  String get diplomacyProposalFriendship => 'Proposition d\'amitié';
 
   @override
-  String get diplomacyProposalTruce => 'Truce proposal';
+  String get diplomacyProposalTruce => 'Proposition de trêve';
 
   @override
-  String get diplomacySendFriendship => 'Propose friendship';
+  String get diplomacySendFriendship => 'Proposer l\'amitié';
 
   @override
-  String get diplomacySendTruce => 'Propose truce';
+  String get diplomacySendTruce => 'Proposition de trêve';
 
   @override
-  String get diplomacyDeclareWar => 'Declare war';
+  String get diplomacyDeclareWar => 'Déclarer la guerre';
 
   @override
-  String get diplomacyAccept => 'Accept';
+  String get diplomacyAccept => 'Accepter';
 
   @override
-  String get diplomacyDecline => 'Decline';
+  String get diplomacyDecline => 'Baisse';
 
   @override
   String get diplomacyMessageTroopsNearCities =>
-      'Too many troops are positioned near my cities.';
+      'Trop de troupes sont placées près de mes villes.';
 
   @override
   String get diplomacyMessageCitiesTooClose =>
-      'You are founding cities too close to my borders.';
+      'Vous êtes des villes fondatrices trop proches de mes frontières.';
 
   @override
-  String get diplomacyMessageBlockedRoutes =>
-      'Your units are blocking my routes.';
+  String get diplomacyMessageBlockedRoutes => 'Vos unités bloquent mes routes.';
 
   @override
   String get diplomacyMessageWithdrawScouts =>
-      'Please withdraw your scouts from my territory.';
+      'Retirez vos éclaireurs de mon territoire.';
 
   @override
   String get diplomacyMessageAvoidEscalation =>
-      'Our civilizations should avoid further escalation.';
+      'Nos civilisations devraient éviter une nouvelle escalade.';
 
   @override
-  String get diplomacyMessageCommonEnemy => 'A common enemy threatens us both.';
+  String get diplomacyMessageCommonEnemy =>
+      'Un ennemi commun nous menace tous les deux.';
 
   @override
   String get diplomacyMessageExpansionProvocation =>
-      'Your expansion is seen as a provocation.';
+      'Votre expansion est perçue comme une provocation.';
 
   @override
   String get diplomacyMessagePeacefulPraise =>
-      'We value the peaceful relations between our peoples.';
+      'Nous apprécions les relations pacifiques entre nos peuples.';
 
   @override
-  String get diplomacyResponseConciliatory => 'Conciliatory';
+  String get diplomacyResponseConciliatory => 'Conciliation';
 
   @override
-  String get diplomacyResponseNeutral => 'Neutral';
+  String get diplomacyResponseNeutral => 'Neutre';
 
   @override
-  String get diplomacyResponseEvasive => 'Evasive';
+  String get diplomacyResponseEvasive => 'Évasive';
 
   @override
-  String get diplomacyResponseAggressive => 'Aggressive';
+  String get diplomacyResponseAggressive => 'Agressifs';
 
   @override
-  String get diplomacyStrategicResourcesTitle => 'Strategic resources';
+  String get diplomacyStrategicResourcesTitle => 'Ressources stratégiques';
 
   @override
   String get diplomacyResourceTradeBlockedByWar =>
-      'Resource trade is blocked by war.';
+      'Le commerce des ressources est bloqué par la guerre.';
 
   @override
   String get diplomacyResourceTradeNoAvailableResources =>
-      'No spare strategic resources are available for trade.';
+      'Aucune ressource stratégique de rechange n\'est disponible pour le commerce.';
 
   @override
   String diplomacyResourceTradeImportOffer(int goldPerTurn, int durationTurns) {
-    return 'Import offer: $goldPerTurn gold/turn for $durationTurns turns.';
+    return 'Offre d\'importation: $goldPerTurn or/tour pour $durationTurns tours.';
   }
 
   @override
   String diplomacyResourceTradeImportAction(String resourceName) {
-    return 'Import $resourceName';
+    return 'Importer $resourceName';
   }
 
   @override
   String diplomacyResourceTradeExchangeOffer(int durationTurns) {
-    return 'Barter exchange: resource for resource for $durationTurns turns.';
+    return 'Échange de troc: ressource pour les tours $durationTurns.';
   }
 
   @override
@@ -889,25 +893,25 @@ class AppLocalizationsFr extends AppLocalizations {
     String offeredResource,
     String requestedResource,
   ) {
-    return 'Trade $offeredResource for $requestedResource';
+    return 'Échangez $offeredResource contre $requestedResource';
   }
 
   @override
   String get diplomacyResourceTradeNoActiveAgreements =>
-      'No active resource agreements.';
+      'Pas d\'accord sur les ressources actives.';
 
   @override
-  String get diplomacyResourceTradeImportDirection => 'Importing';
+  String get diplomacyResourceTradeImportDirection => 'Importation';
 
   @override
-  String get diplomacyResourceTradeExportDirection => 'Exporting';
+  String get diplomacyResourceTradeExportDirection => 'Exportations';
 
   @override
-  String get diplomacyResourceTradeBarterPrice => 'barter';
+  String get diplomacyResourceTradeBarterPrice => 'troc';
 
   @override
   String diplomacyResourceTradeGoldPerTurnPrice(int goldPerTurn) {
-    return '$goldPerTurn gold/turn';
+    return '$goldPerTurn or/tour';
   }
 
   @override
@@ -917,71 +921,71 @@ class AppLocalizationsFr extends AppLocalizations {
     String price,
     int remainingTurns,
   ) {
-    return '$direction $resourceName · $price · $remainingTurns turns';
+    return '$direction $resourceName · $price · $remainingTurns tourne';
   }
 
   @override
-  String get notFoundScreenTitle => 'Screen not found';
+  String get notFoundScreenTitle => 'Écran introuvable';
 
   @override
   String get notFoundBackToMenuAction => 'MENU';
 
   @override
-  String get loadGameTitle => 'LOAD GAME';
+  String get loadGameTitle => 'JEU DE PRÊT';
 
   @override
-  String get loadGameHeaderTitle => 'Saved games';
+  String get loadGameHeaderTitle => 'Jeux enregistrés';
 
   @override
-  String get loadGameHeaderEmptySubtitle => 'No game has been started yet.';
+  String get loadGameHeaderEmptySubtitle => 'Aucun jeu n\'a encore été lancé.';
 
   @override
   String get loadGameHeaderSavesSubtitle =>
-      'Return to recent matches and continue from the saved turn.';
+      'Retourner aux parties récents et continuer du tour enregistré.';
 
   @override
   String loadGameSavesCount(int count) {
-    return 'Saves: $count';
+    return 'Enregistrer: $count';
   }
 
   @override
-  String get loadGameCorruptedStatus => 'Corrupted save';
+  String get loadGameCorruptedStatus => 'Sauvetage corrompu';
 
   @override
-  String get loadGameCorruptedAction => 'Unavailable';
+  String get loadGameCorruptedAction => 'Indisponible';
 
   @override
   String get loadGameCorruptedBody =>
-      'This save cannot be read. You can remove it from the list.';
+      'Cette sauvegarde ne peut pas être lue. Vous pouvez le supprimer de la liste.';
 
   @override
-  String get replayTitle => 'REPLAY';
+  String get replayTitle => 'REMPLACEMENT';
 
   @override
-  String get replayAction => 'REPLAY';
+  String get replayAction => 'REMPLACEMENT';
 
   @override
-  String get replayUnavailableAction => 'NO REPLAY';
+  String get replayUnavailableAction => 'PAS DE REPLAY';
 
   @override
-  String get replayErrorTitle => 'Replay unavailable';
+  String get replayErrorTitle => 'Rejouer indisponible';
 
   @override
   String replayErrorBody(String error) {
-    return 'Replay cannot be opened: $error';
+    return 'Le replay ne peut pas être ouvert: $error';
   }
 
   @override
   String get replayMissingInitialSnapshotBody =>
-      'This save does not contain a replay seed snapshot. Start a new game to record full-match replay data.';
+      'Ce save ne contient pas d\'instantané replay de graines. Démarrer un nouveau jeu pour enregistrer des données de replay complètes.';
 
   @override
   String get replayCorruptLogBody =>
-      'The replay command log is incomplete or cannot be read.';
+      'Le journal de commande replay est incomplet ou ne peut pas être lu.';
 
   @override
   String replayStepCounter(int step, int total) {
-    return 'Step $step/$total';
+    return 'Étape $step/$total';
   }
 
   @override
@@ -991,7 +995,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String replayTurnLabel(int turn) {
-    return 'Turn $turn';
+    return 'Tourner $turn';
   }
 
   @override
@@ -999,124 +1003,125 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count events',
-      one: '1 event',
-      zero: '0 events',
+      other: '$count événements',
+      one: '1 événement',
+      zero: '0 événement',
     );
     return '$_temp0';
   }
 
   @override
-  String get replayInitialStateLabel => 'Initial state';
+  String get replayInitialStateLabel => 'État initial';
 
   @override
-  String get replayPreviousAction => 'Previous step';
+  String get replayPreviousAction => 'Étape précédente';
 
   @override
-  String get replayNextAction => 'Next step';
+  String get replayNextAction => 'Prochaine étape';
 
   @override
-  String get replayPlayAction => 'Play replay';
+  String get replayPlayAction => 'Lecture de replay';
 
   @override
-  String get replayPauseAction => 'Pause replay';
+  String get replayPauseAction => 'Pause rejouer';
 
   @override
-  String get replaySpeedLabel => 'Speed';
+  String get replaySpeedLabel => 'Vitesse';
 
   @override
-  String get replayPerspectiveLabel => 'Perspective';
+  String get replayPerspectiveLabel => 'Aperçu';
 
   @override
-  String get replayAllPlayers => 'All players';
+  String get replayAllPlayers => 'Tous les joueurs';
 
   @override
-  String get replayShowTurnsLabel => 'Show turns';
+  String get replayShowTurnsLabel => 'Afficher les tours';
 
   @override
-  String get replayFreeCameraLabel => 'Free camera';
+  String get replayFreeCameraLabel => 'Caméra gratuite';
 
   @override
   String mapsLoadError(String error) {
-    return 'Could not load maps: $error';
+    return 'Impossible de charger les cartes: $error';
   }
 
   @override
-  String get editorMapPickerTitle => 'Editor maps';
+  String get editorMapPickerTitle => 'Cartes de l\'éditeur';
 
   @override
   String get editorMapPickerSubtitle =>
-      'Create new worlds or refine existing maps.';
+      'Créer de nouveaux mondes ou affiner les cartes existantes.';
 
   @override
-  String get editorMapPickerEmptyTitle => 'No saved maps';
+  String get editorMapPickerEmptyTitle => 'Pas de cartes enregistrées';
 
   @override
   String get editorMapPickerEmptyMessage =>
-      'Create a new map from the screen header.';
+      'Créez une nouvelle carte depuis l\'en-tête de l\'écran.';
 
   @override
-  String get editorNewMapAction => 'New map';
+  String get editorNewMapAction => 'Nouvelle carte';
 
   @override
-  String get editorDeleteMapTooltip => 'Delete map';
+  String get editorDeleteMapTooltip => 'Supprimer la carte';
 
   @override
-  String get editorDeleteMapTitle => 'Delete map?';
+  String get editorDeleteMapTitle => 'Supprimer la carte ?';
 
   @override
   String editorDeleteMapMessage(String name) {
-    return 'This will permanently delete “$name” and all map files.';
+    return 'Cela supprimera définitivement -$name-- et tous les fichiers map.';
   }
 
   @override
-  String get editorOpenMapErrorTitle => 'Could not open map';
+  String get editorOpenMapErrorTitle => 'Impossible d\'ouvrir la carte';
 
   @override
-  String get editorCollapseToolbarTooltip => 'Collapse editor panel';
+  String get editorCollapseToolbarTooltip => 'Effacer le panneau d\'éditeur';
 
   @override
-  String get editorExpandToolbarTooltip => 'Expand editor panel';
+  String get editorExpandToolbarTooltip => 'Élargir le panneau de l\'éditeur';
 
   @override
   String officialMapsCount(int count) {
-    return 'Official: $count';
+    return 'Officiel: $count';
   }
 
   @override
   String yourMapsCount(int count) {
-    return 'Yours: $count';
+    return 'Le vôtre: $count';
   }
 
   @override
-  String get officialMapsSection => 'Official';
+  String get officialMapsSection => 'Fonctionnaires';
 
   @override
-  String get yourMapsSection => 'Your maps';
+  String get yourMapsSection => 'Vos cartes';
 
   @override
-  String get playAction => 'Play';
+  String get playAction => 'Jouer';
 
   @override
-  String get editAction => 'Edit';
+  String get editAction => 'Modifier';
 
   @override
-  String get noMapsTitle => 'No maps';
+  String get noMapsTitle => 'Pas de cartes';
 
   @override
-  String get noMapsMessage => 'No maps were found to start a game.';
+  String get noMapsMessage =>
+      'Aucune carte n\'a été trouvée pour lancer un jeu.';
 
   @override
-  String get gameLengthLabel => 'Game length';
+  String get gameLengthLabel => 'Longueur du jeu';
 
   @override
-  String get gameLengthPresetHint => 'Game preset';
+  String get gameLengthPresetHint => 'Préréglage du jeu';
 
   @override
-  String get gameLengthPresetUnlimited => 'Unlimited';
+  String get gameLengthPresetUnlimited => 'Illimité';
 
   @override
-  String get gameLengthPresetShort60 => 'Short';
+  String get gameLengthPresetShort60 => 'Court';
 
   @override
   String get gameLengthPresetNormal90 => 'Normal';
@@ -1125,39 +1130,40 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gameLengthPresetStandard60 => 'Standard 60 min';
 
   @override
-  String get gameLengthPresetLong120 => 'Long';
+  String get gameLengthPresetLong120 => 'Longue';
 
   @override
-  String get gameLengthPresetVeryLong => 'Very long';
+  String get gameLengthPresetVeryLong => 'Très longue';
 
   @override
-  String get gameLengthUnlimitedSummary => 'No turn limit - current game pace';
+  String get gameLengthUnlimitedSummary =>
+      'Pas de limite de tour - rythme de jeu actuel';
 
   @override
   String gameLengthTimedSummary(int minutes, int turns) {
-    return '$minutes min target - $turns turn limit';
+    return 'Cible $minutes min - limite de tour $turns';
   }
 
   @override
-  String get gameLengthScoreFallbackOn => 'with score fallback';
+  String get gameLengthScoreFallbackOn => 'avec recul de score';
 
   @override
-  String get gameLengthScoreFallbackOff => 'without score fallback';
+  String get gameLengthScoreFallbackOff => 'sans retour de score';
 
   @override
-  String get aiDifficultyLabel => 'AI difficulty';
+  String get aiDifficultyLabel => 'Problèmes d\'IA';
 
   @override
-  String get aiDifficultyEasy => 'Easy';
+  String get aiDifficultyEasy => 'Facile';
 
   @override
   String get aiDifficultyNormal => 'Normal';
 
   @override
-  String get aiDifficultyHard => 'Hard';
+  String get aiDifficultyHard => 'Dur';
 
   @override
-  String get aiDifficultyVeryHard => 'Very hard';
+  String get aiDifficultyVeryHard => 'Très dur';
 
   @override
   String gameLengthVictoryRules(
@@ -1165,465 +1171,467 @@ class AppLocalizationsFr extends AppLocalizations {
     int holdTurns,
     String fallback,
   ) {
-    return 'Conquest + domination $controlPercent%/$holdTurns turns - $fallback';
+    return 'Conquête + domination Tours $controlPercent%/$holdTurns - $fallback';
   }
 
   @override
-  String get mapValidationErrorTitle => 'Map needs fixes';
+  String get mapValidationErrorTitle => 'Correction des besoins de la carte';
 
   @override
-  String get mapValidationLoadingTitle => 'Checking map';
+  String get mapValidationLoadingTitle => 'Vérification de la carte';
 
   @override
-  String get mapValidationWarningTitle => 'Map may be too slow for this preset';
+  String get mapValidationWarningTitle =>
+      'La carte peut être trop lente pour ce préréglage';
 
   @override
   String mapValidationLoadError(String error) {
-    return 'Could not check map: $error';
+    return 'Impossible de vérifier la carte: $error';
   }
 
   @override
   String get mapValidationLoadingMessage =>
-      'Validating starts, resources, and first-contact pacing.';
+      'Valider les départs, les ressources et le premier contact.';
 
   @override
   String get mapValidationIssueSlowFirstContact =>
-      'Starting positions are far apart; 60 min may delay first contact too much.';
+      'Les positions de départ sont éloignées; 60 min peuvent retarder le premier contact trop.';
 
   @override
   String get mapValidationIssueLargeMap =>
-      'The map has many tiles per player; add players or choose a longer game.';
+      'La carte a de nombreuses tuiles par joueur; ajoutez des joueurs ou choisissez un jeu plus long.';
 
   @override
   String get mapValidationIssueInvalidPlayerCount =>
-      'Player count does not match the range supported by this map.';
+      'Le nombre de joueurs ne correspond pas à la plage prise en charge par cette carte.';
 
   @override
-  String get mapValidationIssueNoTiles => 'The map has no tiles.';
+  String get mapValidationIssueNoTiles => 'La carte n\'a pas de carreaux.';
 
   @override
   String get mapValidationIssueLowPassableTileRatio =>
-      'The map has too few tiles passable by land units.';
+      'La carte a trop peu de tuiles passables par les unités terrestres.';
 
   @override
   String get mapValidationIssueLowFoodResourceDensity =>
-      'The map has too few food resources for this player count.';
+      'La carte a trop peu de ressources alimentaires pour ce joueur compte.';
 
   @override
   String get mapValidationIssueLowStrategicResourceDensity =>
-      'The map has too few strategic resources.';
+      'La carte a trop peu de ressources stratégiques.';
 
   @override
   String get mapValidationIssueLowLuxuryResourceDensity =>
-      'The map has too few luxury resources.';
+      'La carte a trop peu de ressources de luxe.';
 
   @override
   String get mapValidationIssueStartSiteNotFoundable =>
-      'The starting settler cannot found a city on its tile.';
+      'Le colon débutant ne peut pas trouver une ville sur sa tuile.';
 
   @override
   String get mapValidationIssueStartSiteLowLandRing =>
-      'The start has too few passable tiles in the first ring.';
+      'Le départ a trop peu de tuiles passables dans la première bague.';
 
   @override
   String get mapValidationIssueStartSiteLowFood =>
-      'The start has no visible food resource nearby.';
+      'Le départ n\'a aucune ressource alimentaire visible à proximité.';
 
   @override
   String get mapValidationIssueStartSiteLowCityControl =>
-      'The start has too few legal tiles for initial city control.';
+      'Le départ a trop peu de tuiles légales pour le contrôle initial de la ville.';
 
   @override
   String get mapValidationIssueStartSitesTooClose =>
-      'Player starts are too close to each other.';
+      'Les départs des joueurs sont trop proches les uns des autres.';
 
   @override
   String lobbyMapPlayersSummary(String mapName, int playerCount) {
-    return '$mapName - $playerCount players';
+    return '$mapName - joueurs $playerCount';
   }
 
   @override
-  String get lobbyHeaderTitle => 'Prepare the table';
+  String get lobbyHeaderTitle => 'Préparer le tableau';
 
   @override
   String get lobbyHeaderSubtitle =>
-      'Confirm civilization first, then tune the match and seats before the first turn.';
+      'Confirmer la civilisation d\'abord, puis régler le partie et les sièges avant le premier tour.';
 
   @override
-  String get lobbyCivilizationTitle => 'Choose civilization';
+  String get lobbyCivilizationTitle => 'Choisir la civilisation';
 
   @override
   String get lobbyCivilizationSubtitle =>
-      'This is player one\'s identity for the opening turn.';
+      'C\'est l\'identité du joueur pour le tour d\'ouverture.';
 
   @override
-  String get lobbyStepCivilization => 'Civilization';
+  String get lobbyStepCivilization => 'Civilisation';
 
   @override
-  String get lobbyStepSetup => 'Setup';
+  String get lobbyStepSetup => 'Configuration';
 
   @override
-  String get lobbyStepOnline => 'Online';
+  String get lobbyStepOnline => 'En ligne';
 
   @override
-  String get lobbyStepPlayers => 'Players';
+  String get lobbyStepPlayers => 'Joueurs';
 
   @override
-  String get lobbySetupTitle => 'Match setup';
+  String get lobbySetupTitle => 'Configuration de la partie';
 
   @override
   String get lobbySetupSubtitle =>
-      'Name the game, choose the pace, and check whether the map fits the selected player count.';
+      'Nommez le jeu, choisissez le rythme et vérifiez si la carte correspond au nombre de joueurs sélectionné.';
 
   @override
-  String get lobbyPlayersSetupTitle => 'Players at the table';
+  String get lobbyPlayersSetupTitle => 'Les joueurs à la table';
 
   @override
   String get lobbyPlayersSetupSubtitle =>
-      'The first player takes the opening turn. Extra seats can be people on this device or AI.';
+      'Le premier joueur prend le tour d\'ouverture. Des sièges supplémentaires peuvent être des personnes sur cet appareil ou IA.';
 
   @override
-  String get lobbyPlayerYou => 'You';
+  String get lobbyPlayerYou => 'Toi';
 
   @override
-  String get lobbyPlayerHost => 'Host';
+  String get lobbyPlayerHost => 'Hôte';
 
   @override
-  String get lobbyPlayerReady => 'ready';
+  String get lobbyPlayerReady => 'Prêt';
 
   @override
-  String get lobbyPlayerConnected => 'connected';
+  String get lobbyPlayerConnected => 'connecté';
 
   @override
-  String get lobbyPlayerConnecting => 'connecting';
+  String get lobbyPlayerConnecting => 'connexion';
 
   @override
-  String get lobbyPlayerReconnecting => 'reconnecting';
+  String get lobbyPlayerReconnecting => 'reconnexion';
 
   @override
-  String get lobbyPlayerOffline => 'offline';
+  String get lobbyPlayerOffline => 'hors ligne';
 
   @override
   String lobbyPlayerOpenSlot(int slotNumber) {
-    return 'Open seat $slotNumber';
+    return 'Siège ouvert $slotNumber';
   }
 
   @override
-  String get lobbyPlayerRequiredSlot => 'Needed to start';
+  String get lobbyPlayerRequiredSlot => 'Besoin de commencer';
 
   @override
-  String get lobbyPlayerOptionalSlot => 'Can join before start';
+  String get lobbyPlayerOptionalSlot => 'Peut se joindre avant le début';
 
   @override
-  String get playerKindHuman => 'Human';
+  String get playerKindHuman => 'Humain';
 
   @override
-  String get playerKindAi => 'AI';
+  String get playerKindAi => 'IA';
 
   @override
-  String get multiplayerServerTitle => 'Online game server';
+  String get multiplayerServerTitle => 'Serveur de jeu en ligne';
 
   @override
-  String get connectAction => 'Connect';
+  String get connectAction => 'Connexion';
 
   @override
-  String get refreshAction => 'Refresh';
+  String get refreshAction => 'Actualiser';
 
   @override
-  String get createMatchAction => 'Create match';
+  String get createMatchAction => 'Créer une partie';
 
   @override
-  String get noOpenMatches => 'No open matches';
+  String get noOpenMatches => 'Pas de partie ouvert';
 
   @override
-  String get matchStatusRunning => 'Ready';
+  String get matchStatusRunning => 'Prêt';
 
   @override
-  String get matchStatusFinished => 'Finished';
+  String get matchStatusFinished => 'Terminé';
 
   @override
-  String get matchStatusAbandoned => 'Abandoned';
+  String get matchStatusAbandoned => 'Abandonné';
 
   @override
   String matchPlayersCount(int players, int maxPlayers) {
-    return '$players/$maxPlayers players';
+    return 'joueurs $players/$maxPlayers';
   }
 
   @override
   String matchReadyCount(int readyPlayers, int players) {
-    return '$readyPlayers/$players ready';
+    return '$readyPlayers/$players prêt';
   }
 
   @override
   String matchTurnInfo(String mapName, String status, int turn) {
-    return '$mapName - $status - turn $turn';
+    return '$mapName - $status - tourner $turn';
   }
 
   @override
   String openMatchInfo(String mapName, int players, int maxPlayers, int turn) {
-    return '$mapName - $players/$maxPlayers - turn $turn';
+    return '$mapName - $players/$maxPlayers - tourner $turn';
   }
 
   @override
-  String get enterMatchAction => 'Enter';
+  String get enterMatchAction => 'Entrez';
 
   @override
-  String get hideMatchAction => 'Hide';
+  String get hideMatchAction => 'Masquer';
 
   @override
-  String get joinMatchAction => 'Join';
+  String get joinMatchAction => 'Rejoignez';
 
   @override
-  String get cancelAction => 'CANCEL';
+  String get cancelAction => 'ANNULATION';
 
   @override
-  String get copyAction => 'Copy';
+  String get copyAction => 'Copier';
 
   @override
-  String get shareAction => 'Share';
+  String get shareAction => 'Partager';
 
   @override
   String get multiplayerHomeSubtitle =>
-      'Choose a quick queue or a private code match for friends.';
+      'Choisissez une file d\'attente rapide ou un code privé pour les amis.';
 
   @override
-  String get multiplayerProfileTitle => 'Your profile';
+  String get multiplayerProfileTitle => 'Votre profil';
 
   @override
   String get multiplayerProfileSubtitle =>
-      'Set the name and civilization you will use in online matches.';
+      'Définissez le nom et la civilisation que vous utiliserez dans les parties en ligne.';
 
   @override
   String get multiplayerProfileOptionsSubtitle =>
-      'Your nickname is used in multiplayer matches and must be unique.';
+      'Votre surnom est utilisé dans les parties multijoueurs et doit être unique.';
 
   @override
-  String get multiplayerProfileSaveAction => 'Save nickname';
+  String get multiplayerProfileSaveAction => 'Enregistrer le pseudonyme';
 
   @override
-  String get multiplayerProfileSaved => 'Nickname saved.';
+  String get multiplayerProfileSaved => 'Pseudo sauvegardé.';
 
   @override
-  String get multiplayerLobbyHeaderTitle => 'Online lobby';
+  String get multiplayerLobbyHeaderTitle => 'Lobby en ligne';
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Choose civilization first, then enter quickplay or create a private table. The map is selected automatically.';
+      'Choisissez la civilisation d\'abord, puis entrez le jeu rapide ou créez une table privée. La carte est sélectionnée automatiquement.';
 
   @override
-  String get multiplayerCountryPickTitle => 'Choose civilization';
+  String get multiplayerCountryPickTitle => 'Choisir la civilisation';
 
   @override
   String get multiplayerCountryPickSubtitle =>
-      'This is the key choice before entering the queue. Multiplayer maps are selected at random.';
+      'C\'est le choix clé avant d\'entrer dans la file d\'attente. Les cartes multijoueur sont sélectionnées au hasard.';
 
   @override
-  String get multiplayerRandomMapLabel => 'Random map';
+  String get multiplayerRandomMapLabel => 'Carte aléatoire';
 
   @override
-  String get multiplayerNicknameLabel => 'Nickname';
+  String get multiplayerNicknameLabel => 'Pseudo';
 
   @override
-  String get multiplayerQuickplayTitle => 'Quick game';
+  String get multiplayerQuickplayTitle => 'Jeu rapide';
 
   @override
   String get multiplayerQuickplaySubtitle =>
-      'Finds players automatically and starts from 2 players.';
+      'Trouvez les joueurs automatiquement et démarrez à partir de 2 joueurs.';
 
   @override
-  String get multiplayerCreatePrivateTitle => 'Create code';
+  String get multiplayerCreatePrivateTitle => 'Créer un code';
 
   @override
   String get multiplayerCreatePrivateSubtitle =>
-      'Private match with no time limit, only for friends.';
+      'Partie privé sans limite de temps, seulement pour les amis.';
 
   @override
-  String get multiplayerJoinPrivateTitle => 'Join with code';
+  String get multiplayerJoinPrivateTitle => 'Rejoignez le code';
 
   @override
   String get multiplayerJoinPrivateSubtitle =>
-      'Enter a friend\'s code and wait for the host.';
+      'Entrez le code d\'un ami et attendez l\'hôte.';
 
   @override
-  String get multiplayerQueueReadyTitle => 'Match ready';
+  String get multiplayerQueueReadyTitle => 'C\'est prêt';
 
   @override
-  String get multiplayerQueueSearchingTitle => 'Searching for players';
+  String get multiplayerQueueSearchingTitle => 'Recherche de joueurs';
 
   @override
-  String get multiplayerQueueCountdownTitle => 'Starting soon';
+  String get multiplayerQueueCountdownTitle => 'À partir de bientôt';
 
   @override
   String get multiplayerQueueConnectingSubtitle =>
-      'Connecting to the server and looking for a queue.';
+      'Se connecter au serveur et chercher une file d\'attente.';
 
   @override
   String multiplayerQueueWaitingForPlayers(int minPlayers) {
-    return 'Waiting for at least $minPlayers players.';
+    return 'Attendre au moins les joueurs $minPlayers.';
   }
 
   @override
   String get multiplayerQueuePreparingStart =>
-      'Players found. Preparing match start.';
+      'Les joueurs ont trouvé. Préparation du début du partie.';
 
   @override
-  String get multiplayerQueueStartingNow => 'Starting match...';
+  String get multiplayerQueueStartingNow => 'Début du partie...';
 
   @override
   String multiplayerQueueStartingIn(int seconds) {
-    return 'Starting in ${seconds}s. More players can still join.';
+    return 'À partir de $seconds. D\'autres joueurs peuvent encore se joindre.';
   }
 
   @override
-  String get multiplayerPrivateTitle => 'Friends match';
+  String get multiplayerPrivateTitle => 'Les amis correspondent';
 
   @override
-  String get multiplayerPrivateHostReady => 'You can start the match now.';
+  String get multiplayerPrivateHostReady =>
+      'Tu peux commencer le partie maintenant.';
 
   @override
   String get multiplayerPrivateWaitingForHost =>
-      'Waiting for the host to start the match.';
+      'Attendre que l\'hôte démarre le partie.';
 
   @override
   String get multiplayerJoinCodeHelp =>
-      'Enter the code you received from a friend.';
+      'Entrez le code que vous avez reçu d\'un ami.';
 
   @override
-  String get multiplayerInviteCodeHint => 'Match code';
+  String get multiplayerInviteCodeHint => 'Code correspondant';
 
   @override
-  String get multiplayerInviteCodeLabel => 'Match code';
+  String get multiplayerInviteCodeLabel => 'Code correspondant';
 
   @override
-  String get multiplayerInviteCopied => 'Match code copied.';
+  String get multiplayerInviteCopied => 'Code de partie copié.';
 
   @override
   String multiplayerInviteShareText(String inviteCode) {
-    return 'Join my AONW match. Code: $inviteCode';
+    return 'Rejoignez mon partie AONW. Code: $inviteCode';
   }
 
   @override
-  String get multiplayerInviteCodeRequired => 'Enter a match code.';
+  String get multiplayerInviteCodeRequired => 'Saisissez un code de partie.';
 
   @override
-  String get multiplayerMapNotReady => 'This map is not ready for multiplayer.';
+  String get multiplayerMapNotReady =>
+      'Cette carte n\'est pas prête pour multijoueur.';
 
   @override
   String multiplayerRequestRejected(int statusCode) {
-    return 'The server rejected the request ($statusCode).';
+    return 'Le serveur a rejeté la requête ($statusCode).';
   }
 
   @override
   String multiplayerRequestRejectedWithReason(int statusCode, String reason) {
-    return 'The server rejected the request ($statusCode: $reason).';
+    return 'Le serveur a rejeté la requête ($statusCode: $reason).';
   }
 
   @override
   String multiplayerConnectionError(String host) {
-    return 'Could not connect to $host. Check your internet connection and try again.';
+    return 'Impossible de se connecter à $host. Vérifiez votre connexion Internet et essayez à nouveau.';
   }
 
   @override
   String get multiplayerSignInRequired =>
-      'Sign in or create an account to play multiplayer.';
+      'Connectez-vous ou créez un compte pour jouer au multijoueur.';
 
   @override
   String get multiplayerSessionExpired =>
-      'Your multiplayer session expired. Sign in again and retry.';
+      'Votre session multijoueur a expiré. Connectez-vous encore et réessayez.';
 
   @override
-  String get multiplayerAccountTitle => 'Multiplayer account';
+  String get multiplayerAccountTitle => 'Compte multijoueur';
 
   @override
   String get multiplayerAccountSubtitle =>
-      'Sign in or create an account to continue.';
+      'Connectez-vous ou créez un compte pour continuer.';
 
   @override
-  String get multiplayerAccountEmailLabel => 'Email';
+  String get multiplayerAccountEmailLabel => 'Courriel';
 
   @override
-  String get multiplayerAccountPasswordLabel => 'Password';
+  String get multiplayerAccountPasswordLabel => 'Mot de passe';
 
   @override
-  String get multiplayerAccountSignInTab => 'Sign in';
+  String get multiplayerAccountSignInTab => 'Connexion';
 
   @override
-  String get multiplayerAccountCreateTab => 'Create account';
+  String get multiplayerAccountCreateTab => 'Créer un compte';
 
   @override
-  String get multiplayerAccountSignInAction => 'Sign in';
+  String get multiplayerAccountSignInAction => 'Connexion';
 
   @override
-  String get multiplayerAccountCreateAction => 'Create account';
+  String get multiplayerAccountCreateAction => 'Créer un compte';
 
   @override
-  String get multiplayerAccountSignOutAction => 'Sign out';
+  String get multiplayerAccountSignOutAction => 'Déconnexion';
 
   @override
-  String get multiplayerAccountSignedOut => 'Signed out of multiplayer.';
+  String get multiplayerAccountSignedOut => 'Signée en multijoueur.';
 
   @override
-  String get multiplayerAccountInvalidEmail => 'Enter a valid email address.';
+  String get multiplayerAccountInvalidEmail =>
+      'Saisissez une adresse email valide.';
 
   @override
   String get multiplayerAccountInvalidCredentials =>
-      'Invalid email or password.';
+      'Courriel ou mot de passe incorrect.';
 
   @override
   String get multiplayerAccountExists =>
-      'An account with this email already exists.';
+      'Un compte avec ce courriel existe déjà.';
 
   @override
   String get multiplayerAccountWeakPassword =>
-      'Password must be at least 8 characters long.';
+      'Le mot de passe doit être d\'au moins 8 caractères.';
 
   @override
   String get multiplayerAccountInvalidNickname =>
-      'Use 3-24 letters, numbers, spaces, _ or -.';
+      'Utilisez 3-24 lettres, chiffres, espaces,   ou -.';
 
   @override
-  String get multiplayerAccountNicknameTaken =>
-      'This nickname is already taken.';
+  String get multiplayerAccountNicknameTaken => 'Ce surnom est déjà pris.';
 
   @override
   String get multiplayerAccountGenericError =>
-      'Could not authenticate. Try again.';
+      'Je ne pouvais pas authentifier. Essaie encore.';
 
   @override
-  String get multiplayerMatchUnavailable =>
-      'This match is no longer available.';
+  String get multiplayerMatchUnavailable => 'Ce partie n\'est plus disponible.';
 
   @override
-  String get multiplayerMatchFull => 'This match is full.';
+  String get multiplayerMatchFull => 'Ce partie est plein.';
 
   @override
   String get multiplayerCountryUnavailable =>
-      'Multiple players picked your civilization. Try another one.';
+      'Plusieurs joueurs ont choisi votre civilisation. Essaie un autre.';
 
   @override
-  String get multiplayerMatchNotReady => 'The match is not ready to start yet.';
+  String get multiplayerMatchNotReady => 'Le partie n\'est pas encore prêt.';
 
   @override
   String get multiplayerMatchAccessDenied =>
-      'You are not a player in this match.';
+      'Vous n\'êtes pas un joueur dans ce partie.';
 
   @override
   String get multiplayerQueueGenericError =>
-      'Could not enter the multiplayer queue. Try again.';
+      'Impossible d\'entrer la file multijoueur. Essaie encore.';
 
   @override
-  String get multiplayerResumeAction => 'Resume game';
+  String get multiplayerResumeAction => 'Reprendre le jeu';
 
   @override
   String get multiplayerResumeSublabel =>
-      'Return to the last multiplayer session';
+      'Retour à la dernière session multijoueur';
 
   @override
-  String get multiplayerResumeLoading => 'Connecting to match...';
+  String get multiplayerResumeLoading => 'Connexion pour correspondre...';
 
   @override
   String get multiplayerResumeFailed =>
-      'Could not resume the last multiplayer session.';
+      'Impossible de reprendre la dernière session multijoueur.';
 
   @override
   String get optionsTooltip => 'Options';
@@ -1743,182 +1751,184 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showMapZoomLabel => 'Afficher le zoom de la carte';
 
   @override
-  String get mapViewModeTooltip => 'Change map view mode';
+  String get mapViewModeTooltip => 'Modifier le mode de vue de la carte';
 
   @override
   String get mapViewGraphicUnavailableTooltip =>
-      'Graphic mode is unavailable for this map';
+      'Le mode graphique est indisponible pour cette carte';
 
   @override
-  String get mapViewModeGraphic => 'Graphic';
+  String get mapViewModeGraphic => 'Graphique';
 
   @override
-  String get mapViewModeTiles => 'Tiles';
+  String get mapViewModeTiles => 'Carreaux';
 
   @override
   String get gameOptionTerrain => 'Terrain';
 
   @override
-  String get gameOptionResources => 'Resources';
+  String get gameOptionResources => 'Ressources';
 
   @override
-  String get gameOptionHeight => 'Height';
+  String get gameOptionHeight => 'Hauteur';
 
   @override
-  String get gameOptionCitySites => 'City sites';
+  String get gameOptionCitySites => 'Sites urbains';
 
   @override
-  String get gameOptionCityGrowth => 'City growth';
+  String get gameOptionCityGrowth => 'Croissance des villes';
 
   @override
-  String get gameOptionShowHexes => 'Show hexes';
+  String get gameOptionShowHexes => 'Afficher les hexagones';
 
   @override
-  String get gameOptionShowHeight => 'Show height';
+  String get gameOptionShowHeight => 'Afficher la hauteur';
 
   @override
-  String get gameOptionDiceTest => 'Dice test';
+  String get gameOptionDiceTest => 'Essai de dés';
 
   @override
-  String get gameOptionAutoActionFlow => 'Auto action completion';
+  String get gameOptionAutoActionFlow => 'Achèvement de l\'action automatique';
 
   @override
-  String get gameOptionAutoTurnFlow => 'Auto turn completion';
+  String get gameOptionAutoTurnFlow => 'Exécution automatique';
 
   @override
-  String get helpPopupsTitle => 'Hints';
+  String get helpPopupsTitle => 'Conseils';
 
   @override
-  String get autoTurnHintTitle => 'Auto turn completion';
+  String get autoTurnHintTitle => 'Exécution automatique';
 
   @override
   String get autoTurnHintBody =>
-      'Auto turn completion submits the turn when no important actions remain. Auto action completion can be controlled separately in map options.';
+      'L\'achèvement automatique du tour soumet le tour quand il ne reste pas d\'actions importantes. L\'achèvement de l\'action automatique peut être contrôlé séparément dans les options de carte.';
 
   @override
-  String get autoTurnHintEnableAction => 'Enable';
+  String get autoTurnHintEnableAction => 'Activer';
 
   @override
-  String get autoTurnHintDisableAction => 'Disable';
+  String get autoTurnHintDisableAction => 'Désactiver';
 
   @override
-  String get autoTurnHintStatusOn => 'Enabled';
+  String get autoTurnHintStatusOn => 'Activé';
 
   @override
-  String get autoTurnHintStatusOff => 'Disabled';
+  String get autoTurnHintStatusOff => 'Handicapé';
 
   @override
   String get autoTurnHintMinimizedSubtitle =>
-      'Quick toggle for automatic turn flow.';
+      'Toggle rapide pour le flux de tour automatique.';
 
   @override
   String visibilityShowAction(String label) {
-    return 'Show $label';
+    return 'Afficher $label';
   }
 
   @override
   String visibilityHideAction(String label) {
-    return 'Hide $label';
+    return 'Masquer $label';
   }
 
   @override
-  String get resignAction => 'Resign';
+  String get resignAction => 'Démissionner';
 
   @override
-  String get resignMatchTitle => 'Resign from match?';
+  String get resignMatchTitle => 'Démissionner du partie ?';
 
   @override
-  String get resignMatchMessage => 'The match will be ended.';
+  String get resignMatchMessage => 'Le partie sera terminé.';
 
   @override
-  String get resignMatchError => 'Could not resign from the match.';
+  String get resignMatchError => 'Je ne pouvais pas démissionner du partie.';
 
   @override
-  String get creditsTitle => 'Credits';
+  String get creditsTitle => 'Crédits';
 
   @override
   String creditsCreatedBy(String name) {
-    return 'Created by $name';
+    return 'Créé par $name';
   }
 
   @override
-  String get deleteGameTitle => 'Delete game';
+  String get deleteGameTitle => 'Supprimer le jeu';
 
   @override
   String deleteGameMessage(String name) {
-    return 'Delete \"$name\"? This cannot be undone.';
+    return 'Supprimer \"$name\" ? Cela ne peut pas être annulé.';
   }
 
   @override
   String get deleteAction => 'DELETE';
 
   @override
-  String get retryAction => 'RETRY';
+  String get retryAction => 'RETRAITE';
 
   @override
-  String get noSavedGames => 'No saved games.';
+  String get noSavedGames => 'Pas de jeux enregistrés.';
 
   @override
-  String get resumeAction => 'RESUME';
+  String get resumeAction => 'RÉSUME';
 
   @override
   String get newGameAction => 'NOUVELLE PARTIE';
 
   @override
-  String get turnActionButtonLabel => 'Action';
+  String get turnActionButtonLabel => 'Décision';
 
   @override
-  String get endTurnButtonLabel => 'End turn';
+  String get endTurnButtonLabel => 'Fin du tour';
 
   @override
-  String get waitingTurnButtonLabel => 'Waiting';
+  String get waitingTurnButtonLabel => 'Attendre';
 
   @override
-  String get waitingForPlayersTooltip => 'Waiting for other players';
+  String get waitingForPlayersTooltip => 'Attendre d\'autres joueurs';
 
   @override
   String submitTurnTooltip(int turn) {
-    return 'Submit readiness on turn $turn';
+    return 'Soumettre l\'état de préparation au tour $turn';
   }
 
   @override
   String endTurnTooltip(int turn) {
-    return 'End turn $turn';
+    return 'Fin du tour $turn';
   }
 
   @override
-  String get nextActionTooltip => 'Go to the next action';
+  String get nextActionTooltip => 'Aller à la prochaine action';
 
   @override
   String nextActionWithCountTooltip(int count) {
-    return 'Go to the next action ($count left)';
+    return 'Aller à l\'action suivante ($count à gauche)';
   }
 
   @override
-  String get turnActionListTooltip => 'Choose an action from the list';
+  String get turnActionListTooltip => 'Choisissez une action dans la liste';
 
   @override
-  String get hudActionDeckCollapseTooltip => 'Collapse bottom toolbar';
+  String get hudActionDeckCollapseTooltip =>
+      'Réduire la barre d\'outils inférieure';
 
   @override
-  String get hudActionDeckExpandTooltip => 'Expand bottom toolbar';
+  String get hudActionDeckExpandTooltip =>
+      'Élargir la barre d\'outils inférieure';
 
   @override
-  String get turnActionUnitKind => 'Unit';
+  String get turnActionUnitKind => 'Unité';
 
   @override
-  String get turnActionCityProductionKind => 'City';
+  String get turnActionCityProductionKind => 'Ville';
 
   @override
-  String get turnActionResearchKind => 'Research';
+  String get turnActionResearchKind => 'Recherche';
 
   @override
   String turnActionCityProductionLabel(String cityName) {
-    return '$cityName production';
+    return 'Production $cityName';
   }
 
   @override
-  String get turnActionResearchLabel => 'Choose research';
+  String get turnActionResearchLabel => 'Choisir la recherche';
 
   @override
   String turnLabel(int turn) {
@@ -1927,275 +1937,280 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String loadGameError(String error) {
-    return 'Load error: $error';
+    return 'Erreur de chargement: $error';
   }
 
   @override
-  String get backAction => 'Back';
+  String get backAction => 'Précédent';
 
   @override
-  String get continueAction => 'Continue';
+  String get continueAction => 'Continuer';
 
   @override
-  String get gameLoadingTitle => 'Loading world';
+  String get gameLoadingTitle => 'Chargement du monde';
 
   @override
   String get gameLoadingMessage =>
-      'Preparing the map, units, and interface. The game will appear once the assets are ready.';
+      'Préparer la carte, les unités et l\'interface. Le jeu apparaîtra une fois les actifs prêts.';
 
   @override
-  String get firstTurnTutorialPopupTitle => 'Tutorial';
+  String get firstTurnTutorialPopupTitle => 'Tutoriel';
 
   @override
-  String get firstTurnTutorialPopupSubtitle => 'First-turn guide';
+  String get firstTurnTutorialPopupSubtitle => 'Guide du premier tour';
 
   @override
   String firstTurnTutorialSemantics(String title) {
-    return 'First turn: $title';
+    return 'Premier tour: $title';
   }
 
   @override
   String firstTurnCoachmarkProgressLabel(int current, int total) {
-    return 'Step $current/$total';
+    return 'Étape $current/$total';
   }
 
   @override
-  String get firstTurnCoachmarkMinimizeTooltip => 'Minimize';
+  String get firstTurnCoachmarkMinimizeTooltip => 'Minimiser';
 
   @override
-  String get firstTurnCoachmarkSkipAction => 'Skip';
+  String get firstTurnCoachmarkSkipAction => 'Sauter';
 
   @override
-  String get firstTurnCoachmarkNextAction => 'Next';
+  String get firstTurnCoachmarkNextAction => 'Suivant';
 
   @override
-  String get firstTurnCoachmarkDoneAction => 'Done';
+  String get firstTurnCoachmarkDoneAction => 'Fait';
 
   @override
-  String get firstTurnCoachmarkSelectionTitle => 'Step 1: read the selection';
+  String get firstTurnCoachmarkSelectionTitle => 'Étape 1: lire la sélection';
 
   @override
   String get firstTurnCoachmarkSelectionBody =>
-      'The game begins by selecting your first unit automatically. The bottom panel tells you what you command, how many actions remain, and which orders you can give now.';
+      'Le jeu commence par sélectionner automatiquement votre première unité. Le panneau inférieur vous indique ce que vous commandez, combien d\'actions restent, et quels ordres vous pouvez donner maintenant.';
 
   @override
   String get firstTurnCoachmarkSelectionBodyUnit =>
-      'The bottom toolbar describes the selected unit: type, movement, action queue, and available orders. Use it to enter Move mode and cancel it when you want hex taps to return to inspection.';
+      'La barre d\'outils inférieure décrit l\'unité sélectionnée: type, mouvement, file d\'attente d\'action et commandes disponibles. Utilisez-le pour entrer en mode Déplacer et l\'annuler lorsque vous voulez des touches hexagonales pour revenir à l\'inspection.';
 
   @override
   String get firstTurnCoachmarkSelectionBodyCity =>
-      'You have a city selected. The bottom panel shows its production, population, buildings, and economic decisions. That is a different context than unit orders, so the tutorial will talk about the city.';
+      'Vous avez une ville sélectionnée. Le panneau inférieur montre sa production, sa population, ses bâtiments et ses décisions économiques. C\'est un contexte différent des commandes unitaires, donc le tutoriel parlera de la ville.';
 
   @override
   String get firstTurnCoachmarkSelectionBodyNone =>
-      'When nothing is selected, the bottom panel shows the general turn state. Tap one of your units or cities to see concrete orders and information.';
+      'Lorsque rien n\'est sélectionné, le panneau inférieur affiche l\'état général du tour. Appuyez sur l\'une de vos unités ou villes pour voir les commandes et les informations concrètes.';
 
   @override
-  String get firstTurnCoachmarkResourcesTitle => 'Step 2: check your empire';
+  String get firstTurnCoachmarkResourcesTitle =>
+      'Étape 2: Vérifiez votre empire';
 
   @override
   String get firstTurnCoachmarkResourcesBody =>
-      'The top bar shows the turn, gold, science, and resources. Gold sustains the economy, science drives research, and resources hint at what is worth building.';
+      'La barre supérieure montre le tour, l\'or, la science et les ressources. L\'or soutient l\'économie, la science stimule la recherche, et les ressources suggèrent ce qui vaut la peine de construire.';
 
   @override
-  String get firstTurnCoachmarkMenuTitle => 'Step 3: learn the left menu';
+  String get firstTurnCoachmarkMenuTitle =>
+      'Étape 3: apprendre le menu de gauche';
 
   @override
   String get firstTurnCoachmarkMenuBody =>
-      'The left menu gathers views you revisit every turn: map options, minimized popup replies, objectives, log, research, and empire. Long-press the menu button to collapse the rail, then tap the single button to open it again.';
+      'Le menu de gauche rassemble des vues que vous revisitez à chaque tour: options de carte, réponses popup minimisées, objectifs, journal, recherche et empire. Appuyez longuement sur le bouton du menu pour faire tomber le rail, puis appuyez sur le bouton unique pour l\'ouvrir à nouveau.';
 
   @override
-  String get firstTurnCoachmarkActionTitle => 'Step 4: give the right order';
+  String get firstTurnCoachmarkActionTitle => 'Étape 4: donner le bon ordre';
 
   @override
   String get firstTurnCoachmarkActionBodyActive =>
-      'If the settler stands on a good tile, use the found-city action. If the location is weak, move the unit and reveal terrain. Movement and special actions spend that unit\'s turn.';
+      'Si le colon se tient sur une bonne tuile, utilisez l\'action de la ville trouvée. Si l\'emplacement est faible, déplacer l\'unité et révéler le terrain. Le mouvement et les actions spéciales passent le tour de cette unité.';
 
   @override
   String get firstTurnCoachmarkActionBodyWaiting =>
-      'When a unit has an order, it appears here. In the first turns, move through units and cities one by one until no important decision is left behind.';
+      'Quand une unité a un ordre, il apparaît ici. Dans les premiers tours, passer à travers les unités et les villes un par un jusqu\'à ce qu\'aucune décision importante ne soit laissée derrière.';
 
   @override
   String get firstTurnCoachmarkActionBodySettler =>
-      'The settler decides the start of your empire. If the tile offers growth, production, and room to expand, found a city. If the terrain is weak, move the settler and inspect nearby land first.';
+      'Le colon décide du début de votre empire. Si la tuile offre de la croissance, la production, et la possibilité de se développer, trouvé une ville. Si le terrain est faible, déplacer le colon et inspecter les terres avoisinantes d\'abord.';
 
   @override
   String get firstTurnCoachmarkActionBodyWorker =>
-      'A worker does not found cities. Its job is to improve tiles inside city borders: farms help growth, mines boost production, and resource improvements strengthen the economy.';
+      'Un travailleur n\'a pas trouvé de villes. Son travail est d\'améliorer les tuiles à l\'intérieur des frontières de la ville: les fermes contribuent à la croissance, les mines stimulent la production et les ressources renforcent l\'économie.';
 
   @override
   String get firstTurnCoachmarkActionBodyUnit =>
-      'For combat and scouting units, movement, vision, and safety matter most. Reveal terrain, protect city borders, and attack only when the predicted result is favorable.';
+      'Pour les unités de combat et de scoutisme, le mouvement, la vision et la sécurité comptent le plus. Reveal terrain, protéger les frontières de la ville, et l\'attaque seulement lorsque le résultat prévu est favorable.';
 
   @override
   String get firstTurnCoachmarkActionBodyCity =>
-      'With a city selected, this area leads to production and management. Choose a build target, check city growth, and keep the city from sitting idle.';
+      'Avec une ville sélectionnée, cette zone mène à la production et à la gestion. Choisissez une cible de construction, vérifiez la croissance de la ville, et empêchez la ville de rester inactif.';
 
   @override
-  String get firstTurnCoachmarkResearchTitle => 'Step 5: choose research';
+  String get firstTurnCoachmarkResearchTitle => 'Étape 5: Choisir la recherche';
 
   @override
   String get firstTurnCoachmarkResearchBody =>
-      'Open Research before ending the turn. Agriculture supports growth, Mining boosts production, and Hunting improves scouting and defense. Most importantly, science should not run without a target.';
+      'Ouvrir la recherche avant de terminer le tour. L\'agriculture soutient la croissance, l\'exploitation minière stimule la production, et la chasse améliore le scoutisme et la défense. Plus important encore, la science ne devrait pas courir sans cible.';
 
   @override
   String get firstTurnCoachmarkResearchBodyAvailable =>
-      'Research is ready to choose. Open Research before ending the turn: Agriculture supports growth, Mining boosts production, and Hunting improves scouting and defense.';
+      'La recherche est prête à choisir. Ouvrir la recherche avant de terminer le tour: l\'agriculture soutient la croissance, l\'exploitation minière stimule la production et la chasse améliore le scoutisme et la défense.';
 
   @override
-  String get firstTurnCoachmarkCityTitle => 'Step 6: set up the city';
+  String get firstTurnCoachmarkCityTitle => 'Étape 6: mettre en place la ville';
 
   @override
   String get firstTurnCoachmarkCityBody =>
-      'After founding the capital, choose production. A worker develops tiles, a warrior secures the area, and buildings strengthen the economy. The city should always be building something.';
+      'Après avoir fondé la capitale, choisissez la production. Un travailleur développe des tuiles, un guerrier sécurise la zone et les bâtiments renforcent l\'économie. La ville devrait toujours construire quelque chose.';
 
   @override
   String get firstTurnCoachmarkCityBodySelected =>
-      'This is the city panel. Check production, growth, buildings, and available projects. The main rule for new turns: every city should have a production target.';
+      'Voici le panneau de la ville. Vérifier la production, la croissance, les bâtiments et les projets disponibles. La règle principale pour les nouveaux tours: chaque ville devrait avoir une cible de production.';
 
   @override
   String get firstTurnCoachmarkCityBodyNeedsProduction =>
-      'One of your cities is waiting for production. Use the action button or select the city, choose a unit, building, or project, and only then end the turn.';
+      'Une de vos villes attend la production. Utilisez le bouton d\'action ou sélectionnez la ville, choisissez une unité, un bâtiment ou un projet, puis terminez le tour.';
 
   @override
   String get firstTurnCoachmarkCityBodyExisting =>
-      'Your cities already have production assigned. In later turns, return here to watch growth, buildings, specialization, and defense needs.';
+      'Vos villes ont déjà une production assignée. Plus tard, retournez ici pour observer la croissance, les bâtiments, la spécialisation et les besoins de défense.';
 
   @override
   String get firstTurnCoachmarkCityBodyFuture =>
-      'After you found the first city, you will return here to choose production. A worker develops tiles, a warrior secures the area, and buildings strengthen the economy.';
+      'Après avoir trouvé la première ville, vous retournerez ici pour choisir la production. Un travailleur développe des tuiles, un guerrier sécurise la zone et les bâtiments renforcent l\'économie.';
 
   @override
   String get firstTurnCoachmarkActionFlowTitle =>
-      'Step 7: clear the action queue';
+      'Étape 7: effacer la file d\'attente d\'action';
 
   @override
   String get firstTurnCoachmarkActionFlowBodyReady =>
-      'All key decisions for this turn are ready. Before ending the turn, quickly confirm that research and city production both have a target.';
+      'Toutes les décisions clés pour ce tour sont prêtes. Avant de terminer le tour, confirmez rapidement que la recherche et la production urbaine ont toutes deux une cible.';
 
   @override
   String get firstTurnCoachmarkActionFlowBodyPending =>
-      'The action button leads to the next unit, city, or missing choice. Keep pressing it until the game shows that it is safe to end the turn.';
+      'Le bouton action mène à l\'unité suivante, la ville, ou le choix manquant. Continuez à appuyer jusqu\'à ce que le jeu montre qu\'il est sûr de terminer le tour.';
 
   @override
   String get firstTurnCoachmarkEndTurnTitle =>
-      'Step 8: end the turn and repeat';
+      'Étape 8: terminer le tour et répéter';
 
   @override
   String get firstTurnCoachmarkEndTurnBody =>
-      'When nothing needs your response, end the turn. The rhythm of the next turns is the same: resources, units, city, research, then end turn.';
+      'Quand rien n\'a besoin de votre réponse, finissez le tour. Le rythme des tours suivants est le même: ressources, unités, ville, recherche, puis fin tour.';
 
   @override
   String get firstTurnCoachmarkVictoryBody =>
-      'You can win by domination or by artifacts: place 6 unique artifacts in your cities and hold the collection for 5 turns.';
+      'Vous pouvez gagner par domination ou par artefacts: placer 6 artefacts uniques dans vos villes et tenir la collection pour 5 tours.';
 
   @override
   String get firstTurnCoachmarkHexTapBody =>
-      'Click or tap the same hex several times to cycle its information: tile selection, artifact, map objective, and hex description.';
+      'Cliquez ou tapez plusieurs fois sur le même hexagone pour faire cycler ses informations: sélection des tuiles, artefact, objectif de la carte et description de l\'hexagone.';
 
   @override
-  String get gameLoadMapErrorTitle => 'Could not load map';
+  String get gameLoadMapErrorTitle => 'Impossible de charger la carte';
 
   @override
   String gameLoadMapErrorMessage(String mapName, String error) {
-    return 'Could not load map \"$mapName\": $error';
+    return 'Impossible de charger la carte \"$mapName\": $error';
   }
 
   @override
-  String get gameOutcomeVictoryTitle => 'Victory';
+  String get gameOutcomeVictoryTitle => 'Victoire';
 
   @override
-  String get gameOutcomeDefeatTitle => 'Defeat';
+  String get gameOutcomeDefeatTitle => 'Défaut';
 
   @override
-  String get gameOutcomeDrawTitle => 'Draw';
+  String get gameOutcomeDrawTitle => 'Dessiner';
 
   @override
-  String get gameOutcomeCompleteTitle => 'Game over';
+  String get gameOutcomeCompleteTitle => 'Jeu terminé';
 
   @override
-  String get gameOutcomeConditionConquest => 'Conquest';
+  String get gameOutcomeConditionConquest => 'Conquête';
 
   @override
   String get gameOutcomeConditionScore => 'Score';
 
   @override
-  String get gameOutcomeConditionScoreDraw => 'Score draw';
+  String get gameOutcomeConditionScoreDraw => 'Tirage des points';
 
   @override
   String get gameOutcomeConditionDomination => 'Domination';
 
   @override
-  String get gameOutcomeConquestNoWinner => 'One empire remains on the map.';
+  String get gameOutcomeConquestNoWinner => 'Un empire reste sur la carte.';
 
   @override
   String gameOutcomeConquestWinner(String winner) {
-    return '$winner is the last empire on the map.';
+    return '$winner est le dernier empire sur la carte.';
   }
 
   @override
-  String get gameOutcomeScoreNoWinner => 'The turn limit decided the result.';
+  String get gameOutcomeScoreNoWinner =>
+      'La limite de tour a décidé le résultat.';
 
   @override
   String gameOutcomeScoreWinner(String winner) {
-    return '$winner wins after the turn limit.';
+    return '$winner gagne après la limite de tour.';
   }
 
   @override
   String get gameOutcomeScoreDrawSubtitle =>
-      'Turn limit reached. The highest score is tied.';
+      'Limite de tour atteinte. Le score le plus élevé est égal.';
 
   @override
-  String get gameOutcomeDominationNoWinner => 'Map control was held.';
+  String get gameOutcomeDominationNoWinner =>
+      'Le contrôle des cartes a été maintenu.';
 
   @override
   String gameOutcomeDominationWinner(String winner) {
-    return '$winner holds territorial domination.';
+    return '$winner détient la domination territoriale.';
   }
 
   @override
-  String get gameOutcomeWinnerMetric => 'Winner';
+  String get gameOutcomeWinnerMetric => 'Gagnant';
 
   @override
-  String get gameOutcomeConditionMetric => 'Condition';
+  String get gameOutcomeConditionMetric => 'État';
 
   @override
-  String get gameOutcomeEliminationMetric => 'Elimination';
+  String get gameOutcomeEliminationMetric => 'Élimination';
 
   @override
-  String get gameOutcomeMapControlMetric => 'Map control';
+  String get gameOutcomeMapControlMetric => 'Contrôle des cartes';
 
   @override
-  String get gameOutcomeHoldMetric => 'Hold';
+  String get gameOutcomeHoldMetric => 'Attendez';
 
   @override
-  String get gameOutcomeThresholdMetric => 'Threshold';
+  String get gameOutcomeThresholdMetric => 'Seuil';
 
   @override
   String gameOutcomeTurnsValue(int held, int required) {
-    return '$held/$required turns';
+    return 'Tours $held/$required';
   }
 
   @override
-  String get victoryConquestPrimary => 'Conquest';
+  String get victoryConquestPrimary => 'Conquête';
 
   @override
-  String get victoryGoalCompact => 'Goal';
+  String get victoryGoalCompact => 'Objectif';
 
   @override
-  String get victoryNoLimit => 'No limit';
+  String get victoryNoLimit => 'Aucune limite';
 
   @override
-  String get victoryConquestTooltip => 'Goal: eliminate rivals. No turn limit.';
+  String get victoryConquestTooltip =>
+      'Objectif: éliminer les rivaux. Pas de limite de tour.';
 
   @override
-  String get victoryLimitLabel => 'Limit';
+  String get victoryLimitLabel => 'Limite';
 
   @override
-  String get victoryNoneValue => 'None';
+  String get victoryNoneValue => 'Aucune';
 
   @override
-  String get victoryScoreCapPrimary => 'SCORE CAP';
+  String get victoryScoreCapPrimary => 'La PAC SCORE';
 
   @override
   String victoryScoreRemainingPrimary(int turns) {
@@ -2203,7 +2218,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get victoryScoreCapCompact => 'CAP';
+  String get victoryScoreCapCompact => 'Politique agricole';
 
   @override
   String victoryTurnsCompact(int turns) {
@@ -2215,36 +2230,36 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count turns',
-      one: '1 turn',
+      other: '$count tours',
+      one: '1 tour',
     );
     return '$_temp0';
   }
 
   @override
-  String get victoryRemainingLabel => 'Remaining';
+  String get victoryRemainingLabel => 'Reste';
 
   @override
-  String get victoryScoreLeaderLabel => 'Score leader';
+  String get victoryScoreLeaderLabel => 'Leader du score';
 
   @override
   String victoryScoreDrawLabel(int score) {
-    return 'DRAW $score';
+    return 'VÉHICULE $score';
   }
 
   @override
   String victoryScoreLimitReachedTooltip(int turnLimit) {
-    return 'Turn limit $turnLimit reached. Score decides the result.';
+    return 'Limite de tour $turnLimit atteint. Le score décide du résultat.';
   }
 
   @override
   String victoryScoreFallbackTooltip(int remainingTurns, int turnLimit) {
-    return 'Score fallback in $remainingTurns turns. Limit: $turnLimit.';
+    return 'Recul des scores dans les tours $remainingTurns. Limite: $turnLimit.';
   }
 
   @override
   String victoryLeaderTooltip(String leader) {
-    return 'Leader: $leader.';
+    return 'Chef: $leader.';
   }
 
   @override
@@ -2254,77 +2269,77 @@ class AppLocalizationsFr extends AppLocalizations {
     String required,
     String hold,
   ) {
-    return 'Domination: $leader controls $control% of the map. Threshold: $required%, hold: $hold.';
+    return 'Domination: $leader contrôle $control% de la carte. Seuil: $required%, tenir: $hold.';
   }
 
   @override
-  String get victoryLeaderLabel => 'Leader';
+  String get victoryLeaderLabel => 'Chef';
 
   @override
-  String get victoryControlLabel => 'Control';
+  String get victoryControlLabel => 'Contrôle';
 
   @override
-  String get victoryHoldLabel => 'Hold';
+  String get victoryHoldLabel => 'Attendez';
 
   @override
-  String get victoryYouLabel => 'You';
+  String get victoryYouLabel => 'Toi';
 
   @override
-  String get victoryPressureLabel => 'Pressure';
+  String get victoryPressureLabel => 'Pression';
 
   @override
-  String get victoryFallbackLabel => 'Fallback';
+  String get victoryFallbackLabel => 'Retour';
 
   @override
   String victoryYourGoalGainControl(int points) {
-    return 'Your goal: gain $points pp more map control.';
+    return 'Votre objectif: gagner $points pp plus de contrôle de carte.';
   }
 
   @override
   String get victoryYourGoalReady =>
-      'Your goal: the domination condition is ready to resolve.';
+      'Votre but: la condition de domination est prête à être résolue.';
 
   @override
   String victoryYourGoalHold(String turns) {
-    return 'Your goal: hold the threshold for $turns more.';
+    return 'Votre objectif: maintenez le seuil pour $turns plus.';
   }
 
   @override
   String victoryLeaderAboveThreshold(String leader) {
-    return '$leader is above the threshold; break that control before the goal is held.';
+    return '$leader est au-dessus du seuil; briser ce contrôle avant que le but soit maintenu.';
   }
 
   @override
   String victoryYourProgress(String control, String required) {
-    return 'Your progress: $control% / $required%.';
+    return 'Vos progrès: $control% / $required%.';
   }
 
   @override
   String victoryPressureReachThreshold(int points) {
-    return 'Reach the threshold: missing $points pp';
+    return 'Atteindre le seuil: manquant $points pp';
   }
 
   @override
-  String get victoryConditionReady => 'Condition ready';
+  String get victoryConditionReady => 'État prêt';
 
   @override
   String victoryPressureHold(String turns) {
-    return 'Hold for $turns';
+    return 'Tenez pour $turns';
   }
 
   @override
   String victoryPressureLeaderHolding(String leader, String turns) {
-    return '$leader above threshold: $turns';
+    return '$leader au-dessus du seuil: $turns';
   }
 
   @override
   String victoryPressureYourGap(int points) {
-    return 'Your goal: missing $points pp';
+    return 'Votre objectif: manquant $points pp';
   }
 
   @override
   String victoryPressureLeaderGap(String leader, int points) {
-    return '$leader leads: missing $points pp';
+    return '$leader conduits: manquant $points pp';
   }
 
   @override
@@ -2334,22 +2349,22 @@ class AppLocalizationsFr extends AppLocalizations {
     String required,
     int points,
   ) {
-    return 'Rival approaches domination: $player controls $control% at the $required% threshold; missing $points pp.';
+    return 'Rival approche la domination: $player contrôle $control% au seuil $required%; il manque $points pp.';
   }
 
   @override
   String victoryThreatHolding(String player, String hold) {
-    return 'Rival is holding the domination threshold: $player $hold.';
+    return 'Rival détient le seuil de domination: $player $hold.';
   }
 
   @override
   String victoryThreatImminent(String player, String hold) {
-    return 'Rival is close to domination: $player $hold.';
+    return 'Rival est proche de la domination: $player $hold.';
   }
 
   @override
   String victoryThreatPressureApproaching(String player, int points) {
-    return '$player near threshold: missing $points pp';
+    return '$player près du seuil: manquant $points pp';
   }
 
   @override
@@ -2358,11 +2373,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get victoryBelowThreshold => 'below threshold';
+  String get victoryBelowThreshold => 'au-dessous du seuil';
 
   @override
   String victoryHoldProgress(int held, int required) {
-    return '$held/$required turns';
+    return 'Tours $held/$required';
   }
 
   @override
@@ -2371,39 +2386,39 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get victoryReady => 'ready';
+  String get victoryReady => 'Prêt';
 
   @override
   String victoryRemainingTurns(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count turns left',
-      one: '1 turn left',
+      other: '$count tours restants',
+      one: '1 tour restant',
     );
     return '$_temp0';
   }
 
   @override
-  String get returnToMenuAction => 'Return to menu';
+  String get returnToMenuAction => 'Retour au menu';
 
   @override
-  String get today => 'today';
+  String get today => 'Aujourd\'hui';
 
   @override
-  String get yesterday => 'yesterday';
+  String get yesterday => 'hier';
 
   @override
-  String get objectivesPanelTitle => 'OBJECTIVES';
+  String get objectivesPanelTitle => 'OBJECTIFS';
 
   @override
-  String get objectivesCloseTooltip => 'Close objectives';
+  String get objectivesCloseTooltip => 'Objectifs étroits';
 
   @override
-  String get objectivesMenuClosePrefix => 'Close objectives';
+  String get objectivesMenuClosePrefix => 'Objectifs étroits';
 
   @override
-  String get objectivesMenuOpenPrefix => 'Objectives';
+  String get objectivesMenuOpenPrefix => 'Objectifs';
 
   @override
   String objectivesMenuTooltip(
@@ -2421,8 +2436,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count objectives',
-      one: '1 objective',
+      other: '$count objectifs',
+      one: '1 objectif',
     );
     return '$_temp0';
   }
@@ -2437,337 +2452,345 @@ class AppLocalizationsFr extends AppLocalizations {
   String get objectivesMenuDescriptorDomination => 'domination';
 
   @override
-  String get objectivesMenuDescriptorDominationThreat => 'domination threat';
+  String get objectivesMenuDescriptorDominationThreat => 'menace de domination';
 
   @override
-  String get objectivesMenuDescriptorScoreLead => 'lead defense';
+  String get objectivesMenuDescriptorScoreLead => 'défense principale';
 
   @override
-  String get objectivesMenuDescriptorScorePressure => 'score pressure';
+  String get objectivesMenuDescriptorScorePressure => 'pression nominale';
 
   @override
-  String get objectivesMenuDescriptorActiveObjective => 'active objective';
+  String get objectivesMenuDescriptorActiveObjective => 'objectif actif';
 
   @override
-  String get objectiveMicroTooltipLabel => 'Why';
+  String get objectiveMicroTooltipLabel => 'Pourquoi';
 
   @override
-  String get objectiveOverviewGuidanceLabel => 'ACTIVE OBJECTIVE';
+  String get objectiveOverviewGuidanceLabel => 'OBJECTIF ACTIF';
 
   @override
   String get objectiveOverviewStrategicLabel => 'URGENT';
 
   @override
-  String get objectiveOverviewScoreCatchUpLabel => 'SCORE PRESSURE';
+  String get objectiveOverviewScoreCatchUpLabel => 'PRESSION SCORE';
 
   @override
-  String get objectiveOverviewScoreProtectLabel => 'DEFEND LEAD';
+  String get objectiveOverviewScoreProtectLabel => 'DÉFENSE';
 
   @override
-  String get objectiveOverviewDominationHoldLabel => 'DOMINATION';
+  String get objectiveOverviewDominationHoldLabel => 'DOMAINE';
 
   @override
-  String get objectiveOverviewDominationThreatLabel => 'DOMINATION THREAT';
+  String get objectiveOverviewDominationThreatLabel =>
+      'PROTECTION DE L\'INTÉRIEUR';
 
   @override
   String objectiveOverviewTitleLabel(String title) {
-    return 'Top priority: $title';
+    return 'Priorité absolue: $title';
   }
 
   @override
   String objectiveOverviewProgressLabel(String progress) {
-    return 'Progress $progress';
+    return 'Progrès $progress';
   }
 
   @override
-  String get objectivePhaseFoundation => 'Foundation';
+  String get objectivePhaseFoundation => 'Fondation';
 
   @override
   String get objectivePhaseExpansion => 'Expansion';
 
   @override
-  String get objectivePhasePressure => 'Pressure';
+  String get objectivePhasePressure => 'Pression';
 
   @override
-  String get objectivePhaseEndgame => 'Endgame';
+  String get objectivePhaseEndgame => 'Fin du jeu';
 
   @override
-  String get objectiveChooseResearchTitle => 'Choose research';
+  String get objectiveChooseResearchTitle => 'Choisir la recherche';
 
   @override
   String get objectiveChooseResearchHint =>
-      'Set your development direction before the first turn ends.';
+      'Réglez votre direction de développement avant la fin du premier tour.';
 
   @override
-  String get objectiveChooseResearchReward => '+ science tempo';
+  String get objectiveChooseResearchReward => '+ tempo scientifique';
 
   @override
   String get objectiveChooseResearchTooltip =>
-      'Research turns every following turn toward a specific development path.';
+      'La recherche tourne chaque tour suivant vers une voie de développement spécifique.';
 
   @override
-  String get objectiveFoundCapitalTitle => 'Found your first city';
+  String get objectiveFoundCapitalTitle => 'Trouvé ta première ville';
 
   @override
   String get objectiveFoundCapitalHint =>
-      'Your settler should quickly turn good terrain into a capital.';
+      'Votre colon devrait rapidement transformer un bon terrain en capitale.';
 
   @override
-  String get objectiveFoundCapitalReward => '+ production base';
+  String get objectiveFoundCapitalReward => '+ base de production';
 
   @override
   String get objectiveFoundCapitalTooltip =>
-      'The capital unlocks production, growth, and territorial reach.';
+      'La capitale libère la production, la croissance et la portée territoriale.';
 
   @override
-  String get objectiveExploreNearbyTitle => 'Explore nearby land';
+  String get objectiveExploreNearbyTitle => 'Explorez les terres voisines';
 
   @override
   String get objectiveExploreNearbyHint =>
-      'Your warrior should reveal nearby resources and city sites.';
+      'Votre guerrier devrait révéler les ressources et les sites de la ville.';
 
   @override
-  String get objectiveExploreNearbyReward => '+ better decisions';
+  String get objectiveExploreNearbyReward => '+ meilleures décisions';
 
   @override
   String get objectiveExploreNearbyTooltip =>
-      'Early scouting helps choose city sites and avoid blind moves.';
+      'Le dépistage précoce aide à choisir les sites de la ville et à éviter les déplacements aveugles.';
 
   @override
-  String get objectiveQueueWorkerTitle => 'Queue a worker';
+  String get objectiveQueueWorkerTitle => 'Demander un travailleur';
 
   @override
   String get objectiveQueueWorkerHint =>
-      'A worker turns food and production on the map into a real advantage.';
+      'Un travailleur transforme la nourriture et la production sur la carte en un véritable avantage.';
 
   @override
-  String get objectiveQueueWorkerReward => '+ field development';
+  String get objectiveQueueWorkerReward => '+ développement sur le terrain';
 
   @override
   String get objectiveQueueWorkerTooltip =>
-      'A worker turns good tiles into steady resource growth.';
+      'Un travailleur transforme de bonnes tuiles en croissance régulière des ressources.';
 
   @override
-  String get objectiveImproveFirstHexTitle => 'Improve your first tile';
+  String get objectiveImproveFirstHexTitle => 'Améliorez votre première tuile';
 
   @override
   String get objectiveImproveFirstHexHint =>
-      'The first improvement should support food, production, or gold.';
+      'La première amélioration devrait soutenir la nourriture, la production ou l\'or.';
 
   @override
-  String get objectiveImproveFirstHexReward => '+ stronger economy';
+  String get objectiveImproveFirstHexReward => '+ une économie plus forte';
 
   @override
   String get objectiveImproveFirstHexTooltip =>
-      'The first improvement shows which part of the city economy should grow fastest.';
+      'La première amélioration montre quelle partie de l\'économie de la ville devrait connaître la croissance la plus rapide.';
 
   @override
-  String get objectiveFoundSecondCityTitle => 'Found a second city';
+  String get objectiveFoundSecondCityTitle => 'Trouvé une deuxième ville';
 
   @override
   String get objectiveFoundSecondCityHint =>
-      'A second settlement opens expansion without flooding the map with units.';
+      'Une seconde colonie ouvre l\'expansion sans inonder la carte avec des unités.';
 
   @override
-  String get objectiveFoundSecondCityReward => '+ empire scale';
+  String get objectiveFoundSecondCityReward => '+ échelle de l\'empire';
 
   @override
   String get objectiveFoundSecondCityTooltip =>
-      'A second city increases production pace without waiting on one capital.';
+      'Une deuxième ville augmente le rythme de production sans attendre une capitale.';
 
   @override
-  String get objectiveBuildFirstBuildingTitle => 'Build your first building';
+  String get objectiveBuildFirstBuildingTitle =>
+      'Construisez votre premier bâtiment';
 
   @override
   String get objectiveBuildFirstBuildingHint =>
-      'The first building should strengthen food, production, or gold.';
+      'Le premier bâtiment devrait renforcer la nourriture, la production ou l\'or.';
 
   @override
-  String get objectiveBuildFirstBuildingReward => '+ lasting city advantage';
+  String get objectiveBuildFirstBuildingReward => '+ avantage urbain durable';
 
   @override
   String get objectiveBuildFirstBuildingTooltip =>
-      'Buildings stay in the city and scale across many turns.';
+      'Les bâtiments restent dans la ville et s\'étendent sur de nombreux tours.';
 
   @override
-  String get objectiveImproveThreeHexesTitle => 'Improve three tiles';
+  String get objectiveImproveThreeHexesTitle => 'Améliorer trois tuiles';
 
   @override
   String get objectiveImproveThreeHexesHint =>
-      'Several improvements turn a starting camp into an economy.';
+      'Plusieurs améliorations transforment un camp de départ en économie.';
 
   @override
-  String get objectiveImproveThreeHexesReward => '+ stable income';
+  String get objectiveImproveThreeHexesReward => '+ revenu stable';
 
   @override
   String get objectiveImproveThreeHexesTooltip =>
-      'Three improvements create a stable base for armies, research, or expansion.';
+      'Trois améliorations créent une base stable pour les armées, la recherche ou l\'expansion.';
 
   @override
-  String get objectiveFoundThirdCityTitle => 'Found a third city';
+  String get objectiveFoundThirdCityTitle => 'Trouvé une troisième ville';
 
   @override
   String get objectiveFoundThirdCityHint =>
-      'A third settlement creates a true empire and a second expansion direction.';
+      'Une troisième colonie crée un véritable empire et une deuxième direction d\'expansion.';
 
   @override
-  String get objectiveFoundThirdCityReward => '+ map scale';
+  String get objectiveFoundThirdCityReward => '+ échelle de carte';
 
   @override
   String get objectiveFoundThirdCityTooltip =>
-      'A third city gives you a second development front and more decisions every turn.';
+      'Une troisième ville vous donne un deuxième front de développement et plus de décisions à chaque tour.';
 
   @override
-  String get objectiveExploreRegionTitle => 'Explore the region';
+  String get objectiveExploreRegionTitle => 'Explorer la région';
 
   @override
   String get objectiveExploreRegionHint =>
-      'A wider map reveals resources, rivals, and places worth defending.';
+      'Une carte plus large révèle les ressources, les rivaux et les lieux à défendre.';
 
   @override
-  String get objectiveExploreRegionReward => '+ strategic plan';
+  String get objectiveExploreRegionReward => '+ plan stratégique';
 
   @override
   String get objectiveExploreRegionTooltip =>
-      'A wider map reveals rivals, strategic resources, and safe borders.';
+      'Une carte plus large révèle des rivaux, des ressources stratégiques et des frontières sûres.';
 
   @override
-  String get objectiveBuildCombatForceTitle => 'Build a defensive force';
+  String get objectiveBuildCombatForceTitle => 'Construire une force défensive';
 
   @override
   String get objectiveBuildCombatForceHint =>
-      'Several troops let you protect expansion and pressure rivals.';
+      'Plusieurs soldats vous permettent de protéger les rivaux d\'expansion et de pression.';
 
   @override
-  String get objectiveBuildCombatForceReward => '+ border security';
+  String get objectiveBuildCombatForceReward => '+ sécurité aux frontières';
 
   @override
   String get objectiveBuildCombatForceTooltip =>
-      'A steady screen protects settlers, workers, and developed cities.';
+      'Un écran permanent protège les colons, les travailleurs et les villes développées.';
 
   @override
-  String get objectiveHoldDominationTitle => 'Hold domination';
+  String get objectiveHoldDominationTitle => 'Maintenez la domination';
 
   @override
   String get objectiveHoldDominationHint =>
-      'You are above the map threshold. Keep control until the countdown ends.';
+      'Vous êtes au-dessus du seuil de la carte. Gardez le contrôle jusqu\'à la fin du compte à rebours.';
 
   @override
-  String get objectiveHoldDominationReward => '+ map victory';
+  String get objectiveHoldDominationReward => '+ victoire de carte';
 
   @override
   String get objectiveHoldDominationTooltip =>
-      'Domination ends the game before the score cap if you hold the required map percentage for consecutive turns.';
+      'La domination termine le jeu avant le plafond de score si vous maintenez le pourcentage de carte requis pour des tours consécutifs.';
 
   @override
-  String get objectiveBreakDominationHoldTitle => 'Break a rival\'s domination';
+  String get objectiveBreakDominationHoldTitle =>
+      'Briser la domination d\'un rival';
 
   @override
   String get objectiveBreakDominationHoldHint =>
-      'A rival is above the map threshold. Take territory before they hold the objective.';
+      'Un rival est au-dessus du seuil de la carte. Prenez le territoire avant qu\'ils ne tiennent l\'objectif.';
 
   @override
-  String get objectiveBreakDominationHoldReward => '+ countdown stopped';
+  String get objectiveBreakDominationHoldReward => '+ compte à rebours arrêté';
 
   @override
   String get objectiveBreakDominationHoldTooltip =>
-      'If a rival falls below the control threshold, their hold turns reset to zero.';
+      'Si un rival tombe au-dessous du seuil de contrôle, ses tours de maintien sont remis à zéro.';
 
   @override
-  String get objectiveHoldScoreLeadTitle => 'Hold the lead';
+  String get objectiveHoldScoreLeadTitle => 'Tenez la tête';
 
   @override
   String get objectiveHoldScoreLeadHint =>
-      'The turn limit is close. Protect your score and avoid losing your edge in the final turns.';
+      'La limite de tour est proche. Protégez votre score et évitez de perdre votre avantage lors des derniers tours.';
 
   @override
-  String get objectiveHoldScoreLeadReward => '+ score-cap win';
+  String get objectiveHoldScoreLeadReward => '+ gain de bonnet de score';
 
   @override
   String get objectiveHoldScoreLeadTooltip =>
-      'The score cap decides the match when the turn limit passes, so the point lead must last to the end.';
+      'La limite de score détermine le partie lorsque la limite de tour passe, de sorte que le point d\'avance doit durer jusqu\'à la fin.';
 
   @override
-  String get objectiveOvertakeScoreLeaderTitle => 'Catch the score leader';
+  String get objectiveOvertakeScoreLeaderTitle => 'Attrapez le leader du score';
 
   @override
   String get objectiveOvertakeScoreLeaderHint =>
-      'The turn limit is close. You need fast score growth or a weaker leader.';
+      'La limite de tour est proche. Il faut une croissance rapide des scores ou un leader plus faible.';
 
   @override
-  String get objectiveOvertakeScoreLeaderReward => '+ score-cap chance';
+  String get objectiveOvertakeScoreLeaderReward => '+ une chance de succès';
 
   @override
   String get objectiveOvertakeScoreLeaderTooltip =>
-      'Build cities, population, technologies, units, and improvements; if scores tie, the score cap ends in a draw.';
+      'Construire des villes, de la population, des technologies, des unités et des améliorations; si les scores sont égaux, le plafond se termine par un tirage au sort.';
 
   @override
-  String get objectiveSecureMapObjectiveTitle => 'Secure the map objective';
+  String get objectiveSecureMapObjectiveTitle =>
+      'Sécuriser l\'objectif de la carte';
 
   @override
   String get objectiveSecureMapObjectiveHint =>
-      'Keep a unit or city influence on the objective until the hold completes.';
+      'Garder une unité ou une ville d\'influence sur l\'objectif jusqu\'à ce que la cale soit terminée.';
 
   @override
-  String get objectiveSecureMapObjectiveReward => '+ objective rewards';
+  String get objectiveSecureMapObjectiveReward => '+ récompenses objectives';
 
   @override
   String get objectiveSecureMapObjectiveTooltip =>
-      'Map objectives use triangle markers and grant their victory points or gold only after consecutive control.';
+      'Les objectifs de la carte utilisent des marqueurs triangulaires et n\'accordent leurs points de victoire ou d\'or qu\'après un contrôle consécutif.';
 
   @override
-  String get objectiveBreakMapObjectiveHoldTitle => 'Break the rival objective';
+  String get objectiveBreakMapObjectiveHoldTitle => 'Briser l\'objectif rival';
 
   @override
   String get objectiveBreakMapObjectiveHoldHint =>
-      'A rival is holding a map objective. Contest the triangle marker before the hold completes.';
+      'Un rival tient un objectif de carte. Concourser le marqueur triangle avant la tenue complète.';
 
   @override
-  String get objectiveBreakMapObjectiveHoldReward => '+ denied objective';
+  String get objectiveBreakMapObjectiveHoldReward => '+ Objectif refusé';
 
   @override
   String get objectiveBreakMapObjectiveHoldTooltip =>
-      'Moving onto the objective with your own force contests control and resets the rival\'s progress.';
+      'En passant à l\'objectif avec votre propre force conteste le contrôle et réinitialise le progrès du rival.';
 
   @override
-  String get objectiveAdviceFoundCity => 'Biggest gap: a new or captured city.';
+  String get objectiveAdviceFoundCity =>
+      'Plus grand écart: une ville nouvelle ou capturée.';
 
   @override
-  String get objectiveAdviceGrowPopulation => 'Biggest gap: population growth.';
+  String get objectiveAdviceGrowPopulation =>
+      'Écart le plus important: croissance démographique.';
 
   @override
   String get objectiveAdviceClaimTerritory =>
-      'Biggest gap: more controlled tiles.';
+      'Plus grand écart: tuiles plus contrôlées.';
 
   @override
   String get objectiveAdviceConstructBuilding =>
-      'Biggest gap: a city building.';
+      'Plus grand écart: un immeuble urbain.';
 
   @override
-  String get objectiveAdviceTrainUnit => 'Biggest gap: a quick unit.';
+  String get objectiveAdviceTrainUnit => 'Plus grand écart: une unité rapide.';
 
   @override
   String get objectiveAdviceUnlockTechnology =>
-      'Biggest gap: completing a technology.';
+      'Plus grand écart: compléter une technologie.';
 
   @override
-  String get objectiveAdviceImproveField => 'Biggest gap: a tile improvement.';
+  String get objectiveAdviceImproveField =>
+      'Plus grand écart: une amélioration de la tuile.';
 
   @override
-  String get objectiveAdviceCollectGold => 'Biggest gap: gold for score.';
+  String get objectiveAdviceCollectGold =>
+      'Plus grand écart: l\'or pour la partition.';
 
   @override
   String get objectiveAdviceProtectLead =>
-      'Priority: do not give up cities, and secure the next score gain.';
+      'Priorité: ne pas abandonner les villes et obtenir le prochain gain de score.';
 
   @override
   String objectiveScoreBreakdownCatchUpHeader(int delta) {
-    return 'Score gap: $delta pts';
+    return 'Écart de score: $delta pts';
   }
 
   @override
   String objectiveScoreBreakdownProtectHeader(int delta) {
-    return 'Score lead: $delta pts';
+    return 'Niveau supérieur: $delta pts';
   }
 
   @override
@@ -2775,7 +2798,7 @@ class AppLocalizationsFr extends AppLocalizations {
     int playerScore,
     int comparisonScore,
   ) {
-    return 'You $playerScore / leader $comparisonScore';
+    return 'Vous $playerScore / leader $comparisonScore';
   }
 
   @override
@@ -2783,12 +2806,12 @@ class AppLocalizationsFr extends AppLocalizations {
     int playerScore,
     int comparisonScore,
   ) {
-    return 'You $playerScore / rival $comparisonScore';
+    return 'Vous $playerScore / rival $comparisonScore';
   }
 
   @override
   String objectiveScoreBreakdownCatchUpDelta(int delta) {
-    return 'short by $delta';
+    return 'courte par $delta';
   }
 
   @override
@@ -2797,61 +2820,61 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get objectiveScoreCategoryCity => 'Cities';
+  String get objectiveScoreCategoryCity => 'Villes';
 
   @override
   String get objectiveScoreCategoryPopulation => 'Population';
 
   @override
-  String get objectiveScoreCategoryTerritory => 'Territory';
+  String get objectiveScoreCategoryTerritory => 'Territoire';
 
   @override
-  String get objectiveScoreCategoryBuilding => 'Buildings';
+  String get objectiveScoreCategoryBuilding => 'Bâtiments';
 
   @override
-  String get objectiveScoreCategoryUnit => 'Units';
+  String get objectiveScoreCategoryUnit => 'Unités';
 
   @override
   String get objectiveScoreCategoryTechnology => 'Technologies';
 
   @override
-  String get objectiveScoreCategoryImprovement => 'Improvements';
+  String get objectiveScoreCategoryImprovement => 'Améliorations';
 
   @override
-  String get objectiveScoreCategoryGold => 'Gold';
+  String get objectiveScoreCategoryGold => 'Or';
 
   @override
   String get cityBuildingGranary => 'Granary';
 
   @override
-  String get cityBuildingWaterMill => 'Water Mill';
+  String get cityBuildingWaterMill => 'Usine d\'eau';
 
   @override
-  String get cityBuildingWorkshop => 'Workshop';
+  String get cityBuildingWorkshop => 'Atelier';
 
   @override
-  String get cityBuildingStorehouse => 'Storehouse';
+  String get cityBuildingStorehouse => 'Magasin';
 
   @override
-  String get cityBuildingHousing => 'Housing';
+  String get cityBuildingHousing => 'Logement';
 
   @override
-  String get cityBuildingMerchantHall => 'Merchant Hall';
+  String get cityBuildingMerchantHall => 'Salle des marchands';
 
   @override
-  String get cityBuildingStonemason => 'Stonemason';
+  String get cityBuildingStonemason => 'Maçon';
 
   @override
-  String get cityBuildingBarracks => 'Barracks';
+  String get cityBuildingBarracks => 'Barres';
 
   @override
-  String get cityBuildingMarketplace => 'Marketplace';
+  String get cityBuildingMarketplace => 'Marché';
 
   @override
   String get cityBuildingPort => 'Port';
 
   @override
-  String get cityBuildingAqueduct => 'Aqueduct';
+  String get cityBuildingAqueduct => 'Aqueduc';
 
   @override
   String get cityBuildingForge => 'Forge';
@@ -2860,22 +2883,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cityBuildingStable => 'Stable';
 
   @override
-  String get cityBuildingBank => 'Bank';
+  String get cityBuildingBank => 'Banque';
 
   @override
-  String get cityBuildingBuildersGuild => 'Builders\' Guild';
+  String get cityBuildingBuildersGuild => 'Guilde des constructeurs';
 
   @override
-  String get cityBuildingFactory => 'Factory';
+  String get cityBuildingFactory => 'Usine';
 
   @override
-  String get cityBuildingLighthouse => 'Lighthouse';
+  String get cityBuildingLighthouse => 'Phare';
 
   @override
-  String get cityBuildingTrainingGrounds => 'Training Grounds';
+  String get cityBuildingTrainingGrounds => 'Terrains de formation';
 
   @override
-  String get cityBuildingTownHall => 'Town Hall';
+  String get cityBuildingTownHall => 'Mairie';
 
   @override
   String get cityBuildingMonument => 'Monument';
@@ -2884,360 +2907,361 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cityBuildingArchive => 'Archive';
 
   @override
-  String get cityBuildingAcademy => 'Academy';
+  String get cityBuildingAcademy => 'Académie';
 
   @override
-  String get cityBuildingUniversity => 'University';
+  String get cityBuildingUniversity => 'Université';
 
   @override
-  String get cityBuildingObservatory => 'Observatory';
+  String get cityBuildingObservatory => 'Observatoire';
 
   @override
-  String get cityBuildingLaboratory => 'Laboratory';
+  String get cityBuildingLaboratory => 'Laboratoire';
 
   @override
-  String get cityBuildingReactor => 'Reactor';
+  String get cityBuildingReactor => 'Réacteur';
 
   @override
-  String get cityBuildingCourthouse => 'Courthouse';
+  String get cityBuildingCourthouse => 'Palais de justice';
 
   @override
-  String get cityBuildingCourt => 'Court';
+  String get cityBuildingCourt => 'Cour';
 
   @override
-  String get cityBuildingGovernorsOffice => 'Governor\'s Office';
+  String get cityBuildingGovernorsOffice => 'Bureau du Gouverneur';
 
   @override
-  String get cityBuildingSurveyorsOffice => 'Surveyor\'s Office';
+  String get cityBuildingSurveyorsOffice => 'Bureau d\'arpenteur';
 
   @override
-  String get cityBuildingPlanningOffice => 'Planning Office';
+  String get cityBuildingPlanningOffice => 'Bureau de la planification';
 
   @override
-  String get cityBuildingApothecary => 'Apothecary';
+  String get cityBuildingApothecary => 'Apothécaire';
 
   @override
-  String get cityBuildingPublicBaths => 'Public Baths';
+  String get cityBuildingPublicBaths => 'Bains publics';
 
   @override
-  String get cityBuildingHospital => 'Hospital';
+  String get cityBuildingHospital => 'Hôpital';
 
   @override
-  String get cityBuildingMinistries => 'Ministries';
+  String get cityBuildingMinistries => 'Ministères';
 
   @override
-  String get cityBuildingWalls => 'Walls';
+  String get cityBuildingWalls => 'Murs';
 
   @override
-  String get cityBuildingArmory => 'Armory';
+  String get cityBuildingArmory => 'Armoire';
 
   @override
-  String get cityBuildingSiegeWorkshop => 'Siege Workshop';
+  String get cityBuildingSiegeWorkshop => 'Atelier de siège';
 
   @override
-  String get cityBuildingCitadel => 'Citadel';
+  String get cityBuildingCitadel => 'Citadelle';
 
   @override
-  String get cityBuildingWarCollege => 'War College';
+  String get cityBuildingWarCollege => 'Collège de guerre';
 
   @override
-  String get cityBuildingConscriptionOffice => 'Conscription Office';
+  String get cityBuildingConscriptionOffice => 'Bureau de conscription';
 
   @override
-  String get cityBuildingBorderFort => 'Border Fort';
+  String get cityBuildingBorderFort => 'Fort frontalier';
 
   @override
-  String get cityBuildingAirfield => 'Airfield';
+  String get cityBuildingAirfield => 'Terrain d\'aviation';
 
   @override
-  String get cityBuildingArtisansGuild => 'Artisans\' Guild';
+  String get cityBuildingArtisansGuild => 'Guilde des artisans';
 
   @override
-  String get cityBuildingMasterWorkshop => 'Master Workshop';
+  String get cityBuildingMasterWorkshop => 'Atelier principal';
 
   @override
-  String get cityBuildingSteelworks => 'Steelworks';
+  String get cityBuildingSteelworks => 'Aciéries';
 
   @override
-  String get cityBuildingRailDepot => 'Rail Depot';
+  String get cityBuildingRailDepot => 'Dépôt ferroviaire';
 
   @override
-  String get cityBuildingPowerPlant => 'Power Plant';
+  String get cityBuildingPowerPlant => 'Centrale électrique';
 
   @override
-  String get cityBuildingAssemblyPlant => 'Assembly Plant';
+  String get cityBuildingAssemblyPlant => 'Usine de montage';
 
   @override
-  String get cityBuildingRefinery => 'Refinery';
+  String get cityBuildingRefinery => 'Raffinerie';
 
   @override
-  String get cityBuildingMapRoom => 'Map Room';
+  String get cityBuildingMapRoom => 'Salle de carte';
 
   @override
-  String get cityBuildingShipyard => 'Shipyard';
+  String get cityBuildingShipyard => 'Chantier naval';
 
   @override
-  String get cityBuildingDryDock => 'Dry Dock';
+  String get cityBuildingDryDock => 'Dock sec';
 
   @override
-  String get cityBuildingNavalAcademy => 'Naval Academy';
+  String get cityBuildingNavalAcademy => 'Académie navale';
 
   @override
-  String get cityBuildingHarborCustoms => 'Harbor Customs';
+  String get cityBuildingHarborCustoms => 'Douanes portuaires';
 
   @override
-  String get cityBuildingMuseum => 'Museum';
+  String get cityBuildingMuseum => 'Musée';
 
   @override
-  String get cityBuildingParliament => 'Parliament';
+  String get cityBuildingParliament => 'Parlement européen';
 
   @override
-  String get cityBuildingBroadcastTower => 'Broadcast Tower';
+  String get cityBuildingBroadcastTower => 'Tour de diffusion';
 
   @override
-  String get cityBuildingWorldFairGrounds => 'World Fair Grounds';
+  String get cityBuildingWorldFairGrounds =>
+      'Des terrains d\'exposition mondiale';
 
   @override
   String get cityBuildingGranaryDescription =>
-      'An early food building that stabilizes city growth.';
+      'Un bâtiment alimentaire précoce qui stabilise la croissance de la ville.';
 
   @override
   String get cityBuildingWaterMillDescription =>
-      'Uses controlled river tiles to increase city food.';
+      'Utilise des tuiles de rivière contrôlées pour augmenter la nourriture de la ville.';
 
   @override
   String get cityBuildingWorkshopDescription =>
-      'A basic craft center that raises city production.';
+      'Un centre d\'artisanat de base qui élève la production urbaine.';
 
   @override
   String get cityBuildingStorehouseDescription =>
-      'Improves harvest storage and increases stored food.';
+      'Améliore l\'entreposage des récoltes et augmente les aliments entreposés.';
 
   @override
   String get cityBuildingHousingDescription =>
-      'Expands living space and lets the city control more tiles.';
+      'Élargit l\'espace vital et permet à la ville de contrôler plus de tuiles.';
 
   @override
   String get cityBuildingMerchantHallDescription =>
-      'Organizes local trade and increases city income.';
+      'Organise le commerce local et augmente le revenu de la ville.';
 
   @override
   String get cityBuildingStonemasonDescription =>
-      'Strengthens the city construction and defensive base.';
+      'Renforce la construction de la ville et la base défensive.';
 
   @override
   String get cityBuildingBarracksDescription =>
-      'Provides military infrastructure and additional defense.';
+      'Fournit une infrastructure militaire et une défense supplémentaire.';
 
   @override
   String get cityBuildingMarketplaceDescription =>
-      'Develops urban trade and greatly increases gold income.';
+      'Développe le commerce urbain et augmente considérablement le revenu de l\'or.';
 
   @override
   String get cityBuildingPortDescription =>
-      'Opens the city to sea trade and coastal food.';
+      'Ouvre la ville au commerce maritime et à la nourriture côtière.';
 
   @override
   String get cityBuildingAqueductDescription =>
-      'Delivers water, supporting growth and further city expansion.';
+      'Offre de l\'eau, favorisant la croissance et l\'expansion de la ville.';
 
   @override
   String get cityBuildingForgeDescription =>
-      'Concentrates metalworking and greatly increases production.';
+      'Concentre le travail des métaux et augmente considérablement la production.';
 
   @override
   String get cityBuildingStableDescription =>
-      'Supports breeding and logistics, adding food and production.';
+      'Soutient l\'élevage et la logistique, ajoutant nourriture et production.';
 
   @override
   String get cityBuildingBankDescription =>
-      'Centralizes finance and significantly increases city income.';
+      'Centralise les finances et augmente considérablement les revenus des villes.';
 
   @override
   String get cityBuildingBuildersGuildDescription =>
-      'Gathers construction specialists, accelerating production and territorial growth.';
+      'Rassemble des spécialistes de la construction, accélère la production et la croissance territoriale.';
 
   @override
   String get cityBuildingFactoryDescription =>
-      'A later-game industrial building that grants a large production bonus.';
+      'Un bâtiment industriel plus tard-jeu qui accorde un grand bonus de production.';
 
   @override
   String get cityBuildingLighthouseDescription =>
-      'Strengthens the coastal economy through navigation and trade.';
+      'Renforcer l\'économie côtière par la navigation et le commerce.';
 
   @override
   String get cityBuildingTrainingGroundsDescription =>
-      'Develops military training and improves city defense.';
+      'Développer l\'entraînement militaire et améliorer la défense de la ville.';
 
   @override
   String get cityBuildingTownHallDescription =>
-      'The city administration center, strengthening economy and territorial control.';
+      'Le centre administratif de la ville, renforçant l\'économie et le contrôle territorial.';
 
   @override
   String get cityBuildingMonumentDescription =>
-      'A symbol of city prestige, providing gold and defense.';
+      'Symbole du prestige de la ville, fournissant l\'or et la défense.';
 
   @override
   String get cityBuildingArchiveDescription =>
-      'The first knowledge building, organizing records and supporting research.';
+      'La première acquisition de connaissances, l\'organisation de documents et l\'appui à la recherche.';
 
   @override
   String get cityBuildingAcademyDescription =>
-      'Strengthens science cities and prepares the path to higher education.';
+      'Renforcer les villes scientifiques et préparer le chemin vers l\'enseignement supérieur.';
 
   @override
   String get cityBuildingUniversityDescription =>
-      'A later science building for large, developed cities.';
+      'Un bâtiment scientifique ultérieur pour de grandes villes développées.';
 
   @override
   String get cityBuildingObservatoryDescription =>
-      'Links geography with science and supports advanced research.';
+      'Établir des liens entre la géographie et la science et appuyer la recherche avancée.';
 
   @override
   String get cityBuildingLaboratoryDescription =>
-      'Support for late technology projects and modern science.';
+      'Soutien aux projets technologiques tardifs et aux sciences modernes.';
 
   @override
   String get cityBuildingReactorDescription =>
-      'A powerful endgame building requiring uranium and strong infrastructure.';
+      'Un puissant bâtiment de jeu nécessitant de l\'uranium et une infrastructure solide.';
 
   @override
   String get cityBuildingCourthouseDescription =>
-      'Stabilizes large or captured cities through legal administration.';
+      'Stabilise les grandes villes ou les villes capturées par l\'administration légale.';
 
   @override
   String get cityBuildingCourtDescription =>
-      'Develops law, city policies, and civilian control.';
+      'Développer le droit, les politiques municipales et le contrôle civil.';
 
   @override
   String get cityBuildingGovernorsOfficeDescription =>
-      'Strengthens city specialization and territorial management.';
+      'Renforcer la spécialisation urbaine et la gestion territoriale.';
 
   @override
   String get cityBuildingSurveyorsOfficeDescription =>
-      'Eases border planning and increases city control range.';
+      'Facilite la planification des frontières et augmente la portée du contrôle urbain.';
 
   @override
   String get cityBuildingPlanningOfficeDescription =>
-      'Develops the city through planning, production, and territorial control.';
+      'Développe la ville par la planification, la production et le contrôle territorial.';
 
   @override
   String get cityBuildingApothecaryDescription =>
-      'Early city health that helps maintain steady growth.';
+      'La santé des premières villes contribue à maintenir une croissance régulière.';
 
   @override
   String get cityBuildingPublicBathsDescription =>
-      'Improve stability and growth in larger cities.';
+      'Améliorer la stabilité et la croissance dans les grandes villes.';
 
   @override
   String get cityBuildingHospitalDescription =>
-      'Late population infrastructure for long-term development.';
+      'Infrastructure démographique tardive pour le développement à long terme.';
 
   @override
   String get cityBuildingMinistriesDescription =>
-      'A limited empire building that strengthens administration and gold.';
+      'Un empire limité qui renforce l\'administration et l\'or.';
 
   @override
   String get cityBuildingWallsDescription =>
-      'Early city defense against the first attacks.';
+      'Défense de la ville contre les premières attaques.';
 
   @override
   String get cityBuildingArmoryDescription =>
-      'A better recruitment and equipment center for troops.';
+      'Un meilleur centre de recrutement et d\'équipement pour les troupes.';
 
   @override
   String get cityBuildingSiegeWorkshopDescription =>
-      'Produces and maintains the support base for siege engines.';
+      'Produit et maintient la base de soutien des moteurs de siège.';
 
   @override
   String get cityBuildingCitadelDescription =>
-      'Late strategic defense for cities on important borders.';
+      'Défense stratégique tardive pour les villes aux frontières importantes.';
 
   @override
   String get cityBuildingWarCollegeDescription =>
-      'A military academy that strengthens army and general coordination.';
+      'Une académie militaire qui renforce l\'armée et la coordination générale.';
 
   @override
   String get cityBuildingConscriptionOfficeDescription =>
-      'Mobilizes the army and speeds preparation of new troops.';
+      'Mobilise l\'armée et accélère la préparation des nouvelles troupes.';
 
   @override
   String get cityBuildingBorderFortDescription =>
-      'Strengthens defense and visibility on empire borders.';
+      'Renforce la défense et la visibilité aux frontières de l\'empire.';
 
   @override
   String get cityBuildingAirfieldDescription =>
-      'A military airfield for aviation, reconnaissance, and modern force projection.';
+      'Un aérodrome militaire pour l\'aviation, la reconnaissance et la projection des forces modernes.';
 
   @override
   String get cityBuildingArtisansGuildDescription =>
-      'A production stage before the factory, based on crafts and workshops.';
+      'Une étape de production avant l\'usine, basée sur l\'artisanat et les ateliers.';
 
   @override
   String get cityBuildingMasterWorkshopDescription =>
-      'A specialized workshop for production-focused cities.';
+      'Un atelier spécialisé pour les villes axées sur la production.';
 
   @override
   String get cityBuildingSteelworksDescription =>
-      'Heavy industry based on iron or coal.';
+      'Industrie lourde basée sur le fer ou le charbon.';
 
   @override
   String get cityBuildingRailDepotDescription =>
-      'A rail depot improving logistics and mobility between cities.';
+      'Un dépôt ferroviaire améliorant la logistique et la mobilité entre les villes.';
 
   @override
   String get cityBuildingPowerPlantDescription =>
-      'Late energy infrastructure for strong industrial production.';
+      'Infrastructure énergétique tardive pour une production industrielle forte.';
 
   @override
   String get cityBuildingAssemblyPlantDescription =>
-      'An endgame industrial building for mass production.';
+      'Un bâtiment industriel pour la production de masse.';
 
   @override
   String get cityBuildingRefineryDescription =>
-      'Processes oil for modern armies and late projects.';
+      'Procéde au pétrole pour les armées modernes et les projets tardifs.';
 
   @override
   String get cityBuildingMapRoomDescription =>
-      'Supports exploration, visibility, and expedition planning.';
+      'Soutient l\'exploration, la visibilité et la planification des expéditions.';
 
   @override
   String get cityBuildingShipyardDescription =>
-      'Develops fleets and production in port cities.';
+      'Développer les flottes et la production dans les villes portuaires.';
 
   @override
   String get cityBuildingDryDockDescription =>
-      'A late naval port for larger warships.';
+      'Un port naval tardif pour les plus grands navires de guerre.';
 
   @override
   String get cityBuildingNavalAcademyDescription =>
-      'A naval military academy for specialized ports.';
+      'Une académie militaire navale pour les ports spécialisés.';
 
   @override
   String get cityBuildingHarborCustomsDescription =>
-      'A port office strengthening trade and coastal control.';
+      'Un bureau portuaire qui renforce le commerce et le contrôle côtier.';
 
   @override
   String get cityBuildingMuseumDescription =>
-      'A prestigious empire building that strengthens city influence.';
+      'Un bâtiment prestigieux qui renforce l\'influence de la ville.';
 
   @override
   String get cityBuildingParliamentDescription =>
-      'A limited civic building for a mature state.';
+      'Un bâtiment civique limité pour un état mature.';
 
   @override
   String get cityBuildingBroadcastTowerDescription =>
-      'Strengthens empire influence, visibility, and communication.';
+      'Renforce l\'influence de l\'empire, la visibilité et la communication.';
 
   @override
   String get cityBuildingWorldFairGroundsDescription =>
-      'A peaceful prestige project for a rich, developed city.';
+      'Un projet de prestige paisible pour une ville riche et développée.';
 
   @override
-  String get unitCommander => 'General';
+  String get unitCommander => 'Généralités';
 
   @override
-  String get unitWarrior => 'Warrior';
+  String get unitWarrior => 'Guerrier';
 
   @override
   String get unitArcher => 'Archer';
@@ -3246,10 +3270,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unitSettler => 'Settler';
 
   @override
-  String get unitWorker => 'Worker';
+  String get unitWorker => 'Travailleur';
 
   @override
-  String get unitMerchant => 'Merchant';
+  String get unitMerchant => 'Marchand';
 
   @override
   String get unitScout => 'Scout';
@@ -3258,306 +3282,306 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unitSpearman => 'Spearman';
 
   @override
-  String get unitCavalry => 'Cavalry';
+  String get unitCavalry => 'Cavalerie';
 
   @override
-  String get unitCatapult => 'Catapult';
+  String get unitCatapult => 'Catapulte';
 
   @override
-  String get unitHeavyInfantry => 'Heavy Infantry';
+  String get unitHeavyInfantry => 'Infanterie lourde';
 
   @override
-  String get unitFieldCannon => 'Field Cannon';
+  String get unitFieldCannon => 'Cannon de champ';
 
   @override
   String get unitRifleman => 'Rifleman';
 
   @override
-  String get unitTank => 'Tank';
+  String get unitTank => 'Réservoir';
 
   @override
-  String get unitScoutShip => 'Scout Ship';
+  String get unitScoutShip => 'Navire scout';
 
   @override
-  String get unitWarship => 'Warship';
+  String get unitWarship => 'Bateau de guerre';
 
   @override
-  String get unitReconPlane => 'Recon Plane';
+  String get unitReconPlane => 'Plan de reconnaissance';
 
   @override
   String get unitCommanderDescription =>
-      'A general commands an army, leads reconnaissance, and can act faster than regular troops.';
+      'Un général commande une armée, dirige la reconnaissance et peut agir plus rapidement que les troupes régulières.';
 
   @override
   String get unitWarriorDescription =>
-      'A basic combat unit for city defense and melee fighting.';
+      'Une unité de combat de base pour la défense de la ville et les combats de mêlée.';
 
   @override
   String get unitArcherDescription =>
-      'A ranged unit that attacks from farther away but defends poorly in melee.';
+      'Une unité variée qui attaque de plus loin mais se défend mal en mêlée.';
 
   @override
   String get unitSettlerDescription =>
-      'Founds new cities and expands the empire, but needs protection on the road.';
+      'Fonde de nouvelles villes et étend l\'empire, mais a besoin de protection sur la route.';
 
   @override
   String get unitWorkerDescription =>
-      'Improves tiles around cities, increasing food, production, and gold.';
+      'Améliore les carreaux autour des villes, augmentant la nourriture, la production et l\'or.';
 
   @override
   String get unitMerchantDescription =>
-      'Travels automatically between your cities along a trade route and can enter occupied friendly city centers.';
+      'Voyage automatiquement entre vos villes le long d\'une route commerciale et peut entrer dans les centres-villes accueillants occupés.';
 
   @override
   String get unitScoutDescription =>
-      'A fast reconnaissance unit for exploring the map and detecting threats.';
+      'Une unité de reconnaissance rapide pour explorer la carte et détecter les menaces.';
 
   @override
   String get unitSpearmanDescription =>
-      'Early defensive infantry, good for covering cities and stopping charges.';
+      'Fantassin défensif, bon pour couvrir les villes et arrêter les charges.';
 
   @override
   String get unitCavalryDescription =>
-      'A mobile strike unit that quickly responds to weak points on the front.';
+      'Une unité de frappe mobile qui réagit rapidement aux points faibles sur le front.';
 
   @override
   String get unitCatapultDescription =>
-      'A siege engine with longer range, effective against fortifications.';
+      'Un moteur de siège à plus longue portée, efficace contre les fortifications.';
 
   @override
   String get unitHeavyInfantryDescription =>
-      'Durable frontline infantry with high defense and solid attack.';
+      'Fantassin en première ligne durable avec haute défense et attaque solide.';
 
   @override
   String get unitFieldCannonDescription =>
-      'Modern field artillery for ranged bombardment.';
+      'L\'artillerie de campagne moderne pour les bombardements.';
 
   @override
   String get unitRiflemanDescription =>
-      'A modern ranged soldier, steady in attack and defense.';
+      'Un soldat moderne, stable dans l\'attaque et la défense.';
 
   @override
   String get unitTankDescription =>
-      'A heavy armored unit with high strength and high mobility.';
+      'Une unité blindée lourde avec une grande résistance et une grande mobilité.';
 
   @override
   String get unitScoutShipDescription =>
-      'A light ship for coastal reconnaissance and protecting early sea routes.';
+      'Un navire léger pour la reconnaissance côtière et la protection des routes maritimes précoces.';
 
   @override
   String get unitWarshipDescription =>
-      'A strong combat ship for sea control and ranged bombardment.';
+      'Un fort navire de combat pour le contrôle maritime et le bombardement.';
 
   @override
   String get unitReconPlaneDescription =>
-      'A reconnaissance aircraft with long vision range and very high mobility.';
+      'Un avion de reconnaissance à longue portée et à très haute mobilité.';
 
   @override
-  String get unitRankRecruit => 'Recruit';
+  String get unitRankRecruit => 'Recrutement';
 
   @override
-  String get unitRankSeasoned => 'Seasoned';
+  String get unitRankSeasoned => 'Assaisonnement';
 
   @override
-  String get unitRankVeteran => 'Veteran';
+  String get unitRankVeteran => 'Vétéran';
 
   @override
   String get unitRankElite => 'Elite';
 
   @override
-  String get troopWarrior => 'Warriors';
+  String get troopWarrior => 'Guerriers';
 
   @override
   String get troopArcher => 'Archers';
 
   @override
-  String get troopSettler => 'Settlers';
+  String get troopSettler => 'Les colons';
 
   @override
-  String get fieldImprovementFarm => 'Farm';
+  String get fieldImprovementFarm => 'Exploitation agricole';
 
   @override
-  String get fieldImprovementRiverFarm => 'River Farm';
+  String get fieldImprovementRiverFarm => 'Ferme fluviale';
 
   @override
-  String get fieldImprovementMine => 'Mine';
+  String get fieldImprovementMine => 'La mienne';
 
   @override
-  String get fieldImprovementLumberMill => 'Lumber Mill';
+  String get fieldImprovementLumberMill => 'Usine de bois';
 
   @override
-  String get fieldImprovementPasture => 'Pasture';
+  String get fieldImprovementPasture => 'Pâturages';
 
   @override
   String get fieldImprovementCamp => 'Camp';
 
   @override
-  String get fieldImprovementQuarry => 'Quarry';
+  String get fieldImprovementQuarry => 'Carrière';
 
   @override
-  String get fieldImprovementFishingBoats => 'Fishing Boats';
+  String get fieldImprovementFishingBoats => 'Bateaux de pêche';
 
   @override
-  String get fieldImprovementOrchard => 'Orchard';
+  String get fieldImprovementOrchard => 'verger';
 
   @override
   String get fieldImprovementPlantation => 'Plantation';
 
   @override
-  String get fieldImprovementVineyard => 'Vineyard';
+  String get fieldImprovementVineyard => 'Vignoble';
 
   @override
-  String get fieldImprovementTradingPost => 'Trading Post';
+  String get fieldImprovementTradingPost => 'Poste de négociation';
 
   @override
-  String get fieldImprovementProspectorCamp => 'Prospector Camp';
+  String get fieldImprovementProspectorCamp => 'Camp de prospecteurs';
 
   @override
-  String get fieldImprovementHorseRanch => 'Horse Ranch';
+  String get fieldImprovementHorseRanch => 'Ranche de chevaux';
 
   @override
-  String get fieldImprovementPearlDivers => 'Pearl Divers';
+  String get fieldImprovementPearlDivers => 'Perles plongeuses';
 
   @override
-  String get fieldImprovementCoalShaft => 'Coal Shaft';
+  String get fieldImprovementCoalShaft => 'Arbres de charbon';
 
   @override
-  String get fieldImprovementOilWell => 'Oil Well';
+  String get fieldImprovementOilWell => 'Biens pétroliers';
 
   @override
-  String get fieldImprovementBauxiteMine => 'Bauxite Mine';
+  String get fieldImprovementBauxiteMine => 'Mine de bauxite';
 
   @override
-  String get fieldImprovementUraniumMine => 'Uranium Mine';
+  String get fieldImprovementUraniumMine => 'Mine d\'uranium';
 
   @override
-  String get resourceWheat => 'wheat';
+  String get resourceWheat => 'blé';
 
   @override
-  String get resourceFish => 'fish';
+  String get resourceFish => 'poissons';
 
   @override
-  String get resourceDeer => 'deer';
+  String get resourceDeer => 'Cerveau';
 
   @override
-  String get resourceSheep => 'sheep';
+  String get resourceSheep => 'ovins';
 
   @override
-  String get resourceRice => 'rice';
+  String get resourceRice => 'riz';
 
   @override
-  String get resourceCow => 'cattle';
+  String get resourceCow => 'bovins';
 
   @override
-  String get resourceApple => 'apples';
+  String get resourceApple => 'Pommes';
 
   @override
-  String get resourceBanana => 'bananas';
+  String get resourceBanana => 'bananes';
 
   @override
-  String get resourceCitrus => 'citrus';
+  String get resourceCitrus => 'agrumes';
 
   @override
-  String get resourceGold => 'gold';
+  String get resourceGold => 'or';
 
   @override
-  String get resourceSilver => 'silver';
+  String get resourceSilver => 'argent';
 
   @override
-  String get resourceGems => 'gems';
+  String get resourceGems => 'gemmes';
 
   @override
-  String get resourceSilk => 'silk';
+  String get resourceSilk => 'soie';
 
   @override
-  String get resourceSpices => 'spices';
+  String get resourceSpices => 'épices';
 
   @override
-  String get resourceCotton => 'cotton';
+  String get resourceCotton => 'coton';
 
   @override
-  String get resourceGrapes => 'grapes';
+  String get resourceGrapes => 'raisins';
 
   @override
-  String get resourceIvory => 'ivory';
+  String get resourceIvory => 'ivoire';
 
   @override
-  String get resourcePearls => 'pearls';
+  String get resourcePearls => 'perles';
 
   @override
-  String get resourceCoffee => 'coffee';
+  String get resourceCoffee => 'café';
 
   @override
-  String get resourceCocoa => 'cocoa';
+  String get resourceCocoa => 'cacao';
 
   @override
-  String get resourceTobacco => 'tobacco';
+  String get resourceTobacco => 'tabac';
 
   @override
-  String get resourceSugar => 'sugar';
+  String get resourceSugar => 'sucre';
 
   @override
-  String get resourceIron => 'iron';
+  String get resourceIron => 'fer';
 
   @override
-  String get resourceCoal => 'coal';
+  String get resourceCoal => 'charbon';
 
   @override
-  String get resourceOil => 'oil';
+  String get resourceOil => 'huile';
 
   @override
-  String get resourceAluminium => 'aluminum';
+  String get resourceAluminium => 'aluminium';
 
   @override
   String get resourceUranium => 'uranium';
 
   @override
-  String get resourceHorses => 'horses';
+  String get resourceHorses => 'chevaux';
 
   @override
-  String get resourceMarble => 'marble';
+  String get resourceMarble => 'marbre';
 
   @override
   String get technologyAgriculture => 'Agriculture';
 
   @override
-  String get technologyWoodworking => 'Woodworking';
+  String get technologyWoodworking => 'Travail du bois';
 
   @override
-  String get technologyMining => 'Mining';
+  String get technologyMining => 'Exploitation minière';
 
   @override
-  String get technologyAnimalHusbandry => 'Animal Husbandry';
+  String get technologyAnimalHusbandry => 'Maris d\'animaux';
 
   @override
-  String get technologyHunting => 'Hunting';
+  String get technologyHunting => 'Chasse';
 
   @override
-  String get technologyFishing => 'Fishing';
+  String get technologyFishing => 'Pêche';
 
   @override
-  String get technologyCraftsmanship => 'Craftsmanship';
+  String get technologyCraftsmanship => 'Artisanat';
 
   @override
-  String get technologyTrade => 'Trade';
+  String get technologyTrade => 'Commerce';
 
   @override
-  String get technologyStorage => 'Storage';
+  String get technologyStorage => 'Stockage';
 
   @override
-  String get technologyWaterEngineering => 'Water Engineering';
+  String get technologyWaterEngineering => 'Génie de l\'eau';
 
   @override
-  String get technologyStoneworking => 'Stoneworking';
+  String get technologyStoneworking => 'Ouvrage de pierres';
 
   @override
-  String get technologyMilitaryOrganization => 'Military Organization';
+  String get technologyMilitaryOrganization => 'Organisation militaire';
 
   @override
-  String get technologyAdvancedTrade => 'Advanced Trade';
+  String get technologyAdvancedTrade => 'Commerce avancé';
 
   @override
-  String get technologyConstruction => 'Construction';
+  String get technologyConstruction => 'Bâtiment';
 
   @override
   String get technologyNavigation => 'Navigation';
@@ -3566,389 +3590,389 @@ class AppLocalizationsFr extends AppLocalizations {
   String get technologyIrrigation => 'Irrigation';
 
   @override
-  String get technologyBanking => 'Banking';
+  String get technologyBanking => 'Banques';
 
   @override
-  String get technologyEngineering => 'Engineering';
+  String get technologyEngineering => 'Génie';
 
   @override
-  String get technologyMetallurgy => 'Metallurgy';
+  String get technologyMetallurgy => 'Métallurgie';
 
   @override
-  String get technologyHorsebackRiding => 'Horseback Riding';
+  String get technologyHorsebackRiding => 'Équitation';
 
   @override
-  String get technologyIronWorking => 'Iron Working';
+  String get technologyIronWorking => 'Travail du fer';
 
   @override
-  String get technologyCoalMining => 'Coal Mining';
+  String get technologyCoalMining => 'Houilles';
 
   @override
-  String get technologyMachinery => 'Machinery';
+  String get technologyMachinery => 'Machines';
 
   @override
   String get technologyAdministration => 'Administration';
 
   @override
-  String get technologyLogistics => 'Logistics';
+  String get technologyLogistics => 'Logistique';
 
   @override
-  String get technologyShipbuilding => 'Shipbuilding';
+  String get technologyShipbuilding => 'Construction navale';
 
   @override
-  String get technologyTactics => 'Tactics';
+  String get technologyTactics => 'Tactiques';
 
   @override
-  String get technologyEconomy => 'Economy';
+  String get technologyEconomy => 'Économie';
 
   @override
-  String get technologyUrbanization => 'Urbanization';
+  String get technologyUrbanization => 'Urbanisation';
 
   @override
   String get technologyFortifications => 'Fortifications';
 
   @override
-  String get technologyStrategy => 'Strategy';
+  String get technologyStrategy => 'Stratégie';
 
   @override
-  String get technologySpecialization => 'Specialization';
+  String get technologySpecialization => 'Spécialisation';
 
   @override
-  String get technologyWriting => 'Writing';
+  String get technologyWriting => 'Rédaction';
 
   @override
-  String get technologyMathematics => 'Mathematics';
+  String get technologyMathematics => 'Mathématiques';
 
   @override
-  String get technologyMedicine => 'Medicine';
+  String get technologyMedicine => 'Médecine';
 
   @override
-  String get technologyCivilService => 'Civil Service';
+  String get technologyCivilService => 'Fonction publique';
 
   @override
-  String get technologySiegecraft => 'Siegecraft';
+  String get technologySiegecraft => 'Sièges';
 
   @override
-  String get technologyCartography => 'Cartography';
+  String get technologyCartography => 'Cartographie';
 
   @override
-  String get technologyGuilds => 'Guilds';
+  String get technologyGuilds => 'Guildes';
 
   @override
-  String get technologyLaw => 'Law';
+  String get technologyLaw => 'Droit';
 
   @override
-  String get technologyEducation => 'Education';
+  String get technologyEducation => 'Éducation';
 
   @override
-  String get technologyUrbanPlanning => 'Urban Planning';
+  String get technologyUrbanPlanning => 'Planification urbaine';
 
   @override
-  String get technologyNavalDoctrine => 'Naval Doctrine';
+  String get technologyNavalDoctrine => 'Doctrine navale';
 
   @override
-  String get technologySteel => 'Steel';
+  String get technologySteel => 'Acier';
 
   @override
-  String get technologyBureaucracy => 'Bureaucracy';
+  String get technologyBureaucracy => 'Bureaucratie';
 
   @override
-  String get technologyNationalism => 'Nationalism';
+  String get technologyNationalism => 'Nationalisme';
 
   @override
-  String get technologyScientificMethod => 'Scientific Method';
+  String get technologyScientificMethod => 'Méthode scientifique';
 
   @override
-  String get technologySteamPower => 'Steam Power';
+  String get technologySteamPower => 'Puissance de vapeur';
 
   @override
-  String get technologyElectricity => 'Electricity';
+  String get technologyElectricity => 'Électricité';
 
   @override
   String get technologyCombustion => 'Combustion';
 
   @override
-  String get technologyFlight => 'Flight';
+  String get technologyFlight => 'Vol';
 
   @override
-  String get technologyMassProduction => 'Mass Production';
+  String get technologyMassProduction => 'Production de masse';
 
   @override
   String get technologyRadio => 'Radio';
 
   @override
-  String get technologyNuclearPhysics => 'Nuclear Physics';
+  String get technologyNuclearPhysics => 'Physique nucléaire';
 
   @override
   String get technologyAgricultureDescription =>
-      'Opens the basic growth path. Farms and river farms let population grow faster and stabilize the first city.';
+      'Ouvre la voie de croissance de base. Les fermes et les fermes fluviales permettent à la population de croître plus rapidement et de stabiliser la première ville.';
 
   @override
   String get technologyWoodworkingDescription =>
-      'Develops the production side of mining. Lumber mills turn forests into production without going deep into metallurgy.';
+      'Développe le côté production de l\'exploitation minière. Les moulins à bois transforment les forêts en production sans aller profondément dans la métallurgie.';
 
   @override
   String get technologyMiningDescription =>
-      'Opens the path of industry and infrastructure. Mines are the first major jump in city production.';
+      'Ouvre la voie de l\'industrie et de l\'infrastructure. Les mines constituent le premier saut majeur dans la production urbaine.';
 
   @override
   String get technologyAnimalHusbandryDescription =>
-      'Strengthens growth through animal resources. Pastures build a food economy and prepare the way to horseback riding.';
+      'Renforce la croissance grâce aux ressources animales. Les pâturages construisent une économie alimentaire et préparent le chemin à l\'équitation.';
 
   @override
   String get technologyHuntingDescription =>
-      'Opens the military and exploration branch. Provides camps and the first ranged unit for city production.';
+      'Ouvre la branche militaire et d\'exploration. Fournit des camps et la première unité de production urbaine.';
 
   @override
   String get technologyFishingDescription =>
-      'Develops cities near water. Fishing boats help coastal cities grow faster and prepare the way to the port.';
+      'Développe des villes près de l\'eau. Les bateaux de pêche aident les villes côtières à croître plus rapidement et à se préparer au port.';
 
   @override
   String get technologyCraftsmanshipDescription =>
-      'The first city production upgrade. The workshop keeps later buildings and units from blocking the queue too long.';
+      'Première amélioration de la production urbaine. L\'atelier empêche les bâtiments et les unités de bloquer la file d\'attente trop longtemps.';
 
   @override
   String get technologyTradeDescription =>
-      'The first step in the gold economy. The merchant hall gives a city a simple financial payoff after choosing a growth branch.';
+      'La première étape de l\'économie de l\'or. La salle des marchands donne à une ville un avantage financier simple après avoir choisi une branche de croissance.';
 
   @override
   String get technologyStorageDescription =>
-      'Stabilizes city growth. Storage helps maintain food pace and reduces the risk of development stalls.';
+      'Stabilise la croissance de la ville. Le stockage aide à maintenir le rythme des aliments et réduit le risque de décrochage.';
 
   @override
   String get technologyWaterEngineeringDescription =>
-      'Expands the water growth path. The water mill rewards cities that control rivers.';
+      'Élargit le chemin de croissance de l\'eau. Le moulin à eau récompense les villes qui contrôlent les rivières.';
 
   @override
   String get technologyStoneworkingDescription =>
-      'Combines production and defense. Quarries and the stonemason strengthen cities in the infrastructure branch.';
+      'Combine production et défense. Les carrières et le maçon de pierre renforcent les villes de la branche infrastructure.';
 
   @override
   String get technologyMilitaryOrganizationDescription =>
-      'Builds the first military core of a city. Barracks strengthen production and defense before later army bonuses appear.';
+      'Construit le premier noyau militaire d\'une ville. Les casernes renforcent la production et la défense avant que des bonus militaires plus tard apparaissent.';
 
   @override
   String get technologyAdvancedTradeDescription =>
-      'Develops the economy after trade. The marketplace is a stronger gold building and prepares the path to banking.';
+      'Développe l\'économie après le commerce. Le marché est un bâtiment aurifère plus fort et prépare la voie à la banque.';
 
   @override
   String get technologyConstructionDescription =>
-      'Expands territory and city maturity. Housing increases tile control and leads to administration and engineering.';
+      'Élargit le territoire et la maturité de la ville. Le logement augmente le contrôle des tuiles et conduit à l\'administration et à l\'ingénierie.';
 
   @override
   String get technologyNavigationDescription =>
-      'Opens a city payoff for the coast. The port requires coast/ocean access and rewards waterfront cities with food and gold.';
+      'Ouvre une ville pour la côte. Le port a besoin d\'un accès côtier/océanique et récompense les villes riveraines avec de la nourriture et de l\'or.';
 
   @override
   String get technologyIrrigationDescription =>
-      'Specializes water-based growth. The aqueduct grants a strong food bonus and additional territorial control.';
+      'Spécialise la croissance à base d\'eau. L\'aqueduc accorde une forte prime alimentaire et un contrôle territorial supplémentaire.';
 
   @override
   String get technologyBankingDescription =>
-      'Specializes the trade branch. The bank turns earlier markets into strong city income and unlocks the wider economy.';
+      'Spécialisé dans le commerce. La banque transforme les marchés antérieurs en revenus urbains solides et libère l\'économie plus large.';
 
   @override
   String get technologyEngineeringDescription =>
-      'Construction specialization. The builders guild speeds production and increases the controlled tile limit.';
+      'Spécialisation de la construction. La guilde des constructeurs accélère la production et augmente la limite des tuiles contrôlées.';
 
   @override
   String get technologyMetallurgyDescription =>
-      'A strong industrial payoff after stoneworking. The forge raises production and prepares the path to iron and coal.';
+      'Une forte rentabilité industrielle après la pierre. La forge augmente la production et prépare le chemin vers le fer et le charbon.';
 
   @override
   String get technologyHorsebackRidingDescription =>
-      'A technology linking growth and war. The stable supports cities that invested earlier in animals and hunting.';
+      'Une technologie qui relie croissance et guerre. L\'écurie soutient les villes qui ont investi plus tôt dans les animaux et la chasse.';
 
   @override
   String get technologyIronWorkingDescription =>
-      'An industrial resource effect. Each controlled iron resource increases city production.';
+      'Un effet ressources industrielles. Chaque ressource de fer contrôlée augmente la production de la ville.';
 
   @override
   String get technologyCoalMiningDescription =>
-      'A later industrial resource effect. Controlled coal increases city production and supports the factory path.';
+      'Un effet sur les ressources industrielles. Le charbon contrôlé augmente la production urbaine et soutient le chemin de l\'usine.';
 
   @override
   String get technologyMachineryDescription =>
-      'A late infrastructure payoff. The factory gives a large production increase to cities that entered engineering.';
+      'Une récupération tardive de l\'infrastructure. L\'usine donne une forte augmentation de la production aux villes qui sont entrées dans l\'ingénierie.';
 
   @override
   String get technologyAdministrationDescription =>
-      'Links infrastructure with economy. Town halls and monuments strengthen mature cities and lead to urbanization.';
+      'Liens entre l\'infrastructure et l\'économie. Les mairies et les monuments renforcent les villes matures et mènent à l\'urbanisation.';
 
   @override
   String get technologyLogisticsDescription =>
-      'Speeds unit production. This is the main technology for players who want to field armies from cities more often.';
+      'Vitesse de production unitaire. C\'est la principale technologie pour les joueurs qui veulent faire campagne les armées des villes plus souvent.';
 
   @override
   String get technologyShipbuildingDescription =>
-      'Develops the coastal/exploration subbranch. The lighthouse requires coast access and strengthens waterfront cities.';
+      'Développe la sous-branche côtière/exploration. Le phare nécessite un accès à la côte et renforce les villes riveraines.';
 
   @override
   String get technologyTacticsDescription =>
-      'Military city specialization. Training grounds add defense and production for military centers.';
+      'Spécialisation des villes militaires. Les terrains d\'entraînement ajoutent la défense et la production pour les centres militaires.';
 
   @override
   String get technologyEconomyDescription =>
-      'A systemic payoff for banking. Increases gold generated by city economies.';
+      'Une compensation systémique pour la banque. Augmente l\'or généré par les économies urbaines.';
 
   @override
   String get technologyUrbanizationDescription =>
-      'The final direction for large-city growth. Increases the population limit once the population system starts using hard caps.';
+      'La dernière orientation pour la croissance des grandes villes. Augmente la limite de population une fois que le système de population commence à utiliser des plafonds durs.';
 
   @override
   String get technologyFortificationsDescription =>
-      'Strengthens city defense. Grants a defensive bonus to the city economy, with its full meaning growing after combat and siege expansion.';
+      'Renforce la défense de la ville. Accorde un bonus défensif à l\'économie de la ville, avec son plein sens croissant après le combat et l\'expansion du siège.';
 
   @override
   String get technologyStrategyDescription =>
-      'The final military direction. Strengthens army effectiveness as a late-game payoff after logistics.';
+      'La dernière direction militaire. Renforce l\'efficacité de l\'armée en tant que compensation tardive après la logistique.';
 
   @override
   String get technologySpecializationDescription =>
-      'The final civic/economy payoff. Unlocks city specializations, adds city science, and helps finish late technologies in longer matches.';
+      'La dernière compensation civique/économie. Débloque les spécialisations de la ville, ajoute les sciences de la ville, et aide à terminer les technologies tardives dans des parties plus longs.';
 
   @override
   String get technologyWritingDescription =>
-      'The first step toward science, law, and administration. The archive gives a city a permanent research base.';
+      'Le premier pas vers la science, le droit et l\'administration. Les archives donnent à une ville une base de recherche permanente.';
 
   @override
   String get technologyMathematicsDescription =>
-      'Connects science with territorial planning. The surveyor office helps cities control borders more effectively.';
+      'Relier la science à l\'aménagement du territoire. Le bureau d\'arpentage aide les villes à mieux contrôler les frontières.';
 
   @override
   String get technologyMedicineDescription =>
-      'Develops health and long-term growth in large cities through apothecaries, baths, and hospitals.';
+      'Développer la santé et la croissance à long terme dans les grandes villes grâce aux apothicaires, aux bains et aux hôpitaux.';
 
   @override
   String get technologyCivilServiceDescription =>
-      'Improves management of a large empire and unlocks courts that stabilize cities.';
+      'Améliore la gestion d\'un grand empire et débloque les tribunaux qui stabilisent les villes.';
 
   @override
   String get technologySiegecraftDescription =>
-      'Opens siege warfare. Catapults and siege workshops break fortress cities.';
+      'Ouvre la guerre de siège. Catapultes et ateliers de siège brisent les villes forteresses.';
 
   @override
   String get technologyCartographyDescription =>
-      'Develops exploration, maps, and the coast. Grants the map room and the first scout ships.';
+      'Développer l\'exploration, les cartes et la côte. Accorde la salle des cartes et les premiers vaisseaux éclaireurs.';
 
   @override
   String get technologyGuildsDescription =>
-      'Gives production cities a stage between the workshop and industry.';
+      'Donne aux villes de production une étape entre l\'atelier et l\'industrie.';
 
   @override
   String get technologyLawDescription =>
-      'Introduces order, policies, and civilian governance through courts.';
+      'Introduit l\'ordre, les politiques et la gouvernance civile par les tribunaux.';
 
   @override
   String get technologyEducationDescription =>
-      'Builds the full science path for cities through academies and universities.';
+      'Construire la voie scientifique complète pour les villes à travers les académies et les universités.';
 
   @override
   String get technologyUrbanPlanningDescription =>
-      'Develops great cities and territorial control through spatial planning.';
+      'Développer les grandes villes et le contrôle territorial par l\'aménagement du territoire.';
 
   @override
   String get technologyNavalDoctrineDescription =>
-      'Turns ports into centers of fleets, shipyards, and force projection at sea.';
+      'Transforme les ports en centres de flottes, de chantiers navals et de projection de force en mer.';
 
   @override
   String get technologySteelDescription =>
-      'Introduces heavy industry and heavy infantry for the later front.';
+      'Introduit l\'industrie lourde et l\'infanterie lourde pour le front ultérieur.';
 
   @override
   String get technologyBureaucracyDescription =>
-      'Provides a major civic goal after administration: offices, ministries, museums, and parliament.';
+      'Fournit un objectif civique majeur après l\'administration: bureaux, ministères, musées et parlement.';
 
   @override
   String get technologyNationalismDescription =>
-      'Combines border defense, mobilization, and empire identity.';
+      'Combine la défense frontalière, la mobilisation et l\'identité de l\'empire.';
 
   @override
   String get technologyScientificMethodDescription =>
-      'Prepares late science, laboratories, observatories, and technology projects.';
+      'Préparer des projets scientifiques, des laboratoires, des observatoires et des technologies.';
 
   @override
   String get technologySteamPowerDescription =>
-      'Opens rail, heavier logistics, and steam industry.';
+      'Ouvre le rail, la logistique plus lourde et l\'industrie de la vapeur.';
 
   @override
   String get technologyElectricityDescription =>
-      'Introduces power, infrastructure, and information reach.';
+      'Introduit la puissance, l\'infrastructure et la portée de l\'information.';
 
   @override
   String get technologyCombustionDescription =>
-      'Gives oil importance and unlocks modern frontline units.';
+      'Donne de l\'importance à l\'huile et déverrouille les unités de première ligne modernes.';
 
   @override
   String get technologyFlightDescription =>
-      'Introduces aviation, reconnaissance, and force projection over the front.';
+      'Introduit l\'aviation, la reconnaissance et la projection de force sur le front.';
 
   @override
   String get technologyMassProductionDescription =>
-      'Develops final industrial production, tanks, and assembly plants.';
+      'Développer la production industrielle finale, les réservoirs et les usines de montage.';
 
   @override
   String get technologyRadioDescription =>
-      'Strengthens empire communication, visibility, and influence through broadcast towers.';
+      'Renforce la communication, la visibilité et l\'influence de l\'empire à travers les tours de diffusion.';
 
   @override
   String get technologyNuclearPhysicsDescription =>
-      'Opens the reactor, uranium, and late endgame projects.';
+      'Ouvre le réacteur, l\'uranium et les projets de fin de jeu.';
 
   @override
-  String get technologyEraFoundation => 'Foundation';
+  String get technologyEraFoundation => 'Fondation';
 
   @override
-  String get technologyEraSettlement => 'Settlement';
+  String get technologyEraSettlement => 'Règlement';
 
   @override
   String get technologyEraExpansion => 'Expansion';
 
   @override
-  String get technologyEraSpecialization => 'Specialization';
+  String get technologyEraSpecialization => 'Spécialisation';
 
   @override
-  String get technologyEraIndustry => 'Industry';
+  String get technologyEraIndustry => 'Industrie';
 
   @override
-  String get technologyEraStrategy => 'Strategy';
+  String get technologyEraStrategy => 'Stratégie';
 
   @override
-  String get technologyUnlockEffect => 'Effect';
+  String get technologyUnlockEffect => 'Effet';
 
   @override
-  String get technologyPrerequisitesNone => 'None';
+  String get technologyPrerequisitesNone => 'Aucune';
 
   @override
-  String get technologyStateCompleted => 'Completed';
+  String get technologyStateCompleted => 'Achevé';
 
   @override
-  String get technologyStateInProgress => 'In progress';
+  String get technologyStateInProgress => 'En cours';
 
   @override
-  String get technologyStateAvailable => 'Available';
+  String get technologyStateAvailable => 'Disponible';
 
   @override
-  String get technologyButtonResearched => 'RESEARCHED';
+  String get technologyButtonResearched => 'RECHERCHES';
 
   @override
-  String get technologyButtonActive => 'ACTIVE';
+  String get technologyButtonActive => 'ACTIF';
 
   @override
-  String get technologyButtonResearch => 'RESEARCH';
+  String get technologyButtonResearch => 'RECHERCHE';
 
   @override
-  String get technologyButtonLocked => 'LOCKED';
+  String get technologyButtonLocked => 'LOCÉ';
 
   @override
-  String get technologyTreeTitle => 'TECHNOLOGY TREE';
+  String get technologyTreeTitle => 'TECHNOLOGIE';
 
   @override
-  String get technologyTreeEmptyTitle => 'No technologies to display';
+  String get technologyTreeEmptyTitle => 'Aucune technologie à afficher';
 
   @override
   String get technologyTreeEmptyBody =>
-      'The research tree will appear here when the ruleset provides technologies for this era.';
+      'L\'arbre de recherche apparaîtra ici lorsque le jeu de règles fournira des technologies pour cette ère.';
 
   @override
   String technologyResearchPointsShort(int points) {
@@ -3956,96 +3980,98 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get technologyDetailsTooltip => 'Technology details';
+  String get technologyDetailsTooltip => 'Détails technologiques';
 
   @override
-  String get technologyDetailsStatus => 'Status';
+  String get technologyDetailsStatus => 'État';
 
   @override
-  String get technologyDetailsCost => 'Cost';
+  String get technologyDetailsCost => 'Coût';
 
   @override
-  String get technologyDetailsProgress => 'Progress';
+  String get technologyDetailsProgress => 'Progrès accomplis';
 
   @override
-  String get technologyDetailsPrerequisites => 'Requirements';
+  String get technologyDetailsPrerequisites => 'Exigences';
 
   @override
-  String get technologyDetailsUnlocks => 'Unlocks';
+  String get technologyDetailsUnlocks => 'Déverrouillage';
 
   @override
-  String get technologyDetailsEffects => 'Effects';
+  String get technologyDetailsEffects => 'Effets';
 
   @override
   String get technologyDetailsBoosts => 'Boosts';
 
   @override
-  String get technologyDetailsUnlockStatus => 'Unlock';
+  String get technologyDetailsUnlockStatus => 'Déverrouillage';
 
   @override
-  String get technologyDetailsNoEffects => 'No passive effects';
+  String get technologyDetailsNoEffects => 'Aucun effet passif';
 
   @override
-  String get technologyDetailsNoBoosts => 'No boosts';
+  String get technologyDetailsNoBoosts => 'Pas de coup de pouce';
 
   @override
-  String get technologyUnlocksNone => 'No direct unlocks';
+  String get technologyUnlocksNone => 'Aucun déverrouillage direct';
 
   @override
-  String get technologyBoostActiveBadge => 'Boost';
+  String get technologyBoostActiveBadge => 'Coup de pouce';
 
   @override
-  String get technologyBoostActiveBest => 'The best available boost is active.';
+  String get technologyBoostActiveBest =>
+      'Le meilleur boost disponible est actif.';
 
   @override
   String technologyBoostLine(String condition, String discount) {
-    return '$condition (-$discount cost)';
+    return '$condition (coût $discount)';
   }
 
   @override
-  String get technologyUnlockFieldImprovementCategory => 'Field improvement';
+  String get technologyUnlockFieldImprovementCategory =>
+      'Amélioration sur le terrain';
 
   @override
   String technologyEffectStrategicResourceProductionBonus(
     int production,
     String resource,
   ) {
-    return '+$production production for each controlled resource: $resource';
+    return 'Production +$production pour chaque ressource contrôlée: $resource';
   }
 
   @override
   String technologyEffectGlobalGoldMultiplier(String percent) {
-    return '+$percent gold in city economy';
+    return '+$percent or dans l\'économie urbaine';
   }
 
   @override
   String technologyEffectCityDefenseBonus(int amount) {
-    return '+$amount city defense';
+    return '+$amount défense de la ville';
   }
 
   @override
   String technologyEffectArmyProductionMultiplier(String percent) {
-    return '+$percent unit production in cities';
+    return '+$percent production unitaire dans les villes';
   }
 
   @override
   String technologyEffectArmyStrengthMultiplier(String percent) {
-    return '+$percent army strength';
+    return 'Force armée +$percent';
   }
 
   @override
   String technologyEffectMaxCityPopulationBonus(int amount) {
-    return '+$amount max city population';
+    return '+$amount population urbaine maximale';
   }
 
   @override
   String technologyEffectMaxControlledHexesBonus(int amount) {
-    return '+$amount max city territory';
+    return '+$amount territoire ville max';
   }
 
   @override
   String technologyEffectCityScienceBonus(int amount) {
-    return '+$amount science per city';
+    return '+$amount science par ville';
   }
 
   @override
@@ -4053,77 +4079,78 @@ class AppLocalizationsFr extends AppLocalizations {
     int count,
     String improvement,
   ) {
-    return 'Have ${count}x $improvement';
+    return 'Avoir ${count}x $improvement';
   }
 
   @override
   String technologyBoostConditionHasImprovement(String improvement) {
-    return 'Have $improvement';
+    return 'Avoir $improvement';
   }
 
   @override
   String technologyBoostConditionControlsResource(String resource) {
-    return 'Control $resource';
+    return 'Contrôle $resource';
   }
 
   @override
   String technologyBoostConditionControlsAnyResource(String resources) {
-    return 'Control: $resources';
+    return 'Contrôle: $resources';
   }
 
   @override
   String technologyEffectAttackBonus(String value) {
-    return '$value attack';
+    return 'Attaque $value';
   }
 
   @override
   String technologyEffectDefenseBonus(String value) {
-    return '$value defense';
+    return 'Défense $value';
   }
 
   @override
-  String get technologyEffectNoArmyStatsBonus => 'No army stat bonus';
+  String get technologyEffectNoArmyStatsBonus =>
+      'Pas de bonus de statistiques de l\'armée';
 
   @override
   String technologyEffectArmyStatsBonus(String parts) {
-    return '$parts for armies';
+    return '$parts pour les armées';
   }
 
   @override
   String commonListOr(String first, String last) {
-    return '$first or $last';
+    return '$first ou $last';
   }
 
   @override
-  String get buildingDetailsTooltip => 'Building details';
+  String get buildingDetailsTooltip => 'Détails du bâtiment';
 
   @override
-  String get buildingDetailsNoRequirements => 'None';
+  String get buildingDetailsNoRequirements => 'Aucune';
 
   @override
-  String get buildingDetailsYieldImpact => 'City impact';
+  String get buildingDetailsYieldImpact => 'Impact sur la ville';
 
   @override
   String buildingDetailsRequirementTechnology(String technology) {
-    return 'Technology: $technology';
+    return 'Technologie: $technology';
   }
 
   @override
-  String get buildingDetailsRequirementCoastalAccess => 'Coastal access';
+  String get buildingDetailsRequirementCoastalAccess => 'Accès côtier';
 
   @override
   String buildingDetailsRequirementResources(String resources) {
-    return 'Resource: $resources';
+    return 'Ressources: $resources';
   }
 
   @override
   String buildingDetailsFlatYieldEffect(String yield) {
-    return '$yield to city yield';
+    return '$yield à rendement urbain';
   }
 
   @override
   String buildingDetailsRiverHexYieldEffect(String yield) {
-    return '$yield per controlled river tile';
+    return '$yield par tuile de rivière contrôlée';
   }
 
   @override
@@ -4131,59 +4158,59 @@ class AppLocalizationsFr extends AppLocalizations {
     String yield,
     int maxApplications,
   ) {
-    return '$yield per controlled river tile (max $maxApplications)';
+    return '$yield par dalle de rivière contrôlée (maximum $maxApplications)';
   }
 
   @override
   String buildingDetailsMaxControlledHexesEffect(int amount) {
-    return '+$amount city controlled tile limit';
+    return '+$amount ville limite de tuile contrôlée';
   }
 
   @override
   String buildingDetailsFoodDepositMultiplierEffect(int percent) {
-    return '+$percent% food stored after turn';
+    return '+$percent% aliments stockés après le tour';
   }
 
   @override
   String buildingDetailsYieldFood(String value) {
-    return '$value food';
+    return '$value aliment';
   }
 
   @override
   String buildingDetailsYieldProduction(String value) {
-    return '$value production';
+    return 'Production $value';
   }
 
   @override
   String buildingDetailsYieldGold(String value) {
-    return '$value gold';
+    return 'Or $value';
   }
 
   @override
   String buildingDetailsYieldDefense(String value) {
-    return '$value defense';
+    return 'Défense $value';
   }
 
   @override
   String buildingDetailsYieldScience(String value) {
-    return '$value science';
+    return 'Sciences $value';
   }
 
   @override
-  String get buildingDetailsNoYieldChange => 'No resource change';
+  String get buildingDetailsNoYieldChange => 'Pas de changement de ressources';
 
   @override
-  String get unitDetailsTooltip => 'Unit details';
+  String get unitDetailsTooltip => 'Détails de l\'unité';
 
   @override
-  String get unitDetailsMovement => 'Movement';
+  String get unitDetailsMovement => 'Mouvement';
 
   @override
-  String get unitDetailsCombat => 'Combat';
+  String get unitDetailsCombat => 'Lutte';
 
   @override
   String unitDetailsMovementPerTurn(int movement) {
-    return '$movement tiles/turn';
+    return 'Tuiles $movement/tour';
   }
 
   @override
@@ -4191,17 +4218,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String unitDetailsRequirementTechnology(String technology) {
-    return 'Technology: $technology';
+    return 'Technologie: $technology';
   }
 
   @override
   String unitDetailsAttackLine(int value) {
-    return 'Attack: $value';
+    return 'Attaque: $value';
   }
 
   @override
   String unitDetailsDefenseLine(int value) {
-    return 'Defense: $value';
+    return 'Défense: $value';
   }
 
   @override
@@ -4211,136 +4238,137 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String unitDetailsRangeLine(int value) {
-    return 'Range: $value';
+    return 'Portée: $value';
   }
 
   @override
   String sciencePerTurn(int science) {
-    return '$science science/turn';
+    return '$science science/tour';
   }
 
   @override
-  String get activeResearchLabel => 'RESEARCHING';
+  String get activeResearchLabel => 'RECHERCHE';
 
   @override
-  String get requirementTechnology => 'Requires technology';
+  String get requirementTechnology => 'Nécessite une technologie';
 
   @override
   String requirementTechnologyName(String technology) {
-    return 'Requires: $technology';
+    return 'Nécessite: $technology';
   }
 
   @override
   String requirementResourcesName(String resources) {
-    return 'Requires: $resources';
+    return 'Nécessite: $resources';
   }
 
   @override
   String technologyBlockedBy(String technology) {
-    return 'Blocked by: $technology';
+    return 'Bloqué par: $technology';
   }
 
   @override
-  String get requirementCoastalAccess => 'Requires: coastal access';
+  String get requirementCoastalAccess => 'Nécessite: accès côtier';
 
   @override
-  String get productionCategoryBuilding => 'Building';
+  String get productionCategoryBuilding => 'Bâtiment';
 
   @override
-  String get productionCategoryUnit => 'Unit';
+  String get productionCategoryUnit => 'Unité';
 
   @override
-  String get productionTitle => 'PRODUCTION';
+  String get productionTitle => 'PRODUIT';
 
   @override
-  String get productionInProgressLabel => 'IN PROGRESS';
+  String get productionInProgressLabel => 'En cours';
 
   @override
   String productionPerTurn(int production) {
-    return '$production production/turn';
+    return 'Production/tour $production';
   }
 
   @override
-  String get productionNoProduction => 'no production';
+  String get productionNoProduction => 'pas de production';
 
   @override
-  String get productionButtonProduce => 'PRODUCE';
+  String get productionButtonProduce => 'PRODUIT';
 
   @override
-  String get productionButtonLocked => 'LOCKED';
+  String get productionButtonLocked => 'LOCÉ';
 
   @override
-  String get productionEmptyState => 'No production is currently available.';
+  String get productionEmptyState =>
+      'Aucune production n\'est actuellement disponible.';
 
   @override
-  String get buildingsSection => 'Buildings';
+  String get buildingsSection => 'Bâtiments';
 
   @override
-  String get unitsSection => 'Units';
+  String get unitsSection => 'Unités';
 
   @override
   String futureBuildingsSection(int count) {
-    return 'Future buildings ($count)';
+    return 'Bâtiments futurs ($count)';
   }
 
   @override
-  String get futureBuildingsSubtitle => 'Unlocked by technologies';
+  String get futureBuildingsSubtitle => 'Débloqué par les technologies';
 
   @override
   String workerPanelTitle(String unitName) {
-    return 'Worker - $unitName';
+    return 'Travailleur - $unitName';
   }
 
   @override
-  String get commonOpenAction => 'Open';
+  String get commonOpenAction => 'Ouvrir';
 
   @override
-  String get commonShowDetailsAction => 'Show details';
+  String get commonShowDetailsAction => 'Afficher les détails';
 
   @override
-  String get commonExecuteAction => 'Execute';
+  String get commonExecuteAction => 'Exécuter';
 
   @override
   String colorPickerChangeTooltip(String label) {
-    return 'Change color: $label';
+    return 'Modifier la couleur: $label';
   }
 
   @override
   String colorPickerColorSelected(String hex) {
-    return '#$hex selected';
+    return '#$hex sélectionné';
   }
 
   @override
   String colorPickerSelectColor(String hex) {
-    return 'Select #$hex';
+    return 'Sélectionner #$hex';
   }
 
   @override
-  String get commonDescription => 'Description';
+  String get commonDescription => 'Désignation des marchandises';
 
   @override
-  String get commonSummary => 'Summary';
+  String get commonSummary => 'Résumé';
 
   @override
-  String get commonStatus => 'Status';
+  String get commonStatus => 'État';
 
   @override
   String get commonTerrain => 'Terrain';
 
   @override
-  String get commonResources => 'Resources';
+  String get commonResources => 'Ressources';
 
   @override
-  String get commonImprovements => 'Improvements';
+  String get commonImprovements => 'Améliorations';
 
   @override
-  String get commonCities => 'Cities';
+  String get commonCities => 'Villes';
 
   @override
-  String get commonBuildings => 'Buildings';
+  String get commonBuildings => 'Bâtiments';
 
   @override
-  String get commonGold => 'Gold';
+  String get commonGold => 'Or';
 
   @override
   String get commonScience => 'Science';
@@ -4349,16 +4377,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonProduction => 'Production';
 
   @override
-  String get commonResearch => 'Research';
+  String get commonResearch => 'Recherche';
 
   @override
   String get commonEmpire => 'Empire';
 
   @override
-  String get commonTurn => 'Turn';
+  String get commonTurn => 'Tourner';
 
   @override
-  String get commonProjects => 'Projects';
+  String get commonProjects => 'Projets';
 
   @override
   String get commonPopulation => 'Population';
@@ -4367,211 +4395,212 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonTechnologies => 'Technologies';
 
   @override
-  String get commonFields => 'Fields';
+  String get commonFields => 'Champs';
 
   @override
-  String get commonMultipliers => 'Multipliers';
+  String get commonMultipliers => 'Multiplicateurs';
 
   @override
-  String get commonOther => 'Other';
+  String get commonOther => 'Autres';
 
   @override
-  String get commonReady => 'Ready';
+  String get commonReady => 'Prêt';
 
   @override
-  String get commonDone => 'Done';
+  String get commonDone => 'Fait';
 
   @override
-  String get commonDefault => 'Default';
+  String get commonDefault => 'Par défaut';
 
   @override
-  String get commonAvailable => 'Available';
+  String get commonAvailable => 'Disponible';
 
   @override
-  String get commonBlocked => 'Blocked';
+  String get commonBlocked => 'Bloqué';
 
   @override
-  String get commonSelectAction => 'Select';
+  String get commonSelectAction => 'Sélectionner';
 
   @override
-  String get commonSelectedAction => 'Selected';
+  String get commonSelectedAction => 'Sélectionné';
 
   @override
-  String get commonOk => 'OK';
+  String get commonOk => 'Très bien.';
 
   @override
-  String get commonDoNotShowAgain => 'Do not show again';
+  String get commonDoNotShowAgain => 'Ne plus afficher';
 
   @override
-  String get commonNoneLower => 'none';
+  String get commonNoneLower => 'aucune';
 
   @override
-  String get visualCurrentLabel => 'Now';
+  String get visualCurrentLabel => 'Tout de suite';
 
   @override
-  String get visualAfterLabel => 'After change';
+  String get visualAfterLabel => 'Après changement';
 
   @override
-  String get terrainDetailEmpty => 'No terrain information';
+  String get terrainDetailEmpty => 'Aucune information sur le terrain';
 
   @override
-  String get yieldFoodShort => 'FOOD';
+  String get yieldFoodShort => 'ALIMENTAIRES';
 
   @override
   String get yieldProductionShort => 'PROD';
 
   @override
-  String get yieldGoldShort => 'GOLD';
+  String get yieldGoldShort => 'OR';
 
   @override
   String get yieldDefenseShort => 'DEF';
 
   @override
   String selectionChipBadgeSuffix(String badge) {
-    return ' Visible counter: $badge.';
+    return 'Compteur visible: $badge.';
   }
 
   @override
   String selectionChipDisabledDescription(String badge) {
-    return 'This information shortcut is not available for the current selection.$badge';
+    return 'Ce raccourci n\'est pas disponible pour la sélection actuelle. $badge';
   }
 
   @override
   String selectionChipOpenDescription(String label, String badge) {
-    return 'Opens “$label” details for the current map context.$badge';
+    return 'Ouvre les détails de « $label » pour le contexte actuel de la carte.$badge';
   }
 
   @override
-  String get gameGoalTitle => 'Game goal';
+  String get gameGoalTitle => 'Objectif du jeu';
 
   @override
-  String get globalHudCloseResearch => 'Close research';
+  String get globalHudCloseResearch => 'Recherche étroite';
 
   @override
   String globalHudResearchActive(String technologyName) {
-    return 'Research: $technologyName';
+    return 'Recherche: $technologyName';
   }
 
   @override
   String globalHudResearchActiveWithEta(String technologyName, String eta) {
-    return 'Research: $technologyName · $eta';
+    return 'Recherche: $technologyName · $eta';
   }
 
   @override
-  String get globalHudChooseResearch => 'Choose research';
+  String get globalHudChooseResearch => 'Choisir la recherche';
 
   @override
-  String get globalHudCloseEmpire => 'Close empire';
+  String get globalHudCloseEmpire => 'Fermez l\'empire';
 
   @override
-  String get globalHudCloseActivityLog => 'Close activity log';
+  String get globalHudCloseActivityLog => 'Fermer le journal des activités';
 
   @override
-  String get bottomToolbarWaiting => 'Waiting';
+  String get bottomToolbarWaiting => 'Attendre';
 
   @override
   String get bottomToolbarPlan => 'Plan';
 
   @override
-  String get bottomToolbarMove => 'Move';
+  String get bottomToolbarMove => 'Déplacer';
 
   @override
-  String get bottomToolbarResolvingTurn => 'Resolving turn';
+  String get bottomToolbarResolvingTurn => 'Résolution du tour';
 
   @override
   String bottomToolbarWaitingFor(String players) {
-    return 'Waiting: $players';
+    return 'En attente: $players';
   }
 
   @override
   String turnHintNextUnit(String unit) {
-    return 'Next step: $unit';
+    return 'Prochaine étape: $unit';
   }
 
   @override
   String turnHintNextCityProduction(String city) {
-    return 'Next step: production in $city';
+    return 'Prochaine étape: production en $city';
   }
 
   @override
-  String get turnHintChooseResearch => 'Next step: choose research';
+  String get turnHintChooseResearch => 'Prochaine étape: choisir la recherche';
 
   @override
-  String get turnHintCheckAction => 'Next step: check action';
+  String get turnHintCheckAction => 'Prochaine étape: vérifier l\'action';
 
   @override
   String turnHintObjective(String objective) {
-    return 'Objective: $objective';
+    return 'Objectif: $objective';
   }
 
   @override
   String turnHintObjectiveWithAdvice(String objective, String advice) {
-    return 'Objective: $objective · $advice';
+    return 'Objectif: $objective · $advice';
   }
 
   @override
   String get turnHintImproveFieldWithWorker =>
-      'Objective: improve a tile with a worker';
+      'Objectif: améliorer une tuile avec un travailleur';
 
   @override
   String get turnHintFoundCityWithSettler =>
-      'Objective: found a city with a settler';
+      'Objectif: trouvé une ville avec un colon';
 
   @override
   String get turnHintClaimTerritoryWithSettler =>
-      'Objective: claim territory with a settler';
+      'Objectif: territoire de revendication avec un colon';
 
   @override
   String turnHintTrainUnit(String unit) {
-    return 'Objective: set unit: $unit';
+    return 'Objectif: unité définie: $unit';
   }
 
   @override
   String turnHintProtectLeadUnit(String unit) {
-    return 'Objective: secure the lead: $unit';
+    return 'Objectif: sécuriser la tête: $unit';
   }
 
   @override
   String turnHintConstructBuildingInCity(String city) {
-    return 'Objective: queue a building in $city';
+    return 'Objectif: faire la file d\'attente d\'un bâtiment à $city';
   }
 
   @override
   String turnHintTrainUnitInCity(String city) {
-    return 'Objective: queue a unit in $city';
+    return 'Objectif: file d\'attente une unité dans $city';
   }
 
   @override
   String turnHintPrepareSettlerInCity(String city) {
-    return 'Objective: prepare a settler in $city';
+    return 'Objectif: préparer un colon en $city';
   }
 
   @override
   String turnHintGrowPopulationInCity(String city) {
-    return 'Objective: set growth in $city';
+    return 'Objectif: fixer la croissance de $city';
   }
 
   @override
   String turnHintPrepareWorkerInCity(String city) {
-    return 'Objective: prepare a worker in $city';
+    return 'Objectif: préparer un travailleur à $city';
   }
 
   @override
   String turnHintCollectGoldInCity(String city) {
-    return 'Objective: close gold in $city';
+    return 'Objectif: fermer l\'or en $city';
   }
 
   @override
   String turnHintProtectLeadProductionInCity(String city) {
-    return 'Objective: secure production in $city';
+    return 'Objectif: une production sûre en $city';
   }
 
   @override
   String get turnHintUnlockTechnologyForScore =>
-      'Objective: choose a scoring technology';
+      'Objectif: choisir une technologie de notation';
 
   @override
-  String get turnHintProtectLeadResearch => 'Objective: finish safe research';
+  String get turnHintProtectLeadResearch =>
+      'Objectif: terminer la recherche en toute sécurité';
 
   @override
   String topResourceTurnShortLabel(int turn) {
@@ -4580,17 +4609,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topResourceTurnTooltip(int turn) {
-    return 'Turn $turn';
+    return 'Tourner $turn';
   }
 
   @override
   String topResourceScienceTooltip(String scienceTurnLabel) {
-    return 'Science: $scienceTurnLabel / turn';
+    return 'Science: $scienceTurnLabel / tour';
   }
 
   @override
   String topResourceResourcesTooltip(int resourceTotal, int resourceTypes) {
-    return 'Resources: $resourceTotal deposits • $resourceTypes controlled types';
+    return 'Ressources: Dépôts $resourceTotal • Types contrôlés $resourceTypes';
   }
 
   @override
@@ -4600,83 +4629,86 @@ class AppLocalizationsFr extends AppLocalizations {
     int unitUpkeep,
     String net,
   ) {
-    return 'Gold: $gold • income +$goldIncome • upkeep -$unitUpkeep • net $net / turn';
+    return 'Or: $gold • revenu +$goldIncome • entretien -$unitUpkeep • net $net / tour';
   }
 
   @override
   String topResourceGoldTooltipNegativeTreasury(String base) {
-    return '$base • treasury below zero';
+    return '$base • trésorerie inférieure à zéro';
   }
 
   @override
   String topResourceGoldTooltipBankruptcy(String base) {
-    return '$base • bankruptcy risk within 3 turns';
+    return '$base • risque de faillite dans les 3 tours';
   }
 
   @override
-  String get resourceBreakdownTreasury => 'Treasury';
+  String get resourceBreakdownTreasury => 'Trésorerie';
 
   @override
-  String get resourceBreakdownCityIncome => 'City income';
+  String get resourceBreakdownCityIncome => 'Revenus des villes';
 
   @override
-  String get resourceBreakdownUpkeep => 'Upkeep';
+  String get resourceBreakdownUpkeep => 'Entretien';
 
   @override
-  String get resourceBreakdownNetPerTurn => 'Net / turn';
+  String get resourceBreakdownNetPerTurn => 'Net / tour';
 
   @override
-  String get resourceBreakdownNoCityIncome => 'No city income';
+  String get resourceBreakdownNoCityIncome => 'Pas de revenus urbains';
 
   @override
-  String get resourceBreakdownFreeLimit => 'Free limit';
+  String get resourceBreakdownFreeLimit => 'Limite libre';
 
   @override
-  String get resourceBreakdownNextWorkerUpkeep => 'Next worker upkeep';
+  String get resourceBreakdownNextWorkerUpkeep =>
+      'Prochain entretien des travailleurs';
 
   @override
   String resourceBreakdownNextWorkerUpkeepValue(int upkeep) {
-    return '-$upkeep gold/turn';
+    return '-$upkeep or/tour';
   }
 
   @override
-  String get resourceBreakdownInsideFreeLimit => 'Inside free limit';
+  String get resourceBreakdownInsideFreeLimit => 'Limite intérieure libre';
 
   @override
-  String get resourceBreakdownNoActiveTechnology => 'No technology selected';
+  String get resourceBreakdownNoActiveTechnology =>
+      'Aucune technologie sélectionnée';
 
   @override
-  String get resourceBreakdownScienceTitle => 'Science and research';
+  String get resourceBreakdownScienceTitle => 'Science et recherche';
 
   @override
-  String get resourceBreakdownSciencePerTurn => 'Science / turn';
+  String get resourceBreakdownSciencePerTurn => 'Science / tour';
 
   @override
-  String get resourceBreakdownActiveResearch => 'Active research';
+  String get resourceBreakdownActiveResearch => 'Recherche active';
 
   @override
-  String get resourceBreakdownTurnsToComplete => 'To complete';
+  String get resourceBreakdownTurnsToComplete => 'À compléter';
 
   @override
-  String get resourceBreakdownNoScienceSources => 'No science sources';
+  String get resourceBreakdownNoScienceSources => 'Aucune source scientifique';
 
   @override
   String resourceBreakdownCityResearchProject(String cityName) {
-    return '$cityName: Research';
+    return '$cityName: Recherche';
   }
 
   @override
   String get resourceBreakdownNoControlledResources =>
-      'No controlled resources';
+      'Aucune ressource contrôlée';
 
   @override
-  String get resourceBreakdownGrowCitiesWithFood => 'Grow cities with food';
+  String get resourceBreakdownGrowCitiesWithFood =>
+      'Culturer des villes avec de la nourriture';
 
   @override
-  String get resourceBreakdownControlledDeposits => 'Controlled deposits';
+  String get resourceBreakdownControlledDeposits => 'Dépôts contrôlés';
 
   @override
-  String get resourceBreakdownResourceTypes => 'Resource types';
+  String get resourceBreakdownResourceTypes => 'Types de ressources';
 
   @override
   String get resourceBreakdownTypesSection => 'Types';
@@ -4685,96 +4717,98 @@ class AppLocalizationsFr extends AppLocalizations {
   String get resourceBreakdownSourcesSection => 'Sources';
 
   @override
-  String get technologyRecommendationsTitle => 'Recommended research';
+  String get technologyRecommendationsTitle => 'Recherche recommandée';
 
   @override
-  String get technologyShowTreeAction => 'Show tree';
+  String get technologyShowTreeAction => 'Afficher l\'arbre';
 
   @override
   String technologyShowTreeCountAction(int count) {
-    return 'Show tree ($count)';
+    return 'Afficher l\'arbre ($count)';
   }
 
   @override
-  String get technologyRecommendationUnlocks => 'Unlocks';
+  String get technologyRecommendationUnlocks => 'Déverrouillage';
 
   @override
   String get technologyRecommendationReasonBoost =>
-      'Active boost lowers the research cost.';
+      'Une stimulation active réduit le coût de la recherche.';
 
   @override
-  String get technologyRecommendationReasonSection => 'Why now';
+  String get technologyRecommendationReasonSection => 'Pourquoi maintenant';
 
   @override
   String get technologyRecommendationReasonImprovements =>
-      'New tile improvements quickly turn resources into yield.';
+      'De nouvelles améliorations de tuiles transforment rapidement les ressources en rendement.';
 
   @override
   String get technologyRecommendationReasonBuilding =>
-      'A new city building opens another development direction.';
+      'Un nouveau bâtiment urbain ouvre une autre direction de développement.';
 
   @override
   String get technologyRecommendationReasonUnit =>
-      'A new unit strengthens safety and map control.';
+      'Une nouvelle unité renforce la sécurité et le contrôle des cartes.';
 
   @override
   String get technologyRecommendationReasonEffect =>
-      'A permanent bonus applies to the whole economy.';
+      'Une prime permanente s\'applique à l\'ensemble de l\'économie.';
 
   @override
   String get technologyRecommendationReasonFast =>
-      'Fast research with no extra requirements.';
+      'Recherche rapide sans exigences supplémentaires.';
 
   @override
   String get technologyRecommendationReasonDefault =>
-      'Available research that neatly closes the next step.';
+      'La recherche disponible qui ferme soigneusement la prochaine étape.';
 
   @override
   String get technologyNoRecommendations =>
-      'No new research is currently available.';
+      'Aucune nouvelle recherche n\'est actuellement disponible.';
 
   @override
-  String get technologyFullTreeTitle => 'Full technology tree';
+  String get technologyFullTreeTitle => 'Arbre pleine technologie';
 
   @override
-  String get technologyRecommendationsBackAction => 'Recommendations';
+  String get technologyRecommendationsBackAction => 'Recommandations';
 
   @override
-  String get empireUnitsEmptyTitle => 'No units';
+  String get empireUnitsEmptyTitle => 'Pas d\'unités';
 
   @override
   String get empireUnitsEmptyBody =>
-      'New units will appear here after city production or event recruitment.';
+      'De nouvelles unités apparaîtront ici après la production urbaine ou le recrutement d\'événements.';
 
   @override
-  String get empireCitiesEmptyTitle => 'No cities';
+  String get empireCitiesEmptyTitle => 'Pas de villes';
 
   @override
   String get empireCitiesEmptyBody =>
-      'Found your first city with a settler to unlock production, science, and empire borders.';
+      'Trouvé votre première ville avec un colon pour débloquer la production, la science, et les frontières de l\'empire.';
 
   @override
-  String get empireCityCenters => 'City centers';
+  String get empireCityCenters => 'Centres urbains';
 
   @override
-  String get empireShowFirstUnitTooltip => 'Show the first unit on the map';
+  String get empireShowFirstUnitTooltip =>
+      'Afficher la première unité sur la carte';
 
   @override
-  String get empireShowUnitTooltip => 'Show unit on the map';
+  String get empireShowUnitTooltip => 'Afficher l\'unité sur la carte';
 
   @override
-  String get empireShowFirstCityTooltip => 'Show the first city on the map';
+  String get empireShowFirstCityTooltip =>
+      'Afficher la première ville sur la carte';
 
   @override
-  String get empireShowCityTooltip => 'Show city on the map';
+  String get empireShowCityTooltip => 'Montrer la ville sur la carte';
 
   @override
   String empireUnitCountLabel(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count units',
-      one: '1 unit',
+      other: '$count unités',
+      one: '1 unité',
     );
     return '$_temp0';
   }
@@ -4784,38 +4818,38 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count cities',
-      one: '1 city',
+      other: '$count villes',
+      one: '1 ville',
     );
     return '$_temp0';
   }
 
   @override
   String empireUnitMovement(int movement) {
-    return 'Movement $movement';
+    return 'Mouvement $movement';
   }
 
   @override
-  String get empireUnitBuilding => 'Building';
+  String get empireUnitBuilding => 'Bâtiment';
 
   @override
-  String get empireUnitWorking => 'Working';
+  String get empireUnitWorking => 'Travail';
 
   @override
-  String get empireUnitFortifying => 'Fortifying';
+  String get empireUnitFortifying => 'Fortifiant';
 
   @override
-  String get empireUnitHealing => 'Healing';
+  String get empireUnitHealing => 'Guérison';
 
   @override
   String get empireUnitEnRoute => 'En route';
 
   @override
-  String get empireUnitNoMovement => 'no movement';
+  String get empireUnitNoMovement => 'Pas de mouvement';
 
   @override
   String empireUnitsWithMovement(int count) {
-    return '$count with movement';
+    return '$count avec mouvement';
   }
 
   @override
@@ -4825,12 +4859,12 @@ class AppLocalizationsFr extends AppLocalizations {
     int buildings,
     String production,
   ) {
-    return 'Population $population - $hexes tiles - $buildings bldg. - producing: $production';
+    return 'Population $population - Tuiles $hexes - Bldg $buildings - produisant: $production';
   }
 
   @override
   String empireCityStoredArtifact(String artifactName) {
-    return 'Artifact: $artifactName';
+    return 'Artéfact: $artifactName';
   }
 
   @override
@@ -4839,53 +4873,53 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get empireStatsTitle => 'Empire status';
+  String get empireStatsTitle => 'Statut Empire';
 
   @override
   String get empireStatsSubtitle =>
-      'A quick read of readiness, composition, and city growth';
+      'Une lecture rapide de la préparation, de la composition et de la croissance de la ville';
 
   @override
-  String get empireStatsReadinessTitle => 'Unit readiness';
+  String get empireStatsReadinessTitle => 'Préparation de l\'unité';
 
   @override
-  String get empireStatsUnitCompositionTitle => 'Unit composition';
+  String get empireStatsUnitCompositionTitle => 'Composition de l\'unité';
 
   @override
-  String get empireStatsCityDevelopmentTitle => 'City development';
+  String get empireStatsCityDevelopmentTitle => 'Développement urbain';
 
   @override
-  String get empireStatsCityComparisonTitle => 'City comparison';
+  String get empireStatsCityComparisonTitle => 'Comparaison des villes';
 
   @override
-  String get empireStatsOrders => 'With orders';
+  String get empireStatsOrders => 'Avec des ordres';
 
   @override
-  String get empireStatsNoMovement => 'No movement';
+  String get empireStatsNoMovement => 'Pas de mouvement';
 
   @override
-  String get empireStatsAveragePopulation => 'Avg. pop.';
+  String get empireStatsAveragePopulation => '- Oui.';
 
   @override
-  String get empireStatsTotalBuildings => 'Buildings';
+  String get empireStatsTotalBuildings => 'Bâtiments';
 
   @override
-  String get empireStatsStoredArtifacts => 'Artifacts';
+  String get empireStatsStoredArtifacts => 'Artefacts';
 
   @override
-  String get empireStatsTerritory => 'Territory';
+  String get empireStatsTerritory => 'Territoire';
 
   @override
   String get empireStatsCitiesProducing => 'Production';
 
   @override
-  String get empireStatsOther => 'Other';
+  String get empireStatsOther => 'Autres';
 
   @override
-  String get empireStatsEmptyUnits => 'No units to analyze';
+  String get empireStatsEmptyUnits => 'Aucune unité à analyser';
 
   @override
-  String get empireStatsEmptyCities => 'No cities to analyze';
+  String get empireStatsEmptyCities => 'Aucune ville à analyser';
 
   @override
   String empireStatsCityBarDetail(int population, int buildings) {
@@ -4899,57 +4933,59 @@ class AppLocalizationsFr extends AppLocalizations {
     int food,
     int gold,
   ) {
-    return 'Pop. $population • Prod. $production • Food $food • Gold $gold';
+    return 'Pop. $population • Prod. $production • Alimentation $food • Or $gold';
   }
 
   @override
-  String get empireStatsMetricPopulation => 'Pop.';
+  String get empireStatsMetricPopulation => 'Père.';
 
   @override
-  String get empireStatsMetricProduction => 'Prod.';
+  String get empireStatsMetricProduction => 'Produit.';
 
   @override
-  String get empireStatsMetricFood => 'Food';
+  String get empireStatsMetricFood => 'Produits alimentaires';
 
   @override
-  String get empireStatsMetricGold => 'Gold';
+  String get empireStatsMetricGold => 'Or';
 
   @override
-  String get activityLogTitle => 'Activity log';
+  String get activityLogTitle => 'Registre des activités';
 
   @override
-  String get activityLogShowAllAction => 'Show all';
+  String get activityLogShowAllAction => 'Afficher tout';
 
   @override
   String activityLogShowMoreAction(int visible, int total) {
-    return 'Show more ($visible/$total)';
+    return 'Afficher plus ($visible/$total)';
   }
 
   @override
-  String get activityLogLoadingHistory => 'Loading full history...';
+  String get activityLogLoadingHistory =>
+      'Chargement de l\'historique complet...';
 
   @override
-  String get activityLogHistoryErrorTitle => 'Could not load history';
+  String get activityLogHistoryErrorTitle =>
+      'Impossible de charger l\'historique';
 
   @override
   String activityLogHistoryErrorBody(String error) {
-    return 'The event journal is unavailable: $error';
+    return 'Le journal événement n\'est pas disponible: $error';
   }
 
   @override
-  String get activityLogFilterAll => 'All';
+  String get activityLogFilterAll => 'Tous';
 
   @override
-  String get activityLogFilterAllShort => 'All';
+  String get activityLogFilterAllShort => 'Tous';
 
   @override
-  String get activityLogFilterCombat => 'Combat';
+  String get activityLogFilterCombat => 'Lutte';
 
   @override
-  String get activityLogFilterCities => 'Cities';
+  String get activityLogFilterCities => 'Villes';
 
   @override
-  String get activityLogFilterDiplomacy => 'Diplomacy';
+  String get activityLogFilterDiplomacy => 'Diplomatie';
 
   @override
   String get activityLogFilterDiplomacyShort => 'Diplo';
@@ -4958,66 +4994,66 @@ class AppLocalizationsFr extends AppLocalizations {
   String get activityLogFilterTechnology => 'Science';
 
   @override
-  String get activityLogEmptyAllTitle => 'No recorded events';
+  String get activityLogEmptyAllTitle => 'Aucun événement enregistré';
 
   @override
-  String get activityLogEmptyCombatTitle => 'No recorded battles';
+  String get activityLogEmptyCombatTitle => 'Aucune bataille enregistrée';
 
   @override
-  String get activityLogEmptyCityTitle => 'No recorded city events';
+  String get activityLogEmptyCityTitle => 'Aucun événement urbain enregistré';
 
   @override
-  String get activityLogEmptyDiplomacyTitle => 'No recorded diplomacy';
+  String get activityLogEmptyDiplomacyTitle => 'Pas de diplomatie enregistrée';
 
   @override
-  String get activityLogEmptyTechnologyTitle => 'No recorded discoveries';
+  String get activityLogEmptyTechnologyTitle => 'Aucune découverte enregistrée';
 
   @override
   String get activityLogEmptyAllBody =>
-      'First discoveries, battles, and builds will appear here after you play actions.';
+      'Les premières découvertes, batailles et constructions apparaîtront ici après avoir joué.';
 
   @override
   String get activityLogEmptyCombatBody =>
-      'Battles are recorded after attacks or defenses visible to the player.';
+      'Les batailles sont enregistrées après des attaques ou des défenses visibles pour le joueur.';
 
   @override
   String get activityLogEmptyCityBody =>
-      'Founded cities, builds, and claimed tiles will create the empire timeline here.';
+      'Des villes fondées, des constructions et des tuiles revendiquées créeront ici la chronologie de l\'empire.';
 
   @override
   String get activityLogEmptyDiplomacyBody =>
-      'Dispatches, proposals, replies, and relation changes will appear here after diplomatic actions.';
+      'Les dépêches, les propositions, les réponses et les changements de relation apparaîtront ici après les actions diplomatiques.';
 
   @override
   String get activityLogEmptyTechnologyBody =>
-      'Discovered technologies will appear here after research completes.';
+      'Les technologies découvertes apparaîtront ici après la fin de la recherche.';
 
   @override
-  String get turnTimelineTitle => 'Turn timeline';
+  String get turnTimelineTitle => 'Tourner la chronologie';
 
   @override
   String turnTimelineSubtitle(int turn, int count) {
-    return 'Turn $turn • events: $count';
+    return 'Tourner $turn • événements: $count';
   }
 
   @override
-  String get turnTimelineChartTitle => 'Events across turns';
+  String get turnTimelineChartTitle => 'Événements à travers les tours';
 
   @override
-  String get turnTimelineMetricEvents => 'Events';
+  String get turnTimelineMetricEvents => 'Événements';
 
   @override
-  String get turnTimelineMetricActiveTurns => 'Active turns';
+  String get turnTimelineMetricActiveTurns => 'Tours actifs';
 
   @override
-  String get turnTimelineMetricCurrentTurn => 'Current turn';
+  String get turnTimelineMetricCurrentTurn => 'Tour actuel';
 
   @override
-  String get technologyDiscoveryEyebrow => 'Technology discovered';
+  String get technologyDiscoveryEyebrow => 'Technologie découverte';
 
   @override
   String unitSelectionMovementSubtitle(int current, int max) {
-    return 'Move $current/$max';
+    return 'Déplacer $current/$max';
   }
 
   @override
@@ -5027,52 +5063,52 @@ class AppLocalizationsFr extends AppLocalizations {
     int hp,
     int maxHp,
   ) {
-    return 'Move $current/$max • HP $hp/$maxHp';
+    return 'Déplacer $current/$max • HP $hp/$maxHp';
   }
 
   @override
-  String get unitSelectionAttackLabel => 'Attack';
+  String get unitSelectionAttackLabel => 'Attaque';
 
   @override
-  String get unitSelectionDefenseLabel => 'Defense';
+  String get unitSelectionDefenseLabel => 'Défense';
 
   @override
   String get unitSelectionHpLabel => 'HP';
 
   @override
-  String get unitSelectionRangeLabel => 'Range';
+  String get unitSelectionRangeLabel => 'Portée';
 
   @override
-  String get unitSelectionConstructionLabel => 'Construction';
+  String get unitSelectionConstructionLabel => 'Bâtiment';
 
   @override
-  String get unitSelectionWorkLabel => 'Work';
+  String get unitSelectionWorkLabel => 'Travail';
 
   @override
-  String get unitSelectionFieldBonusValue => 'Field bonus';
+  String get unitSelectionFieldBonusValue => 'Prime de champ';
 
   @override
-  String get tileSelectionYieldTitle => 'Tile potential';
+  String get tileSelectionYieldTitle => 'Potentiel de carreaux';
 
   @override
   String get tileSelectionYieldTooltip =>
-      'Inspection estimate for this tile, not actual city yield.';
+      'Estimation d\'inspection pour cette tuile, pas le rendement réel de la ville.';
 
   @override
   String get tileSelectionBonusLabel => 'Bonus';
 
   @override
-  String get tileSelectionDefenseBonusValue => '+defense';
+  String get tileSelectionDefenseBonusValue => '+ défense';
 
   @override
-  String get tileSelectionRiverBonusValue => '+river';
+  String get tileSelectionRiverBonusValue => '+rivière';
 
   @override
-  String get citySelectionYieldTitle => 'City income';
+  String get citySelectionYieldTitle => 'Revenus des villes';
 
   @override
   String get citySelectionYieldTooltip =>
-      'Actual city yield per turn from the city economy.';
+      'Rendement réel de la ville par tour de l\'économie de la ville.';
 
   @override
   String citySelectionSubtitle(
@@ -5081,840 +5117,855 @@ class AppLocalizationsFr extends AppLocalizations {
     int maxHexes,
     String production,
   ) {
-    return 'Population $population • $territoryHexCount/$maxHexes fields • Production: $production';
+    return 'Population $population • Champs $territoryHexCount/$maxHexes • Production: $production';
   }
 
   @override
-  String get citySelectionTerritoryLabel => 'Territory';
+  String get citySelectionTerritoryLabel => 'Territoire';
 
   @override
-  String get citySelectionFoodLabel => 'Food';
+  String get citySelectionFoodLabel => 'Produits alimentaires';
 
   @override
-  String get citySelectionNetFoodLabel => 'Net food';
+  String get citySelectionNetFoodLabel => 'Produits alimentaires nets';
 
   @override
-  String get citySelectionBuildingsLabel => 'Buildings';
+  String get citySelectionBuildingsLabel => 'Bâtiments';
 
   @override
-  String get citySelectionArtifactLabel => 'Artifact';
+  String get citySelectionArtifactLabel => 'Artéfact';
 
   @override
   String get worldArtifactBonusTitle => 'Bonus';
 
   @override
-  String get worldArtifactHeritageTitle => 'Heritage';
+  String get worldArtifactHeritageTitle => 'Patrimoine';
 
   @override
   String get worldArtifactHeritageBody =>
-      'Collect and place 6 unique artifacts in your cities, then hold the collection for 5 turns.';
+      'Recueillir et placer 6 artefacts uniques dans vos villes, puis tenir la collection pour 5 tours.';
 
   @override
-  String get worldArtifactAncientImperialCrown => 'Ancient Imperial Crown';
+  String get worldArtifactAncientImperialCrown => 'Ancienne couronne impériale';
 
   @override
-  String get worldArtifactAstronomersTablets => 'Astronomers\' Tablets';
+  String get worldArtifactAstronomersTablets => 'Comprimés d\'astronomes';
 
   @override
-  String get worldArtifactProphetMask => 'Prophet\'s Mask';
+  String get worldArtifactProphetMask => 'Masque du Prophète';
 
   @override
-  String get worldArtifactHeroSword => 'Hero\'s Sword';
+  String get worldArtifactHeroSword => 'Épée du héros';
 
   @override
-  String get worldArtifactMerchantsSeal => 'Merchant\'s Seal';
+  String get worldArtifactMerchantsSeal => 'Le sceau du marchand';
 
   @override
-  String get worldArtifactFirstPeoplesChronicle => 'First Peoples\' Chronicle';
+  String get worldArtifactFirstPeoplesChronicle =>
+      'Chronique des Premières nations';
 
   @override
-  String get worldArtifactTempleReliquary => 'Temple Reliquary';
+  String get worldArtifactTempleReliquary => 'Reliquaire du Temple';
 
   @override
-  String get worldArtifactQueensMirror => 'Queen\'s Mirror';
+  String get worldArtifactQueensMirror => 'Miroir de la Reine';
 
   @override
-  String get worldArtifactAncientImperialCrownShortBonus => '+1 defense';
+  String get worldArtifactAncientImperialCrownShortBonus => '+1 défense';
 
   @override
   String get worldArtifactAstronomersTabletsShortBonus => '+1 science';
 
   @override
-  String get worldArtifactProphetMaskShortBonus => '+1 gold, diplomacy';
+  String get worldArtifactProphetMaskShortBonus => '+1 or, diplomatie';
 
   @override
-  String get worldArtifactHeroSwordShortBonus => '+2 XP for produced units';
+  String get worldArtifactHeroSwordShortBonus =>
+      '+2 XP pour les unités produites';
 
   @override
-  String get worldArtifactMerchantsSealShortBonus => '+2 gold';
+  String get worldArtifactMerchantsSealShortBonus => '+2 or';
 
   @override
-  String get worldArtifactFirstPeoplesChronicleShortBonus => '+1 food';
+  String get worldArtifactFirstPeoplesChronicleShortBonus => '+1 aliments';
 
   @override
-  String get worldArtifactTempleReliquaryShortBonus => '+1 food, +1 defense';
+  String get worldArtifactTempleReliquaryShortBonus =>
+      '+1 nourriture, +1 défense';
 
   @override
-  String get worldArtifactQueensMirrorShortBonus => '+1 gold, diplomacy';
+  String get worldArtifactQueensMirrorShortBonus => '+1 or, diplomatie';
 
   @override
   String get worldArtifactAncientImperialCrownDescription =>
-      'A symbol of old rule. Once stored in a city, it strengthens defense and the prestige of the collection.';
+      'Un symbole de l\'ancienne règle. Une fois stocké dans une ville, il renforce la défense et le prestige de la collection.';
 
   @override
   String get worldArtifactAstronomersTabletsDescription =>
-      'Stone tablets with ancient maps of the sky. In a city, they support science.';
+      'Tablettes en pierre avec des cartes anciennes du ciel. Dans une ville, ils soutiennent la science.';
 
   @override
   String get worldArtifactProphetMaskDescription =>
-      'A ritual mask of great political weight. In a city, it grants gold and diplomatic value.';
+      'Un masque rituel de grand poids politique. Dans une ville, elle accorde de l\'or et de la valeur diplomatique.';
 
   @override
   String get worldArtifactHeroSwordDescription =>
-      'The weapon of a legendary commander. Units produced in this city gain extra experience.';
+      'L\'arme d\'un commandant légendaire. Les unités produites dans cette ville acquièrent une expérience supplémentaire.';
 
   @override
   String get worldArtifactMerchantsSealDescription =>
-      'The mark of the first merchant guilds. In a city, it strengthens gold income.';
+      'La marque des premières corporations marchandes. Dans une ville, il renforce les revenus d\'or.';
 
   @override
   String get worldArtifactFirstPeoplesChronicleDescription =>
-      'A record of the oldest lineages and borders. In a city, it supports growth.';
+      'Une trace des plus anciennes lignées et frontières. Dans une ville, elle soutient la croissance.';
 
   @override
   String get worldArtifactTempleReliquaryDescription =>
-      'A sacred reliquary that gives the city stability, food, and defense.';
+      'Un reliquaire sacré qui donne à la ville stabilité, nourriture et défense.';
 
   @override
   String get worldArtifactQueensMirrorDescription =>
-      'A court treasure joining trade with diplomacy. In a city, it grants gold and prestige.';
+      'Un trésor de cour qui rejoint le commerce avec la diplomatie. Dans une ville, il accorde l\'or et le prestige.';
 
   @override
-  String get worldArtifactLocationMap => 'Artifact on the map';
+  String get worldArtifactLocationMap => 'Artéfact sur la carte';
 
   @override
-  String get worldArtifactLocationExcavation => 'Excavation in progress';
+  String get worldArtifactLocationExcavation => 'Excavation en cours';
 
   @override
-  String get worldArtifactLocationCarried => 'Carried by a unit';
+  String get worldArtifactLocationCarried => 'Porté par une unité';
 
   @override
-  String get worldArtifactLocationStored => 'Stored in a city';
+  String get worldArtifactLocationStored => 'Stocké dans une ville';
 
   @override
-  String get worldArtifactStepExcavate => 'Excavate';
+  String get worldArtifactStepExcavate => 'Excavation';
 
   @override
-  String get worldArtifactStepMove => 'Move';
+  String get worldArtifactStepMove => 'Déplacer';
 
   @override
-  String get worldArtifactStepStore => 'Store';
+  String get worldArtifactStepStore => 'A conserver';
 
   @override
-  String get artifactGuidanceUnknownCityName => 'a city';
+  String get artifactGuidanceUnknownCityName => 'une ville';
 
   @override
-  String get artifactGuidanceStoredTitle => 'Artifact stored';
+  String get artifactGuidanceStoredTitle => 'Artefact stocké';
 
   @override
   String artifactGuidanceStoredBody(String artifactName, String cityName) {
-    return '$artifactName strengthens $cityName. Cultural victory needs 6 artifacts in cities for 5 turns.';
+    return '$artifactName renforce $cityName. La victoire culturelle nécessite 6 artefacts dans les villes pour 5 tours.';
   }
 
   @override
-  String get artifactGuidanceCarriedTitle => 'Artifact carried';
+  String get artifactGuidanceCarriedTitle => 'Objet transporté';
 
   @override
   String artifactGuidanceCarriedBody(String artifactName) {
-    return 'The unit carries $artifactName. Bring it to one of your cities with a free slot and use the store action.';
+    return 'L\'unité porte $artifactName. Apportez-le dans une de vos villes avec une fente gratuite et utilisez l\'action magasin.';
   }
 
   @override
-  String get artifactGuidanceReachedTitle => 'Artifact discovered';
+  String get artifactGuidanceReachedTitle => 'Artéfact découvert';
 
   @override
   String artifactGuidanceReachedBody(String artifactName) {
-    return '$artifactName is under the unit. Use the Excavation action to pick it up.';
+    return '$artifactName est sous l\'unité. Utilisez l\'action Excavation pour le récupérer.';
   }
 
   @override
-  String get citySelectionSpecializationLabel => 'Specialization';
+  String get citySelectionSpecializationLabel => 'Spécialisation';
 
   @override
-  String get fieldImprovementOutsideActiveCity => 'Outside active city';
+  String get fieldImprovementOutsideActiveCity =>
+      'En dehors de la ville active';
 
   @override
-  String get fieldImprovementYieldTitle => 'Improvement bonus';
+  String get fieldImprovementYieldTitle => 'Prime d\'amélioration';
 
   @override
   String get fieldImprovementYieldTooltip =>
-      'Additional yield from the field improvement.';
+      'Rendement supplémentaire de l\'amélioration sur le terrain.';
 
   @override
-  String get hexKindIdealCitySite => 'Ideal city site';
+  String get hexKindIdealCitySite => 'Site idéal de la ville';
 
   @override
-  String get hexKindGoodCitySite => 'Good city site';
+  String get hexKindGoodCitySite => 'Bon site de ville';
 
   @override
-  String get hexKindFertileField => 'Fertile field';
+  String get hexKindFertileField => 'Champ fertile';
 
   @override
-  String get hexKindFertilePlains => 'Fertile plains';
+  String get hexKindFertilePlains => 'Plaines fertiles';
 
   @override
-  String get hexKindRichPlain => 'Rich plain';
+  String get hexKindRichPlain => 'Riche plaine';
 
   @override
-  String get hexKindStrategicBorderland => 'Strategic borderland';
+  String get hexKindStrategicBorderland => 'Frontière stratégique';
 
   @override
-  String get hexKindStrategicField => 'Strategic field';
+  String get hexKindStrategicField => 'Domaine stratégique';
 
   @override
-  String get hexKindDefensivePosition => 'Defensive position';
+  String get hexKindDefensivePosition => 'Position défensive';
 
   @override
-  String get hexKindFertileForest => 'Fertile forest';
+  String get hexKindFertileForest => 'Forêts fertiles';
 
   @override
-  String get hexKindForestBackline => 'Forest backline';
+  String get hexKindForestBackline => 'Couverture forestière';
 
   @override
-  String get hexKindForestForge => 'Forest forge';
+  String get hexKindForestForge => 'Faux forestiers';
 
   @override
-  String get hexKindWildLand => 'Wild land';
+  String get hexKindWildLand => 'Terres sauvages';
 
   @override
-  String get hexKindRichWilds => 'Rich wilds';
+  String get hexKindRichWilds => 'Des sauvages riches';
 
   @override
-  String get hexKindExoticBackline => 'Exotic backline';
+  String get hexKindExoticBackline => 'Ligne arrière exotique';
 
   @override
-  String get hexKindDifficultStrategicTerrain => 'Difficult strategic terrain';
+  String get hexKindDifficultStrategicTerrain =>
+      'Terrain stratégique difficile';
 
   @override
-  String get hexKindHighGround => 'High ground';
+  String get hexKindHighGround => 'Terrain élevé';
 
   @override
-  String get hexKindRiverHills => 'River hills';
+  String get hexKindRiverHills => 'Collines fluviales';
 
   @override
-  String get hexKindIndustrialStronghold => 'Industrial stronghold';
+  String get hexKindIndustrialStronghold => 'Bastion industriel';
 
   @override
-  String get hexKindRichHills => 'Rich hills';
+  String get hexKindRichHills => 'Des collines riches';
 
   @override
-  String get hexKindBarrenLand => 'Barren land';
+  String get hexKindBarrenLand => 'Terrains';
 
   @override
   String get hexKindOasis => 'Oasis';
 
   @override
-  String get hexKindTradeOasis => 'Trade oasis';
+  String get hexKindTradeOasis => 'Oasis commerciale';
 
   @override
-  String get hexKindDesertDeposits => 'Desert deposits';
+  String get hexKindDesertDeposits => 'Dépôts des déserts';
 
   @override
-  String get hexKindHarshLand => 'Harsh land';
+  String get hexKindHarshLand => 'Terres sauvages';
 
   @override
-  String get hexKindColdPastures => 'Cold pastures';
+  String get hexKindColdPastures => 'Pâturages froids';
 
   @override
-  String get hexKindResourceOutpost => 'Resource outpost';
+  String get hexKindResourceOutpost => 'Ressources poste';
 
   @override
-  String get hexKindHostileLand => 'Hostile land';
+  String get hexKindHostileLand => 'Terres hostiles';
 
   @override
-  String get hexKindArcticDeposits => 'Arctic deposits';
+  String get hexKindArcticDeposits => 'Dépôts arctiques';
 
   @override
-  String get hexKindCoast => 'Coast';
+  String get hexKindCoast => 'Côte';
 
   @override
-  String get hexKindFishingCoast => 'Fishing coast';
+  String get hexKindFishingCoast => 'Côte de pêche';
 
   @override
-  String get hexKindRichCoast => 'Rich coast';
+  String get hexKindRichCoast => 'Côte riche';
 
   @override
-  String get hexKindRiverPort => 'River port';
+  String get hexKindRiverPort => 'Port fluvial';
 
   @override
-  String get hexKindRegionalPortHeart => 'Regional port hub';
+  String get hexKindRegionalPortHeart => 'Hub portuaire régional';
 
   @override
-  String get hexKindOpenSea => 'Open sea';
+  String get hexKindOpenSea => 'Mer ouverte';
 
   @override
-  String get hexKindNaturalBarrier => 'Natural barrier';
+  String get hexKindNaturalBarrier => 'Barrière naturelle';
 
   @override
-  String get hexKindPromisingLand => 'Promising land';
+  String get hexKindPromisingLand => 'Terrains prometteurs';
 
   @override
-  String get hexKindWeakLand => 'Weak land';
+  String get hexKindWeakLand => 'Pays faibles';
 
   @override
-  String get hexKindOrdinaryLand => 'Ordinary land';
+  String get hexKindOrdinaryLand => 'Terres ordinaires';
 
   @override
-  String get hexKindMapTile => 'Map tile';
+  String get hexKindMapTile => 'Carrelage de carte';
 
   @override
   String get hexKindIdealCitySiteDescription =>
-      'A high-value settlement tile with food, growth, and expansion pressure already lined up.';
+      'Une tuile de peuplement de haute valeur avec la nourriture, la croissance et la pression d\'expansion déjà alignée.';
 
   @override
   String get hexKindGoodCitySiteDescription =>
-      'Solid terrain for a city center with enough baseline value to support early growth.';
+      'Terrain solide pour un centre-ville avec une valeur de base suffisante pour soutenir la croissance précoce.';
 
   @override
   String get hexKindFertileFieldDescription =>
-      'River-fed grassland that favors food, population growth, and worker improvements.';
+      'Les prairies alimentées par les rivières favorisent la nourriture, la croissance de la population et l\'amélioration des travailleurs.';
 
   @override
   String get hexKindFertilePlainsDescription =>
-      'Open plains with river support, useful for balanced food and production.';
+      'Plaines ouvertes avec support fluvial, utiles pour une alimentation et une production équilibrées.';
 
   @override
   String get hexKindRichPlainDescription =>
-      'A valuable open tile with luxury or trade value worth bringing inside borders.';
+      'Une précieuse tuile ouverte avec luxe ou valeur commerciale vaut la peine d\'apporter à l\'intérieur des frontières.';
 
   @override
   String get hexKindStrategicBorderlandDescription =>
-      'Good land with strategic value, useful for expansion before rivals claim it.';
+      'Une bonne terre à valeur stratégique, utile pour l\'expansion avant que les rivaux ne la revendiquent.';
 
   @override
   String get hexKindStrategicFieldDescription =>
-      'A plains tile tied to strategic resources or pressure on the frontier.';
+      'Une tuile des plaines liée aux ressources stratégiques ou à la pression sur la frontière.';
 
   @override
   String get hexKindDefensivePositionDescription =>
-      'Terrain that improves defensive control and helps hold nearby approaches.';
+      'Terrain qui améliore le contrôle défensif et aide à maintenir des approches proches.';
 
   @override
   String get hexKindFertileForestDescription =>
-      'A forest with river support, mixing growth potential with natural cover.';
+      'Une forêt avec un support fluvial, mélangeant le potentiel de croissance et le couvert naturel.';
 
   @override
   String get hexKindForestBacklineDescription =>
-      'A safer forest tile that can support growth or hunting-oriented improvements.';
+      'Une tuile forestière plus sûre qui peut soutenir la croissance ou des améliorations axées sur la chasse.';
 
   @override
   String get hexKindForestForgeDescription =>
-      'Forest with industrial resource value, promising for production once improved.';
+      'Forêt à valeur industrielle, prometteuse pour la production une fois améliorée.';
 
   @override
   String get hexKindWildLandDescription =>
-      'Dense terrain with friction; useful only when you have a clear worker or expansion plan.';
+      'Terrain dense avec friction; utile seulement lorsque vous avez un travailleur clair ou un plan d\'expansion.';
 
   @override
   String get hexKindRichWildsDescription =>
-      'Wild terrain with enough fertility or resources to justify careful development.';
+      'Terrain sauvage avec suffisamment de fertilité ou de ressources pour justifier un développement attentif.';
 
   @override
   String get hexKindExoticBacklineDescription =>
-      'A jungle or wetland tile carrying luxury value for later borders and trade.';
+      'Une jungle ou des tuiles de zones humides ayant une valeur de luxe pour les frontières et le commerce ultérieurs.';
 
   @override
   String get hexKindDifficultStrategicTerrainDescription =>
-      'Hard terrain with strategic resource value; powerful later, awkward early.';
+      'Terrain dur avec une valeur stratégique des ressources; puissant plus tard, maladroit tôt.';
 
   @override
   String get hexKindHighGroundDescription =>
-      'Hills that favor defense and map control more than fast growth.';
+      'Hills qui favorisent la défense et le contrôle de la carte plus que la croissance rapide.';
 
   @override
   String get hexKindRiverHillsDescription =>
-      'Hills beside a river, combining defense with better economic potential.';
+      'Collines au bord d\'une rivière, combinant défense et meilleur potentiel économique.';
 
   @override
   String get hexKindIndustrialStrongholdDescription =>
-      'Hills with industrial resources, a strong production target for a city.';
+      'Des collines avec des ressources industrielles, un objectif de production fort pour une ville.';
 
   @override
   String get hexKindRichHillsDescription =>
-      'Hills with wealth resources, useful for gold or production-focused expansion.';
+      'Collines riches, utiles pour l\'or ou l\'expansion axée sur la production.';
 
   @override
   String get hexKindBarrenLandDescription =>
-      'Dry land with little immediate value unless later tech or borders change the plan.';
+      'Terres sèches avec peu de valeur immédiate à moins que la technologie ou les frontières plus tard changent le plan.';
 
   @override
   String get hexKindOasisDescription =>
-      'Desert softened by river access, turning weak land into a usable growth tile.';
+      'Désert adouci par l\'accès à la rivière, transformant des terres faibles en une tuile de croissance utilisable.';
 
   @override
   String get hexKindTradeOasisDescription =>
-      'A desert trade pocket that can become valuable with the right improvement.';
+      'Une poche commerciale du désert qui peut devenir utile avec la bonne amélioration.';
 
   @override
   String get hexKindDesertDepositsDescription =>
-      'Poor settlement land with a strategic deposit that matters more in later eras.';
+      'Les terres de peuplement pauvres avec un dépôt stratégique qui importe plus dans les époques ultérieures.';
 
   @override
   String get hexKindHarshLandDescription =>
-      'Cold or rough land with limited early economy and slow development.';
+      'Terres froides ou accidentées avec une économie précoce limitée et un développement lent.';
 
   @override
   String get hexKindColdPasturesDescription =>
-      'Cold terrain with enough pasture value to support a border city.';
+      'Terrain froid avec une valeur de pâturage suffisante pour soutenir une ville frontalière.';
 
   @override
   String get hexKindResourceOutpostDescription =>
-      'Remote cold land worth claiming mainly for the resource it protects.';
+      'Terres froides éloignées qui méritent d\'être revendiquées principalement pour la ressource qu\'elle protège.';
 
   @override
   String get hexKindHostileLandDescription =>
-      'Unfriendly ground with weak settlement value and few immediate returns.';
+      'Un terrain hostile avec une faible valeur d\'établissement et peu de retours immédiats.';
 
   @override
   String get hexKindArcticDepositsDescription =>
-      'Snowy resource land that is hard to use but can matter strategically.';
+      'Des terres enneigées qui sont difficiles à utiliser, mais qui peuvent avoir une importance stratégique.';
 
   @override
   String get hexKindCoastDescription =>
-      'Coastal land that opens naval access and flexible city growth.';
+      'Terrain côtier qui ouvre l\'accès à la marine et la croissance flexible de la ville.';
 
   @override
   String get hexKindFishingCoastDescription =>
-      'Coast with food value, a strong reason to work or settle near the water.';
+      'Côte à valeur alimentaire, une forte raison de travailler ou de s\'installer près de l\'eau.';
 
   @override
   String get hexKindRichCoastDescription =>
-      'Coastal luxury or trade value worth folding into city borders.';
+      'Le luxe côtier ou la valeur commerciale vaut la peine de se replier dans les frontières de la ville.';
 
   @override
   String get hexKindRiverPortDescription =>
-      'A river mouth with trade and movement value for a coastal city.';
+      'Une embouchure fluviale avec valeur commerciale et de déplacement pour une ville côtière.';
 
   @override
   String get hexKindRegionalPortHeartDescription =>
-      'A strong coastal center where river and resource value stack together.';
+      'Un centre côtier fort où la valeur de la rivière et des ressources s\'accumulent ensemble.';
 
   @override
   String get hexKindOpenSeaDescription =>
-      'Water that is useful for ships and scouting, but not for land settlement.';
+      'L\'eau qui est utile pour les navires et le scoutisme, mais pas pour le peuplement terrestre.';
 
   @override
   String get hexKindNaturalBarrierDescription =>
-      'Blocked terrain that shapes movement and defense rather than economy.';
+      'Terrain bloqué qui forme le mouvement et la défense plutôt que l\'économie.';
 
   @override
   String get hexKindPromisingLandDescription =>
-      'A generally useful tile with enough value to inspect before moving on.';
+      'Une tuile généralement utile avec une valeur suffisante pour l\'inspection avant de passer.';
 
   @override
   String get hexKindWeakLandDescription =>
-      'Low-return terrain that rarely deserves early worker time.';
+      'Terrain à faible rendement qui mérite rarement un temps de travail précoce.';
 
   @override
   String get hexKindOrdinaryLandDescription =>
-      'A normal tile with no standout strength, useful when it fits the city plan.';
+      'Une tuile normale sans résistance, utile quand elle correspond au plan de la ville.';
 
   @override
   String get hexKindMapTileDescription =>
-      'A plain map tile without enough information to make a strong judgment.';
+      'Une carrure de carte simple sans suffisamment d\'informations pour faire un jugement fort.';
 
   @override
-  String get hexTagCity => 'City site';
+  String get hexTagCity => 'Site urbain';
 
   @override
-  String get hexTagDefense => 'Defensive position';
+  String get hexTagDefense => 'Position défensive';
 
   @override
-  String get hexTagTrade => 'Trade route';
+  String get hexTagTrade => 'Voie commerciale';
 
   @override
-  String get hexTagFertile => 'Fertile field';
+  String get hexTagFertile => 'Champ fertile';
 
   @override
-  String get hexTagProduction => 'Good production';
+  String get hexTagProduction => 'Bonne production';
 
   @override
-  String get hexTagHostile => 'Hostile land';
+  String get hexTagHostile => 'Terres hostiles';
 
   @override
-  String get hexTagStrategic => 'Strategic resource';
+  String get hexTagStrategic => 'Ressources stratégiques';
 
   @override
-  String get hexTagWater => 'Water passage';
+  String get hexTagWater => 'Passage d\'eau';
 
   @override
-  String get hexRecommendationFoundCity => 'Good development site';
+  String get hexRecommendationFoundCity => 'Bon site de développement';
 
   @override
-  String get hexRecommendationDefendHere => 'Good defensive position';
+  String get hexRecommendationDefendHere => 'Bonne position défensive';
 
   @override
-  String get hexRecommendationExploitEconomy => 'Worth exploiting';
+  String get hexRecommendationExploitEconomy => 'Une bonne exploitation';
 
   @override
-  String get hexRecommendationAvoid => 'Avoid without a plan';
+  String get hexRecommendationAvoid => 'Éviter sans plan';
 
   @override
-  String get hexRecommendationNeutral => 'Inspect before moving';
+  String get hexRecommendationNeutral => 'Inspecter avant de se déplacer';
 
   @override
   String get hexRecommendationFoundCityDetail =>
-      'If borders are free, consider founding or steering a settler here.';
+      'Si les frontières sont libres, envisagez de fonder ou de diriger un colon ici.';
 
   @override
   String get hexRecommendationDefendHereDetail =>
-      'Use it to anchor units, protect borders, or cover nearby cities.';
+      'Utilisez-le pour ancrer les unités, protéger les frontières ou couvrir les villes voisines.';
 
   @override
   String get hexRecommendationExploitEconomyDetail =>
-      'Bring it inside borders and assign a worker when the city can benefit.';
+      'Apportez-le à l\'intérieur des frontières et assignez un travailleur lorsque la ville peut en bénéficier.';
 
   @override
   String get hexRecommendationAvoidDetail =>
-      'Skip it early unless a resource, route, or military need changes the value.';
+      'Passer tôt à moins qu\'une ressource, un itinéraire ou un besoin militaire ne change la valeur.';
 
   @override
   String get hexRecommendationNeutralDetail =>
-      'Scout neighboring tiles and compare resources before committing a worker or settler.';
+      'Scout voisin carreaux et comparer les ressources avant de commettre un travailleur ou un colon.';
 
   @override
-  String get selectionActionLockedReason => 'You cannot issue orders now.';
+  String get selectionActionLockedReason =>
+      'Vous ne pouvez pas donner d\'ordres maintenant.';
 
   @override
-  String get selectionActionFoundCity => 'Found city';
+  String get selectionActionFoundCity => 'Ville trouvée';
 
   @override
-  String get selectionActionCancel => 'Cancel';
+  String get selectionActionCancel => 'Annuler';
 
   @override
-  String get selectionActionCancelAttack => 'Cancel attack';
+  String get selectionActionCancelAttack => 'Annuler l\'attaque';
 
   @override
-  String get selectionActionCancelWorkerBuild => 'Cancel improvement build';
+  String get selectionActionCancelWorkerBuild =>
+      'Annuler la construction d\'amélioration';
 
   @override
-  String get selectionActionCancelCityFounding => 'Cancel city founding';
+  String get selectionActionCancelCityFounding =>
+      'Annuler la fondation de la ville';
 
   @override
-  String get selectionActionCancelAutoExplore => 'Cancel exploration';
+  String get selectionActionCancelAutoExplore => 'Annuler l\'exploration';
 
   @override
   String get selectionActionCancelArtifactExcavation =>
-      'Cancel artifact excavation';
+      'Annuler l\'excavation des artefacts';
 
   @override
   String get selectionActionCancelTradeRouteSelection =>
-      'Cancel trade route selection';
+      'Annuler la sélection de l\'itinéraire commercial';
 
   @override
-  String get selectionActionCancelMerchantMoveToCity => 'Cancel city travel';
+  String get selectionActionCancelMerchantMoveToCity =>
+      'Annuler le voyage en ville';
 
   @override
-  String get selectionActionCancelCommanderMerge => 'Cancel troop merge';
+  String get selectionActionCancelCommanderMerge =>
+      'Annuler la fusion des troupes';
 
   @override
-  String get selectionActionConfirm => 'Confirm';
+  String get selectionActionConfirm => 'Confirmer';
 
   @override
   String selectionActionConfirmWithTurns(String turns) {
-    return 'Confirm ($turns)';
+    return 'Confirmer ($turns)';
   }
 
   @override
-  String get selectionActionMinimize => 'Minimize';
+  String get selectionActionMinimize => 'Minimiser';
 
   @override
-  String get selectionActionConfirmAttack => 'Confirm attack';
+  String get selectionActionConfirmAttack => 'Confirmer l\'attaque';
 
   @override
-  String get selectionActionCaptureCity => 'Capture city';
+  String get selectionActionCaptureCity => 'Ville de capture';
 
   @override
-  String get selectionActionDestroyCity => 'Destroy city';
+  String get selectionActionDestroyCity => 'Détruire la ville';
 
   @override
-  String get selectionActionStopFortifying => 'Stop fortifying';
+  String get selectionActionStopFortifying => 'Arrête de fortifier';
 
   @override
-  String get selectionActionStopHealing => 'Stop healing';
+  String get selectionActionStopHealing => 'Arrête de guérir';
 
   @override
-  String get selectionActionMove => 'Move';
+  String get selectionActionMove => 'Déplacer';
 
   @override
-  String get selectionActionAttack => 'Attack';
+  String get selectionActionAttack => 'Attaque';
 
   @override
-  String get selectionActionAutoExplore => 'Explore';
+  String get selectionActionAutoExplore => 'Explorer';
 
   @override
-  String get selectionActionTradeRoute => 'Trade route';
+  String get selectionActionTradeRoute => 'Voie commerciale';
 
   @override
   String selectionActionTradeRouteToCity(String cityName) {
-    return 'Trade with $cityName';
+    return 'Échanges avec $cityName';
   }
 
   @override
-  String get selectionActionMerchantMoveToCity => 'Go to city';
+  String get selectionActionMerchantMoveToCity => 'Allez en ville';
 
   @override
   String selectionActionMerchantMoveToCityTarget(String cityName) {
-    return 'Go to $cityName';
+    return 'Aller à $cityName';
   }
 
   @override
-  String get selectionActionArmy => 'Army';
+  String get selectionActionArmy => 'Armée';
 
   @override
-  String get selectionArmyEmpty => 'No troops';
+  String get selectionArmyEmpty => 'Pas de troupes';
 
   @override
   String selectionTroopDetachTooltip(String troop) {
-    return 'Detach $troop';
+    return 'Détachement $troop';
   }
 
   @override
-  String get selectionActionImprove => 'Improve';
+  String get selectionActionImprove => 'Améliorer';
 
   @override
-  String get selectionActionSkip => 'Skip';
+  String get selectionActionSkip => 'Sauter';
 
   @override
-  String get selectionActionFortify => 'Fortify';
+  String get selectionActionFortify => 'Fortifier';
 
   @override
-  String get selectionActionHeal => 'Heal';
+  String get selectionActionHeal => 'Guérison';
 
   @override
-  String get selectionActionCancelCityGrowth => 'Cancel growth';
+  String get selectionActionCancelCityGrowth => 'Annuler la croissance';
 
   @override
-  String get selectionActionCityGrowth => 'City growth';
+  String get selectionActionCityGrowth => 'Croissance des villes';
 
   @override
   String get selectionActionProduction => 'Production';
 
   @override
-  String get selectionActionExcavateArtifact => 'Excavate';
+  String get selectionActionExcavateArtifact => 'Excavation';
 
   @override
-  String get selectionActionStoreArtifact => 'Store';
+  String get selectionActionStoreArtifact => 'A conserver';
 
   @override
   String get selectionActionCancelCurrentMoveFirst =>
-      'Cancel the current move first.';
+      'Annule d\'abord le mouvement actuel.';
 
   @override
   String get selectionActionArtifactAlreadyCarried =>
-      'The unit already carries an artifact.';
+      'L\'unité porte déjà un artefact.';
 
   @override
   String get selectionActionStoreArtifactOwnCityRequired =>
-      'Move to one of your cities.';
+      'Déménagez dans une de vos villes.';
 
   @override
   String get selectionActionStoreArtifactCityOccupied =>
-      'This city already stores an artifact.';
+      'Cette ville conserve déjà un artefact.';
 
   @override
   String get selectionActionNoBuildAvailable =>
-      'No build is available on this tile.';
+      'Aucune construction n\'est disponible sur cette tuile.';
 
   @override
-  String get selectionActionUnitWorking => 'The unit is already working.';
+  String get selectionActionUnitWorking => 'L\'unité fonctionne déjà.';
 
   @override
-  String get selectionActionUnitFortified => 'The unit is fortified.';
+  String get selectionActionUnitFortified => 'L\'unité est fortifiée.';
 
   @override
-  String get selectionActionUnitHealing => 'The unit is healing.';
+  String get selectionActionUnitHealing => 'L\'unité guérit.';
 
   @override
-  String get selectionActionNoMovement => 'No movement points left this turn.';
+  String get selectionActionNoMovement =>
+      'Aucun point de mouvement n\'a quitté ce tour.';
 
   @override
-  String get selectionActionNoAttack => 'This unit has no attack.';
+  String get selectionActionNoAttack => 'Cette unité n\'a pas d\'attaque.';
 
   @override
-  String get selectionActionNoVisibleEnemy => 'No visible enemy in range.';
+  String get selectionActionNoVisibleEnemy => 'Aucun ennemi visible à portée.';
 
   @override
   String get selectionActionMerchantNoOriginCity =>
-      'Move the merchant into one of your cities.';
+      'Déplacez le marchand dans une de vos villes.';
 
   @override
   String get selectionActionMerchantNoDestinationCity =>
-      'You need another connected city.';
+      'Vous avez besoin d\'une autre ville connectée.';
 
   @override
   String get selectionActionMerchantNoRoute =>
-      'No trade route can reach this city.';
+      'Aucune route commerciale ne peut atteindre cette ville.';
 
   @override
   String get selectionActionMerchantNoCityPath =>
-      'The merchant cannot reach this city.';
+      'Le marchand ne peut pas atteindre cette ville.';
 
   @override
-  String get selectionActionCannotFoundCityHere => 'Cannot found a city here.';
+  String get selectionActionCannotFoundCityHere =>
+      'Je n\'ai pas trouvé de ville ici.';
 
   @override
   String get selectionActionFoundCityNoCommander =>
-      'Only a settler or a commander with settlers can found a city.';
+      'Seul un colon ou un commandant avec des colons peut trouver une ville.';
 
   @override
   String get selectionActionFoundCityNoSettlers =>
-      'Settlers are required to found a city.';
+      'Les colons sont tenus de trouver une ville.';
 
   @override
   String get selectionActionFoundCityInvalidCenter =>
-      'A city cannot be founded on this tile.';
+      'Une ville ne peut être fondée sur cette tuile.';
 
   @override
   String get selectionActionFoundCityCityAlreadyExists =>
-      'There is already a city on this tile.';
+      'Il y a déjà une ville sur cette tuile.';
 
   @override
   String get selectionActionFoundCityCenterOccupied =>
-      'This tile already belongs to a city.';
+      'Cette tuile appartient déjà à une ville.';
 
   @override
   String get selectionActionFoundCityTooCloseToCity =>
-      'A city cannot be adjacent to another city.';
+      'Une ville ne peut être adjacente à une autre ville.';
 
   @override
   String get selectionActionFoundCityInvalidControlledHexes =>
-      'Choose valid city tiles first.';
+      'Choisissez d\'abord les tuiles de ville valides.';
 
   @override
   String get selectionActionCannotImproveCityCenter =>
-      'Cannot build improvements on the city center.';
+      'Impossible de construire des améliorations sur le centre-ville.';
 
   @override
   String get selectionActionTileAlreadyImproved =>
-      'This tile already has an improvement.';
+      'Cette tuile a déjà une amélioration.';
 
   @override
   String get selectionActionTileMustBelongToCity =>
-      'The tile must belong to a city.';
+      'La tuile doit appartenir à une ville.';
 
   @override
-  String get selectionActionNoWorkerTile => 'No tile under the worker.';
+  String get selectionActionNoWorkerTile => 'Pas de tuile sous l\'ouvrier.';
 
   @override
-  String get hudFeedbackNoTurnCostDetail => 'Action did not consume the turn';
+  String get hudFeedbackNoTurnCostDetail =>
+      'L\'action n\'a pas consommé le tour';
 
   @override
-  String get hudFeedbackAutoExploreNoTargetTitle => 'No exploration route';
+  String get hudFeedbackAutoExploreNoTargetTitle =>
+      'Aucune route d\'exploration';
 
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
-      'The scout has no move that would reveal new tiles this turn.';
+      'Le scout n\'a aucun mouvement qui révélerait de nouvelles tuiles ce tour.';
 
   @override
-  String get hudFeedbackArtifactGuidanceTitle => 'World artifact';
+  String get hudFeedbackArtifactGuidanceTitle => 'Artefact mondial';
 
   @override
   String get hudFeedbackArtifactGuidanceBody =>
-      'Deliver it to one of your cities and place it in an empty artifact slot.';
+      'Livrez-le à l\'une de vos villes et placez-le dans une fente vide.';
 
   @override
-  String get hudFeedbackActionBlockedTitle => 'Action unavailable';
+  String get hudFeedbackActionBlockedTitle => 'Action non disponible';
 
   @override
   String get hudFeedbackActionBlockedBody =>
-      'This action is blocked right now. Choose another tile or another command.';
+      'Cette action est bloquée en ce moment. Choisissez une autre tuile ou une autre commande.';
 
   @override
-  String get hudFeedbackAttackProtectedByTreatyTitle => 'Treaty blocks attack';
+  String get hudFeedbackAttackProtectedByTreatyTitle =>
+      'Le traité bloque l\'attaque';
 
   @override
   String get hudFeedbackAttackProtectedByTreatyBody =>
-      'You cannot attack a unit from a civilization that has an alliance or a truce with you. Change diplomatic relations first.';
+      'Vous ne pouvez pas attaquer une unité d\'une civilisation qui a une alliance ou une trêve avec vous. Changer d\'abord les relations diplomatiques.';
 
   @override
-  String get hudFeedbackMovementCityOccupiedTitle => 'City occupied';
+  String get hudFeedbackMovementCityOccupiedTitle => 'Ville occupée';
 
   @override
   String get hudFeedbackMovementCityOccupiedBody =>
-      'Only one unit can stand in a city. Move the garrison out first or choose another tile.';
+      'Une seule unité peut se tenir dans une ville. Déplacez la garnison d\'abord ou choisissez une autre tuile.';
 
   @override
-  String get hudFeedbackMovementEnemyOccupiedTitle => 'Enemy on this tile';
+  String get hudFeedbackMovementEnemyOccupiedTitle => 'Ennemi sur cette tuile';
 
   @override
   String get hudFeedbackMovementEnemyOccupiedBody =>
-      'You cannot enter an enemy tile with a normal move. Use Attack or choose an adjacent tile.';
+      'Vous ne pouvez pas entrer dans une tuile ennemie avec un mouvement normal. Utilisez Attaquer ou choisissez une tuile adjacente.';
 
   @override
-  String get hudFeedbackMovementForeignCityTitle => 'Foreign city';
+  String get hudFeedbackMovementForeignCityTitle => 'Ville étrangère';
 
   @override
   String get hudFeedbackMovementForeignCityBody =>
-      'You cannot enter a foreign city with a normal move. Use Attack or choose another tile.';
+      'Vous ne pouvez pas entrer dans une ville étrangère avec un mouvement normal. Utilisez Attaquer ou choisissez une autre tuile.';
 
   @override
-  String get hudFeedbackMovementHiddenRouteTooFarTitle => 'Route too far';
+  String get hudFeedbackMovementHiddenRouteTooFarTitle => 'Route trop loin';
 
   @override
   String get hudFeedbackMovementHiddenRouteTooFarBody =>
-      'You cannot plot such a long route through undiscovered terrain. Pick a shorter segment or use scout auto-exploration.';
+      'Vous ne pouvez pas tracer une route aussi longue à travers un terrain inconnu. Choisissez un segment plus court ou utilisez l\'auto-exploration scout.';
 
   @override
   String get hudFeedbackMovementBlockedTerrainTitle =>
-      'Terrain blocks movement';
+      'Mouvement des blocs de terrain';
 
   @override
   String get hudFeedbackMovementBlockedTerrainBody =>
-      'This unit cannot enter that terrain type. Choose another tile or a route around it.';
+      'Cette unité ne peut pas entrer ce type de terrain. Choisissez une autre tuile ou un itinéraire autour.';
 
   @override
   String get hudFeedbackMovementInsufficientUnitMovementTitle =>
-      'Not enough movement';
+      'Pas assez de mouvement';
 
   @override
   String get hudFeedbackMovementInsufficientUnitMovementBody =>
-      'This unit does not have enough movement to enter that area. Upgrade it or use another unit.';
+      'Cette unité n\'a pas assez de mouvement pour entrer dans cette zone. Mettez-le à niveau ou utilisez une autre unité.';
 
   @override
-  String get hudFeedbackMovementNoRouteTitle => 'No route';
+  String get hudFeedbackMovementNoRouteTitle => 'Aucune route';
 
   @override
   String get hudFeedbackMovementNoRouteBody =>
-      'There is no available route to that tile. Try a closer target or another approach.';
+      'Il n\'y a pas de route disponible pour cette tuile. Essayez une cible plus proche ou une autre approche.';
 
   @override
   String selectionCommandUnavailableDescription(String label) {
-    return 'Action \"$label\" is unavailable for the current selection.';
+    return 'L\'action \"$label\" n\'est pas disponible pour la sélection actuelle.';
   }
 
   @override
   String selectionCommandActiveDescription(String label) {
-    return 'Action \"$label\" is an active mode. Choose a target on the map or cancel the mode if you changed your mind.';
+    return 'L\'action \"$label\" est un mode actif. Choisissez une cible sur la carte ou annulez le mode si vous avez changé d\'avis.';
   }
 
   @override
   String selectionCommandProminentDescription(String label) {
-    return 'Action \"$label\" is currently the most important command for this selection.';
+    return 'L\'action \"$label\" est actuellement la commande la plus importante pour cette sélection.';
   }
 
   @override
   String selectionCommandDefaultDescription(String label) {
-    return 'Runs action \"$label\" for the currently selected unit, city, or tile.';
+    return 'Exécute l\'action \"$label\" pour l\'unité, la ville ou la tuile actuellement sélectionnée.';
   }
 
   @override
   String get selectionInfoChipDisabledDescription =>
-      'This information panel is not available for the current selection.';
+      'Ce panneau d\'information n\'est pas disponible pour la sélection actuelle.';
 
   @override
   String selectionInfoChipOpenDescription(String label) {
-    return 'Opens \"$label\" details for the currently selected tile, unit, or city.';
+    return 'Ouvre les détails \"$label\" pour la tuile, l\'unité ou la ville actuellement sélectionnée.';
   }
 
   @override
@@ -5922,9 +5973,9 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count turns',
-      one: '1 turn',
-      zero: '0 turns',
+      other: '$count tours',
+      one: '1 tour',
+      zero: '0 tour',
     );
     return '$_temp0';
   }
@@ -5935,176 +5986,177 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get turnEtaNoProgress => 'no progress';
+  String get turnEtaNoProgress => 'Pas de progrès';
 
   @override
   String turnEtaDetailLabel(String turnsLabel, int turn) {
-    return '$turnsLabel • turn $turn';
+    return '$turnsLabel • tourner $turn';
   }
 
   @override
   String turnEtaTooltipNoTurn(String turnsLabel) {
-    return '$turnsLabel to complete';
+    return '$turnsLabel à compléter';
   }
 
   @override
   String turnEtaTooltipExpectedTurn(String turnsLabel, int turn) {
-    return '$turnsLabel to complete • expected turn $turn';
+    return '$turnsLabel à compléter • tour prévu $turn';
   }
 
   @override
-  String get modeBannerWorkedTilesTitle => 'Worked tiles';
+  String get modeBannerWorkedTilesTitle => 'Tuiles travaillées';
 
   @override
   String get modeBannerWorkedTilesInstruction =>
-      'Tap controlled tiles to toggle city work.';
+      'Tapez les tuiles contrôlées pour basculer le travail de la ville.';
 
   @override
-  String get modeBannerCityGrowthTitle => 'City growth';
+  String get modeBannerCityGrowthTitle => 'Croissance des villes';
 
   @override
   String get modeBannerCityGrowthInstructionSelected =>
-      'The selected tile will be claimed on the next city growth. Confirm it or choose another tile.';
+      'La tuile sélectionnée sera revendiquée lors de la prochaine croissance de la ville. Confirmez-le ou choisissez une autre tuile.';
 
   @override
   String get modeBannerCityGrowthInstructionEmpty =>
-      'Tap an outlined tile to choose the next growth hex. Without a choice, the city will use its recommendation.';
+      'Appuyez sur une tuile tracée pour choisir le prochain hexagone de croissance. Sans choix, la ville utilisera sa recommandation.';
 
   @override
-  String get modeBannerWorkerActionTitle => 'Tile improvement';
+  String get modeBannerWorkerActionTitle => 'Amélioration des carreaux';
 
   @override
   String get modeBannerWorkerActionInstructionPicked =>
-      'Confirm the improvement in the worker popup.';
+      'Confirmer l\'amélioration du popup ouvrier.';
 
   @override
   String get modeBannerWorkerActionInstructionEmpty =>
-      'Choose an improvement type in the worker popup.';
+      'Choisissez un type d\'amélioration dans le popup ouvrier.';
 
   @override
-  String get modeBannerMerchantTradeRouteTitle => 'Trade route';
+  String get modeBannerMerchantTradeRouteTitle => 'Voie commerciale';
 
   @override
   String get modeBannerMerchantTradeRouteInstruction =>
-      'Choose one of your cities. The merchant will travel there automatically and turn back after arrival.';
+      'Choisissez une de vos villes. Le marchand y voyage automatiquement et se retourne après l\'arrivée.';
 
   @override
-  String get modeBannerMerchantMoveToCityTitle => 'Go to city';
+  String get modeBannerMerchantMoveToCityTitle => 'Allez en ville';
 
   @override
   String get modeBannerMerchantMoveToCityInstruction =>
-      'Choose one of your cities. The merchant will plot a path to its center without creating a trade route.';
+      'Choisissez une de vos villes. Le marchand tracera un chemin vers son centre sans créer de route commerciale.';
 
   @override
   String workerActionSelectedImprovement(String title) {
-    return 'Selected: $title';
+    return 'Sélectionné: $title';
   }
 
   @override
-  String get workerActionSelectImprovement => 'Choose improvement';
+  String get workerActionSelectImprovement => 'Choisir l\'amélioration';
 
   @override
-  String get workerActionBuildDetailTitle => 'Tile improvement';
+  String get workerActionBuildDetailTitle => 'Amélioration des carreaux';
 
   @override
   String workerActionBuildImprovement(String title) {
-    return 'Build $title';
+    return 'Construire $title';
   }
 
   @override
   String get workerActionSelectionHint =>
-      'Click an improvement for this tile, inspect yields, and confirm the build.';
+      'Cliquez sur une amélioration pour cette tuile, inspectez les rendements et confirmez la construction.';
 
   @override
-  String get workerActionNoYieldChange => 'no yield change';
+  String get workerActionNoYieldChange => 'Aucun changement de rendement';
 
   @override
-  String get modeBannerResearchSelectionTitle => 'Choose research';
+  String get modeBannerResearchSelectionTitle => 'Choisir la recherche';
 
   @override
   String get modeBannerResearchSelectionInstruction =>
-      'Open the technology tree and choose a research target to continue the turn.';
+      'Ouvrez l\'arbre technologique et choisissez une cible de recherche pour poursuivre le tour.';
 
   @override
-  String get modeBannerUnitTurnSkipTitle => 'Turn skipped';
+  String get modeBannerUnitTurnSkipTitle => 'Tourné en panne';
 
   @override
   String get modeBannerUnitTurnSkipInstruction =>
-      'The unit waits until the next turn. Its state is visible in the bottom bar.';
+      'L\'unité attend le prochain tour. Son état est visible dans la barre inférieure.';
 
   @override
-  String get modeBannerCommanderMergeTitle => 'Merge troops';
+  String get modeBannerCommanderMergeTitle => 'Fusionner les troupes';
 
   @override
   String get modeBannerCommanderMergeInstruction =>
-      'Select a friendly unit for the commander to add to the army.';
+      'Sélectionnez une unité amicale pour le commandant à ajouter à l\'armée.';
 
   @override
-  String get modeBannerAttackTargetingTitle => 'Attack';
+  String get modeBannerAttackTargetingTitle => 'Attaque';
 
   @override
   String get modeBannerAttackTargetingInstructionSelected =>
-      'Check the combat forecast in the popup and confirm the attack.';
+      'Vérifiez les prévisions de combat dans le popup et confirmez l\'attaque.';
 
   @override
   String get modeBannerAttackTargetingInstructionEmpty =>
-      'Select an enemy in range or its hex to see the combat forecast.';
+      'Sélectionnez un ennemi à portée ou son hexagone pour voir les prévisions de combat.';
 
   @override
-  String get modeBannerAttackRetreatProgress => 'Retreat';
+  String get modeBannerAttackRetreatProgress => 'Retraite';
 
   @override
   String get modeBannerActionToolbarHint =>
-      'Use the bottom toolbar for actions when you need them.';
+      'Utilisez la barre d\'outils inférieure pour les actions lorsque vous en avez besoin.';
 
   @override
   String get combatPreviewConfirmBody =>
-      'The selected unit will attack immediately after confirmation.';
+      'L\'unité sélectionnée attaquera immédiatement après confirmation.';
 
   @override
-  String get combatPreviewOutcomeLabel => 'Outcome';
+  String get combatPreviewOutcomeLabel => 'Résultat';
 
   @override
-  String get combatPreviewTargetLabel => 'Target';
+  String get combatPreviewTargetLabel => 'Objectif';
 
   @override
-  String get combatPreviewRetaliationLabel => 'Retaliation';
+  String get combatPreviewRetaliationLabel => 'Rétorsion';
 
   @override
-  String get combatPreviewStrengthLabel => 'Strength';
+  String get combatPreviewStrengthLabel => 'Résistance';
 
   @override
-  String get combatPreviewAttackerRole => 'Attacker';
+  String get combatPreviewAttackerRole => 'Attaque';
 
   @override
-  String get combatPreviewDefenderRole => 'Defender';
+  String get combatPreviewDefenderRole => 'Défenseur';
 
   @override
-  String get combatPreviewCityRole => 'City';
+  String get combatPreviewCityRole => 'Ville';
 
   @override
   String combatPreviewOutcomeLine(String outcome) {
-    return 'Outcome: $outcome';
+    return 'Résultat: $outcome';
   }
 
   @override
-  String get combatPreviewOutcomeCityFalls => 'city falls';
+  String get combatPreviewOutcomeCityFalls => 'chutes de ville';
 
   @override
-  String get combatPreviewOutcomeDefenderKilled => 'defender dies';
+  String get combatPreviewOutcomeDefenderKilled => 'le défenseur meurt';
 
   @override
   String get combatPreviewOutcomeAttackerKilled =>
-      'attacker dies in retaliation';
+      'l\'agresseur meurt en représailles';
 
   @override
-  String get combatPreviewOutcomeDefenderRetreated => 'defender will retreat';
+  String get combatPreviewOutcomeDefenderRetreated =>
+      'le défenseur va se retirer';
 
   @override
-  String get combatPreviewOutcomeCitySurvives => 'city survives';
+  String get combatPreviewOutcomeCitySurvives => 'la ville survit';
 
   @override
-  String get combatPreviewOutcomeDefenderSurvives => 'defender survives';
+  String get combatPreviewOutcomeDefenderSurvives => 'le défenseur survit';
 
   @override
   String combatPreviewTargetLine(
@@ -6115,12 +6167,12 @@ class AppLocalizationsFr extends AppLocalizations {
     int defense,
     int damage,
   ) {
-    return 'Target: HP $hpBefore->$hpAfter/$hpMax, Attack $attack vs Defense $defense (-$damage)';
+    return 'Cible: HP $hpBefore->$hpAfter/$hpMax, Attaque $attack contre Défense $defense (-$damage)';
   }
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Retaliation: none (ranged attack, distance $distance, range $range)';
+    return 'Rétorsion: aucune (attaque à distance, distance $distance, plage $range)';
   }
 
   @override
@@ -6132,7 +6184,7 @@ class AppLocalizationsFr extends AppLocalizations {
     int hpAfter,
     int hpMax,
   ) {
-    return 'Retaliation: Attack $attack vs Defense $defense (-$damage), HP $hpBefore->$hpAfter/$hpMax';
+    return 'Rétorsion: Attaque $attack vs Défense $defense (-$damage), HP $hpBefore->$hpAfter/$hpMax';
   }
 
   @override
@@ -6146,23 +6198,23 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get combatPreviewForecastTitle => 'Combat forecast';
+  String get combatPreviewForecastTitle => 'Prévisions de combat';
 
   @override
-  String get combatPreviewNoHpLoss => 'no damage';
+  String get combatPreviewNoHpLoss => 'aucun dommage';
 
   @override
   String combatPreviewHpAfterSemantics(int hpAfter, int hpMax, int loss) {
-    return '$hpAfter of $hpMax HP after combat, $loss HP lost';
+    return '$hpAfter de $hpMax HP après le combat, $loss HP perdu';
   }
 
   @override
   String combatPreviewStrengthValue(int attack, int defense) {
-    return '$attack attack vs $defense defense';
+    return '$attack attaque contre la défense $defense';
   }
 
   @override
-  String get combatPreviewAdvantageTitle => 'Why this forecast?';
+  String get combatPreviewAdvantageTitle => 'Pourquoi cette prévision?';
 
   @override
   String combatPreviewAdvantageAttacker(
@@ -6171,7 +6223,7 @@ class AppLocalizationsFr extends AppLocalizations {
     int defense,
     int damage,
   ) {
-    return 'Attack advantage: $country has $attack attack against $defense defense; the target loses about $damage HP.';
+    return 'Avantage d\'attaque: $country a une attaque $attack contre la défense $defense; la cible perd sur $damage HP.';
   }
 
   @override
@@ -6181,12 +6233,12 @@ class AppLocalizationsFr extends AppLocalizations {
     int defense,
     int damage,
   ) {
-    return 'Defense advantage: $country has $defense defense against $attack attack; the hit deals about $damage HP.';
+    return 'Avantage de la défense: $country a la défense $defense contre l\'attaque $attack; le succès traite de $damage HP.';
   }
 
   @override
   String combatPreviewAdvantageEven(int attack, int defense, int damage) {
-    return 'Even fight: $attack attack against $defense defense; forecast damage is about $damage HP.';
+    return 'Même combat: attaque $attack contre la défense $defense; les dommages prévus concernent $damage HP.';
   }
 
   @override
@@ -6196,12 +6248,12 @@ class AppLocalizationsFr extends AppLocalizations {
     String defenderCountry,
     String defenderTerrain,
   ) {
-    return 'Positions: $attackerCountry attacks from $attackerTerrain. $defenderCountry defends on $defenderTerrain.';
+    return 'Positions: attaques $attackerCountry depuis $attackerTerrain. $defenderCountry défend sur $defenderTerrain.';
   }
 
   @override
   String combatPreviewSourcesLine(String sources) {
-    return 'The edge comes from: $sources.';
+    return 'Le bord provient de: $sources.';
   }
 
   @override
@@ -6209,7 +6261,7 @@ class AppLocalizationsFr extends AppLocalizations {
     String attackerCountry,
     String sources,
   ) {
-    return 'Helps the attack ($attackerCountry): $sources.';
+    return 'Aide l\'attaque ($attackerCountry): $sources.';
   }
 
   @override
@@ -6217,29 +6269,29 @@ class AppLocalizationsFr extends AppLocalizations {
     String defenderCountry,
     String sources,
   ) {
-    return 'Helps the defense ($defenderCountry): $sources.';
+    return 'Aide la défense ($defenderCountry): $sources.';
   }
 
   @override
   String get combatPreviewNoSourcesLine =>
-      'No modifiers apply: base unit stats and the combat result decide this forecast.';
+      'Aucune modification ne s\'applique: les statistiques des unités de base et le résultat du combat décident de cette prévision.';
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'No retaliation: this is a ranged attack (distance $distance, attack range $range).';
+    return 'Pas de représailles: il s\'agit d\'une attaque variée (distance $distance, portée d\'attaque $range).';
   }
 
   @override
   String get combatPreviewNoRetaliationDefenderDefeated =>
-      'No retaliation: the target is defeated before it can answer.';
+      'Pas de représailles: la cible est vaincue avant de pouvoir répondre.';
 
   @override
   String get combatPreviewNoRetaliationDefenderRetreats =>
-      'No retaliation: the target retreats after the hit.';
+      'Pas de représailles: la cible recule après le coup.';
 
   @override
   String get combatPreviewNoRetaliationNoAttack =>
-      'No retaliation: the target has no attack strength in this forecast.';
+      'Pas de représailles: la cible n\'a pas de force d\'attaque dans cette prévision.';
 
   @override
   String combatPreviewRetaliationRisk(
@@ -6247,249 +6299,255 @@ class AppLocalizationsFr extends AppLocalizations {
     String attackerCountry,
     int damage,
   ) {
-    return 'Retaliation: $defenderCountry answers and $attackerCountry loses about $damage HP.';
+    return 'Rétorsion: $defenderCountry répond et $attackerCountry perd sur $damage HP.';
   }
 
   @override
-  String get combatPreviewSourceAttackTerrain => 'attacker terrain';
+  String get combatPreviewSourceAttackTerrain => 'terrain d\'attaque';
 
   @override
-  String get combatPreviewSourceDefenseTerrain => 'defender terrain';
+  String get combatPreviewSourceDefenseTerrain => 'terrain du défenseur';
 
   @override
-  String get combatPreviewSourceTechnology => 'technology';
+  String get combatPreviewSourceTechnology => 'technologie';
 
   @override
-  String get combatPreviewSourceVeterancy => 'experience';
+  String get combatPreviewSourceVeterancy => 'expérience';
 
   @override
-  String get combatPreviewSourceCityGarrison => 'city garrison';
+  String get combatPreviewSourceCityGarrison => 'garnison de la ville';
 
   @override
-  String get combatPreviewSourceMixedArmy => 'unit composition';
+  String get combatPreviewSourceMixedArmy => 'composition de l\'unité';
 
   @override
   String get combatCounterSpearmanVsMountedAttack =>
-      'spearmen against mounted units';
+      'Lanceurs contre les unités montées';
 
   @override
   String get combatCounterSpearmanVsMountedDefense =>
-      'spearmen holding against mounted units';
+      'hommes de lance tenant contre les unités montées';
 
   @override
   String get combatCounterArcherDefensiveTerrainDefense =>
-      'archers in defensive terrain';
+      'archers en terrain défensif';
 
   @override
   String get combatCounterCavalryRoughAttack =>
-      'cavalry slowed by rough terrain';
+      'cavalerie ralentie par un terrain accidenté';
 
   @override
-  String get combatCounterCavalryOpenRaid => 'cavalry raid on open terrain';
+  String get combatCounterCavalryOpenRaid =>
+      'raid de cavalerie sur terrain ouvert';
 
   @override
   String get combatCounterHeavyInfantryBreakthrough =>
-      'heavy infantry breaking the line';
+      'infanterie lourde brisant la ligne';
 
   @override
-  String get terrainOcean => 'ocean';
+  String get terrainOcean => 'océan';
 
   @override
-  String get terrainCoast => 'coast';
+  String get terrainCoast => 'côte';
 
   @override
-  String get terrainLake => 'lake';
+  String get terrainLake => 'lac';
 
   @override
-  String get terrainPlains => 'plains';
+  String get terrainPlains => 'des plaines';
 
   @override
-  String get terrainGrassland => 'grassland';
+  String get terrainGrassland => 'prairies';
 
   @override
-  String get terrainDesert => 'desert';
+  String get terrainDesert => 'désert';
 
   @override
-  String get terrainTundra => 'tundra';
+  String get terrainTundra => 'toundra';
 
   @override
-  String get terrainSnow => 'snow';
+  String get terrainSnow => 'neige';
 
   @override
-  String get terrainMountain => 'mountains';
+  String get terrainMountain => 'montagnes';
 
   @override
-  String get terrainHills => 'hills';
+  String get terrainHills => 'collines';
 
   @override
-  String get terrainWetlands => 'wetlands';
+  String get terrainWetlands => 'zones humides';
 
   @override
   String get terrainJungle => 'jungle';
 
   @override
-  String get terrainForest => 'forest';
+  String get terrainForest => 'forêt';
 
   @override
-  String get terrainRiver => 'river';
+  String get terrainRiver => 'rivière';
 
   @override
-  String get modeBannerMoveTargetingTitle => 'Movement mode';
+  String get modeBannerMoveTargetingTitle => 'Mode mouvement';
 
   @override
   String get modeBannerMoveTargetingInstruction =>
-      'The first tap on a hex plots the route. Tap the same hex again to move; a longer route is queued for future turns.';
+      'Le premier robinet sur un hexagone trace l\'itinéraire. Appuyez de nouveau sur le même hexagone pour bouger; un itinéraire plus long est en attente pour les tours futurs.';
 
   @override
-  String get modeBannerMoveTargetingCancelAction => 'Exit movement';
+  String get modeBannerMoveTargetingCancelAction => 'Mouvement de sortie';
 
   @override
-  String get modeBannerWorkerFindTileTitle => 'Worker: find a tile';
+  String get modeBannerWorkerFindTileTitle => 'Travailleur: trouver une tuile';
 
   @override
   String modeBannerWorkerFindTileInstruction(String reason) {
-    return '$reason Move the worker to one of your city tiles without an improvement, or to terrain that matches an unlocked build.';
+    return '$reason Déplacez le travailleur dans une des tuiles de votre ville sans amélioration, ou sur un terrain qui correspond à une construction déverrouillée.';
   }
 
   @override
-  String get modeBannerWorkerFindTileDetailOwnCity => 'Own city tile';
+  String get modeBannerWorkerFindTileDetailOwnCity => 'Carrelage de la ville';
 
   @override
-  String get modeBannerWorkerFindTileDetailNoImprovement => 'No improvement';
+  String get modeBannerWorkerFindTileDetailNoImprovement =>
+      'Aucune amélioration';
 
   @override
   String get modeBannerWorkerFindTileDetailMatchingTerrain =>
-      'Matching terrain';
+      'Terrains correspondants';
 
   @override
-  String get modeBannerWorkerImproveTileTitle => 'Worker: improve tile';
+  String get modeBannerWorkerImproveTileTitle => 'Worker: améliorer la tuile';
 
   @override
   String get modeBannerWorkerImproveTileInstruction =>
-      'This tile can be improved. If you want to act, use the bottom toolbar, choose the best build, and confirm it in the bottom panel.';
+      'Cette tuile peut être améliorée. Si vous voulez agir, utilisez la barre d\'outils inférieure, choisissez la meilleure compilation et validez-la dans le panneau inférieur.';
 
   @override
-  String get modeBannerWorkerImproveTileDetailYields => 'Increases tile yields';
+  String get modeBannerWorkerImproveTileDetailYields =>
+      'Augmente les rendements en tuiles';
 
   @override
-  String get modeBannerWorkerImproveTileDetailMovement => 'Uses movement';
+  String get modeBannerWorkerImproveTileDetailMovement =>
+      'Utilisation des mouvements';
 
   @override
-  String get modeBannerScoutExploreTitle => 'Scout: explore';
+  String get modeBannerScoutExploreTitle => 'Scout: explorer';
 
   @override
   String get modeBannerScoutExploreInstruction =>
-      'Enable exploration from the bottom toolbar so the scout discovers the nearest unknown tiles automatically. You can cancel it later from unit actions.';
+      'Activer l\'exploration à partir de la barre d\'outils inférieure afin que le scout découvre automatiquement les tuiles inconnues les plus proches. Vous pouvez l\'annuler plus tard des actions de l\'unité.';
 
   @override
-  String get modeBannerScoutExploreDetailAuto => 'Auto exploration';
+  String get modeBannerScoutExploreDetailAuto => 'Exploration automatique';
 
   @override
-  String get modeBannerScoutExploreDetailReveal => 'Reveals the map';
+  String get modeBannerScoutExploreDetailReveal => 'Révèle la carte';
 
   @override
-  String get modeBannerSettlerFindSiteTitle => 'Settler: find a site';
+  String get modeBannerSettlerFindSiteTitle => 'Settler: trouver un site';
 
   @override
   String modeBannerSettlerFindSiteInstruction(String reason) {
-    return '$reason Move the settler to a free tile outside city borders; avoid water, mountains, and occupied centers.';
+    return '$reason Déplacez le colon vers une tuile libre en dehors des frontières de la ville; évitez l\'eau, les montagnes et les centres occupés.';
   }
 
   @override
-  String get modeBannerSettlerFindSiteDetailFreeHex => 'Free hex';
+  String get modeBannerSettlerFindSiteDetailFreeHex => 'Hex libre';
 
   @override
-  String get modeBannerSettlerFindSiteDetailOutsideBorders => 'Outside borders';
+  String get modeBannerSettlerFindSiteDetailOutsideBorders => 'Hors frontières';
 
   @override
-  String get modeBannerSettlerFindSiteDetailLandOrCoast => 'Land or coast';
+  String get modeBannerSettlerFindSiteDetailLandOrCoast => 'Terrain ou côte';
 
   @override
-  String get modeBannerSettlerFoundCityTitle => 'Settler: found city';
+  String get modeBannerSettlerFoundCityTitle => 'Settler: ville trouvée';
 
   @override
   String get modeBannerSettlerFoundCityInstruction =>
-      'This tile can become a city. If you want to found one, use the bottom toolbar, then choose the city\'s starting tiles on the map.';
+      'Cette tuile peut devenir une ville. Si vous voulez en trouver un, utilisez la barre d\'outils inférieure, puis choisissez les tuiles de départ de la ville sur la carte.';
 
   @override
-  String get modeBannerSettlerFoundCityDetailNewCity => 'New city';
+  String get modeBannerSettlerFoundCityDetailNewCity => 'Nouvelle ville';
 
   @override
   String get modeBannerSettlerFoundCityDetailChooseTiles =>
-      'Choose tiles after tapping';
+      'Choisir les carreaux après avoir tapoté';
 
   @override
-  String get modeBannerCityFoundingTitle => 'Founding a city';
+  String get modeBannerCityFoundingTitle => 'Trouvé une ville';
 
   @override
   String get modeBannerCityFoundingInstructionReady =>
-      'Ready. Confirm founding the city in the bottom toolbar or change the selected tiles on the map.';
+      'Prêt. Confirmer la fondation de la ville dans la barre d\'outils inférieure ou modifier les carreaux sélectionnés sur la carte.';
 
   @override
   String modeBannerCityFoundingInstructionPick(int count) {
-    return 'Choose $count connected tiles around the settler. After choosing them, the found-city action will be available in the bottom toolbar.';
+    return 'Choisissez les tuiles connectées $count autour du colon. Après les avoir choisies, l\'action de la ville trouvée sera disponible dans la barre d\'outils inférieure.';
   }
 
   @override
-  String get selectionImprovementListTitle => 'Tile improvements';
+  String get selectionImprovementListTitle => 'Amélioration des carreaux';
 
   @override
-  String get mapInspectionPossibleImprovementsTitle => 'Possible improvements';
+  String get mapInspectionPossibleImprovementsTitle =>
+      'Améliorations possibles';
 
   @override
-  String get mapInspectionNoPossibleImprovements => 'No possible improvements';
+  String get mapInspectionNoPossibleImprovements =>
+      'Aucune amélioration possible';
 
   @override
-  String get mapInspectionImprovementAvailableFromStart => 'from start';
+  String get mapInspectionImprovementAvailableFromStart => 'dès le début';
 
   @override
-  String get mapInspectionObjectiveTitle => 'Map objective';
+  String get mapInspectionObjectiveTitle => 'Objectif cartographique';
 
   @override
-  String get mapObjectiveRuins => 'Ruins';
+  String get mapObjectiveRuins => 'Ruines';
 
   @override
-  String get mapObjectiveStrategicPass => 'Strategic pass';
+  String get mapObjectiveStrategicPass => 'Pass stratégique';
 
   @override
-  String get mapObjectiveHolySite => 'Holy site';
+  String get mapObjectiveHolySite => 'Site sacré';
 
   @override
-  String get mapObjectiveLegendaryResource => 'Legendary deposit';
+  String get mapObjectiveLegendaryResource => 'Dépôt légendaire';
 
   @override
   String get mapObjectiveRuinsDescription =>
-      'A neutral exploration point. Holding it adds victory pressure.';
+      'Un point d\'exploration neutre. La maintenir ajoute une pression de victoire.';
 
   @override
   String get mapObjectiveStrategicPassDescription =>
-      'A key passage through the terrain. Control turns movement into leverage.';
+      'Un passage clé à travers le terrain. Le contrôle transforme le mouvement en levier.';
 
   @override
   String get mapObjectiveHolySiteDescription =>
-      'A culturally important site. Control grants gold and victory points.';
+      'Un site culturel important. Le contrôle accorde l\'or et les points de victoire.';
 
   @override
   String get mapObjectiveLegendaryResourceDescription =>
-      'A rare deposit worth expansion or conflict. Control grants the largest reward.';
+      'Un dépôt rare qui mérite une expansion ou un conflit. Le contrôle offre la plus grande récompense.';
 
   @override
   String mapObjectiveStatusNeutral(int turns) {
-    return 'Hold $turns turns';
+    return 'Maintenez les tours $turns';
   }
 
   @override
   String mapObjectiveStatusHolding(int held, int required) {
-    return 'Holding $held/$required';
+    return 'Exploitation de $held/$required';
   }
 
   @override
   String mapObjectiveStatusCompleted(int held, int required) {
-    return 'Controlled $held/$required';
+    return 'Commande $held/$required';
   }
 
   @override
-  String get mapObjectiveStatusContested => 'Contested';
+  String get mapObjectiveStatusContested => 'Concours';
 
   @override
   String mapObjectiveRewardVictoryPoints(int points) {
@@ -6498,77 +6556,79 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String mapObjectiveRewardGoldPerTurn(int gold) {
-    return '+$gold gold/turn';
+    return '+$gold or/tour';
   }
 
   @override
-  String get selectionImprovementStateBuilt => 'BUILT';
+  String get selectionImprovementStateBuilt => 'BÂTIMENT';
 
   @override
-  String get selectionImprovementStateAvailable => 'AVAILABLE';
+  String get selectionImprovementStateAvailable => 'DISPONIBLE';
 
   @override
   String get selectionImprovementStateNeedsTechnology => 'TECH';
 
   @override
-  String get selectionImprovementStateNeedsCity => 'CITY';
+  String get selectionImprovementStateNeedsCity => 'VILLE';
 
   @override
-  String get selectionImprovementStateBlocked => 'LIMIT';
+  String get selectionImprovementStateBlocked => 'LIMITÉE';
 
   @override
-  String get selectionImprovementNoBonus => 'No bonus';
+  String get selectionImprovementNoBonus => 'Pas de bonus';
 
   @override
   String workerImprovementYieldFood(int value) {
-    return '+$value food';
+    return '+$value aliments';
   }
 
   @override
   String workerImprovementYieldProduction(int value) {
-    return '+$value production';
+    return 'Production +$value';
   }
 
   @override
   String workerImprovementYieldGold(int value) {
-    return '+$value gold';
+    return '+$value or';
   }
 
   @override
   String workerImprovementYieldDefense(int value) {
-    return '+$value defense';
+    return 'Défense +$value';
   }
 
   @override
-  String get workerImprovementNoBonus => 'No extra bonus.';
+  String get workerImprovementNoBonus => 'Pas de bonus.';
 
   @override
-  String get workerImprovementOnlyWorker => 'Only a worker can build this.';
+  String get workerImprovementOnlyWorker =>
+      'Seul un ouvrier peut construire ça.';
 
   @override
-  String get workerImprovementWorkerBusy => 'The worker is already building.';
+  String get workerImprovementWorkerBusy =>
+      'Le travailleur est déjà en construction.';
 
   @override
   String get workerImprovementStopQueuedMove =>
-      'Stop the planned movement first.';
+      'Arrêtez d\'abord le mouvement prévu.';
 
   @override
-  String get workerImprovementMissingTile => 'No tile under the unit.';
+  String get workerImprovementMissingTile => 'Pas de tuile sous l\'unité.';
 
   @override
   String get workerImprovementMissingResource =>
-      'This improvement requires a matching resource.';
+      'Cette amélioration nécessite une ressource équivalente.';
 
   @override
   String get workerImprovementInvalidTerrain =>
-      'Wrong base terrain for this improvement.';
+      'Mauvais terrain de base pour cette amélioration.';
 
   @override
   String get workerImprovementMissingRiver =>
-      'This improvement requires a river.';
+      'Cette amélioration nécessite une rivière.';
 
   @override
-  String get workerImprovementBlocked => 'This action is blocked now.';
+  String get workerImprovementBlocked => 'Cette action est bloquée maintenant.';
 
   @override
   String unitSelectionWorkerJobTurns(String name, int turns) {
@@ -6576,126 +6636,130 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get resourceValueNoMatchingImprovement => 'No matching improvement';
+  String get resourceValueNoMatchingImprovement =>
+      'Aucune amélioration correspondante';
 
   @override
-  String get resourceValueSelectWorkerOrCity => 'Select worker or city';
+  String get resourceValueSelectWorkerOrCity =>
+      'Sélectionner un travailleur ou une ville';
 
   @override
-  String get resourceValueTileAlreadyImproved =>
-      'Tile already has an improvement';
+  String get resourceValueTileAlreadyImproved => 'Tile a déjà une amélioration';
 
   @override
-  String get resourceValueCityCenter => 'City center';
+  String get resourceValueCityCenter => 'Centre-ville';
 
   @override
   String resourceValueWorksForCity(String city) {
-    return 'Works for: $city';
+    return 'Fonctionne pour: $city';
   }
 
   @override
-  String get resourceValueOutsideCityBorders => 'Outside city borders';
+  String get resourceValueOutsideCityBorders =>
+      'En dehors des frontières de la ville';
 
   @override
   String get resourceValueNoLegalImprovementForTile =>
-      'No legal improvement for this tile';
+      'Aucune amélioration juridique pour cette tuile';
 
   @override
   String resourceValueRequiresTechnology(String technology) {
-    return 'Requires: $technology';
+    return 'Nécessite: $technology';
   }
 
   @override
-  String get resourceValueAvailableForWorker => 'Available for worker';
+  String get resourceValueAvailableForWorker =>
+      'Disponible pour les travailleurs';
 
   @override
-  String get resourceDetailNoResourcesOnTile => 'No resources on this tile';
+  String get resourceDetailNoResourcesOnTile =>
+      'Aucune ressource sur cette tuile';
 
   @override
-  String get resourceDetailValueSection => 'Value';
+  String get resourceDetailValueSection => 'Valeur';
 
   @override
-  String get resourceDetailCurrentSection => 'Now';
+  String get resourceDetailCurrentSection => 'Tout de suite';
 
   @override
-  String get resourceDetailAfterImprovementSection => 'After improvement';
+  String get resourceDetailAfterImprovementSection => 'Après amélioration';
 
   @override
-  String get resourceDetailYieldComparison => 'Tile yields';
+  String get resourceDetailYieldComparison => 'Rendement des carreaux';
 
   @override
-  String get resourceDetailRequiresSection => 'Requires';
+  String get resourceDetailRequiresSection => 'Nécessaire';
 
   @override
-  String get resourceDetailBestMoveSection => 'Best move';
+  String get resourceDetailBestMoveSection => 'Meilleur mouvement';
 
   @override
   String get resourceDetailNoMatchingImprovementBody =>
-      'No matching improvement for this resource.';
+      'Aucune amélioration correspondante pour cette ressource.';
 
   @override
   String get resourceDetailRequirementNoneCanBuild =>
-      'Nothing. You can build immediately.';
+      'Rien. Vous pouvez construire immédiatement.';
 
   @override
   String get resourceDetailRequirementOutsideCity =>
-      'The tile must be inside city borders.';
+      'La tuile doit être à l\'intérieur des frontières de la ville.';
 
   @override
   String get resourceDetailRequirementAlreadyImproved =>
-      'Nothing. The tile is already improved.';
+      'Rien. La tuile est déjà améliorée.';
 
   @override
   String get resourceDetailRequirementCityCenter =>
-      'No worker build in the city center.';
+      'Aucun ouvrier ne construit dans le centre-ville.';
 
   @override
   String get resourceDetailRequirementSelectWorkerOrCity =>
-      'A worker or city selection.';
+      'Une sélection d\'ouvriers ou de villes.';
 
   @override
   String get resourceDetailRequirementNoLegalImprovement =>
-      'No available build for this tile.';
+      'Pas de construction disponible pour cette tuile.';
 
   @override
   String resourceDetailBestMoveRequiresTechnology(
     String technology,
     String improvement,
   ) {
-    return 'Unlock $technology first, then build $improvement.';
+    return 'Déverrouillez d\'abord $technology, puis créez $improvement.';
   }
 
   @override
   String resourceDetailBestMoveAvailable(String improvement) {
-    return 'Send a worker and build $improvement.';
+    return 'Envoyez un travailleur et construisez $improvement.';
   }
 
   @override
   String get resourceDetailBestMoveOutsideCity =>
-      'Expand city borders or found a city closer to the resource.';
+      'Étendre les frontières de la ville ou trouver une ville plus proche de la ressource.';
 
   @override
   String get resourceDetailBestMoveAlreadyImproved =>
-      'Keep the tile in borders and work it when it fits the city plan.';
+      'Gardez la tuile dans les frontières et travaillez-la quand elle correspond au plan de la ville.';
 
   @override
   String get resourceDetailBestMoveCityCenter =>
-      'Treat the resource as city-center value; workers do not improve this tile.';
+      'Traiter la ressource comme un centre-ville; les travailleurs n\'améliorent pas cette tuile.';
 
   @override
   String get resourceDetailBestMoveSelectWorkerOrCity =>
-      'Select a worker or city to check the legal build.';
+      'Sélectionnez un travailleur ou une ville pour vérifier la construction légale.';
 
   @override
   String get resourceDetailBestMoveNoLegalImprovement =>
-      'Treat the resource as an expansion target; there is no separate build here.';
+      'Traiter la ressource comme une cible d\'expansion; il n\'y a pas de construction séparée ici.';
 
   @override
   String resourceValueUnlockedByTechnology(
     String technology,
     String improvement,
   ) {
-    return 'Unlocked by $technology: $improvement.';
+    return 'Débloqué par $technology: $improvement.';
   }
 
   @override
@@ -6703,12 +6767,12 @@ class AppLocalizationsFr extends AppLocalizations {
     String technology,
     String improvement,
   ) {
-    return 'After $technology: $improvement unlocks the full tile yield.';
+    return 'Après $technology: $improvement déverrouille le rendement complet de la tuile.';
   }
 
   @override
   String resourceValueResearchBoostLine(String technology, String discount) {
-    return 'Research boost: controlling this resource accelerates $technology (-$discount cost).';
+    return 'Davantage de recherche: le contrôle de cette ressource accélère $technology (-$discount coût).';
   }
 
   @override
@@ -6716,42 +6780,42 @@ class AppLocalizationsFr extends AppLocalizations {
     String technology,
     int production,
   ) {
-    return 'After $technology: +$production PROD for each controlled resource.';
+    return 'Après $technology: +$production PROD pour chaque ressource contrôlée.';
   }
 
   @override
   String resourceValueNoBaseYieldSummary(String yield) {
-    return 'The resource itself adds no base yield. The whole hex now has $yield; full value comes from improvements and unlocks.';
+    return 'La ressource elle-même n\'ajoute aucun rendement de base. L\'hexagone entier a maintenant $yield; la pleine valeur provient des améliorations et des déverrouillages.';
   }
 
   @override
   String resourceValueBaseYieldSummary(String resourceYield, String tileYield) {
-    return 'The resource gives $resourceYield. The whole hex now has $tileYield before improvement.';
+    return 'La ressource donne $resourceYield. L\'hexagone entier a maintenant $tileYield avant l\'amélioration.';
   }
 
   @override
   String get resourceValueExpansionStrategic =>
-      'Claim it before a rival does: this is a strategic resource for production, armies, or later technologies.';
+      'C\'est une ressource stratégique pour la production, les armées ou les technologies ultérieures.';
 
   @override
   String get resourceValueExpansionFood =>
-      'A good expansion target for city growth: more food means faster population and more worked tiles.';
+      'Une bonne cible d\'expansion pour la croissance de la ville: plus de nourriture signifie une population plus rapide et des tuiles plus travaillées.';
 
   @override
   String get resourceValueExpansionProduction =>
-      'A good expansion target for production tempo: buildings, units, and map pressure arrive faster.';
+      'Une bonne cible d\'expansion pour le rythme de production: les bâtiments, les unités et la pression de la carte arrivent plus rapidement.';
 
   @override
   String get resourceValueExpansionTrade =>
-      'A good expansion target for trade: after improvement it strongly supports gold and continued growth upkeep.';
+      'Un bon objectif d\'expansion pour le commerce: après l\'amélioration, il soutient fortement l\'or et l\'entretien continu de la croissance.';
 
   @override
   String get resourceValueExpansionEconomy =>
-      'A good expansion target for the economy: gold helps maintain armies, build reserves, and close score goals.';
+      'Une bonne cible d\'expansion pour l\'économie: l\'or aide à maintenir les armées, à créer des réserves et à atteindre des buts de score serrés.';
 
   @override
   String resourceValueYieldFood(int amount) {
-    return '+$amount FOOD';
+    return '+$amount ALIMENTS';
   }
 
   @override
@@ -6761,7 +6825,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String resourceValueYieldGold(int amount) {
-    return '+$amount GOLD';
+    return '+$amount OR';
   }
 
   @override
@@ -6770,184 +6834,186 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get resourceValueZeroBaseYield => '0 base yield';
+  String get resourceValueZeroBaseYield => '0 rendement de base';
 
   @override
   String get resourceValueCategoryBonus => 'Bonus';
 
   @override
-  String get resourceValueCategoryLuxury => 'Luxury';
+  String get resourceValueCategoryLuxury => 'Luxe';
 
   @override
-  String get resourceValueCategoryStrategic => 'Strategic';
+  String get resourceValueCategoryStrategic => 'Stratégie';
 
   @override
   String get resourceValueCategoryBonusFuture =>
-      'Value works mostly right away: faster growth and a better city start.';
+      'La valeur fonctionne surtout tout de suite: une croissance plus rapide et un meilleur départ de la ville.';
 
   @override
   String get resourceValueCategoryLuxuryFuture =>
-      'The largest value appears after border claim and the proper improvement.';
+      'La valeur la plus élevée apparaît après la revendication à la frontière et l\'amélioration appropriée.';
 
   @override
   String get resourceValueCategoryStrategicFuture =>
-      'This is a strategic resource: secure it for later production and military pressure.';
+      'Il s\'agit d\'une ressource stratégique: la sécuriser pour la production ultérieure et la pression militaire.';
 
   @override
-  String get cityYieldBreakdownTitle => 'City economy';
+  String get cityYieldBreakdownTitle => 'Économie urbaine';
 
   @override
   String cityYieldBreakdownSubtitle(String growth, String eta) {
-    return 'Real yield/turn • growth $growth • $eta';
+    return 'Rendement/tour réel • croissance $growth • $eta';
   }
 
   @override
-  String get cityYieldBreakdownProductionSources => 'Production sources';
+  String get cityYieldBreakdownProductionSources => 'Sources de production';
 
   @override
-  String get cityYieldBreakdownScienceSources => 'Science sources';
+  String get cityYieldBreakdownScienceSources => 'Sources scientifiques';
 
   @override
-  String get cityYieldBreakdownPerTurnSuffix => '/turn';
+  String get cityYieldBreakdownPerTurnSuffix => '/tourner';
 
   @override
-  String get cityYieldBreakdownNoProduction => 'No production';
+  String get cityYieldBreakdownNoProduction => 'Pas de production';
 
   @override
-  String get cityYieldBreakdownNoScience => 'No science';
+  String get cityYieldBreakdownNoScience => 'Pas de science';
 
   @override
-  String get cityYieldBreakdownCenter => 'Center';
+  String get cityYieldBreakdownCenter => 'Centre';
 
   @override
-  String get cityYieldBreakdownPopulationFields => 'Population fields';
+  String get cityYieldBreakdownPopulationFields => 'Champs de population';
 
   @override
-  String get cityYieldBreakdownWorkers => 'Workers';
+  String get cityYieldBreakdownWorkers => 'Travailleurs';
 
   @override
-  String get cityYieldBreakdownBuildings => 'Buildings';
+  String get cityYieldBreakdownBuildings => 'Bâtiments';
 
   @override
   String get cityYieldBreakdownTechnologies => 'Technologies';
 
   @override
-  String get cityYieldBreakdownSpecialization => 'Specialization';
+  String get cityYieldBreakdownSpecialization => 'Spécialisation';
 
   @override
-  String get cityYieldBreakdownGoldMultiplier => 'Gold multiplier';
+  String get cityYieldBreakdownGoldMultiplier => 'multiplicateur d\'or';
 
   @override
-  String get cityYieldBreakdownUpkeep => 'Upkeep';
+  String get cityYieldBreakdownUpkeep => 'Entretien';
 
   @override
-  String get cityYieldBreakdownFieldsBucket => 'Fields';
+  String get cityYieldBreakdownFieldsBucket => 'Champs';
 
   @override
-  String get cityYieldBreakdownCenterDetail =>
-      'Fixed yield from the city center';
+  String get cityYieldBreakdownCenterDetail => 'Rendement fixe du centre-ville';
 
   @override
   String get cityYieldBreakdownGoldMultiplierDetail =>
-      'Percentage bonus after summing gold sources';
+      'Pourcentage de bonus après la somme des sources d\'or';
 
   @override
-  String get cityYieldBreakdownBaseScience => 'City base';
+  String get cityYieldBreakdownBaseScience => 'Ville';
 
   @override
   String get cityYieldBreakdownBaseScienceDetail =>
-      'Fixed science generated by each city';
+      'Science fixe générée par chaque ville';
 
   @override
-  String get cityYieldBreakdownResearchProject => 'Research project';
+  String get cityYieldBreakdownResearchProject => 'Projet de recherche';
 
   @override
   String get cityYieldBreakdownResearchProjectDetail =>
-      'Current city production converted into science';
+      'Production urbaine actuelle convertie en science';
 
   @override
   String get cityYieldBreakdownScienceSpecializationDetail =>
-      'City science profile';
+      'Profil scientifique de la ville';
 
   @override
   String get cityYieldBreakdownScienceTechnologyDetail =>
-      'Science bonus from unlocked technologies';
+      'Bonus scientifique des technologies débloquées';
 
   @override
   String get cityYieldBreakdownNoWorkedPopulationFields =>
-      'No worked population fields';
+      'Pas de zones de population occupées';
 
   @override
   String get cityYieldBreakdownOneWorkedPopulationField =>
-      '1 worked population field';
+      '1 domaine de la population active';
 
   @override
   String cityYieldBreakdownManyWorkedPopulationFields(int count) {
-    return '$count worked population fields';
+    return '$count zones de population occupées';
   }
 
   @override
-  String get cityYieldBreakdownNoAssignedWorkers => 'No assigned workers';
+  String get cityYieldBreakdownNoAssignedWorkers =>
+      'Pas de travailleurs affectés';
 
   @override
   String get cityYieldBreakdownOneAssignedWorker =>
-      '1 field activated by a worker';
+      '1 champ activé par un travailleur';
 
   @override
   String cityYieldBreakdownManyAssignedWorkers(int count) {
-    return '$count fields activated by workers';
+    return 'Champs $count activés par les travailleurs';
   }
 
   @override
   String get cityYieldBreakdownNoPassiveImprovements =>
-      'No passive improvements';
+      'Aucune amélioration passive';
 
   @override
   String get cityYieldBreakdownOnePassiveImprovement =>
-      '1 unworked improvement, half yield';
+      '1 amélioration non travaillée, demi rendement';
 
   @override
   String cityYieldBreakdownManyPassiveImprovements(int count) {
-    return '$count unworked improvements, half yield';
+    return '$count améliorations non travaillées, demi rendement';
   }
 
   @override
-  String get cityYieldBreakdownNoBuildings => 'No buildings';
+  String get cityYieldBreakdownNoBuildings => 'Pas de bâtiments';
 
   @override
   String get cityYieldBreakdownBuildingsNoDirectYield =>
-      'Buildings without direct yield';
+      'Bâtiments sans rendement direct';
 
   @override
   String get cityYieldBreakdownOneBuildingEconomicEffect =>
-      '1 building with an economy effect';
+      '1 bâtiment à effet économique';
 
   @override
   String cityYieldBreakdownManyBuildingEconomicEffects(int count) {
-    return '$count buildings with economy effects';
+    return 'Bâtiments $count ayant des effets économiques';
   }
 
   @override
-  String get cityYieldBreakdownNoTechnologyYield => 'No technology yield bonus';
+  String get cityYieldBreakdownNoTechnologyYield =>
+      'Pas de bonus de rendement technologique';
 
   @override
   String get cityYieldBreakdownTechnologyYield =>
-      'Bonuses from unlocked technologies';
+      'Bonus des technologies déverrouillées';
 
   @override
-  String get cityYieldBreakdownNoScienceBuildings => 'No science buildings';
+  String get cityYieldBreakdownNoScienceBuildings =>
+      'Pas de bâtiments scientifiques';
 
   @override
-  String get cityYieldBreakdownOneScienceBuilding => '1 science building';
+  String get cityYieldBreakdownOneScienceBuilding => '1 bâtiment scientifique';
 
   @override
   String cityYieldBreakdownManyScienceBuildings(int count) {
-    return '$count science buildings with diminishing returns';
+    return '$count bâtiments scientifiques avec des rendements décroissants';
   }
 
   @override
   String cityYieldBreakdownGrowthFood(int storedFood, int growthCost) {
-    return '$storedFood/$growthCost food';
+    return '$storedFood/$growthCost aliment';
   }
 
   @override
@@ -6955,51 +7021,51 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cityYieldBreakdownUpkeepBlocked(int population, int cost) {
-    return 'Population $population: cost $cost, growth halted';
+    return 'Population $population: coût $cost, arrêt de la croissance';
   }
 
   @override
   String cityYieldBreakdownUpkeepCost(int population) {
-    return 'Food upkeep for population $population';
+    return 'Entretien des aliments pour la population $population';
   }
 
   @override
   String get cityYieldBreakdownGrowthSpecializationDetail =>
-      'City growth profile';
+      'Profil de croissance de la ville';
 
   @override
   String get cityYieldBreakdownIndustrySpecializationDetail =>
-      'City industry profile';
+      'Profil de l\'industrie urbaine';
 
   @override
   String get cityYieldBreakdownCommerceSpecializationDetail =>
-      'City trade profile';
+      'Profil commercial de la ville';
 
   @override
   String get cityYieldBreakdownScienceSpecializationCityDetail =>
-      'City science profile';
+      'Profil scientifique de la ville';
 
   @override
   String get cityYieldBreakdownMilitarySpecializationDetail =>
-      'City garrison profile';
+      'Profil de la garnison';
 
   @override
-  String get cityYieldBreakdownNoSpecialization => 'No specialization';
+  String get cityYieldBreakdownNoSpecialization => 'Pas de spécialisation';
 
   @override
-  String get cityProjectWealth => 'Wealth';
+  String get cityProjectWealth => 'Richesse';
 
   @override
-  String get cityProjectResearch => 'Research';
+  String get cityProjectResearch => 'Recherche';
 
   @override
-  String get cityProductionProjectsSection => 'City projects';
+  String get cityProductionProjectsSection => 'Projets urbains';
 
   @override
-  String get cityProductionSpecializationSection => 'City specialization';
+  String get cityProductionSpecializationSection => 'Spécialisation urbaine';
 
   @override
-  String get cityProductionSortLabel => 'Sort';
+  String get cityProductionSortLabel => 'Tri';
 
   @override
   String cityProductionHeaderSubtitle(
@@ -7007,36 +7073,36 @@ class AppLocalizationsFr extends AppLocalizations {
     String productionPerTurn,
     int gold,
   ) {
-    return '$title • $productionPerTurn • $gold gold';
+    return '$title • $productionPerTurn • Or $gold';
   }
 
   @override
-  String get cityProductionBuiltLabel => 'Built';
+  String get cityProductionBuiltLabel => 'Construit';
 
   @override
-  String get cityProductionAvailableLabel => 'Available';
+  String get cityProductionAvailableLabel => 'Disponible';
 
   @override
-  String get cityProductionAvailableUnitLabel => 'Available';
+  String get cityProductionAvailableUnitLabel => 'Disponible';
 
   @override
   String cityProductionUnitSupplyLimit(int used, int capacity) {
-    return 'Food limit $used/$capacity';
+    return 'Limite alimentaire $used/$capacity';
   }
 
   @override
   String cityProductionUnitSupplyCost(int cost) {
-    return 'food $cost';
+    return 'aliments $cost';
   }
 
   @override
   String cityProductionUnitSupplyUsed(int used, int capacity) {
-    return 'limit $used/$capacity';
+    return 'limite $used/$capacity';
   }
 
   @override
   String cityProductionNextWorkerUpkeep(int upkeep) {
-    return 'next upkeep: $upkeep';
+    return 'prochain entretien: $upkeep';
   }
 
   @override
@@ -7046,61 +7112,61 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cityProductionPaceShort(int production) {
-    return '$production prod./turn';
+    return '$production prod./tour';
   }
 
   @override
-  String get cityBuildingSortRecommended => 'Recommended';
+  String get cityBuildingSortRecommended => 'Recommandation';
 
   @override
   String cityBuildingReplaceProgressWarning(String building) {
-    return 'Choosing another building will replace $building. Progress will be preserved.';
+    return 'Choisir un autre bâtiment remplacera $building. Les progrès seront préservés.';
   }
 
   @override
-  String get cityBuildingSortFastestImpact => 'Fastest impact';
+  String get cityBuildingSortFastestImpact => 'Impact le plus rapide';
 
   @override
-  String get cityBuildingSortBestReturn => 'Best return';
+  String get cityBuildingSortBestReturn => 'Meilleur retour';
 
   @override
-  String get cityBuildingSortGrowth => 'Growth';
+  String get cityBuildingSortGrowth => 'Croissance';
 
   @override
-  String get cityBuildingSortIndustry => 'Industry';
+  String get cityBuildingSortIndustry => 'Industrie';
 
   @override
   String get cityBuildingSortScience => 'Science';
 
   @override
-  String get cityBuildingSortDefenseMilitary => 'Defense / military';
+  String get cityBuildingSortDefenseMilitary => 'Défense / militaire';
 
   @override
-  String get cityBuildingSortEconomy => 'Economy';
+  String get cityBuildingSortEconomy => 'Économie';
 
   @override
-  String get cityBuildingRequiresTechnology => 'Requires technology';
+  String get cityBuildingRequiresTechnology => 'Nécessite une technologie';
 
   @override
-  String get cityProductionContinuous => 'continuous';
+  String get cityProductionContinuous => 'continu';
 
   @override
-  String get cityProductionNoProduction => 'no production';
+  String get cityProductionNoProduction => 'pas de production';
 
   @override
-  String get cityProductionReady => 'ready';
+  String get cityProductionReady => 'Prêt';
 
   @override
-  String get cityProductionTurnOne => '1 turn';
+  String get cityProductionTurnOne => '1 tour';
 
   @override
   String cityProductionTurns(int turns) {
-    return '$turns turns';
+    return 'Tours $turns';
   }
 
   @override
   String cityProductionTreasuryGold(int gold) {
-    return 'Treasury: $gold gold';
+    return 'Trésorerie: or $gold';
   }
 
   @override
@@ -7110,19 +7176,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cityProjectGoldPerTurn(int gold) {
-    return '+$gold gold / turn';
+    return '+$gold or / tour';
   }
 
   @override
   String cityProjectSciencePerTurn(int science) {
-    return '+$science science / turn';
+    return '+$science science / tour';
   }
 
   @override
-  String get citySpecializationGrowth => 'Growth';
+  String get citySpecializationGrowth => 'Croissance';
 
   @override
-  String get citySpecializationIndustry => 'Industry';
+  String get citySpecializationIndustry => 'Industrie';
 
   @override
   String get citySpecializationCommerce => 'Commerce';
@@ -7131,54 +7197,54 @@ class AppLocalizationsFr extends AppLocalizations {
   String get citySpecializationMilitary => 'Garrison';
 
   @override
-  String get citySpecializationGrowthBonus => '+2 food';
+  String get citySpecializationGrowthBonus => '+2 aliments';
 
   @override
   String get citySpecializationIndustryBonus => '+2 production';
 
   @override
-  String get citySpecializationCommerceBonus => '+3 gold';
+  String get citySpecializationCommerceBonus => '+3 or';
 
   @override
-  String get citySpecializationScienceBonus => '+2 science';
+  String get citySpecializationScienceBonus => '+2 sciences';
 
   @override
   String get citySpecializationMilitaryProductionBonus => '+1 production';
 
   @override
-  String get citySpecializationMilitaryDefenseBonus => '+2 defense';
+  String get citySpecializationMilitaryDefenseBonus => '+2 défense';
 
   @override
-  String get citySpecializationMilitaryUnitProductionBonus => '+1 unit prod.';
+  String get citySpecializationMilitaryUnitProductionBonus => '+1 unité prod.';
 
   @override
-  String get citySpecializationBestFit => 'Best fit';
+  String get citySpecializationBestFit => 'Meilleur ajustement';
 
   @override
-  String get eventCityFoundedTitle => 'City founded';
+  String get eventCityFoundedTitle => 'Ville fondée';
 
   @override
-  String get eventCityBuiltBuildingTitle => 'Construction complete';
+  String get eventCityBuiltBuildingTitle => 'Construction terminée';
 
   @override
-  String get eventCityProducedUnitTitle => 'Unit trained';
+  String get eventCityProducedUnitTitle => 'Unité formée';
 
   @override
-  String get eventCityClaimedHexTitle => 'City borders';
+  String get eventCityClaimedHexTitle => 'Frontières de la ville';
 
   @override
   String eventCityClaimedHexBody(String cityName) {
-    return '$cityName: new tile';
+    return '$cityName: nouvelle tuile';
   }
 
   @override
-  String get eventUnitMovedTitle => 'Unit movement';
+  String get eventUnitMovedTitle => 'Mouvement unitaire';
 
   @override
-  String get eventUnitPromotedTitle => 'Unit promoted';
+  String get eventUnitPromotedTitle => 'Unité promue';
 
   @override
-  String get eventUnitExperienceTitle => 'Experience';
+  String get eventUnitExperienceTitle => 'Expérience';
 
   @override
   String eventUnitExperienceBody(String unitName, int amount, String rank) {
@@ -7186,10 +7252,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get eventUnitAttackedTitle => 'Attack';
+  String get eventUnitAttackedTitle => 'Attaque';
 
   @override
-  String get eventCombatTitle => 'Combat';
+  String get eventCombatTitle => 'Lutte';
 
   @override
   String eventCombatDamageLine(String unitName, int damage, String result) {
@@ -7198,7 +7264,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String eventCombatNoRetaliationLine(String unitName) {
-    return '$unitName: no retaliation';
+    return '$unitName: pas de représailles';
   }
 
   @override
@@ -7210,35 +7276,35 @@ class AppLocalizationsFr extends AppLocalizations {
     int attackerHp,
     int defenderHp,
   ) {
-    return '$attackerName ($attackerCountry) attacked $defenderName ($defenderCountry) - HP $attackerHp:$defenderHp';
+    return '$attackerName ($attackerCountry) a attaqué $defenderName ($defenderCountry) - HP $attackerHp:$defenderHp';
   }
 
   @override
-  String get eventDiplomaticProposalAcceptedStatus => 'Accepted';
+  String get eventDiplomaticProposalAcceptedStatus => 'Acceptée';
 
   @override
-  String get eventDiplomaticProposalRejectedStatus => 'Declined';
+  String get eventDiplomaticProposalRejectedStatus => 'Décliné';
 
   @override
-  String get eventDiplomaticProposalExpiredStatus => 'Expired';
+  String get eventDiplomaticProposalExpiredStatus => 'Expiré';
 
   @override
-  String get eventUnitKilledTitle => 'Unit defeated';
+  String get eventUnitKilledTitle => 'Unité vaincue';
 
   @override
-  String get eventUnitRetreatedTitle => 'Retreat';
+  String get eventUnitRetreatedTitle => 'Retraite';
 
   @override
-  String get eventCityCapturedTitle => 'City captured';
+  String get eventCityCapturedTitle => 'Ville capturée';
 
   @override
-  String get eventCityDestroyedTitle => 'City destroyed';
+  String get eventCityDestroyedTitle => 'Ville détruite';
 
   @override
-  String get eventTurnEndedTitle => 'Turn ended';
+  String get eventTurnEndedTitle => 'Fin du tour';
 
   @override
-  String get eventWorkerCompletedJobTitle => 'Work complete';
+  String get eventWorkerCompletedJobTitle => 'Travaux terminés';
 
   @override
   String get eventResearchPointsTitle => 'Science';
@@ -7249,11 +7315,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get eventTechnologyResearchedTitle => 'Technology discovered';
+  String get eventTechnologyResearchedTitle => 'Technologie découverte';
 
   @override
   String get eventStrategicResourceDiscoveredTitle =>
-      'Strategic resource discovered';
+      'Ressources stratégiques découvertes';
 
   @override
   String eventStrategicResourceDiscoveredBody(
@@ -7265,42 +7331,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String eventStrategicResourceControlledDetail(int count) {
-    return 'Controlled: $count';
+    return 'Contrôle: $count';
   }
 
   @override
   String eventStrategicResourceRivalDetail(int count) {
-    return 'Rivals: $count';
+    return 'Rivales: $count';
   }
 
   @override
   String eventStrategicResourceUnclaimedDetail(int count) {
-    return 'Unclaimed: $count';
+    return 'Non réclamé: $count';
   }
 
   @override
   String get eventStrategicResourcePressureSecured =>
-      'Supply secured; defend the source.';
+      'Approvisionnement sécurisé; défendre la source.';
 
   @override
   String get eventStrategicResourcePressureExpansionRace =>
-      'Settlement race: claim the nearest deposit before rivals.';
+      'Course de règlement: demander le dépôt le plus proche devant les rivaux.';
 
   @override
   String get eventStrategicResourcePressureContested =>
-      'Contested supply: rivals also control sources.';
+      'Approvisionnement contesté: les rivaux contrôlent également les sources.';
 
   @override
   String get eventStrategicResourcePressureRivalMonopoly =>
-      'Rival monopoly: prepare trade or an expedition.';
+      'Monopole rival: préparer le commerce ou une expédition.';
 
   @override
   String eventStrategicResourceSettleHint(int col, int row) {
-    return 'Deposit outside borders at $col:$row; consider founding a city.';
+    return 'Dépôt en dehors des frontières à $col:$row; envisager de fonder une ville.';
   }
 
   @override
-  String get eventMapObjectiveSecuredTitle => 'Map objective secured';
+  String get eventMapObjectiveSecuredTitle => 'Objectif de la carte';
 
   @override
   String eventMapObjectiveSecuredBody(String playerName, String objectiveName) {
@@ -7309,26 +7375,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String eventMapObjectiveHoldDetail(int holdTurns, int requiredHoldTurns) {
-    return 'Held: $holdTurns/$requiredHoldTurns';
+    return 'Arrêt: $holdTurns/$requiredHoldTurns';
   }
 
   @override
   String eventMapObjectiveLocationDetail(int col, int row) {
-    return 'Position: $col:$row';
+    return 'Fonction: $col:$row';
   }
 
   @override
   String eventMapObjectiveVictoryRewardDetail(int points) {
-    return '+$points victory points';
+    return 'Points de victoire +$points';
   }
 
   @override
   String eventMapObjectiveGoldRewardDetail(int gold) {
-    return '+$gold gold/turn';
+    return '+$gold or/tour';
   }
 
   @override
-  String get eventCivilizationMetTitle => 'New civilization';
+  String get eventCivilizationMetTitle => 'Nouvelle civilisation';
 
   @override
   String eventCivilizationMetBody(String civilizationName, String playerName) {
@@ -7336,67 +7402,67 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get civilizationMetPopupEyebrow => 'Civilization encountered';
+  String get civilizationMetPopupEyebrow => 'Civilisation rencontrée';
 
   @override
   String civilizationMetPopupBody(String civilizationName) {
-    return 'The civilization of $civilizationName has appeared on the horizon. A new neighbor, rival, or future ally is now part of your world.';
+    return 'La civilisation de $civilizationName est apparue à l\'horizon. Un nouveau voisin, rival ou futur allié fait maintenant partie de votre monde.';
   }
 
   @override
-  String get civilizationMetPopupOk => 'OK';
+  String get civilizationMetPopupOk => 'Très bien.';
 
   @override
-  String get eventCommandRejectedTitle => 'Command rejected';
+  String get eventCommandRejectedTitle => 'Commande rejetée';
 
   @override
-  String get eventAllPlayersSubmittedTitle => 'Everyone ready';
+  String get eventAllPlayersSubmittedTitle => 'Tout le monde est prêt';
 
   @override
   String eventAllPlayersSubmittedBody(int turn, int players) {
-    return 'Turn $turn ($players)';
+    return 'Tourner $turn ($players)';
   }
 
   @override
-  String get eventPlayerTimedOutTitle => 'Auto-submit';
+  String get eventPlayerTimedOutTitle => 'Soumettre automatiquement';
 
   @override
   String eventPlayerTimedOutBody(String playerName, int turn) {
-    return '$playerName: timed out on turn $turn';
+    return '$playerName: désactivé au tour $turn';
   }
 
   @override
-  String get eventCombatDefenderKilledDetail => 'Defender defeated';
+  String get eventCombatDefenderKilledDetail => 'Défendeur vaincu';
 
   @override
-  String get eventCombatAttackerKilledDetail => 'Attacker defeated';
+  String get eventCombatAttackerKilledDetail => 'Attaque vaincu';
 
   @override
-  String get eventCombatDefenderRetreatedDetail => 'Defender retreated';
+  String get eventCombatDefenderRetreatedDetail => 'Le défenseur a reculé';
 
   @override
   String eventCombatAttackDamageDetail(int damage) {
-    return 'Attack: -$damage HP';
+    return 'Attaque: -$damage HP';
   }
 
   @override
   String eventCombatRetaliationDamageDetail(int damage) {
-    return 'Retaliation: -$damage HP';
+    return 'Rétorsion: -$damage HP';
   }
 
   @override
   String eventCombatRollDetail(int value) {
-    return 'Roll $value';
+    return 'Rouleaux $value';
   }
 
   @override
-  String get eventCombatNoRetaliationDetail => 'No retaliation';
+  String get eventCombatNoRetaliationDetail => 'Pas de représailles';
 
   @override
-  String get eventDominationStartedTitle => 'Domination started';
+  String get eventDominationStartedTitle => 'La domination a commencé';
 
   @override
-  String get eventDominationRivalAboveTitle => 'Rival above threshold';
+  String get eventDominationRivalAboveTitle => 'Rival au-dessus du seuil';
 
   @override
   String eventDominationBody(
@@ -7409,20 +7475,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String eventDominationHoldProgressDetail(int held, int required) {
-    return 'Held $held/$required turns';
+    return 'Tourne $held/$required';
   }
 
   @override
-  String get eventDominationReadyDetail => 'Condition ready';
+  String get eventDominationReadyDetail => 'État prêt';
 
   @override
   String eventDominationKeepHoldingDetail(String turns) {
-    return 'Hold for $turns more';
+    return 'Tenez pour $turns plus';
   }
 
   @override
   String eventDominationInterruptDetail(String turns) {
-    return 'Interrupt within $turns';
+    return 'Interruption dans $turns';
   }
 
   @override
@@ -7430,19 +7496,19 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count turns',
-      one: '1 turn',
-      zero: '0 turns',
+      other: '$count tours',
+      one: '1 tour',
+      zero: '0 tour',
     );
     return '$_temp0';
   }
 
   @override
-  String get eventCombatDefeatedResult => 'defeated';
+  String get eventCombatDefeatedResult => 'défaite';
 
   @override
   String eventCombatDefenderRetreatedResult(int hp) {
-    return '$hp HP, retreat';
+    return '$hp HP, retraite';
   }
 
   @override
@@ -7457,35 +7523,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String eventCombatTechModifierLabel(Object technology) {
-    return 'Technology $technology';
+    return 'Technologie $technology';
   }
 
   @override
   String eventCombatRankModifierLabel(Object rank) {
-    return 'Rank $rank';
+    return 'Classement $rank';
   }
 
   @override
-  String get eventCombatCityGarrisonModifier => 'City garrison';
+  String get eventCombatCityGarrisonModifier => 'Garçon de ville';
 
   @override
-  String get eventCombatMixedArmyModifier => 'Mixed army';
+  String get eventCombatMixedArmyModifier => 'Armée mixte';
 
   @override
-  String get eventCombatStatAttack => 'attack';
+  String get eventCombatStatAttack => 'attaque';
 
   @override
-  String get eventCombatStatDefense => 'defense';
+  String get eventCombatStatDefense => 'défense';
 
   @override
   String get eventCombatStatHp => 'HP';
 
   @override
-  String get eventCombatStatRange => 'range';
+  String get eventCombatStatRange => 'plage';
 
   @override
-  String get eventCombatStatMobility => 'movement';
+  String get eventCombatStatMobility => 'mouvement';
 
   @override
-  String get closeAction => 'Close';
+  String get closeAction => 'Fermer';
 }
