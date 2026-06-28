@@ -52,7 +52,7 @@ bool _canApplyAttackCandidate(AttackHexCommand command, GameView view) {
   for (final enemy in view.visibleEnemyUnits) {
     if (enemy.ownerPlayerId == unit.ownerPlayerId) continue;
     if (!view.canTargetPlayer(enemy.ownerPlayerId)) continue;
-    if (enemy.col == command.defenderCol && enemy.row == command.defenderRow) {
+    if (enemy.occupies(command.defenderCol, command.defenderRow)) {
       return true;
     }
   }
@@ -75,7 +75,7 @@ bool _canApplyMoveCandidate(
   if (unit == null || unit.isWorking || unit.movementPoints <= 0) {
     return false;
   }
-  if (unit.col == command.targetCol && unit.row == command.targetRow) {
+  if (unit.occupies(command.targetCol, command.targetRow)) {
     return false;
   }
 
@@ -97,7 +97,7 @@ bool _canApplyMoveCandidate(
   final knownUnits = view.movementBlockingUnits;
   for (final other in knownUnits) {
     if (other.id == unit.id) continue;
-    if (other.col == command.targetCol && other.row == command.targetRow) {
+    if (other.occupies(command.targetCol, command.targetRow)) {
       return false;
     }
   }

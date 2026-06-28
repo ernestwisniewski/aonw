@@ -127,11 +127,7 @@ abstract final class _CombatSetupFactory {
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {
-    final defendedCity = CombatReducer._cityAt(
-      state,
-      defender.col,
-      defender.row,
-    );
+    final defendedCity = state.cityAt(defender.col, defender.row);
     final defenderModifiers = CombatModifierCollector.forDefender(
       unit: defender,
       tile: defenderTile,
@@ -299,11 +295,7 @@ abstract final class _CombatSetupFactory {
     AttackHexCommand command,
     GameUnit attacker,
   ) {
-    final city = CombatReducer._cityAt(
-      state,
-      command.defenderCol,
-      command.defenderRow,
-    );
+    final city = state.cityAt(command.defenderCol, command.defenderRow);
     if (city == null) return null;
     return _canAttackTargetOwner(state, attacker, city.ownerPlayerId)
         ? city

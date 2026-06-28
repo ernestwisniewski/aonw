@@ -10,12 +10,26 @@ extension GameUnitLookup on Iterable<GameUnit> {
     }
     return null;
   }
+
+  GameUnit? unitAt(int col, int row) {
+    for (final unit in this) {
+      if (unit.occupies(col, row)) return unit;
+    }
+    return null;
+  }
 }
 
 extension GameCityLookup on Iterable<GameCity> {
   GameCity? byId(String id) {
     for (final city in this) {
       if (city.id == id) return city;
+    }
+    return null;
+  }
+
+  GameCity? cityAt(int col, int row) {
+    for (final city in this) {
+      if (city.occupiesCenter(col, row)) return city;
     }
     return null;
   }

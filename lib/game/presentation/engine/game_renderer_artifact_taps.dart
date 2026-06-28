@@ -98,7 +98,7 @@ bool _handleStackedMapObjectTap(
   if (tile == null) return false;
 
   final unit = preferredUnitId == null
-      ? _unitAt(renderer, col, row)
+      ? renderer._renderState.unitAt(col, row)
       : renderer._renderState.unitById(preferredUnitId);
   final artifact = preferredArtifact ?? _mapArtifactAt(renderer, col, row);
   final objective = preferredObjective ?? _mapObjectiveAt(renderer, col, row);
@@ -274,13 +274,6 @@ MapObjectiveProgress? _mapObjectiveAt(GameRenderer renderer, int col, int row) {
     holdStatesByObjectiveId:
         renderer._renderState.mapObjectiveHoldStatesByObjectiveId,
   ).entryFor(objective.id);
-}
-
-GameUnit? _unitAt(GameRenderer renderer, int col, int row) {
-  for (final unit in renderer._renderState.units) {
-    if (unit.col == col && unit.row == row) return unit;
-  }
-  return null;
 }
 
 String _objectiveCycleId(String objectiveId) => 'objective:$objectiveId';

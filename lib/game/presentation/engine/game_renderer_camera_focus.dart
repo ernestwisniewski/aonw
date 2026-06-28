@@ -146,7 +146,7 @@ extension GameRendererCameraFocus on GameRenderer {
 
   bool _unitIsOnKnownCity(GameUnit unit) {
     return _renderState.citiesKnownToActivePlayer.any(
-      (city) => city.center.col == unit.col && city.center.row == unit.row,
+      (city) => city.occupiesCenter(unit.col, unit.row),
     );
   }
 

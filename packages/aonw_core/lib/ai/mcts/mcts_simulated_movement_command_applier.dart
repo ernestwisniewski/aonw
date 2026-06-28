@@ -1,6 +1,7 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -32,13 +33,15 @@ final class MctsSimulatedMovementCommandApplier {
     if (targetTile == null || unit.occupies(targetTile.col, targetTile.row)) {
       return ownUnits;
     }
-    final targetCity = _cityAt(targetTile.col, targetTile.row);
+    final targetCity =
+        ownCities.cityAt(targetTile.col, targetTile.row) ??
+        rememberedEnemyCities.cityAt(targetTile.col, targetTile.row);
     if (targetCity != null && targetCity.ownerPlayerId != unit.ownerPlayerId) {
       return ownUnits;
     }
 
     final knownUnits = view.movementBlockingUnits;
-    final targetBlocker = _unitAt(knownUnits, targetTile.col, targetTile.row);
+    final targetBlocker = knownUnits.unitAt(targetTile.col, targetTile.row);
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: knownUnits,
@@ -119,26 +122,9 @@ final class MctsSimulatedMovementCommandApplier {
     ];
   }
 
-  GameCity? _cityAt(int col, int row) {
-    for (final city in ownCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    for (final city in rememberedEnemyCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
-  }
-
   static int? _unitIndexById(List<GameUnit> units, String unitId) {
     for (var i = 0; i < units.length; i++) {
       if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.occupies(col, row)) return unit;
     }
     return null;
   }

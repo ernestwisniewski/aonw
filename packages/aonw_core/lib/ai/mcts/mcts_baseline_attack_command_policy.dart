@@ -3,6 +3,7 @@ import 'package:aonw_core/ai/combat_tactics.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/mcts/mcts_command_reconciliation_rules.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 
 const _defaultRules = MctsCommandReconciliationRules();
@@ -31,8 +32,7 @@ final class MctsBaselineAttackCommandPolicy {
         attacker.movementPoints <= 0) {
       return false;
     }
-    final defender = _rules.unitAt(
-      view.visibleEnemyUnits,
+    final defender = view.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -78,8 +78,7 @@ final class MctsBaselineAttackCommandPolicy {
         !_rules.isAssignedWarGoalMilitaryUnit(attacker, context)) {
       return false;
     }
-    final defender = _rules.unitAt(
-      view.visibleEnemyUnits,
+    final defender = view.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -99,8 +98,7 @@ final class MctsBaselineAttackCommandPolicy {
           );
     }
 
-    final city = _rules.cityAt(
-      view.rememberedEnemyCities,
+    final city = view.rememberedEnemyCities.cityAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -138,8 +136,7 @@ final class MctsBaselineAttackCommandPolicy {
         !_rules.canServeAsMilitaryUnit(attacker, context)) {
       return false;
     }
-    final defender = _rules.unitAt(
-      view.visibleEnemyUnits,
+    final defender = view.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -158,8 +155,7 @@ final class MctsBaselineAttackCommandPolicy {
           );
     }
 
-    final city = _rules.cityAt(
-      view.rememberedEnemyCities,
+    final city = view.rememberedEnemyCities.cityAt(
       command.defenderCol,
       command.defenderRow,
     );
