@@ -73,7 +73,7 @@ final class BasicStrategyPlanningSession {
   }
 
   void addExplorationPlan(AiTurnPlan plan) {
-    commands.addAll(plan.commands);
+    addCommands(plan.commands);
     final explorationNotes = plan.debug?.notes;
     if (explorationNotes != null) notes.addAll(explorationNotes);
   }

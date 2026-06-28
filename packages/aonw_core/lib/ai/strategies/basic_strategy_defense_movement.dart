@@ -31,6 +31,22 @@ final class BasicStrategyDefenseMovement {
         1;
   }
 
+  GameCity? nearestOwnCity(GameUnit unit, GameView view) {
+    GameCity? best;
+    var bestDistance = 1 << 30;
+    final origin = HexCoordinate(col: unit.col, row: unit.row);
+    for (final city in view.ownCities) {
+      final distance = HexDistance.between(origin, city.center.toCoordinate());
+      if (distance < bestDistance ||
+          (distance == bestDistance &&
+              (best == null || city.id.compareTo(best.id) < 0))) {
+        best = city;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  }
+
   BasicStrategyPlannedDefenseMove? moveFor({
     required GameUnit unit,
     required GameCity city,

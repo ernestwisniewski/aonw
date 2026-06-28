@@ -2,22 +2,43 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('BasicStrategyLastMilitaryReservePlanner', () {
-    test('moves the last military unit toward the nearest own city', () {
-      final mapData = _map(cols: 5, rows: 1);
-      final view = _view(mapData: mapData, units: [_warrior(col: 3, row: 0)]);
-      final usedUnitIds = <String>{};
-      final reservedHexes = <HexCoordinate>{};
+  group('BasicStrategyIdleSweepPlanner', () {
+    test('fortifies an idle military unit guarding a city', () {
+      final mapData = _map(cols: 3, rows: 1);
+      final view = _view(
+        mapData: mapData,
+        units: [_warrior('guard_1', 0, 0)],
+        cities: const [_capital],
+      );
 
-      final commands = const BasicStrategyLastMilitaryReservePlanner().plan(
+      final commands = const BasicStrategyIdleSweepPlanner().plan(
         view,
         _context(view),
-        usedUnitIds,
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands, const [FortifyUnitCommand('guard_1')]);
+    });
+
+    test('moves an idle military unit toward the nearest own city', () {
+      final mapData = _map(cols: 5, rows: 1);
+      final reservedHexes = <HexCoordinate>{};
+      final view = _view(
+        mapData: mapData,
+        units: [_warrior('guard_1', 4, 0)],
+        cities: const [_capital],
+      );
+
+      final commands = const BasicStrategyIdleSweepPlanner().plan(
+        view,
+        _context(view),
+        <String>{},
         reservedHexes,
       );
 
       final move = commands.whereType<MoveUnitCommand>().single;
-      expect(move.unitId, 'warrior_1');
+      expect(move.unitId, 'guard_1');
       expect(
         HexDistance.between(
           HexCoordinate(col: move.targetCol, row: move.targetRow),
@@ -25,55 +46,33 @@ void main() {
         ),
         lessThan(
           HexDistance.between(
-            const HexCoordinate(col: 3, row: 0),
+            const HexCoordinate(col: 4, row: 0),
             _capital.center.toCoordinate(),
           ),
         ),
       );
+      expect(reservedHexes, isEmpty);
     });
 
-    test('fortifies the last military unit already guarding a city', () {
-      final mapData = _map(cols: 3, rows: 1);
-      final view = _view(mapData: mapData, units: [_warrior(col: 0, row: 0)]);
-
-      final commands = const BasicStrategyLastMilitaryReservePlanner().plan(
-        view,
-        _context(view),
-        <String>{},
-        <HexCoordinate>{},
-      );
-
-      expect(commands, [const FortifyUnitCommand('warrior_1')]);
-    });
-
-    test('fortifies one ready defender for each city when available', () {
-      final mapData = _map(cols: 5, rows: 1);
-      const satellite = GameCity(
-        id: 'satellite',
+    test('explicitly skips an otherwise unassigned civilian', () {
+      final mapData = _map(cols: 2, rows: 1);
+      final worker = GameUnit.produced(
+        id: 'worker_1',
         ownerPlayerId: 'player_1',
-        name: 'Satellite',
-        center: CityHex(col: 4, row: 0),
+        type: GameUnitType.worker,
+        col: 0,
+        row: 0,
       );
-      final view = _view(
-        mapData: mapData,
-        units: [_warrior(col: 0, row: 0), _warrior2(col: 4, row: 0)],
-        cities: const [_capital, satellite],
-      );
+      final view = _view(mapData: mapData, units: [worker], cities: const []);
 
-      final commands = const BasicStrategyLastMilitaryReservePlanner().plan(
+      final commands = const BasicStrategyIdleSweepPlanner().plan(
         view,
         _context(view),
         <String>{},
         <HexCoordinate>{},
       );
 
-      expect(
-        commands,
-        containsAll(const [
-          FortifyUnitCommand('warrior_1'),
-          FortifyUnitCommand('warrior_2'),
-        ]),
-      );
+      expect(commands, const [SkipUnitTurnCommand('worker_1')]);
     });
   });
 }
@@ -85,19 +84,9 @@ const _capital = GameCity(
   center: CityHex(col: 0, row: 0),
 );
 
-GameUnit _warrior({required int col, required int row}) {
+GameUnit _warrior(String id, int col, int row) {
   return GameUnit.produced(
-    id: 'warrior_1',
-    ownerPlayerId: 'player_1',
-    type: GameUnitType.warrior,
-    col: col,
-    row: row,
-  );
-}
-
-GameUnit _warrior2({required int col, required int row}) {
-  return GameUnit.produced(
-    id: 'warrior_2',
+    id: id,
     ownerPlayerId: 'player_1',
     type: GameUnitType.warrior,
     col: col,
@@ -108,7 +97,7 @@ GameUnit _warrior2({required int col, required int row}) {
 GameView _view({
   required MapData mapData,
   required List<GameUnit> units,
-  List<GameCity> cities = const [_capital],
+  required List<GameCity> cities,
 }) {
   return GameView.fromPersistentState(
     PersistentGameState(
@@ -124,7 +113,7 @@ GameView _view({
       ),
     ),
     forPlayerId: 'player_1',
-    turn: 2,
+    turn: 30,
     mapData: mapData,
     ruleset: GameRuleset.defaults,
   );

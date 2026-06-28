@@ -243,6 +243,45 @@ void main() {
       expect(usedUnitIds, {'b_cavalry'});
       expect(reservedHexes, {const HexCoordinate(col: 1, row: 0)});
     });
+
+    test('fortifies a carrier waiting in a full city storage slot', () {
+      final carrier = GameUnit.produced(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 0,
+        row: 0,
+      ).copyWithCarriedArtifact('artifact_2');
+      final usedUnitIds = <String>{};
+      final reservedHexes = <HexCoordinate>{};
+      final view = _view(
+        units: [carrier],
+        cities: const [_capital],
+        artifacts: const [
+          WorldArtifact(
+            id: 'artifact_1',
+            type: WorldArtifactType.queensMirror,
+            location: WorldArtifactLocation.stored(cityId: 'city_1'),
+          ),
+          WorldArtifact(
+            id: 'artifact_2',
+            type: WorldArtifactType.heroSword,
+            location: WorldArtifactLocation.carried(unitId: 'warrior_1'),
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyArtifactLogisticsPlanner().plan(
+        view,
+        _context(view),
+        usedUnitIds,
+        reservedHexes,
+      );
+
+      expect(commands, const [FortifyUnitCommand('warrior_1')]);
+      expect(usedUnitIds, {'warrior_1'});
+      expect(reservedHexes, isEmpty);
+    });
   });
 }
 

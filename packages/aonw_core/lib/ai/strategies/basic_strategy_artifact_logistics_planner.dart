@@ -1,5 +1,6 @@
 import 'package:aonw_core/ai/ai_context.dart';
 import 'package:aonw_core/ai/game_view.dart';
+import 'package:aonw_core/ai/strategies/basic_strategy_defense_movement.dart';
 import 'package:aonw_core/ai/unit_roles.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -9,7 +10,11 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyArtifactLogisticsPlanner {
-  const BasicStrategyArtifactLogisticsPlanner();
+  const BasicStrategyArtifactLogisticsPlanner({
+    this.defenseMovement = const BasicStrategyDefenseMovement(),
+  });
+
+  final BasicStrategyDefenseMovement defenseMovement;
 
   List<GameCommand> plan(
     GameView view,
@@ -53,6 +58,8 @@ final class BasicStrategyArtifactLogisticsPlanner {
         pathfinder: pathfinder,
       );
       if (move == null) {
+        final hold = _artifactCarrierHoldFor(unit, view);
+        if (hold != null) commands.add(hold);
         usedUnitIds.add(unit.id);
         continue;
       }
@@ -166,6 +173,18 @@ final class BasicStrategyArtifactLogisticsPlanner {
       );
     }
     return null;
+  }
+
+  GameCommand? _artifactCarrierHoldFor(GameUnit unit, GameView view) {
+    if (unit.movementPoints <= 0 || unit.isWorking || unit.isFortified) {
+      return null;
+    }
+    final city = defenseMovement.nearestOwnCity(unit, view);
+    if (city == null) return SkipUnitTurnCommand(unit.id);
+    if (defenseMovement.isInArea(unit, city)) {
+      return FortifyUnitCommand(unit.id);
+    }
+    return SkipUnitTurnCommand(unit.id);
   }
 
   _PlannedArtifactMove? _artifactCollectionMoveFor({
