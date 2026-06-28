@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aonw/menu/menu_animated_background.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/hud_canvas_shapes.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
@@ -377,7 +378,10 @@ class _MenuRouteCartographyPainter extends CustomPainter {
         final cx = x + (row.isOdd ? cell * 0.5 : 0);
         final cy = y;
         if ((row + (x / cell).round()) % 3 == 0) {
-          canvas.drawPath(_hexPath(Offset(cx, cy), cell * 0.47), stroke);
+          canvas.drawPath(
+            HudCanvasShapes.hexOutlinePath(Offset(cx, cy), cell * 0.47),
+            stroke,
+          );
         }
       }
     }
@@ -413,23 +417,6 @@ class _MenuRouteCartographyPainter extends CustomPainter {
     canvas
       ..drawRect(Rect.fromLTWH(0, size.height * 0.18, size.width, 1), horizon)
       ..drawRect(Rect.fromLTWH(0, size.height * 0.82, size.width, 1), horizon);
-  }
-
-  Path _hexPath(Offset center, double radius) {
-    final path = Path();
-    for (var i = 0; i < 6; i++) {
-      final angle = math.pi / 6 + math.pi * 2 * i / 6;
-      final point = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      if (i == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-    }
-    return path..close();
   }
 
   @override

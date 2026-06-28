@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/widgets/screen/game_loading_progress.dart
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/hud_canvas_shapes.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
 import 'package:flutter/material.dart';
 
@@ -386,7 +387,7 @@ class _GameLoadingMapBackdropPainter extends CustomPainter {
             : value < 11
             ? landPaint
             : coastPaint;
-        final path = _hexPath(center, cell * 0.48);
+        final path = HudCanvasShapes.hexOutlinePath(center, cell * 0.48);
         canvas
           ..drawPath(path, paint)
           ..drawPath(path, strokePaint);
@@ -435,23 +436,6 @@ class _GameLoadingMapBackdropPainter extends CustomPainter {
         Rect.fromLTWH(0, size.height * 0.82, size.width, 1),
         horizonPaint,
       );
-  }
-
-  Path _hexPath(Offset center, double radius) {
-    final path = Path();
-    for (var i = 0; i < 6; i++) {
-      final angle = math.pi / 6 + math.pi * 2 * i / 6;
-      final point = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      if (i == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-    }
-    return path..close();
   }
 
   @override
