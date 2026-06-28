@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 /// JSON serialization / deserialization for the [GameCommand] sealed hierarchy.
 ///
@@ -374,87 +375,94 @@ abstract final class GameCommandSerializer {
   ///
   /// Throws [ArgumentError] if the `type` value is unrecognised.
   static GameCommand fromJson(Map<String, dynamic> json) {
-    final type = _requiredString(json, 'GameCommand', 'type');
+    final type = requiredStringField(json, 'GameCommand', 'type');
     return switch (type) {
       'TileTapped' => TileTappedCommand(
-        _requiredInt(json, type, 'col'),
-        _requiredInt(json, type, 'row'),
+        requiredIntField(json, type, 'col'),
+        requiredIntField(json, type, 'row'),
       ),
-      'CityTapped' => CityTappedCommand(_requiredString(json, type, 'cityId')),
+      'CityTapped' => CityTappedCommand(
+        requiredStringField(json, type, 'cityId'),
+      ),
       'MoveUnit' => MoveUnitCommand(
-        _requiredString(json, type, 'unitId'),
-        _requiredInt(json, type, 'targetCol'),
-        _requiredInt(json, type, 'targetRow'),
+        requiredStringField(json, type, 'unitId'),
+        requiredIntField(json, type, 'targetCol'),
+        requiredIntField(json, type, 'targetRow'),
       ),
       'CancelUnitAction' => CancelUnitActionCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
-      'SkipUnitTurn' ||
-      'SleepUnit' => SkipUnitTurnCommand(_requiredString(json, type, 'unitId')),
+      'SkipUnitTurn' || 'SleepUnit' => SkipUnitTurnCommand(
+        requiredStringField(json, type, 'unitId'),
+      ),
       'FortifyUnit' => FortifyUnitCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'AutoExploreUnit' => AutoExploreUnitCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'StartMerchantTradeRouteSelection' =>
         StartMerchantTradeRouteSelectionCommand(
-          _requiredString(json, type, 'unitId'),
+          requiredStringField(json, type, 'unitId'),
         ),
       'CancelMerchantTradeRouteSelection' =>
         CancelMerchantTradeRouteSelectionCommand(
-          _requiredString(json, type, 'unitId'),
+          requiredStringField(json, type, 'unitId'),
         ),
       'AssignMerchantTradeRoute' => AssignMerchantTradeRouteCommand(
-        _requiredString(json, type, 'unitId'),
-        _requiredString(json, type, 'destinationCityId'),
+        requiredStringField(json, type, 'unitId'),
+        requiredStringField(json, type, 'destinationCityId'),
       ),
       'StartMerchantMoveToCitySelection' =>
         StartMerchantMoveToCitySelectionCommand(
-          _requiredString(json, type, 'unitId'),
+          requiredStringField(json, type, 'unitId'),
         ),
       'CancelMerchantMoveToCitySelection' =>
         CancelMerchantMoveToCitySelectionCommand(
-          _requiredString(json, type, 'unitId'),
+          requiredStringField(json, type, 'unitId'),
         ),
       'MoveMerchantToCity' => MoveMerchantToCityCommand(
-        _requiredString(json, type, 'unitId'),
-        _requiredString(json, type, 'destinationCityId'),
+        requiredStringField(json, type, 'unitId'),
+        requiredStringField(json, type, 'destinationCityId'),
       ),
       'StartArtifactExcavation' => StartArtifactExcavationCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'StoreArtifactInCity' => StoreArtifactInCityCommand(
-        _requiredString(json, type, 'unitId'),
-        cityId: _optionalString(json, type, 'cityId'),
+        requiredStringField(json, type, 'unitId'),
+        cityId: optionalStringField(json, type, 'cityId'),
       ),
       'TradeArtifact' => TradeArtifactCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
-        offeredArtifactId: _requiredString(json, type, 'offeredArtifactId'),
-        requestedArtifactId: _optionalString(json, type, 'requestedArtifactId'),
-        offeredGold: _optionalInt(json, type, 'offeredGold') ?? 0,
-        requestedGold: _optionalInt(json, type, 'requestedGold') ?? 0,
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        offeredArtifactId: requiredStringField(json, type, 'offeredArtifactId'),
+        requestedArtifactId: optionalStringField(
+          json,
+          type,
+          'requestedArtifactId',
+        ),
+        offeredGold: optionalIntField(json, type, 'offeredGold') ?? 0,
+        requestedGold: optionalIntField(json, type, 'requestedGold') ?? 0,
       ),
       'FoundCity' => FoundCityCommand(
-        _requiredString(json, type, 'founderId'),
+        requiredStringField(json, type, 'founderId'),
         controlledHexes: _cityHexList(json, type, 'controlledHexes'),
       ),
       'StartBuilding' => StartBuildingCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredEnum(json, type, 'buildingType', CityBuildingType.values),
+        requiredStringField(json, type, 'cityId'),
+        requiredEnumField(json, type, 'buildingType', CityBuildingType.values),
       ),
       'StartUnitProduction' => StartUnitProductionCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredEnum(json, type, 'unitType', GameUnitType.values),
+        requiredStringField(json, type, 'cityId'),
+        requiredEnumField(json, type, 'unitType', GameUnitType.values),
       ),
       'StartCityProject' => StartCityProjectCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredEnum(json, type, 'projectType', CityProjectType.values),
+        requiredStringField(json, type, 'cityId'),
+        requiredEnumField(json, type, 'projectType', CityProjectType.values),
       ),
       'SetCitySpecialization' => SetCitySpecializationCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredEnum(
+        requiredStringField(json, type, 'cityId'),
+        requiredEnumField(
           json,
           type,
           'specialization',
@@ -462,61 +470,61 @@ abstract final class GameCommandSerializer {
         ),
       ),
       'RushProduction' => RushProductionCommand(
-        _requiredString(json, type, 'cityId'),
+        requiredStringField(json, type, 'cityId'),
       ),
       'SelectTechnology' => SelectTechnologyCommand(
-        _requiredString(json, type, 'playerId'),
-        _requiredEnum(json, type, 'technologyId', TechnologyId.values),
+        requiredStringField(json, type, 'playerId'),
+        requiredEnumField(json, type, 'technologyId', TechnologyId.values),
       ),
       'CancelResearchSelection' => CancelResearchSelectionCommand(
-        _requiredString(json, type, 'playerId'),
+        requiredStringField(json, type, 'playerId'),
       ),
       'DetachTroop' => DetachTroopCommand(
-        _requiredString(json, type, 'unitId'),
-        _requiredEnum(json, type, 'troopType', TroopType.values),
+        requiredStringField(json, type, 'unitId'),
+        requiredEnumField(json, type, 'troopType', TroopType.values),
       ),
-      'EndTurn' => EndTurnCommand(_requiredString(json, type, 'playerId')),
+      'EndTurn' => EndTurnCommand(requiredStringField(json, type, 'playerId')),
       'SubmitTurn' => SubmitTurnCommand(
-        _requiredString(json, type, 'playerId'),
+        requiredStringField(json, type, 'playerId'),
       ),
       'ResetUnitMovement' => ResetUnitMovementCommand(
-        playerId: _optionalString(json, type, 'playerId'),
+        playerId: optionalStringField(json, type, 'playerId'),
       ),
       'SetActivePlayer' => SetActivePlayerCommand(
-        _requiredString(json, type, 'playerId'),
-        canAct: _requiredBool(json, type, 'canAct'),
+        requiredStringField(json, type, 'playerId'),
+        canAct: requiredBoolField(json, type, 'canAct'),
       ),
       'ToggleMoveTargeting' => const ToggleMoveTargetingCommand(),
       'StartCityFounding' => const StartCityFoundingCommand(),
       'CancelCityFounding' => const CancelCityFoundingCommand(),
       'StartCityWorkedHexSelection' => StartCityWorkedHexSelectionCommand(
-        _requiredString(json, type, 'cityId'),
+        requiredStringField(json, type, 'cityId'),
       ),
       'CancelCityWorkedHexSelection' => CancelCityWorkedHexSelectionCommand(
-        _requiredString(json, type, 'cityId'),
+        requiredStringField(json, type, 'cityId'),
       ),
       'ToggleWorkedHex' => ToggleWorkedHexCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredInt(json, type, 'col'),
-        _requiredInt(json, type, 'row'),
+        requiredStringField(json, type, 'cityId'),
+        requiredIntField(json, type, 'col'),
+        requiredIntField(json, type, 'row'),
       ),
       'StartCityExpansionSelection' => StartCityExpansionSelectionCommand(
-        _requiredString(json, type, 'cityId'),
+        requiredStringField(json, type, 'cityId'),
       ),
       'CancelCityExpansionSelection' => CancelCityExpansionSelectionCommand(
-        _requiredString(json, type, 'cityId'),
+        requiredStringField(json, type, 'cityId'),
       ),
       'SelectCityExpansionHex' => SelectCityExpansionHexCommand(
-        _requiredString(json, type, 'cityId'),
-        _requiredInt(json, type, 'col'),
-        _requiredInt(json, type, 'row'),
+        requiredStringField(json, type, 'cityId'),
+        requiredIntField(json, type, 'col'),
+        requiredIntField(json, type, 'row'),
       ),
       'StartWorkerActionSelection' => StartWorkerActionSelectionCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'SelectWorkerImprovement' => SelectWorkerImprovementCommand(
-        _requiredString(json, type, 'unitId'),
-        _requiredEnum(
+        requiredStringField(json, type, 'unitId'),
+        requiredEnumField(
           json,
           type,
           'improvementType',
@@ -524,32 +532,32 @@ abstract final class GameCommandSerializer {
         ),
       ),
       'ConfirmWorkerImprovement' => ConfirmWorkerImprovementCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'CancelWorkerActionSelection' => CancelWorkerActionSelectionCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'CancelWorkerJob' => CancelWorkerJobCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'AssignWorkerToHex' => AssignWorkerToHexCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'CancelWorkerAssignment' => CancelWorkerAssignmentCommand(
-        _requiredString(json, type, 'unitId'),
+        requiredStringField(json, type, 'unitId'),
       ),
       'StartAttackTargeting' => StartAttackTargetingCommand(
-        _requiredString(json, type, 'attackerUnitId'),
+        requiredStringField(json, type, 'attackerUnitId'),
       ),
       'CancelAttackTargeting' => CancelAttackTargetingCommand(
-        _requiredString(json, type, 'attackerUnitId'),
+        requiredStringField(json, type, 'attackerUnitId'),
       ),
       'AttackHex' => AttackHexCommand(
-        _requiredString(json, type, 'attackerUnitId'),
-        _requiredInt(json, type, 'defenderCol'),
-        _requiredInt(json, type, 'defenderRow'),
+        requiredStringField(json, type, 'attackerUnitId'),
+        requiredIntField(json, type, 'defenderCol'),
+        requiredIntField(json, type, 'defenderRow'),
         cityConquestAction:
-            _optionalEnum(
+            optionalEnumField(
               json,
               type,
               'cityConquestAction',
@@ -558,86 +566,100 @@ abstract final class GameCommandSerializer {
             CityConquestAction.capture,
       ),
       'StartCommanderMergeSelection' => StartCommanderMergeSelectionCommand(
-        _requiredString(json, type, 'commanderUnitId'),
+        requiredStringField(json, type, 'commanderUnitId'),
       ),
       'CancelCommanderMergeSelection' => CancelCommanderMergeSelectionCommand(
-        _requiredString(json, type, 'commanderUnitId'),
+        requiredStringField(json, type, 'commanderUnitId'),
       ),
       'SelectTile' => SelectTileCommand(
-        _requiredInt(json, type, 'col'),
-        _requiredInt(json, type, 'row'),
+        requiredIntField(json, type, 'col'),
+        requiredIntField(json, type, 'row'),
       ),
-      'SelectUnit' => SelectUnitCommand(_requiredString(json, type, 'unitId')),
-      'SelectCity' => SelectCityCommand(_requiredString(json, type, 'cityId')),
+      'SelectUnit' => SelectUnitCommand(
+        requiredStringField(json, type, 'unitId'),
+      ),
+      'SelectCity' => SelectCityCommand(
+        requiredStringField(json, type, 'cityId'),
+      ),
       'FocusNextPendingAction' => FocusNextPendingActionCommand(
-        _requiredString(json, type, 'playerId'),
-        preferredObjectiveAdvice: _optionalEnum(
+        requiredStringField(json, type, 'playerId'),
+        preferredObjectiveAdvice: optionalEnumField(
           json,
           type,
           'preferredObjectiveAdvice',
           GameObjectiveAdvice.values,
         ),
-        actionIndex: _optionalInt(json, type, 'actionIndex'),
+        actionIndex: optionalIntField(json, type, 'actionIndex'),
       ),
       'FocusTurnStartAction' => FocusTurnStartActionCommand(
-        _requiredString(json, type, 'playerId'),
+        requiredStringField(json, type, 'playerId'),
       ),
       'SendDiplomaticProposal' => SendDiplomaticProposalCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
-        kind: _requiredEnum(json, type, 'kind', DiplomaticProposalKind.values),
-        proposalId: _optionalString(json, type, 'proposalId'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        kind: requiredEnumField(
+          json,
+          type,
+          'kind',
+          DiplomaticProposalKind.values,
+        ),
+        proposalId: optionalStringField(json, type, 'proposalId'),
       ),
       'RespondDiplomaticProposal' => RespondDiplomaticProposalCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        proposalId: _requiredString(json, type, 'proposalId'),
-        accepted: _requiredBool(json, type, 'accepted'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        proposalId: requiredStringField(json, type, 'proposalId'),
+        accepted: requiredBoolField(json, type, 'accepted'),
       ),
       'DeclareWar' => DeclareWarCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
       ),
       'OpenResourceTrade' => OpenResourceTradeCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
-        resource: _requiredEnum(json, type, 'resource', ResourceType.values),
-        goldPerTurn: _requiredInt(json, type, 'goldPerTurn'),
-        durationTurns: _requiredInt(json, type, 'durationTurns'),
-        agreementId: _optionalString(json, type, 'agreementId'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        resource: requiredEnumField(
+          json,
+          type,
+          'resource',
+          ResourceType.values,
+        ),
+        goldPerTurn: requiredIntField(json, type, 'goldPerTurn'),
+        durationTurns: requiredIntField(json, type, 'durationTurns'),
+        agreementId: optionalStringField(json, type, 'agreementId'),
       ),
       'OpenResourceExchange' => OpenResourceExchangeCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
-        offeredResource: _requiredEnum(
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        offeredResource: requiredEnumField(
           json,
           type,
           'offeredResource',
           ResourceType.values,
         ),
-        requestedResource: _requiredEnum(
+        requestedResource: requiredEnumField(
           json,
           type,
           'requestedResource',
           ResourceType.values,
         ),
-        durationTurns: _requiredInt(json, type, 'durationTurns'),
-        agreementId: _optionalString(json, type, 'agreementId'),
+        durationTurns: requiredIntField(json, type, 'durationTurns'),
+        agreementId: optionalStringField(json, type, 'agreementId'),
       ),
       'SendDiplomaticMessage' => SendDiplomaticMessageCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        targetPlayerId: _requiredString(json, type, 'targetPlayerId'),
-        topic: _requiredEnum(
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        topic: requiredEnumField(
           json,
           type,
           'topic',
           DiplomaticMessageTopic.values,
         ),
-        messageId: _optionalString(json, type, 'messageId'),
+        messageId: optionalStringField(json, type, 'messageId'),
       ),
       'RespondDiplomaticMessage' => RespondDiplomaticMessageCommand(
-        playerId: _requiredString(json, type, 'playerId'),
-        messageId: _requiredString(json, type, 'messageId'),
-        response: _requiredEnum(
+        playerId: requiredStringField(json, type, 'playerId'),
+        messageId: requiredStringField(json, type, 'messageId'),
+        response: requiredEnumField(
           json,
           type,
           'response',
@@ -646,93 +668,6 @@ abstract final class GameCommandSerializer {
       ),
       _ => throw ArgumentError('Unknown GameCommand type: "$type"'),
     };
-  }
-
-  static String _requiredString(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      '$type.$field',
-      'Expected a non-empty String',
-    );
-  }
-
-  static String? _optionalString(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value == null) return null;
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      '$type.$field',
-      'Expected a non-empty String or null',
-    );
-  }
-
-  static int _requiredInt(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is int) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected an int');
-  }
-
-  static int? _optionalInt(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value == null) return null;
-    if (value is int) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected an int or null');
-  }
-
-  static bool _requiredBool(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is bool) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected a bool');
-  }
-
-  static T _requiredEnum<T extends Enum>(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-    Iterable<T> values,
-  ) {
-    final name = _requiredString(json, type, field);
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    throw ArgumentError.value(name, '$type.$field', 'Unknown value');
-  }
-
-  static T? _optionalEnum<T extends Enum>(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-    Iterable<T> values,
-  ) {
-    final name = _optionalString(json, type, field);
-    if (name == null) return null;
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    throw ArgumentError.value(name, '$type.$field', 'Unknown value');
   }
 
   static List<CityHex> _cityHexList(

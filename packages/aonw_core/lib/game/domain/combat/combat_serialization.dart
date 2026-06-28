@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/combat/combat_modifier.dart';
 import 'package:aonw_core/game/domain/combat/combat_outcome.dart';
 import 'package:aonw_core/game/domain/combat/combat_step.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 abstract final class CombatOutcomeSerializer {
   static Map<String, dynamic> toJson(CombatOutcome outcome) => {
@@ -16,20 +17,44 @@ abstract final class CombatOutcomeSerializer {
 
   static CombatOutcome fromJson(Map<String, dynamic> json) {
     return CombatOutcome(
-      attackerUnitId: _requiredString(json, 'CombatOutcome', 'attackerUnitId'),
-      defenderUnitId: _requiredString(json, 'CombatOutcome', 'defenderUnitId'),
-      attackerHpAfter: _requiredInt(json, 'CombatOutcome', 'attackerHpAfter'),
-      defenderHpAfter: _requiredInt(json, 'CombatOutcome', 'defenderHpAfter'),
-      attackerKilled: _requiredBool(json, 'CombatOutcome', 'attackerKilled'),
-      defenderKilled: _requiredBool(json, 'CombatOutcome', 'defenderKilled'),
-      defenderRetreated: _requiredBool(
+      attackerUnitId: requiredStringField(
+        json,
+        'CombatOutcome',
+        'attackerUnitId',
+      ),
+      defenderUnitId: requiredStringField(
+        json,
+        'CombatOutcome',
+        'defenderUnitId',
+      ),
+      attackerHpAfter: requiredIntField(
+        json,
+        'CombatOutcome',
+        'attackerHpAfter',
+      ),
+      defenderHpAfter: requiredIntField(
+        json,
+        'CombatOutcome',
+        'defenderHpAfter',
+      ),
+      attackerKilled: requiredBoolField(
+        json,
+        'CombatOutcome',
+        'attackerKilled',
+      ),
+      defenderKilled: requiredBoolField(
+        json,
+        'CombatOutcome',
+        'defenderKilled',
+      ),
+      defenderRetreated: requiredBoolField(
         json,
         'CombatOutcome',
         'defenderRetreated',
       ),
       steps: [
-        for (final step in _requiredList(json, 'CombatOutcome', 'steps'))
-          _stepFromJson(_requiredMap(step, 'CombatOutcome.steps[]')),
+        for (final step in requiredListField(json, 'CombatOutcome', 'steps'))
+          _stepFromJson(requiredMapValue(step, 'CombatOutcome.steps[]')),
       ],
     );
   }
@@ -57,28 +82,28 @@ abstract final class CombatOutcomeSerializer {
   };
 
   static CombatStep _stepFromJson(Map<String, dynamic> json) {
-    final type = _requiredString(json, 'CombatStep', 'type');
+    final type = requiredStringField(json, 'CombatStep', 'type');
     return switch (type) {
       'Attack' => AttackStep(
-        damage: _requiredInt(json, type, 'damage'),
+        damage: requiredIntField(json, type, 'damage'),
         active: [
-          for (final modifier in _requiredList(json, type, 'active'))
-            _modifierFromJson(_requiredMap(modifier, '$type.active[]')),
+          for (final modifier in requiredListField(json, type, 'active'))
+            _modifierFromJson(requiredMapValue(modifier, '$type.active[]')),
         ],
       ),
       'Retaliation' => RetaliationStep(
-        damage: _requiredInt(json, type, 'damage'),
+        damage: requiredIntField(json, type, 'damage'),
         active: [
-          for (final modifier in _requiredList(json, type, 'active'))
-            _modifierFromJson(_requiredMap(modifier, '$type.active[]')),
+          for (final modifier in requiredListField(json, type, 'active'))
+            _modifierFromJson(requiredMapValue(modifier, '$type.active[]')),
         ],
       ),
       'ModifierApplied' => ModifierAppliedStep(
-        _modifierFromJson(_requiredMap(json['modifier'], '$type.modifier')),
+        _modifierFromJson(requiredMapValue(json['modifier'], '$type.modifier')),
       ),
       'Roll' => RollStep(
-        seed: _requiredInt(json, type, 'seed'),
-        value: _requiredInt(json, type, 'value'),
+        seed: requiredIntField(json, type, 'seed'),
+        value: requiredIntField(json, type, 'value'),
       ),
       _ => throw ArgumentError('Unknown CombatStep type: $type'),
     };
@@ -99,10 +124,15 @@ abstract final class CombatOutcomeSerializer {
   };
 
   static CombatModifier _modifierFromJson(Map<String, dynamic> json) {
-    final type = _requiredString(json, 'CombatModifier', 'type');
-    final label = _requiredString(json, type, 'label');
-    final target = _requiredEnum(json, type, 'target', CombatStatTarget.values);
-    final delta = _requiredInt(json, type, 'delta');
+    final type = requiredStringField(json, 'CombatModifier', 'type');
+    final label = requiredStringField(json, type, 'label');
+    final target = requiredEnumField(
+      json,
+      type,
+      'target',
+      CombatStatTarget.values,
+    );
+    final delta = requiredIntField(json, type, 'delta');
     return switch (type) {
       'Terrain' => TerrainModifier(label: label, target: target, delta: delta),
       'Fortification' => FortificationModifier(
@@ -128,68 +158,5 @@ abstract final class CombatOutcomeSerializer {
       ),
       _ => throw ArgumentError('Unknown CombatModifier type: $type'),
     };
-  }
-
-  static String _requiredString(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      '$type.$field',
-      'Expected a non-empty String',
-    );
-  }
-
-  static int _requiredInt(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is int) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected an int');
-  }
-
-  static bool _requiredBool(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is bool) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected a bool');
-  }
-
-  static List<dynamic> _requiredList(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is List) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected a List');
-  }
-
-  static Map<String, dynamic> _requiredMap(Object? value, String name) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value);
-    throw ArgumentError.value(value, name, 'Expected a JSON object');
-  }
-
-  static T _requiredEnum<T extends Enum>(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-    Iterable<T> values,
-  ) {
-    final name = _requiredString(json, type, field);
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    throw ArgumentError.value(name, '$type.$field', 'Unknown value');
   }
 }
