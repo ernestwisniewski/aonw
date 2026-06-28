@@ -2,6 +2,7 @@ import 'package:aonw_core/ai/ai_difficulty.dart';
 import 'package:aonw_core/ai/ai_persona.dart';
 import 'package:aonw_core/ai/ai_strategy_id.dart';
 import 'package:aonw_core/ai/civilization/civilization_profile.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 class AiPlayer {
   final AiStrategyId strategyId;
@@ -26,22 +27,22 @@ class AiPlayer {
 
   factory AiPlayer.fromJson(Map<String, dynamic> json) {
     return AiPlayer(
-      strategyId: _enumByName(
+      strategyId: enumByName(
         json['strategyId'],
         AiStrategyId.values,
         'AiPlayer.strategyId',
       ),
-      difficulty: _enumByName(
+      difficulty: enumByName(
         json['difficulty'] ?? AiDifficulty.normal.name,
         AiDifficulty.values,
         'AiPlayer.difficulty',
       ),
-      persona: _enumByName(
+      persona: enumByName(
         json['persona'] ?? AiPersona.balanced.name,
         AiPersona.values,
         'AiPlayer.persona',
       ),
-      seed: _requiredInt(json['seed'], 'AiPlayer.seed'),
+      seed: requiredIntValue(json['seed'], 'AiPlayer.seed'),
     );
   }
 
@@ -82,25 +83,5 @@ class AiPlayer {
   String toString() {
     return 'AiPlayer(strategyId: $strategyId, difficulty: $difficulty, '
         'persona: $persona, seed: $seed)';
-  }
-
-  static T _enumByName<T extends Enum>(
-    Object? value,
-    Iterable<T> values,
-    String field,
-  ) {
-    if (value is! String || value.isEmpty) {
-      throw ArgumentError.value(value, field, 'Expected a non-empty String');
-    }
-    for (final enumValue in values) {
-      if (enumValue.name == value) return enumValue;
-    }
-    throw ArgumentError.value(value, field, 'Unknown value');
-  }
-
-  static int _requiredInt(Object? value, String field) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    throw ArgumentError.value(value, field, 'Expected an int');
   }
 }

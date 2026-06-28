@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 /// JSON serialization / deserialization for the [GameEvent] sealed hierarchy.
 ///
@@ -403,15 +404,15 @@ abstract final class GameEventSerializer {
   ///
   /// Throws [ArgumentError] if the `type` value is unrecognised.
   static GameEvent fromJson(Map<String, dynamic> json) {
-    final type = _requiredString(json, 'GameEvent', 'type');
+    final type = requiredStringField(json, 'GameEvent', 'type');
     return switch (type) {
       'CityFounded' => CityFoundedEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        ownerPlayerId: _requiredString(json, type, 'ownerPlayerId'),
+        cityId: requiredStringField(json, type, 'cityId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
       ),
       'CityBuiltBuilding' => CityBuiltBuildingEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        buildingType: _requiredEnum(
+        cityId: requiredStringField(json, type, 'cityId'),
+        buildingType: requiredEnumField(
           json,
           type,
           'buildingType',
@@ -419,110 +420,115 @@ abstract final class GameEventSerializer {
         ),
       ),
       'CityProducedUnit' => CityProducedUnitEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        unitType: _requiredEnum(json, type, 'unitType', GameUnitType.values),
-        producedUnitId: _requiredString(json, type, 'producedUnitId'),
+        cityId: requiredStringField(json, type, 'cityId'),
+        unitType: requiredEnumField(
+          json,
+          type,
+          'unitType',
+          GameUnitType.values,
+        ),
+        producedUnitId: requiredStringField(json, type, 'producedUnitId'),
       ),
       'CityClaimedHex' => CityClaimedHexEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        col: _requiredInt(json, type, 'col'),
-        row: _requiredInt(json, type, 'row'),
+        cityId: requiredStringField(json, type, 'cityId'),
+        col: requiredIntField(json, type, 'col'),
+        row: requiredIntField(json, type, 'row'),
       ),
       'UnitMoved' => UnitMovedEvent(
-        unitId: _requiredString(json, type, 'unitId'),
-        fromCol: _requiredInt(json, type, 'fromCol'),
-        fromRow: _requiredInt(json, type, 'fromRow'),
-        toCol: _requiredInt(json, type, 'toCol'),
-        toRow: _requiredInt(json, type, 'toRow'),
+        unitId: requiredStringField(json, type, 'unitId'),
+        fromCol: requiredIntField(json, type, 'fromCol'),
+        fromRow: requiredIntField(json, type, 'fromRow'),
+        toCol: requiredIntField(json, type, 'toCol'),
+        toRow: requiredIntField(json, type, 'toRow'),
       ),
       'UnitGainedExperience' => UnitGainedExperienceEvent(
-        unitId: _requiredString(json, type, 'unitId'),
-        ownerPlayerId: _requiredString(json, type, 'ownerPlayerId'),
-        amount: _requiredInt(json, type, 'amount'),
-        totalExperience: _requiredInt(json, type, 'totalExperience'),
-        rank: _requiredEnum(json, type, 'rank', UnitVeterancyRank.values),
-        promoted: _requiredBool(json, type, 'promoted'),
+        unitId: requiredStringField(json, type, 'unitId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        amount: requiredIntField(json, type, 'amount'),
+        totalExperience: requiredIntField(json, type, 'totalExperience'),
+        rank: requiredEnumField(json, type, 'rank', UnitVeterancyRank.values),
+        promoted: requiredBoolField(json, type, 'promoted'),
       ),
       'UnitAttacked' => UnitAttackedEvent(
-        attackerUnitId: _requiredString(json, type, 'attackerUnitId'),
-        attackerOwnerPlayerId: _requiredString(
+        attackerUnitId: requiredStringField(json, type, 'attackerUnitId'),
+        attackerOwnerPlayerId: requiredStringField(
           json,
           type,
           'attackerOwnerPlayerId',
         ),
-        defenderUnitId: _requiredString(json, type, 'defenderUnitId'),
-        defenderOwnerPlayerId: _requiredString(
+        defenderUnitId: requiredStringField(json, type, 'defenderUnitId'),
+        defenderOwnerPlayerId: requiredStringField(
           json,
           type,
           'defenderOwnerPlayerId',
         ),
       ),
       'CombatResolved' => CombatResolvedEvent(
-        attackerUnitId: _requiredString(json, type, 'attackerUnitId'),
-        defenderUnitId: _requiredString(json, type, 'defenderUnitId'),
+        attackerUnitId: requiredStringField(json, type, 'attackerUnitId'),
+        defenderUnitId: requiredStringField(json, type, 'defenderUnitId'),
         outcome: CombatOutcomeSerializer.fromJson(
-          _requiredMap(json['outcome'], '$type.outcome'),
+          requiredMapValue(json['outcome'], '$type.outcome'),
         ),
       ),
       'UnitKilled' => UnitKilledEvent(
-        unitId: _requiredString(json, type, 'unitId'),
-        ownerPlayerId: _requiredString(json, type, 'ownerPlayerId'),
-        attackerUnitId: _optionalString(json, type, 'attackerUnitId'),
+        unitId: requiredStringField(json, type, 'unitId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        attackerUnitId: optionalStringField(json, type, 'attackerUnitId'),
       ),
       'UnitRetreated' => UnitRetreatedEvent(
-        unitId: _requiredString(json, type, 'unitId'),
-        ownerPlayerId: _requiredString(json, type, 'ownerPlayerId'),
-        fromCol: _requiredInt(json, type, 'fromCol'),
-        fromRow: _requiredInt(json, type, 'fromRow'),
-        toCol: _requiredInt(json, type, 'toCol'),
-        toRow: _requiredInt(json, type, 'toRow'),
+        unitId: requiredStringField(json, type, 'unitId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        fromCol: requiredIntField(json, type, 'fromCol'),
+        fromRow: requiredIntField(json, type, 'fromRow'),
+        toCol: requiredIntField(json, type, 'toCol'),
+        toRow: requiredIntField(json, type, 'toRow'),
       ),
       'CityCaptured' => CityCapturedEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        previousOwnerPlayerId: _requiredString(
+        cityId: requiredStringField(json, type, 'cityId'),
+        previousOwnerPlayerId: requiredStringField(
           json,
           type,
           'previousOwnerPlayerId',
         ),
-        newOwnerPlayerId: _requiredString(json, type, 'newOwnerPlayerId'),
+        newOwnerPlayerId: requiredStringField(json, type, 'newOwnerPlayerId'),
       ),
       'CityDestroyed' => CityDestroyedEvent(
-        cityId: _requiredString(json, type, 'cityId'),
-        previousOwnerPlayerId: _requiredString(
+        cityId: requiredStringField(json, type, 'cityId'),
+        previousOwnerPlayerId: requiredStringField(
           json,
           type,
           'previousOwnerPlayerId',
         ),
-        attackerOwnerPlayerId: _requiredString(
+        attackerOwnerPlayerId: requiredStringField(
           json,
           type,
           'attackerOwnerPlayerId',
         ),
       ),
       'TurnEnded' => TurnEndedEvent(
-        playerId: _requiredString(json, type, 'playerId'),
+        playerId: requiredStringField(json, type, 'playerId'),
       ),
       'WorkerCompletedJob' => WorkerCompletedJobEvent(
-        unitId: _requiredString(json, type, 'unitId'),
+        unitId: requiredStringField(json, type, 'unitId'),
       ),
       'DominationThresholdReached' => DominationThresholdReachedEvent(
-        playerId: _requiredString(json, type, 'playerId'),
-        controlPercent: _requiredDouble(json, type, 'controlPercent'),
-        requiredControlPercent: _requiredDouble(
+        playerId: requiredStringField(json, type, 'playerId'),
+        controlPercent: requiredDoubleField(json, type, 'controlPercent'),
+        requiredControlPercent: requiredDoubleField(
           json,
           type,
           'requiredControlPercent',
         ),
-        holdTurns: _requiredInt(json, type, 'holdTurns'),
-        requiredHoldTurns: _requiredInt(json, type, 'requiredHoldTurns'),
+        holdTurns: requiredIntField(json, type, 'holdTurns'),
+        requiredHoldTurns: requiredIntField(json, type, 'requiredHoldTurns'),
       ),
       'ResearchPointsGained' => ResearchPointsGainedEvent(
-        playerId: _requiredString(json, type, 'playerId'),
-        points: _requiredInt(json, type, 'points'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        points: requiredIntField(json, type, 'points'),
       ),
       'TechnologyResearched' => TechnologyResearchedEvent(
-        playerId: _requiredString(json, type, 'playerId'),
-        technologyId: _requiredEnum(
+        playerId: requiredStringField(json, type, 'playerId'),
+        technologyId: requiredEnumField(
           json,
           type,
           'technologyId',
@@ -534,259 +540,186 @@ abstract final class GameEventSerializer {
         type,
       ),
       'MapObjectiveSecured' => MapObjectiveSecuredEvent(
-        playerId: _requiredString(json, type, 'playerId'),
-        objectiveId: _requiredString(json, type, 'objectiveId'),
-        objectiveType: _requiredEnum(
+        playerId: requiredStringField(json, type, 'playerId'),
+        objectiveId: requiredStringField(json, type, 'objectiveId'),
+        objectiveType: requiredEnumField(
           json,
           type,
           'objectiveType',
           MapObjectiveType.values,
         ),
-        col: _requiredInt(json, type, 'col'),
-        row: _requiredInt(json, type, 'row'),
-        holdTurns: _requiredInt(json, type, 'holdTurns'),
-        requiredHoldTurns: _requiredInt(json, type, 'requiredHoldTurns'),
-        victoryPoints: _requiredInt(json, type, 'victoryPoints'),
-        goldPerTurn: _requiredInt(json, type, 'goldPerTurn'),
+        col: requiredIntField(json, type, 'col'),
+        row: requiredIntField(json, type, 'row'),
+        holdTurns: requiredIntField(json, type, 'holdTurns'),
+        requiredHoldTurns: requiredIntField(json, type, 'requiredHoldTurns'),
+        victoryPoints: requiredIntField(json, type, 'victoryPoints'),
+        goldPerTurn: requiredIntField(json, type, 'goldPerTurn'),
       ),
       'CivilizationMet' => CivilizationMetEvent(
-        playerId: _requiredString(json, type, 'playerId'),
-        metPlayerId: _requiredString(json, type, 'metPlayerId'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        metPlayerId: requiredStringField(json, type, 'metPlayerId'),
       ),
       'DiplomaticProposalSent' => DiplomaticProposalSentEvent(
-        proposalId: _requiredString(json, type, 'proposalId'),
-        fromPlayerId: _requiredString(json, type, 'fromPlayerId'),
-        toPlayerId: _requiredString(json, type, 'toPlayerId'),
-        kind: _requiredEnum(json, type, 'kind', DiplomaticProposalKind.values),
-        expiresOnTurn: _requiredInt(json, type, 'expiresOnTurn'),
+        proposalId: requiredStringField(json, type, 'proposalId'),
+        fromPlayerId: requiredStringField(json, type, 'fromPlayerId'),
+        toPlayerId: requiredStringField(json, type, 'toPlayerId'),
+        kind: requiredEnumField(
+          json,
+          type,
+          'kind',
+          DiplomaticProposalKind.values,
+        ),
+        expiresOnTurn: requiredIntField(json, type, 'expiresOnTurn'),
       ),
       'DiplomaticProposalResponded' => DiplomaticProposalRespondedEvent(
-        proposalId: _requiredString(json, type, 'proposalId'),
-        fromPlayerId: _requiredString(json, type, 'fromPlayerId'),
-        toPlayerId: _requiredString(json, type, 'toPlayerId'),
-        kind: _requiredEnum(json, type, 'kind', DiplomaticProposalKind.values),
-        accepted: _requiredBool(json, type, 'accepted'),
+        proposalId: requiredStringField(json, type, 'proposalId'),
+        fromPlayerId: requiredStringField(json, type, 'fromPlayerId'),
+        toPlayerId: requiredStringField(json, type, 'toPlayerId'),
+        kind: requiredEnumField(
+          json,
+          type,
+          'kind',
+          DiplomaticProposalKind.values,
+        ),
+        accepted: requiredBoolField(json, type, 'accepted'),
       ),
       'DiplomaticProposalExpired' => DiplomaticProposalExpiredEvent(
-        proposalId: _requiredString(json, type, 'proposalId'),
-        fromPlayerId: _requiredString(json, type, 'fromPlayerId'),
-        toPlayerId: _requiredString(json, type, 'toPlayerId'),
-        kind: _requiredEnum(json, type, 'kind', DiplomaticProposalKind.values),
+        proposalId: requiredStringField(json, type, 'proposalId'),
+        fromPlayerId: requiredStringField(json, type, 'fromPlayerId'),
+        toPlayerId: requiredStringField(json, type, 'toPlayerId'),
+        kind: requiredEnumField(
+          json,
+          type,
+          'kind',
+          DiplomaticProposalKind.values,
+        ),
       ),
       'DiplomaticRelationChanged' => DiplomaticRelationChangedEvent(
-        playerAId: _requiredString(json, type, 'playerAId'),
-        playerBId: _requiredString(json, type, 'playerBId'),
-        oldStatus: _requiredEnum(
+        playerAId: requiredStringField(json, type, 'playerAId'),
+        playerBId: requiredStringField(json, type, 'playerBId'),
+        oldStatus: requiredEnumField(
           json,
           type,
           'oldStatus',
           DiplomaticRelationStatus.values,
         ),
-        newStatus: _requiredEnum(
+        newStatus: requiredEnumField(
           json,
           type,
           'newStatus',
           DiplomaticRelationStatus.values,
         ),
-        reason: _requiredEnum(
+        reason: requiredEnumField(
           json,
           type,
           'reason',
           DiplomaticRelationChangeReason.values,
         ),
-        expiresOnTurn: _optionalInt(json, type, 'expiresOnTurn'),
+        expiresOnTurn: optionalIntField(json, type, 'expiresOnTurn'),
       ),
       'DiplomaticMessageSent' => DiplomaticMessageSentEvent(
-        messageId: _requiredString(json, type, 'messageId'),
-        fromPlayerId: _requiredString(json, type, 'fromPlayerId'),
-        toPlayerId: _requiredString(json, type, 'toPlayerId'),
-        topic: _requiredEnum(
+        messageId: requiredStringField(json, type, 'messageId'),
+        fromPlayerId: requiredStringField(json, type, 'fromPlayerId'),
+        toPlayerId: requiredStringField(json, type, 'toPlayerId'),
+        topic: requiredEnumField(
           json,
           type,
           'topic',
           DiplomaticMessageTopic.values,
         ),
-        category: _requiredEnum(
+        category: requiredEnumField(
           json,
           type,
           'category',
           DiplomaticMessageCategory.values,
         ),
-        expiresOnTurn: _requiredInt(json, type, 'expiresOnTurn'),
+        expiresOnTurn: requiredIntField(json, type, 'expiresOnTurn'),
       ),
       'DiplomaticMessageResponded' => DiplomaticMessageRespondedEvent(
-        messageId: _requiredString(json, type, 'messageId'),
-        fromPlayerId: _requiredString(json, type, 'fromPlayerId'),
-        toPlayerId: _requiredString(json, type, 'toPlayerId'),
-        topic: _requiredEnum(
+        messageId: requiredStringField(json, type, 'messageId'),
+        fromPlayerId: requiredStringField(json, type, 'fromPlayerId'),
+        toPlayerId: requiredStringField(json, type, 'toPlayerId'),
+        topic: requiredEnumField(
           json,
           type,
           'topic',
           DiplomaticMessageTopic.values,
         ),
-        response: _requiredEnum(
+        response: requiredEnumField(
           json,
           type,
           'response',
           DiplomaticMessageResponse.values,
         ),
-        relationDelta: _requiredInt(json, type, 'relationDelta'),
-        relationScoreAfter: _requiredInt(json, type, 'relationScoreAfter'),
-        promiseDueTurn: _optionalInt(json, type, 'promiseDueTurn'),
+        relationDelta: requiredIntField(json, type, 'relationDelta'),
+        relationScoreAfter: requiredIntField(json, type, 'relationScoreAfter'),
+        promiseDueTurn: optionalIntField(json, type, 'promiseDueTurn'),
       ),
       'DiplomaticScoreChanged' => DiplomaticScoreChangedEvent(
-        playerAId: _requiredString(json, type, 'playerAId'),
-        playerBId: _requiredString(json, type, 'playerBId'),
-        delta: _requiredInt(json, type, 'delta'),
-        scoreAfter: _requiredInt(json, type, 'scoreAfter'),
-        reason: _requiredEnum(
+        playerAId: requiredStringField(json, type, 'playerAId'),
+        playerBId: requiredStringField(json, type, 'playerBId'),
+        delta: requiredIntField(json, type, 'delta'),
+        scoreAfter: requiredIntField(json, type, 'scoreAfter'),
+        reason: requiredEnumField(
           json,
           type,
           'reason',
           DiplomaticScoreChangeReason.values,
         ),
-        sourceId: _optionalString(json, type, 'sourceId'),
+        sourceId: optionalStringField(json, type, 'sourceId'),
       ),
       'DiplomaticPromiseBroken' => DiplomaticPromiseBrokenEvent(
-        messageId: _requiredString(json, type, 'messageId'),
-        playerAId: _requiredString(json, type, 'playerAId'),
-        playerBId: _requiredString(json, type, 'playerBId'),
-        delta: _requiredInt(json, type, 'delta'),
-        scoreAfter: _requiredInt(json, type, 'scoreAfter'),
+        messageId: requiredStringField(json, type, 'messageId'),
+        playerAId: requiredStringField(json, type, 'playerAId'),
+        playerBId: requiredStringField(json, type, 'playerBId'),
+        delta: requiredIntField(json, type, 'delta'),
+        scoreAfter: requiredIntField(json, type, 'scoreAfter'),
       ),
       SystemEventWire.commandRejectedType => CommandRejectedEvent(
-        reason: _requiredString(json, type, 'reason'),
+        reason: requiredStringField(json, type, 'reason'),
       ),
       SystemEventWire.allPlayersSubmittedType => AllPlayersSubmittedEvent(
-        turn: _requiredInt(json, type, 'turn'),
-        playerIds: _requiredStringList(json, type, 'playerIds'),
+        turn: requiredIntField(json, type, 'turn'),
+        playerIds: requiredStringListField(json, type, 'playerIds'),
       ),
       SystemEventWire.playerTimedOutType => PlayerTimedOutEvent(
-        turn: _requiredInt(json, type, 'turn'),
-        playerId: _requiredString(json, type, 'playerId'),
+        turn: requiredIntField(json, type, 'turn'),
+        playerId: requiredStringField(json, type, 'playerId'),
       ),
       SystemEventWire.turnAutoResolvedType => TurnAutoResolvedEvent(
-        turn: _requiredInt(json, type, 'turn'),
-        playerId: _requiredString(json, type, 'playerId'),
-        unitOrderCount: _requiredInt(json, type, 'unitOrderCount'),
-        cityProductionCount: _requiredInt(json, type, 'cityProductionCount'),
-        researchSelected: _requiredBool(json, type, 'researchSelected'),
+        turn: requiredIntField(json, type, 'turn'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        unitOrderCount: requiredIntField(json, type, 'unitOrderCount'),
+        cityProductionCount: requiredIntField(
+          json,
+          type,
+          'cityProductionCount',
+        ),
+        researchSelected: requiredBoolField(json, type, 'researchSelected'),
       ),
       SystemEventWire.playerKickedType => PlayerKickedEvent(
-        turn: _requiredInt(json, type, 'turn'),
-        playerId: _requiredString(json, type, 'playerId'),
-        reason: _requiredString(json, type, 'reason'),
-        timeoutStreak: _requiredInt(json, type, 'timeoutStreak'),
+        turn: requiredIntField(json, type, 'turn'),
+        playerId: requiredStringField(json, type, 'playerId'),
+        reason: requiredStringField(json, type, 'reason'),
+        timeoutStreak: requiredIntField(json, type, 'timeoutStreak'),
       ),
       _ => throw ArgumentError('Unknown GameEvent type: $type'),
     };
-  }
-
-  static String _requiredString(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      '$type.$field',
-      'Expected a non-empty String',
-    );
-  }
-
-  static int _requiredInt(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is int) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected an int');
-  }
-
-  static int? _optionalInt(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value == null) return null;
-    if (value is int) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected an int or null');
-  }
-
-  static double _requiredDouble(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is num) return value.toDouble();
-    throw ArgumentError.value(value, '$type.$field', 'Expected a number');
-  }
-
-  static bool _requiredBool(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is bool) return value;
-    throw ArgumentError.value(value, '$type.$field', 'Expected a bool');
-  }
-
-  static List<String> _requiredStringList(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value is! List) {
-      throw ArgumentError.value(value, '$type.$field', 'Expected a list');
-    }
-    return [
-      for (final entry in value)
-        if (entry is String && entry.isNotEmpty)
-          entry
-        else
-          throw ArgumentError.value(
-            entry,
-            '$type.$field',
-            'Expected a list of non-empty strings',
-          ),
-    ];
-  }
-
-  static String? _optionalString(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-  ) {
-    final value = json[field];
-    if (value == null) return null;
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      '$type.$field',
-      'Expected a non-empty String or null',
-    );
   }
 
   static StrategicResourceDiscoveredEvent _strategicResourceDiscoveredFromJson(
     Map<String, dynamic> json,
     String type,
   ) {
-    final controlledCount = _requiredInt(json, type, 'controlledCount');
-    final rivalControlledCount = _requiredInt(
+    final controlledCount = requiredIntField(json, type, 'controlledCount');
+    final rivalControlledCount = requiredIntField(
       json,
       type,
       'rivalControlledCount',
     );
-    final unclaimedCount = _requiredInt(json, type, 'unclaimedCount');
+    final unclaimedCount = requiredIntField(json, type, 'unclaimedCount');
     final pressure =
-        _optionalEnum(
+        optionalEnumField(
           json,
           type,
           'pressure',
@@ -798,8 +731,8 @@ abstract final class GameEventSerializer {
           unclaimedCount: unclaimedCount,
         );
     return StrategicResourceDiscoveredEvent(
-      playerId: _requiredString(json, type, 'playerId'),
-      resourceType: _requiredEnum(
+      playerId: requiredStringField(json, type, 'playerId'),
+      resourceType: requiredEnumField(
         json,
         type,
         'resourceType',
@@ -809,41 +742,8 @@ abstract final class GameEventSerializer {
       rivalControlledCount: rivalControlledCount,
       unclaimedCount: unclaimedCount,
       pressure: pressure,
-      nearestUnclaimedCol: _optionalInt(json, type, 'nearestUnclaimedCol'),
-      nearestUnclaimedRow: _optionalInt(json, type, 'nearestUnclaimedRow'),
+      nearestUnclaimedCol: optionalIntField(json, type, 'nearestUnclaimedCol'),
+      nearestUnclaimedRow: optionalIntField(json, type, 'nearestUnclaimedRow'),
     );
-  }
-
-  static Map<String, dynamic> _requiredMap(Object? value, String name) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value);
-    throw ArgumentError.value(value, name, 'Expected a JSON object');
-  }
-
-  static T _requiredEnum<T extends Enum>(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-    Iterable<T> values,
-  ) {
-    final name = _requiredString(json, type, field);
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    throw ArgumentError.value(name, '$type.$field', 'Unknown value');
-  }
-
-  static T? _optionalEnum<T extends Enum>(
-    Map<String, dynamic> json,
-    String type,
-    String field,
-    Iterable<T> values,
-  ) {
-    final name = _optionalString(json, type, field);
-    if (name == null) return null;
-    for (final value in values) {
-      if (value.name == name) return value;
-    }
-    throw ArgumentError.value(name, '$type.$field', 'Unknown value');
   }
 }

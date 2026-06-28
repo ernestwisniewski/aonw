@@ -148,20 +148,14 @@ class TechnologyTreeLabels {
           _resourceName(l10n, resourceType),
         ),
       GlobalGoldMultiplier(:final multiplier) =>
-        l10n.technologyEffectGlobalGoldMultiplier(
-          percent(multiplier),
-        ),
+        l10n.technologyEffectGlobalGoldMultiplier(percent(multiplier)),
       CityDefenseBonus(:final amount) => l10n.technologyEffectCityDefenseBonus(
         amount,
       ),
       ArmyProductionMultiplier(:final multiplier) =>
-        l10n.technologyEffectArmyProductionMultiplier(
-          percent(multiplier),
-        ),
+        l10n.technologyEffectArmyProductionMultiplier(percent(multiplier)),
       ArmyStrengthMultiplier(:final multiplier) =>
-        l10n.technologyEffectArmyStrengthMultiplier(
-          percent(multiplier),
-        ),
+        l10n.technologyEffectArmyStrengthMultiplier(percent(multiplier)),
       ArmyCombatStatsBonus(:final attack, :final defense, :final hp) =>
         _armyCombatStatsBonusLabel(
           l10n,

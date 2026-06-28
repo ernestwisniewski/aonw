@@ -1,4 +1,5 @@
 import 'package:aonw_core/ai/ai_player.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 enum PlayerTurnState { active, finished }
 
@@ -68,17 +69,17 @@ class Player {
   factory Player.fromJson(Map<String, dynamic> json) {
     final aiJson = json['ai'];
     return Player(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      colorValue: (json['colorValue'] as num).toInt(),
+      id: requiredStringValue(json['id'], 'Player.id'),
+      name: requiredStringValue(json['name'], 'Player.name'),
+      colorValue: requiredIntValue(json['colorValue'], 'Player.colorValue'),
       country:
-          _optionalEnumByName(
+          optionalEnumByName(
             json['country'] ?? json['countryId'],
             PlayerCountry.values,
             'Player.country',
           ) ??
           PlayerCountry.poland,
-      kind: _enumByName(
+      kind: enumByName(
         json['kind'] ??
             (aiJson == null ? PlayerKind.human.name : PlayerKind.ai.name),
         PlayerKind.values,
@@ -147,27 +148,4 @@ class Player {
   }
 
   static const Object _unset = Object();
-
-  static T _enumByName<T extends Enum>(
-    Object? value,
-    Iterable<T> values,
-    String field,
-  ) {
-    if (value is! String || value.isEmpty) {
-      throw ArgumentError.value(value, field, 'Expected a non-empty String');
-    }
-    for (final enumValue in values) {
-      if (enumValue.name == value) return enumValue;
-    }
-    throw ArgumentError.value(value, field, 'Unknown value');
-  }
-
-  static T? _optionalEnumByName<T extends Enum>(
-    Object? value,
-    Iterable<T> values,
-    String field,
-  ) {
-    if (value == null) return null;
-    return _enumByName(value, values, field);
-  }
 }

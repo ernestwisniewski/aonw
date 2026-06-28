@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/combat/city_conquest_action.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 final class IntendedAttack {
   const IntendedAttack({
@@ -11,12 +12,13 @@ final class IntendedAttack {
   });
 
   factory IntendedAttack.fromJson(Map<String, dynamic> json) {
+    final reader = WireJson(json, 'IntendedAttack');
     return IntendedAttack(
-      attackerUnitId: _requiredString(json, 'attackerUnitId'),
-      defenderCol: _requiredInt(json, 'defenderCol'),
-      defenderRow: _requiredInt(json, 'defenderRow'),
-      declaredAtTick: _requiredInt(json, 'declaredAtTick'),
-      declaringPlayerId: _requiredString(json, 'declaringPlayerId'),
+      attackerUnitId: reader.requiredString('attackerUnitId'),
+      defenderCol: reader.requiredInt('defenderCol'),
+      defenderRow: reader.requiredInt('defenderRow'),
+      declaredAtTick: reader.requiredInt('declaredAtTick'),
+      declaringPlayerId: reader.requiredString('declaringPlayerId'),
       cityConquestAction: _cityConquestAction(json['cityConquestAction']),
     );
   }
@@ -59,37 +61,12 @@ final class IntendedAttack {
     cityConquestAction,
   );
 
-  static String _requiredString(Map<String, dynamic> json, String field) {
-    final value = json[field];
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      'IntendedAttack.$field',
-      'Expected a non-empty String',
-    );
-  }
-
-  static int _requiredInt(Map<String, dynamic> json, String field) {
-    final value = json[field];
-    if (value is int) return value;
-    throw ArgumentError.value(
-      value,
-      'IntendedAttack.$field',
-      'Expected an int',
-    );
-  }
-
   static CityConquestAction _cityConquestAction(Object? value) {
-    if (value == null) return CityConquestAction.capture;
-    if (value is String && value.isNotEmpty) {
-      for (final action in CityConquestAction.values) {
-        if (action.name == value) return action;
-      }
-    }
-    throw ArgumentError.value(
-      value,
-      'IntendedAttack.cityConquestAction',
-      'Expected a known CityConquestAction name',
-    );
+    return optionalEnumByName(
+          value,
+          CityConquestAction.values,
+          'IntendedAttack.cityConquestAction',
+        ) ??
+        CityConquestAction.capture;
   }
 }
