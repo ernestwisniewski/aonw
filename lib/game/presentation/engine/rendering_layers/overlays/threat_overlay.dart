@@ -1,10 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
-import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flame/components.dart';
@@ -123,20 +121,10 @@ class ThreatOverlay extends Component {
   }
 
   List<Offset> _hexCorners(CityHex hex) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.topFaceCornerOffsets(
       col: hex.col,
       row: hex.row,
-      hexRadius: hexRadius,
+      radiusScale: 0.94,
     );
-    final topFaceCenter = Vector2(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
-    final corners = HexGeometry.topFaceCorners(
-      center: topFaceCenter,
-      radius: hexRadius * 0.94,
-    );
-    return [for (final corner in corners) Offset(corner.x, corner.y)];
   }
 }

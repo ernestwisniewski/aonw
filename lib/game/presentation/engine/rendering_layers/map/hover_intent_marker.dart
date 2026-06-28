@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
-import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -198,34 +196,15 @@ class HoverIntentMarker extends Component {
   }
 
   Offset _hexCenter(CityHex hex) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
-      col: hex.col,
-      row: hex.row,
-      hexRadius: hexRadius,
-    );
-    return Offset(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
+    return HexGeometry.topFaceCentroid(col: hex.col, row: hex.row);
   }
 
   List<Offset> _hexCorners(CityHex hex) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.topFaceCornerOffsets(
       col: hex.col,
       row: hex.row,
-      hexRadius: hexRadius,
+      radiusScale: 0.9,
     );
-    final topFaceCenter = Vector2(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
-    final corners = HexGeometry.topFaceCorners(
-      center: topFaceCenter,
-      radius: hexRadius * 0.9,
-    );
-    return [for (final corner in corners) Offset(corner.x, corner.y)];
   }
 }
 

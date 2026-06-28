@@ -53,6 +53,64 @@ void main() {
     });
   });
 
+  group('HexGeometry overlay helpers', () {
+    test('builds top-face corner offsets around the lifted center', () {
+      const radius = 40.0;
+      final center = HexGeometry.topFaceCenter(
+        col: 1,
+        row: 2,
+        hexRadius: radius,
+      );
+      final corners = HexGeometry.topFaceCornerOffsets(
+        col: 1,
+        row: 2,
+        hexRadius: radius,
+        radiusScale: 0.5,
+      );
+
+      expect(corners, hasLength(6));
+      expect(corners.first.dx, closeTo(center.x + radius * 0.5, 0.01));
+      expect(corners.first.dy, closeTo(center.y, 0.01));
+    });
+
+    test('projects top-face centroid with perspective', () {
+      const radius = 40.0;
+      const perspectiveY = 0.82;
+      final center = HexGeometry.topFaceCenter(
+        col: 2,
+        row: 3,
+        hexRadius: radius,
+      );
+      final centroid = HexGeometry.topFaceCentroid(
+        col: 2,
+        row: 3,
+        hexRadius: radius,
+        perspectiveY: perspectiveY,
+      );
+
+      expect(centroid.dx, closeTo(center.x, 0.01));
+      expect(centroid.dy, closeTo(center.y * perspectiveY, 0.01));
+    });
+
+    test('builds full tile overlay path around tile center', () {
+      const radius = 10.0;
+      final path = HexGeometry.tileOverlayPath(
+        col: 0,
+        row: 0,
+        hexRadius: radius,
+      );
+      final bounds = path.getBounds();
+
+      expect(bounds.left, closeTo(0, 0.01));
+      expect(bounds.right, closeTo(radius * 2, 0.01));
+      expect(bounds.top, closeTo(0, 0.01));
+      expect(
+        bounds.bottom,
+        closeTo(radius * HexTileGeometryLayout.sqrt3, 0.01),
+      );
+    });
+  });
+
   group('HexGeometry.tileAt', () {
     const r = 60.0;
 

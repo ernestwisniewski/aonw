@@ -165,20 +165,11 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
     required int row,
     required double hexRadius,
   }) {
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.tileOverlayPath(
       col: col,
       row: row,
       hexRadius: hexRadius,
     );
-    final corners = HexGeometry.topFaceCorners(
-      center: center,
-      radius: hexRadius,
-    );
-    final path = Path()..moveTo(corners.first.x, corners.first.y);
-    for (final corner in corners.skip(1)) {
-      path.lineTo(corner.x, corner.y);
-    }
-    return path..close();
   }
 
   static int _alphaOf(Color color) => (color.toARGB32() >> 24) & 0xFF;

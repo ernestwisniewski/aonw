@@ -398,20 +398,11 @@ class MapImageLayer extends PositionComponent {
   }
 
   Path _sliceClipPath(int col, int row) {
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.tileOverlayPath(
       col: col,
       row: row,
       hexRadius: config.hexRadius,
     );
-    final corners = HexGeometry.topFaceCorners(
-      center: center,
-      radius: config.hexRadius,
-    );
-    final path = Path()..moveTo(corners.first.x, corners.first.y);
-    for (final corner in corners.skip(1)) {
-      path.lineTo(corner.x, corner.y);
-    }
-    return path..close();
   }
 
   static Rect _imageRect(ui.Image image) =>

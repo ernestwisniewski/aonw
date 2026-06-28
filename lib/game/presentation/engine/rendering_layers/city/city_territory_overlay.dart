@@ -1,11 +1,9 @@
 import 'dart:ui';
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
-import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flame/components.dart';
@@ -623,21 +621,7 @@ class CityTerritoryOverlay extends Component {
   }
 
   List<Offset> _hexCorners(CityHex hex) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
-      col: hex.col,
-      row: hex.row,
-      hexRadius: hexRadius,
-    );
-    final topFaceCenter = Vector2(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
-    final corners = HexGeometry.topFaceCorners(
-      center: topFaceCenter,
-      radius: hexRadius,
-    );
-    return [for (final corner in corners) Offset(corner.x, corner.y)];
+    return HexGeometry.topFaceCornerOffsets(col: hex.col, row: hex.row);
   }
 
   (int, int) _cornerIndexesFor(CityHexEdge side) {
@@ -658,14 +642,7 @@ class CityTerritoryOverlay extends Component {
   }
 
   Offset _hexCenter(CityHex hex) {
-    final corners = _hexCorners(hex);
-    var dx = 0.0;
-    var dy = 0.0;
-    for (final corner in corners) {
-      dx += corner.dx;
-      dy += corner.dy;
-    }
-    return Offset(dx / corners.length, dy / corners.length);
+    return HexGeometry.topFaceCentroid(col: hex.col, row: hex.row);
   }
 
   int _emphasizedAlpha(int baseAlpha, int zoomedOutAlpha) {
