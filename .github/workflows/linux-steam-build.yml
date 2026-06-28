@@ -1,0 +1,100 @@
+name: Linux Steam Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_name:
+        description: Optional Flutter build name override, for example 0.1.0
+        required: false
+        type: string
+      build_number:
+        description: Optional Flutter build number override, for example 57
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  AONW_RELEASE_API_BASE_URL: https://api.aonw.net
+
+jobs:
+  build-linux:
+    name: Build Linux release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            libgtk-3-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgstreamer1.0-dev \
+            libsecret-1-dev \
+            libwebkit2gtk-4.1-dev \
+            liblzma-dev \
+            ninja-build \
+            pkg-config \
+            unzip \
+            zip
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+          cache: true
+
+      - name: Prepare Flutter
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+
+      - name: Build Linux release
+        run: |
+          echo "Building Linux release with AONW_API_BASE_URL=$AONW_RELEASE_API_BASE_URL"
+
+          flutter_args=(
+            build
+            linux
+            --release
+            --no-pub
+            "--dart-define=AONW_API_BASE_URL=$AONW_RELEASE_API_BASE_URL"
+          )
+
+          if [ -n "${{ inputs.build_name }}" ]; then
+            flutter_args+=("--build-name=${{ inputs.build_name }}")
+          fi
+
+          if [ -n "${{ inputs.build_number }}" ]; then
+            flutter_args+=("--build-number=${{ inputs.build_number }}")
+          fi
+
+          flutter "${flutter_args[@]}"
+
+      - name: Package Steam artifact
+        run: |
+          release_path="build/linux/x64/release/bundle"
+          artifact_root="dist/steam-linux"
+          zip_path="dist/aonw-linux-steam.zip"
+
+          rm -rf dist
+          mkdir -p "$artifact_root"
+          cp -a "$release_path/." "$artifact_root/"
+          grep -R -a -F "$AONW_RELEASE_API_BASE_URL" "$artifact_root" >/dev/null
+          (cd "$artifact_root" && zip -qry "../aonw-linux-steam.zip" .)
+          unzip -tq "$zip_path"
+
+      - name: Upload Linux Steam artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aonw-linux-steam-${{ github.run_number }}
+          path: dist/aonw-linux-steam.zip
+          retention-days: 30
