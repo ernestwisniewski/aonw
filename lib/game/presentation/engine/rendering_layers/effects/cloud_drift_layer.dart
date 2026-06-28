@@ -399,22 +399,12 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   }
 
   Path _hexPath(int col, int row) {
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.tileOverlayPath(
       col: col,
       row: row,
       hexRadius: MapConfig.defaultHexRadius,
+      perspectiveY: HexGrid.perspectiveY,
     );
-    final corners = HexGeometry.topFaceCorners(
-      center: center,
-      radius: MapConfig.defaultHexRadius,
-    );
-    final firstCorner = _projectGridPoint(corners.first);
-    final path = Path()..moveTo(firstCorner.x, firstCorner.y);
-    for (final corner in corners.skip(1)) {
-      final worldCorner = _projectGridPoint(corner);
-      path.lineTo(worldCorner.x, worldCorner.y);
-    }
-    return path..close();
   }
 
   Vector2 _projectGridPoint(Vector2 point) {

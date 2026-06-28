@@ -266,20 +266,11 @@ class FogOfWarOverlay extends PositionComponent {
   }
 
   Path _hexPath(int col, int row) {
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.tileOverlayPath(
       col: col,
       row: row,
       hexRadius: hexRadius,
     );
-    final corners = HexGeometry.topFaceCorners(
-      center: center,
-      radius: hexRadius,
-    );
-    final path = Path()..moveTo(corners.first.x, corners.first.y);
-    for (final corner in corners.skip(1)) {
-      path.lineTo(corner.x, corner.y);
-    }
-    return path..close();
   }
 
   void _drawFogTiles(

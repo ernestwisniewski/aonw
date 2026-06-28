@@ -2,12 +2,10 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
-import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flame/components.dart';
@@ -196,39 +194,22 @@ class CityFoundingPreview extends Component {
   }
 
   Path _hexPath(CityHex hex, {double radiusScale = _overlayRadiusScale}) {
-    final corners = _hexCorners(hex, radiusScale: radiusScale);
-    final path = Path()..moveTo(corners.first.dx, corners.first.dy);
-    for (var i = 1; i < corners.length; i++) {
-      path.lineTo(corners[i].dx, corners[i].dy);
-    }
-    return path..close();
-  }
-
-  List<Offset> _hexCorners(CityHex hex, {required double radiusScale}) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
+    final corners = HexGeometry.topFaceCornerOffsets(
       col: hex.col,
       row: hex.row,
-      hexRadius: hexRadius,
+      radiusScale: radiusScale,
+      perspectiveY: HexGrid.perspectiveY,
     );
-    final topFaceCenter = Vector2(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
-    final corners = HexGeometry.topFaceCorners(
-      center: topFaceCenter,
-      radius: hexRadius * radiusScale,
-    );
-    return [
-      for (final corner in corners)
-        Offset(corner.x, corner.y * HexGrid.perspectiveY),
-    ];
+    return Path()..addPolygon(corners, true);
   }
 
   Offset _hexCenter(CityHex hex) {
-    final corners = _hexCorners(hex, radiusScale: _overlayRadiusScale);
-    final sum = corners.fold(Offset.zero, (total, point) => total + point);
-    return Offset(sum.dx / corners.length, sum.dy / corners.length);
+    return HexGeometry.topFaceCentroid(
+      col: hex.col,
+      row: hex.row,
+      radiusScale: _overlayRadiusScale,
+      perspectiveY: HexGrid.perspectiveY,
+    );
   }
 
   void _drawDashedPath(Canvas canvas, Path path, Paint paint) {

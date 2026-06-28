@@ -4,12 +4,10 @@ import 'dart:math' as math;
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
-import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -352,27 +350,11 @@ class CombatHexAlertOverlay extends Component {
   static const double _pulsePeriod = 0.92;
 
   Path _hexPath(CityHex hex, {double radiusScale = 0.98}) {
-    final corners = _hexCorners(hex, radiusScale: radiusScale);
-    return Path()
-      ..moveTo(corners.first.dx, corners.first.dy)
-      ..addPolygon(corners, true);
-  }
-
-  List<Offset> _hexCorners(CityHex hex, {required double radiusScale}) {
-    final hexRadius = MapConfig.defaultConfig.hexRadius;
-    final center = HexGeometry.tilePosition(
+    final corners = HexGeometry.topFaceCornerOffsets(
       col: hex.col,
       row: hex.row,
-      hexRadius: hexRadius,
+      radiusScale: radiusScale,
     );
-    final topFaceCenter = Vector2(
-      center.x,
-      center.y + HexTileMetrics.topCenterAnchorOffsetY(hexRadius),
-    );
-    final corners = HexGeometry.topFaceCorners(
-      center: topFaceCenter,
-      radius: hexRadius * radiusScale,
-    );
-    return [for (final corner in corners) Offset(corner.x, corner.y)];
+    return Path()..addPolygon(corners, true);
   }
 }

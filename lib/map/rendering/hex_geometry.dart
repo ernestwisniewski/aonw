@@ -1,6 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:aonw/map/domain/hex_grid_topology.dart';
+import 'package:aonw/map/domain/map_config.dart';
+import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:flame/components.dart';
 
 /// Pure geometric helpers for flat-top hexagons.
@@ -20,6 +23,84 @@ abstract final class HexGeometry {
         center.y + radius * math.sin(angle),
       );
     });
+  }
+
+  /// Returns the lifted top-face center used by board overlays.
+  static Vector2 topFaceCenter({
+    required int col,
+    required int row,
+    double? hexRadius,
+  }) {
+    final radius = hexRadius ?? MapConfig.defaultConfig.hexRadius;
+    final center = tilePosition(col: col, row: row, hexRadius: radius);
+    return Vector2(
+      center.x,
+      center.y + HexTileMetrics.topCenterAnchorOffsetY(radius),
+    );
+  }
+
+  /// Returns top-face corner offsets for a board tile.
+  static List<Offset> topFaceCornerOffsets({
+    required int col,
+    required int row,
+    double radiusScale = 1.0,
+    double? hexRadius,
+    double perspectiveY = 1.0,
+  }) {
+    final radius = hexRadius ?? MapConfig.defaultConfig.hexRadius;
+    final corners = topFaceCorners(
+      center: topFaceCenter(col: col, row: row, hexRadius: radius),
+      radius: radius * radiusScale,
+    );
+    return [
+      for (final corner in corners) Offset(corner.x, corner.y * perspectiveY),
+    ];
+  }
+
+  /// Returns the centroid of the rendered top-face corners for a board tile.
+  static Offset topFaceCentroid({
+    required int col,
+    required int row,
+    double radiusScale = 1.0,
+    double? hexRadius,
+    double perspectiveY = 1.0,
+  }) {
+    final corners = topFaceCornerOffsets(
+      col: col,
+      row: row,
+      radiusScale: radiusScale,
+      hexRadius: hexRadius,
+      perspectiveY: perspectiveY,
+    );
+    final sum = corners.fold(Offset.zero, (total, point) => total + point);
+    return Offset(sum.dx / corners.length, sum.dy / corners.length);
+  }
+
+  /// Returns a full-tile hex path centered on the board tile position.
+  static Path tileOverlayPath({
+    required int col,
+    required int row,
+    double? hexRadius,
+    double radiusScale = 1.0,
+    double perspectiveY = 1.0,
+  }) {
+    final radius = hexRadius ?? MapConfig.defaultConfig.hexRadius;
+    final center = tilePosition(col: col, row: row, hexRadius: radius);
+    final corners = topFaceCorners(
+      center: center,
+      radius: radius * radiusScale,
+    );
+    return _pathFromOffsets([
+      for (final corner in corners) Offset(corner.x, corner.y * perspectiveY),
+    ]);
+  }
+
+  static Path _pathFromOffsets(List<Offset> corners) {
+    final path = Path()..moveTo(corners.first.dx, corners.first.dy);
+    for (final corner in corners.skip(1)) {
+      path.lineTo(corner.dx, corner.dy);
+    }
+    return path..close();
   }
 
   /// Ray-casting point-in-polygon test.
