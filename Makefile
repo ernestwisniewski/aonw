@@ -97,6 +97,9 @@ STEAMCMD ?= steamcmd
 STEAM_BUILD_DESC ?=
 ITCH_TARGET ?=
 ITCH_DIST_DIR ?= $(STEAM_DIST_DIR)
+ITCH_BUILD_DIR ?= build/itch
+ITCH_MACOS_DIR ?= $(ITCH_BUILD_DIR)/macos
+ITCH_WINDOWS_DIR ?= $(ITCH_BUILD_DIR)/windows
 ITCH_MACOS_ZIP ?= $(ITCH_DIST_DIR)/aonw-macos-itch.zip
 ITCH_WINDOWS_ZIP ?= $(ITCH_DIST_DIR)/aonw-windows-itch.zip
 ITCH_ANDROID_APK ?= $(ITCH_DIST_DIR)/aonw-android-itch.apk
@@ -856,32 +859,46 @@ itch-prepare: steam itch-desktop android-build-itch
 	@ls -lh "$(ITCH_MACOS_ZIP)" "$(ITCH_WINDOWS_ZIP)" "$(ITCH_ANDROID_APK)"
 
 itch-desktop:
+	@command -v butler >/dev/null || { echo "butler is required for itch-desktop validation."; exit 1; }
+	@command -v zip >/dev/null || { echo "zip is required for itch-desktop."; exit 1; }
 	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP). Run make steam first."; exit 1; }
 	@test -f "$(STEAM_WINDOWS_ZIP)" || { echo "Missing Steam Windows ZIP: $(STEAM_WINDOWS_ZIP). Run make steam first."; exit 1; }
-	@mkdir -p "$(ITCH_DIST_DIR)"
-	@cp -p "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_ZIP)"
-	@cp -p "$(STEAM_WINDOWS_ZIP)" "$(ITCH_WINDOWS_ZIP)"
+	@rm -rf "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
+	@mkdir -p "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" "$(ITCH_DIST_DIR)"
+	@ditto -x -k "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_DIR)"
+	@unzip -q "$(STEAM_WINDOWS_ZIP)" -d "$(ITCH_WINDOWS_DIR)"
+	@test -d "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)" || { echo "itch macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
+	@test -f "$(ITCH_WINDOWS_DIR)/aonw.exe" || { echo "itch Windows folder must contain aonw.exe."; exit 1; }
+	@printf '%s\n' '[[actions]]' 'name = "play"' 'path = "$(STEAM_MACOS_APP_NAME)"' > "$(ITCH_MACOS_DIR)/.itch.toml"
+	@printf '%s\n' '[[actions]]' 'name = "play"' 'path = "aonw.exe"' > "$(ITCH_WINDOWS_DIR)/.itch.toml"
+	@butler validate --platform osx "$(ITCH_MACOS_DIR)"
+	@butler validate --platform windows "$(ITCH_WINDOWS_DIR)"
+	@rm -f "$(ITCH_MACOS_ZIP)" "$(ITCH_WINDOWS_ZIP)"
+	@repo_root="$$(pwd)"; macos_zip="$$repo_root/$(ITCH_MACOS_ZIP)"; windows_zip="$$repo_root/$(ITCH_WINDOWS_ZIP)"; \
+		cd "$$repo_root/$(ITCH_MACOS_DIR)" && ditto -c -k --norsrc --noextattr --noqtn --noacl . "$$macos_zip"; \
+		cd "$$repo_root/$(ITCH_WINDOWS_DIR)" && zip -qry "$$windows_zip" .
 	@unzip -tq "$(ITCH_MACOS_ZIP)" >/dev/null
 	@unzip -tq "$(ITCH_WINDOWS_ZIP)" >/dev/null
 	@if { unzip -Z1 "$(ITCH_MACOS_ZIP)"; unzip -Z1 "$(ITCH_WINDOWS_ZIP)"; } | rg -i 'steam' >/dev/null; then \
 		echo "itch desktop archives contain steam-named paths."; \
 		exit 1; \
 	fi
+	@echo "itch desktop folders ready: $(ITCH_MACOS_DIR), $(ITCH_WINDOWS_DIR)"
 	@echo "itch desktop ZIPs ready: $(ITCH_MACOS_ZIP), $(ITCH_WINDOWS_ZIP)"
 
 itch-upload:
 	@command -v butler >/dev/null || { echo "butler is required for itch-upload."; exit 1; }
 	@test -n "$(ITCH_TARGET)" || { echo "ITCH_TARGET is required, e.g. ITCH_TARGET=user/game."; exit 1; }
-	@test -f "$(ITCH_MACOS_ZIP)" || { echo "Missing itch macOS ZIP: $(ITCH_MACOS_ZIP). Run make itch-prepare first."; exit 1; }
-	@test -f "$(ITCH_WINDOWS_ZIP)" || { echo "Missing itch Windows ZIP: $(ITCH_WINDOWS_ZIP). Run make itch-prepare first."; exit 1; }
+	@test -d "$(ITCH_MACOS_DIR)" || { echo "Missing itch macOS folder: $(ITCH_MACOS_DIR). Run make itch-prepare first."; exit 1; }
+	@test -d "$(ITCH_WINDOWS_DIR)" || { echo "Missing itch Windows folder: $(ITCH_WINDOWS_DIR). Run make itch-prepare first."; exit 1; }
 	@test -f "$(ITCH_ANDROID_APK)" || { echo "Missing itch Android APK: $(ITCH_ANDROID_APK). Run make android-build-itch first."; exit 1; }
 	@set -e; \
 	version="$(ITCH_USER_VERSION)"; \
 	test -n "$$version" || { echo "ITCH_USER_VERSION could not be resolved."; exit 1; }; \
 	echo "Uploading macOS build to itch: $(ITCH_TARGET):$(ITCH_MACOS_CHANNEL) ($$version)..."; \
-	butler push "$(ITCH_MACOS_ZIP)" "$(ITCH_TARGET):$(ITCH_MACOS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	butler push "$(ITCH_MACOS_DIR)" "$(ITCH_TARGET):$(ITCH_MACOS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "Uploading Windows build to itch: $(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL) ($$version)..."; \
-	butler push "$(ITCH_WINDOWS_ZIP)" "$(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	butler push "$(ITCH_WINDOWS_DIR)" "$(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "Uploading Android build to itch: $(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL) ($$version)..."; \
 	butler push "$(ITCH_ANDROID_APK)" "$(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "itch.io uploads finished."

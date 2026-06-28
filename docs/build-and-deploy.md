@@ -202,10 +202,13 @@ itch.io packaging and upload:
 make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
 ```
 
-This reuses the Steam desktop ZIP build flow, copies neutral itch archives to
-`dist/aonw-macos-itch.zip` and `dist/aonw-windows-itch.zip`, builds
-`dist/aonw-android-itch.apk`, and pushes them to the `macos`, `windows`, and
-`android` itch channels. Override channels with `ITCH_MACOS_CHANNEL`,
+This reuses the Steam desktop build flow, expands neutral itch desktop folders
+under `build/itch/macos` and `build/itch/windows`, adds `.itch.toml` launch
+manifests for the itch app, validates them with `butler validate`, writes manual
+upload archives to `dist/aonw-macos-itch.zip` and
+`dist/aonw-windows-itch.zip`, builds `dist/aonw-android-itch.apk`, and pushes
+the desktop folders plus Android APK to the `macos`, `windows`, and `android`
+itch channels. Override channels with `ITCH_MACOS_CHANNEL`,
 `ITCH_WINDOWS_CHANNEL`, and `ITCH_ANDROID_CHANNEL`.
 
 ## Backups
