@@ -59,10 +59,7 @@ GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
   String? viewerPlayerId,
 }) {
   return switch (event) {
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
-      _cityTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId) ??
-          _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId) ??
-          _unitTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId),
+    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) ||
     UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) =>
       _cityTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId) ??
           _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId) ??
