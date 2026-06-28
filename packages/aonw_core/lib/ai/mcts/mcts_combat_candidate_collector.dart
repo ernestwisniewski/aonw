@@ -57,7 +57,7 @@ final class MctsCombatCandidateCollector {
 
     final units = [...view.ownUnits]..sort((a, b) => a.id.compareTo(b.id));
     for (final unit in units) {
-      if (!_isReadyUnit(unit)) continue;
+      if (!unit.isReadyToAct) continue;
       final stats = UnitCombatStats.derive(unit, ruleset: view.ruleset.combat);
       if (stats.attack <= 0) continue;
       final origin = HexCoordinate(col: unit.col, row: unit.row);
@@ -115,11 +115,5 @@ final class MctsCombatCandidateCollector {
       if (row != 0) return row;
       return a.id.compareTo(b.id);
     });
-  }
-
-  static bool _isReadyUnit(GameUnit unit) {
-    return !unit.isWorking &&
-        unit.movementPoints > 0 &&
-        unit.queuedPath == null;
   }
 }

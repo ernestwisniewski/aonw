@@ -13,7 +13,6 @@ import 'package:aonw_core/ai/mcts/mcts_worker_candidate_collector.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 abstract interface class MctsActionGenerator {
   List<MctsAction> candidatesFor(SimulatedState state, AiContext context);
@@ -153,7 +152,7 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
     final units = [...view.ownUnits]..sort((a, b) => a.id.compareTo(b.id));
     for (final unit in units) {
-      if (!_isReadyUnit(unit) || unit.isFortified) continue;
+      if (!unit.isReadyToAct || unit.isFortified) continue;
       if (unit.isWorker || CityFoundingRules.canFoundCityWith(unit)) continue;
       final stats = UnitCombatStats.derive(unit, ruleset: view.ruleset.combat);
       if (stats.attack <= 0 && stats.defense <= 0) continue;
@@ -198,12 +197,6 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
   bool _isFull(List<MctsAction> candidates) =>
       candidates.length >= candidateLimit;
-
-  static bool _isReadyUnit(GameUnit unit) {
-    return !unit.isWorking &&
-        unit.movementPoints > 0 &&
-        unit.queuedPath == null;
-  }
 
   static bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;

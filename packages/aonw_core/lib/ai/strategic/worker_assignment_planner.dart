@@ -95,12 +95,7 @@ class WorkerAssignmentPlanner {
   List<GameUnit> _eligibleWorkers(GameView view) {
     return [
       for (final unit in view.ownUnits)
-        if (unit.isWorker &&
-            !unit.isWorking &&
-            unit.workerAssignment == null &&
-            unit.movementPoints > 0 &&
-            unit.queuedPath == null)
-          unit,
+        if (unit.isWorker && unit.isReadyToAct) unit,
     ]..sort((a, b) => a.id.compareTo(b.id));
   }
 
