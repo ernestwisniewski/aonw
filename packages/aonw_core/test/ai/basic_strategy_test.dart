@@ -6233,89 +6233,87 @@ void main() {
       );
     });
 
-    test(
-      'uses a calm assigned garrison for pressure instead of burning its turn',
-      () {
-        final mapData = _combatPressureMap();
-        final state = PersistentGameState(
-          units: [
-            _unit(
-              id: 'tank_1',
-              ownerPlayerId: 'player_1',
-              type: GameUnitType.tank,
-              col: 0,
-              row: 0,
-            ),
-          ],
-          cities: const [
-            GameCity(
-              id: 'city_1',
-              ownerPlayerId: 'player_1',
-              name: 'Capital',
-              center: CityHex(col: 0, row: 0),
-            ),
-            GameCity(
-              id: 'enemy_city',
-              ownerPlayerId: 'player_2',
-              name: 'Enemy',
-              center: CityHex(col: 4, row: 0),
-            ),
-          ],
-          research: ResearchState(
-            players: {
-              'player_1': PlayerResearchState(
-                activeTechnologyId: TechnologyId.agriculture,
-              ),
-            },
+    test('keeps a calm assigned garrison reserved from pressure', () {
+      final mapData = _combatPressureMap();
+      final state = PersistentGameState(
+        units: [
+          _unit(
+            id: 'tank_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.tank,
+            col: 0,
+            row: 0,
           ),
-          fogOfWar: FogOfWarState(
-            players: {
-              'player_1': PlayerFogOfWar(
-                playerId: 'player_1',
-                visibleHexes: _allHexesIn(mapData),
-              ),
-            },
+        ],
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Capital',
+            center: CityHex(col: 0, row: 0),
           ),
-        );
-        final view = GameView.fromPersistentState(
-          state,
-          forPlayerId: 'player_1',
-          turn: 80,
-          mapData: mapData,
-          ruleset: GameRuleset.defaults,
-          pressureTargetPlayerIds: const ['player_2'],
-        );
-        final context = AiContext(
-          ruleset: GameRuleset.defaults,
-          mapData: mapData,
-          turn: 80,
-          rng: AiRng.fromTurn(turn: 80, playerId: 'player_1', baseSeed: 1001),
-          strategicPlan: StrategicPlan(
-            computedAtTurn: 80,
-            mode: StrategicMode.military,
-            expectations: _testExpectations,
-            defenses: {
-              'city_1': StrategicDefenseAssignment(
-                cityId: 'city_1',
-                cityCenter: const CityHex(col: 0, row: 0),
-                threatLevel: 0,
-                assignedUnitIds: const ['tank_1'],
-                primaryThreatPlayerId: '',
-              ),
-            },
+          GameCity(
+            id: 'enemy_city',
+            ownerPlayerId: 'player_2',
+            name: 'Enemy',
+            center: CityHex(col: 4, row: 0),
           ),
-        );
+        ],
+        research: ResearchState(
+          players: {
+            'player_1': PlayerResearchState(
+              activeTechnologyId: TechnologyId.agriculture,
+            ),
+          },
+        ),
+        fogOfWar: FogOfWarState(
+          players: {
+            'player_1': PlayerFogOfWar(
+              playerId: 'player_1',
+              visibleHexes: _allHexesIn(mapData),
+            ),
+          },
+        ),
+      );
+      final view = GameView.fromPersistentState(
+        state,
+        forPlayerId: 'player_1',
+        turn: 80,
+        mapData: mapData,
+        ruleset: GameRuleset.defaults,
+        pressureTargetPlayerIds: const ['player_2'],
+      );
+      final context = AiContext(
+        ruleset: GameRuleset.defaults,
+        mapData: mapData,
+        turn: 80,
+        rng: AiRng.fromTurn(turn: 80, playerId: 'player_1', baseSeed: 1001),
+        strategicPlan: StrategicPlan(
+          computedAtTurn: 80,
+          mode: StrategicMode.military,
+          expectations: _testExpectations,
+          defenses: {
+            'city_1': StrategicDefenseAssignment(
+              cityId: 'city_1',
+              cityCenter: const CityHex(col: 0, row: 0),
+              threatLevel: 0,
+              assignedUnitIds: const ['tank_1'],
+              primaryThreatPlayerId: '',
+            ),
+          },
+        ),
+      );
 
-        final plan = const BasicStrategy().plan(view, context);
+      final plan = const BasicStrategy().plan(view, context);
 
-        expect(
-          plan.commands.whereType<MoveUnitCommand>().where(
-            (command) => command.unitId == 'tank_1',
-          ),
-          isNotEmpty,
-        );
-      },
-    );
+      expect(
+        plan.commands.whereType<MoveUnitCommand>().where(
+          (command) => command.unitId == 'tank_1',
+        ),
+        isEmpty,
+      );
+      expect(plan.commands, contains(const FortifyUnitCommand('tank_1')));
+    });
 
     test('fortifies assigned garrison in a threatened defense area', () {
       final mapData = _combatPressureMap();

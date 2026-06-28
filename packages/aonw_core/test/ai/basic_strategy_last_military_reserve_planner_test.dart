@@ -45,6 +45,57 @@ void main() {
 
       expect(commands, [const FortifyUnitCommand('warrior_1')]);
     });
+
+    test(
+      'fortifies one ready defender for each assigned city when available',
+      () {
+        final mapData = _map(cols: 5, rows: 1);
+        const satellite = GameCity(
+          id: 'satellite',
+          ownerPlayerId: 'player_1',
+          name: 'Satellite',
+          center: CityHex(col: 4, row: 0),
+        );
+        final view = _view(
+          mapData: mapData,
+          units: [_warrior(col: 0, row: 0), _warrior2(col: 4, row: 0)],
+          cities: const [_capital, satellite],
+        );
+
+        final commands = const BasicStrategyLastMilitaryReservePlanner().plan(
+          view,
+          _context(
+            view,
+            defenses: {
+              'capital': StrategicDefenseAssignment(
+                cityId: 'capital',
+                cityCenter: const CityHex(col: 0, row: 0),
+                threatLevel: 0,
+                primaryThreatPlayerId: '',
+                assignedUnitIds: [],
+              ),
+              'satellite': StrategicDefenseAssignment(
+                cityId: 'satellite',
+                cityCenter: const CityHex(col: 4, row: 0),
+                threatLevel: 0,
+                primaryThreatPlayerId: '',
+                assignedUnitIds: [],
+              ),
+            },
+          ),
+          <String>{},
+          <HexCoordinate>{},
+        );
+
+        expect(
+          commands,
+          containsAll(const [
+            FortifyUnitCommand('warrior_1'),
+            FortifyUnitCommand('warrior_2'),
+          ]),
+        );
+      },
+    );
   });
 }
 
@@ -65,11 +116,25 @@ GameUnit _warrior({required int col, required int row}) {
   );
 }
 
-GameView _view({required MapData mapData, required List<GameUnit> units}) {
+GameUnit _warrior2({required int col, required int row}) {
+  return GameUnit.produced(
+    id: 'warrior_2',
+    ownerPlayerId: 'player_1',
+    type: GameUnitType.warrior,
+    col: col,
+    row: row,
+  );
+}
+
+GameView _view({
+  required MapData mapData,
+  required List<GameUnit> units,
+  List<GameCity> cities = const [_capital],
+}) {
   return GameView.fromPersistentState(
     PersistentGameState(
       units: units,
-      cities: const [_capital],
+      cities: cities,
       fogOfWar: FogOfWarState(
         players: {
           'player_1': PlayerFogOfWar(
@@ -86,7 +151,10 @@ GameView _view({required MapData mapData, required List<GameUnit> units}) {
   );
 }
 
-AiContext _context(GameView view) {
+AiContext _context(
+  GameView view, {
+  Map<String, StrategicDefenseAssignment> defenses = const {},
+}) {
   return AiContext(
     ruleset: view.ruleset,
     mapData: view.mapData,
@@ -96,6 +164,20 @@ AiContext _context(GameView view) {
       playerId: view.forPlayerId,
       baseSeed: 1001,
     ),
+    strategicPlan: defenses.isEmpty
+        ? null
+        : StrategicPlan(
+            computedAtTurn: view.turn,
+            mode: StrategicMode.consolidate,
+            expectations: const EconomyExpectations(
+              expectedCityCount: 2,
+              expectedWorkerCount: 0,
+              expectedMilitaryCount: 2,
+              goldReserveTarget: 8,
+              minimumSciencePerTurn: 2,
+            ),
+            defenses: defenses,
+          ),
   );
 }
 

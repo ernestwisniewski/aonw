@@ -3,11 +3,8 @@ part of 'defensive_stance_planner.dart';
 class _DefenseAssignmentPolicy {
   const _DefenseAssignmentPolicy();
 
-  int neededGarrisonCount(_CityThreatProfile threat, StrategicMode mode) {
-    if (mode == StrategicMode.military && threat.threatLevel >= 18) return 2;
-    if (threat.threatLevel >= 24) return 2;
-    return 1;
-  }
+  int neededGarrisonCount(_CityThreatProfile threat, StrategicMode mode) =>
+      AiGarrisonPolicy.needsSecondDefender(threat.threatLevel, mode) ? 2 : 1;
 
   bool isUrgentThreat(
     _CityThreatProfile threat, {
