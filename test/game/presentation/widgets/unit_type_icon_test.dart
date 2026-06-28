@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_type_icon_resolver.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -28,6 +29,17 @@ void main() {
       expect(
         gameIconForUnitType(GameUnitType.fieldCannon),
         same(GameIcons.attack),
+      );
+    });
+
+    test('unit markers reuse canonical unit icons', () {
+      expect(
+        UnitMarkerTypeIconResolver.iconFor(GameUnitType.warship),
+        same(gameIconForUnitType(GameUnitType.warship)),
+      );
+      expect(
+        UnitMarkerTypeIconResolver.iconFor(GameUnitType.scoutShip),
+        same(gameIconForUnitType(GameUnitType.scoutShip)),
       );
     });
   });

@@ -135,49 +135,27 @@ final class _DiplomacyStateJsonParser {
 }
 
 String _requiredString(Map<String, dynamic> json, String field) {
-  final value = json[field];
-  if (value is String && value.isNotEmpty) return value;
-  throw ArgumentError.value(value, field, 'Expected a non-empty String');
+  return requiredStringValue(json[field], field);
 }
 
 String? _optionalString(Map<String, dynamic> json, String field) {
-  final value = json[field];
-  if (value == null) return null;
-  if (value is String && value.isNotEmpty) return value;
-  throw ArgumentError.value(
-    value,
-    field,
-    'Expected a non-empty String or null',
-  );
+  return optionalStringValue(json[field], field);
 }
 
 int _requiredNonNegativeInt(Object? value, String field) {
-  final parsed = _optionalNonNegativeInt(value, field);
-  if (parsed != null) return parsed;
-  throw ArgumentError.value(value, field, 'Expected a non-negative integer');
+  return requiredNonNegativeIntValue(value, field);
 }
 
 int? _optionalNonNegativeInt(Object? value, String field) {
-  if (value == null) return null;
-  if (value is num && value >= 0 && value.toInt() == value) {
-    return value.toInt();
-  }
-  throw ArgumentError.value(value, field, 'Expected a non-negative integer');
+  return optionalNonNegativeIntValue(value, field);
 }
 
 int? _optionalInt(Object? value, String field) {
-  if (value == null) return null;
-  if (value is num && value.toInt() == value) return value.toInt();
-  throw ArgumentError.value(value, field, 'Expected an integer');
+  return optionalIntValue(value, field);
 }
 
 T _enumValue<T extends Enum>(Object? value, Iterable<T> values, String field) {
-  if (value is String) {
-    for (final enumValue in values) {
-      if (enumValue.name == value) return enumValue;
-    }
-  }
-  throw ArgumentError.value(value, field, 'Unknown enum value');
+  return enumByName(value, values, field);
 }
 
 T? _optionalEnumValue<T extends Enum>(
@@ -185,6 +163,5 @@ T? _optionalEnumValue<T extends Enum>(
   Iterable<T> values,
   String field,
 ) {
-  if (value == null) return null;
-  return _enumValue(value, values, field);
+  return optionalEnumByName(value, values, field);
 }

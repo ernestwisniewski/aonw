@@ -2,6 +2,7 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/l10n/generated/app_localizations_pl.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,6 +141,22 @@ void main() {
         GameDisplayNames.playerCountryLeader(en, PlayerCountry.portugal),
         'Henry the Navigator',
       );
+    });
+  });
+
+  group('GameDisplayNames diplomacy', () {
+    test('localizes every relation status', () {
+      final localizations = [AppLocalizationsPl(), AppLocalizationsEn()];
+
+      for (final l10n in localizations) {
+        for (final status in DiplomaticRelationStatus.values) {
+          expect(GameDisplayNames.diplomaticRelation(l10n, status), isNotEmpty);
+          expect(
+            GameDisplayNames.diplomaticRelationShort(l10n, status),
+            isNotEmpty,
+          );
+        }
+      }
     });
   });
 

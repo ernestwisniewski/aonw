@@ -35,6 +35,17 @@ void main() {
       );
     });
 
+    test('reads non-negative ints consistently', () {
+      const reader = WireJson({'count': 3.0}, 'TestPayload');
+
+      expect(reader.requiredNonNegativeInt('count'), 3);
+      expect(optionalNonNegativeIntValue(null, 'TestPayload.count'), isNull);
+      expect(
+        () => requiredNonNegativeIntValue(-1, 'TestPayload.count'),
+        throwsArgumentError,
+      );
+    });
+
     test('reads enum names with consistent errors', () {
       expect(
         enumByName('scout', _TestMode.values, 'TestPayload.mode'),

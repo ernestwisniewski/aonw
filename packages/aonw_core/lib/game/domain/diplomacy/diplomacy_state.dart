@@ -1,4 +1,5 @@
 import 'package:aonw_core/util/collection_equality.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 part 'diplomatic_relation.dart';
 part 'diplomatic_proposal.dart';

@@ -56,6 +56,8 @@ class CityTerritoryOverlay extends Component {
   // off-screen rejection.
   final Map<String, Path> _boundaryPathCache;
   final Map<String, Rect> _boundaryBoundsCache;
+  final Map<_TerritoryRenderStyleKey, _TerritoryRenderStyle>
+  _territoryStyleCache;
 
   CityTerritoryOverlay({
     required List<CityTerritory> territories,
@@ -66,6 +68,8 @@ class CityTerritoryOverlay extends Component {
   }) : _strategicView = strategicView,
        _boundaryPathCache = boundaryPathCache ?? <String, Path>{},
        _boundaryBoundsCache = boundaryBoundsCache ?? <String, Rect>{},
+       _territoryStyleCache =
+           <_TerritoryRenderStyleKey, _TerritoryRenderStyle>{},
        _zoomEmphasis = _clampedZoomEmphasis(zoomEmphasis) {
     updateTerritories(territories: territories, strategicView: strategicView);
   }
@@ -87,6 +91,7 @@ class CityTerritoryOverlay extends Component {
     _territories = List.unmodifiable(territories);
     _strategicView = strategicView;
     _pruneBoundaryCache(_territories);
+    _pruneTerritoryStyleCache(_territories);
   }
 
   void _pruneBoundaryCache(List<CityTerritory> territories) {
@@ -100,6 +105,17 @@ class CityTerritoryOverlay extends Component {
     };
     _boundaryPathCache.removeWhere((key, _) => !liveSignatures.contains(key));
     _boundaryBoundsCache.removeWhere((key, _) => !liveSignatures.contains(key));
+  }
+
+  void _pruneTerritoryStyleCache(List<CityTerritory> territories) {
+    if (territories.isEmpty) {
+      _territoryStyleCache.clear();
+      return;
+    }
+    final liveColors = {for (final territory in territories) territory.color};
+    _territoryStyleCache.removeWhere(
+      (key, _) => !liveColors.contains(key.color),
+    );
   }
 
   @override
@@ -147,6 +163,14 @@ class CityTerritoryOverlay extends Component {
     return !_cachedBoundaryBounds(territory).overlaps(clipBounds);
   }
 
+  _TerritoryRenderStyle _renderStyleFor(Color color) {
+    final key = _TerritoryRenderStyleKey(color, strategicView);
+    return _territoryStyleCache.putIfAbsent(
+      key,
+      () => _TerritoryRenderStyle(color, strategicView: strategicView),
+    );
+  }
+
   CityTerritory? _selectedTerritory() {
     for (final territory in territories) {
       if (territory.selected) {
@@ -159,11 +183,9 @@ class CityTerritoryOverlay extends Component {
   void _drawTerritoryFills(Canvas canvas, Rect clipBounds) {
     for (final territory in territories) {
       if (_isOffscreen(territory, clipBounds)) continue;
-      final fillColor = strategicView
-          ? Color.lerp(territory.color, HudPalette.goldLight, 0.18)!
-          : territory.color;
+      final style = _renderStyleFor(territory.color);
       final fillPaint = HudPaint.fill(
-        fillColor,
+        style.fillColor,
         alpha: strategicView
             ? _tileTerritoryFillAlpha
             : territory.selected
@@ -182,7 +204,7 @@ class CityTerritoryOverlay extends Component {
         _drawTerritoryInsetWash(
           canvas,
           territoryPath,
-          fillColor,
+          style,
           selected: territory.selected,
         );
       }
@@ -193,24 +215,33 @@ class CityTerritoryOverlay extends Component {
     for (final territory in territories) {
       if (_isOffscreen(territory, clipBounds)) continue;
       final boundaryPath = _cachedBoundaryPath(territory);
+      final style = _renderStyleFor(territory.color);
       if (!strategicView) {
         _drawTerritoryEdgeBand(
           canvas,
           boundaryPath,
-          territory.color,
+          style,
           selected: territory.selected,
         );
       }
       if (strategicView) {
-        final glowPaint = _borderGlowPaint(territory.color);
-        canvas.drawPath(boundaryPath, glowPaint);
+        canvas.drawPath(boundaryPath, style.borderGlowPaint);
       }
-      final edgePaint = _solidBorderPaint(territory.color);
       canvas
-        ..drawPath(boundaryPath, _outerBorderPaint(territory.color))
-        ..drawPath(boundaryPath, edgePaint)
-        ..drawPath(boundaryPath, _atlasInkBorderPaint(territory.color))
-        ..drawPath(boundaryPath, _innerBorderHighlightPaint(territory.color));
+        ..drawPath(boundaryPath, style.outerBorderPaint)
+        ..drawPath(boundaryPath, style.solidBorderPaint)
+        ..drawPath(boundaryPath, style.atlasInkBorderPaint)
+        ..drawPath(
+          boundaryPath,
+          style.innerBorderHighlightPaint(
+            strategicView
+                ? _emphasizedAlpha(MapAlpha.regular, MapAlpha.strong)
+                : _emphasizedAlpha(
+                    _innerBorderHighlightAlpha,
+                    _innerBorderHighlightAlphaZoomedOut,
+                  ),
+          ),
+        );
     }
   }
 
@@ -218,44 +249,13 @@ class CityTerritoryOverlay extends Component {
     for (final territory in territories) {
       if (_isOffscreen(territory, clipBounds)) continue;
       final center = _hexCenter(territory.center);
-      final playerColor = Color.lerp(
-        territory.color,
-        HudPalette.goldLight,
-        0.22,
-      )!;
+      final style = _renderStyleFor(territory.color);
       final ring = _scaledHexPath(territory.center, scale: 0.56);
       canvas
-        ..drawPath(
-          ring,
-          HudPaint.stroke(
-            playerColor,
-            alpha: MapAlpha.strong,
-            strokeWidth: MapStroke.glow,
-            strokeCap: StrokeCap.round,
-            strokeJoin: StrokeJoin.round,
-          )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-        )
-        ..drawPath(ring, HudPaint.fill(HudPalette.bg, alpha: MapAlpha.regular))
-        ..drawPath(
-          ring,
-          HudPaint.stroke(
-            HudPalette.goldLight,
-            alpha: MapAlpha.opaque,
-            strokeWidth: MapStroke.regular,
-            strokeCap: StrokeCap.round,
-            strokeJoin: StrokeJoin.round,
-          ),
-        )
-        ..drawPath(
-          ring,
-          HudPaint.stroke(
-            playerColor,
-            alpha: MapAlpha.solid,
-            strokeWidth: MapStroke.hairline,
-            strokeCap: StrokeCap.round,
-            strokeJoin: StrokeJoin.round,
-          ),
-        );
+        ..drawPath(ring, style.strategicCenterGlowPaint)
+        ..drawPath(ring, _strategicCenterFillPaint)
+        ..drawPath(ring, _strategicCenterBorderPaint)
+        ..drawPath(ring, style.strategicCenterInnerPaint);
       MapIntentMarker.paintGlyph(
         canvas,
         center,
@@ -271,44 +271,41 @@ class CityTerritoryOverlay extends Component {
     CityTerritory selectedTerritory,
   ) {
     final boundaryPath = _cachedBoundaryPath(selectedTerritory);
+    final style = _renderStyleFor(selectedTerritory.color);
     canvas
       ..drawPath(
         boundaryPath,
-        _selectedBorderGlowPaint(selectedTerritory.color),
+        style.selectedBorderGlowPaint(
+          _emphasizedAlpha(
+            _selectedBorderGlowAlpha,
+            _selectedBorderGlowAlphaZoomedOut,
+          ),
+        ),
       )
-      ..drawPath(boundaryPath, _outerBorderPaint(selectedTerritory.color))
-      ..drawPath(boundaryPath, _solidBorderPaint(selectedTerritory.color))
-      ..drawPath(boundaryPath, _atlasInkBorderPaint(selectedTerritory.color))
+      ..drawPath(boundaryPath, style.outerBorderPaint)
+      ..drawPath(boundaryPath, style.solidBorderPaint)
+      ..drawPath(boundaryPath, style.atlasInkBorderPaint)
       ..drawPath(
         boundaryPath,
-        _selectedBorderHighlightPaint(selectedTerritory.color),
+        style.selectedBorderHighlightPaint(
+          _emphasizedAlpha(
+            _selectedBorderHighlightAlpha,
+            _selectedBorderHighlightAlphaZoomedOut,
+          ),
+        ),
       );
   }
 
   void _drawTerritoryInsetWash(
     Canvas canvas,
     Path boundaryPath,
-    Color color, {
+    _TerritoryRenderStyle style, {
     required bool selected,
   }) {
-    final washColor = Color.lerp(color, HudPalette.goldLight, 0.12)!;
-    final washPaint = HudPaint.stroke(
-      washColor,
-      alpha: selected
-          ? _selectedTerritoryInsetWashAlpha
-          : _territoryInsetWashAlpha,
-      strokeWidth: selected
-          ? _selectedTerritoryInsetWashWidth
-          : _territoryInsetWashWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
+    final washPaint = style.insetWashPaint(
+      selected: selected,
+      blurred: _zoomEmphasis < _edgeBlurZoomCutoff,
     );
-    if (_zoomEmphasis < _edgeBlurZoomCutoff) {
-      washPaint.maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        _territoryInsetWashBlur,
-      );
-    }
     canvas
       ..save()
       ..clipPath(boundaryPath, doAntiAlias: true)
@@ -319,16 +316,15 @@ class CityTerritoryOverlay extends Component {
   void _drawTerritoryEdgeBand(
     Canvas canvas,
     Path boundaryPath,
-    Color color, {
+    _TerritoryRenderStyle style, {
     required bool selected,
   }) {
-    final bandColor = Color.lerp(color, HudPalette.copper, 0.18)!;
     // The blurred glow stroke is the single most expensive draw per
     // territory (gaussian blur is a 2-pass shader on Impeller). When zoomed
     // out the blur radius is sub-pixel anyway, so we drop it past a
     // threshold and rely on the solid band below to convey the edge.
     final glowPaint = HudPaint.stroke(
-      bandColor,
+      style.edgeBandColor,
       alpha: selected
           ? _emphasizedAlpha(
               _selectedTerritoryEdgeGlowAlpha,
@@ -355,7 +351,7 @@ class CityTerritoryOverlay extends Component {
       ..drawPath(
         boundaryPath,
         HudPaint.stroke(
-          bandColor,
+          style.edgeBandColor,
           alpha: selected
               ? _emphasizedAlpha(
                   _selectedTerritoryEdgeBandAlpha,
@@ -374,104 +370,6 @@ class CityTerritoryOverlay extends Component {
       );
   }
 
-  Paint _outerBorderPaint(Color color) {
-    final borderShadow = Color.lerp(color, HudPalette.bg, 0.72)!;
-    return HudPaint.stroke(
-      borderShadow,
-      alpha: strategicView ? MapAlpha.strong : MapAlpha.solid,
-      strokeWidth: strategicView
-          ? _strategicOuterBorderWidth
-          : _outerBorderWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    );
-  }
-
-  Paint _solidBorderPaint(Color color) {
-    final playerColor = Color.lerp(
-      color,
-      HudPalette.bg,
-      strategicView ? _strategicBorderPlayerDarken : _solidBorderPlayerDarken,
-    )!;
-    return HudPaint.stroke(
-      playerColor,
-      alpha: strategicView ? MapAlpha.opaque : MapAlpha.full,
-      strokeWidth: strategicView
-          ? _strategicSolidBorderWidth
-          : _solidBorderWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    );
-  }
-
-  Paint _atlasInkBorderPaint(Color color) {
-    final ink = Color.lerp(HudPalette.bg, color, 0.1)!;
-    return HudPaint.stroke(
-      ink,
-      alpha: strategicView ? MapAlpha.regular : _atlasInkBorderAlpha,
-      strokeWidth: strategicView ? MapStroke.hairline : _atlasInkBorderWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    );
-  }
-
-  Paint _borderGlowPaint(Color color) {
-    final glow = Color.lerp(color, HudPalette.goldLight, 0.34)!;
-    return HudPaint.stroke(
-      glow,
-      alpha: MapAlpha.regular,
-      strokeWidth: MapStroke.glow,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-  }
-
-  Paint _innerBorderHighlightPaint(Color color) {
-    final playerColor = Color.lerp(color, HudPalette.textBright, 0.26)!;
-    return HudPaint.stroke(
-      playerColor,
-      alpha: strategicView
-          ? _emphasizedAlpha(MapAlpha.regular, MapAlpha.strong)
-          : _emphasizedAlpha(
-              _innerBorderHighlightAlpha,
-              _innerBorderHighlightAlphaZoomedOut,
-            ),
-      strokeWidth: strategicView
-          ? _strategicInnerBorderWidth
-          : _innerBorderWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    );
-  }
-
-  Paint _selectedBorderGlowPaint(Color color) {
-    final glow = Color.lerp(color, HudPalette.goldLight, 0.18)!;
-    return HudPaint.stroke(
-      glow,
-      alpha: _emphasizedAlpha(
-        _selectedBorderGlowAlpha,
-        _selectedBorderGlowAlphaZoomedOut,
-      ),
-      strokeWidth: _selectedBorderGlowWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.6);
-  }
-
-  Paint _selectedBorderHighlightPaint(Color color) {
-    final highlight = Color.lerp(color, HudPalette.textBright, 0.34)!;
-    return HudPaint.stroke(
-      highlight,
-      alpha: _emphasizedAlpha(
-        _selectedBorderHighlightAlpha,
-        _selectedBorderHighlightAlphaZoomedOut,
-      ),
-      strokeWidth: _selectedBorderHighlightWidth,
-      strokeCap: StrokeCap.round,
-      strokeJoin: StrokeJoin.round,
-    );
-  }
-
   void _drawMapDimming(Canvas canvas, CityTerritory selectedTerritory) {
     final path = Path()
       ..fillType = PathFillType.evenOdd
@@ -484,10 +382,7 @@ class CityTerritoryOverlay extends Component {
         ),
       )
       ..addPath(_cachedBoundaryPath(selectedTerritory), Offset.zero);
-    canvas.drawPath(
-      path,
-      HudPaint.fill(HudPalette.bg, alpha: MapAlpha.regular),
-    );
+    canvas.drawPath(path, _mapDimmingPaint);
   }
 
   Path _boundaryPath(Iterable<CityTerritoryBoundaryEdge> edges) {
@@ -619,6 +514,217 @@ class _BoundarySegment {
   final Offset start;
   final Offset end;
 }
+
+class _TerritoryRenderStyleKey {
+  const _TerritoryRenderStyleKey(this.color, this.strategicView);
+
+  final Color color;
+  final bool strategicView;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _TerritoryRenderStyleKey &&
+        other.color == color &&
+        other.strategicView == strategicView;
+  }
+
+  @override
+  int get hashCode => Object.hash(color, strategicView);
+}
+
+class _TerritoryRenderStyle {
+  _TerritoryRenderStyle(this.color, {required this.strategicView});
+
+  final Color color;
+  final bool strategicView;
+
+  late final Color fillColor = strategicView
+      ? Color.lerp(color, HudPalette.goldLight, 0.18)!
+      : color;
+  late final Color insetWashColor = Color.lerp(
+    fillColor,
+    HudPalette.goldLight,
+    0.12,
+  )!;
+  late final Color edgeBandColor = Color.lerp(color, HudPalette.copper, 0.18)!;
+  late final Color strategicCenterColor = Color.lerp(
+    color,
+    HudPalette.goldLight,
+    0.22,
+  )!;
+  late final Color _borderShadowColor = Color.lerp(color, HudPalette.bg, 0.72)!;
+  late final Color _solidBorderColor = Color.lerp(
+    color,
+    HudPalette.bg,
+    strategicView ? _strategicBorderPlayerDarken : _solidBorderPlayerDarken,
+  )!;
+  late final Color _atlasInkBorderColor = Color.lerp(
+    HudPalette.bg,
+    color,
+    0.1,
+  )!;
+  late final Color _borderGlowColor = Color.lerp(
+    color,
+    HudPalette.goldLight,
+    0.34,
+  )!;
+  late final Color _innerBorderHighlightColor = Color.lerp(
+    color,
+    HudPalette.textBright,
+    0.26,
+  )!;
+  late final Color _selectedBorderGlowColor = Color.lerp(
+    color,
+    HudPalette.goldLight,
+    0.18,
+  )!;
+  late final Color _selectedBorderHighlightColor = Color.lerp(
+    color,
+    HudPalette.textBright,
+    0.34,
+  )!;
+
+  late final Paint outerBorderPaint = HudPaint.stroke(
+    _borderShadowColor,
+    alpha: strategicView ? MapAlpha.strong : MapAlpha.solid,
+    strokeWidth: strategicView ? _strategicOuterBorderWidth : _outerBorderWidth,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  );
+
+  late final Paint solidBorderPaint = HudPaint.stroke(
+    _solidBorderColor,
+    alpha: strategicView ? MapAlpha.opaque : MapAlpha.full,
+    strokeWidth: strategicView ? _strategicSolidBorderWidth : _solidBorderWidth,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  );
+
+  late final Paint atlasInkBorderPaint = HudPaint.stroke(
+    _atlasInkBorderColor,
+    alpha: strategicView ? MapAlpha.regular : _atlasInkBorderAlpha,
+    strokeWidth: strategicView ? MapStroke.hairline : _atlasInkBorderWidth,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  );
+
+  late final Paint borderGlowPaint = HudPaint.stroke(
+    _borderGlowColor,
+    alpha: MapAlpha.regular,
+    strokeWidth: MapStroke.glow,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+
+  late final Paint strategicCenterGlowPaint = HudPaint.stroke(
+    strategicCenterColor,
+    alpha: MapAlpha.strong,
+    strokeWidth: MapStroke.glow,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+
+  late final Paint strategicCenterInnerPaint = HudPaint.stroke(
+    strategicCenterColor,
+    alpha: MapAlpha.solid,
+    strokeWidth: MapStroke.hairline,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  );
+
+  late final Paint _insetWashPaint = _createInsetWashPaint(
+    selected: false,
+    blurred: false,
+  );
+  late final Paint _insetWashBlurPaint = _createInsetWashPaint(
+    selected: false,
+    blurred: true,
+  );
+  late final Paint _selectedInsetWashPaint = _createInsetWashPaint(
+    selected: true,
+    blurred: false,
+  );
+  late final Paint _selectedInsetWashBlurPaint = _createInsetWashPaint(
+    selected: true,
+    blurred: true,
+  );
+
+  Paint insetWashPaint({required bool selected, required bool blurred}) {
+    if (selected) {
+      return blurred ? _selectedInsetWashBlurPaint : _selectedInsetWashPaint;
+    }
+    return blurred ? _insetWashBlurPaint : _insetWashPaint;
+  }
+
+  Paint innerBorderHighlightPaint(int alpha) {
+    return HudPaint.stroke(
+      _innerBorderHighlightColor,
+      alpha: alpha,
+      strokeWidth: strategicView
+          ? _strategicInnerBorderWidth
+          : _innerBorderWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    );
+  }
+
+  Paint selectedBorderGlowPaint(int alpha) {
+    return HudPaint.stroke(
+      _selectedBorderGlowColor,
+      alpha: alpha,
+      strokeWidth: _selectedBorderGlowWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.6);
+  }
+
+  Paint selectedBorderHighlightPaint(int alpha) {
+    return HudPaint.stroke(
+      _selectedBorderHighlightColor,
+      alpha: alpha,
+      strokeWidth: _selectedBorderHighlightWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    );
+  }
+
+  Paint _createInsetWashPaint({required bool selected, required bool blurred}) {
+    final paint = HudPaint.stroke(
+      insetWashColor,
+      alpha: selected
+          ? _selectedTerritoryInsetWashAlpha
+          : _territoryInsetWashAlpha,
+      strokeWidth: selected
+          ? _selectedTerritoryInsetWashWidth
+          : _territoryInsetWashWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    );
+    if (blurred) {
+      paint.maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        _territoryInsetWashBlur,
+      );
+    }
+    return paint;
+  }
+}
+
+final Paint _strategicCenterFillPaint = HudPaint.fill(
+  HudPalette.bg,
+  alpha: MapAlpha.regular,
+);
+final Paint _strategicCenterBorderPaint = HudPaint.stroke(
+  HudPalette.goldLight,
+  alpha: MapAlpha.opaque,
+  strokeWidth: MapStroke.regular,
+  strokeCap: StrokeCap.round,
+  strokeJoin: StrokeJoin.round,
+);
+final Paint _mapDimmingPaint = HudPaint.fill(
+  HudPalette.bg,
+  alpha: MapAlpha.regular,
+);
 
 const double _mapDimmingExtent = 100000.0;
 const int _territoryFillAlpha = 42;

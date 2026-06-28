@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit/army_troop.dart';
 import 'package:aonw_core/game/domain/unit/city_founding_job.dart';
@@ -335,6 +336,8 @@ class GameUnit {
 
   bool occupies(int targetCol, int targetRow) =>
       col == targetCol && row == targetRow;
+
+  HexCoordinate get coordinate => HexCoordinate(col: col, row: row);
 
   bool get isWorker => type == GameUnitType.worker;
 

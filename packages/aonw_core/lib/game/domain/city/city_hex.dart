@@ -24,6 +24,8 @@ class CityHex {
 
   HexCoordinate toCoordinate() => HexCoordinate(col: col, row: row);
 
+  HexCoordinate get coordinate => toCoordinate();
+
   bool occupies(int targetCol, int targetRow) =>
       col == targetCol && row == targetRow;
 

@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -41,6 +42,32 @@ abstract final class GameDisplayNames {
       PlayerCountry.korea => l10n.countryKorea,
       PlayerCountry.japan => l10n.countryJapan,
       PlayerCountry.portugal => l10n.countryPortugal,
+    };
+  }
+
+  static String diplomaticRelation(
+    AppLocalizations l10n,
+    DiplomaticRelationStatus status,
+  ) {
+    return switch (status) {
+      DiplomaticRelationStatus.friendly => l10n.diplomacyRelationFriendly,
+      DiplomaticRelationStatus.neutral => l10n.diplomacyRelationNeutral,
+      DiplomaticRelationStatus.hostile => l10n.diplomacyRelationHostile,
+      DiplomaticRelationStatus.truce => l10n.diplomacyRelationTruce,
+      DiplomaticRelationStatus.war => l10n.diplomacyRelationWar,
+    };
+  }
+
+  static String diplomaticRelationShort(
+    AppLocalizations l10n,
+    DiplomaticRelationStatus status,
+  ) {
+    return switch (status) {
+      DiplomaticRelationStatus.friendly => l10n.diplomacyRelationFriendlyShort,
+      DiplomaticRelationStatus.neutral => l10n.diplomacyRelationNeutralShort,
+      DiplomaticRelationStatus.hostile => l10n.diplomacyRelationHostileShort,
+      DiplomaticRelationStatus.truce => l10n.diplomacyRelationTruceShort,
+      DiplomaticRelationStatus.war => l10n.diplomacyRelationWarShort,
     };
   }
 
