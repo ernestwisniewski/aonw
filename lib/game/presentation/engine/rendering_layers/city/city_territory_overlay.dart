@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_territory_boundary_shape.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
@@ -177,6 +178,14 @@ class CityTerritoryOverlay extends Component {
       );
       final territoryPath = _cachedBoundaryPath(territory);
       canvas.drawPath(territoryPath, fillPaint);
+      if (!strategicView) {
+        _drawTerritoryInsetWash(
+          canvas,
+          territoryPath,
+          fillColor,
+          selected: territory.selected,
+        );
+      }
     }
   }
 
@@ -200,6 +209,7 @@ class CityTerritoryOverlay extends Component {
       canvas
         ..drawPath(boundaryPath, _outerBorderPaint(territory.color))
         ..drawPath(boundaryPath, edgePaint)
+        ..drawPath(boundaryPath, _atlasInkBorderPaint(territory.color))
         ..drawPath(boundaryPath, _innerBorderHighlightPaint(territory.color));
     }
   }
@@ -268,10 +278,42 @@ class CityTerritoryOverlay extends Component {
       )
       ..drawPath(boundaryPath, _outerBorderPaint(selectedTerritory.color))
       ..drawPath(boundaryPath, _solidBorderPaint(selectedTerritory.color))
+      ..drawPath(boundaryPath, _atlasInkBorderPaint(selectedTerritory.color))
       ..drawPath(
         boundaryPath,
         _selectedBorderHighlightPaint(selectedTerritory.color),
       );
+  }
+
+  void _drawTerritoryInsetWash(
+    Canvas canvas,
+    Path boundaryPath,
+    Color color, {
+    required bool selected,
+  }) {
+    final washColor = Color.lerp(color, HudPalette.goldLight, 0.12)!;
+    final washPaint = HudPaint.stroke(
+      washColor,
+      alpha: selected
+          ? _selectedTerritoryInsetWashAlpha
+          : _territoryInsetWashAlpha,
+      strokeWidth: selected
+          ? _selectedTerritoryInsetWashWidth
+          : _territoryInsetWashWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    );
+    if (_zoomEmphasis < _edgeBlurZoomCutoff) {
+      washPaint.maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        _territoryInsetWashBlur,
+      );
+    }
+    canvas
+      ..save()
+      ..clipPath(boundaryPath, doAntiAlias: true)
+      ..drawPath(boundaryPath, washPaint)
+      ..restore();
   }
 
   void _drawTerritoryEdgeBand(
@@ -357,6 +399,17 @@ class CityTerritoryOverlay extends Component {
       strokeWidth: strategicView
           ? _strategicSolidBorderWidth
           : _solidBorderWidth,
+      strokeCap: StrokeCap.round,
+      strokeJoin: StrokeJoin.round,
+    );
+  }
+
+  Paint _atlasInkBorderPaint(Color color) {
+    final ink = Color.lerp(HudPalette.bg, color, 0.1)!;
+    return HudPaint.stroke(
+      ink,
+      alpha: strategicView ? MapAlpha.regular : _atlasInkBorderAlpha,
+      strokeWidth: strategicView ? MapStroke.hairline : _atlasInkBorderWidth,
       strokeCap: StrokeCap.round,
       strokeJoin: StrokeJoin.round,
     );
@@ -472,7 +525,12 @@ class CityTerritoryOverlay extends Component {
         current = next.end;
       }
 
-      path.addPath(_civLikeBoundaryPath(points), Offset.zero);
+      final closed =
+          points.length > 2 && _sameBoundaryPoint(points.first, points.last);
+      path.addPath(
+        cityTerritoryBoundaryShapePath(points, closed: closed),
+        Offset.zero,
+      );
     }
     return path;
   }
@@ -491,109 +549,6 @@ class CityTerritoryOverlay extends Component {
     }
     return null;
   }
-
-  Path _civLikeBoundaryPath(List<Offset> points) {
-    final path = Path();
-    if (points.isEmpty) return path;
-    final closed =
-        points.length > 2 && _sameBoundaryPoint(points.first, points.last);
-    final baseLoopPoints = closed
-        ? points.sublist(0, points.length - 1)
-        : points;
-    final loopPoints = closed
-        ? _organicBoundaryPoints(baseLoopPoints)
-        : baseLoopPoints;
-    if (!closed || loopPoints.length < 3) {
-      path.moveTo(points.first.dx, points.first.dy);
-      for (final point in points.skip(1)) {
-        path.lineTo(point.dx, point.dy);
-      }
-      return path;
-    }
-
-    final smoothedPoints = _smoothBoundaryPoints(loopPoints);
-    return _curvedLoopPath(smoothedPoints);
-  }
-
-  Path _curvedLoopPath(List<Offset> points) {
-    final path = Path();
-    if (points.length < 3) return path;
-
-    final start = _midpoint(points.last, points.first);
-    path.moveTo(start.dx, start.dy);
-    for (var i = 0; i < points.length; i++) {
-      final current = points[i];
-      final next = points[(i + 1) % points.length];
-      final end = _midpoint(current, next);
-      path.quadraticBezierTo(current.dx, current.dy, end.dx, end.dy);
-    }
-    return path..close();
-  }
-
-  List<Offset> _smoothBoundaryPoints(List<Offset> points) {
-    var smoothed = points;
-    for (var pass = 0; pass < _boundarySmoothingPasses; pass++) {
-      final nextPoints = <Offset>[];
-      for (var i = 0; i < smoothed.length; i++) {
-        final current = smoothed[i];
-        final next = smoothed[(i + 1) % smoothed.length];
-        final delta = next - current;
-        nextPoints
-          ..add(current + delta * _boundaryCornerCut)
-          ..add(current + delta * (1 - _boundaryCornerCut));
-      }
-      smoothed = nextPoints;
-    }
-    return smoothed;
-  }
-
-  List<Offset> _organicBoundaryPoints(List<Offset> points) {
-    if (points.length < 2) return points;
-
-    final organic = <Offset>[];
-    for (var i = 0; i < points.length; i++) {
-      final start = points[i];
-      final end = points[(i + 1) % points.length];
-      organic.add(start);
-
-      final delta = end - start;
-      final length = delta.distance;
-      if (length <= _organicMinSegmentLength) continue;
-
-      final normal = Offset(-delta.dy / length, delta.dx / length);
-      for (var step = 1; step <= _organicSegmentSteps; step++) {
-        final t = step / (_organicSegmentSteps + 1);
-        final base = Offset(start.dx + delta.dx * t, start.dy + delta.dy * t);
-        final jitter =
-            _boundaryNoise(start: start, end: end, step: step) *
-            _organicBoundaryJitter;
-        organic.add(base + normal * jitter);
-      }
-    }
-    return organic;
-  }
-
-  double _boundaryNoise({
-    required Offset start,
-    required Offset end,
-    required int step,
-  }) {
-    var hash = 17;
-    hash = _hashBoundaryValue(hash, start.dx);
-    hash = _hashBoundaryValue(hash, start.dy);
-    hash = _hashBoundaryValue(hash, end.dx);
-    hash = _hashBoundaryValue(hash, end.dy);
-    hash = 37 * hash + step * 104729;
-    final value = hash.abs() % 2001;
-    return value / 1000.0 - 1.0;
-  }
-
-  int _hashBoundaryValue(int hash, double value) {
-    return 37 * hash + (value * 1000).round();
-  }
-
-  Offset _midpoint(Offset a, Offset b) =>
-      Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
 
   bool _sameBoundaryPoint(Offset a, Offset b) {
     return _boundaryPointKey(a) == _boundaryPointKey(b);
@@ -675,6 +630,8 @@ const int _territoryEdgeGlowAlpha = 88;
 const int _selectedTerritoryEdgeGlowAlpha = 106;
 const int _territoryEdgeBandAlpha = 60;
 const int _selectedTerritoryEdgeBandAlpha = 78;
+const int _territoryInsetWashAlpha = 36;
+const int _selectedTerritoryInsetWashAlpha = 48;
 const int _innerBorderHighlightAlpha = 118;
 const int _selectedBorderGlowAlpha = 132;
 const int _selectedBorderHighlightAlpha = 168;
@@ -689,16 +646,16 @@ const double _territoryEdgeGlowWidth = 17.0;
 const double _selectedTerritoryEdgeGlowWidth = 19.0;
 const double _territoryEdgeBandWidth = 9.2;
 const double _selectedTerritoryEdgeBandWidth = 10.8;
+const double _territoryInsetWashWidth = 27.0;
+const double _selectedTerritoryInsetWashWidth = 31.0;
+const double _territoryInsetWashBlur = 2.4;
 const double _territoryEdgeBlur = 5.2;
-const int _organicSegmentSteps = 1;
-const double _organicBoundaryJitter = 2.4;
-const double _organicMinSegmentLength = 18.0;
-const int _boundarySmoothingPasses = 2;
-const double _boundaryCornerCut = 0.18;
 const double _outerBorderWidth = 5.2;
 const double _strategicOuterBorderWidth = 4.6;
 const double _solidBorderWidth = 3.2;
 const double _strategicSolidBorderWidth = 3.5;
+const int _atlasInkBorderAlpha = 190;
+const double _atlasInkBorderWidth = 1.25;
 const double _innerBorderWidth = 1.1;
 const double _strategicInnerBorderWidth = 1.2;
 const double _selectedBorderGlowWidth = 8.8;
