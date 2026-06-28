@@ -96,10 +96,13 @@ STEAM_USER ?= ew2pl
 STEAMCMD ?= steamcmd
 STEAM_BUILD_DESC ?=
 ITCH_TARGET ?=
-ITCH_MACOS_ZIP ?= $(STEAM_MACOS_ZIP)
-ITCH_WINDOWS_ZIP ?= $(STEAM_WINDOWS_ZIP)
+ITCH_DIST_DIR ?= $(STEAM_DIST_DIR)
+ITCH_MACOS_ZIP ?= $(ITCH_DIST_DIR)/aonw-macos-itch.zip
+ITCH_WINDOWS_ZIP ?= $(ITCH_DIST_DIR)/aonw-windows-itch.zip
+ITCH_ANDROID_APK ?= $(ITCH_DIST_DIR)/aonw-android-itch.apk
 ITCH_MACOS_CHANNEL ?= macos
 ITCH_WINDOWS_CHANNEL ?= windows
+ITCH_ANDROID_CHANNEL ?= android
 ITCH_USER_VERSION ?= $(RELEASE_VERSION)
 ITCH_UPLOAD_ARGS ?=
 
@@ -120,7 +123,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -144,13 +147,14 @@ help:
 	@echo "  make android-upload-closed LOCAL: upload existing .aab to closed test"
 	@echo "  make android-deploy LOCAL: build .aab and upload it to Google Play"
 	@echo "  make android-deploy-closed LOCAL: build .aab and upload it to closed test"
+	@echo "  make android-build-itch LOCAL: build universal Android APK for itch.io into dist/"
 	@echo "  make android-build-apk LOCAL: build split release APKs for sideload testing"
 	@echo "  make multiplayer-platform-smoke LOCAL: build web/macOS/iOS/Android/Windows smoke targets"
 	@echo "  make steam        LOCAL/CI: build Steam ZIPs into dist/"
 	@echo "  make steam-prepare-from-dist LOCAL: prepare SteamPipe content from dist/ ZIPs"
 	@echo "  make steam-upload LOCAL: upload prepared SteamPipe content with steamcmd"
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
-	@echo "  make itch         LOCAL: build/download desktop ZIPs and upload Windows/macOS to itch.io"
+	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
@@ -216,6 +220,7 @@ help:
 	@echo "  ITCH_TARGET=user/game         itch/deploy-all only. Required for itch upload"
 	@echo "  ITCH_MACOS_CHANNEL=macos      itch macOS channel. Default: $(ITCH_MACOS_CHANNEL)"
 	@echo "  ITCH_WINDOWS_CHANNEL=windows  itch Windows channel. Default: $(ITCH_WINDOWS_CHANNEL)"
+	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
 	@echo "  VERSION_BUMP=patch|none       bump-version/deploy-all default: $(VERSION_BUMP)"
 	@echo "  NEW_VERSION=x.y.z             bump-version/deploy-all only. Overrides VERSION_BUMP"
@@ -539,6 +544,19 @@ android-build-apk: android-preflight
 	@echo "Verified Android APK API: $(ANDROID_API_BASE_URL)"
 	@echo "Android APKs ready in: $(ANDROID_RELEASE_APK_DIR)"
 
+android-build-itch: android-preflight
+	@echo "Building universal Android APK for itch.io with API=$(ANDROID_API_BASE_URL)..."
+	@JAVA_HOME="$(ANDROID_JAVA_HOME)" flutter pub get
+	@JAVA_HOME="$(ANDROID_JAVA_HOME)" flutter test "--dart-define=AONW_API_BASE_URL=$(ANDROID_API_BASE_URL)" test/game/repository_providers_test.dart
+	@JAVA_HOME="$(ANDROID_JAVA_HOME)" flutter build apk --release "--dart-define=AONW_API_BASE_URL=$(ANDROID_API_BASE_URL)"
+	@test -f "$(ANDROID_RELEASE_APK_DIR)/app-release.apk" || { echo "Expected release APK not found: $(ANDROID_RELEASE_APK_DIR)/app-release.apk"; exit 1; }
+	@unzip -p "$(ANDROID_RELEASE_APK_DIR)/app-release.apk" 'lib/*/libapp.so' | strings | rg -F "$(ANDROID_API_BASE_URL)" >/dev/null
+	@mkdir -p "$(ITCH_DIST_DIR)"
+	@cp "$(ANDROID_RELEASE_APK_DIR)/app-release.apk" "$(ITCH_ANDROID_APK)"
+	@unzip -tq "$(ITCH_ANDROID_APK)" >/dev/null
+	@echo "Verified itch Android APK API: $(ANDROID_API_BASE_URL)"
+	@echo "itch Android APK ready: $(ITCH_ANDROID_APK)"
+
 android-release: android-build-aab
 	@echo "Upload this file in Play Console: $(ANDROID_RELEASE_BUNDLE)"
 	@echo "Or upload with Play API: make android-deploy"
@@ -830,14 +848,33 @@ steam-upload:
 
 deploy-itch: itch
 
-itch: steam itch-upload
+itch: itch-prepare itch-upload
 	@echo "itch finished."
+
+itch-prepare: steam itch-desktop android-build-itch
+	@echo "itch artifacts ready:"
+	@ls -lh "$(ITCH_MACOS_ZIP)" "$(ITCH_WINDOWS_ZIP)" "$(ITCH_ANDROID_APK)"
+
+itch-desktop:
+	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP). Run make steam first."; exit 1; }
+	@test -f "$(STEAM_WINDOWS_ZIP)" || { echo "Missing Steam Windows ZIP: $(STEAM_WINDOWS_ZIP). Run make steam first."; exit 1; }
+	@mkdir -p "$(ITCH_DIST_DIR)"
+	@cp -p "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_ZIP)"
+	@cp -p "$(STEAM_WINDOWS_ZIP)" "$(ITCH_WINDOWS_ZIP)"
+	@unzip -tq "$(ITCH_MACOS_ZIP)" >/dev/null
+	@unzip -tq "$(ITCH_WINDOWS_ZIP)" >/dev/null
+	@if { unzip -Z1 "$(ITCH_MACOS_ZIP)"; unzip -Z1 "$(ITCH_WINDOWS_ZIP)"; } | rg -i 'steam' >/dev/null; then \
+		echo "itch desktop archives contain steam-named paths."; \
+		exit 1; \
+	fi
+	@echo "itch desktop ZIPs ready: $(ITCH_MACOS_ZIP), $(ITCH_WINDOWS_ZIP)"
 
 itch-upload:
 	@command -v butler >/dev/null || { echo "butler is required for itch-upload."; exit 1; }
 	@test -n "$(ITCH_TARGET)" || { echo "ITCH_TARGET is required, e.g. ITCH_TARGET=user/game."; exit 1; }
-	@test -f "$(ITCH_MACOS_ZIP)" || { echo "Missing itch macOS ZIP: $(ITCH_MACOS_ZIP). Run make steam-macos first."; exit 1; }
-	@test -f "$(ITCH_WINDOWS_ZIP)" || { echo "Missing itch Windows ZIP: $(ITCH_WINDOWS_ZIP). Run make steam-windows first."; exit 1; }
+	@test -f "$(ITCH_MACOS_ZIP)" || { echo "Missing itch macOS ZIP: $(ITCH_MACOS_ZIP). Run make itch-prepare first."; exit 1; }
+	@test -f "$(ITCH_WINDOWS_ZIP)" || { echo "Missing itch Windows ZIP: $(ITCH_WINDOWS_ZIP). Run make itch-prepare first."; exit 1; }
+	@test -f "$(ITCH_ANDROID_APK)" || { echo "Missing itch Android APK: $(ITCH_ANDROID_APK). Run make android-build-itch first."; exit 1; }
 	@set -e; \
 	version="$(ITCH_USER_VERSION)"; \
 	test -n "$$version" || { echo "ITCH_USER_VERSION could not be resolved."; exit 1; }; \
@@ -845,6 +882,8 @@ itch-upload:
 	butler push "$(ITCH_MACOS_ZIP)" "$(ITCH_TARGET):$(ITCH_MACOS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "Uploading Windows build to itch: $(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL) ($$version)..."; \
 	butler push "$(ITCH_WINDOWS_ZIP)" "$(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	echo "Uploading Android build to itch: $(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL) ($$version)..."; \
+	butler push "$(ITCH_ANDROID_APK)" "$(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "itch.io uploads finished."
 
 # Local-only target. Bumps the build number and, when NEW_VERSION is supplied,
@@ -906,9 +945,10 @@ bump-version:
 	echo "bump-version finished. Commit ready to push."
 
 # Local + remote orchestration. Pushes main to origin, prepares desktop ZIPs for
-# itch.io/Steam in dist/, optionally uploads them to itch.io when ITCH_TARGET is
-# set, asks the staging server to make deploy (server image rebuild + restart +
-# health), then deploys the static homepage and demo web app locally.
+# Steam and itch.io plus an Android APK for itch.io in dist/, optionally uploads
+# them to itch.io when ITCH_TARGET is set, asks the staging server to make deploy
+# (server image rebuild + restart + health), then deploys the static homepage
+# and demo web app locally.
 # Aborts on any step failure.
 deploy-all:
 	@$(MAKE) --no-print-directory preflight-release
@@ -923,13 +963,15 @@ deploy-all:
 	@$(MAKE) --no-print-directory archive-ios-if-possible
 	@echo "[3/8] Pushing local main to origin..."
 	@git push origin main
-	@echo "[4/8] Preparing desktop ZIPs in dist/..."
+	@echo "[4/8] Preparing desktop ZIPs and itch Android APK in dist/..."
 	@$(MAKE) --no-print-directory steam
+	@$(MAKE) --no-print-directory itch-desktop
+	@$(MAKE) --no-print-directory android-build-itch
 	@if [ -n "$(ITCH_TARGET)" ]; then \
-		echo "Uploading desktop ZIPs to itch.io target $(ITCH_TARGET)..."; \
+		echo "Uploading itch.io artifacts to target $(ITCH_TARGET)..."; \
 		$(MAKE) --no-print-directory itch-upload; \
 	else \
-		echo "ITCH_TARGET not set; leaving desktop ZIPs in $(STEAM_DIST_DIR)/ and skipping itch.io upload."; \
+		echo "ITCH_TARGET not set; leaving itch.io artifacts in $(ITCH_DIST_DIR)/ and skipping itch.io upload."; \
 	fi
 	@echo "[5/8] Triggering server deploy via SSH..."
 	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
