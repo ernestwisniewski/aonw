@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
@@ -53,21 +53,10 @@ final class CityThreatAssessor {
     required String playerId,
     required IntendedAttack attack,
   }) {
-    for (final unit in state.units) {
-      if (unit.ownerPlayerId == playerId &&
-          unit.col == attack.defenderCol &&
-          unit.row == attack.defenderRow) {
-        return true;
-      }
-    }
-    for (final city in state.cities) {
-      if (city.ownerPlayerId == playerId &&
-          city.center.col == attack.defenderCol &&
-          city.center.row == attack.defenderRow) {
-        return true;
-      }
-    }
-    return false;
+    final unit = state.units.unitAt(attack.defenderCol, attack.defenderRow);
+    if (unit?.ownerPlayerId == playerId) return true;
+    final city = state.cities.cityAt(attack.defenderCol, attack.defenderRow);
+    return city?.ownerPlayerId == playerId;
   }
 
   List<PendingCityAttackThreat> _pendingCityAttackThreats({
@@ -80,13 +69,8 @@ final class CityThreatAssessor {
       if (attack.declaringPlayerId == playerId) continue;
       final attacker = unitsById[attack.attackerUnitId];
       if (attacker == null || attacker.ownerPlayerId == playerId) continue;
-      final city = _cityAt(
-        state,
-        playerId: playerId,
-        col: attack.defenderCol,
-        row: attack.defenderRow,
-      );
-      if (city == null) continue;
+      final city = state.cities.cityAt(attack.defenderCol, attack.defenderRow);
+      if (city == null || city.ownerPlayerId != playerId) continue;
       threats.add(
         PendingCityAttackThreat(
           attackerPlayerId: attack.declaringPlayerId,
@@ -98,21 +82,5 @@ final class CityThreatAssessor {
       );
     }
     return threats;
-  }
-
-  GameCity? _cityAt(
-    PersistentGameState state, {
-    required String playerId,
-    required int col,
-    required int row,
-  }) {
-    for (final city in state.cities) {
-      if (city.ownerPlayerId == playerId &&
-          city.center.col == col &&
-          city.center.row == row) {
-        return city;
-      }
-    }
-    return null;
   }
 }

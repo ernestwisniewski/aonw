@@ -192,11 +192,7 @@ final class _DirectMovePlanFinder {
   }
 
   UnitMovementPlan? _approachBlockedTarget(UnitMovementPathfinder pathfinder) {
-    final blocker = MovementReducer._unitAt(
-      state.units,
-      targetTile.col,
-      targetTile.row,
-    );
+    final blocker = state.units.unitAt(targetTile.col, targetTile.row);
     if (blocker == null || blocker.id == unit.id) return null;
 
     final approach = pathfinder.planTowardBlockedTarget(

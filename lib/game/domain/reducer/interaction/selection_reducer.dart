@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -175,11 +176,10 @@ abstract final class SelectionReducer {
         ? state.unitAt(tileData.col, tileData.row)
         : null;
 
-    final tappedCity = state.citiesKnownToActivePlayer
-        .where(
-          (c) => c.center.col == tileData.col && c.center.row == tileData.row,
-        )
-        .firstOrNull;
+    final tappedCity = state.citiesKnownToActivePlayer.cityAt(
+      tileData.col,
+      tileData.row,
+    );
     final tappedImprovement = _fieldImprovementAt(state, tileData, visibility);
 
     if (tappedCity != null) {

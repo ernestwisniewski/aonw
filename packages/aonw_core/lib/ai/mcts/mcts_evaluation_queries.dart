@@ -159,10 +159,7 @@ GameUnit? mctsOwnUnitById(Iterable<GameUnit> units, String unitId) {
 }
 
 GameUnit? mctsEnemyAt(Iterable<GameUnit> units, int col, int row) {
-  for (final unit in units) {
-    if (unit.col == col && unit.row == row) return unit;
-  }
-  return null;
+  return units.unitAt(col, row);
 }
 
 bool mctsIsNearOwnCity(SimulatedState state, int col, int row, int range) {

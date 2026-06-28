@@ -38,7 +38,7 @@ class UnitMovementPathfinder {
   }) {
     if (!_isInBounds(col, row)) return false;
     if (unit.occupies(col, row)) return false;
-    final blocker = _unitAt(col, row);
+    final blocker = _indexedUnitAt(col, row);
     if (blocker != null && !canEnterOccupied(unit, blocker, col, row)) {
       return false;
     }
@@ -62,7 +62,7 @@ class UnitMovementPathfinder {
     if (!_isInBounds(targetTile.col, targetTile.row)) return null;
     if (unit.occupies(targetTile.col, targetTile.row)) return null;
 
-    final targetBlocker = _unitAt(targetTile.col, targetTile.row);
+    final targetBlocker = _indexedUnitAt(targetTile.col, targetTile.row);
     if (targetBlocker != null &&
         !canEnterOccupied(
           unit,
@@ -101,7 +101,7 @@ class UnitMovementPathfinder {
     required GameUnit unit,
     required TileData targetTile,
   }) {
-    final blocker = _unitAt(targetTile.col, targetTile.row);
+    final blocker = _indexedUnitAt(targetTile.col, targetTile.row);
     if (blocker == null || blocker.id == unit.id) return null;
 
     UnitMovementPlan? best;
@@ -167,7 +167,7 @@ class UnitMovementPathfinder {
       )) {
         if (!_isInBounds(next.col, next.row)) continue;
         final nextKey = _coordKey(next.col, next.row);
-        final blockingUnit = _unitAt(next.col, next.row);
+        final blockingUnit = _indexedUnitAt(next.col, next.row);
         if (blockingUnit != null &&
             !canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
           continue;
@@ -237,7 +237,7 @@ class UnitMovementPathfinder {
     ];
   }
 
-  GameUnit? _unitAt(int col, int row) {
+  GameUnit? _indexedUnitAt(int col, int row) {
     return _unitsByKey[_coordKey(col, row)];
   }
 

@@ -218,12 +218,9 @@ abstract class GameState with _$GameState {
     ];
   }
 
-  GameUnit? unitAt(int col, int row) {
-    for (final unit in units) {
-      if (unit.occupies(col, row)) return unit;
-    }
-    return null;
-  }
+  GameUnit? unitAt(int col, int row) => units.unitAt(col, row);
+
+  GameCity? cityAt(int col, int row) => cities.cityAt(col, row);
 
   GameInteractionMode get interactionMode {
     return interaction.mode;

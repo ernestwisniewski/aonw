@@ -168,7 +168,7 @@ final class AiTurnCommandExecutor {
   static bool _isMoveAlreadyAtTarget(MoveUnitCommand command, GameState state) {
     for (final unit in state.units) {
       if (unit.id == command.unitId) {
-        return unit.col == command.targetCol && unit.row == command.targetRow;
+        return unit.occupies(command.targetCol, command.targetRow);
       }
     }
     return false;

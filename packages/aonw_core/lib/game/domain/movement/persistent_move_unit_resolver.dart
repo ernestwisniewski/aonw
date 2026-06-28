@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -63,7 +64,7 @@ class PersistentMoveUnitResolver {
     if (_isForeignCityCenter(state, unit, targetTile.col, targetTile.row)) {
       return _reject(state, 'move_target_is_foreign_city_center');
     }
-    final targetBlocker = _unitAt(state.units, targetTile.col, targetTile.row);
+    final targetBlocker = state.units.unitAt(targetTile.col, targetTile.row);
     final pathfinder = UnitMovementPathfinder(
       mapData: mapData,
       units: state.units,
@@ -220,13 +221,6 @@ class PersistentMoveUnitResolver {
   static int? _unitIndexById(List<GameUnit> units, String unitId) {
     for (var i = 0; i < units.length; i++) {
       if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.col == col && unit.row == row) return unit;
     }
     return null;
   }

@@ -62,8 +62,7 @@ extension GameRendererTileInteractions on GameRenderer {
       return false;
     }
     return _renderState.citiesKnownToActivePlayer.any(
-      (city) =>
-          city.center.col == tileData.col && city.center.row == tileData.row,
+      (city) => city.occupiesCenter(tileData.col, tileData.row),
     );
   }
 
@@ -75,8 +74,7 @@ extension GameRendererTileInteractions on GameRenderer {
       return false;
     }
     return _renderState.citiesKnownToActivePlayer.any(
-      (city) =>
-          city.center.col == tileData.col && city.center.row == tileData.row,
+      (city) => city.occupiesCenter(tileData.col, tileData.row),
     );
   }
 

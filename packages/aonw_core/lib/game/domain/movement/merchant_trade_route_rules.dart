@@ -250,7 +250,7 @@ abstract final class MerchantTradeRouteRules {
     required Iterable<GameCity> cities,
   }) {
     if (movingUnit.type != GameUnitType.merchant) return false;
-    final city = _cityAt(cities, col, row);
+    final city = cities.cityAt(col, row);
     return city != null && city.ownerPlayerId == movingUnit.ownerPlayerId;
   }
 
@@ -301,13 +301,6 @@ abstract final class MerchantTradeRouteRules {
     for (final unit in units) {
       if (unit.id == movingUnitId) continue;
       if (unit.occupies(col, row)) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityAt(Iterable<GameCity> cities, int col, int row) {
-    for (final city in cities) {
-      if (city.occupiesCenter(col, row)) return city;
     }
     return null;
   }
