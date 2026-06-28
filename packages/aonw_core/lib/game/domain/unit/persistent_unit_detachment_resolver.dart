@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -118,7 +119,7 @@ class PersistentUnitDetachmentResolver {
       final tile = mapData.tileAt(neighbor.col, neighbor.row);
       if (tile == null) continue;
       if (!visibility.canInspectTile(tile)) continue;
-      if (_unitAt(state.units, neighbor.col, neighbor.row) != null) continue;
+      if (state.units.unitAt(neighbor.col, neighbor.row) != null) continue;
       if (UnitMovementCostRules.costToEnterTile(tile).blocked) continue;
       return neighbor;
     }
@@ -160,13 +161,6 @@ class PersistentUnitDetachmentResolver {
   static int? _unitIndexById(List<GameUnit> units, String unitId) {
     for (var i = 0; i < units.length; i++) {
       if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.col == col && unit.row == row) return unit;
     }
     return null;
   }

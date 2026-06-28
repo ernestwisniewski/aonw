@@ -235,7 +235,7 @@ bool _canFoundCityWithUnitId(GameView view, String unitId) {
 bool _isMoveCandidateLegal(MoveUnitCommand command, GameView view) {
   final unit = ownUnitById(view, command.unitId);
   if (unit == null || unit.isWorking) return false;
-  if (unit.col == command.targetCol && unit.row == command.targetRow) {
+  if (unit.occupies(command.targetCol, command.targetRow)) {
     return false;
   }
   if (view.mapData.tileAt(command.targetCol, command.targetRow) == null) {
@@ -246,7 +246,7 @@ bool _isMoveCandidateLegal(MoveUnitCommand command, GameView view) {
   }
   for (final other in view.movementBlockingUnits) {
     if (other.id == unit.id) continue;
-    if (other.col == command.targetCol && other.row == command.targetRow) {
+    if (other.occupies(command.targetCol, command.targetRow)) {
       return false;
     }
   }

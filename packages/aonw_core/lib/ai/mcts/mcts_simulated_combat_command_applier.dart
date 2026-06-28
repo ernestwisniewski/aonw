@@ -3,6 +3,7 @@ import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -294,7 +295,9 @@ final class MctsSimulatedCombatCommandApplier {
     final defenderModifiers = CombatModifierCollector.forDefender(
       unit: defender,
       tile: defenderTile,
-      defendedCity: _cityAt(defender.col, defender.row),
+      defendedCity:
+          ownCities.cityAt(defender.col, defender.row) ??
+          rememberedEnemyCities.cityAt(defender.col, defender.row),
       research: PlayerResearchState.empty,
       attacker: attacker,
       ruleset: view.ruleset.combat,
@@ -352,16 +355,6 @@ final class MctsSimulatedCombatCommandApplier {
       hitPoints >= maxHitPoints ? null : hitPoints,
     );
     return UnitVeterancyRules.addExperience(withHitPoints, experienceAward);
-  }
-
-  GameCity? _cityAt(int col, int row) {
-    for (final city in ownCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    for (final city in rememberedEnemyCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
   }
 
   int? _rememberedEnemyCityIndexAt(int col, int row) {

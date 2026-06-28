@@ -85,7 +85,7 @@ class PersistentArtifactCommandResolver {
       return _reject(state, 'carried_artifact_not_found');
     }
     final city = command.cityId == null
-        ? _cityAt(state, unit.col, unit.row)
+        ? state.cities.cityAt(unit.col, unit.row)
         : state.cities.byId(command.cityId!);
     if (city == null) return _reject(state, 'city_not_found');
     if (city.ownerPlayerId != actorPlayerId) {
@@ -203,13 +203,6 @@ class PersistentArtifactCommandResolver {
           artifact.location.occupiesMapTile(col, row)) {
         return artifact;
       }
-    }
-    return null;
-  }
-
-  static GameCity? _cityAt(PersistentGameState state, int col, int row) {
-    for (final city in state.cities) {
-      if (city.occupiesCenter(col, row)) return city;
     }
     return null;
   }

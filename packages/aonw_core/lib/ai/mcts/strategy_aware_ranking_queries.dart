@@ -72,17 +72,11 @@ bool isNearOwnCity(GameView view, int col, int row, int maxDistance) {
 }
 
 GameUnit? enemyAt(GameView view, int col, int row) {
-  for (final unit in view.visibleTargetableEnemyUnits) {
-    if (unit.col == col && unit.row == row) return unit;
-  }
-  return null;
+  return view.visibleTargetableEnemyUnits.unitAt(col, row);
 }
 
 GameCity? enemyCityAt(GameView view, int col, int row) {
-  for (final city in view.rememberedTargetableEnemyCities) {
-    if (city.occupiesCenter(col, row)) return city;
-  }
-  return null;
+  return view.rememberedTargetableEnemyCities.cityAt(col, row);
 }
 
 bool visibleMilitaryNear(GameView view, int col, int row, int maxDistance) {

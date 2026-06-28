@@ -199,7 +199,7 @@ abstract final class HudCombatPreviewFactory {
         : CombatModifierCollector.forDefender(
             unit: defender,
             tile: defenderTile,
-            defendedCity: _cityAt(state, defender.col, defender.row),
+            defendedCity: state.cityAt(defender.col, defender.row),
             research: state.research.forPlayer(defender.ownerPlayerId),
             ruleset: combatRuleset,
             technologyRuleset: technologyRuleset,
@@ -401,24 +401,17 @@ abstract final class HudCombatPreviewFactory {
     return candidates.isEmpty ? null : candidates.first;
   }
 
-  static GameCity? _cityAt(GameState state, int col, int row) {
-    for (final city in state.cities) {
-      if (city.center.col == col && city.center.row == row) return city;
-    }
-    return null;
-  }
-
   static GameCity? _enemyCityAt(
     GameState state,
     int col,
     int row,
     String attackerOwnerPlayerId,
   ) {
-    for (final city in state.cities) {
-      if (city.ownerPlayerId == attackerOwnerPlayerId) continue;
-      if (city.center.col == col && city.center.row == row) return city;
+    final city = state.cityAt(col, row);
+    if (city == null || city.ownerPlayerId == attackerOwnerPlayerId) {
+      return null;
     }
-    return null;
+    return city;
   }
 
   static int _damageFromAttack(CombatOutcome outcome) {

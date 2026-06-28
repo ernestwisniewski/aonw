@@ -62,7 +62,7 @@ abstract final class AiCityFoundingSafety {
     required HexCoordinate hex,
   }) {
     for (final city in view.rememberedEnemyCities) {
-      if (city.center.col == hex.col && city.center.row == hex.row) {
+      if (city.occupiesCenter(hex.col, hex.row)) {
         return true;
       }
       for (final controlled in city.controlledHexes) {

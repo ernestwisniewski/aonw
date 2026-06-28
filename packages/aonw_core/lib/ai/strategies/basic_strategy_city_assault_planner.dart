@@ -5,8 +5,8 @@ import 'package:aonw_core/ai/strategic/war_goal.dart';
 import 'package:aonw_core/ai/unit_roles.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyCityAssaultPlanner {
   const BasicStrategyCityAssaultPlanner();
@@ -69,8 +69,7 @@ final class BasicStrategyCityAssaultPlanner {
           city.ownerPlayerId,
         );
         if (matchingGoals.isEmpty && !pressureTarget) continue;
-        final centerOccupant = _unitAt(
-          view.movementBlockingUnits,
+        final centerOccupant = view.movementBlockingUnits.unitAt(
           city.center.col,
           city.center.row,
         );
@@ -145,13 +144,6 @@ final class BasicStrategyCityAssaultPlanner {
       commands.add(candidate.command);
     }
     return List.unmodifiable(commands);
-  }
-
-  GameUnit? _unitAt(Iterable<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.col == col && unit.row == row) return unit;
-    }
-    return null;
   }
 
   String _key(int col, int row) => '$col:$row';

@@ -45,7 +45,7 @@ abstract final class CityObjectiveSelectionItemsFactory {
   }
 
   static bool _cityControlsHex(GameCity city, CityHex hex) {
-    if (city.center.col == hex.col && city.center.row == hex.row) return true;
+    if (city.occupiesCenter(hex.col, hex.row)) return true;
     return city.controlledHexes.any(
       (controlled) => controlled.col == hex.col && controlled.row == hex.row,
     );

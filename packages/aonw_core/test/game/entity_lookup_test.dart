@@ -32,6 +32,28 @@ void main() {
       expect([player].byId('missing'), isNull);
     });
 
+    test('finds units and cities by occupied coordinates', () {
+      final unit = GameUnit(
+        id: 'unit_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Warrior',
+        col: 1,
+        row: 2,
+      );
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Warsaw',
+        center: CityHex(col: 3, row: 4),
+      );
+
+      expect([unit].unitAt(1, 2), same(unit));
+      expect([city].cityAt(3, 4), same(city));
+      expect([unit].unitAt(3, 4), isNull);
+      expect([city].cityAt(1, 2), isNull);
+    });
+
     test('finds save players by id', () {
       const player = Player(
         id: 'player_1',
