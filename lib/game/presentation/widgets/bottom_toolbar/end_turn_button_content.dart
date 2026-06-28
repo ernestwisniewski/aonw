@@ -141,33 +141,11 @@ class _EndTurnActionThumbnailBackdrop extends StatelessWidget {
       type: type,
       size: unitSize,
       fallback: GameIcon(
-        _fallbackUnitIcon(type),
+        gameIconForUnitType(type),
         size: unitSize * 0.52,
         color: foreground,
       ),
     );
-  }
-
-  GameIconData _fallbackUnitIcon(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => GameIcons.army,
-      GameUnitType.warrior => GameIcons.warrior,
-      GameUnitType.archer => GameIcons.archer,
-      GameUnitType.scout => GameIcons.visibility,
-      GameUnitType.settler => GameIcons.settler,
-      GameUnitType.worker => GameIcons.production,
-      GameUnitType.merchant => GameIcons.commerce,
-      GameUnitType.catapult => GameIcons.production,
-      GameUnitType.fieldCannon => GameIcons.production,
-      GameUnitType.scoutShip => GameIcons.visibility,
-      GameUnitType.reconPlane => GameIcons.visibility,
-      GameUnitType.spearman ||
-      GameUnitType.cavalry ||
-      GameUnitType.heavyInfantry ||
-      GameUnitType.rifleman ||
-      GameUnitType.tank ||
-      GameUnitType.warship => GameIcons.army,
-    };
   }
 
   double _unitThumbnailScale(GameUnitType type) {

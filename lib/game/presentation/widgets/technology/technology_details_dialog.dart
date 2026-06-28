@@ -7,6 +7,7 @@ import 'package:aonw/game/presentation/widgets/technology/technology_details_hea
 import 'package:aonw/game/presentation/widgets/technology/technology_details_sections.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_unlocks_section.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/game/presentation/widgets/visual/game_insight_widgets.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';

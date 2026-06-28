@@ -17,26 +17,6 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
-GameIconData gameIconForUnitType(GameUnitType type) => switch (type) {
-  GameUnitType.warrior => GameIcons.warrior,
-  GameUnitType.archer => GameIcons.archer,
-  GameUnitType.settler => GameIcons.settler,
-  GameUnitType.worker => GameIcons.production,
-  GameUnitType.merchant => GameIcons.commerce,
-  GameUnitType.commander => GameIcons.army,
-  GameUnitType.scout => GameIcons.visibility,
-  GameUnitType.spearman => GameIcons.attack,
-  GameUnitType.cavalry => GameIcons.move,
-  GameUnitType.catapult => GameIcons.production,
-  GameUnitType.heavyInfantry => GameIcons.defense,
-  GameUnitType.fieldCannon => GameIcons.attack,
-  GameUnitType.rifleman => GameIcons.archer,
-  GameUnitType.tank => GameIcons.defense,
-  GameUnitType.scoutShip => GameIcons.visibility,
-  GameUnitType.warship => GameIcons.attack,
-  GameUnitType.reconPlane => GameIcons.visibility,
-};
-
 class UnitDetailsPanel extends StatelessWidget {
   final GameUnitType unitType;
   final TechnologyDefinition? unlockingTechnology;

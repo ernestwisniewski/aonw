@@ -8,6 +8,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
