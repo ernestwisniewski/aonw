@@ -100,15 +100,8 @@ final class BasicStrategyDefenseMovement {
     }
     return BasicStrategyPlannedDefenseMove(
       command: MoveUnitCommand(unit.id, step.col, step.row),
-      reservedHexes: _reservedHexesFor(bestPlan),
+      reservedHexes: bestPlan.reservedHexes,
     );
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

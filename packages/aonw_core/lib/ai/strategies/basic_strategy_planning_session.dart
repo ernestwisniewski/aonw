@@ -163,9 +163,7 @@ abstract final class BasicStrategyCommandAnalysis {
       return reserved;
     }
 
-    for (final step in plan.reachableSteps.skip(1)) {
-      reserved.add(HexCoordinate(col: step.col, row: step.row));
-    }
+    reserved.addAll(plan.reservedHexes);
     return reserved;
   }
 }
