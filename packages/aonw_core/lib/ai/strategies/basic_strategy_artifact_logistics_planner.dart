@@ -162,7 +162,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
       }
       return _PlannedArtifactMove(
         command: MoveUnitCommand(unit.id, city.center.col, city.center.row),
-        reservedHexes: _reservedHexesFor(plan),
+        reservedHexes: plan.reservedHexes,
       );
     }
     return null;
@@ -224,7 +224,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
     final location = candidate.artifact.location;
     return _PlannedArtifactMove(
       command: MoveUnitCommand(unit.id, location.col!, location.row!),
-      reservedHexes: _reservedHexesFor(candidate.plan),
+      reservedHexes: candidate.plan.reservedHexes,
     );
   }
 
@@ -274,13 +274,6 @@ final class BasicStrategyArtifactLogisticsPlanner {
       for (final city in view.ownCities)
         if (!occupiedCityIds.contains(city.id)) city,
     ]..sort((a, b) => a.id.compareTo(b.id));
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

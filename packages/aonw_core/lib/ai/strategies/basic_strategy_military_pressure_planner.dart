@@ -323,7 +323,7 @@ final class BasicStrategyMilitaryPressurePlanner {
     if (plan == null || plan.totalCost > unit.movementPoints) return null;
     return _PlannedPressureMove(
       command: MoveUnitCommand(unit.id, target.col, target.row),
-      reservedHexes: _reservedHexesFor(plan),
+      reservedHexes: plan.reservedHexes,
     );
   }
 
@@ -357,13 +357,6 @@ final class BasicStrategyMilitaryPressurePlanner {
       if (city.occupiesCenter(col, row)) return true;
     }
     return false;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

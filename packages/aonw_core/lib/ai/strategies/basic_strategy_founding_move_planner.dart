@@ -119,7 +119,7 @@ final class BasicStrategyFoundingMovePlanner {
       }
       return BasicStrategyFoundingMovePlan(
         command: MoveUnitCommand(unit.id, site.center.col, site.center.row),
-        reservedHexes: _reservedHexesFor(plan),
+        reservedHexes: plan.reservedHexes,
       );
     }
 
@@ -389,10 +389,6 @@ final class BasicStrategyFoundingMovePlanner {
       }
     }
     return false;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {for (final step in plan.reachableSteps.skip(1)) step.hex};
   }
 
   String _key(int col, int row) => '$col:$row';

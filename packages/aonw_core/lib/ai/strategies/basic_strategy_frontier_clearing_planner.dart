@@ -164,7 +164,7 @@ final class BasicStrategyFrontierClearingPlanner {
 
     return (
       command: MoveUnitCommand(unit.id, step.col, step.row),
-      reservedHexes: _reservedHexesFor(plan),
+      reservedHexes: plan.reservedHexes,
     );
   }
 
@@ -173,13 +173,6 @@ final class BasicStrategyFrontierClearingPlanner {
       if (unit.col == hex.col && unit.row == hex.row) return unit;
     }
     return null;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

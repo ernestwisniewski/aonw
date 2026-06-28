@@ -189,7 +189,7 @@ final class BasicStrategyExplorationPlanner {
     if (plan == null || plan.totalCost > unit.movementPoints) return null;
     return _PlannedExplorationMove(
       command: MoveUnitCommand(unit.id, candidate.tile.col, candidate.tile.row),
-      reservedHexes: _reservedHexesFor(plan),
+      reservedHexes: plan.reservedHexes,
     );
   }
 
@@ -231,13 +231,6 @@ final class BasicStrategyExplorationPlanner {
       }
     }
     return false;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';
