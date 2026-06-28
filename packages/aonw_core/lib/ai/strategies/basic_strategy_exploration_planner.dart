@@ -116,12 +116,7 @@ final class BasicStrategyExplorationPlanner {
 
   bool _canExploreFrontier(GameUnit unit, Set<String> usedUnitIds) {
     if (usedUnitIds.contains(unit.id)) return false;
-    if (!AiUnitRoles.isMilitaryUnit(unit) ||
-        unit.isWorking ||
-        unit.queuedPath != null) {
-      return false;
-    }
-    return unit.movementPoints > 0;
+    return AiUnitRoles.isMilitaryUnit(unit) && unit.isReadyToAct;
   }
 
   _PlannedExplorationMove? _frontierMoveFor({
@@ -231,10 +226,7 @@ final class BasicStrategyExplorationPlanner {
 
   bool _hasAvailableReconFrontierExplorer(GameView view) {
     for (final unit in view.ownUnits) {
-      if (AiUnitRoles.isReconUnit(unit) &&
-          !unit.isWorking &&
-          unit.queuedPath == null &&
-          unit.movementPoints > 0) {
+      if (AiUnitRoles.isReconUnit(unit) && unit.isReadyToAct) {
         return true;
       }
     }

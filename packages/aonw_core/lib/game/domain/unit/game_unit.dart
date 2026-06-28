@@ -350,6 +350,9 @@ class GameUnit {
       workerAssignment != null ||
       excavatingArtifactId != null;
 
+  bool get isReadyToAct =>
+      !isWorking && movementPoints > 0 && queuedPath == null;
+
   bool get isCarryingArtifact => carriedArtifactId != null;
 
   bool get isFortified => posture == UnitPosture.fortified;

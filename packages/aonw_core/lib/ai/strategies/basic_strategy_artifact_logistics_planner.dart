@@ -230,19 +230,13 @@ final class BasicStrategyArtifactLogisticsPlanner {
 
   bool _canCollectArtifact(GameUnit unit, Set<String> usedUnitIds) {
     if (usedUnitIds.contains(unit.id)) return false;
-    if (!_isReadyUnit(unit) || unit.isFortified || unit.isCarryingArtifact) {
+    if (!unit.isReadyToAct || unit.isFortified || unit.isCarryingArtifact) {
       return false;
     }
     if (unit.isWorker || CityFoundingRules.canFoundCityWith(unit)) {
       return false;
     }
     return AiUnitRoles.isMilitaryUnit(unit);
-  }
-
-  bool _isReadyUnit(GameUnit unit) {
-    return !unit.isWorking &&
-        unit.movementPoints > 0 &&
-        unit.queuedPath == null;
   }
 
   int _compareArtifactCollectors(GameUnit a, GameUnit b) {

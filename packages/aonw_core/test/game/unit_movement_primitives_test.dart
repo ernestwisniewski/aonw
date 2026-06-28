@@ -204,6 +204,34 @@ void main() {
       expect(unit.isWorking, isTrue);
     });
 
+    test('reports whether unit is ready to act', () {
+      final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
+      final queued = unit.copyWithQueuedPath(
+        QueuedMovePath(targetCol: 1, targetRow: 1, steps: const []),
+      );
+      final working =
+          GameUnit(
+            id: 'worker_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.worker,
+            name: GameUnitType.worker.defaultNameToken,
+            col: 1,
+            row: 2,
+          ).copyWithWorkerJob(
+            const WorkerJob(
+              targetHex: CityHex(col: 2, row: 2),
+              improvementType: FieldImprovementType.mine,
+              remainingTurns: 2,
+              totalTurns: 4,
+            ),
+          );
+
+      expect(unit.isReadyToAct, isTrue);
+      expect(unit.copyWith(movementPoints: 0).isReadyToAct, isFalse);
+      expect(queued.isReadyToAct, isFalse);
+      expect(working.isReadyToAct, isFalse);
+    });
+
     test('tracks configurable worker improvement charges', () {
       final worker = GameUnit.produced(
         id: 'worker_1',

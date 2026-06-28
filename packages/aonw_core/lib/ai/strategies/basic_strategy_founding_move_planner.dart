@@ -384,10 +384,7 @@ final class BasicStrategyFoundingMovePlanner {
 
   bool _hasAvailableReconFrontierExplorer(GameView view) {
     for (final unit in view.ownUnits) {
-      if (AiUnitRoles.isReconUnit(unit) &&
-          !unit.isWorking &&
-          unit.queuedPath == null &&
-          unit.movementPoints > 0) {
+      if (AiUnitRoles.isReconUnit(unit) && unit.isReadyToAct) {
         return true;
       }
     }

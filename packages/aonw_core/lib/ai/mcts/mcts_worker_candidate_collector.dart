@@ -2,7 +2,6 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 final class MctsWorkerCandidateCollector {
   const MctsWorkerCandidateCollector();
@@ -18,7 +17,7 @@ final class MctsWorkerCandidateCollector {
     final commands = <GameCommand>[];
 
     for (final worker in workers) {
-      if (!_isReadyUnit(worker)) continue;
+      if (!worker.isReadyToAct) continue;
 
       final assignment = WorkerAssignmentRules.evaluate(
         unit: worker,
@@ -53,11 +52,5 @@ final class MctsWorkerCandidateCollector {
 
   static ResearchState _researchFor(GameView view) {
     return ResearchState(players: {view.forPlayerId: view.ownResearch});
-  }
-
-  static bool _isReadyUnit(GameUnit unit) {
-    return !unit.isWorking &&
-        unit.movementPoints > 0 &&
-        unit.queuedPath == null;
   }
 }

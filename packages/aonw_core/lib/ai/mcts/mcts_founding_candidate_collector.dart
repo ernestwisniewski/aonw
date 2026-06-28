@@ -176,10 +176,7 @@ final class MctsFoundingCandidateCollector {
   }
 
   static bool _isReadyFounder(GameUnit unit) {
-    return !unit.isWorking &&
-        unit.movementPoints > 0 &&
-        unit.queuedPath == null &&
-        CityFoundingRules.canFoundCityWith(unit);
+    return unit.isReadyToAct && CityFoundingRules.canFoundCityWith(unit);
   }
 }
 

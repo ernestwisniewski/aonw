@@ -2,7 +2,6 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 
 final class MctsMovementCandidateCollector {
   const MctsMovementCandidateCollector();
@@ -15,7 +14,7 @@ final class MctsMovementCandidateCollector {
     );
 
     for (final unit in units) {
-      if (!_isReadyUnit(unit)) continue;
+      if (!unit.isReadyToAct || unit.isMerchant) continue;
 
       final origin = HexCoordinate(col: unit.col, row: unit.row);
       for (final neighbor in HexNeighbors.existingAround(
@@ -32,10 +31,4 @@ final class MctsMovementCandidateCollector {
       }
     }
   }
-
-  static bool _isReadyUnit(GameUnit unit) =>
-      !unit.isMerchant &&
-      !unit.isWorking &&
-      unit.movementPoints > 0 &&
-      unit.queuedPath == null;
 }
