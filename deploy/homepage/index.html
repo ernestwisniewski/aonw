@@ -327,6 +327,24 @@
           0 0.54rem 1.2rem rgba(0, 0, 0, 0.76);
       }
 
+      .screen-text a {
+        color: #f1dfaa;
+        font-weight: 500;
+        text-decoration: none;
+        text-underline-offset: 0.18em;
+      }
+
+      .screen-text a:hover,
+      .screen-text a:focus-visible {
+        text-decoration: underline;
+      }
+
+      .screen-text a:focus-visible {
+        border-radius: 0.2rem;
+        outline: 2px solid var(--gold);
+        outline-offset: 0.18rem;
+      }
+
       .logo-link {
         animation: logo-breathe 7s ease-in-out infinite;
         display: inline-grid;
@@ -586,6 +604,32 @@
         padding: 0;
         place-items: center;
         position: absolute;
+        z-index: 3;
+      }
+
+      .video-swipe-zone {
+        background: transparent;
+        bottom: 0;
+        cursor: grab;
+        display: block;
+        position: absolute;
+        top: 0;
+        touch-action: pan-y;
+        user-select: none;
+        width: clamp(3rem, 14%, 8rem);
+        z-index: 4;
+      }
+
+      .video-swipe-zone--left {
+        left: 0;
+      }
+
+      .video-swipe-zone--right {
+        right: 0;
+      }
+
+      .media-carousel.is-dragging .video-swipe-zone {
+        cursor: grabbing;
       }
 
       .video-frame.is-interactive .video-cover {
@@ -1254,6 +1298,16 @@
                       data-video-cover
                       aria-label="Play Age of New Worlds trailer"
                     ></button>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--left"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--right"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
                   </div>
                 </div>
                 <div
@@ -1277,6 +1331,16 @@
                       data-video-cover
                       aria-label="Play Age of New Worlds gameplay showcase"
                     ></button>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--left"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--right"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
                   </div>
                 </div>
                 <div
@@ -1300,6 +1364,16 @@
                       data-video-cover
                       aria-label="Play Age of New Worlds gameplay video"
                     ></button>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--left"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
+                    <span
+                      class="video-swipe-zone video-swipe-zone--right"
+                      data-carousel-drag-zone
+                      aria-hidden="true"
+                    ></span>
                   </div>
                 </div>
               </div>
@@ -1349,8 +1423,9 @@
             <p class="screen-kicker">Play</p>
             <h2 class="screen-title" id="platforms-title">Choose your platform</h2>
             <p class="screen-text">
-              The browser demo, iOS version, and Steam page are live now. More
-              native store versions are planned as the game moves toward broader release.
+              You can try Age of New Worlds for free on
+              <a href="https://ernest-dev.itch.io/aonw">itch.io</a>. More native
+              store versions are planned as the game moves toward broader release.
             </p>
           </div>
           <nav class="reveal-item" aria-label="Age of New Worlds platform links">
@@ -1701,6 +1776,12 @@
           track.style.transform = `translateX(${-index * 100}%)`;
         };
 
+        const canStartCarouselDrag = (target) => {
+          if (!(target instanceof Element)) return false;
+          if (target.closest("[data-carousel-drag-zone]")) return true;
+          return !target.closest("a, button, iframe, [data-video-cover], .video-frame.is-interactive");
+        };
+
         const scheduleNextSlide = (delayMs) => {
           clearRotationTimer();
           timer = window.setTimeout(() => {
@@ -1797,6 +1878,7 @@
             "pointerdown",
             (event) => {
               if (event.pointerType === "mouse" && event.button !== 0) return;
+              if (!canStartCarouselDrag(event.target)) return;
               if (event.target instanceof HTMLImageElement) event.preventDefault();
               dragState = {
                 pointerId: event.pointerId,
