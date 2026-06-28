@@ -486,6 +486,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Welcome to the Age of New Worlds. Build cities, lead commanders, discover new lands, and write the history of your civilization.';
 
   @override
+  String get mainMenuUpdateSoonTitle => 'Update incoming';
+
+  @override
+  String get mainMenuUpdateSoonBody =>
+      'A newer version is ready and will appear on this platform soon. Check your store or launcher again shortly.';
+
+  @override
   String get gameModeLabel => 'MODE';
 
   @override

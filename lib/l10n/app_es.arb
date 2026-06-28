@@ -189,6 +189,8 @@
   "manualMobileTurnBody": "Salta a la siguiente decisión requerida o termina el turno cuando se hayan gastado todos los puntos de acción.",
   "mainMenuWhatsNew": "Novedades",
   "mainMenuWhatsNewBody": "Bienvenido a Age of New Worlds. Construye ciudades, dirige comandantes, descubre nuevas tierras y escribe la historia de tu civilización.",
+  "mainMenuUpdateSoonTitle": "Actualización en camino",
+  "mainMenuUpdateSoonBody": "Una versión más reciente ya está lista y aparecerá pronto en esta plataforma. Vuelve a revisar tu tienda o lanzador dentro de poco.",
   "gameModeLabel": "MODO",
   "gameNameLabel": "NOMBRE DE LA PARTIDA",
   "playersLabel": "JUGADORES",

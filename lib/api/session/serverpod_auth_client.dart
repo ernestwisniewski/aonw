@@ -1,8 +1,12 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 
-sp.Client createServerpodClient(String host, {AuthToken? token}) {
-  final client = sp.Client(host);
+sp.Client createServerpodClient(
+  String host, {
+  AuthToken? token,
+  Duration? connectionTimeout,
+}) {
+  final client = sp.Client(host, connectionTimeout: connectionTimeout);
   if (token != null) {
     client.authKeyProvider = ServerpodAuthTokenProvider(token);
   }

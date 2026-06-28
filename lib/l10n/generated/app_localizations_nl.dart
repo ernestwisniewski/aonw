@@ -488,6 +488,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Welkom in het tijdperk van de nieuwe werelden. Bouw steden, leid commandanten, ontdek nieuwe landen en schrijf de geschiedenis van je beschaving.';
 
   @override
+  String get mainMenuUpdateSoonTitle => 'Update onderweg';
+
+  @override
+  String get mainMenuUpdateSoonBody =>
+      'Een nieuwere versie staat klaar en verschijnt binnenkort op dit platform. Controleer je store of launcher straks opnieuw.';
+
+  @override
   String get gameModeLabel => 'MODUS';
 
   @override

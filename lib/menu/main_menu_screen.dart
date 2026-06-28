@@ -8,6 +8,7 @@ import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/menu/app_exit.dart';
+import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw/menu/menu_animated_background.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -302,16 +303,21 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
   }
 }
 
-class _MenuSynopsis extends StatelessWidget {
+class _MenuSynopsis extends ConsumerWidget {
   const _MenuSynopsis({required this.compact});
 
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (MediaQuery.sizeOf(context).height < 760) {
       return const SizedBox.shrink();
     }
+    final updateNotice = _updateNoticeFor(ref);
+    final title =
+        updateNotice?.title(context.l10n) ?? 'BUILD · RESEARCH · COMMAND';
+    final body =
+        updateNotice?.body(context.l10n) ?? context.l10n.mainMenuWhatsNewBody;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: GameUiTheme.bg.withAlpha(118),
@@ -324,18 +330,20 @@ class _MenuSynopsis extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'BUILD · RESEARCH · COMMAND',
+              title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GameUiTheme.toolbarLabel.copyWith(
-                color: GameUiTheme.goldLight,
+                color: updateNotice == null
+                    ? GameUiTheme.goldLight
+                    : GameUiTheme.gold,
                 fontSize: 10,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              context.l10n.mainMenuWhatsNewBody,
-              maxLines: compact ? 2 : 3,
+              body,
+              maxLines: compact && updateNotice == null ? 2 : 3,
               overflow: TextOverflow.ellipsis,
               style: GameUiTheme.bodySmall.copyWith(
                 color: GameUiTheme.textPrimary,
@@ -813,12 +821,13 @@ class _RightInfoColumn extends StatelessWidget {
   }
 }
 
-class _WhatsNewPanel extends StatelessWidget {
+class _WhatsNewPanel extends ConsumerWidget {
   const _WhatsNewPanel();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final updateNotice = _updateNoticeFor(ref);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: GameUiTheme.bg.withAlpha(176),
@@ -858,6 +867,12 @@ class _WhatsNewPanel extends StatelessWidget {
             const SizedBox(height: 8),
             const GoldDivider(),
             const SizedBox(height: 8),
+            if (updateNotice != null) ...[
+              _UpdateNoticeBlock(notice: updateNotice),
+              const SizedBox(height: 10),
+              const GoldDivider(),
+              const SizedBox(height: 8),
+            ],
             Text(
               l10n.mainMenuWhatsNewBody,
               style: GameUiTheme.body.copyWith(
@@ -871,4 +886,48 @@ class _WhatsNewPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _UpdateNoticeBlock extends StatelessWidget {
+  const _UpdateNoticeBlock({required this.notice});
+
+  final MainMenuUpdateNotice notice;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    const color = GameUiTheme.goldLight;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.system_update_alt_rounded, color: color, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                GameText.sectionLabel(notice.title(l10n)),
+                style: GameUiTheme.sectionHeader.copyWith(color: color),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                notice.body(l10n),
+                style: GameUiTheme.body.copyWith(
+                  color: GameUiTheme.goldLight,
+                  fontSize: 11.5,
+                  height: 1.38,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+MainMenuUpdateNotice? _updateNoticeFor(WidgetRef ref) {
+  final notice = ref.watch(mainMenuUpdateNoticeProvider);
+  return notice is AsyncData<MainMenuUpdateNotice?> ? notice.value : null;
 }

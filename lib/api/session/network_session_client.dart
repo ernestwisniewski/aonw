@@ -130,6 +130,15 @@ class NetworkSessionClient {
 
   NetworkSessionClient({required this.serverpodHost});
 
+  Future<String> versionStatus({
+    required String platform,
+    required int buildNumber,
+  }) {
+    return _client(
+      connectionTimeout: const Duration(seconds: 3),
+    ).appStatus.versionStatus(platform: platform, buildNumber: buildNumber);
+  }
+
   Future<NetworkAuthResult> login({
     required String email,
     required String password,
@@ -348,8 +357,12 @@ class NetworkSessionClient {
     return _withToken(token, (client) => client.multiplayer.loadMatch(matchId));
   }
 
-  sp.Client _client({AuthToken? token}) {
-    return createServerpodClient(serverpodHost, token: token);
+  sp.Client _client({AuthToken? token, Duration? connectionTimeout}) {
+    return createServerpodClient(
+      serverpodHost,
+      token: token,
+      connectionTimeout: connectionTimeout,
+    );
   }
 
   Future<T> _withToken<T>(
