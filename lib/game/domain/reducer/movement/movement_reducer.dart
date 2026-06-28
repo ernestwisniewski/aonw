@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
@@ -11,6 +10,7 @@ import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -411,20 +411,6 @@ abstract final class MovementReducer {
     steps: plan.steps,
   );
 
-  static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.col == col && unit.row == row) return unit;
-    }
-    return null;
-  }
-
-  static GameCity? _cityAt(GameState state, int col, int row) {
-    for (final city in state.cities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
-  }
-
   static bool _isForeignCityCenter(
     GameState state,
     GameUnit unit,
@@ -448,7 +434,7 @@ abstract final class MovementReducer {
     if (step.col != targetTile.col || step.row != targetTile.row) {
       return false;
     }
-    final city = _cityAt(state, step.col, step.row);
+    final city = state.cityAt(step.col, step.row);
     return city?.ownerPlayerId == unit.ownerPlayerId;
   }
 

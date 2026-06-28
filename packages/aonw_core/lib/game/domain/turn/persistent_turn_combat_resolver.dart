@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -244,7 +245,7 @@ abstract final class PersistentTurnCombatResolver {
     final defenderTile = _tileDataAt(mapDefinition, defender.col, defender.row);
     final attackerResearch = state.research.forPlayer(attacker.ownerPlayerId);
     final defenderResearch = state.research.forPlayer(defender.ownerPlayerId);
-    final defendedCity = _cityAt(cities, defender.col, defender.row);
+    final defendedCity = cities.cityAt(defender.col, defender.row);
 
     final attackerModifiers = attackerTile == null
         ? const <CombatModifier>[]
@@ -324,7 +325,7 @@ abstract final class PersistentTurnCombatResolver {
 
   static int? _unitIndexAt(List<GameUnit> units, int col, int row) {
     for (var i = 0; i < units.length; i++) {
-      if (units[i].col == col && units[i].row == row) return i;
+      if (units[i].occupies(col, row)) return i;
     }
     return null;
   }
@@ -532,13 +533,6 @@ abstract final class PersistentTurnCombatResolver {
     final status = diplomacy.statusBetween(attackerPlayerId, defenderPlayerId);
     return status == DiplomaticRelationStatus.friendly ||
         status == DiplomaticRelationStatus.truce;
-  }
-
-  static GameCity? _cityAt(List<GameCity> cities, int col, int row) {
-    for (final city in cities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
   }
 
   static GameUnit _withCombatState(

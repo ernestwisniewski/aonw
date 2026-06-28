@@ -36,7 +36,7 @@ final class MctsCommandReconciliationRules {
     }
 
     final knownUnits = view.movementBlockingUnits;
-    final targetBlocker = unitAt(knownUnits, targetTile.col, targetTile.row);
+    final targetBlocker = knownUnits.unitAt(targetTile.col, targetTile.row);
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: knownUnits,
@@ -105,8 +105,7 @@ final class MctsCommandReconciliationRules {
   ) {
     final reserved = {hexKey(command.defenderCol, command.defenderRow)};
     final attacker = unitById(view.ownUnits, command.attackerUnitId);
-    final defender = unitAt(
-      view.visibleEnemyUnits,
+    final defender = view.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -143,8 +142,7 @@ final class MctsCommandReconciliationRules {
       row: command.defenderRow,
     );
     final reserved = {hexKey(target.col, target.row)};
-    final defender = unitAt(
-      view.visibleEnemyUnits,
+    final defender = view.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -190,7 +188,7 @@ final class MctsCommandReconciliationRules {
   bool moveWouldBeNoOp(MoveUnitCommand command, SimulatedState state) {
     final unit = unitById(state.ownUnits, command.unitId);
     if (unit == null || unit.isWorking) return true;
-    if (unit.col == command.targetCol && unit.row == command.targetRow) {
+    if (unit.occupies(command.targetCol, command.targetRow)) {
       return true;
     }
     if (state.view.mapData.tileAt(command.targetCol, command.targetRow) ==
@@ -206,7 +204,7 @@ final class MctsCommandReconciliationRules {
     }
     for (final other in state.view.movementBlockingUnits) {
       if (other.id == unit.id) continue;
-      if (other.col == command.targetCol && other.row == command.targetRow) {
+      if (other.occupies(command.targetCol, command.targetRow)) {
         return true;
       }
     }
@@ -230,8 +228,7 @@ final class MctsCommandReconciliationRules {
   bool attackWouldBeNoOp(AttackHexCommand command, SimulatedState state) {
     final attacker = unitById(state.ownUnits, command.attackerUnitId);
     if (attacker == null || attacker.isWorking) return true;
-    final ownTargetOccupant = unitAt(
-      state.ownUnits,
+    final ownTargetOccupant = state.ownUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -239,16 +236,14 @@ final class MctsCommandReconciliationRules {
         ownTargetOccupant.id != command.attackerUnitId) {
       return true;
     }
-    if (unitAt(
-          state.visibleEnemyUnits,
+    if (state.visibleEnemyUnits.unitAt(
           command.defenderCol,
           command.defenderRow,
         ) !=
         null) {
       return false;
     }
-    return cityAt(
-          state.rememberedEnemyCities,
+    return state.rememberedEnemyCities.cityAt(
           command.defenderCol,
           command.defenderRow,
         ) ==
@@ -262,14 +257,12 @@ final class MctsCommandReconciliationRules {
   }) {
     final previousAttacker = unitById(before.ownUnits, command.attackerUnitId);
     final nextAttacker = unitById(after.ownUnits, command.attackerUnitId);
-    final previousDefender = unitAt(
-      before.visibleEnemyUnits,
+    final previousDefender = before.visibleEnemyUnits.unitAt(
       command.defenderCol,
       command.defenderRow,
     );
     final previousCity = previousDefender == null
-        ? cityAt(
-            before.rememberedEnemyCities,
+        ? before.rememberedEnemyCities.cityAt(
             command.defenderCol,
             command.defenderRow,
           )
@@ -292,20 +285,6 @@ final class MctsCommandReconciliationRules {
 
   GameUnit? unitById(Iterable<GameUnit> units, String unitId) {
     return units.byId(unitId);
-  }
-
-  GameUnit? unitAt(Iterable<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.col == col && unit.row == row) return unit;
-    }
-    return null;
-  }
-
-  GameCity? cityAt(Iterable<GameCity> cities, int col, int row) {
-    for (final city in cities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
   }
 
   GameCity? cityById(Iterable<GameCity> cities, String cityId) {
@@ -395,7 +374,7 @@ final class MctsCommandReconciliationRules {
 
   bool isRememberedEnemyCityHex(GameView view, int col, int row) {
     for (final city in view.rememberedEnemyCities) {
-      if (city.center.col == col && city.center.row == row) return true;
+      if (city.occupiesCenter(col, row)) return true;
       for (final hex in city.controlledHexes) {
         if (hex.col == col && hex.row == row) return true;
       }

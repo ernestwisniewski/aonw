@@ -354,7 +354,7 @@ final class BasicStrategyMilitaryPressurePlanner {
 
   bool _isRememberedTargetableEnemyCityCenter(GameView view, int col, int row) {
     for (final city in view.rememberedTargetableEnemyCities) {
-      if (city.center.col == col && city.center.row == row) return true;
+      if (city.occupiesCenter(col, row)) return true;
     }
     return false;
   }

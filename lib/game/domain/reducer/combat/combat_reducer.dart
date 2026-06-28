@@ -467,11 +467,9 @@ abstract final class CombatReducer {
   ) {
     final defender = state.unitAt(command.defenderCol, command.defenderRow);
     if (defender != null) return defender.ownerPlayerId;
-    return _cityAt(
-      state,
-      command.defenderCol,
-      command.defenderRow,
-    )?.ownerPlayerId;
+    return state
+        .cityAt(command.defenderCol, command.defenderRow)
+        ?.ownerPlayerId;
   }
 
   static Combatant _combatant({
@@ -570,13 +568,6 @@ abstract final class CombatReducer {
     );
     return status == DiplomaticRelationStatus.friendly ||
         status == DiplomaticRelationStatus.truce;
-  }
-
-  static GameCity? _cityAt(GameState state, int col, int row) {
-    for (final city in state.cities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
   }
 
   static GameState _refreshSelection(

@@ -226,22 +226,14 @@ abstract final class _MovePreviewReducer {
     final targetIsKnown = !fogTracksPlayer || tileVisibility.isKnown;
     final targetDynamicVisible = !fogTracksPlayer || tileVisibility.isVisible;
 
-    final targetBlocker = MovementReducer._unitAt(
-      state.units,
-      targetTile.col,
-      targetTile.row,
-    );
+    final targetBlocker = state.units.unitAt(targetTile.col, targetTile.row);
     if (targetBlocker != null && targetBlocker.id != unit.id) {
       if (targetBlocker.ownerPlayerId != unit.ownerPlayerId &&
           !targetDynamicVisible) {
         // Enemy units are dynamic information and must not be revealed by
         // movement feedback while their tile is under fog.
       } else {
-        final city = MovementReducer._cityAt(
-          state,
-          targetTile.col,
-          targetTile.row,
-        );
+        final city = state.cityAt(targetTile.col, targetTile.row);
         if (city != null) {
           return const ShowHudFeedbackEffect(
             reason: HudFeedbackReason.movementCityOccupied,

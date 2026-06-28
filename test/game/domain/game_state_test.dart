@@ -382,6 +382,18 @@ void main() {
         expect(state.unitAt(0, 0), isNull);
       });
 
+      test('cityAt returns city at given center coordinates', () {
+        const city = GameCity(
+          id: 'city_1',
+          ownerPlayerId: 'p1',
+          name: 'Warsaw',
+          center: CityHex(col: 4, row: 6),
+        );
+        const state = GameState(cities: [city]);
+        expect(state.cityAt(4, 6), equals(city));
+        expect(state.cityAt(0, 0), isNull);
+      });
+
       test('activePlayerVisibility returns query for active player', () {
         const fog = FogOfWarState.empty;
         const state = GameState(activePlayerId: 'p1', fogOfWar: fog);

@@ -32,13 +32,12 @@ bool _isStaleMoveCommand(GameCommand command, PersistentGameState state) {
   for (final unit in state.units) {
     if (unit.id == command.unitId) {
       movingUnit = unit;
-    } else if (unit.col == command.targetCol && unit.row == command.targetRow) {
+    } else if (unit.occupies(command.targetCol, command.targetRow)) {
       return true;
     }
   }
   if (movingUnit == null) return false;
-  return movingUnit.col == command.targetCol &&
-      movingUnit.row == command.targetRow;
+  return movingUnit.occupies(command.targetCol, command.targetRow);
 }
 
 bool _isStaleAttackCommand(

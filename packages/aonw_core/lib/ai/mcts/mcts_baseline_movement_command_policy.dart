@@ -45,7 +45,7 @@ final class MctsBaselineMovementCommandPolicy {
     required Set<String> reservedMoveTargets,
   }) {
     if (unit.isWorking || unit.movementPoints <= 0) return false;
-    if (unit.col == command.targetCol && unit.row == command.targetRow) {
+    if (unit.occupies(command.targetCol, command.targetRow)) {
       return false;
     }
     final targetTile = view.mapData.tileAt(
@@ -75,7 +75,7 @@ final class MctsBaselineMovementCommandPolicy {
     if (reservedMoveTargets.contains(targetKey)) return false;
     for (final other in view.movementBlockingUnits) {
       if (other.id == unit.id) continue;
-      if (other.col == command.targetCol && other.row == command.targetRow) {
+      if (other.occupies(command.targetCol, command.targetRow)) {
         return false;
       }
     }

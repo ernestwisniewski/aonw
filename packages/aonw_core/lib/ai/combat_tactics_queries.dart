@@ -26,10 +26,7 @@ abstract final class _CombatTacticsQueries {
   }
 
   static GameUnit? enemyAt(GameView view, int col, int row) {
-    for (final unit in view.visibleEnemyUnits) {
-      if (unit.col == col && unit.row == row) return unit;
-    }
-    return null;
+    return view.visibleEnemyUnits.unitAt(col, row);
   }
 
   static GameCity? targetableEnemyCityAt({
@@ -46,10 +43,7 @@ abstract final class _CombatTacticsQueries {
   }
 
   static GameCity? enemyCityAt(GameView view, int col, int row) {
-    for (final city in view.rememberedEnemyCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
+    return view.rememberedEnemyCities.cityAt(col, row);
   }
 
   static ({TileData attacker, TileData defender})? unitAttackTiles({
@@ -176,13 +170,8 @@ abstract final class _CombatTacticsQueries {
   }
 
   static GameCity? cityAt(GameView view, int col, int row) {
-    for (final city in view.ownCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    for (final city in view.rememberedEnemyCities) {
-      if (city.occupiesCenter(col, row)) return city;
-    }
-    return null;
+    return view.ownCities.cityAt(col, row) ??
+        view.rememberedEnemyCities.cityAt(col, row);
   }
 
   static int nearestOwnCityDistance(GameView view, int col, int row) {
