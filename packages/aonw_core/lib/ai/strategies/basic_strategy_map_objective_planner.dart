@@ -113,7 +113,7 @@ final class BasicStrategyMapObjectivePlanner {
       }
       final candidate = _ObjectiveMove(
         command: MoveUnitCommand(unit.id, step.col, step.row),
-        reservedHexes: _reservedHexesFor(plan),
+        reservedHexes: plan.reservedHexes,
         score: _moveScore(unit, objective, plan),
       );
       if (best == null ||
@@ -180,13 +180,6 @@ final class BasicStrategyMapObjectivePlanner {
 
   int _objectiveReward(MapObjectiveDefinition objective) {
     return objective.victoryPoints + objective.goldPerTurn;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

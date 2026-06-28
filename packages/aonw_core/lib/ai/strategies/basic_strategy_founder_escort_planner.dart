@@ -249,7 +249,7 @@ final class BasicStrategyFounderEscortPlanner {
       final candidate = _FounderEscortMoveCandidate(
         command: MoveUnitCommand(unit.id, step.col, step.row),
         origin: current,
-        reservedHexes: _reservedHexesFor(plan),
+        reservedHexes: plan.reservedHexes,
         score: score,
       );
       if (best == null || candidate.score > best.score) best = candidate;
@@ -278,13 +278,6 @@ final class BasicStrategyFounderEscortPlanner {
           return a.row.compareTo(b.row);
         });
     return targets;
-  }
-
-  Set<HexCoordinate> _reservedHexesFor(UnitMovementPlan plan) {
-    return {
-      for (final step in plan.reachableSteps.skip(1))
-        HexCoordinate(col: step.col, row: step.row),
-    };
   }
 
   String _key(int col, int row) => '$col:$row';

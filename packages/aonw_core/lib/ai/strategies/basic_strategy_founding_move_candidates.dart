@@ -13,9 +13,7 @@ final class _ReachableFounderMove {
 
   int get movementCost => plan.totalCost;
 
-  Set<HexCoordinate> get reservedHexes {
-    return {for (final step in plan.reachableSteps.skip(1)) step.hex};
-  }
+  Set<HexCoordinate> get reservedHexes => plan.reservedHexes;
 
   BasicStrategyFoundingMovePlan toPlan(GameUnit unit) {
     return BasicStrategyFoundingMovePlan(
@@ -106,10 +104,6 @@ final class _FounderRetreatCandidate
 }
 
 extension _FounderUnitHex on GameUnit {
-  HexCoordinate get hex => HexCoordinate(col: col, row: row);
-}
-
-extension _UnitMovementStepHex on UnitMovementStep {
   HexCoordinate get hex => HexCoordinate(col: col, row: row);
 }
 

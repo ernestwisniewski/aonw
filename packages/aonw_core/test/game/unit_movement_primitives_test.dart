@@ -232,6 +232,28 @@ void main() {
       expect(working.isReadyToAct, isFalse);
     });
 
+    test('exposes reserved movement hexes from reachable steps', () {
+      final plan = UnitMovementPlan(
+        unitId: 'unit_1',
+        targetCol: 3,
+        targetRow: 0,
+        totalCost: 3,
+        availableMovementPoints: 2,
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+          UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+          UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
+        ],
+      );
+
+      expect(plan.steps[1].hex, const HexCoordinate(col: 1, row: 0));
+      expect(plan.reservedHexes, {
+        const HexCoordinate(col: 1, row: 0),
+        const HexCoordinate(col: 2, row: 0),
+      });
+    });
+
     test('tracks configurable worker improvement charges', () {
       final worker = GameUnit.produced(
         id: 'worker_1',

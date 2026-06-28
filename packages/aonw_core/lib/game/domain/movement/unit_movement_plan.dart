@@ -1,3 +1,5 @@
+import 'package:aonw_core/game/domain/hex.dart';
+
 class UnitMovementStep {
   final int col;
   final int row;
@@ -12,6 +14,8 @@ class UnitMovementStep {
   });
 
   ({int col, int row}) get coord => (col: col, row: row);
+
+  HexCoordinate get hex => HexCoordinate(col: col, row: row);
 
   @override
   bool operator ==(Object other) {
@@ -65,6 +69,10 @@ class UnitMovementPlan {
       for (final step in steps)
         if (canReachStepThisTurn(step)) step,
     ];
+  }
+
+  Set<HexCoordinate> get reservedHexes {
+    return {for (final step in reachableSteps.skip(1)) step.hex};
   }
 
   UnitMovementStep? get furthestReachableStep {

@@ -63,8 +63,8 @@ final class MctsCommandReconciliationRules {
       return reserved;
     }
 
-    for (final step in plan.reachableSteps.skip(1)) {
-      reserved.add(hexKey(step.col, step.row));
+    for (final hex in plan.reservedHexes) {
+      reserved.add(hexKey(hex.col, hex.row));
     }
     reserved.addAll(
       reservedReachableApproachTargets(
