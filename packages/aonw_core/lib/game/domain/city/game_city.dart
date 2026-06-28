@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_progression.dart';
 import 'package:aonw_core/game/domain/city/city_progression_catalog.dart';
 import 'package:aonw_core/game/domain/city/city_specialization.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 class GameCity {
@@ -209,6 +210,8 @@ class GameCity {
   List<CityHex> get territoryHexes => [center, ...controlledHexes];
 
   int get territoryHexCount => territoryHexes.length;
+
+  HexCoordinate get coordinate => center.coordinate;
 
   bool occupiesCenter(int col, int row) => center.occupies(col, row);
 

@@ -33,20 +33,18 @@ final class DiplomaticRelation {
   }
 
   factory DiplomaticRelation.fromJson(Map<String, dynamic> json) {
+    final reader = WireJson(json, 'DiplomaticRelation');
     return DiplomaticRelation.between(
-      playerAId: _requiredString(json, 'playerAId'),
-      playerBId: _requiredString(json, 'playerBId'),
-      status: _statusFromJson(json['status']),
-      relationScore: _optionalInt(json['relationScore'], 'relationScore') ?? 0,
-      statusExpiresOnTurn: _optionalNonNegativeInt(
-        json['statusExpiresOnTurn'],
-        'statusExpiresOnTurn',
+      playerAId: reader.requiredString('playerAId'),
+      playerBId: reader.requiredString('playerBId'),
+      status: reader.requiredEnum('status', DiplomaticRelationStatus.values),
+      relationScore: _optionalRelationScore(json['relationScore']) ?? 0,
+      statusExpiresOnTurn: reader.optionalNonNegativeInt('statusExpiresOnTurn'),
+      lastChangedTurn: reader.optionalNonNegativeInt('lastChangedTurn'),
+      lastChangeReason: reader.optionalEnum(
+        'lastChangeReason',
+        DiplomaticRelationChangeReason.values,
       ),
-      lastChangedTurn: _optionalNonNegativeInt(
-        json['lastChangedTurn'],
-        'lastChangedTurn',
-      ),
-      lastChangeReason: _reasonFromJson(json['lastChangeReason']),
     );
   }
 
@@ -117,64 +115,8 @@ final class DiplomaticRelation {
 
   static const Object _unset = Object();
 
-  static String _requiredString(Map<String, dynamic> json, String field) {
-    final value = json[field];
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      'DiplomaticRelation.$field',
-      'Expected a non-empty String',
-    );
-  }
-
-  static int? _optionalNonNegativeInt(Object? value, String field) {
-    if (value == null) return null;
-    if (value is num && value >= 0 && value.toInt() == value) {
-      return value.toInt();
-    }
-    throw ArgumentError.value(
-      value,
-      'DiplomaticRelation.$field',
-      'Expected a non-negative integer',
-    );
-  }
-
-  static int? _optionalInt(Object? value, String field) {
-    if (value == null) return null;
-    if (value is num && value.toInt() == value) {
-      return value.toInt().clamp(-100, 100);
-    }
-    throw ArgumentError.value(
-      value,
-      'DiplomaticRelation.$field',
-      'Expected an integer',
-    );
-  }
-
-  static DiplomaticRelationStatus _statusFromJson(Object? value) {
-    if (value is String) {
-      for (final status in DiplomaticRelationStatus.values) {
-        if (status.name == value) return status;
-      }
-    }
-    throw ArgumentError.value(
-      value,
-      'DiplomaticRelation.status',
-      'Unknown diplomatic relation status',
-    );
-  }
-
-  static DiplomaticRelationChangeReason? _reasonFromJson(Object? value) {
-    if (value == null) return null;
-    if (value is String) {
-      for (final reason in DiplomaticRelationChangeReason.values) {
-        if (reason.name == value) return reason;
-      }
-    }
-    throw ArgumentError.value(
-      value,
-      'DiplomaticRelation.lastChangeReason',
-      'Unknown diplomatic relation change reason',
-    );
+  static int? _optionalRelationScore(Object? value) {
+    final score = optionalIntValue(value, 'DiplomaticRelation.relationScore');
+    return score?.clamp(-100, 100).toInt();
   }
 }

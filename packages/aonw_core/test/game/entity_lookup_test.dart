@@ -54,6 +54,28 @@ void main() {
       expect([city].cityAt(1, 2), isNull);
     });
 
+    test('exposes canonical coordinates for positioned entities', () {
+      final unit = GameUnit(
+        id: 'unit_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Warrior',
+        col: 1,
+        row: 2,
+      );
+      const cityHex = CityHex(col: 3, row: 4);
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Warsaw',
+        center: cityHex,
+      );
+
+      expect(unit.coordinate, const HexCoordinate(col: 1, row: 2));
+      expect(cityHex.coordinate, const HexCoordinate(col: 3, row: 4));
+      expect(city.coordinate, const HexCoordinate(col: 3, row: 4));
+    });
+
     test('finds save players by id', () {
       const player = Player(
         id: 'player_1',

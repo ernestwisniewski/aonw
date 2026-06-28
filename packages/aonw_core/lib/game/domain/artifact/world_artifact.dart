@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/artifact/world_artifact_type.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 enum WorldArtifactLocationKind { map, carried, stored, excavation }
 
@@ -42,25 +43,24 @@ class WorldArtifactLocation {
        );
 
   factory WorldArtifactLocation.fromJson(Map<String, dynamic> json) {
-    final kind = WorldArtifactLocationKind.values.byName(
-      _requiredString(json, 'kind'),
-    );
+    final reader = WireJson(json, 'WorldArtifactLocation');
+    final kind = reader.requiredEnum('kind', WorldArtifactLocationKind.values);
     return switch (kind) {
       WorldArtifactLocationKind.map => WorldArtifactLocation.map(
-        col: _requiredInt(json, 'col'),
-        row: _requiredInt(json, 'row'),
+        col: reader.requiredInt('col'),
+        row: reader.requiredInt('row'),
       ),
       WorldArtifactLocationKind.carried => WorldArtifactLocation.carried(
-        unitId: _requiredString(json, 'unitId'),
+        unitId: reader.requiredString('unitId'),
       ),
       WorldArtifactLocationKind.stored => WorldArtifactLocation.stored(
-        cityId: _requiredString(json, 'cityId'),
+        cityId: reader.requiredString('cityId'),
       ),
       WorldArtifactLocationKind.excavation => WorldArtifactLocation.excavation(
-        unitId: _requiredString(json, 'unitId'),
-        col: _requiredInt(json, 'col'),
-        row: _requiredInt(json, 'row'),
-        remainingTurns: _requiredNonNegativeInt(json, 'remainingTurns'),
+        unitId: reader.requiredString('unitId'),
+        col: reader.requiredInt('col'),
+        row: reader.requiredInt('row'),
+        remainingTurns: reader.requiredNonNegativeInt('remainingTurns'),
       ),
     };
   }
@@ -121,12 +121,11 @@ class WorldArtifact {
   }
 
   factory WorldArtifact.fromJson(Map<String, dynamic> json) {
+    final reader = WireJson(json, 'WorldArtifact');
     return WorldArtifact(
-      id: _requiredString(json, 'id'),
-      type: WorldArtifactType.fromName(_requiredString(json, 'type')),
-      location: WorldArtifactLocation.fromJson(
-        _requiredMap(json['location'], 'location'),
-      ),
+      id: reader.requiredString('id'),
+      type: WorldArtifactType.fromName(reader.requiredString('type')),
+      location: WorldArtifactLocation.fromJson(reader.requiredMap('location')),
     );
   }
 
@@ -155,37 +154,4 @@ class WorldArtifact {
 
   @override
   int get hashCode => Object.hash(id, type, location);
-}
-
-String _requiredString(Map<String, dynamic> json, String field) {
-  final value = json[field];
-  if (value is String && value.isNotEmpty) return value;
-  throw ArgumentError.value(
-    value,
-    'WorldArtifact.$field',
-    'Expected a non-empty String',
-  );
-}
-
-int _requiredInt(Map<String, dynamic> json, String field) {
-  final value = json[field];
-  if (value is int) return value;
-  if (value is num && value.toInt() == value) return value.toInt();
-  throw ArgumentError.value(value, 'WorldArtifact.$field', 'Expected an int');
-}
-
-int _requiredNonNegativeInt(Map<String, dynamic> json, String field) {
-  final value = _requiredInt(json, field);
-  if (value >= 0) return value;
-  throw ArgumentError.value(
-    value,
-    'WorldArtifact.$field',
-    'Expected a non-negative int',
-  );
-}
-
-Map<String, dynamic> _requiredMap(Object? value, String field) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map<Object?, Object?>) return Map<String, dynamic>.from(value);
-  throw ArgumentError.value(value, 'WorldArtifact.$field', 'Expected a map');
 }

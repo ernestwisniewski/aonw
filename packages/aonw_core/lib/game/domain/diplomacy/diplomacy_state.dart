@@ -1,4 +1,5 @@
 import 'package:aonw_core/util/collection_equality.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 part 'diplomatic_relation.dart';
 part 'diplomatic_proposal.dart';
@@ -75,14 +76,10 @@ extension DiplomaticMessageTopicRules on DiplomaticMessageTopic {
     };
   }
 
-  bool get canCreateWithdrawalPromise {
-    return switch (this) {
-      DiplomaticMessageTopic.troopsNearCities ||
-      DiplomaticMessageTopic.blockedRoutes ||
-      DiplomaticMessageTopic.withdrawScouts => true,
-      _ => false,
-    };
-  }
+  bool get canCreateWithdrawalPromise =>
+      this == DiplomaticMessageTopic.troopsNearCities ||
+      this == DiplomaticMessageTopic.blockedRoutes ||
+      this == DiplomaticMessageTopic.withdrawScouts;
 }
 
 extension DiplomaticMessageResponseRules on DiplomaticMessageResponse {

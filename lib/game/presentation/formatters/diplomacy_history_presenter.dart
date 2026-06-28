@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/formatters/diplomacy_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -372,13 +373,7 @@ abstract final class DiplomacyHistoryPresenter {
     AppLocalizations l10n,
     DiplomaticRelationStatus status,
   ) {
-    return switch (status) {
-      DiplomaticRelationStatus.friendly => l10n.diplomacyRelationFriendly,
-      DiplomaticRelationStatus.neutral => l10n.diplomacyRelationNeutral,
-      DiplomaticRelationStatus.hostile => l10n.diplomacyRelationHostile,
-      DiplomaticRelationStatus.truce => l10n.diplomacyRelationTruce,
-      DiplomaticRelationStatus.war => l10n.diplomacyRelationWar,
-    };
+    return DiplomacyDisplayNames.relation(l10n, status);
   }
 
   static String signedDelta(int delta) => delta > 0 ? '+$delta' : '$delta';

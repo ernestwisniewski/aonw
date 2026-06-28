@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/formatters/diplomacy_display_names.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -61,25 +62,13 @@ abstract final class MultiplayerRelationStatusStyle {
   }
 
   static String label(AppLocalizations l10n, DiplomaticRelationStatus status) {
-    return switch (status) {
-      DiplomaticRelationStatus.friendly => l10n.diplomacyRelationFriendly,
-      DiplomaticRelationStatus.neutral => l10n.diplomacyRelationNeutral,
-      DiplomaticRelationStatus.hostile => l10n.diplomacyRelationHostile,
-      DiplomaticRelationStatus.truce => l10n.diplomacyRelationTruce,
-      DiplomaticRelationStatus.war => l10n.diplomacyRelationWar,
-    };
+    return DiplomacyDisplayNames.relation(l10n, status);
   }
 
   static String shortLabel(
     AppLocalizations l10n,
     DiplomaticRelationStatus status,
   ) {
-    return switch (status) {
-      DiplomaticRelationStatus.friendly => l10n.diplomacyRelationFriendlyShort,
-      DiplomaticRelationStatus.neutral => l10n.diplomacyRelationNeutralShort,
-      DiplomaticRelationStatus.hostile => l10n.diplomacyRelationHostileShort,
-      DiplomaticRelationStatus.truce => l10n.diplomacyRelationTruceShort,
-      DiplomaticRelationStatus.war => l10n.diplomacyRelationWarShort,
-    };
+    return DiplomacyDisplayNames.relationShort(l10n, status);
   }
 }

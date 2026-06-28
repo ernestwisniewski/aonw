@@ -16,6 +16,12 @@ final class WireJson {
 
   int? optionalInt(String field) => optionalIntField(json, context, field);
 
+  int requiredNonNegativeInt(String field) =>
+      requiredNonNegativeIntField(json, context, field);
+
+  int? optionalNonNegativeInt(String field) =>
+      optionalNonNegativeIntField(json, context, field);
+
   double requiredDouble(String field) =>
       requiredDoubleField(json, context, field);
 
@@ -58,14 +64,13 @@ String? optionalStringField(
   String context,
   String field,
 ) {
-  final value = json[field];
+  return optionalStringValue(json[field], '$context.$field');
+}
+
+String? optionalStringValue(Object? value, String name) {
   if (value == null) return null;
   if (value is String && value.isNotEmpty) return value;
-  throw ArgumentError.value(
-    value,
-    '$context.$field',
-    'Expected a non-empty String or null',
-  );
+  throw ArgumentError.value(value, name, 'Expected a non-empty String or null');
 }
 
 int requiredIntField(Map<String, dynamic> json, String context, String field) {
@@ -79,15 +84,43 @@ int requiredIntValue(Object? value, String name) {
 }
 
 int? optionalIntField(Map<String, dynamic> json, String context, String field) {
-  final value = json[field];
+  return optionalIntValue(json[field], '$context.$field');
+}
+
+int? optionalIntValue(Object? value, String name) {
   if (value == null) return null;
   final intValue = _intValue(value);
   if (intValue != null) return intValue;
-  throw ArgumentError.value(
-    value,
-    '$context.$field',
-    'Expected an int or null',
-  );
+  throw ArgumentError.value(value, name, 'Expected an int or null');
+}
+
+int requiredNonNegativeIntField(
+  Map<String, dynamic> json,
+  String context,
+  String field,
+) {
+  return requiredNonNegativeIntValue(json[field], '$context.$field');
+}
+
+int requiredNonNegativeIntValue(Object? value, String name) {
+  final intValue = requiredIntValue(value, name);
+  if (intValue >= 0) return intValue;
+  throw ArgumentError.value(value, name, 'Expected a non-negative int');
+}
+
+int? optionalNonNegativeIntField(
+  Map<String, dynamic> json,
+  String context,
+  String field,
+) {
+  return optionalNonNegativeIntValue(json[field], '$context.$field');
+}
+
+int? optionalNonNegativeIntValue(Object? value, String name) {
+  if (value == null) return null;
+  final intValue = requiredIntValue(value, name);
+  if (intValue >= 0) return intValue;
+  throw ArgumentError.value(value, name, 'Expected a non-negative int or null');
 }
 
 double requiredDoubleField(
