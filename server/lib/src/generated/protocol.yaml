@@ -1,3 +1,5 @@
+appStatus:
+  - versionStatus:
 accountProfile:
   - ensureAccount:
 appleIdp:

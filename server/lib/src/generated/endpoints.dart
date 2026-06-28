@@ -26,11 +26,14 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i11;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i12;
+import '../app_status/app_status_endpoint.dart' as _i13;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
+      'appStatus': _i13.AppStatusEndpoint()
+        ..initialize(server, 'appStatus', null),
       'accountProfile': _i2.AccountProfileEndpoint()
         ..initialize(server, 'accountProfile', null),
       'appleIdp': _i3.AppleIdpEndpoint()..initialize(server, 'appleIdp', null),
@@ -44,6 +47,33 @@ class Endpoints extends _i1.EndpointDispatch {
       'multiplayer': _i8.MultiplayerEndpoint()
         ..initialize(server, 'multiplayer', null),
     };
+    connectors['appStatus'] = _i1.EndpointConnector(
+      name: 'appStatus',
+      endpoint: endpoints['appStatus']!,
+      methodConnectors: {
+        'versionStatus': _i1.MethodConnector(
+          name: 'versionStatus',
+          params: {
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'buildNumber': _i1.ParameterDescription(
+              name: 'buildNumber',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['appStatus'] as _i13.AppStatusEndpoint).versionStatus(
+                session,
+                platform: params['platform'],
+                buildNumber: params['buildNumber'],
+              ),
+        ),
+      },
+    );
     connectors['accountProfile'] = _i1.EndpointConnector(
       name: 'accountProfile',
       endpoint: endpoints['accountProfile']!,

@@ -31,6 +31,22 @@ import 'package:aonw_server_client/src/protocol/multiplayer/models/multiplayer_c
     as _i12;
 import 'protocol.dart' as _i13;
 
+/// {@category Endpoint}
+class EndpointAppStatus extends _i1.EndpointRef {
+  EndpointAppStatus(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'appStatus';
+
+  _i2.Future<String> versionStatus({
+    required String platform,
+    required int buildNumber,
+  }) => caller.callServerEndpoint<String>('appStatus', 'versionStatus', {
+    'platform': platform,
+    'buildNumber': buildNumber,
+  }, authenticated: false);
+}
+
 /// Keeps the game account table in sync with Serverpod Auth users.
 /// {@category Endpoint}
 class EndpointAccountProfile extends _i1.EndpointRef {
@@ -333,6 +349,7 @@ class Client extends _i1.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    appStatus = EndpointAppStatus(this);
     accountProfile = EndpointAccountProfile(this);
     appleIdp = EndpointAppleIdp(this);
     emailIdp = EndpointEmailIdp(this);
@@ -342,6 +359,8 @@ class Client extends _i1.ServerpodClientShared {
     multiplayer = EndpointMultiplayer(this);
     modules = Modules(this);
   }
+
+  late final EndpointAppStatus appStatus;
 
   late final EndpointAccountProfile accountProfile;
 
@@ -361,6 +380,7 @@ class Client extends _i1.ServerpodClientShared {
 
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'appStatus': appStatus,
     'accountProfile': accountProfile,
     'appleIdp': appleIdp,
     'emailIdp': emailIdp,

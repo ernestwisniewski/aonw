@@ -952,6 +952,18 @@ abstract class AppLocalizations {
   /// **'Welcome to the Age of New Worlds. Build cities, lead commanders, discover new lands, and write the history of your civilization.'**
   String get mainMenuWhatsNewBody;
 
+  /// No description provided for @mainMenuUpdateSoonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update incoming'**
+  String get mainMenuUpdateSoonTitle;
+
+  /// No description provided for @mainMenuUpdateSoonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer version is ready and will appear on this platform soon. Check your store or launcher again shortly.'**
+  String get mainMenuUpdateSoonBody;
+
   /// No description provided for @gameModeLabel.
   ///
   /// In en, this message translates to:

@@ -486,6 +486,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Witaj w Erze Nowych Światów. Buduj miasta, prowadź dowódców, odkrywaj nowe krainy i zapisuj historię swojej cywilizacji.';
 
   @override
+  String get mainMenuUpdateSoonTitle => 'Aktualizacja w drodze';
+
+  @override
+  String get mainMenuUpdateSoonBody =>
+      'Nowsza wersja gry jest już gotowa i pojawi się na tej platformie wkrótce. Sprawdź sklep albo launcher za chwilę.';
+
+  @override
   String get gameModeLabel => 'TRYB';
 
   @override

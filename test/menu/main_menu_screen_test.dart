@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/menu/main_menu_screen.dart';
+import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw/menu/manual_screen.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter/material.dart';
@@ -175,6 +176,66 @@ void main() {
     await tester.pump();
 
     expect(exited, isTrue);
+  });
+
+  testWidgets('main menu shows update notice in whats new', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          mainMenuUpdateNoticeProvider.overrideWith(
+            (_) async => const MainMenuUpdateNotice(),
+          ),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: MainMenuScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('UPDATE INCOMING'), findsOneWidget);
+    expect(
+      find.textContaining('will appear on this platform soon'),
+      findsOneWidget,
+    );
+    expect(find.text('WHAT\'S NEW'), findsOneWidget);
+  });
+
+  testWidgets('main menu keeps whats new when update check fails', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          mainMenuUpdateNoticeProvider.overrideWith((_) async {
+            throw StateError('offline');
+          }),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: MainMenuScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('UPDATE INCOMING'), findsNothing);
+    expect(find.text('WHAT\'S NEW'), findsOneWidget);
+    expect(
+      find.textContaining('Welcome to the Age of New Worlds'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('main menu resumes a persisted running multiplayer match', (

@@ -27,7 +27,21 @@ class AppReleaseInfo {
     return 'v$version+$buildNumber';
   }
 
+  int get buildNumberValue => int.tryParse(buildNumber) ?? 0;
+
   String get displayLabel => '${channel.label} $displayVersion';
+}
+
+String resolveAppReleasePlatform() {
+  if (kIsWeb) return 'web';
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android => 'android',
+    TargetPlatform.iOS => 'ios',
+    TargetPlatform.linux ||
+    TargetPlatform.macOS ||
+    TargetPlatform.windows => 'steam',
+    _ => 'unknown',
+  };
 }
 
 final appReleaseInfoProvider = FutureProvider<AppReleaseInfo>((ref) async {
