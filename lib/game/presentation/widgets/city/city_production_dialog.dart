@@ -10,6 +10,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
