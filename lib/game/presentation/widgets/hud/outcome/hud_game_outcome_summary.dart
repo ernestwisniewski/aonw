@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
@@ -201,7 +202,7 @@ class HudGameOutcomeSummary {
         if (winnerEntry != null)
           HudGameOutcomeMetric(
             label: l10n.gameOutcomeMapControlMetric,
-            value: '${_percent(winnerEntry.controlPercent)}%',
+            value: percent(winnerEntry.controlPercent, false),
           ),
         if (winnerEntry != null)
           HudGameOutcomeMetric(
@@ -214,7 +215,7 @@ class HudGameOutcomeSummary {
         if (winnerEntry != null)
           HudGameOutcomeMetric(
             label: l10n.gameOutcomeThresholdMetric,
-            value: '${_percent(winnerEntry.requiredControlPercent)}%',
+            value: percent(winnerEntry.requiredControlPercent, false),
           ),
       ],
     );
@@ -348,6 +349,4 @@ class HudGameOutcomeSummary {
   static String _playerName(GameSave save, String playerId) {
     return save.playerById(playerId)?.name ?? playerId;
   }
-
-  static String _percent(double value) => value.round().toString();
 }

@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -116,7 +117,7 @@ class TechnologyTreeLabels {
       for (final boost in card.boosts)
         l10n.technologyBoostLine(
           _boostConditionLabel(l10n, boost.condition),
-          _percent(boost.discount),
+          percent(boost.discount),
         ),
     ];
   }
@@ -147,14 +148,20 @@ class TechnologyTreeLabels {
           _resourceName(l10n, resourceType),
         ),
       GlobalGoldMultiplier(:final multiplier) =>
-        l10n.technologyEffectGlobalGoldMultiplier(_percent(multiplier)),
+        l10n.technologyEffectGlobalGoldMultiplier(
+          percent(multiplier),
+        ),
       CityDefenseBonus(:final amount) => l10n.technologyEffectCityDefenseBonus(
         amount,
       ),
       ArmyProductionMultiplier(:final multiplier) =>
-        l10n.technologyEffectArmyProductionMultiplier(_percent(multiplier)),
+        l10n.technologyEffectArmyProductionMultiplier(
+          percent(multiplier),
+        ),
       ArmyStrengthMultiplier(:final multiplier) =>
-        l10n.technologyEffectArmyStrengthMultiplier(_percent(multiplier)),
+        l10n.technologyEffectArmyStrengthMultiplier(
+          percent(multiplier),
+        ),
       ArmyCombatStatsBonus(:final attack, :final defense, :final hp) =>
         _armyCombatStatsBonusLabel(
           l10n,
@@ -210,8 +217,6 @@ class TechnologyTreeLabels {
       names.last,
     );
   }
-
-  static String _percent(double value) => '${(value * 100).round()}%';
 
   static String _armyCombatStatsBonusLabel(
     AppLocalizations l10n, {

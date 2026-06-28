@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_paths.dart';
+import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:flutter/services.dart';
 
 class AnimationFrameAdjustment {
@@ -163,8 +164,7 @@ class AnimationFrameAdjustment {
   }
 
   static double _clampedScale(double value) {
-    if (!value.isFinite) return 1;
-    return value.clamp(0.25, 3.0).toDouble();
+    return clampFiniteScale(value, min: 0.25, max: 3.0);
   }
 
   static double _finiteCrop(double value) {

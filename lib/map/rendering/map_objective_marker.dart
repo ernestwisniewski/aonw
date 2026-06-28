@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/components.dart';
@@ -41,7 +42,7 @@ class MapObjectiveMarker extends PositionComponent with TapCallbacks {
        _completed = completed,
        _holdTurns = math.max(0, holdTurns),
        _requiredHoldTurns = math.max(1, requiredHoldTurns),
-       _markerWorldScale = _clampedScale(markerWorldScale),
+       _markerWorldScale = clampMarkerScale(markerWorldScale),
        super(
          position: position,
          size: Vector2(_baseWidth, _baseHeight),
@@ -102,7 +103,7 @@ class MapObjectiveMarker extends PositionComponent with TapCallbacks {
   double get markerWorldScale => _markerWorldScale;
 
   set markerWorldScale(double value) {
-    final next = _clampedScale(value);
+    final next = clampMarkerScale(value);
     if (_markerWorldScale == next) return;
     _markerWorldScale = next;
     scale = Vector2.all(next);
@@ -291,10 +292,6 @@ class MapObjectiveMarker extends PositionComponent with TapCallbacks {
     final colorValue = _controlColorValue;
     if (colorValue != null) return Color(colorValue);
     return HudPalette.goldLight;
-  }
-
-  static double _clampedScale(double value) {
-    return value.isFinite ? value.clamp(1.0, 2.4).toDouble() : 1.0;
   }
 
   @visibleForTesting

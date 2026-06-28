@@ -8,6 +8,7 @@ import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_objective_marker.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
+import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/components.dart';
 
@@ -25,7 +26,7 @@ class MapObjectiveMarkerLayer extends Component with LayerAttachment {
   double get markerWorldScale => _markerWorldScale;
 
   set markerWorldScale(double value) {
-    final next = value.isFinite ? value.clamp(1.0, 2.4).toDouble() : 1.0;
+    final next = clampMarkerScale(value);
     if (_markerWorldScale == next) return;
     _markerWorldScale = next;
     for (final marker in _markers.values) {

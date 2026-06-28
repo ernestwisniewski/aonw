@@ -5,6 +5,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/combat_modifier_labels.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -746,8 +747,8 @@ GameEventNotificationMessage _dominationThresholdMessage({
   final playerName = _playerName(l10n, save, playerId);
   final isSelf =
       state.activePlayerId.isNotEmpty && state.activePlayerId == playerId;
-  final control = _percentLabel(controlPercent);
-  final required = _percentLabel(requiredControlPercent);
+  final control = percent(controlPercent, false, false);
+  final required = percent(requiredControlPercent, false, false);
   final remaining = (requiredHoldTurns - holdTurns).clamp(0, requiredHoldTurns);
   return GameEventNotificationMessage(
     title: isSelf
@@ -842,8 +843,6 @@ String? _unitNameOrNull(
     ),
   );
 }
-
-String _percentLabel(double value) => value.round().toString();
 
 String _turnsLabel(AppLocalizations l10n, int count) =>
     l10n.eventTurnCountLabel(count);
