@@ -67,6 +67,23 @@ void main() {
 
       expect(reserved, isEmpty);
     });
+
+    test('does not reserve every calm city in a multi-city empire', () {
+      final mapData = _map(cols: 6, rows: 1);
+      final view = _view(
+        mapData: mapData,
+        units: [_warrior('guard_1', 0, 0), _warrior('guard_2', 5, 0)],
+        cities: const [_capital, _satellite],
+      );
+
+      final reserved = const BasicStrategyGarrisonReservationPlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+      );
+
+      expect(reserved, isEmpty);
+    });
   });
 
   group('BasicStrategy garrison integration', () {
@@ -127,6 +144,13 @@ const _capital = GameCity(
   ownerPlayerId: 'player_1',
   name: 'Capital',
   center: CityHex(col: 0, row: 0),
+);
+
+const _satellite = GameCity(
+  id: 'satellite',
+  ownerPlayerId: 'player_1',
+  name: 'Satellite',
+  center: CityHex(col: 5, row: 0),
 );
 
 GameUnit _warrior(String id, int col, int row) {

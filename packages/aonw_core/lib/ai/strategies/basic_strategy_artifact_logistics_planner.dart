@@ -58,7 +58,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
         pathfinder: pathfinder,
       );
       if (move == null) {
-        final hold = _artifactCarrierHoldFor(unit, view);
+        final hold = _artifactCarrierHoldFor(unit, view, context);
         if (hold != null) commands.add(hold);
         usedUnitIds.add(unit.id);
         continue;
@@ -175,11 +175,15 @@ final class BasicStrategyArtifactLogisticsPlanner {
     return null;
   }
 
-  GameCommand? _artifactCarrierHoldFor(GameUnit unit, GameView view) {
+  GameCommand? _artifactCarrierHoldFor(
+    GameUnit unit,
+    GameView view,
+    AiContext context,
+  ) {
     if (unit.movementPoints <= 0 || unit.isWorking || unit.isFortified) {
       return null;
     }
-    final city = defenseMovement.nearestOwnCity(unit, view);
+    final city = defenseMovement.preferredOwnCity(unit, view, context);
     if (city == null) return SkipUnitTurnCommand(unit.id);
     if (defenseMovement.isInArea(unit, city)) {
       return FortifyUnitCommand(unit.id);

@@ -58,6 +58,7 @@ export 'ai/strategic/economy_expectations.dart';
 export 'ai/strategic/economy_health.dart';
 export 'ai/strategic/frontier_clearing_plan.dart';
 export 'ai/strategic/frontier_clearing_planner.dart';
+export 'ai/strategic/garrison_policy.dart';
 export 'ai/strategic/mode_selector.dart';
 export 'ai/strategic/rival_snapshot.dart';
 export 'ai/strategic/strategic_mode.dart';

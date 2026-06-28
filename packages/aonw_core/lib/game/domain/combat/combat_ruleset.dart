@@ -219,4 +219,8 @@ class CombatRuleset {
   CombatStats terrainStatsFor(TerrainType type) {
     return terrainStatModifiers[type] ?? const CombatStats();
   }
+
+  bool isDefensiveTerrain(TerrainType type) {
+    return terrainStatsFor(type).defense > 0;
+  }
 }

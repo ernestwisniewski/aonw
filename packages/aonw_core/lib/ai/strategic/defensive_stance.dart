@@ -1,6 +1,8 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
+export 'garrison_policy.dart';
+
 class DefensiveStancePlan {
   final Map<String, StrategicDefenseAssignment> defenses;
 

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:aonw_core/ai/ai_context.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategic/defensive_stance.dart';
@@ -21,6 +19,7 @@ final class BasicStrategyGarrisonRules {
           requiredCount: requiredGarrisonCount(
             defenses[city.id],
             context.strategicPlan?.mode,
+            view.ownCities.length,
           ),
         ),
     ]..sort(compareNeeds);
@@ -29,15 +28,15 @@ final class BasicStrategyGarrisonRules {
   int requiredGarrisonCount(
     StrategicDefenseAssignment? defense,
     StrategicMode? mode,
+    int ownCityCount,
   ) {
-    final threatLevel = defense?.threatLevel ?? 0;
-    final threatNeed =
-        threatLevel >= 24 ||
-            (mode == StrategicMode.military && threatLevel >= 18)
-        ? 2
-        : 1;
-    final assignedNeed = defense?.assignedUnitIds.length ?? 0;
-    return math.max(threatNeed, assignedNeed);
+    return AiGarrisonPolicy.requiredGarrisonCount(
+      ownCityCount: ownCityCount,
+      hasDefenseAssignment: defense != null,
+      threatLevel: defense?.threatLevel ?? 0,
+      assignedUnitCount: defense?.assignedUnitIds.length ?? 0,
+      mode: mode,
+    );
   }
 
   bool canServeAsDefender(GameUnit unit, CombatRuleset ruleset) {

@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/ai_context.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/unit_roles.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -45,6 +46,38 @@ final class BasicStrategyDefenseMovement {
       }
     }
     return best;
+  }
+
+  GameCity? preferredOwnCity(GameUnit unit, GameView view, AiContext context) {
+    final cities = preferredOwnCities(unit, view, context);
+    return cities.isEmpty ? null : cities.first;
+  }
+
+  List<GameCity> preferredOwnCities(
+    GameUnit unit,
+    GameView view,
+    AiContext context, {
+    bool threatenedOnly = false,
+  }) {
+    final defenses = context.strategicPlan?.defenses ?? const {};
+    final origin = HexCoordinate(col: unit.col, row: unit.row);
+    return [
+      for (final city in view.ownCities)
+        if (!threatenedOnly || (defenses[city.id]?.threatLevel ?? 0) > 0) city,
+    ]..sort((a, b) {
+      final aThreat = defenses[a.id]?.threatLevel ?? 0;
+      final bThreat = defenses[b.id]?.threatLevel ?? 0;
+      final threatPresence = _sortBool(bThreat > 0, aThreat > 0);
+      if (threatPresence != 0) return threatPresence;
+      final threatCompare = bThreat.compareTo(aThreat);
+      if (threatCompare != 0) return threatCompare;
+      final distanceCompare = HexDistance.between(
+        origin,
+        a.center.toCoordinate(),
+      ).compareTo(HexDistance.between(origin, b.center.toCoordinate()));
+      if (distanceCompare != 0) return distanceCompare;
+      return a.id.compareTo(b.id);
+    });
   }
 
   BasicStrategyPlannedDefenseMove? moveFor({
@@ -121,6 +154,8 @@ final class BasicStrategyDefenseMovement {
   }
 
   String _key(int col, int row) => '$col:$row';
+
+  int _sortBool(bool a, bool b) => (a ? 1 : 0).compareTo(b ? 1 : 0);
 }
 
 final class BasicStrategyPlannedDefenseMove {
