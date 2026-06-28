@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/hex_assessment.dart';
+import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_resource_value_card.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_yield_item.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -283,7 +284,7 @@ abstract final class SelectionResourceValueCardFactory {
           lines.add(
             l10n.resourceValueResearchBoostLine(
               techName,
-              _percent(boost.discount),
+              percent(boost.discount),
             ),
           );
         }
@@ -445,8 +446,6 @@ abstract final class SelectionResourceValueCardFactory {
     }
     return _ResourceValueCategory.bonus;
   }
-
-  static String _percent(double value) => '${(value * 100).round()}%';
 
   static const _luxuryResources = {
     ResourceType.gold,

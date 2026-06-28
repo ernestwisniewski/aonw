@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:flame/components.dart';
@@ -30,7 +31,7 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
     double markerWorldScale = 1.0,
   }) : _type = type,
        _selected = selected,
-       _markerWorldScale = _clampedScale(markerWorldScale),
+       _markerWorldScale = clampMarkerScale(markerWorldScale),
        super(
          position: position,
          size: Vector2(_baseWidth, _baseHeight),
@@ -54,7 +55,7 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
   double get markerWorldScale => _markerWorldScale;
 
   set markerWorldScale(double value) {
-    final next = _clampedScale(value);
+    final next = clampMarkerScale(value);
     if (_markerWorldScale == next) return;
     _markerWorldScale = next;
     scale = Vector2.all(next);
@@ -308,10 +309,6 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
     WorldArtifactType.templeReliquary => const Color(0xFF8A3A56),
     WorldArtifactType.queensMirror => const Color(0xFF31706E),
   };
-
-  static double _clampedScale(double value) {
-    return value.isFinite ? value.clamp(1.0, 2.4).toDouble() : 1.0;
-  }
 
   @visibleForTesting
   Color get rimColorForTesting => _selected ? _selectedRimColor : _rimColor;

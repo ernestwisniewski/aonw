@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -312,8 +313,9 @@ class HudVictoryStatusSummary {
     final leaderName = GameText.uppercase(
       _playerName(gameSave, leader.playerId),
     );
-    final leaderPercent = _percentLabel(leader.controlPercent);
-    final requiredPercent = _percentLabel(leader.requiredControlPercent);
+    final requiredControl = leader.requiredControlPercent;
+    final leaderPercent = percent(leader.controlPercent, false, false);
+    final requiredPercent = percent(requiredControl, false, false);
     final secondary = leader.atThreshold
         ? '$leaderName ${_holdProgressLabel(l10n, leader)}'
         : '$leaderName / $requiredPercent%';

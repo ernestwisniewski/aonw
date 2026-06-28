@@ -13,8 +13,8 @@ String _dominationTooltip({
     gameSave,
     leader.playerId,
   );
-  final leaderPercent = _percentLabel(leader.controlPercent);
-  final requiredPercent = _percentLabel(leader.requiredControlPercent);
+  final leaderPercent = percent(leader.controlPercent, false, false);
+  final requiredPercent = percent(leader.requiredControlPercent, false, false);
   final hold = _holdDetailLabel(l10n, leader);
   final parts = [
     l10n.victoryDominationTooltip(
@@ -49,8 +49,8 @@ List<HudVictoryStatusDetail> _dominationDetails({
     gameSave,
     leader.playerId,
   );
-  final leaderPercent = _percentLabel(leader.controlPercent);
-  final requiredPercent = _percentLabel(leader.requiredControlPercent);
+  final leaderPercent = percent(leader.controlPercent, false, false);
+  final requiredPercent = percent(leader.requiredControlPercent, false, false);
   final activeIsLeader =
       activePlayerId != null && leader.playerId == activePlayerId;
 
@@ -109,8 +109,12 @@ String _dominationPerspectiveTooltip({
     );
   }
 
-  final activePercent = _percentLabel(activeEntry.controlPercent);
-  final activeRequired = _percentLabel(activeEntry.requiredControlPercent);
+  final activePercent = percent(activeEntry.controlPercent, false, false);
+  final activeRequired = percent(
+    activeEntry.requiredControlPercent,
+    false,
+    false,
+  );
   final leaderName = HudVictoryStatusSummary._playerName(
     gameSave,
     leader.playerId,
@@ -168,8 +172,8 @@ String _threatTooltip(
     gameSave,
     entry.playerId,
   );
-  final controlPercent = _percentLabel(entry.controlPercent);
-  final requiredPercent = _percentLabel(entry.requiredControlPercent);
+  final controlPercent = percent(entry.controlPercent, false, false);
+  final requiredPercent = percent(entry.requiredControlPercent, false, false);
   return switch (threat.level) {
     DominationThreatLevel.approachingThreshold => l10n.victoryThreatApproaching(
       playerName,
@@ -218,10 +222,10 @@ String _selfDominationLabel(
   AppLocalizations l10n,
   DominationProgressEntry entry,
 ) {
-  final percent = _percentLabel(entry.controlPercent);
-  final required = _percentLabel(entry.requiredControlPercent);
-  if (!entry.atThreshold) return '$percent% / $required%';
-  return '$percent% / $required% · ${_holdDetailLabel(l10n, entry)}';
+  final control = percent(entry.controlPercent, false, false);
+  final required = percent(entry.requiredControlPercent, false, false);
+  if (!entry.atThreshold) return '$control% / $required%';
+  return '$control% / $required% · ${_holdDetailLabel(l10n, entry)}';
 }
 
 String _holdProgressLabel(
@@ -247,9 +251,4 @@ int _percentGapPoints(DominationProgressEntry entry) {
   final gap = entry.requiredControlPercent - entry.controlPercent;
   if (gap <= 0) return 0;
   return gap.ceil();
-}
-
-String _percentLabel(double value) {
-  final rounded = value.round();
-  return rounded.toString();
 }
