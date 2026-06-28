@@ -594,46 +594,41 @@ GameEventNotificationMessage _combatMessage({
   required CombatOutcome outcome,
   required GameActivityContext activityContext,
 }) {
-  final defenderUnitSnapshot = activityContext.units[defenderUnitId];
-  final defenderUnit =
-      previousState?.unitById(defenderUnitId) ?? state.unitById(defenderUnitId);
-  final defenderCitySnapshot = activityContext.cities[defenderUnitId];
-  final defenderCity =
-      previousState?.cityById(defenderUnitId) ?? state.cityById(defenderUnitId);
-  final attackerName = _combatUnitName(
-    l10n,
+  final attackerUnit = _resolveUnit(
     state,
     attackerUnitId,
-    previousState,
-    activityContext,
+    previousState: previousState,
+    activityContext: activityContext,
   );
-  final defenderName = defenderUnitSnapshot != null || defenderUnit != null
-      ? _combatUnitName(
-          l10n,
-          state,
-          defenderUnitId,
-          previousState,
-          activityContext,
-        )
-      : defenderCitySnapshot != null
-      ? _citySnapshotName(l10n, defenderCitySnapshot)
-      : defenderCity != null
-      ? GameDisplayNames.city(l10n, defenderCity)
-      : defenderUnitId;
-  final attackerOwnerPlayerId = _unitOwnerPlayerId(
+  final defenderUnit = _resolveUnit(
     state,
-    attackerUnitId,
-    previousState,
-    activityContext,
+    defenderUnitId,
+    previousState: previousState,
+    activityContext: activityContext,
   );
+  final defenderCity = _resolveCity(
+    state,
+    defenderUnitId,
+    previousState: previousState,
+    activityContext: activityContext,
+    preferPreviousState: true,
+  );
+  final defenderOwnerCity = _resolveCity(
+    state,
+    defenderUnitId,
+    previousState: previousState,
+    activityContext: activityContext,
+  );
+  final attackerName =
+      _resolvedCombatUnitName(l10n, attackerUnit) ?? attackerUnitId;
+  final defenderName =
+      _resolvedCombatUnitName(l10n, defenderUnit) ??
+      _resolvedCityName(l10n, defenderCity) ??
+      defenderUnitId;
+  final attackerOwnerPlayerId = _resolvedUnitOwnerPlayerId(attackerUnit);
   final defenderOwnerPlayerId =
-      _unitOwnerPlayerId(
-        state,
-        defenderUnitId,
-        previousState,
-        activityContext,
-      ) ??
-      _cityOwnerPlayerId(state, defenderUnitId, previousState, activityContext);
+      _resolvedUnitOwnerPlayerId(defenderUnit) ??
+      _resolvedCityOwnerPlayerId(defenderOwnerCity);
 
   return GameEventNotificationMessage(
     title: l10n.eventCombatTitle,
@@ -652,8 +647,8 @@ GameEventNotificationMessage _combatMessage({
       outcome: outcome,
     ),
     thumbnail:
-        _unitThumbnail(state, attackerUnitId, previousState, activityContext) ??
-        _unitThumbnail(state, defenderUnitId, previousState, activityContext) ??
+        _resolvedUnitThumbnail(attackerUnit) ??
+        _resolvedUnitThumbnail(defenderUnit) ??
         const CombatEventNotificationThumbnail(),
   );
 }
@@ -812,10 +807,11 @@ String _cityName(
   String cityId, [
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
-  final citySnapshot = activityContext.cities[cityId];
-  if (citySnapshot != null) return _citySnapshotName(l10n, citySnapshot);
-  final city = state.cityById(cityId);
-  return city == null ? cityId : GameDisplayNames.city(l10n, city);
+  return _resolvedCityName(
+        l10n,
+        _resolveCity(state, cityId, activityContext: activityContext),
+      ) ??
+      cityId;
 }
 
 String _unitName(
@@ -836,64 +832,15 @@ String? _unitNameOrNull(
   GameState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
-  final unitSnapshot = activityContext.units[unitId];
-  if (unitSnapshot != null) return _unitSnapshotName(l10n, unitSnapshot);
-  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
-  return unit == null ? null : GameDisplayNames.unit(l10n, unit);
-}
-
-String _combatUnitName(
-  AppLocalizations l10n,
-  GameState state,
-  String unitId, [
-  GameState? previousState,
-  GameActivityContext activityContext = GameActivityContext.empty,
-]) {
-  return _combatUnitNameOrNull(
-        l10n,
-        state,
-        unitId,
-        previousState,
-        activityContext,
-      ) ??
-      unitId;
-}
-
-String? _combatUnitNameOrNull(
-  AppLocalizations l10n,
-  GameState state,
-  String unitId, [
-  GameState? previousState,
-  GameActivityContext activityContext = GameActivityContext.empty,
-]) {
-  final unitSnapshot = activityContext.units[unitId];
-  if (unitSnapshot != null) return _unitSnapshotName(l10n, unitSnapshot);
-  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
-  return unit == null ? null : GameDisplayNames.unitWithType(l10n, unit);
-}
-
-String? _unitOwnerPlayerId(
-  GameState state,
-  String unitId, [
-  GameState? previousState,
-  GameActivityContext activityContext = GameActivityContext.empty,
-]) {
-  final unitSnapshot = activityContext.units[unitId];
-  if (unitSnapshot != null) return unitSnapshot.ownerPlayerId;
-  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
-  return unit?.ownerPlayerId;
-}
-
-String? _cityOwnerPlayerId(
-  GameState state,
-  String cityId, [
-  GameState? previousState,
-  GameActivityContext activityContext = GameActivityContext.empty,
-]) {
-  final citySnapshot = activityContext.cities[cityId];
-  if (citySnapshot != null) return citySnapshot.ownerPlayerId;
-  final city = state.cityById(cityId) ?? previousState?.cityById(cityId);
-  return city?.ownerPlayerId;
+  return _resolvedUnitName(
+    l10n,
+    _resolveUnit(
+      state,
+      unitId,
+      previousState: previousState,
+      activityContext: activityContext,
+    ),
+  );
 }
 
 String _percentLabel(double value) => value.round().toString();
@@ -907,12 +854,101 @@ UnitEventNotificationThumbnail? _unitThumbnail(
   GameState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
+  return _resolvedUnitThumbnail(
+    _resolveUnit(
+      state,
+      unitId,
+      previousState: previousState,
+      activityContext: activityContext,
+    ),
+  );
+}
+
+String? _resolvedUnitName(AppLocalizations l10n, Object? unit) {
+  return switch (unit) {
+    final GameActivityUnitSnapshot snapshot => _unitSnapshotName(
+      l10n,
+      snapshot,
+    ),
+    final GameUnit unit => GameDisplayNames.unit(l10n, unit),
+    _ => null,
+  };
+}
+
+String? _resolvedCombatUnitName(AppLocalizations l10n, Object? unit) {
+  return switch (unit) {
+    final GameActivityUnitSnapshot snapshot => _unitSnapshotName(
+      l10n,
+      snapshot,
+    ),
+    final GameUnit unit => GameDisplayNames.unitWithType(l10n, unit),
+    _ => null,
+  };
+}
+
+String? _resolvedUnitOwnerPlayerId(Object? unit) {
+  return switch (unit) {
+    GameActivityUnitSnapshot(:final ownerPlayerId) ||
+    GameUnit(:final ownerPlayerId) => ownerPlayerId,
+    _ => null,
+  };
+}
+
+UnitEventNotificationThumbnail? _resolvedUnitThumbnail(Object? unit) {
+  return switch (unit) {
+    GameActivityUnitSnapshot(:final type) ||
+    GameUnit(:final type) => UnitEventNotificationThumbnail(type),
+    _ => null,
+  };
+}
+
+String? _resolvedCityName(AppLocalizations l10n, Object? city) {
+  return switch (city) {
+    final GameActivityCitySnapshot snapshot => _citySnapshotName(
+      l10n,
+      snapshot,
+    ),
+    final GameCity city => GameDisplayNames.city(l10n, city),
+    _ => null,
+  };
+}
+
+String? _resolvedCityOwnerPlayerId(Object? city) {
+  return switch (city) {
+    GameActivityCitySnapshot(:final ownerPlayerId) ||
+    GameCity(:final ownerPlayerId) => ownerPlayerId,
+    _ => null,
+  };
+}
+
+Object? _resolveUnit(
+  GameState state,
+  String unitId, {
+  GameState? previousState,
+  GameActivityContext activityContext = GameActivityContext.empty,
+  bool preferPreviousState = false,
+}) {
   final unitSnapshot = activityContext.units[unitId];
-  if (unitSnapshot != null) {
-    return UnitEventNotificationThumbnail(unitSnapshot.type);
-  }
-  final unit = state.unitById(unitId) ?? previousState?.unitById(unitId);
-  return unit == null ? null : UnitEventNotificationThumbnail(unit.type);
+  if (unitSnapshot != null) return unitSnapshot;
+  final unit = preferPreviousState
+      ? previousState?.unitById(unitId) ?? state.unitById(unitId)
+      : state.unitById(unitId) ?? previousState?.unitById(unitId);
+  return unit;
+}
+
+Object? _resolveCity(
+  GameState state,
+  String cityId, {
+  GameState? previousState,
+  GameActivityContext activityContext = GameActivityContext.empty,
+  bool preferPreviousState = false,
+}) {
+  final citySnapshot = activityContext.cities[cityId];
+  if (citySnapshot != null) return citySnapshot;
+  final city = preferPreviousState
+      ? previousState?.cityById(cityId) ?? state.cityById(cityId)
+      : state.cityById(cityId) ?? previousState?.cityById(cityId);
+  return city;
 }
 
 String _unitSnapshotName(AppLocalizations l10n, GameActivityUnitSnapshot unit) {
