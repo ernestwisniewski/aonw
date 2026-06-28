@@ -100,14 +100,15 @@ ITCH_DIST_DIR ?= $(STEAM_DIST_DIR)
 ITCH_BUILD_DIR ?= build/itch
 ITCH_MACOS_DIR ?= $(ITCH_BUILD_DIR)/macos
 ITCH_WINDOWS_DIR ?= $(ITCH_BUILD_DIR)/windows
-ITCH_MACOS_ZIP ?= $(ITCH_DIST_DIR)/aonw-macos-itch.zip
-ITCH_WINDOWS_ZIP ?= $(ITCH_DIST_DIR)/aonw-windows-itch.zip
 ITCH_ANDROID_APK ?= $(ITCH_DIST_DIR)/aonw-android-itch.apk
 ITCH_MACOS_CHANNEL ?= macos
 ITCH_WINDOWS_CHANNEL ?= windows
 ITCH_ANDROID_CHANNEL ?= android
 ITCH_USER_VERSION ?= $(RELEASE_VERSION)
 ITCH_UPLOAD_ARGS ?=
+DEPLOY_ALL_STEAMWORKS ?= 1
+DEPLOY_ALL_GOOGLE_PLAY ?= 1
+DEPLOY_ALL_GOOGLE_PLAY_MODE ?= closed
 
 # bump-version: updates the marketing version and build number in pubspec.yaml,
 # iOS Runner MARKETING_VERSION/CURRENT_PROJECT_VERSION, and the Windows fallback
@@ -158,6 +159,7 @@ help:
 	@echo "  make steam-upload LOCAL: upload prepared SteamPipe content with steamcmd"
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
 	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
+	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=0 DEPLOY_ALL_GOOGLE_PLAY=0  Skip Steamworks/Google Play uploads"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
@@ -225,6 +227,9 @@ help:
 	@echo "  ITCH_WINDOWS_CHANNEL=windows  itch Windows channel. Default: $(ITCH_WINDOWS_CHANNEL)"
 	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
+	@echo "  DEPLOY_ALL_STEAMWORKS=1       deploy-all uploads prepared build to Steamworks. Default: $(DEPLOY_ALL_STEAMWORKS)"
+	@echo "  DEPLOY_ALL_GOOGLE_PLAY=1      deploy-all uploads Android .aab to Google Play. Default: $(DEPLOY_ALL_GOOGLE_PLAY)"
+	@echo "  DEPLOY_ALL_GOOGLE_PLAY_MODE=closed|internal|alpha|beta|production Google Play mode. Default: $(DEPLOY_ALL_GOOGLE_PLAY_MODE)"
 	@echo "  VERSION_BUMP=patch|none       bump-version/deploy-all default: $(VERSION_BUMP)"
 	@echo "  NEW_VERSION=x.y.z             bump-version/deploy-all only. Overrides VERSION_BUMP"
 	@echo "  NEW_BUILD=N                   bump-version/deploy-all only. Default: current+1"
@@ -856,15 +861,15 @@ itch: itch-prepare itch-upload
 
 itch-prepare: steam itch-desktop android-build-itch
 	@echo "itch artifacts ready:"
-	@ls -lh "$(ITCH_MACOS_ZIP)" "$(ITCH_WINDOWS_ZIP)" "$(ITCH_ANDROID_APK)"
+	@ls -ldh "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" "$(ITCH_ANDROID_APK)"
 
 itch-desktop:
 	@command -v butler >/dev/null || { echo "butler is required for itch-desktop validation."; exit 1; }
-	@command -v zip >/dev/null || { echo "zip is required for itch-desktop."; exit 1; }
 	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP). Run make steam first."; exit 1; }
 	@test -f "$(STEAM_WINDOWS_ZIP)" || { echo "Missing Steam Windows ZIP: $(STEAM_WINDOWS_ZIP). Run make steam first."; exit 1; }
 	@rm -rf "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
-	@mkdir -p "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" "$(ITCH_DIST_DIR)"
+	@rm -f "$(ITCH_DIST_DIR)/aonw-macos-itch.zip" "$(ITCH_DIST_DIR)/aonw-windows-itch.zip"
+	@mkdir -p "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
 	@ditto -x -k "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_DIR)"
 	@unzip -q "$(STEAM_WINDOWS_ZIP)" -d "$(ITCH_WINDOWS_DIR)"
 	@test -d "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)" || { echo "itch macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
@@ -873,18 +878,11 @@ itch-desktop:
 	@printf '%s\n' '[[actions]]' 'name = "play"' 'path = "aonw.exe"' > "$(ITCH_WINDOWS_DIR)/.itch.toml"
 	@butler validate --platform osx "$(ITCH_MACOS_DIR)"
 	@butler validate --platform windows "$(ITCH_WINDOWS_DIR)"
-	@rm -f "$(ITCH_MACOS_ZIP)" "$(ITCH_WINDOWS_ZIP)"
-	@repo_root="$$(pwd)"; macos_zip="$$repo_root/$(ITCH_MACOS_ZIP)"; windows_zip="$$repo_root/$(ITCH_WINDOWS_ZIP)"; \
-		cd "$$repo_root/$(ITCH_MACOS_DIR)" && ditto -c -k --norsrc --noextattr --noqtn --noacl . "$$macos_zip"; \
-		cd "$$repo_root/$(ITCH_WINDOWS_DIR)" && zip -qry "$$windows_zip" .
-	@unzip -tq "$(ITCH_MACOS_ZIP)" >/dev/null
-	@unzip -tq "$(ITCH_WINDOWS_ZIP)" >/dev/null
-	@if { unzip -Z1 "$(ITCH_MACOS_ZIP)"; unzip -Z1 "$(ITCH_WINDOWS_ZIP)"; } | rg -i 'steam' >/dev/null; then \
-		echo "itch desktop archives contain steam-named paths."; \
+	@if find "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" -iname '*steam*' -print -quit | rg . >/dev/null; then \
+		echo "itch desktop folders contain steam-named paths."; \
 		exit 1; \
 	fi
 	@echo "itch desktop folders ready: $(ITCH_MACOS_DIR), $(ITCH_WINDOWS_DIR)"
-	@echo "itch desktop ZIPs ready: $(ITCH_MACOS_ZIP), $(ITCH_WINDOWS_ZIP)"
 
 itch-upload:
 	@command -v butler >/dev/null || { echo "butler is required for itch-upload."; exit 1; }
@@ -961,11 +959,11 @@ bump-version:
 	fi; \
 	echo "bump-version finished. Commit ready to push."
 
-# Local + remote orchestration. Pushes main to origin, prepares desktop ZIPs for
-# Steam and itch.io plus an Android APK for itch.io in dist/, optionally uploads
-# them to itch.io when ITCH_TARGET is set, asks the staging server to make deploy
-# (server image rebuild + restart + health), then deploys the static homepage
-# and demo web app locally.
+# Local + remote orchestration. Pushes main to origin, prepares Steam desktop
+# ZIPs, itch.io desktop folders, and Android artifacts, uploads to Steamworks
+# and Google Play by default, optionally uploads to itch.io when ITCH_TARGET is
+# set, asks the staging server to make deploy (server image rebuild + restart +
+# health), then deploys the static homepage and demo web app locally.
 # Aborts on any step failure.
 deploy-all:
 	@$(MAKE) --no-print-directory preflight-release
@@ -974,30 +972,49 @@ deploy-all:
 	@test -n "$(REMOTE_DEPLOY_HOST)" || { echo "REMOTE_DEPLOY_HOST is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_PATH)" || { echo "REMOTE_DEPLOY_PATH is required."; exit 1; }
 	@test -f "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(REMOTE_DEPLOY_SSH_KEY)"; exit 1; }
-	@echo "[1/8] Bumping build version..."
+	@echo "[1/11] Bumping build version..."
 	@$(MAKE) --no-print-directory bump-version NEW_VERSION="$(NEW_VERSION)" NEW_BUILD="$(NEW_BUILD)"
-	@echo "[2/8] Archiving iOS build for Xcode Organizer if possible..."
+	@echo "[2/11] Archiving iOS build for Xcode Organizer if possible..."
 	@$(MAKE) --no-print-directory archive-ios-if-possible
-	@echo "[3/8] Pushing local main to origin..."
+	@echo "[3/11] Pushing local main to origin..."
 	@git push origin main
-	@echo "[4/8] Preparing desktop ZIPs and itch Android APK in dist/..."
+	@echo "[4/11] Preparing Steam desktop ZIPs, itch desktop folders, and itch Android APK..."
 	@$(MAKE) --no-print-directory steam
 	@$(MAKE) --no-print-directory itch-desktop
 	@$(MAKE) --no-print-directory android-build-itch
+	@echo "[5/11] Uploading Steamworks build if enabled..."
+	@if [ "$(DEPLOY_ALL_STEAMWORKS)" = "1" ]; then \
+		$(MAKE) --no-print-directory steam-prepare-from-dist; \
+		$(MAKE) --no-print-directory steam-upload; \
+	else \
+		echo "DEPLOY_ALL_STEAMWORKS=$(DEPLOY_ALL_STEAMWORKS); skipping Steamworks upload."; \
+	fi
+	@echo "[6/11] Uploading Google Play build if enabled..."
+	@if [ "$(DEPLOY_ALL_GOOGLE_PLAY)" = "1" ]; then \
+		case "$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" in \
+			closed) \
+				$(MAKE) --no-print-directory android-deploy-closed ;; \
+			*) \
+				$(MAKE) --no-print-directory android-deploy ANDROID_PLAY_TRACK="$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" ;; \
+		esac; \
+	else \
+		echo "DEPLOY_ALL_GOOGLE_PLAY=$(DEPLOY_ALL_GOOGLE_PLAY); skipping Google Play upload."; \
+	fi
+	@echo "[7/11] Uploading itch.io artifacts if configured..."
 	@if [ -n "$(ITCH_TARGET)" ]; then \
 		echo "Uploading itch.io artifacts to target $(ITCH_TARGET)..."; \
 		$(MAKE) --no-print-directory itch-upload; \
 	else \
-		echo "ITCH_TARGET not set; leaving itch.io artifacts in $(ITCH_DIST_DIR)/ and skipping itch.io upload."; \
+		echo "ITCH_TARGET not set; leaving itch.io desktop folders in $(ITCH_BUILD_DIR)/ and Android APK in $(ITCH_DIST_DIR)/."; \
 	fi
-	@echo "[5/8] Triggering server deploy via SSH..."
+	@echo "[8/11] Triggering server deploy via SSH..."
 	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
 	  'cd "$(REMOTE_DEPLOY_PATH)" && make deploy'
-	@echo "[6/8] Building and uploading static root homepage..."
+	@echo "[9/11] Building and uploading static root homepage..."
 	@$(MAKE) --no-print-directory deploy-homepage
-	@echo "[7/8] Building and uploading demo web bundle..."
+	@echo "[10/11] Building and uploading demo web bundle..."
 	@$(MAKE) --no-print-directory deploy-web
-	@echo "[8/8] Final health checks..."
+	@echo "[11/11] Final health checks..."
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage

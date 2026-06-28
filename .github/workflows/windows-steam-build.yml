@@ -79,7 +79,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: aonw-windows-steam-${{ github.run_number }}
-          path: |
-            dist/aonw-windows-steam.zip
-            dist/steam-windows/**
+          path: dist/aonw-windows-steam.zip
           retention-days: 30

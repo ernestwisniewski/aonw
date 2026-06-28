@@ -128,9 +128,10 @@ are set.
 ## Full Release Helper
 
 `make deploy-all` coordinates version bumping, optional iOS archiving, desktop
-ZIP preparation, itch.io Android APK preparation, optional itch.io upload, a
-remote server deploy, homepage upload, web upload, and health checks. It
-requires all remote values to be provided explicitly:
+ZIP preparation, Steamworks upload, Google Play upload, itch.io Android APK
+preparation, optional itch.io upload, a remote server deploy, homepage upload,
+web upload, and health checks. It requires all remote values to be provided
+explicitly:
 
 ```sh
 make deploy-all \
@@ -149,14 +150,21 @@ The helper expects a clean `main` checkout and pushes `main` before triggering
 artifact preparation and remote deploy. The desktop ZIP step runs `make steam`,
 so macOS is built locally and Windows is built locally, downloaded from GitHub
 Actions, or packaged from an existing release according to
-`STEAM_WINDOWS_SOURCE`. It then copies neutral itch.io desktop ZIPs and builds a
-universal Android APK for itch.io.
+`STEAM_WINDOWS_SOURCE`. It then expands neutral itch.io desktop folders and
+builds a universal Android APK for itch.io.
+
+By default, `deploy-all` uploads the prepared desktop build to Steamworks and
+uploads an Android App Bundle to the Google Play closed-test track. Set
+`DEPLOY_ALL_STEAMWORKS=0` or `DEPLOY_ALL_GOOGLE_PLAY=0` to skip either upload.
+Google Play defaults to `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed`, which uses
+`ANDROID_PLAY_CLOSED_TRACK`; set it to a track name such as `internal`, `alpha`,
+`beta`, or `production` to upload via `ANDROID_PLAY_TRACK`.
 
 Set `ITCH_TARGET=user/game` to upload the prepared macOS, Windows, and Android
-artifacts to itch.io during `deploy-all`. If `ITCH_TARGET` is omitted, the ZIPs
-and APK are left in `dist/` and the itch.io upload is skipped. Uploading
-requires `butler` to be installed and authenticated with `butler login` or
-`BUTLER_API_KEY`.
+artifacts to itch.io during `deploy-all`. If `ITCH_TARGET` is omitted, the
+desktop upload folders are left in `build/itch/`, the Android APK is left in
+`dist/`, and the itch.io upload is skipped. Uploading requires `butler` to be
+installed and authenticated with `butler login` or `BUTLER_API_KEY`.
 
 ## Platform Builds
 
@@ -204,12 +212,11 @@ make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
 
 This reuses the Steam desktop build flow, expands neutral itch desktop folders
 under `build/itch/macos` and `build/itch/windows`, adds `.itch.toml` launch
-manifests for the itch app, validates them with `butler validate`, writes manual
-upload archives to `dist/aonw-macos-itch.zip` and
-`dist/aonw-windows-itch.zip`, builds `dist/aonw-android-itch.apk`, and pushes
-the desktop folders plus Android APK to the `macos`, `windows`, and `android`
-itch channels. Override channels with `ITCH_MACOS_CHANNEL`,
-`ITCH_WINDOWS_CHANNEL`, and `ITCH_ANDROID_CHANNEL`.
+manifests for the itch app, validates them with `butler validate`, builds
+`dist/aonw-android-itch.apk`, and pushes only the two desktop folders plus the
+Android APK to the `macos`, `windows`, and `android` itch channels. Override
+channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`, and
+`ITCH_ANDROID_CHANNEL`.
 
 ## Backups
 
