@@ -127,9 +127,10 @@ are set.
 
 ## Full Release Helper
 
-`make deploy-all` coordinates version bumping, optional iOS archiving, a remote
-server deploy, homepage upload, web upload, and health checks. It requires all
-remote values to be provided explicitly:
+`make deploy-all` coordinates version bumping, optional iOS archiving, desktop
+ZIP preparation, optional itch.io desktop upload, a remote server deploy,
+homepage upload, web upload, and health checks. It requires all remote values to
+be provided explicitly:
 
 ```sh
 make deploy-all \
@@ -145,7 +146,15 @@ make deploy-all \
 ```
 
 The helper expects a clean `main` checkout and pushes `main` before triggering
-the remote deploy.
+desktop ZIP preparation and remote deploy. The desktop ZIP step runs
+`make steam`, so macOS is built locally and Windows is built locally, downloaded
+from GitHub Actions, or packaged from an existing release according to
+`STEAM_WINDOWS_SOURCE`.
+
+Set `ITCH_TARGET=user/game` to upload the prepared macOS and Windows ZIPs to
+itch.io during `deploy-all`. If `ITCH_TARGET` is omitted, the ZIPs are left in
+`dist/` and the itch.io upload is skipped. Uploading requires `butler` to be
+installed and authenticated with `butler login` or `BUTLER_API_KEY`.
 
 ## Platform Builds
 
@@ -184,6 +193,16 @@ make steam
 
 On non-Windows hosts, `make steam` can download the Windows build from GitHub
 Actions when `gh` is available and the workflow is configured.
+
+itch.io desktop upload:
+
+```sh
+make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
+```
+
+This reuses the Steam desktop ZIP build flow and pushes macOS and Windows ZIPs
+to the `macos` and `windows` itch channels. Override channels with
+`ITCH_MACOS_CHANNEL` and `ITCH_WINDOWS_CHANNEL`.
 
 ## Backups
 

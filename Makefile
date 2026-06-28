@@ -95,6 +95,13 @@ STEAM_WINDOWS_DEPOT_ID ?= 4833242
 STEAM_USER ?= ew2pl
 STEAMCMD ?= steamcmd
 STEAM_BUILD_DESC ?=
+ITCH_TARGET ?=
+ITCH_MACOS_ZIP ?= $(STEAM_MACOS_ZIP)
+ITCH_WINDOWS_ZIP ?= $(STEAM_WINDOWS_ZIP)
+ITCH_MACOS_CHANNEL ?= macos
+ITCH_WINDOWS_CHANNEL ?= windows
+ITCH_USER_VERSION ?= $(RELEASE_VERSION)
+ITCH_UPLOAD_ARGS ?=
 
 # bump-version: updates the marketing version and build number in pubspec.yaml,
 # iOS Runner MARKETING_VERSION/CURRENT_PROJECT_VERSION, and the Windows fallback
@@ -113,7 +120,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -143,6 +150,7 @@ help:
 	@echo "  make steam-prepare-from-dist LOCAL: prepare SteamPipe content from dist/ ZIPs"
 	@echo "  make steam-upload LOCAL: upload prepared SteamPipe content with steamcmd"
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
+	@echo "  make itch         LOCAL: build/download desktop ZIPs and upload Windows/macOS to itch.io"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
@@ -205,6 +213,10 @@ help:
 	@echo "  STEAM_WINDOWS_DIST_ZIP=path   Windows ZIP/artifact for steam-prepare-from-dist. Default: $(STEAM_WINDOWS_DIST_ZIP)"
 	@echo "  STEAM_USER=user               SteamCMD username. Default: $(STEAM_USER)"
 	@echo "  STEAM_BUILD_DESC=text         Steam build description. Default: Build N - x.y.z release"
+	@echo "  ITCH_TARGET=user/game         itch/deploy-all only. Required for itch upload"
+	@echo "  ITCH_MACOS_CHANNEL=macos      itch macOS channel. Default: $(ITCH_MACOS_CHANNEL)"
+	@echo "  ITCH_WINDOWS_CHANNEL=windows  itch Windows channel. Default: $(ITCH_WINDOWS_CHANNEL)"
+	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
 	@echo "  VERSION_BUMP=patch|none       bump-version/deploy-all default: $(VERSION_BUMP)"
 	@echo "  NEW_VERSION=x.y.z             bump-version/deploy-all only. Overrides VERSION_BUMP"
 	@echo "  NEW_BUILD=N                   bump-version/deploy-all only. Default: current+1"
@@ -816,6 +828,25 @@ steam-upload:
 	@$(MAKE) --no-print-directory steam-upload-command
 	@cd "$(STEAM_SCRIPT_DIR)" && "$(STEAMCMD)" +login "$(STEAM_USER)" +run_app_build "$(STEAM_SCRIPT_DIR)/app_build_$(STEAM_APP_ID).vdf" +quit
 
+deploy-itch: itch
+
+itch: steam itch-upload
+	@echo "itch finished."
+
+itch-upload:
+	@command -v butler >/dev/null || { echo "butler is required for itch-upload."; exit 1; }
+	@test -n "$(ITCH_TARGET)" || { echo "ITCH_TARGET is required, e.g. ITCH_TARGET=user/game."; exit 1; }
+	@test -f "$(ITCH_MACOS_ZIP)" || { echo "Missing itch macOS ZIP: $(ITCH_MACOS_ZIP). Run make steam-macos first."; exit 1; }
+	@test -f "$(ITCH_WINDOWS_ZIP)" || { echo "Missing itch Windows ZIP: $(ITCH_WINDOWS_ZIP). Run make steam-windows first."; exit 1; }
+	@set -e; \
+	version="$(ITCH_USER_VERSION)"; \
+	test -n "$$version" || { echo "ITCH_USER_VERSION could not be resolved."; exit 1; }; \
+	echo "Uploading macOS build to itch: $(ITCH_TARGET):$(ITCH_MACOS_CHANNEL) ($$version)..."; \
+	butler push "$(ITCH_MACOS_ZIP)" "$(ITCH_TARGET):$(ITCH_MACOS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	echo "Uploading Windows build to itch: $(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL) ($$version)..."; \
+	butler push "$(ITCH_WINDOWS_ZIP)" "$(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	echo "itch.io uploads finished."
+
 # Local-only target. Bumps the build number and, when NEW_VERSION is supplied,
 # the marketing version in pubspec.yaml and platform version metadata. Stages
 # and commits the changes. Override the build with NEW_BUILD=N; otherwise the
@@ -874,9 +905,10 @@ bump-version:
 	fi; \
 	echo "bump-version finished. Commit ready to push."
 
-# Local + remote orchestration. Pushes main to origin, asks the staging
-# server to make deploy (server image rebuild + restart + health), then
-# deploys the static homepage and demo web app locally.
+# Local + remote orchestration. Pushes main to origin, prepares desktop ZIPs for
+# itch.io/Steam in dist/, optionally uploads them to itch.io when ITCH_TARGET is
+# set, asks the staging server to make deploy (server image rebuild + restart +
+# health), then deploys the static homepage and demo web app locally.
 # Aborts on any step failure.
 deploy-all:
 	@$(MAKE) --no-print-directory preflight-release
@@ -885,20 +917,28 @@ deploy-all:
 	@test -n "$(REMOTE_DEPLOY_HOST)" || { echo "REMOTE_DEPLOY_HOST is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_PATH)" || { echo "REMOTE_DEPLOY_PATH is required."; exit 1; }
 	@test -f "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(REMOTE_DEPLOY_SSH_KEY)"; exit 1; }
-	@echo "[1/7] Bumping build version..."
+	@echo "[1/8] Bumping build version..."
 	@$(MAKE) --no-print-directory bump-version NEW_VERSION="$(NEW_VERSION)" NEW_BUILD="$(NEW_BUILD)"
-	@echo "[2/7] Archiving iOS build for Xcode Organizer if possible..."
+	@echo "[2/8] Archiving iOS build for Xcode Organizer if possible..."
 	@$(MAKE) --no-print-directory archive-ios-if-possible
-	@echo "[3/7] Pushing local main to origin..."
+	@echo "[3/8] Pushing local main to origin..."
 	@git push origin main
-	@echo "[4/7] Triggering server deploy via SSH..."
+	@echo "[4/8] Preparing desktop ZIPs in dist/..."
+	@$(MAKE) --no-print-directory steam
+	@if [ -n "$(ITCH_TARGET)" ]; then \
+		echo "Uploading desktop ZIPs to itch.io target $(ITCH_TARGET)..."; \
+		$(MAKE) --no-print-directory itch-upload; \
+	else \
+		echo "ITCH_TARGET not set; leaving desktop ZIPs in $(STEAM_DIST_DIR)/ and skipping itch.io upload."; \
+	fi
+	@echo "[5/8] Triggering server deploy via SSH..."
 	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
 	  'cd "$(REMOTE_DEPLOY_PATH)" && make deploy'
-	@echo "[5/7] Building and uploading static root homepage..."
+	@echo "[6/8] Building and uploading static root homepage..."
 	@$(MAKE) --no-print-directory deploy-homepage
-	@echo "[6/7] Building and uploading demo web bundle..."
+	@echo "[7/8] Building and uploading demo web bundle..."
 	@$(MAKE) --no-print-directory deploy-web
-	@echo "[7/7] Final health checks..."
+	@echo "[8/8] Final health checks..."
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage
