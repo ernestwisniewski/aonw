@@ -82,6 +82,11 @@ STEAM_WINDOWS_ZIP ?= $(STEAM_DIST_DIR)/aonw-windows-steam.zip
 STEAM_WINDOWS_SOURCE ?= auto
 STEAM_WINDOWS_WORKFLOW ?= windows-steam-build.yml
 STEAM_WINDOWS_ARTIFACT_DIR ?= build/steam-windows-artifact
+STEAM_LINUX_RELEASE_DIR ?= build/linux/x64/release/bundle
+STEAM_LINUX_ZIP ?= $(STEAM_DIST_DIR)/aonw-linux-steam.zip
+STEAM_LINUX_SOURCE ?= auto
+STEAM_LINUX_WORKFLOW ?= linux-steam-build.yml
+STEAM_LINUX_ARTIFACT_DIR ?= build/steam-linux-artifact
 STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS ?= 30
 STEAM_GITHUB_RUN_LOOKUP_SLEEP ?= 5
 STEAM_DEPLOY_DIR ?= $(HOME)/Desktop/steam-deploy
@@ -89,9 +94,12 @@ STEAM_CONTENT_DIR ?= $(STEAM_DEPLOY_DIR)/content
 STEAM_SCRIPT_DIR ?= $(STEAM_DEPLOY_DIR)/scripts
 STEAM_OUTPUT_DIR ?= $(STEAM_DEPLOY_DIR)/output
 STEAM_WINDOWS_DIST_ZIP ?= $(STEAM_WINDOWS_ZIP)
+STEAM_LINUX_DIST_ZIP ?= $(STEAM_LINUX_ZIP)
 STEAM_APP_ID ?= 4833240
 STEAM_MACOS_DEPOT_ID ?= 4833241
 STEAM_WINDOWS_DEPOT_ID ?= 4833242
+STEAM_LINUX_DEPOT_ID ?= 4833243
+STEAM_INCLUDE_LINUX ?= 0
 STEAM_USER ?= ew2pl
 STEAMCMD ?= steamcmd
 STEAM_BUILD_DESC ?=
@@ -100,10 +108,13 @@ ITCH_DIST_DIR ?= $(STEAM_DIST_DIR)
 ITCH_BUILD_DIR ?= build/itch
 ITCH_MACOS_DIR ?= $(ITCH_BUILD_DIR)/macos
 ITCH_WINDOWS_DIR ?= $(ITCH_BUILD_DIR)/windows
+ITCH_LINUX_DIR ?= $(ITCH_BUILD_DIR)/linux
 ITCH_ANDROID_APK ?= $(ITCH_DIST_DIR)/aonw-android-itch.apk
 ITCH_MACOS_CHANNEL ?= macos
 ITCH_WINDOWS_CHANNEL ?= windows
+ITCH_LINUX_CHANNEL ?= linux
 ITCH_ANDROID_CHANNEL ?= android
+ITCH_INCLUDE_LINUX ?= 0
 ITCH_USER_VERSION ?= $(RELEASE_VERSION)
 ITCH_UPLOAD_ARGS ?=
 DEPLOY_ALL_STEAMWORKS ?= 1
@@ -127,7 +138,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -218,13 +229,19 @@ help:
 	@echo "  PLATFORM_SMOKE_WINDOWS=auto|1|0 multiplayer-platform-smoke Windows debug build. Default: $(PLATFORM_SMOKE_WINDOWS)"
 	@echo "  STEAM_API_BASE_URL=https://... Steam builds only. Default: $(STEAM_API_BASE_URL)"
 	@echo "  STEAM_WINDOWS_SOURCE=auto|local|github|existing Steam Windows source. Default: $(STEAM_WINDOWS_SOURCE)"
+	@echo "  STEAM_LINUX_SOURCE=auto|local|github|existing Steam Linux source. Default: $(STEAM_LINUX_SOURCE)"
+	@echo "  STEAM_INCLUDE_LINUX=1       include Linux ZIP/depot in Steam prepare/upload. Default: $(STEAM_INCLUDE_LINUX)"
+	@echo "  STEAM_LINUX_DEPOT_ID=...    Linux depot for STEAM_INCLUDE_LINUX=1. Default: $(STEAM_LINUX_DEPOT_ID)"
 	@echo "  STEAM_DEPLOY_DIR=/path        SteamPipe working dir. Default: $(STEAM_DEPLOY_DIR)"
 	@echo "  STEAM_WINDOWS_DIST_ZIP=path   Windows ZIP/artifact for steam-prepare-from-dist. Default: $(STEAM_WINDOWS_DIST_ZIP)"
+	@echo "  STEAM_LINUX_DIST_ZIP=path     Linux ZIP/artifact for steam-prepare-from-dist. Default: $(STEAM_LINUX_DIST_ZIP)"
 	@echo "  STEAM_USER=user               SteamCMD username. Default: $(STEAM_USER)"
 	@echo "  STEAM_BUILD_DESC=text         Steam build description. Default: Build N - x.y.z release"
 	@echo "  ITCH_TARGET=user/game         itch/deploy-all only. Required for itch upload"
 	@echo "  ITCH_MACOS_CHANNEL=macos      itch macOS channel. Default: $(ITCH_MACOS_CHANNEL)"
 	@echo "  ITCH_WINDOWS_CHANNEL=windows  itch Windows channel. Default: $(ITCH_WINDOWS_CHANNEL)"
+	@echo "  ITCH_INCLUDE_LINUX=1          include Linux folder in itch prepare/upload. Default: $(ITCH_INCLUDE_LINUX)"
+	@echo "  ITCH_LINUX_CHANNEL=linux      itch Linux channel. Default: $(ITCH_LINUX_CHANNEL)"
 	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
 	@echo "  DEPLOY_ALL_STEAMWORKS=1       deploy-all uploads prepared build to Steamworks. Default: $(DEPLOY_ALL_STEAMWORKS)"
@@ -645,10 +662,18 @@ multiplayer-platform-smoke:
 deploy-steam: steam-release-from-dist
 
 steam: steam-macos steam-windows
+	@if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then \
+		$(MAKE) --no-print-directory steam-linux; \
+	fi
 	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP)"; exit 1; }
 	@test -f "$(STEAM_WINDOWS_ZIP)" || { echo "Missing Steam Windows ZIP: $(STEAM_WINDOWS_ZIP)"; exit 1; }
+	@if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then \
+		test -f "$(STEAM_LINUX_ZIP)" || { echo "Missing Steam Linux ZIP: $(STEAM_LINUX_ZIP)"; exit 1; }; \
+	fi
 	@echo "Steam ZIPs ready:"
-	@ls -lh "$(STEAM_MACOS_ZIP)" "$(STEAM_WINDOWS_ZIP)"
+	@files="$(STEAM_MACOS_ZIP) $(STEAM_WINDOWS_ZIP)"; \
+	if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then files="$$files $(STEAM_LINUX_ZIP)"; fi; \
+	ls -lh $$files
 
 steam-release-from-dist: steam-macos steam-prepare-from-dist steam-upload
 
@@ -764,6 +789,102 @@ steam-package-windows:
 	@echo "Verified Steam Windows API: $(STEAM_API_BASE_URL)"
 	@echo "Steam Windows ZIP ready: $(STEAM_WINDOWS_ZIP)"
 
+steam-linux:
+	@set -e; \
+	mode="$(STEAM_LINUX_SOURCE)"; \
+	if [ "$$mode" = "auto" ]; then \
+		case "$$(uname -s 2>/dev/null || echo unknown)" in \
+			Linux*) mode="local" ;; \
+			*) \
+				if command -v gh >/dev/null; then \
+					mode="github"; \
+				elif [ -d "$(STEAM_LINUX_RELEASE_DIR)" ]; then \
+					mode="existing"; \
+				else \
+					echo "Cannot build Steam Linux ZIP on this host."; \
+					echo "Use STEAM_LINUX_SOURCE=github with gh installed, run this on Linux, or place a release in $(STEAM_LINUX_RELEASE_DIR)."; \
+					exit 1; \
+				fi ;; \
+		esac; \
+	fi; \
+	case "$$mode" in \
+		local) $(MAKE) --no-print-directory steam-linux-local ;; \
+		github) $(MAKE) --no-print-directory steam-linux-github ;; \
+		existing) $(MAKE) --no-print-directory steam-package-linux ;; \
+		*) echo "Invalid STEAM_LINUX_SOURCE=$$mode. Use auto, local, github, or existing."; exit 1 ;; \
+	esac
+
+steam-linux-local:
+	@command -v flutter >/dev/null || { echo "flutter SDK is required for steam-linux-local."; exit 1; }
+	@case "$$(uname -s 2>/dev/null || echo unknown)" in \
+		Linux*) ;; \
+		*) echo "steam-linux-local requires a Linux host."; exit 1 ;; \
+	esac
+	@echo "Building Linux Steam release with API=$(STEAM_API_BASE_URL)..."
+	@flutter config --enable-linux-desktop
+	@flutter pub get
+	@flutter build linux --release --no-pub "--dart-define=AONW_API_BASE_URL=$(STEAM_API_BASE_URL)"
+	@$(MAKE) --no-print-directory steam-package-linux
+
+steam-linux-github:
+	@command -v gh >/dev/null || { echo "gh is required for STEAM_LINUX_SOURCE=github."; exit 1; }
+	@set -e; \
+	branch=$$(git branch --show-current); \
+	local_sha=$$(git rev-parse HEAD); \
+	build_name=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
+	build_number=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
+	test -n "$$branch" || { echo "Could not detect current git branch."; exit 1; }; \
+	test -n "$$build_name" || { echo "Could not parse version name from $(PUBSPEC)."; exit 1; }; \
+	test -n "$$build_number" || { echo "Could not parse build number from $(PUBSPEC)."; exit 1; }; \
+	git fetch origin "$$branch" >/dev/null; \
+	remote_sha=$$(git rev-parse "origin/$$branch"); \
+	test "$$local_sha" = "$$remote_sha" || { echo "Local HEAD is not pushed to origin/$$branch. Push first, then run make steam-linux again."; exit 1; }; \
+	echo "Dispatching $(STEAM_LINUX_WORKFLOW) on $$branch for $$build_name+$$build_number..."; \
+	gh workflow run "$(STEAM_LINUX_WORKFLOW)" --ref "$$branch" -f build_name="$$build_name" -f build_number="$$build_number"; \
+	echo "Waiting for GitHub Actions run to appear..."; \
+	run_id=""; \
+	i=1; \
+	while [ "$$i" -le "$(STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS)" ]; do \
+		run_id=$$(gh run list --workflow "$(STEAM_LINUX_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId --limit 1 --jq '.[0].databaseId // ""'); \
+		if [ -n "$$run_id" ]; then break; fi; \
+		sleep "$(STEAM_GITHUB_RUN_LOOKUP_SLEEP)"; \
+		i=$$((i + 1)); \
+	done; \
+	test -n "$$run_id" || { echo "Could not find GitHub Actions run for $(STEAM_LINUX_WORKFLOW)."; exit 1; }; \
+	echo "Watching GitHub Actions run $$run_id..."; \
+	gh run watch "$$run_id" --exit-status; \
+	rm -rf "$(STEAM_LINUX_ARTIFACT_DIR)"; \
+	mkdir -p "$(STEAM_LINUX_ARTIFACT_DIR)" "$(STEAM_DIST_DIR)"; \
+	gh run download "$$run_id" --dir "$(STEAM_LINUX_ARTIFACT_DIR)" --pattern 'aonw-linux-steam-*'; \
+	zip_file=$$(find "$(STEAM_LINUX_ARTIFACT_DIR)" -name 'aonw-linux-steam.zip' -print -quit); \
+	test -n "$$zip_file" || { echo "Downloaded artifact did not contain aonw-linux-steam.zip."; exit 1; }; \
+	cp "$$zip_file" "$(STEAM_LINUX_ZIP)"; \
+	unzip -tq "$(STEAM_LINUX_ZIP)" >/dev/null; \
+	tmp_dir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp_dir"' EXIT; \
+	unzip -q "$(STEAM_LINUX_ZIP)" -d "$$tmp_dir"; \
+	test -f "$$tmp_dir/aonw" || { echo "Linux ZIP must contain aonw at root."; exit 1; }; \
+	rg -a -F "$(STEAM_API_BASE_URL)" "$$tmp_dir" >/dev/null; \
+	echo "Steam Linux ZIP ready: $(STEAM_LINUX_ZIP)"
+
+steam-package-linux:
+	@command -v zip >/dev/null || { echo "zip is required for steam-package-linux."; exit 1; }
+	@command -v unzip >/dev/null || { echo "unzip is required for steam-package-linux."; exit 1; }
+	@command -v rg >/dev/null || { echo "rg is required for steam-package-linux."; exit 1; }
+	@test -d "$(STEAM_LINUX_RELEASE_DIR)" || { echo "Expected Linux release directory not found: $(STEAM_LINUX_RELEASE_DIR)"; exit 1; }
+	@test -f "$(STEAM_LINUX_RELEASE_DIR)/aonw" || { echo "Expected Linux executable not found: $(STEAM_LINUX_RELEASE_DIR)/aonw"; exit 1; }
+	@mkdir -p "$(STEAM_DIST_DIR)"
+	@rm -f "$(STEAM_LINUX_ZIP)"
+	@zip_path="$$(pwd)/$(STEAM_LINUX_ZIP)"; \
+		cd "$(STEAM_LINUX_RELEASE_DIR)" && zip -qry "$$zip_path" .
+	@unzip -tq "$(STEAM_LINUX_ZIP)" >/dev/null
+	@tmp_dir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp_dir"' EXIT; \
+	unzip -q "$(STEAM_LINUX_ZIP)" -d "$$tmp_dir"; \
+	rg -a -F "$(STEAM_API_BASE_URL)" "$$tmp_dir" >/dev/null
+	@echo "Verified Steam Linux API: $(STEAM_API_BASE_URL)"
+	@echo "Steam Linux ZIP ready: $(STEAM_LINUX_ZIP)"
+
 steam-prepare-from-dist:
 	@command -v ditto >/dev/null || { echo "ditto is required for steam-prepare-from-dist."; exit 1; }
 	@command -v unzip >/dev/null || { echo "unzip is required for steam-prepare-from-dist."; exit 1; }
@@ -771,6 +892,10 @@ steam-prepare-from-dist:
 	@command -v strings >/dev/null || { echo "strings is required for steam-prepare-from-dist."; exit 1; }
 	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP). Run make steam-macos first."; exit 1; }
 	@test -f "$(STEAM_WINDOWS_DIST_ZIP)" || { echo "Missing Steam Windows ZIP/artifact: $(STEAM_WINDOWS_DIST_ZIP). Copy the GitHub Actions artifact to dist/ or set STEAM_WINDOWS_DIST_ZIP=/path."; exit 1; }
+	@if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then \
+		test -n "$(STEAM_LINUX_DEPOT_ID)" || { echo "STEAM_LINUX_DEPOT_ID is required when STEAM_INCLUDE_LINUX=1."; exit 1; }; \
+		test -f "$(STEAM_LINUX_DIST_ZIP)" || { echo "Missing Steam Linux ZIP/artifact: $(STEAM_LINUX_DIST_ZIP). Run make steam-linux, download the GitHub Actions artifact, or set STEAM_LINUX_DIST_ZIP=/path."; exit 1; }; \
+	fi
 	@set -e; \
 	build_name=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
 	build_number=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
@@ -779,28 +904,48 @@ steam-prepare-from-dist:
 	build_desc="$(STEAM_BUILD_DESC)"; \
 	if [ -z "$$build_desc" ]; then build_desc="Build $$build_number - $$build_name release"; fi; \
 	echo "Preparing SteamPipe content in $(STEAM_DEPLOY_DIR) ($$build_desc)..."; \
-	rm -rf "$(STEAM_CONTENT_DIR)/macos" "$(STEAM_CONTENT_DIR)/windows"; \
+	rm -rf "$(STEAM_CONTENT_DIR)/macos" "$(STEAM_CONTENT_DIR)/windows" "$(STEAM_CONTENT_DIR)/linux"; \
 	mkdir -p "$(STEAM_CONTENT_DIR)/macos" "$(STEAM_CONTENT_DIR)/windows" "$(STEAM_SCRIPT_DIR)" "$(STEAM_OUTPUT_DIR)"; \
+	if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then mkdir -p "$(STEAM_CONTENT_DIR)/linux"; fi; \
 	ditto -x -k "$(STEAM_MACOS_ZIP)" "$(STEAM_CONTENT_DIR)/macos"; \
 	test -d "$(STEAM_CONTENT_DIR)/macos/$(STEAM_MACOS_APP_NAME)" || { echo "macOS depot must contain $(STEAM_MACOS_APP_NAME) at its root."; exit 1; }; \
 	tmp_dir=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp_dir"' EXIT; \
-	unzip -q "$(STEAM_WINDOWS_DIST_ZIP)" -d "$$tmp_dir"; \
-	if [ -d "$$tmp_dir/steam-windows" ]; then \
-		ditto "$$tmp_dir/steam-windows" "$(STEAM_CONTENT_DIR)/windows"; \
-	elif [ -f "$$tmp_dir/aonw-windows-steam.zip" ]; then \
-		unzip -q "$$tmp_dir/aonw-windows-steam.zip" -d "$(STEAM_CONTENT_DIR)/windows"; \
-	elif [ -f "$$tmp_dir/aonw.exe" ]; then \
-		ditto "$$tmp_dir" "$(STEAM_CONTENT_DIR)/windows"; \
+	windows_tmp_dir="$$tmp_dir/windows"; \
+	mkdir -p "$$windows_tmp_dir"; \
+	unzip -q "$(STEAM_WINDOWS_DIST_ZIP)" -d "$$windows_tmp_dir"; \
+	if [ -d "$$windows_tmp_dir/steam-windows" ]; then \
+		ditto "$$windows_tmp_dir/steam-windows" "$(STEAM_CONTENT_DIR)/windows"; \
+	elif [ -f "$$windows_tmp_dir/aonw-windows-steam.zip" ]; then \
+		unzip -q "$$windows_tmp_dir/aonw-windows-steam.zip" -d "$(STEAM_CONTENT_DIR)/windows"; \
+	elif [ -f "$$windows_tmp_dir/aonw.exe" ]; then \
+		ditto "$$windows_tmp_dir" "$(STEAM_CONTENT_DIR)/windows"; \
 	else \
 		echo "Windows ZIP must contain steam-windows/, aonw-windows-steam.zip, or aonw.exe at root."; \
 		exit 1; \
 	fi; \
 	test -f "$(STEAM_CONTENT_DIR)/windows/aonw.exe" || { echo "Windows depot must contain aonw.exe at its root."; exit 1; }; \
+	if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then \
+		linux_tmp_dir="$$tmp_dir/linux"; \
+		mkdir -p "$$linux_tmp_dir"; \
+		unzip -q "$(STEAM_LINUX_DIST_ZIP)" -d "$$linux_tmp_dir"; \
+		if [ -d "$$linux_tmp_dir/steam-linux" ]; then \
+			ditto "$$linux_tmp_dir/steam-linux" "$(STEAM_CONTENT_DIR)/linux"; \
+		elif [ -f "$$linux_tmp_dir/aonw-linux-steam.zip" ]; then \
+			unzip -q "$$linux_tmp_dir/aonw-linux-steam.zip" -d "$(STEAM_CONTENT_DIR)/linux"; \
+		elif [ -f "$$linux_tmp_dir/aonw" ]; then \
+			ditto "$$linux_tmp_dir" "$(STEAM_CONTENT_DIR)/linux"; \
+		else \
+			echo "Linux ZIP must contain steam-linux/, aonw-linux-steam.zip, or aonw at root."; \
+			exit 1; \
+		fi; \
+		test -f "$(STEAM_CONTENT_DIR)/linux/aonw" || { echo "Linux depot must contain aonw at its root."; exit 1; }; \
+	fi; \
 	macos_binary=$$(find "$(STEAM_CONTENT_DIR)/macos/$(STEAM_MACOS_APP_NAME)/Contents/Frameworks/App.framework" -type f -name App -print -quit); \
 	test -n "$$macos_binary" || { echo "Expected Flutter App.framework binary not found in macOS depot."; exit 1; }; \
 	strings "$$macos_binary" | rg -F "$(STEAM_API_BASE_URL)" >/dev/null; \
 	rg -a -F "$(STEAM_API_BASE_URL)" "$(STEAM_CONTENT_DIR)/windows/data/app.so" >/dev/null; \
+	if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then rg -a -F "$(STEAM_API_BASE_URL)" "$(STEAM_CONTENT_DIR)/linux" >/dev/null; fi; \
 	{ \
 		printf '%s\n' '"AppBuild"'; \
 		printf '%s\n' '{'; \
@@ -812,6 +957,7 @@ steam-prepare-from-dist:
 		printf '%s\n' '  {'; \
 		printf '    "%s" "%s/depot_build_%s_macos.vdf"\n' "$(STEAM_MACOS_DEPOT_ID)" "$(STEAM_SCRIPT_DIR)" "$(STEAM_MACOS_DEPOT_ID)"; \
 		printf '    "%s" "%s/depot_build_%s_windows.vdf"\n' "$(STEAM_WINDOWS_DEPOT_ID)" "$(STEAM_SCRIPT_DIR)" "$(STEAM_WINDOWS_DEPOT_ID)"; \
+		if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then printf '    "%s" "%s/depot_build_%s_linux.vdf"\n' "$(STEAM_LINUX_DEPOT_ID)" "$(STEAM_SCRIPT_DIR)" "$(STEAM_LINUX_DEPOT_ID)"; fi; \
 		printf '%s\n' '  }'; \
 		printf '%s\n' '}'; \
 	} > "$(STEAM_SCRIPT_DIR)/app_build_$(STEAM_APP_ID).vdf"; \
@@ -838,10 +984,27 @@ steam-prepare-from-dist:
 		printf '%s\n' '    "LocalPath" "*"'; \
 		printf '%s\n' '    "DepotPath" "."'; \
 		printf '%s\n' '    "recursive" "1"'; \
-		printf '%s\n' '  }'; \
-		printf '%s\n' '}'; \
-	} > "$(STEAM_SCRIPT_DIR)/depot_build_$(STEAM_WINDOWS_DEPOT_ID)_windows.vdf"; \
-	echo "Verified Steam macOS and Windows API: $(STEAM_API_BASE_URL)"; \
+			printf '%s\n' '  }'; \
+			printf '%s\n' '}'; \
+		} > "$(STEAM_SCRIPT_DIR)/depot_build_$(STEAM_WINDOWS_DEPOT_ID)_windows.vdf"; \
+	if [ "$(STEAM_INCLUDE_LINUX)" = "1" ]; then \
+		{ \
+			printf '%s\n' '"DepotBuildConfig"'; \
+			printf '%s\n' '{'; \
+			printf '  "DepotID" "%s"\n' "$(STEAM_LINUX_DEPOT_ID)"; \
+			printf '  "ContentRoot" "%s/linux"\n' "$(STEAM_CONTENT_DIR)"; \
+			printf '%s\n' '  "FileMapping"'; \
+			printf '%s\n' '  {'; \
+			printf '%s\n' '    "LocalPath" "*"'; \
+			printf '%s\n' '    "DepotPath" "."'; \
+			printf '%s\n' '    "recursive" "1"'; \
+			printf '%s\n' '  }'; \
+			printf '%s\n' '}'; \
+		} > "$(STEAM_SCRIPT_DIR)/depot_build_$(STEAM_LINUX_DEPOT_ID)_linux.vdf"; \
+		echo "Verified Steam macOS, Windows, and Linux API: $(STEAM_API_BASE_URL)"; \
+	else \
+		echo "Verified Steam macOS and Windows API: $(STEAM_API_BASE_URL)"; \
+	fi; \
 	echo "SteamPipe content ready in $(STEAM_DEPLOY_DIR)."
 
 steam-upload-command:
@@ -861,34 +1024,54 @@ itch: itch-prepare itch-upload
 
 itch-prepare: steam itch-desktop android-build-itch
 	@echo "itch artifacts ready:"
-	@ls -ldh "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" "$(ITCH_ANDROID_APK)"
+	@files="$(ITCH_MACOS_DIR) $(ITCH_WINDOWS_DIR) $(ITCH_ANDROID_APK)"; \
+	if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then files="$$files $(ITCH_LINUX_DIR)"; fi; \
+	ls -ldh $$files
 
 itch-desktop:
 	@command -v butler >/dev/null || { echo "butler is required for itch-desktop validation."; exit 1; }
 	@test -f "$(STEAM_MACOS_ZIP)" || { echo "Missing Steam macOS ZIP: $(STEAM_MACOS_ZIP). Run make steam first."; exit 1; }
 	@test -f "$(STEAM_WINDOWS_ZIP)" || { echo "Missing Steam Windows ZIP: $(STEAM_WINDOWS_ZIP). Run make steam first."; exit 1; }
-	@rm -rf "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
-	@rm -f "$(ITCH_DIST_DIR)/aonw-macos-itch.zip" "$(ITCH_DIST_DIR)/aonw-windows-itch.zip"
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ] && [ ! -f "$(STEAM_LINUX_ZIP)" ]; then \
+		$(MAKE) --no-print-directory steam-linux; \
+	fi
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then \
+		test -f "$(STEAM_LINUX_ZIP)" || { echo "Missing Steam Linux ZIP: $(STEAM_LINUX_ZIP). Run make steam-linux first."; exit 1; }; \
+	fi
+	@rm -rf "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" "$(ITCH_LINUX_DIR)"
+	@rm -f "$(ITCH_DIST_DIR)/aonw-macos-itch.zip" "$(ITCH_DIST_DIR)/aonw-windows-itch.zip" "$(ITCH_DIST_DIR)/aonw-linux-itch.zip"
 	@mkdir -p "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then mkdir -p "$(ITCH_LINUX_DIR)"; fi
 	@ditto -x -k "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_DIR)"
 	@unzip -q "$(STEAM_WINDOWS_ZIP)" -d "$(ITCH_WINDOWS_DIR)"
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then unzip -q "$(STEAM_LINUX_ZIP)" -d "$(ITCH_LINUX_DIR)"; fi
 	@test -d "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)" || { echo "itch macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
 	@test -f "$(ITCH_WINDOWS_DIR)/aonw.exe" || { echo "itch Windows folder must contain aonw.exe."; exit 1; }
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then test -f "$(ITCH_LINUX_DIR)/aonw" || { echo "itch Linux folder must contain aonw."; exit 1; }; fi
 	@printf '%s\n' '[[actions]]' 'name = "play"' 'path = "$(STEAM_MACOS_APP_NAME)"' > "$(ITCH_MACOS_DIR)/.itch.toml"
 	@printf '%s\n' '[[actions]]' 'name = "play"' 'path = "aonw.exe"' > "$(ITCH_WINDOWS_DIR)/.itch.toml"
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then printf '%s\n' '[[actions]]' 'name = "play"' 'path = "aonw"' > "$(ITCH_LINUX_DIR)/.itch.toml"; fi
 	@butler validate --platform osx "$(ITCH_MACOS_DIR)"
 	@butler validate --platform windows "$(ITCH_WINDOWS_DIR)"
-	@if find "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)" -iname '*steam*' -print -quit | rg . >/dev/null; then \
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then butler validate --platform linux "$(ITCH_LINUX_DIR)"; fi
+	@find_dirs="$(ITCH_MACOS_DIR) $(ITCH_WINDOWS_DIR)"; \
+	if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then find_dirs="$$find_dirs $(ITCH_LINUX_DIR)"; fi; \
+	if find $$find_dirs -iname '*steam*' -print -quit | rg . >/dev/null; then \
 		echo "itch desktop folders contain steam-named paths."; \
 		exit 1; \
 	fi
-	@echo "itch desktop folders ready: $(ITCH_MACOS_DIR), $(ITCH_WINDOWS_DIR)"
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then \
+		echo "itch desktop folders ready: $(ITCH_MACOS_DIR), $(ITCH_WINDOWS_DIR), $(ITCH_LINUX_DIR)"; \
+	else \
+		echo "itch desktop folders ready: $(ITCH_MACOS_DIR), $(ITCH_WINDOWS_DIR)"; \
+	fi
 
 itch-upload:
 	@command -v butler >/dev/null || { echo "butler is required for itch-upload."; exit 1; }
 	@test -n "$(ITCH_TARGET)" || { echo "ITCH_TARGET is required, e.g. ITCH_TARGET=user/game."; exit 1; }
 	@test -d "$(ITCH_MACOS_DIR)" || { echo "Missing itch macOS folder: $(ITCH_MACOS_DIR). Run make itch-prepare first."; exit 1; }
 	@test -d "$(ITCH_WINDOWS_DIR)" || { echo "Missing itch Windows folder: $(ITCH_WINDOWS_DIR). Run make itch-prepare first."; exit 1; }
+	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then test -d "$(ITCH_LINUX_DIR)" || { echo "Missing itch Linux folder: $(ITCH_LINUX_DIR). Run make itch-prepare first."; exit 1; }; fi
 	@test -f "$(ITCH_ANDROID_APK)" || { echo "Missing itch Android APK: $(ITCH_ANDROID_APK). Run make android-build-itch first."; exit 1; }
 	@set -e; \
 	version="$(ITCH_USER_VERSION)"; \
@@ -897,6 +1080,10 @@ itch-upload:
 	butler push "$(ITCH_MACOS_DIR)" "$(ITCH_TARGET):$(ITCH_MACOS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "Uploading Windows build to itch: $(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL) ($$version)..."; \
 	butler push "$(ITCH_WINDOWS_DIR)" "$(ITCH_TARGET):$(ITCH_WINDOWS_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then \
+		echo "Uploading Linux build to itch: $(ITCH_TARGET):$(ITCH_LINUX_CHANNEL) ($$version)..."; \
+		butler push "$(ITCH_LINUX_DIR)" "$(ITCH_TARGET):$(ITCH_LINUX_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
+	fi; \
 	echo "Uploading Android build to itch: $(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL) ($$version)..."; \
 	butler push "$(ITCH_ANDROID_APK)" "$(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "itch.io uploads finished."

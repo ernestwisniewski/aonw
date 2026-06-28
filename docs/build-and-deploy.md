@@ -150,8 +150,11 @@ The helper expects a clean `main` checkout and pushes `main` before triggering
 artifact preparation and remote deploy. The desktop ZIP step runs `make steam`,
 so macOS is built locally and Windows is built locally, downloaded from GitHub
 Actions, or packaged from an existing release according to
-`STEAM_WINDOWS_SOURCE`. It then expands neutral itch.io desktop folders and
-builds a universal Android APK for itch.io.
+`STEAM_WINDOWS_SOURCE`. Linux packaging is available as an opt-in path through
+`STEAM_INCLUDE_LINUX=1` and `STEAM_LINUX_SOURCE`, but it should stay disabled
+until the Linux Steam depot has been created in Steamworks. The helper then
+expands neutral itch.io desktop folders and builds a universal Android APK for
+itch.io.
 
 By default, `deploy-all` uploads the prepared desktop build to Steamworks and
 uploads an Android App Bundle to the Google Play closed-test track. Set
@@ -161,10 +164,12 @@ Google Play defaults to `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed`, which uses
 `beta`, or `production` to upload via `ANDROID_PLAY_TRACK`.
 
 Set `ITCH_TARGET=user/game` to upload the prepared macOS, Windows, and Android
-artifacts to itch.io during `deploy-all`. If `ITCH_TARGET` is omitted, the
-desktop upload folders are left in `build/itch/`, the Android APK is left in
-`dist/`, and the itch.io upload is skipped. Uploading requires `butler` to be
-installed and authenticated with `butler login` or `BUTLER_API_KEY`.
+artifacts to itch.io during `deploy-all`. Set `ITCH_INCLUDE_LINUX=1` after the
+itch Linux channel is ready to include the Linux desktop folder as well. If
+`ITCH_TARGET` is omitted, the desktop upload folders are left in `build/itch/`,
+the Android APK is left in `dist/`, and the itch.io upload is skipped. Uploading
+requires `butler` to be installed and authenticated with `butler login` or
+`BUTLER_API_KEY`.
 
 ## Platform Builds
 
@@ -181,6 +186,23 @@ macOS:
 flutter build macos --release \
   --dart-define=AONW_API_BASE_URL=https://api.aonw.net
 ```
+
+Linux:
+
+```sh
+sudo apt-get install -y \
+  clang cmake libgtk-3-dev libgstreamer-plugins-base1.0-dev \
+  libgstreamer1.0-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
+  liblzma-dev ninja-build pkg-config unzip zip
+
+flutter config --enable-linux-desktop
+flutter build linux --release \
+  --dart-define=AONW_API_BASE_URL=https://api.aonw.net
+```
+
+The release workflow `.github/workflows/linux-steam-build.yml` performs this on
+Ubuntu 24.04 and publishes `dist/aonw-linux-steam.zip` as a GitHub Actions
+artifact.
 
 Android release builds require local signing files that are not committed:
 
@@ -204,6 +226,24 @@ make steam
 On non-Windows hosts, `make steam` can download the Windows build from GitHub
 Actions when `gh` is available and the workflow is configured.
 
+Linux Steam packaging is separate until the Steamworks Linux depot exists:
+
+```sh
+make steam-linux STEAM_LINUX_SOURCE=github
+make steam STEAM_INCLUDE_LINUX=1
+```
+
+`steamcmd` uploads builds to depots that already exist. Create the Linux depot
+first in Steamworks under **SteamPipe > Depots**, save and publish the partner
+site changes, add the depot to the same packages as the macOS and Windows
+depots, then rerun the command above. The default Linux depot id is `4833243`;
+override `STEAM_LINUX_DEPOT_ID` if Steamworks assigns a different id in another
+app. See the Steamworks
+[Depots](https://partner.steamgames.com/doc/store/application/depots),
+[Packages](https://partner.steamgames.com/doc/store/application/packages), and
+[Builds](https://partner.steamgames.com/doc/store/application/builds)
+documentation for the Steam object model.
+
 itch.io packaging and upload:
 
 ```sh
@@ -214,9 +254,18 @@ This reuses the Steam desktop build flow, expands neutral itch desktop folders
 under `build/itch/macos` and `build/itch/windows`, adds `.itch.toml` launch
 manifests for the itch app, validates them with `butler validate`, builds
 `dist/aonw-android-itch.apk`, and pushes only the two desktop folders plus the
-Android APK to the `macos`, `windows`, and `android` itch channels. Override
-channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`, and
-`ITCH_ANDROID_CHANNEL`.
+Android APK to the `macos`, `windows`, and `android` itch channels. Set
+`ITCH_INCLUDE_LINUX=1` to add `build/itch/linux` and push the `linux` channel.
+Override channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`,
+`ITCH_LINUX_CHANNEL`, and `ITCH_ANDROID_CHANNEL`.
+
+Linux runtime notes:
+
+- OAuth web login depends on `desktop_webview_window` and the system WebKitGTK
+  runtime.
+- Saved login state depends on Secret Service through
+  `flutter_secure_storage_linux`.
+- Audio playback depends on GStreamer runtime plugins.
 
 ## Backups
 
