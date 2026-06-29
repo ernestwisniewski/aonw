@@ -24,76 +24,73 @@ class HudGameOutcomeOverlay extends StatelessWidget {
     return Material(
       key: const Key('gameHud.outcomeOverlay'),
       color: Colors.transparent,
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: GameUiTheme.bg.withAlpha(190)),
-        child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: GameUiTheme.surface.withAlpha(246),
-                    border: Border.all(color: accent.withAlpha(190)),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(150),
-                        blurRadius: 28,
-                        offset: const Offset(0, 14),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _OutcomeHeader(summary: summary, accent: accent),
-                        const SizedBox(height: 14),
-                        Text(
-                          summary.subtitle,
-                          style: GameUiTheme.body.copyWith(
-                            color: GameUiTheme.textPrimary,
-                            height: 1.25,
-                          ),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: GameUiTheme.surface.withAlpha(246),
+                  border: Border.all(color: accent.withAlpha(190)),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(150),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _OutcomeHeader(summary: summary, accent: accent),
+                      const SizedBox(height: 14),
+                      Text(
+                        summary.subtitle,
+                        style: GameUiTheme.body.copyWith(
+                          color: GameUiTheme.textPrimary,
+                          height: 1.25,
                         ),
-                        if (summary.metrics.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _OutcomeMetrics(
-                            metrics: summary.metrics,
-                            accent: accent,
-                          ),
-                        ],
-                        const SizedBox(height: 18),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            key: const Key('gameHud.outcome.returnToMenu'),
-                            style: GameUiTheme.primaryButtonStyle(
-                              background: accent,
-                            ),
-                            onPressed: onReturnToMenu,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const GameIcon(
-                                  GameIcons.back,
-                                  size: 17,
-                                  color: GameUiTheme.bg,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  GameText.actionLabel(l10n.returnToMenuAction),
-                                ),
-                              ],
-                            ),
-                          ),
+                      ),
+                      if (summary.metrics.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _OutcomeMetrics(
+                          metrics: summary.metrics,
+                          accent: accent,
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 18),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton(
+                          key: const Key('gameHud.outcome.returnToMenu'),
+                          style: GameUiTheme.primaryButtonStyle(
+                            background: accent,
+                          ),
+                          onPressed: onReturnToMenu,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const GameIcon(
+                                GameIcons.back,
+                                size: 17,
+                                color: GameUiTheme.bg,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                GameText.actionLabel(l10n.returnToMenuAction),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

@@ -1,5 +1,4 @@
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -17,10 +16,7 @@ Future<T?> showGameModal<T>({
     context: context,
     barrierDismissible: barrierDismissible,
     requestFocus: requestFocus,
-    barrierColor: SurfaceElevation.flat.fill(
-      background: Colors.black,
-      alpha: 150,
-    ),
+    barrierColor: Colors.transparent,
     builder: (dialogContext) {
       return Material(
         type: MaterialType.transparency,
@@ -41,10 +37,7 @@ Future<T?> showGameBottomSheet<T>({
     useSafeArea: true,
     enableDrag: enableDrag,
     backgroundColor: Colors.transparent,
-    barrierColor: SurfaceElevation.flat.fill(
-      background: Colors.black,
-      alpha: 118,
-    ),
+    barrierColor: Colors.transparent,
     builder: (sheetContext) {
       return Material(
         type: MaterialType.transparency,
