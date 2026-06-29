@@ -111,10 +111,6 @@ class _FirstTurnCoachmarksOverlayState
         child: Stack(
           key: const Key('firstTurnCoachmarks.overlay'),
           children: [
-            const ColoredBox(
-              color: Color(0x78000000),
-              child: SizedBox.expand(),
-            ),
             CoachmarkTargetHalo(anchor: step.anchor),
             CoachmarkBubble(
               step: step,

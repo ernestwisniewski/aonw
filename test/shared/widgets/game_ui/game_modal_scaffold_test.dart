@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
@@ -96,4 +98,78 @@ void main() {
 
     expect(confirmed, isTrue);
   });
+
+  testWidgets('game modals keep the map backdrop undimmed', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () {
+                unawaited(
+                  showGameModal<void>(
+                    context: context,
+                    builder: (_) =>
+                        const GameModalScaffold(content: Text('Modal content')),
+                  ),
+                );
+              },
+              child: const Text('Open modal'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open modal'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Modal content'), findsOneWidget);
+    expect(_modalBarrierColors(tester), everyElement(_transparentBarrierColor));
+  });
+
+  testWidgets('game bottom sheets keep the map backdrop undimmed', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () {
+                unawaited(
+                  showGameBottomSheet<void>(
+                    context: context,
+                    builder: (_) => const GameModalScaffold(
+                      shape: GameModalShape.bottomSheet,
+                      content: Text('Sheet content'),
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Open sheet'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open sheet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sheet content'), findsOneWidget);
+    expect(_modalBarrierColors(tester), everyElement(_transparentBarrierColor));
+  });
+}
+
+final Matcher _transparentBarrierColor = anyOf(isNull, Colors.transparent);
+
+List<Color?> _modalBarrierColors(WidgetTester tester) {
+  return [
+    for (final widget in tester.allWidgets)
+      if (widget is ModalBarrier)
+        widget.color
+      else if (widget is AnimatedModalBarrier)
+        widget.color.value,
+  ];
 }
