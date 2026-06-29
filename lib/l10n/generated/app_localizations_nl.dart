@@ -4252,6 +4252,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String requirementResourceAnyOf(String leading, String last) {
+    return '$leading of $last';
+  }
+
+  @override
   String requirementResourcesName(String resources) {
     return 'Vereist: $resources';
   }

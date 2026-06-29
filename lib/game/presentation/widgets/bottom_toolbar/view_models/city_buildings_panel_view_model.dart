@@ -1,7 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/resource_requirement_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -258,24 +258,13 @@ abstract final class CityBuildingsPanelViewModelFactory {
     for (final requirement in definition.requirements) {
       if (requirement is CityResourceRequirement) {
         return l10n.requirementResourcesName(
-          _joinResourceNames(l10n, requirement.resources),
+          ResourceRequirementDisplayNames.alternatives(
+            l10n,
+            requirement.resources,
+          ),
         );
       }
     }
     return l10n.requirementTechnology;
-  }
-
-  static String _joinResourceNames(
-    AppLocalizations l10n,
-    Set<ResourceType> resources,
-  ) {
-    final names =
-        resources
-            .map((resource) => GameDisplayNames.resource(l10n, resource))
-            .toList()
-          ..sort();
-    if (names.isEmpty) return l10n.requirementTechnology;
-    if (names.length == 1) return names.single;
-    return '${names.take(names.length - 1).join(', ')} lub ${names.last}';
   }
 }

@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/resource_requirement_display_names.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_project_item_factory.dart';
@@ -246,7 +247,10 @@ class CityProductionDialogViewModel {
           ? l10n.requirementCoastalAccess
           : resourceBlocked
           ? l10n.requirementResourcesName(
-              _joinResourceNames(l10n, missingResourceChoices),
+              ResourceRequirementDisplayNames.alternatives(
+                l10n,
+                missingResourceChoices,
+              ),
             )
           : supplyBlocked
           ? l10n.cityProductionUnitSupplyLimit(
@@ -466,15 +470,4 @@ List<String> _unitMetaLabels({
     if (type == GameUnitType.worker)
       l10n.cityProductionNextWorkerUpkeep(unitUpkeep.nextWorkerUpkeep),
   ];
-}
-
-String _joinResourceNames(AppLocalizations l10n, Set<ResourceType> resources) {
-  final names =
-      resources
-          .map((resource) => GameDisplayNames.resource(l10n, resource))
-          .toList()
-        ..sort();
-  if (names.isEmpty) return l10n.requirementTechnology;
-  if (names.length == 1) return names.single;
-  return '${names.take(names.length - 1).join(', ')} lub ${names.last}';
 }

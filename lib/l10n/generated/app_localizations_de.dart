@@ -4255,6 +4255,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String requirementResourceAnyOf(String leading, String last) {
+    return '$leading oder $last';
+  }
+
+  @override
   String requirementResourcesName(String resources) {
     return 'Benötigt: $resources';
   }

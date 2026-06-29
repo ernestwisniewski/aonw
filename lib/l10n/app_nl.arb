@@ -2328,6 +2328,7 @@
       }
     }
   },
+  "requirementResourceAnyOf": "{leading} of {last}",
   "requirementResourcesName": "Vereist: {resources}",
   "@requirementResourcesName": {
     "placeholders": {

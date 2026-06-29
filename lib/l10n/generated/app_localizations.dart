@@ -7279,6 +7279,12 @@ abstract class AppLocalizations {
   /// **'Requires: {technology}'**
   String requirementTechnologyName(String technology);
 
+  /// Joins alternative resource requirements into a list, e.g. 'wheat, fish or gold'.
+  ///
+  /// In en, this message translates to:
+  /// **'{leading} or {last}'**
+  String requirementResourceAnyOf(String leading, String last);
+
   /// No description provided for @requirementResourcesName.
   ///
   /// In en, this message translates to:
