@@ -4238,6 +4238,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String requirementResourceAnyOf(String leading, String last) {
+    return '$leading lub $last';
+  }
+
+  @override
   String requirementResourcesName(String resources) {
     return 'Wymaga: $resources';
   }

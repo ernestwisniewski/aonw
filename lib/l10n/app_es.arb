@@ -2329,6 +2329,7 @@
       }
     }
   },
+  "requirementResourceAnyOf": "{leading} o {last}",
   "requirementResourcesName": "Requiere: {resources}",
   "@requirementResourcesName": {
     "placeholders": {

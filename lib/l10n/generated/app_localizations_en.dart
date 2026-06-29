@@ -4230,6 +4230,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String requirementResourceAnyOf(String leading, String last) {
+    return '$leading or $last';
+  }
+
+  @override
   String requirementResourcesName(String resources) {
     return 'Requires: $resources';
   }

@@ -2329,6 +2329,18 @@
       }
     }
   },
+  "requirementResourceAnyOf": "{leading} or {last}",
+  "@requirementResourceAnyOf": {
+    "description": "Joins alternative resource requirements into a list, e.g. 'wheat, fish or gold'.",
+    "placeholders": {
+      "leading": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
   "requirementResourcesName": "Requires: {resources}",
   "@requirementResourcesName": {
     "placeholders": {

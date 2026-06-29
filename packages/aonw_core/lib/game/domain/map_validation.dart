@@ -177,7 +177,12 @@ abstract final class MapValidator {
       rules: rules,
     );
 
-    final startSites = _startSites(mapData: mapData, playerCount: playerCount);
+    final startSites = _startSites(
+      mapName: mapName,
+      mapData: mapData,
+      playerCount: playerCount,
+      issues: issues,
+    );
     _validateStartSites(
       mapName: mapName,
       mapData: mapData,
@@ -365,29 +370,78 @@ abstract final class MapValidator {
   }
 
   static List<MapStartSiteReport> _startSites({
+    required String mapName,
     required MapData mapData,
     required int playerCount,
+    required List<MapValidationIssue> issues,
   }) {
     if (playerCount <= 0) return const [];
     final players = [for (var i = 0; i < playerCount; i++) Player.forIndex(i)];
     final units = StartingUnits.unitsForPlayers(players, mapData: mapData);
-    return [
-      for (var i = 0; i < playerCount; i++)
+    final reports = <MapStartSiteReport>[];
+    for (var i = 0; i < playerCount; i++) {
+      final playerId = players[i].id;
+      final warrior = _unitFor(
+        units,
+        ownerPlayerId: playerId,
+        type: GameUnitType.warrior,
+      );
+      final settler = _unitFor(
+        units,
+        ownerPlayerId: playerId,
+        type: GameUnitType.settler,
+      );
+      if (warrior == null || settler == null) {
+        _addMissingStartingUnitIssues(
+          mapName: mapName,
+          playerIndex: i,
+          playerId: playerId,
+          warrior: warrior,
+          settler: settler,
+          issues: issues,
+        );
+        continue;
+      }
+      reports.add(
         _startSiteReport(
           playerIndex: i,
           mapData: mapData,
-          warrior: _unitFor(
-            units,
-            ownerPlayerId: players[i].id,
-            type: GameUnitType.warrior,
-          ),
-          settler: _unitFor(
-            units,
-            ownerPlayerId: players[i].id,
-            type: GameUnitType.settler,
-          ),
+          warrior: warrior,
+          settler: settler,
         ),
-    ];
+      );
+    }
+    return reports;
+  }
+
+  static void _addMissingStartingUnitIssues({
+    required String mapName,
+    required int playerIndex,
+    required String playerId,
+    required GameUnit? warrior,
+    required GameUnit? settler,
+    required List<MapValidationIssue> issues,
+  }) {
+    if (warrior == null) {
+      issues.add(
+        MapValidationIssue(
+          severity: MapValidationSeverity.error,
+          code: 'starting_unit_missing',
+          message:
+              '$mapName player ${playerIndex + 1} is missing a warrior starting unit ($playerId).',
+        ),
+      );
+    }
+    if (settler == null) {
+      issues.add(
+        MapValidationIssue(
+          severity: MapValidationSeverity.error,
+          code: 'starting_unit_missing',
+          message:
+              '$mapName player ${playerIndex + 1} is missing a settler starting unit ($playerId).',
+        ),
+      );
+    }
   }
 
   static MapStartSiteReport _startSiteReport({
@@ -439,14 +493,17 @@ abstract final class MapValidator {
     );
   }
 
-  static GameUnit _unitFor(
+  static GameUnit? _unitFor(
     Iterable<GameUnit> units, {
     required String ownerPlayerId,
     required GameUnitType type,
   }) {
-    return units.firstWhere(
-      (unit) => unit.ownerPlayerId == ownerPlayerId && unit.type == type,
-    );
+    for (final unit in units) {
+      if (unit.ownerPlayerId == ownerPlayerId && unit.type == type) {
+        return unit;
+      }
+    }
+    return null;
   }
 
   static MapResourceSummary _resourceSummary(MapData mapData) {
