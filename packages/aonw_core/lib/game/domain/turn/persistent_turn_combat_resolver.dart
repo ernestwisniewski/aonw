@@ -414,16 +414,15 @@ abstract final class PersistentTurnCombatResolver {
       defenderPlayerId: city.ownerPlayerId,
       turn: turn,
     );
-    updateDiplomacy(
-      DiplomaticWarmongerReputation.apply(
-        diplomacy: cityAttackDiplomacy,
-        aggressorPlayerId: attacker.ownerPlayerId,
-        victimPlayerId: city.ownerPlayerId,
-        action: DiplomaticWarmongerAction.cityAttack,
-        turn: turn,
-        sourceId: 'city_attack.$turn.${attacker.id}',
-      ).diplomacy,
+    final reputation = DiplomaticWarmongerReputation.apply(
+      diplomacy: cityAttackDiplomacy,
+      aggressorPlayerId: attacker.ownerPlayerId,
+      victimPlayerId: city.ownerPlayerId,
+      action: DiplomaticWarmongerAction.cityAttack,
+      turn: turn,
+      sourceId: 'city_attack.$turn.${attacker.id}',
     );
+    updateDiplomacy(reputation.diplomacy);
     updateResourceTradeAgreements(
       _removeResourceTradeAgreementsBetween(
         resourceTradeAgreements,
@@ -460,13 +459,15 @@ abstract final class PersistentTurnCombatResolver {
       ),
       ruleset: ruleset.combat,
     );
-    events.add(
-      CombatResolvedEvent(
-        attackerUnitId: attacker.id,
-        defenderUnitId: city.id,
-        outcome: outcome,
-      ),
-    );
+    events
+      ..add(
+        CombatResolvedEvent(
+          attackerUnitId: attacker.id,
+          defenderUnitId: city.id,
+          outcome: outcome,
+        ),
+      )
+      ..addAll(_warmongerScoreEvents(reputation.entries));
 
     final attackerExperience = UnitVeterancyRules.experienceAwardForCombat(
       unit: attacker,
@@ -559,6 +560,22 @@ abstract final class PersistentTurnCombatResolver {
     final status = diplomacy.statusBetween(attackerPlayerId, defenderPlayerId);
     return status == DiplomaticRelationStatus.friendly ||
         status == DiplomaticRelationStatus.truce;
+  }
+
+  static List<DiplomaticScoreChangedEvent> _warmongerScoreEvents(
+    Iterable<DiplomaticScoreEntry> entries,
+  ) {
+    return [
+      for (final entry in entries)
+        DiplomaticScoreChangedEvent(
+          playerAId: entry.playerAId,
+          playerBId: entry.playerBId,
+          delta: entry.delta,
+          scoreAfter: entry.scoreAfter,
+          reason: entry.reason,
+          sourceId: entry.sourceId,
+        ),
+    ];
   }
 
   static List<ResourceTradeAgreement> _removeResourceTradeAgreementsBetween(

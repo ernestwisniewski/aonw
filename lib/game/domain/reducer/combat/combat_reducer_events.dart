@@ -64,6 +64,7 @@ abstract final class _CombatEventFactory {
     required GameCity city,
     required CombatOutcome outcome,
     required _CityCombatApplication application,
+    Iterable<DiplomaticScoreEntry> warmongerEntries = const [],
   }) {
     final updatedAttacker = application.updatedAttacker;
     final capturedCity = application.capturedCity;
@@ -99,6 +100,7 @@ abstract final class _CombatEventFactory {
           previousOwnerPlayerId: city.ownerPlayerId,
           attackerOwnerPlayerId: attacker.ownerPlayerId,
         ),
+      ...DiplomaticWarEffects.warmongerScoreEvents(warmongerEntries),
     ];
   }
 

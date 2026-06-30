@@ -380,7 +380,7 @@ abstract final class CombatReducer {
     );
     final changedCity =
         applied.capturedCity ?? applied.destroyedCity ?? applied.updatedCity;
-    final diplomacy = DiplomaticWarmongerReputation.apply(
+    final reputation = DiplomaticWarmongerReputation.apply(
       diplomacy: state.diplomacy.registerCityAttack(
         attackerPlayerId: attacker.ownerPlayerId,
         defenderPlayerId: setup.city.ownerPlayerId,
@@ -391,7 +391,8 @@ abstract final class CombatReducer {
       action: DiplomaticWarmongerAction.cityAttack,
       turn: context.combatSeedTurn,
       sourceId: 'city_attack.${context.combatSeedTurn}.${attacker.id}',
-    ).diplomacy;
+    );
+    final diplomacy = reputation.diplomacy;
     final next = _clearAttackInteractionState(
       withDiscoveredDiplomaticContacts(
         state.copyWith(
@@ -420,6 +421,7 @@ abstract final class CombatReducer {
         city: setup.city,
         outcome: outcome,
         application: applied,
+        warmongerEntries: reputation.entries,
       ),
       uiEffects: [
         PlayCombatAnimationEffect(
@@ -606,7 +608,6 @@ abstract final class CombatReducer {
             : state,
     };
   }
-
   static GameState _refreshUnitSelection(
     GameState state,
     GameSelection selection,

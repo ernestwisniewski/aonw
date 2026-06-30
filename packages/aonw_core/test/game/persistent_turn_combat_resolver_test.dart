@@ -190,6 +190,64 @@ void main() {
       ]);
     });
 
+    test('city attack emits warmonger score events for shared contacts', () {
+      final attacker = GameUnit(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Warrior',
+        col: 0,
+        row: 0,
+      );
+      const city = GameCity(
+        id: 'city_2',
+        ownerPlayerId: 'player_2',
+        name: 'City 2',
+        center: CityHex(col: 1, row: 0),
+      );
+      final state = PersistentGameState(
+        units: [attacker],
+        cities: const [city],
+        runtimeState: GameRuntimeState(
+          diplomacy: DiplomacyState.empty
+              .addContact('player_1', 'player_2')
+              .addContact('player_1', 'player_3')
+              .addContact('player_2', 'player_3'),
+          intendedAttacks: const [
+            IntendedAttack(
+              attackerUnitId: 'warrior_1',
+              defenderCol: 1,
+              defenderRow: 0,
+              declaredAtTick: 7,
+              declaringPlayerId: 'player_1',
+            ),
+          ],
+        ),
+      );
+
+      final result = PersistentTurnCombatResolver.resolve(
+        turn: 4,
+        state: state,
+        mapDefinition: _mapDefinition(),
+      );
+      final scoreEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+
+      expect(
+        result.state.runtimeState.diplomacy.relationScoreBetween(
+          'player_1',
+          'player_3',
+        ),
+        DiplomaticWarmongerReputation.cityAttackPenalty,
+      );
+      expect(scoreEvent.playerAId, 'player_1');
+      expect(scoreEvent.playerBId, 'player_3');
+      expect(scoreEvent.delta, DiplomaticWarmongerReputation.cityAttackPenalty);
+      expect(scoreEvent.reason, DiplomaticScoreChangeReason.warmongerPenalty);
+      expect(scoreEvent.sourceId, 'city_attack.4.warrior_1');
+    });
+
     test('moves a low-health defender when retreat is available', () {
       final attacker = GameUnit(
         id: 'archer_1',

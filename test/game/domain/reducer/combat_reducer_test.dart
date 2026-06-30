@@ -521,6 +521,19 @@ void main() {
         result.state.diplomacy.relationScoreBetween('p1', 'p3'),
         DiplomaticWarmongerReputation.cityAttackPenalty,
       );
+      final warmongerEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+      expect(warmongerEvent.playerAId, 'p1');
+      expect(warmongerEvent.playerBId, 'p3');
+      expect(
+        warmongerEvent.delta,
+        DiplomaticWarmongerReputation.cityAttackPenalty,
+      );
+      expect(
+        warmongerEvent.reason,
+        DiplomaticScoreChangeReason.warmongerPenalty,
+      );
     });
 
     test('lethal attack on unguarded city captures it by default', () {
