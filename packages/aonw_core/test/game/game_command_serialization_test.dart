@@ -255,6 +255,7 @@ const _commandFixtures = <({GameCommand command, String type})>[
       targetPlayerId: 'player_2',
       kind: DiplomaticProposalKind.friendship,
       proposalId: 'proposal_1',
+      goldPayment: 6,
     ),
     type: 'SendDiplomaticProposal',
   ),

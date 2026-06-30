@@ -233,6 +233,7 @@ void main() {
               kind: DiplomaticProposalKind.truce,
               createdTurn: 3,
               expiresOnTurn: 8,
+              goldPayment: 9,
             ),
           )
           .addMessage(message)
@@ -249,6 +250,7 @@ void main() {
 
       expect(restored, diplomacy);
       expect(restored.proposalsFor('player_1'), hasLength(1));
+      expect(restored.proposalsFor('player_1').single.goldPayment, 9);
       expect(restored.messagesBetween('player_1', 'player_2').single, message);
       expect(
         restored.scoreEntriesBetween('player_1', 'player_2'),

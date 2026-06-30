@@ -6,12 +6,14 @@ final class SendDiplomaticProposalCommand extends GameCommand {
     required this.targetPlayerId,
     required this.kind,
     this.proposalId,
+    this.goldPayment = 0,
   });
 
   final String playerId;
   final String targetPlayerId;
   final DiplomaticProposalKind kind;
   final String? proposalId;
+  final int goldPayment;
 
   @override
   bool operator ==(Object other) =>
@@ -19,7 +21,8 @@ final class SendDiplomaticProposalCommand extends GameCommand {
       other.playerId == playerId &&
       other.targetPlayerId == targetPlayerId &&
       other.kind == kind &&
-      other.proposalId == proposalId;
+      other.proposalId == proposalId &&
+      other.goldPayment == goldPayment;
 
   @override
   int get hashCode => Object.hash(
@@ -28,6 +31,7 @@ final class SendDiplomaticProposalCommand extends GameCommand {
     targetPlayerId,
     kind,
     proposalId,
+    goldPayment,
   );
 }
 

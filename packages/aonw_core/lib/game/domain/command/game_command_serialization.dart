@@ -287,6 +287,7 @@ abstract final class GameCommandSerializer {
       :final targetPlayerId,
       :final kind,
       :final proposalId,
+      :final goldPayment,
     ) =>
       {
         'type': 'SendDiplomaticProposal',
@@ -294,6 +295,7 @@ abstract final class GameCommandSerializer {
         'targetPlayerId': targetPlayerId,
         'kind': kind.name,
         'proposalId': ?proposalId,
+        if (goldPayment > 0) 'goldPayment': goldPayment,
       },
     RespondDiplomaticProposalCommand(
       :final playerId,
@@ -604,6 +606,7 @@ abstract final class GameCommandSerializer {
           DiplomaticProposalKind.values,
         ),
         proposalId: optionalStringField(json, type, 'proposalId'),
+        goldPayment: optionalIntField(json, type, 'goldPayment') ?? 0,
       ),
       'RespondDiplomaticProposal' => RespondDiplomaticProposalCommand(
         playerId: requiredStringField(json, type, 'playerId'),
