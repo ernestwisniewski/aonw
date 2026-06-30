@@ -3,6 +3,7 @@ part of 'diplomacy_player_modal.dart';
 class _ActionsSection extends StatelessWidget {
   const _ActionsSection({
     required this.l10n,
+    required this.gameState,
     required this.relation,
     required this.activePlayerId,
     required this.targetPlayerId,
@@ -10,6 +11,7 @@ class _ActionsSection extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
+  final GameState gameState;
   final DiplomaticRelation relation;
   final String activePlayerId;
   final String targetPlayerId;
@@ -20,62 +22,168 @@ class _ActionsSection extends StatelessWidget {
     final truceBlocksWar =
         relation.status == DiplomaticRelationStatus.truce &&
         relation.statusExpiresOnTurn != null;
+    final friendshipForecast = _proposalForecast(
+      DiplomaticProposalKind.friendship,
+    );
+    final truceForecast = _proposalForecast(DiplomaticProposalKind.truce);
     return _Section(
       title: l10n.diplomacyActionsTitle,
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          EpicButton.outlined(
-            label: l10n.diplomacySendFriendship,
-            icon: Icons.handshake_outlined,
-            onPressed: relation.status == DiplomaticRelationStatus.war
-                ? null
-                : () => unawaited(
-                    onCommand(
-                      SendDiplomaticProposalCommand(
-                        playerId: activePlayerId,
-                        targetPlayerId: targetPlayerId,
-                        kind: DiplomaticProposalKind.friendship,
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              EpicButton.outlined(
+                label: l10n.diplomacySendFriendship,
+                icon: Icons.handshake_outlined,
+                onPressed: relation.status == DiplomaticRelationStatus.war
+                    ? null
+                    : () => unawaited(
+                        onCommand(
+                          SendDiplomaticProposalCommand(
+                            playerId: activePlayerId,
+                            targetPlayerId: targetPlayerId,
+                            kind: DiplomaticProposalKind.friendship,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+              ),
+              EpicButton.outlined(
+                label: l10n.diplomacySendTruce,
+                icon: Icons.hourglass_bottom_outlined,
+                onPressed:
+                    relation.status == DiplomaticRelationStatus.friendly ||
+                        relation.status == DiplomaticRelationStatus.truce
+                    ? null
+                    : () => unawaited(
+                        onCommand(
+                          SendDiplomaticProposalCommand(
+                            playerId: activePlayerId,
+                            targetPlayerId: targetPlayerId,
+                            kind: DiplomaticProposalKind.truce,
+                          ),
+                        ),
+                      ),
+              ),
+              EpicButton.outlined(
+                label: l10n.diplomacyDeclareWar,
+                icon: Icons.gavel_outlined,
+                onPressed:
+                    truceBlocksWar ||
+                        relation.status == DiplomaticRelationStatus.war
+                    ? null
+                    : () => unawaited(
+                        onCommand(
+                          DeclareWarCommand(
+                            playerId: activePlayerId,
+                            targetPlayerId: targetPlayerId,
+                          ),
+                        ),
+                      ),
+              ),
+            ],
           ),
-          EpicButton.outlined(
-            label: l10n.diplomacySendTruce,
-            icon: Icons.hourglass_bottom_outlined,
-            onPressed:
-                relation.status == DiplomaticRelationStatus.friendly ||
-                    relation.status == DiplomaticRelationStatus.truce
-                ? null
-                : () => unawaited(
-                    onCommand(
-                      SendDiplomaticProposalCommand(
-                        playerId: activePlayerId,
-                        targetPlayerId: targetPlayerId,
-                        kind: DiplomaticProposalKind.truce,
-                      ),
-                    ),
-                  ),
+          const SizedBox(height: 10),
+          _ProposalForecastLine(
+            l10n: l10n,
+            kind: DiplomaticProposalKind.friendship,
+            forecast: friendshipForecast,
           ),
-          EpicButton.outlined(
-            label: l10n.diplomacyDeclareWar,
-            icon: Icons.gavel_outlined,
-            onPressed:
-                truceBlocksWar ||
-                    relation.status == DiplomaticRelationStatus.war
-                ? null
-                : () => unawaited(
-                    onCommand(
-                      DeclareWarCommand(
-                        playerId: activePlayerId,
-                        targetPlayerId: targetPlayerId,
-                      ),
-                    ),
-                  ),
+          const SizedBox(height: 4),
+          _ProposalForecastLine(
+            l10n: l10n,
+            kind: DiplomaticProposalKind.truce,
+            forecast: truceForecast,
           ),
         ],
       ),
     );
+  }
+
+  DiplomaticProposalForecast _proposalForecast(DiplomaticProposalKind kind) {
+    return DiplomaticProposalForecast.evaluate(
+      kind: kind,
+      relation: relation,
+      underPressure:
+          _militaryCount(activePlayerId) > _militaryCount(targetPlayerId),
+      recentHostility: _recentAggression(activePlayerId, targetPlayerId) > 0,
+    );
+  }
+
+  int _militaryCount(String playerId) {
+    return gameState.units
+        .where(
+          (unit) =>
+              unit.ownerPlayerId == playerId &&
+              unit.type != GameUnitType.worker &&
+              unit.type != GameUnitType.settler,
+        )
+        .length;
+  }
+
+  int _recentAggression(String attackerId, String defenderId) {
+    return gameState.diplomacy
+        .scoreEntriesBetween(attackerId, defenderId)
+        .where(
+          (entry) =>
+              entry.reason == DiplomaticScoreChangeReason.unitAttack ||
+              entry.reason == DiplomaticScoreChangeReason.cityAttack ||
+              entry.reason == DiplomaticScoreChangeReason.declarationOfWar,
+        )
+        .length;
+  }
+}
+
+class _ProposalForecastLine extends StatelessWidget {
+  const _ProposalForecastLine({
+    required this.l10n,
+    required this.kind,
+    required this.forecast,
+  });
+
+  final AppLocalizations l10n;
+  final DiplomaticProposalKind kind;
+  final DiplomaticProposalForecast forecast;
+
+  @override
+  Widget build(BuildContext context) {
+    final outcome = forecast.accepted
+        ? l10n.diplomacyProposalForecastAccepted
+        : l10n.diplomacyProposalForecastRejected;
+    final reasons = forecast.reasons
+        .map((reason) => _reasonLabel(l10n, reason))
+        .join(', ');
+    return Text(
+      l10n.diplomacyProposalForecastLine(
+        _proposalLabel(l10n, kind),
+        outcome,
+        reasons,
+      ),
+      style: GameUiTheme.cardMeta.copyWith(
+        color: forecast.accepted ? GameUiTheme.success : GameUiTheme.danger,
+      ),
+    );
+  }
+
+  String _reasonLabel(
+    AppLocalizations l10n,
+    DiplomaticProposalForecastReason reason,
+  ) {
+    return switch (reason) {
+      DiplomaticProposalForecastReason.acceptableRelations =>
+        l10n.diplomacyProposalForecastReasonAcceptableRelations,
+      DiplomaticProposalForecastReason.activeWar =>
+        l10n.diplomacyProposalForecastReasonActiveWar,
+      DiplomaticProposalForecastReason.atWar =>
+        l10n.diplomacyProposalForecastReasonAtWar,
+      DiplomaticProposalForecastReason.lowRelations =>
+        l10n.diplomacyProposalForecastReasonLowRelations,
+      DiplomaticProposalForecastReason.militaryPressure =>
+        l10n.diplomacyProposalForecastReasonMilitaryPressure,
+      DiplomaticProposalForecastReason.recentHostility =>
+        l10n.diplomacyProposalForecastReasonRecentHostility,
+    };
   }
 }

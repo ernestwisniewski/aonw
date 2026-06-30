@@ -354,6 +354,28 @@
   },
   "diplomacyProposalFriendship": "Freundschaftsvorschlag",
   "diplomacyProposalTruce": "Waffenstillstandsvorschlag",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "wahrscheinlich akzeptiert",
+  "diplomacyProposalForecastRejected": "wahrscheinlich abgelehnt",
+  "diplomacyProposalForecastReasonAcceptableRelations": "Beziehungen reichen aus",
+  "diplomacyProposalForecastReasonActiveWar": "aktiver Krieg",
+  "diplomacyProposalForecastReasonAtWar": "Freundschaft durch Krieg blockiert",
+  "diplomacyProposalForecastReasonLowRelations": "Beziehungen zu niedrig",
+  "diplomacyProposalForecastReasonMilitaryPressure": "militärischer Druck",
+  "diplomacyProposalForecastReasonRecentHostility": "jüngste Feindseligkeit",
   "diplomacySendFriendship": "Freundschaft vorschlagen",
   "diplomacySendTruce": "Waffenruhe vorschlagen",
   "diplomacyDeclareWar": "Krieg erklären",

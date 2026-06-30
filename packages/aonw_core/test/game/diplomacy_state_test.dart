@@ -104,6 +104,37 @@ void main() {
       );
     });
 
+    test('forecasts proposal acceptance reasons', () {
+      final lowTrust = DiplomacyState.empty
+          .adjustRelationScore(
+            'player_1',
+            'player_2',
+            -40,
+            turn: 2,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .relationBetween('player_1', 'player_2');
+      final friendship = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.friendship,
+        relation: lowTrust,
+      );
+      final truce = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        underPressure: true,
+      );
+
+      expect(friendship.accepted, isFalse);
+      expect(friendship.reasons, [
+        DiplomaticProposalForecastReason.lowRelations,
+      ]);
+      expect(truce.accepted, isTrue);
+      expect(
+        truce.reasons,
+        contains(DiplomaticProposalForecastReason.militaryPressure),
+      );
+    });
+
     test('round-trips discovered contacts through json', () {
       final diplomacy = DiplomacyState.empty.addContact('player_2', 'player_1');
       final json = diplomacy.toJson();

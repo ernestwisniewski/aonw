@@ -3,6 +3,7 @@ import 'package:aonw_core/util/wire_json.dart';
 
 part 'diplomatic_relation.dart';
 part 'diplomatic_proposal.dart';
+part 'diplomatic_proposal_forecast.dart';
 part 'diplomatic_message.dart';
 part 'diplomatic_score_entry.dart';
 part 'diplomacy_state_model.dart';

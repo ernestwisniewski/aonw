@@ -354,6 +354,28 @@
   },
   "diplomacyProposalFriendship": "Propozycja przyjaźni",
   "diplomacyProposalTruce": "Propozycja rozejmu",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "raczej zaakceptują",
+  "diplomacyProposalForecastRejected": "raczej odrzucą",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relacje są wystarczające",
+  "diplomacyProposalForecastReasonActiveWar": "trwa wojna",
+  "diplomacyProposalForecastReasonAtWar": "wojna blokuje przyjaźń",
+  "diplomacyProposalForecastReasonLowRelations": "relacje są zbyt niskie",
+  "diplomacyProposalForecastReasonMilitaryPressure": "presja militarna",
+  "diplomacyProposalForecastReasonRecentHostility": "niedawna wrogość",
   "diplomacySendFriendship": "Zaproponuj przyjaźń",
   "diplomacySendTruce": "Zaproponuj rozejm",
   "diplomacyDeclareWar": "Wypowiedz wojnę",

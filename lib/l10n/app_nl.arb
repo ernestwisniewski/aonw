@@ -354,6 +354,28 @@
   },
   "diplomacyProposalFriendship": "Vriendschapsvoorstel",
   "diplomacyProposalTruce": "Wapenstilstandsvoorstel",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "waarschijnlijk geaccepteerd",
+  "diplomacyProposalForecastRejected": "waarschijnlijk afgewezen",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relaties zijn werkbaar",
+  "diplomacyProposalForecastReasonActiveWar": "actieve oorlog",
+  "diplomacyProposalForecastReasonAtWar": "vriendschap geblokkeerd door oorlog",
+  "diplomacyProposalForecastReasonLowRelations": "relaties te laag",
+  "diplomacyProposalForecastReasonMilitaryPressure": "militaire druk",
+  "diplomacyProposalForecastReasonRecentHostility": "recente vijandigheid",
   "diplomacySendFriendship": "Stel vriendschap voor",
   "diplomacySendTruce": "Stel een wapenstilstand voor",
   "diplomacyDeclareWar": "Verklaar de oorlog",

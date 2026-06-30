@@ -806,6 +806,43 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diplomacyProposalTruce => 'Wapenstilstandsvoorstel';
 
   @override
+  String diplomacyProposalForecastLine(
+    String proposal,
+    String outcome,
+    String reasons,
+  ) {
+    return '$proposal: $outcome · $reasons';
+  }
+
+  @override
+  String get diplomacyProposalForecastAccepted => 'waarschijnlijk geaccepteerd';
+
+  @override
+  String get diplomacyProposalForecastRejected => 'waarschijnlijk afgewezen';
+
+  @override
+  String get diplomacyProposalForecastReasonAcceptableRelations =>
+      'relaties zijn werkbaar';
+
+  @override
+  String get diplomacyProposalForecastReasonActiveWar => 'actieve oorlog';
+
+  @override
+  String get diplomacyProposalForecastReasonAtWar =>
+      'vriendschap geblokkeerd door oorlog';
+
+  @override
+  String get diplomacyProposalForecastReasonLowRelations => 'relaties te laag';
+
+  @override
+  String get diplomacyProposalForecastReasonMilitaryPressure =>
+      'militaire druk';
+
+  @override
+  String get diplomacyProposalForecastReasonRecentHostility =>
+      'recente vijandigheid';
+
+  @override
   String get diplomacySendFriendship => 'Stel vriendschap voor';
 
   @override

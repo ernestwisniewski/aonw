@@ -354,6 +354,28 @@
   },
   "diplomacyProposalFriendship": "Friendship proposal",
   "diplomacyProposalTruce": "Truce proposal",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "likely accepted",
+  "diplomacyProposalForecastRejected": "likely rejected",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relations are workable",
+  "diplomacyProposalForecastReasonActiveWar": "active war",
+  "diplomacyProposalForecastReasonAtWar": "friendship blocked by war",
+  "diplomacyProposalForecastReasonLowRelations": "relations too low",
+  "diplomacyProposalForecastReasonMilitaryPressure": "military pressure",
+  "diplomacyProposalForecastReasonRecentHostility": "recent hostility",
   "diplomacySendFriendship": "Propose friendship",
   "diplomacySendTruce": "Propose truce",
   "diplomacyDeclareWar": "Declare war",

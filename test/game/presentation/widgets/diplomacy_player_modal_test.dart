@@ -77,6 +77,14 @@ void main() {
     );
     expect(find.text('Dispatches'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
+    expect(
+      find.textContaining('Friendship proposal: likely rejected'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Truce proposal: likely rejected'),
+      findsOneWidget,
+    );
     expect(find.text('Strategic resources'), findsOneWidget);
     expect(find.text('Import horses'), findsOneWidget);
     expect(find.text('Trade iron for horses'), findsOneWidget);

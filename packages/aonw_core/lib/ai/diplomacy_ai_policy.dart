@@ -43,7 +43,6 @@ class DiplomacyAiPolicy {
       view.forPlayerId,
       proposal.fromPlayerId,
     );
-    final score = relation.relationScore;
     final underPressure =
         view.pendingCityAttackThreats.any(
           (threat) => threat.attackerPlayerId == proposal.fromPlayerId,
@@ -53,16 +52,14 @@ class DiplomacyAiPolicy {
                 .length >
             view.ownUnits.length;
 
-    return switch (proposal.kind) {
-      DiplomaticProposalKind.friendship =>
-        relation.status != DiplomaticRelationStatus.war &&
-            score >= -15 &&
-            !view.recentHostilePlayerIds.contains(proposal.fromPlayerId),
-      DiplomaticProposalKind.truce =>
-        relation.status == DiplomaticRelationStatus.war ||
-            underPressure ||
-            score >= -35,
-    };
+    return DiplomaticProposalForecast.evaluate(
+      kind: proposal.kind,
+      relation: relation,
+      recentHostility: view.recentHostilePlayerIds.contains(
+        proposal.fromPlayerId,
+      ),
+      underPressure: underPressure,
+    ).accepted;
   }
 
   Iterable<GameCommand> _messageResponses(

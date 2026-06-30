@@ -804,6 +804,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diplomacyProposalTruce => 'Truce proposal';
 
   @override
+  String diplomacyProposalForecastLine(
+    String proposal,
+    String outcome,
+    String reasons,
+  ) {
+    return '$proposal: $outcome · $reasons';
+  }
+
+  @override
+  String get diplomacyProposalForecastAccepted => 'likely accepted';
+
+  @override
+  String get diplomacyProposalForecastRejected => 'likely rejected';
+
+  @override
+  String get diplomacyProposalForecastReasonAcceptableRelations =>
+      'relations are workable';
+
+  @override
+  String get diplomacyProposalForecastReasonActiveWar => 'active war';
+
+  @override
+  String get diplomacyProposalForecastReasonAtWar =>
+      'friendship blocked by war';
+
+  @override
+  String get diplomacyProposalForecastReasonLowRelations => 'relations too low';
+
+  @override
+  String get diplomacyProposalForecastReasonMilitaryPressure =>
+      'military pressure';
+
+  @override
+  String get diplomacyProposalForecastReasonRecentHostility =>
+      'recent hostility';
+
+  @override
   String get diplomacySendFriendship => 'Propose friendship';
 
   @override

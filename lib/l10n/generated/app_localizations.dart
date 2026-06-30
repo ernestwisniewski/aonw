@@ -1548,6 +1548,64 @@ abstract class AppLocalizations {
   /// **'Truce proposal'**
   String get diplomacyProposalTruce;
 
+  /// No description provided for @diplomacyProposalForecastLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{proposal}: {outcome} · {reasons}'**
+  String diplomacyProposalForecastLine(
+    String proposal,
+    String outcome,
+    String reasons,
+  );
+
+  /// No description provided for @diplomacyProposalForecastAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'likely accepted'**
+  String get diplomacyProposalForecastAccepted;
+
+  /// No description provided for @diplomacyProposalForecastRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'likely rejected'**
+  String get diplomacyProposalForecastRejected;
+
+  /// No description provided for @diplomacyProposalForecastReasonAcceptableRelations.
+  ///
+  /// In en, this message translates to:
+  /// **'relations are workable'**
+  String get diplomacyProposalForecastReasonAcceptableRelations;
+
+  /// No description provided for @diplomacyProposalForecastReasonActiveWar.
+  ///
+  /// In en, this message translates to:
+  /// **'active war'**
+  String get diplomacyProposalForecastReasonActiveWar;
+
+  /// No description provided for @diplomacyProposalForecastReasonAtWar.
+  ///
+  /// In en, this message translates to:
+  /// **'friendship blocked by war'**
+  String get diplomacyProposalForecastReasonAtWar;
+
+  /// No description provided for @diplomacyProposalForecastReasonLowRelations.
+  ///
+  /// In en, this message translates to:
+  /// **'relations too low'**
+  String get diplomacyProposalForecastReasonLowRelations;
+
+  /// No description provided for @diplomacyProposalForecastReasonMilitaryPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'military pressure'**
+  String get diplomacyProposalForecastReasonMilitaryPressure;
+
+  /// No description provided for @diplomacyProposalForecastReasonRecentHostility.
+  ///
+  /// In en, this message translates to:
+  /// **'recent hostility'**
+  String get diplomacyProposalForecastReasonRecentHostility;
+
   /// No description provided for @diplomacySendFriendship.
   ///
   /// In en, this message translates to:

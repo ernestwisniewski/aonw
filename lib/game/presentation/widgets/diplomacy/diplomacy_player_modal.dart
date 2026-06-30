@@ -175,6 +175,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
               ),
               _ActionsSection(
                 l10n: l10n,
+                gameState: gameState,
                 relation: relation,
                 activePlayerId: activePlayerId,
                 targetPlayerId: targetPlayerId,
