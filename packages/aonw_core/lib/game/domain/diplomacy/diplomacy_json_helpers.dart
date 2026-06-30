@@ -54,7 +54,7 @@ final class _DiplomacyStateJsonParser {
   Set<String> _parseContactKeys() {
     final parsed = <String>{};
     for (final contactJson in _jsonList('contacts')) {
-      final key = DiplomacyState._contactKeyFromJson(contactJson);
+      final key = _contactKeyFromJson(contactJson);
       if (key.isNotEmpty) parsed.add(key);
     }
     return parsed;
@@ -108,8 +108,7 @@ final class _DiplomacyStateJsonParser {
     return {
       for (final entry in parsed.entries)
         entry.key: List<DiplomaticScoreEntry>.unmodifiable(
-          <DiplomaticScoreEntry>[...entry.value]
-            ..sort(DiplomacyState._compareScoreEntries),
+          <DiplomaticScoreEntry>[...entry.value]..sort(_compareScoreEntries),
         ),
     };
   }

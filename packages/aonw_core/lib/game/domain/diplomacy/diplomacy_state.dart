@@ -7,10 +7,12 @@ part 'diplomatic_proposal.dart';
 part 'proposal_acceptance_policy.dart';
 part 'diplomatic_proposal_forecast.dart';
 part 'diplomatic_message.dart';
+part 'diplomatic_score_adjustment.dart';
 part 'diplomatic_score_entry.dart';
 part 'diplomatic_score_reason.dart';
 part 'diplomacy_contact_pairs.dart';
 part 'diplomacy_state_model.dart';
+part 'diplomacy_state_serialization_helpers.dart';
 part 'diplomacy_json_helpers.dart';
 
 enum DiplomaticRelationStatus { friendly, neutral, hostile, truce, war }

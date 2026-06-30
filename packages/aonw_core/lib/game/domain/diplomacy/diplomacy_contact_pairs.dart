@@ -3,7 +3,7 @@ part of 'diplomacy_state.dart';
 extension DiplomacyContactPairs on DiplomacyState {
   List<(String, String)> get decodedContactPairs {
     final pairs = [
-      for (final key in _sortedContactKeys()) _decodedContactKey(key),
+      for (final key in _sortedContactKeys(this)) _decodedContactKey(key),
     ];
     return List.unmodifiable(pairs);
   }
