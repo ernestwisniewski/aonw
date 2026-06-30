@@ -209,6 +209,14 @@ class ServerCommandReducer {
               agreementId: command.agreementId,
             );
         return _fromPersistentResult(save, result);
+      case DiplomaticCommand():
+        final result = const DiplomacyCommandRouter().route(
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          turn: save.turn,
+        );
+        return _fromPersistentResult(save, result);
       case FoundCityCommand():
         final result = const PersistentCityFoundingResolver().foundCity(
           state: state,
@@ -614,6 +622,19 @@ class ServerCommandReducer {
           save: save,
           accepted: accepted,
           state: state,
+          reason: reason,
+        ),
+      PersistentDiplomacyResult(
+        :final accepted,
+        :final state,
+        :final events,
+        :final reason,
+      ) =>
+        _applicationFrom(
+          save: save,
+          accepted: accepted,
+          state: state,
+          events: events,
           reason: reason,
         ),
       PersistentResearchCommandResult(
