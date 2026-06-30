@@ -704,6 +704,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diplomacyScoreLabel => 'Betrekkingen';
 
   @override
+  String get diplomacyTreatyLabel => 'Verdrag';
+
+  @override
+  String get diplomacyAttitudeLabel => 'Houding';
+
+  @override
   String get diplomacyScoreDriversTitle => 'Wat relaties verandert';
 
   @override

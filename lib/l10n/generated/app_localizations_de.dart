@@ -705,6 +705,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diplomacyScoreLabel => 'Beziehungen';
 
   @override
+  String get diplomacyTreatyLabel => 'Vertrag';
+
+  @override
+  String get diplomacyAttitudeLabel => 'Haltung';
+
+  @override
   String get diplomacyScoreDriversTitle => 'Was Beziehungen verändert';
 
   @override

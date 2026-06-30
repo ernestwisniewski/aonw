@@ -301,6 +301,8 @@
   "diplomacyRelationWarShort": "guerre",
   "commonDiplomacy": "Diplomatie",
   "diplomacyScoreLabel": "Relations",
+  "diplomacyTreatyLabel": "Traité",
+  "diplomacyAttitudeLabel": "Attitude",
   "diplomacyScoreDriversTitle": "Ce qui change les relations",
   "diplomacyScoreReasonManual": "Changement manuel",
   "diplomacyScoreReasonUnitAttack": "Attaque d'unité",

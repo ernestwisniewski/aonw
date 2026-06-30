@@ -1356,6 +1356,18 @@ abstract class AppLocalizations {
   /// **'Relations'**
   String get diplomacyScoreLabel;
 
+  /// No description provided for @diplomacyTreatyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Treaty'**
+  String get diplomacyTreatyLabel;
+
+  /// No description provided for @diplomacyAttitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Attitude'**
+  String get diplomacyAttitudeLabel;
+
   /// No description provided for @diplomacyScoreDriversTitle.
   ///
   /// In en, this message translates to:

@@ -301,6 +301,8 @@
   "diplomacyRelationWarShort": "oorlog",
   "commonDiplomacy": "Diplomatie",
   "diplomacyScoreLabel": "Betrekkingen",
+  "diplomacyTreatyLabel": "Verdrag",
+  "diplomacyAttitudeLabel": "Houding",
   "diplomacyScoreDriversTitle": "Wat relaties verandert",
   "diplomacyScoreReasonManual": "Handmatige wijziging",
   "diplomacyScoreReasonUnitAttack": "Aanval op eenheid",
