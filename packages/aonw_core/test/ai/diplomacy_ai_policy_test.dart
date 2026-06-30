@@ -130,6 +130,64 @@ void main() {
         ),
       );
     });
+
+    test('requires pressure or payment for hostile truce offers', () {
+      final baseDiplomacy = DiplomacyState.empty
+          .setStatus('ai', 'rival', DiplomaticRelationStatus.war)
+          .adjustRelationScore(
+            'ai',
+            'rival',
+            -50,
+            turn: 8,
+            reason: DiplomaticScoreChangeReason.manual,
+          );
+
+      RespondDiplomaticProposalCommand responseFor(
+        DiplomaticProposal proposal,
+      ) {
+        final view = _view(diplomacy: baseDiplomacy.addProposal(proposal));
+        return const DiplomacyAiPolicy()
+            .commandsFor(view, _context())
+            .whereType<RespondDiplomaticProposalCommand>()
+            .single;
+      }
+
+      expect(
+        responseFor(
+          const DiplomaticProposal(
+            id: 'unpaid_truce',
+            fromPlayerId: 'rival',
+            toPlayerId: 'ai',
+            kind: DiplomaticProposalKind.truce,
+            createdTurn: 11,
+            expiresOnTurn: 16,
+          ),
+        ),
+        const RespondDiplomaticProposalCommand(
+          playerId: 'ai',
+          proposalId: 'unpaid_truce',
+          accepted: false,
+        ),
+      );
+      expect(
+        responseFor(
+          const DiplomaticProposal(
+            id: 'paid_truce',
+            fromPlayerId: 'rival',
+            toPlayerId: 'ai',
+            kind: DiplomaticProposalKind.truce,
+            createdTurn: 11,
+            expiresOnTurn: 16,
+            goldPayment: DiplomaticProposalForecast.minimumTruceGoldPayment,
+          ),
+        ),
+        const RespondDiplomaticProposalCommand(
+          playerId: 'ai',
+          proposalId: 'paid_truce',
+          accepted: true,
+        ),
+      );
+    });
   });
 }
 

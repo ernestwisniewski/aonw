@@ -59,6 +59,7 @@ class DiplomacyAiPolicy {
         proposal.fromPlayerId,
       ),
       underPressure: underPressure,
+      goldPayment: proposal.goldPayment,
     ).accepted;
   }
 

@@ -854,6 +854,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'l\'amitié est bloquée par la guerre';
 
   @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'paiement de paix';
+
+  @override
   String get diplomacyProposalForecastReasonLowRelations =>
       'relations trop faibles';
 

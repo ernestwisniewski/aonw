@@ -853,6 +853,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'la guerra bloquea la amistad';
 
   @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'pago de paz';
+
+  @override
   String get diplomacyProposalForecastReasonLowRelations =>
       'relaciones demasiado bajas';
 

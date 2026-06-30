@@ -848,6 +848,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get diplomacyProposalForecastReasonAtWar => 'wojna blokuje przyjaźń';
 
   @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'zapłata za pokój';
+
+  @override
   String get diplomacyProposalForecastReasonLowRelations =>
       'relacje są zbyt niskie';
 

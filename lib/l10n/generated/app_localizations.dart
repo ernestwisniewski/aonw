@@ -1624,6 +1624,12 @@ abstract class AppLocalizations {
   /// **'friendship blocked by war'**
   String get diplomacyProposalForecastReasonAtWar;
 
+  /// No description provided for @diplomacyProposalForecastReasonGoldPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'peace payment'**
+  String get diplomacyProposalForecastReasonGoldPayment;
+
   /// No description provided for @diplomacyProposalForecastReasonLowRelations.
   ///
   /// In en, this message translates to:

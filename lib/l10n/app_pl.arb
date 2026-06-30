@@ -379,6 +379,7 @@
   "diplomacyProposalForecastReasonAcceptableRelations": "relacje są wystarczające",
   "diplomacyProposalForecastReasonActiveWar": "trwa wojna",
   "diplomacyProposalForecastReasonAtWar": "wojna blokuje przyjaźń",
+  "diplomacyProposalForecastReasonGoldPayment": "zapłata za pokój",
   "diplomacyProposalForecastReasonLowRelations": "relacje są zbyt niskie",
   "diplomacyProposalForecastReasonMilitaryPressure": "presja militarna",
   "diplomacyProposalForecastReasonRecentHostility": "niedawna wrogość",

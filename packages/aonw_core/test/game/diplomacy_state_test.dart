@@ -123,6 +123,11 @@ void main() {
         relation: lowTrust,
         underPressure: true,
       );
+      final paidTruce = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        goldPayment: DiplomaticProposalForecast.minimumTruceGoldPayment,
+      );
 
       expect(friendship.accepted, isFalse);
       expect(friendship.reasons, [
@@ -132,6 +137,11 @@ void main() {
       expect(
         truce.reasons,
         contains(DiplomaticProposalForecastReason.militaryPressure),
+      );
+      expect(paidTruce.accepted, isTrue);
+      expect(
+        paidTruce.reasons,
+        contains(DiplomaticProposalForecastReason.goldPayment),
       );
     });
 

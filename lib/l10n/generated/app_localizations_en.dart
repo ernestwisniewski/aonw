@@ -850,6 +850,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'friendship blocked by war';
 
   @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'peace payment';
+
+  @override
   String get diplomacyProposalForecastReasonLowRelations => 'relations too low';
 
   @override

@@ -852,6 +852,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'vriendschap geblokkeerd door oorlog';
 
   @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'vredesbetaling';
+
+  @override
   String get diplomacyProposalForecastReasonLowRelations => 'relaties te laag';
 
   @override

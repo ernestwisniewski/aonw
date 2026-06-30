@@ -379,6 +379,7 @@
   "diplomacyProposalForecastReasonAcceptableRelations": "relaties zijn werkbaar",
   "diplomacyProposalForecastReasonActiveWar": "actieve oorlog",
   "diplomacyProposalForecastReasonAtWar": "vriendschap geblokkeerd door oorlog",
+  "diplomacyProposalForecastReasonGoldPayment": "vredesbetaling",
   "diplomacyProposalForecastReasonLowRelations": "relaties te laag",
   "diplomacyProposalForecastReasonMilitaryPressure": "militaire druk",
   "diplomacyProposalForecastReasonRecentHostility": "recente vijandigheid",

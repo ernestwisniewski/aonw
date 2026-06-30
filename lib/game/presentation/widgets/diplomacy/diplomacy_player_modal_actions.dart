@@ -178,6 +178,8 @@ class _ProposalForecastLine extends StatelessWidget {
         l10n.diplomacyProposalForecastReasonActiveWar,
       DiplomaticProposalForecastReason.atWar =>
         l10n.diplomacyProposalForecastReasonAtWar,
+      DiplomaticProposalForecastReason.goldPayment =>
+        l10n.diplomacyProposalForecastReasonGoldPayment,
       DiplomaticProposalForecastReason.lowRelations =>
         l10n.diplomacyProposalForecastReasonLowRelations,
       DiplomaticProposalForecastReason.militaryPressure =>

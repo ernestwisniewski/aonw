@@ -4,12 +4,15 @@ enum DiplomaticProposalForecastReason {
   acceptableRelations,
   activeWar,
   atWar,
+  goldPayment,
   lowRelations,
   militaryPressure,
   recentHostility,
 }
 
 final class DiplomaticProposalForecast {
+  static const int minimumTruceGoldPayment = 5;
+
   const DiplomaticProposalForecast({
     required this.accepted,
     required this.reasons,
@@ -23,6 +26,7 @@ final class DiplomaticProposalForecast {
     required DiplomaticRelation relation,
     bool recentHostility = false,
     bool underPressure = false,
+    int goldPayment = 0,
   }) {
     return switch (kind) {
       DiplomaticProposalKind.friendship => _friendship(
@@ -32,6 +36,7 @@ final class DiplomaticProposalForecast {
       DiplomaticProposalKind.truce => _truce(
         relation,
         underPressure: underPressure,
+        goldPayment: goldPayment,
       ),
     };
   }
@@ -65,6 +70,7 @@ final class DiplomaticProposalForecast {
   static DiplomaticProposalForecast _truce(
     DiplomaticRelation relation, {
     required bool underPressure,
+    required int goldPayment,
   }) {
     final reasons = <DiplomaticProposalForecastReason>[];
     if (relation.status == DiplomaticRelationStatus.war) {
@@ -73,12 +79,15 @@ final class DiplomaticProposalForecast {
     if (underPressure) {
       reasons.add(DiplomaticProposalForecastReason.militaryPressure);
     }
+    if (goldPayment >= minimumTruceGoldPayment) {
+      reasons.add(DiplomaticProposalForecastReason.goldPayment);
+    }
     if (relation.relationScore >= -35) {
       reasons.add(DiplomaticProposalForecastReason.acceptableRelations);
     }
     final accepted =
-        relation.status == DiplomaticRelationStatus.war ||
         underPressure ||
+        goldPayment >= minimumTruceGoldPayment ||
         relation.relationScore >= -35;
     if (!accepted) {
       reasons.add(DiplomaticProposalForecastReason.lowRelations);
