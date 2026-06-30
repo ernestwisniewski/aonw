@@ -10,6 +10,7 @@ import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -411,7 +412,7 @@ abstract final class MovementReducer {
     steps: plan.steps,
   );
 
-  static bool _isForeignCityCenter(
+  static bool _blocksForeignCityCenter(
     GameState state,
     GameUnit unit,
     int col,
@@ -419,7 +420,11 @@ abstract final class MovementReducer {
   ) {
     for (final city in state.cities) {
       if (!city.occupiesCenter(col, row)) continue;
-      return city.ownerPlayerId != unit.ownerPlayerId;
+      return !DiplomaticRelationBenefits.canEnterForeignCityCenter(
+        diplomacy: state.diplomacy,
+        unitOwnerPlayerId: unit.ownerPlayerId,
+        cityOwnerPlayerId: city.ownerPlayerId,
+      );
     }
     return false;
   }
