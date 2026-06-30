@@ -59,12 +59,14 @@ class _ProposalRow extends StatelessWidget {
 class _MessageRow extends StatelessWidget {
   const _MessageRow({
     required this.message,
+    required this.diplomacy,
     required this.l10n,
     required this.activePlayerId,
     required this.onCommand,
   });
 
   final DiplomaticMessage message;
+  final DiplomacyState diplomacy;
   final AppLocalizations l10n;
   final String activePlayerId;
   final Future<void> Function(GameCommand command) onCommand;
@@ -92,7 +94,7 @@ class _MessageRow extends StatelessWidget {
                 children: [
                   for (final response in DiplomaticMessageResponse.values)
                     EpicButton.text(
-                      label: _responseLabel(l10n, response),
+                      label: _responseActionLabel(response),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 6,
@@ -113,6 +115,16 @@ class _MessageRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _responseActionLabel(DiplomaticMessageResponse response) {
+    final delta = DiplomaticMessageEffects.relationDeltaForResponse(
+      diplomacy,
+      message,
+      response,
+    );
+    return '${_responseLabel(l10n, response)} '
+        '(${DiplomacyHistoryPresenter.signedDelta(delta)})';
   }
 }
 

@@ -78,6 +78,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Dispatches'), findsOneWidget);
+    expect(find.text('Conciliatory (+20)'), findsOneWidget);
+    expect(find.text('Neutral (+6)'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
     expect(
       find.textContaining('Friendship proposal: likely rejected'),
@@ -221,6 +223,18 @@ GameState _state() {
           turn: 6,
           reason: DiplomaticScoreChangeReason.promiseBroken,
           sourceId: 'message_2',
+        )
+        .setStatus('player_1', 'player_3', DiplomaticRelationStatus.war)
+        .setStatus('player_2', 'player_3', DiplomaticRelationStatus.war)
+        .addMessage(
+          DiplomaticMessage.create(
+            id: 'message_3',
+            fromPlayerId: 'player_2',
+            toPlayerId: 'player_1',
+            topic: DiplomaticMessageTopic.commonEnemy,
+            createdTurn: 6,
+            expiresOnTurn: 11,
+          ),
         )
         .addMessage(message)
         .addProposal(proposal),

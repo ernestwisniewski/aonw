@@ -1,5 +1,4 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_message_effects.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -264,7 +263,11 @@ abstract final class DiplomacyReducer {
           message,
           command.response,
         );
-    final delta = command.response.relationScoreDelta + cooperationBonus;
+    final delta = DiplomaticMessageEffects.relationDeltaForResponse(
+      state.diplomacy,
+      message,
+      command.response,
+    );
     final scoreReason = cooperationBonus == 0
         ? DiplomaticScoreChangeReason.messageResponse
         : DiplomaticScoreChangeReason.commonEnemyCooperation;
