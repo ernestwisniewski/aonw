@@ -733,6 +733,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyScoreReasonMessageResponse => 'Réponse d \' expédition';
 
   @override
+  String get diplomacyScoreReasonCommonEnemyCooperation =>
+      'Coopération contre un ennemi commun';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'La promesse brisée';
 
   @override

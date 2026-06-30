@@ -55,6 +55,7 @@ enum DiplomaticScoreChangeReason {
   proposalAccepted,
   proposalRejected,
   messageResponse,
+  commonEnemyCooperation,
   promiseBroken,
 }
 

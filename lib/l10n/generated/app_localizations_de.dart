@@ -732,6 +732,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diplomacyScoreReasonMessageResponse => 'Antwort auf Depesche';
 
   @override
+  String get diplomacyScoreReasonCommonEnemyCooperation =>
+      'Zusammenarbeit gegen gemeinsamen Feind';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Versprechen gebrochen';
 
   @override

@@ -1410,6 +1410,12 @@ abstract class AppLocalizations {
   /// **'Dispatch response'**
   String get diplomacyScoreReasonMessageResponse;
 
+  /// No description provided for @diplomacyScoreReasonCommonEnemyCooperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Common enemy cooperation'**
+  String get diplomacyScoreReasonCommonEnemyCooperation;
+
   /// No description provided for @diplomacyScoreReasonPromiseBroken.
   ///
   /// In en, this message translates to:

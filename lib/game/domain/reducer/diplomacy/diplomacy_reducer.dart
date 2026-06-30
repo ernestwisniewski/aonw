@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_message_effects.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -257,13 +258,22 @@ abstract final class DiplomacyReducer {
       return GameStateTransition(state: state);
     }
 
-    final delta = command.response.relationScoreDelta;
+    final cooperationBonus =
+        DiplomaticMessageEffects.commonEnemyCooperationBonus(
+          state.diplomacy,
+          message,
+          command.response,
+        );
+    final delta = command.response.relationScoreDelta + cooperationBonus;
+    final scoreReason = cooperationBonus == 0
+        ? DiplomaticScoreChangeReason.messageResponse
+        : DiplomaticScoreChangeReason.commonEnemyCooperation;
     var diplomacy = state.diplomacy.adjustRelationScore(
       message.fromPlayerId,
       message.toPlayerId,
       delta,
       turn: context.combatSeedTurn,
-      reason: DiplomaticScoreChangeReason.messageResponse,
+      reason: scoreReason,
       sourceId: message.id,
     );
     final scoreAfter = diplomacy.relationScoreBetween(
@@ -306,7 +316,7 @@ abstract final class DiplomacyReducer {
               .playerBId,
           delta: delta,
           scoreAfter: scoreAfter,
-          reason: DiplomaticScoreChangeReason.messageResponse,
+          reason: scoreReason,
           sourceId: message.id,
         ),
       ],

@@ -729,6 +729,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diplomacyScoreReasonMessageResponse => 'Dispatch response';
 
   @override
+  String get diplomacyScoreReasonCommonEnemyCooperation =>
+      'Common enemy cooperation';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Promise broken';
 
   @override

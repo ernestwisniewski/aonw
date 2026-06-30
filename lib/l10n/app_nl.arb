@@ -310,6 +310,7 @@
   "diplomacyScoreReasonProposalAccepted": "Voorstel geaccepteerd",
   "diplomacyScoreReasonProposalRejected": "Voorstel afgewezen",
   "diplomacyScoreReasonMessageResponse": "Reactie op bericht",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Samenwerking tegen gemeenschappelijke vijand",
   "diplomacyScoreReasonPromiseBroken": "Belofte gebroken",
   "diplomacyStatsTitle": "Statistieken",
   "diplomacyHistoryTitle": "Geschiedenis",

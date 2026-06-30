@@ -366,6 +366,8 @@ abstract final class DiplomacyHistoryPresenter {
         l10n.diplomacyScoreReasonProposalRejected,
       DiplomaticScoreChangeReason.messageResponse =>
         l10n.diplomacyScoreReasonMessageResponse,
+      DiplomaticScoreChangeReason.commonEnemyCooperation =>
+        l10n.diplomacyScoreReasonCommonEnemyCooperation,
       DiplomaticScoreChangeReason.promiseBroken =>
         l10n.diplomacyScoreReasonPromiseBroken,
     };

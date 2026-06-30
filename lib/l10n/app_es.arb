@@ -310,6 +310,7 @@
   "diplomacyScoreReasonProposalAccepted": "Propuesta aceptada",
   "diplomacyScoreReasonProposalRejected": "Propuesta rechazada",
   "diplomacyScoreReasonMessageResponse": "Respuesta a despacho",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Cooperación contra enemigo común",
   "diplomacyScoreReasonPromiseBroken": "Promesa rota",
   "diplomacyStatsTitle": "Estadísticas",
   "diplomacyHistoryTitle": "Historial",

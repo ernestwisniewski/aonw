@@ -310,6 +310,7 @@
   "diplomacyScoreReasonProposalAccepted": "Vorschlag angenommen",
   "diplomacyScoreReasonProposalRejected": "Vorschlag abgelehnt",
   "diplomacyScoreReasonMessageResponse": "Antwort auf Depesche",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Zusammenarbeit gegen gemeinsamen Feind",
   "diplomacyScoreReasonPromiseBroken": "Versprechen gebrochen",
   "diplomacyStatsTitle": "Statistiken",
   "diplomacyHistoryTitle": "Verlauf",

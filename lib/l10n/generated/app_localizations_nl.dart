@@ -731,6 +731,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diplomacyScoreReasonMessageResponse => 'Reactie op bericht';
 
   @override
+  String get diplomacyScoreReasonCommonEnemyCooperation =>
+      'Samenwerking tegen gemeenschappelijke vijand';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Belofte gebroken';
 
   @override

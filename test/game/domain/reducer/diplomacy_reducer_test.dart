@@ -156,6 +156,57 @@ void main() {
       );
     });
 
+    test('common enemy response rewards shared war cooperation', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final withMessage = _state().copyWith(
+        playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .addContact('p1', 'p3')
+            .addContact('p2', 'p3')
+            .setStatus('p1', 'p3', DiplomaticRelationStatus.war)
+            .setStatus('p2', 'p3', DiplomaticRelationStatus.war)
+            .addMessage(
+              DiplomaticMessage.create(
+                id: 'message_1',
+                fromPlayerId: 'p1',
+                toPlayerId: 'p2',
+                topic: DiplomaticMessageTopic.commonEnemy,
+                createdTurn: 4,
+                expiresOnTurn: 9,
+              ),
+            ),
+      );
+
+      final result = reducer.reduce(
+        withMessage,
+        const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p2',
+          combatSeedTurn: 5,
+        ),
+      );
+      final message = result.state.diplomacy.messages['message_1'];
+      final scoreEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 20);
+      expect(message?.relationScoreDelta, 20);
+      expect(
+        result.state.diplomacy.scoreEntriesBetween('p1', 'p2').single.reason,
+        DiplomaticScoreChangeReason.commonEnemyCooperation,
+      );
+      expect(
+        scoreEvent.reason,
+        DiplomaticScoreChangeReason.commonEnemyCooperation,
+      );
+    });
+
     test('accepted truce updates status and expiry', () {
       final reducer = GameStateReducer(mapData: _map());
       final withProposal = _state().copyWith(
