@@ -78,6 +78,32 @@ void main() {
       );
     });
 
+    test('applies warmonger penalty to contacts who know both sides', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('player_1', 'player_2')
+          .addContact('player_1', 'player_3')
+          .addContact('player_2', 'player_3')
+          .addContact('player_1', 'player_4');
+
+      final result = DiplomaticWarmongerReputation.apply(
+        diplomacy: diplomacy,
+        aggressorPlayerId: 'player_1',
+        victimPlayerId: 'player_2',
+        action: DiplomaticWarmongerAction.declarationOfWar,
+        turn: 6,
+      );
+
+      expect(
+        result.diplomacy.relationScoreBetween('player_1', 'player_3'),
+        DiplomaticWarmongerReputation.declarationOfWarPenalty,
+      );
+      expect(result.diplomacy.relationScoreBetween('player_1', 'player_4'), 0);
+      expect(
+        result.entries.single.reason,
+        DiplomaticScoreChangeReason.warmongerPenalty,
+      );
+    });
+
     test('round-trips discovered contacts through json', () {
       final diplomacy = DiplomacyState.empty.addContact('player_2', 'player_1');
       final json = diplomacy.toJson();

@@ -1386,6 +1386,12 @@ abstract class AppLocalizations {
   /// **'Declaration of war'**
   String get diplomacyScoreReasonDeclarationOfWar;
 
+  /// No description provided for @diplomacyScoreReasonWarmongerPenalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Warmonger penalty'**
+  String get diplomacyScoreReasonWarmongerPenalty;
+
   /// No description provided for @diplomacyScoreReasonProposalAccepted.
   ///
   /// In en, this message translates to:

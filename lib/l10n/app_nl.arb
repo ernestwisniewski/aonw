@@ -306,6 +306,7 @@
   "diplomacyScoreReasonUnitAttack": "Aanval op eenheid",
   "diplomacyScoreReasonCityAttack": "Aanval op stad",
   "diplomacyScoreReasonDeclarationOfWar": "Oorlogsverklaring",
+  "diplomacyScoreReasonWarmongerPenalty": "Straf voor oorlogszucht",
   "diplomacyScoreReasonProposalAccepted": "Voorstel geaccepteerd",
   "diplomacyScoreReasonProposalRejected": "Voorstel afgewezen",
   "diplomacyScoreReasonMessageResponse": "Reactie op bericht",

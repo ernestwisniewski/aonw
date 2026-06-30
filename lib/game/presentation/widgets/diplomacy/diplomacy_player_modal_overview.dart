@@ -182,7 +182,8 @@ class _StatsSection extends StatelessWidget {
           (entry) =>
               entry.reason == DiplomaticScoreChangeReason.unitAttack ||
               entry.reason == DiplomaticScoreChangeReason.cityAttack ||
-              entry.reason == DiplomaticScoreChangeReason.declarationOfWar,
+              entry.reason == DiplomaticScoreChangeReason.declarationOfWar ||
+              entry.reason == DiplomaticScoreChangeReason.warmongerPenalty,
         )
         .length;
   }

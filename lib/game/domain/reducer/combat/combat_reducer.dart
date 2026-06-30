@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_effects.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
@@ -379,6 +380,18 @@ abstract final class CombatReducer {
     );
     final changedCity =
         applied.capturedCity ?? applied.destroyedCity ?? applied.updatedCity;
+    final diplomacy = DiplomaticWarmongerReputation.apply(
+      diplomacy: state.diplomacy.registerCityAttack(
+        attackerPlayerId: attacker.ownerPlayerId,
+        defenderPlayerId: setup.city.ownerPlayerId,
+        turn: context.combatSeedTurn,
+      ),
+      aggressorPlayerId: attacker.ownerPlayerId,
+      victimPlayerId: setup.city.ownerPlayerId,
+      action: DiplomaticWarmongerAction.cityAttack,
+      turn: context.combatSeedTurn,
+      sourceId: 'city_attack.${context.combatSeedTurn}.${attacker.id}',
+    ).diplomacy;
     final next = _clearAttackInteractionState(
       withDiscoveredDiplomaticContacts(
         state.copyWith(
@@ -386,11 +399,13 @@ abstract final class CombatReducer {
           cities: applied.cities,
           artifacts: artifacts,
           fogOfWar: fogOfWar,
-          diplomacy: state.diplomacy.registerCityAttack(
-            attackerPlayerId: attacker.ownerPlayerId,
-            defenderPlayerId: setup.city.ownerPlayerId,
-            turn: context.combatSeedTurn,
-          ),
+          diplomacy: diplomacy,
+          resourceTradeAgreements:
+              DiplomaticWarEffects.removeResourceTradeAgreementsBetween(
+                state.resourceTradeAgreements,
+                attacker.ownerPlayerId,
+                setup.city.ownerPlayerId,
+              ),
         ),
       ),
       attackerUnitId: attacker.id,

@@ -717,6 +717,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diplomacyScoreReasonDeclarationOfWar => 'Declaration of war';
 
   @override
+  String get diplomacyScoreReasonWarmongerPenalty => 'Warmonger penalty';
+
+  @override
   String get diplomacyScoreReasonProposalAccepted => 'Proposal accepted';
 
   @override

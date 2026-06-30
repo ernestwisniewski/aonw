@@ -306,6 +306,7 @@
   "diplomacyScoreReasonUnitAttack": "Atak na jednostkę",
   "diplomacyScoreReasonCityAttack": "Atak na miasto",
   "diplomacyScoreReasonDeclarationOfWar": "Wypowiedzenie wojny",
+  "diplomacyScoreReasonWarmongerPenalty": "Kara za agresję",
   "diplomacyScoreReasonProposalAccepted": "Akceptacja propozycji",
   "diplomacyScoreReasonProposalRejected": "Odrzucenie propozycji",
   "diplomacyScoreReasonMessageResponse": "Odpowiedź na depeszę",

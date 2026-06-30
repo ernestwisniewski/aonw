@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
@@ -183,55 +184,7 @@ abstract final class DiplomacyReducer {
     DeclareWarCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    if (!_canIssue(state, command.playerId, context)) {
-      return GameStateTransition(state: state);
-    }
-    if (!_canTargetDiscoveredPlayer(
-      state,
-      command.playerId,
-      command.targetPlayerId,
-    )) {
-      return GameStateTransition(state: state);
-    }
-    final relation = state.diplomacy.relationBetween(
-      command.playerId,
-      command.targetPlayerId,
-    );
-    if (relation.status == DiplomaticRelationStatus.truce &&
-        relation.statusExpiresOnTurn != null &&
-        context.combatSeedTurn < relation.statusExpiresOnTurn!) {
-      return GameStateTransition(state: state);
-    }
-    if (relation.status == DiplomaticRelationStatus.war) {
-      return GameStateTransition(state: state);
-    }
-    final diplomacy = state.diplomacy.declareWar(
-      playerId: command.playerId,
-      targetPlayerId: command.targetPlayerId,
-      turn: context.combatSeedTurn,
-    );
-    final nextRelation = diplomacy.relationBetween(
-      command.playerId,
-      command.targetPlayerId,
-    );
-    return GameStateTransition(
-      state: state.copyWith(diplomacy: diplomacy),
-      events: [
-        DiplomaticRelationChangedEvent(
-          playerAId: nextRelation.playerAId,
-          playerBId: nextRelation.playerBId,
-          oldStatus: relation.status,
-          newStatus: nextRelation.status,
-          reason: DiplomaticRelationChangeReason.declarationOfWar,
-        ),
-        _scoreEvent(
-          diplomacy,
-          command.playerId,
-          command.targetPlayerId,
-          reason: DiplomaticScoreChangeReason.declarationOfWar,
-        ),
-      ],
-    );
+    return DiplomaticWarReducer.declareWar(state, command, context: context);
   }
 
   static GameStateTransition sendMessage(

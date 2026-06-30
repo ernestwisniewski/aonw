@@ -721,6 +721,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyScoreReasonDeclarationOfWar => 'Déclaration de guerre';
 
   @override
+  String get diplomacyScoreReasonWarmongerPenalty => 'Pénalité belliciste';
+
+  @override
   String get diplomacyScoreReasonProposalAccepted => 'Proposition acceptée';
 
   @override

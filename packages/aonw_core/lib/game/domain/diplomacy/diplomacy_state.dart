@@ -50,6 +50,7 @@ enum DiplomaticScoreChangeReason {
   unitAttack,
   cityAttack,
   declarationOfWar,
+  warmongerPenalty,
   proposalAccepted,
   proposalRejected,
   messageResponse,

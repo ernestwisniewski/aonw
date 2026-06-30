@@ -203,6 +203,59 @@ void main() {
       );
     });
 
+    test('declaration of war breaks trade and hurts shared contacts', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final state = _state().copyWith(
+        playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .addContact('p1', 'p3')
+            .addContact('p2', 'p3'),
+        resourceTradeAgreements: const [
+          ResourceTradeAgreement(
+            id: 'war_trade',
+            exporterPlayerId: 'p2',
+            importerPlayerId: 'p1',
+            resource: ResourceType.horses,
+            goldPerTurn: 3,
+            remainingTurns: 5,
+          ),
+          ResourceTradeAgreement(
+            id: 'observer_trade',
+            exporterPlayerId: 'p3',
+            importerPlayerId: 'p1',
+            resource: ResourceType.iron,
+            goldPerTurn: 1,
+            remainingTurns: 5,
+          ),
+        ],
+      );
+
+      final result = reducer.reduce(
+        state,
+        const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
+        context: const GameCommandContext(combatSeedTurn: 9),
+      );
+
+      expect(
+        result.state.diplomacy.statusBetween('p1', 'p2'),
+        DiplomaticRelationStatus.war,
+      );
+      expect(result.state.resourceTradeAgreements.map((trade) => trade.id), [
+        'observer_trade',
+      ]);
+      expect(
+        result.state.diplomacy.relationScoreBetween('p1', 'p3'),
+        DiplomaticWarmongerReputation.declarationOfWarPenalty,
+      );
+      expect(
+        result.events.whereType<DiplomaticScoreChangedEvent>().map(
+          (event) => event.reason,
+        ),
+        contains(DiplomaticScoreChangeReason.warmongerPenalty),
+      );
+    });
+
     test('opens resource trade from controlled exporter resource', () {
       final reducer = GameStateReducer(mapData: _resourceMap());
       final state = _state().copyWith(
