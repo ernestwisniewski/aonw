@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -524,6 +525,69 @@ void main() {
       );
     });
 
+    test('matches persistent diplomacy router for local commands', () {
+      _expectDiplomacyParity(
+        _state().copyWith(playerGold: const {'p1': 20, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        actorPlayerId: 'p1',
+        turn: 6,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          playerGold: const {'p1': 20, 'p2': 3},
+          diplomacy: DiplomacyState.empty
+              .addContact('p1', 'p2')
+              .setStatus('p1', 'p2', DiplomaticRelationStatus.war)
+              .addProposal(
+                const DiplomaticProposal(
+                  id: 'proposal_1',
+                  fromPlayerId: 'p1',
+                  toPlayerId: 'p2',
+                  kind: DiplomaticProposalKind.truce,
+                  createdTurn: 4,
+                  expiresOnTurn: 9,
+                  goldPayment: 7,
+                ),
+              ),
+        ),
+        const RespondDiplomaticProposalCommand(
+          playerId: 'p2',
+          proposalId: 'proposal_1',
+          accepted: true,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+          diplomacy: DiplomacyState.empty
+              .addContact('p1', 'p2')
+              .addContact('p1', 'p3')
+              .addContact('p2', 'p3'),
+          resourceTradeAgreements: const [
+            ResourceTradeAgreement(
+              id: 'war_trade',
+              exporterPlayerId: 'p2',
+              importerPlayerId: 'p1',
+              resource: ResourceType.horses,
+              goldPerTurn: 3,
+              remainingTurns: 5,
+            ),
+          ],
+        ),
+        const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
+        actorPlayerId: 'p1',
+        turn: 9,
+      );
+    });
+
     test('opens resource trade from controlled exporter resource', () {
       final reducer = GameStateReducer(mapData: _resourceMap());
       final state = _state().copyWith(
@@ -644,6 +708,59 @@ void main() {
       );
     });
   });
+}
+
+void _expectDiplomacyParity(
+  GameState state,
+  DiplomaticCommand command, {
+  required String actorPlayerId,
+  required int turn,
+}) {
+  final client = GameStateReducer(mapData: _map()).reduce(
+    state,
+    command,
+    context: GameCommandContext(
+      actorPlayerId: actorPlayerId,
+      combatSeedTurn: turn,
+    ),
+  );
+  final server = const DiplomacyCommandRouter().route(
+    state: _persistentState(state),
+    command: command,
+    actorPlayerId: actorPlayerId,
+    turn: turn,
+  );
+
+  expect(server.state.runtimeState.diplomacy, client.state.diplomacy);
+  expect(server.state.playerGold, client.state.playerGold);
+  expect(
+    server.state.runtimeState.intendedAttacks,
+    client.state.intendedAttacks,
+  );
+  expect(
+    server.state.runtimeState.resourceTradeAgreements,
+    client.state.resourceTradeAgreements,
+  );
+  expect(_eventJson(server.events), _eventJson(client.events));
+}
+
+PersistentGameState _persistentState(GameState state) {
+  return PersistentGameState(
+    playerColors: state.playerColors,
+    playerCountries: state.playerCountries,
+    playerGold: state.playerGold,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    research: state.research,
+    runtimeState: state.runtimeState,
+  );
+}
+
+List<Map<String, dynamic>> _eventJson(List<GameEvent> events) {
+  return [for (final event in events) GameEventSerializer.toJson(event)];
 }
 
 GameState _state({
