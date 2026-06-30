@@ -1,3 +1,4 @@
+export 'diplomacy/city_entry_policy.dart';
 export 'diplomacy/diplomacy_command_router.dart';
 export 'diplomacy/diplomacy_state.dart';
 export 'diplomacy/diplomacy_turn_resolver.dart';

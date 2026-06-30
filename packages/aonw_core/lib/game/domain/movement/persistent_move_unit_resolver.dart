@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
@@ -61,7 +62,13 @@ class PersistentMoveUnitResolver {
     if (unit.occupies(targetTile.col, targetTile.row)) {
       return _reject(state, 'move_target_is_current_tile');
     }
-    if (_isForeignCityCenter(state, unit, targetTile.col, targetTile.row)) {
+    if (CityEntryPolicy.blocksCityCenterEntry(
+      diplomacy: state.runtimeState.diplomacy,
+      cities: state.cities,
+      unitOwnerPlayerId: unit.ownerPlayerId,
+      col: targetTile.col,
+      row: targetTile.row,
+    )) {
       return _reject(state, 'move_target_is_foreign_city_center');
     }
     final targetBlocker = state.units.unitAt(targetTile.col, targetTile.row);
@@ -223,19 +230,6 @@ class PersistentMoveUnitResolver {
       if (units[i].id == unitId) return i;
     }
     return null;
-  }
-
-  static bool _isForeignCityCenter(
-    PersistentGameState state,
-    GameUnit unit,
-    int col,
-    int row,
-  ) {
-    for (final city in state.cities) {
-      if (!city.occupiesCenter(col, row)) continue;
-      return city.ownerPlayerId != unit.ownerPlayerId;
-    }
-    return false;
   }
 
   static bool _canCarryArtifactIntoTargetCity({

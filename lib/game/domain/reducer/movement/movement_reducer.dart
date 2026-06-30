@@ -418,15 +418,13 @@ abstract final class MovementReducer {
     int col,
     int row,
   ) {
-    for (final city in state.cities) {
-      if (!city.occupiesCenter(col, row)) continue;
-      return !DiplomaticRelationBenefits.canEnterForeignCityCenter(
-        diplomacy: state.diplomacy,
-        unitOwnerPlayerId: unit.ownerPlayerId,
-        cityOwnerPlayerId: city.ownerPlayerId,
-      );
-    }
-    return false;
+    return CityEntryPolicy.blocksCityCenterEntry(
+      diplomacy: state.diplomacy,
+      cities: state.cities,
+      unitOwnerPlayerId: unit.ownerPlayerId,
+      col: col,
+      row: row,
+    );
   }
 
   static bool _canCarryArtifactIntoTargetCity({
