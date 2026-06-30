@@ -39,6 +39,13 @@ final class DiplomacyState {
       scoreHistory.isEmpty;
   bool get isNotEmpty => !isEmpty;
 
+  List<(String, String)> get decodedContactPairs {
+    final pairs = [
+      for (final key in _sortedContactKeys()) _decodedContactKey(key),
+    ];
+    return List.unmodifiable(pairs);
+  }
+
   bool hasContact(String playerAId, String playerBId) {
     final key = relationKey(playerAId, playerBId);
     return key.isNotEmpty && contactKeys.contains(key);
@@ -543,6 +550,18 @@ final class DiplomacyState {
   static bool _isContactKey(String key) {
     final parts = key.split('|');
     return parts.length == 2 && parts[0].isNotEmpty && parts[1].isNotEmpty;
+  }
+
+  static (String, String) _decodedContactKey(String key) {
+    final parts = key.split('|');
+    if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
+      throw ArgumentError.value(
+        key,
+        'DiplomacyState.contactKeys[]',
+        'Expected a diplomatic contact key',
+      );
+    }
+    return (Uri.decodeComponent(parts[0]), Uri.decodeComponent(parts[1]));
   }
 
   static int _statusSeverity(DiplomaticRelationStatus status) {

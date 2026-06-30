@@ -47,6 +47,17 @@ void main() {
       );
     });
 
+    test('relation returns the other player in the pair', () {
+      final relation = DiplomaticRelation.between(
+        playerAId: 'player_2',
+        playerBId: 'player_1',
+      );
+
+      expect(relation.other('player_1'), 'player_2');
+      expect(relation.other('player_2'), 'player_1');
+      expect(relation.other('player_3'), isNull);
+    });
+
     test('derives attitude from relation score thresholds', () {
       final diplomacy = DiplomacyState.empty
           .adjustRelationScore(
@@ -245,6 +256,17 @@ void main() {
       ]);
       expect(restored.hasContact('player_1', 'player_2'), isTrue);
       expect(restored, diplomacy);
+    });
+
+    test('decodes discovered contact pairs in stable order', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('player 4', 'player/3')
+          .addContact('player_2', 'player_1');
+
+      expect(diplomacy.decodedContactPairs, [
+        ('player 4', 'player/3'),
+        ('player_1', 'player_2'),
+      ]);
     });
 
     test('round-trips proposals messages and score history through json', () {
