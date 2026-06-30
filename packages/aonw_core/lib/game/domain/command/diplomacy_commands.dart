@@ -1,6 +1,6 @@
 part of 'game_command.dart';
 
-final class SendDiplomaticProposalCommand extends GameCommand {
+final class SendDiplomaticProposalCommand extends DiplomaticCommand {
   const SendDiplomaticProposalCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -35,7 +35,7 @@ final class SendDiplomaticProposalCommand extends GameCommand {
   );
 }
 
-final class RespondDiplomaticProposalCommand extends GameCommand {
+final class RespondDiplomaticProposalCommand extends DiplomaticCommand {
   const RespondDiplomaticProposalCommand({
     required this.playerId,
     required this.proposalId,
@@ -62,7 +62,7 @@ final class RespondDiplomaticProposalCommand extends GameCommand {
   );
 }
 
-final class DeclareWarCommand extends GameCommand {
+final class DeclareWarCommand extends DiplomaticCommand {
   const DeclareWarCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -81,7 +81,7 @@ final class DeclareWarCommand extends GameCommand {
   int get hashCode => Object.hash(DeclareWarCommand, playerId, targetPlayerId);
 }
 
-final class SendGoldGiftCommand extends GameCommand {
+final class SendGoldGiftCommand extends DiplomaticCommand {
   const SendGoldGiftCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -182,7 +182,7 @@ final class OpenResourceExchangeCommand extends GameCommand {
   );
 }
 
-final class SendDiplomaticMessageCommand extends GameCommand {
+final class SendDiplomaticMessageCommand extends DiplomaticCommand {
   const SendDiplomaticMessageCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -213,7 +213,7 @@ final class SendDiplomaticMessageCommand extends GameCommand {
   );
 }
 
-final class RespondDiplomaticMessageCommand extends GameCommand {
+final class RespondDiplomaticMessageCommand extends DiplomaticCommand {
   const RespondDiplomaticMessageCommand({
     required this.playerId,
     required this.messageId,

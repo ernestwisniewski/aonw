@@ -23,3 +23,8 @@ part 'diplomacy_commands.dart';
 sealed class GameCommand {
   const GameCommand();
 }
+
+/// Commands routed through the diplomacy application service.
+sealed class DiplomaticCommand extends GameCommand {
+  const DiplomaticCommand();
+}
