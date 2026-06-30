@@ -752,7 +752,7 @@ steam-windows-github:
 	run_id=""; \
 	i=1; \
 	while [ "$$i" -le "$(STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS)" ]; do \
-		run_id=$$(gh run list --workflow "$(STEAM_WINDOWS_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId --limit 1 --jq '.[0].databaseId // ""'); \
+		run_id=$$(gh run list --workflow "$(STEAM_WINDOWS_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\") | .databaseId" | head -n 1); \
 		if [ -n "$$run_id" ]; then break; fi; \
 		sleep "$(STEAM_GITHUB_RUN_LOOKUP_SLEEP)"; \
 		i=$$((i + 1)); \
@@ -845,7 +845,7 @@ steam-linux-github:
 	run_id=""; \
 	i=1; \
 	while [ "$$i" -le "$(STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS)" ]; do \
-		run_id=$$(gh run list --workflow "$(STEAM_LINUX_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId --limit 1 --jq '.[0].databaseId // ""'); \
+		run_id=$$(gh run list --workflow "$(STEAM_LINUX_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\") | .databaseId" | head -n 1); \
 		if [ -n "$$run_id" ]; then break; fi; \
 		sleep "$(STEAM_GITHUB_RUN_LOOKUP_SLEEP)"; \
 		i=$$((i + 1)); \
