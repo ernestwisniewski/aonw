@@ -254,6 +254,53 @@ void main() {
       );
     });
 
+    test('accepted truce transfers offered gold payment', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final sent = reducer.reduce(
+        _state().copyWith(
+          playerGold: const {'p1': 20, 'p2': 3},
+          diplomacy: DiplomacyState.empty.setStatus(
+            'p1',
+            'p2',
+            DiplomaticRelationStatus.war,
+          ),
+        ),
+        const SendDiplomaticProposalCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          kind: DiplomaticProposalKind.truce,
+          proposalId: 'proposal_1',
+          goldPayment: 7,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 4,
+        ),
+      );
+      final proposal = sent.state.diplomacy.pendingProposals['proposal_1'];
+
+      final result = reducer.reduce(
+        sent.state,
+        const RespondDiplomaticProposalCommand(
+          playerId: 'p2',
+          proposalId: 'proposal_1',
+          accepted: true,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p2',
+          combatSeedTurn: 5,
+        ),
+      );
+
+      expect(proposal?.goldPayment, 7);
+      expect(result.state.playerGold['p1'], 13);
+      expect(result.state.playerGold['p2'], 10);
+      expect(
+        result.state.diplomacy.statusBetween('p1', 'p2'),
+        DiplomaticRelationStatus.truce,
+      );
+    });
+
     test('declaration of war breaks trade and hurts shared contacts', () {
       final reducer = GameStateReducer(mapData: _map());
       final state = _state().copyWith(
