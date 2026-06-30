@@ -302,6 +302,7 @@ class DiplomacyAiPolicy {
           ? relation.playerBId
           : relation.playerAId;
       if (!view.hasDiplomaticContactWith(target)) continue;
+      if (_recentlyRejectedProposal(view, target, context.turn)) continue;
       final underPressure =
           view.pendingCityAttackThreats.any(
             (threat) => threat.attackerPlayerId == target,
@@ -312,6 +313,7 @@ class DiplomacyAiPolicy {
         playerId: view.forPlayerId,
         targetPlayerId: target,
         kind: DiplomaticProposalKind.truce,
+        goldPayment: _truceGoldPayment(view, relation),
       );
     }
     return null;
@@ -400,6 +402,28 @@ class DiplomacyAiPolicy {
   bool _recentlyTouched(DiplomaticRelation relation, int turn) {
     final changed = relation.lastChangedTurn;
     return changed != null && turn - changed < cooldownTurns;
+  }
+
+  bool _recentlyRejectedProposal(
+    GameView view,
+    String targetPlayerId,
+    int turn,
+  ) {
+    return view.diplomacy
+        .scoreEntriesBetween(view.forPlayerId, targetPlayerId)
+        .any(
+          (entry) =>
+              entry.reason == DiplomaticScoreChangeReason.proposalRejected &&
+              turn >= entry.turn &&
+              turn - entry.turn < cooldownTurns,
+        );
+  }
+
+  int _truceGoldPayment(GameView view, DiplomaticRelation relation) {
+    if (relation.relationScore > -55) return 0;
+    return view.ownGold >= DiplomaticProposalForecast.minimumTruceGoldPayment
+        ? DiplomaticProposalForecast.minimumTruceGoldPayment
+        : 0;
   }
 }
 

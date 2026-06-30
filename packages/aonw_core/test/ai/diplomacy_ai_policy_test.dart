@@ -210,6 +210,48 @@ void main() {
         ),
       );
     });
+
+    test('pays for hostile truce initiatives and cools down rejections', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('ai', 'rival')
+          .setStatus('ai', 'rival', DiplomaticRelationStatus.war)
+          .adjustRelationScore(
+            'ai',
+            'rival',
+            -60,
+            turn: 8,
+            reason: DiplomaticScoreChangeReason.manual,
+          );
+      final view = _view(
+        diplomacy: diplomacy,
+        ownGold: DiplomaticProposalForecast.minimumTruceGoldPayment,
+      );
+      final rejected = _view(
+        diplomacy: diplomacy.adjustRelationScore(
+          'ai',
+          'rival',
+          -6,
+          turn: 10,
+          reason: DiplomaticScoreChangeReason.proposalRejected,
+          sourceId: 'truce_1',
+        ),
+        ownGold: DiplomaticProposalForecast.minimumTruceGoldPayment,
+      );
+
+      final commands = const DiplomacyAiPolicy().commandsFor(view, _context());
+      final cooledDown = const DiplomacyAiPolicy().commandsFor(
+        rejected,
+        _context(),
+      );
+
+      final proposal = commands.single as SendDiplomaticProposalCommand;
+      expect(proposal.kind, DiplomaticProposalKind.truce);
+      expect(
+        proposal.goldPayment,
+        DiplomaticProposalForecast.minimumTruceGoldPayment,
+      );
+      expect(cooledDown, isEmpty);
+    });
   });
 }
 
@@ -218,6 +260,7 @@ GameView _view({
   List<GameCity> rememberedEnemyCities = const [],
   List<PendingCityAttackThreat> pendingCityAttackThreats = const [],
   List<String> recentHostilePlayerIds = const [],
+  int ownGold = 0,
 }) {
   return GameView(
     forPlayerId: 'ai',
@@ -233,6 +276,7 @@ GameView _view({
     ],
     ownResearch: PlayerResearchState.empty,
     ownImprovements: const [],
+    ownGold: ownGold,
     diplomacy: diplomacy,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: rememberedEnemyCities,
