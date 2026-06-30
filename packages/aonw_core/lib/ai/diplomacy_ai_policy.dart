@@ -43,16 +43,17 @@ class DiplomacyAiPolicy {
       view.forPlayerId,
       proposal.fromPlayerId,
     );
-    final underPressure =
-        view.pendingCityAttackThreats.any(
-          (threat) => threat.attackerPlayerId == proposal.fromPlayerId,
-        ) ||
-        view.visibleEnemyUnits
-                .where((unit) => unit.ownerPlayerId == proposal.fromPlayerId)
-                .length >
-            view.ownUnits.length;
+    final underPressure = ProposalAcceptancePolicy.isUnderPressure(
+      hasPendingCityAttackThreat: view.pendingCityAttackThreats.any(
+        (threat) => threat.attackerPlayerId == proposal.fromPlayerId,
+      ),
+      visibleOpponentUnitCount: view.visibleEnemyUnits
+          .where((unit) => unit.ownerPlayerId == proposal.fromPlayerId)
+          .length,
+      ownUnitCount: view.ownUnits.length,
+    );
 
-    return DiplomaticProposalForecast.evaluate(
+    return ProposalAcceptancePolicy.evaluate(
       kind: proposal.kind,
       relation: relation,
       recentHostility: view.recentHostilePlayerIds.contains(
@@ -303,11 +304,14 @@ class DiplomacyAiPolicy {
           : relation.playerAId;
       if (!view.hasDiplomaticContactWith(target)) continue;
       if (_recentlyRejectedProposal(view, target, context.turn)) continue;
-      final underPressure =
-          view.pendingCityAttackThreats.any(
-            (threat) => threat.attackerPlayerId == target,
-          ) ||
-          relation.relationScore <= -55;
+      final underPressure = ProposalAcceptancePolicy.isUnderPressure(
+        hasPendingCityAttackThreat: view.pendingCityAttackThreats.any(
+          (threat) => threat.attackerPlayerId == target,
+        ),
+        visibleOpponentUnitCount: 0,
+        ownUnitCount: 0,
+        severeHostility: relation.relationScore <= -55,
+      );
       if (!underPressure || _hasPendingProposal(view, target)) continue;
       return SendDiplomaticProposalCommand(
         playerId: view.forPlayerId,
@@ -421,8 +425,8 @@ class DiplomacyAiPolicy {
 
   int _truceGoldPayment(GameView view, DiplomaticRelation relation) {
     if (relation.relationScore > -55) return 0;
-    return view.ownGold >= DiplomaticProposalForecast.minimumTruceGoldPayment
-        ? DiplomaticProposalForecast.minimumTruceGoldPayment
+    return view.ownGold >= ProposalAcceptancePolicy.minimumTruceGoldPayment
+        ? ProposalAcceptancePolicy.minimumTruceGoldPayment
         : 0;
   }
 }

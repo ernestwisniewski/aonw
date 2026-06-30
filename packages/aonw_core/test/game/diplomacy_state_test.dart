@@ -135,28 +135,37 @@ void main() {
             reason: DiplomaticScoreChangeReason.manual,
           )
           .relationBetween('player_1', 'player_2');
-      final friendship = DiplomaticProposalForecast.evaluate(
+      final friendship = ProposalAcceptancePolicy.evaluate(
         kind: DiplomaticProposalKind.friendship,
         relation: lowTrust,
       );
-      final truce = DiplomaticProposalForecast.evaluate(
+      final truce = ProposalAcceptancePolicy.evaluate(
         kind: DiplomaticProposalKind.truce,
         relation: lowTrust,
-        underPressure: true,
+        underPressure: ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: false,
+          visibleOpponentUnitCount: 3,
+          ownUnitCount: 2,
+        ),
       );
-      final paidTruce = DiplomaticProposalForecast.evaluate(
+      final paidTruce = ProposalAcceptancePolicy.evaluate(
         kind: DiplomaticProposalKind.truce,
         relation: lowTrust,
-        goldPayment: DiplomaticProposalForecast.minimumTruceGoldPayment,
+        goldPayment: ProposalAcceptancePolicy.minimumTruceGoldPayment,
       );
-      final recentTruce = DiplomaticProposalForecast.evaluate(
+      final recentTruce = ProposalAcceptancePolicy.evaluate(
         kind: DiplomaticProposalKind.truce,
         relation: lowTrust,
         recentHostility: true,
       );
-      final staleWarTruce = DiplomaticProposalForecast.evaluate(
+      final staleWarTruce = ProposalAcceptancePolicy.evaluate(
         kind: DiplomaticProposalKind.truce,
         relation: warTrust,
+      );
+      final legacyForecast = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        goldPayment: ProposalAcceptancePolicy.minimumTruceGoldPayment,
       );
 
       expect(friendship.accepted, isFalse);
@@ -182,6 +191,25 @@ void main() {
       expect(
         staleWarTruce.reasons,
         contains(DiplomaticProposalForecastReason.activeWar),
+      );
+      expect(legacyForecast.accepted, paidTruce.accepted);
+      expect(legacyForecast.reasons, paidTruce.reasons);
+      expect(
+        ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: true,
+          visibleOpponentUnitCount: 0,
+          ownUnitCount: 5,
+        ),
+        isTrue,
+      );
+      expect(
+        ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: false,
+          visibleOpponentUnitCount: 0,
+          ownUnitCount: 0,
+          severeHostility: true,
+        ),
+        isTrue,
       );
     });
 

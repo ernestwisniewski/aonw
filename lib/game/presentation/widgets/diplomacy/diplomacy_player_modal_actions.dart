@@ -153,7 +153,7 @@ class _ActionsSection extends StatelessWidget {
     DiplomaticProposalKind kind, {
     int goldPayment = 0,
   }) {
-    return DiplomaticProposalForecast.evaluate(
+    return ProposalAcceptancePolicy.evaluate(
       kind: kind,
       relation: relation,
       recentHostility: _recentAggression(activePlayerId, targetPlayerId) > 0,
@@ -175,8 +175,8 @@ class _ActionsSection extends StatelessWidget {
   int _suggestedTruceGoldPayment() {
     if (relation.status != DiplomaticRelationStatus.war) return 0;
     final availableGold = gameState.playerGold[activePlayerId] ?? 0;
-    return availableGold >= DiplomaticProposalForecast.minimumTruceGoldPayment
-        ? DiplomaticProposalForecast.minimumTruceGoldPayment
+    return availableGold >= ProposalAcceptancePolicy.minimumTruceGoldPayment
+        ? ProposalAcceptancePolicy.minimumTruceGoldPayment
         : 0;
   }
 
