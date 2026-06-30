@@ -50,6 +50,8 @@ void main() {
     expect(find.text('Relations'), findsOneWidget);
     expect(find.text('Treaty'), findsOneWidget);
     expect(find.text('Attitude'), findsOneWidget);
+    expect(find.text('Treaty benefits'), findsOneWidget);
+    expect(find.text('No treaty benefits'), findsOneWidget);
     expect(find.text('What changes relations'), findsOneWidget);
     expect(find.textContaining('Proposal accepted'), findsWidgets);
     expect(find.textContaining('Dispatch response'), findsWidgets);

@@ -712,6 +712,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyAttitudeLabel => 'Attitude';
 
   @override
+  String get diplomacyTreatyBenefitsLabel => 'Avantages du traité';
+
+  @override
+  String get diplomacyFriendlyBenefits =>
+      '+1 or du commerce de ressources · droit de passage';
+
+  @override
+  String get diplomacyNoTreatyBenefits => 'Aucun avantage de traité';
+
+  @override
   String get diplomacyScoreDriversTitle => 'Ce qui change les relations';
 
   @override

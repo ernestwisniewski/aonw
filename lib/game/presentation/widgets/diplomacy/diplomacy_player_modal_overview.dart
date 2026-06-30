@@ -75,6 +75,8 @@ class _OverviewSection extends StatelessWidget {
               style: GameUiTheme.bodySmall,
             ),
           ],
+          const SizedBox(height: 8),
+          _RelationBenefitLine(l10n: l10n, relation: relation),
           const SizedBox(height: 12),
           _RelationScoreChart(
             entries: chartEntries,
@@ -95,6 +97,37 @@ class _OverviewSection extends StatelessWidget {
       return DiplomaticRelationStatus.hostile;
     }
     return DiplomaticRelationStatus.neutral;
+  }
+}
+
+class _RelationBenefitLine extends StatelessWidget {
+  const _RelationBenefitLine({required this.l10n, required this.relation});
+
+  final AppLocalizations l10n;
+  final DiplomaticRelation relation;
+
+  @override
+  Widget build(BuildContext context) {
+    final benefits = relation.status == DiplomaticRelationStatus.friendly
+        ? l10n.diplomacyFriendlyBenefits
+        : l10n.diplomacyNoTreatyBenefits;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.diplomacyTreatyBenefitsLabel, style: GameUiTheme.chipLabel),
+        const SizedBox(height: 3),
+        Text(
+          benefits,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GameUiTheme.bodySmall.copyWith(
+            color: relation.status == DiplomaticRelationStatus.friendly
+                ? GameUiTheme.success
+                : GameUiTheme.textTertiary,
+          ),
+        ),
+      ],
+    );
   }
 }
 

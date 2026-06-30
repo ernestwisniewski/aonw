@@ -1368,6 +1368,24 @@ abstract class AppLocalizations {
   /// **'Attitude'**
   String get diplomacyAttitudeLabel;
 
+  /// No description provided for @diplomacyTreatyBenefitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Treaty benefits'**
+  String get diplomacyTreatyBenefitsLabel;
+
+  /// No description provided for @diplomacyFriendlyBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 gold from resource trades · right of passage'**
+  String get diplomacyFriendlyBenefits;
+
+  /// No description provided for @diplomacyNoTreatyBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'No treaty benefits'**
+  String get diplomacyNoTreatyBenefits;
+
   /// No description provided for @diplomacyScoreDriversTitle.
   ///
   /// In en, this message translates to:

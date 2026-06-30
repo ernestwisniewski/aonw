@@ -711,6 +711,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diplomacyAttitudeLabel => 'Haltung';
 
   @override
+  String get diplomacyTreatyBenefitsLabel => 'Vertragsvorteile';
+
+  @override
+  String get diplomacyFriendlyBenefits =>
+      '+1 Gold aus Ressourcenhandel · Durchmarschrecht';
+
+  @override
+  String get diplomacyNoTreatyBenefits => 'Keine Vertragsvorteile';
+
+  @override
   String get diplomacyScoreDriversTitle => 'Was Beziehungen verändert';
 
   @override

@@ -708,6 +708,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diplomacyAttitudeLabel => 'Attitude';
 
   @override
+  String get diplomacyTreatyBenefitsLabel => 'Treaty benefits';
+
+  @override
+  String get diplomacyFriendlyBenefits =>
+      '+1 gold from resource trades · right of passage';
+
+  @override
+  String get diplomacyNoTreatyBenefits => 'No treaty benefits';
+
+  @override
   String get diplomacyScoreDriversTitle => 'What changes relations';
 
   @override
