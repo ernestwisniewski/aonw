@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_action_guard_adapter.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_effects.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -13,10 +13,14 @@ abstract final class DiplomaticWarReducer {
     DeclareWarCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    if (!_canIssue(state, command.playerId, context)) {
+    if (!DiplomaticActionGuardAdapter.canIssue(
+      state,
+      command.playerId,
+      context,
+    )) {
       return GameStateTransition(state: state);
     }
-    if (!_canTargetDiscoveredPlayer(
+    if (!DiplomaticActionGuardAdapter.canTargetDiscoveredPlayer(
       state,
       command.playerId,
       command.targetPlayerId,
@@ -80,37 +84,6 @@ abstract final class DiplomaticWarReducer {
         ),
         ...DiplomaticWarEffects.warmongerScoreEvents(reputation.entries),
       ],
-    );
-  }
-
-  static bool _canIssue(
-    GameState state,
-    String playerId,
-    GameCommandContext context,
-  ) {
-    if (playerId.isEmpty || !context.canAct) return false;
-    if (context.hasActor) return context.actorPlayerId == playerId;
-    return state.activePlayerId.isEmpty || state.activePlayerId == playerId;
-  }
-
-  static bool _canTargetDiscoveredPlayer(
-    GameState state,
-    String playerId,
-    String targetPlayerId,
-  ) {
-    if (playerId.isEmpty ||
-        targetPlayerId.isEmpty ||
-        playerId == targetPlayerId) {
-      return false;
-    }
-    if (!knownPlayerIds(state).contains(targetPlayerId)) return false;
-    if (state.diplomacy.hasContact(playerId, targetPlayerId)) return true;
-    return DiplomaticContact.hasContact(
-      playerId: playerId,
-      targetPlayerId: targetPlayerId,
-      fogOfWar: state.fogOfWar,
-      units: state.units,
-      cities: state.cities,
     );
   }
 
