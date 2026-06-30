@@ -18,11 +18,7 @@ abstract final class DiplomaticRelationBenefits {
     required String cityOwnerPlayerId,
   }) {
     if (unitOwnerPlayerId == cityOwnerPlayerId) return true;
-    return hasRightOfPassage(
-      diplomacy: diplomacy,
-      playerAId: unitOwnerPlayerId,
-      playerBId: cityOwnerPlayerId,
-    );
+    return false;
   }
 
   static int resourceTradeGoldBonus({

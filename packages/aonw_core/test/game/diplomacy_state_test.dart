@@ -145,7 +145,7 @@ void main() {
       );
     });
 
-    test('grants right of passage to friendly relations', () {
+    test('grants right of passage without opening foreign city centers', () {
       final friendly = DiplomacyState.empty.setStatus(
         'player_1',
         'player_2',
@@ -171,7 +171,7 @@ void main() {
           unitOwnerPlayerId: 'player_1',
           cityOwnerPlayerId: 'player_2',
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         DiplomaticRelationBenefits.canEnterForeignCityCenter(

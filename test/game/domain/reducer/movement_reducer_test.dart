@@ -578,7 +578,7 @@ void main() {
         expect(result.events, isEmpty);
       });
 
-      test('moveUnit enters a friendly foreign city center', () {
+      test('moveUnit does not enter a friendly foreign city center', () {
         final commander = _commander(col: 0, row: 0);
         const city = GameCity(
           id: 'friendly_city',
@@ -602,11 +602,9 @@ void main() {
           const MoveUnitCommand('commander_player_1', 1, 0),
           mapData,
         );
-        final moved = result.state.units.single;
 
-        expect(moved.col, 1);
-        expect(moved.row, 0);
-        expect(result.events.single, isA<UnitMovedEvent>());
+        expect(result.state, state);
+        expect(result.events, isEmpty);
       });
 
       test('moveUnit reports terrain beyond unit movement capacity', () {
@@ -944,7 +942,7 @@ void main() {
         expect(feedback.single.reason, HudFeedbackReason.movementForeignCity);
       });
 
-      test('previews friendly foreign city centers', () {
+      test('does not preview friendly foreign city centers', () {
         final commander = _commander();
         const city = GameCity(
           id: 'friendly_city',
@@ -973,8 +971,9 @@ void main() {
           mapData,
         );
 
-        expect(result.state.movePreview?.targetCol, 1);
-        expect(result.uiEffects.whereType<ShowHudFeedbackEffect>(), isEmpty);
+        expect(result.state.movePreview, isNull);
+        final feedback = result.uiEffects.whereType<ShowHudFeedbackEffect>();
+        expect(feedback.single.reason, HudFeedbackReason.movementForeignCity);
       });
 
       test('reports impassable terrain', () {
