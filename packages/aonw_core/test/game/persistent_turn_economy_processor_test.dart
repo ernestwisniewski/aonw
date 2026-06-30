@@ -480,6 +480,41 @@ void main() {
       );
     });
 
+    test('does not add friendly income bonus to free resource trades', () {
+      final state = PersistentGameState(
+        playerGold: const {'player_1': 10, 'player_2': 4},
+        runtimeState: GameRuntimeState(
+          diplomacy: DiplomacyState.empty.setStatus(
+            'player_1',
+            'player_2',
+            DiplomaticRelationStatus.friendly,
+          ),
+          resourceTradeAgreements: const [
+            ResourceTradeAgreement(
+              id: 'trade_1',
+              exporterPlayerId: 'player_2',
+              importerPlayerId: 'player_1',
+              resource: ResourceType.horses,
+              goldPerTurn: 0,
+              remainingTurns: 2,
+            ),
+          ],
+        ),
+      );
+
+      final result = PersistentTurnEconomyProcessor.advanceForPlayers(
+        state: state,
+        playerIds: const ['player_1'],
+        mapData: _mapData(),
+      );
+
+      expect(result.state.playerGold, state.playerGold);
+      expect(
+        result.state.runtimeState.resourceTradeAgreements.single.remainingTurns,
+        1,
+      );
+    });
+
     test('expires resource trade agreement when importer cannot pay', () {
       const state = PersistentGameState(
         playerGold: {'player_1': 2, 'player_2': 4},

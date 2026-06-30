@@ -220,11 +220,13 @@ abstract final class PersistentTurnEconomyProcessor {
         continue;
       }
 
-      final tradeBonus = DiplomaticRelationBenefits.resourceTradeGoldBonus(
-        diplomacy: state.runtimeState.diplomacy,
-        playerAId: agreement.importerPlayerId,
-        playerBId: agreement.exporterPlayerId,
-      );
+      final tradeBonus = agreement.goldPerTurn > 0
+          ? DiplomaticRelationBenefits.resourceTradeGoldBonus(
+              diplomacy: state.runtimeState.diplomacy,
+              playerAId: agreement.importerPlayerId,
+              playerBId: agreement.exporterPlayerId,
+            )
+          : 0;
       final exporterGoldPerTurn = agreement.goldPerTurn + tradeBonus;
 
       if (agreement.goldPerTurn > 0) {
