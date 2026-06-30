@@ -868,6 +868,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'hostilidad reciente';
 
   @override
+  String diplomacyTruceGoldPayment(int gold) {
+    return 'Condiciones de paz: $gold de oro';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Proponer amistad';
 
   @override

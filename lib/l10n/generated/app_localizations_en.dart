@@ -864,6 +864,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'recent hostility';
 
   @override
+  String diplomacyTruceGoldPayment(int gold) {
+    return 'Peace terms: $gold gold';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Propose friendship';
 
   @override

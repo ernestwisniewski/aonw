@@ -383,6 +383,14 @@
   "diplomacyProposalForecastReasonLowRelations": "relaties te laag",
   "diplomacyProposalForecastReasonMilitaryPressure": "militaire druk",
   "diplomacyProposalForecastReasonRecentHostility": "recente vijandigheid",
+  "diplomacyTruceGoldPayment": "Vredesvoorwaarden: {gold} goud",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Stel vriendschap voor",
   "diplomacySendTruce": "Stel een wapenstilstand voor",
   "diplomacyDeclareWar": "Verklaar de oorlog",

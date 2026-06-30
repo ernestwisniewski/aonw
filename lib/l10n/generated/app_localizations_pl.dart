@@ -863,6 +863,11 @@ class AppLocalizationsPl extends AppLocalizations {
       'niedawna wrogość';
 
   @override
+  String diplomacyTruceGoldPayment(int gold) {
+    return 'Warunki pokoju: $gold złota';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Zaproponuj przyjaźń';
 
   @override

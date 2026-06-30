@@ -22,22 +22,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     GameCommand? dispatched;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: DiplomacyPlayerModal(
-            gameSave: _save(),
-            gameState: _state(),
-            mapData: _map(),
-            activePlayerId: 'player_1',
-            targetPlayerId: 'player_2',
-            onCommand: (command) async => dispatched = command,
-          ),
-        ),
-      ),
+    await _pumpModal(
+      tester,
+      gameState: _state(),
+      onCommand: (command) async => dispatched = command,
     );
 
     expect(
@@ -126,6 +114,75 @@ void main() {
       DiplomaticProposalKind.friendship,
     );
   });
+
+  testWidgets('adds peace payment to truce proposals during war', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      playerGold: const {
+        'player_1': DiplomaticProposalForecast.minimumTruceGoldPayment,
+      },
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.war,
+      ),
+    );
+    GameCommand? dispatched;
+
+    await _pumpModal(
+      tester,
+      gameState: state,
+      onCommand: (command) async => dispatched = command,
+    );
+
+    expect(
+      find.textContaining('Truce proposal: likely accepted'),
+      findsOneWidget,
+    );
+    expect(find.text('Peace terms: 5 gold'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(EpicButton, 'Propose truce'));
+    await tester.pump();
+
+    expect(dispatched, isA<SendDiplomaticProposalCommand>());
+    final command = dispatched as SendDiplomaticProposalCommand;
+    expect(command.kind, DiplomaticProposalKind.truce);
+    expect(
+      command.goldPayment,
+      DiplomaticProposalForecast.minimumTruceGoldPayment,
+    );
+  });
+}
+
+Future<void> _pumpModal(
+  WidgetTester tester, {
+  required GameState gameState,
+  required Future<void> Function(GameCommand command) onCommand,
+}) {
+  return tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: DiplomacyPlayerModal(
+          gameSave: _save(),
+          gameState: gameState,
+          mapData: _map(),
+          activePlayerId: 'player_1',
+          targetPlayerId: 'player_2',
+          onCommand: onCommand,
+        ),
+      ),
+    ),
+  );
 }
 
 GameSave _save() {

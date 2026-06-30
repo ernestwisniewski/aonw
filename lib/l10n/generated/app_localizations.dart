@@ -1648,6 +1648,12 @@ abstract class AppLocalizations {
   /// **'recent hostility'**
   String get diplomacyProposalForecastReasonRecentHostility;
 
+  /// No description provided for @diplomacyTruceGoldPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Peace terms: {gold} gold'**
+  String diplomacyTruceGoldPayment(int gold);
+
   /// No description provided for @diplomacySendFriendship.
   ///
   /// In en, this message translates to:

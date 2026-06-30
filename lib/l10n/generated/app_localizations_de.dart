@@ -868,6 +868,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'jüngste Feindseligkeit';
 
   @override
+  String diplomacyTruceGoldPayment(int gold) {
+    return 'Friedensbedingungen: $gold Gold';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Freundschaft vorschlagen';
 
   @override

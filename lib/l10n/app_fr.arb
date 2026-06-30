@@ -383,6 +383,14 @@
   "diplomacyProposalForecastReasonLowRelations": "relations trop faibles",
   "diplomacyProposalForecastReasonMilitaryPressure": "pression militaire",
   "diplomacyProposalForecastReasonRecentHostility": "hostilité récente",
+  "diplomacyTruceGoldPayment": "Conditions de paix : {gold} or",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Proposer l'amitié",
   "diplomacySendTruce": "Proposition de trêve",
   "diplomacyDeclareWar": "Déclarer la guerre",

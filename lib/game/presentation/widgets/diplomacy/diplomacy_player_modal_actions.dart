@@ -22,10 +22,14 @@ class _ActionsSection extends StatelessWidget {
     final truceBlocksWar =
         relation.status == DiplomaticRelationStatus.truce &&
         relation.statusExpiresOnTurn != null;
+    final truceGoldPayment = _suggestedTruceGoldPayment();
     final friendshipForecast = _proposalForecast(
       DiplomaticProposalKind.friendship,
     );
-    final truceForecast = _proposalForecast(DiplomaticProposalKind.truce);
+    final truceForecast = _proposalForecast(
+      DiplomaticProposalKind.truce,
+      goldPayment: truceGoldPayment,
+    );
     return _Section(
       title: l10n.diplomacyActionsTitle,
       child: Column(
@@ -63,6 +67,7 @@ class _ActionsSection extends StatelessWidget {
                             playerId: activePlayerId,
                             targetPlayerId: targetPlayerId,
                             kind: DiplomaticProposalKind.truce,
+                            goldPayment: truceGoldPayment,
                           ),
                         ),
                       ),
@@ -97,19 +102,40 @@ class _ActionsSection extends StatelessWidget {
             kind: DiplomaticProposalKind.truce,
             forecast: truceForecast,
           ),
+          if (truceGoldPayment > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.diplomacyTruceGoldPayment(truceGoldPayment),
+              style: GameUiTheme.cardMeta.copyWith(
+                color: GameUiTheme.goldLight,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  DiplomaticProposalForecast _proposalForecast(DiplomaticProposalKind kind) {
+  DiplomaticProposalForecast _proposalForecast(
+    DiplomaticProposalKind kind, {
+    int goldPayment = 0,
+  }) {
     return DiplomaticProposalForecast.evaluate(
       kind: kind,
       relation: relation,
       underPressure:
           _militaryCount(activePlayerId) > _militaryCount(targetPlayerId),
       recentHostility: _recentAggression(activePlayerId, targetPlayerId) > 0,
+      goldPayment: goldPayment,
     );
+  }
+
+  int _suggestedTruceGoldPayment() {
+    if (relation.status != DiplomaticRelationStatus.war) return 0;
+    final availableGold = gameState.playerGold[activePlayerId] ?? 0;
+    return availableGold >= DiplomaticProposalForecast.minimumTruceGoldPayment
+        ? DiplomaticProposalForecast.minimumTruceGoldPayment
+        : 0;
   }
 
   int _militaryCount(String playerId) {
