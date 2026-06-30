@@ -175,8 +175,12 @@ class _ActionsSection extends StatelessWidget {
   }
 
   int _suggestedGoldGiftAmount() {
-    if (relation.status == DiplomaticRelationStatus.war) return 0;
+    if (relation.status == DiplomaticRelationStatus.war ||
+        relation.status == DiplomaticRelationStatus.truce) {
+      return 0;
+    }
     final availableGold = gameState.playerGold[activePlayerId] ?? 0;
+    if (availableGold < DiplomaticGoldGiftRules.minimumAmount) return 0;
     return math.min(10, availableGold);
   }
 

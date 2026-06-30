@@ -7,8 +7,6 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 abstract final class DiplomaticGoldGiftReducer {
-  static const int maxRelationDelta = 12;
-
   static GameStateTransition sendGoldGift(
     GameState state,
     SendGoldGiftCommand command, {
@@ -28,13 +26,18 @@ abstract final class DiplomaticGoldGiftReducer {
       command.playerId,
       command.targetPlayerId,
     );
-    if (relation.status == DiplomaticRelationStatus.war) {
+    if (relation.status == DiplomaticRelationStatus.war ||
+        relation.status == DiplomaticRelationStatus.truce) {
       return GameStateTransition(state: state);
     }
 
     final availableGold = state.playerGold[command.playerId] ?? 0;
     final amount = command.amount.clamp(0, availableGold).toInt();
-    if (amount <= 0) return GameStateTransition(state: state);
+    final relationDelta = DiplomaticGoldGiftRules.relationDeltaFor(amount);
+    if (relationDelta <= 0 ||
+        _giftOnCooldown(state, command, context.combatSeedTurn)) {
+      return GameStateTransition(state: state);
+    }
 
     final recipientGold = state.playerGold[command.targetPlayerId] ?? 0;
     final sourceId = _sourceId(
@@ -45,7 +48,7 @@ abstract final class DiplomaticGoldGiftReducer {
     final diplomacy = state.diplomacy.adjustRelationScore(
       command.playerId,
       command.targetPlayerId,
-      _relationDelta(amount),
+      relationDelta,
       turn: context.combatSeedTurn,
       reason: DiplomaticScoreChangeReason.goldGift,
       sourceId: sourceId,
@@ -102,11 +105,19 @@ abstract final class DiplomaticGoldGiftReducer {
     );
   }
 
-  static int _relationDelta(int amount) {
-    final scaled = amount ~/ 2;
-    if (scaled < 2) return 2;
-    if (scaled > maxRelationDelta) return maxRelationDelta;
-    return scaled;
+  static bool _giftOnCooldown(
+    GameState state,
+    SendGoldGiftCommand command,
+    int turn,
+  ) {
+    return state.diplomacy
+        .scoreEntriesBetween(command.playerId, command.targetPlayerId)
+        .any(
+          (entry) =>
+              entry.reason == DiplomaticScoreChangeReason.goldGift &&
+              turn >= entry.turn &&
+              turn - entry.turn < DiplomaticGoldGiftRules.cooldownTurns,
+        );
   }
 
   static DiplomaticScoreChangedEvent _scoreEvent(

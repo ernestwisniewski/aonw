@@ -99,7 +99,7 @@ void main() {
     test('gold gift transfers available gold and improves relations', () {
       final reducer = GameStateReducer(mapData: _map());
       final result = reducer.reduce(
-        _state().copyWith(playerGold: const {'p1': 7, 'p2': 1}),
+        _state().copyWith(playerGold: const {'p1': 10, 'p2': 1}),
         const SendGoldGiftCommand(
           playerId: 'p1',
           targetPlayerId: 'p2',
@@ -111,28 +111,94 @@ void main() {
           .whereType<DiplomaticScoreChangedEvent>()
           .single;
 
-      expect(result.state.playerGold, {'p1': 0, 'p2': 8});
-      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 3);
+      expect(result.state.playerGold, {'p1': 0, 'p2': 11});
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 2);
       expect(
         result.state.diplomacy.scoreEntriesBetween('p1', 'p2').single.reason,
         DiplomaticScoreChangeReason.goldGift,
       );
-      expect(scoreEvent.delta, 3);
+      expect(scoreEvent.delta, 2);
       expect(scoreEvent.reason, DiplomaticScoreChangeReason.goldGift);
       expect(scoreEvent.sourceId, 'gold_gift.6.p1.p2');
     });
 
-    test('gold gift is blocked during war', () {
+    test('gold gift below minimum does not farm relations', () {
       final reducer = GameStateReducer(mapData: _map());
-      final state = _state().copyWith(
+      final state = _state().copyWith(playerGold: const {'p1': 4, 'p2': 1});
+
+      final result = reducer.reduce(
+        state,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 4,
+        ),
+      );
+
+      expect(result.events, isEmpty);
+      expect(result.state.playerGold, state.playerGold);
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 0);
+    });
+
+    test('gold gift respects relation cooldown', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final first = reducer.reduce(
+        _state().copyWith(playerGold: const {'p1': 20, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 6,
+        ),
+      );
+
+      final repeated = reducer.reduce(
+        first.state,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 8,
+        ),
+      );
+
+      expect(repeated.events, isEmpty);
+      expect(repeated.state.playerGold, first.state.playerGold);
+      expect(repeated.state.diplomacy.relationScoreBetween('p1', 'p2'), 2);
+    });
+
+    test('gold gift is blocked during war and truce', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final war = _state().copyWith(
         playerGold: const {'p1': 7, 'p2': 1},
         diplomacy: DiplomacyState.empty
             .addContact('p1', 'p2')
             .setStatus('p1', 'p2', DiplomaticRelationStatus.war),
       );
+      final truce = war.copyWith(
+        diplomacy: war.diplomacy.setStatus(
+          'p1',
+          'p2',
+          DiplomaticRelationStatus.truce,
+        ),
+      );
 
-      final result = reducer.reduce(
-        state,
+      final warResult = reducer.reduce(
+        war,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
+      final truceResult = reducer.reduce(
+        truce,
         const SendGoldGiftCommand(
           playerId: 'p1',
           targetPlayerId: 'p2',
@@ -140,8 +206,10 @@ void main() {
         ),
       );
 
-      expect(result.events, isEmpty);
-      expect(result.state.playerGold, state.playerGold);
+      expect(warResult.events, isEmpty);
+      expect(warResult.state.playerGold, war.playerGold);
+      expect(truceResult.events, isEmpty);
+      expect(truceResult.state.playerGold, truce.playerGold);
     });
 
     test('allows initial diplomacy after visible contact', () {
