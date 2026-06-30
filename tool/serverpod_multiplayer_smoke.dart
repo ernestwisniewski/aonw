@@ -236,6 +236,7 @@ class _RuntimeSmoke {
     final ownerInitialMessage = Completer<sp.MultiplayerServerMessage>();
     final ackMessages = <sp.MultiplayerServerMessage>[];
     final firstAckSeen = Completer<sp.MultiplayerServerMessage>();
+    final diplomacyAckSeen = Completer<sp.MultiplayerServerMessage>();
     final ackMessagesSeen = Completer<List<sp.MultiplayerServerMessage>>();
     final ownerSubscription = ownerClient.multiplayer
         .connect(started.id, 0, ownerInput.stream)
@@ -249,7 +250,10 @@ class _RuntimeSmoke {
               if (ackMessages.length == 1 && !firstAckSeen.isCompleted) {
                 firstAckSeen.complete(message);
               }
-              if (ackMessages.length == 3 && !ackMessagesSeen.isCompleted) {
+              if (ackMessages.length == 2 && !diplomacyAckSeen.isCompleted) {
+                diplomacyAckSeen.complete(message);
+              }
+              if (ackMessages.length == 4 && !ackMessagesSeen.isCompleted) {
                 ackMessagesSeen.complete(List.unmodifiable(ackMessages));
               }
             }
@@ -260,6 +264,9 @@ class _RuntimeSmoke {
             }
             if (!firstAckSeen.isCompleted) {
               firstAckSeen.completeError(error, stackTrace);
+            }
+            if (!diplomacyAckSeen.isCompleted) {
+              diplomacyAckSeen.completeError(error, stackTrace);
             }
             if (!ackMessagesSeen.isCompleted) {
               ackMessagesSeen.completeError(error, stackTrace);
@@ -276,9 +283,16 @@ class _RuntimeSmoke {
       '${ownerInitialSnapshot?.offset}.',
     );
 
+    final initialSnapshot = snapshotCodec.fromWire(ownerInitialSnapshot!);
+    final targetPlayer = started.players.firstWhere(
+      (player) => player.id != ownerPlayer.id,
+      orElse: () => throw StateError(
+        'Started match has no opponent for owner player ${ownerPlayer.id}.',
+      ),
+    );
     final move = _movementCommandFor(
       mapData: mapData,
-      snapshot: snapshotCodec.fromWire(ownerInitialSnapshot!),
+      snapshot: initialSnapshot,
       actorPlayerId: ownerPlayer.id,
     );
     ownerInput.add(
@@ -324,13 +338,91 @@ class _RuntimeSmoke {
       'Expected movement ACK to include the committed UnitMovedEvent.',
     );
 
+    final postMoveSnapshot = snapshotCodec.fromWire(moveAck.snapshot);
+    final diplomacyCommand = SendDiplomaticMessageCommand(
+      playerId: ownerPlayer.id,
+      targetPlayerId: targetPlayer.id,
+      topic: DiplomaticMessageTopic.peacefulPraise,
+      messageId: 'smoke-diplomacy-$seed',
+    );
+    final expectsDiplomacyAccepted = DiplomaticActionGuard.canTargetDiscovered(
+      playerId: diplomacyCommand.playerId,
+      targetPlayerId: diplomacyCommand.targetPlayerId,
+      knownPlayerIds: started.players.map((player) => player.id),
+      diplomacy: postMoveSnapshot.runtimeState.diplomacy,
+      fogOfWar: postMoveSnapshot.fogOfWar,
+      units: postMoveSnapshot.units,
+      cities: postMoveSnapshot.cities,
+    );
+    ownerInput.add(
+      sp.MultiplayerClientMessage(
+        clientMessageId: 'send-diplomacy-$seed',
+        lastSeenOffset: moveAck.offset,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: started.id,
+          tick: 2,
+          turn: started.turn,
+          actorPlayerId: ownerPlayer.id,
+          command: GameCommandSerializer.toJson(diplomacyCommand),
+        ),
+      ),
+    );
+
+    final diplomacyAckMessage = await diplomacyAckSeen.future.timeout(
+      config.streamTimeout,
+    );
+    final diplomacyAck = diplomacyAckMessage.ack;
+    _expect(diplomacyAck != null, 'Expected diplomacy command ACK.');
+    _expect(
+      diplomacyAck!.accepted == expectsDiplomacyAccepted,
+      'Expected diplomacy ACK accepted=$expectsDiplomacyAccepted, got '
+      '${diplomacyAck.accepted} (${diplomacyAck.reason ?? 'no reason'}).',
+    );
+    final expectedDiplomacyOffset = expectsDiplomacyAccepted
+        ? moveAck.offset + 1
+        : moveAck.offset;
+    _expect(
+      diplomacyAck.offset == expectedDiplomacyOffset,
+      'Expected diplomacy ACK offset $expectedDiplomacyOffset, got '
+      '${diplomacyAck.offset}.',
+    );
+    _expect(
+      diplomacyAck.snapshot.offset == diplomacyAck.offset,
+      'Expected diplomacy ACK snapshot offset ${diplomacyAck.offset}, got '
+      '${diplomacyAck.snapshot.offset}.',
+    );
+    final diplomacyEvents = eventCodec.eventsFromJsonList(diplomacyAck.events);
+    if (expectsDiplomacyAccepted) {
+      _expect(
+        diplomacyEvents.whereType<DiplomaticMessageSentEvent>().any(
+          (event) =>
+              event.messageId == diplomacyCommand.messageId &&
+              event.fromPlayerId == diplomacyCommand.playerId &&
+              event.toPlayerId == diplomacyCommand.targetPlayerId &&
+              event.topic == diplomacyCommand.topic,
+        ),
+        'Expected diplomacy ACK to include the committed '
+        'DiplomaticMessageSentEvent.',
+      );
+    } else {
+      _expect(
+        diplomacyAck.reason != null && diplomacyAck.reason!.isNotEmpty,
+        'Expected rejected diplomacy ACK to include a reason.',
+      );
+      _expect(
+        diplomacyEvents.isEmpty,
+        'Expected rejected diplomacy ACK to include no committed events.',
+      );
+    }
+
     final submitTurnMessage = sp.MultiplayerClientMessage(
       clientMessageId: 'submit-turn-$seed',
-      lastSeenOffset: moveAck.offset,
+      lastSeenOffset: diplomacyAck.offset,
       requestSnapshot: false,
       command: WireCommand(
         matchId: started.id,
-        tick: 2,
+        tick: 3,
         turn: started.turn,
         actorPlayerId: ownerPlayer.id,
         command: GameCommandSerializer.toJson(
@@ -347,8 +439,8 @@ class _RuntimeSmoke {
     );
     await ownerInput.close();
     await ownerSubscription.cancel();
-    final ack = ownerAckMessages[1].ack;
-    final retryAck = ownerAckMessages[2].ack;
+    final ack = ownerAckMessages[2].ack;
+    final retryAck = ownerAckMessages[3].ack;
     _expect(ack != null, 'Expected command ACK from Serverpod stream.');
     _expect(
       retryAck != null,
@@ -359,9 +451,10 @@ class _RuntimeSmoke {
       retryAck!.accepted,
       'Expected accepted retry command ACK, got rejection.',
     );
+    final expectedSubmitOffset = diplomacyAck.offset + 1;
     _expect(
-      ack.offset == 2,
-      'Expected command ACK offset 2, got ${ack.offset}.',
+      ack.offset == expectedSubmitOffset,
+      'Expected command ACK offset $expectedSubmitOffset, got ${ack.offset}.',
     );
     _expect(
       retryAck.offset == ack.offset,
@@ -424,9 +517,10 @@ class _RuntimeSmoke {
     final events = await guestClient.multiplayer
         .listEvents(started.id, 0)
         .timeout(config.requestTimeout);
+    final expectedEventCount = ack.offset;
     _expect(
-      events.length == 2,
-      'Expected two persisted events, got ${events.length}.',
+      events.length == expectedEventCount,
+      'Expected $expectedEventCount persisted events, got ${events.length}.',
     );
     _expect(
       events.first.offset == moveAck.offset && events.last.offset == ack.offset,
@@ -440,6 +534,21 @@ class _RuntimeSmoke {
           .any((event) => event.unitId == move.command.unitId),
       'Expected first persisted event to describe the movement command.',
     );
+    if (expectsDiplomacyAccepted) {
+      final diplomacyEvent = events.firstWhere(
+        (event) => event.offset == diplomacyAck.offset,
+        orElse: () => throw StateError(
+          'Expected persisted diplomacy event at offset ${diplomacyAck.offset}.',
+        ),
+      );
+      _expect(
+        eventCodec
+            .eventsFromWire(diplomacyEvent)
+            .whereType<DiplomaticMessageSentEvent>()
+            .any((event) => event.messageId == diplomacyCommand.messageId),
+        'Expected persisted event to describe the diplomacy command.',
+      );
+    }
 
     final guestActiveInput = StreamController<sp.MultiplayerClientMessage>();
     final guestActive = await _openUntilInitialSnapshot(
@@ -479,6 +588,10 @@ class _RuntimeSmoke {
         '${move.command.targetCol}:${move.command.targetRow}',
       )
       ..writeln('  movement ack offset: ${moveAck.offset}')
+      ..writeln(
+        '  diplomacy ack offset: ${diplomacyAck.offset} '
+        '(${diplomacyAck.accepted ? 'accepted' : 'rejected: ${diplomacyAck.reason}'})',
+      )
       ..writeln('  ack offset: ${ack.offset}')
       ..writeln('  retry ack offset: ${retryAck.offset}')
       ..writeln('  reconnect snapshot offset: ${reconnect.snapshot?.offset}')

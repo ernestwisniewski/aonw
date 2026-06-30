@@ -328,6 +328,11 @@ void main() {
           response: DiplomaticMessageResponse.neutral,
         ),
         const DeclareWarCommand(playerId: 'p', targetPlayerId: 'q'),
+        const SendGoldGiftCommand(
+          playerId: 'p',
+          targetPlayerId: 'q',
+          amount: 5,
+        ),
         const OpenResourceTradeCommand(
           playerId: 'p',
           targetPlayerId: 'q',
@@ -379,8 +384,8 @@ void main() {
         const FocusTurnStartActionCommand('p'),
       ];
 
-      test('there are exactly 62 subtype instances', () {
-        expect(allSubtypes, hasLength(62));
+      test('there are exactly 63 subtype instances', () {
+        expect(allSubtypes, hasLength(63));
       });
 
       test('every subtype is a GameCommand', () {
@@ -431,6 +436,7 @@ void main() {
           SendDiplomaticMessageCommand() => 'SendDiplomaticMessage',
           RespondDiplomaticMessageCommand() => 'RespondDiplomaticMessage',
           DeclareWarCommand() => 'DeclareWar',
+          SendGoldGiftCommand() => 'SendGoldGift',
           OpenResourceTradeCommand() => 'OpenResourceTrade',
           OpenResourceExchangeCommand() => 'OpenResourceExchange',
           ResetUnitMovementCommand() => 'ResetUnitMovement',

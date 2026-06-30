@@ -272,6 +272,7 @@ abstract final class GameSoundCueMapper {
       SendDiplomaticMessageCommand(playerId: final commandPlayerId) ||
       RespondDiplomaticMessageCommand(playerId: final commandPlayerId) ||
       DeclareWarCommand(playerId: final commandPlayerId) ||
+      SendGoldGiftCommand(playerId: final commandPlayerId) ||
       SetActivePlayerCommand(playerId: final commandPlayerId) ||
       FocusNextPendingActionCommand(playerId: final commandPlayerId) ||
       FocusTurnStartActionCommand(

@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_effects.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
@@ -379,6 +380,19 @@ abstract final class CombatReducer {
     );
     final changedCity =
         applied.capturedCity ?? applied.destroyedCity ?? applied.updatedCity;
+    final reputation = DiplomaticWarmongerReputation.apply(
+      diplomacy: state.diplomacy.registerCityAttack(
+        attackerPlayerId: attacker.ownerPlayerId,
+        defenderPlayerId: setup.city.ownerPlayerId,
+        turn: context.combatSeedTurn,
+      ),
+      aggressorPlayerId: attacker.ownerPlayerId,
+      victimPlayerId: setup.city.ownerPlayerId,
+      action: DiplomaticWarmongerAction.cityAttack,
+      turn: context.combatSeedTurn,
+      sourceId: 'city_attack.${context.combatSeedTurn}.${attacker.id}',
+    );
+    final diplomacy = reputation.diplomacy;
     final next = _clearAttackInteractionState(
       withDiscoveredDiplomaticContacts(
         state.copyWith(
@@ -386,11 +400,13 @@ abstract final class CombatReducer {
           cities: applied.cities,
           artifacts: artifacts,
           fogOfWar: fogOfWar,
-          diplomacy: state.diplomacy.registerCityAttack(
-            attackerPlayerId: attacker.ownerPlayerId,
-            defenderPlayerId: setup.city.ownerPlayerId,
-            turn: context.combatSeedTurn,
-          ),
+          diplomacy: diplomacy,
+          resourceTradeAgreements:
+              DiplomaticWarEffects.removeResourceTradeAgreementsBetween(
+                state.resourceTradeAgreements,
+                attacker.ownerPlayerId,
+                setup.city.ownerPlayerId,
+              ),
         ),
       ),
       attackerUnitId: attacker.id,
@@ -405,6 +421,7 @@ abstract final class CombatReducer {
         city: setup.city,
         outcome: outcome,
         application: applied,
+        warmongerEntries: reputation.entries,
       ),
       uiEffects: [
         PlayCombatAnimationEffect(
@@ -580,11 +597,7 @@ abstract final class CombatReducer {
     return switch (selection.type) {
       GameSelectionType.tile => state,
       GameSelectionType.fieldImprovement => state,
-      GameSelectionType.unit => _refreshUnitSelection(
-        state,
-        selection,
-        mapData,
-      ),
+      GameSelectionType.unit => _refreshUnit(state, selection, mapData),
       GameSelectionType.city =>
         selection.city?.id == changedCityId
             ? state.copyWithInteraction(selection: null)
@@ -592,7 +605,7 @@ abstract final class CombatReducer {
     };
   }
 
-  static GameState _refreshUnitSelection(
+  static GameState _refreshUnit(
     GameState state,
     GameSelection selection,
     MapData mapData,

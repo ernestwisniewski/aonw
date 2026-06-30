@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "oorlog",
   "commonDiplomacy": "Diplomatie",
   "diplomacyScoreLabel": "Betrekkingen",
+  "diplomacyTreatyLabel": "Verdrag",
+  "diplomacyAttitudeLabel": "Houding",
+  "diplomacyTreatyBenefitsLabel": "Verdragsvoordelen",
+  "diplomacyFriendlyBenefits": "+1 goud uit grondstoffenhandel · recht van doorgang",
+  "diplomacyNoTreatyBenefits": "Geen verdragsvoordelen",
   "diplomacyScoreDriversTitle": "Wat relaties verandert",
   "diplomacyScoreReasonManual": "Handmatige wijziging",
   "diplomacyScoreReasonUnitAttack": "Aanval op eenheid",
   "diplomacyScoreReasonCityAttack": "Aanval op stad",
   "diplomacyScoreReasonDeclarationOfWar": "Oorlogsverklaring",
+  "diplomacyScoreReasonWarmongerPenalty": "Straf voor oorlogszucht",
   "diplomacyScoreReasonProposalAccepted": "Voorstel geaccepteerd",
   "diplomacyScoreReasonProposalRejected": "Voorstel afgewezen",
   "diplomacyScoreReasonMessageResponse": "Reactie op bericht",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Samenwerking tegen gemeenschappelijke vijand",
+  "diplomacyScoreReasonGoldGift": "Goudgeschenk",
   "diplomacyScoreReasonPromiseBroken": "Belofte gebroken",
   "diplomacyStatsTitle": "Statistieken",
   "diplomacyHistoryTitle": "Geschiedenis",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Vriendschapsvoorstel",
   "diplomacyProposalTruce": "Wapenstilstandsvoorstel",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "waarschijnlijk geaccepteerd",
+  "diplomacyProposalForecastRejected": "waarschijnlijk afgewezen",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relaties zijn werkbaar",
+  "diplomacyProposalForecastReasonActiveWar": "actieve oorlog",
+  "diplomacyProposalForecastReasonAtWar": "vriendschap geblokkeerd door oorlog",
+  "diplomacyProposalForecastReasonGoldPayment": "vredesbetaling",
+  "diplomacyProposalForecastReasonLowRelations": "relaties te laag",
+  "diplomacyProposalForecastReasonMilitaryPressure": "militaire druk",
+  "diplomacyProposalForecastReasonRecentHostility": "recente vijandigheid",
+  "diplomacyTruceGoldPayment": "Vredesvoorwaarden: {gold} goud",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Goudgeschenk: {gold} goud",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Stel vriendschap voor",
   "diplomacySendTruce": "Stel een wapenstilstand voor",
+  "diplomacySendGoldGift": "Goudgeschenk sturen",
   "diplomacyDeclareWar": "Verklaar de oorlog",
   "diplomacyAccept": "Accepteren",
   "diplomacyDecline": "Afwijzen",

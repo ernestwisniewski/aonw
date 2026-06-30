@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "guerre",
   "commonDiplomacy": "Diplomatie",
   "diplomacyScoreLabel": "Relations",
+  "diplomacyTreatyLabel": "Traité",
+  "diplomacyAttitudeLabel": "Attitude",
+  "diplomacyTreatyBenefitsLabel": "Avantages du traité",
+  "diplomacyFriendlyBenefits": "+1 or du commerce de ressources · droit de passage",
+  "diplomacyNoTreatyBenefits": "Aucun avantage de traité",
   "diplomacyScoreDriversTitle": "Ce qui change les relations",
   "diplomacyScoreReasonManual": "Changement manuel",
   "diplomacyScoreReasonUnitAttack": "Attaque d'unité",
   "diplomacyScoreReasonCityAttack": "Attaque de la ville",
   "diplomacyScoreReasonDeclarationOfWar": "Déclaration de guerre",
+  "diplomacyScoreReasonWarmongerPenalty": "Pénalité belliciste",
   "diplomacyScoreReasonProposalAccepted": "Proposition acceptée",
   "diplomacyScoreReasonProposalRejected": "Proposition rejetée",
   "diplomacyScoreReasonMessageResponse": "Réponse d ' expédition",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Coopération contre un ennemi commun",
+  "diplomacyScoreReasonGoldGift": "Don d'or",
   "diplomacyScoreReasonPromiseBroken": "La promesse brisée",
   "diplomacyStatsTitle": "Statistiques",
   "diplomacyHistoryTitle": "Historique",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Proposition d'amitié",
   "diplomacyProposalTruce": "Proposition de trêve",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "probablement acceptée",
+  "diplomacyProposalForecastRejected": "probablement rejetée",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relations suffisantes",
+  "diplomacyProposalForecastReasonActiveWar": "guerre active",
+  "diplomacyProposalForecastReasonAtWar": "l'amitié est bloquée par la guerre",
+  "diplomacyProposalForecastReasonGoldPayment": "paiement de paix",
+  "diplomacyProposalForecastReasonLowRelations": "relations trop faibles",
+  "diplomacyProposalForecastReasonMilitaryPressure": "pression militaire",
+  "diplomacyProposalForecastReasonRecentHostility": "hostilité récente",
+  "diplomacyTruceGoldPayment": "Conditions de paix : {gold} or",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Don d'or : {gold} or",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Proposer l'amitié",
   "diplomacySendTruce": "Proposition de trêve",
+  "diplomacySendGoldGift": "Envoyer un don d'or",
   "diplomacyDeclareWar": "Déclarer la guerre",
   "diplomacyAccept": "Accepter",
   "diplomacyDecline": "Baisse",

@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "Krieg",
   "commonDiplomacy": "Diplomatie",
   "diplomacyScoreLabel": "Beziehungen",
+  "diplomacyTreatyLabel": "Vertrag",
+  "diplomacyAttitudeLabel": "Haltung",
+  "diplomacyTreatyBenefitsLabel": "Vertragsvorteile",
+  "diplomacyFriendlyBenefits": "+1 Gold aus Ressourcenhandel · Durchmarschrecht",
+  "diplomacyNoTreatyBenefits": "Keine Vertragsvorteile",
   "diplomacyScoreDriversTitle": "Was Beziehungen verändert",
   "diplomacyScoreReasonManual": "Manuelle Änderung",
   "diplomacyScoreReasonUnitAttack": "Angriff auf Einheit",
   "diplomacyScoreReasonCityAttack": "Angriff auf Stadt",
   "diplomacyScoreReasonDeclarationOfWar": "Kriegserklärung",
+  "diplomacyScoreReasonWarmongerPenalty": "Aggressor-Malus",
   "diplomacyScoreReasonProposalAccepted": "Vorschlag angenommen",
   "diplomacyScoreReasonProposalRejected": "Vorschlag abgelehnt",
   "diplomacyScoreReasonMessageResponse": "Antwort auf Depesche",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Zusammenarbeit gegen gemeinsamen Feind",
+  "diplomacyScoreReasonGoldGift": "Goldgeschenk",
   "diplomacyScoreReasonPromiseBroken": "Versprechen gebrochen",
   "diplomacyStatsTitle": "Statistiken",
   "diplomacyHistoryTitle": "Verlauf",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Freundschaftsvorschlag",
   "diplomacyProposalTruce": "Waffenstillstandsvorschlag",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "wahrscheinlich akzeptiert",
+  "diplomacyProposalForecastRejected": "wahrscheinlich abgelehnt",
+  "diplomacyProposalForecastReasonAcceptableRelations": "Beziehungen reichen aus",
+  "diplomacyProposalForecastReasonActiveWar": "aktiver Krieg",
+  "diplomacyProposalForecastReasonAtWar": "Freundschaft durch Krieg blockiert",
+  "diplomacyProposalForecastReasonGoldPayment": "Friedenszahlung",
+  "diplomacyProposalForecastReasonLowRelations": "Beziehungen zu niedrig",
+  "diplomacyProposalForecastReasonMilitaryPressure": "militärischer Druck",
+  "diplomacyProposalForecastReasonRecentHostility": "jüngste Feindseligkeit",
+  "diplomacyTruceGoldPayment": "Friedensbedingungen: {gold} Gold",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Goldgeschenk: {gold} Gold",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Freundschaft vorschlagen",
   "diplomacySendTruce": "Waffenruhe vorschlagen",
+  "diplomacySendGoldGift": "Goldgeschenk senden",
   "diplomacyDeclareWar": "Krieg erklären",
   "diplomacyAccept": "Annehmen",
   "diplomacyDecline": "Ablehnen",

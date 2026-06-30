@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/objective.dart';
@@ -219,12 +220,22 @@ abstract final class PersistentTurnEconomyProcessor {
         continue;
       }
 
+      final tradeBonus = agreement.goldPerTurn > 0
+          ? DiplomaticRelationBenefits.resourceTradeGoldBonus(
+              diplomacy: state.runtimeState.diplomacy,
+              playerAId: agreement.importerPlayerId,
+              playerBId: agreement.exporterPlayerId,
+            )
+          : 0;
+      final exporterGoldPerTurn = agreement.goldPerTurn + tradeBonus;
+
       if (agreement.goldPerTurn > 0) {
         playerGold[agreement.importerPlayerId] =
             importerGold - agreement.goldPerTurn;
+      }
+      if (exporterGoldPerTurn > 0) {
         playerGold[agreement.exporterPlayerId] =
-            (playerGold[agreement.exporterPlayerId] ?? 0) +
-            agreement.goldPerTurn;
+            (playerGold[agreement.exporterPlayerId] ?? 0) + exporterGoldPerTurn;
       }
 
       final remainingTurns = agreement.remainingTurns - 1;

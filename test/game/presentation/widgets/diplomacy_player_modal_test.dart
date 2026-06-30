@@ -22,22 +22,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     GameCommand? dispatched;
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: DiplomacyPlayerModal(
-            gameSave: _save(),
-            gameState: _state(),
-            mapData: _map(),
-            activePlayerId: 'player_1',
-            targetPlayerId: 'player_2',
-            onCommand: (command) async => dispatched = command,
-          ),
-        ),
-      ),
+    await _pumpModal(
+      tester,
+      gameState: _state(),
+      onCommand: (command) async => dispatched = command,
     );
 
     expect(
@@ -48,6 +36,10 @@ void main() {
     expect(find.textContaining('Bob'), findsWidgets);
     expect(find.textContaining('Bob · Germany'), findsOneWidget);
     expect(find.text('Relations'), findsOneWidget);
+    expect(find.text('Treaty'), findsOneWidget);
+    expect(find.text('Attitude'), findsOneWidget);
+    expect(find.text('Treaty benefits'), findsOneWidget);
+    expect(find.text('No treaty benefits'), findsOneWidget);
     expect(find.text('What changes relations'), findsOneWidget);
     expect(find.textContaining('Proposal accepted'), findsWidgets);
     expect(find.textContaining('Dispatch response'), findsWidgets);
@@ -76,10 +68,26 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Dispatches'), findsOneWidget);
+    expect(find.text('Conciliatory (+20)'), findsOneWidget);
+    expect(find.text('Neutral (+6)'), findsOneWidget);
     expect(find.text('Actions'), findsOneWidget);
+    expect(
+      find.textContaining('Friendship proposal: likely rejected'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Truce proposal: likely rejected'),
+      findsOneWidget,
+    );
     expect(find.text('Strategic resources'), findsOneWidget);
     expect(find.text('Import horses'), findsOneWidget);
     expect(find.text('Trade iron for horses'), findsOneWidget);
+    expect(
+      tester
+          .widget<EpicButton>(find.widgetWithText(EpicButton, 'Propose truce'))
+          .onPressed,
+      isNull,
+    );
 
     await tester.tap(find.widgetWithText(EpicButton, 'Trade iron for horses'));
     await tester.pump();
@@ -112,14 +120,175 @@ void main() {
       DiplomaticProposalKind.friendship,
     );
   });
+
+  testWidgets('adds peace payment to truce proposals during war', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      playerGold: const {
+        'player_1': DiplomaticProposalForecast.minimumTruceGoldPayment,
+      },
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.war,
+      ),
+    );
+    GameCommand? dispatched;
+
+    await _pumpModal(
+      tester,
+      gameState: state,
+      onCommand: (command) async => dispatched = command,
+    );
+
+    expect(
+      find.textContaining('Truce proposal: likely accepted'),
+      findsOneWidget,
+    );
+    expect(find.text('Peace terms: 5 gold'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(EpicButton, 'Propose truce'));
+    await tester.pump();
+
+    expect(dispatched, isA<SendDiplomaticProposalCommand>());
+    final command = dispatched as SendDiplomaticProposalCommand;
+    expect(command.kind, DiplomaticProposalKind.truce);
+    expect(
+      command.goldPayment,
+      DiplomaticProposalForecast.minimumTruceGoldPayment,
+    );
+  });
+
+  testWidgets('ignores stale aggression in truce forecasts', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.war,
+      ),
+    );
+
+    await _pumpModal(
+      tester,
+      gameSave: _save(turn: 20),
+      gameState: state,
+      onCommand: (_) async {},
+    );
+
+    expect(
+      find.textContaining('Truce proposal: likely accepted'),
+      findsOneWidget,
+    );
+    expect(find.text('Peace terms: 5 gold'), findsNothing);
+  });
+
+  testWidgets('sends gold gift proposals from diplomacy actions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    GameCommand? dispatched;
+    await _pumpModal(
+      tester,
+      gameState: _state().copyWith(playerGold: const {'player_1': 12}),
+      onCommand: (command) async => dispatched = command,
+    );
+
+    expect(find.text('Gold gift: 10 gold'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(EpicButton, 'Send gold gift'));
+    await tester.pump();
+
+    expect(dispatched, isA<SendGoldGiftCommand>());
+    final command = dispatched as SendGoldGiftCommand;
+    expect(command.playerId, 'player_1');
+    expect(command.targetPlayerId, 'player_2');
+    expect(command.amount, 10);
+  });
+
+  testWidgets('disables proposals rejected by current treaty status', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.friendly,
+      ),
+    );
+
+    await _pumpModal(tester, gameState: state, onCommand: (_) async {});
+
+    expect(
+      tester
+          .widget<EpicButton>(
+            find.widgetWithText(EpicButton, 'Propose friendship'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<EpicButton>(find.widgetWithText(EpicButton, 'Propose truce'))
+          .onPressed,
+      isNull,
+    );
+  });
 }
 
-GameSave _save() {
+Future<void> _pumpModal(
+  WidgetTester tester, {
+  GameSave? gameSave,
+  required GameState gameState,
+  required Future<void> Function(GameCommand command) onCommand,
+}) {
+  return tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: DiplomacyPlayerModal(
+          gameSave: gameSave ?? _save(),
+          gameState: gameState,
+          mapData: _map(),
+          activePlayerId: 'player_1',
+          targetPlayerId: 'player_2',
+          onCommand: onCommand,
+        ),
+      ),
+    ),
+  );
+}
+
+GameSave _save({int turn = 6}) {
   return GameSave(
     id: 'save',
     name: 'Game',
     mapName: 'verdantia',
-    turn: 6,
+    turn: turn,
     savedAt: DateTime.utc(2026, 5, 5),
     camera: CameraState.zero,
     players: const [
@@ -211,6 +380,18 @@ GameState _state() {
           turn: 6,
           reason: DiplomaticScoreChangeReason.promiseBroken,
           sourceId: 'message_2',
+        )
+        .setStatus('player_1', 'player_3', DiplomaticRelationStatus.war)
+        .setStatus('player_2', 'player_3', DiplomaticRelationStatus.war)
+        .addMessage(
+          DiplomaticMessage.create(
+            id: 'message_3',
+            fromPlayerId: 'player_2',
+            toPlayerId: 'player_1',
+            topic: DiplomaticMessageTopic.commonEnemy,
+            createdTurn: 6,
+            expiresOnTurn: 11,
+          ),
         )
         .addMessage(message)
         .addProposal(proposal),

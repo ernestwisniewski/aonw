@@ -706,6 +706,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyScoreLabel => 'Relations';
 
   @override
+  String get diplomacyTreatyLabel => 'Traité';
+
+  @override
+  String get diplomacyAttitudeLabel => 'Attitude';
+
+  @override
+  String get diplomacyTreatyBenefitsLabel => 'Avantages du traité';
+
+  @override
+  String get diplomacyFriendlyBenefits =>
+      '+1 or du commerce de ressources · droit de passage';
+
+  @override
+  String get diplomacyNoTreatyBenefits => 'Aucun avantage de traité';
+
+  @override
   String get diplomacyScoreDriversTitle => 'Ce qui change les relations';
 
   @override
@@ -721,6 +737,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyScoreReasonDeclarationOfWar => 'Déclaration de guerre';
 
   @override
+  String get diplomacyScoreReasonWarmongerPenalty => 'Pénalité belliciste';
+
+  @override
   String get diplomacyScoreReasonProposalAccepted => 'Proposition acceptée';
 
   @override
@@ -728,6 +747,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diplomacyScoreReasonMessageResponse => 'Réponse d \' expédition';
+
+  @override
+  String get diplomacyScoreReasonCommonEnemyCooperation =>
+      'Coopération contre un ennemi commun';
+
+  @override
+  String get diplomacyScoreReasonGoldGift => 'Don d\'or';
 
   @override
   String get diplomacyScoreReasonPromiseBroken => 'La promesse brisée';
@@ -805,10 +831,64 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diplomacyProposalTruce => 'Proposition de trêve';
 
   @override
+  String diplomacyProposalForecastLine(
+    String proposal,
+    String outcome,
+    String reasons,
+  ) {
+    return '$proposal: $outcome · $reasons';
+  }
+
+  @override
+  String get diplomacyProposalForecastAccepted => 'probablement acceptée';
+
+  @override
+  String get diplomacyProposalForecastRejected => 'probablement rejetée';
+
+  @override
+  String get diplomacyProposalForecastReasonAcceptableRelations =>
+      'relations suffisantes';
+
+  @override
+  String get diplomacyProposalForecastReasonActiveWar => 'guerre active';
+
+  @override
+  String get diplomacyProposalForecastReasonAtWar =>
+      'l\'amitié est bloquée par la guerre';
+
+  @override
+  String get diplomacyProposalForecastReasonGoldPayment => 'paiement de paix';
+
+  @override
+  String get diplomacyProposalForecastReasonLowRelations =>
+      'relations trop faibles';
+
+  @override
+  String get diplomacyProposalForecastReasonMilitaryPressure =>
+      'pression militaire';
+
+  @override
+  String get diplomacyProposalForecastReasonRecentHostility =>
+      'hostilité récente';
+
+  @override
+  String diplomacyTruceGoldPayment(int gold) {
+    return 'Conditions de paix : $gold or';
+  }
+
+  @override
+  String diplomacyGoldGiftAmount(int gold) {
+    return 'Don d\'or : $gold or';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Proposer l\'amitié';
 
   @override
   String get diplomacySendTruce => 'Proposition de trêve';
+
+  @override
+  String get diplomacySendGoldGift => 'Envoyer un don d\'or';
 
   @override
   String get diplomacyDeclareWar => 'Déclarer la guerre';

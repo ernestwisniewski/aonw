@@ -119,6 +119,7 @@ class ReplayStep {
       SendDiplomaticProposalCommand(:final playerId) ||
       RespondDiplomaticProposalCommand(:final playerId) ||
       DeclareWarCommand(:final playerId) ||
+      SendGoldGiftCommand(:final playerId) ||
       SendDiplomaticMessageCommand(:final playerId) ||
       RespondDiplomaticMessageCommand(:final playerId) ||
       TradeArtifactCommand(:final playerId) ||

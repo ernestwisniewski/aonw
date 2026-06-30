@@ -255,6 +255,7 @@ const _commandFixtures = <({GameCommand command, String type})>[
       targetPlayerId: 'player_2',
       kind: DiplomaticProposalKind.friendship,
       proposalId: 'proposal_1',
+      goldPayment: 6,
     ),
     type: 'SendDiplomaticProposal',
   ),
@@ -289,6 +290,14 @@ const _commandFixtures = <({GameCommand command, String type})>[
       targetPlayerId: 'player_2',
     ),
     type: 'DeclareWar',
+  ),
+  (
+    command: SendGoldGiftCommand(
+      playerId: 'player_1',
+      targetPlayerId: 'player_2',
+      amount: 12,
+    ),
+    type: 'SendGoldGift',
   ),
   (
     command: OpenResourceTradeCommand(
@@ -429,6 +438,7 @@ const _expectedCommandTypes = {
   'SendDiplomaticMessage',
   'RespondDiplomaticMessage',
   'DeclareWar',
+  'SendGoldGift',
   'OpenResourceTrade',
   'OpenResourceExchange',
   'ResetUnitMovement',

@@ -169,6 +169,54 @@ class ServerCommandReducer {
           mapData: mapData,
         );
         return _fromPersistentResult(save, result);
+      case OpenResourceTradeCommand(:final playerId):
+        if (playerId != actorPlayerId) {
+          return _CommandApplication.reject(
+            save: save,
+            state: state,
+            reason: 'resource_trade_player_not_controlled',
+          );
+        }
+        final result = const PersistentResourceTradeResolver()
+            .openGoldForResourceTrade(
+              state: state,
+              importerPlayerId: command.playerId,
+              exporterPlayerId: command.targetPlayerId,
+              resource: command.resource,
+              goldPerTurn: command.goldPerTurn,
+              durationTurns: command.durationTurns,
+              mapData: mapData,
+              agreementId: command.agreementId,
+            );
+        return _fromPersistentResult(save, result);
+      case OpenResourceExchangeCommand(:final playerId):
+        if (playerId != actorPlayerId) {
+          return _CommandApplication.reject(
+            save: save,
+            state: state,
+            reason: 'resource_trade_player_not_controlled',
+          );
+        }
+        final result = const PersistentResourceTradeResolver()
+            .openResourceForResourceTrade(
+              state: state,
+              playerId: command.playerId,
+              targetPlayerId: command.targetPlayerId,
+              offeredResource: command.offeredResource,
+              requestedResource: command.requestedResource,
+              durationTurns: command.durationTurns,
+              mapData: mapData,
+              agreementId: command.agreementId,
+            );
+        return _fromPersistentResult(save, result);
+      case DiplomaticCommand():
+        final result = const DiplomacyCommandRouter().route(
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          turn: save.turn,
+        );
+        return _fromPersistentResult(save, result);
       case FoundCityCommand():
         final result = const PersistentCityFoundingResolver().foundCity(
           state: state,
@@ -563,6 +611,30 @@ class ServerCommandReducer {
           save: save,
           accepted: accepted,
           state: state,
+          reason: reason,
+        ),
+      PersistentResourceTradeResult(
+        :final accepted,
+        :final state,
+        :final reason,
+      ) =>
+        _applicationFrom(
+          save: save,
+          accepted: accepted,
+          state: state,
+          reason: reason,
+        ),
+      PersistentDiplomacyResult(
+        :final accepted,
+        :final state,
+        :final events,
+        :final reason,
+      ) =>
+        _applicationFrom(
+          save: save,
+          accepted: accepted,
+          state: state,
+          events: events,
           reason: reason,
         ),
       PersistentResearchCommandResult(

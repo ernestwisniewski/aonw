@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "war",
   "commonDiplomacy": "Diplomacy",
   "diplomacyScoreLabel": "Relations",
+  "diplomacyTreatyLabel": "Treaty",
+  "diplomacyAttitudeLabel": "Attitude",
+  "diplomacyTreatyBenefitsLabel": "Treaty benefits",
+  "diplomacyFriendlyBenefits": "+1 gold from resource trades · right of passage",
+  "diplomacyNoTreatyBenefits": "No treaty benefits",
   "diplomacyScoreDriversTitle": "What changes relations",
   "diplomacyScoreReasonManual": "Manual change",
   "diplomacyScoreReasonUnitAttack": "Unit attack",
   "diplomacyScoreReasonCityAttack": "City attack",
   "diplomacyScoreReasonDeclarationOfWar": "Declaration of war",
+  "diplomacyScoreReasonWarmongerPenalty": "Warmonger penalty",
   "diplomacyScoreReasonProposalAccepted": "Proposal accepted",
   "diplomacyScoreReasonProposalRejected": "Proposal rejected",
   "diplomacyScoreReasonMessageResponse": "Dispatch response",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Common enemy cooperation",
+  "diplomacyScoreReasonGoldGift": "Gold gift",
   "diplomacyScoreReasonPromiseBroken": "Promise broken",
   "diplomacyStatsTitle": "Stats",
   "diplomacyHistoryTitle": "History",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Friendship proposal",
   "diplomacyProposalTruce": "Truce proposal",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "likely accepted",
+  "diplomacyProposalForecastRejected": "likely rejected",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relations are workable",
+  "diplomacyProposalForecastReasonActiveWar": "active war",
+  "diplomacyProposalForecastReasonAtWar": "friendship blocked by war",
+  "diplomacyProposalForecastReasonGoldPayment": "peace payment",
+  "diplomacyProposalForecastReasonLowRelations": "relations too low",
+  "diplomacyProposalForecastReasonMilitaryPressure": "military pressure",
+  "diplomacyProposalForecastReasonRecentHostility": "recent hostility",
+  "diplomacyTruceGoldPayment": "Peace terms: {gold} gold",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Gold gift: {gold} gold",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Propose friendship",
   "diplomacySendTruce": "Propose truce",
+  "diplomacySendGoldGift": "Send gold gift",
   "diplomacyDeclareWar": "Declare war",
   "diplomacyAccept": "Accept",
   "diplomacyDecline": "Decline",

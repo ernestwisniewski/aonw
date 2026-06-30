@@ -1,17 +1,19 @@
 part of 'game_command.dart';
 
-final class SendDiplomaticProposalCommand extends GameCommand {
+final class SendDiplomaticProposalCommand extends DiplomaticCommand {
   const SendDiplomaticProposalCommand({
     required this.playerId,
     required this.targetPlayerId,
     required this.kind,
     this.proposalId,
+    this.goldPayment = 0,
   });
 
   final String playerId;
   final String targetPlayerId;
   final DiplomaticProposalKind kind;
   final String? proposalId;
+  final int goldPayment;
 
   @override
   bool operator ==(Object other) =>
@@ -19,7 +21,8 @@ final class SendDiplomaticProposalCommand extends GameCommand {
       other.playerId == playerId &&
       other.targetPlayerId == targetPlayerId &&
       other.kind == kind &&
-      other.proposalId == proposalId;
+      other.proposalId == proposalId &&
+      other.goldPayment == goldPayment;
 
   @override
   int get hashCode => Object.hash(
@@ -28,10 +31,11 @@ final class SendDiplomaticProposalCommand extends GameCommand {
     targetPlayerId,
     kind,
     proposalId,
+    goldPayment,
   );
 }
 
-final class RespondDiplomaticProposalCommand extends GameCommand {
+final class RespondDiplomaticProposalCommand extends DiplomaticCommand {
   const RespondDiplomaticProposalCommand({
     required this.playerId,
     required this.proposalId,
@@ -58,7 +62,7 @@ final class RespondDiplomaticProposalCommand extends GameCommand {
   );
 }
 
-final class DeclareWarCommand extends GameCommand {
+final class DeclareWarCommand extends DiplomaticCommand {
   const DeclareWarCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -75,6 +79,29 @@ final class DeclareWarCommand extends GameCommand {
 
   @override
   int get hashCode => Object.hash(DeclareWarCommand, playerId, targetPlayerId);
+}
+
+final class SendGoldGiftCommand extends DiplomaticCommand {
+  const SendGoldGiftCommand({
+    required this.playerId,
+    required this.targetPlayerId,
+    required this.amount,
+  });
+
+  final String playerId;
+  final String targetPlayerId;
+  final int amount;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SendGoldGiftCommand &&
+      other.playerId == playerId &&
+      other.targetPlayerId == targetPlayerId &&
+      other.amount == amount;
+
+  @override
+  int get hashCode =>
+      Object.hash(SendGoldGiftCommand, playerId, targetPlayerId, amount);
 }
 
 final class OpenResourceTradeCommand extends GameCommand {
@@ -155,7 +182,7 @@ final class OpenResourceExchangeCommand extends GameCommand {
   );
 }
 
-final class SendDiplomaticMessageCommand extends GameCommand {
+final class SendDiplomaticMessageCommand extends DiplomaticCommand {
   const SendDiplomaticMessageCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -186,7 +213,7 @@ final class SendDiplomaticMessageCommand extends GameCommand {
   );
 }
 
-final class RespondDiplomaticMessageCommand extends GameCommand {
+final class RespondDiplomaticMessageCommand extends DiplomaticCommand {
   const RespondDiplomaticMessageCommand({
     required this.playerId,
     required this.messageId,

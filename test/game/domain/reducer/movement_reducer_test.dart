@@ -8,6 +8,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -577,6 +578,35 @@ void main() {
         expect(result.events, isEmpty);
       });
 
+      test('moveUnit does not enter a friendly foreign city center', () {
+        final commander = _commander(col: 0, row: 0);
+        const city = GameCity(
+          id: 'friendly_city',
+          ownerPlayerId: 'player_2',
+          name: 'Friend',
+          center: CityHex(col: 1, row: 0),
+        );
+        final state = GameState(
+          units: [commander],
+          cities: const [city],
+          activePlayerId: 'player_1',
+          diplomacy: DiplomacyState.empty.setStatus(
+            'player_1',
+            'player_2',
+            DiplomaticRelationStatus.friendly,
+          ),
+        );
+
+        final result = MovementReducer.moveUnit(
+          state,
+          const MoveUnitCommand('commander_player_1', 1, 0),
+          mapData,
+        );
+
+        expect(result.state, state);
+        expect(result.events, isEmpty);
+      });
+
       test('moveUnit reports terrain beyond unit movement capacity', () {
         final roughMap = _map(
           2,
@@ -895,6 +925,40 @@ void main() {
           units: [commander],
           cities: const [city],
           activePlayerId: 'player_1',
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander),
+            moveCommandActive: true,
+          ),
+        );
+
+        final result = MovementReducer.handleMoveTargetTile(
+          state,
+          mapData.tileAt(1, 0)!,
+          mapData,
+        );
+
+        expect(result.state.movePreview, isNull);
+        final feedback = result.uiEffects.whereType<ShowHudFeedbackEffect>();
+        expect(feedback.single.reason, HudFeedbackReason.movementForeignCity);
+      });
+
+      test('does not preview friendly foreign city centers', () {
+        final commander = _commander();
+        const city = GameCity(
+          id: 'friendly_city',
+          ownerPlayerId: 'player_2',
+          name: 'Friend',
+          center: CityHex(col: 1, row: 0),
+        );
+        final state = GameState(
+          units: [commander],
+          cities: const [city],
+          activePlayerId: 'player_1',
+          diplomacy: DiplomacyState.empty.setStatus(
+            'player_1',
+            'player_2',
+            DiplomaticRelationStatus.friendly,
+          ),
           interaction: GameInteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,

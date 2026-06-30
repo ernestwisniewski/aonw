@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "guerra",
   "commonDiplomacy": "Diplomacia",
   "diplomacyScoreLabel": "Relaciones",
+  "diplomacyTreatyLabel": "Tratado",
+  "diplomacyAttitudeLabel": "Actitud",
+  "diplomacyTreatyBenefitsLabel": "Beneficios del tratado",
+  "diplomacyFriendlyBenefits": "+1 oro por comercio de recursos · derecho de paso",
+  "diplomacyNoTreatyBenefits": "Sin beneficios de tratado",
   "diplomacyScoreDriversTitle": "Qué cambia las relaciones",
   "diplomacyScoreReasonManual": "Cambio manual",
   "diplomacyScoreReasonUnitAttack": "Ataque a unidad",
   "diplomacyScoreReasonCityAttack": "Ataque a ciudad",
   "diplomacyScoreReasonDeclarationOfWar": "Declaración de guerra",
+  "diplomacyScoreReasonWarmongerPenalty": "Penalización belicista",
   "diplomacyScoreReasonProposalAccepted": "Propuesta aceptada",
   "diplomacyScoreReasonProposalRejected": "Propuesta rechazada",
   "diplomacyScoreReasonMessageResponse": "Respuesta a despacho",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Cooperación contra enemigo común",
+  "diplomacyScoreReasonGoldGift": "Regalo de oro",
   "diplomacyScoreReasonPromiseBroken": "Promesa rota",
   "diplomacyStatsTitle": "Estadísticas",
   "diplomacyHistoryTitle": "Historial",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Propuesta de amistad",
   "diplomacyProposalTruce": "Propuesta de tregua",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "probablemente aceptada",
+  "diplomacyProposalForecastRejected": "probablemente rechazada",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relaciones suficientes",
+  "diplomacyProposalForecastReasonActiveWar": "guerra activa",
+  "diplomacyProposalForecastReasonAtWar": "la guerra bloquea la amistad",
+  "diplomacyProposalForecastReasonGoldPayment": "pago de paz",
+  "diplomacyProposalForecastReasonLowRelations": "relaciones demasiado bajas",
+  "diplomacyProposalForecastReasonMilitaryPressure": "presión militar",
+  "diplomacyProposalForecastReasonRecentHostility": "hostilidad reciente",
+  "diplomacyTruceGoldPayment": "Condiciones de paz: {gold} de oro",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Regalo de oro: {gold} de oro",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Proponer amistad",
   "diplomacySendTruce": "Proponer tregua",
+  "diplomacySendGoldGift": "Enviar regalo de oro",
   "diplomacyDeclareWar": "Declarar la guerra",
   "diplomacyAccept": "Aceptar",
   "diplomacyDecline": "Rechazar",

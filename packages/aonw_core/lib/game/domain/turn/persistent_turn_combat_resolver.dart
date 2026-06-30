@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
@@ -37,6 +38,7 @@ abstract final class PersistentTurnCombatResolver {
     final artifacts = [...state.artifacts];
     final events = <GameEvent>[];
     var diplomacy = state.runtimeState.diplomacy;
+    var resourceTradeAgreements = state.runtimeState.resourceTradeAgreements;
     final ordered = [...state.runtimeState.intendedAttacks]
       ..sort(_compareIntents);
 
@@ -61,7 +63,10 @@ abstract final class PersistentTurnCombatResolver {
           artifacts: artifacts,
           events: events,
           diplomacy: diplomacy,
+          resourceTradeAgreements: resourceTradeAgreements,
           updateDiplomacy: (next) => diplomacy = next,
+          updateResourceTradeAgreements: (next) =>
+              resourceTradeAgreements = next,
           mapDefinition: mapDefinition,
           ruleset: ruleset,
         );
@@ -221,7 +226,10 @@ abstract final class PersistentTurnCombatResolver {
         units: units,
         cities: cities,
         artifacts: artifacts,
-        runtimeState: state.runtimeState.copyWith(diplomacy: diplomacy),
+        runtimeState: state.runtimeState.copyWith(
+          diplomacy: diplomacy,
+          resourceTradeAgreements: resourceTradeAgreements,
+        ),
       ),
       events: events,
     );
@@ -348,7 +356,10 @@ abstract final class PersistentTurnCombatResolver {
     required List<WorldArtifact> artifacts,
     required List<GameEvent> events,
     required DiplomacyState diplomacy,
+    required List<ResourceTradeAgreement> resourceTradeAgreements,
     required void Function(DiplomacyState) updateDiplomacy,
+    required void Function(List<ResourceTradeAgreement>)
+    updateResourceTradeAgreements,
     required MapDefinition? mapDefinition,
     required GameRuleset ruleset,
   }) {
@@ -398,11 +409,25 @@ abstract final class PersistentTurnCombatResolver {
       ),
     );
     if (cityBaseStats.hp <= 0) return false;
-    updateDiplomacy(
-      diplomacy.registerCityAttack(
-        attackerPlayerId: attacker.ownerPlayerId,
-        defenderPlayerId: city.ownerPlayerId,
-        turn: turn,
+    final cityAttackDiplomacy = diplomacy.registerCityAttack(
+      attackerPlayerId: attacker.ownerPlayerId,
+      defenderPlayerId: city.ownerPlayerId,
+      turn: turn,
+    );
+    final reputation = DiplomaticWarmongerReputation.apply(
+      diplomacy: cityAttackDiplomacy,
+      aggressorPlayerId: attacker.ownerPlayerId,
+      victimPlayerId: city.ownerPlayerId,
+      action: DiplomaticWarmongerAction.cityAttack,
+      turn: turn,
+      sourceId: 'city_attack.$turn.${attacker.id}',
+    );
+    updateDiplomacy(reputation.diplomacy);
+    updateResourceTradeAgreements(
+      _removeResourceTradeAgreementsBetween(
+        resourceTradeAgreements,
+        attacker.ownerPlayerId,
+        city.ownerPlayerId,
       ),
     );
     final attackerCombatant = Combatant(
@@ -434,13 +459,15 @@ abstract final class PersistentTurnCombatResolver {
       ),
       ruleset: ruleset.combat,
     );
-    events.add(
-      CombatResolvedEvent(
-        attackerUnitId: attacker.id,
-        defenderUnitId: city.id,
-        outcome: outcome,
-      ),
-    );
+    events
+      ..add(
+        CombatResolvedEvent(
+          attackerUnitId: attacker.id,
+          defenderUnitId: city.id,
+          outcome: outcome,
+        ),
+      )
+      ..addAll(_warmongerScoreEvents(reputation.entries));
 
     final attackerExperience = UnitVeterancyRules.experienceAwardForCombat(
       unit: attacker,
@@ -533,6 +560,39 @@ abstract final class PersistentTurnCombatResolver {
     final status = diplomacy.statusBetween(attackerPlayerId, defenderPlayerId);
     return status == DiplomaticRelationStatus.friendly ||
         status == DiplomaticRelationStatus.truce;
+  }
+
+  static List<DiplomaticScoreChangedEvent> _warmongerScoreEvents(
+    Iterable<DiplomaticScoreEntry> entries,
+  ) {
+    return [
+      for (final entry in entries)
+        DiplomaticScoreChangedEvent(
+          playerAId: entry.playerAId,
+          playerBId: entry.playerBId,
+          delta: entry.delta,
+          scoreAfter: entry.scoreAfter,
+          reason: entry.reason,
+          sourceId: entry.sourceId,
+        ),
+    ];
+  }
+
+  static List<ResourceTradeAgreement> _removeResourceTradeAgreementsBetween(
+    Iterable<ResourceTradeAgreement> agreements,
+    String playerAId,
+    String playerBId,
+  ) {
+    final key = DiplomacyState.relationKey(playerAId, playerBId);
+    return [
+      for (final agreement in agreements)
+        if (DiplomacyState.relationKey(
+              agreement.exporterPlayerId,
+              agreement.importerPlayerId,
+            ) !=
+            key)
+          agreement,
+    ];
   }
 
   static GameUnit _withCombatState(

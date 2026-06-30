@@ -358,12 +358,17 @@ abstract final class DiplomacyHistoryPresenter {
         l10n.diplomacyScoreReasonCityAttack,
       DiplomaticScoreChangeReason.declarationOfWar =>
         l10n.diplomacyScoreReasonDeclarationOfWar,
+      DiplomaticScoreChangeReason.warmongerPenalty =>
+        l10n.diplomacyScoreReasonWarmongerPenalty,
       DiplomaticScoreChangeReason.proposalAccepted =>
         l10n.diplomacyScoreReasonProposalAccepted,
       DiplomaticScoreChangeReason.proposalRejected =>
         l10n.diplomacyScoreReasonProposalRejected,
       DiplomaticScoreChangeReason.messageResponse =>
         l10n.diplomacyScoreReasonMessageResponse,
+      DiplomaticScoreChangeReason.commonEnemyCooperation =>
+        l10n.diplomacyScoreReasonCommonEnemyCooperation,
+      DiplomaticScoreChangeReason.goldGift => l10n.diplomacyScoreReasonGoldGift,
       DiplomaticScoreChangeReason.promiseBroken =>
         l10n.diplomacyScoreReasonPromiseBroken,
     };

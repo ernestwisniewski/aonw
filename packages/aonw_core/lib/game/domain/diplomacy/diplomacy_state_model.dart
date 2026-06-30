@@ -201,6 +201,18 @@ final class DiplomacyState {
     required String targetPlayerId,
     int? turn,
   }) {
+    return declareWarWithScoreEntry(
+      playerId: playerId,
+      targetPlayerId: targetPlayerId,
+      turn: turn,
+    ).state;
+  }
+
+  DiplomaticScoreAdjustment declareWarWithScoreEntry({
+    required String playerId,
+    required String targetPlayerId,
+    int? turn,
+  }) {
     return setStatus(
           playerId,
           targetPlayerId,
@@ -210,7 +222,7 @@ final class DiplomacyState {
           allowDowngrade: false,
         )
         .clearPairPendingActions(playerId, targetPlayerId)
-        .adjustRelationScore(
+        .adjustRelationScoreWithEntry(
           playerId,
           targetPlayerId,
           -25,
@@ -272,11 +284,29 @@ final class DiplomacyState {
     required DiplomaticScoreChangeReason reason,
     String? sourceId,
   }) {
+    return adjustRelationScoreWithEntry(
+      playerAId,
+      playerBId,
+      delta,
+      turn: turn,
+      reason: reason,
+      sourceId: sourceId,
+    ).state;
+  }
+
+  DiplomaticScoreAdjustment adjustRelationScoreWithEntry(
+    String playerAId,
+    String playerBId,
+    int delta, {
+    int? turn,
+    required DiplomaticScoreChangeReason reason,
+    String? sourceId,
+  }) {
     if (delta == 0 ||
         playerAId.isEmpty ||
         playerBId.isEmpty ||
         playerAId == playerBId) {
-      return this;
+      return DiplomaticScoreAdjustment(state: this, entry: null);
     }
     final key = relationKey(playerAId, playerBId);
     final existing =
@@ -303,7 +333,7 @@ final class DiplomacyState {
         historyEntry.key: [...historyEntry.value],
     };
     nextHistory.putIfAbsent(key, () => <DiplomaticScoreEntry>[]).add(entry);
-    return copyWith(
+    final state = copyWith(
       contactKeys: Set.unmodifiable({...contactKeys, key}),
       relations: Map.unmodifiable(nextRelations),
       scoreHistory: Map.unmodifiable({
@@ -313,6 +343,7 @@ final class DiplomacyState {
           ),
       }),
     );
+    return DiplomaticScoreAdjustment(state: state, entry: entry);
   }
 
   DiplomacyState addContact(String playerAId, String playerBId) {
@@ -423,20 +454,22 @@ final class DiplomacyState {
   }
 
   Map<String, dynamic> toJson() => {
-    if (contactKeys.isNotEmpty) 'contacts': _sortedContactKeys(),
+    if (contactKeys.isNotEmpty) 'contacts': _sortedContactKeys(this),
     if (relations.isNotEmpty)
       'relations': [
-        for (final relation in _sortedRelations()) relation.toJson(),
+        for (final relation in _sortedRelations(this)) relation.toJson(),
       ],
     if (pendingProposals.isNotEmpty)
       'pendingProposals': [
-        for (final proposal in _sortedProposals()) proposal.toJson(),
+        for (final proposal in _sortedProposals(this)) proposal.toJson(),
       ],
     if (messages.isNotEmpty)
-      'messages': [for (final message in _sortedMessages()) message.toJson()],
+      'messages': [
+        for (final message in _sortedMessages(this)) message.toJson(),
+      ],
     if (scoreHistory.isNotEmpty)
       'scoreHistory': [
-        for (final entry in _sortedScoreEntries()) entry.toJson(),
+        for (final entry in _sortedScoreEntries(this)) entry.toJson(),
       ],
   };
 
@@ -451,7 +484,7 @@ final class DiplomacyState {
 
   @override
   int get hashCode => Object.hash(
-    Object.hashAll(_sortedContactKeys()),
+    Object.hashAll(_sortedContactKeys(this)),
     mapHash(relations),
     mapHash(pendingProposals),
     mapHash(messages),
@@ -470,99 +503,5 @@ final class DiplomacyState {
     return playerAId.compareTo(playerBId) <= 0
         ? (playerAId, playerBId)
         : (playerBId, playerAId);
-  }
-
-  List<String> _sortedContactKeys() => contactKeys.toList()..sort();
-
-  List<DiplomaticRelation> _sortedRelations() {
-    final sorted = relations.values.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    return sorted;
-  }
-
-  List<DiplomaticProposal> _sortedProposals() {
-    final sorted = pendingProposals.values.toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
-    return sorted;
-  }
-
-  List<DiplomaticMessage> _sortedMessages() {
-    final sorted = messages.values.toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
-    return sorted;
-  }
-
-  List<DiplomaticScoreEntry> _sortedScoreEntries() {
-    final entries = [for (final list in scoreHistory.values) ...list]
-      ..sort(_compareScoreEntries);
-    return entries;
-  }
-
-  static bool _historyEquals(
-    Map<String, List<DiplomaticScoreEntry>> a,
-    Map<String, List<DiplomaticScoreEntry>> b,
-  ) {
-    if (identical(a, b)) return true;
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      final other = b[entry.key];
-      if (other == null || other.length != entry.value.length) return false;
-      for (var i = 0; i < entry.value.length; i++) {
-        if (entry.value[i] != other[i]) return false;
-      }
-    }
-    return true;
-  }
-
-  static int _historyHash(Map<String, List<DiplomaticScoreEntry>> map) {
-    final entries = map.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    return Object.hashAll(
-      entries.map(
-        (entry) => Object.hash(entry.key, Object.hashAll(entry.value)),
-      ),
-    );
-  }
-
-  static String _contactKeyFromJson(Object? value) {
-    if (value is String) {
-      if (_isContactKey(value)) return value;
-      throw ArgumentError.value(
-        value,
-        'DiplomacyState.contacts[]',
-        'Expected a diplomatic contact key',
-      );
-    }
-    throw ArgumentError.value(
-      value,
-      'DiplomacyState.contacts[]',
-      'Expected a diplomatic contact key',
-    );
-  }
-
-  static bool _isContactKey(String key) {
-    final parts = key.split('|');
-    return parts.length == 2 && parts[0].isNotEmpty && parts[1].isNotEmpty;
-  }
-
-  static int _statusSeverity(DiplomaticRelationStatus status) {
-    return switch (status) {
-      DiplomaticRelationStatus.friendly => 0,
-      DiplomaticRelationStatus.neutral => 0,
-      DiplomaticRelationStatus.truce => 0,
-      DiplomaticRelationStatus.hostile => 1,
-      DiplomaticRelationStatus.war => 2,
-    };
-  }
-
-  static int _compareScoreEntries(
-    DiplomaticScoreEntry a,
-    DiplomaticScoreEntry b,
-  ) {
-    final key = a.key.compareTo(b.key);
-    if (key != 0) return key;
-    final turn = a.turn.compareTo(b.turn);
-    if (turn != 0) return turn;
-    return (a.sourceId ?? '').compareTo(b.sourceId ?? '');
   }
 }

@@ -15,6 +15,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -465,6 +466,74 @@ void main() {
       final resolved = result.events.first as CombatResolvedEvent;
       expect(resolved.defenderUnitId, 'city-p2');
       expect(resolved.outcome.defenderKilled, isFalse);
+    });
+
+    test('city attack breaks trade and applies warmonger reputation', () {
+      final mapData = _map(3, 3);
+      final attacker = _unit(id: 'a', ownerPlayerId: 'p1', col: 0, row: 0);
+      const city = GameCity(
+        id: 'city-p2',
+        ownerPlayerId: 'p2',
+        name: 'city',
+        center: CityHex(col: 1, row: 0),
+      );
+      final state = GameState(
+        activePlayerId: 'p1',
+        playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+        units: [attacker],
+        cities: const [city],
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .addContact('p1', 'p3')
+            .addContact('p2', 'p3'),
+        resourceTradeAgreements: const [
+          ResourceTradeAgreement(
+            id: 'war_trade',
+            exporterPlayerId: 'p2',
+            importerPlayerId: 'p1',
+            resource: ResourceType.horses,
+            goldPerTurn: 3,
+            remainingTurns: 5,
+          ),
+          ResourceTradeAgreement(
+            id: 'observer_trade',
+            exporterPlayerId: 'p3',
+            importerPlayerId: 'p1',
+            resource: ResourceType.iron,
+            goldPerTurn: 1,
+            remainingTurns: 5,
+          ),
+        ],
+        fogOfWar: _visible('p1', const [
+          HexCoordinate(col: 0, row: 0),
+          HexCoordinate(col: 1, row: 0),
+        ]),
+      );
+
+      final result = _reducer(
+        mapData,
+      ).reduce(state, const AttackHexCommand('a', 1, 0));
+
+      expect(result.state.resourceTradeAgreements.map((trade) => trade.id), [
+        'observer_trade',
+      ]);
+      expect(
+        result.state.diplomacy.relationScoreBetween('p1', 'p3'),
+        DiplomaticWarmongerReputation.cityAttackPenalty,
+      );
+      final warmongerEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+      expect(warmongerEvent.playerAId, 'p1');
+      expect(warmongerEvent.playerBId, 'p3');
+      expect(
+        warmongerEvent.delta,
+        DiplomaticWarmongerReputation.cityAttackPenalty,
+      );
+      expect(
+        warmongerEvent.reason,
+        DiplomaticScoreChangeReason.warmongerPenalty,
+      );
     });
 
     test('lethal attack on unguarded city captures it by default', () {

@@ -287,6 +287,7 @@ abstract final class GameCommandSerializer {
       :final targetPlayerId,
       :final kind,
       :final proposalId,
+      :final goldPayment,
     ) =>
       {
         'type': 'SendDiplomaticProposal',
@@ -294,6 +295,7 @@ abstract final class GameCommandSerializer {
         'targetPlayerId': targetPlayerId,
         'kind': kind.name,
         'proposalId': ?proposalId,
+        if (goldPayment > 0) 'goldPayment': goldPayment,
       },
     RespondDiplomaticProposalCommand(
       :final playerId,
@@ -311,6 +313,17 @@ abstract final class GameCommandSerializer {
       'playerId': playerId,
       'targetPlayerId': targetPlayerId,
     },
+    SendGoldGiftCommand(
+      :final playerId,
+      :final targetPlayerId,
+      :final amount,
+    ) =>
+      {
+        'type': 'SendGoldGift',
+        'playerId': playerId,
+        'targetPlayerId': targetPlayerId,
+        'amount': amount,
+      },
     OpenResourceTradeCommand(
       :final playerId,
       :final targetPlayerId,
@@ -604,6 +617,7 @@ abstract final class GameCommandSerializer {
           DiplomaticProposalKind.values,
         ),
         proposalId: optionalStringField(json, type, 'proposalId'),
+        goldPayment: optionalIntField(json, type, 'goldPayment') ?? 0,
       ),
       'RespondDiplomaticProposal' => RespondDiplomaticProposalCommand(
         playerId: requiredStringField(json, type, 'playerId'),
@@ -613,6 +627,11 @@ abstract final class GameCommandSerializer {
       'DeclareWar' => DeclareWarCommand(
         playerId: requiredStringField(json, type, 'playerId'),
         targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+      ),
+      'SendGoldGift' => SendGoldGiftCommand(
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        amount: requiredIntField(json, type, 'amount'),
       ),
       'OpenResourceTrade' => OpenResourceTradeCommand(
         playerId: requiredStringField(json, type, 'playerId'),

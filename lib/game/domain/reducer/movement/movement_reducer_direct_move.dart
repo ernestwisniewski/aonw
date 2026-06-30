@@ -58,7 +58,7 @@ abstract final class _DirectMoveProcessor {
     final targetTile = mapData.tileAt(command.targetCol, command.targetRow);
     if (targetTile == null) return null;
     if (unit.occupies(targetTile.col, targetTile.row)) return null;
-    if (MovementReducer._isForeignCityCenter(
+    if (MovementReducer._blocksForeignCityCenter(
       state,
       unit,
       targetTile.col,

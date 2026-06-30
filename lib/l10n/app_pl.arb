@@ -301,14 +301,22 @@
   "diplomacyRelationWarShort": "wojna",
   "commonDiplomacy": "Dyplomacja",
   "diplomacyScoreLabel": "Relacje",
+  "diplomacyTreatyLabel": "Traktat",
+  "diplomacyAttitudeLabel": "Nastawienie",
+  "diplomacyTreatyBenefitsLabel": "Korzyści traktatu",
+  "diplomacyFriendlyBenefits": "+1 złota z handlu surowcami · prawo przemarszu",
+  "diplomacyNoTreatyBenefits": "Brak korzyści traktatu",
   "diplomacyScoreDriversTitle": "Co wpływa na relacje",
   "diplomacyScoreReasonManual": "Ręczna zmiana",
   "diplomacyScoreReasonUnitAttack": "Atak na jednostkę",
   "diplomacyScoreReasonCityAttack": "Atak na miasto",
   "diplomacyScoreReasonDeclarationOfWar": "Wypowiedzenie wojny",
+  "diplomacyScoreReasonWarmongerPenalty": "Kara za agresję",
   "diplomacyScoreReasonProposalAccepted": "Akceptacja propozycji",
   "diplomacyScoreReasonProposalRejected": "Odrzucenie propozycji",
   "diplomacyScoreReasonMessageResponse": "Odpowiedź na depeszę",
+  "diplomacyScoreReasonCommonEnemyCooperation": "Współpraca przeciw wspólnemu wrogowi",
+  "diplomacyScoreReasonGoldGift": "Dar złota",
   "diplomacyScoreReasonPromiseBroken": "Złamana obietnica",
   "diplomacyStatsTitle": "Statystyki",
   "diplomacyHistoryTitle": "Historia",
@@ -353,8 +361,48 @@
   },
   "diplomacyProposalFriendship": "Propozycja przyjaźni",
   "diplomacyProposalTruce": "Propozycja rozejmu",
+  "diplomacyProposalForecastLine": "{proposal}: {outcome} · {reasons}",
+  "@diplomacyProposalForecastLine": {
+    "placeholders": {
+      "proposal": {
+        "type": "String"
+      },
+      "outcome": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacyProposalForecastAccepted": "raczej zaakceptują",
+  "diplomacyProposalForecastRejected": "raczej odrzucą",
+  "diplomacyProposalForecastReasonAcceptableRelations": "relacje są wystarczające",
+  "diplomacyProposalForecastReasonActiveWar": "trwa wojna",
+  "diplomacyProposalForecastReasonAtWar": "wojna blokuje przyjaźń",
+  "diplomacyProposalForecastReasonGoldPayment": "zapłata za pokój",
+  "diplomacyProposalForecastReasonLowRelations": "relacje są zbyt niskie",
+  "diplomacyProposalForecastReasonMilitaryPressure": "presja militarna",
+  "diplomacyProposalForecastReasonRecentHostility": "niedawna wrogość",
+  "diplomacyTruceGoldPayment": "Warunki pokoju: {gold} złota",
+  "@diplomacyTruceGoldPayment": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacyGoldGiftAmount": "Dar złota: {gold} złota",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Zaproponuj przyjaźń",
   "diplomacySendTruce": "Zaproponuj rozejm",
+  "diplomacySendGoldGift": "Wyślij dar złota",
   "diplomacyDeclareWar": "Wypowiedz wojnę",
   "diplomacyAccept": "Akceptuj",
   "diplomacyDecline": "Odrzuć",

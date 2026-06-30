@@ -30,6 +30,7 @@ part 'diplomacy_player_modal_conversation.dart';
 part 'diplomacy_player_modal_labels.dart';
 part 'diplomacy_player_modal_overview.dart';
 part 'diplomacy_player_modal_primitives.dart';
+part 'diplomacy_player_modal_relation_chart.dart';
 part 'diplomacy_player_modal_resource_offers.dart';
 part 'diplomacy_player_modal_resource_trade.dart';
 
@@ -175,7 +176,9 @@ class DiplomacyPlayerModal extends StatelessWidget {
               ),
               _ActionsSection(
                 l10n: l10n,
+                gameState: gameState,
                 relation: relation,
+                currentTurn: gameSave.turn,
                 activePlayerId: activePlayerId,
                 targetPlayerId: targetPlayerId,
                 onCommand: onCommand,

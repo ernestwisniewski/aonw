@@ -18,6 +18,7 @@ class _OverviewSection extends StatelessWidget {
     final remaining = relation.statusExpiresOnTurn == null
         ? null
         : (relation.statusExpiresOnTurn! - currentTurn).clamp(0, 999);
+    final attitudeStatus = _attitudeStatus(relation.relationScore);
     final chartEntries = scoreEntries.isEmpty && relation.relationScore != 0
         ? [
             DiplomaticScoreEntry.between(
@@ -37,13 +38,28 @@ class _OverviewSection extends StatelessWidget {
         children: [
           Row(
             children: [
+              Text(l10n.diplomacyTreatyLabel, style: GameUiTheme.chipLabel),
+              const Spacer(),
               _RelationDot(status: relation.status),
               const SizedBox(width: 8),
               Text(
                 MultiplayerRelationStatusStyle.label(l10n, relation.status),
                 style: GameUiTheme.bodyStrong,
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(l10n.diplomacyAttitudeLabel, style: GameUiTheme.chipLabel),
               const Spacer(),
+              _RelationDot(status: attitudeStatus),
+              const SizedBox(width: 8),
+              Text(
+                MultiplayerRelationStatusStyle.label(l10n, attitudeStatus),
+                style: GameUiTheme.bodySmall,
+              ),
+              const SizedBox(width: 10),
               Text(
                 relation.relationScore.toString(),
                 style: GameUiTheme.cardTitle.copyWith(
@@ -59,6 +75,8 @@ class _OverviewSection extends StatelessWidget {
               style: GameUiTheme.bodySmall,
             ),
           ],
+          const SizedBox(height: 8),
+          _RelationBenefitLine(l10n: l10n, relation: relation),
           const SizedBox(height: 12),
           _RelationScoreChart(
             entries: chartEntries,
@@ -68,6 +86,47 @@ class _OverviewSection extends StatelessWidget {
           _RelationScoreDrivers(entries: scoreEntries, l10n: l10n),
         ],
       ),
+    );
+  }
+
+  DiplomaticRelationStatus _attitudeStatus(int score) {
+    if (score >= DiplomacyState.friendlyScoreThreshold) {
+      return DiplomaticRelationStatus.friendly;
+    }
+    if (score <= DiplomacyState.hostileScoreThreshold) {
+      return DiplomaticRelationStatus.hostile;
+    }
+    return DiplomaticRelationStatus.neutral;
+  }
+}
+
+class _RelationBenefitLine extends StatelessWidget {
+  const _RelationBenefitLine({required this.l10n, required this.relation});
+
+  final AppLocalizations l10n;
+  final DiplomaticRelation relation;
+
+  @override
+  Widget build(BuildContext context) {
+    final benefits = relation.status == DiplomaticRelationStatus.friendly
+        ? l10n.diplomacyFriendlyBenefits
+        : l10n.diplomacyNoTreatyBenefits;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.diplomacyTreatyBenefitsLabel, style: GameUiTheme.chipLabel),
+        const SizedBox(height: 3),
+        Text(
+          benefits,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GameUiTheme.bodySmall.copyWith(
+            color: relation.status == DiplomaticRelationStatus.friendly
+                ? GameUiTheme.success
+                : GameUiTheme.textTertiary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -182,7 +241,8 @@ class _StatsSection extends StatelessWidget {
           (entry) =>
               entry.reason == DiplomaticScoreChangeReason.unitAttack ||
               entry.reason == DiplomaticScoreChangeReason.cityAttack ||
-              entry.reason == DiplomaticScoreChangeReason.declarationOfWar,
+              entry.reason == DiplomaticScoreChangeReason.declarationOfWar ||
+              entry.reason == DiplomaticScoreChangeReason.warmongerPenalty,
         )
         .length;
   }

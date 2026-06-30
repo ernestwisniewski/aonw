@@ -8,6 +8,7 @@ final class DiplomaticProposal {
     required this.kind,
     required this.createdTurn,
     required this.expiresOnTurn,
+    this.goldPayment = 0,
   });
 
   factory DiplomaticProposal.fromJson(Map<String, dynamic> json) {
@@ -25,6 +26,8 @@ final class DiplomaticProposal {
         json['expiresOnTurn'],
         'expiresOnTurn',
       ),
+      goldPayment:
+          _optionalNonNegativeInt(json['goldPayment'], 'goldPayment') ?? 0,
     );
   }
 
@@ -34,6 +37,7 @@ final class DiplomaticProposal {
   final DiplomaticProposalKind kind;
   final int createdTurn;
   final int expiresOnTurn;
+  final int goldPayment;
 
   bool involves(String playerId) =>
       fromPlayerId == playerId || toPlayerId == playerId;
@@ -47,6 +51,7 @@ final class DiplomaticProposal {
     'kind': kind.name,
     'createdTurn': createdTurn,
     'expiresOnTurn': expiresOnTurn,
+    if (goldPayment > 0) 'goldPayment': goldPayment,
   };
 
   @override
@@ -57,7 +62,8 @@ final class DiplomaticProposal {
       other.toPlayerId == toPlayerId &&
       other.kind == kind &&
       other.createdTurn == createdTurn &&
-      other.expiresOnTurn == expiresOnTurn;
+      other.expiresOnTurn == expiresOnTurn &&
+      other.goldPayment == goldPayment;
 
   @override
   int get hashCode => Object.hash(
@@ -68,5 +74,6 @@ final class DiplomaticProposal {
     kind,
     createdTurn,
     expiresOnTurn,
+    goldPayment,
   );
 }

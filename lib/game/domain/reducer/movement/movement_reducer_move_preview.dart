@@ -249,7 +249,7 @@ abstract final class _MovePreviewReducer {
     }
 
     if (targetIsKnown &&
-        MovementReducer._isForeignCityCenter(
+        MovementReducer._blocksForeignCityCenter(
           state,
           unit,
           targetTile.col,

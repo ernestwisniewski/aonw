@@ -254,6 +254,7 @@ class _MessagesSection extends StatelessWidget {
             for (final message in messages.take(3))
               _MessageRow(
                 message: message,
+                diplomacy: diplomacy,
                 l10n: l10n,
                 activePlayerId: activePlayerId,
                 onCommand: onCommand,

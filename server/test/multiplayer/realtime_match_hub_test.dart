@@ -822,6 +822,123 @@ void main() {
     await ownerInput.close();
   });
 
+  test('routes diplomacy commands through the authoritative hub', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+    );
+    final store = _MemoryMatchStore();
+    final openMatch = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Diplomacy match',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final joined = await hub.joinMatch(
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: openMatch.id,
+    );
+    final match = await hub.startMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: joined.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+    final owner = match.players.first;
+    final guest = match.players.last;
+
+    final stored = (await store.findState(match.id))!;
+    final baseState = PersistentGameState.fromJson(stored.snapshot.state);
+    final patchedState = baseState.copyWith(
+      playerGold: {owner.id: 20, guest.id: 0},
+      runtimeState: baseState.runtimeState.copyWith(
+        diplomacy: DiplomacyState.empty.addContact(owner.id, guest.id),
+      ),
+    );
+    await store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(state: patchedState.toJson()),
+      ),
+    );
+
+    final ownerInput = StreamController<MultiplayerClientMessage>();
+    final guestInput = StreamController<MultiplayerClientMessage>();
+    final ownerStream = hub
+        .connect(
+          store: store,
+          userIdentifier: owner.userId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: ownerInput.stream,
+        )
+        .asBroadcastStream();
+    final guestStream = hub
+        .connect(
+          store: store,
+          userIdentifier: guest.userId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: guestInput.stream,
+        )
+        .asBroadcastStream();
+
+    expect((await ownerStream.first).snapshot?.offset, 0);
+    expect((await guestStream.first).snapshot?.offset, 0);
+
+    final ownerAck = ownerStream.firstWhere((message) => message.ack != null);
+    final guestEvent = guestStream.firstWhere(
+      (message) => message.event != null,
+    );
+
+    ownerInput.add(
+      MultiplayerClientMessage(
+        clientMessageId: 'client-diplomacy-1',
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(
+            SendGoldGiftCommand(
+              playerId: owner.id,
+              targetPlayerId: guest.id,
+              amount: 10,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final ackMessage = await ownerAck;
+    final eventMessage = await guestEvent;
+    final nextState = PersistentGameState.fromJson(
+      ackMessage.ack!.snapshot.state,
+    );
+
+    expect(ackMessage.ack?.accepted, isTrue);
+    expect(nextState.playerGold[owner.id], 10);
+    expect(nextState.playerGold[guest.id], 10);
+    expect(
+      nextState.runtimeState.diplomacy.relationScoreBetween(owner.id, guest.id),
+      2,
+    );
+    expect(ackMessage.ack?.events.single['type'], 'DiplomaticScoreChanged');
+    expect(eventMessage.event?.events.single['type'], 'DiplomaticScoreChanged');
+
+    await ownerInput.close();
+    await guestInput.close();
+  });
+
   test('broadcasts accepted commands with one authoritative offset', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
     final hub = RealtimeMatchHub(

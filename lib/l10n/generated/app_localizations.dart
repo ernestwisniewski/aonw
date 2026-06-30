@@ -1356,6 +1356,36 @@ abstract class AppLocalizations {
   /// **'Relations'**
   String get diplomacyScoreLabel;
 
+  /// No description provided for @diplomacyTreatyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Treaty'**
+  String get diplomacyTreatyLabel;
+
+  /// No description provided for @diplomacyAttitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Attitude'**
+  String get diplomacyAttitudeLabel;
+
+  /// No description provided for @diplomacyTreatyBenefitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Treaty benefits'**
+  String get diplomacyTreatyBenefitsLabel;
+
+  /// No description provided for @diplomacyFriendlyBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 gold from resource trades · right of passage'**
+  String get diplomacyFriendlyBenefits;
+
+  /// No description provided for @diplomacyNoTreatyBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'No treaty benefits'**
+  String get diplomacyNoTreatyBenefits;
+
   /// No description provided for @diplomacyScoreDriversTitle.
   ///
   /// In en, this message translates to:
@@ -1386,6 +1416,12 @@ abstract class AppLocalizations {
   /// **'Declaration of war'**
   String get diplomacyScoreReasonDeclarationOfWar;
 
+  /// No description provided for @diplomacyScoreReasonWarmongerPenalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Warmonger penalty'**
+  String get diplomacyScoreReasonWarmongerPenalty;
+
   /// No description provided for @diplomacyScoreReasonProposalAccepted.
   ///
   /// In en, this message translates to:
@@ -1403,6 +1439,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dispatch response'**
   String get diplomacyScoreReasonMessageResponse;
+
+  /// No description provided for @diplomacyScoreReasonCommonEnemyCooperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Common enemy cooperation'**
+  String get diplomacyScoreReasonCommonEnemyCooperation;
+
+  /// No description provided for @diplomacyScoreReasonGoldGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold gift'**
+  String get diplomacyScoreReasonGoldGift;
 
   /// No description provided for @diplomacyScoreReasonPromiseBroken.
   ///
@@ -1542,6 +1590,82 @@ abstract class AppLocalizations {
   /// **'Truce proposal'**
   String get diplomacyProposalTruce;
 
+  /// No description provided for @diplomacyProposalForecastLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{proposal}: {outcome} · {reasons}'**
+  String diplomacyProposalForecastLine(
+    String proposal,
+    String outcome,
+    String reasons,
+  );
+
+  /// No description provided for @diplomacyProposalForecastAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'likely accepted'**
+  String get diplomacyProposalForecastAccepted;
+
+  /// No description provided for @diplomacyProposalForecastRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'likely rejected'**
+  String get diplomacyProposalForecastRejected;
+
+  /// No description provided for @diplomacyProposalForecastReasonAcceptableRelations.
+  ///
+  /// In en, this message translates to:
+  /// **'relations are workable'**
+  String get diplomacyProposalForecastReasonAcceptableRelations;
+
+  /// No description provided for @diplomacyProposalForecastReasonActiveWar.
+  ///
+  /// In en, this message translates to:
+  /// **'active war'**
+  String get diplomacyProposalForecastReasonActiveWar;
+
+  /// No description provided for @diplomacyProposalForecastReasonAtWar.
+  ///
+  /// In en, this message translates to:
+  /// **'friendship blocked by war'**
+  String get diplomacyProposalForecastReasonAtWar;
+
+  /// No description provided for @diplomacyProposalForecastReasonGoldPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'peace payment'**
+  String get diplomacyProposalForecastReasonGoldPayment;
+
+  /// No description provided for @diplomacyProposalForecastReasonLowRelations.
+  ///
+  /// In en, this message translates to:
+  /// **'relations too low'**
+  String get diplomacyProposalForecastReasonLowRelations;
+
+  /// No description provided for @diplomacyProposalForecastReasonMilitaryPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'military pressure'**
+  String get diplomacyProposalForecastReasonMilitaryPressure;
+
+  /// No description provided for @diplomacyProposalForecastReasonRecentHostility.
+  ///
+  /// In en, this message translates to:
+  /// **'recent hostility'**
+  String get diplomacyProposalForecastReasonRecentHostility;
+
+  /// No description provided for @diplomacyTruceGoldPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Peace terms: {gold} gold'**
+  String diplomacyTruceGoldPayment(int gold);
+
+  /// No description provided for @diplomacyGoldGiftAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold gift: {gold} gold'**
+  String diplomacyGoldGiftAmount(int gold);
+
   /// No description provided for @diplomacySendFriendship.
   ///
   /// In en, this message translates to:
@@ -1553,6 +1677,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Propose truce'**
   String get diplomacySendTruce;
+
+  /// No description provided for @diplomacySendGoldGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Send gold gift'**
+  String get diplomacySendGoldGift;
 
   /// No description provided for @diplomacyDeclareWar.
   ///

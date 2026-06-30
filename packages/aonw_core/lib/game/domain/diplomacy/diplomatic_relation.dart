@@ -61,6 +61,12 @@ final class DiplomaticRelation {
   bool get isTruceExpired =>
       status == DiplomaticRelationStatus.truce && statusExpiresOnTurn != null;
 
+  String? other(String playerId) {
+    if (playerId == playerAId) return playerBId;
+    if (playerId == playerBId) return playerAId;
+    return null;
+  }
+
   DiplomaticRelation copyWith({
     DiplomaticRelationStatus? status,
     int? relationScore,

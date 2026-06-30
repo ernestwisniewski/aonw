@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -76,14 +77,140 @@ void main() {
         state,
         const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
       );
+      final gift = reducer.reduce(
+        state.copyWith(playerGold: const {'p1': 5}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
 
       expect(message.events, isEmpty);
       expect(message.state.diplomacy.messages, isEmpty);
       expect(war.events, isEmpty);
+      expect(gift.events, isEmpty);
       expect(
         war.state.diplomacy.statusBetween('p1', 'p2'),
         DiplomaticRelationStatus.neutral,
       );
+      expect(gift.state.playerGold, {'p1': 5});
+    });
+
+    test('gold gift transfers available gold and improves relations', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final result = reducer.reduce(
+        _state().copyWith(playerGold: const {'p1': 10, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(combatSeedTurn: 6),
+      );
+      final scoreEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+
+      expect(result.state.playerGold, {'p1': 0, 'p2': 11});
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 2);
+      expect(
+        result.state.diplomacy.scoreEntriesBetween('p1', 'p2').single.reason,
+        DiplomaticScoreChangeReason.goldGift,
+      );
+      expect(scoreEvent.delta, 2);
+      expect(scoreEvent.reason, DiplomaticScoreChangeReason.goldGift);
+      expect(scoreEvent.sourceId, 'gold_gift.6.p1.p2');
+    });
+
+    test('gold gift below minimum does not farm relations', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final state = _state().copyWith(playerGold: const {'p1': 4, 'p2': 1});
+
+      final result = reducer.reduce(
+        state,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 4,
+        ),
+      );
+
+      expect(result.events, isEmpty);
+      expect(result.state.playerGold, state.playerGold);
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 0);
+    });
+
+    test('gold gift respects relation cooldown', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final first = reducer.reduce(
+        _state().copyWith(playerGold: const {'p1': 20, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 6,
+        ),
+      );
+
+      final repeated = reducer.reduce(
+        first.state,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 8,
+        ),
+      );
+
+      expect(repeated.events, isEmpty);
+      expect(repeated.state.playerGold, first.state.playerGold);
+      expect(repeated.state.diplomacy.relationScoreBetween('p1', 'p2'), 2);
+    });
+
+    test('gold gift is blocked during war and truce', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final war = _state().copyWith(
+        playerGold: const {'p1': 7, 'p2': 1},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .setStatus('p1', 'p2', DiplomaticRelationStatus.war),
+      );
+      final truce = war.copyWith(
+        diplomacy: war.diplomacy.setStatus(
+          'p1',
+          'p2',
+          DiplomaticRelationStatus.truce,
+        ),
+      );
+
+      final warResult = reducer.reduce(
+        war,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
+      final truceResult = reducer.reduce(
+        truce,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
+
+      expect(warResult.events, isEmpty);
+      expect(warResult.state.playerGold, war.playerGold);
+      expect(truceResult.events, isEmpty);
+      expect(truceResult.state.playerGold, truce.playerGold);
     });
 
     test('allows initial diplomacy after visible contact', () {
@@ -156,6 +283,57 @@ void main() {
       );
     });
 
+    test('common enemy response rewards shared war cooperation', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final withMessage = _state().copyWith(
+        playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .addContact('p1', 'p3')
+            .addContact('p2', 'p3')
+            .setStatus('p1', 'p3', DiplomaticRelationStatus.war)
+            .setStatus('p2', 'p3', DiplomaticRelationStatus.war)
+            .addMessage(
+              DiplomaticMessage.create(
+                id: 'message_1',
+                fromPlayerId: 'p1',
+                toPlayerId: 'p2',
+                topic: DiplomaticMessageTopic.commonEnemy,
+                createdTurn: 4,
+                expiresOnTurn: 9,
+              ),
+            ),
+      );
+
+      final result = reducer.reduce(
+        withMessage,
+        const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p2',
+          combatSeedTurn: 5,
+        ),
+      );
+      final message = result.state.diplomacy.messages['message_1'];
+      final scoreEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 20);
+      expect(message?.relationScoreDelta, 20);
+      expect(
+        result.state.diplomacy.scoreEntriesBetween('p1', 'p2').single.reason,
+        DiplomaticScoreChangeReason.commonEnemyCooperation,
+      );
+      expect(
+        scoreEvent.reason,
+        DiplomaticScoreChangeReason.commonEnemyCooperation,
+      );
+    });
+
     test('accepted truce updates status and expiry', () {
       final reducer = GameStateReducer(mapData: _map());
       final withProposal = _state().copyWith(
@@ -200,6 +378,259 @@ void main() {
             .single
             .newStatus,
         DiplomaticRelationStatus.truce,
+      );
+    });
+
+    test('accepted truce transfers offered gold payment', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final sent = reducer.reduce(
+        _state().copyWith(
+          playerGold: const {'p1': 20, 'p2': 3},
+          diplomacy: DiplomacyState.empty.setStatus(
+            'p1',
+            'p2',
+            DiplomaticRelationStatus.war,
+          ),
+        ),
+        const SendDiplomaticProposalCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          kind: DiplomaticProposalKind.truce,
+          proposalId: 'proposal_1',
+          goldPayment: 7,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p1',
+          combatSeedTurn: 4,
+        ),
+      );
+      final proposal = sent.state.diplomacy.pendingProposals['proposal_1'];
+
+      final result = reducer.reduce(
+        sent.state,
+        const RespondDiplomaticProposalCommand(
+          playerId: 'p2',
+          proposalId: 'proposal_1',
+          accepted: true,
+        ),
+        context: const GameCommandContext(
+          actorPlayerId: 'p2',
+          combatSeedTurn: 5,
+        ),
+      );
+
+      expect(proposal?.goldPayment, 7);
+      expect(result.state.playerGold['p1'], 13);
+      expect(result.state.playerGold['p2'], 10);
+      expect(
+        result.state.diplomacy.statusBetween('p1', 'p2'),
+        DiplomaticRelationStatus.truce,
+      );
+    });
+
+    test(
+      'paid truce acceptance requires promised gold to remain available',
+      () {
+        final reducer = GameStateReducer(mapData: _map());
+        final state = _state().copyWith(
+          playerGold: const {'p1': 4, 'p2': 3},
+          diplomacy: DiplomacyState.empty
+              .setStatus('p1', 'p2', DiplomaticRelationStatus.war)
+              .addProposal(
+                const DiplomaticProposal(
+                  id: 'proposal_1',
+                  fromPlayerId: 'p1',
+                  toPlayerId: 'p2',
+                  kind: DiplomaticProposalKind.truce,
+                  createdTurn: 4,
+                  expiresOnTurn: 9,
+                  goldPayment: 7,
+                ),
+              ),
+        );
+
+        final result = reducer.reduce(
+          state,
+          const RespondDiplomaticProposalCommand(
+            playerId: 'p2',
+            proposalId: 'proposal_1',
+            accepted: true,
+          ),
+          context: const GameCommandContext(
+            actorPlayerId: 'p2',
+            combatSeedTurn: 5,
+          ),
+        );
+
+        expect(result.events, isEmpty);
+        expect(result.state.playerGold, state.playerGold);
+        expect(
+          result.state.diplomacy.statusBetween('p1', 'p2'),
+          DiplomaticRelationStatus.war,
+        );
+        expect(result.state.diplomacy.pendingProposals, contains('proposal_1'));
+      },
+    );
+
+    test('declaration of war breaks trade and hurts shared contacts', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final state = _state().copyWith(
+        playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .addContact('p1', 'p3')
+            .addContact('p2', 'p3'),
+        resourceTradeAgreements: const [
+          ResourceTradeAgreement(
+            id: 'war_trade',
+            exporterPlayerId: 'p2',
+            importerPlayerId: 'p1',
+            resource: ResourceType.horses,
+            goldPerTurn: 3,
+            remainingTurns: 5,
+          ),
+          ResourceTradeAgreement(
+            id: 'observer_trade',
+            exporterPlayerId: 'p3',
+            importerPlayerId: 'p1',
+            resource: ResourceType.iron,
+            goldPerTurn: 1,
+            remainingTurns: 5,
+          ),
+        ],
+      );
+
+      final result = reducer.reduce(
+        state,
+        const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
+        context: const GameCommandContext(combatSeedTurn: 9),
+      );
+
+      expect(
+        result.state.diplomacy.statusBetween('p1', 'p2'),
+        DiplomaticRelationStatus.war,
+      );
+      expect(result.state.resourceTradeAgreements.map((trade) => trade.id), [
+        'observer_trade',
+      ]);
+      expect(
+        result.state.diplomacy.relationScoreBetween('p1', 'p3'),
+        DiplomaticWarmongerReputation.declarationOfWarPenalty,
+      );
+      expect(
+        result.events.whereType<DiplomaticScoreChangedEvent>().map(
+          (event) => event.reason,
+        ),
+        contains(DiplomaticScoreChangeReason.warmongerPenalty),
+      );
+    });
+
+    test('matches persistent diplomacy router for local commands', () {
+      _expectDiplomacyParity(
+        _state(),
+        const SendDiplomaticProposalCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          kind: DiplomaticProposalKind.friendship,
+          proposalId: 'proposal_1',
+        ),
+        actorPlayerId: 'p1',
+        turn: 4,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(playerGold: const {'p1': 20, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        actorPlayerId: 'p1',
+        turn: 6,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          playerGold: const {'p1': 20, 'p2': 3},
+          diplomacy: DiplomacyState.empty
+              .addContact('p1', 'p2')
+              .setStatus('p1', 'p2', DiplomaticRelationStatus.war)
+              .addProposal(
+                const DiplomaticProposal(
+                  id: 'proposal_1',
+                  fromPlayerId: 'p1',
+                  toPlayerId: 'p2',
+                  kind: DiplomaticProposalKind.truce,
+                  createdTurn: 4,
+                  expiresOnTurn: 9,
+                  goldPayment: 7,
+                ),
+              ),
+        ),
+        const RespondDiplomaticProposalCommand(
+          playerId: 'p2',
+          proposalId: 'proposal_1',
+          accepted: true,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+
+      _expectDiplomacyParity(
+        _state(),
+        const SendDiplomaticMessageCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          topic: DiplomaticMessageTopic.peacefulPraise,
+          messageId: 'message_1',
+        ),
+        actorPlayerId: 'p1',
+        turn: 6,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          diplomacy: DiplomacyState.empty.addMessage(
+            DiplomaticMessage.create(
+              id: 'message_1',
+              fromPlayerId: 'p1',
+              toPlayerId: 'p2',
+              topic: DiplomaticMessageTopic.troopsNearCities,
+              createdTurn: 4,
+              expiresOnTurn: 9,
+            ),
+          ),
+        ),
+        const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          playerColors: const {'p1': 1, 'p2': 2, 'p3': 3},
+          diplomacy: DiplomacyState.empty
+              .addContact('p1', 'p2')
+              .addContact('p1', 'p3')
+              .addContact('p2', 'p3'),
+          resourceTradeAgreements: const [
+            ResourceTradeAgreement(
+              id: 'war_trade',
+              exporterPlayerId: 'p2',
+              importerPlayerId: 'p1',
+              resource: ResourceType.horses,
+              goldPerTurn: 3,
+              remainingTurns: 5,
+            ),
+          ],
+        ),
+        const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
+        actorPlayerId: 'p1',
+        turn: 9,
       );
     });
 
@@ -323,6 +754,59 @@ void main() {
       );
     });
   });
+}
+
+void _expectDiplomacyParity(
+  GameState state,
+  DiplomaticCommand command, {
+  required String actorPlayerId,
+  required int turn,
+}) {
+  final client = GameStateReducer(mapData: _map()).reduce(
+    state,
+    command,
+    context: GameCommandContext(
+      actorPlayerId: actorPlayerId,
+      combatSeedTurn: turn,
+    ),
+  );
+  final server = const DiplomacyCommandRouter().route(
+    state: _persistentState(state),
+    command: command,
+    actorPlayerId: actorPlayerId,
+    turn: turn,
+  );
+
+  expect(server.state.runtimeState.diplomacy, client.state.diplomacy);
+  expect(server.state.playerGold, client.state.playerGold);
+  expect(
+    server.state.runtimeState.intendedAttacks,
+    client.state.intendedAttacks,
+  );
+  expect(
+    server.state.runtimeState.resourceTradeAgreements,
+    client.state.resourceTradeAgreements,
+  );
+  expect(_eventJson(server.events), _eventJson(client.events));
+}
+
+PersistentGameState _persistentState(GameState state) {
+  return PersistentGameState(
+    playerColors: state.playerColors,
+    playerCountries: state.playerCountries,
+    playerGold: state.playerGold,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    research: state.research,
+    runtimeState: state.runtimeState,
+  );
+}
+
+List<Map<String, dynamic>> _eventJson(List<GameEvent> events) {
+  return [for (final event in events) GameEventSerializer.toJson(event)];
 }
 
 GameState _state({

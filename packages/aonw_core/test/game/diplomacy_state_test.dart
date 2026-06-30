@@ -47,6 +47,17 @@ void main() {
       );
     });
 
+    test('relation returns the other player in the pair', () {
+      final relation = DiplomaticRelation.between(
+        playerAId: 'player_2',
+        playerBId: 'player_1',
+      );
+
+      expect(relation.other('player_1'), 'player_2');
+      expect(relation.other('player_2'), 'player_1');
+      expect(relation.other('player_3'), isNull);
+    });
+
     test('derives attitude from relation score thresholds', () {
       final diplomacy = DiplomacyState.empty
           .adjustRelationScore(
@@ -78,6 +89,229 @@ void main() {
       );
     });
 
+    test('returns applied relation score entry after clamping', () {
+      final initial = DiplomacyState.empty.adjustRelationScore(
+        'player_1',
+        'player_2',
+        DiplomacyState.maxRelationScore,
+        turn: 1,
+        reason: DiplomaticScoreChangeReason.manual,
+      );
+
+      final adjustment = initial.adjustRelationScoreWithEntry(
+        'player_1',
+        'player_2',
+        20,
+        turn: 2,
+        reason: DiplomaticScoreChangeReason.goldGift,
+        sourceId: 'gift_1',
+      );
+
+      expect(adjustment.applied, isTrue);
+      expect(
+        adjustment.state.relationScoreBetween('player_1', 'player_2'),
+        100,
+      );
+      expect(adjustment.entry?.delta, 0);
+      expect(adjustment.entry?.scoreAfter, 100);
+      expect(adjustment.entry?.reason, DiplomaticScoreChangeReason.goldGift);
+      expect(adjustment.entry?.sourceId, 'gift_1');
+
+      final ignored = initial.adjustRelationScoreWithEntry(
+        'player_1',
+        'player_2',
+        0,
+        reason: DiplomaticScoreChangeReason.manual,
+      );
+      expect(ignored.applied, isFalse);
+      expect(ignored.state, initial);
+    });
+
+    test('applies warmonger penalty to contacts who know both sides', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('player_1', 'player_2')
+          .addContact('player_1', 'player_3')
+          .addContact('player_2', 'player_3')
+          .addContact('player_1', 'player_4');
+
+      final result = DiplomaticWarmongerReputation.apply(
+        diplomacy: diplomacy,
+        aggressorPlayerId: 'player_1',
+        victimPlayerId: 'player_2',
+        action: DiplomaticWarmongerAction.declarationOfWar,
+        turn: 6,
+      );
+
+      expect(
+        result.diplomacy.relationScoreBetween('player_1', 'player_3'),
+        DiplomaticWarmongerReputation.declarationOfWarPenalty,
+      );
+      expect(result.diplomacy.relationScoreBetween('player_1', 'player_4'), 0);
+      expect(
+        result.entries.single.reason,
+        DiplomaticScoreChangeReason.warmongerPenalty,
+      );
+    });
+
+    test('forecasts proposal acceptance reasons', () {
+      final lowTrust = DiplomacyState.empty
+          .adjustRelationScore(
+            'player_1',
+            'player_2',
+            -40,
+            turn: 2,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .relationBetween('player_1', 'player_2');
+      final warTrust = DiplomacyState.empty
+          .setStatus('player_1', 'player_2', DiplomaticRelationStatus.war)
+          .adjustRelationScore(
+            'player_1',
+            'player_2',
+            -40,
+            turn: 2,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .relationBetween('player_1', 'player_2');
+      final friendship = ProposalAcceptancePolicy.evaluate(
+        kind: DiplomaticProposalKind.friendship,
+        relation: lowTrust,
+      );
+      final truce = ProposalAcceptancePolicy.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        underPressure: ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: false,
+          visibleOpponentUnitCount: 3,
+          ownUnitCount: 2,
+        ),
+      );
+      final paidTruce = ProposalAcceptancePolicy.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        goldPayment: ProposalAcceptancePolicy.minimumTruceGoldPayment,
+      );
+      final recentTruce = ProposalAcceptancePolicy.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        recentHostility: true,
+      );
+      final staleWarTruce = ProposalAcceptancePolicy.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: warTrust,
+      );
+      final legacyForecast = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        goldPayment: ProposalAcceptancePolicy.minimumTruceGoldPayment,
+      );
+
+      expect(friendship.accepted, isFalse);
+      expect(friendship.reasons, [
+        DiplomaticProposalForecastReason.lowRelations,
+      ]);
+      expect(truce.accepted, isTrue);
+      expect(
+        truce.reasons,
+        contains(DiplomaticProposalForecastReason.militaryPressure),
+      );
+      expect(paidTruce.accepted, isTrue);
+      expect(
+        paidTruce.reasons,
+        contains(DiplomaticProposalForecastReason.goldPayment),
+      );
+      expect(recentTruce.accepted, isFalse);
+      expect(
+        recentTruce.reasons,
+        contains(DiplomaticProposalForecastReason.recentHostility),
+      );
+      expect(staleWarTruce.accepted, isTrue);
+      expect(
+        staleWarTruce.reasons,
+        contains(DiplomaticProposalForecastReason.activeWar),
+      );
+      expect(legacyForecast.accepted, paidTruce.accepted);
+      expect(legacyForecast.reasons, paidTruce.reasons);
+      expect(
+        ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: true,
+          visibleOpponentUnitCount: 0,
+          ownUnitCount: 5,
+        ),
+        isTrue,
+      );
+      expect(
+        ProposalAcceptancePolicy.isUnderPressure(
+          hasPendingCityAttackThreat: false,
+          visibleOpponentUnitCount: 0,
+          ownUnitCount: 0,
+          severeHostility: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('grants right of passage without opening foreign city centers', () {
+      final friendly = DiplomacyState.empty.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.friendly,
+      );
+      final neutral = DiplomacyState.empty.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.neutral,
+      );
+
+      expect(
+        DiplomaticRelationBenefits.hasRightOfPassage(
+          diplomacy: friendly,
+          playerAId: 'player_1',
+          playerBId: 'player_2',
+        ),
+        isTrue,
+      );
+      expect(
+        DiplomaticRelationBenefits.canEnterForeignCityCenter(
+          diplomacy: friendly,
+          unitOwnerPlayerId: 'player_1',
+          cityOwnerPlayerId: 'player_2',
+        ),
+        isFalse,
+      );
+      expect(
+        DiplomaticRelationBenefits.canEnterForeignCityCenter(
+          diplomacy: neutral,
+          unitOwnerPlayerId: 'player_1',
+          cityOwnerPlayerId: 'player_2',
+        ),
+        isFalse,
+      );
+    });
+
+    test('detects shared war enemies', () {
+      final diplomacy = DiplomacyState.empty
+          .setStatus('player_1', 'player_3', DiplomaticRelationStatus.war)
+          .setStatus('player_2', 'player_3', DiplomaticRelationStatus.war);
+
+      expect(
+        DiplomaticSharedWar.hasSharedWarEnemy(
+          diplomacy,
+          'player_1',
+          'player_2',
+        ),
+        isTrue,
+      );
+      expect(
+        DiplomaticSharedWar.hasSharedWarEnemy(
+          diplomacy,
+          'player_1',
+          'player_4',
+        ),
+        isFalse,
+      );
+    });
+
     test('round-trips discovered contacts through json', () {
       final diplomacy = DiplomacyState.empty.addContact('player_2', 'player_1');
       final json = diplomacy.toJson();
@@ -88,6 +322,17 @@ void main() {
       ]);
       expect(restored.hasContact('player_1', 'player_2'), isTrue);
       expect(restored, diplomacy);
+    });
+
+    test('decodes discovered contact pairs in stable order', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('player 4', 'player/3')
+          .addContact('player_2', 'player_1');
+
+      expect(diplomacy.decodedContactPairs, [
+        ('player 4', 'player/3'),
+        ('player_1', 'player_2'),
+      ]);
     });
 
     test('round-trips proposals messages and score history through json', () {
@@ -115,6 +360,7 @@ void main() {
               kind: DiplomaticProposalKind.truce,
               createdTurn: 3,
               expiresOnTurn: 8,
+              goldPayment: 9,
             ),
           )
           .addMessage(message)
@@ -131,6 +377,7 @@ void main() {
 
       expect(restored, diplomacy);
       expect(restored.proposalsFor('player_1'), hasLength(1));
+      expect(restored.proposalsFor('player_1').single.goldPayment, 9);
       expect(restored.messagesBetween('player_1', 'player_2').single, message);
       expect(
         restored.scoreEntriesBetween('player_1', 'player_2'),
