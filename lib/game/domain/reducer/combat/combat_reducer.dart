@@ -597,18 +597,15 @@ abstract final class CombatReducer {
     return switch (selection.type) {
       GameSelectionType.tile => state,
       GameSelectionType.fieldImprovement => state,
-      GameSelectionType.unit => _refreshUnitSelection(
-        state,
-        selection,
-        mapData,
-      ),
+      GameSelectionType.unit => _refreshUnit(state, selection, mapData),
       GameSelectionType.city =>
         selection.city?.id == changedCityId
             ? state.copyWithInteraction(selection: null)
             : state,
     };
   }
-  static GameState _refreshUnitSelection(
+
+  static GameState _refreshUnit(
     GameState state,
     GameSelection selection,
     MapData mapData,

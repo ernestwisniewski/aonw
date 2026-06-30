@@ -95,7 +95,11 @@ class _ActionsSection extends StatelessWidget {
               ),
               EpicButton.outlined(
                 label: l10n.diplomacySendGoldGift,
-                icon: Icons.redeem_outlined,
+                iconBuilder: (color) => GameIcon(
+                  GameIcons.gold,
+                  size: GameIconSize.small,
+                  color: color,
+                ),
                 onPressed: goldGiftAmount <= 0
                     ? null
                     : () => unawaited(
