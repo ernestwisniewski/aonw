@@ -135,6 +135,44 @@ void main() {
       );
     });
 
+    test('grants right of passage to friendly relations', () {
+      final friendly = DiplomacyState.empty.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.friendly,
+      );
+      final neutral = DiplomacyState.empty.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.neutral,
+      );
+
+      expect(
+        DiplomaticRelationBenefits.hasRightOfPassage(
+          diplomacy: friendly,
+          playerAId: 'player_1',
+          playerBId: 'player_2',
+        ),
+        isTrue,
+      );
+      expect(
+        DiplomaticRelationBenefits.canEnterForeignCityCenter(
+          diplomacy: friendly,
+          unitOwnerPlayerId: 'player_1',
+          cityOwnerPlayerId: 'player_2',
+        ),
+        isTrue,
+      );
+      expect(
+        DiplomaticRelationBenefits.canEnterForeignCityCenter(
+          diplomacy: neutral,
+          unitOwnerPlayerId: 'player_1',
+          cityOwnerPlayerId: 'player_2',
+        ),
+        isFalse,
+      );
+    });
+
     test('detects shared war enemies', () {
       final diplomacy = DiplomacyState.empty
           .setStatus('player_1', 'player_3', DiplomaticRelationStatus.war)
