@@ -876,10 +876,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String diplomacyGoldGiftAmount(int gold) {
+    return 'Goldgeschenk: $gold Gold';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Freundschaft vorschlagen';
 
   @override
   String get diplomacySendTruce => 'Waffenruhe vorschlagen';
+
+  @override
+  String get diplomacySendGoldGift => 'Goldgeschenk senden';
 
   @override
   String get diplomacyDeclareWar => 'Krieg erklären';

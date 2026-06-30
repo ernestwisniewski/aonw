@@ -392,8 +392,17 @@
       }
     }
   },
+  "diplomacyGoldGiftAmount": "Gold gift: {gold} gold",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Propose friendship",
   "diplomacySendTruce": "Propose truce",
+  "diplomacySendGoldGift": "Send gold gift",
   "diplomacyDeclareWar": "Declare war",
   "diplomacyAccept": "Accept",
   "diplomacyDecline": "Decline",

@@ -159,6 +159,33 @@ void main() {
       DiplomaticProposalForecast.minimumTruceGoldPayment,
     );
   });
+
+  testWidgets('sends gold gift proposals from diplomacy actions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    GameCommand? dispatched;
+    await _pumpModal(
+      tester,
+      gameState: _state().copyWith(playerGold: const {'player_1': 12}),
+      onCommand: (command) async => dispatched = command,
+    );
+
+    expect(find.text('Gold gift: 10 gold'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(EpicButton, 'Send gold gift'));
+    await tester.pump();
+
+    expect(dispatched, isA<SendGoldGiftCommand>());
+    final command = dispatched as SendGoldGiftCommand;
+    expect(command.playerId, 'player_1');
+    expect(command.targetPlayerId, 'player_2');
+    expect(command.amount, 10);
+  });
 }
 
 Future<void> _pumpModal(

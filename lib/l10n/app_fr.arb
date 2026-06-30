@@ -392,8 +392,17 @@
       }
     }
   },
+  "diplomacyGoldGiftAmount": "Don d'or : {gold} or",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Proposer l'amitié",
   "diplomacySendTruce": "Proposition de trêve",
+  "diplomacySendGoldGift": "Envoyer un don d'or",
   "diplomacyDeclareWar": "Déclarer la guerre",
   "diplomacyAccept": "Accepter",
   "diplomacyDecline": "Baisse",

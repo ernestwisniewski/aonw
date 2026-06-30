@@ -874,10 +874,18 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String diplomacyGoldGiftAmount(int gold) {
+    return 'Goudgeschenk: $gold goud';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Stel vriendschap voor';
 
   @override
   String get diplomacySendTruce => 'Stel een wapenstilstand voor';
+
+  @override
+  String get diplomacySendGoldGift => 'Goudgeschenk sturen';
 
   @override
   String get diplomacyDeclareWar => 'Verklaar de oorlog';

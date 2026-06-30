@@ -392,8 +392,17 @@
       }
     }
   },
+  "diplomacyGoldGiftAmount": "Goudgeschenk: {gold} goud",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Stel vriendschap voor",
   "diplomacySendTruce": "Stel een wapenstilstand voor",
+  "diplomacySendGoldGift": "Goudgeschenk sturen",
   "diplomacyDeclareWar": "Verklaar de oorlog",
   "diplomacyAccept": "Accepteren",
   "diplomacyDecline": "Afwijzen",

@@ -1660,6 +1660,12 @@ abstract class AppLocalizations {
   /// **'Peace terms: {gold} gold'**
   String diplomacyTruceGoldPayment(int gold);
 
+  /// No description provided for @diplomacyGoldGiftAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold gift: {gold} gold'**
+  String diplomacyGoldGiftAmount(int gold);
+
   /// No description provided for @diplomacySendFriendship.
   ///
   /// In en, this message translates to:
@@ -1671,6 +1677,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Propose truce'**
   String get diplomacySendTruce;
+
+  /// No description provided for @diplomacySendGoldGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Send gold gift'**
+  String get diplomacySendGoldGift;
 
   /// No description provided for @diplomacyDeclareWar.
   ///

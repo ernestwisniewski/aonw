@@ -23,6 +23,7 @@ class _ActionsSection extends StatelessWidget {
         relation.status == DiplomaticRelationStatus.truce &&
         relation.statusExpiresOnTurn != null;
     final truceGoldPayment = _suggestedTruceGoldPayment();
+    final goldGiftAmount = _suggestedGoldGiftAmount();
     final friendshipForecast = _proposalForecast(
       DiplomaticProposalKind.friendship,
     );
@@ -88,6 +89,21 @@ class _ActionsSection extends StatelessWidget {
                         ),
                       ),
               ),
+              EpicButton.outlined(
+                label: l10n.diplomacySendGoldGift,
+                icon: Icons.redeem_outlined,
+                onPressed: goldGiftAmount <= 0
+                    ? null
+                    : () => unawaited(
+                        onCommand(
+                          SendGoldGiftCommand(
+                            playerId: activePlayerId,
+                            targetPlayerId: targetPlayerId,
+                            amount: goldGiftAmount,
+                          ),
+                        ),
+                      ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -106,6 +122,15 @@ class _ActionsSection extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               l10n.diplomacyTruceGoldPayment(truceGoldPayment),
+              style: GameUiTheme.cardMeta.copyWith(
+                color: GameUiTheme.goldLight,
+              ),
+            ),
+          ],
+          if (goldGiftAmount > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.diplomacyGoldGiftAmount(goldGiftAmount),
               style: GameUiTheme.cardMeta.copyWith(
                 color: GameUiTheme.goldLight,
               ),
@@ -136,6 +161,12 @@ class _ActionsSection extends StatelessWidget {
     return availableGold >= DiplomaticProposalForecast.minimumTruceGoldPayment
         ? DiplomaticProposalForecast.minimumTruceGoldPayment
         : 0;
+  }
+
+  int _suggestedGoldGiftAmount() {
+    if (relation.status == DiplomaticRelationStatus.war) return 0;
+    final availableGold = gameState.playerGold[activePlayerId] ?? 0;
+    return math.min(10, availableGold);
   }
 
   int _militaryCount(String playerId) {

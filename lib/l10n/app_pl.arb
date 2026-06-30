@@ -392,8 +392,17 @@
       }
     }
   },
+  "diplomacyGoldGiftAmount": "Dar złota: {gold} złota",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Zaproponuj przyjaźń",
   "diplomacySendTruce": "Zaproponuj rozejm",
+  "diplomacySendGoldGift": "Wyślij dar złota",
   "diplomacyDeclareWar": "Wypowiedz wojnę",
   "diplomacyAccept": "Akceptuj",
   "diplomacyDecline": "Odrzuć",

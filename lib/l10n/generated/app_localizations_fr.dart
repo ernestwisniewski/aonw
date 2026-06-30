@@ -877,10 +877,18 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String diplomacyGoldGiftAmount(int gold) {
+    return 'Don d\'or : $gold or';
+  }
+
+  @override
   String get diplomacySendFriendship => 'Proposer l\'amitié';
 
   @override
   String get diplomacySendTruce => 'Proposition de trêve';
+
+  @override
+  String get diplomacySendGoldGift => 'Envoyer un don d\'or';
 
   @override
   String get diplomacyDeclareWar => 'Déclarer la guerre';

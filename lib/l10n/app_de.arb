@@ -392,8 +392,17 @@
       }
     }
   },
+  "diplomacyGoldGiftAmount": "Goldgeschenk: {gold} Gold",
+  "@diplomacyGoldGiftAmount": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacySendFriendship": "Freundschaft vorschlagen",
   "diplomacySendTruce": "Waffenruhe vorschlagen",
+  "diplomacySendGoldGift": "Goldgeschenk senden",
   "diplomacyDeclareWar": "Krieg erklären",
   "diplomacyAccept": "Annehmen",
   "diplomacyDecline": "Ablehnen",
