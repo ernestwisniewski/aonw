@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_proposal_payments.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -49,7 +50,10 @@ abstract final class DiplomacyReducer {
       kind: command.kind,
       createdTurn: turn,
       expiresOnTurn: turn + DiplomacyState.defaultProposalDurationTurns,
-      goldPayment: _proposalGoldPayment(state, command),
+      goldPayment: DiplomaticProposalPayments.goldPaymentForCommand(
+        state,
+        command,
+      ),
     );
     final diplomacy = state.diplomacy.addProposal(proposal);
     if (identical(diplomacy, state.diplomacy)) {
@@ -79,6 +83,10 @@ abstract final class DiplomacyReducer {
     }
     final proposal = state.diplomacy.pendingProposals[command.proposalId];
     if (proposal == null || proposal.toPlayerId != command.playerId) {
+      return GameStateTransition(state: state);
+    }
+    if (command.accepted &&
+        !DiplomaticProposalPayments.canFundAccepted(state, proposal)) {
       return GameStateTransition(state: state);
     }
 
@@ -151,7 +159,7 @@ abstract final class DiplomacyReducer {
           reason: DiplomaticScoreChangeReason.proposalAccepted,
         ),
       ]);
-      state = _applyGoldPayment(state, proposal);
+      state = DiplomaticProposalPayments.applyAccepted(state, proposal);
     } else {
       diplomacy = diplomacy.adjustRelationScore(
         proposal.fromPlayerId,
@@ -178,33 +186,6 @@ abstract final class DiplomacyReducer {
         intendedAttacks: intendedAttacks,
       ),
       events: events,
-    );
-  }
-
-  static int _proposalGoldPayment(
-    GameState state,
-    SendDiplomaticProposalCommand command,
-  ) {
-    if (command.kind != DiplomaticProposalKind.truce) return 0;
-    final availableGold = state.playerGold[command.playerId] ?? 0;
-    return command.goldPayment.clamp(0, availableGold).toInt();
-  }
-
-  static GameState _applyGoldPayment(
-    GameState state,
-    DiplomaticProposal proposal,
-  ) {
-    if (proposal.goldPayment <= 0) return state;
-    final payerGold = state.playerGold[proposal.fromPlayerId] ?? 0;
-    final transfer = proposal.goldPayment.clamp(0, payerGold).toInt();
-    if (transfer <= 0) return state;
-    final recipientGold = state.playerGold[proposal.toPlayerId] ?? 0;
-    return state.copyWith(
-      playerGold: {
-        ...state.playerGold,
-        proposal.fromPlayerId: payerGold - transfer,
-        proposal.toPlayerId: recipientGold + transfer,
-      },
     );
   }
 

@@ -359,6 +359,50 @@ void main() {
       );
     });
 
+    test(
+      'paid truce acceptance requires promised gold to remain available',
+      () {
+        final reducer = GameStateReducer(mapData: _map());
+        final state = _state().copyWith(
+          playerGold: const {'p1': 4, 'p2': 3},
+          diplomacy: DiplomacyState.empty
+              .setStatus('p1', 'p2', DiplomaticRelationStatus.war)
+              .addProposal(
+                const DiplomaticProposal(
+                  id: 'proposal_1',
+                  fromPlayerId: 'p1',
+                  toPlayerId: 'p2',
+                  kind: DiplomaticProposalKind.truce,
+                  createdTurn: 4,
+                  expiresOnTurn: 9,
+                  goldPayment: 7,
+                ),
+              ),
+        );
+
+        final result = reducer.reduce(
+          state,
+          const RespondDiplomaticProposalCommand(
+            playerId: 'p2',
+            proposalId: 'proposal_1',
+            accepted: true,
+          ),
+          context: const GameCommandContext(
+            actorPlayerId: 'p2',
+            combatSeedTurn: 5,
+          ),
+        );
+
+        expect(result.events, isEmpty);
+        expect(result.state.playerGold, state.playerGold);
+        expect(
+          result.state.diplomacy.statusBetween('p1', 'p2'),
+          DiplomaticRelationStatus.war,
+        );
+        expect(result.state.diplomacy.pendingProposals, contains('proposal_1'));
+      },
+    );
+
     test('declaration of war breaks trade and hurts shared contacts', () {
       final reducer = GameStateReducer(mapData: _map());
       final state = _state().copyWith(
