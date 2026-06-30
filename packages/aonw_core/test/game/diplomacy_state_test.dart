@@ -89,6 +89,44 @@ void main() {
       );
     });
 
+    test('returns applied relation score entry after clamping', () {
+      final initial = DiplomacyState.empty.adjustRelationScore(
+        'player_1',
+        'player_2',
+        DiplomacyState.maxRelationScore,
+        turn: 1,
+        reason: DiplomaticScoreChangeReason.manual,
+      );
+
+      final adjustment = initial.adjustRelationScoreWithEntry(
+        'player_1',
+        'player_2',
+        20,
+        turn: 2,
+        reason: DiplomaticScoreChangeReason.goldGift,
+        sourceId: 'gift_1',
+      );
+
+      expect(adjustment.applied, isTrue);
+      expect(
+        adjustment.state.relationScoreBetween('player_1', 'player_2'),
+        100,
+      );
+      expect(adjustment.entry?.delta, 0);
+      expect(adjustment.entry?.scoreAfter, 100);
+      expect(adjustment.entry?.reason, DiplomaticScoreChangeReason.goldGift);
+      expect(adjustment.entry?.sourceId, 'gift_1');
+
+      final ignored = initial.adjustRelationScoreWithEntry(
+        'player_1',
+        'player_2',
+        0,
+        reason: DiplomaticScoreChangeReason.manual,
+      );
+      expect(ignored.applied, isFalse);
+      expect(ignored.state, initial);
+    });
+
     test('applies warmonger penalty to contacts who know both sides', () {
       final diplomacy = DiplomacyState.empty
           .addContact('player_1', 'player_2')

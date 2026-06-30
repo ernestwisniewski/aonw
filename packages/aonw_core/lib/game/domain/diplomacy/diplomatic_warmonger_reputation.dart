@@ -40,10 +40,7 @@ abstract final class DiplomaticWarmongerReputation {
       aggressorPlayerId,
       victimPlayerId,
     )) {
-      final before = next
-          .scoreEntriesBetween(observerId, aggressorPlayerId)
-          .length;
-      next = next.adjustRelationScore(
+      final adjustment = next.adjustRelationScoreWithEntry(
         observerId,
         aggressorPlayerId,
         _penaltyFor(action),
@@ -58,8 +55,8 @@ abstract final class DiplomaticWarmongerReputation {
               victimPlayerId: victimPlayerId,
             ),
       );
-      final history = next.scoreEntriesBetween(observerId, aggressorPlayerId);
-      if (history.length > before) entries.add(history.last);
+      next = adjustment.state;
+      if (adjustment.entry != null) entries.add(adjustment.entry!);
     }
 
     return DiplomaticWarmongerReputationResult(

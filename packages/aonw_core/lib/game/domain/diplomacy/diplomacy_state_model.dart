@@ -1,5 +1,14 @@
 part of 'diplomacy_state.dart';
 
+final class DiplomaticScoreAdjustment {
+  const DiplomaticScoreAdjustment({required this.state, required this.entry});
+
+  final DiplomacyState state;
+  final DiplomaticScoreEntry? entry;
+
+  bool get applied => entry != null;
+}
+
 final class DiplomacyState {
   static const empty = DiplomacyState();
 
@@ -201,6 +210,18 @@ final class DiplomacyState {
     required String targetPlayerId,
     int? turn,
   }) {
+    return declareWarWithScoreEntry(
+      playerId: playerId,
+      targetPlayerId: targetPlayerId,
+      turn: turn,
+    ).state;
+  }
+
+  DiplomaticScoreAdjustment declareWarWithScoreEntry({
+    required String playerId,
+    required String targetPlayerId,
+    int? turn,
+  }) {
     return setStatus(
           playerId,
           targetPlayerId,
@@ -210,7 +231,7 @@ final class DiplomacyState {
           allowDowngrade: false,
         )
         .clearPairPendingActions(playerId, targetPlayerId)
-        .adjustRelationScore(
+        .adjustRelationScoreWithEntry(
           playerId,
           targetPlayerId,
           -25,
@@ -272,11 +293,29 @@ final class DiplomacyState {
     required DiplomaticScoreChangeReason reason,
     String? sourceId,
   }) {
+    return adjustRelationScoreWithEntry(
+      playerAId,
+      playerBId,
+      delta,
+      turn: turn,
+      reason: reason,
+      sourceId: sourceId,
+    ).state;
+  }
+
+  DiplomaticScoreAdjustment adjustRelationScoreWithEntry(
+    String playerAId,
+    String playerBId,
+    int delta, {
+    int? turn,
+    required DiplomaticScoreChangeReason reason,
+    String? sourceId,
+  }) {
     if (delta == 0 ||
         playerAId.isEmpty ||
         playerBId.isEmpty ||
         playerAId == playerBId) {
-      return this;
+      return DiplomaticScoreAdjustment(state: this, entry: null);
     }
     final key = relationKey(playerAId, playerBId);
     final existing =
@@ -303,7 +342,7 @@ final class DiplomacyState {
         historyEntry.key: [...historyEntry.value],
     };
     nextHistory.putIfAbsent(key, () => <DiplomaticScoreEntry>[]).add(entry);
-    return copyWith(
+    final state = copyWith(
       contactKeys: Set.unmodifiable({...contactKeys, key}),
       relations: Map.unmodifiable(nextRelations),
       scoreHistory: Map.unmodifiable({
@@ -313,6 +352,7 @@ final class DiplomacyState {
           ),
       }),
     );
+    return DiplomaticScoreAdjustment(state: state, entry: entry);
   }
 
   DiplomacyState addContact(String playerAId, String playerBId) {

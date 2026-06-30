@@ -111,7 +111,7 @@ class PersistentDiplomacyResolver {
       final expiresOnTurn = proposal.kind == DiplomaticProposalKind.truce
           ? turn + DiplomacyState.defaultTruceDurationTurns
           : null;
-      diplomacy = diplomacy
+      final adjustment = diplomacy
           .setStatus(
             proposal.fromPlayerId,
             proposal.toPlayerId,
@@ -120,7 +120,7 @@ class PersistentDiplomacyResolver {
             reason: DiplomaticRelationChangeReason.proposalAccepted,
             statusExpiresOnTurn: expiresOnTurn,
           )
-          .adjustRelationScore(
+          .adjustRelationScoreWithEntry(
             proposal.fromPlayerId,
             proposal.toPlayerId,
             proposal.kind == DiplomaticProposalKind.friendship ? 18 : 10,
@@ -128,6 +128,7 @@ class PersistentDiplomacyResolver {
             reason: DiplomaticScoreChangeReason.proposalAccepted,
             sourceId: proposal.id,
           );
+      diplomacy = adjustment.state;
       intendedAttacks = _clearIntendedAttacksBetween(
         state.runtimeState.intendedAttacks,
         proposal.fromPlayerId,
@@ -147,17 +148,11 @@ class PersistentDiplomacyResolver {
           reason: DiplomaticRelationChangeReason.proposalAccepted,
           expiresOnTurn: relation.statusExpiresOnTurn,
         ),
-        _scoreEvent(
-          diplomacy,
-          proposal.fromPlayerId,
-          proposal.toPlayerId,
-          sourceId: proposal.id,
-          reason: DiplomaticScoreChangeReason.proposalAccepted,
-        ),
+        if (adjustment.entry != null) _scoreEvent(adjustment.entry!),
       ]);
       nextState = _applyAcceptedPayment(state, proposal);
     } else {
-      diplomacy = diplomacy.adjustRelationScore(
+      final adjustment = diplomacy.adjustRelationScoreWithEntry(
         proposal.fromPlayerId,
         proposal.toPlayerId,
         -6,
@@ -165,15 +160,8 @@ class PersistentDiplomacyResolver {
         reason: DiplomaticScoreChangeReason.proposalRejected,
         sourceId: proposal.id,
       );
-      events.add(
-        _scoreEvent(
-          diplomacy,
-          proposal.fromPlayerId,
-          proposal.toPlayerId,
-          sourceId: proposal.id,
-          reason: DiplomaticScoreChangeReason.proposalRejected,
-        ),
-      );
+      diplomacy = adjustment.state;
+      if (adjustment.entry != null) events.add(_scoreEvent(adjustment.entry!));
     }
 
     return _accept(
@@ -214,11 +202,12 @@ class PersistentDiplomacyResolver {
       return _reject(state, 'diplomacy_war_already_active');
     }
 
-    var diplomacy = currentDiplomacy.declareWar(
+    final declaration = currentDiplomacy.declareWarWithScoreEntry(
       playerId: command.playerId,
       targetPlayerId: command.targetPlayerId,
       turn: turn,
     );
+    var diplomacy = declaration.state;
     final reputation = DiplomaticWarmongerReputation.apply(
       diplomacy: diplomacy,
       aggressorPlayerId: command.playerId,
@@ -251,12 +240,7 @@ class PersistentDiplomacyResolver {
           newStatus: nextRelation.status,
           reason: DiplomaticRelationChangeReason.declarationOfWar,
         ),
-        _scoreEvent(
-          diplomacy,
-          command.playerId,
-          command.targetPlayerId,
-          reason: DiplomaticScoreChangeReason.declarationOfWar,
-        ),
+        if (declaration.entry != null) _scoreEvent(declaration.entry!),
         ..._warmongerScoreEvents(reputation.entries),
       ],
     );
@@ -305,14 +289,16 @@ class PersistentDiplomacyResolver {
       playerId: command.playerId,
       targetPlayerId: command.targetPlayerId,
     );
-    final diplomacy = state.runtimeState.diplomacy.adjustRelationScore(
-      command.playerId,
-      command.targetPlayerId,
-      relationDelta,
-      turn: turn,
-      reason: DiplomaticScoreChangeReason.goldGift,
-      sourceId: sourceId,
-    );
+    final adjustment = state.runtimeState.diplomacy
+        .adjustRelationScoreWithEntry(
+          command.playerId,
+          command.targetPlayerId,
+          relationDelta,
+          turn: turn,
+          reason: DiplomaticScoreChangeReason.goldGift,
+          sourceId: sourceId,
+        );
+    final diplomacy = adjustment.state;
 
     return _accept(
       state.copyWith(
@@ -323,15 +309,7 @@ class PersistentDiplomacyResolver {
         },
         runtimeState: state.runtimeState.copyWith(diplomacy: diplomacy),
       ),
-      events: [
-        _scoreEvent(
-          diplomacy,
-          command.playerId,
-          command.targetPlayerId,
-          sourceId: sourceId,
-          reason: DiplomaticScoreChangeReason.goldGift,
-        ),
-      ],
+      events: [if (adjustment.entry != null) _scoreEvent(adjustment.entry!)],
     );
   }
 
@@ -419,18 +397,23 @@ class PersistentDiplomacyResolver {
     final scoreReason = cooperationBonus == 0
         ? DiplomaticScoreChangeReason.messageResponse
         : DiplomaticScoreChangeReason.commonEnemyCooperation;
-    var diplomacy = state.runtimeState.diplomacy.adjustRelationScore(
-      message.fromPlayerId,
-      message.toPlayerId,
-      delta,
-      turn: turn,
-      reason: scoreReason,
-      sourceId: message.id,
-    );
-    final scoreAfter = diplomacy.relationScoreBetween(
-      message.fromPlayerId,
-      message.toPlayerId,
-    );
+    final adjustment = state.runtimeState.diplomacy
+        .adjustRelationScoreWithEntry(
+          message.fromPlayerId,
+          message.toPlayerId,
+          delta,
+          turn: turn,
+          reason: scoreReason,
+          sourceId: message.id,
+        );
+    var diplomacy = adjustment.state;
+    final appliedDelta = adjustment.entry?.delta ?? 0;
+    final scoreAfter =
+        adjustment.entry?.scoreAfter ??
+        diplomacy.relationScoreBetween(
+          message.fromPlayerId,
+          message.toPlayerId,
+        );
     final promiseDueTurn =
         command.response.isPromiseTone &&
             message.topic.canCreateWithdrawalPromise
@@ -439,7 +422,7 @@ class PersistentDiplomacyResolver {
     final updatedMessage = message.copyWith(
       response: command.response,
       respondedTurn: turn,
-      relationScoreDelta: delta,
+      relationScoreDelta: appliedDelta,
       relationScoreAfter: scoreAfter,
       promiseDueTurn: promiseDueTurn,
     );
@@ -454,22 +437,11 @@ class PersistentDiplomacyResolver {
           toPlayerId: updatedMessage.toPlayerId,
           topic: updatedMessage.topic,
           response: command.response,
-          relationDelta: delta,
+          relationDelta: appliedDelta,
           relationScoreAfter: scoreAfter,
           promiseDueTurn: promiseDueTurn,
         ),
-        DiplomaticScoreChangedEvent(
-          playerAId: diplomacy
-              .relationBetween(message.fromPlayerId, message.toPlayerId)
-              .playerAId,
-          playerBId: diplomacy
-              .relationBetween(message.fromPlayerId, message.toPlayerId)
-              .playerBId,
-          delta: delta,
-          scoreAfter: scoreAfter,
-          reason: scoreReason,
-          sourceId: message.id,
-        ),
+        if (adjustment.entry != null) _scoreEvent(adjustment.entry!),
       ],
     );
   }
@@ -684,23 +656,14 @@ class PersistentDiplomacyResolver {
     ];
   }
 
-  static DiplomaticScoreChangedEvent _scoreEvent(
-    DiplomacyState diplomacy,
-    String playerAId,
-    String playerBId, {
-    required DiplomaticScoreChangeReason reason,
-    String? sourceId,
-  }) {
-    final relation = diplomacy.relationBetween(playerAId, playerBId);
-    final history = diplomacy.scoreEntriesBetween(playerAId, playerBId);
-    final latest = history.isEmpty ? null : history.last;
+  static DiplomaticScoreChangedEvent _scoreEvent(DiplomaticScoreEntry entry) {
     return DiplomaticScoreChangedEvent(
-      playerAId: relation.playerAId,
-      playerBId: relation.playerBId,
-      delta: latest?.delta ?? 0,
-      scoreAfter: relation.relationScore,
-      reason: reason,
-      sourceId: sourceId,
+      playerAId: entry.playerAId,
+      playerBId: entry.playerBId,
+      delta: entry.delta,
+      scoreAfter: entry.scoreAfter,
+      reason: entry.reason,
+      sourceId: entry.sourceId,
     );
   }
 

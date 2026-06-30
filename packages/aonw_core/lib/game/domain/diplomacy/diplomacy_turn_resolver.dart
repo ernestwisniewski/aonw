@@ -66,9 +66,9 @@ abstract final class DiplomacyTurnResolver {
         continue;
       }
       final marked = promise.copyWith(promiseBroken: true);
-      next = next
+      final adjustment = next
           .updateMessage(marked)
-          .adjustRelationScore(
+          .adjustRelationScoreWithEntry(
             promise.fromPlayerId,
             promise.toPlayerId,
             DiplomacyState.defaultPromiseBrokenPenalty,
@@ -76,25 +76,28 @@ abstract final class DiplomacyTurnResolver {
             reason: DiplomaticScoreChangeReason.promiseBroken,
             sourceId: promise.id,
           );
+      next = adjustment.state;
       final relation = next.relationBetween(
         promise.fromPlayerId,
         promise.toPlayerId,
       );
+      final entry = adjustment.entry;
+      if (entry == null) continue;
       events.addAll([
         DiplomaticPromiseBrokenEvent(
           messageId: promise.id,
           playerAId: relation.playerAId,
           playerBId: relation.playerBId,
-          delta: DiplomacyState.defaultPromiseBrokenPenalty,
-          scoreAfter: relation.relationScore,
+          delta: entry.delta,
+          scoreAfter: entry.scoreAfter,
         ),
         DiplomaticScoreChangedEvent(
-          playerAId: relation.playerAId,
-          playerBId: relation.playerBId,
-          delta: DiplomacyState.defaultPromiseBrokenPenalty,
-          scoreAfter: relation.relationScore,
-          reason: DiplomaticScoreChangeReason.promiseBroken,
-          sourceId: promise.id,
+          playerAId: entry.playerAId,
+          playerBId: entry.playerBId,
+          delta: entry.delta,
+          scoreAfter: entry.scoreAfter,
+          reason: entry.reason,
+          sourceId: entry.sourceId,
         ),
       ]);
     }
