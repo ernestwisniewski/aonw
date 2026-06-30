@@ -1120,6 +1120,10 @@ bump-version:
 		esac; \
 	fi; \
 	case "$$new_name" in *+*) echo "NEW_VERSION must not contain +build metadata: $$new_name"; exit 1;; esac; \
+	if [ "$$new_name" = "$$current_name" ] && [ "$$new_build" = "$$current_build" ]; then \
+		echo "Version already set to $$new_name+$$new_build; skipping version commit."; \
+		exit 0; \
+	fi; \
 	echo "Bumping version $$current_name+$$current_build -> $$new_name+$$new_build..."; \
 	sed -i.bak "s/^version:.*$$/version: $$new_name+$$new_build/" "$(PUBSPEC)" && rm "$(PUBSPEC).bak"; \
 	sed -i.bak "s/CURRENT_PROJECT_VERSION = $$current_build;/CURRENT_PROJECT_VERSION = $$new_build;/g; s/MARKETING_VERSION = $$current_name;/MARKETING_VERSION = $$new_name;/g" "$(PBXPROJ)" && rm "$(PBXPROJ).bak"; \
