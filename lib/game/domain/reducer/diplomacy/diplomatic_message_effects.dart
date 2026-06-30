@@ -7,7 +7,7 @@ abstract final class DiplomaticMessageEffects {
     DiplomaticMessageResponse response,
   ) {
     if (message.topic != DiplomaticMessageTopic.commonEnemy ||
-        !_hasSharedWarEnemy(
+        !DiplomaticSharedWar.hasSharedWarEnemy(
           diplomacy,
           message.fromPlayerId,
           message.toPlayerId,
@@ -20,28 +20,5 @@ abstract final class DiplomaticMessageEffects {
       DiplomaticMessageResponse.evasive ||
       DiplomaticMessageResponse.aggressive => 0,
     };
-  }
-
-  static bool _hasSharedWarEnemy(
-    DiplomacyState diplomacy,
-    String playerAId,
-    String playerBId,
-  ) {
-    for (final relation in diplomacy.relations.values) {
-      if (relation.status != DiplomaticRelationStatus.war) continue;
-      final enemyId = _warEnemyFor(relation, playerAId);
-      if (enemyId == null || enemyId == playerBId) continue;
-      if (diplomacy.statusBetween(playerBId, enemyId) ==
-          DiplomaticRelationStatus.war) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static String? _warEnemyFor(DiplomaticRelation relation, String playerId) {
-    if (relation.playerAId == playerId) return relation.playerBId;
-    if (relation.playerBId == playerId) return relation.playerAId;
-    return null;
   }
 }

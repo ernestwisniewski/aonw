@@ -135,6 +135,29 @@ void main() {
       );
     });
 
+    test('detects shared war enemies', () {
+      final diplomacy = DiplomacyState.empty
+          .setStatus('player_1', 'player_3', DiplomaticRelationStatus.war)
+          .setStatus('player_2', 'player_3', DiplomaticRelationStatus.war);
+
+      expect(
+        DiplomaticSharedWar.hasSharedWarEnemy(
+          diplomacy,
+          'player_1',
+          'player_2',
+        ),
+        isTrue,
+      );
+      expect(
+        DiplomaticSharedWar.hasSharedWarEnemy(
+          diplomacy,
+          'player_1',
+          'player_4',
+        ),
+        isFalse,
+      );
+    });
+
     test('round-trips discovered contacts through json', () {
       final diplomacy = DiplomacyState.empty.addContact('player_2', 'player_1');
       final json = diplomacy.toJson();

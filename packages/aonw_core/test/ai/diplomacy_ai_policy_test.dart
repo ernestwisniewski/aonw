@@ -82,6 +82,54 @@ void main() {
 
       expect(commands, isEmpty);
     });
+
+    test('backs common enemy messages when the war target is shared', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('ai', 'rival')
+          .addContact('ai', 'enemy')
+          .addContact('rival', 'enemy')
+          .setStatus('ai', 'enemy', DiplomaticRelationStatus.war)
+          .setStatus('rival', 'enemy', DiplomaticRelationStatus.war)
+          .adjustRelationScore(
+            'ai',
+            'rival',
+            -30,
+            turn: 8,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .addMessage(
+            DiplomaticMessage.create(
+              id: 'message_1',
+              fromPlayerId: 'rival',
+              toPlayerId: 'ai',
+              topic: DiplomaticMessageTopic.commonEnemy,
+              createdTurn: 11,
+              expiresOnTurn: 16,
+            ),
+          );
+      final view = _view(diplomacy: diplomacy);
+
+      final commands = const DiplomacyAiPolicy().commandsFor(view, _context());
+
+      expect(
+        commands.first,
+        const RespondDiplomaticMessageCommand(
+          playerId: 'ai',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
+        ),
+      );
+      expect(
+        commands,
+        contains(
+          const SendDiplomaticMessageCommand(
+            playerId: 'ai',
+            targetPlayerId: 'rival',
+            topic: DiplomaticMessageTopic.commonEnemy,
+          ),
+        ),
+      );
+    });
   });
 }
 

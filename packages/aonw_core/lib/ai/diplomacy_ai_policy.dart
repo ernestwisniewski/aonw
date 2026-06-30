@@ -91,6 +91,16 @@ class DiplomacyAiPolicy {
         .where((unit) => unit.ownerPlayerId == message.fromPlayerId)
         .length;
     final weaker = view.ownUnits.length < rivalMilitary;
+    if (message.topic == DiplomaticMessageTopic.commonEnemy &&
+        DiplomaticSharedWar.hasSharedWarEnemy(
+          view.diplomacy,
+          view.forPlayerId,
+          message.fromPlayerId,
+        )) {
+      return score >= -45
+          ? DiplomaticMessageResponse.conciliatory
+          : DiplomaticMessageResponse.neutral;
+    }
     if (message.topic == DiplomaticMessageTopic.peacefulPraise) {
       return score >= -25
           ? DiplomaticMessageResponse.conciliatory
