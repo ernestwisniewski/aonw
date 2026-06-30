@@ -1,10 +1,13 @@
 part of 'diplomacy_player_modal.dart';
 
 class _ActionsSection extends StatelessWidget {
+  static const int _recentHostilityTurns = 8;
+
   const _ActionsSection({
     required this.l10n,
     required this.gameState,
     required this.relation,
+    required this.currentTurn,
     required this.activePlayerId,
     required this.targetPlayerId,
     required this.onCommand,
@@ -13,6 +16,7 @@ class _ActionsSection extends StatelessWidget {
   final AppLocalizations l10n;
   final GameState gameState;
   final DiplomaticRelation relation;
+  final int currentTurn;
   final String activePlayerId;
   final String targetPlayerId;
   final Future<void> Function(GameCommand command) onCommand;
@@ -148,8 +152,6 @@ class _ActionsSection extends StatelessWidget {
     return DiplomaticProposalForecast.evaluate(
       kind: kind,
       relation: relation,
-      underPressure:
-          _militaryCount(activePlayerId) > _militaryCount(targetPlayerId),
       recentHostility: _recentAggression(activePlayerId, targetPlayerId) > 0,
       goldPayment: goldPayment,
     );
@@ -184,27 +186,21 @@ class _ActionsSection extends StatelessWidget {
     return math.min(10, availableGold);
   }
 
-  int _militaryCount(String playerId) {
-    return gameState.units
-        .where(
-          (unit) =>
-              unit.ownerPlayerId == playerId &&
-              unit.type != GameUnitType.worker &&
-              unit.type != GameUnitType.settler,
-        )
-        .length;
-  }
-
   int _recentAggression(String attackerId, String defenderId) {
     return gameState.diplomacy
         .scoreEntriesBetween(attackerId, defenderId)
-        .where(
-          (entry) =>
-              entry.reason == DiplomaticScoreChangeReason.unitAttack ||
-              entry.reason == DiplomaticScoreChangeReason.cityAttack ||
-              entry.reason == DiplomaticScoreChangeReason.declarationOfWar,
-        )
+        .where(_isRecentAggression)
         .length;
+  }
+
+  bool _isRecentAggression(DiplomaticScoreEntry entry) {
+    if (currentTurn < entry.turn ||
+        currentTurn - entry.turn >= _recentHostilityTurns) {
+      return false;
+    }
+    return entry.reason == DiplomaticScoreChangeReason.unitAttack ||
+        entry.reason == DiplomaticScoreChangeReason.cityAttack ||
+        entry.reason == DiplomaticScoreChangeReason.declarationOfWar;
   }
 }
 

@@ -166,6 +166,35 @@ void main() {
     );
   });
 
+  testWidgets('ignores stale aggression in truce forecasts', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.war,
+      ),
+    );
+
+    await _pumpModal(
+      tester,
+      gameSave: _save(turn: 20),
+      gameState: state,
+      onCommand: (_) async {},
+    );
+
+    expect(
+      find.textContaining('Truce proposal: likely accepted'),
+      findsOneWidget,
+    );
+    expect(find.text('Peace terms: 5 gold'), findsNothing);
+  });
+
   testWidgets('sends gold gift proposals from diplomacy actions', (
     tester,
   ) async {
@@ -231,6 +260,7 @@ void main() {
 
 Future<void> _pumpModal(
   WidgetTester tester, {
+  GameSave? gameSave,
   required GameState gameState,
   required Future<void> Function(GameCommand command) onCommand,
 }) {
@@ -241,7 +271,7 @@ Future<void> _pumpModal(
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: DiplomacyPlayerModal(
-          gameSave: _save(),
+          gameSave: gameSave ?? _save(),
           gameState: gameState,
           mapData: _map(),
           activePlayerId: 'player_1',
@@ -253,12 +283,12 @@ Future<void> _pumpModal(
   );
 }
 
-GameSave _save() {
+GameSave _save({int turn = 6}) {
   return GameSave(
     id: 'save',
     name: 'Game',
     mapName: 'verdantia',
-    turn: 6,
+    turn: turn,
     savedAt: DateTime.utc(2026, 5, 5),
     camera: CameraState.zero,
     players: const [

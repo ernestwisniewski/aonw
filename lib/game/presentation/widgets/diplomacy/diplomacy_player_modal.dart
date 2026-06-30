@@ -177,6 +177,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
                 l10n: l10n,
                 gameState: gameState,
                 relation: relation,
+                currentTurn: gameSave.turn,
                 activePlayerId: activePlayerId,
                 targetPlayerId: targetPlayerId,
                 onCommand: onCommand,
