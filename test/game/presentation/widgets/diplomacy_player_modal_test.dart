@@ -82,6 +82,12 @@ void main() {
     expect(find.text('Strategic resources'), findsOneWidget);
     expect(find.text('Import horses'), findsOneWidget);
     expect(find.text('Trade iron for horses'), findsOneWidget);
+    expect(
+      tester
+          .widget<EpicButton>(find.widgetWithText(EpicButton, 'Propose truce'))
+          .onPressed,
+      isNull,
+    );
 
     await tester.tap(find.widgetWithText(EpicButton, 'Trade iron for horses'));
     await tester.pump();
@@ -185,6 +191,41 @@ void main() {
     expect(command.playerId, 'player_1');
     expect(command.targetPlayerId, 'player_2');
     expect(command.amount, 10);
+  });
+
+  testWidgets('disables proposals rejected by current treaty status', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final baseState = _state();
+    final state = baseState.copyWith(
+      diplomacy: baseState.diplomacy.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.friendly,
+      ),
+    );
+
+    await _pumpModal(tester, gameState: state, onCommand: (_) async {});
+
+    expect(
+      tester
+          .widget<EpicButton>(
+            find.widgetWithText(EpicButton, 'Propose friendship'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<EpicButton>(find.widgetWithText(EpicButton, 'Propose truce'))
+          .onPressed,
+      isNull,
+    );
   });
 }
 

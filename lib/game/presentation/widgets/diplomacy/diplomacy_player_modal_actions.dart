@@ -22,6 +22,8 @@ class _ActionsSection extends StatelessWidget {
     final truceBlocksWar =
         relation.status == DiplomaticRelationStatus.truce &&
         relation.statusExpiresOnTurn != null;
+    final canProposeFriendship = _canProposeFriendship();
+    final canProposeTruce = _canProposeTruce();
     final truceGoldPayment = _suggestedTruceGoldPayment();
     final goldGiftAmount = _suggestedGoldGiftAmount();
     final friendshipForecast = _proposalForecast(
@@ -43,7 +45,7 @@ class _ActionsSection extends StatelessWidget {
               EpicButton.outlined(
                 label: l10n.diplomacySendFriendship,
                 icon: Icons.handshake_outlined,
-                onPressed: relation.status == DiplomaticRelationStatus.war
+                onPressed: !canProposeFriendship
                     ? null
                     : () => unawaited(
                         onCommand(
@@ -58,9 +60,7 @@ class _ActionsSection extends StatelessWidget {
               EpicButton.outlined(
                 label: l10n.diplomacySendTruce,
                 icon: Icons.hourglass_bottom_outlined,
-                onPressed:
-                    relation.status == DiplomaticRelationStatus.friendly ||
-                        relation.status == DiplomaticRelationStatus.truce
+                onPressed: !canProposeTruce
                     ? null
                     : () => unawaited(
                         onCommand(
@@ -153,6 +153,17 @@ class _ActionsSection extends StatelessWidget {
       recentHostility: _recentAggression(activePlayerId, targetPlayerId) > 0,
       goldPayment: goldPayment,
     );
+  }
+
+  bool _canProposeFriendship() {
+    return relation.status == DiplomaticRelationStatus.neutral ||
+        relation.status == DiplomaticRelationStatus.hostile ||
+        relation.status == DiplomaticRelationStatus.truce;
+  }
+
+  bool _canProposeTruce() {
+    return relation.status == DiplomaticRelationStatus.hostile ||
+        relation.status == DiplomaticRelationStatus.war;
   }
 
   int _suggestedTruceGoldPayment() {
