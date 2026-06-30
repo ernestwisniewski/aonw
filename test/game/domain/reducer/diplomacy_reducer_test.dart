@@ -527,6 +527,18 @@ void main() {
 
     test('matches persistent diplomacy router for local commands', () {
       _expectDiplomacyParity(
+        _state(),
+        const SendDiplomaticProposalCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          kind: DiplomaticProposalKind.friendship,
+          proposalId: 'proposal_1',
+        ),
+        actorPlayerId: 'p1',
+        turn: 4,
+      );
+
+      _expectDiplomacyParity(
         _state().copyWith(playerGold: const {'p1': 20, 'p2': 1}),
         const SendGoldGiftCommand(
           playerId: 'p1',
@@ -559,6 +571,40 @@ void main() {
           playerId: 'p2',
           proposalId: 'proposal_1',
           accepted: true,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+
+      _expectDiplomacyParity(
+        _state(),
+        const SendDiplomaticMessageCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          topic: DiplomaticMessageTopic.peacefulPraise,
+          messageId: 'message_1',
+        ),
+        actorPlayerId: 'p1',
+        turn: 6,
+      );
+
+      _expectDiplomacyParity(
+        _state().copyWith(
+          diplomacy: DiplomacyState.empty.addMessage(
+            DiplomaticMessage.create(
+              id: 'message_1',
+              fromPlayerId: 'p1',
+              toPlayerId: 'p2',
+              topic: DiplomaticMessageTopic.troopsNearCities,
+              createdTurn: 4,
+              expiresOnTurn: 9,
+            ),
+          ),
+        ),
+        const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
         ),
         actorPlayerId: 'p2',
         turn: 5,

@@ -204,6 +204,30 @@ void main() {
       );
     });
 
+    test('rejects war declarations during an active truce', () {
+      final state = _state(
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .setStatus(
+              'p1',
+              'p2',
+              DiplomaticRelationStatus.truce,
+              statusExpiresOnTurn: 15,
+            ),
+      );
+
+      final result = resolver.declareWar(
+        state: state,
+        command: const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
+        actorPlayerId: 'p1',
+        turn: 9,
+      );
+
+      expect(result.accepted, isFalse);
+      expect(result.reason, 'diplomacy_truce_active');
+      expect(result.state, state);
+    });
+
     test('sends a funded gold gift and rejects actor spoofing', () {
       final accepted = resolver.sendGoldGift(
         state: _state(playerGold: const {'p1': 10, 'p2': 1}),
@@ -315,6 +339,47 @@ void main() {
         result.events.whereType<DiplomaticScoreChangedEvent>(),
         hasLength(1),
       );
+    });
+
+    test('rejects unavailable diplomatic message responses', () {
+      final missing = resolver.respondMessage(
+        state: _state(),
+        command: const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'missing',
+          response: DiplomaticMessageResponse.neutral,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+      final expiredState = _state(
+        diplomacy: DiplomacyState.empty.addMessage(
+          DiplomaticMessage.create(
+            id: 'message_1',
+            fromPlayerId: 'p1',
+            toPlayerId: 'p2',
+            topic: DiplomaticMessageTopic.troopsNearCities,
+            createdTurn: 1,
+            expiresOnTurn: 4,
+          ),
+        ),
+      );
+      final expired = resolver.respondMessage(
+        state: expiredState,
+        command: const RespondDiplomaticMessageCommand(
+          playerId: 'p2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.neutral,
+        ),
+        actorPlayerId: 'p2',
+        turn: 5,
+      );
+
+      expect(missing.accepted, isFalse);
+      expect(missing.reason, 'diplomacy_message_not_found');
+      expect(expired.accepted, isFalse);
+      expect(expired.reason, 'diplomacy_message_unavailable');
+      expect(expired.state, expiredState);
     });
   });
 }
