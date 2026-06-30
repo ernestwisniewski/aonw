@@ -114,6 +114,16 @@ void main() {
             reason: DiplomaticScoreChangeReason.manual,
           )
           .relationBetween('player_1', 'player_2');
+      final warTrust = DiplomacyState.empty
+          .setStatus('player_1', 'player_2', DiplomaticRelationStatus.war)
+          .adjustRelationScore(
+            'player_1',
+            'player_2',
+            -40,
+            turn: 2,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .relationBetween('player_1', 'player_2');
       final friendship = DiplomaticProposalForecast.evaluate(
         kind: DiplomaticProposalKind.friendship,
         relation: lowTrust,
@@ -127,6 +137,15 @@ void main() {
         kind: DiplomaticProposalKind.truce,
         relation: lowTrust,
         goldPayment: DiplomaticProposalForecast.minimumTruceGoldPayment,
+      );
+      final recentTruce = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: lowTrust,
+        recentHostility: true,
+      );
+      final staleWarTruce = DiplomaticProposalForecast.evaluate(
+        kind: DiplomaticProposalKind.truce,
+        relation: warTrust,
       );
 
       expect(friendship.accepted, isFalse);
@@ -142,6 +161,16 @@ void main() {
       expect(
         paidTruce.reasons,
         contains(DiplomaticProposalForecastReason.goldPayment),
+      );
+      expect(recentTruce.accepted, isFalse);
+      expect(
+        recentTruce.reasons,
+        contains(DiplomaticProposalForecastReason.recentHostility),
+      );
+      expect(staleWarTruce.accepted, isTrue);
+      expect(
+        staleWarTruce.reasons,
+        contains(DiplomaticProposalForecastReason.activeWar),
       );
     });
 

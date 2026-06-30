@@ -35,6 +35,7 @@ final class DiplomaticProposalForecast {
       ),
       DiplomaticProposalKind.truce => _truce(
         relation,
+        recentHostility: recentHostility,
         underPressure: underPressure,
         goldPayment: goldPayment,
       ),
@@ -69,6 +70,7 @@ final class DiplomaticProposalForecast {
 
   static DiplomaticProposalForecast _truce(
     DiplomaticRelation relation, {
+    required bool recentHostility,
     required bool underPressure,
     required int goldPayment,
   }) {
@@ -79,16 +81,22 @@ final class DiplomaticProposalForecast {
     if (underPressure) {
       reasons.add(DiplomaticProposalForecastReason.militaryPressure);
     }
+    if (recentHostility) {
+      reasons.add(DiplomaticProposalForecastReason.recentHostility);
+    }
     if (goldPayment >= minimumTruceGoldPayment) {
       reasons.add(DiplomaticProposalForecastReason.goldPayment);
     }
     if (relation.relationScore >= -35) {
       reasons.add(DiplomaticProposalForecastReason.acceptableRelations);
     }
+    final activeWarCanSettle =
+        relation.status == DiplomaticRelationStatus.war && !recentHostility;
     final accepted =
         underPressure ||
         goldPayment >= minimumTruceGoldPayment ||
-        relation.relationScore >= -35;
+        relation.relationScore >= -35 ||
+        activeWarCanSettle;
     if (!accepted) {
       reasons.add(DiplomaticProposalForecastReason.lowRelations);
     }

@@ -131,7 +131,7 @@ void main() {
       );
     });
 
-    test('requires pressure or payment for hostile truce offers', () {
+    test('accepts stale war truces but prices fresh hostility', () {
       final baseDiplomacy = DiplomacyState.empty
           .setStatus('ai', 'rival', DiplomaticRelationStatus.war)
           .adjustRelationScore(
@@ -143,9 +143,13 @@ void main() {
           );
 
       RespondDiplomaticProposalCommand responseFor(
-        DiplomaticProposal proposal,
-      ) {
-        final view = _view(diplomacy: baseDiplomacy.addProposal(proposal));
+        DiplomaticProposal proposal, {
+        List<String> recentHostilePlayerIds = const [],
+      }) {
+        final view = _view(
+          diplomacy: baseDiplomacy.addProposal(proposal),
+          recentHostilePlayerIds: recentHostilePlayerIds,
+        );
         return const DiplomacyAiPolicy()
             .commandsFor(view, _context())
             .whereType<RespondDiplomaticProposalCommand>()
@@ -166,6 +170,24 @@ void main() {
         const RespondDiplomaticProposalCommand(
           playerId: 'ai',
           proposalId: 'unpaid_truce',
+          accepted: true,
+        ),
+      );
+      expect(
+        responseFor(
+          const DiplomaticProposal(
+            id: 'fresh_unpaid_truce',
+            fromPlayerId: 'rival',
+            toPlayerId: 'ai',
+            kind: DiplomaticProposalKind.truce,
+            createdTurn: 11,
+            expiresOnTurn: 16,
+          ),
+          recentHostilePlayerIds: const ['rival'],
+        ),
+        const RespondDiplomaticProposalCommand(
+          playerId: 'ai',
+          proposalId: 'fresh_unpaid_truce',
           accepted: false,
         ),
       );
@@ -195,6 +217,7 @@ GameView _view({
   required DiplomacyState diplomacy,
   List<GameCity> rememberedEnemyCities = const [],
   List<PendingCityAttackThreat> pendingCityAttackThreats = const [],
+  List<String> recentHostilePlayerIds = const [],
 }) {
   return GameView(
     forPlayerId: 'ai',
@@ -213,6 +236,7 @@ GameView _view({
     diplomacy: diplomacy,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: rememberedEnemyCities,
+    recentHostilePlayerIds: recentHostilePlayerIds,
     pendingCityAttackThreats: pendingCityAttackThreats,
     visibility: const FogVisibilityQuery(
       playerId: '',
