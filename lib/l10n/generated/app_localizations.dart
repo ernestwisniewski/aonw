@@ -1446,6 +1446,12 @@ abstract class AppLocalizations {
   /// **'Common enemy cooperation'**
   String get diplomacyScoreReasonCommonEnemyCooperation;
 
+  /// No description provided for @diplomacyScoreReasonGoldGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold gift'**
+  String get diplomacyScoreReasonGoldGift;
+
   /// No description provided for @diplomacyScoreReasonPromiseBroken.
   ///
   /// In en, this message translates to:

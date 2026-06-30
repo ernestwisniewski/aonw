@@ -751,6 +751,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Samenwerking tegen gemeenschappelijke vijand';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Goudgeschenk';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Belofte gebroken';
 
   @override

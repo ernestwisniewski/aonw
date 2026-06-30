@@ -753,6 +753,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Coopération contre un ennemi commun';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Don d\'or';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'La promesse brisée';
 
   @override

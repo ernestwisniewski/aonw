@@ -6,6 +6,7 @@ part 'diplomatic_proposal.dart';
 part 'diplomatic_proposal_forecast.dart';
 part 'diplomatic_message.dart';
 part 'diplomatic_score_entry.dart';
+part 'diplomatic_score_reason.dart';
 part 'diplomacy_state_model.dart';
 part 'diplomacy_json_helpers.dart';
 
@@ -45,19 +46,6 @@ enum DiplomaticMessageTopic {
 }
 
 enum DiplomaticMessageResponse { conciliatory, neutral, evasive, aggressive }
-
-enum DiplomaticScoreChangeReason {
-  manual,
-  unitAttack,
-  cityAttack,
-  declarationOfWar,
-  warmongerPenalty,
-  proposalAccepted,
-  proposalRejected,
-  messageResponse,
-  commonEnemyCooperation,
-  promiseBroken,
-}
 
 extension DiplomaticMessageTopicRules on DiplomaticMessageTopic {
   DiplomaticMessageCategory get category {

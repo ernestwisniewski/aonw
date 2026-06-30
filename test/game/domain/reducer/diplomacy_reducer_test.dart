@@ -76,14 +76,72 @@ void main() {
         state,
         const DeclareWarCommand(playerId: 'p1', targetPlayerId: 'p2'),
       );
+      final gift = reducer.reduce(
+        state.copyWith(playerGold: const {'p1': 5}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
 
       expect(message.events, isEmpty);
       expect(message.state.diplomacy.messages, isEmpty);
       expect(war.events, isEmpty);
+      expect(gift.events, isEmpty);
       expect(
         war.state.diplomacy.statusBetween('p1', 'p2'),
         DiplomaticRelationStatus.neutral,
       );
+      expect(gift.state.playerGold, {'p1': 5});
+    });
+
+    test('gold gift transfers available gold and improves relations', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final result = reducer.reduce(
+        _state().copyWith(playerGold: const {'p1': 7, 'p2': 1}),
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 10,
+        ),
+        context: const GameCommandContext(combatSeedTurn: 6),
+      );
+      final scoreEvent = result.events
+          .whereType<DiplomaticScoreChangedEvent>()
+          .single;
+
+      expect(result.state.playerGold, {'p1': 0, 'p2': 8});
+      expect(result.state.diplomacy.relationScoreBetween('p1', 'p2'), 3);
+      expect(
+        result.state.diplomacy.scoreEntriesBetween('p1', 'p2').single.reason,
+        DiplomaticScoreChangeReason.goldGift,
+      );
+      expect(scoreEvent.delta, 3);
+      expect(scoreEvent.reason, DiplomaticScoreChangeReason.goldGift);
+      expect(scoreEvent.sourceId, 'gold_gift.6.p1.p2');
+    });
+
+    test('gold gift is blocked during war', () {
+      final reducer = GameStateReducer(mapData: _map());
+      final state = _state().copyWith(
+        playerGold: const {'p1': 7, 'p2': 1},
+        diplomacy: DiplomacyState.empty
+            .addContact('p1', 'p2')
+            .setStatus('p1', 'p2', DiplomaticRelationStatus.war),
+      );
+
+      final result = reducer.reduce(
+        state,
+        const SendGoldGiftCommand(
+          playerId: 'p1',
+          targetPlayerId: 'p2',
+          amount: 5,
+        ),
+      );
+
+      expect(result.events, isEmpty);
+      expect(result.state.playerGold, state.playerGold);
     });
 
     test('allows initial diplomacy after visible contact', () {

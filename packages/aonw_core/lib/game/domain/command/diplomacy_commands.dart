@@ -81,6 +81,29 @@ final class DeclareWarCommand extends GameCommand {
   int get hashCode => Object.hash(DeclareWarCommand, playerId, targetPlayerId);
 }
 
+final class SendGoldGiftCommand extends GameCommand {
+  const SendGoldGiftCommand({
+    required this.playerId,
+    required this.targetPlayerId,
+    required this.amount,
+  });
+
+  final String playerId;
+  final String targetPlayerId;
+  final int amount;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SendGoldGiftCommand &&
+      other.playerId == playerId &&
+      other.targetPlayerId == targetPlayerId &&
+      other.amount == amount;
+
+  @override
+  int get hashCode =>
+      Object.hash(SendGoldGiftCommand, playerId, targetPlayerId, amount);
+}
+
 final class OpenResourceTradeCommand extends GameCommand {
   const OpenResourceTradeCommand({
     required this.playerId,

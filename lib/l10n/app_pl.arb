@@ -316,6 +316,7 @@
   "diplomacyScoreReasonProposalRejected": "Odrzucenie propozycji",
   "diplomacyScoreReasonMessageResponse": "Odpowiedź na depeszę",
   "diplomacyScoreReasonCommonEnemyCooperation": "Współpraca przeciw wspólnemu wrogowi",
+  "diplomacyScoreReasonGoldGift": "Dar złota",
   "diplomacyScoreReasonPromiseBroken": "Złamana obietnica",
   "diplomacyStatsTitle": "Statystyki",
   "diplomacyHistoryTitle": "Historia",

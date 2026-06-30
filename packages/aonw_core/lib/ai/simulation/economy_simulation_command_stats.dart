@@ -52,6 +52,7 @@ final class EconomySimulationCommandStats {
           SendDiplomaticMessageCommand() ||
           RespondDiplomaticMessageCommand() ||
           DeclareWarCommand() ||
+          SendGoldGiftCommand() ||
           EndTurnCommand() ||
           SubmitTurnCommand() ||
           StartArtifactExcavationCommand() ||

@@ -313,6 +313,17 @@ abstract final class GameCommandSerializer {
       'playerId': playerId,
       'targetPlayerId': targetPlayerId,
     },
+    SendGoldGiftCommand(
+      :final playerId,
+      :final targetPlayerId,
+      :final amount,
+    ) =>
+      {
+        'type': 'SendGoldGift',
+        'playerId': playerId,
+        'targetPlayerId': targetPlayerId,
+        'amount': amount,
+      },
     OpenResourceTradeCommand(
       :final playerId,
       :final targetPlayerId,
@@ -616,6 +627,11 @@ abstract final class GameCommandSerializer {
       'DeclareWar' => DeclareWarCommand(
         playerId: requiredStringField(json, type, 'playerId'),
         targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+      ),
+      'SendGoldGift' => SendGoldGiftCommand(
+        playerId: requiredStringField(json, type, 'playerId'),
+        targetPlayerId: requiredStringField(json, type, 'targetPlayerId'),
+        amount: requiredIntField(json, type, 'amount'),
       ),
       'OpenResourceTrade' => OpenResourceTradeCommand(
         playerId: requiredStringField(json, type, 'playerId'),

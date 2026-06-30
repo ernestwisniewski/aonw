@@ -752,6 +752,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Cooperación contra enemigo común';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Regalo de oro';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Promesa rota';
 
   @override

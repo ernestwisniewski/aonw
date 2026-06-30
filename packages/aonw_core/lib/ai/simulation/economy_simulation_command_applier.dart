@@ -269,6 +269,7 @@ final class _EconomySimulationCommandApplier {
           SendDiplomaticMessageCommand() ||
           RespondDiplomaticMessageCommand() ||
           DeclareWarCommand() ||
+          SendGoldGiftCommand() ||
           StartArtifactExcavationCommand() ||
           StoreArtifactInCityCommand() ||
           TradeArtifactCommand() ||
@@ -340,7 +341,6 @@ class _ApplyCommandResult {
     this.events = const [],
     this.reason,
   });
-
   final bool accepted;
   final PersistentGameState state;
   final List<GameEvent> events;

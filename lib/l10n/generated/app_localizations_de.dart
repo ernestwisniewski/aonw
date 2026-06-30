@@ -752,6 +752,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zusammenarbeit gegen gemeinsamen Feind';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Goldgeschenk';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Versprechen gebrochen';
 
   @override

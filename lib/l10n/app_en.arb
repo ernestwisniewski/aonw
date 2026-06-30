@@ -316,6 +316,7 @@
   "diplomacyScoreReasonProposalRejected": "Proposal rejected",
   "diplomacyScoreReasonMessageResponse": "Dispatch response",
   "diplomacyScoreReasonCommonEnemyCooperation": "Common enemy cooperation",
+  "diplomacyScoreReasonGoldGift": "Gold gift",
   "diplomacyScoreReasonPromiseBroken": "Promise broken",
   "diplomacyStatsTitle": "Stats",
   "diplomacyHistoryTitle": "History",

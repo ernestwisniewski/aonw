@@ -748,6 +748,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Współpraca przeciw wspólnemu wrogowi';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Dar złota';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Złamana obietnica';
 
   @override

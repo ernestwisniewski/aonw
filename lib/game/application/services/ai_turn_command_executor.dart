@@ -240,6 +240,9 @@ final class AiTurnCommandExecutor {
             '${command.messageId} for ${command.playerId}',
       DeclareWarCommand() =>
         'declare war from ${command.playerId} to ${command.targetPlayerId}',
+      SendGoldGiftCommand() =>
+        'send ${command.amount} gold gift from ${command.playerId} to '
+            '${command.targetPlayerId}',
       RushProductionCommand() => 'rush production in city ${command.cityId}',
       DetachTroopCommand() =>
         'detach ${command.troopType.name} from unit ${command.unitId}',

@@ -749,6 +749,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Common enemy cooperation';
 
   @override
+  String get diplomacyScoreReasonGoldGift => 'Gold gift';
+
+  @override
   String get diplomacyScoreReasonPromiseBroken => 'Promise broken';
 
   @override

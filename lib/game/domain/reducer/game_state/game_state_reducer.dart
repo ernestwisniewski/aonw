@@ -225,6 +225,7 @@ class GameStateReducer {
       RespondDiplomaticProposalCommand() =>
         environment.respondDiplomaticProposal(state, command),
       DeclareWarCommand() => environment.declareWar(state, command),
+      SendGoldGiftCommand() => environment.sendGoldGift(state, command),
       SendDiplomaticMessageCommand() => environment.sendDiplomaticMessage(
         state,
         command,
