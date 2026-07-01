@@ -360,6 +360,8 @@ class HudVictoryStatusSummary {
       playerColors: state.playerColors,
       playerCountries: state.playerCountries,
       playerGold: state.playerGold,
+      playerWarWeariness: state.playerWarWeariness,
+      playerStabilityNet: state.playerStabilityNet,
       units: state.units,
       cities: state.cities,
       artifacts: state.artifacts,

@@ -8,6 +8,20 @@ abstract final class StabilityPolicy {
     return relativeStanding.clamp(-1.0, 1.0).toDouble();
   }
 
+  /// Relative standing in [-1, 1] derived from a player's map control share.
+  /// A player at their fair share (100% / players) is neutral (0); a runaway
+  /// leader trends toward +1 (harder to stay content) and a trailing player
+  /// toward -1 (a catch-up shift up).
+  static double relativeStandingFor({
+    required double controlPercent,
+    required int playerCount,
+  }) {
+    final count = playerCount <= 0 ? 1 : playerCount;
+    final fairShare = 100.0 / count;
+    if (fairShare <= 0) return 0.0;
+    return normalizeRelativeStanding((controlPercent - fairShare) / fairShare);
+  }
+
   static int effectiveNet(
     int net, {
     required double relativeStanding,

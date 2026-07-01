@@ -7,6 +7,7 @@ import 'package:aonw/game/domain/turn/phases/cultural_victory_progress_phase.dar
 import 'package:aonw/game/domain/turn/phases/fog_recompute_phase.dart';
 import 'package:aonw/game/domain/turn/phases/research_processing_phase.dart';
 import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
+import 'package:aonw/game/domain/turn/phases/stability_processing_phase.dart';
 import 'package:aonw/game/domain/turn/phases/turn_ended_phase.dart';
 import 'package:aonw/game/domain/turn/phases/worker_processing_phase.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
@@ -29,6 +30,7 @@ class TurnPipeline {
         const WorkerProcessingPhase(),
         const CityFoundingProcessingPhase(),
         const ArtifactProcessingPhase(),
+        const StabilityProcessingPhase(),
         FogRecomputePhase(fogOfWarService: fogOfWarService),
         const CulturalVictoryProgressPhase(),
         const SelectionRefreshPhase(),
@@ -49,6 +51,7 @@ class TurnPipeline {
         const WorkerProcessingPhase(),
         const CityFoundingProcessingPhase(),
         const ArtifactProcessingPhase(),
+        const StabilityProcessingPhase(),
         FogRecomputePhase(fogOfWarService: fogOfWarService),
         const CulturalVictoryProgressPhase(),
         const SelectionRefreshPhase(),

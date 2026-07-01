@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
@@ -116,6 +117,13 @@ abstract final class PersistentTurnEconomyProcessor {
       holdStatesByObjectiveId: mapObjectiveHoldStates,
     );
     current = _advanceResourceTrades(state: current, playerIds: playerIds);
+    current = PersistentStabilityProcessor.advanceForPlayers(
+      state: current,
+      playerIds: playerIds,
+      mapData: mapData,
+      ruleset: ruleset.stability,
+      turnEvents: [...priorEvents, ...events],
+    ).state;
 
     final fogOfWar = fogOfWarService.recompute(
       current: current.fogOfWar,
@@ -271,6 +279,11 @@ abstract final class PersistentTurnEconomyProcessor {
       ruleset: ruleset.city,
       research: state.research,
       technologyRuleset: ruleset.technology,
+      stabilityModifier: PersistentStabilityProcessor.modifierForPlayer(
+        state: state,
+        playerId: playerId,
+        ruleset: ruleset.stability,
+      ),
       paceBalance: ruleset.paceBalance,
     );
     final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
@@ -557,10 +570,20 @@ abstract final class PersistentTurnEconomyProcessor {
   static Set<String> _knownPlayerIds(PersistentGameState state) {
     return {
       ...state.playerColors.keys,
+      ...state.playerCountries.keys,
       ...state.playerGold.keys,
+      ...state.playerWarWeariness.keys,
+      ...state.playerStabilityNet.keys,
       ...state.fogOfWar.playerIds,
+      ...state.runtimeState.submittedPlayerIds,
+      ...state.runtimeState.dominationHoldTurnsByPlayerId.keys,
+      ...state.runtimeState.culturalVictoryHoldTurnsByPlayerId.keys,
       for (final unit in state.units) unit.ownerPlayerId,
       for (final city in state.cities) city.ownerPlayerId,
+      for (final relation in state.runtimeState.diplomacy.relations.values)
+        relation.playerAId,
+      for (final relation in state.runtimeState.diplomacy.relations.values)
+        relation.playerBId,
     };
   }
 }
