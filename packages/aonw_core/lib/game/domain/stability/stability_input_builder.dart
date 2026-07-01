@@ -1,11 +1,14 @@
+import 'package:aonw_core/game/domain/artifact/cultural_victory_progress.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/stability/cohesion_calculator.dart';
 import 'package:aonw_core/game/domain/stability/stability_inputs.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
+import 'package:aonw_core/game/domain/stability/stability_source_catalog.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class StabilityInputBuilder {
   static Map<String, StabilityInputs> forPlayers({
@@ -33,6 +36,7 @@ abstract final class StabilityInputBuilder {
         playerId: forPlayer(
           state: state,
           playerId: playerId,
+          mapData: mapData,
           ruleset: ruleset,
           warWeariness:
               warWearinessByPlayerId?[playerId] ??
@@ -47,6 +51,7 @@ abstract final class StabilityInputBuilder {
   static StabilityInputs forPlayer({
     required PersistentGameState state,
     required String playerId,
+    required MapData mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
     int? warWeariness,
     double controlPercent = 0.0,
@@ -61,6 +66,8 @@ abstract final class StabilityInputBuilder {
     var conqueredCityCount = 0;
     var sumPopulationOverThreshold = 0;
     var sumCohesionCost = 0;
+    var orderBuildingCount = 0;
+    final luxuryResourceTypes = <ResourceType>{};
 
     for (final city in ownedCities) {
       final foundingOwnerPlayerId = city.foundingOwnerPlayerId;
@@ -86,7 +93,37 @@ abstract final class StabilityInputBuilder {
           ruleset: ruleset,
         );
       }
+
+      for (final building in city.buildings) {
+        if (StabilitySourceCatalog.orderBuildings.contains(building)) {
+          orderBuildingCount += 1;
+        }
+      }
+
+      // Luxuries are counted by presence on the empire's territory (a proxy for
+      // the eventual connected-network semantics).
+      for (final hex in city.territoryHexes) {
+        final tile = mapData.tileAt(hex.col, hex.row);
+        if (tile == null) continue;
+        for (final resource in tile.resources) {
+          if (StabilitySourceCatalog.luxuryResources.contains(resource)) {
+            luxuryResourceTypes.add(resource);
+          }
+        }
+      }
     }
+
+    final orderTechnologyCount = state.research
+        .forPlayer(playerId)
+        .unlockedTechnologyIds
+        .where(StabilitySourceCatalog.orderTechnologies.contains)
+        .length;
+    final storedArtifactCount =
+        CulturalVictoryProgressCalculator.storedArtifactCountFor(
+          playerId: playerId,
+          artifacts: state.artifacts,
+          cities: state.cities,
+        );
 
     return StabilityInputs(
       playerId: playerId,
@@ -94,10 +131,11 @@ abstract final class StabilityInputBuilder {
       conqueredCityCount: conqueredCityCount,
       sumCohesionCost: sumCohesionCost,
       sumPopulationOverThreshold: sumPopulationOverThreshold,
-      buildingSources: 0,
-      luxurySources: 0,
-      techSources: 0,
-      artifactSources: 0,
+      buildingSources: orderBuildingCount * ruleset.stabilityPerOrderBuilding,
+      luxurySources:
+          luxuryResourceTypes.length * ruleset.stabilityPerLuxuryResource,
+      techSources: orderTechnologyCount * ruleset.stabilityPerOrderTechnology,
+      artifactSources: storedArtifactCount * ruleset.stabilityPerStoredArtifact,
       warWeariness: warWeariness ?? state.playerWarWeariness[playerId] ?? 0,
       controlPercent: controlPercent,
       playerCount: playerCount <= 0 ? 1 : playerCount,

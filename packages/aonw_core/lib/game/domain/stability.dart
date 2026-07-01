@@ -9,4 +9,5 @@ export 'stability/stability_inputs.dart';
 export 'stability/stability_modifier.dart';
 export 'stability/stability_policy.dart';
 export 'stability/stability_ruleset.dart';
+export 'stability/stability_source_catalog.dart';
 export 'stability/war_weariness_rules.dart';
