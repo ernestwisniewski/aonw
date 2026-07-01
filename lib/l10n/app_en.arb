@@ -2478,6 +2478,7 @@
   "commonBuildings": "Buildings",
   "commonGold": "Gold",
   "commonScience": "Science",
+  "commonStability": "Stability",
   "commonProduction": "Production",
   "commonResearch": "Research",
   "commonEmpire": "Empire",
@@ -2703,6 +2704,14 @@
     "placeholders": {
       "scienceTurnLabel": {
         "type": "String"
+      }
+    }
+  },
+  "topResourceStabilityTooltip": "Empire stability: {net}",
+  "@topResourceStabilityTooltip": {
+    "placeholders": {
+      "net": {
+        "type": "int"
       }
     }
   },

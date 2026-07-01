@@ -3,6 +3,7 @@ import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +14,8 @@ void main() {
     int goldIncome = 9,
     int unitUpkeep = 2,
     int sciencePerTurn = 5,
+    int stabilityNet = 4,
+    StabilityBand stabilityBand = StabilityBand.stable,
     int resourceTotal = 3,
     int resourceTypes = 2,
     TopResourcePopupType? openBreakdown,
@@ -37,6 +40,8 @@ void main() {
           goldIncome: goldIncome,
           unitUpkeep: unitUpkeep,
           sciencePerTurn: sciencePerTurn,
+          stabilityNet: stabilityNet,
+          stabilityBand: stabilityBand,
           resourceTotal: resourceTotal,
           resourceTypes: resourceTypes,
           openBreakdown: openBreakdown,

@@ -212,6 +212,8 @@ Future<void> _pumpOverlay(
             goldIncome: 4,
             unitUpkeep: 1,
             sciencePerTurn: 6,
+            stabilityNet: 0,
+            stabilityBand: StabilityBand.stable,
             resourceInventory: const CityResourceInventory(
               playerId: 'player_1',
               countsByType: {ResourceType.iron: 2},

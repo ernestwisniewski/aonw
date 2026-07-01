@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -15,6 +16,8 @@ class HudResourceSummary {
   final EmpireResourceNetwork resourceNetwork;
   final GoldBreakdown goldBreakdown;
   final ScienceYieldBreakdown scienceBreakdown;
+  final int stabilityNet;
+  final StabilityBand stabilityBand;
 
   const HudResourceSummary({
     required this.gold,
@@ -26,6 +29,8 @@ class HudResourceSummary {
     required this.resourceNetwork,
     required this.goldBreakdown,
     required this.scienceBreakdown,
+    required this.stabilityNet,
+    required this.stabilityBand,
   });
 
   factory HudResourceSummary.fromGameState({
@@ -63,6 +68,8 @@ class HudResourceSummary {
       resourceTradeAgreements: state.resourceTradeAgreements,
     );
 
+    final stabilityNet = state.playerStabilityNet[playerId] ?? 0;
+
     return HudResourceSummary(
       gold: goldBreakdown.treasury,
       goldIncome: goldBreakdown.grossIncome,
@@ -73,6 +80,8 @@ class HudResourceSummary {
       resourceNetwork: resourceNetwork,
       goldBreakdown: goldBreakdown,
       scienceBreakdown: scienceBreakdown,
+      stabilityNet: stabilityNet,
+      stabilityBand: StabilityPolicy.bandFor(stabilityNet),
     );
   }
 
@@ -99,6 +108,8 @@ class HudResourceSummary {
       resourceNetwork: EmpireResourceNetwork.empty,
       goldBreakdown: goldBreakdown,
       scienceBreakdown: ScienceYieldBreakdown.empty,
+      stabilityNet: 0,
+      stabilityBand: StabilityBand.stable,
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/resources/victory_status_popup.da
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,8 @@ class TopResourceOverlay extends StatelessWidget {
     required this.goldIncome,
     required this.unitUpkeep,
     required this.sciencePerTurn,
+    required this.stabilityNet,
+    required this.stabilityBand,
     required this.resourceInventory,
     required this.openBreakdown,
     required this.goldBreakdown,
@@ -43,6 +46,8 @@ class TopResourceOverlay extends StatelessWidget {
   final int goldIncome;
   final int unitUpkeep;
   final int sciencePerTurn;
+  final int stabilityNet;
+  final StabilityBand stabilityBand;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
   final TopResourcePopupType? openBreakdown;
@@ -86,6 +91,8 @@ class TopResourceOverlay extends StatelessWidget {
                   goldIncome: goldIncome,
                   unitUpkeep: unitUpkeep,
                   sciencePerTurn: sciencePerTurn,
+                  stabilityNet: stabilityNet,
+                  stabilityBand: stabilityBand,
                   resourceTotal: resourceInventory.totalCount,
                   resourceTypes: resourceInventory.distinctTypeCount,
                   openBreakdown: openBreakdown,

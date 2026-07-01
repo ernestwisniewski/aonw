@@ -7613,6 +7613,12 @@ abstract class AppLocalizations {
   /// **'Science'**
   String get commonScience;
 
+  /// No description provided for @commonStability.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability'**
+  String get commonStability;
+
   /// No description provided for @commonProduction.
   ///
   /// In en, this message translates to:
@@ -8002,6 +8008,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Science: {scienceTurnLabel} / turn'**
   String topResourceScienceTooltip(String scienceTurnLabel);
+
+  /// No description provided for @topResourceStabilityTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire stability: {net}'**
+  String topResourceStabilityTooltip(int net);
 
   /// No description provided for @topResourceResourcesTooltip.
   ///

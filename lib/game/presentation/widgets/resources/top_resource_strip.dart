@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 
 enum TopResourcePopupType { gold, science, resources, victory }
@@ -36,6 +37,8 @@ class TopResourceStrip extends StatelessWidget {
     required this.goldIncome,
     required this.unitUpkeep,
     required this.sciencePerTurn,
+    required this.stabilityNet,
+    required this.stabilityBand,
     required this.resourceTotal,
     required this.resourceTypes,
     required this.openBreakdown,
@@ -56,6 +59,8 @@ class TopResourceStrip extends StatelessWidget {
   final int goldIncome;
   final int unitUpkeep;
   final int sciencePerTurn;
+  final int stabilityNet;
+  final StabilityBand stabilityBand;
   final int resourceTotal;
   final int resourceTypes;
   final TopResourcePopupType? openBreakdown;
@@ -70,6 +75,16 @@ class TopResourceStrip extends StatelessWidget {
 
   /// When provided, the turn count is shown beside the resource pills.
   final int? turnNumber;
+
+  String get _stabilityValueLabel =>
+      stabilityNet > 0 ? '+$stabilityNet' : '$stabilityNet';
+
+  static Color _stabilityColor(StabilityBand band) => switch (band) {
+    StabilityBand.content => GameUiTheme.success,
+    StabilityBand.stable => GameUiTheme.gold,
+    StabilityBand.strained => GameUiTheme.warning,
+    StabilityBand.unrest => GameUiTheme.danger,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +117,19 @@ class TopResourceStrip extends StatelessWidget {
         tooltip: l10n.topResourceScienceTooltip(_scienceTurnLabel),
         active: openBreakdown == TopResourcePopupType.science,
         onTap: onSciencePressed,
+      ),
+      const SizedBox(width: 6),
+      TopResourcePill(
+        key: const Key('gameHud.resource.stability'),
+        icon: GameIcons.defense,
+        title: l10n.commonStability,
+        value: _stabilityValueLabel,
+        color: _stabilityColor(stabilityBand),
+        compact: compact,
+        critical: stabilityBand == StabilityBand.unrest,
+        tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
+        active: false,
+        onTap: () {},
       ),
       const SizedBox(width: 6),
       TopResourcePill(

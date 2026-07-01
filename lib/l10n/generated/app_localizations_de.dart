@@ -4455,6 +4455,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get commonScience => 'Wissenschaft';
 
   @override
+  String get commonStability => 'Stability';
+
+  @override
   String get commonProduction => 'Produktion';
 
   @override
@@ -4696,6 +4699,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String topResourceScienceTooltip(String scienceTurnLabel) {
     return 'Wissenschaft: $scienceTurnLabel / Zug';
+  }
+
+  @override
+  String topResourceStabilityTooltip(int net) {
+    return 'Empire stability: $net';
   }
 
   @override
