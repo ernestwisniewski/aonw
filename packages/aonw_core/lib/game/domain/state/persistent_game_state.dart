@@ -12,6 +12,8 @@ class PersistentGameState {
     this.playerColors = const {},
     this.playerCountries = const {},
     this.playerGold = const {},
+    this.playerWarWeariness = const {},
+    this.playerStabilityNet = const {},
     this.units = const [],
     this.cities = const [],
     this.artifacts = const [],
@@ -26,6 +28,14 @@ class PersistentGameState {
       playerColors: _intMap(json['playerColors'], 'playerColors'),
       playerCountries: _countryMap(json['playerCountries'], 'playerCountries'),
       playerGold: _intMap(json['playerGold'], 'playerGold'),
+      playerWarWeariness: _intMap(
+        json['playerWarWeariness'],
+        'playerWarWeariness',
+      ),
+      playerStabilityNet: _intMap(
+        json['playerStabilityNet'],
+        'playerStabilityNet',
+      ),
       units: _jsonList(json['units'], 'units').map(GameUnit.fromJson).toList(),
       cities: _jsonList(
         json['cities'],
@@ -78,6 +88,8 @@ class PersistentGameState {
   final Map<String, int> playerColors;
   final Map<String, PlayerCountry> playerCountries;
   final Map<String, int> playerGold;
+  final Map<String, int> playerWarWeariness;
+  final Map<String, int> playerStabilityNet;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -92,6 +104,8 @@ class PersistentGameState {
       (playerId, country) => MapEntry(playerId, country.name),
     ),
     'playerGold': playerGold,
+    'playerWarWeariness': playerWarWeariness,
+    'playerStabilityNet': playerStabilityNet,
     'units': units.map((unit) => unit.toJson()).toList(),
     'cities': cities.map((city) => city.toJson()).toList(),
     'artifacts': artifacts.map((artifact) => artifact.toJson()).toList(),
@@ -111,6 +125,8 @@ class PersistentGameState {
     Map<String, int>? playerColors,
     Map<String, PlayerCountry>? playerCountries,
     Map<String, int>? playerGold,
+    Map<String, int>? playerWarWeariness,
+    Map<String, int>? playerStabilityNet,
     List<GameUnit>? units,
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
@@ -123,6 +139,8 @@ class PersistentGameState {
       playerColors: playerColors ?? this.playerColors,
       playerCountries: playerCountries ?? this.playerCountries,
       playerGold: playerGold ?? this.playerGold,
+      playerWarWeariness: playerWarWeariness ?? this.playerWarWeariness,
+      playerStabilityNet: playerStabilityNet ?? this.playerStabilityNet,
       units: units ?? this.units,
       cities: cities ?? this.cities,
       artifacts: artifacts ?? this.artifacts,
@@ -139,6 +157,8 @@ class PersistentGameState {
       mapEquals(other.playerColors, playerColors) &&
       mapEquals(other.playerCountries, playerCountries) &&
       mapEquals(other.playerGold, playerGold) &&
+      mapEquals(other.playerWarWeariness, playerWarWeariness) &&
+      mapEquals(other.playerStabilityNet, playerStabilityNet) &&
       listEquals(other.units, units) &&
       listEquals(other.cities, cities) &&
       listEquals(other.artifacts, artifacts) &&
@@ -152,6 +172,8 @@ class PersistentGameState {
     mapHash(playerColors),
     mapHash(playerCountries),
     mapHash(playerGold),
+    mapHash(playerWarWeariness),
+    mapHash(playerStabilityNet),
     Object.hashAll(units),
     Object.hashAll(cities),
     Object.hashAll(artifacts),
