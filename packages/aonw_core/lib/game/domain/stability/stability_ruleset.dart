@@ -60,6 +60,57 @@ class StabilityRuleset {
     hegemonyTaxPointsPerCost: 5,
   );
 
+  StabilityRuleset copyWith({
+    int? baseOrder,
+    int? costPerCity,
+    int? populationCostThreshold,
+    int? costPerPopulationOverThreshold,
+    int? conqueredCityCost,
+    int? reachRadius,
+    int? frontierCostPerHexBeyondReach,
+    int? disconnectedCityCost,
+    int? warWearinessCap,
+    int? warWearinessAttackFreePerTurn,
+    int? warWearinessPerCityLost,
+    int? warWearinessPeaceDecay,
+    int? warWearinessTreatyDecay,
+    int? contentThreshold,
+    int? unrestThreshold,
+    int? relativeStandingOffset,
+    double? hegemonyK,
+    double? hegemonyTaxPointsPerCost,
+  }) {
+    return StabilityRuleset(
+      baseOrder: baseOrder ?? this.baseOrder,
+      costPerCity: costPerCity ?? this.costPerCity,
+      populationCostThreshold:
+          populationCostThreshold ?? this.populationCostThreshold,
+      costPerPopulationOverThreshold:
+          costPerPopulationOverThreshold ?? this.costPerPopulationOverThreshold,
+      conqueredCityCost: conqueredCityCost ?? this.conqueredCityCost,
+      reachRadius: reachRadius ?? this.reachRadius,
+      frontierCostPerHexBeyondReach:
+          frontierCostPerHexBeyondReach ?? this.frontierCostPerHexBeyondReach,
+      disconnectedCityCost: disconnectedCityCost ?? this.disconnectedCityCost,
+      warWearinessCap: warWearinessCap ?? this.warWearinessCap,
+      warWearinessAttackFreePerTurn:
+          warWearinessAttackFreePerTurn ?? this.warWearinessAttackFreePerTurn,
+      warWearinessPerCityLost:
+          warWearinessPerCityLost ?? this.warWearinessPerCityLost,
+      warWearinessPeaceDecay:
+          warWearinessPeaceDecay ?? this.warWearinessPeaceDecay,
+      warWearinessTreatyDecay:
+          warWearinessTreatyDecay ?? this.warWearinessTreatyDecay,
+      contentThreshold: contentThreshold ?? this.contentThreshold,
+      unrestThreshold: unrestThreshold ?? this.unrestThreshold,
+      relativeStandingOffset:
+          relativeStandingOffset ?? this.relativeStandingOffset,
+      hegemonyK: hegemonyK ?? this.hegemonyK,
+      hegemonyTaxPointsPerCost:
+          hegemonyTaxPointsPerCost ?? this.hegemonyTaxPointsPerCost,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     return other is StabilityRuleset &&
