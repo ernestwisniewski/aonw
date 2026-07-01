@@ -1,0 +1,108 @@
+class StabilityRuleset {
+  final int baseOrder;
+  final int costPerCity;
+  final int populationCostThreshold;
+  final int costPerPopulationOverThreshold;
+  final int conqueredCityCost;
+  final int reachRadius;
+  final int frontierCostPerHexBeyondReach;
+  final int disconnectedCityCost;
+  final int warWearinessCap;
+  final int warWearinessAttackFreePerTurn;
+  final int warWearinessPerCityLost;
+  final int warWearinessPeaceDecay;
+  final int warWearinessTreatyDecay;
+  final int contentThreshold;
+  final int unrestThreshold;
+  final int relativeStandingOffset;
+  final double hegemonyK;
+  final double hegemonyTaxPointsPerCost;
+
+  const StabilityRuleset({
+    required this.baseOrder,
+    required this.costPerCity,
+    required this.populationCostThreshold,
+    required this.costPerPopulationOverThreshold,
+    required this.conqueredCityCost,
+    required this.reachRadius,
+    required this.frontierCostPerHexBeyondReach,
+    required this.disconnectedCityCost,
+    required this.warWearinessCap,
+    required this.warWearinessAttackFreePerTurn,
+    required this.warWearinessPerCityLost,
+    required this.warWearinessPeaceDecay,
+    required this.warWearinessTreatyDecay,
+    required this.contentThreshold,
+    required this.unrestThreshold,
+    required this.relativeStandingOffset,
+    required this.hegemonyK,
+    required this.hegemonyTaxPointsPerCost,
+  });
+
+  static const StabilityRuleset standard = StabilityRuleset(
+    baseOrder: 6,
+    costPerCity: 2,
+    populationCostThreshold: 6,
+    costPerPopulationOverThreshold: 1,
+    conqueredCityCost: 3,
+    reachRadius: 4,
+    frontierCostPerHexBeyondReach: 1,
+    disconnectedCityCost: 1,
+    warWearinessCap: 8,
+    warWearinessAttackFreePerTurn: 1,
+    warWearinessPerCityLost: 2,
+    warWearinessPeaceDecay: 1,
+    warWearinessTreatyDecay: 2,
+    contentThreshold: 4,
+    unrestThreshold: -4,
+    relativeStandingOffset: 3,
+    hegemonyK: 1.6,
+    hegemonyTaxPointsPerCost: 5,
+  );
+
+  @override
+  bool operator ==(Object other) {
+    return other is StabilityRuleset &&
+        other.baseOrder == baseOrder &&
+        other.costPerCity == costPerCity &&
+        other.populationCostThreshold == populationCostThreshold &&
+        other.costPerPopulationOverThreshold ==
+            costPerPopulationOverThreshold &&
+        other.conqueredCityCost == conqueredCityCost &&
+        other.reachRadius == reachRadius &&
+        other.frontierCostPerHexBeyondReach == frontierCostPerHexBeyondReach &&
+        other.disconnectedCityCost == disconnectedCityCost &&
+        other.warWearinessCap == warWearinessCap &&
+        other.warWearinessAttackFreePerTurn == warWearinessAttackFreePerTurn &&
+        other.warWearinessPerCityLost == warWearinessPerCityLost &&
+        other.warWearinessPeaceDecay == warWearinessPeaceDecay &&
+        other.warWearinessTreatyDecay == warWearinessTreatyDecay &&
+        other.contentThreshold == contentThreshold &&
+        other.unrestThreshold == unrestThreshold &&
+        other.relativeStandingOffset == relativeStandingOffset &&
+        other.hegemonyK == hegemonyK &&
+        other.hegemonyTaxPointsPerCost == hegemonyTaxPointsPerCost;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    baseOrder,
+    costPerCity,
+    populationCostThreshold,
+    costPerPopulationOverThreshold,
+    conqueredCityCost,
+    reachRadius,
+    frontierCostPerHexBeyondReach,
+    disconnectedCityCost,
+    warWearinessCap,
+    warWearinessAttackFreePerTurn,
+    warWearinessPerCityLost,
+    warWearinessPeaceDecay,
+    warWearinessTreatyDecay,
+    contentThreshold,
+    unrestThreshold,
+    relativeStandingOffset,
+    hegemonyK,
+    hegemonyTaxPointsPerCost,
+  );
+}
