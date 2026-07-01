@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 
 abstract final class StabilityPolicy {
   static double normalizeRelativeStanding(double relativeStanding) {
+    if (relativeStanding.isNaN) return 0.0;
     return relativeStanding.clamp(-1.0, 1.0).toDouble();
   }
 

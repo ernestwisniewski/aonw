@@ -81,9 +81,24 @@ void main() {
       expect(StabilityPolicy.normalizeRelativeStanding(-3.0), -1.0);
       expect(StabilityPolicy.normalizeRelativeStanding(4.5), 1.0);
     });
+
+    test('neutralizes a NaN standing', () {
+      expect(StabilityPolicy.normalizeRelativeStanding(double.nan), 0.0);
+    });
   });
 
   group('effectiveNet', () {
+    test('treats a NaN standing as neutral instead of crashing', () {
+      expect(
+        StabilityPolicy.effectiveNet(
+          5,
+          relativeStanding: double.nan,
+          ruleset: ruleset,
+        ),
+        5,
+      );
+    });
+
     test('clamps a leader standing above 1.0', () {
       expect(
         StabilityPolicy.effectiveNet(
