@@ -63,4 +63,36 @@ void main() {
       closeTo(160.0, 0.0001),
     );
   });
+
+  StabilityRuleset withTaxPoints(double taxPoints) => StabilityRuleset(
+    baseOrder: ruleset.baseOrder,
+    costPerCity: ruleset.costPerCity,
+    populationCostThreshold: ruleset.populationCostThreshold,
+    costPerPopulationOverThreshold: ruleset.costPerPopulationOverThreshold,
+    conqueredCityCost: ruleset.conqueredCityCost,
+    reachRadius: ruleset.reachRadius,
+    frontierCostPerHexBeyondReach: ruleset.frontierCostPerHexBeyondReach,
+    disconnectedCityCost: ruleset.disconnectedCityCost,
+    warWearinessCap: ruleset.warWearinessCap,
+    warWearinessAttackFreePerTurn: ruleset.warWearinessAttackFreePerTurn,
+    warWearinessPerCityLost: ruleset.warWearinessPerCityLost,
+    warWearinessPeaceDecay: ruleset.warWearinessPeaceDecay,
+    warWearinessTreatyDecay: ruleset.warWearinessTreatyDecay,
+    contentThreshold: ruleset.contentThreshold,
+    unrestThreshold: ruleset.unrestThreshold,
+    relativeStandingOffset: ruleset.relativeStandingOffset,
+    hegemonyK: ruleset.hegemonyK,
+    hegemonyTaxPointsPerCost: taxPoints,
+  );
+
+  test('tax points per cost of zero yields no tax instead of crashing', () {
+    expect(
+      HegemonyPressureCalculator.hegemonyTax(
+        controlPercent: 90,
+        playerCount: 4,
+        ruleset: withTaxPoints(0),
+      ),
+      0,
+    );
+  });
 }

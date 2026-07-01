@@ -8,7 +8,8 @@ abstract final class StabilityPolicy {
     required double relativeStanding,
     required StabilityRuleset ruleset,
   }) {
-    final shift = (relativeStanding * ruleset.relativeStandingOffset).round();
+    final clampedStanding = relativeStanding.clamp(-1.0, 1.0);
+    final shift = (clampedStanding * ruleset.relativeStandingOffset).round();
     return net - shift;
   }
 

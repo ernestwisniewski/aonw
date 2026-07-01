@@ -71,6 +71,37 @@ void main() {
     });
   });
 
+  group('effectiveNet', () {
+    test('clamps a leader standing above 1.0', () {
+      expect(
+        StabilityPolicy.effectiveNet(8, relativeStanding: 3.0, ruleset: ruleset),
+        StabilityPolicy.effectiveNet(8, relativeStanding: 1.0, ruleset: ruleset),
+      );
+      expect(
+        StabilityPolicy.effectiveNet(8, relativeStanding: 3.0, ruleset: ruleset),
+        5,
+      );
+    });
+
+    test('clamps an underdog standing below -1.0', () {
+      expect(
+        StabilityPolicy.effectiveNet(
+          0,
+          relativeStanding: -3.0,
+          ruleset: ruleset,
+        ),
+        3,
+      );
+    });
+
+    test('out-of-range leader standing cannot flip content into unrest', () {
+      expect(
+        StabilityPolicy.bandFor(8, relativeStanding: 5.0, ruleset: ruleset),
+        StabilityBand.content,
+      );
+    });
+  });
+
   group('modifierFor', () {
     test('stable is neutral', () {
       expect(

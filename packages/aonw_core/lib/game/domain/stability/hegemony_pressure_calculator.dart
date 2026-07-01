@@ -24,6 +24,7 @@ abstract final class HegemonyPressureCalculator {
     required int playerCount,
     required StabilityRuleset ruleset,
   }) {
+    if (ruleset.hegemonyTaxPointsPerCost <= 0) return 0;
     final above = pressureAbove(
       controlPercent: controlPercent,
       playerCount: playerCount,
