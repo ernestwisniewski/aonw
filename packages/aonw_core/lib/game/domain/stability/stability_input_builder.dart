@@ -18,6 +18,9 @@ abstract final class StabilityInputBuilder {
     final orderedPlayerIds = orderedKnownPlayerIds(state, playerIds);
     if (orderedPlayerIds.isEmpty) return const {};
 
+    // Only controlPercent (controlled / valid tiles) is read below, and that is
+    // independent of victory thresholds, so the standard rules are sufficient
+    // here regardless of the match's actual VictoryRules.
     final domination = const DominationProgressCalculator().snapshot(
       playerIds: orderedPlayerIds,
       state: state,
@@ -105,24 +108,9 @@ abstract final class StabilityInputBuilder {
     PersistentGameState state,
     Iterable<String> playerIds,
   ) {
-    return {
+    return <String>{
       ...playerIds,
-      ...state.playerColors.keys,
-      ...state.playerCountries.keys,
-      ...state.playerGold.keys,
-      ...state.playerWarWeariness.keys,
-      ...state.playerStabilityNet.keys,
-      ...state.fogOfWar.playerIds,
-      ...state.runtimeState.submittedPlayerIds,
-      ...state.runtimeState.dominationHoldTurnsByPlayerId.keys,
-      ...state.runtimeState.culturalVictoryHoldTurnsByPlayerId.keys,
-      for (final unit in state.units) unit.ownerPlayerId,
-      for (final city in state.cities) city.ownerPlayerId,
-      for (final city in state.cities) ?city.foundingOwnerPlayerId,
-      for (final relation in state.runtimeState.diplomacy.relations.values)
-        relation.playerAId,
-      for (final relation in state.runtimeState.diplomacy.relations.values)
-        relation.playerBId,
+      ...state.knownPlayerIds,
     }.where((playerId) => playerId.isNotEmpty).toList()..sort();
   }
 

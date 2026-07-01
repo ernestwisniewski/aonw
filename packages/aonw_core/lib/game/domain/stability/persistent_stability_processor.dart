@@ -104,16 +104,24 @@ abstract final class PersistentStabilityProcessor {
     );
   }
 
+  static StabilityModifier modifierForNet(
+    int net, {
+    StabilityRuleset ruleset = StabilityRuleset.standard,
+  }) {
+    return StabilityPolicy.modifierFor(
+      StabilityPolicy.bandFor(net, ruleset: ruleset),
+    );
+  }
+
   static StabilityModifier modifierForPlayer({
     required PersistentGameState state,
     required String playerId,
     StabilityRuleset ruleset = StabilityRuleset.standard,
   }) {
-    final band = StabilityPolicy.bandFor(
+    return modifierForNet(
       state.playerStabilityNet[playerId] ?? 0,
       ruleset: ruleset,
     );
-    return StabilityPolicy.modifierFor(band);
   }
 
   static bool _isAtWar(PersistentGameState state, String playerId) {

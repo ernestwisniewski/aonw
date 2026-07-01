@@ -128,7 +128,7 @@ abstract final class PersistentTurnEconomyProcessor {
     final fogOfWar = fogOfWarService.recompute(
       current: current.fogOfWar,
       mapData: mapData,
-      playerIds: _knownPlayerIds(current),
+      playerIds: current.knownPlayerIds,
       units: current.units,
       cities: current.cities,
     );
@@ -565,25 +565,5 @@ abstract final class PersistentTurnEconomyProcessor {
       for (final playerId in playerIds)
         if (playerId.isNotEmpty) playerId,
     }.toList()..sort();
-  }
-
-  static Set<String> _knownPlayerIds(PersistentGameState state) {
-    return {
-      ...state.playerColors.keys,
-      ...state.playerCountries.keys,
-      ...state.playerGold.keys,
-      ...state.playerWarWeariness.keys,
-      ...state.playerStabilityNet.keys,
-      ...state.fogOfWar.playerIds,
-      ...state.runtimeState.submittedPlayerIds,
-      ...state.runtimeState.dominationHoldTurnsByPlayerId.keys,
-      ...state.runtimeState.culturalVictoryHoldTurnsByPlayerId.keys,
-      for (final unit in state.units) unit.ownerPlayerId,
-      for (final city in state.cities) city.ownerPlayerId,
-      for (final relation in state.runtimeState.diplomacy.relations.values)
-        relation.playerAId,
-      for (final relation in state.runtimeState.diplomacy.relations.values)
-        relation.playerBId,
-    };
   }
 }

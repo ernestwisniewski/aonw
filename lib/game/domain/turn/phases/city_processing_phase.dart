@@ -2,7 +2,6 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/game/domain/turn/turn_phase.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -22,11 +21,8 @@ class CityProcessingPhase extends TurnPhase {
       ruleset: context.ruleset.city,
       research: state.research,
       technologyRuleset: context.ruleset.technology,
-      stabilityModifier: PersistentStabilityProcessor.modifierForPlayer(
-        state: PersistentGameState(
-          playerStabilityNet: state.playerStabilityNet,
-        ),
-        playerId: context.playerId,
+      stabilityModifier: PersistentStabilityProcessor.modifierForNet(
+        state.playerStabilityNet[context.playerId] ?? 0,
         ruleset: context.ruleset.stability,
       ),
       paceBalance: context.ruleset.paceBalance,
