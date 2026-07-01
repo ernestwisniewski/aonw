@@ -4724,6 +4724,30 @@ abstract class AppLocalizations {
   /// **'A steady screen protects settlers, workers, and developed cities.'**
   String get objectiveBuildCombatForceTooltip;
 
+  /// No description provided for @objectiveRaiseStabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore stability'**
+  String get objectiveRaiseStabilityTitle;
+
+  /// No description provided for @objectiveRaiseStabilityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.'**
+  String get objectiveRaiseStabilityHint;
+
+  /// No description provided for @objectiveRaiseStabilityReward.
+  ///
+  /// In en, this message translates to:
+  /// **'+ steady growth'**
+  String get objectiveRaiseStabilityReward;
+
+  /// No description provided for @objectiveRaiseStabilityTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained and unrest empires lose city growth and part of their yields until stability recovers.'**
+  String get objectiveRaiseStabilityTooltip;
+
   /// No description provided for @objectiveHoldDominationTitle.
   ///
   /// In en, this message translates to:

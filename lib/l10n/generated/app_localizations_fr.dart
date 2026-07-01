@@ -2743,6 +2743,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Un écran permanent protège les colons, les travailleurs et les villes développées.';
 
   @override
+  String get objectiveRaiseStabilityTitle => 'Restore stability';
+
+  @override
+  String get objectiveRaiseStabilityHint =>
+      'Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.';
+
+  @override
+  String get objectiveRaiseStabilityReward => '+ steady growth';
+
+  @override
+  String get objectiveRaiseStabilityTooltip =>
+      'Strained and unrest empires lose city growth and part of their yields until stability recovers.';
+
+  @override
   String get objectiveHoldDominationTitle => 'Maintenez la domination';
 
   @override

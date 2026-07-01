@@ -9,6 +9,36 @@ import 'package:test/test.dart';
 
 void main() {
   group('GameObjectiveTracker', () {
+    test('raiseStability guidance is complete unless stability is negative', () {
+      final stable = GameObjectiveTracker.progressForPlayer(
+        playerId: 'player_1',
+        cities: const [],
+        units: const [],
+        fieldImprovements: const [],
+        fogOfWar: _fog(discoveredCount: 0),
+        research: ResearchState.empty,
+        playerStabilityNet: 2,
+      );
+      final strained = GameObjectiveTracker.progressForPlayer(
+        playerId: 'player_1',
+        cities: const [],
+        units: const [],
+        fieldImprovements: const [],
+        fogOfWar: _fog(discoveredCount: 0),
+        research: ResearchState.empty,
+        playerStabilityNet: -3,
+      );
+
+      expect(
+        _progressFor(stable, GameObjectiveId.raiseStability).currentValue,
+        1,
+      );
+      expect(
+        _progressFor(strained, GameObjectiveId.raiseStability).currentValue,
+        0,
+      );
+    });
+
     test(
       'returns the first early-game objectives that are still incomplete',
       () {

@@ -438,6 +438,7 @@ class _ObjectiveRow extends StatelessWidget {
       GameObjectiveId.foundThirdCity => GameIcons.cityFilled,
       GameObjectiveId.exploreRegion => GameIcons.visibility,
       GameObjectiveId.buildCombatForce => GameIcons.attack,
+      GameObjectiveId.raiseStability => GameIcons.defense,
       GameObjectiveId.overtakeScoreLeader => GameIcons.stats,
       GameObjectiveId.holdDomination ||
       GameObjectiveId.holdScoreLead ||

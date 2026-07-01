@@ -83,6 +83,7 @@ class HudObjectiveSummary {
               state: state,
               mapData: mapData,
             ),
+            playerStabilityNet: state.playerStabilityNet[activePlayerId] ?? 0,
           );
 
     return HudObjectiveSummary(
