@@ -3,13 +3,17 @@ import 'package:aonw_core/game/domain/stability/stability_modifier.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 
 abstract final class StabilityPolicy {
+  static double normalizeRelativeStanding(double relativeStanding) {
+    return relativeStanding.clamp(-1.0, 1.0).toDouble();
+  }
+
   static int effectiveNet(
     int net, {
     required double relativeStanding,
     required StabilityRuleset ruleset,
   }) {
-    final clampedStanding = relativeStanding.clamp(-1.0, 1.0);
-    final shift = (clampedStanding * ruleset.relativeStandingOffset).round();
+    final normalizedStanding = normalizeRelativeStanding(relativeStanding);
+    final shift = (normalizedStanding * ruleset.relativeStandingOffset).round();
     return net - shift;
   }
 

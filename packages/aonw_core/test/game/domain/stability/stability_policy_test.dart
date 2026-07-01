@@ -71,14 +71,38 @@ void main() {
     });
   });
 
+  group('normalizeRelativeStanding', () {
+    test('keeps in-range standing values', () {
+      expect(StabilityPolicy.normalizeRelativeStanding(-0.25), -0.25);
+      expect(StabilityPolicy.normalizeRelativeStanding(0.75), 0.75);
+    });
+
+    test('clamps out-of-range standing values', () {
+      expect(StabilityPolicy.normalizeRelativeStanding(-3.0), -1.0);
+      expect(StabilityPolicy.normalizeRelativeStanding(4.5), 1.0);
+    });
+  });
+
   group('effectiveNet', () {
     test('clamps a leader standing above 1.0', () {
       expect(
-        StabilityPolicy.effectiveNet(8, relativeStanding: 3.0, ruleset: ruleset),
-        StabilityPolicy.effectiveNet(8, relativeStanding: 1.0, ruleset: ruleset),
+        StabilityPolicy.effectiveNet(
+          8,
+          relativeStanding: 3.0,
+          ruleset: ruleset,
+        ),
+        StabilityPolicy.effectiveNet(
+          8,
+          relativeStanding: 1.0,
+          ruleset: ruleset,
+        ),
       );
       expect(
-        StabilityPolicy.effectiveNet(8, relativeStanding: 3.0, ruleset: ruleset),
+        StabilityPolicy.effectiveNet(
+          8,
+          relativeStanding: 3.0,
+          ruleset: ruleset,
+        ),
         5,
       );
     });
