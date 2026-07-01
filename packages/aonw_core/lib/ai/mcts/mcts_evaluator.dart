@@ -12,6 +12,9 @@ import 'package:aonw_core/ai/mcts/mcts_strategic_state_scorer.dart';
 import 'package:aonw_core/ai/strategic/war_goal.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
+import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 
 abstract interface class MctsEvaluator {
   double score(SimulatedState state, String forPlayerId, {AiContext? context});
@@ -42,11 +45,14 @@ class StateHeuristicEvaluator implements MctsEvaluator {
         ? 0.0
         : (0.08 + scoreRace.urgency * 0.17).clamp(0.0, 0.25).toDouble();
     const commandWeight = 0.22;
-    final strategicWeight = 1.0 - commandWeight - scoreRaceWeight;
+    const stabilityWeight = 0.12;
+    final strategicWeight =
+        1.0 - commandWeight - scoreRaceWeight - stabilityWeight;
     final score =
         strategicScore * strategicWeight +
         commandScore * commandWeight +
-        _scoreRaceScore(state, scoreRace) * scoreRaceWeight;
+        _scoreRaceScore(state, scoreRace) * scoreRaceWeight +
+        _stabilityScore(state, context) * stabilityWeight;
     return score.clamp(-1.0, 1.0).toDouble();
   }
 
@@ -67,6 +73,39 @@ class StateHeuristicEvaluator implements MctsEvaluator {
     final progress = (scoreDelta / gap).clamp(-1.0, 1.0).toDouble();
     final urgency = 0.35 + scoreRace.urgency * 0.65;
     return (standing * 0.55 + progress * 0.45) * urgency;
+  }
+
+  double _stabilityScore(SimulatedState state, AiContext? context) {
+    if (context == null) return 0.0;
+    final view = state.view;
+    final forPlayerId = view.forPlayerId;
+    if (forPlayerId.isEmpty) return 0.0;
+    final ruleset = context.ruleset.stability;
+    // Project the AI's own empire into a minimal state and reuse the real
+    // calculator so the heuristic tracks the same net the turn processor caches.
+    // Luxuries are skipped to keep this off the per-tile scan on the hot path.
+    final projectedState = PersistentGameState(
+      cities: state.ownCities,
+      artifacts: view.artifacts,
+      research: ResearchState(players: {forPlayerId: state.ownResearch}),
+    );
+    final inputs = StabilityInputBuilder.forPlayer(
+      state: projectedState,
+      playerId: forPlayerId,
+      mapData: context.mapData,
+      ruleset: ruleset,
+      includeLuxuries: false,
+    );
+    final net = StabilityCalculator.calculate(
+      inputs: inputs,
+      ruleset: ruleset,
+    ).net;
+    return switch (StabilityPolicy.bandFor(net, ruleset: ruleset)) {
+      StabilityBand.content => 0.5,
+      StabilityBand.stable => 0.0,
+      StabilityBand.strained => -0.6,
+      StabilityBand.unrest => -1.0,
+    };
   }
 }
 

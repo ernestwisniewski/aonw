@@ -64,4 +64,39 @@ void main() {
     expect(inputs.luxurySources, 1);
     expect(inputs.artifactSources, 1);
   });
+
+  test('forPlayer skips the luxury scan when includeLuxuries is false', () {
+    final mapData = MapData(
+      cols: 1,
+      rows: 1,
+      tiles: const [
+        TileData(
+          col: 0,
+          row: 0,
+          terrains: [TerrainType.grassland],
+          resources: [ResourceType.silk],
+          height: 0,
+        ),
+      ],
+    );
+    const state = PersistentGameState(
+      cities: [
+        GameCity(
+          id: 'city-a',
+          ownerPlayerId: 'a',
+          name: 'A',
+          center: CityHex(col: 0, row: 0),
+        ),
+      ],
+    );
+
+    final inputs = StabilityInputBuilder.forPlayer(
+      state: state,
+      playerId: 'a',
+      mapData: mapData,
+      includeLuxuries: false,
+    );
+
+    expect(inputs.luxurySources, 0);
+  });
 }

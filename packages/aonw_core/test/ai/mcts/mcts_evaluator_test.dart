@@ -123,6 +123,38 @@ void main() {
       expect(fiveCityScore, greaterThan(fourCityScore));
       expect(fiveCityScore, lessThan(1.0));
     });
+
+    test('penalizes an over-sprawled empire that falls into unrest', () {
+      const evaluator = StateHeuristicEvaluator();
+      final mapData = _squareMap(cols: 40, rows: 1);
+      final context = _context(mapData: mapData);
+
+      PersistentGameState empire(List<int> cityCols) => PersistentGameState(
+        cities: [
+          for (var i = 0; i < cityCols.length; i++)
+            GameCity(
+              id: 'city_$i',
+              ownerPlayerId: 'player_1',
+              name: 'City $i',
+              center: CityHex(col: cityCols[i], row: 0),
+              population: 3,
+            ),
+        ],
+        fogOfWar: _fogForHexes({
+          for (var col = 0; col < 40; col++) HexCoordinate(col: col, row: 0),
+        }),
+      );
+
+      // Same city count, population and buildings; only the spacing differs, so
+      // the cohesion cost (and thus the stability band) is the isolated driver.
+      final compact = _state(empire([0, 2, 3]), mapData: mapData);
+      final sprawled = _state(empire([0, 20, 39]), mapData: mapData);
+
+      expect(
+        evaluator.score(compact, 'player_1', context: context),
+        greaterThan(evaluator.score(sprawled, 'player_1', context: context)),
+      );
+    });
   });
 
   group('CommandSequenceEvaluator', () {

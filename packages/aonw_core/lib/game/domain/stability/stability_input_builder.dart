@@ -56,6 +56,7 @@ abstract final class StabilityInputBuilder {
     int? warWeariness,
     double controlPercent = 0.0,
     int playerCount = 1,
+    bool includeLuxuries = true,
   }) {
     final ownedCities = [
       for (final city in state.cities)
@@ -101,13 +102,16 @@ abstract final class StabilityInputBuilder {
       }
 
       // Luxuries are counted by presence on the empire's territory (a proxy for
-      // the eventual connected-network semantics).
-      for (final hex in city.territoryHexes) {
-        final tile = mapData.tileAt(hex.col, hex.row);
-        if (tile == null) continue;
-        for (final resource in tile.resources) {
-          if (StabilitySourceCatalog.luxuryResources.contains(resource)) {
-            luxuryResourceTypes.add(resource);
+      // the eventual connected-network semantics). Skipped by callers that want
+      // to avoid the per-tile scan on a hot path (e.g. AI simulation).
+      if (includeLuxuries) {
+        for (final hex in city.territoryHexes) {
+          final tile = mapData.tileAt(hex.col, hex.row);
+          if (tile == null) continue;
+          for (final resource in tile.resources) {
+            if (StabilitySourceCatalog.luxuryResources.contains(resource)) {
+              luxuryResourceTypes.add(resource);
+            }
           }
         }
       }
