@@ -24,6 +24,10 @@ abstract final class SaveSnapshotCodec {
         json['playerCountries'] as Map<String, dynamic>? ?? const {};
     final rawPlayerGold =
         json['playerGold'] as Map<String, dynamic>? ?? const {};
+    final rawPlayerWarWeariness =
+        json['playerWarWeariness'] as Map<String, dynamic>? ?? const {};
+    final rawPlayerStabilityNet =
+        json['playerStabilityNet'] as Map<String, dynamic>? ?? const {};
     final rawUnits = json['units'] as List<dynamic>? ?? const <dynamic>[];
     final rawCities = json['cities'] as List<dynamic>? ?? const <dynamic>[];
     final rawArtifacts =
@@ -35,6 +39,8 @@ abstract final class SaveSnapshotCodec {
       'playerColors': rawPlayerColors,
       'playerCountries': rawPlayerCountries,
       'playerGold': rawPlayerGold,
+      'playerWarWeariness': rawPlayerWarWeariness,
+      'playerStabilityNet': rawPlayerStabilityNet,
       'units': rawUnits,
       'cities': rawCities,
       'artifacts': rawArtifacts,

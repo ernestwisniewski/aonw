@@ -28,6 +28,8 @@ void main() {
         playerColors: const {'p1': 0xFF4a7fc4},
         playerCountries: const {'p1': PlayerCountry.japan},
         playerGold: const {'p1': 7},
+        playerWarWeariness: const {'p1': 3},
+        playerStabilityNet: const {'p1': -2},
         units: [unit],
         cities: [city],
         runtimeState: GameRuntimeState(
@@ -59,6 +61,8 @@ void main() {
       expect(restored.playerColors, {'p1': 0xFF4a7fc4});
       expect(restored.playerCountries, {'p1': PlayerCountry.japan});
       expect(restored.playerGold, {'p1': 7});
+      expect(restored.playerWarWeariness, {'p1': 3});
+      expect(restored.playerStabilityNet, {'p1': -2});
       expect(restored.units.single.id, unit.id);
       expect(restored.cities.single.id, city.id);
       expect(
@@ -76,6 +80,17 @@ void main() {
         'warrior_1',
       );
       expect(restored.eventLogOffset, 9);
+    });
+
+    test('defaults stability state for snapshots created before stability', () {
+      final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()))
+        ..remove('playerWarWeariness')
+        ..remove('playerStabilityNet');
+
+      final restored = SaveSnapshotCodec.fromJson(json);
+
+      expect(restored.playerWarWeariness, isEmpty);
+      expect(restored.playerStabilityNet, isEmpty);
     });
 
     test('round-trips match rules in save metadata', () {
