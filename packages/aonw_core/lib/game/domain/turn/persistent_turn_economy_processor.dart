@@ -117,13 +117,15 @@ abstract final class PersistentTurnEconomyProcessor {
       holdStatesByObjectiveId: mapObjectiveHoldStates,
     );
     current = _advanceResourceTrades(state: current, playerIds: playerIds);
-    current = PersistentStabilityProcessor.advanceForPlayers(
+    final stability = PersistentStabilityProcessor.advanceForPlayers(
       state: current,
       playerIds: playerIds,
       mapData: mapData,
       ruleset: ruleset.stability,
       turnEvents: [...priorEvents, ...events],
-    ).state;
+    );
+    current = stability.state;
+    events.addAll(stability.events);
 
     final fogOfWar = fogOfWarService.recompute(
       current: current.fogOfWar,

@@ -4411,6 +4411,21 @@
   "eventCityCapturedTitle": "Miasto zdobyte",
   "eventCityDestroyedTitle": "Miasto zniszczone",
   "eventTurnEndedTitle": "Tura zakończona",
+  "eventStabilityBandChangedTitle": "Zmiana stabilności imperium",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
+  "@eventStabilityBandChangedBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      },
+      "net": {
+        "type": "int"
+      }
+    }
+  },
   "eventWorkerCompletedJobTitle": "Praca zakończona",
   "eventResearchPointsTitle": "Nauka",
   "eventResearchPointsBody": "{playerName}: +{points} nauki",

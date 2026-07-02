@@ -8,6 +8,7 @@ import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dar
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -16,12 +17,38 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('formats stability band changes for the owning player', () {
+    final message = GameEventNotificationMessage.from(
+      AppLocalizationsEn(),
+      const GameEventNotification(
+        id: 1,
+        event: StabilityBandChangedEvent(
+          playerId: 'player_1',
+          previousBand: StabilityBand.stable,
+          newBand: StabilityBand.strained,
+          net: -2,
+        ),
+        state: GameState(activePlayerId: 'player_1'),
+        playerId: 'player_1',
+      ),
+      null,
+    );
+
+    expect(message.title, 'Empire stability changed');
+    expect(message.body, contains('Strained (-2)'));
+    expect(
+      message.thumbnail,
+      const TypeMatcher<IconEventNotificationThumbnail>(),
+    );
+  });
+
   testWidgets('dismiss animation uses shared HUD motion tokens', (
     tester,
   ) async {

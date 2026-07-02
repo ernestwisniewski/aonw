@@ -23,6 +23,7 @@ class StabilityProcessingPhase extends TurnPhase {
         playerWarWeariness: result.state.playerWarWeariness,
         playerStabilityNet: result.state.playerStabilityNet,
       ),
+      events: [...context.events, ...result.events],
     );
   }
 

@@ -18,6 +18,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -211,6 +212,9 @@ bool _isCriticalNotification(GameEventNotification notification) {
     TechnologyResearchedEvent() ||
     CivilizationMetEvent() ||
     DominationThresholdReachedEvent() ||
+    StabilityBandChangedEvent(
+      newBand: StabilityBand.strained || StabilityBand.unrest,
+    ) ||
     UnitKilledEvent() => true,
     CombatResolvedEvent(:final outcome) =>
       (outcome.attackerKilled &&

@@ -7,6 +7,7 @@ export 'turn/phases/combat_resolution_phase.dart';
 export 'turn/phases/fog_recompute_phase.dart';
 export 'turn/phases/research_processing_phase.dart';
 export 'turn/phases/selection_refresh_phase.dart';
+export 'turn/phases/stability_processing_phase.dart';
 export 'turn/phases/turn_ended_phase.dart';
 export 'turn/phases/worker_processing_phase.dart';
 export 'turn/turn_context.dart';

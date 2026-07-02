@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -76,7 +77,8 @@ class _GameEventNotificationMessageFormatter {
       CityCapturedEvent() ||
       CityDestroyedEvent() => _combatEventMessage(event),
       TurnEndedEvent() ||
-      DominationThresholdReachedEvent() => _turnEventMessage(event),
+      DominationThresholdReachedEvent() ||
+      StabilityBandChangedEvent() => _turnEventMessage(event),
       ResearchPointsGainedEvent() ||
       TechnologyResearchedEvent() ||
       StrategicResourceDiscoveredEvent() => _researchEventMessage(event),
@@ -273,7 +275,30 @@ class _GameEventNotificationMessageFormatter {
           holdTurns: holdTurns,
           requiredHoldTurns: requiredHoldTurns,
         ),
+      StabilityBandChangedEvent(:final playerId, :final newBand, :final net) =>
+        GameEventNotificationMessage(
+          title: l10n.eventStabilityBandChangedTitle,
+          body: l10n.eventStabilityBandChangedBody(
+            _playerName(l10n, save, playerId),
+            _stabilityBandLabel(l10n, newBand),
+            net,
+          ),
+          thumbnail: IconEventNotificationThumbnail(
+            newBand == StabilityBand.strained || newBand == StabilityBand.unrest
+                ? EventNotificationIconThumbnailKind.warning
+                : EventNotificationIconThumbnailKind.success,
+          ),
+        ),
       _ => _unsupportedEvent('turn', event),
+    };
+  }
+
+  String _stabilityBandLabel(AppLocalizations l10n, StabilityBand band) {
+    return switch (band) {
+      StabilityBand.content => l10n.stabilityBandContent,
+      StabilityBand.stable => l10n.stabilityBandStable,
+      StabilityBand.strained => l10n.stabilityBandStrained,
+      StabilityBand.unrest => l10n.stabilityBandUnrest,
     };
   }
 

@@ -184,6 +184,7 @@ void main() {
         firstTurn.state.playerStabilityNet['player_1'],
         greaterThanOrEqualTo(4),
       );
+      expect(firstTurn.events, contains(isA<StabilityBandChangedEvent>()));
 
       final secondTurn = PersistentTurnEconomyProcessor.advanceForPlayers(
         state: firstTurn.state,

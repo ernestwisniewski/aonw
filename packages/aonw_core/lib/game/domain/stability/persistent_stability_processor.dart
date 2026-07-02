@@ -16,11 +16,13 @@ class PersistentStabilityTurnResult {
     required this.state,
     this.inputsByPlayerId = const {},
     this.breakdownsByPlayerId = const {},
+    this.events = const [],
   });
 
   final PersistentGameState state;
   final Map<String, StabilityInputs> inputsByPlayerId;
   final Map<String, StabilityBreakdown> breakdownsByPlayerId;
+  final List<GameEvent> events;
 }
 
 abstract final class PersistentStabilityProcessor {
@@ -75,6 +77,7 @@ abstract final class PersistentStabilityProcessor {
     );
     final breakdownsByPlayerId = <String, StabilityBreakdown>{};
     final stabilityNet = <String, int>{};
+    final events = <GameEvent>[];
     for (final entry in inputsByPlayerId.entries) {
       final breakdown = StabilityCalculator.calculate(
         inputs: entry.value,
@@ -92,6 +95,27 @@ abstract final class PersistentStabilityProcessor {
         relativeStanding: relativeStanding,
         ruleset: ruleset,
       );
+      final previousNet = state.playerStabilityNet[entry.key];
+      if (previousNet != null) {
+        final previousBand = StabilityPolicy.bandFor(
+          previousNet,
+          ruleset: ruleset,
+        );
+        final newBand = StabilityPolicy.bandFor(
+          stabilityNet[entry.key]!,
+          ruleset: ruleset,
+        );
+        if (previousBand != newBand) {
+          events.add(
+            StabilityBandChangedEvent(
+              playerId: entry.key,
+              previousBand: previousBand,
+              newBand: newBand,
+              net: stabilityNet[entry.key]!,
+            ),
+          );
+        }
+      }
     }
 
     return PersistentStabilityTurnResult(
@@ -101,6 +125,7 @@ abstract final class PersistentStabilityProcessor {
       ),
       inputsByPlayerId: Map.unmodifiable(inputsByPlayerId),
       breakdownsByPlayerId: Map.unmodifiable(breakdownsByPlayerId),
+      events: List.unmodifiable(events),
     );
   }
 
@@ -176,11 +201,12 @@ class _WarWearinessEventCounts {
           _addPlayer(signedPeacePlayerIds, fromPlayerId);
           _addPlayer(signedPeacePlayerIds, toPlayerId);
         case DiplomaticRelationChangedEvent(
-          oldStatus: DiplomaticRelationStatus.war,
-          :final newStatus,
-          :final playerAId,
-          :final playerBId,
-        ) when newStatus != DiplomaticRelationStatus.war:
+              oldStatus: DiplomaticRelationStatus.war,
+              :final newStatus,
+              :final playerAId,
+              :final playerBId,
+            )
+            when newStatus != DiplomaticRelationStatus.war:
           _addPlayer(signedPeacePlayerIds, playerAId);
           _addPlayer(signedPeacePlayerIds, playerBId);
         default:

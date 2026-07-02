@@ -7403,6 +7403,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventTurnEndedTitle => 'Turn ended';
 
   @override
+  String get eventStabilityBandChangedTitle => 'Empire stability changed';
+
+  @override
+  String eventStabilityBandChangedBody(
+    String playerName,
+    String band,
+    int net,
+  ) {
+    return '$playerName: $band ($net)';
+  }
+
+  @override
   String get eventWorkerCompletedJobTitle => 'Work complete';
 
   @override

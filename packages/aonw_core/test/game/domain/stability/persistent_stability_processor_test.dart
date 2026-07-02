@@ -1,6 +1,8 @@
 import 'package:aonw_core/game/domain/city/city_hex.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/stability/persistent_stability_processor.dart';
+import 'package:aonw_core/game/domain/stability/stability_band.dart';
 import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -22,9 +24,7 @@ MapData _singleTileMap() => MapData(
 
 void main() {
   test('advances war-weariness only for the acting players', () {
-    const state = PersistentGameState(
-      playerWarWeariness: {'a': 5, 'b': 5},
-    );
+    const state = PersistentGameState(playerWarWeariness: {'a': 5, 'b': 5});
 
     final result = PersistentStabilityProcessor.advanceForPlayers(
       state: state,
@@ -62,5 +62,36 @@ void main() {
     final rawNet = result.breakdownsByPlayerId['a']!.net;
     final cachedNet = result.state.playerStabilityNet['a']!;
     expect(cachedNet, lessThan(rawNet));
+  });
+
+  test('emits a band change only when an existing snapshot crosses a band', () {
+    const state = PersistentGameState(playerStabilityNet: {'a': -4});
+
+    final result = PersistentStabilityProcessor.advanceForPlayers(
+      state: state,
+      playerIds: const ['a'],
+      mapData: _singleTileMap(),
+    );
+
+    expect(
+      result.events,
+      contains(
+        isA<StabilityBandChangedEvent>()
+            .having((event) => event.playerId, 'playerId', 'a')
+            .having(
+              (event) => event.previousBand,
+              'previousBand',
+              StabilityBand.unrest,
+            )
+            .having((event) => event.newBand, 'newBand', StabilityBand.content),
+      ),
+    );
+
+    final initial = PersistentStabilityProcessor.advanceForPlayers(
+      state: const PersistentGameState(),
+      playerIds: const ['a'],
+      mapData: _singleTileMap(),
+    );
+    expect(initial.events, isEmpty);
   });
 }

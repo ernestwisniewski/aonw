@@ -4435,6 +4435,21 @@
   "eventCityCapturedTitle": "City captured",
   "eventCityDestroyedTitle": "City destroyed",
   "eventTurnEndedTitle": "Turn ended",
+  "eventStabilityBandChangedTitle": "Empire stability changed",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
+  "@eventStabilityBandChangedBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      },
+      "net": {
+        "type": "int"
+      }
+    }
+  },
   "eventWorkerCompletedJobTitle": "Work complete",
   "eventResearchPointsTitle": "Science",
   "eventResearchPointsBody": "{playerName}: +{points} science",

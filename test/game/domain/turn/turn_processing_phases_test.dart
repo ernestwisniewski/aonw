@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,29 @@ TurnContext _context({
 
 void main() {
   group('turn processing phases', () {
+    test('StabilityProcessingPhase emits a cached band change', () {
+      final next = const StabilityProcessingPhase().apply(
+        _context(state: const GameState(playerStabilityNet: {'player_1': -4})),
+      );
+
+      expect(
+        next.events,
+        contains(
+          isA<StabilityBandChangedEvent>()
+              .having(
+                (event) => event.previousBand,
+                'previousBand',
+                StabilityBand.unrest,
+              )
+              .having(
+                (event) => event.newBand,
+                'newBand',
+                StabilityBand.content,
+              ),
+        ),
+      );
+    });
+
     test('CityProcessingPhase produces units and emits city events', () {
       final cityRuleset = CityRulesets.standard.copyWith(
         units: {

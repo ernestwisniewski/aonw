@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/stability/stability_band.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -157,6 +158,19 @@ abstract final class GameEventSerializer {
       'type': 'TurnEnded',
       'playerId': playerId,
     },
+    StabilityBandChangedEvent(
+      :final playerId,
+      :final previousBand,
+      :final newBand,
+      :final net,
+    ) =>
+      {
+        'type': 'StabilityBandChanged',
+        'playerId': playerId,
+        'previousBand': previousBand.name,
+        'newBand': newBand.name,
+        'net': net,
+      },
     WorkerCompletedJobEvent(:final unitId) => {
       'type': 'WorkerCompletedJob',
       'unitId': unitId,
@@ -507,6 +521,17 @@ abstract final class GameEventSerializer {
       ),
       'TurnEnded' => TurnEndedEvent(
         playerId: requiredStringField(json, type, 'playerId'),
+      ),
+      'StabilityBandChanged' => StabilityBandChangedEvent(
+        playerId: requiredStringField(json, type, 'playerId'),
+        previousBand: requiredEnumField(
+          json,
+          type,
+          'previousBand',
+          StabilityBand.values,
+        ),
+        newBand: requiredEnumField(json, type, 'newBand', StabilityBand.values),
+        net: requiredIntField(json, type, 'net'),
       ),
       'WorkerCompletedJob' => WorkerCompletedJobEvent(
         unitId: requiredStringField(json, type, 'unitId'),

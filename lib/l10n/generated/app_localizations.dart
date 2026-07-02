@@ -12505,6 +12505,18 @@ abstract class AppLocalizations {
   /// **'Turn ended'**
   String get eventTurnEndedTitle;
 
+  /// No description provided for @eventStabilityBandChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire stability changed'**
+  String get eventStabilityBandChangedTitle;
+
+  /// No description provided for @eventStabilityBandChangedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{playerName}: {band} ({net})'**
+  String eventStabilityBandChangedBody(String playerName, String band, int net);
+
   /// No description provided for @eventWorkerCompletedJobTitle.
   ///
   /// In en, this message translates to:
