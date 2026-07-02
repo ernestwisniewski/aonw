@@ -109,7 +109,10 @@ class CityEconomyBreakdown {
 
   TileYield get netYield => TileYield(
     food: netFood,
-    production: _scale(grossYield.production, stabilityModifier.productionMultiplier),
+    production: _scale(
+      grossYield.production,
+      stabilityModifier.productionMultiplier,
+    ),
     gold: _scale(grossYield.gold, stabilityModifier.goldMultiplier),
     defense: grossYield.defense,
   );

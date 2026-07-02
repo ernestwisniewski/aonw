@@ -18,7 +18,6 @@ abstract final class StabilityPolicy {
   }) {
     final count = playerCount <= 0 ? 1 : playerCount;
     final fairShare = 100.0 / count;
-    if (fairShare <= 0) return 0.0;
     return normalizeRelativeStanding((controlPercent - fairShare) / fairShare);
   }
 

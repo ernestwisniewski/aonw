@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -19,6 +20,7 @@ import 'package:flutter/material.dart';
 
 part 'resource_breakdown_popup_models.dart';
 part 'resource_breakdown_popup_sections.dart';
+part 'resource_breakdown_popup_stability_sections.dart';
 part 'resource_breakdown_popup_widgets.dart';
 
 class ResourceBreakdownPopup extends StatelessWidget {
@@ -68,7 +70,9 @@ class ResourceBreakdownPopup extends StatelessWidget {
     final color = switch (type) {
       ResourceBreakdownType.gold => GameUiTheme.gold,
       ResourceBreakdownType.science => GameUiTheme.scienceAccent,
-      ResourceBreakdownType.stability => _stabilityColor(stabilityBand),
+      ResourceBreakdownType.stability => StabilityBandPresentation.color(
+        stabilityBand,
+      ),
       ResourceBreakdownType.resources => GameUiTheme.resourcesAccent,
     };
     final title = switch (type) {
@@ -140,11 +144,4 @@ class ResourceBreakdownPopup extends StatelessWidget {
       ),
     );
   }
-
-  static Color _stabilityColor(StabilityBand band) => switch (band) {
-    StabilityBand.content => GameUiTheme.success,
-    StabilityBand.stable => GameUiTheme.gold,
-    StabilityBand.strained => GameUiTheme.warning,
-    StabilityBand.unrest => GameUiTheme.danger,
-  };
 }

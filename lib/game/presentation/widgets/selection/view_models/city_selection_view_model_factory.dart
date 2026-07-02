@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/city/city_yield_breakdown_view_model.dart';
+import 'package:aonw/game/presentation/widgets/selection/view_models/city_cohesion_selection_item.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/city_objective_selection_items_factory.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_item.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_view_model.dart';
@@ -12,9 +13,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -73,7 +72,7 @@ abstract final class CitySelectionViewModelFactory {
               GameDisplayNames.cityBuilding(l10n, type),
         ),
     ];
-    final cohesionItem = _cohesionItem(city: city, cities: cities, l10n: l10n);
+    final cohesionItem = CityCohesionSelectionItem.build(city, cities, l10n);
     final yieldBreakdown = mapData == null
         ? null
         : CityYieldBreakdownViewModel.fromCity(
@@ -184,52 +183,6 @@ abstract final class CitySelectionViewModelFactory {
       cityBuildingItems: cityBuildingItems,
       cityYieldBreakdown: yieldBreakdown,
       tags: const [],
-    );
-  }
-
-  static SelectionInfoItem? _cohesionItem({
-    required GameCity city,
-    required List<GameCity> cities,
-    required AppLocalizations l10n,
-  }) {
-    final ownedCities = [
-      for (final candidate in cities)
-        if (candidate.ownerPlayerId == city.ownerPlayerId) candidate,
-    ]..sort((a, b) => a.id.compareTo(b.id));
-    if (ownedCities.isEmpty) return null;
-    final coreCity = ownedCities.firstWhere(
-      (candidate) => candidate.capitalOwnerPlayerId == city.ownerPlayerId,
-      orElse: () => ownedCities.first,
-    );
-    if (city.id == coreCity.id) {
-      return SelectionInfoItem(
-        icon: GameIcons.defense,
-        label: l10n.citySelectionCohesionLabel,
-        value: l10n.citySelectionCohesionCore,
-        color: GameUiTheme.success,
-      );
-    }
-
-    final distance = HexDistance.between(
-      city.center.toCoordinate(),
-      coreCity.center.toCoordinate(),
-    );
-    final cohesionCost = CohesionCalculator.cityCohesionCost(
-      cityCenter: city.center.toCoordinate(),
-      nearestCoreCenter: coreCity.center.toCoordinate(),
-      isConnected: CityTerritoryRules.isConnected(
-        center: city.center,
-        controlledHexes: city.controlledHexes,
-      ),
-      ruleset: StabilityRuleset.standard,
-    );
-    return SelectionInfoItem(
-      icon: GameIcons.defense,
-      label: l10n.citySelectionCohesionLabel,
-      value: cohesionCost == 0
-          ? l10n.citySelectionCohesionIntegrated(distance)
-          : l10n.citySelectionCohesionFrontier(distance, cohesionCost),
-      color: cohesionCost == 0 ? GameUiTheme.success : GameUiTheme.warning,
     );
   }
 

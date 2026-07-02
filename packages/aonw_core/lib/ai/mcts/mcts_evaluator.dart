@@ -7,15 +7,12 @@ import 'package:aonw_core/ai/mcts/mcts_command_movement_scorer.dart';
 import 'package:aonw_core/ai/mcts/mcts_command_production_scorer.dart';
 import 'package:aonw_core/ai/mcts/mcts_evaluation_queries.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
+import 'package:aonw_core/ai/mcts/mcts_stability_scores.dart';
 import 'package:aonw_core/ai/mcts/mcts_state_score_estimator.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategic_state_scorer.dart';
 import 'package:aonw_core/ai/strategic/war_goal.dart';
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
-import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/technology.dart';
 
 abstract interface class MctsEvaluator {
   double score(SimulatedState state, String forPlayerId, {AiContext? context});
@@ -53,7 +50,7 @@ class StateHeuristicEvaluator implements MctsEvaluator {
         strategicScore * strategicWeight +
         commandScore * commandWeight +
         _scoreRaceScore(state, scoreRace) * scoreRaceWeight +
-        _stabilityScore(state, context) * stabilityWeight;
+        MctsStabilityScores.stateScore(state, context) * stabilityWeight;
     return score.clamp(-1.0, 1.0).toDouble();
   }
 
@@ -74,40 +71,6 @@ class StateHeuristicEvaluator implements MctsEvaluator {
     final progress = (scoreDelta / gap).clamp(-1.0, 1.0).toDouble();
     final urgency = 0.35 + scoreRace.urgency * 0.65;
     return (standing * 0.55 + progress * 0.45) * urgency;
-  }
-
-  double _stabilityScore(SimulatedState state, AiContext? context) {
-    if (context == null) return 0.0;
-    final view = state.view;
-    final forPlayerId = view.forPlayerId;
-    if (forPlayerId.isEmpty) return 0.0;
-    final ruleset = context.ruleset.stability;
-    // Project the AI's own empire into a minimal state and reuse the real
-    // calculator so the heuristic tracks the same net the turn processor caches.
-    // Luxuries are skipped to keep this off the per-tile scan on the hot path.
-    final projectedState = PersistentGameState(
-      playerWarWeariness: {forPlayerId: view.ownWarWeariness},
-      cities: state.ownCities,
-      artifacts: view.artifacts,
-      research: ResearchState(players: {forPlayerId: state.ownResearch}),
-    );
-    final inputs = StabilityInputBuilder.forPlayer(
-      state: projectedState,
-      playerId: forPlayerId,
-      mapData: context.mapData,
-      ruleset: ruleset,
-      includeLuxuries: false,
-    );
-    final net = StabilityCalculator.calculate(
-      inputs: inputs,
-      ruleset: ruleset,
-    ).net;
-    return switch (StabilityPolicy.bandFor(net, ruleset: ruleset)) {
-      StabilityBand.content => 0.5,
-      StabilityBand.stable => 0.0,
-      StabilityBand.strained => -0.6,
-      StabilityBand.unrest => -1.0,
-    };
   }
 }
 
@@ -149,10 +112,8 @@ class CommandSequenceEvaluator implements MctsEvaluator {
         state: state,
         context: context,
       ),
-      StartBuildingCommand(:final buildingType) => _buildingScore(
-        buildingType,
-        state,
-      ),
+      StartBuildingCommand(:final buildingType) =>
+        MctsStabilityScores.buildingScore(buildingType, state),
       StartCityProjectCommand() => 0.11,
       SetCitySpecializationCommand() => 0.08,
       SelectWorkerImprovementCommand() ||
@@ -179,23 +140,6 @@ class CommandSequenceEvaluator implements MctsEvaluator {
       StoreArtifactInCityCommand() => 0.24,
       _ => 0.0,
     };
-  }
-
-  double _buildingScore(CityBuildingType buildingType, SimulatedState state) {
-    const base = 0.11;
-    if (!StabilitySourceCatalog.orderBuildings.contains(buildingType)) {
-      return base;
-    }
-    return base +
-        switch (StabilityPolicy.bandFor(
-          state.view.ownStabilityNet,
-          ruleset: state.view.ruleset.stability,
-        )) {
-          StabilityBand.content => 0.0,
-          StabilityBand.stable => 0.02,
-          StabilityBand.strained => 0.10,
-          StabilityBand.unrest => 0.18,
-        };
   }
 
   double _cancelUnitActionScore(

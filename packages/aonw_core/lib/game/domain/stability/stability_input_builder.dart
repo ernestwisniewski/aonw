@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/stability/cohesion_calculator.dart';
+import 'package:aonw_core/game/domain/stability/core_city_locator.dart';
 import 'package:aonw_core/game/domain/stability/stability_inputs.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/stability/stability_source_catalog.dart';
@@ -61,8 +62,11 @@ abstract final class StabilityInputBuilder {
     final ownedCities = [
       for (final city in state.cities)
         if (city.ownerPlayerId == playerId) city,
-    ]..sort(_compareCities);
-    final coreCity = _canonicalCoreCity(ownedCities, playerId);
+    ];
+    final coreCity = CoreCityLocator.coreCityFor(
+      playerId: playerId,
+      cities: ownedCities,
+    );
 
     var conqueredCityCount = 0;
     var sumPopulationOverThreshold = 0;
@@ -72,8 +76,7 @@ abstract final class StabilityInputBuilder {
 
     for (final city in ownedCities) {
       final foundingOwnerPlayerId = city.foundingOwnerPlayerId;
-      if (foundingOwnerPlayerId != null &&
-          foundingOwnerPlayerId != playerId) {
+      if (foundingOwnerPlayerId != null && foundingOwnerPlayerId != playerId) {
         conqueredCityCount += 1;
       }
 
@@ -154,24 +157,5 @@ abstract final class StabilityInputBuilder {
       ...playerIds,
       ...state.knownPlayerIds,
     }.where((playerId) => playerId.isNotEmpty).toList()..sort();
-  }
-
-  static GameCity? _canonicalCoreCity(
-    List<GameCity> ownedCities,
-    String playerId,
-  ) {
-    if (ownedCities.isEmpty) return null;
-    for (final city in ownedCities) {
-      if (city.capitalOwnerPlayerId == playerId) return city;
-    }
-    return ownedCities.first;
-  }
-
-  static int _compareCities(GameCity a, GameCity b) {
-    final byId = a.id.compareTo(b.id);
-    if (byId != 0) return byId;
-    final byCol = a.center.col.compareTo(b.center.col);
-    if (byCol != 0) return byCol;
-    return a.center.row.compareTo(b.center.row);
   }
 }

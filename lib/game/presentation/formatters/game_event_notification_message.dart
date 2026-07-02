@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/formatters/combat_modifier_labels.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
+import 'package:aonw/game/presentation/formatters/stability_event_messages.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -13,7 +14,6 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -276,29 +276,13 @@ class _GameEventNotificationMessageFormatter {
           requiredHoldTurns: requiredHoldTurns,
         ),
       StabilityBandChangedEvent(:final playerId, :final newBand, :final net) =>
-        GameEventNotificationMessage(
-          title: l10n.eventStabilityBandChangedTitle,
-          body: l10n.eventStabilityBandChangedBody(
-            _playerName(l10n, save, playerId),
-            _stabilityBandLabel(l10n, newBand),
-            net,
-          ),
-          thumbnail: IconEventNotificationThumbnail(
-            newBand == StabilityBand.strained || newBand == StabilityBand.unrest
-                ? EventNotificationIconThumbnailKind.warning
-                : EventNotificationIconThumbnailKind.success,
-          ),
+        stabilityBandChangedMessage(
+          l10n: l10n,
+          playerName: _playerName(l10n, save, playerId),
+          newBand: newBand,
+          net: net,
         ),
       _ => _unsupportedEvent('turn', event),
-    };
-  }
-
-  String _stabilityBandLabel(AppLocalizations l10n, StabilityBand band) {
-    return switch (band) {
-      StabilityBand.content => l10n.stabilityBandContent,
-      StabilityBand.stable => l10n.stabilityBandStable,
-      StabilityBand.strained => l10n.stabilityBandStrained,
-      StabilityBand.unrest => l10n.stabilityBandUnrest,
     };
   }
 

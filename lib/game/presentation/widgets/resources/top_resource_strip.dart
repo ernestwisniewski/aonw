@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_delta_badge.dart';
@@ -83,13 +84,6 @@ class TopResourceStrip extends StatelessWidget {
   String get _stabilityValueLabel =>
       stabilityNet > 0 ? '+$stabilityNet' : '$stabilityNet';
 
-  static Color _stabilityColor(StabilityBand band) => switch (band) {
-    StabilityBand.content => GameUiTheme.success,
-    StabilityBand.stable => GameUiTheme.gold,
-    StabilityBand.strained => GameUiTheme.warning,
-    StabilityBand.unrest => GameUiTheme.danger,
-  };
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -128,7 +122,7 @@ class TopResourceStrip extends StatelessWidget {
         icon: GameIcons.defense,
         title: l10n.commonStability,
         value: _stabilityValueLabel,
-        color: _stabilityColor(stabilityBand),
+        color: StabilityBandPresentation.color(stabilityBand),
         compact: compact,
         critical: stabilityBand == StabilityBand.unrest,
         tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
