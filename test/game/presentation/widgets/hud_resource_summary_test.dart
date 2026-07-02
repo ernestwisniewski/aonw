@@ -116,8 +116,8 @@ void main() {
 
       expect(summary.stabilityBand, StabilityBand.unrest);
       expect(summary.goldIncome, 1);
-      expect(summary.stabilityBreakdown.baseOrder, 6);
-      expect(summary.stabilityBreakdown.cityCost, 0);
+      expect(summary.stabilityDetails.breakdown.baseOrder, 6);
+      expect(summary.stabilityDetails.breakdown.cityCost, 0);
     });
   });
 }

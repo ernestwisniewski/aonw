@@ -1,9 +1,9 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -19,8 +19,7 @@ class HudResourceSummary {
   final ScienceYieldBreakdown scienceBreakdown;
   final int stabilityNet;
   final StabilityBand stabilityBand;
-  final StabilityBreakdown stabilityBreakdown;
-  final int stabilityStandingAdjustment;
+  final HudStabilityDetails stabilityDetails;
 
   const HudResourceSummary({
     required this.gold,
@@ -34,8 +33,7 @@ class HudResourceSummary {
     required this.scienceBreakdown,
     required this.stabilityNet,
     required this.stabilityBand,
-    required this.stabilityBreakdown,
-    required this.stabilityStandingAdjustment,
+    required this.stabilityDetails,
   });
 
   factory HudResourceSummary.fromGameState({
@@ -80,12 +78,6 @@ class HudResourceSummary {
       resourceTradeAgreements: state.resourceTradeAgreements,
     );
 
-    final stabilityDetails = _stabilityDetailsForPlayer(
-      state: state,
-      playerId: playerId,
-      mapData: mapData,
-    );
-
     return HudResourceSummary(
       gold: goldBreakdown.treasury,
       goldIncome: goldBreakdown.grossIncome,
@@ -98,8 +90,11 @@ class HudResourceSummary {
       scienceBreakdown: scienceBreakdown,
       stabilityNet: stabilityNet,
       stabilityBand: StabilityPolicy.bandFor(stabilityNet),
-      stabilityBreakdown: stabilityDetails.breakdown,
-      stabilityStandingAdjustment: stabilityDetails.standingAdjustment,
+      stabilityDetails: HudStabilityDetails(
+        state: state,
+        playerId: playerId,
+        mapData: mapData,
+      ),
     );
   }
 
@@ -116,7 +111,7 @@ class HudResourceSummary {
         grossUpkeep: 0,
       ),
     );
-    return const HudResourceSummary(
+    return HudResourceSummary(
       gold: 0,
       goldIncome: 0,
       unitUpkeep: 0,
@@ -128,8 +123,7 @@ class HudResourceSummary {
       scienceBreakdown: ScienceYieldBreakdown.empty,
       stabilityNet: 0,
       stabilityBand: StabilityBand.stable,
-      stabilityBreakdown: _emptyStabilityBreakdown,
-      stabilityStandingAdjustment: 0,
+      stabilityDetails: HudStabilityDetails.empty(),
     );
   }
 }
@@ -280,61 +274,3 @@ ScienceYieldBreakdown _scienceBreakdownForPlayer({
     sources: List.unmodifiable([...base.sources, ...projectSources]),
   );
 }
-
-({StabilityBreakdown breakdown, int standingAdjustment})
-_stabilityDetailsForPlayer({
-  required GameState state,
-  required String playerId,
-  required MapData mapData,
-}) {
-  final persistentState = PersistentGameState(
-    playerColors: state.playerColors,
-    playerCountries: state.playerCountries,
-    playerGold: state.playerGold,
-    playerWarWeariness: state.playerWarWeariness,
-    playerStabilityNet: state.playerStabilityNet,
-    units: state.units,
-    cities: state.cities,
-    artifacts: state.artifacts,
-    fieldImprovements: state.fieldImprovements,
-    fogOfWar: state.fogOfWar,
-    research: state.research,
-    runtimeState: state.runtimeState,
-  );
-  final inputs = StabilityInputBuilder.forPlayers(
-    state: persistentState,
-    playerIds: [playerId],
-    mapData: mapData,
-  )[playerId];
-  if (inputs == null) {
-    return (breakdown: _emptyStabilityBreakdown, standingAdjustment: 0);
-  }
-  final breakdown = StabilityCalculator.calculate(inputs: inputs);
-  final effectiveNet = StabilityPolicy.effectiveNet(
-    breakdown.net,
-    relativeStanding: StabilityPolicy.relativeStandingFor(
-      controlPercent: inputs.controlPercent,
-      playerCount: inputs.playerCount,
-    ),
-    ruleset: StabilityRuleset.standard,
-  );
-  return (
-    breakdown: breakdown,
-    standingAdjustment: effectiveNet - breakdown.net,
-  );
-}
-
-const _emptyStabilityBreakdown = StabilityBreakdown(
-  playerId: '',
-  baseOrder: 0,
-  buildingSources: 0,
-  luxurySources: 0,
-  techSources: 0,
-  artifactSources: 0,
-  cityCost: 0,
-  populationCost: 0,
-  cohesionCost: 0,
-  conqueredCityCost: 0,
-  warWearinessCost: 0,
-  hegemonyTax: 0,
-);

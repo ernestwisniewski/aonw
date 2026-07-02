@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
@@ -230,21 +231,23 @@ Future<void> _pumpOverlay(
             sciencePerTurn: 6,
             stabilityNet: 0,
             stabilityBand: StabilityBand.stable,
-            stabilityBreakdown: const StabilityBreakdown(
-              playerId: 'player_1',
-              baseOrder: 6,
-              buildingSources: 0,
-              luxurySources: 0,
-              techSources: 0,
-              artifactSources: 0,
-              cityCost: 0,
-              populationCost: 0,
-              cohesionCost: 0,
-              conqueredCityCost: 0,
-              warWearinessCost: 0,
-              hegemonyTax: 0,
+            stabilityDetails: HudStabilityDetails.fixed(
+              standingAdjustment: 0,
+              breakdown: const StabilityBreakdown(
+                playerId: 'player_1',
+                baseOrder: 6,
+                buildingSources: 0,
+                luxurySources: 0,
+                techSources: 0,
+                artifactSources: 0,
+                cityCost: 0,
+                populationCost: 0,
+                cohesionCost: 0,
+                conqueredCityCost: 0,
+                warWearinessCost: 0,
+                hegemonyTax: 0,
+              ),
             ),
-            stabilityStandingAdjustment: 0,
             resourceInventory: const CityResourceInventory(
               playerId: 'player_1',
               countsByType: {ResourceType.iron: 2},

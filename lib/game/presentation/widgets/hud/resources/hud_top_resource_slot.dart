@@ -72,9 +72,7 @@ class HudTopResourceSlot extends ConsumerWidget {
         sciencePerTurn: resourceSummary.sciencePerTurn,
         stabilityNet: resourceSummary.stabilityNet,
         stabilityBand: resourceSummary.stabilityBand,
-        stabilityBreakdown: resourceSummary.stabilityBreakdown,
-        stabilityStandingAdjustment:
-            resourceSummary.stabilityStandingAdjustment,
+        stabilityDetails: resourceSummary.stabilityDetails,
         resourceInventory: resourceSummary.resourceInventory,
         resourceNetwork: resourceSummary.resourceNetwork,
         openBreakdown: openBreakdown,

@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/resources/victory_status_popup.dart';
@@ -18,8 +19,7 @@ class TopResourceOverlay extends StatelessWidget {
     required this.sciencePerTurn,
     required this.stabilityNet,
     required this.stabilityBand,
-    required this.stabilityBreakdown,
-    required this.stabilityStandingAdjustment,
+    required this.stabilityDetails,
     required this.resourceInventory,
     required this.openBreakdown,
     required this.goldBreakdown,
@@ -51,8 +51,7 @@ class TopResourceOverlay extends StatelessWidget {
   final int sciencePerTurn;
   final int stabilityNet;
   final StabilityBand stabilityBand;
-  final StabilityBreakdown stabilityBreakdown;
-  final int stabilityStandingAdjustment;
+  final HudStabilityDetails stabilityDetails;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
   final TopResourcePopupType? openBreakdown;
@@ -232,10 +231,10 @@ class TopResourceOverlay extends StatelessWidget {
       type: resourceType,
       gold: goldBreakdown,
       science: scienceBreakdown,
-      stability: stabilityBreakdown,
+      stability: stabilityDetails.breakdown,
       stabilityNet: stabilityNet,
       stabilityBand: stabilityBand,
-      stabilityStandingAdjustment: stabilityStandingAdjustment,
+      stabilityStandingAdjustment: stabilityDetails.standingAdjustment,
       resources: resourceInventory,
       resourceNetwork: resourceNetwork,
       cities: cities,
