@@ -332,6 +332,63 @@ void main() {
         const BuildingProductionTarget(CityBuildingType.granary),
       );
     });
+
+    test('raises order-building priority when stability reaches unrest', () {
+      const scorer = AiProductionScorer();
+      final existingBuildings = CityBuildingType.values.toSet()
+        ..remove(CityBuildingType.townHall);
+      final city = _city().copyWith(buildings: existingBuildings);
+      const assessment = AiEmpireAssessment(
+        playerId: 'player_1',
+        cityCount: 1,
+        workerCount: 1,
+        settlerCount: 0,
+        militaryCount: 1,
+        visibleEnemyMilitaryCount: 0,
+        goldReserve: 20,
+        netGoldPerTurn: 2,
+        desiredCityCount: 1,
+        desiredWorkerCount: 1,
+        desiredMilitaryCount: 1,
+      );
+      const planState = AiProductionPlanState(
+        hasPlannedResearch: true,
+        workerCount: 1,
+        settlerCount: 0,
+        militaryCount: 1,
+        reconCount: 0,
+      );
+      final research = PlayerResearchState(
+        unlockedTechnologyIds: {TechnologyId.administration},
+      );
+      final stableView = _view(city, ownResearch: research);
+      final unrestView = _view(
+        city,
+        ownResearch: research,
+        ownStabilityNet: -4,
+      );
+
+      final stable = scorer.recommend(
+        city: city,
+        view: stableView,
+        context: _context(stableView),
+        assessment: assessment,
+        planState: planState,
+      );
+      final unrest = scorer.recommend(
+        city: city,
+        view: unrestView,
+        context: _context(unrestView),
+        assessment: assessment,
+        planState: planState,
+      );
+
+      expect(
+        unrest.target,
+        const BuildingProductionTarget(CityBuildingType.townHall),
+      );
+      expect(unrest.score, greaterThan(stable.score));
+    });
   });
 }
 
@@ -352,6 +409,7 @@ GameView _view(
   List<GameUnit>? units,
   List<GameUnit> visibleEnemyUnits = const [],
   PlayerResearchState ownResearch = PlayerResearchState.empty,
+  int ownStabilityNet = 0,
   MapData? mapData,
 }) {
   final actualMapData = mapData ?? _mapData;
@@ -361,6 +419,7 @@ GameView _view(
     ownUnits: units ?? [_warrior('warrior_1', col: 0, row: 0)],
     ownCities: cities ?? [city],
     ownResearch: ownResearch,
+    ownStabilityNet: ownStabilityNet,
     ownImprovements: const [],
     visibleEnemyUnits: visibleEnemyUnits,
     rememberedEnemyCities: const [],

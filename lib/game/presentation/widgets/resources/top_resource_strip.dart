@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_delta_badge.dart';
@@ -6,16 +7,18 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 
-enum TopResourcePopupType { gold, science, resources, victory }
+enum TopResourcePopupType { gold, science, stability, resources, victory }
 
-enum ResourceBreakdownType { gold, science, resources }
+enum ResourceBreakdownType { gold, science, stability, resources }
 
 extension ResourceBreakdownPopupType on ResourceBreakdownType {
   TopResourcePopupType get popupType => switch (this) {
     ResourceBreakdownType.gold => TopResourcePopupType.gold,
     ResourceBreakdownType.science => TopResourcePopupType.science,
+    ResourceBreakdownType.stability => TopResourcePopupType.stability,
     ResourceBreakdownType.resources => TopResourcePopupType.resources,
   };
 }
@@ -24,6 +27,7 @@ extension TopResourcePopupResourceType on TopResourcePopupType {
   ResourceBreakdownType? get resourceType => switch (this) {
     TopResourcePopupType.gold => ResourceBreakdownType.gold,
     TopResourcePopupType.science => ResourceBreakdownType.science,
+    TopResourcePopupType.stability => ResourceBreakdownType.stability,
     TopResourcePopupType.resources => ResourceBreakdownType.resources,
     TopResourcePopupType.victory => null,
   };
@@ -36,11 +40,14 @@ class TopResourceStrip extends StatelessWidget {
     required this.goldIncome,
     required this.unitUpkeep,
     required this.sciencePerTurn,
+    required this.stabilityNet,
+    required this.stabilityBand,
     required this.resourceTotal,
     required this.resourceTypes,
     required this.openBreakdown,
     required this.onGoldPressed,
     required this.onSciencePressed,
+    required this.onStabilityPressed,
     required this.onResourcesPressed,
     required this.onVictoryPressed,
     this.victoryStatus,
@@ -56,11 +63,14 @@ class TopResourceStrip extends StatelessWidget {
   final int goldIncome;
   final int unitUpkeep;
   final int sciencePerTurn;
+  final int stabilityNet;
+  final StabilityBand stabilityBand;
   final int resourceTotal;
   final int resourceTypes;
   final TopResourcePopupType? openBreakdown;
   final VoidCallback onGoldPressed;
   final VoidCallback onSciencePressed;
+  final VoidCallback onStabilityPressed;
   final VoidCallback onResourcesPressed;
   final VoidCallback onVictoryPressed;
   final HudVictoryStatusSummary? victoryStatus;
@@ -70,6 +80,9 @@ class TopResourceStrip extends StatelessWidget {
 
   /// When provided, the turn count is shown beside the resource pills.
   final int? turnNumber;
+
+  String get _stabilityValueLabel =>
+      stabilityNet > 0 ? '+$stabilityNet' : '$stabilityNet';
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +115,19 @@ class TopResourceStrip extends StatelessWidget {
         tooltip: l10n.topResourceScienceTooltip(_scienceTurnLabel),
         active: openBreakdown == TopResourcePopupType.science,
         onTap: onSciencePressed,
+      ),
+      const SizedBox(width: 6),
+      TopResourcePill(
+        key: const Key('gameHud.resource.stability'),
+        icon: GameIcons.defense,
+        title: l10n.commonStability,
+        value: _stabilityValueLabel,
+        color: StabilityBandPresentation.color(stabilityBand),
+        compact: compact,
+        critical: stabilityBand == StabilityBand.unrest,
+        tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
+        active: openBreakdown == TopResourcePopupType.stability,
+        onTap: onStabilityPressed,
       ),
       const SizedBox(width: 6),
       TopResourcePill(

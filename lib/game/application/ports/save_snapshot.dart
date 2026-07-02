@@ -14,6 +14,8 @@ class SaveSnapshot {
   final Map<String, int> playerColors;
   final Map<String, PlayerCountry> playerCountries;
   final Map<String, int> playerGold;
+  final Map<String, int> playerWarWeariness;
+  final Map<String, int> playerStabilityNet;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -28,6 +30,8 @@ class SaveSnapshot {
     this.playerColors = const {},
     this.playerCountries = const {},
     this.playerGold = const {},
+    this.playerWarWeariness = const {},
+    this.playerStabilityNet = const {},
     this.units = const [],
     this.cities = const [],
     this.artifacts = const [],
@@ -49,6 +53,8 @@ class SaveSnapshot {
         playerColors: state.playerColors,
         playerCountries: state.playerCountries,
         playerGold: state.playerGold,
+        playerWarWeariness: state.playerWarWeariness,
+        playerStabilityNet: state.playerStabilityNet,
         units: state.units,
         cities: state.cities,
         artifacts: state.artifacts,
@@ -71,6 +77,8 @@ class SaveSnapshot {
       playerColors: state.playerColors,
       playerCountries: _withSaveCountryDefaults(save, state.playerCountries),
       playerGold: state.playerGold,
+      playerWarWeariness: state.playerWarWeariness,
+      playerStabilityNet: state.playerStabilityNet,
       units: state.units,
       cities: state.cities,
       artifacts: state.artifacts,
@@ -86,6 +94,8 @@ class SaveSnapshot {
     playerColors: playerColors,
     playerCountries: effectivePlayerCountries,
     playerGold: playerGold,
+    playerWarWeariness: playerWarWeariness,
+    playerStabilityNet: playerStabilityNet,
     units: units,
     cities: cities,
     artifacts: artifacts,
@@ -103,6 +113,8 @@ class SaveSnapshot {
       playerColors: playerColors,
       playerCountries: effectivePlayerCountries,
       playerGold: playerGold,
+      playerWarWeariness: playerWarWeariness,
+      playerStabilityNet: playerStabilityNet,
       units: units,
       cities: cities,
       artifacts: artifacts,
@@ -132,6 +144,8 @@ class SaveSnapshot {
     Map<String, int>? playerColors,
     Map<String, PlayerCountry>? playerCountries,
     Map<String, int>? playerGold,
+    Map<String, int>? playerWarWeariness,
+    Map<String, int>? playerStabilityNet,
     List<GameUnit>? units,
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
@@ -146,6 +160,8 @@ class SaveSnapshot {
       playerColors: playerColors ?? this.playerColors,
       playerCountries: playerCountries ?? this.playerCountries,
       playerGold: playerGold ?? this.playerGold,
+      playerWarWeariness: playerWarWeariness ?? this.playerWarWeariness,
+      playerStabilityNet: playerStabilityNet ?? this.playerStabilityNet,
       units: units ?? this.units,
       cities: cities ?? this.cities,
       artifacts: artifacts ?? this.artifacts,

@@ -14,6 +14,8 @@ class ArtifactProcessingPhase extends TurnPhase {
         units: state.units,
         cities: state.cities,
         artifacts: state.artifacts,
+        playerWarWeariness: state.playerWarWeariness,
+        playerStabilityNet: state.playerStabilityNet,
         runtimeState: state.runtimeState,
       ),
       playerIds: [context.playerId],
@@ -23,6 +25,8 @@ class ArtifactProcessingPhase extends TurnPhase {
       state: state.copyWith(
         units: result.state.units,
         artifacts: result.state.artifacts,
+        playerWarWeariness: result.state.playerWarWeariness,
+        playerStabilityNet: result.state.playerStabilityNet,
       ),
     );
   }

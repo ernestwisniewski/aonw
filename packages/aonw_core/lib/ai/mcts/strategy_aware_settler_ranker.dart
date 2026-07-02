@@ -3,6 +3,7 @@ import 'package:aonw_core/ai/city_founding_safety.dart';
 import 'package:aonw_core/ai/empire_assessment.dart';
 import 'package:aonw_core/ai/frontier_exploration_scorer.dart';
 import 'package:aonw_core/ai/game_view.dart';
+import 'package:aonw_core/ai/mcts/settler_founding_stability_policy.dart';
 import 'package:aonw_core/ai/mcts/strategy_aware_candidate_ranking.dart';
 import 'package:aonw_core/ai/mcts/strategy_aware_military_context.dart';
 import 'package:aonw_core/ai/mcts/strategy_aware_ranking_queries.dart';

@@ -1,10 +1,12 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/resources/victory_status_popup.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +17,9 @@ class TopResourceOverlay extends StatelessWidget {
     required this.goldIncome,
     required this.unitUpkeep,
     required this.sciencePerTurn,
+    required this.stabilityNet,
+    required this.stabilityBand,
+    required this.stabilityDetails,
     required this.resourceInventory,
     required this.openBreakdown,
     required this.goldBreakdown,
@@ -25,6 +30,7 @@ class TopResourceOverlay extends StatelessWidget {
     required this.l10n,
     required this.onGoldPressed,
     required this.onSciencePressed,
+    required this.onStabilityPressed,
     required this.onResourcesPressed,
     required this.onVictoryPressed,
     required this.onCloseBreakdown,
@@ -43,6 +49,9 @@ class TopResourceOverlay extends StatelessWidget {
   final int goldIncome;
   final int unitUpkeep;
   final int sciencePerTurn;
+  final int stabilityNet;
+  final StabilityBand stabilityBand;
+  final HudStabilityDetails stabilityDetails;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
   final TopResourcePopupType? openBreakdown;
@@ -55,6 +64,7 @@ class TopResourceOverlay extends StatelessWidget {
   final AppLocalizations l10n;
   final VoidCallback onGoldPressed;
   final VoidCallback onSciencePressed;
+  final VoidCallback onStabilityPressed;
   final VoidCallback onResourcesPressed;
   final VoidCallback onVictoryPressed;
   final VoidCallback onCloseBreakdown;
@@ -86,6 +96,8 @@ class TopResourceOverlay extends StatelessWidget {
                   goldIncome: goldIncome,
                   unitUpkeep: unitUpkeep,
                   sciencePerTurn: sciencePerTurn,
+                  stabilityNet: stabilityNet,
+                  stabilityBand: stabilityBand,
                   resourceTotal: resourceInventory.totalCount,
                   resourceTypes: resourceInventory.distinctTypeCount,
                   openBreakdown: openBreakdown,
@@ -96,6 +108,7 @@ class TopResourceOverlay extends StatelessWidget {
                   onTurnPressed: onTurnPressed,
                   onGoldPressed: onGoldPressed,
                   onSciencePressed: onSciencePressed,
+                  onStabilityPressed: onStabilityPressed,
                   onResourcesPressed: onResourcesPressed,
                   onVictoryPressed: onVictoryPressed,
                 ),
@@ -218,6 +231,10 @@ class TopResourceOverlay extends StatelessWidget {
       type: resourceType,
       gold: goldBreakdown,
       science: scienceBreakdown,
+      stability: stabilityDetails.breakdown,
+      stabilityNet: stabilityNet,
+      stabilityBand: stabilityBand,
+      stabilityStandingAdjustment: stabilityDetails.standingAdjustment,
       resources: resourceInventory,
       resourceNetwork: resourceNetwork,
       cities: cities,

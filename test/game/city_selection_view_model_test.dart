@@ -130,6 +130,37 @@ void main() {
       expect(vm.items[4].label, 'Buildings');
     });
 
+    test('shows frontier distance and cohesion cost', () {
+      const capital = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        foundingOwnerPlayerId: 'player_1',
+        name: 'Capital',
+        center: CityHex(col: 0, row: 0),
+      );
+      const frontier = GameCity(
+        id: 'city_2',
+        ownerPlayerId: 'player_1',
+        foundingOwnerPlayerId: 'player_1',
+        name: 'Frontier',
+        center: CityHex(col: 8, row: 0),
+        controlledHexes: [CityHex(col: 7, row: 0)],
+      );
+
+      final vm = SelectionViewModelFactory.from(
+        GameSelection.city(
+          frontier,
+          cityYield: TileYield.zero,
+          playerColor: 0xFF4488cc,
+        ),
+        gameState: const GameState(cities: [capital, frontier]),
+        l10n: l10n,
+      );
+
+      final cohesion = vm.items.singleWhere((item) => item.label == 'Cohesion');
+      expect(cohesion.value, 'Frontier • 8 hexes • -4 stability');
+    });
+
     test('marks city info when the city stores an artifact', () {
       const artifact = WorldArtifact(
         id: 'artifact.hero_sword',

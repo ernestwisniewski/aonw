@@ -16,6 +16,7 @@ import 'package:aonw_core/game/domain/city/city_yield_calculator.dart';
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability/stability_modifier.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/science_yield.dart';
 import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart';
@@ -35,6 +36,7 @@ abstract final class CityTurnProcessor {
     CityRuleset ruleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityModifier stabilityModifier = StabilityModifier.stable,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final updatedCities = List<GameCity>.of(cities);
@@ -66,6 +68,7 @@ abstract final class CityTurnProcessor {
         ruleset: ruleset,
         paceBalance: paceBalance,
         technologyEffects: technologyEffects,
+        stabilityModifier: stabilityModifier,
         artifacts: artifacts,
       );
       updatedCities[i] = result.city;
@@ -107,6 +110,7 @@ abstract final class CityTurnProcessor {
     required CityRuleset ruleset,
     required PaceBalance paceBalance,
     required TechnologyEffectSummary technologyEffects,
+    required StabilityModifier stabilityModifier,
     required List<WorldArtifact> artifacts,
   }) {
     final events = <CityTurnEvent>[];
@@ -125,6 +129,7 @@ abstract final class CityTurnProcessor {
       ruleset: ruleset,
       paceBalance: paceBalance,
       technologyEffects: technologyEffects,
+      stabilityModifier: stabilityModifier,
     );
     final goldGained = economy.netYield.gold < 0 ? 0 : economy.netYield.gold;
     var projectGoldGained = 0;

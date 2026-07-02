@@ -4724,6 +4724,30 @@ abstract class AppLocalizations {
   /// **'A steady screen protects settlers, workers, and developed cities.'**
   String get objectiveBuildCombatForceTooltip;
 
+  /// No description provided for @objectiveRaiseStabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore stability'**
+  String get objectiveRaiseStabilityTitle;
+
+  /// No description provided for @objectiveRaiseStabilityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.'**
+  String get objectiveRaiseStabilityHint;
+
+  /// No description provided for @objectiveRaiseStabilityReward.
+  ///
+  /// In en, this message translates to:
+  /// **'+ steady growth'**
+  String get objectiveRaiseStabilityReward;
+
+  /// No description provided for @objectiveRaiseStabilityTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained and unrest empires lose city growth and part of their yields until stability recovers.'**
+  String get objectiveRaiseStabilityTooltip;
+
   /// No description provided for @objectiveHoldDominationTitle.
   ///
   /// In en, this message translates to:
@@ -7613,6 +7637,12 @@ abstract class AppLocalizations {
   /// **'Science'**
   String get commonScience;
 
+  /// No description provided for @commonStability.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability'**
+  String get commonStability;
+
   /// No description provided for @commonProduction.
   ///
   /// In en, this message translates to:
@@ -8002,6 +8032,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Science: {scienceTurnLabel} / turn'**
   String topResourceScienceTooltip(String scienceTurnLabel);
+
+  /// No description provided for @topResourceStabilityTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire stability: {net}'**
+  String topResourceStabilityTooltip(int net);
+
+  /// No description provided for @stabilityBandContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get stabilityBandContent;
+
+  /// No description provided for @stabilityBandStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable'**
+  String get stabilityBandStable;
+
+  /// No description provided for @stabilityBandStrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained'**
+  String get stabilityBandStrained;
+
+  /// No description provided for @stabilityBandUnrest.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrest'**
+  String get stabilityBandUnrest;
+
+  /// No description provided for @stabilityBreakdownBand.
+  ///
+  /// In en, this message translates to:
+  /// **'Current state'**
+  String get stabilityBreakdownBand;
+
+  /// No description provided for @stabilityBreakdownNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net stability'**
+  String get stabilityBreakdownNet;
+
+  /// No description provided for @stabilityBreakdownSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get stabilityBreakdownSources;
+
+  /// No description provided for @stabilityBreakdownCosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Costs'**
+  String get stabilityBreakdownCosts;
+
+  /// No description provided for @stabilityBreakdownBaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Base order'**
+  String get stabilityBreakdownBaseOrder;
+
+  /// No description provided for @stabilityBreakdownBuildings.
+  ///
+  /// In en, this message translates to:
+  /// **'Order buildings'**
+  String get stabilityBreakdownBuildings;
+
+  /// No description provided for @stabilityBreakdownLuxuries.
+  ///
+  /// In en, this message translates to:
+  /// **'Luxury resources'**
+  String get stabilityBreakdownLuxuries;
+
+  /// No description provided for @stabilityBreakdownTechnologies.
+  ///
+  /// In en, this message translates to:
+  /// **'Technologies'**
+  String get stabilityBreakdownTechnologies;
+
+  /// No description provided for @stabilityBreakdownArtifacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored artifacts'**
+  String get stabilityBreakdownArtifacts;
+
+  /// No description provided for @stabilityBreakdownCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire size'**
+  String get stabilityBreakdownCities;
+
+  /// No description provided for @stabilityBreakdownPopulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Population'**
+  String get stabilityBreakdownPopulation;
+
+  /// No description provided for @stabilityBreakdownCohesion.
+  ///
+  /// In en, this message translates to:
+  /// **'Frontier cohesion'**
+  String get stabilityBreakdownCohesion;
+
+  /// No description provided for @stabilityBreakdownConqueredCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Conquered cities'**
+  String get stabilityBreakdownConqueredCities;
+
+  /// No description provided for @stabilityBreakdownWarWeariness.
+  ///
+  /// In en, this message translates to:
+  /// **'War weariness'**
+  String get stabilityBreakdownWarWeariness;
+
+  /// No description provided for @stabilityBreakdownHegemony.
+  ///
+  /// In en, this message translates to:
+  /// **'Hegemony pressure'**
+  String get stabilityBreakdownHegemony;
+
+  /// No description provided for @stabilityBreakdownRelativeStanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Relative standing'**
+  String get stabilityBreakdownRelativeStanding;
 
   /// No description provided for @topResourceResourcesTooltip.
   ///
@@ -8843,6 +8999,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Buildings'**
   String get citySelectionBuildingsLabel;
+
+  /// No description provided for @citySelectionCohesionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cohesion'**
+  String get citySelectionCohesionLabel;
+
+  /// No description provided for @citySelectionCohesionCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get citySelectionCohesionCore;
+
+  /// No description provided for @citySelectionCohesionIntegrated.
+  ///
+  /// In en, this message translates to:
+  /// **'Integrated • {distance} hexes from core'**
+  String citySelectionCohesionIntegrated(int distance);
+
+  /// No description provided for @citySelectionCohesionFrontier.
+  ///
+  /// In en, this message translates to:
+  /// **'Frontier • {distance} hexes • -{cost} stability'**
+  String citySelectionCohesionFrontier(int distance, int cost);
 
   /// No description provided for @citySelectionArtifactLabel.
   ///
@@ -12348,6 +12528,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Turn ended'**
   String get eventTurnEndedTitle;
+
+  /// No description provided for @eventStabilityBandChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire stability changed'**
+  String get eventStabilityBandChangedTitle;
+
+  /// No description provided for @eventStabilityBandChangedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{playerName}: {band} ({net})'**
+  String eventStabilityBandChangedBody(String playerName, String band, int net);
 
   /// No description provided for @eventWorkerCompletedJobTitle.
   ///

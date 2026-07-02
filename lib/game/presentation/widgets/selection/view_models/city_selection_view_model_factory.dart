@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/city/city_yield_breakdown_view_model.dart';
+import 'package:aonw/game/presentation/widgets/selection/view_models/city_cohesion_selection_item.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/city_objective_selection_items_factory.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_item.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_view_model.dart';
@@ -24,6 +25,7 @@ abstract final class CitySelectionViewModelFactory {
     CityRuleset cityRuleset = CityRulesets.standard,
     MapData? mapData,
     List<GameUnit> units = const [],
+    List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
     List<FieldImprovement> fieldImprovements = const [],
     ResearchState research = ResearchState.empty,
@@ -70,6 +72,7 @@ abstract final class CitySelectionViewModelFactory {
               GameDisplayNames.cityBuilding(l10n, type),
         ),
     ];
+    final cohesionItem = CityCohesionSelectionItem.build(city, cities, l10n);
     final yieldBreakdown = mapData == null
         ? null
         : CityYieldBreakdownViewModel.fromCity(
@@ -155,6 +158,7 @@ abstract final class CitySelectionViewModelFactory {
           value: '${city.buildings.length}',
           color: const Color(0xFF8da8e8),
         ),
+        ?cohesionItem,
         if (storedArtifact != null)
           SelectionInfoItem(
             icon: GameIcons.artifact,

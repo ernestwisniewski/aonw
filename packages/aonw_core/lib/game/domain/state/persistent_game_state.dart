@@ -98,6 +98,28 @@ class PersistentGameState {
   final ResearchState research;
   final GameRuntimeState runtimeState;
 
+  /// Every non-empty player id referenced anywhere in this state: per-player
+  /// maps, unit and city owners (including a city's founding owner), diplomacy
+  /// relations, fog, and runtime holds.
+  Set<String> get knownPlayerIds => <String>{
+    ...playerColors.keys,
+    ...playerCountries.keys,
+    ...playerGold.keys,
+    ...playerWarWeariness.keys,
+    ...playerStabilityNet.keys,
+    ...fogOfWar.playerIds,
+    ...runtimeState.submittedPlayerIds,
+    ...runtimeState.dominationHoldTurnsByPlayerId.keys,
+    ...runtimeState.culturalVictoryHoldTurnsByPlayerId.keys,
+    for (final unit in units) unit.ownerPlayerId,
+    for (final city in cities) city.ownerPlayerId,
+    for (final city in cities) ?city.foundingOwnerPlayerId,
+    for (final relation in runtimeState.diplomacy.relations.values)
+      relation.playerAId,
+    for (final relation in runtimeState.diplomacy.relations.values)
+      relation.playerBId,
+  }..removeWhere((playerId) => playerId.isEmpty);
+
   Map<String, dynamic> toJson() => {
     'playerColors': playerColors,
     'playerCountries': playerCountries.map(

@@ -3,6 +3,7 @@ import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +14,8 @@ void main() {
     int goldIncome = 9,
     int unitUpkeep = 2,
     int sciencePerTurn = 5,
+    int stabilityNet = 4,
+    StabilityBand stabilityBand = StabilityBand.stable,
     int resourceTotal = 3,
     int resourceTypes = 2,
     TopResourcePopupType? openBreakdown,
@@ -22,6 +25,7 @@ void main() {
     int? turnNumber,
     VoidCallback? onGoldPressed,
     VoidCallback? onSciencePressed,
+    VoidCallback? onStabilityPressed,
     VoidCallback? onResourcesPressed,
     VoidCallback? onVictoryPressed,
     VoidCallback? onTurnPressed,
@@ -37,6 +41,8 @@ void main() {
           goldIncome: goldIncome,
           unitUpkeep: unitUpkeep,
           sciencePerTurn: sciencePerTurn,
+          stabilityNet: stabilityNet,
+          stabilityBand: stabilityBand,
           resourceTotal: resourceTotal,
           resourceTypes: resourceTypes,
           openBreakdown: openBreakdown,
@@ -47,6 +53,7 @@ void main() {
           onTurnPressed: onTurnPressed,
           onGoldPressed: onGoldPressed ?? () {},
           onSciencePressed: onSciencePressed ?? () {},
+          onStabilityPressed: onStabilityPressed ?? () {},
           onResourcesPressed: onResourcesPressed ?? () {},
           onVictoryPressed: onVictoryPressed ?? () {},
         ),
@@ -57,6 +64,7 @@ void main() {
   testWidgets('renders resource values and handles taps', (tester) async {
     var goldTaps = 0;
     var scienceTaps = 0;
+    var stabilityTaps = 0;
     var resourceTaps = 0;
 
     await tester.pumpWidget(
@@ -64,6 +72,7 @@ void main() {
         openBreakdown: TopResourcePopupType.gold,
         onGoldPressed: () => goldTaps++,
         onSciencePressed: () => scienceTaps++,
+        onStabilityPressed: () => stabilityTaps++,
         onResourcesPressed: () => resourceTaps++,
       ),
     );
@@ -75,10 +84,12 @@ void main() {
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
     await tester.tap(find.byKey(const Key('gameHud.resource.science')));
+    await tester.tap(find.byKey(const Key('gameHud.resource.stability')));
     await tester.tap(find.byKey(const Key('gameHud.resource.resources')));
 
     expect(goldTaps, 1);
     expect(scienceTaps, 1);
+    expect(stabilityTaps, 1);
     expect(resourceTaps, 1);
   });
 

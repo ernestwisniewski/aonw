@@ -87,6 +87,29 @@ void main() {
     });
   });
 
+  group('relativeStandingFor', () {
+    test('is neutral at the fair share', () {
+      expect(
+        StabilityPolicy.relativeStandingFor(controlPercent: 25, playerCount: 4),
+        closeTo(0.0, 0.0001),
+      );
+    });
+
+    test('trends to a full leader well above the fair share', () {
+      expect(
+        StabilityPolicy.relativeStandingFor(controlPercent: 50, playerCount: 4),
+        closeTo(1.0, 0.0001),
+      );
+    });
+
+    test('trends to a full underdog at zero control and clamps', () {
+      expect(
+        StabilityPolicy.relativeStandingFor(controlPercent: 0, playerCount: 4),
+        closeTo(-1.0, 0.0001),
+      );
+    });
+  });
+
   group('effectiveNet', () {
     test('treats a NaN standing as neutral instead of crashing', () {
       expect(

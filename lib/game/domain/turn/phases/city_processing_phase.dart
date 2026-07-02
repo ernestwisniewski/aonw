@@ -21,6 +21,10 @@ class CityProcessingPhase extends TurnPhase {
       ruleset: context.ruleset.city,
       research: state.research,
       technologyRuleset: context.ruleset.technology,
+      stabilityModifier: PersistentStabilityProcessor.modifierForNet(
+        state.playerStabilityNet[context.playerId] ?? 0,
+        ruleset: context.ruleset.stability,
+      ),
       paceBalance: context.ruleset.paceBalance,
     );
 

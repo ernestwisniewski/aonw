@@ -229,6 +229,8 @@ bool _eventBelongsToPlayer({
           _unitOwner(previousState, unitId) == playerId,
     DominationThresholdReachedEvent(playerId: final eventPlayerId) =>
       eventPlayerId == playerId,
+    StabilityBandChangedEvent(playerId: final eventPlayerId) =>
+      eventPlayerId == playerId,
     CivilizationMetEvent(playerId: final eventPlayerId, :final metPlayerId) =>
       eventPlayerId == playerId || metPlayerId == playerId,
     DiplomaticProposalSentEvent(:final fromPlayerId, :final toPlayerId) =>

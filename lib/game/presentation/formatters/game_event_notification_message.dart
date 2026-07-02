@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/formatters/combat_modifier_labels.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
+import 'package:aonw/game/presentation/formatters/stability_event_messages.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -76,7 +77,8 @@ class _GameEventNotificationMessageFormatter {
       CityCapturedEvent() ||
       CityDestroyedEvent() => _combatEventMessage(event),
       TurnEndedEvent() ||
-      DominationThresholdReachedEvent() => _turnEventMessage(event),
+      DominationThresholdReachedEvent() ||
+      StabilityBandChangedEvent() => _turnEventMessage(event),
       ResearchPointsGainedEvent() ||
       TechnologyResearchedEvent() ||
       StrategicResourceDiscoveredEvent() => _researchEventMessage(event),
@@ -272,6 +274,13 @@ class _GameEventNotificationMessageFormatter {
           requiredControlPercent: requiredControlPercent,
           holdTurns: holdTurns,
           requiredHoldTurns: requiredHoldTurns,
+        ),
+      StabilityBandChangedEvent(:final playerId, :final newBand, :final net) =>
+        stabilityBandChangedMessage(
+          l10n: l10n,
+          playerName: _playerName(l10n, save, playerId),
+          newBand: newBand,
+          net: net,
         ),
       _ => _unsupportedEvent('turn', event),
     };

@@ -64,6 +64,49 @@ void main() {
       expect(science.byCityId['city_2'], 4);
     });
 
+    test('stability modifiers gate growth and scale city yields', () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Capital',
+        center: CityHex(col: 0, row: 0),
+      );
+      const tileYield = TileYield(food: 6, production: 5, gold: 5, defense: 0);
+
+      final stable = CityEconomyBreakdown.from(
+        city: city,
+        tileYield: tileYield,
+        mapData: _map(),
+      );
+      final content = CityEconomyBreakdown.from(
+        city: city,
+        tileYield: tileYield,
+        mapData: _map(),
+        stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.content),
+      );
+      final strained = CityEconomyBreakdown.from(
+        city: city,
+        tileYield: tileYield,
+        mapData: _map(),
+        stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.strained),
+      );
+      final unrest = CityEconomyBreakdown.from(
+        city: city,
+        tileYield: tileYield,
+        mapData: _map(),
+        stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.unrest),
+      );
+
+      expect(content.foodDeposit, stable.foodDeposit + 1);
+      expect(content.netYield, stable.netYield);
+      expect(strained.foodDeposit, 0);
+      expect(strained.netYield.production, stable.netYield.production);
+      expect(strained.netYield.gold, 4);
+      expect(unrest.foodDeposit, 0);
+      expect(unrest.netYield.production, 3);
+      expect(unrest.netYield.gold, 3);
+    });
+
     test('military specialization accelerates unit production only', () {
       final city = GameCity(
         id: 'city_1',

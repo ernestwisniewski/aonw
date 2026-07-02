@@ -7,6 +7,7 @@ import 'package:aonw_core/ai/mcts/mcts_command_movement_scorer.dart';
 import 'package:aonw_core/ai/mcts/mcts_command_production_scorer.dart';
 import 'package:aonw_core/ai/mcts/mcts_evaluation_queries.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
+import 'package:aonw_core/ai/mcts/mcts_stability_scores.dart';
 import 'package:aonw_core/ai/mcts/mcts_state_score_estimator.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategic_state_scorer.dart';
 import 'package:aonw_core/ai/strategic/war_goal.dart';
@@ -42,11 +43,14 @@ class StateHeuristicEvaluator implements MctsEvaluator {
         ? 0.0
         : (0.08 + scoreRace.urgency * 0.17).clamp(0.0, 0.25).toDouble();
     const commandWeight = 0.22;
-    final strategicWeight = 1.0 - commandWeight - scoreRaceWeight;
+    const stabilityWeight = 0.12;
+    final strategicWeight =
+        1.0 - commandWeight - scoreRaceWeight - stabilityWeight;
     final score =
         strategicScore * strategicWeight +
         commandScore * commandWeight +
-        _scoreRaceScore(state, scoreRace) * scoreRaceWeight;
+        _scoreRaceScore(state, scoreRace) * scoreRaceWeight +
+        MctsStabilityScores.stateScore(state, context) * stabilityWeight;
     return score.clamp(-1.0, 1.0).toDouble();
   }
 
@@ -108,7 +112,9 @@ class CommandSequenceEvaluator implements MctsEvaluator {
         state: state,
         context: context,
       ),
-      StartBuildingCommand() || StartCityProjectCommand() => 0.11,
+      StartBuildingCommand(:final buildingType) =>
+        MctsStabilityScores.buildingScore(buildingType, state),
+      StartCityProjectCommand() => 0.11,
       SetCitySpecializationCommand() => 0.08,
       SelectWorkerImprovementCommand() ||
       ConfirmWorkerImprovementCommand() ||

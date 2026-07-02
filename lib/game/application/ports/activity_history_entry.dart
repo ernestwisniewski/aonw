@@ -220,6 +220,7 @@ Set<String> _unitIdsFor(GameEvent event) {
     CityDestroyedEvent() ||
     TurnEndedEvent() ||
     DominationThresholdReachedEvent() ||
+    StabilityBandChangedEvent() ||
     ResearchPointsGainedEvent() ||
     TechnologyResearchedEvent() ||
     StrategicResourceDiscoveredEvent() ||
@@ -258,6 +259,7 @@ Set<String> _cityIdsFor(GameEvent event) {
     TurnEndedEvent() ||
     WorkerCompletedJobEvent() ||
     DominationThresholdReachedEvent() ||
+    StabilityBandChangedEvent() ||
     ResearchPointsGainedEvent() ||
     TechnologyResearchedEvent() ||
     StrategicResourceDiscoveredEvent() ||

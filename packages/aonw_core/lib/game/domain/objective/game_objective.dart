@@ -18,6 +18,7 @@ enum GameObjectiveId {
   foundThirdCity,
   exploreRegion,
   buildCombatForce,
+  raiseStability,
   holdDomination,
   breakDominationHold,
   holdScoreLead,
@@ -204,6 +205,12 @@ abstract final class GameObjectiveTracker {
       tone: GameObjectiveTone.expansion,
       targetScaling: GameObjectiveTargetScaling.pace,
     ),
+    GameObjectiveDefinition(
+      id: GameObjectiveId.raiseStability,
+      phase: GameObjectivePhase.pressure,
+      targetValue: 1,
+      tone: GameObjectiveTone.economy,
+    ),
   ];
 
   static const holdDominationObjective = GameObjectiveDefinition(
@@ -278,6 +285,7 @@ abstract final class GameObjectiveTracker {
     required ResearchState research,
     Iterable<GameObjectiveDefinition> definitions = guidanceObjectives,
     PaceBalance paceBalance = PaceBalance.unlimited,
+    int playerStabilityNet = 0,
   }) {
     return [
       for (final definition in definitions)
@@ -291,6 +299,7 @@ abstract final class GameObjectiveTracker {
             fieldImprovements: fieldImprovements,
             fogOfWar: fogOfWar,
             research: research,
+            playerStabilityNet: playerStabilityNet,
           ),
         ),
     ];
@@ -332,6 +341,7 @@ abstract final class GameObjectiveTracker {
     int? scoreRemainingTurns,
     int scorePressureWindow = 5,
     Iterable<MapObjectiveProgress> mapObjectiveProgress = const [],
+    int playerStabilityNet = 0,
     int limit = 3,
   }) {
     if (limit <= 0) return const [];
@@ -354,6 +364,7 @@ abstract final class GameObjectiveTracker {
       fogOfWar: fogOfWar,
       research: research,
       paceBalance: paceBalance,
+      playerStabilityNet: playerStabilityNet,
     );
     return [
       ...strategic.take(limit),
@@ -480,6 +491,7 @@ abstract final class GameObjectiveTracker {
     required Iterable<FieldImprovement> fieldImprovements,
     required FogOfWarState fogOfWar,
     required ResearchState research,
+    int playerStabilityNet = 0,
   }) {
     final playerCities = [
       for (final city in cities)
@@ -518,6 +530,7 @@ abstract final class GameObjectiveTracker {
         playerId: playerId,
         units: units,
       ),
+      GameObjectiveId.raiseStability => playerStabilityNet >= 0 ? 1 : 0,
       GameObjectiveId.holdDomination ||
       GameObjectiveId.breakDominationHold ||
       GameObjectiveId.holdScoreLead ||

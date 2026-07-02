@@ -2695,6 +2695,26 @@
       }
     }
   },
+  "stabilityBandContent": "Dobrobyt",
+  "stabilityBandStable": "Stabilne",
+  "stabilityBandStrained": "Napięcie",
+  "stabilityBandUnrest": "Niepokoje",
+  "stabilityBreakdownBand": "Obecny stan",
+  "stabilityBreakdownNet": "Stabilność netto",
+  "stabilityBreakdownSources": "Źródła",
+  "stabilityBreakdownCosts": "Koszty",
+  "stabilityBreakdownBaseOrder": "Podstawowy porządek",
+  "stabilityBreakdownBuildings": "Budynki porządku",
+  "stabilityBreakdownLuxuries": "Zasoby luksusowe",
+  "stabilityBreakdownTechnologies": "Technologie",
+  "stabilityBreakdownArtifacts": "Przechowywane artefakty",
+  "stabilityBreakdownCities": "Rozmiar imperium",
+  "stabilityBreakdownPopulation": "Populacja",
+  "stabilityBreakdownCohesion": "Spójność pogranicza",
+  "stabilityBreakdownConqueredCities": "Podbite miasta",
+  "stabilityBreakdownWarWeariness": "Zmęczenie wojną",
+  "stabilityBreakdownHegemony": "Presja hegemonii",
+  "stabilityBreakdownRelativeStanding": "Pozycja względem rywali",
   "topResourceResourcesTooltip": "Zasoby: {resourceTotal} złóż • {resourceTypes} typów kontrolowanych",
   "@topResourceResourcesTooltip": {
     "placeholders": {
@@ -3048,6 +3068,27 @@
   "citySelectionFoodLabel": "Żywność",
   "citySelectionNetFoodLabel": "Net food",
   "citySelectionBuildingsLabel": "Budynki",
+  "citySelectionCohesionLabel": "Spójność",
+  "citySelectionCohesionCore": "Rdzeń",
+  "citySelectionCohesionIntegrated": "Zintegrowane • {distance} pól od rdzenia",
+  "@citySelectionCohesionIntegrated": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  },
+  "citySelectionCohesionFrontier": "Pogranicze • {distance} pól • -{cost} stabilności",
+  "@citySelectionCohesionFrontier": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "citySelectionArtifactLabel": "Artefakt",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Dziedzictwo",
@@ -4391,6 +4432,21 @@
   "eventCityCapturedTitle": "Miasto zdobyte",
   "eventCityDestroyedTitle": "Miasto zniszczone",
   "eventTurnEndedTitle": "Tura zakończona",
+  "eventStabilityBandChangedTitle": "Zmiana stabilności imperium",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
+  "@eventStabilityBandChangedBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      },
+      "net": {
+        "type": "int"
+      }
+    }
+  },
   "eventWorkerCompletedJobTitle": "Praca zakończona",
   "eventResearchPointsTitle": "Nauka",
   "eventResearchPointsBody": "{playerName}: +{points} nauki",

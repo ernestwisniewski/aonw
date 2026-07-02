@@ -64,6 +64,8 @@ abstract final class ResourceTradeReducer {
       playerColors: state.playerColors,
       playerCountries: state.playerCountries,
       playerGold: state.playerGold,
+      playerWarWeariness: state.playerWarWeariness,
+      playerStabilityNet: state.playerStabilityNet,
       units: state.units,
       cities: state.cities,
       artifacts: state.artifacts,
@@ -80,6 +82,8 @@ abstract final class ResourceTradeReducer {
   ) {
     return state.copyWith(
       playerGold: persistent.playerGold,
+      playerWarWeariness: persistent.playerWarWeariness,
+      playerStabilityNet: persistent.playerStabilityNet,
       resourceTradeAgreements: persistent.runtimeState.resourceTradeAgreements,
     );
   }

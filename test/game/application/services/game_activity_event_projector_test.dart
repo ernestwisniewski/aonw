@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -118,6 +119,36 @@ void main() {
       expect(activity.single.playerId, 'player_1');
       expect(activity.single.context.units, isEmpty);
       expect(activity.single.context.cities, isEmpty);
+    });
+
+    test('projects stability changes only to the owning player', () {
+      final hidden = GameActivityEventProjector.project(
+        events: const [
+          StabilityBandChangedEvent(
+            playerId: 'player_1',
+            previousBand: StabilityBand.stable,
+            newBand: StabilityBand.strained,
+            net: -2,
+          ),
+        ],
+        state: const GameState(),
+        visiblePlayerId: 'player_2',
+      );
+      final visible = GameActivityEventProjector.project(
+        events: const [
+          StabilityBandChangedEvent(
+            playerId: 'player_1',
+            previousBand: StabilityBand.stable,
+            newBand: StabilityBand.strained,
+            net: -2,
+          ),
+        ],
+        state: const GameState(),
+        visiblePlayerId: 'player_1',
+      );
+
+      expect(hidden, isEmpty);
+      expect(visible.single.playerId, 'player_1');
     });
   });
 }

@@ -8,6 +8,7 @@ import 'package:aonw_core/ai/production_unit_scorer.dart';
 import 'package:aonw_core/ai/production_yield_weights.dart';
 import 'package:aonw_core/ai/strategic/strategic_mode.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';

@@ -113,6 +113,8 @@ abstract class GameState with _$GameState {
     @Default({}) Map<String, int> playerColors,
     @Default({}) Map<String, PlayerCountry> playerCountries,
     @Default({}) Map<String, int> playerGold,
+    @Default({}) Map<String, int> playerWarWeariness,
+    @Default({}) Map<String, int> playerStabilityNet,
     @Default([]) List<GameUnit> units,
     @Default([]) List<GameCity> cities,
     @Default([]) List<WorldArtifact> artifacts,

@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
@@ -116,11 +117,20 @@ abstract final class PersistentTurnEconomyProcessor {
       holdStatesByObjectiveId: mapObjectiveHoldStates,
     );
     current = _advanceResourceTrades(state: current, playerIds: playerIds);
+    final stability = PersistentStabilityProcessor.advanceForPlayers(
+      state: current,
+      playerIds: playerIds,
+      mapData: mapData,
+      ruleset: ruleset.stability,
+      turnEvents: [...priorEvents, ...events],
+    );
+    current = stability.state;
+    events.addAll(stability.events);
 
     final fogOfWar = fogOfWarService.recompute(
       current: current.fogOfWar,
       mapData: mapData,
-      playerIds: _knownPlayerIds(current),
+      playerIds: current.knownPlayerIds,
       units: current.units,
       cities: current.cities,
     );
@@ -271,6 +281,11 @@ abstract final class PersistentTurnEconomyProcessor {
       ruleset: ruleset.city,
       research: state.research,
       technologyRuleset: ruleset.technology,
+      stabilityModifier: PersistentStabilityProcessor.modifierForPlayer(
+        state: state,
+        playerId: playerId,
+        ruleset: ruleset.stability,
+      ),
       paceBalance: ruleset.paceBalance,
     );
     final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
@@ -552,15 +567,5 @@ abstract final class PersistentTurnEconomyProcessor {
       for (final playerId in playerIds)
         if (playerId.isNotEmpty) playerId,
     }.toList()..sort();
-  }
-
-  static Set<String> _knownPlayerIds(PersistentGameState state) {
-    return {
-      ...state.playerColors.keys,
-      ...state.playerGold.keys,
-      ...state.fogOfWar.playerIds,
-      for (final unit in state.units) unit.ownerPlayerId,
-      for (final city in state.cities) city.ownerPlayerId,
-    };
   }
 }

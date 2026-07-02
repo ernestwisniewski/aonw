@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
@@ -15,6 +16,7 @@ void main() {
   ) async {
     var goldTaps = 0;
     var scienceTaps = 0;
+    var stabilityTaps = 0;
     var resourceTaps = 0;
     var victoryTaps = 0;
 
@@ -23,6 +25,7 @@ void main() {
       victoryStatus: _victoryStatus,
       onGoldPressed: () => goldTaps++,
       onSciencePressed: () => scienceTaps++,
+      onStabilityPressed: () => stabilityTaps++,
       onResourcesPressed: () => resourceTaps++,
       onVictoryPressed: () => victoryTaps++,
     );
@@ -34,11 +37,13 @@ void main() {
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
     await tester.tap(find.byKey(const Key('gameHud.resource.science')));
+    await tester.tap(find.byKey(const Key('gameHud.resource.stability')));
     await tester.tap(find.byKey(const Key('gameHud.resource.resources')));
     await tester.tap(find.byKey(const Key('gameHud.victoryStatus')));
 
     expect(goldTaps, 1);
     expect(scienceTaps, 1);
+    expect(stabilityTaps, 1);
     expect(resourceTaps, 1);
     expect(victoryTaps, 1);
   });
@@ -75,6 +80,17 @@ void main() {
     await tester.tapAt(const Offset(30, 250));
 
     expect(closes, 1);
+  });
+
+  testWidgets('TopResourceOverlay shows stability breakdown', (tester) async {
+    await _pumpOverlay(tester, openBreakdown: TopResourcePopupType.stability);
+
+    expect(
+      find.byKey(const Key('gameHud.resourceBreakdown.stability')),
+      findsOneWidget,
+    );
+    expect(find.text('Stability'), findsOneWidget);
+    expect(find.text('Base order'), findsOneWidget);
   });
 
   testWidgets(
@@ -184,6 +200,7 @@ Future<void> _pumpOverlay(
   int? activeTechnologyTurnsRemaining,
   VoidCallback? onGoldPressed,
   VoidCallback? onSciencePressed,
+  VoidCallback? onStabilityPressed,
   VoidCallback? onResourcesPressed,
   VoidCallback? onVictoryPressed,
   VoidCallback? onCloseBreakdown,
@@ -212,6 +229,25 @@ Future<void> _pumpOverlay(
             goldIncome: 4,
             unitUpkeep: 1,
             sciencePerTurn: 6,
+            stabilityNet: 0,
+            stabilityBand: StabilityBand.stable,
+            stabilityDetails: HudStabilityDetails.fixed(
+              standingAdjustment: 0,
+              breakdown: const StabilityBreakdown(
+                playerId: 'player_1',
+                baseOrder: 6,
+                buildingSources: 0,
+                luxurySources: 0,
+                techSources: 0,
+                artifactSources: 0,
+                cityCost: 0,
+                populationCost: 0,
+                cohesionCost: 0,
+                conqueredCityCost: 0,
+                warWearinessCost: 0,
+                hegemonyTax: 0,
+              ),
+            ),
             resourceInventory: const CityResourceInventory(
               playerId: 'player_1',
               countsByType: {ResourceType.iron: 2},
@@ -245,6 +281,7 @@ Future<void> _pumpOverlay(
             l10n: AppLocalizationsEn(),
             onGoldPressed: onGoldPressed ?? () {},
             onSciencePressed: onSciencePressed ?? () {},
+            onStabilityPressed: onStabilityPressed ?? () {},
             onResourcesPressed: onResourcesPressed ?? () {},
             onVictoryPressed: onVictoryPressed ?? () {},
             onCloseBreakdown: onCloseBreakdown ?? () {},

@@ -137,6 +137,12 @@ void main() {
           holdTurns: 1,
           requiredHoldTurns: 4,
         ),
+        const StabilityBandChangedEvent(
+          playerId: 'player_1',
+          previousBand: StabilityBand.stable,
+          newBand: StabilityBand.strained,
+          net: -2,
+        ),
         const CommandRejectedEvent(reason: 'turn_already_submitted'),
         AllPlayersSubmittedEvent(
           turn: 7,

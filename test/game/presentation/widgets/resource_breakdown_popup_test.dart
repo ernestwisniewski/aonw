@@ -98,6 +98,41 @@ void main() {
     expect(find.text('Krakow: Research'), findsOneWidget);
   });
 
+  testWidgets('ResourceBreakdownPopup explains empire stability', (
+    tester,
+  ) async {
+    await _pumpPopup(
+      tester,
+      type: ResourceBreakdownType.stability,
+      stabilityNet: -5,
+      stabilityBand: StabilityBand.unrest,
+      stability: const StabilityBreakdown(
+        playerId: 'player_1',
+        baseOrder: 6,
+        buildingSources: 1,
+        luxurySources: 1,
+        techSources: 0,
+        artifactSources: 0,
+        cityCost: 4,
+        populationCost: 1,
+        cohesionCost: 2,
+        conqueredCityCost: 3,
+        warWearinessCost: 2,
+        hegemonyTax: 0,
+      ),
+    );
+
+    expect(find.text('Stability'), findsOneWidget);
+    expect(find.text('Unrest'), findsOneWidget);
+    expect(find.text('Net stability'), findsOneWidget);
+    expect(find.text('-5'), findsOneWidget);
+    expect(find.text('Base order'), findsOneWidget);
+    expect(find.text('Order buildings'), findsOneWidget);
+    expect(find.text('Frontier cohesion'), findsOneWidget);
+    expect(find.text('Conquered cities'), findsOneWidget);
+    expect(find.text('War weariness'), findsOneWidget);
+  });
+
   testWidgets('ResourceBreakdownPopup renders resource inventory sources', (
     tester,
   ) async {
@@ -193,6 +228,23 @@ Future<void> _pumpPopup(
     ),
   ),
   ScienceYieldBreakdown science = ScienceYieldBreakdown.empty,
+  StabilityBreakdown stability = const StabilityBreakdown(
+    playerId: '',
+    baseOrder: 0,
+    buildingSources: 0,
+    luxurySources: 0,
+    techSources: 0,
+    artifactSources: 0,
+    cityCost: 0,
+    populationCost: 0,
+    cohesionCost: 0,
+    conqueredCityCost: 0,
+    warWearinessCost: 0,
+    hegemonyTax: 0,
+  ),
+  int stabilityNet = 0,
+  StabilityBand stabilityBand = StabilityBand.stable,
+  int stabilityStandingAdjustment = 0,
   CityResourceInventory resources = CityResourceInventory.empty,
   EmpireResourceNetwork resourceNetwork = EmpireResourceNetwork.empty,
   String? activeTechnologyName,
@@ -208,6 +260,10 @@ Future<void> _pumpPopup(
             type: type,
             gold: gold,
             science: science,
+            stability: stability,
+            stabilityNet: stabilityNet,
+            stabilityBand: stabilityBand,
+            stabilityStandingAdjustment: stabilityStandingAdjustment,
             resources: resources,
             resourceNetwork: resourceNetwork,
             cities: const [

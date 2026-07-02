@@ -45,6 +45,7 @@ abstract final class GameObjectiveLabels {
       GameObjectiveId.foundThirdCity => l10n.objectiveFoundThirdCityTitle,
       GameObjectiveId.exploreRegion => l10n.objectiveExploreRegionTitle,
       GameObjectiveId.buildCombatForce => l10n.objectiveBuildCombatForceTitle,
+      GameObjectiveId.raiseStability => l10n.objectiveRaiseStabilityTitle,
       GameObjectiveId.holdDomination => l10n.objectiveHoldDominationTitle,
       GameObjectiveId.breakDominationHold =>
         l10n.objectiveBreakDominationHoldTitle,
@@ -72,6 +73,7 @@ abstract final class GameObjectiveLabels {
       GameObjectiveId.foundThirdCity => l10n.objectiveFoundThirdCityHint,
       GameObjectiveId.exploreRegion => l10n.objectiveExploreRegionHint,
       GameObjectiveId.buildCombatForce => l10n.objectiveBuildCombatForceHint,
+      GameObjectiveId.raiseStability => l10n.objectiveRaiseStabilityHint,
       GameObjectiveId.holdDomination => l10n.objectiveHoldDominationHint,
       GameObjectiveId.breakDominationHold =>
         l10n.objectiveBreakDominationHoldHint,
@@ -100,6 +102,7 @@ abstract final class GameObjectiveLabels {
       GameObjectiveId.foundThirdCity => l10n.objectiveFoundThirdCityReward,
       GameObjectiveId.exploreRegion => l10n.objectiveExploreRegionReward,
       GameObjectiveId.buildCombatForce => l10n.objectiveBuildCombatForceReward,
+      GameObjectiveId.raiseStability => l10n.objectiveRaiseStabilityReward,
       GameObjectiveId.holdDomination => l10n.objectiveHoldDominationReward,
       GameObjectiveId.breakDominationHold =>
         l10n.objectiveBreakDominationHoldReward,
@@ -128,6 +131,7 @@ abstract final class GameObjectiveLabels {
       GameObjectiveId.foundThirdCity => l10n.objectiveFoundThirdCityTooltip,
       GameObjectiveId.exploreRegion => l10n.objectiveExploreRegionTooltip,
       GameObjectiveId.buildCombatForce => l10n.objectiveBuildCombatForceTooltip,
+      GameObjectiveId.raiseStability => l10n.objectiveRaiseStabilityTooltip,
       GameObjectiveId.holdDomination => l10n.objectiveHoldDominationTooltip,
       GameObjectiveId.breakDominationHold =>
         l10n.objectiveBreakDominationHoldTooltip,

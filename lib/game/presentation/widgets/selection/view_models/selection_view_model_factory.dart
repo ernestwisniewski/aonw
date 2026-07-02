@@ -85,6 +85,7 @@ abstract final class SelectionViewModelFactory {
         cityRuleset: cityRuleset,
         mapData: mapData,
         units: gameState == null ? const [] : gameState.units,
+        cities: gameState == null ? const [] : gameState.cities,
         artifacts: gameState == null ? const [] : gameState.artifacts,
         fieldImprovements: gameState == null
             ? const []

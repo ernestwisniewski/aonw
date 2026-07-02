@@ -20,6 +20,7 @@ export 'game/domain/player.dart';
 export 'game/domain/ruleset.dart';
 export 'game/domain/runtime.dart';
 export 'game/domain/save.dart';
+export 'game/domain/stability.dart';
 export 'game/domain/state.dart';
 export 'game/domain/technology.dart';
 export 'game/domain/telemetry.dart';

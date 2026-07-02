@@ -17,6 +17,10 @@ class StabilityRuleset {
   final int relativeStandingOffset;
   final double hegemonyK;
   final double hegemonyTaxPointsPerCost;
+  final int stabilityPerOrderBuilding;
+  final int stabilityPerOrderTechnology;
+  final int stabilityPerLuxuryResource;
+  final int stabilityPerStoredArtifact;
 
   const StabilityRuleset({
     required this.baseOrder,
@@ -37,6 +41,10 @@ class StabilityRuleset {
     required this.relativeStandingOffset,
     required this.hegemonyK,
     required this.hegemonyTaxPointsPerCost,
+    required this.stabilityPerOrderBuilding,
+    required this.stabilityPerOrderTechnology,
+    required this.stabilityPerLuxuryResource,
+    required this.stabilityPerStoredArtifact,
   });
 
   static const StabilityRuleset standard = StabilityRuleset(
@@ -58,6 +66,10 @@ class StabilityRuleset {
     relativeStandingOffset: 3,
     hegemonyK: 1.6,
     hegemonyTaxPointsPerCost: 5,
+    stabilityPerOrderBuilding: 1,
+    stabilityPerOrderTechnology: 2,
+    stabilityPerLuxuryResource: 1,
+    stabilityPerStoredArtifact: 1,
   );
 
   StabilityRuleset copyWith({
@@ -79,6 +91,10 @@ class StabilityRuleset {
     int? relativeStandingOffset,
     double? hegemonyK,
     double? hegemonyTaxPointsPerCost,
+    int? stabilityPerOrderBuilding,
+    int? stabilityPerOrderTechnology,
+    int? stabilityPerLuxuryResource,
+    int? stabilityPerStoredArtifact,
   }) {
     return StabilityRuleset(
       baseOrder: baseOrder ?? this.baseOrder,
@@ -108,6 +124,14 @@ class StabilityRuleset {
       hegemonyK: hegemonyK ?? this.hegemonyK,
       hegemonyTaxPointsPerCost:
           hegemonyTaxPointsPerCost ?? this.hegemonyTaxPointsPerCost,
+      stabilityPerOrderBuilding:
+          stabilityPerOrderBuilding ?? this.stabilityPerOrderBuilding,
+      stabilityPerOrderTechnology:
+          stabilityPerOrderTechnology ?? this.stabilityPerOrderTechnology,
+      stabilityPerLuxuryResource:
+          stabilityPerLuxuryResource ?? this.stabilityPerLuxuryResource,
+      stabilityPerStoredArtifact:
+          stabilityPerStoredArtifact ?? this.stabilityPerStoredArtifact,
     );
   }
 
@@ -132,11 +156,15 @@ class StabilityRuleset {
         other.unrestThreshold == unrestThreshold &&
         other.relativeStandingOffset == relativeStandingOffset &&
         other.hegemonyK == hegemonyK &&
-        other.hegemonyTaxPointsPerCost == hegemonyTaxPointsPerCost;
+        other.hegemonyTaxPointsPerCost == hegemonyTaxPointsPerCost &&
+        other.stabilityPerOrderBuilding == stabilityPerOrderBuilding &&
+        other.stabilityPerOrderTechnology == stabilityPerOrderTechnology &&
+        other.stabilityPerLuxuryResource == stabilityPerLuxuryResource &&
+        other.stabilityPerStoredArtifact == stabilityPerStoredArtifact;
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     baseOrder,
     costPerCity,
     populationCostThreshold,
@@ -155,5 +183,9 @@ class StabilityRuleset {
     relativeStandingOffset,
     hegemonyK,
     hegemonyTaxPointsPerCost,
-  );
+    stabilityPerOrderBuilding,
+    stabilityPerOrderTechnology,
+    stabilityPerLuxuryResource,
+    stabilityPerStoredArtifact,
+  ]);
 }

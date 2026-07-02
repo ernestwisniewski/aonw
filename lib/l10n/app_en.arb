@@ -1603,6 +1603,10 @@
   "objectiveBuildCombatForceHint": "Several troops let you protect expansion and pressure rivals.",
   "objectiveBuildCombatForceReward": "+ border security",
   "objectiveBuildCombatForceTooltip": "A steady screen protects settlers, workers, and developed cities.",
+  "objectiveRaiseStabilityTitle": "Restore stability",
+  "objectiveRaiseStabilityHint": "Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.",
+  "objectiveRaiseStabilityReward": "+ steady growth",
+  "objectiveRaiseStabilityTooltip": "Strained and unrest empires lose city growth and part of their yields until stability recovers.",
   "objectiveHoldDominationTitle": "Hold domination",
   "objectiveHoldDominationHint": "You are above the map threshold. Keep control until the countdown ends.",
   "objectiveHoldDominationReward": "+ map victory",
@@ -2478,6 +2482,7 @@
   "commonBuildings": "Buildings",
   "commonGold": "Gold",
   "commonScience": "Science",
+  "commonStability": "Stability",
   "commonProduction": "Production",
   "commonResearch": "Research",
   "commonEmpire": "Empire",
@@ -2706,6 +2711,34 @@
       }
     }
   },
+  "topResourceStabilityTooltip": "Empire stability: {net}",
+  "@topResourceStabilityTooltip": {
+    "placeholders": {
+      "net": {
+        "type": "int"
+      }
+    }
+  },
+  "stabilityBandContent": "Content",
+  "stabilityBandStable": "Stable",
+  "stabilityBandStrained": "Strained",
+  "stabilityBandUnrest": "Unrest",
+  "stabilityBreakdownBand": "Current state",
+  "stabilityBreakdownNet": "Net stability",
+  "stabilityBreakdownSources": "Sources",
+  "stabilityBreakdownCosts": "Costs",
+  "stabilityBreakdownBaseOrder": "Base order",
+  "stabilityBreakdownBuildings": "Order buildings",
+  "stabilityBreakdownLuxuries": "Luxury resources",
+  "stabilityBreakdownTechnologies": "Technologies",
+  "stabilityBreakdownArtifacts": "Stored artifacts",
+  "stabilityBreakdownCities": "Empire size",
+  "stabilityBreakdownPopulation": "Population",
+  "stabilityBreakdownCohesion": "Frontier cohesion",
+  "stabilityBreakdownConqueredCities": "Conquered cities",
+  "stabilityBreakdownWarWeariness": "War weariness",
+  "stabilityBreakdownHegemony": "Hegemony pressure",
+  "stabilityBreakdownRelativeStanding": "Relative standing",
   "topResourceResourcesTooltip": "Resources: {resourceTotal} deposits • {resourceTypes} controlled types",
   "@topResourceResourcesTooltip": {
     "placeholders": {
@@ -3059,6 +3092,27 @@
   "citySelectionFoodLabel": "Food",
   "citySelectionNetFoodLabel": "Net food",
   "citySelectionBuildingsLabel": "Buildings",
+  "citySelectionCohesionLabel": "Cohesion",
+  "citySelectionCohesionCore": "Core",
+  "citySelectionCohesionIntegrated": "Integrated • {distance} hexes from core",
+  "@citySelectionCohesionIntegrated": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  },
+  "citySelectionCohesionFrontier": "Frontier • {distance} hexes • -{cost} stability",
+  "@citySelectionCohesionFrontier": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "citySelectionArtifactLabel": "Artifact",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Heritage",
@@ -4402,6 +4456,21 @@
   "eventCityCapturedTitle": "City captured",
   "eventCityDestroyedTitle": "City destroyed",
   "eventTurnEndedTitle": "Turn ended",
+  "eventStabilityBandChangedTitle": "Empire stability changed",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
+  "@eventStabilityBandChangedBody": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      },
+      "net": {
+        "type": "int"
+      }
+    }
+  },
   "eventWorkerCompletedJobTitle": "Work complete",
   "eventResearchPointsTitle": "Science",
   "eventResearchPointsBody": "{playerName}: +{points} science",

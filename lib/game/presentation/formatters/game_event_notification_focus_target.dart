@@ -120,6 +120,7 @@ GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
       viewerPlayerId: viewerPlayerId,
     ),
     TurnEndedEvent() ||
+    StabilityBandChangedEvent() ||
     ResearchPointsGainedEvent() ||
     StrategicResourceDiscoveredEvent(
       nearestUnclaimedCol: null,

@@ -71,6 +71,7 @@ abstract final class GameActivityEventProjector {
       CityCapturedEvent() ||
       CityDestroyedEvent() ||
       DominationThresholdReachedEvent() ||
+      StabilityBandChangedEvent() ||
       WorkerCompletedJobEvent() ||
       TechnologyResearchedEvent() ||
       StrategicResourceDiscoveredEvent() ||
@@ -160,6 +161,7 @@ abstract final class GameActivityEventProjector {
         visiblePlayerId,
         playerId,
       ]),
+      StabilityBandChangedEvent(:final playerId) => _playerIds([playerId]),
       ResearchPointsGainedEvent(:final playerId) => _playerIds([playerId]),
       TechnologyResearchedEvent(:final playerId) => _playerIds([playerId]),
       StrategicResourceDiscoveredEvent(:final playerId) => _playerIds([

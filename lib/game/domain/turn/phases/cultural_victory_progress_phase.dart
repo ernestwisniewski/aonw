@@ -19,6 +19,8 @@ class CulturalVictoryProgressPhase extends TurnPhase {
         units: state.units,
         cities: state.cities,
         artifacts: state.artifacts,
+        playerWarWeariness: state.playerWarWeariness,
+        playerStabilityNet: state.playerStabilityNet,
         runtimeState: state.runtimeState,
       ),
       previousHoldTurnsByPlayerId: state.culturalVictoryHoldTurnsByPlayerId,

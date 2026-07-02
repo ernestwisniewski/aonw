@@ -52,20 +52,24 @@ final class _StrategicSettlerRanker {
       return null;
     }
 
+    final penalty = SettlerFoundingStabilityPolicy.foundingPenalty(
+      command: command,
+      founder: founder,
+      view: view,
+    );
     final assignment = plan.settlerAssignments[founder.id];
     if (assignment == null) {
-      final score = coreDefenseCovered(view, context, plan) ? 840.0 : 760.0;
-      if (plan.mode == StrategicMode.expand) {
-        return CommandRanking(CandidatePriority.settler, score + 30);
-      }
-      return CommandRanking(CandidatePriority.settler, score);
+      var score = coreDefenseCovered(view, context, plan) ? 840.0 : 760.0;
+      if (plan.mode == StrategicMode.expand) score += 30;
+      return CommandRanking(CandidatePriority.settler, score - penalty);
     }
 
     final distance = HexDistance.between(
       HexCoordinate(col: founder.col, row: founder.row),
       assignment.toCoordinate(),
     );
-    return CommandRanking(CandidatePriority.settler, 860 - distance * 8);
+    final score = 860.0 - distance * 8 - penalty;
+    return CommandRanking(CandidatePriority.settler, score);
   }
 
   CommandRanking? _rankMove(

@@ -42,7 +42,7 @@ final class EditorStateNotifierProvider
 }
 
 String _$editorStateNotifierHash() =>
-    r'c3e16900b012d2b790495cd48850d90abbbc4dc2';
+    r'e90bbe64b41c2714dd6f0dbed23a8dc7d02a9ed8';
 
 abstract class _$EditorStateNotifier extends $Notifier<EditorState> {
   EditorState build();
@@ -94,7 +94,7 @@ final class EditorMapNotifierProvider
   }
 }
 
-String _$editorMapNotifierHash() => r'bff40750d6fc51de59ca6b223ee833a2f2cfa2f8';
+String _$editorMapNotifierHash() => r'b2f9004f51083c98cff2ed11bb593af6a38af787';
 
 abstract class _$EditorMapNotifier extends $Notifier<MapData?> {
   MapData? build();

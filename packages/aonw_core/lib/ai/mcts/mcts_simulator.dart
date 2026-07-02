@@ -378,6 +378,8 @@ class TracingMctsSimulator implements MctsSimulator {
       ],
       ownCities: ownCities,
       ownGold: state.playerGold[opponentId] ?? 0,
+      ownWarWeariness: state.playerWarWeariness[opponentId] ?? 0,
+      ownStabilityNet: state.playerStabilityNet[opponentId] ?? 0,
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: [
         for (final improvement in state.fieldImprovements)

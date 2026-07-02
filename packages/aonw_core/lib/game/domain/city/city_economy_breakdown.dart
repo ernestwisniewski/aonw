@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/city/city_technology_effect_rules.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability/stability_modifier.dart';
 import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
@@ -17,6 +18,7 @@ class CityEconomyBreakdown {
   final TileYield specializationYield;
   final TileYield technologyYield;
   final TechnologyEffectSummary technologyEffects;
+  final StabilityModifier stabilityModifier;
   final int populationUpkeep;
   final int netFood;
   final int foodDeposit;
@@ -29,6 +31,7 @@ class CityEconomyBreakdown {
     this.specializationYield = TileYield.zero,
     this.technologyYield = TileYield.zero,
     this.technologyEffects = TechnologyEffectSummary.empty,
+    this.stabilityModifier = StabilityModifier.stable,
     required this.populationUpkeep,
     required this.netFood,
     required this.foodDeposit,
@@ -41,6 +44,7 @@ class CityEconomyBreakdown {
     required MapData mapData,
     CityRuleset ruleset = CityRulesets.standard,
     TechnologyEffectSummary technologyEffects = TechnologyEffectSummary.empty,
+    StabilityModifier stabilityModifier = StabilityModifier.stable,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final buildingYield = CityBuildingRules.yieldForCity(
@@ -70,6 +74,15 @@ class CityEconomyBreakdown {
       population: city.population,
       ruleset: ruleset,
     );
+    final baseFoodDeposit = CityBuildingRules.foodDeposited(
+      city,
+      netFood,
+      ruleset: ruleset,
+    );
+    final foodDeposit = stabilityModifier.haltsGrowth
+        ? 0
+        : baseFoodDeposit + stabilityModifier.foodBonus;
+
     return CityEconomyBreakdown(
       city: city,
       tileYield: tileYield,
@@ -77,13 +90,10 @@ class CityEconomyBreakdown {
       specializationYield: specializationYield,
       technologyYield: technologyYield,
       technologyEffects: technologyEffects,
+      stabilityModifier: stabilityModifier,
       populationUpkeep: populationUpkeep,
       netFood: netFood,
-      foodDeposit: CityBuildingRules.foodDeposited(
-        city,
-        netFood,
-        ruleset: ruleset,
-      ),
+      foodDeposit: foodDeposit,
       growthCost: CityGrowthRules.growthCost(
         city,
         ruleset: ruleset,
@@ -99,12 +109,20 @@ class CityEconomyBreakdown {
 
   TileYield get netYield => TileYield(
     food: netFood,
-    production: grossYield.production,
-    gold: grossYield.gold,
+    production: _scale(
+      grossYield.production,
+      stabilityModifier.productionMultiplier,
+    ),
+    gold: _scale(grossYield.gold, stabilityModifier.goldMultiplier),
     defense: grossYield.defense,
   );
 
   int get storedFoodAfterTurn => city.storedFood + foodDeposit;
 
   bool get willGrow => storedFoodAfterTurn >= growthCost;
+
+  static int _scale(int value, double multiplier) {
+    if (multiplier == 1.0) return value;
+    return (value * multiplier).floor();
+  }
 }

@@ -6,6 +6,7 @@ List<_BreakdownSectionModel> _resourceBreakdownSections(
   return switch (popup.type) {
     ResourceBreakdownType.gold => _goldSections(popup),
     ResourceBreakdownType.science => _scienceSections(popup),
+    ResourceBreakdownType.stability => _stabilitySections(popup),
     ResourceBreakdownType.resources => _resourceSections(popup),
   };
 }
