@@ -3092,6 +3092,27 @@
   "citySelectionFoodLabel": "Food",
   "citySelectionNetFoodLabel": "Net food",
   "citySelectionBuildingsLabel": "Buildings",
+  "citySelectionCohesionLabel": "Cohesion",
+  "citySelectionCohesionCore": "Core",
+  "citySelectionCohesionIntegrated": "Integrated • {distance} hexes from core",
+  "@citySelectionCohesionIntegrated": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  },
+  "citySelectionCohesionFrontier": "Frontier • {distance} hexes • -{cost} stability",
+  "@citySelectionCohesionFrontier": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "citySelectionArtifactLabel": "Artifact",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Heritage",

@@ -9000,6 +9000,30 @@ abstract class AppLocalizations {
   /// **'Buildings'**
   String get citySelectionBuildingsLabel;
 
+  /// No description provided for @citySelectionCohesionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cohesion'**
+  String get citySelectionCohesionLabel;
+
+  /// No description provided for @citySelectionCohesionCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get citySelectionCohesionCore;
+
+  /// No description provided for @citySelectionCohesionIntegrated.
+  ///
+  /// In en, this message translates to:
+  /// **'Integrated • {distance} hexes from core'**
+  String citySelectionCohesionIntegrated(int distance);
+
+  /// No description provided for @citySelectionCohesionFrontier.
+  ///
+  /// In en, this message translates to:
+  /// **'Frontier • {distance} hexes • -{cost} stability'**
+  String citySelectionCohesionFrontier(int distance, int cost);
+
   /// No description provided for @citySelectionArtifactLabel.
   ///
   /// In en, this message translates to:

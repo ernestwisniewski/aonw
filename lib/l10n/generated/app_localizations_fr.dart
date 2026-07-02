@@ -5300,6 +5300,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get citySelectionBuildingsLabel => 'Bâtiments';
 
   @override
+  String get citySelectionCohesionLabel => 'Cohesion';
+
+  @override
+  String get citySelectionCohesionCore => 'Core';
+
+  @override
+  String citySelectionCohesionIntegrated(int distance) {
+    return 'Integrated • $distance hexes from core';
+  }
+
+  @override
+  String citySelectionCohesionFrontier(int distance, int cost) {
+    return 'Frontier • $distance hexes • -$cost stability';
+  }
+
+  @override
   String get citySelectionArtifactLabel => 'Artéfact';
 
   @override

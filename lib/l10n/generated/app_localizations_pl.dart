@@ -5270,6 +5270,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get citySelectionBuildingsLabel => 'Budynki';
 
   @override
+  String get citySelectionCohesionLabel => 'Spójność';
+
+  @override
+  String get citySelectionCohesionCore => 'Rdzeń';
+
+  @override
+  String citySelectionCohesionIntegrated(int distance) {
+    return 'Zintegrowane • $distance pól od rdzenia';
+  }
+
+  @override
+  String citySelectionCohesionFrontier(int distance, int cost) {
+    return 'Pogranicze • $distance pól • -$cost stabilności';
+  }
+
+  @override
   String get citySelectionArtifactLabel => 'Artefakt';
 
   @override

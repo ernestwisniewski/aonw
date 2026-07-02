@@ -3068,6 +3068,27 @@
   "citySelectionFoodLabel": "Żywność",
   "citySelectionNetFoodLabel": "Net food",
   "citySelectionBuildingsLabel": "Budynki",
+  "citySelectionCohesionLabel": "Spójność",
+  "citySelectionCohesionCore": "Rdzeń",
+  "citySelectionCohesionIntegrated": "Zintegrowane • {distance} pól od rdzenia",
+  "@citySelectionCohesionIntegrated": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  },
+  "citySelectionCohesionFrontier": "Pogranicze • {distance} pól • -{cost} stabilności",
+  "@citySelectionCohesionFrontier": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "citySelectionArtifactLabel": "Artefakt",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Dziedzictwo",
