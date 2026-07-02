@@ -159,6 +159,41 @@ void main() {
       expect(result.state.playerGold['player_1'], 4);
     });
 
+    test('consumes the previous stability snapshot before refreshing it', () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City 1',
+        center: CityHex(col: 1, row: 1),
+        buildings: {CityBuildingType.merchantHall},
+      );
+      const state = PersistentGameState(
+        playerGold: {'player_1': 0},
+        playerStabilityNet: {'player_1': -4},
+        cities: [city],
+      );
+
+      final firstTurn = PersistentTurnEconomyProcessor.advanceForPlayers(
+        state: state,
+        playerIds: const ['player_1'],
+        mapData: _mapData(),
+      );
+
+      expect(firstTurn.state.playerGold['player_1'], 1);
+      expect(
+        firstTurn.state.playerStabilityNet['player_1'],
+        greaterThanOrEqualTo(4),
+      );
+
+      final secondTurn = PersistentTurnEconomyProcessor.advanceForPlayers(
+        state: firstTurn.state,
+        playerIds: const ['player_1'],
+        mapData: _mapData(),
+      );
+
+      expect(secondTurn.state.playerGold['player_1'], 3);
+    });
+
     test('slowly regenerates damaged city HP for submitted players', () {
       const city = GameCity(
         id: 'city_1',
