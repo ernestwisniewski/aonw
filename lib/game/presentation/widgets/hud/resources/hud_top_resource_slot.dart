@@ -72,6 +72,9 @@ class HudTopResourceSlot extends ConsumerWidget {
         sciencePerTurn: resourceSummary.sciencePerTurn,
         stabilityNet: resourceSummary.stabilityNet,
         stabilityBand: resourceSummary.stabilityBand,
+        stabilityBreakdown: resourceSummary.stabilityBreakdown,
+        stabilityStandingAdjustment:
+            resourceSummary.stabilityStandingAdjustment,
         resourceInventory: resourceSummary.resourceInventory,
         resourceNetwork: resourceSummary.resourceNetwork,
         openBreakdown: openBreakdown,
@@ -102,6 +105,8 @@ class HudTopResourceSlot extends ConsumerWidget {
             dispatcher.toggleResourceBreakdown(ResourceBreakdownType.gold),
         onSciencePressed: () =>
             dispatcher.toggleResourceBreakdown(ResourceBreakdownType.science),
+        onStabilityPressed: () =>
+            dispatcher.toggleResourceBreakdown(ResourceBreakdownType.stability),
         onResourcesPressed: () =>
             dispatcher.toggleResourceBreakdown(ResourceBreakdownType.resources),
         onVictoryPressed: dispatcher.toggleVictoryBreakdown,

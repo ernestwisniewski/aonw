@@ -9,14 +9,15 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 
-enum TopResourcePopupType { gold, science, resources, victory }
+enum TopResourcePopupType { gold, science, stability, resources, victory }
 
-enum ResourceBreakdownType { gold, science, resources }
+enum ResourceBreakdownType { gold, science, stability, resources }
 
 extension ResourceBreakdownPopupType on ResourceBreakdownType {
   TopResourcePopupType get popupType => switch (this) {
     ResourceBreakdownType.gold => TopResourcePopupType.gold,
     ResourceBreakdownType.science => TopResourcePopupType.science,
+    ResourceBreakdownType.stability => TopResourcePopupType.stability,
     ResourceBreakdownType.resources => TopResourcePopupType.resources,
   };
 }
@@ -25,6 +26,7 @@ extension TopResourcePopupResourceType on TopResourcePopupType {
   ResourceBreakdownType? get resourceType => switch (this) {
     TopResourcePopupType.gold => ResourceBreakdownType.gold,
     TopResourcePopupType.science => ResourceBreakdownType.science,
+    TopResourcePopupType.stability => ResourceBreakdownType.stability,
     TopResourcePopupType.resources => ResourceBreakdownType.resources,
     TopResourcePopupType.victory => null,
   };
@@ -44,6 +46,7 @@ class TopResourceStrip extends StatelessWidget {
     required this.openBreakdown,
     required this.onGoldPressed,
     required this.onSciencePressed,
+    required this.onStabilityPressed,
     required this.onResourcesPressed,
     required this.onVictoryPressed,
     this.victoryStatus,
@@ -66,6 +69,7 @@ class TopResourceStrip extends StatelessWidget {
   final TopResourcePopupType? openBreakdown;
   final VoidCallback onGoldPressed;
   final VoidCallback onSciencePressed;
+  final VoidCallback onStabilityPressed;
   final VoidCallback onResourcesPressed;
   final VoidCallback onVictoryPressed;
   final HudVictoryStatusSummary? victoryStatus;
@@ -128,8 +132,8 @@ class TopResourceStrip extends StatelessWidget {
         compact: compact,
         critical: stabilityBand == StabilityBand.unrest,
         tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
-        active: false,
-        onTap: () {},
+        active: openBreakdown == TopResourcePopupType.stability,
+        onTap: onStabilityPressed,
       ),
       const SizedBox(width: 6),
       TopResourcePill(

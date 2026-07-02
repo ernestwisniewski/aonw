@@ -2719,6 +2719,26 @@
       }
     }
   },
+  "stabilityBandContent": "Content",
+  "stabilityBandStable": "Stable",
+  "stabilityBandStrained": "Strained",
+  "stabilityBandUnrest": "Unrest",
+  "stabilityBreakdownBand": "Current state",
+  "stabilityBreakdownNet": "Net stability",
+  "stabilityBreakdownSources": "Sources",
+  "stabilityBreakdownCosts": "Costs",
+  "stabilityBreakdownBaseOrder": "Base order",
+  "stabilityBreakdownBuildings": "Order buildings",
+  "stabilityBreakdownLuxuries": "Luxury resources",
+  "stabilityBreakdownTechnologies": "Technologies",
+  "stabilityBreakdownArtifacts": "Stored artifacts",
+  "stabilityBreakdownCities": "Empire size",
+  "stabilityBreakdownPopulation": "Population",
+  "stabilityBreakdownCohesion": "Frontier cohesion",
+  "stabilityBreakdownConqueredCities": "Conquered cities",
+  "stabilityBreakdownWarWeariness": "War weariness",
+  "stabilityBreakdownHegemony": "Hegemony pressure",
+  "stabilityBreakdownRelativeStanding": "Relative standing",
   "topResourceResourcesTooltip": "Resources: {resourceTotal} deposits • {resourceTypes} controlled types",
   "@topResourceResourcesTooltip": {
     "placeholders": {

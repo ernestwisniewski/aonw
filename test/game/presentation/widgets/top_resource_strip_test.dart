@@ -25,6 +25,7 @@ void main() {
     int? turnNumber,
     VoidCallback? onGoldPressed,
     VoidCallback? onSciencePressed,
+    VoidCallback? onStabilityPressed,
     VoidCallback? onResourcesPressed,
     VoidCallback? onVictoryPressed,
     VoidCallback? onTurnPressed,
@@ -52,6 +53,7 @@ void main() {
           onTurnPressed: onTurnPressed,
           onGoldPressed: onGoldPressed ?? () {},
           onSciencePressed: onSciencePressed ?? () {},
+          onStabilityPressed: onStabilityPressed ?? () {},
           onResourcesPressed: onResourcesPressed ?? () {},
           onVictoryPressed: onVictoryPressed ?? () {},
         ),
@@ -62,6 +64,7 @@ void main() {
   testWidgets('renders resource values and handles taps', (tester) async {
     var goldTaps = 0;
     var scienceTaps = 0;
+    var stabilityTaps = 0;
     var resourceTaps = 0;
 
     await tester.pumpWidget(
@@ -69,6 +72,7 @@ void main() {
         openBreakdown: TopResourcePopupType.gold,
         onGoldPressed: () => goldTaps++,
         onSciencePressed: () => scienceTaps++,
+        onStabilityPressed: () => stabilityTaps++,
         onResourcesPressed: () => resourceTaps++,
       ),
     );
@@ -80,10 +84,12 @@ void main() {
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
     await tester.tap(find.byKey(const Key('gameHud.resource.science')));
+    await tester.tap(find.byKey(const Key('gameHud.resource.stability')));
     await tester.tap(find.byKey(const Key('gameHud.resource.resources')));
 
     expect(goldTaps, 1);
     expect(scienceTaps, 1);
+    expect(stabilityTaps, 1);
     expect(resourceTaps, 1);
   });
 

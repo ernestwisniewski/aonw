@@ -4700,6 +4700,66 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get stabilityBandContent => 'Dobrobyt';
+
+  @override
+  String get stabilityBandStable => 'Stabilne';
+
+  @override
+  String get stabilityBandStrained => 'Napięcie';
+
+  @override
+  String get stabilityBandUnrest => 'Niepokoje';
+
+  @override
+  String get stabilityBreakdownBand => 'Obecny stan';
+
+  @override
+  String get stabilityBreakdownNet => 'Stabilność netto';
+
+  @override
+  String get stabilityBreakdownSources => 'Źródła';
+
+  @override
+  String get stabilityBreakdownCosts => 'Koszty';
+
+  @override
+  String get stabilityBreakdownBaseOrder => 'Podstawowy porządek';
+
+  @override
+  String get stabilityBreakdownBuildings => 'Budynki porządku';
+
+  @override
+  String get stabilityBreakdownLuxuries => 'Zasoby luksusowe';
+
+  @override
+  String get stabilityBreakdownTechnologies => 'Technologie';
+
+  @override
+  String get stabilityBreakdownArtifacts => 'Przechowywane artefakty';
+
+  @override
+  String get stabilityBreakdownCities => 'Rozmiar imperium';
+
+  @override
+  String get stabilityBreakdownPopulation => 'Populacja';
+
+  @override
+  String get stabilityBreakdownCohesion => 'Spójność pogranicza';
+
+  @override
+  String get stabilityBreakdownConqueredCities => 'Podbite miasta';
+
+  @override
+  String get stabilityBreakdownWarWeariness => 'Zmęczenie wojną';
+
+  @override
+  String get stabilityBreakdownHegemony => 'Presja hegemonii';
+
+  @override
+  String get stabilityBreakdownRelativeStanding => 'Pozycja względem rywali';
+
+  @override
   String topResourceResourcesTooltip(int resourceTotal, int resourceTypes) {
     return 'Zasoby: $resourceTotal złóż • $resourceTypes typów kontrolowanych';
   }

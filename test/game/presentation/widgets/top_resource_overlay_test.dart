@@ -15,6 +15,7 @@ void main() {
   ) async {
     var goldTaps = 0;
     var scienceTaps = 0;
+    var stabilityTaps = 0;
     var resourceTaps = 0;
     var victoryTaps = 0;
 
@@ -23,6 +24,7 @@ void main() {
       victoryStatus: _victoryStatus,
       onGoldPressed: () => goldTaps++,
       onSciencePressed: () => scienceTaps++,
+      onStabilityPressed: () => stabilityTaps++,
       onResourcesPressed: () => resourceTaps++,
       onVictoryPressed: () => victoryTaps++,
     );
@@ -34,11 +36,13 @@ void main() {
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
     await tester.tap(find.byKey(const Key('gameHud.resource.science')));
+    await tester.tap(find.byKey(const Key('gameHud.resource.stability')));
     await tester.tap(find.byKey(const Key('gameHud.resource.resources')));
     await tester.tap(find.byKey(const Key('gameHud.victoryStatus')));
 
     expect(goldTaps, 1);
     expect(scienceTaps, 1);
+    expect(stabilityTaps, 1);
     expect(resourceTaps, 1);
     expect(victoryTaps, 1);
   });
@@ -75,6 +79,17 @@ void main() {
     await tester.tapAt(const Offset(30, 250));
 
     expect(closes, 1);
+  });
+
+  testWidgets('TopResourceOverlay shows stability breakdown', (tester) async {
+    await _pumpOverlay(tester, openBreakdown: TopResourcePopupType.stability);
+
+    expect(
+      find.byKey(const Key('gameHud.resourceBreakdown.stability')),
+      findsOneWidget,
+    );
+    expect(find.text('Stability'), findsOneWidget);
+    expect(find.text('Base order'), findsOneWidget);
   });
 
   testWidgets(
@@ -184,6 +199,7 @@ Future<void> _pumpOverlay(
   int? activeTechnologyTurnsRemaining,
   VoidCallback? onGoldPressed,
   VoidCallback? onSciencePressed,
+  VoidCallback? onStabilityPressed,
   VoidCallback? onResourcesPressed,
   VoidCallback? onVictoryPressed,
   VoidCallback? onCloseBreakdown,
@@ -214,6 +230,21 @@ Future<void> _pumpOverlay(
             sciencePerTurn: 6,
             stabilityNet: 0,
             stabilityBand: StabilityBand.stable,
+            stabilityBreakdown: const StabilityBreakdown(
+              playerId: 'player_1',
+              baseOrder: 6,
+              buildingSources: 0,
+              luxurySources: 0,
+              techSources: 0,
+              artifactSources: 0,
+              cityCost: 0,
+              populationCost: 0,
+              cohesionCost: 0,
+              conqueredCityCost: 0,
+              warWearinessCost: 0,
+              hegemonyTax: 0,
+            ),
+            stabilityStandingAdjustment: 0,
             resourceInventory: const CityResourceInventory(
               playerId: 'player_1',
               countsByType: {ResourceType.iron: 2},
@@ -247,6 +278,7 @@ Future<void> _pumpOverlay(
             l10n: AppLocalizationsEn(),
             onGoldPressed: onGoldPressed ?? () {},
             onSciencePressed: onSciencePressed ?? () {},
+            onStabilityPressed: onStabilityPressed ?? () {},
             onResourcesPressed: onResourcesPressed ?? () {},
             onVictoryPressed: onVictoryPressed ?? () {},
             onCloseBreakdown: onCloseBreakdown ?? () {},

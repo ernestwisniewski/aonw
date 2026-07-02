@@ -2695,6 +2695,26 @@
       }
     }
   },
+  "stabilityBandContent": "Dobrobyt",
+  "stabilityBandStable": "Stabilne",
+  "stabilityBandStrained": "Napięcie",
+  "stabilityBandUnrest": "Niepokoje",
+  "stabilityBreakdownBand": "Obecny stan",
+  "stabilityBreakdownNet": "Stabilność netto",
+  "stabilityBreakdownSources": "Źródła",
+  "stabilityBreakdownCosts": "Koszty",
+  "stabilityBreakdownBaseOrder": "Podstawowy porządek",
+  "stabilityBreakdownBuildings": "Budynki porządku",
+  "stabilityBreakdownLuxuries": "Zasoby luksusowe",
+  "stabilityBreakdownTechnologies": "Technologie",
+  "stabilityBreakdownArtifacts": "Przechowywane artefakty",
+  "stabilityBreakdownCities": "Rozmiar imperium",
+  "stabilityBreakdownPopulation": "Populacja",
+  "stabilityBreakdownCohesion": "Spójność pogranicza",
+  "stabilityBreakdownConqueredCities": "Podbite miasta",
+  "stabilityBreakdownWarWeariness": "Zmęczenie wojną",
+  "stabilityBreakdownHegemony": "Presja hegemonii",
+  "stabilityBreakdownRelativeStanding": "Pozycja względem rywali",
   "topResourceResourcesTooltip": "Zasoby: {resourceTotal} złóż • {resourceTypes} typów kontrolowanych",
   "@topResourceResourcesTooltip": {
     "placeholders": {

@@ -8039,6 +8039,126 @@ abstract class AppLocalizations {
   /// **'Empire stability: {net}'**
   String topResourceStabilityTooltip(int net);
 
+  /// No description provided for @stabilityBandContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get stabilityBandContent;
+
+  /// No description provided for @stabilityBandStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable'**
+  String get stabilityBandStable;
+
+  /// No description provided for @stabilityBandStrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained'**
+  String get stabilityBandStrained;
+
+  /// No description provided for @stabilityBandUnrest.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrest'**
+  String get stabilityBandUnrest;
+
+  /// No description provided for @stabilityBreakdownBand.
+  ///
+  /// In en, this message translates to:
+  /// **'Current state'**
+  String get stabilityBreakdownBand;
+
+  /// No description provided for @stabilityBreakdownNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net stability'**
+  String get stabilityBreakdownNet;
+
+  /// No description provided for @stabilityBreakdownSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get stabilityBreakdownSources;
+
+  /// No description provided for @stabilityBreakdownCosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Costs'**
+  String get stabilityBreakdownCosts;
+
+  /// No description provided for @stabilityBreakdownBaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Base order'**
+  String get stabilityBreakdownBaseOrder;
+
+  /// No description provided for @stabilityBreakdownBuildings.
+  ///
+  /// In en, this message translates to:
+  /// **'Order buildings'**
+  String get stabilityBreakdownBuildings;
+
+  /// No description provided for @stabilityBreakdownLuxuries.
+  ///
+  /// In en, this message translates to:
+  /// **'Luxury resources'**
+  String get stabilityBreakdownLuxuries;
+
+  /// No description provided for @stabilityBreakdownTechnologies.
+  ///
+  /// In en, this message translates to:
+  /// **'Technologies'**
+  String get stabilityBreakdownTechnologies;
+
+  /// No description provided for @stabilityBreakdownArtifacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored artifacts'**
+  String get stabilityBreakdownArtifacts;
+
+  /// No description provided for @stabilityBreakdownCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire size'**
+  String get stabilityBreakdownCities;
+
+  /// No description provided for @stabilityBreakdownPopulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Population'**
+  String get stabilityBreakdownPopulation;
+
+  /// No description provided for @stabilityBreakdownCohesion.
+  ///
+  /// In en, this message translates to:
+  /// **'Frontier cohesion'**
+  String get stabilityBreakdownCohesion;
+
+  /// No description provided for @stabilityBreakdownConqueredCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Conquered cities'**
+  String get stabilityBreakdownConqueredCities;
+
+  /// No description provided for @stabilityBreakdownWarWeariness.
+  ///
+  /// In en, this message translates to:
+  /// **'War weariness'**
+  String get stabilityBreakdownWarWeariness;
+
+  /// No description provided for @stabilityBreakdownHegemony.
+  ///
+  /// In en, this message translates to:
+  /// **'Hegemony pressure'**
+  String get stabilityBreakdownHegemony;
+
+  /// No description provided for @stabilityBreakdownRelativeStanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Relative standing'**
+  String get stabilityBreakdownRelativeStanding;
+
   /// No description provided for @topResourceResourcesTooltip.
   ///
   /// In en, this message translates to:

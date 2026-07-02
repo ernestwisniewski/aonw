@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -18,6 +19,8 @@ class HudResourceSummary {
   final ScienceYieldBreakdown scienceBreakdown;
   final int stabilityNet;
   final StabilityBand stabilityBand;
+  final StabilityBreakdown stabilityBreakdown;
+  final int stabilityStandingAdjustment;
 
   const HudResourceSummary({
     required this.gold,
@@ -31,6 +34,8 @@ class HudResourceSummary {
     required this.scienceBreakdown,
     required this.stabilityNet,
     required this.stabilityBand,
+    required this.stabilityBreakdown,
+    required this.stabilityStandingAdjustment,
   });
 
   factory HudResourceSummary.fromGameState({
@@ -44,12 +49,18 @@ class HudResourceSummary {
       return HudResourceSummary.empty();
     }
 
+    final stabilityNet = state.playerStabilityNet[playerId] ?? 0;
+    final stabilityModifier = PersistentStabilityProcessor.modifierForNet(
+      stabilityNet,
+    );
+
     final goldBreakdown = _goldBreakdownForPlayer(
       state: state,
       playerId: playerId,
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityModifier: stabilityModifier,
     );
     final scienceBreakdown = _scienceBreakdownForPlayer(
       state: state,
@@ -57,6 +68,7 @@ class HudResourceSummary {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityModifier: stabilityModifier,
     );
 
     final resourceNetwork = EmpireResourceNetworkRules.forPlayer(
@@ -68,7 +80,11 @@ class HudResourceSummary {
       resourceTradeAgreements: state.resourceTradeAgreements,
     );
 
-    final stabilityNet = state.playerStabilityNet[playerId] ?? 0;
+    final stabilityDetails = _stabilityDetailsForPlayer(
+      state: state,
+      playerId: playerId,
+      mapData: mapData,
+    );
 
     return HudResourceSummary(
       gold: goldBreakdown.treasury,
@@ -82,6 +98,8 @@ class HudResourceSummary {
       scienceBreakdown: scienceBreakdown,
       stabilityNet: stabilityNet,
       stabilityBand: StabilityPolicy.bandFor(stabilityNet),
+      stabilityBreakdown: stabilityDetails.breakdown,
+      stabilityStandingAdjustment: stabilityDetails.standingAdjustment,
     );
   }
 
@@ -110,6 +128,8 @@ class HudResourceSummary {
       scienceBreakdown: ScienceYieldBreakdown.empty,
       stabilityNet: 0,
       stabilityBand: StabilityBand.stable,
+      stabilityBreakdown: _emptyStabilityBreakdown,
+      stabilityStandingAdjustment: 0,
     );
   }
 }
@@ -120,6 +140,7 @@ GoldBreakdown _goldBreakdownForPlayer({
   required MapData mapData,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
+  required StabilityModifier stabilityModifier,
 }) {
   final technologyEffects = TechnologyEffectSummary.forPlayer(
     playerId: playerId,
@@ -145,6 +166,7 @@ GoldBreakdown _goldBreakdownForPlayer({
       mapData: mapData,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
+      stabilityModifier: stabilityModifier,
     );
     if (economy.netYield.gold > 0) {
       citySources.add(
@@ -185,6 +207,7 @@ ScienceYieldBreakdown _scienceBreakdownForPlayer({
   required MapData mapData,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
+  required StabilityModifier stabilityModifier,
 }) {
   final base = ScienceYieldCalculator.totalForPlayer(
     playerId: playerId,
@@ -225,6 +248,7 @@ ScienceYieldBreakdown _scienceBreakdownForPlayer({
       mapData: mapData,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
+      stabilityModifier: stabilityModifier,
     );
     final output = CityProjectRules.outputFor(
       type: CityProjectType.research,
@@ -256,3 +280,61 @@ ScienceYieldBreakdown _scienceBreakdownForPlayer({
     sources: List.unmodifiable([...base.sources, ...projectSources]),
   );
 }
+
+({StabilityBreakdown breakdown, int standingAdjustment})
+_stabilityDetailsForPlayer({
+  required GameState state,
+  required String playerId,
+  required MapData mapData,
+}) {
+  final persistentState = PersistentGameState(
+    playerColors: state.playerColors,
+    playerCountries: state.playerCountries,
+    playerGold: state.playerGold,
+    playerWarWeariness: state.playerWarWeariness,
+    playerStabilityNet: state.playerStabilityNet,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    research: state.research,
+    runtimeState: state.runtimeState,
+  );
+  final inputs = StabilityInputBuilder.forPlayers(
+    state: persistentState,
+    playerIds: [playerId],
+    mapData: mapData,
+  )[playerId];
+  if (inputs == null) {
+    return (breakdown: _emptyStabilityBreakdown, standingAdjustment: 0);
+  }
+  final breakdown = StabilityCalculator.calculate(inputs: inputs);
+  final effectiveNet = StabilityPolicy.effectiveNet(
+    breakdown.net,
+    relativeStanding: StabilityPolicy.relativeStandingFor(
+      controlPercent: inputs.controlPercent,
+      playerCount: inputs.playerCount,
+    ),
+    ruleset: StabilityRuleset.standard,
+  );
+  return (
+    breakdown: breakdown,
+    standingAdjustment: effectiveNet - breakdown.net,
+  );
+}
+
+const _emptyStabilityBreakdown = StabilityBreakdown(
+  playerId: '',
+  baseOrder: 0,
+  buildingSources: 0,
+  luxurySources: 0,
+  techSources: 0,
+  artifactSources: 0,
+  cityCost: 0,
+  populationCost: 0,
+  cohesionCost: 0,
+  conqueredCityCost: 0,
+  warWearinessCost: 0,
+  hegemonyTax: 0,
+);

@@ -18,6 +18,8 @@ class TopResourceOverlay extends StatelessWidget {
     required this.sciencePerTurn,
     required this.stabilityNet,
     required this.stabilityBand,
+    required this.stabilityBreakdown,
+    required this.stabilityStandingAdjustment,
     required this.resourceInventory,
     required this.openBreakdown,
     required this.goldBreakdown,
@@ -28,6 +30,7 @@ class TopResourceOverlay extends StatelessWidget {
     required this.l10n,
     required this.onGoldPressed,
     required this.onSciencePressed,
+    required this.onStabilityPressed,
     required this.onResourcesPressed,
     required this.onVictoryPressed,
     required this.onCloseBreakdown,
@@ -48,6 +51,8 @@ class TopResourceOverlay extends StatelessWidget {
   final int sciencePerTurn;
   final int stabilityNet;
   final StabilityBand stabilityBand;
+  final StabilityBreakdown stabilityBreakdown;
+  final int stabilityStandingAdjustment;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
   final TopResourcePopupType? openBreakdown;
@@ -60,6 +65,7 @@ class TopResourceOverlay extends StatelessWidget {
   final AppLocalizations l10n;
   final VoidCallback onGoldPressed;
   final VoidCallback onSciencePressed;
+  final VoidCallback onStabilityPressed;
   final VoidCallback onResourcesPressed;
   final VoidCallback onVictoryPressed;
   final VoidCallback onCloseBreakdown;
@@ -103,6 +109,7 @@ class TopResourceOverlay extends StatelessWidget {
                   onTurnPressed: onTurnPressed,
                   onGoldPressed: onGoldPressed,
                   onSciencePressed: onSciencePressed,
+                  onStabilityPressed: onStabilityPressed,
                   onResourcesPressed: onResourcesPressed,
                   onVictoryPressed: onVictoryPressed,
                 ),
@@ -225,6 +232,10 @@ class TopResourceOverlay extends StatelessWidget {
       type: resourceType,
       gold: goldBreakdown,
       science: scienceBreakdown,
+      stability: stabilityBreakdown,
+      stabilityNet: stabilityNet,
+      stabilityBand: stabilityBand,
+      stabilityStandingAdjustment: stabilityStandingAdjustment,
       resources: resourceInventory,
       resourceNetwork: resourceNetwork,
       cities: cities,

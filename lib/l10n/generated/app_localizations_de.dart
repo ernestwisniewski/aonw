@@ -4721,6 +4721,66 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get stabilityBandContent => 'Content';
+
+  @override
+  String get stabilityBandStable => 'Stable';
+
+  @override
+  String get stabilityBandStrained => 'Strained';
+
+  @override
+  String get stabilityBandUnrest => 'Unrest';
+
+  @override
+  String get stabilityBreakdownBand => 'Current state';
+
+  @override
+  String get stabilityBreakdownNet => 'Net stability';
+
+  @override
+  String get stabilityBreakdownSources => 'Sources';
+
+  @override
+  String get stabilityBreakdownCosts => 'Costs';
+
+  @override
+  String get stabilityBreakdownBaseOrder => 'Base order';
+
+  @override
+  String get stabilityBreakdownBuildings => 'Order buildings';
+
+  @override
+  String get stabilityBreakdownLuxuries => 'Luxury resources';
+
+  @override
+  String get stabilityBreakdownTechnologies => 'Technologies';
+
+  @override
+  String get stabilityBreakdownArtifacts => 'Stored artifacts';
+
+  @override
+  String get stabilityBreakdownCities => 'Empire size';
+
+  @override
+  String get stabilityBreakdownPopulation => 'Population';
+
+  @override
+  String get stabilityBreakdownCohesion => 'Frontier cohesion';
+
+  @override
+  String get stabilityBreakdownConqueredCities => 'Conquered cities';
+
+  @override
+  String get stabilityBreakdownWarWeariness => 'War weariness';
+
+  @override
+  String get stabilityBreakdownHegemony => 'Hegemony pressure';
+
+  @override
+  String get stabilityBreakdownRelativeStanding => 'Relative standing';
+
+  @override
   String topResourceResourcesTooltip(int resourceTotal, int resourceTypes) {
     return 'Ressourcen: $resourceTotal Vorkommen • $resourceTypes kontrollierte Typen';
   }

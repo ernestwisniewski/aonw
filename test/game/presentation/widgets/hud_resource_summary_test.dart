@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -91,6 +92,32 @@ void main() {
         summary.scienceBreakdown.sources.map((source) => source.label),
         containsAll(['City science', 'City research project']),
       );
+    });
+
+    test('applies cached unrest to the HUD economy forecast', () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 0, row: 0),
+        buildings: {CityBuildingType.merchantHall},
+      );
+
+      final summary = HudResourceSummary.fromGameState(
+        state: const GameState(
+          cities: [city],
+          playerStabilityNet: {'player_1': -4},
+        ),
+        playerId: 'player_1',
+        mapData: _landMap(),
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+      );
+
+      expect(summary.stabilityBand, StabilityBand.unrest);
+      expect(summary.goldIncome, 1);
+      expect(summary.stabilityBreakdown.baseOrder, 6);
+      expect(summary.stabilityBreakdown.cityCost, 0);
     });
   });
 }
