@@ -60,6 +60,8 @@ class SimulatedState {
       ownCities: ownCities,
       artifacts: _baseView.artifacts,
       ownGold: _baseView.ownGold,
+      ownWarWeariness: _baseView.ownWarWeariness,
+      ownStabilityNet: _baseView.ownStabilityNet,
       ownResearch: ownResearch,
       ownImprovements: _baseView.ownImprovements,
       diplomacy: _baseView.diplomacy,

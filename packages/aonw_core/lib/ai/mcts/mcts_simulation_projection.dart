@@ -18,6 +18,8 @@ final class MctsSimulationProjection {
   }) {
     return PersistentGameState(
       playerGold: {view.forPlayerId: view.ownGold},
+      playerWarWeariness: {view.forPlayerId: view.ownWarWeariness},
+      playerStabilityNet: {view.forPlayerId: view.ownStabilityNet},
       units: units.toList(growable: false),
       cities: cities.toList(growable: false),
       artifacts: view.artifacts,

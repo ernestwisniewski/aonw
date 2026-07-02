@@ -56,6 +56,8 @@ class GameView {
   final List<GameCity> ownCities;
   final List<WorldArtifact> artifacts;
   final int ownGold;
+  final int ownWarWeariness;
+  final int ownStabilityNet;
   final ResearchState research;
   final PlayerResearchState ownResearch;
   final List<FieldImprovement> ownImprovements;
@@ -81,6 +83,8 @@ class GameView {
     required Iterable<GameCity> ownCities,
     Iterable<WorldArtifact> artifacts = const [],
     this.ownGold = 0,
+    this.ownWarWeariness = 0,
+    this.ownStabilityNet = 0,
     this.research = ResearchState.empty,
     required this.ownResearch,
     required Iterable<FieldImprovement> ownImprovements,
@@ -247,6 +251,8 @@ class GameView {
             artifact,
       ],
       ownGold: state.playerGold[forPlayerId] ?? 0,
+      ownWarWeariness: state.playerWarWeariness[forPlayerId] ?? 0,
+      ownStabilityNet: state.playerStabilityNet[forPlayerId] ?? 0,
       research: state.research,
       ownResearch: state.research.forPlayer(forPlayerId),
       ownImprovements: [

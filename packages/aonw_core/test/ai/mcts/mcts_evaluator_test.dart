@@ -155,9 +155,71 @@ void main() {
         greaterThan(evaluator.score(sprawled, 'player_1', context: context)),
       );
     });
+
+    test('includes persistent war weariness in stability evaluation', () {
+      const evaluator = StateHeuristicEvaluator();
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 0, row: 0),
+      );
+      final context = _context();
+      final peaceful = _state(const PersistentGameState(cities: [city]));
+      final weary = _state(
+        const PersistentGameState(
+          playerWarWeariness: {'player_1': 8},
+          cities: [city],
+        ),
+      );
+
+      expect(
+        evaluator.score(peaceful, 'player_1', context: context),
+        greaterThan(evaluator.score(weary, 'player_1', context: context)),
+      );
+    });
   });
 
   group('CommandSequenceEvaluator', () {
+    test('prioritizes order buildings while the empire is in unrest', () {
+      const evaluator = CommandSequenceEvaluator();
+      final base = _state(
+        PersistentGameState(
+          playerStabilityNet: const {'player_1': -4},
+          cities: const [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: 'player_1',
+              name: 'City',
+              center: CityHex(col: 0, row: 0),
+            ),
+          ],
+          research: ResearchState(
+            players: {
+              'player_1': PlayerResearchState(
+                unlockedTechnologyIds: {TechnologyId.administration},
+              ),
+            },
+          ),
+        ),
+      );
+      final orderBuilding = base.apply(
+        const CommandMctsAction(
+          StartBuildingCommand('city_1', CityBuildingType.townHall),
+        ),
+      );
+      final regularBuilding = base.apply(
+        const CommandMctsAction(
+          StartBuildingCommand('city_1', CityBuildingType.granary),
+        ),
+      );
+
+      expect(
+        evaluator.score(orderBuilding, 'player_1'),
+        greaterThan(evaluator.score(regularBuilding, 'player_1')),
+      );
+    });
+
     test('rewards queued settlers while expansion is still desired', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(

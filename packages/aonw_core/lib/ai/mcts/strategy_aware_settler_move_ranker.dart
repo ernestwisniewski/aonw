@@ -53,19 +53,69 @@ final class _StrategicSettlerRanker {
     }
 
     final assignment = plan.settlerAssignments[founder.id];
+    final stabilityPenalty = _foundingStabilityPenalty(
+      command: command,
+      founder: founder,
+      view: view,
+    );
     if (assignment == null) {
       final score = coreDefenseCovered(view, context, plan) ? 840.0 : 760.0;
       if (plan.mode == StrategicMode.expand) {
-        return CommandRanking(CandidatePriority.settler, score + 30);
+        return CommandRanking(
+          CandidatePriority.settler,
+          score + 30 - stabilityPenalty,
+        );
       }
-      return CommandRanking(CandidatePriority.settler, score);
+      return CommandRanking(
+        CandidatePriority.settler,
+        score - stabilityPenalty,
+      );
     }
 
     final distance = HexDistance.between(
       HexCoordinate(col: founder.col, row: founder.row),
       assignment.toCoordinate(),
     );
-    return CommandRanking(CandidatePriority.settler, 860 - distance * 8);
+    return CommandRanking(
+      CandidatePriority.settler,
+      860 - distance * 8 - stabilityPenalty,
+    );
+  }
+
+  double _foundingStabilityPenalty({
+    required FoundCityCommand command,
+    required GameUnit founder,
+    required GameView view,
+  }) {
+    final coreCity = _canonicalCoreCity(view);
+    if (coreCity == null) return 0.0;
+    final ruleset = view.ruleset.stability;
+    final center = CityHex(col: founder.col, row: founder.row);
+    final cohesionCost = CohesionCalculator.cityCohesionCost(
+      cityCenter: center.toCoordinate(),
+      nearestCoreCenter: coreCity.center.toCoordinate(),
+      isConnected: CityTerritoryRules.isConnected(
+        center: center,
+        controlledHexes: command.controlledHexes,
+      ),
+      ruleset: ruleset,
+    );
+    final projectedNet =
+        view.ownStabilityNet - ruleset.costPerCity - cohesionCost;
+    return switch (StabilityPolicy.bandFor(projectedNet, ruleset: ruleset)) {
+      StabilityBand.content || StabilityBand.stable => 0.0,
+      StabilityBand.strained => 50.0,
+      StabilityBand.unrest => 240.0,
+    };
+  }
+
+  GameCity? _canonicalCoreCity(GameView view) {
+    if (view.ownCities.isEmpty) return null;
+    for (final city in view.ownCities) {
+      if (city.capitalOwnerPlayerId == view.forPlayerId) return city;
+    }
+    final ordered = [...view.ownCities]..sort((a, b) => a.id.compareTo(b.id));
+    return ordered.first;
   }
 
   CommandRanking? _rankMove(

@@ -43,6 +43,7 @@ final class _BuildingProductionScorecard {
         _militaryReadinessBonus() +
         _localDefenseBonus() +
         _strategicModeBonus() +
+        _stabilityRecoveryBonus() +
         _economicBuildingBonus() +
         _infrastructureWindowBonus() +
         _productionYieldBonus(effectScore.hasProductionYield) +
@@ -157,6 +158,21 @@ final class _BuildingProductionScorecard {
       StrategicMode.consolidate => buildingProfile.isEconomic ? 1.4 : 0.0,
       StrategicMode.techRush => buildingProfile.isScience ? 1.8 : 0.0,
       StrategicMode.expand || null => 0.0,
+    };
+  }
+
+  double _stabilityRecoveryBonus() {
+    if (!StabilitySourceCatalog.orderBuildings.contains(buildingType)) {
+      return 0.0;
+    }
+    return switch (StabilityPolicy.bandFor(
+      view.ownStabilityNet,
+      ruleset: view.ruleset.stability,
+    )) {
+      StabilityBand.content => 0.0,
+      StabilityBand.stable => 0.8,
+      StabilityBand.strained => 6.0,
+      StabilityBand.unrest => 12.0,
     };
   }
 

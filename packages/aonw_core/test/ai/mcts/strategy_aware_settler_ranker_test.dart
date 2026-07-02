@@ -40,6 +40,47 @@ void main() {
       expect(ranking?.priority, CandidatePriority.opening);
       expect(ranking?.score, greaterThan(1212));
     });
+
+    test('penalizes a city site that would push cohesion into unrest', () {
+      final mapData = _mapData(cols: 12, rows: 1);
+      const capital = GameCity(
+        id: 'capital',
+        ownerPlayerId: 'player_1',
+        foundingOwnerPlayerId: 'player_1',
+        name: 'Capital',
+        center: CityHex(col: 0, row: 0),
+      );
+      final near = rankStrategicSettlerCommand(
+        const FoundCityCommand(
+          'near_settler',
+          controlledHexes: [CityHex(col: 2, row: 0)],
+        ),
+        _view(
+          units: [_unit('near_settler', GameUnitType.settler, col: 3)],
+          cities: const [capital],
+          mapData: mapData,
+        ),
+        _context(mapData: mapData),
+        _plan(),
+      );
+      final far = rankStrategicSettlerCommand(
+        const FoundCityCommand(
+          'far_settler',
+          controlledHexes: [CityHex(col: 10, row: 0)],
+        ),
+        _view(
+          units: [_unit('far_settler', GameUnitType.settler, col: 11)],
+          cities: const [capital],
+          mapData: mapData,
+        ),
+        _context(mapData: mapData),
+        _plan(),
+      );
+
+      expect(near, isNotNull);
+      expect(far, isNotNull);
+      expect(far!.score, lessThan(near!.score));
+    });
   });
 }
 
@@ -60,21 +101,27 @@ StrategicPlan _plan({Map<String, CityHex> settlerAssignments = const {}}) {
   );
 }
 
-AiContext _context() {
+AiContext _context({MapData? mapData}) {
+  final actualMapData = mapData ?? _mapData();
   return AiContext(
     ruleset: GameRuleset.defaults,
-    mapData: _mapData(),
+    mapData: actualMapData,
     turn: 1,
     rng: AiRng.fromTurn(turn: 1, playerId: 'player_1', baseSeed: 7),
   );
 }
 
-GameView _view({List<GameUnit> units = const []}) {
+GameView _view({
+  List<GameUnit> units = const [],
+  List<GameCity> cities = const [],
+  MapData? mapData,
+}) {
+  final actualMapData = mapData ?? _mapData();
   return GameView.fromPersistentState(
-    PersistentGameState(units: units),
+    PersistentGameState(units: units, cities: cities),
     forPlayerId: 'player_1',
     turn: 1,
-    mapData: _mapData(),
+    mapData: actualMapData,
     ruleset: GameRuleset.defaults,
     ignoreFogOfWar: true,
     ignoreDynamicFogOfWar: true,
@@ -98,13 +145,13 @@ GameUnit _unit(
   );
 }
 
-MapData _mapData() {
+MapData _mapData({int cols = 4, int rows = 4}) {
   return MapData(
-    cols: 4,
-    rows: 4,
+    cols: cols,
+    rows: rows,
     tiles: [
-      for (var col = 0; col < 4; col++)
-        for (var row = 0; row < 4; row++)
+      for (var col = 0; col < cols; col++)
+        for (var row = 0; row < rows; row++)
           TileData(
             col: col,
             row: row,

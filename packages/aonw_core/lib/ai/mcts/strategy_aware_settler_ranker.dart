@@ -11,6 +11,7 @@ import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 part 'strategy_aware_settler_move_ranker.dart';

@@ -10,6 +10,7 @@ import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_state_score_estimator.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategic_state_scorer.dart';
 import 'package:aonw_core/ai/strategic/war_goal.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -85,6 +86,7 @@ class StateHeuristicEvaluator implements MctsEvaluator {
     // calculator so the heuristic tracks the same net the turn processor caches.
     // Luxuries are skipped to keep this off the per-tile scan on the hot path.
     final projectedState = PersistentGameState(
+      playerWarWeariness: {forPlayerId: view.ownWarWeariness},
       cities: state.ownCities,
       artifacts: view.artifacts,
       research: ResearchState(players: {forPlayerId: state.ownResearch}),
@@ -147,7 +149,11 @@ class CommandSequenceEvaluator implements MctsEvaluator {
         state: state,
         context: context,
       ),
-      StartBuildingCommand() || StartCityProjectCommand() => 0.11,
+      StartBuildingCommand(:final buildingType) => _buildingScore(
+        buildingType,
+        state,
+      ),
+      StartCityProjectCommand() => 0.11,
       SetCitySpecializationCommand() => 0.08,
       SelectWorkerImprovementCommand() ||
       ConfirmWorkerImprovementCommand() ||
@@ -173,6 +179,23 @@ class CommandSequenceEvaluator implements MctsEvaluator {
       StoreArtifactInCityCommand() => 0.24,
       _ => 0.0,
     };
+  }
+
+  double _buildingScore(CityBuildingType buildingType, SimulatedState state) {
+    const base = 0.11;
+    if (!StabilitySourceCatalog.orderBuildings.contains(buildingType)) {
+      return base;
+    }
+    return base +
+        switch (StabilityPolicy.bandFor(
+          state.view.ownStabilityNet,
+          ruleset: state.view.ruleset.stability,
+        )) {
+          StabilityBand.content => 0.0,
+          StabilityBand.stable => 0.02,
+          StabilityBand.strained => 0.10,
+          StabilityBand.unrest => 0.18,
+        };
   }
 
   double _cancelUnitActionScore(
