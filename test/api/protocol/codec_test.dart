@@ -194,6 +194,21 @@ void main() {
       expect(threshold.holdTurns, 1);
       expect(threshold.requiredHoldTurns, 4);
     });
+
+    test('rejects unknown wire event types', () {
+      const codec = EventCodec();
+      final wire = WireEvent(
+        matchId: 'match_1',
+        offset: 4,
+        timestamp: DateTime.utc(2026, 4, 27, 12),
+        events: const [
+          {'type': 'FromTheFuture'},
+        ],
+      );
+
+      expect(() => codec.eventsFromWire(wire), throwsArgumentError);
+      expect(() => codec.eventsFromJsonList(wire.events), throwsArgumentError);
+    });
   });
 
   group('SnapshotCodec', () {

@@ -249,6 +249,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       fogOfWarService: fogOfWarService,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       paceBalance: paceBalance,
     );
   }

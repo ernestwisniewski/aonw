@@ -173,6 +173,7 @@ class LocalCommandResolver {
       ruleset: ruleset,
       priorEvents: combat.events,
       mapObjectives: reducer.mapData.objectives,
+      turn: save.turn,
     );
     final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
       state: economy.state,

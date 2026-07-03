@@ -36,6 +36,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
@@ -123,6 +124,7 @@ class HudOverlayFrame {
     required GameState? gameState,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     required HudPanelModes panelModes,
     required TopResourcePopupType? openResourceBreakdown,
     required TechnologyPanelViewModel technologyViewModel,
@@ -167,6 +169,7 @@ class HudOverlayFrame {
       mapData: session.mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
     );
     final activeTechnologySummary = HudActiveTechnologySummary.fromViewModel(
       viewModel: technologyViewModel,
@@ -251,6 +254,7 @@ class HudOverlayFrame {
       mapData: session.mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       l10n: l10n,
       currentTurn: gameSave.turn,
       paceBalance: gameSave.matchRules.paceBalance,
@@ -261,6 +265,7 @@ class HudOverlayFrame {
       mapData: session.mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       l10n: l10n,
       currentTurn: gameSave.turn,
       paceBalance: gameSave.matchRules.paceBalance,

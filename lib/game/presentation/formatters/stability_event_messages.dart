@@ -3,7 +3,6 @@ import 'package:aonw/game/presentation/formatters/stability_band_presentation.da
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 
-/// Builds the player-facing notification for a stability band change.
 GameEventNotificationMessage stabilityBandChangedMessage({
   required AppLocalizations l10n,
   required String playerName,

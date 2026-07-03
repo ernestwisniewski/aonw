@@ -461,6 +461,14 @@ abstract final class PersistentTurnCombatResolver {
     );
     events
       ..add(
+        CityAttackedEvent(
+          attackerUnitId: attacker.id,
+          attackerOwnerPlayerId: attacker.ownerPlayerId,
+          cityId: city.id,
+          cityOwnerPlayerId: city.ownerPlayerId,
+        ),
+      )
+      ..add(
         CombatResolvedEvent(
           attackerUnitId: attacker.id,
           defenderUnitId: city.id,

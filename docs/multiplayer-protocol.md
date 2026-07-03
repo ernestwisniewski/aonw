@@ -63,7 +63,9 @@ The runtime keeps these synchronization invariants:
 
 ## Protocol Versioning
 
-All wire payloads carry `v: 1` and are validated by `kProtocolVersion`.
+All wire payloads carry `v: 2` and are validated by `kProtocolVersion`.
+Persisted snapshots/events from earlier wire versions must be cleared or
+migrated before replaying them with the current client and server.
 
 Use this path for the first coordinated protocol bump:
 

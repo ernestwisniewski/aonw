@@ -1602,6 +1602,10 @@
   "objectiveBuildCombatForceHint": "Met verschillende troepen kun je expansie- en drukrivalen beschermen.",
   "objectiveBuildCombatForceReward": "+ grensbeveiliging",
   "objectiveBuildCombatForceTooltip": "Een stabiel scherm beschermt kolonisten, arbeiders en ontwikkelde steden.",
+  "objectiveRaiseStabilityTitle": "Herstel de stabiliteit",
+  "objectiveRaiseStabilityHint": "Je rijk staat onder druk. Bouw ordegebouwen, ontsluit luxegoederen of consolideer voordat er onrust uitbreekt.",
+  "objectiveRaiseStabilityReward": "+ gestage groei",
+  "objectiveRaiseStabilityTooltip": "Rijken onder druk of in onrust verliezen stadsgroei en een deel van hun opbrengsten tot de stabiliteit herstelt.",
   "objectiveHoldDominationTitle": "Houd de dominantie vast",
   "objectiveHoldDominationHint": "U bevindt zich boven de kaartdrempel. Houd de controle totdat het aftellen eindigt.",
   "objectiveHoldDominationReward": "+ kaartoverwinning",
@@ -2466,6 +2470,7 @@
   "commonBuildings": "Gebouwen",
   "commonGold": "Goud",
   "commonScience": "Wetenschap",
+  "commonStability": "Stabiliteit",
   "commonProduction": "Productie",
   "commonResearch": "Onderzoek",
   "commonEmpire": "Empire",
@@ -2694,6 +2699,27 @@
       }
     }
   },
+  "topResourceStabilityTooltip": "Stabiliteit van het rijk: {net}",
+  "stabilityBandContent": "Tevreden",
+  "stabilityBandStable": "Stabiel",
+  "stabilityBandStrained": "Onder druk",
+  "stabilityBandUnrest": "Onrust",
+  "stabilityBreakdownBand": "Huidige toestand",
+  "stabilityBreakdownNet": "Nettostabiliteit",
+  "stabilityBreakdownSources": "Bronnen",
+  "stabilityBreakdownCosts": "Kosten",
+  "stabilityBreakdownBaseOrder": "Basisorde",
+  "stabilityBreakdownBuildings": "Ordegebouwen",
+  "stabilityBreakdownLuxuries": "Luxegoederen",
+  "stabilityBreakdownTechnologies": "Technologieën",
+  "stabilityBreakdownArtifacts": "Opgeslagen artefacten",
+  "stabilityBreakdownCities": "Omvang van het rijk",
+  "stabilityBreakdownPopulation": "Bevolking",
+  "stabilityBreakdownCohesion": "Grenscohesie",
+  "stabilityBreakdownConqueredCities": "Veroverde steden",
+  "stabilityBreakdownWarWeariness": "Oorlogsmoeheid",
+  "stabilityBreakdownHegemony": "Hegemoniale druk",
+  "stabilityBreakdownRelativeStanding": "Relatieve positie",
   "topResourceResourcesTooltip": "Grondstoffen: {resourceTotal}-stortingen • {resourceTypes}-gecontroleerde typen",
   "@topResourceResourcesTooltip": {
     "placeholders": {
@@ -3047,6 +3073,10 @@
   "citySelectionFoodLabel": "Voedsel",
   "citySelectionNetFoodLabel": "Netto eten",
   "citySelectionBuildingsLabel": "Gebouwen",
+  "citySelectionCohesionLabel": "Cohesie",
+  "citySelectionCohesionCore": "Kerngebied",
+  "citySelectionCohesionIntegrated": "Geïntegreerd • {distance} velden van de kern",
+  "citySelectionCohesionFrontier": "Grensgebied • {distance} velden • -{cost} stabiliteit",
   "citySelectionArtifactLabel": "Artefact",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Erfenis",
@@ -3797,16 +3827,52 @@
   "mapObjectiveHolySiteDescription": "Een cultureel belangrijke plek. Controle geeft goud en overwinningspunten.",
   "mapObjectiveLegendaryResourceDescription": "Een zeldzame afzetting die uitbreiding of conflict waard is. Controle geeft de grootste beloning.",
   "mapObjectiveStatusNeutral": "Houd {turns} beurten vast",
-  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "@mapObjectiveStatusNeutral": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusHolding": "Vasthouden {held}/{required}",
-  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusHolding": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusCompleted": "Gecontroleerd {held}/{required}",
-  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusCompleted": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusContested": "Betwist",
   "mapObjectiveRewardVictoryPoints": "+{points} OP",
-  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@mapObjectiveRewardVictoryPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveRewardGoldPerTurn": "+{gold} goud/beurt",
-  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "@mapObjectiveRewardGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "selectionImprovementStateBuilt": "GEBOUWD",
   "selectionImprovementStateAvailable": "BESCHIKBAAR",
   "selectionImprovementStateNeedsTechnology": "TECH",
@@ -4390,6 +4456,8 @@
   "eventCityCapturedTitle": "Stad veroverd",
   "eventCityDestroyedTitle": "Stad vernietigd",
   "eventTurnEndedTitle": "De beurt is geëindigd",
+  "eventStabilityBandChangedTitle": "Stabiliteit van het rijk veranderd",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
   "eventWorkerCompletedJobTitle": "Werk voltooid",
   "eventResearchPointsTitle": "Wetenschap",
   "eventResearchPointsBody": "{playerName}: +{points} wetenschap",

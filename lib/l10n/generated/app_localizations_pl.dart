@@ -2729,18 +2729,18 @@ class AppLocalizationsPl extends AppLocalizations {
       'Stała osłona chroni osadników, robotników i rozwinięte miasta.';
 
   @override
-  String get objectiveRaiseStabilityTitle => 'Restore stability';
+  String get objectiveRaiseStabilityTitle => 'Przywróć stabilność';
 
   @override
   String get objectiveRaiseStabilityHint =>
-      'Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.';
+      'Twoje imperium jest przeciążone. Dodaj budynki porządku, podłącz luksusy lub skonsoliduj się, zanim wpadnie w niepokoje.';
 
   @override
-  String get objectiveRaiseStabilityReward => '+ steady growth';
+  String get objectiveRaiseStabilityReward => '+ stabilny wzrost';
 
   @override
   String get objectiveRaiseStabilityTooltip =>
-      'Strained and unrest empires lose city growth and part of their yields until stability recovers.';
+      'Przeciążone i niespokojne imperia tracą wzrost miast i część dochodów, dopóki stabilność nie wróci.';
 
   @override
   String get objectiveHoldDominationTitle => 'Utrzymaj dominację';
@@ -4451,7 +4451,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get commonScience => 'Nauka';
 
   @override
-  String get commonStability => 'Stability';
+  String get commonStability => 'Stabilność';
 
   @override
   String get commonProduction => 'Produkcja';
@@ -4696,7 +4696,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String topResourceStabilityTooltip(int net) {
-    return 'Empire stability: $net';
+    return 'Stabilność imperium: $net';
   }
 
   @override

@@ -31,6 +31,12 @@ void main() {
           defenderUnitId: 'defender',
           outcome: _sampleOutcome(),
         ),
+        const CityAttackedEvent(
+          attackerUnitId: 'attacker',
+          attackerOwnerPlayerId: 'player_1',
+          cityId: 'city_2',
+          cityOwnerPlayerId: 'player_2',
+        ),
         const UnitKilledEvent(
           unitId: 'defender',
           ownerPlayerId: 'player_2',
@@ -217,6 +223,17 @@ void main() {
       expect(
         (event as StrategicResourceDiscoveredEvent).pressure,
         StrategicResourceDiscoveryPressure.rivalMonopoly,
+      );
+    });
+
+    test('tryFromJson skips unknown event types from newer peers', () {
+      expect(
+        GameEventSerializer.tryFromJson(const {'type': 'FromTheFuture'}),
+        isNull,
+      );
+      expect(
+        () => GameEventSerializer.fromJson(const {'type': 'FromTheFuture'}),
+        throwsArgumentError,
       );
     });
 

@@ -784,7 +784,7 @@
   "enterMatchAction": "Wejdź",
   "hideMatchAction": "Ukryj",
   "joinMatchAction": "Dołącz",
-  "cancelAction": "Anuluj",
+  "cancelAction": "ANULUJ",
   "copyAction": "Kopiuj",
   "shareAction": "Udostępnij",
   "multiplayerHomeSubtitle": "Wybierz szybką kolejkę albo prywatny mecz z kodem dla znajomych.",
@@ -1030,7 +1030,6 @@
       }
     }
   },
-  "cancelAction": "ANULUJ",
   "deleteAction": "USUŃ",
   "retryAction": "PONÓW",
   "noSavedGames": "Brak zapisanych gier.",
@@ -1603,6 +1602,10 @@
   "objectiveBuildCombatForceHint": "Kilka oddziałów pozwala chronić ekspansję i naciskać rywali.",
   "objectiveBuildCombatForceReward": "+ bezpieczeństwo granic",
   "objectiveBuildCombatForceTooltip": "Stała osłona chroni osadników, robotników i rozwinięte miasta.",
+  "objectiveRaiseStabilityTitle": "Przywróć stabilność",
+  "objectiveRaiseStabilityHint": "Twoje imperium jest przeciążone. Dodaj budynki porządku, podłącz luksusy lub skonsoliduj się, zanim wpadnie w niepokoje.",
+  "objectiveRaiseStabilityReward": "+ stabilny wzrost",
+  "objectiveRaiseStabilityTooltip": "Przeciążone i niespokojne imperia tracą wzrost miast i część dochodów, dopóki stabilność nie wróci.",
   "objectiveHoldDominationTitle": "Utrzymaj dominację",
   "objectiveHoldDominationHint": "Jesteś nad progiem mapy. Utrzymaj kontrolę, aż odliczanie dobiegnie końca.",
   "objectiveHoldDominationReward": "+ zwycięstwo mapowe",
@@ -2467,6 +2470,7 @@
   "commonBuildings": "Budynki",
   "commonGold": "Złoto",
   "commonScience": "Nauka",
+  "commonStability": "Stabilność",
   "commonProduction": "Produkcja",
   "commonResearch": "Badania",
   "commonEmpire": "Imperium",
@@ -2695,6 +2699,7 @@
       }
     }
   },
+  "topResourceStabilityTooltip": "Stabilność imperium: {net}",
   "stabilityBandContent": "Dobrobyt",
   "stabilityBandStable": "Stabilne",
   "stabilityBandStrained": "Napięcie",
@@ -3839,16 +3844,52 @@
   "mapObjectiveHolySiteDescription": "Miejsce o znaczeniu kulturowym. Kontrola zapewnia złoto i punkty.",
   "mapObjectiveLegendaryResourceDescription": "Rzadkie złoże warte ekspansji lub konfliktu. Kontrola daje największą nagrodę.",
   "mapObjectiveStatusNeutral": "Utrzymaj {turns} tur",
-  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "@mapObjectiveStatusNeutral": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusHolding": "Utrzymanie {held}/{required}",
-  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusHolding": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusCompleted": "Kontrolowane {held}/{required}",
-  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusCompleted": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusContested": "Sporne",
   "mapObjectiveRewardVictoryPoints": "+{points} pkt",
-  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@mapObjectiveRewardVictoryPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveRewardGoldPerTurn": "+{gold} złota/turę",
-  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "@mapObjectiveRewardGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "selectionImprovementStateBuilt": "ZBUDOWANE",
   "selectionImprovementStateAvailable": "DOSTĘPNE",
   "selectionImprovementStateNeedsTechnology": "TECH",

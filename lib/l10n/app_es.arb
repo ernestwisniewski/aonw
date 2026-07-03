@@ -784,7 +784,7 @@
   "enterMatchAction": "Entrar",
   "hideMatchAction": "Ocultar",
   "joinMatchAction": "Unirse",
-  "cancelAction": "Cancelar",
+  "cancelAction": "CANCELAR",
   "copyAction": "Copiar",
   "shareAction": "Compartir",
   "multiplayerHomeSubtitle": "Elige una cola rápida o una partida privada con código para amigos.",
@@ -1030,7 +1030,6 @@
       }
     }
   },
-  "cancelAction": "CANCELAR",
   "deleteAction": "ELIMINAR",
   "retryAction": "REINTENTAR",
   "noSavedGames": "No hay partidas guardadas.",
@@ -1603,6 +1602,10 @@
   "objectiveBuildCombatForceHint": "Varias tropas te permiten proteger la expansión y presionar a los rivales.",
   "objectiveBuildCombatForceReward": "+ seguridad fronteriza",
   "objectiveBuildCombatForceTooltip": "Una pantalla constante protege colonos, trabajadores y ciudades desarrolladas.",
+  "objectiveRaiseStabilityTitle": "Restaura la estabilidad",
+  "objectiveRaiseStabilityHint": "Tu imperio está tensionado. Añade edificios de orden, conecta lujos o consolídate antes de caer en el descontento.",
+  "objectiveRaiseStabilityReward": "+ crecimiento constante",
+  "objectiveRaiseStabilityTooltip": "Los imperios tensionados y en descontento pierden crecimiento de las ciudades y parte de sus rendimientos hasta recuperar la estabilidad.",
   "objectiveHoldDominationTitle": "Mantén la dominación",
   "objectiveHoldDominationHint": "Estás por encima del umbral del mapa. Mantén el control hasta que termine la cuenta atrás.",
   "objectiveHoldDominationReward": "+ victoria de mapa",
@@ -2467,6 +2470,7 @@
   "commonBuildings": "Edificios",
   "commonGold": "Oro",
   "commonScience": "Ciencia",
+  "commonStability": "Estabilidad",
   "commonProduction": "Producción",
   "commonResearch": "Investigación",
   "commonEmpire": "Imperio",
@@ -2695,6 +2699,27 @@
       }
     }
   },
+  "topResourceStabilityTooltip": "Estabilidad del imperio: {net}",
+  "stabilityBandContent": "Satisfecho",
+  "stabilityBandStable": "Estable",
+  "stabilityBandStrained": "Tensionado",
+  "stabilityBandUnrest": "Descontento",
+  "stabilityBreakdownBand": "Estado actual",
+  "stabilityBreakdownNet": "Estabilidad neta",
+  "stabilityBreakdownSources": "Fuentes",
+  "stabilityBreakdownCosts": "Costes",
+  "stabilityBreakdownBaseOrder": "Orden base",
+  "stabilityBreakdownBuildings": "Edificios de orden",
+  "stabilityBreakdownLuxuries": "Recursos de lujo",
+  "stabilityBreakdownTechnologies": "Tecnologías",
+  "stabilityBreakdownArtifacts": "Artefactos almacenados",
+  "stabilityBreakdownCities": "Tamaño del imperio",
+  "stabilityBreakdownPopulation": "Población",
+  "stabilityBreakdownCohesion": "Cohesión fronteriza",
+  "stabilityBreakdownConqueredCities": "Ciudades conquistadas",
+  "stabilityBreakdownWarWeariness": "Fatiga de guerra",
+  "stabilityBreakdownHegemony": "Presión hegemónica",
+  "stabilityBreakdownRelativeStanding": "Posición relativa",
   "topResourceResourcesTooltip": "Recursos: {resourceTotal} depósitos • {resourceTypes} tipos controlados",
   "@topResourceResourcesTooltip": {
     "placeholders": {
@@ -3048,6 +3073,10 @@
   "citySelectionFoodLabel": "Alimento",
   "citySelectionNetFoodLabel": "Alimento neto",
   "citySelectionBuildingsLabel": "Edificios",
+  "citySelectionCohesionLabel": "Cohesión",
+  "citySelectionCohesionCore": "Núcleo",
+  "citySelectionCohesionIntegrated": "Integrada • {distance} hex del núcleo",
+  "citySelectionCohesionFrontier": "Frontera • {distance} hex • -{cost} estabilidad",
   "citySelectionArtifactLabel": "Artefacto",
   "worldArtifactBonusTitle": "Bonificación",
   "worldArtifactHeritageTitle": "Patrimonio",
@@ -3798,16 +3827,52 @@
   "mapObjectiveHolySiteDescription": "Un lugar de importancia cultural. Controlarlo otorga oro y puntos de victoria.",
   "mapObjectiveLegendaryResourceDescription": "Un yacimiento raro que merece expansión o conflicto. Controlarlo da la mayor recompensa.",
   "mapObjectiveStatusNeutral": "Mantén {turns} turnos",
-  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "@mapObjectiveStatusNeutral": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusHolding": "Manteniendo {held}/{required}",
-  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusHolding": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusCompleted": "Controlado {held}/{required}",
-  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusCompleted": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusContested": "Disputado",
   "mapObjectiveRewardVictoryPoints": "+{points} PV",
-  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@mapObjectiveRewardVictoryPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveRewardGoldPerTurn": "+{gold} oro/turno",
-  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "@mapObjectiveRewardGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "selectionImprovementStateBuilt": "CONSTRUIDA",
   "selectionImprovementStateAvailable": "DISPONIBLE",
   "selectionImprovementStateNeedsTechnology": "TEC.",
@@ -4391,6 +4456,8 @@
   "eventCityCapturedTitle": "Ciudad capturada",
   "eventCityDestroyedTitle": "Ciudad destruida",
   "eventTurnEndedTitle": "Turno terminado",
+  "eventStabilityBandChangedTitle": "La estabilidad del imperio ha cambiado",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
   "eventWorkerCompletedJobTitle": "Trabajo completado",
   "eventResearchPointsTitle": "Ciencia",
   "eventResearchPointsBody": "{playerName}: +{points} ciencia",

@@ -21,6 +21,9 @@ class AiContext {
   final ScoreRaceAnalysis? scoreRace;
   final DateTime? deadline;
 
+  final double ownControlPercent;
+  final int knownPlayerCount;
+
   const AiContext({
     required this.ruleset,
     required this.mapData,
@@ -32,6 +35,8 @@ class AiContext {
     this.strategicPlan,
     this.scoreRace,
     this.deadline,
+    this.ownControlPercent = 0.0,
+    this.knownPlayerCount = 1,
   });
 
   AiDifficultyProfile get difficultyProfile => difficulty.profile;
@@ -53,6 +58,8 @@ class AiContext {
     StrategicPlan? strategicPlan,
     ScoreRaceAnalysis? scoreRace,
     DateTime? deadline,
+    double? ownControlPercent,
+    int? knownPlayerCount,
   }) {
     return AiContext(
       ruleset: ruleset ?? this.ruleset,
@@ -65,6 +72,8 @@ class AiContext {
       strategicPlan: strategicPlan ?? this.strategicPlan,
       scoreRace: scoreRace ?? this.scoreRace,
       deadline: deadline ?? this.deadline,
+      ownControlPercent: ownControlPercent ?? this.ownControlPercent,
+      knownPlayerCount: knownPlayerCount ?? this.knownPlayerCount,
     );
   }
 }

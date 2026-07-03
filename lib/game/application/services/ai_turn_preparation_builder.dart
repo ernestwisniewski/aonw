@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 
 final class AiTurnPreparationBuilder {
   final GameRepository repository;
@@ -111,6 +112,11 @@ final class AiTurnPreparationBuilder {
       ),
       ignoreFogOfWar: true,
     );
+    final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
+      state: planningPersistentState,
+      playerId: playerId,
+      mapData: mapData,
+    );
     var context = AiContext(
       ruleset: effectiveRuleset,
       mapData: mapData,
@@ -128,6 +134,8 @@ final class AiTurnPreparationBuilder {
         resolvedSnapshot.save,
         resolvedSnapshot.runtimeState.turnStartedAt,
       ),
+      ownControlPercent: hegemonyContext.controlPercent,
+      knownPlayerCount: hegemonyContext.playerCount,
     );
     final assessment = AiEmpireAssessment.fromView(view, context);
     final strategicPlan =

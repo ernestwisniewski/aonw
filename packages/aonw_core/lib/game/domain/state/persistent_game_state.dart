@@ -98,9 +98,6 @@ class PersistentGameState {
   final ResearchState research;
   final GameRuntimeState runtimeState;
 
-  /// Every non-empty player id referenced anywhere in this state: per-player
-  /// maps, unit and city owners (including a city's founding owner), diplomacy
-  /// relations, fog, and runtime holds.
   Set<String> get knownPlayerIds => <String>{
     ...playerColors.keys,
     ...playerCountries.keys,

@@ -6,15 +6,13 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 
-/// Builds the cohesion row of the city selection panel: core / integrated /
-/// frontier status with the cohesion cost, using the same core-city choice
-/// ([CoreCityLocator]) as the stability calculation itself.
 abstract final class CityCohesionSelectionItem {
   static SelectionInfoItem? build(
     GameCity city,
     List<GameCity> cities,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    StabilityRuleset ruleset = StabilityRuleset.standard,
+  }) {
     final coreCity = CoreCityLocator.coreCityFor(
       playerId: city.ownerPlayerId,
       cities: cities,
@@ -40,7 +38,7 @@ abstract final class CityCohesionSelectionItem {
         center: city.center,
         controlledHexes: city.controlledHexes,
       ),
-      ruleset: StabilityRuleset.standard,
+      ruleset: ruleset,
     );
     return SelectionInfoItem(
       icon: GameIcons.defense,

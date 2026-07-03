@@ -2743,18 +2743,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Un écran permanent protège les colons, les travailleurs et les villes développées.';
 
   @override
-  String get objectiveRaiseStabilityTitle => 'Restore stability';
+  String get objectiveRaiseStabilityTitle => 'Rétablir la stabilité';
 
   @override
   String get objectiveRaiseStabilityHint =>
-      'Your empire is strained. Add order buildings, connect luxuries, or consolidate before it slips into unrest.';
+      'Votre empire est sous tension. Ajoutez des bâtiments d\'ordre, reliez des ressources de luxe ou consolidez-vous avant de sombrer dans les troubles.';
 
   @override
-  String get objectiveRaiseStabilityReward => '+ steady growth';
+  String get objectiveRaiseStabilityReward => '+ croissance régulière';
 
   @override
   String get objectiveRaiseStabilityTooltip =>
-      'Strained and unrest empires lose city growth and part of their yields until stability recovers.';
+      'Les empires sous tension ou en proie aux troubles perdent la croissance des villes et une partie de leurs rendements jusqu\'au retour de la stabilité.';
 
   @override
   String get objectiveHoldDominationTitle => 'Maintenez la domination';
@@ -4473,7 +4473,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonScience => 'Science';
 
   @override
-  String get commonStability => 'Stability';
+  String get commonStability => 'Stabilité';
 
   @override
   String get commonProduction => 'Production';
@@ -4721,68 +4721,68 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topResourceStabilityTooltip(int net) {
-    return 'Empire stability: $net';
+    return 'Stabilité de l\'empire : $net';
   }
 
   @override
-  String get stabilityBandContent => 'Content';
+  String get stabilityBandContent => 'Prospère';
 
   @override
   String get stabilityBandStable => 'Stable';
 
   @override
-  String get stabilityBandStrained => 'Strained';
+  String get stabilityBandStrained => 'Sous tension';
 
   @override
-  String get stabilityBandUnrest => 'Unrest';
+  String get stabilityBandUnrest => 'Troubles';
 
   @override
-  String get stabilityBreakdownBand => 'Current state';
+  String get stabilityBreakdownBand => 'État actuel';
 
   @override
-  String get stabilityBreakdownNet => 'Net stability';
+  String get stabilityBreakdownNet => 'Stabilité nette';
 
   @override
   String get stabilityBreakdownSources => 'Sources';
 
   @override
-  String get stabilityBreakdownCosts => 'Costs';
+  String get stabilityBreakdownCosts => 'Coûts';
 
   @override
-  String get stabilityBreakdownBaseOrder => 'Base order';
+  String get stabilityBreakdownBaseOrder => 'Ordre de base';
 
   @override
-  String get stabilityBreakdownBuildings => 'Order buildings';
+  String get stabilityBreakdownBuildings => 'Bâtiments d\'ordre';
 
   @override
-  String get stabilityBreakdownLuxuries => 'Luxury resources';
+  String get stabilityBreakdownLuxuries => 'Ressources de luxe';
 
   @override
   String get stabilityBreakdownTechnologies => 'Technologies';
 
   @override
-  String get stabilityBreakdownArtifacts => 'Stored artifacts';
+  String get stabilityBreakdownArtifacts => 'Artefacts entreposés';
 
   @override
-  String get stabilityBreakdownCities => 'Empire size';
+  String get stabilityBreakdownCities => 'Taille de l\'empire';
 
   @override
   String get stabilityBreakdownPopulation => 'Population';
 
   @override
-  String get stabilityBreakdownCohesion => 'Frontier cohesion';
+  String get stabilityBreakdownCohesion => 'Cohésion frontalière';
 
   @override
-  String get stabilityBreakdownConqueredCities => 'Conquered cities';
+  String get stabilityBreakdownConqueredCities => 'Villes conquises';
 
   @override
-  String get stabilityBreakdownWarWeariness => 'War weariness';
+  String get stabilityBreakdownWarWeariness => 'Lassitude de guerre';
 
   @override
-  String get stabilityBreakdownHegemony => 'Hegemony pressure';
+  String get stabilityBreakdownHegemony => 'Pression hégémonique';
 
   @override
-  String get stabilityBreakdownRelativeStanding => 'Relative standing';
+  String get stabilityBreakdownRelativeStanding => 'Position relative';
 
   @override
   String topResourceResourcesTooltip(int resourceTotal, int resourceTypes) {
@@ -5300,19 +5300,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get citySelectionBuildingsLabel => 'Bâtiments';
 
   @override
-  String get citySelectionCohesionLabel => 'Cohesion';
+  String get citySelectionCohesionLabel => 'Cohésion';
 
   @override
-  String get citySelectionCohesionCore => 'Core';
+  String get citySelectionCohesionCore => 'Cœur';
 
   @override
   String citySelectionCohesionIntegrated(int distance) {
-    return 'Integrated • $distance hexes from core';
+    return 'Intégrée • $distance hex du cœur';
   }
 
   @override
   String citySelectionCohesionFrontier(int distance, int cost) {
-    return 'Frontier • $distance hexes • -$cost stability';
+    return 'Frontière • $distance hex • -$cost stabilité';
   }
 
   @override
@@ -7487,7 +7487,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get eventTurnEndedTitle => 'Fin du tour';
 
   @override
-  String get eventStabilityBandChangedTitle => 'Empire stability changed';
+  String get eventStabilityBandChangedTitle =>
+      'Stabilité de l\'empire modifiée';
 
   @override
   String eventStabilityBandChangedBody(
@@ -7495,7 +7496,7 @@ class AppLocalizationsFr extends AppLocalizations {
     String band,
     int net,
   ) {
-    return '$playerName: $band ($net)';
+    return '$playerName : $band ($net)';
   }
 
   @override

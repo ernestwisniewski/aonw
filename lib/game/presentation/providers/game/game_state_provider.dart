@@ -69,6 +69,7 @@ class GameStateNotifier extends _$GameStateNotifier {
       ruleset: GameRuleset(
         city: ref.watch(cityRulesetProvider),
         technology: ref.watch(technologyRulesetProvider),
+        stability: ref.watch(stabilityRulesetProvider),
       ),
     );
     _dispatchCommand = buildDispatchCommandUseCase(

@@ -53,6 +53,7 @@ class ServerCommandReducer {
     final ruleset = GameRuleset(
       city: CityRulesets.standard,
       technology: TechnologyRulesets.standard,
+      stability: StabilityRuleset.standard,
       paceBalance: save.matchRules.paceBalance,
     );
     final result = _applyCommand(
@@ -473,6 +474,7 @@ class ServerCommandReducer {
       ruleset: ruleset,
       priorEvents: combat.events,
       mapObjectives: mapData.objectives,
+      turn: save.turn,
     );
     final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
       state: economy.state,

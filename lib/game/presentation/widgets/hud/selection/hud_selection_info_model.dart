@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 
 abstract final class HudSelectionInfoModelFactory {
@@ -16,6 +17,7 @@ abstract final class HudSelectionInfoModelFactory {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required AppLocalizations l10n,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     int? currentTurn,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -27,6 +29,7 @@ abstract final class HudSelectionInfoModelFactory {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       l10n: l10n,
       cityName: (city) => GameDisplayNames.city(l10n, city),
       unitName: (unit) => GameDisplayNames.unit(l10n, unit),

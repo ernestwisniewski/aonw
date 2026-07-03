@@ -64,6 +64,9 @@ GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
       _cityTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId) ??
           _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId) ??
           _unitTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId),
+    CityAttackedEvent(:final attackerUnitId, :final cityId) =>
+      _cityTarget(state, cityId, viewerPlayerId: viewerPlayerId) ??
+          _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId),
     UnitKilledEvent(:final attackerUnitId) =>
       attackerUnitId == null
           ? null

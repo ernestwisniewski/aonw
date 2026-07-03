@@ -71,6 +71,12 @@ abstract final class _CombatEventFactory {
     final destroyedCity = application.destroyedCity;
 
     return [
+      CityAttackedEvent(
+        attackerUnitId: attacker.id,
+        attackerOwnerPlayerId: attacker.ownerPlayerId,
+        cityId: city.id,
+        cityOwnerPlayerId: city.ownerPlayerId,
+      ),
       CombatResolvedEvent(
         attackerUnitId: attacker.id,
         defenderUnitId: city.id,

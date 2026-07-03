@@ -145,8 +145,6 @@ void main() {
         }),
       );
 
-      // Same city count, population and buildings; only the spacing differs, so
-      // the cohesion cost (and thus the stability band) is the isolated driver.
       final compact = _state(empire([0, 2, 3]), mapData: mapData);
       final sprawled = _state(empire([0, 20, 39]), mapData: mapData);
 
@@ -176,6 +174,38 @@ void main() {
       expect(
         evaluator.score(peaceful, 'player_1', context: context),
         greaterThan(evaluator.score(weary, 'player_1', context: context)),
+      );
+    });
+
+    test('includes luxury stability sources in stability evaluation', () {
+      const evaluator = StateHeuristicEvaluator();
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 0, row: 0),
+        controlledHexes: [CityHex(col: 0, row: 0)],
+      );
+      const state = PersistentGameState(
+        playerWarWeariness: {'player_1': 7},
+        cities: [city],
+      );
+      final plainMap = _singleTileMap(resources: const []);
+      final luxuryMap = _singleTileMap(resources: const [ResourceType.silk]);
+
+      expect(
+        evaluator.score(
+          _state(state, mapData: luxuryMap),
+          'player_1',
+          context: _context(mapData: luxuryMap, ownControlPercent: 100),
+        ),
+        greaterThan(
+          evaluator.score(
+            _state(state, mapData: plainMap),
+            'player_1',
+            context: _context(mapData: plainMap, ownControlPercent: 100),
+          ),
+        ),
       );
     });
   });
@@ -1939,6 +1969,8 @@ AiContext _context({
   MapData? mapData,
   AiPersona persona = AiPersona.balanced,
   CivilizationProfile civProfile = CivilizationProfiles.poland,
+  double ownControlPercent = 0,
+  int knownPlayerCount = 1,
 }) {
   final actualMapData = mapData ?? _mapData();
   return AiContext(
@@ -1949,6 +1981,8 @@ AiContext _context({
     persona: persona,
     civProfile: civProfile,
     strategicPlan: strategicPlan,
+    ownControlPercent: ownControlPercent,
+    knownPlayerCount: knownPlayerCount,
   );
 }
 
@@ -2018,6 +2052,22 @@ FogOfWarState _fogForHexes(Set<HexCoordinate> visibleHexes) {
 
 MapData _mapData() {
   return _squareMap(cols: 2, rows: 1);
+}
+
+MapData _singleTileMap({required List<ResourceType> resources}) {
+  return MapData(
+    cols: 1,
+    rows: 1,
+    tiles: [
+      TileData(
+        col: 0,
+        row: 0,
+        terrains: const [TerrainType.plains],
+        resources: resources,
+        height: 0,
+      ),
+    ],
+  );
 }
 
 PersistentGameState _developedEmpire({required int cityCount}) {

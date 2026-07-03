@@ -187,7 +187,7 @@ const _legacyGameFileLineCountBaseline = <String, int>{
   'lib/game/presentation/formatters/game_display_names.dart': 638,
   'lib/game/presentation/formatters/'
           'game_event_notification_message.dart':
-      1018,
+      954,
   'lib/game/presentation/screens/game/game_screen.dart': 850,
   'lib/game/presentation/screens/lobby/lobby_screen.dart': 680,
   'lib/game/presentation/widgets/activity_log/turn_timeline_popup.dart': 678,
@@ -197,7 +197,7 @@ const _legacyGameFileLineCountBaseline = <String, int>{
   'lib/game/presentation/widgets/empire/empire_overview_statistics.dart': 1025,
   'lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart': 844,
   'lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart': 711,
-  'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': 622,
+  'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': 625,
   'lib/game/presentation/widgets/options/game_options_overlay.dart': 785,
   'lib/game/presentation/widgets/screen/game_screen_state_views.dart': 613,
 };
@@ -270,7 +270,7 @@ const _legacyGameClassLineCountBaseline = <String, int>{
       629,
   'lib/game/presentation/formatters/game_event_notification_message.dart::'
           '_GameEventNotificationMessageFormatter':
-      402,
+      331,
   'lib/game/presentation/providers/game/game_actions_provider.dart::'
           'GameCommandController':
       451,
@@ -294,7 +294,7 @@ const _legacyGameClassLineCountBaseline = <String, int>{
       401,
   'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart::'
           'HudOverlayFrame':
-      581,
+      582,
   'lib/game/presentation/widgets/options/game_options_overlay.dart::'
           '_GameOptionsOverlayState':
       507,

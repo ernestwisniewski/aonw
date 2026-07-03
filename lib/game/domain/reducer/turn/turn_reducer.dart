@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -38,9 +39,8 @@ abstract final class TurnReducer {
 
   /// Runs one city turn for every city owned by [playerId]:
   /// food → growth → pending territory claim → production queue,
-  /// then advances research and active worker jobs.
-  /// Recomputes fog of war afterwards. Returns [GameStateTransition] with the
-  /// updated state, domain events, and UI effects.
+  /// then advances research, active worker jobs, and fog of war.
+  /// Returns [GameStateTransition] with the updated state, events, and effects.
   static GameStateTransition advanceCitiesForPlayer(
     GameState state,
     String playerId,
@@ -48,6 +48,7 @@ abstract final class TurnReducer {
     FogOfWarService fogOfWarService = const FogOfWarService(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final result = TurnPipeline.playerEndTurn(fogOfWarService: fogOfWarService)
@@ -58,6 +59,7 @@ abstract final class TurnReducer {
             ruleset: GameRuleset(
               city: cityRuleset,
               technology: technologyRuleset,
+              stability: stabilityRuleset,
               paceBalance: paceBalance,
             ),
             playerId: playerId,

@@ -56,6 +56,20 @@ final class UnitRetreatedEvent extends GameEvent {
   final int toRow;
 }
 
+final class CityAttackedEvent extends GameEvent {
+  const CityAttackedEvent({
+    required this.attackerUnitId,
+    required this.attackerOwnerPlayerId,
+    required this.cityId,
+    required this.cityOwnerPlayerId,
+  });
+
+  final String attackerUnitId;
+  final String attackerOwnerPlayerId;
+  final String cityId;
+  final String cityOwnerPlayerId;
+}
+
 final class CityCapturedEvent extends GameEvent {
   const CityCapturedEvent({
     required this.cityId,

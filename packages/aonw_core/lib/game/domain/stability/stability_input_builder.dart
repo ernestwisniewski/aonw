@@ -22,9 +22,6 @@ abstract final class StabilityInputBuilder {
     final orderedPlayerIds = orderedKnownPlayerIds(state, playerIds);
     if (orderedPlayerIds.isEmpty) return const {};
 
-    // Only controlPercent (controlled / valid tiles) is read below, and that is
-    // independent of victory thresholds, so the standard rules are sufficient
-    // here regardless of the match's actual VictoryRules.
     final domination = const DominationProgressCalculator().snapshot(
       playerIds: orderedPlayerIds,
       state: state,
@@ -47,6 +44,27 @@ abstract final class StabilityInputBuilder {
           playerCount: orderedPlayerIds.length,
         ),
     });
+  }
+
+  static ({double controlPercent, int playerCount}) hegemonyContextFor({
+    required PersistentGameState state,
+    required String playerId,
+    required MapData mapData,
+  }) {
+    final orderedPlayerIds = orderedKnownPlayerIds(state, [playerId]);
+    if (orderedPlayerIds.isEmpty) {
+      return (controlPercent: 0.0, playerCount: 1);
+    }
+    final domination = const DominationProgressCalculator().snapshot(
+      playerIds: orderedPlayerIds,
+      state: state,
+      mapData: mapData,
+      victoryRules: VictoryRules.standard,
+    );
+    return (
+      controlPercent: domination.entryFor(playerId)?.controlPercent ?? 0.0,
+      playerCount: orderedPlayerIds.length,
+    );
   }
 
   static StabilityInputs forPlayer({
@@ -104,9 +122,6 @@ abstract final class StabilityInputBuilder {
         }
       }
 
-      // Luxuries are counted by presence on the empire's territory (a proxy for
-      // the eventual connected-network semantics). Skipped by callers that want
-      // to avoid the per-tile scan on a hot path (e.g. AI simulation).
       if (includeLuxuries) {
         for (final hex in city.territoryHexes) {
           final tile = mapData.tileAt(hex.col, hex.row);
