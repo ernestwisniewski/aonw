@@ -48,7 +48,7 @@ const _largeFileBaseline = <String, int>{
   'lib/ai/mcts/strategy_aware_economy_settler_escort.dart': 60,
   'lib/ai/mcts/strategy_aware_economy_settler_production.dart': 271,
   'lib/ai/mcts/mcts_action_generation_stats.dart': 106,
-  'lib/ai/simulation/economy_simulation.dart': 313,
+  'lib/ai/simulation/economy_simulation.dart': 321,
   'lib/ai/simulation/economy_simulation_command_applier.dart': 348,
   'lib/ai/simulation/economy_simulation_hostility_memory.dart': 88,
   'lib/ai/simulation/economy_simulation_setup.dart': 103,

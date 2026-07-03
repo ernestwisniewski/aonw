@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/telemetry.dart';
@@ -111,6 +112,11 @@ abstract final class EconomySimulation {
             const AiPlayer(strategyId: AiStrategyId.basic, seed: 1001);
         const civRegistry = CivilizationProfileRegistry();
         final civProfile = civRegistry.profileFor(actingPlayer.country);
+        final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
+          state: state,
+          playerId: actingPlayer.id,
+          mapData: mapData,
+        );
         var context = AiContext(
           ruleset: config.ruleset,
           mapData: mapData,
@@ -123,6 +129,8 @@ abstract final class EconomySimulation {
           persona: ai.personaForProfile(civProfile),
           difficulty: ai.difficulty,
           civProfile: civProfile,
+          ownControlPercent: hegemonyContext.controlPercent,
+          knownPlayerCount: hegemonyContext.playerCount,
         );
         final strategicPlan = const StrategicPlanner().build(
           view: view,

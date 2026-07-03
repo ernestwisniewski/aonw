@@ -78,7 +78,6 @@ class TopResourceStrip extends StatelessWidget {
   final Color? playerColor;
   final VoidCallback? onTurnPressed;
 
-  /// When provided, the turn count is shown beside the resource pills.
   final int? turnNumber;
 
   String get _stabilityValueLabel =>

@@ -5,8 +5,6 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 
-/// Stability terms used by the MCTS evaluators: the state-level band score
-/// and the order-building production bonus.
 abstract final class MctsStabilityScores {
   static double stateScore(SimulatedState state, AiContext? context) {
     if (context == null) return 0.0;
@@ -14,10 +12,6 @@ abstract final class MctsStabilityScores {
     final forPlayerId = view.forPlayerId;
     if (forPlayerId.isEmpty) return 0.0;
     final ruleset = context.ruleset.stability;
-    // Project the AI's own empire into a minimal state and reuse the real
-    // calculator so the heuristic tracks the same net the turn processor
-    // caches. Luxuries are skipped to keep this off the per-tile scan on the
-    // hot path.
     final projectedState = PersistentGameState(
       playerWarWeariness: {forPlayerId: view.ownWarWeariness},
       cities: state.ownCities,
@@ -30,11 +24,17 @@ abstract final class MctsStabilityScores {
       mapData: context.mapData,
       ruleset: ruleset,
       includeLuxuries: false,
+      controlPercent: context.ownControlPercent,
+      playerCount: context.knownPlayerCount,
     );
-    final net = StabilityCalculator.calculate(
-      inputs: inputs,
+    final net = StabilityPolicy.effectiveNet(
+      StabilityCalculator.calculate(inputs: inputs, ruleset: ruleset).net,
+      relativeStanding: StabilityPolicy.relativeStandingFor(
+        controlPercent: context.ownControlPercent,
+        playerCount: context.knownPlayerCount,
+      ),
       ruleset: ruleset,
-    ).net;
+    );
     return switch (StabilityPolicy.bandFor(net, ruleset: ruleset)) {
       StabilityBand.content => 0.5,
       StabilityBand.stable => 0.0,

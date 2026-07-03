@@ -93,6 +93,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
         ref.watch(gameOptionsOverlayOpenProvider(widget.gameSave.id));
     final cityRuleset = ref.watch(cityRulesetProvider);
     final technologyRuleset = ref.watch(technologyRulesetProvider);
+    final stabilityRuleset = ref.watch(stabilityRulesetProvider);
     final openSelectionDetailChipId = ref.watch(
       openSelectionDetailControllerProvider,
     );
@@ -105,6 +106,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       gameState: gameState,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       panelModes: ref.watch(hudPanelControllerProvider),
       openResourceBreakdown: ref.watch(hudResourceBreakdownControllerProvider),
       technologyViewModel: ref.watch(

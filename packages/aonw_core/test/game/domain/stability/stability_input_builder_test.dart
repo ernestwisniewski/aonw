@@ -57,8 +57,6 @@ void main() {
       mapData: mapData,
     );
 
-    // standard ruleset: +1 per order building, +2 per order tech, +1 per unique
-    // luxury, +1 per stored artifact.
     expect(inputs.buildingSources, 1);
     expect(inputs.techSources, 4);
     expect(inputs.luxurySources, 1);

@@ -145,8 +145,6 @@ void main() {
         }),
       );
 
-      // Same city count, population and buildings; only the spacing differs, so
-      // the cohesion cost (and thus the stability band) is the isolated driver.
       final compact = _state(empire([0, 2, 3]), mapData: mapData);
       final sprawled = _state(empire([0, 20, 39]), mapData: mapData);
 

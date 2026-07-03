@@ -4,9 +4,6 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
-/// Projects how founding a city at the command target would shift the
-/// empire's stability net, and converts the projected band into a score
-/// penalty for the settler rankers.
 abstract final class SettlerFoundingStabilityPolicy {
   static double foundingPenalty({
     required FoundCityCommand command,

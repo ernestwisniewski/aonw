@@ -96,3 +96,49 @@ final class TechnologyRulesetProvider
 }
 
 String _$technologyRulesetHash() => r'ed1867aaa2f45814be512d2b2aa2978eff056bef';
+
+@ProviderFor(stabilityRuleset)
+final stabilityRulesetProvider = StabilityRulesetProvider._();
+
+final class StabilityRulesetProvider
+    extends
+        $FunctionalProvider<
+          StabilityRuleset,
+          StabilityRuleset,
+          StabilityRuleset
+        >
+    with $Provider<StabilityRuleset> {
+  StabilityRulesetProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stabilityRulesetProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$stabilityRulesetHash();
+
+  @$internal
+  @override
+  $ProviderElement<StabilityRuleset> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  StabilityRuleset create(Ref ref) {
+    return stabilityRuleset(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(StabilityRuleset value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<StabilityRuleset>(value),
+    );
+  }
+}
+
+String _$stabilityRulesetHash() => r'64029f822d0f4c191d6d3fa8d8be74f9f297a108';

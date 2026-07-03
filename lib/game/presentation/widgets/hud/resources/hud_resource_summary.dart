@@ -42,6 +42,7 @@ class HudResourceSummary {
     required MapData mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
   }) {
     if (state == null || playerId.isEmpty) {
       return HudResourceSummary.empty();
@@ -50,6 +51,7 @@ class HudResourceSummary {
     final stabilityNet = state.playerStabilityNet[playerId] ?? 0;
     final stabilityModifier = PersistentStabilityProcessor.modifierForNet(
       stabilityNet,
+      ruleset: stabilityRuleset,
     );
 
     final goldBreakdown = _goldBreakdownForPlayer(
@@ -89,11 +91,15 @@ class HudResourceSummary {
       goldBreakdown: goldBreakdown,
       scienceBreakdown: scienceBreakdown,
       stabilityNet: stabilityNet,
-      stabilityBand: StabilityPolicy.bandFor(stabilityNet),
+      stabilityBand: StabilityPolicy.bandFor(
+        stabilityNet,
+        ruleset: stabilityRuleset,
+      ),
       stabilityDetails: HudStabilityDetails(
         state: state,
         playerId: playerId,
         mapData: mapData,
+        ruleset: stabilityRuleset,
       ),
     );
   }

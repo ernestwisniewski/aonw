@@ -3,8 +3,6 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 
-/// Single source of the [StabilityBand] presentation shared by the HUD pill,
-/// the resource breakdown popup and event notifications.
 abstract final class StabilityBandPresentation {
   static String label(AppLocalizations l10n, StabilityBand band) {
     return switch (band) {

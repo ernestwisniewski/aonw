@@ -36,6 +36,7 @@ final replayTimelineProvider = FutureProvider.autoDispose
       final ruleset = GameRuleset(
         city: ref.watch(cityRulesetProvider),
         technology: ref.watch(technologyRulesetProvider),
+        stability: ref.watch(stabilityRulesetProvider),
       );
       final reducer = GameStateReducer(
         mapData: session.mapData,
