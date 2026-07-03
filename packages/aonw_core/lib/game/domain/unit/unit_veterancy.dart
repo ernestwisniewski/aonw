@@ -1,6 +1,6 @@
 import 'package:aonw_core/game/domain/combat/combat_stats.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
-import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/unit/unit_catalog.dart';
 
 enum UnitVeterancyRank {
   recruit,
@@ -25,25 +25,7 @@ abstract final class UnitVeterancyRules {
   static const int defeatedEnemyExperience = 2;
 
   static bool canGainExperience(GameUnit unit) {
-    return switch (unit.type) {
-      GameUnitType.commander ||
-      GameUnitType.warrior ||
-      GameUnitType.archer ||
-      GameUnitType.scout ||
-      GameUnitType.spearman ||
-      GameUnitType.cavalry ||
-      GameUnitType.catapult ||
-      GameUnitType.heavyInfantry ||
-      GameUnitType.fieldCannon ||
-      GameUnitType.rifleman ||
-      GameUnitType.tank ||
-      GameUnitType.scoutShip ||
-      GameUnitType.warship ||
-      GameUnitType.reconPlane => true,
-      GameUnitType.settler ||
-      GameUnitType.worker ||
-      GameUnitType.merchant => false,
-    };
+    return UnitCatalog.specFor(unit.type).capabilities.gainsExperience;
   }
 
   static UnitVeterancyRank rankFor(GameUnit unit) {

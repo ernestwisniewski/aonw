@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/unit/unit_catalog.dart';
 
 class UnitUpkeepBreakdown {
   final String playerId;
@@ -47,25 +48,7 @@ abstract final class UnitUpkeepRules {
   }
 
   static int upkeepCostForType(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => 0,
-      GameUnitType.warrior ||
-      GameUnitType.archer ||
-      GameUnitType.worker ||
-      GameUnitType.merchant ||
-      GameUnitType.scout ||
-      GameUnitType.spearman ||
-      GameUnitType.scoutShip => 1,
-      GameUnitType.settler => 2,
-      GameUnitType.cavalry ||
-      GameUnitType.catapult ||
-      GameUnitType.heavyInfantry ||
-      GameUnitType.fieldCannon ||
-      GameUnitType.rifleman ||
-      GameUnitType.warship ||
-      GameUnitType.reconPlane => 2,
-      GameUnitType.tank => 3,
-    };
+    return UnitCatalog.specFor(type).upkeep;
   }
 
   static int workerUpkeepCostForPaidIndex(int paidWorkerIndex) {

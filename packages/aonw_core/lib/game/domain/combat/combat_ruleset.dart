@@ -209,7 +209,7 @@ class CombatRuleset {
   }
 
   CombatStats baseStatsFor(GameUnitType type) {
-    return unitBaseStats[type] ?? const CombatStats();
+    return unitBaseStats[type] ?? UnitCatalog.specFor(type).baseStats;
   }
 
   CombatStats statsForTroop(TroopType type) {
