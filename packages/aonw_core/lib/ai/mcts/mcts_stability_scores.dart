@@ -23,7 +23,6 @@ abstract final class MctsStabilityScores {
       playerId: forPlayerId,
       mapData: context.mapData,
       ruleset: ruleset,
-      includeLuxuries: false,
       controlPercent: context.ownControlPercent,
       playerCount: context.knownPlayerCount,
     );

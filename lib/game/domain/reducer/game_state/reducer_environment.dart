@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 
 /// Immutable dependency bundle shared by reducers for a single command pass.
@@ -26,6 +27,8 @@ final class ReducerEnvironment {
   CityRuleset get cityRuleset => ruleset.city;
 
   TechnologyRuleset get technologyRuleset => ruleset.technology;
+
+  StabilityRuleset get stabilityRuleset => ruleset.stability;
 
   PaceBalance get paceBalance => context.paceBalance;
 

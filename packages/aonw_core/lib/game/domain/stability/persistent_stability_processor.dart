@@ -194,18 +194,10 @@ class _WarWearinessEventCounts {
           _increment(attacksByPlayerId, attackerOwnerPlayerId);
         case CityAttackedEvent(:final attackerOwnerPlayerId):
           _increment(attacksByPlayerId, attackerOwnerPlayerId);
-        case CityCapturedEvent(
-          :final previousOwnerPlayerId,
-          :final newOwnerPlayerId,
-        ):
+        case CityCapturedEvent(:final previousOwnerPlayerId):
           _increment(citiesLostByPlayerId, previousOwnerPlayerId);
-          _increment(attacksByPlayerId, newOwnerPlayerId);
-        case CityDestroyedEvent(
-          :final previousOwnerPlayerId,
-          :final attackerOwnerPlayerId,
-        ):
+        case CityDestroyedEvent(:final previousOwnerPlayerId):
           _increment(citiesLostByPlayerId, previousOwnerPlayerId);
-          _increment(attacksByPlayerId, attackerOwnerPlayerId);
         case DiplomaticProposalRespondedEvent(
           kind: DiplomaticProposalKind.truce,
           accepted: true,

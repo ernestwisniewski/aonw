@@ -460,10 +460,11 @@ void main() {
         DiplomaticRelationStatus.war,
       );
       expect(result.events.map((event) => event.runtimeType), [
+        CityAttackedEvent,
         CombatResolvedEvent,
         UnitGainedExperienceEvent,
       ]);
-      final resolved = result.events.first as CombatResolvedEvent;
+      final resolved = result.events[1] as CombatResolvedEvent;
       expect(resolved.defenderUnitId, 'city-p2');
       expect(resolved.outcome.defenderKilled, isFalse);
     });
@@ -563,6 +564,7 @@ void main() {
       expect(result.state.cities.single.ownerPlayerId, 'p1');
       expect(result.state.cities.single.hitPoints, 8);
       expect(result.events.map((event) => event.runtimeType), [
+        CityAttackedEvent,
         CombatResolvedEvent,
         UnitGainedExperienceEvent,
         CityCapturedEvent,
@@ -629,6 +631,7 @@ void main() {
 
       expect(result.state.cities, isEmpty);
       expect(result.events.map((event) => event.runtimeType), [
+        CityAttackedEvent,
         CombatResolvedEvent,
         UnitGainedExperienceEvent,
         CityDestroyedEvent,

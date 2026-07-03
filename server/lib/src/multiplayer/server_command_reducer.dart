@@ -53,6 +53,7 @@ class ServerCommandReducer {
     final ruleset = GameRuleset(
       city: CityRulesets.standard,
       technology: TechnologyRulesets.standard,
+      stability: StabilityRuleset.standard,
       paceBalance: save.matchRules.paceBalance,
     );
     final result = _applyCommand(

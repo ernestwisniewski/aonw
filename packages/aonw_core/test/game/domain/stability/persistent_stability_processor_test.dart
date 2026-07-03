@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/runtime/game_runtime_state.dart';
 import 'package:aonw_core/game/domain/stability/persistent_stability_processor.dart';
 import 'package:aonw_core/game/domain/stability/stability_band.dart';
+import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -76,6 +77,43 @@ void main() {
     );
 
     expect(result.state.playerWarWeariness['a'], 2);
+  });
+
+  test('a capture counts as one attack, not attack plus capture', () {
+    final state = PersistentGameState(
+      runtimeState: GameRuntimeState(
+        diplomacy: DiplomacyState.empty.setStatus(
+          'a',
+          'b',
+          DiplomaticRelationStatus.war,
+        ),
+      ),
+    );
+
+    final result = PersistentStabilityProcessor.advanceForPlayers(
+      state: state,
+      playerIds: const ['a', 'b'],
+      mapData: _singleTileMap(),
+      turnEvents: const [
+        CityAttackedEvent(
+          attackerUnitId: 'u1',
+          attackerOwnerPlayerId: 'a',
+          cityId: 'city_b',
+          cityOwnerPlayerId: 'b',
+        ),
+        CityCapturedEvent(
+          cityId: 'city_b',
+          previousOwnerPlayerId: 'b',
+          newOwnerPlayerId: 'a',
+        ),
+      ],
+    );
+
+    expect(result.state.playerWarWeariness['a'], isNull);
+    expect(
+      result.state.playerWarWeariness['b'],
+      StabilityRuleset.standard.warWearinessPerCityLost,
+    );
   });
 
   test('a truce signed this turn accelerates war-weariness decay', () {

@@ -277,6 +277,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
         return GameRuleset(
           city: ref.read(cityRulesetProvider),
           technology: ref.read(technologyRulesetProvider),
+          stability: ref.read(stabilityRulesetProvider),
         );
       },
       eventLogReader: () => ref.read(eventLogProvider),

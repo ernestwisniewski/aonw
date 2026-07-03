@@ -65,7 +65,7 @@ class EventCodec {
   }
 
   List<GameEvent> eventsFromWire(WireEvent wire) {
-    return wire.events.map(GameEventSerializer.tryFromJson).nonNulls.toList();
+    return wire.events.map(GameEventSerializer.fromJson).toList();
   }
 
   List<Map<String, dynamic>> eventsToJsonList(Iterable<GameEvent> events) {
@@ -73,7 +73,7 @@ class EventCodec {
   }
 
   List<GameEvent> eventsFromJsonList(Iterable<Map<String, dynamic>> events) {
-    return events.map(GameEventSerializer.tryFromJson).nonNulls.toList();
+    return events.map(GameEventSerializer.fromJson).toList();
   }
 
   GameCommand? commandFromWire(WireEvent wire) {

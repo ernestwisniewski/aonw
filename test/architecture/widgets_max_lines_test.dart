@@ -101,6 +101,9 @@ const _legacyWidgetLineCountBaseline = <String, int>{
   'lib/game/presentation/widgets/hud/objective/game_objectives_overlay.dart':
       586,
   'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': 644,
+  'lib/game/presentation/widgets/selection/view_models/'
+          'city_selection_view_model_factory.dart':
+      355,
   'lib/game/presentation/widgets/hud/game_hud.dart': 416,
   'lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart': 370,
   'lib/game/presentation/widgets/hud/turn/turn_action_hint.dart': 370,

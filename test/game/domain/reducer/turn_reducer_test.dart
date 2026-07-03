@@ -8,6 +8,7 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -98,6 +99,31 @@ void main() {
             .progressFor(TechnologyId.agriculture),
         2,
       );
+    });
+
+    test('advanceCitiesForPlayer forwards the stability ruleset', () {
+      final stabilityRuleset = StabilityRuleset.standard.copyWith(
+        baseOrder: 21,
+        relativeStandingOffset: 0,
+        hegemonyTaxPointsPerCost: 0,
+      );
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 2, row: 2),
+        population: 1,
+      );
+      const state = GameState(cities: [city], activePlayerId: 'player_1');
+
+      final result = TurnReducer.advanceCitiesForPlayer(
+        state,
+        'player_1',
+        mapData,
+        stabilityRuleset: stabilityRuleset,
+      );
+
+      expect(result.state.playerStabilityNet['player_1'], 21);
     });
 
     test('advanceCitiesForPlayer adds units when a city produces one', () {

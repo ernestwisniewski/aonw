@@ -10,6 +10,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/unit_select
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -20,6 +21,7 @@ abstract final class SelectionViewModelFactory {
     MapData? mapData,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     required AppLocalizations l10n,
     String Function(GameCity city)? cityName,
     String Function(GameUnit unit)? unitName,
@@ -92,6 +94,7 @@ abstract final class SelectionViewModelFactory {
             : gameState.fieldImprovements,
         research: gameState == null ? ResearchState.empty : gameState.research,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         cityName: cityName,
         buildingName: buildingName,
         l10n: l10n,

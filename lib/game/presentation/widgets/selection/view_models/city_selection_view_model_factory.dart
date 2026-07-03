@@ -14,6 +14,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -30,6 +31,7 @@ abstract final class CitySelectionViewModelFactory {
     List<FieldImprovement> fieldImprovements = const [],
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     required AppLocalizations l10n,
     String Function(GameCity city)? cityName,
     String Function(CityBuildingType type)? buildingName,
@@ -72,7 +74,12 @@ abstract final class CitySelectionViewModelFactory {
               GameDisplayNames.cityBuilding(l10n, type),
         ),
     ];
-    final cohesionItem = CityCohesionSelectionItem.build(city, cities, l10n);
+    final cohesionItem = CityCohesionSelectionItem.build(
+      city,
+      cities,
+      l10n,
+      ruleset: stabilityRuleset,
+    );
     final yieldBreakdown = mapData == null
         ? null
         : CityYieldBreakdownViewModel.fromCity(
