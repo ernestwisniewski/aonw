@@ -105,6 +105,8 @@ class SnapshotCodec {
       playerColors: _stringIntMap(state, 'playerColors'),
       playerCountries: _stringCountryMap(state, 'playerCountries'),
       playerGold: _stringIntMap(state, 'playerGold'),
+      playerWarWeariness: _stringIntMap(state, 'playerWarWeariness'),
+      playerStabilityNet: _stringIntMap(state, 'playerStabilityNet'),
       units: _jsonList(
         state,
         'units',
@@ -159,6 +161,8 @@ class SnapshotCodec {
         (playerId, country) => MapEntry(playerId, country.name),
       ),
       'playerGold': snapshot.playerGold,
+      'playerWarWeariness': snapshot.playerWarWeariness,
+      'playerStabilityNet': snapshot.playerStabilityNet,
       'units': snapshot.units.map((unit) => unit.toJson()).toList(),
       'cities': snapshot.cities.map((city) => city.toJson()).toList(),
       'artifacts': snapshot.artifacts

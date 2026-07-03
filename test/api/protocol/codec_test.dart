@@ -228,6 +228,8 @@ void main() {
           playerColors: const {'player_1': 0xFF2563EB},
           playerCountries: const {'player_1': PlayerCountry.france},
           playerGold: const {'player_1': 11},
+          playerWarWeariness: const {'player_1': 4},
+          playerStabilityNet: const {'player_1': -3},
           units: [unit],
           cities: const [city],
           fieldImprovements: const [
@@ -263,10 +265,14 @@ void main() {
         expect(wire.v, kProtocolVersion);
         expect(wire.offset, 12);
         expect(wire.state['playerGold'], {'player_1': 11});
+        expect(wire.state['playerWarWeariness'], {'player_1': 4});
+        expect(wire.state['playerStabilityNet'], {'player_1': -3});
         expect(restored.save.id, 'save_1');
         expect(restored.playerColors, {'player_1': 0xFF2563EB});
         expect(restored.playerCountries, {'player_1': PlayerCountry.france});
         expect(restored.playerGold, {'player_1': 11});
+        expect(restored.playerWarWeariness, {'player_1': 4});
+        expect(restored.playerStabilityNet, {'player_1': -3});
         expect(restored.units.single.id, unit.id);
         expect(restored.cities.single.id, city.id);
         expect(
