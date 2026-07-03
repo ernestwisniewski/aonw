@@ -473,6 +473,7 @@ class ServerCommandReducer {
       ruleset: ruleset,
       priorEvents: combat.events,
       mapObjectives: mapData.objectives,
+      turn: save.turn,
     );
     final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
       state: economy.state,

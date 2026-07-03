@@ -162,6 +162,7 @@ bool _hasCombatEventForPlayer({
 
 bool _isCombatEvent(GameEvent event) {
   return event is UnitAttackedEvent ||
+      event is CityAttackedEvent ||
       event is CombatResolvedEvent ||
       event is UnitKilledEvent ||
       event is CityCapturedEvent ||
@@ -203,6 +204,8 @@ bool _eventBelongsToPlayer({
       :final defenderOwnerPlayerId,
     ) =>
       attackerOwnerPlayerId == playerId || defenderOwnerPlayerId == playerId,
+    CityAttackedEvent(:final attackerOwnerPlayerId, :final cityOwnerPlayerId) =>
+      attackerOwnerPlayerId == playerId || cityOwnerPlayerId == playerId,
     CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
       _unitOwner(state, attackerUnitId) == playerId ||
           _unitOwner(previousState, attackerUnitId) == playerId ||

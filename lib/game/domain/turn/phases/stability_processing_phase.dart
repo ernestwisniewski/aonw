@@ -15,6 +15,7 @@ class StabilityProcessingPhase extends TurnPhase {
       mapData: context.mapData,
       ruleset: context.ruleset.stability,
       turnEvents: context.events,
+      turn: context.save?.turn,
     );
 
     return context.copyWith(

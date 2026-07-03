@@ -34,6 +34,7 @@ abstract final class PersistentTurnEconomyProcessor {
     FogOfWarService fogOfWarService = const FogOfWarService(),
     Iterable<GameEvent> priorEvents = const [],
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
+    int? turn,
   }) {
     var current = state;
     final events = <GameEvent>[];
@@ -123,6 +124,7 @@ abstract final class PersistentTurnEconomyProcessor {
       mapData: mapData,
       ruleset: ruleset.stability,
       turnEvents: [...priorEvents, ...events],
+      turn: turn,
     );
     current = stability.state;
     events.addAll(stability.events);

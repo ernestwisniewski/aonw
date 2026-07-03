@@ -93,6 +93,7 @@ abstract final class GameActivityEventProjector {
       UnitMovedEvent() ||
       UnitGainedExperienceEvent() ||
       UnitAttackedEvent() ||
+      CityAttackedEvent() ||
       TurnEndedEvent() ||
       ResearchPointsGainedEvent() => false,
     };
@@ -126,6 +127,11 @@ abstract final class GameActivityEventProjector {
         :final defenderOwnerPlayerId,
       ) =>
         _playerIds([attackerOwnerPlayerId, defenderOwnerPlayerId]),
+      CityAttackedEvent(
+        :final attackerOwnerPlayerId,
+        :final cityOwnerPlayerId,
+      ) =>
+        _playerIds([attackerOwnerPlayerId, cityOwnerPlayerId]),
       CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
         _combatPlayerIds(
           state,

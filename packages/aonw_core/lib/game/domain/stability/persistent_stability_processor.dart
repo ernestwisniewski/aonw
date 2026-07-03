@@ -32,6 +32,7 @@ abstract final class PersistentStabilityProcessor {
     required MapData mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
     Iterable<GameEvent> turnEvents = const [],
+    int? turn,
   }) {
     final knownPlayerIds = StabilityInputBuilder.orderedKnownPlayerIds(
       state,
@@ -41,9 +42,6 @@ abstract final class PersistentStabilityProcessor {
       return PersistentStabilityTurnResult(state: state);
     }
 
-    // The war-weariness stock advances only for the players actually taking a
-    // turn, so a peaceful rival is not decayed once per every other player's
-    // end-turn. Every non-advancing player's stored value is preserved.
     final advancingPlayerIds = {
       for (final playerId in playerIds)
         if (playerId.isNotEmpty) playerId,
@@ -56,7 +54,9 @@ abstract final class PersistentStabilityProcessor {
         atWar: _isAtWar(state, playerId),
         attacksThisTurn: eventCounts.attacksByPlayerId[playerId] ?? 0,
         citiesLost: eventCounts.citiesLostByPlayerId[playerId] ?? 0,
-        signedPeace: eventCounts.signedPeacePlayerIds.contains(playerId),
+        signedPeace:
+            eventCounts.signedPeacePlayerIds.contains(playerId) ||
+            _signedPeaceThisTurn(state, playerId, turn),
         ruleset: ruleset,
       );
       if (next > 0) {
@@ -66,8 +66,6 @@ abstract final class PersistentStabilityProcessor {
       }
     }
 
-    // Stability net is refreshed for every known player so the cache stays
-    // complete for the HUD and AI.
     final inputsByPlayerId = StabilityInputBuilder.forPlayers(
       state: state,
       playerIds: knownPlayerIds,
@@ -84,8 +82,6 @@ abstract final class PersistentStabilityProcessor {
         ruleset: ruleset,
       );
       breakdownsByPlayerId[entry.key] = breakdown;
-      // Cache the standing-adjusted net so the band reflects the relative-band
-      // (U4) rule. Raw components remain in [breakdownsByPlayerId].
       final relativeStanding = StabilityPolicy.relativeStandingFor(
         controlPercent: entry.value.controlPercent,
         playerCount: entry.value.playerCount,
@@ -158,6 +154,22 @@ abstract final class PersistentStabilityProcessor {
     }
     return false;
   }
+
+  static bool _signedPeaceThisTurn(
+    PersistentGameState state,
+    String playerId,
+    int? turn,
+  ) {
+    if (turn == null) return false;
+    for (final relation in state.runtimeState.diplomacy.relations.values) {
+      if (relation.status != DiplomaticRelationStatus.truce) continue;
+      if (relation.lastChangedTurn != turn) continue;
+      if (relation.playerAId == playerId || relation.playerBId == playerId) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 class _WarWearinessEventCounts {
@@ -179,6 +191,8 @@ class _WarWearinessEventCounts {
     for (final event in events) {
       switch (event) {
         case UnitAttackedEvent(:final attackerOwnerPlayerId):
+          _increment(attacksByPlayerId, attackerOwnerPlayerId);
+        case CityAttackedEvent(:final attackerOwnerPlayerId):
           _increment(attacksByPlayerId, attackerOwnerPlayerId);
         case CityCapturedEvent(
           :final previousOwnerPlayerId,

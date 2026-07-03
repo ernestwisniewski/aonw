@@ -10,16 +10,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_core/util/wire_json.dart';
 
-/// JSON serialization / deserialization for the [GameEvent] sealed hierarchy.
-///
-/// Used for multiplayer transport — each event is encoded as a flat JSON map
-/// with a `type` discriminator field plus event-specific payload fields.
 abstract final class GameEventSerializer {
-  /// Serializes [event] to a JSON-compatible map.
-  ///
-  /// The `type` key holds a stable string discriminator.
-  /// The switch expression is exhaustive over the sealed class, so adding a new
-  /// subtype without updating this method will cause a compile-time error.
   static Map<String, dynamic> toJson(GameEvent event) => switch (event) {
     CityFoundedEvent(:final cityId, :final ownerPlayerId) => {
       'type': 'CityFounded',
@@ -131,6 +122,19 @@ abstract final class GameEventSerializer {
         'fromRow': fromRow,
         'toCol': toCol,
         'toRow': toRow,
+      },
+    CityAttackedEvent(
+      :final attackerUnitId,
+      :final attackerOwnerPlayerId,
+      :final cityId,
+      :final cityOwnerPlayerId,
+    ) =>
+      {
+        'type': 'CityAttacked',
+        'attackerUnitId': attackerUnitId,
+        'attackerOwnerPlayerId': attackerOwnerPlayerId,
+        'cityId': cityId,
+        'cityOwnerPlayerId': cityOwnerPlayerId,
       },
     CityCapturedEvent(
       :final cityId,
@@ -414,10 +418,15 @@ abstract final class GameEventSerializer {
       ),
   };
 
-  /// Deserializes a [GameEvent] from [json] using the `type` discriminator.
-  ///
-  /// Throws [ArgumentError] if the `type` value is unrecognised.
   static GameEvent fromJson(Map<String, dynamic> json) {
+    final event = tryFromJson(json);
+    if (event == null) {
+      throw ArgumentError('Unknown GameEvent type: ${json['type']}');
+    }
+    return event;
+  }
+
+  static GameEvent? tryFromJson(Map<String, dynamic> json) {
     final type = requiredStringField(json, 'GameEvent', 'type');
     return switch (type) {
       'CityFounded' => CityFoundedEvent(
@@ -496,6 +505,16 @@ abstract final class GameEventSerializer {
         fromRow: requiredIntField(json, type, 'fromRow'),
         toCol: requiredIntField(json, type, 'toCol'),
         toRow: requiredIntField(json, type, 'toRow'),
+      ),
+      'CityAttacked' => CityAttackedEvent(
+        attackerUnitId: requiredStringField(json, type, 'attackerUnitId'),
+        attackerOwnerPlayerId: requiredStringField(
+          json,
+          type,
+          'attackerOwnerPlayerId',
+        ),
+        cityId: requiredStringField(json, type, 'cityId'),
+        cityOwnerPlayerId: requiredStringField(json, type, 'cityOwnerPlayerId'),
       ),
       'CityCaptured' => CityCapturedEvent(
         cityId: requiredStringField(json, type, 'cityId'),
@@ -728,7 +747,7 @@ abstract final class GameEventSerializer {
         reason: requiredStringField(json, type, 'reason'),
         timeoutStreak: requiredIntField(json, type, 'timeoutStreak'),
       ),
-      _ => throw ArgumentError('Unknown GameEvent type: $type'),
+      _ => null,
     };
   }
 

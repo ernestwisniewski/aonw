@@ -168,7 +168,6 @@ abstract final class CityTurnProcessor {
       }
     }
 
-    // Production queue advancement
     final queue = nextCity.productionQueue;
     if (queue != null) {
       var productionPerTurn = CityProductionRules.productionPerTurn(

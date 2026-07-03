@@ -128,6 +128,7 @@ void main() {
         DiplomaticRelationStatus.war,
       );
       expect(result.events.map((event) => event.runtimeType), [
+        CityAttackedEvent,
         CombatResolvedEvent,
         UnitGainedExperienceEvent,
         CityCapturedEvent,
@@ -184,6 +185,7 @@ void main() {
         DiplomaticRelationStatus.war,
       );
       expect(result.events.map((event) => event.runtimeType), [
+        CityAttackedEvent,
         CombatResolvedEvent,
         UnitGainedExperienceEvent,
         CityDestroyedEvent,

@@ -203,6 +203,7 @@ Set<String> _unitIdsFor(GameEvent event) {
       attackerUnitId,
       defenderUnitId,
     },
+    CityAttackedEvent(:final attackerUnitId) => {attackerUnitId},
     CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) => {
       attackerUnitId,
       defenderUnitId,
@@ -248,6 +249,7 @@ Set<String> _cityIdsFor(GameEvent event) {
     CityBuiltBuildingEvent(:final cityId) => {cityId},
     CityProducedUnitEvent(:final cityId) => {cityId},
     CityClaimedHexEvent(:final cityId) => {cityId},
+    CityAttackedEvent(:final cityId) => {cityId},
     CombatResolvedEvent(:final defenderUnitId) => {defenderUnitId},
     CityCapturedEvent(:final cityId) => {cityId},
     CityDestroyedEvent(:final cityId) => {cityId},

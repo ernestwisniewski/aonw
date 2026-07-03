@@ -16,9 +16,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'game_state.freezed.dart';
 
-// Hand-rolled instead of @freezed because copyWith must distinguish omitted
-// fields from explicit nulls. Keep copyWith, equality, and hashCode in sync
-// when adding fields.
 class GameInteractionState {
   static const empty = GameInteractionState();
   static const Object unset = Object();
