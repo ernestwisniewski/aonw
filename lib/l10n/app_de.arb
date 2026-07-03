@@ -1602,6 +1602,10 @@
   "objectiveBuildCombatForceHint": "Mehrere Truppen lassen dich Expansion schützen und Rivalen unter Druck setzen.",
   "objectiveBuildCombatForceReward": "+ Grenzsicherheit",
   "objectiveBuildCombatForceTooltip": "Ein stabiler Schutzschirm schützt Siedler, Arbeiter und entwickelte Städte.",
+  "objectiveRaiseStabilityTitle": "Stabilität wiederherstellen",
+  "objectiveRaiseStabilityHint": "Dein Reich ist überlastet. Errichte Ordnungsgebäude, erschließe Luxusgüter oder konsolidiere dich, bevor Unruhen ausbrechen.",
+  "objectiveRaiseStabilityReward": "+ stetiges Wachstum",
+  "objectiveRaiseStabilityTooltip": "Überlastete und unruhige Reiche verlieren Stadtwachstum und einen Teil ihrer Erträge, bis sich die Stabilität erholt.",
   "objectiveHoldDominationTitle": "Dominanz halten",
   "objectiveHoldDominationHint": "Du liegst über der Kartenschwelle. Behalte die Kontrolle, bis der Countdown endet.",
   "objectiveHoldDominationReward": "+ Kartensieg",
@@ -2466,6 +2470,7 @@
   "commonBuildings": "Gebäude",
   "commonGold": "Gold",
   "commonScience": "Wissenschaft",
+  "commonStability": "Stabilität",
   "commonProduction": "Produktion",
   "commonResearch": "Forschung",
   "commonEmpire": "Imperium",
@@ -2694,6 +2699,27 @@
       }
     }
   },
+  "topResourceStabilityTooltip": "Stabilität des Reiches: {net}",
+  "stabilityBandContent": "Zufrieden",
+  "stabilityBandStable": "Stabil",
+  "stabilityBandStrained": "Überlastet",
+  "stabilityBandUnrest": "Unruhen",
+  "stabilityBreakdownBand": "Aktueller Zustand",
+  "stabilityBreakdownNet": "Nettostabilität",
+  "stabilityBreakdownSources": "Quellen",
+  "stabilityBreakdownCosts": "Kosten",
+  "stabilityBreakdownBaseOrder": "Grundordnung",
+  "stabilityBreakdownBuildings": "Ordnungsgebäude",
+  "stabilityBreakdownLuxuries": "Luxusgüter",
+  "stabilityBreakdownTechnologies": "Technologien",
+  "stabilityBreakdownArtifacts": "Gelagerte Artefakte",
+  "stabilityBreakdownCities": "Reichsgröße",
+  "stabilityBreakdownPopulation": "Bevölkerung",
+  "stabilityBreakdownCohesion": "Grenzkohäsion",
+  "stabilityBreakdownConqueredCities": "Eroberte Städte",
+  "stabilityBreakdownWarWeariness": "Kriegsmüdigkeit",
+  "stabilityBreakdownHegemony": "Hegemonialer Druck",
+  "stabilityBreakdownRelativeStanding": "Relative Stellung",
   "topResourceResourcesTooltip": "Ressourcen: {resourceTotal} Vorkommen • {resourceTypes} kontrollierte Typen",
   "@topResourceResourcesTooltip": {
     "placeholders": {
@@ -3047,6 +3073,10 @@
   "citySelectionFoodLabel": "Nahrung",
   "citySelectionNetFoodLabel": "Nettonahrung",
   "citySelectionBuildingsLabel": "Gebäude",
+  "citySelectionCohesionLabel": "Kohäsion",
+  "citySelectionCohesionCore": "Kernland",
+  "citySelectionCohesionIntegrated": "Integriert • {distance} Felder vom Kern",
+  "citySelectionCohesionFrontier": "Grenzland • {distance} Felder • -{cost} Stabilität",
   "citySelectionArtifactLabel": "Artefakt",
   "worldArtifactBonusTitle": "Bonus",
   "worldArtifactHeritageTitle": "Erbe",
@@ -3797,16 +3827,52 @@
   "mapObjectiveHolySiteDescription": "Eine kulturell wichtige Stätte. Kontrolle gewährt Gold und Siegpunkte.",
   "mapObjectiveLegendaryResourceDescription": "Eine seltene Lagerstätte, die Expansion oder Konflikt lohnt. Kontrolle gibt die größte Belohnung.",
   "mapObjectiveStatusNeutral": "{turns} Runden halten",
-  "@mapObjectiveStatusNeutral": {"placeholders": {"turns": {"type": "int"}}},
+  "@mapObjectiveStatusNeutral": {
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusHolding": "Halten {held}/{required}",
-  "@mapObjectiveStatusHolding": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusHolding": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusCompleted": "Kontrolliert {held}/{required}",
-  "@mapObjectiveStatusCompleted": {"placeholders": {"held": {"type": "int"}, "required": {"type": "int"}}},
+  "@mapObjectiveStatusCompleted": {
+    "placeholders": {
+      "held": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveStatusContested": "Umkämpft",
   "mapObjectiveRewardVictoryPoints": "+{points} SP",
-  "@mapObjectiveRewardVictoryPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@mapObjectiveRewardVictoryPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "mapObjectiveRewardGoldPerTurn": "+{gold} Gold/Runde",
-  "@mapObjectiveRewardGoldPerTurn": {"placeholders": {"gold": {"type": "int"}}},
+  "@mapObjectiveRewardGoldPerTurn": {
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "selectionImprovementStateBuilt": "GEBAUT",
   "selectionImprovementStateAvailable": "VERFÜGBAR",
   "selectionImprovementStateNeedsTechnology": "TECH",
@@ -4390,6 +4456,8 @@
   "eventCityCapturedTitle": "Stadt erobert",
   "eventCityDestroyedTitle": "Stadt zerstört",
   "eventTurnEndedTitle": "Zug beendet",
+  "eventStabilityBandChangedTitle": "Stabilität des Reiches geändert",
+  "eventStabilityBandChangedBody": "{playerName}: {band} ({net})",
   "eventWorkerCompletedJobTitle": "Arbeit abgeschlossen",
   "eventResearchPointsTitle": "Wissenschaft",
   "eventResearchPointsBody": "{playerName}: +{points} Wissenschaft",
