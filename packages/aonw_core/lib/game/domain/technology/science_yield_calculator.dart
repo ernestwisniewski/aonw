@@ -10,6 +10,25 @@ import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart'
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 
 abstract final class ScienceYieldCalculator {
+  static int totalAmountForPlayer({
+    required String playerId,
+    required Iterable<GameCity> cities,
+    required ResearchState research,
+    required TechnologyRuleset ruleset,
+    Iterable<WorldArtifact> artifacts = const [],
+    CityRuleset cityRuleset = CityRulesets.standard,
+  }) {
+    return _totalForPlayer(
+      playerId: playerId,
+      cities: cities,
+      research: research,
+      ruleset: ruleset,
+      artifacts: artifacts,
+      cityRuleset: cityRuleset,
+      collectSources: false,
+    ).total;
+  }
+
   static ScienceYieldBreakdown totalForPlayer({
     required String playerId,
     required Iterable<GameCity> cities,
@@ -18,14 +37,34 @@ abstract final class ScienceYieldCalculator {
     Iterable<WorldArtifact> artifacts = const [],
     CityRuleset cityRuleset = CityRulesets.standard,
   }) {
+    return _totalForPlayer(
+      playerId: playerId,
+      cities: cities,
+      research: research,
+      ruleset: ruleset,
+      artifacts: artifacts,
+      cityRuleset: cityRuleset,
+      collectSources: true,
+    );
+  }
+
+  static ScienceYieldBreakdown _totalForPlayer({
+    required String playerId,
+    required Iterable<GameCity> cities,
+    required ResearchState research,
+    required TechnologyRuleset ruleset,
+    required Iterable<WorldArtifact> artifacts,
+    required CityRuleset cityRuleset,
+    required bool collectSources,
+  }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: playerId,
       research: research,
       ruleset: ruleset,
     );
 
-    final byCityId = <String, int>{};
-    final sources = <ScienceYieldSource>[];
+    final byCityId = collectSources ? <String, int>{} : null;
+    final sources = collectSources ? <ScienceYieldSource>[] : null;
     var total = 0;
 
     for (final city in cities) {
@@ -47,24 +86,26 @@ abstract final class ScienceYieldCalculator {
       final amount = baseAmount + artifactAmount;
       if (amount <= 0) continue;
 
-      byCityId[city.id] = amount;
-      if (baseAmount > 0) {
-        sources.add(
-          ScienceYieldSource(
-            cityId: city.id,
-            amount: baseAmount,
-            label: 'City science',
-          ),
-        );
-      }
-      if (artifactAmount > 0) {
-        sources.add(
-          ScienceYieldSource(
-            cityId: city.id,
-            amount: artifactAmount,
-            label: 'World artifact',
-          ),
-        );
+      if (collectSources) {
+        byCityId![city.id] = amount;
+        if (baseAmount > 0) {
+          sources!.add(
+            ScienceYieldSource(
+              cityId: city.id,
+              amount: baseAmount,
+              label: 'City science',
+            ),
+          );
+        }
+        if (artifactAmount > 0) {
+          sources!.add(
+            ScienceYieldSource(
+              cityId: city.id,
+              amount: artifactAmount,
+              label: 'World artifact',
+            ),
+          );
+        }
       }
       total += amount;
     }
@@ -72,8 +113,8 @@ abstract final class ScienceYieldCalculator {
     if (total == 0) return ScienceYieldBreakdown.empty;
     return ScienceYieldBreakdown(
       total: total,
-      byCityId: Map.unmodifiable(byCityId),
-      sources: List.unmodifiable(sources),
+      byCityId: byCityId == null ? const {} : Map.unmodifiable(byCityId),
+      sources: sources == null ? const [] : List.unmodifiable(sources),
     );
   }
 

@@ -27,6 +27,19 @@ class GoldBreakdown {
     required this.upkeep,
   });
 
+  static const empty = GoldBreakdown(
+    treasury: 0,
+    citySources: [],
+    projectSources: [],
+    upkeep: UnitUpkeepBreakdown(
+      playerId: '',
+      unitCount: 0,
+      freeUnitCount: 0,
+      paidUnitCount: 0,
+      grossUpkeep: 0,
+    ),
+  );
+
   int get cityIncome {
     var total = 0;
     for (final source in citySources) {

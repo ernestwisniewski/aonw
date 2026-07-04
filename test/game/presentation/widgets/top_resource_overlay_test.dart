@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
@@ -258,22 +259,24 @@ Future<void> _pumpOverlay(
             playerName: playerName,
             playerColor: playerColor,
             turnNumber: turnNumber,
-            goldBreakdown: const GoldBreakdown(
-              treasury: 42,
-              citySources: [],
-              projectSources: [],
-              upkeep: UnitUpkeepBreakdown(
-                playerId: 'player_1',
-                unitCount: 0,
-                freeUnitCount: 0,
-                paidUnitCount: 0,
-                grossUpkeep: 0,
+            resourceBreakdowns: HudResourceBreakdowns.fixed(
+              gold: const GoldBreakdown(
+                treasury: 42,
+                citySources: [],
+                projectSources: [],
+                upkeep: UnitUpkeepBreakdown(
+                  playerId: 'player_1',
+                  unitCount: 0,
+                  freeUnitCount: 0,
+                  paidUnitCount: 0,
+                  grossUpkeep: 0,
+                ),
               ),
-            ),
-            scienceBreakdown: const ScienceYieldBreakdown(
-              total: 6,
-              byCityId: {},
-              sources: [],
+              science: const ScienceYieldBreakdown(
+                total: 6,
+                byCityId: {},
+                sources: [],
+              ),
             ),
             cities: const [],
             activeTechnologyName: activeTechnologyName,
