@@ -4,6 +4,20 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.1.0 - 2026-07-05
+
+- Added gamepad controls for moving around the map, selecting tiles, confirming
+  primary actions, opening key panels, and playing more comfortably from a
+  couch or handheld-style setup.
+- Added in-game manual guidance for gamepad controls across supported
+  languages.
+- Improved HUD economy breakdown performance so gold, science, and city
+  economy details are calculated more efficiently when opened.
+- Improved combat fog handling so combat updates reveal only the affected
+  visibility changes instead of doing unnecessary full-map work.
+- Tightened city production and ruleset calculations behind the HUD so economy
+  forecasts stay clearer and cheaper to update.
+
 ## 1.0.9 - 2026-07-04
 
 - Added the first version of empire stability, cohesion, and war-weariness
