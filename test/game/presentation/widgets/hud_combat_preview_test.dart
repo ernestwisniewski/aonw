@@ -130,7 +130,7 @@ void main() {
       expect(preview.hasRetaliation, isFalse);
       expect(
         preview.attackerLine(l10n),
-        'Retaliation: none (ranged attack, distance 2, range 2)',
+        'Retaliation: none (defender out of range, distance 2, defender range 1)',
       );
     });
 

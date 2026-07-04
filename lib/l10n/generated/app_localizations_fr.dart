@@ -3452,7 +3452,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get unitRiflemanDescription =>
-      'Un soldat moderne, stable dans l\'attaque et la défense.';
+      'Une infanterie de ligne moderne, fiable en attaque comme en défense.';
 
   @override
   String get unitTankDescription =>
@@ -6355,7 +6355,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Rétorsion: aucune (attaque à distance, distance $distance, plage $range)';
+    return 'Rétorsion: aucune (défenseur hors de portée, distance $distance, portée du défenseur $range)';
   }
 
   @override
@@ -6461,7 +6461,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'Pas de représailles: il s\'agit d\'une attaque variée (distance $distance, portée d\'attaque $range).';
+    return 'Pas de représailles: le défenseur ne peut pas répondre à cette distance (distance $distance, portée du défenseur $range).';
   }
 
   @override

@@ -53,8 +53,15 @@ final class _AttackConsiderationPolicy {
   }
 
   bool _protectsImportantGround(AiAttackEvaluation evaluation) {
-    return (defendingCity || protectsCivilian || evaluation.threatensOwnCity) &&
-        evaluation.defenderDamage >= evaluation.attackerDamage;
+    if (!defendingCity && !protectsCivilian && !evaluation.threatensOwnCity) {
+      return false;
+    }
+    if (evaluation.defenderDamage >= evaluation.attackerDamage) return true;
+
+    final attackerKeepsPressure =
+        evaluation.attackerHpAfter * 2 >= evaluation.attackerHpBefore;
+    return attackerKeepsPressure &&
+        evaluation.defenderDamage + 1 >= evaluation.attackerDamage;
   }
 
   bool _acceptsAggressiveRisk(AiAttackEvaluation evaluation) {

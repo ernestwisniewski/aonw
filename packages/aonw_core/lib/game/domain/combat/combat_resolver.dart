@@ -46,7 +46,7 @@ abstract final class CombatResolver {
 
     var attackerHpAfter = attacker.currentHp;
     var attackerKilled = false;
-    final retaliationPercent = _retaliationPercent(
+    final retaliationPercent = CombatRetaliationRules.percentFor(
       attackDistance: attackDistance,
       defenderRange: defenderStats.range,
       ruleset: ruleset,
@@ -57,7 +57,7 @@ abstract final class CombatResolver {
         defenderStats.attack > 0) {
       final retaliationVariance = rng.signed(ruleset.varianceRange);
       steps.add(RollStep(seed: rng.seed, value: retaliationVariance));
-      final retaliationDamage = _scaledDamage(
+      final retaliationDamage = CombatRetaliationRules.scaledDamage(
         _damage(
           attack: defenderStats.attack,
           defense: attackerStats.defense,
@@ -84,24 +84,6 @@ abstract final class CombatResolver {
     );
   }
 
-  static int _retaliationPercent({
-    required int attackDistance,
-    required int defenderRange,
-    required CombatRuleset ruleset,
-  }) {
-    if (attackDistance <= 1) return 100;
-    if (defenderRange < attackDistance) return 0;
-    return ruleset.rangedRetaliationPercent < 0
-        ? 0
-        : ruleset.rangedRetaliationPercent;
-  }
-
-  static int _scaledDamage(int damage, {required int percent}) {
-    if (damage <= 0 || percent <= 0) return 0;
-    final scaled = damage * percent ~/ 100;
-    return scaled < 1 ? 1 : scaled;
-  }
-
   static int _damage({
     required int attack,
     required int defense,
@@ -124,5 +106,29 @@ abstract final class CombatResolver {
     }
     if (defenderHpAfter <= 0) return false;
     return defenderHpAfter * 100 < defenderMaxHp * thresholdPercent;
+  }
+}
+
+abstract final class CombatRetaliationRules {
+  static int percentFor({
+    required int attackDistance,
+    required int defenderRange,
+    required CombatRuleset ruleset,
+  }) {
+    if (attackDistance <= 1) return 100;
+    if (defenderRange < attackDistance) return 0;
+    return _clampPercent(ruleset.rangedRetaliationPercent);
+  }
+
+  static int scaledDamage(int damage, {required int percent}) {
+    if (damage <= 0 || percent <= 0) return 0;
+    final scaled = damage * percent ~/ 100;
+    return scaled < 1 ? 1 : scaled;
+  }
+
+  static int _clampPercent(int percent) {
+    if (percent < 0) return 0;
+    if (percent > 100) return 100;
+    return percent;
   }
 }

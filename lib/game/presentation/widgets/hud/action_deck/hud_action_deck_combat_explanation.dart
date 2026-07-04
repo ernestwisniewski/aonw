@@ -206,7 +206,7 @@ class _CombatExplanationPanel extends StatelessWidget {
     return _CombatExplanationItem(
       text: l10n.combatPreviewNoRetaliationReason(
         preview.distance,
-        preview.range,
+        preview.defenderRange,
       ),
       tone: _CombatExplanationTone.positive,
     );

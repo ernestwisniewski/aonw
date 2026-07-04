@@ -346,7 +346,7 @@ final class BasicStrategyCombatReactionsPlanner {
 
     return evaluation.defenderKilled ||
         evaluation.attackerHpAfter > 1 ||
-        evaluation.rangedAttack;
+        evaluation.isFreeRangedDamage;
   }
 
   MoveUnitCommand? _moveAwayFromEnemies({

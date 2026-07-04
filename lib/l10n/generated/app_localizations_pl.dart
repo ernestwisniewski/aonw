@@ -3433,7 +3433,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get unitRiflemanDescription =>
-      'Nowoczesny żołnierz dystansowy, stabilny w ataku i obronie.';
+      'Nowoczesna piechota liniowa, stabilna w ataku i obronie.';
 
   @override
   String get unitTankDescription =>
@@ -6315,7 +6315,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Kontratak: brak (atak dystansowy, dystans $distance, zasięg $range)';
+    return 'Kontratak: brak (obrońca poza zasięgiem, dystans $distance, zasięg obrońcy $range)';
   }
 
   @override
@@ -6421,7 +6421,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'Bez kontrataku: atak jest dystansowy (dystans $distance, zasięg ataku $range).';
+    return 'Bez kontrataku: obrońca nie może odpowiedzieć z tego dystansu (dystans $distance, zasięg obrońcy $range).';
   }
 
   @override

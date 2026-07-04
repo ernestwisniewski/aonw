@@ -1849,7 +1849,7 @@
   "unitCatapultDescription": "A siege engine with longer range, effective against fortifications.",
   "unitHeavyInfantryDescription": "Durable frontline infantry with high defense and solid attack.",
   "unitFieldCannonDescription": "Modern field artillery for ranged bombardment.",
-  "unitRiflemanDescription": "A modern ranged soldier, steady in attack and defense.",
+  "unitRiflemanDescription": "A modern line infantry unit, steady in attack and defense.",
   "unitTankDescription": "A heavy armored unit with high strength and high mobility.",
   "unitScoutShipDescription": "A light ship for coastal reconnaissance and protecting early sea routes.",
   "unitWarshipDescription": "A strong combat ship for sea control and ranged bombardment.",
@@ -3571,7 +3571,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Retaliation: none (ranged attack, distance {distance}, range {range})",
+  "combatPreviewNoRetaliationLine": "Retaliation: none (defender out of range, distance {distance}, defender range {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3746,7 +3746,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "No modifiers apply: base unit stats and the combat result decide this forecast.",
-  "combatPreviewNoRetaliationReason": "No retaliation: this is a ranged attack (distance {distance}, attack range {range}).",
+  "combatPreviewNoRetaliationReason": "No retaliation: the defender cannot answer at this distance (distance {distance}, defender range {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

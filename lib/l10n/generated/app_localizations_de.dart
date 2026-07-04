@@ -3451,7 +3451,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get unitRiflemanDescription =>
-      'Ein moderner Fernkampfsoldat, zuverlässig in Angriff und Verteidigung.';
+      'Eine moderne Linieninfanterie, zuverlässig in Angriff und Verteidigung.';
 
   @override
   String get unitTankDescription =>
@@ -6347,7 +6347,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Gegenschlag: keiner (Fernangriff, Distanz $distance, Reichweite $range)';
+    return 'Gegenschlag: keiner (Verteidiger außer Reichweite, Distanz $distance, Verteidigerreichweite $range)';
   }
 
   @override
@@ -6453,7 +6453,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'Kein Gegenschlag: Dies ist ein Fernangriff (Distanz $distance, Angriffsreichweite $range).';
+    return 'Kein Gegenschlag: Der Verteidiger kann auf diese Distanz nicht antworten (Distanz $distance, Verteidigerreichweite $range).';
   }
 
   @override

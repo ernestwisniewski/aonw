@@ -38,7 +38,11 @@ final class _UnitAttackEvaluationBuilder {
     );
     final attackerEffective = combatants.attacker.effective;
     final defenderEffective = combatants.defender.effective;
-    if (!_canAttackUnit(attacker, defender, attackerEffective)) return null;
+    final attackDistance = _CombatTacticsQueries.unitDistance(
+      attacker,
+      defender,
+    );
+    if (!_canAttackUnit(attackDistance, attackerEffective)) return null;
 
     final outcome = _resolveAttack(
       view: view,
@@ -46,6 +50,7 @@ final class _UnitAttackEvaluationBuilder {
       defender: defender,
       combatants: combatants,
       defenderEffective: defenderEffective,
+      attackDistance: attackDistance,
     );
     final evaluation = _evaluationFromOutcome(
       view: view,
@@ -54,21 +59,22 @@ final class _UnitAttackEvaluationBuilder {
       defender: defender,
       combatants: combatants,
       outcome: outcome,
-      rangedAttack: attackerEffective.range > 1,
+      attackDistance: attackDistance,
+      retaliationPercent: CombatRetaliationRules.percentFor(
+        attackDistance: attackDistance,
+        defenderRange: defenderEffective.range,
+        ruleset: view.ruleset.combat,
+      ),
+      rangedAttack: attackDistance > 1,
     );
     return evaluation.withHeuristicScore(
       _CombatHeuristicScorer.unit(evaluation),
     );
   }
 
-  bool _canAttackUnit(
-    GameUnit attacker,
-    GameUnit defender,
-    CombatStats attackerEffective,
-  ) {
+  bool _canAttackUnit(int attackDistance, CombatStats attackerEffective) {
     return attackerEffective.attack > 0 &&
-        _CombatTacticsQueries.unitDistance(attacker, defender) <=
-            attackerEffective.range;
+        attackDistance <= attackerEffective.range;
   }
 
   CombatOutcome _resolveAttack({
@@ -77,6 +83,7 @@ final class _UnitAttackEvaluationBuilder {
     required GameUnit defender,
     required ({Combatant attacker, Combatant defender}) combatants,
     required CombatStats defenderEffective,
+    required int attackDistance,
   }) {
     final retreatDestination = defenderEffective.attack > 0
         ? CombatRetreatResolver.destination(
@@ -94,7 +101,7 @@ final class _UnitAttackEvaluationBuilder {
         attackerId: attacker.id,
         defenderId: defender.id,
       ),
-      attackDistance: _CombatTacticsQueries.unitDistance(attacker, defender),
+      attackDistance: attackDistance,
       ruleset: view.ruleset.combat,
       defenderCanRetreat: retreatDestination != null,
     );
@@ -107,6 +114,8 @@ final class _UnitAttackEvaluationBuilder {
     required GameUnit defender,
     required ({Combatant attacker, Combatant defender}) combatants,
     required CombatOutcome outcome,
+    required int attackDistance,
+    required int retaliationPercent,
     required bool rangedAttack,
   }) {
     final defenderHpBefore = combatants.defender.currentHp;
@@ -138,6 +147,8 @@ final class _UnitAttackEvaluationBuilder {
         view.ruleset.combat,
       ),
       capturesCity: false,
+      attackDistance: attackDistance,
+      retaliationPercent: retaliationPercent,
       rangedAttack: rangedAttack,
       nearestOwnCityDistance: _CombatTacticsQueries.nearestOwnCityDistance(
         view,
@@ -185,7 +196,11 @@ final class _CityAttackEvaluationBuilder {
       context: context,
     );
     final attackerEffective = attackerCombatant.effective;
-    if (!_canAttackCity(attacker, city, attackerEffective)) return null;
+    final attackDistance = _CombatTacticsQueries.distanceToCity(
+      attacker,
+      city.center,
+    );
+    if (!_canAttackCity(attackDistance, attackerEffective)) return null;
 
     final cityBaseStats = context.ruleset.combat.cityBaseStats;
     if (cityBaseStats.hp <= 0) return null;
@@ -202,10 +217,7 @@ final class _CityAttackEvaluationBuilder {
         attackerId: attacker.id,
         defenderId: city.id,
       ),
-      attackDistance: _CombatTacticsQueries.distanceToCity(
-        attacker,
-        city.center,
-      ),
+      attackDistance: attackDistance,
       ruleset: context.ruleset.combat,
     );
     final evaluation = _evaluationFromOutcome(
@@ -216,21 +228,22 @@ final class _CityAttackEvaluationBuilder {
       attackerCombatant: attackerCombatant,
       cityCombatant: cityCombatant,
       outcome: outcome,
-      rangedAttack: attackerEffective.range > 1,
+      attackDistance: attackDistance,
+      retaliationPercent: CombatRetaliationRules.percentFor(
+        attackDistance: attackDistance,
+        defenderRange: cityCombatant.effective.range,
+        ruleset: context.ruleset.combat,
+      ),
+      rangedAttack: attackDistance > 1,
     );
     return evaluation.withHeuristicScore(
       _CombatHeuristicScorer.city(evaluation),
     );
   }
 
-  bool _canAttackCity(
-    GameUnit attacker,
-    GameCity city,
-    CombatStats attackerEffective,
-  ) {
+  bool _canAttackCity(int attackDistance, CombatStats attackerEffective) {
     return attackerEffective.attack > 0 &&
-        _CombatTacticsQueries.distanceToCity(attacker, city.center) <=
-            attackerEffective.range;
+        attackDistance <= attackerEffective.range;
   }
 
   AiCityAttackEvaluation _evaluationFromOutcome({
@@ -241,6 +254,8 @@ final class _CityAttackEvaluationBuilder {
     required Combatant attackerCombatant,
     required Combatant cityCombatant,
     required CombatOutcome outcome,
+    required int attackDistance,
+    required int retaliationPercent,
     required bool rangedAttack,
   }) {
     final defenderHpBefore = cityCombatant.currentHp;
@@ -264,6 +279,8 @@ final class _CityAttackEvaluationBuilder {
       attackerHpAfter: attackerHpAfter,
       cityDefeated: outcome.defenderKilled,
       attackerKilled: outcome.attackerKilled,
+      attackDistance: attackDistance,
+      retaliationPercent: retaliationPercent,
       rangedAttack: rangedAttack,
       nearestOwnCityDistance: _CombatTacticsQueries.nearestOwnCityDistance(
         view,

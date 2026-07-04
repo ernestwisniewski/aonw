@@ -72,7 +72,7 @@ CommandRanking? rankFounderPressureClearingCommand(
   final attacker = ownUnitById(view, command.attackerUnitId);
   if (attacker != null &&
       _military.isOnly(attacker, view, context) &&
-      !_military.isSafeLastMilitaryAttack(evaluation)) {
+      !_military.isSafeLastMilitaryAttack(evaluation, protectsCivilian: true)) {
     return const CommandRanking(CandidatePriority.fallback, -950);
   }
 

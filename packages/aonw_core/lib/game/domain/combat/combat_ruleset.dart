@@ -195,19 +195,35 @@ class CombatRuleset {
 
   static const CombatRuleset standard = CombatRuleset();
 
-  CombatRuleset copyWith({CombatResolutionMode? resolutionMode}) {
+  CombatRuleset copyWith({
+    CombatResolutionMode? resolutionMode,
+    int? varianceRange,
+    int? rangedRetaliationPercent,
+    int? retreatThresholdPercent,
+    int? defendedCityDefenseBonus,
+    int? mixedCommanderArmyAttackBonus,
+    CombatStats? cityBaseStats,
+    CombatStats? commanderBaseStats,
+    Map<GameUnitType, CombatStats>? unitBaseStats,
+    Map<TroopType, CombatStats>? troopBaseStats,
+    Map<TerrainType, CombatStats>? terrainStatModifiers,
+  }) {
     return CombatRuleset(
       resolutionMode: resolutionMode ?? this.resolutionMode,
-      varianceRange: varianceRange,
-      rangedRetaliationPercent: rangedRetaliationPercent,
-      retreatThresholdPercent: retreatThresholdPercent,
-      defendedCityDefenseBonus: defendedCityDefenseBonus,
-      mixedCommanderArmyAttackBonus: mixedCommanderArmyAttackBonus,
-      cityBaseStats: cityBaseStats,
-      commanderBaseStats: commanderBaseStats,
-      unitBaseStats: unitBaseStats,
-      troopBaseStats: troopBaseStats,
-      terrainStatModifiers: terrainStatModifiers,
+      varianceRange: varianceRange ?? this.varianceRange,
+      rangedRetaliationPercent:
+          rangedRetaliationPercent ?? this.rangedRetaliationPercent,
+      retreatThresholdPercent:
+          retreatThresholdPercent ?? this.retreatThresholdPercent,
+      defendedCityDefenseBonus:
+          defendedCityDefenseBonus ?? this.defendedCityDefenseBonus,
+      mixedCommanderArmyAttackBonus:
+          mixedCommanderArmyAttackBonus ?? this.mixedCommanderArmyAttackBonus,
+      cityBaseStats: cityBaseStats ?? this.cityBaseStats,
+      commanderBaseStats: commanderBaseStats ?? this.commanderBaseStats,
+      unitBaseStats: unitBaseStats ?? this.unitBaseStats,
+      troopBaseStats: troopBaseStats ?? this.troopBaseStats,
+      terrainStatModifiers: terrainStatModifiers ?? this.terrainStatModifiers,
     );
   }
 

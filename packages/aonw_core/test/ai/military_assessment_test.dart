@@ -111,7 +111,101 @@ void main() {
         isTrue,
       );
     });
+
+    test('keeps standoff attacks safe only outside defender range', () {
+      final attacker = _unit(
+        id: 'archer_1',
+        type: GameUnitType.archer,
+        col: 0,
+        row: 0,
+      );
+      final defender = _unit(
+        id: 'enemy_warrior',
+        owner: 'player_2',
+        type: GameUnitType.warrior,
+        col: 2,
+        row: 0,
+      );
+
+      expect(
+        const AiMilitaryAssessment().lastMilitarySurvivesAttack(
+          attacker: attacker,
+          defender: defender,
+          ruleset: GameRuleset.defaults.combat,
+          currentHp: 1,
+        ),
+        isTrue,
+      );
+    });
+
+    test('counts counter-battery retaliation against ranged safety', () {
+      final attacker = _unit(
+        id: 'archer_1',
+        type: GameUnitType.archer,
+        col: 0,
+        row: 0,
+      );
+      final defender = _unit(
+        id: 'enemy_archer',
+        owner: 'player_2',
+        type: GameUnitType.archer,
+        col: 2,
+        row: 0,
+      );
+
+      expect(
+        const AiMilitaryAssessment().lastMilitarySurvivesAttack(
+          attacker: attacker,
+          defender: defender,
+          ruleset: GameRuleset.defaults.combat,
+          currentHp: 1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('counts point-blank ranged retaliation at full risk', () {
+      final attacker = _unit(
+        id: 'archer_1',
+        type: GameUnitType.archer,
+        col: 0,
+        row: 0,
+      );
+      final defender = _unit(
+        id: 'enemy_archer',
+        owner: 'player_2',
+        type: GameUnitType.archer,
+        col: 1,
+        row: 0,
+      );
+
+      expect(
+        const AiMilitaryAssessment().lastMilitarySurvivesAttack(
+          attacker: attacker,
+          defender: defender,
+          ruleset: GameRuleset.defaults.combat,
+          currentHp: 1,
+        ),
+        isFalse,
+      );
+    });
   });
+}
+
+GameUnit _unit({
+  required String id,
+  required GameUnitType type,
+  required int col,
+  required int row,
+  String owner = 'player_1',
+}) {
+  return GameUnit.produced(
+    id: id,
+    ownerPlayerId: owner,
+    type: type,
+    col: col,
+    row: row,
+  );
 }
 
 MapData _map() {
