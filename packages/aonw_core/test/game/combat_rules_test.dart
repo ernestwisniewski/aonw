@@ -15,6 +15,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(varianceRange: 0),
       );
 
@@ -22,6 +23,48 @@ void main() {
       expect(outcome.attackerHpAfter, 6);
       expect(outcome.defenderKilled, isFalse);
       expect(outcome.steps.whereType<RetaliationStep>(), hasLength(1));
+    });
+
+    test('retaliates against point-blank ranged attacks', () {
+      final outcome = CombatResolver.resolve(
+        attacker: _combatant(
+          id: 'attacker',
+          stats: const CombatStats(attack: 6, defense: 1, hp: 10, range: 2),
+        ),
+        defender: _combatant(
+          id: 'defender',
+          owner: 'player_2',
+          stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 1),
+        ),
+        rng: CombatRng(99),
+        attackDistance: 1,
+        ruleset: const CombatRuleset(varianceRange: 0),
+      );
+
+      expect(outcome.defenderHpAfter, 5);
+      expect(outcome.attackerHpAfter, 6);
+      expect(outcome.steps.whereType<RetaliationStep>(), hasLength(1));
+    });
+
+    test('keeps standoff ranged attacks retaliation-free', () {
+      final outcome = CombatResolver.resolve(
+        attacker: _combatant(
+          id: 'attacker',
+          stats: const CombatStats(attack: 6, defense: 1, hp: 10, range: 2),
+        ),
+        defender: _combatant(
+          id: 'defender',
+          owner: 'player_2',
+          stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 1),
+        ),
+        rng: CombatRng(99),
+        attackDistance: 2,
+        ruleset: const CombatRuleset(varianceRange: 0),
+      );
+
+      expect(outcome.defenderHpAfter, 5);
+      expect(outcome.attackerHpAfter, 10);
+      expect(outcome.steps.whereType<RetaliationStep>(), isEmpty);
     });
 
     test('lethal damage kills instead of forcing retreat', () {
@@ -36,6 +79,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 0, hp: 8, mobility: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(
           varianceRange: 0,
           retreatThresholdPercent: 25,

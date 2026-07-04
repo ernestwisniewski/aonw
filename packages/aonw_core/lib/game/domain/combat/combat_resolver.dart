@@ -9,6 +9,7 @@ abstract final class CombatResolver {
     required Combatant attacker,
     required Combatant defender,
     required CombatRng rng,
+    required int attackDistance,
     CombatRuleset ruleset = CombatRuleset.standard,
     bool defenderCanRetreat = false,
   }) {
@@ -47,7 +48,7 @@ abstract final class CombatResolver {
     var attackerKilled = false;
     if (!defenderKilled &&
         !defenderRetreated &&
-        attackerStats.range <= 1 &&
+        attackDistance <= 1 &&
         defenderStats.attack > 0) {
       final retaliationVariance = rng.signed(ruleset.varianceRange);
       steps.add(RollStep(seed: rng.seed, value: retaliationVariance));

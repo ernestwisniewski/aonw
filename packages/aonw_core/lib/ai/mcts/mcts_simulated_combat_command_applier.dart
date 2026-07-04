@@ -81,7 +81,8 @@ final class MctsSimulatedCombatCommandApplier {
     if (combatants.attacker.effective.attack <= 0) {
       return _unchangedCommandApplication;
     }
-    if (_distance(attacker, defender) > combatants.attacker.effective.range) {
+    final attackDistance = _distance(attacker, defender);
+    if (attackDistance > combatants.attacker.effective.range) {
       return _unchangedCommandApplication;
     }
 
@@ -102,6 +103,7 @@ final class MctsSimulatedCombatCommandApplier {
         attackerId: attacker.id,
         defenderId: defender.id,
       ),
+      attackDistance: attackDistance,
       ruleset: view.ruleset.combat,
       defenderCanRetreat: retreatDestination != null,
     );
@@ -198,6 +200,7 @@ final class MctsSimulatedCombatCommandApplier {
 
     final cityBaseStats = view.ruleset.combat.cityBaseStats;
     if (cityBaseStats.hp <= 0) return _unchangedCommandApplication;
+    final attackDistance = _distanceToHex(attacker, city.center);
     final outcome = CombatResolver.resolve(
       attacker: Combatant(
         unitId: attacker.id,
@@ -223,6 +226,7 @@ final class MctsSimulatedCombatCommandApplier {
         attackerId: attacker.id,
         defenderId: city.id,
       ),
+      attackDistance: attackDistance,
       ruleset: view.ruleset.combat,
     );
 
