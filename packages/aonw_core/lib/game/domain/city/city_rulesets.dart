@@ -16,4 +16,10 @@ abstract final class CityRulesets {
     buildings: CityBuildingCatalog.standard,
     units: UnitProductionCatalog.standard,
   );
+
+  static CityRuleset fromUnitSpecs(UnitSpecResolver unitSpecs) {
+    return standard.copyWith(
+      units: UnitProductionCatalog.fromUnitSpecs(unitSpecs),
+    );
+  }
 }

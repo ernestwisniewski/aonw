@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
+import 'package:aonw_core/game/domain/unit/unit_spec.dart';
 
 class UnitProductionDefinition {
   final GameUnitType type;
@@ -11,4 +12,12 @@ class UnitProductionDefinition {
     required this.productionCost,
     this.requirements = const [],
   });
+
+  factory UnitProductionDefinition.fromSpec(UnitSpec spec) {
+    return UnitProductionDefinition(
+      type: spec.type,
+      productionCost: spec.productionCost,
+      requirements: spec.requirements,
+    );
+  }
 }

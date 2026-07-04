@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_definition.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
+import 'package:aonw_core/game/domain/unit/unit_spec_resolver.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class UnitProductionCatalog {
@@ -95,4 +96,13 @@ abstract final class UnitProductionCatalog {
       ],
     ),
   };
+
+  static Map<GameUnitType, UnitProductionDefinition> fromUnitSpecs(
+    UnitSpecResolver unitSpecs,
+  ) {
+    return {
+      for (final type in GameUnitType.values)
+        type: UnitProductionDefinition.fromSpec(unitSpecs.specFor(type)),
+    };
+  }
 }
