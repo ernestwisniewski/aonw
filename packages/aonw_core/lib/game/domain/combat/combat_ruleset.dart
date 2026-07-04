@@ -19,7 +19,7 @@ class CombatRuleset {
 
   const CombatRuleset({
     this.resolutionMode = CombatResolutionMode.instant,
-    this.varianceRange = 1,
+    this.varianceRange = 2,
     this.rangedRetaliationPercent = 50,
     this.retreatThresholdPercent = 25,
     this.defendedCityDefenseBonus = 1,
