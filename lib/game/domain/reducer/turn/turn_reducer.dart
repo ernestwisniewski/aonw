@@ -56,7 +56,7 @@ abstract final class TurnReducer {
           TurnContext(
             state: state,
             mapData: mapData,
-            ruleset: GameRuleset(
+            ruleset: GameRuleset.standard().copyWith(
               city: cityRuleset,
               technology: technologyRuleset,
               stability: stabilityRuleset,

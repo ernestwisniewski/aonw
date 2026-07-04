@@ -50,10 +50,7 @@ class ServerCommandReducer {
     final mapData = await _mapCatalog.loadAssetMap(save.mapName);
     mapData.mapName ??= save.mapName;
     final mapDefinition = _mapDefinitionFrom(mapData);
-    final ruleset = GameRuleset(
-      city: CityRulesets.standard,
-      technology: TechnologyRulesets.standard,
-      stability: StabilityRuleset.standard,
+    final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
     final result = _applyCommand(

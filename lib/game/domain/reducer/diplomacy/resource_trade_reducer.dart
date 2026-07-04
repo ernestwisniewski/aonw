@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -20,7 +21,7 @@ abstract final class ResourceTradeReducer {
 
     final result = const PersistentResourceTradeResolver()
         .openGoldForResourceTrade(
-          state: _persistentState(state),
+          state: state.toPersistentState(),
           importerPlayerId: command.playerId,
           exporterPlayerId: command.targetPlayerId,
           resource: command.resource,
@@ -46,7 +47,7 @@ abstract final class ResourceTradeReducer {
 
     final result = const PersistentResourceTradeResolver()
         .openResourceForResourceTrade(
-          state: _persistentState(state),
+          state: state.toPersistentState(),
           playerId: command.playerId,
           targetPlayerId: command.targetPlayerId,
           offeredResource: command.offeredResource,
@@ -57,23 +58,6 @@ abstract final class ResourceTradeReducer {
         );
     if (!result.accepted) return GameStateTransition(state: state);
     return GameStateTransition(state: _fromPersistent(state, result.state));
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
   }
 
   static GameState _fromPersistent(

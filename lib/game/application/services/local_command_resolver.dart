@@ -3,6 +3,7 @@ import 'package:aonw/game/application/services/queued_movement_effect_builder.da
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
@@ -12,7 +13,6 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
-import 'package:aonw_core/game/domain/state.dart';
 
 class LocalCommandResolution {
   final GameSave save;
@@ -146,20 +146,7 @@ class LocalCommandResolver {
     final ruleset = reducer.ruleset.copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
-    final persistent = PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
+    final persistent = state.toPersistentState();
     final combat = PersistentTurnCombatResolver.resolve(
       turn: save.turn,
       state: persistent,

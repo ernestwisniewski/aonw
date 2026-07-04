@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
@@ -41,9 +42,7 @@ class HudVictoryStatusSummary {
     EmpireScoreCalculator scoreCalculator = const EmpireScoreCalculator(),
   }) {
     final victory = gameSave.matchRules.victory;
-    final persistentState = gameState == null
-        ? null
-        : _persistentState(gameState);
+    final persistentState = gameState?.toPersistentState();
     final scoreStatus = _scoreStatus(
       gameSave: gameSave,
       gameState: gameState,
@@ -178,7 +177,7 @@ class HudVictoryStatusSummary {
     required HudVictoryStatusSummary? scoreStatus,
   }) {
     final victory = gameSave.matchRules.victory;
-    final state = _persistentState(gameState);
+    final state = gameState.toPersistentState();
     final leader = _culturalLeader(gameSave: gameSave, state: state);
     if (leader == null) return null;
     final leaderLabel = _playerName(gameSave, leader.playerId);
@@ -245,7 +244,7 @@ class HudVictoryStatusSummary {
         ? const <String, int>{}
         : scoreCalculator.scoresFor(
             playerIds: gameSave.players.map((player) => player.id),
-            state: _persistentState(gameState),
+            state: gameState.toPersistentState(),
             mapObjectives: mapData?.objectives ?? const [],
           );
     final leaderLabel = _leaderLabel(
@@ -301,7 +300,7 @@ class HudVictoryStatusSummary {
   }) {
     final progress = const DominationProgressCalculator().snapshot(
       playerIds: gameSave.players.map((player) => player.id),
-      state: _persistentState(gameState),
+      state: gameState.toPersistentState(),
       mapData: mapData,
       victoryRules: gameSave.matchRules.victory,
     );
@@ -352,23 +351,6 @@ class HudVictoryStatusSummary {
         opponentThreat: opponentThreat,
         scoreStatus: scoreStatus,
       ),
-    );
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
     );
   }
 

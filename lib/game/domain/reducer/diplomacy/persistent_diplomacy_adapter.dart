@@ -1,9 +1,9 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
 abstract final class PersistentDiplomacyAdapter {
@@ -13,7 +13,7 @@ abstract final class PersistentDiplomacyAdapter {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final result = const DiplomacyCommandRouter().route(
-      state: _persistentState(state),
+      state: state.toPersistentState(),
       command: command,
       actorPlayerId: _actorPlayerId(state, command, context),
       turn: context.combatSeedTurn,
@@ -23,35 +23,6 @@ abstract final class PersistentDiplomacyAdapter {
     return GameStateTransition(
       state: _fromPersistent(state, result.state),
       events: result.events,
-    );
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: GameRuntimeState(
-        cityFoundingDraft: state.cityFoundingDraft,
-        pendingAction: state.pendingAction,
-        submittedPlayerIds: state.submittedPlayerIds,
-        intendedAttacks: state.intendedAttacks,
-        diplomacy: state.diplomacy,
-        dominationHoldTurnsByPlayerId: state.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            state.culturalVictoryHoldTurnsByPlayerId,
-        mapObjectiveHoldStatesByObjectiveId:
-            state.mapObjectiveHoldStatesByObjectiveId,
-        resourceTradeAgreements: state.resourceTradeAgreements,
-      ),
     );
   }
 

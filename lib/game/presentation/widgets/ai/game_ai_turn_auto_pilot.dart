@@ -274,7 +274,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
       canRunScheduledAiTurn: GameAiTurnAutoPilotRules.canRunScheduledAiTurn,
       strategyRegistryFor: _strategyRegistryFor,
       rulesetReader: () {
-        return GameRuleset(
+        return GameRuleset.standard().copyWith(
           city: ref.read(cityRulesetProvider),
           technology: ref.read(technologyRulesetProvider),
           stability: ref.read(stabilityRulesetProvider),

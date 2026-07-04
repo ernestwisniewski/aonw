@@ -33,7 +33,7 @@ final replayTimelineProvider = FutureProvider.autoDispose
       final session = await ref.watch(
         gameSessionProvider(request.selection, request.saveId).future,
       );
-      final ruleset = GameRuleset(
+      final ruleset = GameRuleset.standard().copyWith(
         city: ref.watch(cityRulesetProvider),
         technology: ref.watch(technologyRulesetProvider),
         stability: ref.watch(stabilityRulesetProvider),
