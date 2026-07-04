@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
+import 'package:aonw/shared/assets/preferred_image_assets.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class UnitSpriteCatalog {
@@ -17,42 +18,42 @@ abstract final class UnitSpriteCatalog {
   );
 
   static final UnitSpriteDefinition commander = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/commander.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('commander'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition warrior = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/warrior.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('warrior'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition archer = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/archer.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('archer'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition settler = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/settler.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('settler'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
   );
 
   static final UnitSpriteDefinition worker = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/worker.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('worker'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
   );
 
   static final UnitSpriteDefinition merchant = UnitSpriteDefinition(
-    assetPath: 'assets/sprites/units/merchant.png',
+    assetPath: PreferredImageAssets.unitAtlasPath('merchant'),
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
@@ -64,7 +65,7 @@ abstract final class UnitSpriteCatalog {
     UnitSpriteSize smallSize = _smallSize,
   }) {
     return UnitSpriteDefinition(
-      assetPath: 'assets/sprites/units/$assetName.png',
+      assetPath: PreferredImageAssets.unitAtlasPath(assetName),
       normalSize: normalSize,
       smallSize: smallSize,
       actions: _unitActions(),

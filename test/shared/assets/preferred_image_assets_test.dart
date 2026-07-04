@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:aonw/shared/assets/preferred_image_assets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,11 +26,21 @@ void main() {
       );
     });
 
-    test('keeps unit atlases on original asset path until WebP exists', () {
+    test('prefers WebP unit atlases with PNG fallback', () {
       expect(
         PreferredImageAssets.candidatesFor(
           'assets/sprites/units/warrior.png',
           preferredCandidateFailed: false,
+        ),
+        [
+          'assets/sprites/units/warrior.webp',
+          'assets/sprites/units/warrior.png',
+        ],
+      );
+      expect(
+        PreferredImageAssets.candidatesFor(
+          'assets/sprites/units/warrior.png',
+          preferredCandidateFailed: true,
         ),
         ['assets/sprites/units/warrior.png'],
       );
@@ -38,6 +50,17 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('declares existing unit atlas PNG and WebP files', () {
+      for (final path in PreferredImageAssets.unitAtlasPaths) {
+        expect(File(path).existsSync(), isTrue, reason: path);
+        expect(
+          File(PreferredImageAssets.webpPathFor(path)).existsSync(),
+          isTrue,
+          reason: PreferredImageAssets.webpPathFor(path),
+        );
+      }
     });
   });
 }
