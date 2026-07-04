@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -7,7 +8,7 @@ part 'ruleset_providers.g.dart';
 
 @riverpod
 CityRuleset cityRuleset(Ref ref) {
-  return CityRulesets.standard;
+  return GameRuleset.standard().city;
 }
 
 @riverpod

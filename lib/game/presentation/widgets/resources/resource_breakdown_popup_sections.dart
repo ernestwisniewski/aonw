@@ -191,9 +191,8 @@ String _scienceSourceLabel({
       ? source.cityId
       : GameDisplayNames.city(popup.l10n, city);
   return switch (source.label) {
-    'City research project' => popup.l10n.resourceBreakdownCityResearchProject(
-      cityName,
-    ),
+    ScienceYieldSourceLabels.cityResearchProject =>
+      popup.l10n.resourceBreakdownCityResearchProject(cityName),
     _ => cityName,
   };
 }

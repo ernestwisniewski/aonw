@@ -71,12 +71,12 @@ void main() {
           ScienceYieldSource(
             cityId: 'city_1',
             amount: 6,
-            label: 'City science',
+            label: ScienceYieldSourceLabels.cityScience,
           ),
           ScienceYieldSource(
             cityId: 'city_1',
             amount: 2,
-            label: 'City research project',
+            label: ScienceYieldSourceLabels.cityResearchProject,
           ),
         ],
       ),

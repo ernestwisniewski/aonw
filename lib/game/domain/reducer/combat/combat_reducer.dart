@@ -19,6 +19,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 part 'combat_reducer_events.dart';
+part 'combat_reducer_fog.dart';
 part 'combat_reducer_outcomes.dart';
 part 'combat_reducer_setup.dart';
 
@@ -266,14 +267,14 @@ abstract final class CombatReducer {
       defender: defender,
       outcome: outcome,
     );
-    final fogOfWar = fogOfWarService.recompute(
+    final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: knownPlayerIds(
-        state.copyWith(units: applied.units, cities: applied.cities),
-      ),
       units: applied.units,
       cities: applied.cities,
+      fogOfWarService: fogOfWarService,
+      attackerOwnerPlayerId: attacker.ownerPlayerId,
+      defenderOwnerPlayerId: defender.ownerPlayerId,
     );
 
     final next = _clearAttackInteractionState(
@@ -371,14 +372,14 @@ abstract final class CombatReducer {
       outcome: outcome,
       cityConquestAction: command.cityConquestAction,
     );
-    final fogOfWar = fogOfWarService.recompute(
+    final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: knownPlayerIds(
-        state.copyWith(units: applied.units, cities: applied.cities),
-      ),
       units: applied.units,
       cities: applied.cities,
+      fogOfWarService: fogOfWarService,
+      attackerOwnerPlayerId: attacker.ownerPlayerId,
+      defenderOwnerPlayerId: setup.city.ownerPlayerId,
     );
     final changedCity =
         applied.capturedCity ?? applied.destroyedCity ?? applied.updatedCity;

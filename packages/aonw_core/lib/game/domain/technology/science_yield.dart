@@ -32,6 +32,12 @@ class ScienceYieldBreakdown {
   );
 }
 
+abstract final class ScienceYieldSourceLabels {
+  static const cityScience = 'City science';
+  static const cityResearchProject = 'City research project';
+  static const worldArtifact = 'World artifact';
+}
+
 class ScienceYieldSource {
   final String cityId;
   final int amount;

@@ -30,6 +30,13 @@ class CityProductionQueue {
     required this.investedProduction,
   });
 
+  CityProjectType? get projectType {
+    return switch (target) {
+      ProjectProductionTarget(:final projectType) => projectType,
+      _ => null,
+    };
+  }
+
   bool get isComplete => isCompleteFor(CityRulesets.standard);
 
   bool isCompleteFor(

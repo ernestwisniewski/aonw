@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_city_economy_calculator.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -92,21 +93,15 @@ abstract final class HudScienceResourceCalculator {
 
     for (final city in state.cities) {
       if (city.ownerPlayerId != playerId) continue;
-      if (_projectTypeFor(city) != CityProjectType.research) continue;
+      if (city.productionQueue?.projectType != CityProjectType.research) {
+        continue;
+      }
 
-      final cityYield = CityYieldCalculator.totalFor(
-        city,
-        mapData,
-        fieldImprovements: state.fieldImprovements,
-        units: state.units,
-        artifacts: state.artifacts,
-        ruleset: cityRuleset,
-      );
-      final economy = CityEconomyBreakdown.from(
+      final economy = HudCityEconomyCalculator.forCity(
         city: city,
-        tileYield: cityYield,
+        state: state,
         mapData: mapData,
-        ruleset: cityRuleset,
+        cityRuleset: cityRuleset,
         technologyEffects: technologyEffects,
         stabilityModifier: stabilityModifier,
       );
@@ -124,7 +119,7 @@ abstract final class HudScienceResourceCalculator {
           ScienceYieldSource(
             cityId: city.id,
             amount: output,
-            label: 'City research project',
+            label: ScienceYieldSourceLabels.cityResearchProject,
           ),
         );
       }
@@ -136,13 +131,6 @@ abstract final class HudScienceResourceCalculator {
       sources: collectSources ? List.unmodifiable(sources) : const [],
     );
   }
-}
-
-CityProjectType? _projectTypeFor(GameCity city) {
-  return switch (city.productionQueue?.target) {
-    ProjectProductionTarget(:final projectType) => projectType,
-    _ => null,
-  };
 }
 
 final class _ScienceProjectForecast {

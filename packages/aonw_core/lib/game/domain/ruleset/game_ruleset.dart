@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 
 class GameRuleset {
   final CityRuleset city;
@@ -19,15 +20,17 @@ class GameRuleset {
     this.stability = StabilityRuleset.standard,
   });
 
-  factory GameRuleset.standard() => const GameRuleset(
-    city: CityRulesets.standard,
+  factory GameRuleset.standard() => _standard;
+
+  static final GameRuleset _standard = GameRuleset(
+    city: CityRulesets.fromUnitSpecs(UnitSpecResolver.standard),
     combat: CombatRuleset.standard,
     technology: TechnologyRulesets.standard,
     stability: StabilityRuleset.standard,
   );
 
-  /// Compile-time constant for the standard ruleset.
-  /// Use [GameRuleset.standard()] to create an instance at runtime.
+  /// Compile-time-compatible standard ruleset for default parameters.
+  /// Runtime entry points should prefer [GameRuleset.standard()].
   static const GameRuleset defaults = GameRuleset(
     city: CityRulesets.standard,
     combat: CombatRuleset.standard,

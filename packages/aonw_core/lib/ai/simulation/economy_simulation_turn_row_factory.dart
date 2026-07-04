@@ -241,14 +241,9 @@ final class _EconomySimulationTurnRowFactory {
     Iterable<GameCity> cities,
     CityProjectType projectType,
   ) {
-    return cities.where((city) => _projectTypeFor(city) == projectType).length;
-  }
-
-  CityProjectType? _projectTypeFor(GameCity city) {
-    return switch (city.productionQueue?.target) {
-      ProjectProductionTarget(:final projectType) => projectType,
-      _ => null,
-    };
+    return cities
+        .where((city) => city.productionQueue?.projectType == projectType)
+        .length;
   }
 }
 
