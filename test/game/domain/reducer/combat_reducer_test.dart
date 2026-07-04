@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -103,6 +104,51 @@ void main() {
       expect(result.events, isEmpty);
       final feedback = result.uiEffects.whereType<ShowHudFeedbackEffect>();
       expect(feedback.single.reason, HudFeedbackReason.attackProtectedByTreaty);
+    });
+
+    test('combat fog recomputes only attacker and defender owners', () {
+      final mapData = _map(4, 4);
+      final attacker = _unit(id: 'a', ownerPlayerId: 'p1', col: 0, row: 0);
+      final defender = _unit(id: 'd', ownerPlayerId: 'p2', col: 1, row: 0);
+      final bystander = _unit(id: 'b', ownerPlayerId: 'p3', col: 3, row: 3);
+      final fogOfWarService = _RecordingFogOfWarService();
+      final reducer = _reducer(mapData);
+      final state = GameState(
+        activePlayerId: 'p1',
+        units: [attacker, defender, bystander],
+        fogOfWar: FogOfWarState(
+          players: {
+            'p1': PlayerFogOfWar(
+              playerId: 'p1',
+              visibleHexes: {const HexCoordinate(col: 1, row: 0)},
+            ),
+            'p2': PlayerFogOfWar(
+              playerId: 'p2',
+              visibleHexes: {const HexCoordinate(col: 0, row: 0)},
+            ),
+            'p3': PlayerFogOfWar(
+              playerId: 'p3',
+              visibleHexes: {const HexCoordinate(col: 3, row: 3)},
+            ),
+          },
+        ),
+      );
+
+      reducer.reduceWithEnvironment(
+        state,
+        const AttackHexCommand('a', 1, 0),
+        ReducerEnvironment(
+          mapData: mapData,
+          ruleset: reducer.ruleset,
+          fogOfWarService: fogOfWarService,
+        ),
+      );
+
+      expect(fogOfWarService.recomputedPlayerIds, hasLength(1));
+      expect(
+        fogOfWarService.recomputedPlayerIds.single,
+        unorderedEquals(['p1', 'p2']),
+      );
     });
 
     test('friendly cities cannot be attacked', () {
@@ -935,6 +981,28 @@ FogOfWarState _visible(String playerId, Iterable<HexCoordinate> hexes) {
       ),
     },
   );
+}
+
+final class _RecordingFogOfWarService extends FogOfWarService {
+  final List<List<String>> recomputedPlayerIds = [];
+
+  @override
+  FogOfWarState recompute({
+    required FogOfWarState current,
+    required MapData mapData,
+    required Iterable<String> playerIds,
+    required Iterable<GameUnit> units,
+    required Iterable<GameCity> cities,
+  }) {
+    recomputedPlayerIds.add(playerIds.toList(growable: false));
+    return super.recompute(
+      current: current,
+      mapData: mapData,
+      playerIds: playerIds,
+      units: units,
+      cities: cities,
+    );
+  }
 }
 
 MapData _map(int cols, int rows) => MapData(

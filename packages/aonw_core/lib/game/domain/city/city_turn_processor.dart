@@ -197,7 +197,7 @@ abstract final class CityTurnProcessor {
                     ScienceYieldSource(
                       cityId: city.id,
                       amount: output,
-                      label: 'City research project',
+                      label: ScienceYieldSourceLabels.cityResearchProject,
                     ),
                   ],
                 );
@@ -356,7 +356,7 @@ abstract final class CityTurnProcessor {
         ScienceYieldSource(
           cityId: city.id,
           amount: amount,
-          label: 'World artifact',
+          label: ScienceYieldSourceLabels.worldArtifact,
         ),
       ],
     );

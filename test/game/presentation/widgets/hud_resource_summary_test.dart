@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -90,7 +91,10 @@ void main() {
       expect(summary.scienceBreakdown.byCityId, {'city_1': 3});
       expect(
         summary.scienceBreakdown.sources.map((source) => source.label),
-        containsAll(['City science', 'City research project']),
+        containsAll([
+          ScienceYieldSourceLabels.cityScience,
+          ScienceYieldSourceLabels.cityResearchProject,
+        ]),
       );
     });
 
@@ -142,6 +146,48 @@ void main() {
       });
       expect(summary.resourceBreakdowns.debugHasComputedScience, isTrue);
     });
+
+    test(
+      'reuses strip economy forecast across interaction-only state changes',
+      () {
+        HudResourceEconomyForecast.debugResetCache();
+        addTearDown(HudResourceEconomyForecast.debugResetCache);
+
+        final city = GameCity(
+          id: 'city_1',
+          ownerPlayerId: 'player_1',
+          name: 'City',
+          center: const CityHex(col: 0, row: 0),
+          productionQueue: CityProductionQueue.project(
+            projectType: CityProjectType.wealth,
+          ),
+        );
+        final state = GameState(
+          cities: [city],
+          playerGold: const {'player_1': 12},
+        );
+        final mapData = _landMap();
+
+        final first = HudResourceSummary.fromGameState(
+          state: state,
+          playerId: 'player_1',
+          mapData: mapData,
+          cityRuleset: CityRulesets.standard,
+          technologyRuleset: TechnologyRulesets.standard,
+        );
+        final second = HudResourceSummary.fromGameState(
+          state: state.copyWithInteraction(moveCommandActive: true),
+          playerId: 'player_1',
+          mapData: mapData,
+          cityRuleset: CityRulesets.standard,
+          technologyRuleset: TechnologyRulesets.standard,
+        );
+
+        expect(first.goldPerTurn, 1);
+        expect(second.goldPerTurn, first.goldPerTurn);
+        expect(HudResourceEconomyForecast.debugComputeCount, 1);
+      },
+    );
 
     test('applies cached unrest to the HUD economy forecast', () {
       const city = GameCity(

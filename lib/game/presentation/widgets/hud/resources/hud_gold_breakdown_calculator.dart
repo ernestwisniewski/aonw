@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_city_economy_calculator.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -66,7 +67,7 @@ abstract final class HudGoldResourceCalculator {
 
     for (final city in state.cities) {
       if (city.ownerPlayerId != playerId) continue;
-      final economy = _economyForCity(
+      final economy = HudCityEconomyCalculator.forCity(
         city: city,
         state: state,
         mapData: mapData,
@@ -83,7 +84,7 @@ abstract final class HudGoldResourceCalculator {
         }
       }
 
-      if (_projectTypeFor(city) == CityProjectType.wealth) {
+      if (city.productionQueue?.projectType == CityProjectType.wealth) {
         final output = CityProjectRules.outputFor(
           type: CityProjectType.wealth,
           productionPerTurn: CityProductionRules.productionPerTurn(
@@ -112,39 +113,6 @@ abstract final class HudGoldResourceCalculator {
       ),
     );
   }
-}
-
-CityEconomyBreakdown _economyForCity({
-  required GameCity city,
-  required GameState state,
-  required MapData mapData,
-  required CityRuleset cityRuleset,
-  required TechnologyEffectSummary technologyEffects,
-  required StabilityModifier stabilityModifier,
-}) {
-  final cityYield = CityYieldCalculator.totalFor(
-    city,
-    mapData,
-    fieldImprovements: state.fieldImprovements,
-    units: state.units,
-    artifacts: state.artifacts,
-    ruleset: cityRuleset,
-  );
-  return CityEconomyBreakdown.from(
-    city: city,
-    tileYield: cityYield,
-    mapData: mapData,
-    ruleset: cityRuleset,
-    technologyEffects: technologyEffects,
-    stabilityModifier: stabilityModifier,
-  );
-}
-
-CityProjectType? _projectTypeFor(GameCity city) {
-  return switch (city.productionQueue?.target) {
-    ProjectProductionTarget(:final projectType) => projectType,
-    _ => null,
-  };
 }
 
 final class HudGoldForecast {

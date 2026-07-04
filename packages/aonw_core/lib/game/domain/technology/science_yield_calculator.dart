@@ -93,7 +93,7 @@ abstract final class ScienceYieldCalculator {
             ScienceYieldSource(
               cityId: city.id,
               amount: baseAmount,
-              label: 'City science',
+              label: ScienceYieldSourceLabels.cityScience,
             ),
           );
         }
@@ -102,7 +102,7 @@ abstract final class ScienceYieldCalculator {
             ScienceYieldSource(
               cityId: city.id,
               amount: artifactAmount,
-              label: 'World artifact',
+              label: ScienceYieldSourceLabels.worldArtifact,
             ),
           );
         }
