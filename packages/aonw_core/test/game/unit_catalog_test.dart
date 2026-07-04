@@ -47,6 +47,19 @@ void main() {
       expect(spec.upkeep, _upkeep[type], reason: '$type upkeep');
     }
   });
+
+  test('rifleman anchors the line while field cannon stays standoff', () {
+    final rifleman = UnitCatalog.specFor(GameUnitType.rifleman);
+    final fieldCannon = UnitCatalog.specFor(GameUnitType.fieldCannon);
+
+    expect(rifleman.baseStats.defense, 7);
+    expect(rifleman.baseStats.range, 1);
+    expect(fieldCannon.baseStats.range, 2);
+    expect(
+      CombatRuleset.standard.baseStatsFor(GameUnitType.rifleman),
+      rifleman.baseStats,
+    );
+  });
 }
 
 void _expectRequirements(
