@@ -1,9 +1,9 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
-import 'package:aonw_core/game/domain/state.dart';
 
 class HudScorePressureContext {
   final Map<String, EmpireScoreBreakdown> breakdownByPlayerId;
@@ -73,7 +73,7 @@ class HudScorePressureContext {
         gameState == null) {
       return const {};
     }
-    final state = _persistentState(gameState);
+    final state = gameState.toPersistentState();
     return {
       for (final player in gameSave.players)
         if (player.id.isNotEmpty)
@@ -83,22 +83,5 @@ class HudScorePressureContext {
             mapObjectives: mapData?.objectives ?? const [],
           ),
     };
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
   }
 }

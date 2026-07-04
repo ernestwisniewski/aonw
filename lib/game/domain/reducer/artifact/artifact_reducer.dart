@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
@@ -13,7 +14,7 @@ abstract final class ArtifactReducer {
   }) {
     final actorPlayerId = _actorPlayerId(state, context);
     final result = const PersistentArtifactCommandResolver().startExcavation(
-      state: _persistentState(state),
+      state: state.toPersistentState(),
       command: command,
       actorPlayerId: actorPlayerId,
     );
@@ -28,7 +29,7 @@ abstract final class ArtifactReducer {
   }) {
     final actorPlayerId = _actorPlayerId(state, context);
     final result = const PersistentArtifactCommandResolver().storeInCity(
-      state: _persistentState(state),
+      state: state.toPersistentState(),
       command: command,
       actorPlayerId: actorPlayerId,
     );
@@ -43,7 +44,7 @@ abstract final class ArtifactReducer {
   }) {
     final actorPlayerId = _actorPlayerId(state, context);
     final result = const PersistentArtifactCommandResolver().tradeArtifact(
-      state: _persistentState(state),
+      state: state.toPersistentState(),
       command: command,
       actorPlayerId: actorPlayerId,
     );
@@ -53,23 +54,6 @@ abstract final class ArtifactReducer {
 
   static String _actorPlayerId(GameState state, GameCommandContext context) {
     return context.actorPlayerId ?? state.activePlayerId;
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
   }
 
   static GameState _fromPersistent(

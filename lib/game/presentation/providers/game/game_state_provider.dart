@@ -66,7 +66,7 @@ class GameStateNotifier extends _$GameStateNotifier {
 
     final reducer = GameStateReducer(
       mapData: session.mapData,
-      ruleset: GameRuleset(
+      ruleset: GameRuleset.standard().copyWith(
         city: ref.watch(cityRulesetProvider),
         technology: ref.watch(technologyRulesetProvider),
         stability: ref.watch(stabilityRulesetProvider),

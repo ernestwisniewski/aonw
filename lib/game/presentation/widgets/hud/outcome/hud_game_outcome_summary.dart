@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -48,7 +49,7 @@ class HudGameOutcomeSummary {
     if (gameState == null) return null;
     if (_hasProjectedMultiplayerState(gameSave, gameState)) return null;
 
-    final persistentState = _persistentState(gameState);
+    final persistentState = gameState.toPersistentState();
     final outcome = detector.evaluate(
       playerIds: gameSave.players.map((player) => player.id),
       state: persistentState,
@@ -304,23 +305,6 @@ class HudGameOutcomeSummary {
     return winnerPlayerId == activePlayerId
         ? HudGameOutcomeTone.victory
         : HudGameOutcomeTone.defeat;
-  }
-
-  static PersistentGameState _persistentState(GameState state) {
-    return PersistentGameState(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
   }
 
   static bool _hasProjectedMultiplayerState(GameSave save, GameState state) {

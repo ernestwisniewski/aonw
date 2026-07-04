@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -49,20 +50,7 @@ class SaveSnapshot {
   }) {
     return SaveSnapshot.fromPersistentState(
       save: save,
-      state: PersistentGameState(
-        playerColors: state.playerColors,
-        playerCountries: state.playerCountries,
-        playerGold: state.playerGold,
-        playerWarWeariness: state.playerWarWeariness,
-        playerStabilityNet: state.playerStabilityNet,
-        units: state.units,
-        cities: state.cities,
-        artifacts: state.artifacts,
-        fieldImprovements: state.fieldImprovements,
-        fogOfWar: state.fogOfWar,
-        research: state.research,
-        runtimeState: state.runtimeState,
-      ),
+      state: state.toPersistentState(),
       eventLogOffset: eventLogOffset,
     );
   }
