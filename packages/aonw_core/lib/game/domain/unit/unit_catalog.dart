@@ -198,9 +198,9 @@ abstract final class UnitCatalog {
       ],
       baseStats: CombatStats(
         attack: 8,
-        defense: 6,
+        defense: 7,
         hp: 11,
-        range: 2,
+        range: 1,
         mobility: 1,
       ),
       capabilities: _land,
