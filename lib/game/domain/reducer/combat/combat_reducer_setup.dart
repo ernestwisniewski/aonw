@@ -271,10 +271,7 @@ abstract final class _CombatSetupFactory {
     CombatStats attackerEffective,
     HexCoordinate target,
   ) {
-    final distance = HexDistance.between(
-      HexCoordinate(col: attacker.col, row: attacker.row),
-      target,
-    );
+    final distance = CombatDistance.fromUnitToCoordinate(attacker, target);
     return distance <= attackerEffective.range;
   }
 
@@ -304,16 +301,9 @@ abstract final class _CombatSetupFactory {
 }
 
 int _unitDistance(GameUnit attacker, GameUnit defender) {
-  return _hexDistance(attacker, defender.col, defender.row);
+  return CombatDistance.betweenUnits(attacker, defender);
 }
 
 int _cityDistance(GameUnit attacker, GameCity city) {
-  return _hexDistance(attacker, city.center.col, city.center.row);
-}
-
-int _hexDistance(GameUnit unit, int col, int row) {
-  return HexDistance.between(
-    HexCoordinate(col: unit.col, row: unit.row),
-    HexCoordinate(col: col, row: row),
-  );
+  return CombatDistance.fromUnitToHex(attacker, city.center);
 }

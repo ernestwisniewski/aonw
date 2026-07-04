@@ -81,7 +81,7 @@ final class MctsSimulatedCombatCommandApplier {
     if (combatants.attacker.effective.attack <= 0) {
       return _unchangedCommandApplication;
     }
-    final attackDistance = _distance(attacker, defender);
+    final attackDistance = CombatDistance.betweenUnits(attacker, defender);
     if (attackDistance > combatants.attacker.effective.range) {
       return _unchangedCommandApplication;
     }
@@ -194,13 +194,14 @@ final class MctsSimulatedCombatCommandApplier {
     );
     final attackerEffective = attackerBaseStats.applyAll(attackerModifiers);
     if (attackerEffective.attack <= 0) return _unchangedCommandApplication;
-    if (_distanceToHex(attacker, city.center) > attackerEffective.range) {
+    if (CombatDistance.fromUnitToHex(attacker, city.center) >
+        attackerEffective.range) {
       return _unchangedCommandApplication;
     }
 
     final cityBaseStats = view.ruleset.combat.cityBaseStats;
     if (cityBaseStats.hp <= 0) return _unchangedCommandApplication;
-    final attackDistance = _distanceToHex(attacker, city.center);
+    final attackDistance = CombatDistance.fromUnitToHex(attacker, city.center);
     final outcome = CombatResolver.resolve(
       attacker: Combatant(
         unitId: attacker.id,
@@ -388,19 +389,5 @@ final class MctsSimulatedCombatCommandApplier {
       if (units[i].occupies(col, row)) return i;
     }
     return null;
-  }
-
-  static int _distance(GameUnit a, GameUnit b) {
-    return HexDistance.between(
-      HexCoordinate(col: a.col, row: a.row),
-      HexCoordinate(col: b.col, row: b.row),
-    );
-  }
-
-  static int _distanceToHex(GameUnit unit, CityHex hex) {
-    return HexDistance.between(
-      HexCoordinate(col: unit.col, row: unit.row),
-      hex.toCoordinate(),
-    );
   }
 }

@@ -93,7 +93,7 @@ abstract final class PersistentTurnCombatResolver {
       );
       if (attack == null) continue;
       if (attack.attacker.effective.attack <= 0) continue;
-      final attackDistance = _distance(attacker, defender);
+      final attackDistance = CombatDistance.betweenUnits(attacker, defender);
       if (attackDistance > attack.attacker.effective.range) {
         continue;
       }
@@ -401,7 +401,8 @@ abstract final class PersistentTurnCombatResolver {
     );
     final attackerEffective = attackerBaseStats.applyAll(attackerModifiers);
     if (attackerEffective.attack <= 0) return false;
-    if (_distanceToHex(attacker, city.center) > attackerEffective.range) {
+    if (CombatDistance.fromUnitToHex(attacker, city.center) >
+        attackerEffective.range) {
       return false;
     }
     final cityBaseStats = ruleset.combat.cityBaseStats.add(
@@ -451,7 +452,7 @@ abstract final class PersistentTurnCombatResolver {
         effectiveStats: cityBaseStats,
       ),
     );
-    final attackDistance = _distanceToHex(attacker, city.center);
+    final attackDistance = CombatDistance.fromUnitToHex(attacker, city.center);
     final outcome = CombatResolver.resolve(
       attacker: attackerCombatant,
       defender: cityCombatant,
@@ -548,20 +549,6 @@ abstract final class PersistentTurnCombatResolver {
       ),
     );
     return true;
-  }
-
-  static int _distance(GameUnit a, GameUnit b) {
-    return HexDistance.between(
-      HexCoordinate(col: a.col, row: a.row),
-      HexCoordinate(col: b.col, row: b.row),
-    );
-  }
-
-  static int _distanceToHex(GameUnit unit, CityHex hex) {
-    return HexDistance.between(
-      HexCoordinate(col: unit.col, row: unit.row),
-      HexCoordinate(col: hex.col, row: hex.row),
-    );
   }
 
   static bool _isProtectedRelation(

@@ -1,5 +1,6 @@
 export 'combat/city_combat_health.dart';
 export 'combat/city_conquest_action.dart';
+export 'combat/combat_distance.dart';
 export 'combat/combat_modifier.dart';
 export 'combat/combat_modifier_collector.dart';
 export 'combat/combat_outcome.dart';
