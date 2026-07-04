@@ -8,6 +8,8 @@ abstract final class PreferredImageAssets {
   static const String technologyAtlas =
       'assets/sprites/technologies_atlas_8x7_512.png';
   static const String cityAtlas = 'assets/sprites/cities_atlas_6x4_512x320.jpg';
+  static const int technologyAtlasDecodeWidth = 2048;
+  static const int unitAtlasDecodeWidth = 1536;
 
   static const Set<String> webpPreferredAssetPaths = {
     buildingAtlasA,
@@ -18,9 +20,14 @@ abstract final class PreferredImageAssets {
 
   static int? targetDecodeWidthFor(String path) {
     return switch (path) {
-      technologyAtlas => 2048,
+      technologyAtlas => technologyAtlasDecodeWidth,
+      _ when isUnitAtlasPath(path) => unitAtlasDecodeWidth,
       _ => null,
     };
+  }
+
+  static bool isUnitAtlasPath(String path) {
+    return path.startsWith('assets/sprites/units/');
   }
 
   static List<String> candidatesFor(
