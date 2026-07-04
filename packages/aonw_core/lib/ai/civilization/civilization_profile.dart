@@ -2,19 +2,6 @@ import 'package:aonw_core/ai/ai_persona.dart';
 import 'package:aonw_core/ai/civilization/persona_weights.dart';
 import 'package:aonw_core/ai/civilization/tech_branch_preferences.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/util/collection_equality.dart';
-
-class UniqueUnitOverride {
-  const UniqueUnitOverride();
-}
-
-class UniqueBuildingOverride {
-  const UniqueBuildingOverride();
-}
-
-class StartingBonus {
-  const StartingBonus();
-}
 
 class CivilizationProfile {
   final PlayerCountry country;
@@ -25,9 +12,6 @@ class CivilizationProfile {
   final double expansionDistance;
   final double frontierTolerance;
   final TechBranchPreferences techBias;
-  final List<UniqueUnitOverride> uniqueUnits;
-  final List<UniqueBuildingOverride> uniqueBuildings;
-  final List<StartingBonus> startingBonuses;
 
   const CivilizationProfile({
     required this.country,
@@ -38,9 +22,6 @@ class CivilizationProfile {
     required this.expansionDistance,
     required this.frontierTolerance,
     required this.techBias,
-    this.uniqueUnits = const [],
-    this.uniqueBuildings = const [],
-    this.startingBonuses = const [],
   });
 
   PersonaWeights effectiveWeights(AiPersona persona) {
@@ -57,10 +38,7 @@ class CivilizationProfile {
         other.belligerence == belligerence &&
         other.expansionDistance == expansionDistance &&
         other.frontierTolerance == frontierTolerance &&
-        other.techBias == techBias &&
-        listEquals(other.uniqueUnits, uniqueUnits) &&
-        listEquals(other.uniqueBuildings, uniqueBuildings) &&
-        listEquals(other.startingBonuses, startingBonuses);
+        other.techBias == techBias;
   }
 
   @override
@@ -74,9 +52,6 @@ class CivilizationProfile {
       expansionDistance,
       frontierTolerance,
       techBias,
-      Object.hashAll(uniqueUnits),
-      Object.hashAll(uniqueBuildings),
-      Object.hashAll(startingBonuses),
     );
   }
 }
