@@ -75,7 +75,7 @@ Example:
 | `Outcome: defender survives` | Attack will not kill the target |
 | `Target: HP 10->6/10, Attack 6 vs Defense 2 (-4)` | Defender survives with 6 HP |
 | `Retaliation: Attack 4 vs Defense 3 (-2), HP 10->8/10` | Attacker will take retaliation |
-| `Retaliation: none (range 2/2)` | Ranged attack will not trigger melee retaliation |
+| `Retaliation: none (defender out of range, distance 2, range 1)` | Defender cannot answer at the attack distance |
 
 ## Balance Parameters That Affect Preview
 
@@ -87,7 +87,8 @@ combat:
 | `unitBaseStats.attack` | `CombatRuleset` | Damage dealt by the unit |
 | `unitBaseStats.defense` | `CombatRuleset` | Incoming damage reduction |
 | `unitBaseStats.hp` | `CombatRuleset` | Max HP and survival threshold |
-| `unitBaseStats.range` | `CombatRuleset` | Attack range and no melee retaliation for range > 1 |
+| `unitBaseStats.range` | `CombatRuleset` | Attack range and defender retaliation reach |
+| `rangedRetaliationPercent` | `CombatRuleset` | Partial counter-battery retaliation when the defender can answer a ranged attack |
 | `varianceRange` | `CombatRuleset` | Random damage adjustment range |
 | `retreatThresholdPercent` | `CombatRuleset` | Threshold below which the defender can retreat if it survives the hit |
 | `defendedCityDefenseBonus` | `CombatRuleset` | Defense bonus in city garrison |

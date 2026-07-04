@@ -190,6 +190,7 @@ final class AiMilitaryAssessment {
     CombatStats? attackerStats,
     CombatStats? defenderStats,
     int? currentHp,
+    int? attackDistance,
   }) {
     final effectiveAttackerStats =
         attackerStats ?? UnitCombatStats.derive(attacker, ruleset: ruleset);
@@ -205,8 +206,17 @@ final class AiMilitaryAssessment {
       variance: -ruleset.varianceRange,
     );
     if (defenderHp <= minimumAttackDamage) return true;
-    if (effectiveAttackerStats.range > 1 ||
-        effectiveDefenderStats.attack <= 0) {
+    final retaliationPercent = CombatRetaliationRules.percentFor(
+      attackDistance:
+          attackDistance ??
+          HexDistance.between(
+            HexCoordinate(col: attacker.col, row: attacker.row),
+            HexCoordinate(col: defender.col, row: defender.row),
+          ),
+      defenderRange: effectiveDefenderStats.range,
+      ruleset: ruleset,
+    );
+    if (retaliationPercent <= 0 || effectiveDefenderStats.attack <= 0) {
       return true;
     }
 
@@ -216,24 +226,36 @@ final class AiMilitaryAssessment {
           attacker,
           effectiveStats: effectiveAttackerStats,
         );
-    final maximumRetaliationDamage = _damageWithVariance(
-      attack: effectiveDefenderStats.attack,
-      defense: effectiveAttackerStats.defense,
-      variance: ruleset.varianceRange,
+    final maximumRetaliationDamage = CombatRetaliationRules.scaledDamage(
+      _damageWithVariance(
+        attack: effectiveDefenderStats.attack,
+        defense: effectiveAttackerStats.defense,
+        variance: ruleset.varianceRange,
+      ),
+      percent: retaliationPercent,
     );
     return attackerHp > maximumRetaliationDamage;
   }
 
-  bool isSafeLastMilitaryAttack(AiAttackEvaluation evaluation) {
+  bool isSafeLastMilitaryAttack(
+    AiAttackEvaluation evaluation, {
+    bool protectsCivilian = false,
+    bool defendingCity = false,
+  }) {
     if (evaluation.defenderKilled ||
         evaluation.capturesCity ||
         evaluation.targetIsCivilian) {
       return true;
     }
-    if (evaluation.rangedAttack && evaluation.attackerDamage == 0) {
+    if (evaluation.isFreeRangedDamage) {
       return true;
     }
     if (evaluation.defenderRetreated && evaluation.attackerDamage == 0) {
+      return true;
+    }
+    if ((protectsCivilian || defendingCity) &&
+        evaluation.defenderDamage + 1 >= evaluation.attackerDamage &&
+        evaluation.attackerHpAfter * 2 >= evaluation.attackerHpBefore) {
       return true;
     }
     return evaluation.defenderDamage >= evaluation.attackerDamage + 2 &&

@@ -1848,7 +1848,7 @@
   "unitCatapultDescription": "Una máquina de asedio de mayor alcance, efectiva contra fortificaciones.",
   "unitHeavyInfantryDescription": "Infantería resistente de primera línea con alta defensa y ataque sólido.",
   "unitFieldCannonDescription": "Artillería de campaña moderna para bombardeo a distancia.",
-  "unitRiflemanDescription": "Un soldado moderno a distancia, estable en ataque y defensa.",
+  "unitRiflemanDescription": "Infantería de línea moderna, estable en ataque y defensa.",
   "unitTankDescription": "Una unidad blindada pesada con gran fuerza y alta movilidad.",
   "unitScoutShipDescription": "Un barco ligero para reconocimiento costero y protección de rutas marítimas tempranas.",
   "unitWarshipDescription": "Un fuerte buque de combate para control marítimo y bombardeo a distancia.",
@@ -3535,7 +3535,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Contraataque: ninguno (ataque a distancia, distancia {distance}, alcance {range})",
+  "combatPreviewNoRetaliationLine": "Contraataque: ninguno (defensor fuera de alcance, distancia {distance}, alcance defensor {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3710,7 +3710,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "No se aplican modificadores: las estadísticas base de la unidad y el resultado de combate deciden esta previsión.",
-  "combatPreviewNoRetaliationReason": "Sin contraataque: este es un ataque a distancia (distancia {distance}, alcance de ataque {range}).",
+  "combatPreviewNoRetaliationReason": "Sin contraataque: el defensor no puede responder a esta distancia (distancia {distance}, alcance defensor {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

@@ -37,6 +37,7 @@ class HudCombatPreview {
     required this.attackerDefense,
     required this.defenderAttack,
     required this.defenderDefense,
+    required this.defenderRange,
     required this.attackDamage,
     required this.retaliationDamage,
     required this.attackerKilled,
@@ -72,6 +73,7 @@ class HudCombatPreview {
   final int attackerDefense;
   final int defenderAttack;
   final int defenderDefense;
+  final int defenderRange;
   final int attackDamage;
   final int retaliationDamage;
   final bool attackerKilled;
@@ -113,7 +115,7 @@ class HudCombatPreview {
 
   String attackerLine(AppLocalizations l10n) {
     if (!hasRetaliation) {
-      return l10n.combatPreviewNoRetaliationLine(distance, range);
+      return l10n.combatPreviewNoRetaliationLine(distance, defenderRange);
     }
     final after = attackerKilled ? 0 : attackerHpAfter;
     return l10n.combatPreviewRetaliationLine(
@@ -273,6 +275,7 @@ abstract final class HudCombatPreviewFactory {
       attackerDefense: attackerEffective.defense,
       defenderAttack: defenderEffective.attack,
       defenderDefense: defenderEffective.defense,
+      defenderRange: defenderEffective.range,
       attackDamage: _damageFromAttack(outcome),
       retaliationDamage: _damageFromRetaliation(outcome),
       attackerKilled: outcome.attackerKilled,

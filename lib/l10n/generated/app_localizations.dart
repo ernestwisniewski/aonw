@@ -5921,7 +5921,7 @@ abstract class AppLocalizations {
   /// No description provided for @unitRiflemanDescription.
   ///
   /// In en, this message translates to:
-  /// **'A modern ranged soldier, steady in attack and defense.'**
+  /// **'A modern line infantry unit, steady in attack and defense.'**
   String get unitRiflemanDescription;
 
   /// No description provided for @unitTankDescription.
@@ -10756,7 +10756,7 @@ abstract class AppLocalizations {
   /// No description provided for @combatPreviewNoRetaliationLine.
   ///
   /// In en, this message translates to:
-  /// **'Retaliation: none (ranged attack, distance {distance}, range {range})'**
+  /// **'Retaliation: none (defender out of range, distance {distance}, defender range {range})'**
   String combatPreviewNoRetaliationLine(int distance, int range);
 
   /// No description provided for @combatPreviewRetaliationLine.
@@ -10885,7 +10885,7 @@ abstract class AppLocalizations {
   /// No description provided for @combatPreviewNoRetaliationReason.
   ///
   /// In en, this message translates to:
-  /// **'No retaliation: this is a ranged attack (distance {distance}, attack range {range}).'**
+  /// **'No retaliation: the defender cannot answer at this distance (distance {distance}, defender range {range}).'**
   String combatPreviewNoRetaliationReason(int distance, int range);
 
   /// No description provided for @combatPreviewNoRetaliationDefenderDefeated.

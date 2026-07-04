@@ -3426,7 +3426,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unitRiflemanDescription =>
-      'A modern ranged soldier, steady in attack and defense.';
+      'A modern line infantry unit, steady in attack and defense.';
 
   @override
   String get unitTankDescription =>
@@ -6301,7 +6301,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Retaliation: none (ranged attack, distance $distance, range $range)';
+    return 'Retaliation: none (defender out of range, distance $distance, defender range $range)';
   }
 
   @override
@@ -6407,7 +6407,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'No retaliation: this is a ranged attack (distance $distance, attack range $range).';
+    return 'No retaliation: the defender cannot answer at this distance (distance $distance, defender range $range).';
   }
 
   @override

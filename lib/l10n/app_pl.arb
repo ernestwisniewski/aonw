@@ -1848,7 +1848,7 @@
   "unitCatapultDescription": "Machina oblężnicza o większym zasięgu, skuteczna przeciw umocnieniom.",
   "unitHeavyInfantryDescription": "Wytrzymała piechota frontowa z wysoką obroną i solidnym atakiem.",
   "unitFieldCannonDescription": "Nowoczesna artyleria polowa do ostrzału z dystansu.",
-  "unitRiflemanDescription": "Nowoczesny żołnierz dystansowy, stabilny w ataku i obronie.",
+  "unitRiflemanDescription": "Nowoczesna piechota liniowa, stabilna w ataku i obronie.",
   "unitTankDescription": "Ciężka jednostka pancerna o wysokiej sile i dużej mobilności.",
   "unitScoutShipDescription": "Lekki okręt do rozpoznania wybrzeży i ochrony pierwszych tras morskich.",
   "unitWarshipDescription": "Silny okręt bojowy do kontroli morza i ostrzału z dystansu.",
@@ -3552,7 +3552,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Kontratak: brak (atak dystansowy, dystans {distance}, zasięg {range})",
+  "combatPreviewNoRetaliationLine": "Kontratak: brak (obrońca poza zasięgiem, dystans {distance}, zasięg obrońcy {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3727,7 +3727,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "Brak modyfikatorów: decydują bazowe statystyki jednostek i wynik walki.",
-  "combatPreviewNoRetaliationReason": "Bez kontrataku: atak jest dystansowy (dystans {distance}, zasięg ataku {range}).",
+  "combatPreviewNoRetaliationReason": "Bez kontrataku: obrońca nie może odpowiedzieć z tego dystansu (dystans {distance}, zasięg obrońcy {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

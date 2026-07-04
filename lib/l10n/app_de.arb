@@ -1848,7 +1848,7 @@
   "unitCatapultDescription": "Eine Belagerungsmaschine mit größerer Reichweite, effektiv gegen Befestigungen.",
   "unitHeavyInfantryDescription": "Robuste Frontinfanterie mit hoher Verteidigung und solidem Angriff.",
   "unitFieldCannonDescription": "Moderne Feldartillerie für Fernbeschuss.",
-  "unitRiflemanDescription": "Ein moderner Fernkampfsoldat, zuverlässig in Angriff und Verteidigung.",
+  "unitRiflemanDescription": "Eine moderne Linieninfanterie, zuverlässig in Angriff und Verteidigung.",
   "unitTankDescription": "Eine schwere gepanzerte Einheit mit hoher Stärke und hoher Mobilität.",
   "unitScoutShipDescription": "Ein leichtes Schiff für Küstenaufklärung und den Schutz früher Seewege.",
   "unitWarshipDescription": "Ein starkes Kampfschiff für Seekontrolle und Fernbeschuss.",
@@ -3535,7 +3535,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Gegenschlag: keiner (Fernangriff, Distanz {distance}, Reichweite {range})",
+  "combatPreviewNoRetaliationLine": "Gegenschlag: keiner (Verteidiger außer Reichweite, Distanz {distance}, Verteidigerreichweite {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3710,7 +3710,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "Keine Modifikatoren gelten: Basiswerte der Einheit und das Kampfergebnis entscheiden diese Prognose.",
-  "combatPreviewNoRetaliationReason": "Kein Gegenschlag: Dies ist ein Fernangriff (Distanz {distance}, Angriffsreichweite {range}).",
+  "combatPreviewNoRetaliationReason": "Kein Gegenschlag: Der Verteidiger kann auf diese Distanz nicht antworten (Distanz {distance}, Verteidigerreichweite {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

@@ -47,7 +47,15 @@ final class StrategyAwareMilitaryContext {
     );
   }
 
-  bool isSafeLastMilitaryAttack(AiAttackEvaluation evaluation) {
-    return assessment.isSafeLastMilitaryAttack(evaluation);
+  bool isSafeLastMilitaryAttack(
+    AiAttackEvaluation evaluation, {
+    bool protectsCivilian = false,
+    bool defendingCity = false,
+  }) {
+    return assessment.isSafeLastMilitaryAttack(
+      evaluation,
+      protectsCivilian: protectsCivilian,
+      defendingCity: defendingCity,
+    );
   }
 }

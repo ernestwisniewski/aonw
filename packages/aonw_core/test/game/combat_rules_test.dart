@@ -94,6 +94,55 @@ void main() {
       expect(outcome.steps.whereType<RetaliationStep>().single.damage, 2);
     });
 
+    test('clamps shared ranged retaliation tuning', () {
+      expect(
+        CombatRetaliationRules.percentFor(
+          attackDistance: 1,
+          defenderRange: 1,
+          ruleset: const CombatRuleset(rangedRetaliationPercent: 50),
+        ),
+        100,
+      );
+      expect(
+        CombatRetaliationRules.percentFor(
+          attackDistance: 2,
+          defenderRange: 1,
+          ruleset: const CombatRuleset(rangedRetaliationPercent: 50),
+        ),
+        0,
+      );
+      expect(
+        CombatRetaliationRules.percentFor(
+          attackDistance: 2,
+          defenderRange: 2,
+          ruleset: const CombatRuleset(rangedRetaliationPercent: -10),
+        ),
+        0,
+      );
+      expect(
+        CombatRetaliationRules.percentFor(
+          attackDistance: 2,
+          defenderRange: 2,
+          ruleset: const CombatRuleset(rangedRetaliationPercent: 150),
+        ),
+        100,
+      );
+    });
+
+    test('copyWith can tune combat variance and ranged retaliation', () {
+      final copy = CombatRuleset.standard.copyWith(
+        varianceRange: 0,
+        rangedRetaliationPercent: 25,
+      );
+
+      expect(copy.varianceRange, 0);
+      expect(copy.rangedRetaliationPercent, 25);
+      expect(
+        copy.retreatThresholdPercent,
+        CombatRuleset.standard.retreatThresholdPercent,
+      );
+    });
+
     test('lethal damage kills instead of forcing retreat', () {
       final outcome = CombatResolver.resolve(
         attacker: _combatant(

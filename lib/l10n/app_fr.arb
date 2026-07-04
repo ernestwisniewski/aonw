@@ -1848,7 +1848,7 @@
   "unitCatapultDescription": "Un moteur de siège à plus longue portée, efficace contre les fortifications.",
   "unitHeavyInfantryDescription": "Fantassin en première ligne durable avec haute défense et attaque solide.",
   "unitFieldCannonDescription": "L'artillerie de campagne moderne pour les bombardements.",
-  "unitRiflemanDescription": "Un soldat moderne, stable dans l'attaque et la défense.",
+  "unitRiflemanDescription": "Une infanterie de ligne moderne, fiable en attaque comme en défense.",
   "unitTankDescription": "Une unité blindée lourde avec une grande résistance et une grande mobilité.",
   "unitScoutShipDescription": "Un navire léger pour la reconnaissance côtière et la protection des routes maritimes précoces.",
   "unitWarshipDescription": "Un fort navire de combat pour le contrôle maritime et le bombardement.",
@@ -3535,7 +3535,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Rétorsion: aucune (attaque à distance, distance {distance}, plage {range})",
+  "combatPreviewNoRetaliationLine": "Rétorsion: aucune (défenseur hors de portée, distance {distance}, portée du défenseur {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3710,7 +3710,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "Aucune modification ne s'applique: les statistiques des unités de base et le résultat du combat décident de cette prévision.",
-  "combatPreviewNoRetaliationReason": "Pas de représailles: il s'agit d'une attaque variée (distance {distance}, portée d'attaque {range}).",
+  "combatPreviewNoRetaliationReason": "Pas de représailles: le défenseur ne peut pas répondre à cette distance (distance {distance}, portée du défenseur {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

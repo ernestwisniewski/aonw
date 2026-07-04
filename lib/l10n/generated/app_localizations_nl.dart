@@ -3446,7 +3446,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get unitRiflemanDescription =>
-      'Een moderne afstandssoldaat, stabiel in aanval en verdediging.';
+      'Moderne linie-infanterie, stabiel in aanval en verdediging.';
 
   @override
   String get unitTankDescription =>
@@ -6340,7 +6340,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationLine(int distance, int range) {
-    return 'Vergelding: geen (afstandsaanval, afstand $distance, bereik $range)';
+    return 'Vergelding: geen (verdediger buiten bereik, afstand $distance, verdedigerbereik $range)';
   }
 
   @override
@@ -6446,7 +6446,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String combatPreviewNoRetaliationReason(int distance, int range) {
-    return 'Geen vergelding: dit is een afstandsaanval (afstand $distance, aanvalsbereik $range).';
+    return 'Geen vergelding: de verdediger kan op deze afstand niet terugslaan (afstand $distance, verdedigerbereik $range).';
   }
 
   @override

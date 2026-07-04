@@ -1848,7 +1848,7 @@
   "unitCatapultDescription": "Een belegeringsmotor met een groter bereik, effectief tegen vestingwerken.",
   "unitHeavyInfantryDescription": "Duurzame frontlinie-infanterie met hoge verdediging en solide aanval.",
   "unitFieldCannonDescription": "Moderne veldartillerie voor afstandsbombardementen.",
-  "unitRiflemanDescription": "Een moderne afstandssoldaat, stabiel in aanval en verdediging.",
+  "unitRiflemanDescription": "Moderne linie-infanterie, stabiel in aanval en verdediging.",
   "unitTankDescription": "Een zware gepantserde eenheid met hoge sterkte en hoge mobiliteit.",
   "unitScoutShipDescription": "Een licht schip voor kustverkenning en het beschermen van vroege zeeroutes.",
   "unitWarshipDescription": "Een sterk gevechtsschip voor zeecontrole en afstandsbombardementen.",
@@ -3535,7 +3535,7 @@
       }
     }
   },
-  "combatPreviewNoRetaliationLine": "Vergelding: geen (afstandsaanval, afstand {distance}, bereik {range})",
+  "combatPreviewNoRetaliationLine": "Vergelding: geen (verdediger buiten bereik, afstand {distance}, verdedigerbereik {range})",
   "@combatPreviewNoRetaliationLine": {
     "placeholders": {
       "distance": {
@@ -3710,7 +3710,7 @@
     }
   },
   "combatPreviewNoSourcesLine": "Er zijn geen aanpassingen van toepassing: de statistieken van de basiseenheid en het gevechtsresultaat bepalen deze voorspelling.",
-  "combatPreviewNoRetaliationReason": "Geen vergelding: dit is een afstandsaanval (afstand {distance}, aanvalsbereik {range}).",
+  "combatPreviewNoRetaliationReason": "Geen vergelding: de verdediger kan op deze afstand niet terugslaan (afstand {distance}, verdedigerbereik {range}).",
   "@combatPreviewNoRetaliationReason": {
     "placeholders": {
       "distance": {

@@ -16,6 +16,8 @@ class AiAttackEvaluation {
     required this.defenderRetreated,
     required this.targetIsCivilian,
     required this.capturesCity,
+    required this.attackDistance,
+    required this.retaliationPercent,
     required this.rangedAttack,
     required this.nearestOwnCityDistance,
     required this.heuristicScore,
@@ -35,6 +37,8 @@ class AiAttackEvaluation {
   final bool defenderRetreated;
   final bool targetIsCivilian;
   final bool capturesCity;
+  final int attackDistance;
+  final int retaliationPercent;
   final bool rangedAttack;
   final int nearestOwnCityDistance;
   final double heuristicScore;
@@ -43,7 +47,10 @@ class AiAttackEvaluation {
 
   bool get isDecisive => defenderKilled || capturesCity;
 
-  bool get isFreeRangedDamage => rangedAttack && attackerDamage == 0;
+  bool get hasRetaliationRisk => retaliationPercent > 0;
+
+  bool get isFreeRangedDamage =>
+      rangedAttack && !hasRetaliationRisk && attackerDamage == 0;
 
   bool get tradesAwayAttacker =>
       attackerKilled && !defenderKilled && !capturesCity;
@@ -64,6 +71,8 @@ class AiAttackEvaluation {
       defenderRetreated: defenderRetreated,
       targetIsCivilian: targetIsCivilian,
       capturesCity: capturesCity,
+      attackDistance: attackDistance,
+      retaliationPercent: retaliationPercent,
       rangedAttack: rangedAttack,
       nearestOwnCityDistance: nearestOwnCityDistance,
       heuristicScore: heuristicScore,
@@ -84,6 +93,8 @@ class AiCityAttackEvaluation {
     required this.attackerHpAfter,
     required this.cityDefeated,
     required this.attackerKilled,
+    required this.attackDistance,
+    required this.retaliationPercent,
     required this.rangedAttack,
     required this.nearestOwnCityDistance,
     required this.heuristicScore,
@@ -100,6 +111,8 @@ class AiCityAttackEvaluation {
   final int attackerHpAfter;
   final bool cityDefeated;
   final bool attackerKilled;
+  final int attackDistance;
+  final int retaliationPercent;
   final bool rangedAttack;
   final int nearestOwnCityDistance;
   final double heuristicScore;
@@ -110,7 +123,10 @@ class AiCityAttackEvaluation {
   bool get destroysCity =>
       cityDefeated && command.cityConquestAction == CityConquestAction.destroy;
 
-  bool get isFreeRangedDamage => rangedAttack && attackerDamage == 0;
+  bool get hasRetaliationRisk => retaliationPercent > 0;
+
+  bool get isFreeRangedDamage =>
+      rangedAttack && !hasRetaliationRisk && attackerDamage == 0;
 
   bool get tradesAwayAttacker => attackerKilled && !cityDefeated;
 
@@ -127,6 +143,8 @@ class AiCityAttackEvaluation {
       attackerHpAfter: attackerHpAfter,
       cityDefeated: cityDefeated,
       attackerKilled: attackerKilled,
+      attackDistance: attackDistance,
+      retaliationPercent: retaliationPercent,
       rangedAttack: rangedAttack,
       nearestOwnCityDistance: nearestOwnCityDistance,
       heuristicScore: heuristicScore,
