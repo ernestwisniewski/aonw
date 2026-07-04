@@ -108,10 +108,10 @@ abstract final class _DirectMoveProcessor {
     required FogOfWarService fogOfWarService,
   }) {
     final updatedUnits = replaceUnit(state.units, movedUnit);
-    final newFog = fogOfWarService.recompute(
+    final newFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: knownPlayerIds(state),
+      playerId: movedUnit.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );

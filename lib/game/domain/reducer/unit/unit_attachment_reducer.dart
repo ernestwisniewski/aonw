@@ -55,10 +55,10 @@ abstract final class UnitAttachmentReducer {
       detachment.detachedUnit,
     ];
 
-    final newFog = fogOfWarService.recompute(
+    final newFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: knownPlayerIds(state),
+      playerId: source.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );

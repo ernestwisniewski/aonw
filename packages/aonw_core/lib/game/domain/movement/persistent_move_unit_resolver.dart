@@ -160,10 +160,10 @@ class PersistentMoveUnitResolver {
         ? moved.copyWithQueuedPath(null)
         : moved.copyWithQueuedPath(_queuedPathFor(plan));
     final updatedUnits = _replaceUnit(state.units, movedWithPath);
-    final updatedFog = fogOfWarService.recompute(
+    final updatedFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: _knownPlayerIds(state),
+      playerId: movedWithPath.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );
@@ -288,15 +288,5 @@ class PersistentMoveUnitResolver {
       units: knownUnits,
     );
     return knownPathfinder.plan(unit: unit, targetTile: targetTile) != null;
-  }
-
-  static Set<String> _knownPlayerIds(PersistentGameState state) {
-    return {
-      ...state.playerColors.keys,
-      ...state.playerGold.keys,
-      ...state.fogOfWar.playerIds,
-      for (final unit in state.units) unit.ownerPlayerId,
-      for (final city in state.cities) city.ownerPlayerId,
-    };
   }
 }
