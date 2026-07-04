@@ -3,6 +3,12 @@ import 'package:test/test.dart';
 
 void main() {
   group('Combat rules', () {
+    test('standard ruleset keeps combat variance tunable and wider', () {
+      expect(CombatRuleset.standard.varianceRange, 2);
+      expect(const CombatRuleset().varianceRange, 2);
+      expect(const CombatRuleset(varianceRange: 0).varianceRange, 0);
+    });
+
     test('resolves deterministic melee combat with retaliation', () {
       final outcome = CombatResolver.resolve(
         attacker: _combatant(
