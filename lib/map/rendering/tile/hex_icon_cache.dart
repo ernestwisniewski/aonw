@@ -86,12 +86,7 @@ abstract final class HexIconCache {
   }
 
   static int? _targetDecodeWidthFor(String path) {
-    final preferredWidth = PreferredImageAssets.targetDecodeWidthFor(path);
-    if (preferredWidth != null) return preferredWidth;
-    if (path.startsWith('assets/sprites/units/')) {
-      return 1536;
-    }
-    return null;
+    return PreferredImageAssets.targetDecodeWidthFor(path);
   }
 
   static List<String> _assetCandidatesFor(String path) {
