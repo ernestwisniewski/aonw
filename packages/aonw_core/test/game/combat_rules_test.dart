@@ -67,6 +67,27 @@ void main() {
       expect(outcome.steps.whereType<RetaliationStep>(), isEmpty);
     });
 
+    test('applies partial counter-battery retaliation', () {
+      final outcome = CombatResolver.resolve(
+        attacker: _combatant(
+          id: 'attacker',
+          stats: const CombatStats(attack: 6, defense: 1, hp: 10, range: 2),
+        ),
+        defender: _combatant(
+          id: 'defender',
+          owner: 'player_2',
+          stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 2),
+        ),
+        rng: CombatRng(99),
+        attackDistance: 2,
+        ruleset: const CombatRuleset(varianceRange: 0),
+      );
+
+      expect(outcome.defenderHpAfter, 5);
+      expect(outcome.attackerHpAfter, 8);
+      expect(outcome.steps.whereType<RetaliationStep>().single.damage, 2);
+    });
+
     test('lethal damage kills instead of forcing retreat', () {
       final outcome = CombatResolver.resolve(
         attacker: _combatant(

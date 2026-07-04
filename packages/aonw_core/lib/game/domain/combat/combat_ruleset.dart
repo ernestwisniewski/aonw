@@ -7,6 +7,7 @@ enum CombatResolutionMode { instant, simultaneous }
 class CombatRuleset {
   final CombatResolutionMode resolutionMode;
   final int varianceRange;
+  final int rangedRetaliationPercent;
   final int retreatThresholdPercent;
   final int defendedCityDefenseBonus;
   final int mixedCommanderArmyAttackBonus;
@@ -19,6 +20,7 @@ class CombatRuleset {
   const CombatRuleset({
     this.resolutionMode = CombatResolutionMode.instant,
     this.varianceRange = 1,
+    this.rangedRetaliationPercent = 50,
     this.retreatThresholdPercent = 25,
     this.defendedCityDefenseBonus = 1,
     this.mixedCommanderArmyAttackBonus = 1,
@@ -197,6 +199,7 @@ class CombatRuleset {
     return CombatRuleset(
       resolutionMode: resolutionMode ?? this.resolutionMode,
       varianceRange: varianceRange,
+      rangedRetaliationPercent: rangedRetaliationPercent,
       retreatThresholdPercent: retreatThresholdPercent,
       defendedCityDefenseBonus: defendedCityDefenseBonus,
       mixedCommanderArmyAttackBonus: mixedCommanderArmyAttackBonus,

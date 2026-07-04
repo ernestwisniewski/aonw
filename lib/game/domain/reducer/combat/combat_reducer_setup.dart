@@ -302,3 +302,18 @@ abstract final class _CombatSetupFactory {
         : null;
   }
 }
+
+int _unitDistance(GameUnit attacker, GameUnit defender) {
+  return _hexDistance(attacker, defender.col, defender.row);
+}
+
+int _cityDistance(GameUnit attacker, GameCity city) {
+  return _hexDistance(attacker, city.center.col, city.center.row);
+}
+
+int _hexDistance(GameUnit unit, int col, int row) {
+  return HexDistance.between(
+    HexCoordinate(col: unit.col, row: unit.row),
+    HexCoordinate(col: col, row: row),
+  );
+}
