@@ -94,6 +94,7 @@ final class _UnitAttackEvaluationBuilder {
         attackerId: attacker.id,
         defenderId: defender.id,
       ),
+      attackDistance: _CombatTacticsQueries.unitDistance(attacker, defender),
       ruleset: view.ruleset.combat,
       defenderCanRetreat: retreatDestination != null,
     );
@@ -200,6 +201,10 @@ final class _CityAttackEvaluationBuilder {
         turn: view.turn,
         attackerId: attacker.id,
         defenderId: city.id,
+      ),
+      attackDistance: _CombatTacticsQueries.distanceToCity(
+        attacker,
+        city.center,
       ),
       ruleset: context.ruleset.combat,
     );

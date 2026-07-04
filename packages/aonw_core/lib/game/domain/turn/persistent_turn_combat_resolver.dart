@@ -93,7 +93,8 @@ abstract final class PersistentTurnCombatResolver {
       );
       if (attack == null) continue;
       if (attack.attacker.effective.attack <= 0) continue;
-      if (_distance(attacker, defender) > attack.attacker.effective.range) {
+      final attackDistance = _distance(attacker, defender);
+      if (attackDistance > attack.attacker.effective.range) {
         continue;
       }
       diplomacy = diplomacy.registerUnitAttack(
@@ -119,6 +120,7 @@ abstract final class PersistentTurnCombatResolver {
           attackerId: attacker.id,
           defenderId: defender.id,
         ),
+        attackDistance: attackDistance,
         ruleset: ruleset.combat,
         defenderCanRetreat: retreatDestination != null,
       );
@@ -449,6 +451,7 @@ abstract final class PersistentTurnCombatResolver {
         effectiveStats: cityBaseStats,
       ),
     );
+    final attackDistance = _distanceToHex(attacker, city.center);
     final outcome = CombatResolver.resolve(
       attacker: attackerCombatant,
       defender: cityCombatant,
@@ -457,6 +460,7 @@ abstract final class PersistentTurnCombatResolver {
         attackerId: attacker.id,
         defenderId: city.id,
       ),
+      attackDistance: attackDistance,
       ruleset: ruleset.combat,
     );
     events
