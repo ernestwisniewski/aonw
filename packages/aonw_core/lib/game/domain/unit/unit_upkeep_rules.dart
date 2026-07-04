@@ -65,21 +65,19 @@ abstract final class UnitUpkeepRules {
         .where((city) => city.ownerPlayerId == playerId)
         .length;
     final freeUnits = freeUnitCount(cityCount: cityCount);
-    final upkeepUnits =
-        [
-          for (final unit in units)
-            if (unit.ownerPlayerId == playerId &&
-                upkeepCostForType(unit.type) > 0)
-              unit,
-        ]..sort((a, b) {
-          final costCompare = upkeepCostForType(
-            b.type,
-          ).compareTo(upkeepCostForType(a.type));
-          if (costCompare != 0) return costCompare;
-          final typeCompare = a.type.index.compareTo(b.type.index);
-          if (typeCompare != 0) return typeCompare;
-          return a.id.compareTo(b.id);
-        });
+    final upkeepCostsByType = <GameUnitType, int>{};
+    int cachedUpkeepCost(GameUnitType type) {
+      return upkeepCostsByType[type] ??= upkeepCostForType(type);
+    }
+
+    final upkeepUnits = <_UpkeepUnit>[];
+    for (final unit in units) {
+      if (unit.ownerPlayerId != playerId) continue;
+      final upkeepCost = cachedUpkeepCost(unit.type);
+      if (upkeepCost <= 0) continue;
+      upkeepUnits.add(_UpkeepUnit(unit: unit, baseCost: upkeepCost));
+    }
+    upkeepUnits.sort(_compareUpkeepUnits);
 
     final paidUnits = upkeepUnits.skip(freeUnits);
     final paidUnitsByType = <GameUnitType, int>{};
@@ -88,10 +86,11 @@ abstract final class UnitUpkeepRules {
     var paidUnitCount = 0;
     var paidWorkerCount = 0;
 
-    for (final unit in paidUnits) {
+    for (final upkeepUnit in paidUnits) {
+      final unit = upkeepUnit.unit;
       final cost = switch (unit.type) {
         GameUnitType.worker => workerUpkeepCostForPaidIndex(++paidWorkerCount),
-        _ => upkeepCostForType(unit.type),
+        _ => upkeepUnit.baseCost,
       };
       paidUnitCount++;
       grossUpkeep += cost;
@@ -109,4 +108,19 @@ abstract final class UnitUpkeepRules {
       upkeepByType: Map.unmodifiable(upkeepByType),
     );
   }
+
+  static int _compareUpkeepUnits(_UpkeepUnit a, _UpkeepUnit b) {
+    final costCompare = b.baseCost.compareTo(a.baseCost);
+    if (costCompare != 0) return costCompare;
+    final typeCompare = a.unit.type.index.compareTo(b.unit.type.index);
+    if (typeCompare != 0) return typeCompare;
+    return a.unit.id.compareTo(b.unit.id);
+  }
+}
+
+class _UpkeepUnit {
+  final GameUnit unit;
+  final int baseCost;
+
+  const _UpkeepUnit({required this.unit, required this.baseCost});
 }
