@@ -146,12 +146,7 @@ bool isReconUnit(GameUnit unit) {
 }
 
 bool isReconType(GameUnitType type) {
-  return switch (type) {
-    GameUnitType.scout ||
-    GameUnitType.scoutShip ||
-    GameUnitType.reconPlane => true,
-    _ => false,
-  };
+  return UnitCatalog.isReconType(type);
 }
 
 bool isMilitaryBuilding(CityBuildingType type) {

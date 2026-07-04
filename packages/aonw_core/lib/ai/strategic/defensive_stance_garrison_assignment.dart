@@ -62,10 +62,5 @@ int _compareAvailableGarrisons(GameUnit a, GameUnit b) {
 }
 
 int _reconSortValue(GameUnitType type) {
-  return switch (type) {
-    GameUnitType.scout ||
-    GameUnitType.scoutShip ||
-    GameUnitType.reconPlane => 1,
-    _ => 0,
-  };
+  return UnitCatalog.isReconType(type) ? 1 : 0;
 }

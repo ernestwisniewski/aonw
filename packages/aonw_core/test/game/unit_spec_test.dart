@@ -19,12 +19,17 @@ void main() {
         producibleByCities: true,
         naval: false,
         gainsExperience: true,
+        military: true,
+        recon: false,
       ),
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 15,
     );
 
     expect(spec, equals(spec.copyWith()));
     expect(spec.copyWith(productionCost: 20).productionCost, 20);
+    expect(spec.copyWith(scoreValue: 18).scoreValue, 18);
     expect(spec.capabilities.naval, isFalse);
   });
 }

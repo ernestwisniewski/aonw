@@ -10,6 +10,8 @@ class UnitSpec {
   final CombatStats baseStats;
   final UnitCapabilities capabilities;
   final int upkeep;
+  final int supplyCost;
+  final int scoreValue;
 
   const UnitSpec({
     required this.type,
@@ -18,6 +20,8 @@ class UnitSpec {
     required this.baseStats,
     required this.capabilities,
     required this.upkeep,
+    required this.supplyCost,
+    required this.scoreValue,
   });
 
   UnitSpec copyWith({
@@ -26,6 +30,8 @@ class UnitSpec {
     CombatStats? baseStats,
     UnitCapabilities? capabilities,
     int? upkeep,
+    int? supplyCost,
+    int? scoreValue,
   }) {
     return UnitSpec(
       type: type,
@@ -34,6 +40,8 @@ class UnitSpec {
       baseStats: baseStats ?? this.baseStats,
       capabilities: capabilities ?? this.capabilities,
       upkeep: upkeep ?? this.upkeep,
+      supplyCost: supplyCost ?? this.supplyCost,
+      scoreValue: scoreValue ?? this.scoreValue,
     );
   }
 
@@ -45,7 +53,9 @@ class UnitSpec {
         _requirementsEqual(other.requirements, requirements) &&
         other.baseStats == baseStats &&
         other.capabilities == capabilities &&
-        other.upkeep == upkeep;
+        other.upkeep == upkeep &&
+        other.supplyCost == supplyCost &&
+        other.scoreValue == scoreValue;
   }
 
   @override
@@ -57,6 +67,8 @@ class UnitSpec {
       baseStats,
       capabilities,
       upkeep,
+      supplyCost,
+      scoreValue,
     );
   }
 }
