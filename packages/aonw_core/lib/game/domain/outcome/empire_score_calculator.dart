@@ -164,25 +164,7 @@ class EmpireScoreCalculator {
   }
 
   static int unitTypeScore(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => 30,
-      GameUnitType.warrior => 15,
-      GameUnitType.archer => 17,
-      GameUnitType.settler => 18,
-      GameUnitType.worker => 12,
-      GameUnitType.merchant => 14,
-      GameUnitType.scout => 10,
-      GameUnitType.spearman => 18,
-      GameUnitType.cavalry => 24,
-      GameUnitType.catapult => 25,
-      GameUnitType.heavyInfantry => 30,
-      GameUnitType.fieldCannon => 35,
-      GameUnitType.rifleman => 38,
-      GameUnitType.tank => 50,
-      GameUnitType.scoutShip => 20,
-      GameUnitType.warship => 40,
-      GameUnitType.reconPlane => 36,
-    };
+    return UnitCatalog.scoreValueFor(type);
   }
 
   static int goldScoreFor(int gold) {

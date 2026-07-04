@@ -307,12 +307,7 @@ final class MctsCommandReconciliationRules {
       unit.type == GameUnitType.settler || unit.hasSettlers;
 
   bool isReconUnit(GameUnit unit) {
-    return switch (unit.type) {
-      GameUnitType.scout ||
-      GameUnitType.scoutShip ||
-      GameUnitType.reconPlane => true,
-      _ => false,
-    };
+    return UnitCatalog.isReconType(unit.type);
   }
 
   bool canServeAsMilitaryUnit(GameUnit unit, AiContext context) =>

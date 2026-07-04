@@ -6,22 +6,44 @@ import 'package:aonw_core/game/domain/unit/unit_spec.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class UnitCatalog {
-  static const _land = UnitCapabilities(
+  static const _landMilitary = UnitCapabilities(
     producibleByCities: true,
     naval: false,
     gainsExperience: true,
+    military: true,
+    recon: false,
   );
 
-  static const _naval = UnitCapabilities(
+  static const _navalMilitary = UnitCapabilities(
     producibleByCities: true,
     naval: true,
     gainsExperience: true,
+    military: true,
+    recon: false,
   );
 
   static const _civilian = UnitCapabilities(
     producibleByCities: true,
     naval: false,
     gainsExperience: false,
+    military: false,
+    recon: false,
+  );
+
+  static const _landRecon = UnitCapabilities(
+    producibleByCities: true,
+    naval: false,
+    gainsExperience: true,
+    military: true,
+    recon: true,
+  );
+
+  static const _navalRecon = UnitCapabilities(
+    producibleByCities: true,
+    naval: true,
+    gainsExperience: true,
+    military: true,
+    recon: true,
   );
 
   static const standard = <GameUnitType, UnitSpec>{
@@ -35,8 +57,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 2,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 0,
+      supplyCost: 0,
+      scoreValue: 30,
     ),
     GameUnitType.warrior: UnitSpec(
       type: GameUnitType.warrior,
@@ -48,8 +72,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 15,
     ),
     GameUnitType.archer: UnitSpec(
       type: GameUnitType.archer,
@@ -61,8 +87,10 @@ abstract final class UnitCatalog {
         range: 2,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 17,
     ),
     GameUnitType.settler: UnitSpec(
       type: GameUnitType.settler,
@@ -76,6 +104,8 @@ abstract final class UnitCatalog {
       ),
       capabilities: _civilian,
       upkeep: 2,
+      supplyCost: 1,
+      scoreValue: 18,
     ),
     GameUnitType.worker: UnitSpec(
       type: GameUnitType.worker,
@@ -89,6 +119,8 @@ abstract final class UnitCatalog {
       ),
       capabilities: _civilian,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 12,
     ),
     GameUnitType.merchant: UnitSpec(
       type: GameUnitType.merchant,
@@ -102,6 +134,8 @@ abstract final class UnitCatalog {
       ),
       capabilities: _civilian,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 14,
     ),
     GameUnitType.scout: UnitSpec(
       type: GameUnitType.scout,
@@ -113,8 +147,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 3,
       ),
-      capabilities: _land,
+      capabilities: _landRecon,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 10,
     ),
     GameUnitType.spearman: UnitSpec(
       type: GameUnitType.spearman,
@@ -126,8 +162,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 18,
     ),
     GameUnitType.cavalry: UnitSpec(
       type: GameUnitType.cavalry,
@@ -142,8 +180,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 3,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 24,
     ),
     GameUnitType.catapult: UnitSpec(
       type: GameUnitType.catapult,
@@ -155,8 +195,10 @@ abstract final class UnitCatalog {
         range: 2,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 25,
     ),
     GameUnitType.heavyInfantry: UnitSpec(
       type: GameUnitType.heavyInfantry,
@@ -171,8 +213,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 30,
     ),
     GameUnitType.fieldCannon: UnitSpec(
       type: GameUnitType.fieldCannon,
@@ -187,8 +231,10 @@ abstract final class UnitCatalog {
         range: 2,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 35,
     ),
     GameUnitType.rifleman: UnitSpec(
       type: GameUnitType.rifleman,
@@ -203,8 +249,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 1,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 38,
     ),
     GameUnitType.tank: UnitSpec(
       type: GameUnitType.tank,
@@ -219,8 +267,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 3,
       ),
-      capabilities: _land,
+      capabilities: _landMilitary,
       upkeep: 3,
+      supplyCost: 3,
+      scoreValue: 50,
     ),
     GameUnitType.scoutShip: UnitSpec(
       type: GameUnitType.scoutShip,
@@ -232,8 +282,10 @@ abstract final class UnitCatalog {
         range: 1,
         mobility: 3,
       ),
-      capabilities: _naval,
+      capabilities: _navalRecon,
       upkeep: 1,
+      supplyCost: 1,
+      scoreValue: 20,
     ),
     GameUnitType.warship: UnitSpec(
       type: GameUnitType.warship,
@@ -248,8 +300,10 @@ abstract final class UnitCatalog {
         range: 2,
         mobility: 2,
       ),
-      capabilities: _naval,
+      capabilities: _navalMilitary,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 40,
     ),
     GameUnitType.reconPlane: UnitSpec(
       type: GameUnitType.reconPlane,
@@ -264,8 +318,10 @@ abstract final class UnitCatalog {
         range: 3,
         mobility: 5,
       ),
-      capabilities: _land,
+      capabilities: _landRecon,
       upkeep: 2,
+      supplyCost: 2,
+      scoreValue: 36,
     ),
   };
 
@@ -275,5 +331,21 @@ abstract final class UnitCatalog {
       throw StateError('No UnitSpec registered for $type');
     }
     return spec;
+  }
+
+  static int supplyCostFor(GameUnitType type) {
+    return specFor(type).supplyCost;
+  }
+
+  static int scoreValueFor(GameUnitType type) {
+    return specFor(type).scoreValue;
+  }
+
+  static bool isMilitaryType(GameUnitType type) {
+    return specFor(type).capabilities.military;
+  }
+
+  static bool isReconType(GameUnitType type) {
+    return specFor(type).capabilities.recon;
   }
 }

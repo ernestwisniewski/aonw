@@ -68,12 +68,7 @@ bool mctsIsReconUnit(GameUnit unit) {
 }
 
 bool mctsIsReconType(GameUnitType type) {
-  return switch (type) {
-    GameUnitType.scout ||
-    GameUnitType.scoutShip ||
-    GameUnitType.reconPlane => true,
-    _ => false,
-  };
+  return UnitCatalog.isReconType(type);
 }
 
 bool mctsOwnMilitaryNear(

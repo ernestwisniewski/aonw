@@ -55,25 +55,7 @@ abstract final class CityUnitSupplyRules {
   static const int maximumMapCapacity = 28;
 
   static int supplyCostForType(GameUnitType type) {
-    return switch (type) {
-      GameUnitType.commander => 0,
-      GameUnitType.settler => 1,
-      GameUnitType.warrior ||
-      GameUnitType.archer ||
-      GameUnitType.worker ||
-      GameUnitType.merchant ||
-      GameUnitType.scout ||
-      GameUnitType.spearman ||
-      GameUnitType.scoutShip => 1,
-      GameUnitType.cavalry ||
-      GameUnitType.catapult ||
-      GameUnitType.heavyInfantry ||
-      GameUnitType.fieldCannon ||
-      GameUnitType.rifleman ||
-      GameUnitType.warship ||
-      GameUnitType.reconPlane => 2,
-      GameUnitType.tank => 3,
-    };
+    return UnitCatalog.supplyCostFor(type);
   }
 
   static int maxCapacityForMap(MapData mapData) {
