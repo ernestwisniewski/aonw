@@ -1,20 +1,26 @@
 PODS:
   - Flutter (1.0.0)
+  - gamepads_ios (0.1.1):
+    - Flutter
   - sign_in_with_apple (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - gamepads_ios (from `.symlinks/plugins/gamepads_ios/ios`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  gamepads_ios:
+    :path: ".symlinks/plugins/gamepads_ios/ios"
   sign_in_with_apple:
     :path: ".symlinks/plugins/sign_in_with_apple/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  gamepads_ios: c75c6d31377d275b0effb9174c619e2705678c09
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
 
 PODFILE CHECKSUM: 4e3db05175e1bbfaa9a6f2ea7a8934a812d864e3
