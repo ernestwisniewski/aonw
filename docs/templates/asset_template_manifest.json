@@ -4,6 +4,8 @@
     "unitSheet": {
       "template": "unit_sheet_6x4_512x768.svg",
       "outputPattern": "assets/sprites/units/<unit>.png",
+      "runtimeOutputPattern": "assets/sprites/units/<unit>.webp",
+      "runtimeFormat": "webp-lossless",
       "columns": 6,
       "rows": 4,
       "cellWidth": 512,

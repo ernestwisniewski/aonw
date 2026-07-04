@@ -12,7 +12,7 @@ should not need to move, crop, or scale individual frames.
 
 | Template | Target asset | Grid | Cell | Atlas size | Usage |
 | --- | --- | ---: | ---: | ---: | --- |
-| `unit_sheet_6x4_512x768.svg` | `assets/sprites/units/<unit>.png` | 6 x 4 | 512 x 768 | 3072 x 3072 | Animated units |
+| `unit_sheet_6x4_512x768.svg` | `assets/sprites/units/<unit>.png` + `.webp` | 6 x 4 | 512 x 768 | 3072 x 3072 | Animated units |
 | `buildings_atlas_a_5x4_512.svg` | `assets/sprites/buildings_atlas_a_5x4_512.png` + `.webp` | 5 x 4 | 512 x 512 | 2560 x 2048 | Buildings 00-19 |
 | `buildings_atlas_b_5x4_512.svg` | `assets/sprites/buildings_atlas_b_5x4_512.png` + `.webp` | 5 x 4 | 512 x 512 | 2560 x 2048 | Buildings 20-39 |
 | `buildings_atlas_c_5x4_512.svg` | `assets/sprites/buildings_atlas_c_5x4_512.png` + `.webp` | 5 x 4 | 512 x 512 | 2560 x 2048 | Buildings 40-58, slot 59 empty |
@@ -45,6 +45,17 @@ columns: 6 frames
 All frames for the same unit must use the same pivot. Do not crop each frame
 individually. If the character stands in place, its feet, wheels, or hull should
 hit the same baseline in every frame.
+
+For runtime, keep PNG as a fallback and generate lossless WebP with the same
+base name:
+
+```text
+cwebp -lossless -m 6 -mt warrior.png -o warrior.webp
+```
+
+The runtime prefers WebP for unit atlases and falls back to PNG if WebP loading
+fails. Unit atlases are decoded with a capped target width through
+`PreferredImageAssets.unitAtlasDecodeWidth`.
 
 ## Buildings
 
