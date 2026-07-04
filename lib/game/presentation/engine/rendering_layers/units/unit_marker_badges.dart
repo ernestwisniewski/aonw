@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -67,6 +68,28 @@ abstract final class UnitMarkerBadgeStyle {
 }
 
 abstract final class UnitMarkerBadgePainter {
+  static final _workBadgeTextLayouts = _UnitMarkerWorkBadgeTextLayoutCache(
+    maxEntries: 64,
+  );
+
+  @visibleForTesting
+  static int get debugWorkBadgeTextLayoutCacheCapacity =>
+      _workBadgeTextLayouts.maxEntries;
+
+  @visibleForTesting
+  static int get debugWorkBadgeTextLayoutCacheSize =>
+      _workBadgeTextLayouts.length;
+
+  @visibleForTesting
+  static bool debugWorkBadgeTextLayoutCacheContains(String label) {
+    return _workBadgeTextLayouts.contains(label);
+  }
+
+  @visibleForTesting
+  static void debugResetWorkBadgeTextLayoutCache() {
+    _workBadgeTextLayouts.clear();
+  }
+
   static void paintStateBadge(
     Canvas canvas, {
     required Offset center,
@@ -170,19 +193,7 @@ abstract final class UnitMarkerBadgePainter {
   }) {
     if (label.isEmpty) return;
 
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: const TextStyle(
-          color: HudPalette.textBright,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          fontFeatures: GameUiTheme.tabularFigures,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
+    final textPainter = _workBadgeTextLayouts.layoutFor(label);
     final width = math.max(28.0, textPainter.width + 12);
     final height = textPainter.height + 6;
     final bottom = top - statusBarsExtentAboveTop - gapAboveBars;
@@ -218,6 +229,46 @@ abstract final class UnitMarkerBadgePainter {
       ),
     );
   }
+}
+
+final class _UnitMarkerWorkBadgeTextLayoutCache {
+  final int maxEntries;
+  final LinkedHashMap<String, TextPainter> _layouts;
+
+  _UnitMarkerWorkBadgeTextLayoutCache({required this.maxEntries})
+    : assert(maxEntries > 0),
+      _layouts = LinkedHashMap<String, TextPainter>();
+
+  int get length => _layouts.length;
+
+  bool contains(String label) => _layouts.containsKey(label);
+
+  void clear() => _layouts.clear();
+
+  TextPainter layoutFor(String label) {
+    final cached = _layouts.remove(label);
+    if (cached != null) {
+      _layouts[label] = cached;
+      return cached;
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(text: label, style: _workBadgeTextStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _layouts[label] = textPainter;
+    if (_layouts.length > maxEntries) {
+      _layouts.remove(_layouts.keys.first);
+    }
+    return textPainter;
+  }
+
+  static const _workBadgeTextStyle = TextStyle(
+    color: HudPalette.textBright,
+    fontSize: 10,
+    fontWeight: FontWeight.w800,
+    fontFeatures: GameUiTheme.tabularFigures,
+  );
 }
 
 class _UnitMarkerStateBadgeSpec {

@@ -5,6 +5,7 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -885,6 +886,77 @@ void main() {
       expect(marker.stateBadgeRadiusForTesting, 5.0);
     });
 
+    test('reuses work badge text layouts by label', () {
+      UnitMarkerBadgePainter.debugResetWorkBadgeTextLayoutCache();
+      addTearDown(UnitMarkerBadgePainter.debugResetWorkBadgeTextLayoutCache);
+
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      try {
+        _paintWorkBadge(
+          canvas,
+          label: '1t',
+          playerColor: const Color(0xFF0066CC),
+        );
+        _paintWorkBadge(
+          canvas,
+          label: '1t',
+          playerColor: const Color(0xFFCC6600),
+        );
+        _paintWorkBadge(
+          canvas,
+          label: '2t',
+          playerColor: const Color(0xFF0066CC),
+        );
+      } finally {
+        recorder.endRecording().dispose();
+      }
+
+      expect(UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheSize, 2);
+      expect(
+        UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheContains('1t'),
+        isTrue,
+      );
+      expect(
+        UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheContains('2t'),
+        isTrue,
+      );
+    });
+
+    test('bounds work badge text layout cache', () {
+      UnitMarkerBadgePainter.debugResetWorkBadgeTextLayoutCache();
+      addTearDown(UnitMarkerBadgePainter.debugResetWorkBadgeTextLayoutCache);
+
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      final capacity =
+          UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheCapacity;
+
+      try {
+        for (var index = 0; index <= capacity; index++) {
+          _paintWorkBadge(canvas, label: '${index}t');
+        }
+      } finally {
+        recorder.endRecording().dispose();
+      }
+
+      expect(
+        UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheSize,
+        capacity,
+      );
+      expect(
+        UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheContains('0t'),
+        isFalse,
+      );
+      expect(
+        UnitMarkerBadgePainter.debugWorkBadgeTextLayoutCacheContains(
+          '${capacity}t',
+        ),
+        isTrue,
+      );
+    });
+
     test('hides peripheral marker details at distant zoom', () {
       final marker = UnitMarker(
         position: Vector2.zero(),
@@ -1173,4 +1245,20 @@ void main() {
       expect(layer.markerCompactWorkVisualForTesting('worker_1'), isTrue);
     });
   });
+}
+
+void _paintWorkBadge(
+  Canvas canvas, {
+  required String label,
+  Color playerColor = const Color(0xFF0000FF),
+}) {
+  UnitMarkerBadgePainter.paintWorkBadge(
+    canvas,
+    center: const Offset(40, 40),
+    top: 36,
+    playerColor: playerColor,
+    label: label,
+    statusBarsExtentAboveTop: 8,
+    gapAboveBars: 3,
+  );
 }
