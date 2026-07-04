@@ -81,10 +81,10 @@ class PersistentUnitDetachmentResolver {
         if (unit.id == source.id) detachment.updatedSource else unit,
       detachment.detachedUnit,
     ];
-    final updatedFog = fogOfWarService.recompute(
+    final updatedFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
       mapData: mapData,
-      playerIds: _knownPlayerIds(state),
+      playerId: source.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );
@@ -163,15 +163,5 @@ class PersistentUnitDetachmentResolver {
       if (units[i].id == unitId) return i;
     }
     return null;
-  }
-
-  static Set<String> _knownPlayerIds(PersistentGameState state) {
-    return {
-      ...state.playerColors.keys,
-      ...state.playerGold.keys,
-      ...state.fogOfWar.playerIds,
-      for (final unit in state.units) unit.ownerPlayerId,
-      for (final city in state.cities) city.ownerPlayerId,
-    };
   }
 }

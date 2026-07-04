@@ -22,21 +22,56 @@ class FogOfWarService {
   }) {
     final updated = <PlayerFogOfWar>[];
     for (final playerId in playerIds.where((id) => id.isNotEmpty)) {
-      final sources = _sourcesForPlayer(
+      updated.add(
+        _recomputedFogForPlayer(
+          current: current,
+          playerId: playerId,
+          mapData: mapData,
+          units: units,
+          cities: cities,
+        ),
+      );
+    }
+    return current.updatePlayers(updated);
+  }
+
+  FogOfWarState recomputePlayer({
+    required FogOfWarState current,
+    required MapData mapData,
+    required String playerId,
+    required Iterable<GameUnit> units,
+    required Iterable<GameCity> cities,
+  }) {
+    if (playerId.isEmpty) return current;
+    return current.updatePlayer(
+      _recomputedFogForPlayer(
+        current: current,
         playerId: playerId,
         mapData: mapData,
         units: units,
         cities: cities,
-      );
-      final visibleHexes = revealCalculator.visibleHexesFor(
-        mapData: mapData,
-        sources: sources,
-      );
-      updated.add(
-        current.fogForPlayer(playerId).withVisibleHexes(visibleHexes),
-      );
-    }
-    return current.updatePlayers(updated);
+      ),
+    );
+  }
+
+  PlayerFogOfWar _recomputedFogForPlayer({
+    required FogOfWarState current,
+    required String playerId,
+    required MapData mapData,
+    required Iterable<GameUnit> units,
+    required Iterable<GameCity> cities,
+  }) {
+    final sources = _sourcesForPlayer(
+      playerId: playerId,
+      mapData: mapData,
+      units: units,
+      cities: cities,
+    );
+    final visibleHexes = revealCalculator.visibleHexesFor(
+      mapData: mapData,
+      sources: sources,
+    );
+    return current.fogForPlayer(playerId).withVisibleHexes(visibleHexes);
   }
 
   List<FogRevealSource> _sourcesForPlayer({
