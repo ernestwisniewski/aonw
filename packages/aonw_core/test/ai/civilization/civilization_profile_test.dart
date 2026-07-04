@@ -26,10 +26,11 @@ void main() {
       expect(weights.expansion, closeTo(0.95, 1e-9));
     });
 
-    test('reserved phase-B fields default to empty lists', () {
-      expect(CivilizationProfiles.poland.uniqueUnits, isEmpty);
-      expect(CivilizationProfiles.poland.uniqueBuildings, isEmpty);
-      expect(CivilizationProfiles.poland.startingBonuses, isEmpty);
+    test('standard profiles cover every supported country', () {
+      expect(
+        CivilizationProfiles.all.keys,
+        unorderedEquals(PlayerCountry.values),
+      );
     });
   });
 }
