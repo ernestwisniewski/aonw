@@ -4,6 +4,7 @@ import 'package:aonw_core/ai/ai_strategy.dart';
 import 'package:aonw_core/ai/civilization/civilization_profile_registry.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/mcts/mcts_action.dart';
+import 'package:aonw_core/ai/mcts/mcts_opponent_view_index.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
@@ -11,7 +12,6 @@ import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -80,7 +80,9 @@ class TracingMctsSimulator implements MctsSimulator {
         : persistent;
     final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
       state: afterOpponentPlans,
-      playerIds: _knownPlayerIds(afterOpponentPlans, view.forPlayerId),
+      playerIds: MctsOpponentViewIndex.fromState(
+        afterOpponentPlans,
+      ).knownPlayerIds(view.forPlayerId),
       mapData: view.mapData,
       ruleset: view.ruleset,
       mapObjectives: view.mapData.objectives,
@@ -116,8 +118,10 @@ class TracingMctsSimulator implements MctsSimulator {
     required GameRuleset ruleset,
   }) {
     var current = state;
-    for (final opponentId in _opponentPlayerIds(current, forPlayerId)) {
-      final opponentView = _viewForOpponent(
+    var viewIndex = MctsOpponentViewIndex.fromState(current);
+    final opponentPlayerIds = viewIndex.opponentPlayerIds(forPlayerId);
+    for (final opponentId in opponentPlayerIds) {
+      final opponentView = viewIndex.viewFor(
         state: current,
         opponentId: opponentId,
         turn: turn,
@@ -156,6 +160,7 @@ class TracingMctsSimulator implements MctsSimulator {
         );
         tick += 1;
       }
+      viewIndex = MctsOpponentViewIndex.fromState(current);
     }
     return current;
   }
@@ -357,85 +362,7 @@ class TracingMctsSimulator implements MctsSimulator {
     );
   }
 
-  GameView _viewForOpponent({
-    required PersistentGameState state,
-    required String opponentId,
-    required int turn,
-    required MapData mapData,
-    required GameRuleset ruleset,
-  }) {
-    final ownCities = [
-      for (final city in state.cities)
-        if (city.ownerPlayerId == opponentId) city,
-    ];
-    final ownCityIds = {for (final city in ownCities) city.id};
-    return GameView(
-      forPlayerId: opponentId,
-      turn: turn,
-      ownUnits: [
-        for (final unit in state.units)
-          if (unit.ownerPlayerId == opponentId) unit,
-      ],
-      ownCities: ownCities,
-      ownGold: state.playerGold[opponentId] ?? 0,
-      ownWarWeariness: state.playerWarWeariness[opponentId] ?? 0,
-      ownStabilityNet: state.playerStabilityNet[opponentId] ?? 0,
-      ownResearch: state.research.forPlayer(opponentId),
-      ownImprovements: [
-        for (final improvement in state.fieldImprovements)
-          if (_isOwnImprovement(improvement, ownCities, ownCityIds))
-            improvement,
-      ],
-      diplomacy: state.runtimeState.diplomacy,
-      visibleEnemyUnits: [
-        for (final unit in state.units)
-          if (unit.ownerPlayerId != opponentId) unit,
-      ],
-      rememberedEnemyCities: [
-        for (final city in state.cities)
-          if (city.ownerPlayerId != opponentId) city,
-      ],
-      visibility: const FogVisibilityQuery(
-        playerId: '',
-        state: FogOfWarState.empty,
-      ),
-      mapData: mapData,
-      ruleset: ruleset,
-    );
-  }
-
-  List<String> _knownPlayerIds(PersistentGameState state, String forPlayerId) {
-    final ids = <String>{
-      forPlayerId,
-      ..._opponentPlayerIds(state, forPlayerId),
-    };
-    return ids.toList()..sort();
-  }
-
-  List<String> _opponentPlayerIds(
-    PersistentGameState state,
-    String forPlayerId,
-  ) {
-    final ids = <String>{
-      for (final unit in state.units)
-        if (unit.ownerPlayerId != forPlayerId) unit.ownerPlayerId,
-      for (final city in state.cities)
-        if (city.ownerPlayerId != forPlayerId) city.ownerPlayerId,
-    };
-    return ids.toList()..sort();
-  }
-
   bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
-  }
-
-  bool _isOwnImprovement(
-    FieldImprovement improvement,
-    List<GameCity> ownCities,
-    Set<String> ownCityIds,
-  ) {
-    final builtByCityId = improvement.builtByCityId;
-    if (builtByCityId != null) return ownCityIds.contains(builtByCityId);
-    return ownCities.any((city) => city.controlsHex(improvement.hex));
   }
 }
