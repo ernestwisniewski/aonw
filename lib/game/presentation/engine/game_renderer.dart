@@ -38,6 +38,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -68,6 +69,7 @@ part 'game_renderer_artifact_taps.dart';
 part 'game_renderer_camera_focus.dart';
 part 'game_renderer_camera_policy.dart';
 part 'game_renderer_camera_rendering.dart';
+part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_input.dart';
 part 'game_renderer_state_sync.dart';
 part 'game_renderer_testing.dart';
@@ -393,6 +395,7 @@ class GameRenderer extends HexWorld
   void update(double dt) {
     super.update(dt);
     if (_isReady) _cameraController.update(dt);
+    _updateGamepadInput(dt);
     _syncFastCameraRendering(dt);
   }
 

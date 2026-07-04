@@ -4,14 +4,14 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/application/services/game_session.dart';
-import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart';
+import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
+import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
 import 'package:aonw/game/presentation/widgets.dart';
-import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';
@@ -26,7 +26,6 @@ import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/viewport_gesture_layer.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -392,101 +391,24 @@ class _GameRendererSessionHostState
                     widget.gameSave,
                   ),
                 ],
-                child: _GamePrimaryActionShortcutController(
-                  session: session,
-                  gameSave: widget.gameSave,
-                  animatingUnitIdsListenable:
-                      _renderer.animatingUnitIdsListenable,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: ViewportGestureLayer(
-                          game: _renderer,
-                          child: GameWidget(
-                            key: ValueKey(_renderer),
-                            game: _renderer,
-                            loadingBuilder: (_) =>
-                                ValueListenableBuilder<GameLoadingProgress>(
-                                  valueListenable: _loadingProgressController,
-                                  builder: (context, progress, _) {
-                                    return GameLoadingPanel(progress: progress);
-                                  },
-                                ),
-                          ),
-                        ),
-                      ),
-                      const Positioned.fill(child: _MapVignetteOverlay()),
-                      if (_showDiceRollTestOverlay)
-                        const Positioned.fill(child: DiceRollTestOverlay()),
-                      Positioned.fill(
-                        child: GameHud(
+                child: GamepadRendererInputBinding(
+                  renderer: _renderer,
+                  builder: (context, gamepadInput) =>
+                      GamePrimaryActionController(
+                        session: session,
+                        gameSave: widget.gameSave,
+                        animatingUnitIdsListenable:
+                            _renderer.animatingUnitIdsListenable,
+                        gamepadInputListenable: gamepadInput,
+                        child: _GameRendererPlaySurface(
+                          selection: widget.selection,
                           session: session,
-                          animatingUnitIdsListenable:
-                              _renderer.animatingUnitIdsListenable,
-                          initialCameraFocusReadyListenable:
-                              _renderer.initialCameraFocusReadyListenable,
                           gameSave: widget.gameSave,
-                          allowGraphicMode: session.imagePath != null,
+                          renderer: _renderer,
                           displaySettings: widget.displaySettings,
-                          onToggleTerrain: () => ref
-                              .read(hexDisplayProvider.notifier)
-                              .toggleTerrain(),
-                          onToggleResources: () => ref
-                              .read(hexDisplayProvider.notifier)
-                              .toggleResources(),
-                          onToggleHeightBadge: () => ref
-                              .read(hexDisplayProvider.notifier)
-                              .toggleHeightBadge(),
-                          onToggleCitySites: () => ref
-                              .read(hexDisplayProvider.notifier)
-                              .toggleCitySites(),
-                          onToggleCityGrowth: () => ref
-                              .read(hexDisplayProvider.notifier)
-                              .toggleCityGrowth(),
-                          onToggleHexBorders: () => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .setHexBordersVisibleForMap(
-                                  widget.selection,
-                                  !widget.displaySettings.hexBordersVisible,
-                                ),
-                          ),
-                          onToggleHeightWalls: () => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .setHeightWallsVisibleForMap(
-                                  widget.selection,
-                                  !widget.displaySettings.heightWallsVisible,
-                                ),
-                          ),
-                          onHexBorderColorChanged: (color) => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .setHexBorderColorForMap(
-                                  widget.selection,
-                                  color,
-                                ),
-                          ),
-                          onWallTintColorChanged: (color) => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .setWallTintColorForMap(
-                                  widget.selection,
-                                  color,
-                                ),
-                          ),
-                          onResetHexBorderColor: () => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .resetHexBorderColorForMap(widget.selection),
-                          ),
-                          onResetWallTintColor: () => unawaited(
-                            ref
-                                .read(hexDisplayProvider.notifier)
-                                .resetWallTintColorForMap(widget.selection),
-                          ),
-                          showDiceRollTest: _showDiceRollTestOverlay,
-                          aiAutopilotEnabled: true,
+                          loadingProgress: _loadingProgressController,
+                          preloadFuture: _startupAssetPreload,
+                          showDiceRollTestOverlay: _showDiceRollTestOverlay,
                           onToggleDiceRollTest: () {
                             setState(() {
                               _showDiceRollTestOverlay =
@@ -494,43 +416,8 @@ class _GameRendererSessionHostState
                             });
                           },
                           onClose: _returnToMainMenu,
-                          onViewModeChanged: (value) {
-                            if (value == MapViewMode.graphic &&
-                                session.imagePath == null) {
-                              return;
-                            }
-                            ref
-                                .read(
-                                  gameSessionProvider(
-                                    widget.selection,
-                                    session.saveId,
-                                  ).notifier,
-                                )
-                                .setViewMode(value);
-                          },
                         ),
                       ),
-                      Positioned(
-                        top: 10,
-                        left: 12,
-                        right: 12,
-                        child: _MultiplayerConnectionBanner(
-                          saveId: session.saveId,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: _GameStartupLoadingOverlay(
-                          saveId: session.saveId,
-                          multiplayer: session.gameMode == GameMode.multiplayer,
-                          preloadFuture: _startupAssetPreload,
-                          rendererReady: _renderer.readyListenable,
-                          initialCameraFocusReady:
-                              _renderer.initialCameraFocusReadyListenable,
-                          loadingProgress: _loadingProgressController,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -541,69 +428,143 @@ class _GameRendererSessionHostState
   }
 }
 
-class _GamePrimaryActionShortcutController extends ConsumerWidget {
-  const _GamePrimaryActionShortcutController({
+class _GameRendererPlaySurface extends ConsumerWidget {
+  const _GameRendererPlaySurface({
+    required this.selection,
     required this.session,
     required this.gameSave,
-    required this.animatingUnitIdsListenable,
-    required this.child,
+    required this.renderer,
+    required this.displaySettings,
+    required this.loadingProgress,
+    required this.preloadFuture,
+    required this.showDiceRollTestOverlay,
+    required this.onToggleDiceRollTest,
+    required this.onClose,
   });
 
+  final MapSelection selection;
   final GameSession session;
   final GameSave? gameSave;
-  final ValueListenable<Set<String>> animatingUnitIdsListenable;
-  final Widget child;
+  final GameRenderer renderer;
+  final HexDisplaySettings displaySettings;
+  final ValueListenable<GameLoadingProgress> loadingProgress;
+  final Future<void> preloadFuture;
+  final bool showDiceRollTestOverlay;
+  final VoidCallback onToggleDiceRollTest;
+  final Future<void> Function() onClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return GamePrimaryActionShortcutScope(
-      enabled: gameSave != null && session.saveId.isNotEmpty,
-      onActivate: () => _activate(ref),
-      child: child,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ViewportGestureLayer(
+            game: renderer,
+            child: GameWidget(
+              key: ValueKey(renderer),
+              game: renderer,
+              loadingBuilder: (_) =>
+                  ValueListenableBuilder<GameLoadingProgress>(
+                    valueListenable: loadingProgress,
+                    builder: (context, progress, _) {
+                      return GameLoadingPanel(progress: progress);
+                    },
+                  ),
+            ),
+          ),
+        ),
+        const Positioned.fill(child: _MapVignetteOverlay()),
+        if (showDiceRollTestOverlay)
+          const Positioned.fill(child: DiceRollTestOverlay()),
+        Positioned.fill(child: _buildHud(ref)),
+        Positioned(
+          top: 10,
+          left: 12,
+          right: 12,
+          child: _MultiplayerConnectionBanner(saveId: session.saveId),
+        ),
+        Positioned.fill(
+          child: _GameStartupLoadingOverlay(
+            saveId: session.saveId,
+            multiplayer: session.gameMode == GameMode.multiplayer,
+            preloadFuture: preloadFuture,
+            rendererReady: renderer.readyListenable,
+            initialCameraFocusReady: renderer.initialCameraFocusReadyListenable,
+            loadingProgress: loadingProgress,
+          ),
+        ),
+      ],
     );
   }
 
-  void _activate(WidgetRef ref) {
-    final save = gameSave;
-    if (save == null || session.saveId.isEmpty) return;
-    if (animatingUnitIdsListenable.value.isNotEmpty) return;
-
-    final playerControl = PlayerControlCoordinator.normalize(
-      current: ref.read(gamePlayerControlControllerProvider),
-      save: save,
+  Widget _buildHud(WidgetRef ref) {
+    return GameHud(
+      session: session,
+      animatingUnitIdsListenable: renderer.animatingUnitIdsListenable,
+      initialCameraFocusReadyListenable:
+          renderer.initialCameraFocusReadyListenable,
+      gameSave: gameSave,
+      allowGraphicMode: session.imagePath != null,
+      displaySettings: displaySettings,
+      onToggleTerrain: () =>
+          ref.read(hexDisplayProvider.notifier).toggleTerrain(),
+      onToggleResources: () =>
+          ref.read(hexDisplayProvider.notifier).toggleResources(),
+      onToggleHeightBadge: () =>
+          ref.read(hexDisplayProvider.notifier).toggleHeightBadge(),
+      onToggleCitySites: () =>
+          ref.read(hexDisplayProvider.notifier).toggleCitySites(),
+      onToggleCityGrowth: () =>
+          ref.read(hexDisplayProvider.notifier).toggleCityGrowth(),
+      onToggleHexBorders: () => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .setHexBordersVisibleForMap(
+              selection,
+              !displaySettings.hexBordersVisible,
+            ),
+      ),
+      onToggleHeightWalls: () => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .setHeightWallsVisibleForMap(
+              selection,
+              !displaySettings.heightWallsVisible,
+            ),
+      ),
+      onHexBorderColorChanged: (color) => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .setHexBorderColorForMap(selection, color),
+      ),
+      onWallTintColorChanged: (color) => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .setWallTintColorForMap(selection, color),
+      ),
+      onResetHexBorderColor: () => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .resetHexBorderColorForMap(selection),
+      ),
+      onResetWallTintColor: () => unawaited(
+        ref
+            .read(hexDisplayProvider.notifier)
+            .resetWallTintColorForMap(selection),
+      ),
+      showDiceRollTest: showDiceRollTestOverlay,
+      aiAutopilotEnabled: true,
+      onToggleDiceRollTest: onToggleDiceRollTest,
+      onClose: onClose,
+      onViewModeChanged: (value) => _setViewMode(ref, value),
     );
-    final activePlayerId = playerControl.activePlayerId;
-    if (activePlayerId.isEmpty || !playerControl.canAct) return;
-    if (save.playerStates[activePlayerId] == PlayerTurnState.finished) {
-      return;
-    }
+  }
 
-    final gameState = ref.read(gameStateProvider(session.saveId)).value;
-    if (gameState == null || gameState.hasSubmittedTurn(activePlayerId)) {
-      return;
-    }
-
-    final technologyViewModel = ref.read(
-      technologyPanelViewModelProvider(session.saveId, activePlayerId),
-    );
-    final readyToEndTurn = hudPlayerReadyToEndTurn(
-      gameState: gameState,
-      activePlayerId: activePlayerId,
-      technologyViewModel: technologyViewModel,
-    );
-
-    unawaited(
-      ref
-          .read(hudCommandDispatcherProvider)
-          .endTurn(
-            animatingUnitIdsListenable: animatingUnitIdsListenable,
-            gameSave: save,
-            activePlayerId: activePlayerId,
-            readyToEndTurn: readyToEndTurn,
-            currentState: () =>
-                ref.read(gameStateProvider(session.saveId)).value,
-          ),
-    );
+  void _setViewMode(WidgetRef ref, MapViewMode value) {
+    if (value == MapViewMode.graphic && session.imagePath == null) return;
+    ref
+        .read(gameSessionProvider(selection, session.saveId).notifier)
+        .setViewMode(value);
   }
 }
 

@@ -43,6 +43,10 @@ class ManualScreen extends ConsumerWidget {
                   label: l10n.manualMetaMobile,
                 ),
                 GameUiMetaPill(
+                  icon: Icons.sports_esports_outlined,
+                  label: l10n.manualMetaGamepad,
+                ),
+                GameUiMetaPill(
                   icon: Icons.flag_outlined,
                   label: l10n.manualMetaAlpha,
                   color: GameUiTheme.info,
@@ -86,6 +90,16 @@ List<Widget> _manualSections(
     const SizedBox(height: 10),
     _ControlGrid(groups: _mobileGroups(l10n)),
   ];
+  final gamepadControls = [
+    _SectionLead(
+      key: const Key('manual.gamepadSection'),
+      icon: Icons.sports_esports_outlined,
+      title: l10n.manualGamepadTitle,
+      subtitle: l10n.manualGamepadSubtitle,
+    ),
+    const SizedBox(height: 10),
+    _ControlGrid(groups: _gamepadGroups(l10n)),
+  ];
   final desktopControls = [
     _SectionLead(
       key: const Key('manual.desktopSection'),
@@ -98,8 +112,8 @@ List<Widget> _manualSections(
   ];
 
   final sections = mobileFirst
-      ? [mobileControls, commandLoop, desktopControls]
-      : [commandLoop, mobileControls, desktopControls];
+      ? [mobileControls, commandLoop, gamepadControls, desktopControls]
+      : [commandLoop, mobileControls, gamepadControls, desktopControls];
 
   return [
     for (var i = 0; i < sections.length; i += 1) ...[
@@ -680,6 +694,80 @@ List<_ControlGroup> _mobileGroups(AppLocalizations l10n) => [
         icon: Icons.play_arrow,
         action: l10n.manualMobileTurnAction,
         body: l10n.manualMobileTurnBody,
+      ),
+    ],
+  ),
+];
+
+List<_ControlGroup> _gamepadGroups(AppLocalizations l10n) => [
+  _ControlGroup(
+    icon: Icons.map_outlined,
+    title: l10n.manualMapCameraGroup,
+    color: GameUiTheme.info,
+    items: [
+      _ControlItem(
+        icon: Icons.control_camera,
+        action: l10n.manualGamepadCursorAction,
+        body: l10n.manualGamepadCursorBody,
+      ),
+      _ControlItem(
+        icon: Icons.open_with,
+        action: l10n.manualGamepadPanAction,
+        body: l10n.manualGamepadPanBody,
+      ),
+      _ControlItem(
+        icon: Icons.zoom_in,
+        action: l10n.manualGamepadZoomAction,
+        body: l10n.manualGamepadZoomBody,
+      ),
+    ],
+  ),
+  _ControlGroup(
+    icon: Icons.gps_fixed,
+    title: l10n.manualOrdersGroup,
+    color: GameUiTheme.success,
+    items: [
+      _ControlItem(
+        icon: Icons.check_circle_outline,
+        action: l10n.manualGamepadConfirmAction,
+        body: l10n.manualGamepadConfirmBody,
+      ),
+      _ControlItem(
+        icon: Icons.cancel_outlined,
+        action: l10n.manualGamepadCancelAction,
+        body: l10n.manualGamepadCancelBody,
+      ),
+      _ControlItem(
+        icon: Icons.alt_route,
+        action: l10n.manualGamepadModeAction,
+        body: l10n.manualGamepadModeBody,
+      ),
+      _ControlItem(
+        icon: Icons.info_outline,
+        action: l10n.manualGamepadInspectAction,
+        body: l10n.manualGamepadInspectBody,
+      ),
+    ],
+  ),
+  _ControlGroup(
+    icon: Icons.flag_outlined,
+    title: l10n.manualTurnFlowGroup,
+    color: GameUiTheme.warning,
+    items: [
+      _ControlItem(
+        icon: Icons.skip_next,
+        action: l10n.manualGamepadNextAction,
+        body: l10n.manualGamepadNextBody,
+      ),
+      _ControlItem(
+        icon: Icons.first_page,
+        action: l10n.manualGamepadFocusAction,
+        body: l10n.manualGamepadFocusBody,
+      ),
+      _ControlItem(
+        icon: Icons.play_arrow,
+        action: l10n.manualGamepadTurnAction,
+        body: l10n.manualGamepadTurnBody,
       ),
     ],
   ),

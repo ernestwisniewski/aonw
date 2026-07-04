@@ -553,7 +553,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'A quick reference for map movement, selection, orders, panels, and turn flow across desktop and mobile.'**
+  /// **'A quick reference for map movement, selection, orders, panels, and turn flow across desktop, mobile, and gamepad.'**
   String get manualSubtitle;
 
   /// No description provided for @manualMetaDesktop.
@@ -567,6 +567,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mobile'**
   String get manualMetaMobile;
+
+  /// No description provided for @manualMetaGamepad.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad'**
+  String get manualMetaGamepad;
 
   /// No description provided for @manualMetaAlpha.
   ///
@@ -651,6 +657,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Touch-first play tuned for readable panels, deliberate orders, and quick turn flow.'**
   String get manualMobileSubtitle;
+
+  /// No description provided for @manualGamepadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad controls'**
+  String get manualGamepadTitle;
+
+  /// No description provided for @manualGamepadSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Controller play centered on a hex cursor, camera sticks, and predictable confirm/cancel actions.'**
+  String get manualGamepadSubtitle;
 
   /// No description provided for @manualMapCameraGroup.
   ///
@@ -939,6 +957,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Jump to the next required decision or end the turn once all action points are spent.'**
   String get manualMobileTurnBody;
+
+  /// No description provided for @manualGamepadCursorAction.
+  ///
+  /// In en, this message translates to:
+  /// **'D-pad / left stick'**
+  String get manualGamepadCursorAction;
+
+  /// No description provided for @manualGamepadCursorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves the selected hex cursor without committing an order.'**
+  String get manualGamepadCursorBody;
+
+  /// No description provided for @manualGamepadPanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Right stick'**
+  String get manualGamepadPanAction;
+
+  /// No description provided for @manualGamepadPanBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pans the camera continuously while the selected hex stays intact.'**
+  String get manualGamepadPanBody;
+
+  /// No description provided for @manualGamepadZoomAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Triggers'**
+  String get manualGamepadZoomAction;
+
+  /// No description provided for @manualGamepadZoomBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Right trigger zooms in; left trigger zooms out for strategic or tactical view.'**
+  String get manualGamepadZoomBody;
+
+  /// No description provided for @manualGamepadConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'A'**
+  String get manualGamepadConfirmAction;
+
+  /// No description provided for @manualGamepadConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirms the current hex, matching a tap or left click on the map.'**
+  String get manualGamepadConfirmBody;
+
+  /// No description provided for @manualGamepadCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'B / Back'**
+  String get manualGamepadCancelAction;
+
+  /// No description provided for @manualGamepadCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancels the active targeting, panel choice, route, or interaction mode.'**
+  String get manualGamepadCancelBody;
+
+  /// No description provided for @manualGamepadModeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'X'**
+  String get manualGamepadModeAction;
+
+  /// No description provided for @manualGamepadModeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggles movement targeting for the selected unit when movement is available.'**
+  String get manualGamepadModeBody;
+
+  /// No description provided for @manualGamepadInspectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Y'**
+  String get manualGamepadInspectAction;
+
+  /// No description provided for @manualGamepadInspectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspects the current cursor hex without changing the active mode.'**
+  String get manualGamepadInspectBody;
+
+  /// No description provided for @manualGamepadNextAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Right bumper'**
+  String get manualGamepadNextAction;
+
+  /// No description provided for @manualGamepadNextBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Focuses the next pending player action in the turn queue.'**
+  String get manualGamepadNextBody;
+
+  /// No description provided for @manualGamepadFocusAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Left bumper'**
+  String get manualGamepadFocusAction;
+
+  /// No description provided for @manualGamepadFocusBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns focus to the turn-start target when you need to reorient.'**
+  String get manualGamepadFocusBody;
+
+  /// No description provided for @manualGamepadTurnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get manualGamepadTurnAction;
+
+  /// No description provided for @manualGamepadTurnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs the primary turn action, matching Space and the bottom action button.'**
+  String get manualGamepadTurnBody;
 
   /// No description provided for @mainMenuWhatsNew.
   ///

@@ -97,6 +97,8 @@ rendering behavior:
   presentation for attacks.
 - [Event Notifications and Popups](game-design/event-notifications-and-popups.md)
   - notification behavior, popup layering, and activity feedback.
+- [Gamepad Controls](game-design/gamepad-controls.md) - controller research,
+  input mapping, and the in-game manual contract.
 - [Map Display Preferences](game-design/map-display-preferences.md) - player
   display toggles and map visualization options.
 - [Map Validation](game-design/map-validation.md) - bundled map validation

@@ -45,14 +45,22 @@ void main() {
     expect(find.text('CORE COMMAND LOOP'), findsOneWidget);
     expect(find.byKey(const Key('manual.desktopSection')), findsOneWidget);
     expect(find.byKey(const Key('manual.mobileSection')), findsOneWidget);
+    expect(find.byKey(const Key('manual.gamepadSection')), findsOneWidget);
     expect(
       tester.getTopLeft(find.byKey(const Key('manual.mobileSection'))).dy,
       lessThan(
         tester.getTopLeft(find.byKey(const Key('manual.desktopSection'))).dy,
       ),
     );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('manual.gamepadSection'))).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const Key('manual.desktopSection'))).dy,
+      ),
+    );
     expect(find.text('Left click'), findsOneWidget);
     expect(find.text('Tap'), findsOneWidget);
+    expect(find.text('D-pad / left stick'), findsOneWidget);
     expect(find.text('?'), findsWidgets);
   });
 
@@ -101,5 +109,10 @@ void main() {
     );
     expect(find.text('Tap'), findsOneWidget);
     expect(find.text('CORE COMMAND LOOP'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('manual.gamepadSection')),
+      220,
+    );
+    expect(find.text('GAMEPAD CONTROLS'), findsOneWidget);
   });
 }

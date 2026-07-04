@@ -256,13 +256,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'Szybka karta ruchu mapy, zaznaczania, rozkazów, paneli i przebiegu tury na desktopie oraz mobile.';
+      'Szybka karta ruchu mapy, zaznaczania, rozkazów, paneli i przebiegu tury na desktopie, mobile oraz gamepadzie.';
 
   @override
   String get manualMetaDesktop => 'Desktop';
 
   @override
   String get manualMetaMobile => 'Mobile';
+
+  @override
+  String get manualMetaGamepad => 'Gamepad';
 
   @override
   String get manualMetaAlpha => 'Alpha singleplayer';
@@ -311,6 +314,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Gra dotykiem ustawiona pod czytelne panele, świadome rozkazy i szybki przebieg tury.';
+
+  @override
+  String get manualGamepadTitle => 'Sterowanie gamepadem';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Gra kontrolerem oparta o kursor heksa, analogową kamerę oraz przewidywalne potwierdzanie i anulowanie.';
 
   @override
   String get manualMapCameraGroup => 'Mapa i kamera';
@@ -477,6 +487,76 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Przeskakuje do kolejnej wymaganej decyzji albo kończy turę, gdy punkty akcji są zużyte.';
+
+  @override
+  String get manualGamepadCursorAction => 'D-pad / lewy analog';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Przesuwa zaznaczony kursor heksa bez wykonywania rozkazu.';
+
+  @override
+  String get manualGamepadPanAction => 'Prawy analog';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Płynnie przesuwa kamerę, nie naruszając aktualnego pola kursora.';
+
+  @override
+  String get manualGamepadZoomAction => 'Spusty';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'Prawy spust przybliża, a lewy oddala widok strategiczny lub taktyczny.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Potwierdza aktualny heks tak jak stuknięcie albo lewy klik na mapie.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Back';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Anuluje aktywne celowanie, wybór panelu, trasę albo tryb interakcji.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Włącza lub wyłącza celowanie ruchem dla zaznaczonej jednostki, gdy ruch jest dostępny.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Pokazuje aktualny heks kursora bez zmiany aktywnego trybu.';
+
+  @override
+  String get manualGamepadNextAction => 'Prawy bumper';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Przenosi fokus do kolejnej oczekującej akcji gracza w turze.';
+
+  @override
+  String get manualGamepadFocusAction => 'Lewy bumper';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Wraca fokusem do celu startowego tury, gdy trzeba odzyskać orientację.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Uruchamia główną akcję tury tak jak Spacja i dolny przycisk akcji.';
 
   @override
   String get mainMenuWhatsNew => 'Co nowego';
