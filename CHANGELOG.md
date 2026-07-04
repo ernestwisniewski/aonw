@@ -4,6 +4,25 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.0.9 - 2026-07-04
+
+- Added the first version of empire stability, cohesion, and war-weariness
+  systems, including clearer city and empire readouts in the HUD.
+- Deepened combat with point-blank ranged retaliation, counter-battery fire,
+  tuned damage variance, and a more distinct rifleman battlefield role.
+- Improved combat previews and battle notifications so retaliation, modifiers,
+  and combat outcomes are easier to understand before and after an attack.
+- Improved AI tactical choices around retaliation, city defense, expansion, and
+  long-term stability so computer players behave more consistently.
+- Made multiplayer and saved-game snapshots preserve more empire state,
+  including stability and war-weariness data.
+- Improved HUD performance by deferring detailed resource breakdown work until
+  it is actually opened.
+- Reduced map and unit rendering overhead with incremental fog updates, cached
+  unit badge text, and lighter preferred unit sprite atlases.
+- Tightened unit rules, production data, and upkeep handling so unit behavior is
+  more consistent across gameplay, AI planning, and UI previews.
+
 ## 1.0.8 - 2026-06-30
 
 - Expanded diplomacy with clearer relationship information, better proposal
