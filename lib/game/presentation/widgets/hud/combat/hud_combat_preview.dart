@@ -243,6 +243,7 @@ abstract final class HudCombatPreviewFactory {
         attackerId: attacker.id,
         defenderId: target.id,
       ),
+      attackDistance: target.distance,
       defenderCanRetreat: retreatDestination != null,
     );
 

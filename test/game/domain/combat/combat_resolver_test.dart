@@ -22,6 +22,7 @@ void main() {
           attackerId: attacker.unitId,
           defenderId: defender.unitId,
         ),
+        attackDistance: 1,
       );
       final second = CombatResolver.resolve(
         attacker: attacker,
@@ -31,6 +32,7 @@ void main() {
           attackerId: attacker.unitId,
           defenderId: defender.unitId,
         ),
+        attackDistance: 1,
       );
 
       expect(first, second);
@@ -48,6 +50,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(varianceRange: 0),
       );
 
@@ -57,7 +60,7 @@ void main() {
       expect(outcome.steps.whereType<RetaliationStep>(), hasLength(1));
     });
 
-    test('ranged attacker does not trigger retaliation', () {
+    test('standoff ranged attacker does not trigger retaliation', () {
       final outcome = CombatResolver.resolve(
         attacker: _combatant(
           id: 'archer',
@@ -69,6 +72,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 1, hp: 10, range: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 2,
         ruleset: const CombatRuleset(varianceRange: 0),
       );
 
@@ -89,6 +93,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 1, hp: 5),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(varianceRange: 0),
       );
 
@@ -109,6 +114,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 0, hp: 8, mobility: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(
           varianceRange: 0,
           retreatThresholdPercent: 25,
@@ -134,6 +140,7 @@ void main() {
           stats: const CombatStats(attack: 5, defense: 0, hp: 8, mobility: 1),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(
           varianceRange: 0,
           retreatThresholdPercent: 25,
@@ -159,6 +166,7 @@ void main() {
           stats: const CombatStats(attack: 0, defense: 1, hp: 5),
         ),
         rng: CombatRng(99),
+        attackDistance: 1,
         ruleset: const CombatRuleset(varianceRange: 0),
       );
 

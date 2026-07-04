@@ -247,6 +247,7 @@ abstract final class CombatReducer {
         attackerId: attacker.id,
         defenderId: defender.id,
       ),
+      attackDistance: _unitDistance(attacker, defender),
       defenderCanRetreat: retreatDestination != null,
     );
 
@@ -351,6 +352,7 @@ abstract final class CombatReducer {
         attackerId: attacker.id,
         defenderId: setup.city.id,
       ),
+      attackDistance: _cityDistance(attacker, setup.city),
     );
 
     final applied = _CombatOutcomeApplier.applyCityCombat(

@@ -46,16 +46,24 @@ abstract final class CombatResolver {
 
     var attackerHpAfter = attacker.currentHp;
     var attackerKilled = false;
+    final retaliationPercent = _retaliationPercent(
+      attackDistance: attackDistance,
+      defenderRange: defenderStats.range,
+      ruleset: ruleset,
+    );
     if (!defenderKilled &&
         !defenderRetreated &&
-        attackDistance <= 1 &&
+        retaliationPercent > 0 &&
         defenderStats.attack > 0) {
       final retaliationVariance = rng.signed(ruleset.varianceRange);
       steps.add(RollStep(seed: rng.seed, value: retaliationVariance));
-      final retaliationDamage = _damage(
-        attack: defenderStats.attack,
-        defense: attackerStats.defense,
-        variance: retaliationVariance,
+      final retaliationDamage = _scaledDamage(
+        _damage(
+          attack: defenderStats.attack,
+          defense: attackerStats.defense,
+          variance: retaliationVariance,
+        ),
+        percent: retaliationPercent,
       );
       attackerHpAfter -= retaliationDamage;
       attackerKilled = attackerHpAfter <= 0;
@@ -74,6 +82,24 @@ abstract final class CombatResolver {
       defenderRetreated: defenderRetreated,
       steps: steps,
     );
+  }
+
+  static int _retaliationPercent({
+    required int attackDistance,
+    required int defenderRange,
+    required CombatRuleset ruleset,
+  }) {
+    if (attackDistance <= 1) return 100;
+    if (defenderRange < attackDistance) return 0;
+    return ruleset.rangedRetaliationPercent < 0
+        ? 0
+        : ruleset.rangedRetaliationPercent;
+  }
+
+  static int _scaledDamage(int damage, {required int percent}) {
+    if (damage <= 0 || percent <= 0) return 0;
+    final scaled = damage * percent ~/ 100;
+    return scaled < 1 ? 1 : scaled;
   }
 
   static int _damage({
