@@ -94,6 +94,55 @@ void main() {
       );
     });
 
+    test('keeps popup breakdowns lazy after computing strip totals', () {
+      final wealthCity = GameCity(
+        id: 'wealth_city',
+        ownerPlayerId: 'player_1',
+        name: 'Wealth',
+        center: const CityHex(col: 0, row: 0),
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.wealth,
+        ),
+      );
+      final researchCity = GameCity(
+        id: 'research_city',
+        ownerPlayerId: 'player_1',
+        name: 'Research',
+        center: const CityHex(col: 0, row: 0),
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.research,
+        ),
+      );
+
+      final summary = HudResourceSummary.fromGameState(
+        state: GameState(
+          cities: [wealthCity, researchCity],
+          playerGold: const {'player_1': 12},
+        ),
+        playerId: 'player_1',
+        mapData: _landMap(),
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+      );
+
+      expect(summary.gold, 12);
+      expect(summary.goldIncome, 1);
+      expect(summary.goldPerTurn, 1);
+      expect(summary.sciencePerTurn, 5);
+      expect(summary.resourceBreakdowns.debugHasComputedGold, isFalse);
+      expect(summary.resourceBreakdowns.debugHasComputedScience, isFalse);
+
+      expect(summary.goldBreakdown.projectIncome, 1);
+      expect(summary.resourceBreakdowns.debugHasComputedGold, isTrue);
+      expect(summary.resourceBreakdowns.debugHasComputedScience, isFalse);
+
+      expect(summary.scienceBreakdown.byCityId, {
+        'wealth_city': 2,
+        'research_city': 3,
+      });
+      expect(summary.resourceBreakdowns.debugHasComputedScience, isTrue);
+    });
+
     test('applies cached unrest to the HUD economy forecast', () {
       const city = GameCity(
         id: 'city_1',

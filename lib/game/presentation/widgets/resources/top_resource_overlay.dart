@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
@@ -22,8 +23,7 @@ class TopResourceOverlay extends StatelessWidget {
     required this.stabilityDetails,
     required this.resourceInventory,
     required this.openBreakdown,
-    required this.goldBreakdown,
-    required this.scienceBreakdown,
+    required this.resourceBreakdowns,
     required this.cities,
     required this.activeTechnologyName,
     required this.activeTechnologyTurnsRemaining,
@@ -55,8 +55,7 @@ class TopResourceOverlay extends StatelessWidget {
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
   final TopResourcePopupType? openBreakdown;
-  final GoldBreakdown goldBreakdown;
-  final ScienceYieldBreakdown scienceBreakdown;
+  final HudResourceBreakdowns resourceBreakdowns;
   final List<GameCity> cities;
   final String? activeTechnologyName;
   final int? activeTechnologyTurnsRemaining;
@@ -226,15 +225,24 @@ class TopResourceOverlay extends StatelessWidget {
     }
 
     final resourceType = activePopup.resourceType!;
+    final stabilityPopup = resourceType == ResourceBreakdownType.stability;
     return ResourceBreakdownPopup(
       key: Key('gameHud.resourceBreakdown.${resourceType.name}'),
       type: resourceType,
-      gold: goldBreakdown,
-      science: scienceBreakdown,
-      stability: stabilityDetails.breakdown,
+      gold: resourceType == ResourceBreakdownType.gold
+          ? resourceBreakdowns.gold
+          : GoldBreakdown.empty,
+      science: resourceType == ResourceBreakdownType.science
+          ? resourceBreakdowns.science
+          : ScienceYieldBreakdown.empty,
+      stability: stabilityPopup
+          ? stabilityDetails.breakdown
+          : _emptyStabilityBreakdown,
       stabilityNet: stabilityNet,
       stabilityBand: stabilityBand,
-      stabilityStandingAdjustment: stabilityDetails.standingAdjustment,
+      stabilityStandingAdjustment: stabilityPopup
+          ? stabilityDetails.standingAdjustment
+          : 0,
       resources: resourceInventory,
       resourceNetwork: resourceNetwork,
       cities: cities,
@@ -256,6 +264,21 @@ class TopResourceOverlay extends StatelessWidget {
         : popup.resourceType!.name;
   }
 }
+
+const _emptyStabilityBreakdown = StabilityBreakdown(
+  playerId: '',
+  baseOrder: 0,
+  buildingSources: 0,
+  luxurySources: 0,
+  techSources: 0,
+  artifactSources: 0,
+  cityCost: 0,
+  populationCost: 0,
+  cohesionCost: 0,
+  conqueredCityCost: 0,
+  warWearinessCost: 0,
+  hegemonyTax: 0,
+);
 
 class _SwipeDismissibleResourceBreakdownSheet extends StatefulWidget {
   const _SwipeDismissibleResourceBreakdownSheet({

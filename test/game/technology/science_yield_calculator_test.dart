@@ -43,6 +43,34 @@ void main() {
       expect(science.byCityId['city_1'], 3);
     });
 
+    test('computes total amount without collecting source details', () {
+      final city1 = _city(id: 'city_1', ownerPlayerId: 'player_1');
+      final city2 = _city(
+        id: 'city_2',
+        ownerPlayerId: 'player_1',
+        buildings: {CityBuildingType.archive},
+      );
+      final cities = [city1, city2, _city(id: 'city_3', ownerPlayerId: 'p2')];
+
+      final full = ScienceYieldCalculator.totalForPlayer(
+        playerId: 'player_1',
+        cities: cities,
+        research: ResearchState.empty,
+        ruleset: ruleset,
+        cityRuleset: CityRulesets.standard,
+      );
+      final amount = ScienceYieldCalculator.totalAmountForPlayer(
+        playerId: 'player_1',
+        cities: cities,
+        research: ResearchState.empty,
+        ruleset: ruleset,
+        cityRuleset: CityRulesets.standard,
+      );
+
+      expect(amount, full.total);
+      expect(full.sources, isNotEmpty);
+    });
+
     test('adds science from selected buildings with diminishing returns', () {
       final city = _city(
         id: 'city_1',
