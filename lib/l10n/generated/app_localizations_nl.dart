@@ -258,13 +258,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'Een snelle referentie voor kaartbeweging, selectie, bestellingen, panelen en turnflow op desktop en mobiel.';
+      'Een snelle referentie voor kaartbeweging, selectie, bestellingen, panelen en beurtverloop op desktop, mobiel en gamepad.';
 
   @override
   String get manualMetaDesktop => 'Bureaublad';
 
   @override
   String get manualMetaMobile => 'Mobiel';
+
+  @override
+  String get manualMetaGamepad => 'Gamepad';
 
   @override
   String get manualMetaAlpha => 'Alfa voor één speler';
@@ -313,6 +316,13 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Touch-first play afgestemd op leesbare panelen, weloverwogen opdrachten en een snelle beurtstroom.';
+
+  @override
+  String get manualGamepadTitle => 'Gamepadbediening';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Controller-spel rond een hex-cursor, camerasticks en voorspelbaar bevestigen/annuleren.';
 
   @override
   String get manualMapCameraGroup => 'Kaart en camera';
@@ -479,6 +489,76 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Spring naar de volgende vereiste beslissing of beëindig de beurt zodra alle actiepunten zijn opgebruikt.';
+
+  @override
+  String get manualGamepadCursorAction => 'D-pad / linker stick';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Verplaatst de geselecteerde hex-cursor zonder een opdracht uit te voeren.';
+
+  @override
+  String get manualGamepadPanAction => 'Rechter stick';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Pant de camera continu terwijl de geselecteerde hex behouden blijft.';
+
+  @override
+  String get manualGamepadZoomAction => 'Triggers';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'Rechter trigger zoomt in; linker trigger zoomt uit voor strategisch of tactisch beeld.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Bevestigt de huidige hex, net als tikken of links klikken op de kaart.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Terug';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Annuleert actieve targeting, paneelkeuze, route of interactiemodus.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Schakelt bewegingsdoelen voor de geselecteerde eenheid wanneer beweging beschikbaar is.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Inspecteert de huidige cursor-hex zonder de actieve modus te wijzigen.';
+
+  @override
+  String get manualGamepadNextAction => 'Rechter bumper';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Focust de volgende openstaande speleractie in de beurtwachtrij.';
+
+  @override
+  String get manualGamepadFocusAction => 'Linker bumper';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Brengt de focus terug naar het startdoel van de beurt wanneer u opnieuw wilt oriënteren.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Voert de primaire beurtactie uit, net als Spatie en de onderste actieknop.';
 
   @override
   String get mainMenuWhatsNew => 'Wat is er nieuw';

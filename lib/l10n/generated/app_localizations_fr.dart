@@ -260,13 +260,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'Une référence rapide pour le mouvement de carte, la sélection, les commandes, les panneaux, et le flux de tour sur le bureau et mobile.';
+      'Une référence rapide pour le mouvement de carte, la sélection, les commandes, les panneaux, et le flux de tour sur bureau, mobile et manette.';
 
   @override
   String get manualMetaDesktop => 'Bureau';
 
   @override
   String get manualMetaMobile => 'Mobile';
+
+  @override
+  String get manualMetaGamepad => 'Manette';
 
   @override
   String get manualMetaAlpha => 'Un seul joueur alpha';
@@ -315,6 +318,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Touch-premier jeu accordé pour des panneaux lisibles, des ordres délibérés, et un flux de tour rapide.';
+
+  @override
+  String get manualGamepadTitle => 'Commandes manette';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Jeu à la manette centré sur un curseur hex, les sticks de caméra, et confirmer/annuler prévisible.';
 
   @override
   String get manualMapCameraGroup => 'Carte & appareil photo';
@@ -481,6 +491,76 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Aller à la prochaine décision requise ou terminer le tour une fois que tous les points d\'action sont dépensés.';
+
+  @override
+  String get manualGamepadCursorAction => 'Croix / stick gauche';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Déplace le curseur hex sélectionné sans exécuter d\'ordre.';
+
+  @override
+  String get manualGamepadPanAction => 'Stick droit';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Déplace la caméra en continu tout en gardant l\'hex sélectionné.';
+
+  @override
+  String get manualGamepadZoomAction => 'Gâchettes';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'La gâchette droite zoome; la gauche dézoome pour la vue stratégique ou tactique.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Confirme l\'hex actuel, comme un appui ou un clic gauche sur la carte.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Retour';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Annule le ciblage actif, le choix de panneau, l\'itinéraire ou le mode d\'interaction.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Active ou désactive le ciblage de mouvement pour l\'unité sélectionnée si elle peut bouger.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Inspecte l\'hex du curseur sans changer le mode actif.';
+
+  @override
+  String get manualGamepadNextAction => 'Bumper droit';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Focalise la prochaine action joueur en attente dans la file du tour.';
+
+  @override
+  String get manualGamepadFocusAction => 'Bumper gauche';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Ramène le focus vers la cible de début de tour quand vous devez vous réorienter.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Lance l\'action principale du tour, comme Espace et le bouton d\'action inférieur.';
 
   @override
   String get mainMenuWhatsNew => 'Nouveautés';

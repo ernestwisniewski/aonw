@@ -259,13 +259,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'Eine kurze Übersicht zu Kartenbewegung, Auswahl, Befehlen, Bereichen und Zugablauf auf Desktop und Mobilgerät.';
+      'Eine kurze Übersicht zu Kartenbewegung, Auswahl, Befehlen, Bereichen und Zugablauf auf Desktop, Mobilgerät und Gamepad.';
 
   @override
   String get manualMetaDesktop => 'Desktop';
 
   @override
   String get manualMetaMobile => 'Mobil';
+
+  @override
+  String get manualMetaGamepad => 'Gamepad';
 
   @override
   String get manualMetaAlpha => 'Einzelspieler-Alpha';
@@ -314,6 +317,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Touchorientiertes Spiel, abgestimmt auf gut lesbare Bereiche, bewusste Befehle und schnellen Zugablauf.';
+
+  @override
+  String get manualGamepadTitle => 'Gamepad-Steuerung';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Controller-Spiel mit Hex-Cursor, Kamerasticks und vorhersehbaren Bestätigen- und Abbrechen-Aktionen.';
 
   @override
   String get manualMapCameraGroup => 'Karte & Kamera';
@@ -480,6 +490,76 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Springe zur nächsten erforderlichen Entscheidung oder beende den Zug, sobald alle Aktionspunkte ausgegeben sind.';
+
+  @override
+  String get manualGamepadCursorAction => 'Steuerkreuz / linker Stick';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Bewegt den ausgewählten Hex-Cursor, ohne einen Befehl auszuführen.';
+
+  @override
+  String get manualGamepadPanAction => 'Rechter Stick';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Verschiebt die Kamera kontinuierlich, während das ausgewählte Hex-Feld erhalten bleibt.';
+
+  @override
+  String get manualGamepadZoomAction => 'Trigger';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'Rechter Trigger zoomt hinein; linker Trigger zoomt für Strategie- oder Taktikansicht heraus.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Bestätigt das aktuelle Hex-Feld wie Tippen oder Linksklick auf der Karte.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Zurück';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Bricht aktive Zielwahl, Bereichsauswahl, Route oder Interaktionsmodus ab.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Schaltet die Bewegungszielwahl für die ausgewählte Einheit um, wenn Bewegung verfügbar ist.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Prüft das aktuelle Cursor-Hex, ohne den aktiven Modus zu ändern.';
+
+  @override
+  String get manualGamepadNextAction => 'Rechter Bumper';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.';
+
+  @override
+  String get manualGamepadFocusAction => 'Linker Bumper';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Setzt den Fokus auf das Ziel vom Zugbeginn zurück, wenn du dich neu orientieren musst.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Führt die primäre Zugaktion aus, wie Leertaste und untere Aktionstaste.';
 
   @override
   String get mainMenuWhatsNew => 'Was ist neu?';

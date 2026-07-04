@@ -259,13 +259,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'Una referencia rápida para movimiento del mapa, selección, órdenes, paneles y flujo de turnos en escritorio y móvil.';
+      'Una referencia rápida para movimiento del mapa, selección, órdenes, paneles y flujo de turnos en escritorio, móvil y gamepad.';
 
   @override
   String get manualMetaDesktop => 'Escritorio';
 
   @override
   String get manualMetaMobile => 'Móvil';
+
+  @override
+  String get manualMetaGamepad => 'Gamepad';
 
   @override
   String get manualMetaAlpha => 'Alfa para un jugador';
@@ -314,6 +317,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Juego táctil ajustado para paneles legibles, órdenes deliberadas y flujo de turnos rápido.';
+
+  @override
+  String get manualGamepadTitle => 'Controles de gamepad';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Juego con mando centrado en un cursor hexagonal, sticks de cámara y confirmar/cancelar predecible.';
 
   @override
   String get manualMapCameraGroup => 'Mapa y cámara';
@@ -480,6 +490,76 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Salta a la siguiente decisión requerida o termina el turno cuando se hayan gastado todos los puntos de acción.';
+
+  @override
+  String get manualGamepadCursorAction => 'Cruceta / stick izquierdo';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Mueve el cursor hexagonal seleccionado sin ejecutar una orden.';
+
+  @override
+  String get manualGamepadPanAction => 'Stick derecho';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Desplaza la cámara de forma continua sin perder el hexágono seleccionado.';
+
+  @override
+  String get manualGamepadZoomAction => 'Gatillos';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'El gatillo derecho acerca; el izquierdo aleja para vista estratégica o táctica.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Confirma el hexágono actual, igual que tocar o hacer clic izquierdo en el mapa.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Atrás';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Cancela el objetivo activo, la elección de panel, la ruta o el modo de interacción.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Alterna la selección de movimiento para la unidad seleccionada cuando haya movimiento disponible.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Inspecciona el hexágono del cursor sin cambiar el modo activo.';
+
+  @override
+  String get manualGamepadNextAction => 'Bumper derecho';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Enfoca la siguiente acción pendiente del jugador en la cola del turno.';
+
+  @override
+  String get manualGamepadFocusAction => 'Bumper izquierdo';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Devuelve el foco al objetivo inicial del turno cuando necesites orientarte.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Ejecuta la acción principal del turno, igual que Espacio y el botón inferior.';
 
   @override
   String get mainMenuWhatsNew => 'Novedades';

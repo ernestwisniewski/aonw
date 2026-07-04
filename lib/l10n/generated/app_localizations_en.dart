@@ -256,13 +256,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualSubtitle =>
-      'A quick reference for map movement, selection, orders, panels, and turn flow across desktop and mobile.';
+      'A quick reference for map movement, selection, orders, panels, and turn flow across desktop, mobile, and gamepad.';
 
   @override
   String get manualMetaDesktop => 'Desktop';
 
   @override
   String get manualMetaMobile => 'Mobile';
+
+  @override
+  String get manualMetaGamepad => 'Gamepad';
 
   @override
   String get manualMetaAlpha => 'Single-player alpha';
@@ -311,6 +314,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get manualMobileSubtitle =>
       'Touch-first play tuned for readable panels, deliberate orders, and quick turn flow.';
+
+  @override
+  String get manualGamepadTitle => 'Gamepad controls';
+
+  @override
+  String get manualGamepadSubtitle =>
+      'Controller play centered on a hex cursor, camera sticks, and predictable confirm/cancel actions.';
 
   @override
   String get manualMapCameraGroup => 'Map & camera';
@@ -477,6 +487,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get manualMobileTurnBody =>
       'Jump to the next required decision or end the turn once all action points are spent.';
+
+  @override
+  String get manualGamepadCursorAction => 'D-pad / left stick';
+
+  @override
+  String get manualGamepadCursorBody =>
+      'Moves the selected hex cursor without committing an order.';
+
+  @override
+  String get manualGamepadPanAction => 'Right stick';
+
+  @override
+  String get manualGamepadPanBody =>
+      'Pans the camera continuously while the selected hex stays intact.';
+
+  @override
+  String get manualGamepadZoomAction => 'Triggers';
+
+  @override
+  String get manualGamepadZoomBody =>
+      'Right trigger zooms in; left trigger zooms out for strategic or tactical view.';
+
+  @override
+  String get manualGamepadConfirmAction => 'A';
+
+  @override
+  String get manualGamepadConfirmBody =>
+      'Confirms the current hex, matching a tap or left click on the map.';
+
+  @override
+  String get manualGamepadCancelAction => 'B / Back';
+
+  @override
+  String get manualGamepadCancelBody =>
+      'Cancels the active targeting, panel choice, route, or interaction mode.';
+
+  @override
+  String get manualGamepadModeAction => 'X';
+
+  @override
+  String get manualGamepadModeBody =>
+      'Toggles movement targeting for the selected unit when movement is available.';
+
+  @override
+  String get manualGamepadInspectAction => 'Y';
+
+  @override
+  String get manualGamepadInspectBody =>
+      'Inspects the current cursor hex without changing the active mode.';
+
+  @override
+  String get manualGamepadNextAction => 'Right bumper';
+
+  @override
+  String get manualGamepadNextBody =>
+      'Focuses the next pending player action in the turn queue.';
+
+  @override
+  String get manualGamepadFocusAction => 'Left bumper';
+
+  @override
+  String get manualGamepadFocusBody =>
+      'Returns focus to the turn-start target when you need to reorient.';
+
+  @override
+  String get manualGamepadTurnAction => 'Start';
+
+  @override
+  String get manualGamepadTurnBody =>
+      'Runs the primary turn action, matching Space and the bottom action button.';
 
   @override
   String get mainMenuWhatsNew => 'What\'s new';
