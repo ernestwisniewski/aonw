@@ -17,10 +17,24 @@ String? _outcomePerspectivePlayerId({
 }
 
 extension _GameHudGamepadFocusTargets on _GameHudState {
+  void _syncReturnMenuGamepadFocusTarget(
+    String label,
+    VoidCallback onActivate, {
+    required bool enabled,
+  }) {
+    _syncMenuGamepadFocusTarget(
+      label: label,
+      onActivate: onActivate,
+      enabled: enabled,
+      activationKey: widget.session.saveId,
+    );
+  }
+
   void _syncMenuGamepadFocusTarget({
     required String label,
     required VoidCallback onActivate,
     required bool enabled,
+    required Object? activationKey,
   }) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -35,6 +49,7 @@ extension _GameHudGamepadFocusTargets on _GameHudState {
                       id: HudGamepadFocusTargetIds.menuReturn,
                       label: label,
                       onActivate: onActivate,
+                      activationKey: activationKey,
                     ),
                   ]
                 : const <HudGamepadFocusTarget>[],

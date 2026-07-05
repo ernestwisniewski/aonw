@@ -44,6 +44,7 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('menu'),
           label: l10n.optionsOpenMenuTooltip,
           onActivate: _expandMenu,
+          activationKey: _sideMenuActivationKey('menu', '', null),
         ),
       ];
     }
@@ -53,6 +54,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
         id: _sideMenuTargetId('options'),
         label: l10n.optionsTooltip,
         onActivate: () => _toggleOptions(activePlayerId, gameState),
+        activationKey: _sideMenuActivationKey(
+          'options',
+          activePlayerId,
+          gameState,
+        ),
       ),
       if (helpAvailable)
         HudGamepadFocusTarget(
@@ -60,6 +66,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('help'),
           label: l10n.helpPopupsTitle,
           onActivate: () => _toggleHelpPanel(activePlayerId, gameState),
+          activationKey: _sideMenuActivationKey(
+            'help',
+            activePlayerId,
+            gameState,
+          ),
         ),
       if (objectivesAvailable)
         HudGamepadFocusTarget(
@@ -67,6 +78,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('objectives'),
           label: l10n.objectivesPanelTitle,
           onActivate: () => _toggleObjectivesPanel(activePlayerId, gameState),
+          activationKey: _sideMenuActivationKey(
+            'objectives',
+            activePlayerId,
+            gameState,
+          ),
         ),
       if (activityLogAvailable)
         HudGamepadFocusTarget(
@@ -74,6 +90,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('activityLog'),
           label: l10n.activityLogTitle,
           onActivate: () => _toggleActivityLogPanel(activePlayerId, gameState),
+          activationKey: _sideMenuActivationKey(
+            'activityLog',
+            activePlayerId,
+            gameState,
+          ),
         ),
       if (globalActionsAvailable)
         HudGamepadFocusTarget(
@@ -81,6 +102,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('research'),
           label: l10n.commonResearch,
           onActivate: () => _toggleTechnologyPanel(activePlayerId, gameState),
+          activationKey: _sideMenuActivationKey(
+            'research',
+            activePlayerId,
+            gameState,
+          ),
         ),
       if (globalActionsAvailable)
         HudGamepadFocusTarget(
@@ -88,6 +114,11 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
           id: _sideMenuTargetId('empire'),
           label: l10n.commonEmpire,
           onActivate: () => _toggleEmpirePanel(activePlayerId, gameState),
+          activationKey: _sideMenuActivationKey(
+            'empire',
+            activePlayerId,
+            gameState,
+          ),
         ),
     ];
   }
@@ -105,6 +136,20 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
 
   String _sideMenuTargetId(String targetId) {
     return HudGamepadFocusTargetIds.globalAction(targetId);
+  }
+
+  Object _sideMenuActivationKey(
+    String targetId,
+    String activePlayerId,
+    GameState? gameState,
+  ) {
+    return Object.hash(
+      widget.session.saveId,
+      widget.gameSave?.id,
+      targetId,
+      activePlayerId,
+      gameState,
+    );
   }
 
   void _toggleObjectivesPanel(String activePlayerId, GameState? gameState) {

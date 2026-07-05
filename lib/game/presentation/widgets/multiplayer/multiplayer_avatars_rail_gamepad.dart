@@ -49,7 +49,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
     required String activePlayerId,
     required String targetPlayerId,
   }) async {
-    _setPopupInputCaptured(true);
+    _setPopupInputCaptured(true, sourceId: 'multiplayerAvatarsRail.diplomacy');
     try {
       await showDiplomacyPlayerModal(
         context,
@@ -62,7 +62,10 @@ extension _MultiplayerAvatarsRailOverlayGamepad
         onCommand: ref.read(gameCommandControllerProvider.notifier).dispatch,
       );
     } finally {
-      _setPopupInputCaptured(false);
+      _setPopupInputCaptured(
+        false,
+        sourceId: 'multiplayerAvatarsRail.diplomacy',
+      );
     }
   }
 
@@ -73,7 +76,10 @@ extension _MultiplayerAvatarsRailOverlayGamepad
     required DiplomacyState diplomacy,
     required String activePlayerId,
   }) async {
-    _setPopupInputCaptured(true);
+    _setPopupInputCaptured(
+      true,
+      sourceId: 'multiplayerAvatarsRail.requestedSheet',
+    );
     try {
       await MultiplayerAvatarsRail.showPlayersSheet(
         context,
@@ -92,7 +98,10 @@ extension _MultiplayerAvatarsRailOverlayGamepad
         ),
       );
     } finally {
-      _setPopupInputCaptured(false);
+      _setPopupInputCaptured(
+        false,
+        sourceId: 'multiplayerAvatarsRail.requestedSheet',
+      );
     }
   }
 
@@ -115,6 +124,12 @@ extension _MultiplayerAvatarsRailOverlayGamepad
             activePlayerId: activePlayerId,
             playerId: player.id,
           ),
+          activationKey: Object.hash(
+            gameSave.id,
+            activePlayerId,
+            gameState,
+            player.id,
+          ),
         ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.rightPlayers,
@@ -125,6 +140,12 @@ extension _MultiplayerAvatarsRailOverlayGamepad
               .read(multiplayerStatusSheetRequestProvider.notifier)
               .request(save: gameSave, activePlayerId: activePlayerId);
         },
+        activationKey: Object.hash(
+          gameSave.id,
+          activePlayerId,
+          gameState,
+          'statusSheet',
+        ),
       ),
     ];
   }
@@ -138,9 +159,9 @@ extension _MultiplayerAvatarsRailOverlayGamepad
     });
   }
 
-  void _setPopupInputCaptured(bool captured) {
+  void _setPopupInputCaptured(bool captured, {required String sourceId}) {
     ref
         .read(hudGamepadPopupInputCaptureProvider.notifier)
-        .setCaptured(captured);
+        .setSourceCaptured(sourceId, captured);
   }
 }

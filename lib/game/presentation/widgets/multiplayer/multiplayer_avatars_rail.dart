@@ -132,7 +132,10 @@ class _MultiplayerAvatarsRailOverlayState
         gameState: gameState,
         gamepadFocusedTargetId: focusedTargetId,
         gamepadInputListenable: widget.gamepadInputListenable,
-        onGamepadSheetOpenChanged: _setPopupInputCaptured,
+        onGamepadSheetOpenChanged: (captured) => _setPopupInputCaptured(
+          captured,
+          sourceId: 'multiplayerAvatarsRail.fullListSheet',
+        ),
         onAvatarTapped: (playerId) => _handleAvatarTapped(
           context,
           gameSave: gameSave,

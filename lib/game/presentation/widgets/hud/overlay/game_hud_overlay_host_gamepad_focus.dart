@@ -22,6 +22,8 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
     final targets = [
       ..._topResourceFocusTargets(
         frame: frame,
+        activePlayerId: activePlayerId,
+        gameState: gameState,
         onGoldPressed: () =>
             dispatcher.toggleResourceBreakdown(ResourceBreakdownType.gold),
         onSciencePressed: () =>
@@ -38,7 +40,11 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
         ),
         onVictoryPressed: dispatcher.toggleVictoryBreakdown,
       ),
-      ..._selectionActionFocusTargets(selectionActions),
+      ..._selectionActionFocusTargets(
+        selectionActions,
+        activePlayerId: activePlayerId,
+        gameState: gameState,
+      ),
     ];
     _publishHudGamepadFocusTargets(targets, enabled: enabled);
     final focusState = ref.read(hudGamepadFocusControllerProvider);
@@ -63,7 +69,9 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
     required String activePlayerId,
   }) {
     dispatcher.closeResourceBreakdown();
-    ref.read(hudGamepadPopupInputCaptureProvider.notifier).setCaptured(true);
+    ref
+        .read(hudGamepadPopupInputCaptureProvider.notifier)
+        .setSourceCaptured('hudOverlay.turnTimeline', true);
     unawaited(
       showTurnTimelinePopup(
         context,
@@ -76,7 +84,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
         if (!mounted) return;
         ref
             .read(hudGamepadPopupInputCaptureProvider.notifier)
-            .setCaptured(false);
+            .setSourceCaptured('hudOverlay.turnTimeline', false);
       }),
     );
   }
@@ -96,6 +104,8 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
 
   List<HudGamepadFocusTarget> _topResourceFocusTargets({
     required HudOverlayFrame frame,
+    required String activePlayerId,
+    required GameState? gameState,
     required VoidCallback onGoldPressed,
     required VoidCallback onSciencePressed,
     required VoidCallback onStabilityPressed,
@@ -113,43 +123,75 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
         id: HudGamepadFocusTargetIds.resourceGold,
         label: l10n.commonGold,
         onActivate: onGoldPressed,
+        activationKey: _topResourceActivationKey(
+          'gold',
+          activePlayerId,
+          gameState,
+        ),
       ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.topResources,
         id: HudGamepadFocusTargetIds.resourceScience,
         label: l10n.commonScience,
         onActivate: onSciencePressed,
+        activationKey: _topResourceActivationKey(
+          'science',
+          activePlayerId,
+          gameState,
+        ),
       ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.topResources,
         id: HudGamepadFocusTargetIds.resourceStability,
         label: l10n.commonStability,
         onActivate: onStabilityPressed,
+        activationKey: _topResourceActivationKey(
+          'stability',
+          activePlayerId,
+          gameState,
+        ),
       ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.topResources,
         id: HudGamepadFocusTargetIds.resourceResources,
         label: l10n.commonResources,
         onActivate: onResourcesPressed,
+        activationKey: _topResourceActivationKey(
+          'resources',
+          activePlayerId,
+          gameState,
+        ),
       ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.topResources,
         id: HudGamepadFocusTargetIds.resourceTurn,
         label: l10n.commonTurn,
         onActivate: onTurnPressed,
+        activationKey: _topResourceActivationKey(
+          'turn',
+          activePlayerId,
+          gameState,
+        ),
       ),
       HudGamepadFocusTarget(
         section: HudGamepadFocusSection.topResources,
         id: HudGamepadFocusTargetIds.resourceVictory,
         label: l10n.gameGoalTitle,
         onActivate: onVictoryPressed,
+        activationKey: _topResourceActivationKey(
+          'victory',
+          activePlayerId,
+          gameState,
+        ),
       ),
     ];
   }
 
   List<HudGamepadFocusTarget> _selectionActionFocusTargets(
-    List<Widget> actions,
-  ) {
+    List<Widget> actions, {
+    required String activePlayerId,
+    required GameState? gameState,
+  }) {
     return [
       for (final action in actions)
         if (action is SelectionCommandChip &&
@@ -160,8 +202,27 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
             id: HudGamepadFocusTargetIds.selectionAction(action.actionId),
             label: action.label,
             onActivate: action.onTap!,
+            activationKey: Object.hash(
+              widget.gameSave.id,
+              activePlayerId,
+              gameState,
+              action.actionId,
+            ),
           ),
     ];
+  }
+
+  Object _topResourceActivationKey(
+    String resourceId,
+    String activePlayerId,
+    GameState? gameState,
+  ) {
+    return Object.hash(
+      widget.gameSave.id,
+      resourceId,
+      activePlayerId,
+      gameState,
+    );
   }
 
   List<Widget> _focusSelectionActions(List<Widget> actions, String? targetId) {

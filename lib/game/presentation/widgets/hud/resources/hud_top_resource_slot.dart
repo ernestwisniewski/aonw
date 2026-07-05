@@ -99,7 +99,7 @@ class HudTopResourceSlot extends ConsumerWidget {
           dispatcher.closeResourceBreakdown();
           ref
               .read(hudGamepadPopupInputCaptureProvider.notifier)
-              .setCaptured(true);
+              .setSourceCaptured('topResources.turnTimeline', true);
           unawaited(
             showTurnTimelinePopup(
               context,
@@ -112,7 +112,7 @@ class HudTopResourceSlot extends ConsumerWidget {
               if (!context.mounted) return;
               ref
                   .read(hudGamepadPopupInputCaptureProvider.notifier)
-                  .setCaptured(false);
+                  .setSourceCaptured('topResources.turnTimeline', false);
             }),
           );
         },

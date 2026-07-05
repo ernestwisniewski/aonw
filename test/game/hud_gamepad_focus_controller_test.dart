@@ -117,13 +117,73 @@ void main() {
       HudGamepadFocusSection.selectionActions,
     );
   });
+
+  test('registry refreshes callbacks when activation key changes', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final registry = container.read(
+      hudGamepadFocusTargetRegistryProvider.notifier,
+    );
+    final activations = <String>[];
+
+    registry
+      ..setSource('source', [
+        _target(
+          HudGamepadFocusSection.rightPlayers,
+          'players.player_1',
+          activationKey: 'player_1',
+          onActivate: () => activations.add('player_1'),
+        ),
+      ])
+      ..setSource('source', [
+        _target(
+          HudGamepadFocusSection.rightPlayers,
+          'players.player_1',
+          activationKey: 'player_2',
+          onActivate: () => activations.add('player_2'),
+        ),
+      ]);
+
+    final targets = HudGamepadFocusTargetRegistry.flatten(
+      container.read(hudGamepadFocusTargetRegistryProvider),
+    );
+    targets.single.onActivate();
+
+    expect(activations, ['player_2']);
+  });
+
+  test('popup capture remains active until every source releases', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    void setCaptured(String sourceId, bool captured) {
+      container
+          .read(hudGamepadPopupInputCaptureProvider.notifier)
+          .setSourceCaptured(sourceId, captured);
+    }
+
+    setCaptured('playersSheet', true);
+    setCaptured('diplomacyPopup', true);
+    setCaptured('playersSheet', false);
+
+    expect(container.read(hudGamepadPopupInputCaptureProvider), isTrue);
+
+    setCaptured('diplomacyPopup', false);
+
+    expect(container.read(hudGamepadPopupInputCaptureProvider), isFalse);
+  });
 }
 
-HudGamepadFocusTarget _target(HudGamepadFocusSection section, String id) {
+HudGamepadFocusTarget _target(
+  HudGamepadFocusSection section,
+  String id, {
+  Object? activationKey,
+  void Function()? onActivate,
+}) {
   return HudGamepadFocusTarget(
     section: section,
     id: id,
     label: id,
-    onActivate: () {},
+    onActivate: onActivate ?? () {},
+    activationKey: activationKey,
   );
 }

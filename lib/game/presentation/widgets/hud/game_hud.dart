@@ -171,16 +171,14 @@ class _GameHudState extends ConsumerState<GameHud> {
         (state) => state.active ? state.targetId : null,
       ),
     );
-    final hudGamepadFocusEnabled =
-        gameSave != null &&
-        !handoffBlocksHud &&
-        outcomeSummary == null &&
-        hudFocusTargets.isNotEmpty;
+    final hudAvailable =
+        gameSave != null && !handoffBlocksHud && outcomeSummary == null;
+    final hudGamepadFocusEnabled = hudAvailable && hudFocusTargets.isNotEmpty;
     void onReturnToMenu() => unawaited(_onClose(context));
-    _syncMenuGamepadFocusTarget(
-      label: l10n.returnToMenuAction,
-      onActivate: onReturnToMenu,
-      enabled: gameSave != null && !handoffBlocksHud && outcomeSummary == null,
+    _syncReturnMenuGamepadFocusTarget(
+      l10n.returnToMenuAction,
+      onReturnToMenu,
+      enabled: hudAvailable,
     );
     final openResourceBreakdown = gameSave == null
         ? null

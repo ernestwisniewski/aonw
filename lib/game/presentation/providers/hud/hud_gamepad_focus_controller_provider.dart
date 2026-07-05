@@ -18,11 +18,23 @@ final hudGamepadPopupInputCaptureProvider =
     );
 
 class HudGamepadPopupInputCaptureController extends Notifier<bool> {
+  final Set<String> _capturedSources = {};
+
   @override
   bool build() => false;
 
   void setCaptured(bool captured) {
-    if (state == captured) return;
-    state = captured;
+    setSourceCaptured('default', captured);
+  }
+
+  void setSourceCaptured(String sourceId, bool captured) {
+    if (captured) {
+      _capturedSources.add(sourceId);
+    } else {
+      _capturedSources.remove(sourceId);
+    }
+    final next = _capturedSources.isNotEmpty;
+    if (state == next) return;
+    state = next;
   }
 }

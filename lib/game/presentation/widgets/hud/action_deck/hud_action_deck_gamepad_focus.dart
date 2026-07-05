@@ -18,6 +18,12 @@ extension _HudActionDeckGamepadFocus on _HudActionDeckState {
           id: HudGamepadFocusTargetIds.bottomCommand,
           label: _commandLineGamepadLabel(l10n, viewModel),
           onActivate: widget.readyToEndTurn ? _endTurn : _nextAction,
+          activationKey: Object.hash(
+            widget.gameSave.id,
+            widget.activePlayerId,
+            widget.gameState,
+            widget.readyToEndTurn,
+          ),
         ),
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -35,6 +35,7 @@ final class HudGamepadFocusTarget {
     required this.label,
     required this.onActivate,
     this.enabled = true,
+    this.activationKey,
   });
 
   final HudGamepadFocusSection section;
@@ -42,6 +43,7 @@ final class HudGamepadFocusTarget {
   final String label;
   final VoidCallback onActivate;
   final bool enabled;
+  final Object? activationKey;
 }
 
 final class HudGamepadFocusState {
@@ -327,7 +329,8 @@ class HudGamepadFocusTargetRegistry
       if (leftTarget.section != rightTarget.section ||
           leftTarget.id != rightTarget.id ||
           leftTarget.label != rightTarget.label ||
-          leftTarget.enabled != rightTarget.enabled) {
+          leftTarget.enabled != rightTarget.enabled ||
+          leftTarget.activationKey != rightTarget.activationKey) {
         return false;
       }
     }
