@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecte l'hex du curseur, ou ouvre les détails de la production ou technologie sélectionnée.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "Active ou quitte le focus du HUD. Parcourez le menu, le rail latéral, les pastilles supérieures, le rail des joueurs et la barre inférieure; A ouvre les cibles, le D-pad fait défiler les popups ouverts, B les ferme et LB/RB change de section HUD.",
+  "manualGamepadHudFocusBody": "R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Le bumper droit focalise la prochaine action joueur en attente dans la file du tour.",
   "manualGamepadFocusAction": "LB",

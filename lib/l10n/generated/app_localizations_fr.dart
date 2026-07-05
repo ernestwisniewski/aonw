@@ -546,7 +546,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'Active ou quitte le focus du HUD. Parcourez le menu, le rail latéral, les pastilles supérieures, le rail des joueurs et la barre inférieure; A ouvre les cibles, le D-pad fait défiler les popups ouverts, B les ferme et LB/RB change de section HUD.';
+      'R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.';
 
   @override
   String get manualGamepadNextAction => 'RB';

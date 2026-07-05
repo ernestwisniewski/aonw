@@ -29,12 +29,6 @@ void main() {
     controller.nextSection(targets);
     expect(
       container.read(hudGamepadFocusControllerProvider).section,
-      HudGamepadFocusSection.globalActions,
-    );
-
-    controller.nextSection(targets);
-    expect(
-      container.read(hudGamepadFocusControllerProvider).section,
       HudGamepadFocusSection.topResources,
     );
 
@@ -51,6 +45,45 @@ void main() {
     );
 
     controller.nextSection(targets);
+    expect(
+      container.read(hudGamepadFocusControllerProvider).section,
+      HudGamepadFocusSection.globalActions,
+    );
+
+    controller.nextSection(targets);
+    expect(
+      container.read(hudGamepadFocusControllerProvider).section,
+      HudGamepadFocusSection.menu,
+    );
+
+    controller.previousSection(targets);
+    expect(
+      container.read(hudGamepadFocusControllerProvider).section,
+      HudGamepadFocusSection.globalActions,
+    );
+  });
+
+  test('stick section focus enters the HUD at the menu', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(
+      hudGamepadFocusControllerProvider.notifier,
+    );
+    final targets = [
+      _target(HudGamepadFocusSection.globalActions, 'global.options'),
+      _target(HudGamepadFocusSection.menu, HudGamepadFocusTargetIds.menuReturn),
+      _target(HudGamepadFocusSection.topResources, 'resource.gold'),
+    ];
+
+    controller.nextSection(targets);
+    expect(
+      container.read(hudGamepadFocusControllerProvider).section,
+      HudGamepadFocusSection.menu,
+    );
+
+    controller
+      ..deactivate()
+      ..previousSection(targets);
     expect(
       container.read(hudGamepadFocusControllerProvider).section,
       HudGamepadFocusSection.menu,

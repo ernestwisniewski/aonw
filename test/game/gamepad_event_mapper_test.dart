@@ -6,7 +6,7 @@ void main() {
   group('GamepadEventMapper', () {
     const mapper = GamepadEventMapper();
 
-    test('maps stick button presses to HUD focus', () {
+    test('maps stick button presses to directional HUD focus', () {
       final leftPressed = mapper.apply(
         GamepadInputSnapshot.empty,
         NormalizedGamepadEvent(
@@ -38,9 +38,11 @@ void main() {
         ),
       );
 
-      expect(leftPressed.hudFocus, isTrue);
-      expect(rightPressed.hudFocus, isTrue);
-      expect(released.hudFocus, isFalse);
+      expect(leftPressed.hudFocusPrevious, isTrue);
+      expect(leftPressed.hudFocusNext, isFalse);
+      expect(rightPressed.hudFocusPrevious, isFalse);
+      expect(rightPressed.hudFocusNext, isTrue);
+      expect(released.hudFocusPrevious, isFalse);
     });
   });
 }

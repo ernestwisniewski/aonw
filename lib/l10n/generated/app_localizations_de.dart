@@ -545,7 +545,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'Aktiviert oder verlässt den HUD-Fokus. Navigiere durch Menü, Seitenleiste, obere Pills, Spielerleiste und untere Toolbar; A öffnet Ziele, das D-Pad scrollt offene Popups, B schließt sie, und LB/RB wechseln HUD-Abschnitte.';
+      'R3 wechselt nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar. A öffnet Ziele, das D-Pad scrollt offene Popups, und B schließt sie.';
 
   @override
   String get manualGamepadNextAction => 'RB';

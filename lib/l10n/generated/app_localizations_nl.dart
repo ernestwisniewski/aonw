@@ -544,7 +544,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'Schakelt HUD-focus in of uit. Navigeer door menu, zijbalk, bovenste pills, spelersrail en onderste toolbar; A opent doelen, de D-pad scrollt open popups, B sluit ze en LB/RB wisselt HUD-secties.';
+      'R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.';
 
   @override
   String get manualGamepadNextAction => 'RB';

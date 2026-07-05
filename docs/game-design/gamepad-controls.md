@@ -24,16 +24,17 @@
 | B / Back | Close panel details, close the active panel or HUD popup, or cancel the active interaction mode |
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
-| L3 / R3 | Enter or leave HUD focus for the menu button, side actions, top resource pills, player rail, and bottom toolbar |
+| L3 / R3 | Step HUD focus left/right across the left rail, menu button, top resource pills, player rail, and bottom toolbar |
 | RB | Focus the next pending player action |
 | LB | Focus the turn-start map target |
 | Start | Run the primary turn action, matching Space |
 
 Terminology note: zoom is on the analog triggers, `RT` and `LT`. The bumpers,
 `RB` and `LB`, are separate shoulder buttons and are reserved for turn-flow
-focus shortcuts unless HUD focus is active, where they switch HUD sections. The
-sticks are also separate: the left stick/D-pad moves the hex cursor, while the
-right stick pans the camera. Pressing either stick enters or leaves HUD focus.
+focus shortcuts unless HUD focus is active, where they also switch HUD
+sections. The sticks are also separate: the left stick/D-pad moves the hex
+cursor, while the right stick pans the camera. Pressing `L3` moves HUD focus one
+section left; pressing `R3` moves it one section right.
 
 ## Implementation Boundary
 
@@ -44,10 +45,11 @@ local row/card selection, then call the existing production, research, details,
 and close callbacks. This keeps controller support out of save/wire state and
 avoids a parallel gameplay path.
 
-HUD focus is similarly presentation-local. Pressing `L3` or `R3` activates a
-focused HUD target, the D-pad moves within or between the menu, side rail, top
-resource pills, player rail, and bottom toolbar, `A` invokes the same callback
-as tapping the highlighted widget, and `B` returns input to the map. Open HUD
+HUD focus is similarly presentation-local. Pressing `R3` activates or moves
+focus one section right, while `L3` activates or moves focus one section left
+through the left rail, menu, top resource pills, player rail, and bottom
+toolbar. The D-pad moves within a section, `A` invokes the same callback as
+tapping the highlighted widget, and `B` returns input to the map. Open HUD
 popups capture the controller so the D-pad scrolls their content and `B` closes
 the popup instead of moving the map behind it. The renderer receives an idle
 gamepad snapshot while HUD focus or popup capture is active so map cursor

@@ -34,6 +34,10 @@ class HudGamepadFocusInputLayer extends ConsumerWidget {
       input: input,
       enabled: enabled,
       onHudFocus: popupOpen ? null : () => controller.toggle(targets),
+      onHudFocusPrevious: popupOpen
+          ? null
+          : () => controller.previousSection(targets),
+      onHudFocusNext: popupOpen ? null : () => controller.nextSection(targets),
       onNavigate: focusNavigationActive
           ? (direction) => controller.move(direction, targets)
           : null,

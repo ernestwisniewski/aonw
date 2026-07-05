@@ -42,8 +42,8 @@ final class GamepadEventMapper {
       GamepadButton.back => snapshot.copyWith(cancel: pressed),
       GamepadButton.x => snapshot.copyWith(moveMode: pressed),
       GamepadButton.y => snapshot.copyWith(inspect: pressed),
-      GamepadButton.leftStick ||
-      GamepadButton.rightStick => snapshot.copyWith(hudFocus: pressed),
+      GamepadButton.leftStick => snapshot.copyWith(hudFocusPrevious: pressed),
+      GamepadButton.rightStick => snapshot.copyWith(hudFocusNext: pressed),
       GamepadButton.leftBumper => snapshot.copyWith(focusPrevious: pressed),
       GamepadButton.rightBumper => snapshot.copyWith(focusNext: pressed),
       GamepadButton.start => snapshot.copyWith(primaryAction: pressed),

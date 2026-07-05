@@ -53,7 +53,7 @@ final class HudGamepadFocusState {
 
   static const inactive = HudGamepadFocusState(
     active: false,
-    section: HudGamepadFocusSection.topResources,
+    section: HudGamepadFocusSection.menu,
     targetId: null,
   );
 
@@ -64,8 +64,8 @@ final class HudGamepadFocusState {
 
 class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   static const _sectionOrder = [
-    HudGamepadFocusSection.menu,
     HudGamepadFocusSection.globalActions,
+    HudGamepadFocusSection.menu,
     HudGamepadFocusSection.topResources,
     HudGamepadFocusSection.rightPlayers,
     HudGamepadFocusSection.selectionActions,
@@ -97,7 +97,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       deactivate();
       return;
     }
-    _activateFirst(_availableTargets(targets));
+    _activateFirst(_availableTargets(targets), preferredSection: state.section);
   }
 
   void deactivate() {
@@ -132,13 +132,11 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   }
 
   void previousSection(List<HudGamepadFocusTarget> targets) {
-    if (!state.active) return;
-    _moveSection(_availableTargets(targets), -1);
+    _moveSectionOrActivate(_availableTargets(targets), -1);
   }
 
   void nextSection(List<HudGamepadFocusTarget> targets) {
-    if (!state.active) return;
-    _moveSection(_availableTargets(targets), 1);
+    _moveSectionOrActivate(_availableTargets(targets), 1);
   }
 
   void activateFocused(List<HudGamepadFocusTarget> targets) {
@@ -256,6 +254,14 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     final section =
         sections[nextIndex < 0 ? nextIndex + sections.length : nextIndex];
     _activateFirst(targets, preferredSection: section);
+  }
+
+  void _moveSectionOrActivate(List<HudGamepadFocusTarget> targets, int delta) {
+    if (state.active) {
+      _moveSection(targets, delta);
+      return;
+    }
+    _activateFirst(targets, preferredSection: state.section);
   }
 
   bool _directionMovesWithinSection(

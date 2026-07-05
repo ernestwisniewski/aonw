@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecteert de huidige cursor-hex, of opent details voor de geselecteerde productie of technologie.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "Schakelt HUD-focus in of uit. Navigeer door menu, zijbalk, bovenste pills, spelersrail en onderste toolbar; A opent doelen, de D-pad scrollt open popups, B sluit ze en LB/RB wisselt HUD-secties.",
+  "manualGamepadHudFocusBody": "R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "De rechter bumper focust de volgende openstaande speleractie in de beurtwachtrij.",
   "manualGamepadFocusAction": "LB",
