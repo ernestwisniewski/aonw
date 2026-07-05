@@ -14,6 +14,7 @@ import 'package:aonw/game/presentation/widgets/diplomacy/civilization_met_popup_
 import 'package:aonw/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_input_layer.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_ring.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notifications_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_game_outcome_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_game_outcome_summary.dart';
@@ -165,15 +166,25 @@ class _GameHudState extends ConsumerState<GameHud> {
     final hudFocusTargets = HudGamepadFocusTargetRegistry.flatten(
       ref.watch(hudGamepadFocusTargetRegistryProvider),
     );
+    final focusedHudTargetId = ref.watch(
+      hudGamepadFocusControllerProvider.select(
+        (state) => state.active ? state.targetId : null,
+      ),
+    );
     final hudGamepadFocusEnabled =
         gameSave != null &&
         !handoffBlocksHud &&
         outcomeSummary == null &&
         hudFocusTargets.isNotEmpty;
+    void onReturnToMenu() => unawaited(_onClose(context));
+    _syncMenuGamepadFocusTarget(
+      label: l10n.returnToMenuAction,
+      onActivate: onReturnToMenu,
+      enabled: gameSave != null && !handoffBlocksHud && outcomeSummary == null,
+    );
     final openResourceBreakdown = gameSave == null
         ? null
         : ref.watch(hudResourceBreakdownControllerProvider);
-
     return HudGamepadFocusInputLayer(
       input: widget.gamepadInputListenable,
       enabled: hudGamepadFocusEnabled,
@@ -190,7 +201,10 @@ class _GameHudState extends ConsumerState<GameHud> {
             ),
           const _HudTopFade(),
           if (gameSave != null)
-            MultiplayerAvatarsRailOverlay(gameSave: gameSave),
+            MultiplayerAvatarsRailOverlay(
+              gameSave: gameSave,
+              gamepadInputListenable: widget.gamepadInputListenable,
+            ),
           GameOptionsOverlay(
             session: widget.session,
             gameSave: gameSave,
@@ -241,7 +255,11 @@ class _GameHudState extends ConsumerState<GameHud> {
               gameSave: gameSave,
               gamepadInputListenable: widget.gamepadInputListenable,
             ),
-          _HudMenuButton(onPressed: () => unawaited(_onClose(context))),
+          _HudMenuButton(
+            onPressed: onReturnToMenu,
+            gamepadFocused:
+                focusedHudTargetId == HudGamepadFocusTargetIds.menuReturn,
+          ),
           GameEventNotificationsOverlay(gameSave: gameSave),
           const HudFeedbackOverlay(),
           if (gameSave != null)

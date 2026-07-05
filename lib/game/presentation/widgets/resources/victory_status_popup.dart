@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/l10n.dart';
@@ -6,6 +7,7 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class VictoryStatusPopup extends StatelessWidget {
@@ -15,6 +17,7 @@ class VictoryStatusPopup extends StatelessWidget {
     this.maxWidth = 330,
     this.maxHeight = 380,
     this.showDragHandle = false,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -23,6 +26,7 @@ class VictoryStatusPopup extends StatelessWidget {
   final double maxWidth;
   final double maxHeight;
   final bool showDragHandle;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +40,9 @@ class VictoryStatusPopup extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         centerInAvailableSpace: false,
         scrollable: false,
-        content: SingleChildScrollView(
+        content: GamepadScrollable(
+          input: gamepadInputListenable,
+          onCancel: onClose,
           padding: const EdgeInsets.fromLTRB(12, 10, 10, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,

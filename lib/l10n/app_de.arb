@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "Aktiviert oder verlässt den HUD-Fokus. Während er aktiv ist, navigierst du mit dem D-Pad durch Seitenleiste, obere Ressourcen-Pills und Aktionschips; A aktiviert, B kehrt zur Karte zurück, und LB/RB wechseln die HUD-Abschnitte.",
+  "manualGamepadHudFocusBody": "Aktiviert oder verlässt den HUD-Fokus. Navigiere durch Menü, Seitenleiste, obere Pills, Spielerleiste und untere Toolbar; A öffnet Ziele, das D-Pad scrollt offene Popups, B schließt sie, und LB/RB wechseln HUD-Abschnitte.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Der rechte Bumper fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.",
   "manualGamepadFocusAction": "LB",

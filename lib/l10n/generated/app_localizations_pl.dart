@@ -542,7 +542,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'Włącza albo wyłącza fokus HUD. Gdy jest aktywny, D-pad przechodzi po bocznym pasku, górnych zasobach i chipach akcji; A aktywuje, B wraca na mapę, a LB/RB przełącza sekcje HUD.';
+      'Włącza albo wyłącza fokus HUD. Przechodzisz po menu, lewym pasku, górnych pillsach, railu graczy i dolnym toolbarze; A otwiera cele, D-pad scrolluje popupy, B je zamyka, a LB/RB przełącza sekcje HUD.';
 
   @override
   String get manualGamepadNextAction => 'RB';

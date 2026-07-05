@@ -32,6 +32,12 @@ extension _HudActionDeckLayout on _HudActionDeckState {
           actionHintLabel: widget.actionHintLabel,
           l10n: l10n,
         );
+        final focusedHudTargetId = _focusedHudTargetId();
+        _syncActionDeckGamepadFocusTargets(
+          l10n: l10n,
+          viewModel: viewModel,
+          isUnitAnimating: animatingUnitIds.isNotEmpty,
+        );
         final playerColor = viewModel.activePlayerColorValue != null
             ? PlayerColorTheme.resolve(viewModel.activePlayerColorValue!)
             : GameHudTheme.accentFallback;
@@ -65,19 +71,22 @@ extension _HudActionDeckLayout on _HudActionDeckState {
                 onChipTap: widget.onToggleSelectionDetail,
               )
             : null;
-        final commandLine = HudCommandLine(
-          viewModel: viewModel,
-          playerColor: playerColor,
-          turn: widget.gameSave.turn,
-          readyToEndTurn: widget.readyToEndTurn,
-          isUnitAnimating: animatingUnitIds.isNotEmpty,
-          currentActionIndex: widget.currentActionIndex,
-          turnActionOptions: widget.turnActionOptions,
-          pulseActionBorder: _actionCompletionPulseVisible,
-          forceCompact: compactLandscape,
-          onEndTurn: _endTurn,
-          onNextAction: _nextAction,
-          onActionSelected: _selectTurnAction,
+        final commandLine = _focusCommandLine(
+          HudCommandLine(
+            viewModel: viewModel,
+            playerColor: playerColor,
+            turn: widget.gameSave.turn,
+            readyToEndTurn: widget.readyToEndTurn,
+            isUnitAnimating: animatingUnitIds.isNotEmpty,
+            currentActionIndex: widget.currentActionIndex,
+            turnActionOptions: widget.turnActionOptions,
+            pulseActionBorder: _actionCompletionPulseVisible,
+            forceCompact: compactLandscape,
+            onEndTurn: _endTurn,
+            onNextAction: _nextAction,
+            onActionSelected: _selectTurnAction,
+          ),
+          focusedHudTargetId,
         );
 
         return SafeArea(

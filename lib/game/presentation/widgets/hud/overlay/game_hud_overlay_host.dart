@@ -333,6 +333,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
           activePlayerId: activePlayerId,
           l10n: AppLocalizations.of(context),
           gamepadFocusedTargetId: hudGamepadFocus.focusedTargetId,
+          gamepadInputListenable: widget.gamepadInputListenable,
         ),
         HudModeBannerSlot(
           layoutMetrics: frame.layoutMetrics,

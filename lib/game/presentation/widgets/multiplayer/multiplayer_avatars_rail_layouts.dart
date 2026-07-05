@@ -1,3 +1,5 @@
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_ring.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatar_models.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatar_tile.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail_metrics.dart';
@@ -15,6 +17,7 @@ class ExpandedMultiplayerAvatarsRail extends StatelessWidget {
     required this.onAvatarTapped,
     this.tileWidth = MultiplayerAvatarsRailMetrics.itemWidth,
     this.onOpenFullList,
+    this.gamepadFocusedTargetId,
     super.key,
   });
 
@@ -22,6 +25,7 @@ class ExpandedMultiplayerAvatarsRail extends StatelessWidget {
   final ValueChanged<String> onAvatarTapped;
   final double tileWidth;
   final VoidCallback? onOpenFullList;
+  final String? gamepadFocusedTargetId;
 
   @override
   Widget build(BuildContext context) {
@@ -34,23 +38,35 @@ class ExpandedMultiplayerAvatarsRail extends StatelessWidget {
             padding: const EdgeInsets.only(
               bottom: MultiplayerAvatarsRailMetrics.itemGap,
             ),
-            child: MultiplayerAvatarTile(
-              key: Key('multiplayerAvatar.${tile.player.id}'),
-              player: tile.player,
-              playerName: tile.playerName,
-              status: tile.status,
-              timerLabel: tile.timerLabel,
-              relationStatus: tile.relationStatus,
-              width: tileWidth,
-              onTap: () => onAvatarTapped(tile.player.id),
+            child: HudGamepadFocusRing(
+              focused:
+                  gamepadFocusedTargetId ==
+                  HudGamepadFocusTargetIds.playerAvatar(tile.player.id),
+              borderRadius: GameUiTheme.pillBorderRadius,
+              child: MultiplayerAvatarTile(
+                key: Key('multiplayerAvatar.${tile.player.id}'),
+                player: tile.player,
+                playerName: tile.playerName,
+                status: tile.status,
+                timerLabel: tile.timerLabel,
+                relationStatus: tile.relationStatus,
+                width: tileWidth,
+                onTap: () => onAvatarTapped(tile.player.id),
+              ),
             ),
           ),
         if (onOpenFullList != null)
-          _OpenStatusSheetButton(
-            width: tileWidth,
-            height: MultiplayerAvatarsRailMetrics.compactItemSize,
-            borderRadius: GameUiTheme.radiusCard,
-            onTap: onOpenFullList!,
+          HudGamepadFocusRing(
+            focused:
+                gamepadFocusedTargetId ==
+                HudGamepadFocusTargetIds.playerStatusSheet,
+            borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+            child: _OpenStatusSheetButton(
+              width: tileWidth,
+              height: MultiplayerAvatarsRailMetrics.compactItemSize,
+              borderRadius: GameUiTheme.radiusCard,
+              onTap: onOpenFullList!,
+            ),
           ),
       ],
     );
@@ -62,12 +78,14 @@ class CompactMultiplayerAvatarsRail extends StatelessWidget {
     required this.tiles,
     required this.onAvatarTapped,
     required this.onOpenFullList,
+    this.gamepadFocusedTargetId,
     super.key,
   });
 
   final List<MultiplayerAvatarTileData> tiles;
   final ValueChanged<String> onAvatarTapped;
   final VoidCallback onOpenFullList;
+  final String? gamepadFocusedTargetId;
 
   @override
   Widget build(BuildContext context) {
@@ -82,24 +100,36 @@ class CompactMultiplayerAvatarsRail extends StatelessWidget {
             padding: const EdgeInsets.only(
               bottom: MultiplayerAvatarsRailMetrics.compactItemGap,
             ),
-            child: CompactMultiplayerAvatarTile(
-              data: tile,
-              onTap: () => onAvatarTapped(tile.player.id),
+            child: HudGamepadFocusRing(
+              focused:
+                  gamepadFocusedTargetId ==
+                  HudGamepadFocusTargetIds.playerAvatar(tile.player.id),
+              borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+              child: CompactMultiplayerAvatarTile(
+                data: tile,
+                onTap: () => onAvatarTapped(tile.player.id),
+              ),
             ),
           ),
         Tooltip(
           message: l10n.multiplayerStatusTooltip,
           preferBelow: false,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onOpenFullList,
-              borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
-              child: const _OpenStatusSheetButton(
-                width: MultiplayerAvatarsRailMetrics.compactItemSize,
-                height: MultiplayerAvatarsRailMetrics.compactItemSize,
-                borderRadius: GameUiTheme.radiusCard,
-                onTap: null,
+          child: HudGamepadFocusRing(
+            focused:
+                gamepadFocusedTargetId ==
+                HudGamepadFocusTargetIds.playerStatusSheet,
+            borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onOpenFullList,
+                borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+                child: const _OpenStatusSheetButton(
+                  width: MultiplayerAvatarsRailMetrics.compactItemSize,
+                  height: MultiplayerAvatarsRailMetrics.compactItemSize,
+                  borderRadius: GameUiTheme.radiusCard,
+                  onTap: null,
+                ),
               ),
             ),
           ),

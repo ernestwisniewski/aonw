@@ -11,3 +11,18 @@ final hudGamepadFocusTargetRegistryProvider =
       HudGamepadFocusTargetRegistry,
       Map<String, List<HudGamepadFocusTarget>>
     >(HudGamepadFocusTargetRegistry.new);
+
+final hudGamepadPopupInputCaptureProvider =
+    NotifierProvider<HudGamepadPopupInputCaptureController, bool>(
+      HudGamepadPopupInputCaptureController.new,
+    );
+
+class HudGamepadPopupInputCaptureController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setCaptured(bool captured) {
+    if (state == captured) return;
+    state = captured;
+  }
+}

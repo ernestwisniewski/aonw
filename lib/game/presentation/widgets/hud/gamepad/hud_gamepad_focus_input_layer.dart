@@ -25,26 +25,29 @@ class HudGamepadFocusInputLayer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final focusState = ref.watch(hudGamepadFocusControllerProvider);
+    final popupInputCaptured = ref.watch(hudGamepadPopupInputCaptureProvider);
     final controller = ref.read(hudGamepadFocusControllerProvider.notifier);
+    final popupOpen = resourceBreakdownOpen || popupInputCaptured;
+    final focusNavigationActive = focusState.active && !popupOpen;
     _syncTargets(context, controller);
     return GamepadPanelInputListener(
       input: input,
       enabled: enabled,
-      onHudFocus: () => controller.toggle(targets),
-      onNavigate: focusState.active
+      onHudFocus: popupOpen ? null : () => controller.toggle(targets),
+      onNavigate: focusNavigationActive
           ? (direction) => controller.move(direction, targets)
           : null,
-      onConfirm: focusState.active
+      onConfirm: focusNavigationActive
           ? () => controller.activateFocused(targets)
           : null,
-      onCancel: focusState.active || resourceBreakdownOpen
+      onCancel: resourceBreakdownOpen || (focusState.active && !popupOpen)
           ? () =>
                 _handleCancel(ref, resourceBreakdownOpen: resourceBreakdownOpen)
           : null,
-      onFocusPrevious: focusState.active
+      onFocusPrevious: focusNavigationActive
           ? () => controller.previousSection(targets)
           : null,
-      onFocusNext: focusState.active
+      onFocusNext: focusNavigationActive
           ? () => controller.nextSection(targets)
           : null,
       child: child,

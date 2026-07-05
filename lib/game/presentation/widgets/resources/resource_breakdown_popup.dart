@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -16,6 +17,7 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 part 'resource_breakdown_popup_models.dart';
@@ -42,6 +44,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
   final double maxWidth;
   final double maxHeight;
   final bool showDragHandle;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   const ResourceBreakdownPopup({
     required this.type,
@@ -62,6 +65,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
     this.showDragHandle = false,
     this.activeTechnologyCompletionTurn,
     this.resourceNetwork = EmpireResourceNetwork.empty,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -96,7 +100,9 @@ class ResourceBreakdownPopup extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         centerInAvailableSpace: false,
         scrollable: false,
-        content: SingleChildScrollView(
+        content: GamepadScrollable(
+          input: gamepadInputListenable,
+          onCancel: onClose,
           padding: const EdgeInsets.fromLTRB(12, 10, 10, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,

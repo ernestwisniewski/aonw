@@ -257,11 +257,14 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
       gameState: gameState,
     );
     _publishGamepadFocusTargets(sideMenuFocusTargets);
-    ref.watch(hudGamepadFocusControllerProvider);
-    final focusedSideMenuTargetId = ref
-        .read(hudGamepadFocusControllerProvider.notifier)
-        .focusedTarget(sideMenuFocusTargets)
-        ?.id;
+    final focusState = ref.watch(hudGamepadFocusControllerProvider);
+    final focusedSideMenuTargetId =
+        focusState.active &&
+            sideMenuFocusTargets.any(
+              (target) => target.id == focusState.targetId,
+            )
+        ? focusState.targetId
+        : null;
     Widget? researchAction;
     Widget? empireAction;
     if (canShowGlobalActions) {

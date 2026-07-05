@@ -1051,7 +1051,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadHudFocusBody.
   ///
   /// In en, this message translates to:
-  /// **'Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.'**
+  /// **'Enters or leaves HUD focus. Move through the menu, side rail, top pills, player rail, and bottom toolbar; A opens targets, the D-pad scrolls open popups, B closes them, and LB/RB switch HUD sections.'**
   String get manualGamepadHudFocusBody;
 
   /// No description provided for @manualGamepadNextAction.

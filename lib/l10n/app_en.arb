@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspects the current cursor hex, or opens details for the selected production or technology item.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.",
+  "manualGamepadHudFocusBody": "Enters or leaves HUD focus. Move through the menu, side rail, top pills, player rail, and bottom toolbar; A opens targets, the D-pad scrolls open popups, B closes them, and LB/RB switch HUD sections.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "The right bumper focuses the next pending player action in the turn queue.",
   "manualGamepadFocusAction": "LB",

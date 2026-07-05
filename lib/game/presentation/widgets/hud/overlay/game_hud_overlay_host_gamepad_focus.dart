@@ -41,10 +41,12 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
       ..._selectionActionFocusTargets(selectionActions),
     ];
     _publishHudGamepadFocusTargets(targets, enabled: enabled);
-    final focusedTargetId = ref
-        .read(hudGamepadFocusControllerProvider.notifier)
-        .focusedTarget(targets)
-        ?.id;
+    final focusState = ref.read(hudGamepadFocusControllerProvider);
+    final focusedTargetId =
+        focusState.active &&
+            targets.any((target) => target.id == focusState.targetId)
+        ? focusState.targetId
+        : null;
     return _HudOverlayGamepadFocus(
       focusedTargetId: focusedTargetId,
       selectionActions: _focusSelectionActions(
@@ -61,6 +63,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
     required String activePlayerId,
   }) {
     dispatcher.closeResourceBreakdown();
+    ref.read(hudGamepadPopupInputCaptureProvider.notifier).setCaptured(true);
     unawaited(
       showTurnTimelinePopup(
         context,
@@ -68,7 +71,13 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
         gameSave: widget.gameSave,
         currentState: gameState,
         activePlayerId: activePlayerId,
-      ),
+        gamepadInputListenable: widget.gamepadInputListenable,
+      ).whenComplete(() {
+        if (!mounted) return;
+        ref
+            .read(hudGamepadPopupInputCaptureProvider.notifier)
+            .setCaptured(false);
+      }),
     );
   }
 

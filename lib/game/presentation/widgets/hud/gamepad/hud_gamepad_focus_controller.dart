@@ -3,14 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum HudGamepadFocusSection {
+  menu,
   globalActions,
   topResources,
+  rightPlayers,
   selectionActions,
-  menu,
 }
 
 abstract final class HudGamepadFocusTargetIds {
   static const menuReturn = 'menu.return';
+  static const playerStatusSheet = 'players.statusSheet';
+  static const bottomCommand = 'bottom.command';
   static const resourceGold = 'resource.gold';
   static const resourceScience = 'resource.science';
   static const resourceStability = 'resource.stability';
@@ -19,6 +22,8 @@ abstract final class HudGamepadFocusTargetIds {
   static const resourceVictory = 'resource.victory';
 
   static String globalAction(String actionId) => 'global.$actionId';
+
+  static String playerAvatar(String playerId) => 'players.$playerId';
 
   static String selectionAction(String actionId) => 'selection.$actionId';
 }
@@ -59,10 +64,11 @@ final class HudGamepadFocusState {
 
 class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   static const _sectionOrder = [
+    HudGamepadFocusSection.menu,
     HudGamepadFocusSection.globalActions,
     HudGamepadFocusSection.topResources,
+    HudGamepadFocusSection.rightPlayers,
     HudGamepadFocusSection.selectionActions,
-    HudGamepadFocusSection.menu,
   ];
 
   @override
@@ -256,7 +262,9 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     GamepadMapDirection direction,
     HudGamepadFocusSection section,
   ) {
-    final vertical = section == HudGamepadFocusSection.globalActions;
+    final vertical =
+        section == HudGamepadFocusSection.globalActions ||
+        section == HudGamepadFocusSection.rightPlayers;
     return switch (direction) {
       GamepadMapDirection.up || GamepadMapDirection.down => vertical,
       GamepadMapDirection.left || GamepadMapDirection.right => !vertical,

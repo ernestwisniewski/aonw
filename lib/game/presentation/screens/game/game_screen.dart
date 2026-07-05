@@ -366,8 +366,12 @@ class _GameRendererSessionHostState
     final hudGamepadFocusActive = ref.watch(
       hudGamepadFocusControllerProvider.select((state) => state.active),
     );
+    final hudGamepadPopupInputCaptured = ref.watch(
+      hudGamepadPopupInputCaptureProvider,
+    );
     final rendererGamepadInputEnabled =
         !hudGamepadFocusActive &&
+        !hudGamepadPopupInputCaptured &&
         !hudPanelModes.cityBuildings &&
         !hudPanelModes.technology &&
         !hudPanelModes.empire &&

@@ -17,14 +17,14 @@
 
 | Input | Action |
 | --- | --- |
-| D-pad / left stick | Move the selected hex cursor, the selected row/card in open HUD panels, or the focused HUD target while HUD focus is active |
+| D-pad / left stick | Move the selected hex cursor, the selected row/card in open HUD panels, the focused HUD target while HUD focus is active, or scroll an open HUD popup |
 | Right stick | Pan the camera |
 | RT / LT triggers | Zoom in / zoom out |
 | A | Confirm/tap the current cursor hex, or confirm the selected panel choice |
-| B / Back | Close panel details, close the active panel, or cancel the active interaction mode |
+| B / Back | Close panel details, close the active panel or HUD popup, or cancel the active interaction mode |
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
-| L3 / R3 | Enter or leave HUD focus for side actions, top resource pills, and action chips |
+| L3 / R3 | Enter or leave HUD focus for the menu button, side actions, top resource pills, player rail, and bottom toolbar |
 | RB | Focus the next pending player action |
 | LB | Focus the turn-start map target |
 | Start | Run the primary turn action, matching Space |
@@ -45,10 +45,13 @@ and close callbacks. This keeps controller support out of save/wire state and
 avoids a parallel gameplay path.
 
 HUD focus is similarly presentation-local. Pressing `L3` or `R3` activates a
-focused HUD target, the D-pad moves within or between sections, `A` invokes the
-same callback as tapping the highlighted widget, and `B` returns input to the
-map. The renderer receives an idle gamepad snapshot while HUD focus is active so
-map cursor movement and HUD navigation cannot both process the same frame.
+focused HUD target, the D-pad moves within or between the menu, side rail, top
+resource pills, player rail, and bottom toolbar, `A` invokes the same callback
+as tapping the highlighted widget, and `B` returns input to the map. Open HUD
+popups capture the controller so the D-pad scrolls their content and `B` closes
+the popup instead of moving the map behind it. The renderer receives an idle
+gamepad snapshot while HUD focus or popup capture is active so map cursor
+movement and HUD navigation cannot both process the same frame.
 
 ## Manual Contract
 

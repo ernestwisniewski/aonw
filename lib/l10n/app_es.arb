@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecciona el hexágono del cursor, o abre detalles de la producción o tecnología seleccionada.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "Entra o sale del foco del HUD. Mientras está activo, usa el D-pad para moverte por la barra lateral, las píldoras superiores de recursos y los chips de acción; A activa, B vuelve al mapa y LB/RB cambia secciones del HUD.",
+  "manualGamepadHudFocusBody": "Entra o sale del foco del HUD. Recorre el menú, la barra lateral, las píldoras superiores, la barra de jugadores y la barra inferior; A abre objetivos, el D-pad desplaza popups abiertos, B los cierra y LB/RB cambia secciones del HUD.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "El bumper derecho enfoca la siguiente acción pendiente del jugador en la cola del turno.",
   "manualGamepadFocusAction": "LB",

@@ -16,6 +16,33 @@ String? _outcomePerspectivePlayerId({
   return playerControl?.activePlayerId;
 }
 
+extension _GameHudGamepadFocusTargets on _GameHudState {
+  void _syncMenuGamepadFocusTarget({
+    required String label,
+    required VoidCallback onActivate,
+    required bool enabled,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(hudGamepadFocusTargetRegistryProvider.notifier)
+          .setSource(
+            'hudMenu',
+            enabled
+                ? [
+                    HudGamepadFocusTarget(
+                      section: HudGamepadFocusSection.menu,
+                      id: HudGamepadFocusTargetIds.menuReturn,
+                      label: label,
+                      onActivate: onActivate,
+                    ),
+                  ]
+                : const <HudGamepadFocusTarget>[],
+          );
+    });
+  }
+}
+
 class _HudTopFade extends StatelessWidget {
   const _HudTopFade();
 
@@ -55,8 +82,9 @@ class _HudTopFade extends StatelessWidget {
 
 class _HudMenuButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool gamepadFocused;
 
-  const _HudMenuButton({required this.onPressed});
+  const _HudMenuButton({required this.onPressed, this.gamepadFocused = false});
 
   @override
   Widget build(BuildContext context) {
@@ -68,44 +96,48 @@ class _HudMenuButton extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Tooltip(
             message: l10n.returnToMenuAction,
-            child: Material(
-              color: SurfaceElevation.flat.fill(
-                background: GameUiTheme.bg,
-                alpha: 205,
-              ),
+            child: HudGamepadFocusRing(
+              focused: gamepadFocused,
               borderRadius: GameUiTheme.borderRadius,
-              child: InkWell(
-                onTap: onPressed,
+              child: Material(
+                color: SurfaceElevation.flat.fill(
+                  background: GameUiTheme.bg,
+                  alpha: 205,
+                ),
                 borderRadius: GameUiTheme.borderRadius,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: SurfaceElevation.flat.decoration(
-                    borderRadius: GameUiTheme.borderRadius,
-                    border: BorderEmphasis.regular,
-                    includeShadow: false,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '✕',
-                        style: GameUiTheme.actionLabel.copyWith(
-                          color: GameUiTheme.gold,
-                          fontSize: 13,
+                child: InkWell(
+                  onTap: onPressed,
+                  borderRadius: GameUiTheme.borderRadius,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: SurfaceElevation.flat.decoration(
+                      borderRadius: GameUiTheme.borderRadius,
+                      border: BorderEmphasis.regular,
+                      includeShadow: false,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '✕',
+                          style: GameUiTheme.actionLabel.copyWith(
+                            color: GameUiTheme.gold,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'MENU',
-                        style: GameUiTheme.actionLabel.copyWith(
-                          color: GameUiTheme.goldLight,
-                          fontSize: 10,
+                        const SizedBox(width: 6),
+                        Text(
+                          'MENU',
+                          style: GameUiTheme.actionLabel.copyWith(
+                            color: GameUiTheme.goldLight,
+                            fontSize: 10,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
