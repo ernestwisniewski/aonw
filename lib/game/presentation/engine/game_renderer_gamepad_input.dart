@@ -7,6 +7,10 @@ final Expando<GamepadFrameController> _gamepadFrameControllers =
 final Expando<CityHex> _gamepadCursorHexes = Expando<CityHex>(
   'GameRenderer.gamepadCursorHex',
 );
+const String _noGamepadCursorSelectionKey = '__none__';
+final Expando<String> _gamepadCursorSelectionKeys = Expando<String>(
+  'GameRenderer.gamepadCursorSelectionKey',
+);
 
 extension GameRendererGamepadInput on GameRenderer {
   static const double _cameraPanSpeed = 520.0;
@@ -37,6 +41,15 @@ extension GameRendererGamepadInput on GameRenderer {
     _gamepadCursorHexes[this] = value;
   }
 
+  String? get _gamepadCursorSelectionKey {
+    final key = _gamepadCursorSelectionKeys[this];
+    return key == _noGamepadCursorSelectionKey ? null : key;
+  }
+
+  set _gamepadCursorSelectionKey(String? value) {
+    _gamepadCursorSelectionKeys[this] = value ?? _noGamepadCursorSelectionKey;
+  }
+
   void _applyGamepadCameraInput(GamepadControlFrame frame, double dt) {
     final panDelta = Vector2(
       frame.cameraX * _cameraPanSpeed * dt,
@@ -62,8 +75,27 @@ extension GameRendererGamepadInput on GameRenderer {
     if (tile == null) return;
 
     _gamepadCursorHex = CityHex(col: tile.col, row: tile.row);
-    unawaited(onCommand(SelectTileCommand(tile.col, tile.row)));
+    _syncGamepadCursorTile(tile);
     _focusGamepadCursor(tile);
+  }
+
+  void _syncGamepadCursorTile(TileData tile) {
+    if (_gamepadCursorShouldSelectTile) {
+      unawaited(onCommand(SelectTileCommand(tile.col, tile.row)));
+      return;
+    }
+    _syncHoverIntentForTile(tile);
+  }
+
+  bool get _gamepadCursorShouldSelectTile {
+    return _renderState.interactionMode == GameInteractionMode.standard;
+  }
+
+  bool get _gamepadCanToggleMoveMode {
+    return switch (_renderState.interactionMode) {
+      GameInteractionMode.standard || GameInteractionMode.moveTargeting => true,
+      _ => false,
+    };
   }
 
   void _applyGamepadButtonInput(GamepadControlFrame frame) {
@@ -75,7 +107,7 @@ extension GameRendererGamepadInput on GameRenderer {
       final tile = _currentGamepadTile();
       if (tile != null) _handleTileInspected(tile);
     }
-    if (frame.moveModePressed) {
+    if (frame.moveModePressed && _gamepadCanToggleMoveMode) {
       unawaited(onCommand(const ToggleMoveTargetingCommand()));
     }
     if (frame.focusPreviousPressed) {
@@ -99,23 +131,33 @@ extension GameRendererGamepadInput on GameRenderer {
   }
 
   CityHex? _currentGamepadCursorHex() {
+    final selectionHex = _selectionHex();
+    final selectionKey = _selectionCursorKey();
+    if (selectionHex != null && selectionKey != _gamepadCursorSelectionKey) {
+      _gamepadCursorSelectionKey = selectionKey;
+      _gamepadCursorHex = selectionHex;
+      return selectionHex;
+    }
+
     final cursor = _gamepadCursorHex;
     if (cursor != null && mapData.tileAt(cursor.col, cursor.row) != null) {
       return cursor;
     }
-    final fromSelection = _selectionHex();
-    if (fromSelection != null) {
-      _gamepadCursorHex = fromSelection;
-      return fromSelection;
+    if (selectionHex != null) {
+      _gamepadCursorSelectionKey = selectionKey;
+      _gamepadCursorHex = selectionHex;
+      return selectionHex;
     }
     final fromViewport = _viewportCenterHex();
     if (fromViewport != null) {
+      _gamepadCursorSelectionKey = null;
       _gamepadCursorHex = fromViewport;
       return fromViewport;
     }
     final first = mapData.tiles.isEmpty ? null : mapData.tiles.first;
     if (first == null) return null;
     final fallback = CityHex(col: first.col, row: first.row);
+    _gamepadCursorSelectionKey = null;
     _gamepadCursorHex = fallback;
     return fallback;
   }
@@ -138,6 +180,21 @@ extension GameRendererGamepadInput on GameRenderer {
       GameSelectionType.tile || GameSelectionType.fieldImprovement
           when selection?.tile != null =>
         CityHex(col: selection!.tile!.col, row: selection.tile!.row),
+      _ => null,
+    };
+  }
+
+  String? _selectionCursorKey() {
+    final selection = _renderState.selection;
+    return switch (selection?.type) {
+      GameSelectionType.unit when selection?.unit != null =>
+        'unit:${selection!.unit!.id}:${selection.unit!.col}:${selection.unit!.row}',
+      GameSelectionType.city when selection?.city != null =>
+        'city:${selection!.city!.id}:${selection.city!.center.col}:${selection.city!.center.row}',
+      GameSelectionType.tile when selection?.tile != null =>
+        'tile:${selection!.tile!.col}:${selection.tile!.row}',
+      GameSelectionType.fieldImprovement when selection?.tile != null =>
+        'improvement:${selection!.tile!.col}:${selection.tile!.row}',
       _ => null,
     };
   }
@@ -202,13 +259,10 @@ extension GameRendererGamepadInput on GameRenderer {
   }
 
   GameCommand? _gamepadCancelCommand() {
-    if (_renderState.moveCommandActive) {
-      return const ToggleMoveTargetingCommand();
-    }
     if (_renderState.cityFoundingDraft != null) {
       return const CancelCityFoundingCommand();
     }
-    return switch (_renderState.pendingAction) {
+    final pendingCancel = switch (_renderState.pendingAction) {
       PendingResearchSelection(:final ownerPlayerId) =>
         CancelResearchSelectionCommand(ownerPlayerId),
       PendingCityWorkedHexSelection(:final cityId) =>
@@ -227,5 +281,10 @@ extension GameRendererGamepadInput on GameRenderer {
         CancelCommanderMergeSelectionCommand(commanderUnitId),
       _ => null,
     };
+    if (pendingCancel != null) return pendingCancel;
+    if (_renderState.moveCommandActive) {
+      return const ToggleMoveTargetingCommand();
+    }
+    return null;
   }
 }

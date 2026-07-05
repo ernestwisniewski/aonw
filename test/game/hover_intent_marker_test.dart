@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -84,6 +85,179 @@ void main() {
       expect(game.hoverIntentTileForTesting, (col: 1, row: 1));
       expect(game.hoverIntentColorValueForTesting, HudPalette.gold.toARGB32());
       expect(game.hoverIntentBlockedForTesting, isFalse);
+    });
+
+    test(
+      'gamepad cursor retargets movement without leaving move mode',
+      () async {
+        final map = _map();
+        final commands = <GameCommand>[];
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+        final game = await _loadedGame(
+          map,
+          onCommand: (command) async => commands.add(command),
+        );
+
+        game
+          ..applyState(
+            GameState(
+              activePlayerId: 'player_1',
+              units: [commander],
+              interaction: GameInteractionState(
+                selection: GameSelection.unit(
+                  commander,
+                  tile: _tile(map, 0, 0),
+                ),
+                moveCommandActive: true,
+              ),
+            ),
+          )
+          ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
+          ..update(0.016);
+
+        expect(commands, isEmpty);
+        expect(game.moveCommandActiveForTesting, isTrue);
+        expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
+        expect(game.hoverIntentTileForTesting, (col: 1, row: 0));
+
+        game
+          ..gamepadInput = GamepadInputSnapshot.empty
+          ..update(0.016)
+          ..gamepadInput = const GamepadInputSnapshot(confirm: true)
+          ..update(0.016);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(commands, [const TileTappedCommand(1, 0)]);
+      },
+    );
+
+    test('gamepad cursor reanchors when the selected unit changes', () async {
+      final map = _map();
+      final commands = <GameCommand>[];
+      final firstUnit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final secondUnit = GameUnit(
+        id: 'scout_2',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.scout,
+        name: 'Scout',
+        col: 0,
+        row: 2,
+      );
+      final game = await _loadedGame(
+        map,
+        onCommand: (command) async => commands.add(command),
+      );
+
+      game
+        ..applyState(
+          GameState(
+            activePlayerId: 'player_1',
+            units: [firstUnit, secondUnit],
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(firstUnit, tile: _tile(map, 0, 0)),
+              moveCommandActive: true,
+            ),
+          ),
+        )
+        ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
+        ..update(0.016)
+        ..gamepadInput = GamepadInputSnapshot.empty
+        ..update(0.016);
+
+      expect(game.hoverIntentTileForTesting, (col: 1, row: 0));
+
+      game
+        ..applyState(
+          GameState(
+            activePlayerId: 'player_1',
+            units: [firstUnit, secondUnit],
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(secondUnit, tile: _tile(map, 0, 2)),
+              moveCommandActive: true,
+            ),
+          ),
+        )
+        ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
+        ..update(0.016);
+
+      expect(commands, isEmpty);
+      expect(game.moveCommandActiveForTesting, isTrue);
+      expect(game.hoverIntentTileForTesting, (col: 1, row: 2));
+    });
+
+    test('gamepad cancel prioritizes pending worker action', () async {
+      final map = _map();
+      final commands = <GameCommand>[];
+      final worker = GameUnit(
+        id: 'worker_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.worker,
+        name: 'Worker',
+        col: 0,
+        row: 0,
+      );
+      final game = await _loadedGame(
+        map,
+        onCommand: (command) async => commands.add(command),
+      );
+
+      game
+        ..applyState(
+          GameState(
+            activePlayerId: 'player_1',
+            units: [worker],
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
+              moveCommandActive: true,
+              pendingAction: const PendingWorkerActionSelection(
+                ownerPlayerId: 'player_1',
+                unitId: 'worker_1',
+              ),
+            ),
+          ),
+        )
+        ..gamepadInput = const GamepadInputSnapshot(cancel: true)
+        ..update(0.016);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(commands, [const CancelWorkerActionSelectionCommand('worker_1')]);
+    });
+
+    test('gamepad move toggle ignores pending worker action', () async {
+      final map = _map();
+      final commands = <GameCommand>[];
+      final worker = GameUnit(
+        id: 'worker_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.worker,
+        name: 'Worker',
+        col: 0,
+        row: 0,
+      );
+      final game = await _loadedGame(
+        map,
+        onCommand: (command) async => commands.add(command),
+      );
+
+      game
+        ..applyState(
+          GameState(
+            activePlayerId: 'player_1',
+            units: [worker],
+            interaction: GameInteractionState(
+              selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
+              pendingAction: const PendingWorkerActionSelection(
+                ownerPlayerId: 'player_1',
+                unitId: 'worker_1',
+              ),
+            ),
+          ),
+        )
+        ..gamepadInput = const GamepadInputSnapshot(moveMode: true)
+        ..update(0.016);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(commands, isEmpty);
     });
 
     test('move targeting shows a move marker on reachable fog', () async {

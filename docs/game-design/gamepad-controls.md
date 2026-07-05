@@ -19,14 +19,19 @@
 | --- | --- |
 | D-pad / left stick | Move the selected hex cursor |
 | Right stick | Pan the camera |
-| Right trigger / left trigger | Zoom in / zoom out |
+| RT / LT triggers | Zoom in / zoom out |
 | A | Confirm/tap the current cursor hex |
 | B / Back | Cancel the active interaction mode |
 | X | Toggle move targeting |
 | Y | Inspect the current cursor hex |
-| Right bumper | Focus the next pending player action |
-| Left bumper | Focus the turn-start map target |
+| RB | Focus the next pending player action |
+| LB | Focus the turn-start map target |
 | Start | Run the primary turn action, matching Space |
+
+Terminology note: zoom is on the analog triggers, `RT` and `LT`. The bumpers,
+`RB` and `LB`, are separate shoulder buttons and are reserved for turn-flow
+focus shortcuts. The sticks are also separate: the left stick/D-pad moves the
+hex cursor, while the right stick pans the camera.
 
 ## Implementation Boundary
 

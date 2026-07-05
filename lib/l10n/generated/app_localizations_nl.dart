@@ -505,11 +505,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Pant de camera continu terwijl de geselecteerde hex behouden blijft.';
 
   @override
-  String get manualGamepadZoomAction => 'Triggers';
+  String get manualGamepadZoomAction => 'LT / RT-triggers';
 
   @override
   String get manualGamepadZoomBody =>
-      'Rechter trigger zoomt in; linker trigger zoomt uit voor strategisch of tactisch beeld.';
+      'RT zoomt in; LT zoomt uit. Gebruik de analoge triggers, niet de LB/RB-bumpers.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -540,18 +540,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'Inspecteert de huidige cursor-hex zonder de actieve modus te wijzigen.';
 
   @override
-  String get manualGamepadNextAction => 'Rechter bumper';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Focust de volgende openstaande speleractie in de beurtwachtrij.';
+      'De rechter bumper focust de volgende openstaande speleractie in de beurtwachtrij.';
 
   @override
-  String get manualGamepadFocusAction => 'Linker bumper';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Brengt de focus terug naar het startdoel van de beurt wanneer u opnieuw wilt oriënteren.';
+      'De linker bumper brengt de focus terug naar het startdoel van de beurt wanneer u opnieuw wilt oriënteren.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
