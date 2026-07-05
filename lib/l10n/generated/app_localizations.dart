@@ -985,13 +985,13 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadZoomAction.
   ///
   /// In en, this message translates to:
-  /// **'Triggers'**
+  /// **'LT / RT triggers'**
   String get manualGamepadZoomAction;
 
   /// No description provided for @manualGamepadZoomBody.
   ///
   /// In en, this message translates to:
-  /// **'Right trigger zooms in; left trigger zooms out for strategic or tactical view.'**
+  /// **'RT zooms in; LT zooms out. Use the analog triggers, not the LB/RB bumpers.'**
   String get manualGamepadZoomBody;
 
   /// No description provided for @manualGamepadConfirmAction.
@@ -1045,25 +1045,25 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadNextAction.
   ///
   /// In en, this message translates to:
-  /// **'Right bumper'**
+  /// **'RB'**
   String get manualGamepadNextAction;
 
   /// No description provided for @manualGamepadNextBody.
   ///
   /// In en, this message translates to:
-  /// **'Focuses the next pending player action in the turn queue.'**
+  /// **'The right bumper focuses the next pending player action in the turn queue.'**
   String get manualGamepadNextBody;
 
   /// No description provided for @manualGamepadFocusAction.
   ///
   /// In en, this message translates to:
-  /// **'Left bumper'**
+  /// **'LB'**
   String get manualGamepadFocusAction;
 
   /// No description provided for @manualGamepadFocusBody.
   ///
   /// In en, this message translates to:
-  /// **'Returns focus to the turn-start target when you need to reorient.'**
+  /// **'The left bumper returns focus to the turn-start target when you need to reorient.'**
   String get manualGamepadFocusBody;
 
   /// No description provided for @manualGamepadTurnAction.

@@ -506,11 +506,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Verschiebt die Kamera kontinuierlich, während das ausgewählte Hex-Feld erhalten bleibt.';
 
   @override
-  String get manualGamepadZoomAction => 'Trigger';
+  String get manualGamepadZoomAction => 'LT / RT Trigger';
 
   @override
   String get manualGamepadZoomBody =>
-      'Rechter Trigger zoomt hinein; linker Trigger zoomt für Strategie- oder Taktikansicht heraus.';
+      'RT zoomt hinein; LT zoomt heraus. Gemeint sind die analogen Trigger, nicht die LB/RB-Bumper.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -541,18 +541,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Prüft das aktuelle Cursor-Hex, ohne den aktiven Modus zu ändern.';
 
   @override
-  String get manualGamepadNextAction => 'Rechter Bumper';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.';
+      'Der rechte Bumper fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.';
 
   @override
-  String get manualGamepadFocusAction => 'Linker Bumper';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Setzt den Fokus auf das Ziel vom Zugbeginn zurück, wenn du dich neu orientieren musst.';
+      'Der linke Bumper setzt den Fokus auf das Ziel vom Zugbeginn zurück, wenn du dich neu orientieren musst.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

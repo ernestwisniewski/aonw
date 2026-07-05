@@ -503,11 +503,11 @@ class AppLocalizationsPl extends AppLocalizations {
       'Płynnie przesuwa kamerę, nie naruszając aktualnego pola kursora.';
 
   @override
-  String get manualGamepadZoomAction => 'Spusty';
+  String get manualGamepadZoomAction => 'LT / RT (spusty)';
 
   @override
   String get manualGamepadZoomBody =>
-      'Prawy spust przybliża, a lewy oddala widok strategiczny lub taktyczny.';
+      'RT przybliża, a LT oddala. Chodzi o analogowe spusty, nie bumpery LB/RB.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -538,18 +538,18 @@ class AppLocalizationsPl extends AppLocalizations {
       'Pokazuje aktualny heks kursora bez zmiany aktywnego trybu.';
 
   @override
-  String get manualGamepadNextAction => 'Prawy bumper';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Przenosi fokus do kolejnej oczekującej akcji gracza w turze.';
+      'Prawy bumper przenosi fokus do kolejnej oczekującej akcji gracza w turze.';
 
   @override
-  String get manualGamepadFocusAction => 'Lewy bumper';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Wraca fokusem do celu startowego tury, gdy trzeba odzyskać orientację.';
+      'Lewy bumper wraca fokusem do celu startowego tury, gdy trzeba odzyskać orientację.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

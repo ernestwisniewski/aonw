@@ -506,11 +506,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Desplaza la cámara de forma continua sin perder el hexágono seleccionado.';
 
   @override
-  String get manualGamepadZoomAction => 'Gatillos';
+  String get manualGamepadZoomAction => 'Gatillos LT / RT';
 
   @override
   String get manualGamepadZoomBody =>
-      'El gatillo derecho acerca; el izquierdo aleja para vista estratégica o táctica.';
+      'RT acerca; LT aleja. Usa los gatillos analógicos, no los bumpers LB/RB.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -541,18 +541,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'Inspecciona el hexágono del cursor sin cambiar el modo activo.';
 
   @override
-  String get manualGamepadNextAction => 'Bumper derecho';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Enfoca la siguiente acción pendiente del jugador en la cola del turno.';
+      'El bumper derecho enfoca la siguiente acción pendiente del jugador en la cola del turno.';
 
   @override
-  String get manualGamepadFocusAction => 'Bumper izquierdo';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Devuelve el foco al objetivo inicial del turno cuando necesites orientarte.';
+      'El bumper izquierdo devuelve el foco al objetivo inicial del turno cuando necesites orientarte.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

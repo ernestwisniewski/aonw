@@ -503,11 +503,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pans the camera continuously while the selected hex stays intact.';
 
   @override
-  String get manualGamepadZoomAction => 'Triggers';
+  String get manualGamepadZoomAction => 'LT / RT triggers';
 
   @override
   String get manualGamepadZoomBody =>
-      'Right trigger zooms in; left trigger zooms out for strategic or tactical view.';
+      'RT zooms in; LT zooms out. Use the analog triggers, not the LB/RB bumpers.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -538,18 +538,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Inspects the current cursor hex without changing the active mode.';
 
   @override
-  String get manualGamepadNextAction => 'Right bumper';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Focuses the next pending player action in the turn queue.';
+      'The right bumper focuses the next pending player action in the turn queue.';
 
   @override
-  String get manualGamepadFocusAction => 'Left bumper';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Returns focus to the turn-start target when you need to reorient.';
+      'The left bumper returns focus to the turn-start target when you need to reorient.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

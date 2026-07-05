@@ -507,11 +507,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Déplace la caméra en continu tout en gardant l\'hex sélectionné.';
 
   @override
-  String get manualGamepadZoomAction => 'Gâchettes';
+  String get manualGamepadZoomAction => 'Gâchettes LT / RT';
 
   @override
   String get manualGamepadZoomBody =>
-      'La gâchette droite zoome; la gauche dézoome pour la vue stratégique ou tactique.';
+      'RT zoome; LT dézoome. Utilisez les gâchettes analogiques, pas les bumpers LB/RB.';
 
   @override
   String get manualGamepadConfirmAction => 'A';
@@ -542,18 +542,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Inspecte l\'hex du curseur sans changer le mode actif.';
 
   @override
-  String get manualGamepadNextAction => 'Bumper droit';
+  String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Focalise la prochaine action joueur en attente dans la file du tour.';
+      'Le bumper droit focalise la prochaine action joueur en attente dans la file du tour.';
 
   @override
-  String get manualGamepadFocusAction => 'Bumper gauche';
+  String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Ramène le focus vers la cible de début de tour quand vous devez vous réorienter.';
+      'Le bumper gauche ramène le focus vers la cible de début de tour quand vous devez vous réorienter.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
