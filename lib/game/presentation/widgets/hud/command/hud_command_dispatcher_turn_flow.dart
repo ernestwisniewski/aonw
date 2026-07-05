@@ -19,14 +19,13 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     if (!_ref.mounted) return;
 
     final focusedState = currentState();
-    _applyPanelModes(
-      _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
-    );
-
-    switch (HudNextActionPanelResolver.afterFocus(
+    final nextPanel = HudNextActionPanelResolver.afterFocus(
       state: focusedState,
       activePlayerId: activePlayerId,
-    )) {
+    );
+    _closePrimaryPanelsBeforeOpening(nextPanel);
+
+    switch (nextPanel) {
       case HudNextActionPanel.technology:
         openTechnologyPanel(
           activePlayerId: activePlayerId,
@@ -41,14 +40,13 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
 
   Future<void> focusTurnStartMapTarget({
     required String activePlayerId,
+    GameState? state,
     bool moveCamera = true,
   }) async {
     if (activePlayerId.isEmpty) return;
 
     _ref.read(mapInspectionControllerProvider.notifier).clear();
-    _applyPanelModes(
-      _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
-    );
+    _applyPanelModesForTurnFocus(state: state, activePlayerId: activePlayerId);
 
     final focused = await _ref
         .read(gameCommandControllerProvider.notifier)
@@ -58,6 +56,23 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     await _ref
         .read(gameCommandControllerProvider.notifier)
         .jumpToPlayerStart(activePlayerId);
+  }
+
+  void _closePrimaryPanelsBeforeOpening(HudNextActionPanel nextPanel) {
+    final modes = _ref.read(hudPanelControllerProvider);
+    _applyPanelModes(modes.closePrimaryPanelsPreserving(nextPanel));
+  }
+
+  void _applyPanelModesForTurnFocus({
+    required GameState? state,
+    required String activePlayerId,
+  }) {
+    final modes = _ref.read(hudPanelControllerProvider);
+    final nextPanel = HudNextActionPanelResolver.afterFocus(
+      state: state,
+      activePlayerId: activePlayerId,
+    );
+    _applyPanelModes(modes.closePrimaryPanelsPreserving(nextPanel));
   }
 
   Future<void> endTurn({
@@ -91,6 +106,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
 
     await focusTurnStartMapTarget(
       activePlayerId: activePlayerId,
+      state: currentState(),
       moveCamera: true,
     );
   }
