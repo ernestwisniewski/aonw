@@ -12,6 +12,7 @@ import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_host_acti
 import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_stack_slots.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_actions.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/hud_auto_turn_hint.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
@@ -47,6 +48,8 @@ class GameHudOverlayHost extends ConsumerStatefulWidget {
 }
 
 class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
+  final HudResourceEconomyForecastCache _resourceEconomyForecastCache =
+      HudResourceEconomyForecastCache();
   HudMinimizedPopupEntry? _restoredModeBannerEntry;
   bool _autoTurnHintRestored = false;
 
@@ -64,6 +67,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
     if (oldWidget.gameSave.id == widget.gameSave.id) return;
     _restoredModeBannerEntry = null;
     _autoTurnHintRestored = false;
+    _resourceEconomyForecastCache.clear();
   }
 
   @override
@@ -107,6 +111,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
+      economyForecastCache: _resourceEconomyForecastCache,
       panelModes: ref.watch(hudPanelControllerProvider),
       openResourceBreakdown: ref.watch(hudResourceBreakdownControllerProvider),
       technologyViewModel: ref.watch(

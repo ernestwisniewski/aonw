@@ -20,6 +20,7 @@ import 'package:aonw/game/presentation/widgets/hud/objective/hud_score_pressure_
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_activity_log_entries.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_active_technology_summary.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_detail_sync.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_info_model.dart';
@@ -125,6 +126,7 @@ class HudOverlayFrame {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    HudResourceEconomyForecastCache? economyForecastCache,
     required HudPanelModes panelModes,
     required TopResourcePopupType? openResourceBreakdown,
     required TechnologyPanelViewModel technologyViewModel,
@@ -170,6 +172,7 @@ class HudOverlayFrame {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
+      economyForecastCache: economyForecastCache,
     );
     final activeTechnologySummary = HudActiveTechnologySummary.fromViewModel(
       viewModel: technologyViewModel,

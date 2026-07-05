@@ -47,6 +47,7 @@ class HudResourceSummary {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    HudResourceEconomyForecastCache? economyForecastCache,
   }) {
     if (state == null || playerId.isEmpty) {
       return HudResourceSummary.empty();
@@ -65,6 +66,7 @@ class HudResourceSummary {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityModifier: stabilityModifier,
+      cache: economyForecastCache,
     );
 
     final resourceNetwork = EmpireResourceNetworkRules.forPlayer(
