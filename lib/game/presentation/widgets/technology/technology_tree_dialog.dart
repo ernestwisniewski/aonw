@@ -9,6 +9,7 @@ import 'package:aonw/game/presentation/widgets/technology/technology_details_dia
 import 'package:aonw/game/presentation/widgets/technology/technology_recommendations_view.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_board.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_details_layers.dart';
+import 'package:aonw/game/presentation/widgets/technology/technology_tree_gamepad_navigation.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_header.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
@@ -30,6 +31,8 @@ export 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas
         technologyTreeConnectorPointsForTesting,
         technologyTreeSelectedPathEdgesForTesting,
         technologyTreeSelectedPathTargetForTesting;
+
+part 'technology_tree_panel_details.dart';
 
 enum TechnologyTreeViewMode { recommendations, tree }
 
@@ -121,6 +124,10 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
 
+  void _setDetailsState(void Function() update) {
+    setState(update);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -153,8 +160,15 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
         detailsCard != null ||
         _detailsBuildingType != null ||
         _detailsUnitType != null;
-    final gamepadCards = _gamepadCards(showTree);
-    final selectedTechnologyId = _selectedTechnologyIdFor(gamepadCards);
+    final gamepadCards = TechnologyTreeGamepadNavigation.cardsFor(
+      viewModel: widget.viewModel,
+      showTree: showTree,
+    );
+    final selectedTechnologyId =
+        TechnologyTreeGamepadNavigation.selectedTechnologyIdFor(
+          gamepadCards,
+          _selectedTechnologyId,
+        );
 
     return GamepadPanelInputListener(
       input: widget.gamepadInputListenable,
@@ -278,51 +292,19 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
     );
   }
 
-  List<TechnologyCardViewModel> _gamepadCards(bool showTree) {
-    if (!showTree) return widget.viewModel.recommendedTechnologies;
-    return [...widget.viewModel.technologies]..sort(_compareTechnologyCards);
-  }
-
-  int _compareTechnologyCards(
-    TechnologyCardViewModel a,
-    TechnologyCardViewModel b,
-  ) {
-    final column = a.treeColumn.compareTo(b.treeColumn);
-    if (column != 0) return column;
-    return a.treeRow.compareTo(b.treeRow);
-  }
-
-  TechnologyId? _selectedTechnologyIdFor(List<TechnologyCardViewModel> cards) {
-    final selected = _selectedTechnologyId;
-    if (selected != null && cards.any((card) => card.id == selected)) {
-      return selected;
-    }
-    for (final card in cards) {
-      if (card.canSelect) return card.id;
-    }
-    return cards.isEmpty ? null : cards.first.id;
-  }
-
   void _moveSelection(
     List<TechnologyCardViewModel> cards,
     GamepadMapDirection direction, {
     required bool showTree,
     required bool compact,
   }) {
-    if (cards.isEmpty) return;
-    final step = switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.left => -1,
-      GamepadMapDirection.down || GamepadMapDirection.right => 1,
-    };
-    final selectedId = _selectedTechnologyIdFor(cards);
-    final selectedIndex = cards.indexWhere((card) => card.id == selectedId);
-    final currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
-    final nextIndex = (currentIndex + step) % cards.length;
-    _setSelectedTechnology(
-      cards[nextIndex],
-      showTree: showTree,
-      compact: compact,
+    final nextCard = TechnologyTreeGamepadNavigation.nextCard(
+      cards: cards,
+      selectedTechnologyId: _selectedTechnologyId,
+      direction: direction,
     );
+    if (nextCard == null) return;
+    _setSelectedTechnology(nextCard, showTree: showTree, compact: compact);
   }
 
   void _setSelectedTechnology(
@@ -336,46 +318,23 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsBuildingType = null;
       _detailsUnitType = null;
     });
-    if (showTree) _revealTreeTechnology(card, compact: compact);
-  }
-
-  void _revealTreeTechnology(
-    TechnologyCardViewModel card, {
-    required bool compact,
-  }) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          !_verticalController.hasClients ||
-          !_horizontalController.hasClients) {
-        return;
-      }
-      final metrics = TechnologyTreeBoardMetrics.fromCards(
-        widget.viewModel.technologies,
+    if (showTree) {
+      TechnologyTreeGamepadNavigation.revealTreeCard(
+        isMounted: () => mounted,
+        cards: widget.viewModel.technologies,
+        card: card,
         compact: compact,
+        verticalController: _verticalController,
+        horizontalController: _horizontalController,
       );
-      final rect = metrics.rects[card.id];
-      if (rect == null) return;
-      _horizontalController.animateTo(
-        _centeredOffset(_horizontalController.position, rect.center.dx),
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOutCubic,
-      );
-      _verticalController.animateTo(
-        _centeredOffset(_verticalController.position, rect.center.dy),
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
-  double _centeredOffset(ScrollPosition position, double center) {
-    return (center - position.viewportDimension / 2)
-        .clamp(position.minScrollExtent, position.maxScrollExtent)
-        .toDouble();
+    }
   }
 
   void _confirmSelected(List<TechnologyCardViewModel> cards) {
-    final selected = _selectedCard(cards);
+    final selected = TechnologyTreeGamepadNavigation.selectedCard(
+      cards,
+      _selectedTechnologyId,
+    );
     if (selected == null) return;
     if (selected.canSelect) {
       _researchTechnology(selected.id);
@@ -387,18 +346,12 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
   }
 
   void _showSelectedDetails(List<TechnologyCardViewModel> cards) {
-    final selected = _selectedCard(cards);
+    final selected = TechnologyTreeGamepadNavigation.selectedCard(
+      cards,
+      _selectedTechnologyId,
+    );
     if (selected == null) return;
     _showTechnologyDetails(selected);
-  }
-
-  TechnologyCardViewModel? _selectedCard(List<TechnologyCardViewModel> cards) {
-    final selectedId = _selectedTechnologyIdFor(cards);
-    if (selectedId == null) return null;
-    for (final card in cards) {
-      if (card.id == selectedId) return card;
-    }
-    return null;
   }
 
   void _toggleTechnologyView(
@@ -409,7 +362,10 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _showRecommendations();
       return;
     }
-    final selected = _selectedCard(cards);
+    final selected = TechnologyTreeGamepadNavigation.selectedCard(
+      cards,
+      _selectedTechnologyId,
+    );
     ref.read(technologyTreeViewModeProvider.notifier).showTree();
     setState(() {
       if (selected != null) _selectedTechnologyId = selected.id;
@@ -458,158 +414,6 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
           ? card.id
           : null;
     });
-  }
-
-  void _showTechnologyDetails(TechnologyCardViewModel card) {
-    if (_opensDetailsAsModal(context)) {
-      _showTechnologyDetailsModal(card);
-      return;
-    }
-    setState(() {
-      _detailsTechnologyId = card.id;
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-    });
-  }
-
-  void _closeTechnologyDetails() {
-    setState(() => _detailsTechnologyId = null);
-  }
-
-  void _showBuildingDetails(CityBuildingType buildingType) {
-    if (_opensDetailsAsModal(context)) {
-      _showBuildingDetailsModal(buildingType);
-      return;
-    }
-    setState(() {
-      _detailsTechnologyId = null;
-      _detailsBuildingType = buildingType;
-      _detailsUnitType = null;
-    });
-  }
-
-  void _showUnitDetails(GameUnitType unitType) {
-    if (_opensDetailsAsModal(context)) {
-      _showUnitDetailsModal(unitType);
-      return;
-    }
-    setState(() {
-      _detailsTechnologyId = null;
-      _detailsBuildingType = null;
-      _detailsUnitType = unitType;
-    });
-  }
-
-  bool _opensDetailsAsModal(BuildContext context) =>
-      MediaQuery.orientationOf(context) == Orientation.portrait;
-
-  void _showTechnologyDetailsModal(TechnologyCardViewModel card) {
-    final l10n = AppLocalizations.of(context);
-    _clearInlineDetails();
-    unawaited(
-      showGameModal<void>(
-        context: context,
-        builder: (dialogContext) => TechnologyDetailsDialog(
-          card: card,
-          l10n: l10n,
-          cityRuleset: widget.cityRuleset,
-          technologyRuleset: widget.technologyRuleset,
-          onClose: () => Navigator.of(dialogContext).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  void _showBuildingDetailsModal(CityBuildingType buildingType) {
-    final l10n = AppLocalizations.of(context);
-    final definition = widget.cityRuleset.buildingDefinitionFor(buildingType);
-    _clearInlineDetails();
-    unawaited(
-      showGameModal<void>(
-        context: context,
-        builder: (dialogContext) => CityBuildingDetailsDialog(
-          buildingType: buildingType,
-          definition: definition,
-          unlockingTechnology:
-              TechnologyUnlockQuery.unlockingTechnologyForBuilding(
-                buildingType: buildingType,
-                ruleset: widget.technologyRuleset,
-              ),
-          l10n: l10n,
-          title: GameDisplayNames.cityBuilding(l10n, buildingType),
-          emoji: CityBuildingsPanelViewModelFactory.emojiFor(buildingType),
-          statusLabel: l10n.technologyDetailsUnlockStatus,
-          costLabel: l10n.cityProductionCostShort(definition.productionCost),
-          onClose: () => Navigator.of(dialogContext).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  void _showUnitDetailsModal(GameUnitType unitType) {
-    final l10n = AppLocalizations.of(context);
-    final definition = _unitDefinitionFor(unitType);
-    _clearInlineDetails();
-    unawaited(
-      showGameModal<void>(
-        context: context,
-        builder: (dialogContext) => UnitDetailsPanel(
-          unitType: unitType,
-          unlockingTechnology: TechnologyUnlockQuery.unlockingTechnologyForUnit(
-            unitType: unitType,
-            ruleset: widget.technologyRuleset,
-          ),
-          l10n: l10n,
-          title: GameDisplayNames.unitType(l10n, unitType),
-          icon: gameIconForUnitType(unitType),
-          statusLabel: l10n.technologyDetailsUnlockStatus,
-          costLabel: definition == null
-              ? null
-              : l10n.cityProductionCostShort(definition.productionCost),
-          maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.78,
-          onClose: () => Navigator.of(dialogContext).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  void _clearInlineDetails() {
-    if (_detailsTechnologyId == null &&
-        _detailsBuildingType == null &&
-        _detailsUnitType == null) {
-      return;
-    }
-    setState(() {
-      _detailsTechnologyId = null;
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-    });
-  }
-
-  UnitProductionDefinition? _unitDefinitionFor(GameUnitType unitType) {
-    try {
-      return widget.cityRuleset.unitDefinitionFor(unitType);
-    } on ArgumentError {
-      return null;
-    }
-  }
-
-  void _closeDetailsLayer() {
-    setState(() {
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-    });
-  }
-
-  TechnologyCardViewModel? _technologyCardFor(
-    List<TechnologyCardViewModel> cards,
-    TechnologyId? technologyId,
-  ) {
-    if (technologyId == null) return null;
-    for (final card in cards) {
-      if (card.id == technologyId) return card;
-    }
-    return null;
   }
 
   void _showFullTree() {

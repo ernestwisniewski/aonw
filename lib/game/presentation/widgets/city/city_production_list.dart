@@ -1,16 +1,18 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/widgets/city/city_building_sort_controls.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_sorting.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_sections.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_tile.dart';
 import 'package:aonw/game/presentation/widgets/city/city_specialization_list_tile.dart';
-import 'package:aonw/l10n/game_text.dart';
+import 'package:aonw/game/presentation/widgets/shared/selected_panel_item_revealer.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
+export 'package:aonw/game/presentation/widgets/city/city_building_sort_controls.dart'
+    show BuildingSectionHeader, BuildingSortSelect;
 export 'package:aonw/game/presentation/widgets/city/city_building_sorting.dart'
     show CityBuildingSortMode;
 
@@ -73,8 +75,9 @@ class CityProductionList extends StatelessWidget {
       for (final item in projects) {
         final itemKey = cityProductionItemKey(item);
         children.add(
-          _RevealWhenSelected(
+          SelectedPanelItemRevealer(
             selected: selectedItemKey == itemKey,
+            alignment: 0.18,
             child: ProductionListTile(
               key: ValueKey(itemKey),
               item: item,
@@ -103,8 +106,9 @@ class CityProductionList extends StatelessWidget {
       for (final item in sortedBuildings) {
         final itemKey = cityProductionItemKey(item);
         children.add(
-          _RevealWhenSelected(
+          SelectedPanelItemRevealer(
             selected: selectedItemKey == itemKey,
+            alignment: 0.18,
             child: ProductionListTile(
               key: ValueKey(itemKey),
               item: item,
@@ -152,8 +156,9 @@ class CityProductionList extends StatelessWidget {
       for (final item in units) {
         final itemKey = cityProductionItemKey(item);
         children.add(
-          _RevealWhenSelected(
+          SelectedPanelItemRevealer(
             selected: selectedItemKey == itemKey,
+            alignment: 0.18,
             child: ProductionListTile(
               key: ValueKey(itemKey),
               item: item,
@@ -177,8 +182,9 @@ class CityProductionList extends StatelessWidget {
       for (final item in specializations) {
         final itemKey = citySpecializationItemKey(item);
         children.add(
-          _RevealWhenSelected(
+          SelectedPanelItemRevealer(
             selected: selectedItemKey == itemKey,
+            alignment: 0.18,
             child: SpecializationListTile(
               key: ValueKey(itemKey),
               item: item,
@@ -242,174 +248,3 @@ String cityProductionItemKey(CityProductionItem item) {
 
 String citySpecializationItemKey(CitySpecializationItem item) =>
     'specialization:${item.type.name}';
-
-class _RevealWhenSelected extends StatefulWidget {
-  const _RevealWhenSelected({required this.selected, required this.child});
-
-  final bool selected;
-  final Widget child;
-
-  @override
-  State<_RevealWhenSelected> createState() => _RevealWhenSelectedState();
-}
-
-class _RevealWhenSelectedState extends State<_RevealWhenSelected> {
-  @override
-  void initState() {
-    super.initState();
-    _revealIfSelected();
-  }
-
-  @override
-  void didUpdateWidget(_RevealWhenSelected oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.selected && !oldWidget.selected) {
-      _revealIfSelected();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-
-  void _revealIfSelected() {
-    if (!widget.selected) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 120),
-        alignment: 0.18,
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-}
-
-class BuildingSectionHeader extends StatelessWidget {
-  const BuildingSectionHeader({
-    required this.label,
-    required this.value,
-    required this.compact,
-    required this.onChanged,
-    super.key,
-  });
-
-  final String label;
-  final CityBuildingSortMode value;
-  final bool compact;
-  final ValueChanged<CityBuildingSortMode>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final sortChanged = onChanged;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              GameText.uppercase(label),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GameUiTheme.toolbarLabel.copyWith(color: GameUiTheme.gold),
-            ),
-          ),
-          if (sortChanged != null) ...[
-            const SizedBox(width: 10),
-            Flexible(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: BuildingSortSelect(
-                  value: value,
-                  compact: compact,
-                  onChanged: sortChanged,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class BuildingSortSelect extends StatelessWidget {
-  const BuildingSortSelect({
-    required this.value,
-    required this.compact,
-    required this.onChanged,
-    super.key,
-  });
-
-  final CityBuildingSortMode value;
-  final bool compact;
-  final ValueChanged<CityBuildingSortMode> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Align(
-      alignment: Alignment.centerRight,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: compact ? 190 : 230),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0x33131313),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0x44EBD9B0)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: compact ? 8 : 10,
-              right: compact ? 4 : 6,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.cityProductionSortLabel,
-                  style: GameUiTheme.toolbarLabel.copyWith(
-                    color: GameUiTheme.textSecondary,
-                    fontSize: compact ? 9.5 : 10.5,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<CityBuildingSortMode>(
-                      key: const Key('cityProductionList.buildingSort'),
-                      value: value,
-                      isDense: true,
-                      isExpanded: true,
-                      borderRadius: BorderRadius.circular(7),
-                      dropdownColor: GameUiTheme.bg,
-                      iconEnabledColor: GameUiTheme.gold,
-                      style: GameUiTheme.bodySmall.copyWith(
-                        color: GameUiTheme.goldLight,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      items: [
-                        for (final mode in CityBuildingSortMode.values)
-                          DropdownMenuItem(
-                            value: mode,
-                            child: Text(
-                              mode.label(l10n),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                      onChanged: (mode) {
-                        if (mode != null) onChanged(mode);
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

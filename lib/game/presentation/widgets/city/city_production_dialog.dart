@@ -8,6 +8,7 @@ import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog
 import 'package:aonw/game/presentation/widgets/city/city_empty_production_state.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_details_panels.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_model.dart';
+import 'package:aonw/game/presentation/widgets/city/city_production_gamepad_navigation.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
@@ -24,6 +25,8 @@ import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+part 'city_production_panel_details.dart';
 
 class CityProductionDialog extends StatelessWidget {
   final GameCity city;
@@ -162,6 +165,10 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
   String? _selectedItemKey;
   CityBuildingSortMode _buildingSortMode = CityBuildingSortMode.recommended;
 
+  void _setDetailsState(void Function() update) {
+    setState(update);
+  }
+
   @override
   void didUpdateWidget(covariant CityProductionPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -180,8 +187,20 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     final detailsBuildingItem = viewModel.itemForBuilding(_detailsBuildingType);
     final detailsUnitItem = viewModel.itemForUnit(_detailsUnitType);
     final activeItem = viewModel.activeItem;
-    final gamepadChoices = _gamepadChoicesFor(viewModel);
-    final selectedItemKey = _selectedKeyFor(gamepadChoices);
+    final gamepadChoices = CityProductionGamepadNavigation.choicesFor(
+      viewModel: viewModel,
+      buildingSortMode: _buildingSortMode,
+      onBuild: widget.onBuild,
+      onProduceUnit: widget.onProduceUnit,
+      onBuildingDetails: _showBuildingDetails,
+      onUnitDetails: _showUnitDetails,
+      onStartProject: widget.onStartProject,
+      onSetSpecialization: widget.onSetSpecialization,
+    );
+    final selectedItemKey = CityProductionGamepadNavigation.selectedKeyFor(
+      gamepadChoices,
+      _selectedItemKey,
+    );
 
     return GamepadPanelInputListener(
       input: widget.gamepadInputListenable,
@@ -305,241 +324,38 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     );
   }
 
-  void _showBuildingDetails(CityProductionItem item) {
-    final buildingType = item.buildingType;
-    if (buildingType == null) return;
-    if (_opensDetailsAsModal(context)) {
-      _showBuildingDetailsModal(item);
-      return;
-    }
-    setState(() {
-      _detailsBuildingType = buildingType;
-      _detailsUnitType = null;
-    });
-  }
-
-  bool _opensDetailsAsModal(BuildContext context) {
-    return MediaQuery.orientationOf(context) == Orientation.portrait;
-  }
-
-  void _showBuildingDetailsModal(CityProductionItem item) {
-    final buildingType = item.buildingType;
-    if (buildingType == null) return;
-    final l10n = AppLocalizations.of(context);
-    final viewModel = _viewModelFor(l10n);
-    final definition = widget.cityRuleset.buildingDefinitionFor(buildingType);
-
-    unawaited(
-      showGameModal<void>(
-        context: context,
-        builder: (dialogContext) => CityBuildingDetailsDialog(
-          buildingType: buildingType,
-          definition: definition,
-          unlockingTechnology:
-              TechnologyUnlockQuery.unlockingTechnologyForBuilding(
-                buildingType: buildingType,
-                ruleset: widget.technologyRuleset,
-              ),
-          l10n: l10n,
-          title: item.title,
-          emoji: item.emoji,
-          statusLabel: _buildingStateLabel(l10n, item),
-          costLabel: l10n.cityProductionCostShort(definition.productionCost),
-          progressLabel: _buildingProgressLabel(l10n, item),
-          paceLabel: l10n.cityProductionPaceShort(item.productionPerTurn),
-          yieldImpactMode: item.buildingState == CityBuildingCardState.built
-              ? CityBuildingYieldImpactMode.active
-              : CityBuildingYieldImpactMode.planned,
-          currentCityYield: viewModel.currentCityYield,
-          currentCityScience: viewModel.currentCityScience,
-          onClose: () => Navigator.of(dialogContext).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  CityProductionDialogViewModel _viewModelFor(AppLocalizations l10n) {
-    return CityProductionDialogViewModel.from(
-      widget.city,
-      l10n: l10n,
-      cityRuleset: widget.cityRuleset,
-      research: widget.research,
-      technologyRuleset: widget.technologyRuleset,
-      mapData: widget.mapData,
-      cities: widget.cities,
-      units: widget.units,
-      artifacts: widget.artifacts,
-      fieldImprovements: widget.fieldImprovements,
-      resourceTradeAgreements: widget.resourceTradeAgreements,
-      productionPerTurn: widget.productionPerTurn,
-      currentTurn: widget.currentTurn,
-      paceBalance: widget.paceBalance,
-    );
-  }
-
-  String _buildingStateLabel(AppLocalizations l10n, CityProductionItem item) {
-    return switch (item.buildingState) {
-      CityBuildingCardState.built => l10n.cityProductionBuiltLabel,
-      CityBuildingCardState.inProgress => l10n.productionInProgressLabel,
-      CityBuildingCardState.locked => l10n.productionButtonLocked,
-      CityBuildingCardState.available ||
-      null => l10n.cityProductionAvailableLabel,
-    };
-  }
-
-  String _buildingProgressLabel(
-    AppLocalizations l10n,
-    CityProductionItem item,
-  ) {
-    final eta = item.effectiveEta;
-    final turns = eta.hasTurns ? ' • ${eta.detailLabel(l10n)}' : '';
-    return '${item.investedProduction}/${item.totalCost}$turns';
-  }
-
   void _setBuildingSortMode(CityBuildingSortMode mode) {
     setState(() => _buildingSortMode = mode);
   }
 
-  void _closeBuildingDetails() {
-    setState(() => _detailsBuildingType = null);
-  }
-
-  void _showUnitDetails(CityProductionItem item) {
-    final unitType = item.unitType;
-    if (unitType == null) return;
-    if (_opensDetailsAsModal(context)) {
-      _showUnitDetailsModal(item);
-      return;
-    }
-    setState(() {
-      _detailsBuildingType = null;
-      _detailsUnitType = unitType;
-    });
-  }
-
-  void _showUnitDetailsModal(CityProductionItem item) {
-    final unitType = item.unitType;
-    if (unitType == null) return;
-    final l10n = AppLocalizations.of(context);
-    final definition = widget.cityRuleset.unitDefinitionFor(unitType);
-
-    unawaited(
-      showGameModal<void>(
-        context: context,
-        builder: (dialogContext) => UnitDetailsPanel(
-          unitType: unitType,
-          unlockingTechnology: TechnologyUnlockQuery.unlockingTechnologyForUnit(
-            unitType: unitType,
-            ruleset: widget.technologyRuleset,
-          ),
-          l10n: l10n,
-          title: item.title,
-          icon: item.icon ?? gameIconForUnitType(unitType),
-          statusLabel: item.active
-              ? l10n.productionInProgressLabel
-              : l10n.cityProductionAvailableUnitLabel,
-          costLabel: l10n.cityProductionCostShort(definition.productionCost),
-          progressLabel: _buildingProgressLabel(l10n, item),
-          paceLabel: l10n.cityProductionPaceShort(item.productionPerTurn),
-          maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.78,
-          onClose: () => Navigator.of(dialogContext).maybePop(),
-        ),
-      ),
-    );
-  }
-
-  void _closeUnitDetails() {
-    setState(() => _detailsUnitType = null);
-  }
-
-  List<_CityProductionGamepadChoice> _gamepadChoicesFor(
-    CityProductionDialogViewModel viewModel,
-  ) {
-    return [
-      for (final item in CityProductionList.sortedBuildings(
-        viewModel.buildings,
-        _buildingSortMode,
-      ))
-        _CityProductionGamepadChoice(
-          key: cityProductionItemKey(item),
-          canConfirm: !item.active,
-          onConfirm: () => widget.onBuild(item.buildingType!),
-          onDetails: () => _showBuildingDetails(item),
-        ),
-      for (final item in viewModel.units)
-        _CityProductionGamepadChoice(
-          key: cityProductionItemKey(item),
-          canConfirm: !item.active && !item.locked,
-          onConfirm: () => widget.onProduceUnit(item.unitType!),
-          onDetails: () => _showUnitDetails(item),
-        ),
-      for (final item in viewModel.specializations)
-        _CityProductionGamepadChoice(
-          key: citySpecializationItemKey(item),
-          canConfirm:
-              !item.active &&
-              !item.locked &&
-              widget.onSetSpecialization != null,
-          onConfirm: () => widget.onSetSpecialization!(item.type),
-        ),
-      for (final item in viewModel.projects)
-        _CityProductionGamepadChoice(
-          key: cityProductionItemKey(item),
-          canConfirm: !item.active && widget.onStartProject != null,
-          onConfirm: () => widget.onStartProject!(item.projectType!),
-        ),
-    ];
-  }
-
-  String? _selectedKeyFor(List<_CityProductionGamepadChoice> choices) {
-    final selected = _selectedItemKey;
-    if (selected != null && choices.any((choice) => choice.key == selected)) {
-      return selected;
-    }
-    for (final choice in choices) {
-      if (choice.canConfirm) return choice.key;
-    }
-    return choices.isEmpty ? null : choices.first.key;
-  }
-
   void _moveSelection(
-    List<_CityProductionGamepadChoice> choices,
+    List<CityProductionGamepadChoice> choices,
     GamepadMapDirection direction,
   ) {
-    if (choices.isEmpty) return;
-    final step = switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.left => -1,
-      GamepadMapDirection.down || GamepadMapDirection.right => 1,
-    };
-    final selectedKey = _selectedKeyFor(choices);
-    final selectedIndex = choices.indexWhere(
-      (choice) => choice.key == selectedKey,
+    final nextKey = CityProductionGamepadNavigation.nextKey(
+      choices: choices,
+      selectedKey: _selectedItemKey,
+      direction: direction,
     );
-    final currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
-    final nextIndex = (currentIndex + step) % choices.length;
-    setState(() => _selectedItemKey = choices[nextIndex].key);
+    if (nextKey == null) return;
+    setState(() => _selectedItemKey = nextKey);
   }
 
-  void _confirmSelected(List<_CityProductionGamepadChoice> choices) {
-    final selected = _selectedChoice(choices);
+  void _confirmSelected(List<CityProductionGamepadChoice> choices) {
+    final selected = CityProductionGamepadNavigation.selectedChoice(
+      choices,
+      _selectedItemKey,
+    );
     if (selected == null || !selected.canConfirm) return;
     selected.onConfirm();
   }
 
-  void _showSelectedDetails(List<_CityProductionGamepadChoice> choices) {
-    final selected = _selectedChoice(choices);
+  void _showSelectedDetails(List<CityProductionGamepadChoice> choices) {
+    final selected = CityProductionGamepadNavigation.selectedChoice(
+      choices,
+      _selectedItemKey,
+    );
     selected?.onDetails?.call();
-  }
-
-  _CityProductionGamepadChoice? _selectedChoice(
-    List<_CityProductionGamepadChoice> choices,
-  ) {
-    final selectedKey = _selectedKeyFor(choices);
-    if (selectedKey == null) return null;
-    for (final choice in choices) {
-      if (choice.key == selectedKey) return choice;
-    }
-    return null;
   }
 
   void _handleGamepadCancel() {
@@ -555,18 +371,4 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     });
     return true;
   }
-}
-
-class _CityProductionGamepadChoice {
-  const _CityProductionGamepadChoice({
-    required this.key,
-    required this.canConfirm,
-    required this.onConfirm,
-    this.onDetails,
-  });
-
-  final String key;
-  final bool canConfirm;
-  final VoidCallback onConfirm;
-  final VoidCallback? onDetails;
 }

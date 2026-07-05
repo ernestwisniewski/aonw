@@ -113,6 +113,11 @@ class _GameHudState extends ConsumerState<GameHud> {
   bool _resigning = false;
   bool _optionsOverlayPanelActive = false;
 
+  void _setResigning(bool resigning) {
+    if (!mounted || _resigning == resigning) return;
+    setState(() => _resigning = resigning);
+  }
+
   Future<void> _onClose(BuildContext context) async {
     await ref.read(gameCommandControllerProvider.notifier).saveCamera();
     if (!context.mounted) return;
@@ -244,61 +249,6 @@ class _GameHudState extends ConsumerState<GameHud> {
           ),
       ],
     );
-  }
-
-  bool _canResign(GameSave? save, NetworkSession? networkSession) {
-    return save?.gameMode == GameMode.multiplayer &&
-        networkSession != null &&
-        networkSession.isConnected &&
-        networkSession.matchId == widget.session.saveId;
-  }
-
-  Future<void> _onResignMatch(BuildContext context) async {
-    if (_resigning) return;
-    final l10n = AppLocalizations.of(context);
-    final session = ref.read(networkSessionProvider);
-    final matchId = session?.matchId;
-    if (session == null || matchId == null) return;
-
-    final confirmed = await showGameConfirmation(
-      context: context,
-      title: l10n.resignMatchTitle,
-      message: l10n.resignMatchMessage,
-      confirmLabel: l10n.resignAction,
-      cancelLabel: l10n.selectionActionCancel,
-      tone: GameConfirmationTone.danger,
-    );
-    if (!confirmed || !mounted || !context.mounted) return;
-
-    setState(() => _resigning = true);
-    try {
-      await NetworkSessionClient(
-        serverpodHost: ref.read(apiConfigProvider).baseUrl.toString(),
-      ).resignMatch(token: session.token, matchId: matchId);
-      await const NetworkSessionStore().saveMatchId(null);
-      ref
-          .read(networkSessionStateProvider.notifier)
-          .set(
-            NetworkSession(
-              userId: session.userId,
-              token: session.token,
-              connectionState: session.connectionState.copyWith(
-                changedAt: ref.read(gameClockProvider).nowUtc(),
-              ),
-            ),
-          );
-      if (!mounted) return;
-      widget.onClose();
-    } catch (_) {
-      if (!mounted || !context.mounted) return;
-      GameToast.show(
-        context,
-        message: l10n.resignMatchError,
-        tone: GameToastTone.error,
-      );
-    } finally {
-      if (mounted) setState(() => _resigning = false);
-    }
   }
 
   void _setOptionsOverlayPanelActive(bool active) {

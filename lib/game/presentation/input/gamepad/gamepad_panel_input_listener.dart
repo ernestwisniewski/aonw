@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/game/presentation/input/gamepad/gamepad_control_frame.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_frame_controller.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart';
@@ -92,7 +94,7 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
     final ticker = _ticker ??= createTicker(_tick);
     if (ticker.isActive) return;
     _lastElapsed = null;
-    ticker.start();
+    unawaited(ticker.start());
   }
 
   void _stopTicker() {
