@@ -496,7 +496,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Mueve el cursor hexagonal seleccionado sin ejecutar una orden.';
+      'Mueve el cursor hexagonal seleccionado, o la fila/tarjeta seleccionada en paneles de ciudad e investigación abiertos.';
 
   @override
   String get manualGamepadPanAction => 'Stick derecho';
@@ -517,28 +517,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirma el hexágono actual, igual que tocar o hacer clic izquierdo en el mapa.';
+      'Confirma el hexágono actual o la opción seleccionada del panel, incluidas producción de ciudad e investigación.';
 
   @override
   String get manualGamepadCancelAction => 'B / Atrás';
 
   @override
   String get manualGamepadCancelBody =>
-      'Cancela el objetivo activo, la elección de panel, la ruta o el modo de interacción.';
+      'Cierra primero los detalles del panel y luego los paneles; si no, cancela objetivo, ruta o modo de interacción.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Alterna la selección de movimiento para la unidad seleccionada cuando haya movimiento disponible.';
+      'En el mapa alterna objetivos de movimiento; en investigación alterna recomendaciones y árbol completo.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Inspecciona el hexágono del cursor sin cambiar el modo activo.';
+      'Inspecciona el hexágono del cursor, o abre detalles de la producción o tecnología seleccionada.';
 
   @override
   String get manualGamepadNextAction => 'RB';

@@ -967,7 +967,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadCursorBody.
   ///
   /// In en, this message translates to:
-  /// **'Moves the selected hex cursor without committing an order.'**
+  /// **'Moves the selected hex cursor, or the selected row/card in open city and research panels.'**
   String get manualGamepadCursorBody;
 
   /// No description provided for @manualGamepadPanAction.
@@ -1003,7 +1003,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Confirms the current hex, matching a tap or left click on the map.'**
+  /// **'Confirms the current hex or selected panel choice, including city production and research picks.'**
   String get manualGamepadConfirmBody;
 
   /// No description provided for @manualGamepadCancelAction.
@@ -1015,7 +1015,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadCancelBody.
   ///
   /// In en, this message translates to:
-  /// **'Cancels the active targeting, panel choice, route, or interaction mode.'**
+  /// **'Closes panel details first, then panels; otherwise cancels active targeting, route, or interaction mode.'**
   String get manualGamepadCancelBody;
 
   /// No description provided for @manualGamepadModeAction.
@@ -1027,7 +1027,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadModeBody.
   ///
   /// In en, this message translates to:
-  /// **'Toggles movement targeting for the selected unit when movement is available.'**
+  /// **'Toggles movement targeting on the map; in research, switches recommendations and full tree view.'**
   String get manualGamepadModeBody;
 
   /// No description provided for @manualGamepadInspectAction.
@@ -1039,7 +1039,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadInspectBody.
   ///
   /// In en, this message translates to:
-  /// **'Inspects the current cursor hex without changing the active mode.'**
+  /// **'Inspects the current cursor hex, or opens details for the selected production or technology item.'**
   String get manualGamepadInspectBody;
 
   /// No description provided for @manualGamepadNextAction.

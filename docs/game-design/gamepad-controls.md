@@ -17,13 +17,13 @@
 
 | Input | Action |
 | --- | --- |
-| D-pad / left stick | Move the selected hex cursor |
+| D-pad / left stick | Move the selected hex cursor, or the selected row/card in open HUD panels |
 | Right stick | Pan the camera |
 | RT / LT triggers | Zoom in / zoom out |
-| A | Confirm/tap the current cursor hex |
-| B / Back | Cancel the active interaction mode |
-| X | Toggle move targeting |
-| Y | Inspect the current cursor hex |
+| A | Confirm/tap the current cursor hex, or confirm the selected panel choice |
+| B / Back | Close panel details, close the active panel, or cancel the active interaction mode |
+| X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
+| Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
 | RB | Focus the next pending player action |
 | LB | Focus the turn-start map target |
 | Start | Run the primary turn action, matching Space |
@@ -37,8 +37,10 @@ hex cursor, while the right stick pans the camera.
 
 The gamepad layer translates controller input into existing game commands such
 as `SelectTileCommand`, `TileTappedCommand`, `ToggleMoveTargetingCommand`, and
-the relevant cancel commands. It does not introduce a parallel gameplay path or
-mutate game state directly.
+the relevant cancel commands. HUD panels consume the same normalized input for
+local row/card selection, then call the existing production, research, details,
+and close callbacks. This keeps controller support out of save/wire state and
+avoids a parallel gameplay path.
 
 ## Manual Contract
 
