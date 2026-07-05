@@ -22,7 +22,20 @@ extension GameRendererGamepadInput on GameRenderer {
 
   void _updateGamepadInput(double dt) {
     if (!_isReady || _isDisposed) return;
-    final frame = _gamepadFrameController.advance(input: _gamepadInput, dt: dt);
+    final input = _gamepadInput;
+    final existingFrameController = _gamepadFrameControllers[this];
+    if (input.isIdle &&
+        (existingFrameController == null || existingFrameController.isIdle)) {
+      return;
+    }
+
+    final frameController = existingFrameController ?? GamepadFrameController();
+    if (existingFrameController == null) {
+      _gamepadFrameControllers[this] = frameController;
+    }
+    final frame = frameController.advance(input: input, dt: dt);
+    if (frame.isIdle) return;
+
     _applyGamepadCameraInput(frame, dt);
     _applyGamepadCursorInput(frame);
     _applyGamepadButtonInput(frame);
@@ -30,10 +43,6 @@ extension GameRendererGamepadInput on GameRenderer {
 
   GamepadInputSnapshot get _gamepadInput =>
       _gamepadInputSnapshots[this] ?? GamepadInputSnapshot.empty;
-
-  GamepadFrameController get _gamepadFrameController {
-    return _gamepadFrameControllers[this] ??= GamepadFrameController();
-  }
 
   CityHex? get _gamepadCursorHex => _gamepadCursorHexes[this];
 
@@ -51,17 +60,31 @@ extension GameRendererGamepadInput on GameRenderer {
   }
 
   void _applyGamepadCameraInput(GamepadControlFrame frame, double dt) {
+    _applyAnalogCameraInput(
+      panX: frame.cameraX,
+      panY: frame.cameraY,
+      zoom: frame.zoom,
+      dt: dt,
+    );
+  }
+
+  void _applyAnalogCameraInput({
+    required double panX,
+    required double panY,
+    required double zoom,
+    required double dt,
+  }) {
     final panDelta = Vector2(
-      frame.cameraX * _cameraPanSpeed * dt,
-      -frame.cameraY * _cameraPanSpeed * dt,
+      panX * _cameraPanSpeed * dt,
+      -panY * _cameraPanSpeed * dt,
     );
     if (panDelta.x != 0 || panDelta.y != 0) {
       panByScreenDelta(panDelta);
     }
 
-    if (frame.zoom == 0 || size.x <= 0 || size.y <= 0) return;
+    if (zoom == 0 || size.x <= 0 || size.y <= 0) return;
     final center = Vector2(size.x / 2, size.y / 2);
-    final scale = 1 + frame.zoom * _zoomSpeed * dt;
+    final scale = 1 + zoom * _zoomSpeed * dt;
     setZoomAround(camera.viewfinder.zoom * scale, center);
   }
 
@@ -91,42 +114,20 @@ extension GameRendererGamepadInput on GameRenderer {
     return _renderState.interactionMode == GameInteractionMode.standard;
   }
 
-  bool get _gamepadCanToggleMoveMode {
-    return switch (_renderState.interactionMode) {
-      GameInteractionMode.standard || GameInteractionMode.moveTargeting => true,
-      _ => false,
-    };
-  }
-
   void _applyGamepadButtonInput(GamepadControlFrame frame) {
-    if (frame.cancelPressed) {
-      final command = _gamepadCancelCommand();
-      if (command != null) unawaited(onCommand(command));
-    }
+    final currentTile = frame.inspectPressed || frame.confirmPressed
+        ? _currentGamepadTile()
+        : null;
     if (frame.inspectPressed) {
-      final tile = _currentGamepadTile();
-      if (tile != null) _handleTileInspected(tile);
+      if (currentTile != null) _handleTileInspected(currentTile);
     }
-    if (frame.moveModePressed && _gamepadCanToggleMoveMode) {
-      unawaited(onCommand(const ToggleMoveTargetingCommand()));
-    }
-    if (frame.focusPreviousPressed) {
-      final playerId = _renderState.activePlayerId;
-      if (playerId.isNotEmpty) {
-        unawaited(onCommand(FocusTurnStartActionCommand(playerId)));
-      }
-    }
-    if (frame.focusNextPressed) {
-      final playerId = _renderState.activePlayerId;
-      if (playerId.isNotEmpty) {
-        unawaited(onCommand(FocusNextPendingActionCommand(playerId)));
-      }
-    }
-    if (frame.confirmPressed) {
-      final tile = _currentGamepadTile();
-      if (tile != null) {
-        unawaited(onCommand(TileTappedCommand(tile.col, tile.row)));
-      }
+    final commands = const GamepadCommandMapper().commandsForFrame(
+      frame: frame,
+      state: _renderState,
+      currentTile: currentTile,
+    );
+    for (final command in commands) {
+      unawaited(onCommand(command));
     }
   }
 
@@ -256,35 +257,5 @@ extension GameRendererGamepadInput on GameRenderer {
     unawaited(
       _cameraController.smoothCenterOnWorldPoint(worldPoint, duration: 0.16),
     );
-  }
-
-  GameCommand? _gamepadCancelCommand() {
-    if (_renderState.cityFoundingDraft != null) {
-      return const CancelCityFoundingCommand();
-    }
-    final pendingCancel = switch (_renderState.pendingAction) {
-      PendingResearchSelection(:final ownerPlayerId) =>
-        CancelResearchSelectionCommand(ownerPlayerId),
-      PendingCityWorkedHexSelection(:final cityId) =>
-        CancelCityWorkedHexSelectionCommand(cityId),
-      PendingCityExpansionSelection(:final cityId) =>
-        CancelCityExpansionSelectionCommand(cityId),
-      PendingWorkerActionSelection(:final unitId) =>
-        CancelWorkerActionSelectionCommand(unitId),
-      PendingMerchantTradeRouteSelection(:final unitId) =>
-        CancelMerchantTradeRouteSelectionCommand(unitId),
-      PendingMerchantMoveToCitySelection(:final unitId) =>
-        CancelMerchantMoveToCitySelectionCommand(unitId),
-      PendingAttackTargeting(:final attackerUnitId) =>
-        CancelAttackTargetingCommand(attackerUnitId),
-      PendingCommanderMergeSelection(:final commanderUnitId) =>
-        CancelCommanderMergeSelectionCommand(commanderUnitId),
-      _ => null,
-    };
-    if (pendingCancel != null) return pendingCancel;
-    if (_renderState.moveCommandActive) {
-      return const ToggleMoveTargetingCommand();
-    }
-    return null;
   }
 }

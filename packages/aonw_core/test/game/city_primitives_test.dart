@@ -141,6 +141,28 @@ void main() {
       );
     });
 
+    test('CityProductionQueue exposes typed project output', () {
+      final wealth = CityProductionQueue.project(
+        projectType: CityProjectType.wealth,
+      ).projectOutput(productionPerTurn: 5);
+      final research = CityProductionQueue.project(
+        projectType: CityProjectType.research,
+      ).projectOutput(productionPerTurn: 13);
+
+      expect(
+        wealth,
+        const CityProjectOutput(type: CityProjectType.wealth, amount: 3),
+      );
+      expect(wealth?.gold, 3);
+      expect(wealth?.science, 0);
+      expect(
+        research,
+        const CityProjectOutput(type: CityProjectType.research, amount: 2),
+      );
+      expect(research?.gold, 0);
+      expect(research?.science, 2);
+    });
+
     test('keeps settlers and heavier units out of one-turn territory', () {
       const strongEarlyProduction = 14;
 

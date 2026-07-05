@@ -22,20 +22,15 @@ class GameRuleset {
 
   factory GameRuleset.standard() => _standard;
 
-  static final GameRuleset _standard = GameRuleset(
-    city: CityRulesets.fromUnitSpecs(UnitSpecResolver.standard),
-    combat: CombatRuleset.standard,
-    technology: TechnologyRulesets.standard,
-    stability: StabilityRuleset.standard,
-  );
-
-  /// Compile-time-compatible standard ruleset for default parameters.
-  /// Runtime entry points should prefer [GameRuleset.standard()].
   static const GameRuleset defaults = GameRuleset(
     city: CityRulesets.standard,
     combat: CombatRuleset.standard,
     technology: TechnologyRulesets.standard,
     stability: StabilityRuleset.standard,
+  );
+
+  static final GameRuleset _standard = defaults.copyWith(
+    city: CityRulesets.fromUnitSpecs(UnitSpecResolver.standard),
   );
 
   GameRuleset copyWith({

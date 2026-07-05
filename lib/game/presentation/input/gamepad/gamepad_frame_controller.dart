@@ -18,10 +18,17 @@ final class GamepadFrameController {
   GamepadMapDirection? _heldCursorDirection;
   double _cursorRepeatRemaining = 0;
 
+  bool get isIdle =>
+      _previous.isIdle &&
+      _heldCursorDirection == null &&
+      _cursorRepeatRemaining == 0;
+
   GamepadControlFrame advance({
     required GamepadInputSnapshot input,
     required double dt,
   }) {
+    if (input.isIdle && isIdle) return GamepadControlFrame.idle;
+
     final frame = GamepadControlFrame(
       cursorStep: _advanceCursorRepeat(_cursorDirection(input), dt),
       cameraX: _deadzone(input.cameraX),

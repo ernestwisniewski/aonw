@@ -150,9 +150,7 @@ void main() {
     test(
       'reuses strip economy forecast across interaction-only state changes',
       () {
-        HudResourceEconomyForecast.debugResetCache();
-        addTearDown(HudResourceEconomyForecast.debugResetCache);
-
+        final forecastCache = HudResourceEconomyForecastCache();
         final city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -174,6 +172,7 @@ void main() {
           mapData: mapData,
           cityRuleset: CityRulesets.standard,
           technologyRuleset: TechnologyRulesets.standard,
+          economyForecastCache: forecastCache,
         );
         final second = HudResourceSummary.fromGameState(
           state: state.copyWithInteraction(moveCommandActive: true),
@@ -181,13 +180,117 @@ void main() {
           mapData: mapData,
           cityRuleset: CityRulesets.standard,
           technologyRuleset: TechnologyRulesets.standard,
+          economyForecastCache: forecastCache,
         );
 
         expect(first.goldPerTurn, 1);
         expect(second.goldPerTurn, first.goldPerTurn);
-        expect(HudResourceEconomyForecast.debugComputeCount, 1);
+        expect(forecastCache.debugComputeCount, 1);
       },
     );
+
+    test('keeps economy forecasts for alternating active players', () {
+      final forecastCache = HudResourceEconomyForecastCache();
+      final playerCity = GameCity(
+        id: 'player_city',
+        ownerPlayerId: 'player_1',
+        name: 'Player',
+        center: const CityHex(col: 0, row: 0),
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.wealth,
+        ),
+      );
+      final opponentCity = GameCity(
+        id: 'opponent_city',
+        ownerPlayerId: 'player_2',
+        name: 'Opponent',
+        center: const CityHex(col: 1, row: 0),
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.research,
+        ),
+      );
+      final state = GameState(
+        cities: [playerCity, opponentCity],
+        playerGold: const {'player_1': 12, 'player_2': 6},
+      );
+      final mapData = _twoCityLandMap();
+
+      final playerSummary = HudResourceSummary.fromGameState(
+        state: state,
+        playerId: 'player_1',
+        mapData: mapData,
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        economyForecastCache: forecastCache,
+      );
+      final opponentSummary = HudResourceSummary.fromGameState(
+        state: state,
+        playerId: 'player_2',
+        mapData: mapData,
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        economyForecastCache: forecastCache,
+      );
+      final reusedPlayerSummary = HudResourceSummary.fromGameState(
+        state: state,
+        playerId: 'player_1',
+        mapData: mapData,
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        economyForecastCache: forecastCache,
+      );
+
+      expect(playerSummary.goldPerTurn, 1);
+      expect(opponentSummary.sciencePerTurn, 3);
+      expect(reusedPlayerSummary.goldPerTurn, playerSummary.goldPerTurn);
+      expect(forecastCache.debugComputeCount, 2);
+      expect(forecastCache.debugForecastEntryCount, 2);
+    });
+
+    test('reuses unchanged city economy across forecast misses', () {
+      final forecastCache = HudResourceEconomyForecastCache();
+      const stableCity = GameCity(
+        id: 'stable_city',
+        ownerPlayerId: 'player_1',
+        name: 'Stable',
+        center: CityHex(col: 0, row: 0),
+        buildings: {CityBuildingType.merchantHall},
+      );
+      const firstVersionCity = GameCity(
+        id: 'changed_city',
+        ownerPlayerId: 'player_1',
+        name: 'Changed',
+        center: CityHex(col: 1, row: 0),
+      );
+      final secondVersionCity = firstVersionCity.copyWith(
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.wealth,
+        ),
+      );
+      final mapData = _twoCityLandMap();
+
+      final first = HudResourceSummary.fromGameState(
+        state: const GameState(cities: [stableCity, firstVersionCity]),
+        playerId: 'player_1',
+        mapData: mapData,
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        economyForecastCache: forecastCache,
+      );
+      final second = HudResourceSummary.fromGameState(
+        state: GameState(cities: [stableCity, secondVersionCity]),
+        playerId: 'player_1',
+        mapData: mapData,
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        economyForecastCache: forecastCache,
+      );
+
+      expect(first.goldIncome, 2);
+      expect(second.goldIncome, 3);
+      expect(forecastCache.debugComputeCount, 2);
+      expect(forecastCache.debugCityEconomyComputeCount, 3);
+    });
 
     test('applies cached unrest to the HUD economy forecast', () {
       const city = GameCity(
@@ -226,6 +329,29 @@ MapData _landMap() {
     tiles: const [
       TileData(
         col: 0,
+        row: 0,
+        terrains: [TerrainType.plains],
+        resources: [],
+        height: 0,
+      ),
+    ],
+  );
+}
+
+MapData _twoCityLandMap() {
+  return MapData(
+    cols: 2,
+    rows: 1,
+    tiles: const [
+      TileData(
+        col: 0,
+        row: 0,
+        terrains: [TerrainType.plains],
+        resources: [],
+        height: 0,
+      ),
+      TileData(
+        col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],

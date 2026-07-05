@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_city_economy_calculator.dart';
@@ -22,8 +24,6 @@ final class HudResourceEconomyForecast {
   final int goldPerTurn;
   final int sciencePerTurn;
 
-  static final _cache = _HudResourceEconomyForecastCache();
-
   factory HudResourceEconomyForecast.forPlayer({
     required GameState state,
     required String playerId,
@@ -31,8 +31,20 @@ final class HudResourceEconomyForecast {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
+    HudResourceEconomyForecastCache? cache,
   }) {
-    return _cache.forPlayer(
+    final forecastCache = cache;
+    if (forecastCache != null) {
+      return forecastCache.forPlayer(
+        state: state,
+        playerId: playerId,
+        mapData: mapData,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        stabilityModifier: stabilityModifier,
+      );
+    }
+    return _computeForPlayer(
       state: state,
       playerId: playerId,
       mapData: mapData,
@@ -49,6 +61,11 @@ final class HudResourceEconomyForecast {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
+    CityEconomyBreakdown Function(
+      GameCity city,
+      TechnologyEffectSummary technologyEffects,
+    )?
+    economyForCity,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: playerId,
@@ -61,32 +78,28 @@ final class HudResourceEconomyForecast {
 
     for (final city in state.cities) {
       if (city.ownerPlayerId != playerId) continue;
-      final economy = HudCityEconomyCalculator.forCity(
-        city: city,
-        state: state,
-        mapData: mapData,
-        cityRuleset: cityRuleset,
-        technologyEffects: technologyEffects,
-        stabilityModifier: stabilityModifier,
-      );
+      final economy =
+          economyForCity?.call(city, technologyEffects) ??
+          HudCityEconomyCalculator.forCity(
+            city: city,
+            state: state,
+            mapData: mapData,
+            cityRuleset: cityRuleset,
+            technologyEffects: technologyEffects,
+            stabilityModifier: stabilityModifier,
+          );
       if (economy.netYield.gold > 0) {
         cityGoldIncome += economy.netYield.gold;
       }
 
-      final projectType = city.productionQueue?.projectType;
-      if (projectType == null) continue;
-      final output = CityProjectRules.outputFor(
-        type: projectType,
+      final projectOutput = city.productionQueue?.projectOutput(
         productionPerTurn: CityProductionRules.productionPerTurn(
           economy.netYield.production,
         ),
       );
-      switch (projectType) {
-        case CityProjectType.wealth:
-          projectGoldIncome += output;
-        case CityProjectType.research:
-          projectScience += output;
-      }
+      if (projectOutput == null) continue;
+      projectGoldIncome += projectOutput.gold;
+      projectScience += projectOutput.science;
     }
 
     final grossIncome = cityGoldIncome + projectGoldIncome;
@@ -112,20 +125,26 @@ final class HudResourceEconomyForecast {
           projectScience,
     );
   }
-
-  @visibleForTesting
-  static void debugResetCache() {
-    _cache.clear();
-  }
-
-  @visibleForTesting
-  static int get debugComputeCount => _cache.computeCount;
 }
 
-final class _HudResourceEconomyForecastCache {
-  _HudResourceEconomyForecastKey? _key;
-  HudResourceEconomyForecast? _value;
-  int computeCount = 0;
+final class HudResourceEconomyForecastCache {
+  HudResourceEconomyForecastCache({
+    this.maxForecastEntries = 8,
+    this.maxCityEconomyEntries = 128,
+  }) : assert(maxForecastEntries > 0),
+       assert(maxCityEconomyEntries > 0);
+
+  final int maxForecastEntries;
+  final int maxCityEconomyEntries;
+  final LinkedHashMap<
+    _HudResourceEconomyForecastKey,
+    HudResourceEconomyForecast
+  >
+  _forecasts = LinkedHashMap();
+  final LinkedHashMap<_HudCityEconomyForecastKey, CityEconomyBreakdown>
+  _cityEconomies = LinkedHashMap();
+  int _computeCount = 0;
+  int _cityEconomyComputeCount = 0;
 
   HudResourceEconomyForecast forPlayer({
     required GameState state,
@@ -143,10 +162,13 @@ final class _HudResourceEconomyForecastCache {
       technologyRuleset: technologyRuleset,
       stabilityModifier: stabilityModifier,
     );
-    final value = _value;
-    if (value != null && key == _key) return value;
+    final cached = _forecasts.remove(key);
+    if (cached != null) {
+      _forecasts[key] = cached;
+      return cached;
+    }
 
-    computeCount++;
+    _computeCount++;
     final computed = HudResourceEconomyForecast._computeForPlayer(
       state: state,
       playerId: playerId,
@@ -154,16 +176,84 @@ final class _HudResourceEconomyForecastCache {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityModifier: stabilityModifier,
+      economyForCity: (city, technologyEffects) => _economyForCity(
+        state: state,
+        playerId: playerId,
+        city: city,
+        mapData: mapData,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        stabilityModifier: stabilityModifier,
+        technologyEffects: technologyEffects,
+      ),
     );
-    _key = key;
-    _value = computed;
+    _forecasts[key] = computed;
+    _prune(_forecasts, maxForecastEntries);
+    return computed;
+  }
+
+  CityEconomyBreakdown _economyForCity({
+    required GameState state,
+    required String playerId,
+    required GameCity city,
+    required MapData mapData,
+    required CityRuleset cityRuleset,
+    required TechnologyRuleset technologyRuleset,
+    required StabilityModifier stabilityModifier,
+    required TechnologyEffectSummary technologyEffects,
+  }) {
+    final key = _HudCityEconomyForecastKey.from(
+      state: state,
+      playerId: playerId,
+      city: city,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      stabilityModifier: stabilityModifier,
+    );
+    final cached = _cityEconomies.remove(key);
+    if (cached != null) {
+      _cityEconomies[key] = cached;
+      return cached;
+    }
+
+    _cityEconomyComputeCount++;
+    final computed = HudCityEconomyCalculator.forCity(
+      city: city,
+      state: state,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      technologyEffects: technologyEffects,
+      stabilityModifier: stabilityModifier,
+    );
+    _cityEconomies[key] = computed;
+    _prune(_cityEconomies, maxCityEconomyEntries);
     return computed;
   }
 
   void clear() {
-    _key = null;
-    _value = null;
-    computeCount = 0;
+    _forecasts.clear();
+    _cityEconomies.clear();
+    _computeCount = 0;
+    _cityEconomyComputeCount = 0;
+  }
+
+  @visibleForTesting
+  int get debugComputeCount => _computeCount;
+
+  @visibleForTesting
+  int get debugCityEconomyComputeCount => _cityEconomyComputeCount;
+
+  @visibleForTesting
+  int get debugForecastEntryCount => _forecasts.length;
+
+  @visibleForTesting
+  int get debugCityEconomyEntryCount => _cityEconomies.length;
+
+  static void _prune<K, V>(LinkedHashMap<K, V> values, int maxEntries) {
+    while (values.length > maxEntries) {
+      values.remove(values.keys.first);
+    }
   }
 }
 
@@ -243,6 +333,84 @@ final class _HudResourceEconomyForecastKey {
     gold,
     identityHashCode(research),
     cities,
+    units,
+    fieldImprovements,
+    artifacts,
+  );
+}
+
+final class _HudCityEconomyForecastKey {
+  const _HudCityEconomyForecastKey({
+    required this.playerId,
+    required this.city,
+    required this.mapData,
+    required this.cityRuleset,
+    required this.technologyRuleset,
+    required this.stabilityModifier,
+    required this.research,
+    required this.units,
+    required this.fieldImprovements,
+    required this.artifacts,
+  });
+
+  factory _HudCityEconomyForecastKey.from({
+    required GameState state,
+    required String playerId,
+    required GameCity city,
+    required MapData mapData,
+    required CityRuleset cityRuleset,
+    required TechnologyRuleset technologyRuleset,
+    required StabilityModifier stabilityModifier,
+  }) {
+    return _HudCityEconomyForecastKey(
+      playerId: playerId,
+      city: city,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      stabilityModifier: stabilityModifier,
+      research: state.research,
+      units: _identitySignature(state.units),
+      fieldImprovements: _identitySignature(state.fieldImprovements),
+      artifacts: _identitySignature(state.artifacts),
+    );
+  }
+
+  final String playerId;
+  final GameCity city;
+  final MapData mapData;
+  final CityRuleset cityRuleset;
+  final TechnologyRuleset technologyRuleset;
+  final StabilityModifier stabilityModifier;
+  final ResearchState research;
+  final int units;
+  final int fieldImprovements;
+  final int artifacts;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _HudCityEconomyForecastKey &&
+        other.playerId == playerId &&
+        identical(other.city, city) &&
+        identical(other.mapData, mapData) &&
+        identical(other.cityRuleset, cityRuleset) &&
+        identical(other.technologyRuleset, technologyRuleset) &&
+        other.stabilityModifier == stabilityModifier &&
+        identical(other.research, research) &&
+        other.units == units &&
+        other.fieldImprovements == fieldImprovements &&
+        other.artifacts == artifacts;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    playerId,
+    identityHashCode(city),
+    identityHashCode(mapData),
+    identityHashCode(cityRuleset),
+    identityHashCode(technologyRuleset),
+    stabilityModifier,
+    identityHashCode(research),
     units,
     fieldImprovements,
     artifacts,

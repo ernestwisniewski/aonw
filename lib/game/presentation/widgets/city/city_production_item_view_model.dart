@@ -133,10 +133,9 @@ class CityProductionItem {
     required bool active,
     required AppLocalizations l10n,
   }) {
-    final output = CityProjectRules.outputFor(
-      type: type,
-      productionPerTurn: productionPerTurn,
-    );
+    final output = CityProductionQueue.project(
+      projectType: type,
+    ).projectOutput(productionPerTurn: productionPerTurn)!;
     final continuousLabel = l10n.cityProductionContinuous;
     return CityProductionItem(
       buildingType: null,
@@ -159,8 +158,10 @@ class CityProductionItem {
       metaLabels: [
         continuousLabel,
         switch (type) {
-          CityProjectType.wealth => l10n.cityProjectGoldPerTurn(output),
-          CityProjectType.research => l10n.cityProjectSciencePerTurn(output),
+          CityProjectType.wealth => l10n.cityProjectGoldPerTurn(output.amount),
+          CityProjectType.research => l10n.cityProjectSciencePerTurn(
+            output.amount,
+          ),
         },
       ],
     );

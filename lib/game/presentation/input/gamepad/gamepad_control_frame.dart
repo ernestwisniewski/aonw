@@ -28,4 +28,17 @@ final class GamepadControlFrame {
   final bool focusPreviousPressed;
   final bool focusNextPressed;
   final bool primaryActionPressed;
+
+  bool get isIdle =>
+      cursorStep == null &&
+      cameraX == 0 &&
+      cameraY == 0 &&
+      zoom == 0 &&
+      !confirmPressed &&
+      !cancelPressed &&
+      !inspectPressed &&
+      !moveModePressed &&
+      !focusPreviousPressed &&
+      !focusNextPressed &&
+      !primaryActionPressed;
 }

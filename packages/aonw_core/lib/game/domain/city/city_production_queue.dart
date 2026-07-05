@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/city/city_building.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
+import 'package:aonw_core/game/domain/city/city_project_rules.dart';
 import 'package:aonw_core/game/domain/city/city_project_type.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
@@ -33,6 +34,21 @@ class CityProductionQueue {
   CityProjectType? get projectType {
     return switch (target) {
       ProjectProductionTarget(:final projectType) => projectType,
+      _ => null,
+    };
+  }
+
+  bool get hasProjectOutput => target is ProjectProductionTarget;
+
+  CityProjectOutput? projectOutput({required int productionPerTurn}) {
+    return switch (target) {
+      ProjectProductionTarget(:final projectType) => CityProjectOutput(
+        type: projectType,
+        amount: CityProjectRules.outputFor(
+          type: projectType,
+          productionPerTurn: productionPerTurn,
+        ),
+      ),
       _ => null,
     };
   }

@@ -93,10 +93,7 @@ abstract final class HudScienceResourceCalculator {
 
     for (final city in state.cities) {
       if (city.ownerPlayerId != playerId) continue;
-      if (city.productionQueue?.projectType != CityProjectType.research) {
-        continue;
-      }
-
+      if (city.productionQueue?.hasProjectOutput != true) continue;
       final economy = HudCityEconomyCalculator.forCity(
         city: city,
         state: state,
@@ -105,20 +102,20 @@ abstract final class HudScienceResourceCalculator {
         technologyEffects: technologyEffects,
         stabilityModifier: stabilityModifier,
       );
-      final output = CityProjectRules.outputFor(
-        type: CityProjectType.research,
+      final projectOutput = city.productionQueue?.projectOutput(
         productionPerTurn: CityProductionRules.productionPerTurn(
           economy.netYield.production,
         ),
       );
-      if (output <= 0) continue;
-      total += output;
+      final projectScience = projectOutput?.science ?? 0;
+      if (projectScience <= 0) continue;
+      total += projectScience;
       if (collectSources) {
-        byCityId[city.id] = (byCityId[city.id] ?? 0) + output;
+        byCityId[city.id] = (byCityId[city.id] ?? 0) + projectScience;
         sources.add(
           ScienceYieldSource(
             cityId: city.id,
-            amount: output,
+            amount: projectScience,
             label: ScienceYieldSourceLabels.cityResearchProject,
           ),
         );

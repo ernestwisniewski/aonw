@@ -84,16 +84,18 @@ abstract final class HudGoldResourceCalculator {
         }
       }
 
-      if (city.productionQueue?.projectType == CityProjectType.wealth) {
-        final output = CityProjectRules.outputFor(
-          type: CityProjectType.wealth,
-          productionPerTurn: CityProductionRules.productionPerTurn(
-            economy.netYield.production,
-          ),
-        );
-        projectIncome += output;
+      final projectOutput = city.productionQueue?.projectOutput(
+        productionPerTurn: CityProductionRules.productionPerTurn(
+          economy.netYield.production,
+        ),
+      );
+      final projectGold = projectOutput?.gold ?? 0;
+      if (projectGold > 0) {
+        projectIncome += projectGold;
         if (collectSources) {
-          projectSources.add(GoldProjectSource(city: city, amount: output));
+          projectSources.add(
+            GoldProjectSource(city: city, amount: projectGold),
+          );
         }
       }
     }

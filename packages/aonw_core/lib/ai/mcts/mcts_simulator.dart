@@ -120,7 +120,8 @@ class TracingMctsSimulator implements MctsSimulator {
     var current = state;
     var viewIndex = MctsOpponentViewIndex.fromState(current);
     final opponentPlayerIds = viewIndex.opponentPlayerIds(forPlayerId);
-    for (final opponentId in opponentPlayerIds) {
+    for (var i = 0; i < opponentPlayerIds.length; i += 1) {
+      final opponentId = opponentPlayerIds[i];
       final opponentView = viewIndex.viewFor(
         state: current,
         opponentId: opponentId,
@@ -147,8 +148,10 @@ class TracingMctsSimulator implements MctsSimulator {
         ),
       );
       var tick = 1;
+      var appliedNonTerminalCommand = false;
       for (final command in plan.commands) {
         if (_isTerminal(command)) continue;
+        appliedNonTerminalCommand = true;
         current = _applyOpponentCommand(
           state: current,
           command: command,
@@ -160,7 +163,9 @@ class TracingMctsSimulator implements MctsSimulator {
         );
         tick += 1;
       }
-      viewIndex = MctsOpponentViewIndex.fromState(current);
+      if (appliedNonTerminalCommand && i < opponentPlayerIds.length - 1) {
+        viewIndex = MctsOpponentViewIndex.fromState(current);
+      }
     }
     return current;
   }

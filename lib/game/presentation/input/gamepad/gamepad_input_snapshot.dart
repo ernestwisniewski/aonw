@@ -41,6 +41,8 @@ final class GamepadInputSnapshot {
   final bool focusNext;
   final bool primaryAction;
 
+  bool get isIdle => this == empty;
+
   double get zoom => zoomIn - zoomOut;
 
   GamepadInputSnapshot copyWith({
