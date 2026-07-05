@@ -33,6 +33,7 @@ export 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas
         technologyTreeSelectedPathTargetForTesting;
 
 part 'technology_tree_panel_details.dart';
+part 'technology_tree_panel_gamepad_selection.dart';
 
 enum TechnologyTreeViewMode { recommendations, tree }
 
@@ -123,6 +124,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
   TechnologyId? _detailsTechnologyId;
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
+  bool _gamepadSelectionVisible = false;
 
   void _setDetailsState(void Function() update) {
     setState(update);
@@ -169,6 +171,9 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
           gamepadCards,
           _selectedTechnologyId,
         );
+    final visibleSelectedTechnologyId = _visibleSelectedTechnologyId(
+      selectedTechnologyId,
+    );
 
     return GamepadPanelInputListener(
       input: widget.gamepadInputListenable,
@@ -188,6 +193,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
           ? null
           : () => _toggleTechnologyView(showTree, gamepadCards),
       onCancel: _handleGamepadCancel,
+      onInputActive: _showGamepadSelection,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 980, maxHeight: widget.maxHeight),
         child: GameModalScaffold(
@@ -227,7 +233,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
                       child: showTree
                           ? TechnologyTreeBoard(
                               cards: cards,
-                              selectedTechnologyId: selectedTechnologyId,
+                              selectedTechnologyId: visibleSelectedTechnologyId,
                               hasDetailsLayer: hasDetailsLayer,
                               compact: compact,
                               pathAnimation: _pathAnimationController,
@@ -244,7 +250,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
                               viewModel: widget.viewModel,
                               l10n: l10n,
                               compact: compact,
-                              selectedTechnologyId: selectedTechnologyId,
+                              selectedTechnologyId: visibleSelectedTechnologyId,
                               onResearch: _researchTechnology,
                               onTechnologyDetails: _showTechnologyDetails,
                             ),

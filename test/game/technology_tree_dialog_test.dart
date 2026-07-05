@@ -3,6 +3,7 @@ import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
+import 'package:aonw/game/presentation/widgets/technology/technology_recommendations_view.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_details_layers.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
@@ -150,6 +151,29 @@ void main() {
           onClose: () => closeCount++,
         ),
       ),
+    );
+
+    expect(
+      tester
+          .widget<TechnologyRecommendationsView>(
+            find.byType(TechnologyRecommendationsView),
+          )
+          .selectedTechnologyId,
+      isNull,
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadRight: true),
+    );
+    expect(
+      tester
+          .widget<TechnologyRecommendationsView>(
+            find.byType(TechnologyRecommendationsView),
+          )
+          .selectedTechnologyId,
+      TechnologyId.agriculture,
     );
 
     await _pressGamepad(

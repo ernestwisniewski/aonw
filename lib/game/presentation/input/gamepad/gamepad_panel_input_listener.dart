@@ -20,6 +20,7 @@ class GamepadPanelInputListener extends StatefulWidget {
     this.onHudFocus,
     this.onFocusPrevious,
     this.onFocusNext,
+    this.onInputActive,
     super.key,
   });
 
@@ -33,6 +34,7 @@ class GamepadPanelInputListener extends StatefulWidget {
   final VoidCallback? onHudFocus;
   final VoidCallback? onFocusPrevious;
   final VoidCallback? onFocusNext;
+  final VoidCallback? onInputActive;
   final Widget child;
 
   @override
@@ -100,6 +102,7 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
 
   void _handleInputChanged() {
     _input = _currentInput();
+    if (!_input.isIdle) widget.onInputActive?.call();
     _syncTicker();
   }
 

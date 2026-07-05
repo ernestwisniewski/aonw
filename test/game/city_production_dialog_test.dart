@@ -196,6 +196,20 @@ void main() {
     );
 
     expect(find.text('Granary'), findsOneWidget);
+    expect(_selectedProductionTiles(tester), isEmpty);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadDown: true),
+    );
+    expect(_selectedProductionTiles(tester), isNotEmpty);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadUp: true),
+    );
 
     await _pressGamepad(
       tester,
@@ -589,6 +603,13 @@ Future<void> _pressGamepad(
   await tester.pump(const Duration(milliseconds: 16));
   input.value = GamepadInputSnapshot.empty;
   await tester.pumpAndSettle();
+}
+
+List<ProductionListTile> _selectedProductionTiles(WidgetTester tester) {
+  return tester
+      .widgetList<ProductionListTile>(find.byType(ProductionListTile))
+      .where((tile) => tile.selected)
+      .toList();
 }
 
 MapData _map() {

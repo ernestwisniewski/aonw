@@ -163,6 +163,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
   String? _selectedItemKey;
+  bool _gamepadSelectionVisible = false;
   CityBuildingSortMode _buildingSortMode = CityBuildingSortMode.recommended;
 
   void _setDetailsState(void Function() update) {
@@ -176,6 +177,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
       _detailsBuildingType = null;
       _detailsUnitType = null;
       _selectedItemKey = null;
+      _gamepadSelectionVisible = false;
     }
   }
 
@@ -208,6 +210,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
       onConfirm: () => _confirmSelected(gamepadChoices),
       onDetails: () => _showSelectedDetails(gamepadChoices),
       onCancel: _handleGamepadCancel,
+      onInputActive: _showGamepadSelection,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 760,
@@ -263,7 +266,9 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
                               specializations: viewModel.specializations,
                               buildingSortMode: _buildingSortMode,
                               onBuildingSortModeChanged: _setBuildingSortMode,
-                              selectedItemKey: selectedItemKey,
+                              selectedItemKey: _gamepadSelectionVisible
+                                  ? selectedItemKey
+                                  : null,
                               onBuildingDetails: _showBuildingDetails,
                               onUnitDetails: _showUnitDetails,
                               onBuild: widget.onBuild,
@@ -326,6 +331,11 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
 
   void _setBuildingSortMode(CityBuildingSortMode mode) {
     setState(() => _buildingSortMode = mode);
+  }
+
+  void _showGamepadSelection() {
+    if (_gamepadSelectionVisible) return;
+    setState(() => _gamepadSelectionVisible = true);
   }
 
   void _moveSelection(
