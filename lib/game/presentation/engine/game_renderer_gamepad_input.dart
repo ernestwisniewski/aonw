@@ -91,42 +91,20 @@ extension GameRendererGamepadInput on GameRenderer {
     return _renderState.interactionMode == GameInteractionMode.standard;
   }
 
-  bool get _gamepadCanToggleMoveMode {
-    return switch (_renderState.interactionMode) {
-      GameInteractionMode.standard || GameInteractionMode.moveTargeting => true,
-      _ => false,
-    };
-  }
-
   void _applyGamepadButtonInput(GamepadControlFrame frame) {
-    if (frame.cancelPressed) {
-      final command = _gamepadCancelCommand();
-      if (command != null) unawaited(onCommand(command));
-    }
+    final currentTile = frame.inspectPressed || frame.confirmPressed
+        ? _currentGamepadTile()
+        : null;
     if (frame.inspectPressed) {
-      final tile = _currentGamepadTile();
-      if (tile != null) _handleTileInspected(tile);
+      if (currentTile != null) _handleTileInspected(currentTile);
     }
-    if (frame.moveModePressed && _gamepadCanToggleMoveMode) {
-      unawaited(onCommand(const ToggleMoveTargetingCommand()));
-    }
-    if (frame.focusPreviousPressed) {
-      final playerId = _renderState.activePlayerId;
-      if (playerId.isNotEmpty) {
-        unawaited(onCommand(FocusTurnStartActionCommand(playerId)));
-      }
-    }
-    if (frame.focusNextPressed) {
-      final playerId = _renderState.activePlayerId;
-      if (playerId.isNotEmpty) {
-        unawaited(onCommand(FocusNextPendingActionCommand(playerId)));
-      }
-    }
-    if (frame.confirmPressed) {
-      final tile = _currentGamepadTile();
-      if (tile != null) {
-        unawaited(onCommand(TileTappedCommand(tile.col, tile.row)));
-      }
+    final commands = const GamepadCommandMapper().commandsForFrame(
+      frame: frame,
+      state: _renderState,
+      currentTile: currentTile,
+    );
+    for (final command in commands) {
+      unawaited(onCommand(command));
     }
   }
 
@@ -256,35 +234,5 @@ extension GameRendererGamepadInput on GameRenderer {
     unawaited(
       _cameraController.smoothCenterOnWorldPoint(worldPoint, duration: 0.16),
     );
-  }
-
-  GameCommand? _gamepadCancelCommand() {
-    if (_renderState.cityFoundingDraft != null) {
-      return const CancelCityFoundingCommand();
-    }
-    final pendingCancel = switch (_renderState.pendingAction) {
-      PendingResearchSelection(:final ownerPlayerId) =>
-        CancelResearchSelectionCommand(ownerPlayerId),
-      PendingCityWorkedHexSelection(:final cityId) =>
-        CancelCityWorkedHexSelectionCommand(cityId),
-      PendingCityExpansionSelection(:final cityId) =>
-        CancelCityExpansionSelectionCommand(cityId),
-      PendingWorkerActionSelection(:final unitId) =>
-        CancelWorkerActionSelectionCommand(unitId),
-      PendingMerchantTradeRouteSelection(:final unitId) =>
-        CancelMerchantTradeRouteSelectionCommand(unitId),
-      PendingMerchantMoveToCitySelection(:final unitId) =>
-        CancelMerchantMoveToCitySelectionCommand(unitId),
-      PendingAttackTargeting(:final attackerUnitId) =>
-        CancelAttackTargetingCommand(attackerUnitId),
-      PendingCommanderMergeSelection(:final commanderUnitId) =>
-        CancelCommanderMergeSelectionCommand(commanderUnitId),
-      _ => null,
-    };
-    if (pendingCancel != null) return pendingCancel;
-    if (_renderState.moveCommandActive) {
-      return const ToggleMoveTargetingCommand();
-    }
-    return null;
   }
 }
