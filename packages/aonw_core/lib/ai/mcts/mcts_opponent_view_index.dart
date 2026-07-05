@@ -7,21 +7,15 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 final class MctsOpponentViewIndex {
-  final List<GameUnit> _units;
-  final List<GameCity> _cities;
   final Map<String, List<GameUnit>> _unitsByOwner;
   final Map<String, List<GameCity>> _citiesByOwner;
   final Map<String, List<FieldImprovement>> _improvementsByOwner;
 
   MctsOpponentViewIndex._({
-    required List<GameUnit> units,
-    required List<GameCity> cities,
     required Map<String, List<GameUnit>> unitsByOwner,
     required Map<String, List<GameCity>> citiesByOwner,
     required Map<String, List<FieldImprovement>> improvementsByOwner,
-  }) : _units = List.unmodifiable(units),
-       _cities = List.unmodifiable(cities),
-       _unitsByOwner = _freezeListMap(unitsByOwner),
+  }) : _unitsByOwner = _freezeListMap(unitsByOwner),
        _citiesByOwner = _freezeListMap(citiesByOwner),
        _improvementsByOwner = _freezeListMap(improvementsByOwner);
 
@@ -39,8 +33,6 @@ final class MctsOpponentViewIndex {
     }
 
     return MctsOpponentViewIndex._(
-      units: state.units,
-      cities: state.cities,
       unitsByOwner: unitsByOwner,
       citiesByOwner: citiesByOwner,
       improvementsByOwner: _buildImprovementsByOwner(
@@ -80,14 +72,11 @@ final class MctsOpponentViewIndex {
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
       diplomacy: state.runtimeState.diplomacy,
-      visibleEnemyUnits: [
-        for (final unit in _units)
-          if (unit.ownerPlayerId != opponentId) unit,
-      ],
-      rememberedEnemyCities: [
-        for (final city in _cities)
-          if (city.ownerPlayerId != opponentId) city,
-      ],
+      visibleEnemyUnits: _indexedValuesExceptOwner(_unitsByOwner, opponentId),
+      rememberedEnemyCities: _indexedValuesExceptOwner(
+        _citiesByOwner,
+        opponentId,
+      ),
       visibility: const FogVisibilityQuery(
         playerId: '',
         state: FogOfWarState.empty,
@@ -102,6 +91,33 @@ final class MctsOpponentViewIndex {
       for (final entry in source.entries)
         entry.key: List<T>.unmodifiable(entry.value),
     });
+  }
+
+  static Iterable<T> _indexedValuesExceptOwner<T>(
+    Map<String, List<T>> valuesByOwner,
+    String ownerId,
+  ) {
+    if (valuesByOwner.isEmpty) return const [];
+    if (valuesByOwner.length == 1) {
+      final entry = valuesByOwner.entries.single;
+      return entry.key == ownerId ? const [] : entry.value;
+    }
+    if (valuesByOwner.length == 2 && valuesByOwner.containsKey(ownerId)) {
+      for (final entry in valuesByOwner.entries) {
+        if (entry.key != ownerId) return entry.value;
+      }
+      return const [];
+    }
+    return _indexedValuesExceptOwnerLazy(valuesByOwner, ownerId);
+  }
+
+  static Iterable<T> _indexedValuesExceptOwnerLazy<T>(
+    Map<String, List<T>> valuesByOwner,
+    String ownerId,
+  ) sync* {
+    for (final entry in valuesByOwner.entries) {
+      if (entry.key != ownerId) yield* entry.value;
+    }
   }
 
   static Map<String, List<FieldImprovement>> _buildImprovementsByOwner({
