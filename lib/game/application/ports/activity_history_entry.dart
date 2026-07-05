@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -61,8 +62,9 @@ class GameActivityContext {
     required GameState state,
     GameState? previousState,
   }) {
-    final unitIds = _unitIdsFor(event);
-    final cityIds = _cityIdsFor(event);
+    final descriptor = GameEventDescriptor.forEvent(event);
+    final unitIds = descriptor.unitIds;
+    final cityIds = descriptor.cityIds;
     final units = <String, GameActivityUnitSnapshot>{};
     final cities = <String, GameActivityCitySnapshot>{};
 
@@ -192,93 +194,4 @@ class GameActivityCitySnapshot {
   Map<String, dynamic> toJson() {
     return {'id': id, 'ownerPlayerId': ownerPlayerId, 'name': name};
   }
-}
-
-Set<String> _unitIdsFor(GameEvent event) {
-  return switch (event) {
-    CityProducedUnitEvent(:final producedUnitId) => {producedUnitId},
-    UnitMovedEvent(:final unitId) => {unitId},
-    UnitGainedExperienceEvent(:final unitId) => {unitId},
-    UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) => {
-      attackerUnitId,
-      defenderUnitId,
-    },
-    CityAttackedEvent(:final attackerUnitId) => {attackerUnitId},
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) => {
-      attackerUnitId,
-      defenderUnitId,
-    },
-    UnitKilledEvent(:final unitId, :final attackerUnitId) => {
-      unitId,
-      ?attackerUnitId,
-    },
-    UnitRetreatedEvent(:final unitId) => {unitId},
-    WorkerCompletedJobEvent(:final unitId) => {unitId},
-    CityFoundedEvent() ||
-    CityBuiltBuildingEvent() ||
-    CityClaimedHexEvent() ||
-    CityCapturedEvent() ||
-    CityDestroyedEvent() ||
-    TurnEndedEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => const <String>{},
-  };
-}
-
-Set<String> _cityIdsFor(GameEvent event) {
-  return switch (event) {
-    CityFoundedEvent(:final cityId) => {cityId},
-    CityBuiltBuildingEvent(:final cityId) => {cityId},
-    CityProducedUnitEvent(:final cityId) => {cityId},
-    CityClaimedHexEvent(:final cityId) => {cityId},
-    CityAttackedEvent(:final cityId) => {cityId},
-    CombatResolvedEvent(:final defenderUnitId) => {defenderUnitId},
-    CityCapturedEvent(:final cityId) => {cityId},
-    CityDestroyedEvent(:final cityId) => {cityId},
-    UnitMovedEvent() ||
-    UnitGainedExperienceEvent() ||
-    UnitAttackedEvent() ||
-    UnitKilledEvent() ||
-    UnitRetreatedEvent() ||
-    TurnEndedEvent() ||
-    WorkerCompletedJobEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => const <String>{},
-  };
 }

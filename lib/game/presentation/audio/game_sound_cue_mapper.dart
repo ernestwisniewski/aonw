@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -110,33 +111,19 @@ abstract final class GameSoundCueMapper {
     GameState? previousState, {
     required String audiblePlayerId,
   }) {
-    return switch (event) {
-      CityFoundedEvent(:final ownerPlayerId)
-          when _belongsToPlayer(ownerPlayerId, audiblePlayerId) =>
-        GameSoundCue.city,
-      CityBuiltBuildingEvent(:final cityId) ||
-      CityProducedUnitEvent(:final cityId)
-          when _belongsToPlayer(
-            _cityOwner(state, previousState, cityId),
-            audiblePlayerId,
-          ) =>
-        GameSoundCue.city,
-      CityCapturedEvent(:final previousOwnerPlayerId, :final newOwnerPlayerId)
-          when _belongsToAnyPlayer([
-            previousOwnerPlayerId,
-            newOwnerPlayerId,
-          ], audiblePlayerId) =>
-        GameSoundCue.city,
-      CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId)
-          when _combatInvolvesPlayer(
-            state,
-            previousState,
-            attackerUnitId: attackerUnitId,
-            defenderUnitId: defenderUnitId,
-            playerId: audiblePlayerId,
-          ) =>
-        GameSoundCue.attack,
-      _ => null,
+    final descriptor = GameEventDescriptor.forEvent(event);
+    if (!_eventBelongsToAudiblePlayer(
+      descriptor,
+      state,
+      previousState,
+      audiblePlayerId,
+    )) {
+      return null;
+    }
+    return switch (descriptor.soundCueKind) {
+      GameEventSoundCueKind.city => GameSoundCue.city,
+      GameEventSoundCueKind.combat => GameSoundCue.attack,
+      GameEventSoundCueKind.none => null,
     };
   }
 
@@ -151,35 +138,16 @@ abstract final class GameSoundCueMapper {
     return const [];
   }
 
-  static String? _cityOwner(
+  static bool _eventBelongsToAudiblePlayer(
+    GameEventDescriptor descriptor,
     GameState state,
     GameState? previousState,
-    String cityId,
+    String playerId,
   ) {
-    return (state.cityById(cityId) ?? previousState?.cityById(cityId))
-        ?.ownerPlayerId;
-  }
-
-  static String? _unitOrCityOwner(
-    GameState state,
-    GameState? previousState,
-    String id,
-  ) {
-    return (state.unitById(id) ?? previousState?.unitById(id))?.ownerPlayerId ??
-        (state.cityById(id) ?? previousState?.cityById(id))?.ownerPlayerId;
-  }
-
-  static bool _combatInvolvesPlayer(
-    GameState state,
-    GameState? previousState, {
-    required String attackerUnitId,
-    required String defenderUnitId,
-    required String playerId,
-  }) {
-    return _belongsToAnyPlayer([
-      _unitOrCityOwner(state, previousState, attackerUnitId),
-      _unitOrCityOwner(state, previousState, defenderUnitId),
-    ], playerId);
+    if (playerId.isEmpty) return true;
+    return descriptor
+        .playerIdsFor(state: state, previousState: previousState)
+        .contains(playerId);
   }
 
   static String _audiblePlayerId(GameState? previousState, GameState state) {
@@ -312,13 +280,5 @@ abstract final class GameSoundCueMapper {
   static bool _belongsToPlayer(String? ownerPlayerId, String playerId) {
     if (playerId.isEmpty) return true;
     return ownerPlayerId == playerId;
-  }
-
-  static bool _belongsToAnyPlayer(
-    Iterable<String?> ownerPlayerIds,
-    String playerId,
-  ) {
-    if (playerId.isEmpty) return true;
-    return ownerPlayerIds.contains(playerId);
   }
 }

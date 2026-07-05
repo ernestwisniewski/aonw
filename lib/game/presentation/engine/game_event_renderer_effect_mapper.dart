@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -53,66 +54,62 @@ abstract final class GameEventRendererEffectMapper {
     int? turn,
   }) {
     final localizations = l10n;
-    return switch (event) {
-      UnitMovedEvent(
-        :final unitId,
-        :final fromCol,
-        :final fromRow,
-        :final toCol,
-        :final toRow,
-      ) =>
-        skipUnitMoveIds.contains(unitId) ||
-                (fromCol == toCol && fromRow == toRow)
+    return switch (GameEventDescriptor.forEvent(event).rendererEffectKind) {
+      GameEventRendererEffectKind.unitMoved =>
+        skipUnitMoveIds.contains((event as UnitMovedEvent).unitId) ||
+                (event.fromCol == event.toCol && event.fromRow == event.toRow)
             ? const []
             : [
                 AnimateUnitMoveEffect(
-                  unitId: unitId,
-                  fromCol: fromCol,
-                  fromRow: fromRow,
+                  unitId: event.unitId,
+                  fromCol: event.fromCol,
+                  fromRow: event.fromRow,
                   steps: [
                     UnitMovementStep(
-                      col: toCol,
-                      row: toRow,
+                      col: event.toCol,
+                      row: event.toRow,
                       enterCost: 0,
                       cumulativeCost: 0,
                     ),
                   ],
                 ),
               ],
-      CityFoundedEvent(:final cityId, :final ownerPlayerId) => _single(
+      GameEventRendererEffectKind.cityFounded => _single(
         _cityFoundedEffect(
           state,
-          cityId,
-          ownerPlayerId,
+          (event as CityFoundedEvent).cityId,
+          event.ownerPlayerId,
           viewerPlayerId: viewerPlayerId,
         ),
       ),
-      CityProducedUnitEvent(:final cityId) => _single(
-        _cityProducedUnitEffect(state, cityId, viewerPlayerId: viewerPlayerId),
+      GameEventRendererEffectKind.cityProducedUnit => _single(
+        _cityProducedUnitEffect(
+          state,
+          (event as CityProducedUnitEvent).cityId,
+          viewerPlayerId: viewerPlayerId,
+        ),
       ),
-      CityClaimedHexEvent(:final cityId, :final col, :final row) => _single(
+      GameEventRendererEffectKind.cityClaimedHex => _single(
         _claimedHexEffect(
           state,
-          cityId,
-          col,
-          row,
+          (event as CityClaimedHexEvent).cityId,
+          event.col,
+          event.row,
           viewerPlayerId: viewerPlayerId,
         ),
       ),
-      CityDestroyedEvent() => const [],
-      UnitKilledEvent(:final unitId, :final ownerPlayerId) =>
-        _unitKilledEffects(
-          state,
-          previousState,
-          unitId,
-          ownerPlayerId,
-          viewerPlayerId: viewerPlayerId,
-        ),
-      UnitRetreatedEvent(:final toCol, :final toRow) =>
+      GameEventRendererEffectKind.unitKilled => _unitKilledEffects(
+        state,
+        previousState,
+        (event as UnitKilledEvent).unitId,
+        event.ownerPlayerId,
+        viewerPlayerId: viewerPlayerId,
+      ),
+      GameEventRendererEffectKind.unitRetreated =>
         _canRenderTransientAt(
               state,
-              toCol,
-              toRow,
+              (event as UnitRetreatedEvent).toCol,
+              event.toRow,
               viewerPlayerId: viewerPlayerId,
             )
             ? [
@@ -120,37 +117,37 @@ abstract final class GameEventRendererEffectMapper {
                   text: localizations == null
                       ? '↩'
                       : localizations.modeBannerAttackRetreatProgress,
-                  col: toCol,
-                  row: toRow,
+                  col: event.toCol,
+                  row: event.toRow,
                   colorValue: _combatCueColor,
                   delay: _combatResultCueDelay,
                 ),
               ]
             : const [],
-      CombatResolvedEvent() => _combatResolvedEffects(
+      GameEventRendererEffectKind.combatResolved => _combatResolvedEffects(
         state,
         previousState,
-        event,
+        event as CombatResolvedEvent,
         viewerPlayerId: viewerPlayerId,
         turn: turn,
       ),
-      WorkerCompletedJobEvent(:final unitId) => _single(
+      GameEventRendererEffectKind.workerCompletedJob => _single(
         _workerCompletedJobEffect(
           state,
           previousState,
-          unitId,
+          (event as WorkerCompletedJobEvent).unitId,
           l10n: l10n,
           viewerPlayerId: viewerPlayerId,
         ),
       ),
-      TechnologyResearchedEvent(:final playerId) => _single(
+      GameEventRendererEffectKind.technologyResearched => _single(
         _technologyResearchedEffect(
           state,
-          playerId,
+          (event as TechnologyResearchedEvent).playerId,
           viewerPlayerId: viewerPlayerId,
         ),
       ),
-      _ => const [],
+      GameEventRendererEffectKind.none => const [],
     };
   }
 
