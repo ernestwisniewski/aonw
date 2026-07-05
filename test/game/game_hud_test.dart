@@ -6426,6 +6426,81 @@ void main() {
   );
 
   testWidgets(
+    'turn-start focus keeps open city production panel without a flicker',
+    (tester) async {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 2, row: 2),
+        controlledHexes: [CityHex(col: 2, row: 2)],
+        productionQueue: null,
+      );
+      final research = ResearchState(
+        players: {
+          'player_1': PlayerResearchState(
+            activeTechnologyId: TechnologyId.agriculture,
+          ),
+        },
+      );
+      final repository = _FakeGameRepository(
+        snapshot: SaveSnapshot.fromGameState(
+          save: _save,
+          state: GameState(
+            activePlayerId: 'player_1',
+            cities: const [city],
+            research: research,
+          ),
+        ),
+      );
+      final renderer = _SpyGameRenderer(mapData: _makeMap());
+
+      await _pumpHud(
+        tester,
+        repository: repository,
+        renderer: renderer,
+        autoActionFlowEnabled: false,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await _disableAutoTurnFlow(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameHud)),
+        listen: false,
+      );
+
+      await container
+          .read(gameCommandControllerProvider.notifier)
+          .dispatch(const CityTappedCommand('city_1'));
+      await tester.pump();
+      container
+          .read(hudCommandDispatcherProvider)
+          .openCityProductionPanel(
+            state: container.read(gameStateProvider('save')).value,
+          );
+      await tester.pump();
+
+      expect(find.byType(CityProductionPanel), findsOneWidget);
+
+      final focus = container
+          .read(hudCommandDispatcherProvider)
+          .focusTurnStartMapTarget(
+            activePlayerId: 'player_1',
+            state: container.read(gameStateProvider('save')).value,
+            moveCamera: false,
+          );
+      await tester.pump();
+
+      expect(find.byType(CityProductionPanel), findsOneWidget);
+
+      await focus;
+      await tester.pump();
+
+      expect(find.byType(CityProductionPanel), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'Auto action mode stops before ending turn when auto turn is disabled',
     (tester) async {
       final unit = GameUnit(

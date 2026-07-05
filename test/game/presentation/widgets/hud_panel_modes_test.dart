@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_next_action_panel.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -194,6 +195,65 @@ void main() {
 
       expect(result, const HudPanelModes(empire: true, activityLog: true));
     });
+
+    test(
+      'closePrimaryPanelsPreserving keeps active production decision panel',
+      () {
+        final result = const HudPanelModes(
+          cityBuildings: true,
+          technology: true,
+          objectives: true,
+          empire: true,
+          activityLog: true,
+        ).closePrimaryPanelsPreserving(HudNextActionPanel.cityProduction);
+
+        expect(
+          result,
+          const HudPanelModes(
+            cityBuildings: true,
+            empire: true,
+            activityLog: true,
+          ),
+        );
+      },
+    );
+
+    test(
+      'closePrimaryPanelsPreserving keeps active research decision panel',
+      () {
+        final result = const HudPanelModes(
+          cityBuildings: true,
+          technology: true,
+          objectives: true,
+          empire: true,
+          activityLog: true,
+        ).closePrimaryPanelsPreserving(HudNextActionPanel.technology);
+
+        expect(
+          result,
+          const HudPanelModes(
+            technology: true,
+            empire: true,
+            activityLog: true,
+          ),
+        );
+      },
+    );
+
+    test(
+      'closePrimaryPanelsPreserving closes all primary panels for no target',
+      () {
+        final result = const HudPanelModes(
+          cityBuildings: true,
+          technology: true,
+          objectives: true,
+          empire: true,
+          activityLog: true,
+        ).closePrimaryPanelsPreserving(HudNextActionPanel.none);
+
+        expect(result, const HudPanelModes(empire: true, activityLog: true));
+      },
+    );
 
     test('closeUnitActionPanels keeps city and global overlays unchanged', () {
       final result = const HudPanelModes(

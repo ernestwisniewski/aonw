@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_next_action_panel.dart';
 
 class HudPanelModes {
   const HudPanelModes({
@@ -84,6 +85,20 @@ class HudPanelModes {
 
   HudPanelModes closePrimaryPanels() =>
       copyWith(cityBuildings: false, technology: false, objectives: false);
+
+  HudPanelModes closePrimaryPanelsPreserving(HudNextActionPanel panel) {
+    return switch (panel) {
+      HudNextActionPanel.cityProduction => copyWith(
+        technology: false,
+        objectives: false,
+      ),
+      HudNextActionPanel.technology => copyWith(
+        cityBuildings: false,
+        objectives: false,
+      ),
+      HudNextActionPanel.none => closePrimaryPanels(),
+    };
+  }
 
   HudPanelModes closeUnitActionPanels() =>
       copyWith(technology: false, objectives: false);

@@ -359,6 +359,7 @@ class _GameHudState extends ConsumerState<GameHud> {
         .read(hudCommandDispatcherProvider)
         .focusTurnStartMapTarget(
           activePlayerId: handoff.playerId,
+          state: ref.read(gameStateProvider(widget.session.saveId)).value,
           moveCamera: true,
         );
   }
