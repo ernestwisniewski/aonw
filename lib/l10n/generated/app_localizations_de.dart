@@ -541,6 +541,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.';
 
   @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

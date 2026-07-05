@@ -20,6 +20,7 @@ class HelpPopupsButton extends StatefulWidget {
     required this.onPressed,
     required this.attentionSequence,
     this.bare = false,
+    this.gamepadFocused = false,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class HelpPopupsButton extends StatefulWidget {
   final VoidCallback onPressed;
   final int attentionSequence;
   final bool bare;
+  final bool gamepadFocused;
 
   @override
   State<HelpPopupsButton> createState() => _HelpPopupsButtonState();
@@ -89,6 +91,7 @@ class _HelpPopupsButtonState extends State<HelpPopupsButton>
       iconBuilder: (color) => GameIcon(GameIcons.help, size: 18, color: color),
       onPressed: widget.onPressed,
       bare: widget.bare,
+      gamepadFocused: widget.gamepadFocused,
     );
 
     return AnimatedBuilder(

@@ -4,6 +4,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
+import 'package:aonw/shared/widgets/game_ui/game_ui_focus_ring.dart';
 import 'package:flutter/material.dart';
 
 enum GameUiSideMenuBadgeTone { count, score, domination }
@@ -20,6 +21,7 @@ class GameUiSideMenuButton extends StatelessWidget {
     this.badgeTone = GameUiSideMenuBadgeTone.count,
     this.iconSize = 18,
     this.bare = false,
+    this.gamepadFocused = false,
     super.key,
   });
 
@@ -35,28 +37,83 @@ class GameUiSideMenuButton extends StatelessWidget {
   final GameUiSideMenuBadgeTone badgeTone;
   final double iconSize;
   final bool bare;
+  final bool gamepadFocused;
 
   @override
   Widget build(BuildContext context) {
     final iconColor = open ? GameUiTheme.goldLight : GameUiTheme.gold;
 
     if (bare) {
-      return Tooltip(
+      return _withGamepadFocusRing(
+        Tooltip(
+          message: tooltip,
+          child: Semantics(
+            button: true,
+            selected: open,
+            label: tooltip,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onPressed,
+              onLongPress: onLongPress,
+              child: Stack(
+                key: buttonKey,
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox.square(
+                    dimension: extent,
+                    child: Center(
+                      child: IconTheme(
+                        data: IconThemeData(size: iconSize, color: iconColor),
+                        child: iconBuilder(iconColor),
+                      ),
+                    ),
+                  ),
+                  if (badgeLabel != null)
+                    Positioned(
+                      right: -3,
+                      top: -3,
+                      child: _GameUiSideMenuBadge(
+                        label: badgeLabel!,
+                        tone: badgeTone,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return _withGamepadFocusRing(
+      Tooltip(
         message: tooltip,
-        child: Semantics(
-          button: true,
-          selected: open,
-          label: tooltip,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onPressed,
-            onLongPress: onLongPress,
-            child: Stack(
-              key: buttonKey,
-              clipBehavior: Clip.none,
-              children: [
-                SizedBox.square(
-                  dimension: extent,
+        child: Material(
+          key: buttonKey,
+          color: SurfaceElevation.flat.fill(
+            background: GameUiTheme.bg,
+            alpha: 205,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: GameUiTheme.borderRadius,
+            side: BorderSide(
+              color: open
+                  ? GameUiTheme.gold
+                  : SurfaceElevation.flat.strokeColor(
+                      color: GameUiTheme.gold,
+                      alpha: 92,
+                    ),
+            ),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              SizedBox.square(
+                dimension: extent,
+                child: InkWell(
+                  borderRadius: GameUiTheme.borderRadius,
+                  onTap: onPressed,
+                  onLongPress: onLongPress,
                   child: Center(
                     child: IconTheme(
                       data: IconThemeData(size: iconSize, color: iconColor),
@@ -64,70 +121,28 @@ class GameUiSideMenuButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (badgeLabel != null)
-                  Positioned(
-                    right: -3,
-                    top: -3,
-                    child: _GameUiSideMenuBadge(
-                      label: badgeLabel!,
-                      tone: badgeTone,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        key: buttonKey,
-        color: SurfaceElevation.flat.fill(
-          background: GameUiTheme.bg,
-          alpha: 205,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: GameUiTheme.borderRadius,
-          side: BorderSide(
-            color: open
-                ? GameUiTheme.gold
-                : SurfaceElevation.flat.strokeColor(
-                    color: GameUiTheme.gold,
-                    alpha: 92,
-                  ),
-          ),
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox.square(
-              dimension: extent,
-              child: InkWell(
-                borderRadius: GameUiTheme.borderRadius,
-                onTap: onPressed,
-                onLongPress: onLongPress,
-                child: Center(
-                  child: IconTheme(
-                    data: IconThemeData(size: iconSize, color: iconColor),
-                    child: iconBuilder(iconColor),
+              ),
+              if (badgeLabel != null)
+                Positioned(
+                  right: -3,
+                  top: -3,
+                  child: _GameUiSideMenuBadge(
+                    label: badgeLabel!,
+                    tone: badgeTone,
                   ),
                 ),
-              ),
-            ),
-            if (badgeLabel != null)
-              Positioned(
-                right: -3,
-                top: -3,
-                child: _GameUiSideMenuBadge(
-                  label: badgeLabel!,
-                  tone: badgeTone,
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _withGamepadFocusRing(Widget child) {
+    return GameUiFocusRing(
+      focused: gamepadFocused,
+      borderRadius: GameUiTheme.borderRadius,
+      child: child,
     );
   }
 }

@@ -61,6 +61,7 @@ void main() {
     expect(find.text('Left click'), findsOneWidget);
     expect(find.text('Tap'), findsOneWidget);
     expect(find.text('D-pad / left stick'), findsOneWidget);
+    expect(find.text('L3 / R3'), findsOneWidget);
     expect(find.text('?'), findsWidgets);
   });
 

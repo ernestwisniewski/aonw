@@ -1,4 +1,6 @@
 import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_ring.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_targets.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_delta_badge.dart';
@@ -55,6 +57,7 @@ class TopResourceStrip extends StatelessWidget {
     this.playerColor,
     this.turnNumber,
     this.onTurnPressed,
+    this.gamepadFocusedTargetId,
     super.key,
   });
 
@@ -77,6 +80,7 @@ class TopResourceStrip extends StatelessWidget {
   final String? playerName;
   final Color? playerColor;
   final VoidCallback? onTurnPressed;
+  final String? gamepadFocusedTargetId;
 
   final int? turnNumber;
 
@@ -90,76 +94,97 @@ class TopResourceStrip extends StatelessWidget {
     final compact = size.width < 520;
     final portrait = size.height >= size.width;
     final resourcePills = <Widget>[
-      TopResourcePill(
-        key: const Key('gameHud.resource.gold'),
-        icon: GameIcons.gold,
-        title: l10n.commonGold,
-        value: '$gold',
-        delta: goldPerTurn == 0 ? null : ResourceDelta(goldPerTurn),
-        color: GameUiTheme.gold,
-        compact: compact,
-        critical: _bankruptcyWarning,
-        tooltip: _goldTooltip(l10n),
-        active: openBreakdown == TopResourcePopupType.gold,
-        onTap: onGoldPressed,
+      _focusablePill(
+        HudGamepadFocusTargetIds.resourceGold,
+        TopResourcePill(
+          key: const Key('gameHud.resource.gold'),
+          icon: GameIcons.gold,
+          title: l10n.commonGold,
+          value: '$gold',
+          delta: goldPerTurn == 0 ? null : ResourceDelta(goldPerTurn),
+          color: GameUiTheme.gold,
+          compact: compact,
+          critical: _bankruptcyWarning,
+          tooltip: _goldTooltip(l10n),
+          active: openBreakdown == TopResourcePopupType.gold,
+          onTap: onGoldPressed,
+        ),
       ),
       const SizedBox(width: 6),
-      TopResourcePill(
-        key: const Key('gameHud.resource.science'),
-        icon: GameIcons.science,
-        title: l10n.commonScience,
-        value: _scienceTurnLabel,
-        color: GameUiTheme.scienceAccent,
-        compact: compact,
-        tooltip: l10n.topResourceScienceTooltip(_scienceTurnLabel),
-        active: openBreakdown == TopResourcePopupType.science,
-        onTap: onSciencePressed,
+      _focusablePill(
+        HudGamepadFocusTargetIds.resourceScience,
+        TopResourcePill(
+          key: const Key('gameHud.resource.science'),
+          icon: GameIcons.science,
+          title: l10n.commonScience,
+          value: _scienceTurnLabel,
+          color: GameUiTheme.scienceAccent,
+          compact: compact,
+          tooltip: l10n.topResourceScienceTooltip(_scienceTurnLabel),
+          active: openBreakdown == TopResourcePopupType.science,
+          onTap: onSciencePressed,
+        ),
       ),
       const SizedBox(width: 6),
-      TopResourcePill(
-        key: const Key('gameHud.resource.stability'),
-        icon: GameIcons.defense,
-        title: l10n.commonStability,
-        value: _stabilityValueLabel,
-        color: StabilityBandPresentation.color(stabilityBand),
-        compact: compact,
-        critical: stabilityBand == StabilityBand.unrest,
-        tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
-        active: openBreakdown == TopResourcePopupType.stability,
-        onTap: onStabilityPressed,
+      _focusablePill(
+        HudGamepadFocusTargetIds.resourceStability,
+        TopResourcePill(
+          key: const Key('gameHud.resource.stability'),
+          icon: GameIcons.defense,
+          title: l10n.commonStability,
+          value: _stabilityValueLabel,
+          color: StabilityBandPresentation.color(stabilityBand),
+          compact: compact,
+          critical: stabilityBand == StabilityBand.unrest,
+          tooltip: l10n.topResourceStabilityTooltip(stabilityNet),
+          active: openBreakdown == TopResourcePopupType.stability,
+          onTap: onStabilityPressed,
+        ),
       ),
       const SizedBox(width: 6),
-      TopResourcePill(
-        key: const Key('gameHud.resource.resources'),
-        icon: GameIcons.resources,
-        title: l10n.commonResources,
-        value: '$resourceTotal',
-        color: GameUiTheme.resourcesAccent,
-        compact: compact,
-        tooltip: l10n.topResourceResourcesTooltip(resourceTotal, resourceTypes),
-        active: openBreakdown == TopResourcePopupType.resources,
-        onTap: onResourcesPressed,
+      _focusablePill(
+        HudGamepadFocusTargetIds.resourceResources,
+        TopResourcePill(
+          key: const Key('gameHud.resource.resources'),
+          icon: GameIcons.resources,
+          title: l10n.commonResources,
+          value: '$resourceTotal',
+          color: GameUiTheme.resourcesAccent,
+          compact: compact,
+          tooltip: l10n.topResourceResourcesTooltip(
+            resourceTotal,
+            resourceTypes,
+          ),
+          active: openBreakdown == TopResourcePopupType.resources,
+          onTap: onResourcesPressed,
+        ),
       ),
       if (turnNumber != null) ...[
         const SizedBox(width: 6),
-        TurnResourcePill(
-          turnNumber: turnNumber!,
-          compact: compact,
-          onTap: onTurnPressed,
+        _focusablePill(
+          HudGamepadFocusTargetIds.resourceTurn,
+          TurnResourcePill(
+            turnNumber: turnNumber!,
+            compact: compact,
+            onTap: onTurnPressed,
+          ),
         ),
       ],
       if (victoryStatus case final status?) ...[
         const SizedBox(width: 6),
-        VictoryStatusResourcePill(
-          primaryLabel: status.primaryLabel,
-          compactLabel: status.compactLabel,
-          secondaryLabel: status.secondaryLabel,
-          tooltip: status.tooltip,
-          compact: compact,
-          condensed: portrait,
-          critical: status.critical,
-          active: openBreakdown == TopResourcePopupType.victory,
-          onTap: onVictoryPressed,
+        _focusablePill(
+          HudGamepadFocusTargetIds.resourceVictory,
+          VictoryStatusResourcePill(
+            primaryLabel: status.primaryLabel,
+            compactLabel: status.compactLabel,
+            secondaryLabel: status.secondaryLabel,
+            tooltip: status.tooltip,
+            compact: compact,
+            condensed: portrait,
+            critical: status.critical,
+            active: openBreakdown == TopResourcePopupType.victory,
+            onTap: onVictoryPressed,
+          ),
         ),
       ],
     ];
@@ -207,6 +232,14 @@ class TopResourceStrip extends StatelessWidget {
     }
     if (!_projectedBankruptcy) return base;
     return l10n.topResourceGoldTooltipBankruptcy(base);
+  }
+
+  Widget _focusablePill(String targetId, Widget child) {
+    return HudGamepadFocusRing(
+      focused: gamepadFocusedTargetId == targetId,
+      borderRadius: GameUiTheme.pillBorderRadius,
+      child: child,
+    );
   }
 }
 

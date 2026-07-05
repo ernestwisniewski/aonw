@@ -10,6 +10,7 @@ final class GamepadControlFrame {
     this.cancelPressed = false,
     this.inspectPressed = false,
     this.moveModePressed = false,
+    this.hudFocusPressed = false,
     this.focusPreviousPressed = false,
     this.focusNextPressed = false,
     this.primaryActionPressed = false,
@@ -25,6 +26,7 @@ final class GamepadControlFrame {
   final bool cancelPressed;
   final bool inspectPressed;
   final bool moveModePressed;
+  final bool hudFocusPressed;
   final bool focusPreviousPressed;
   final bool focusNextPressed;
   final bool primaryActionPressed;
@@ -38,6 +40,7 @@ final class GamepadControlFrame {
       !cancelPressed &&
       !inspectPressed &&
       !moveModePressed &&
+      !hudFocusPressed &&
       !focusPreviousPressed &&
       !focusNextPressed &&
       !primaryActionPressed;

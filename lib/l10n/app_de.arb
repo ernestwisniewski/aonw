@@ -204,6 +204,8 @@
   "manualGamepadModeBody": "Schaltet auf der Karte Bewegungszielwahl um; in Forschung wechselt es Empfehlungen und vollständigen Baum.",
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.",
+  "manualGamepadHudFocusAction": "L3 / R3",
+  "manualGamepadHudFocusBody": "Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Der rechte Bumper fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.",
   "manualGamepadFocusAction": "LB",

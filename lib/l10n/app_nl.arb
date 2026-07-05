@@ -204,6 +204,8 @@
   "manualGamepadModeBody": "Schakelt op de kaart bewegingsdoelen; in onderzoek wisselt het aanbevelingen en volledige boom.",
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecteert de huidige cursor-hex, of opent details voor de geselecteerde productie of technologie.",
+  "manualGamepadHudFocusAction": "L3 / R3",
+  "manualGamepadHudFocusBody": "Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "De rechter bumper focust de volgende openstaande speleractie in de beurtwachtrij.",
   "manualGamepadFocusAction": "LB",

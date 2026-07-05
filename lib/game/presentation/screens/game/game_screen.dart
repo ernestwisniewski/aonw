@@ -363,7 +363,11 @@ class _GameRendererSessionHostState
     final session = widget.session;
     final gameplaySettings = ref.watch(gameplaySettingsProvider);
     final hudPanelModes = ref.watch(hudPanelControllerProvider);
+    final hudGamepadFocusActive = ref.watch(
+      hudGamepadFocusControllerProvider.select((state) => state.active),
+    );
     final rendererGamepadInputEnabled =
+        !hudGamepadFocusActive &&
         !hudPanelModes.cityBuildings &&
         !hudPanelModes.technology &&
         !hudPanelModes.empire &&

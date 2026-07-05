@@ -204,6 +204,8 @@
   "manualGamepadModeBody": "Sur la carte, alterne le ciblage de mouvement; en recherche, alterne recommandations et arbre complet.",
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecte l'hex du curseur, ou ouvre les détails de la production ou technologie sélectionnée.",
+  "manualGamepadHudFocusAction": "L3 / R3",
+  "manualGamepadHudFocusBody": "Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Le bumper droit focalise la prochaine action joueur en attente dans la file du tour.",
   "manualGamepadFocusAction": "LB",

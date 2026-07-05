@@ -12,6 +12,8 @@ import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_input_layer.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notifications_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_game_outcome_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_game_outcome_summary.dart';
@@ -19,6 +21,7 @@ import 'package:aonw/game/presentation/widgets/hud/overlay/game_hud_overlay_host
 import 'package:aonw/game/presentation/widgets/hud/overlay/game_hud_overlay_panels_host.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/hud_feedback_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/game_player_avatars_overlay.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/hot_seat_handoff_overlay.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart';
@@ -159,95 +162,115 @@ class _GameHudState extends ConsumerState<GameHud> {
         ? pendingHandoff ?? entryHandoff
         : null;
     final handoffBlocksHud = handoff != null || _handoffTransitionInProgress;
+    final hudFocusTargets = HudGamepadFocusTargetRegistry.flatten(
+      ref.watch(hudGamepadFocusTargetRegistryProvider),
+    );
+    final hudGamepadFocusEnabled =
+        gameSave != null &&
+        !handoffBlocksHud &&
+        outcomeSummary == null &&
+        hudFocusTargets.isNotEmpty;
+    final openResourceBreakdown = gameSave == null
+        ? null
+        : ref.watch(hudResourceBreakdownControllerProvider);
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        if (!handoffBlocksHud) GamePlayerControlSync(gameSave: gameSave),
-        if (widget.aiAutopilotEnabled && outcomeSummary == null)
-          GameAiTurnAutoPilot(
-            key: const ValueKey('game-ai-turn-auto-pilot'),
-            gameSave: gameSave,
-          ),
-        const _HudTopFade(),
-        if (gameSave != null) MultiplayerAvatarsRailOverlay(gameSave: gameSave),
-        GameOptionsOverlay(
-          session: widget.session,
-          gameSave: gameSave,
-          allowGraphicMode: widget.allowGraphicMode,
-          onViewModeChanged: widget.onViewModeChanged,
-          displaySettings: widget.displaySettings,
-          onToggleTerrain: widget.onToggleTerrain,
-          onToggleResources: widget.onToggleResources,
-          onToggleHeightBadge: widget.onToggleHeightBadge,
-          onToggleCitySites: widget.onToggleCitySites,
-          onToggleCityGrowth: widget.onToggleCityGrowth,
-          onToggleHexBorders: widget.onToggleHexBorders,
-          onToggleHeightWalls: widget.onToggleHeightWalls,
-          onHexBorderColorChanged: widget.onHexBorderColorChanged,
-          onWallTintColorChanged: widget.onWallTintColorChanged,
-          onResetHexBorderColor: widget.onResetHexBorderColor,
-          onResetWallTintColor: widget.onResetWallTintColor,
-          showDiceRollTest: widget.showDiceRollTest,
-          onToggleDiceRollTest: widget.onToggleDiceRollTest,
-          onResignMatch: _canResign(gameSave, networkSession)
-              ? () => unawaited(_onResignMatch(context))
-              : null,
-          resigning: _resigning,
-          closedContent:
-              gameSave != null &&
-                  gameSave.gameMode != GameMode.multiplayer &&
-                  gameSave.players.isNotEmpty
-              ? GamePlayerAvatarsOverlay(
-                  gameSave: gameSave,
-                  diplomacy: gameState?.diplomacy ?? DiplomacyState.empty,
-                )
-              : null,
-          onOverlayPanelActiveChanged: _setOptionsOverlayPanelActive,
-        ),
-        if (gameSave != null && !handoffBlocksHud)
-          GameHudOverlayHost(
-            session: widget.session,
-            animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
-            initialCameraFocusReadyListenable:
-                widget.initialCameraFocusReadyListenable,
-            gameSave: gameSave,
-            optionsOverlayOpenOverride: _optionsOverlayPanelActive,
-          ),
-        if (gameSave != null && !handoffBlocksHud)
-          GameHudOverlayPanelsHost(
+    return HudGamepadFocusInputLayer(
+      input: widget.gamepadInputListenable,
+      enabled: hudGamepadFocusEnabled,
+      targets: hudFocusTargets,
+      resourceBreakdownOpen: openResourceBreakdown != null,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (!handoffBlocksHud) GamePlayerControlSync(gameSave: gameSave),
+          if (widget.aiAutopilotEnabled && outcomeSummary == null)
+            GameAiTurnAutoPilot(
+              key: const ValueKey('game-ai-turn-auto-pilot'),
+              gameSave: gameSave,
+            ),
+          const _HudTopFade(),
+          if (gameSave != null)
+            MultiplayerAvatarsRailOverlay(gameSave: gameSave),
+          GameOptionsOverlay(
             session: widget.session,
             gameSave: gameSave,
-            gamepadInputListenable: widget.gamepadInputListenable,
+            allowGraphicMode: widget.allowGraphicMode,
+            onViewModeChanged: widget.onViewModeChanged,
+            displaySettings: widget.displaySettings,
+            onToggleTerrain: widget.onToggleTerrain,
+            onToggleResources: widget.onToggleResources,
+            onToggleHeightBadge: widget.onToggleHeightBadge,
+            onToggleCitySites: widget.onToggleCitySites,
+            onToggleCityGrowth: widget.onToggleCityGrowth,
+            onToggleHexBorders: widget.onToggleHexBorders,
+            onToggleHeightWalls: widget.onToggleHeightWalls,
+            onHexBorderColorChanged: widget.onHexBorderColorChanged,
+            onWallTintColorChanged: widget.onWallTintColorChanged,
+            onResetHexBorderColor: widget.onResetHexBorderColor,
+            onResetWallTintColor: widget.onResetWallTintColor,
+            showDiceRollTest: widget.showDiceRollTest,
+            onToggleDiceRollTest: widget.onToggleDiceRollTest,
+            onResignMatch: _canResign(gameSave, networkSession)
+                ? () => unawaited(_onResignMatch(context))
+                : null,
+            resigning: _resigning,
+            closedContent:
+                gameSave != null &&
+                    gameSave.gameMode != GameMode.multiplayer &&
+                    gameSave.players.isNotEmpty
+                ? GamePlayerAvatarsOverlay(
+                    gameSave: gameSave,
+                    diplomacy: gameState?.diplomacy ?? DiplomacyState.empty,
+                  )
+                : null,
+            onOverlayPanelActiveChanged: _setOptionsOverlayPanelActive,
           ),
-        _HudMenuButton(onPressed: () => unawaited(_onClose(context))),
-        GameEventNotificationsOverlay(gameSave: gameSave),
-        const HudFeedbackOverlay(),
-        if (gameSave != null) TurnStartBannerOverlay(turnNumber: gameSave.turn),
-        CivilizationMetPopupOverlay(gameSave: gameSave),
-        DiplomaticMessagePopupOverlay(gameSave: gameSave),
-        TechnologyDiscoveryPopupOverlay(gameSave: gameSave),
-        if (handoff != null)
-          Positioned.fill(
-            child: HotSeatHandoffOverlay(
-              handoff: handoff,
-              onConfirm: () => unawaited(
-                _onHandoffConfirmed(
-                  handoff,
-                  clearPending: pendingHandoff != null,
-                  entrySaveId: entryHandoff != null ? gameSave?.id : null,
+          if (gameSave != null && !handoffBlocksHud)
+            GameHudOverlayHost(
+              session: widget.session,
+              animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
+              initialCameraFocusReadyListenable:
+                  widget.initialCameraFocusReadyListenable,
+              gamepadInputListenable: widget.gamepadInputListenable,
+              gameSave: gameSave,
+              optionsOverlayOpenOverride: _optionsOverlayPanelActive,
+            ),
+          if (gameSave != null && !handoffBlocksHud)
+            GameHudOverlayPanelsHost(
+              session: widget.session,
+              gameSave: gameSave,
+              gamepadInputListenable: widget.gamepadInputListenable,
+            ),
+          _HudMenuButton(onPressed: () => unawaited(_onClose(context))),
+          GameEventNotificationsOverlay(gameSave: gameSave),
+          const HudFeedbackOverlay(),
+          if (gameSave != null)
+            TurnStartBannerOverlay(turnNumber: gameSave.turn),
+          CivilizationMetPopupOverlay(gameSave: gameSave),
+          DiplomaticMessagePopupOverlay(gameSave: gameSave),
+          TechnologyDiscoveryPopupOverlay(gameSave: gameSave),
+          if (handoff != null)
+            Positioned.fill(
+              child: HotSeatHandoffOverlay(
+                handoff: handoff,
+                onConfirm: () => unawaited(
+                  _onHandoffConfirmed(
+                    handoff,
+                    clearPending: pendingHandoff != null,
+                    entrySaveId: entryHandoff != null ? gameSave?.id : null,
+                  ),
                 ),
               ),
             ),
-          ),
-        if (outcomeSummary != null)
-          Positioned.fill(
-            child: HudGameOutcomeOverlay(
-              summary: outcomeSummary,
-              onReturnToMenu: () => _onClose(context),
+          if (outcomeSummary != null)
+            Positioned.fill(
+              child: HudGameOutcomeOverlay(
+                summary: outcomeSummary,
+                onReturnToMenu: () => _onClose(context),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

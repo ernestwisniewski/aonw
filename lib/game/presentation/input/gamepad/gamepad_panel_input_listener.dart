@@ -17,6 +17,9 @@ class GamepadPanelInputListener extends StatefulWidget {
     this.onCancel,
     this.onDetails,
     this.onMode,
+    this.onHudFocus,
+    this.onFocusPrevious,
+    this.onFocusNext,
     super.key,
   });
 
@@ -27,6 +30,9 @@ class GamepadPanelInputListener extends StatefulWidget {
   final VoidCallback? onCancel;
   final VoidCallback? onDetails;
   final VoidCallback? onMode;
+  final VoidCallback? onHudFocus;
+  final VoidCallback? onFocusPrevious;
+  final VoidCallback? onFocusNext;
   final Widget child;
 
   @override
@@ -74,7 +80,22 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
 
   GamepadInputSnapshot _currentInput() {
     if (!widget.enabled) return GamepadInputSnapshot.empty;
-    return widget.input?.value ?? GamepadInputSnapshot.empty;
+    final input = widget.input?.value ?? GamepadInputSnapshot.empty;
+    return GamepadInputSnapshot(
+      cursorX: widget.onNavigate == null ? 0 : input.cursorX,
+      cursorY: widget.onNavigate == null ? 0 : input.cursorY,
+      dpadUp: widget.onNavigate != null && input.dpadUp,
+      dpadDown: widget.onNavigate != null && input.dpadDown,
+      dpadLeft: widget.onNavigate != null && input.dpadLeft,
+      dpadRight: widget.onNavigate != null && input.dpadRight,
+      confirm: widget.onConfirm != null && input.confirm,
+      cancel: widget.onCancel != null && input.cancel,
+      inspect: widget.onDetails != null && input.inspect,
+      moveMode: widget.onMode != null && input.moveMode,
+      hudFocus: widget.onHudFocus != null && input.hudFocus,
+      focusPrevious: widget.onFocusPrevious != null && input.focusPrevious,
+      focusNext: widget.onFocusNext != null && input.focusNext,
+    );
   }
 
   void _handleInputChanged() {
@@ -124,5 +145,8 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
     if (frame.cancelPressed) widget.onCancel?.call();
     if (frame.inspectPressed) widget.onDetails?.call();
     if (frame.moveModePressed) widget.onMode?.call();
+    if (frame.hudFocusPressed) widget.onHudFocus?.call();
+    if (frame.focusPreviousPressed) widget.onFocusPrevious?.call();
+    if (frame.focusNextPressed) widget.onFocusNext?.call();
   }
 }

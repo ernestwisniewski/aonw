@@ -38,6 +38,7 @@ final class GamepadFrameController {
       cancelPressed: _pressed(input.cancel, _previous.cancel),
       inspectPressed: _pressed(input.inspect, _previous.inspect),
       moveModePressed: _pressed(input.moveMode, _previous.moveMode),
+      hudFocusPressed: _pressed(input.hudFocus, _previous.hudFocus),
       focusPreviousPressed: _pressed(
         input.focusPrevious,
         _previous.focusPrevious,

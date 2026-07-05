@@ -1042,6 +1042,18 @@ abstract class AppLocalizations {
   /// **'Inspects the current cursor hex, or opens details for the selected production or technology item.'**
   String get manualGamepadInspectBody;
 
+  /// No description provided for @manualGamepadHudFocusAction.
+  ///
+  /// In en, this message translates to:
+  /// **'L3 / R3'**
+  String get manualGamepadHudFocusAction;
+
+  /// No description provided for @manualGamepadHudFocusBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.'**
+  String get manualGamepadHudFocusBody;
+
   /// No description provided for @manualGamepadNextAction.
   ///
   /// In en, this message translates to:

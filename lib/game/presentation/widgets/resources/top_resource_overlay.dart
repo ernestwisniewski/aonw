@@ -41,6 +41,7 @@ class TopResourceOverlay extends StatelessWidget {
     this.onTurnPressed,
     this.activeTechnologyCompletionTurn,
     this.resourceNetwork = EmpireResourceNetwork.empty,
+    this.gamepadFocusedTargetId,
     super.key,
   });
 
@@ -72,6 +73,7 @@ class TopResourceOverlay extends StatelessWidget {
   final Color? playerColor;
   final int? turnNumber;
   final VoidCallback? onTurnPressed;
+  final String? gamepadFocusedTargetId;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +107,7 @@ class TopResourceOverlay extends StatelessWidget {
                   playerColor: playerColor,
                   turnNumber: turnNumber,
                   onTurnPressed: onTurnPressed,
+                  gamepadFocusedTargetId: gamepadFocusedTargetId,
                   onGoldPressed: onGoldPressed,
                   onSciencePressed: onSciencePressed,
                   onStabilityPressed: onStabilityPressed,

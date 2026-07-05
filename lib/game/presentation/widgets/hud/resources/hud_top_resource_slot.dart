@@ -30,6 +30,7 @@ class HudTopResourceSlot extends ConsumerWidget {
     required this.mapData,
     required this.activePlayerId,
     required this.l10n,
+    this.gamepadFocusedTargetId,
     super.key,
   });
 
@@ -44,6 +45,7 @@ class HudTopResourceSlot extends ConsumerWidget {
   final MapData mapData;
   final String? activePlayerId;
   final AppLocalizations l10n;
+  final String? gamepadFocusedTargetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,6 +87,7 @@ class HudTopResourceSlot extends ConsumerWidget {
         playerName: playerName,
         playerColor: playerColor,
         turnNumber: turnNumber,
+        gamepadFocusedTargetId: gamepadFocusedTargetId,
         l10n: l10n,
         onTurnPressed: () {
           dispatcher.closeResourceBreakdown();

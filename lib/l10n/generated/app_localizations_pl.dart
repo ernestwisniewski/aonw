@@ -538,6 +538,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Pokazuje aktualny heks kursora albo szczegóły wybranej produkcji lub technologii.';
 
   @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'Włącza albo wyłącza fokus HUD. Gdy jest aktywny, D-pad przechodzi po bocznym pasku, górnych zasobach i chipach akcji; A aktywuje, B wraca na mapę, a LB/RB przełącza sekcje HUD.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

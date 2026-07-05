@@ -540,6 +540,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Inspecteert de huidige cursor-hex, of opent details voor de geselecteerde productie of technologie.';
 
   @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override
