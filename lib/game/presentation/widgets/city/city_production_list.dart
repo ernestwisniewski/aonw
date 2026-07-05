@@ -29,6 +29,7 @@ class CityProductionList extends StatelessWidget {
     required this.onSetSpecialization,
     this.buildingSortMode = CityBuildingSortMode.recommended,
     this.onBuildingSortModeChanged,
+    this.selectedItemKey,
     this.compact = false,
     super.key,
   });
@@ -46,6 +47,7 @@ class CityProductionList extends StatelessWidget {
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
   final CityBuildingSortMode buildingSortMode;
   final ValueChanged<CityBuildingSortMode>? onBuildingSortModeChanged;
+  final String? selectedItemKey;
   final bool compact;
 
   @override
@@ -69,14 +71,20 @@ class CityProductionList extends StatelessWidget {
         CityProductionSectionTitle(l10n.cityProductionProjectsSection),
       );
       for (final item in projects) {
+        final itemKey = cityProductionItemKey(item);
         children.add(
-          ProductionListTile(
-            item: item,
-            compact: compact,
-            onDetails: null,
-            onTap: item.active || onStartProject == null
-                ? null
-                : () => onStartProject!(item.projectType!),
+          _RevealWhenSelected(
+            selected: selectedItemKey == itemKey,
+            child: ProductionListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onDetails: null,
+              onTap: item.active || onStartProject == null
+                  ? null
+                  : () => onStartProject!(item.projectType!),
+            ),
           ),
         );
       }
@@ -93,12 +101,18 @@ class CityProductionList extends StatelessWidget {
         ),
       );
       for (final item in sortedBuildings) {
+        final itemKey = cityProductionItemKey(item);
         children.add(
-          ProductionListTile(
-            item: item,
-            compact: compact,
-            onDetails: () => onBuildingDetails(item),
-            onTap: item.active ? null : () => onBuild(item.buildingType!),
+          _RevealWhenSelected(
+            selected: selectedItemKey == itemKey,
+            child: ProductionListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onDetails: () => onBuildingDetails(item),
+              onTap: item.active ? null : () => onBuild(item.buildingType!),
+            ),
           ),
         );
       }
@@ -136,14 +150,20 @@ class CityProductionList extends StatelessWidget {
       addMajorGap();
       children.add(CityProductionSectionTitle(l10n.unitsSection));
       for (final item in units) {
+        final itemKey = cityProductionItemKey(item);
         children.add(
-          ProductionListTile(
-            item: item,
-            compact: compact,
-            onDetails: () => onUnitDetails(item),
-            onTap: item.active || item.locked
-                ? null
-                : () => onProduceUnit(item.unitType!),
+          _RevealWhenSelected(
+            selected: selectedItemKey == itemKey,
+            child: ProductionListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onDetails: () => onUnitDetails(item),
+              onTap: item.active || item.locked
+                  ? null
+                  : () => onProduceUnit(item.unitType!),
+            ),
           ),
         );
       }
@@ -155,13 +175,19 @@ class CityProductionList extends StatelessWidget {
         CityProductionSectionTitle(l10n.cityProductionSpecializationSection),
       );
       for (final item in specializations) {
+        final itemKey = citySpecializationItemKey(item);
         children.add(
-          SpecializationListTile(
-            item: item,
-            compact: compact,
-            onTap: item.active || item.locked || onSetSpecialization == null
-                ? null
-                : () => onSetSpecialization!(item.type),
+          _RevealWhenSelected(
+            selected: selectedItemKey == itemKey,
+            child: SpecializationListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onTap: item.active || item.locked || onSetSpecialization == null
+                  ? null
+                  : () => onSetSpecialization!(item.type),
+            ),
           ),
         );
       }
@@ -196,6 +222,66 @@ class CityProductionList extends StatelessWidget {
         metrics: item.buildingSortMetrics,
       ),
     );
+  }
+
+  static List<CityProductionItem> sortedBuildings(
+    List<CityProductionItem> items,
+    CityBuildingSortMode mode,
+  ) => _sortBuildings(items, mode);
+}
+
+String cityProductionItemKey(CityProductionItem item) {
+  final buildingType = item.buildingType;
+  if (buildingType != null) return 'building:${buildingType.name}';
+  final unitType = item.unitType;
+  if (unitType != null) return 'unit:${unitType.name}';
+  final projectType = item.projectType;
+  if (projectType != null) return 'project:${projectType.name}';
+  return 'item:${item.title}';
+}
+
+String citySpecializationItemKey(CitySpecializationItem item) =>
+    'specialization:${item.type.name}';
+
+class _RevealWhenSelected extends StatefulWidget {
+  const _RevealWhenSelected({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  State<_RevealWhenSelected> createState() => _RevealWhenSelectedState();
+}
+
+class _RevealWhenSelectedState extends State<_RevealWhenSelected> {
+  @override
+  void initState() {
+    super.initState();
+    _revealIfSelected();
+  }
+
+  @override
+  void didUpdateWidget(_RevealWhenSelected oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selected && !oldWidget.selected) {
+      _revealIfSelected();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+
+  void _revealIfSelected() {
+    if (!widget.selected) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 120),
+        alignment: 0.18,
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 }
 

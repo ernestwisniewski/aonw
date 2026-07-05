@@ -10,18 +10,22 @@ class SpecializationListTile extends StatelessWidget {
     required this.item,
     required this.compact,
     required this.onTap,
+    this.selected = false,
     super.key,
   });
 
   final CitySpecializationItem item;
   final bool compact;
   final VoidCallback? onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final enabled = onTap != null;
-    final borderColor = item.active
+    final borderColor = selected
+        ? GameUiTheme.scienceAccent
+        : item.active
         ? GameUiTheme.gold
         : item.locked
         ? SurfaceElevation.flat.strokeColor(alpha: 86)
@@ -43,11 +47,15 @@ class SpecializationListTile extends StatelessWidget {
             decoration: SurfaceElevation.flat.decoration(
               background: item.active
                   ? GameUiTheme.goldDark
+                  : selected
+                  ? GameUiTheme.scienceAccent
                   : item.locked
                   ? GameUiTheme.bg
                   : GameUiTheme.bg,
               backgroundAlpha: item.active
                   ? 70
+                  : selected
+                  ? 34
                   : item.locked
                   ? 82
                   : 150,

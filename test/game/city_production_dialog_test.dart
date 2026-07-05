@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
@@ -10,6 +11,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -155,6 +157,69 @@ void main() {
 
     expect(buildCount, 2);
     expect(find.byType(CityBuildingDetailsPanel), findsNothing);
+  });
+
+  testWidgets('gamepad opens details and confirms selected production', (
+    tester,
+  ) async {
+    const city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'City',
+      center: CityHex(col: 1, row: 1),
+    );
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+    CityBuildingType? selectedBuilding;
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: CityProductionPanel(
+            city: city,
+            cityRuleset: CityRulesets.standard,
+            research: ResearchState.empty,
+            technologyRuleset: TechnologyRulesets.standard,
+            productionPerTurn: 2,
+            gamepadInputListenable: gamepadInput,
+            onBuild: (buildingType) => selectedBuilding = buildingType,
+            onProduceUnit: (_) {},
+            onClose: () => closeCount++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Granary'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(inspect: true),
+    );
+    expect(find.byType(CityBuildingDetailsPanel), findsOneWidget);
+    expect(find.text('CITY IMPACT'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(cancel: true),
+    );
+    expect(find.byType(CityBuildingDetailsPanel), findsNothing);
+    expect(closeCount, 0);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+    expect(selectedBuilding, CityBuildingType.granary);
   });
 
   testWidgets(
@@ -513,6 +578,17 @@ void main() {
 
 Future<void> _scrollUntilVisible(WidgetTester tester, Finder finder) async {
   await tester.scrollUntilVisible(finder, 180);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressGamepad(
+  WidgetTester tester,
+  ValueNotifier<GamepadInputSnapshot> input,
+  GamepadInputSnapshot snapshot,
+) async {
+  input.value = snapshot;
+  await tester.pump(const Duration(milliseconds: 16));
+  input.value = GamepadInputSnapshot.empty;
   await tester.pumpAndSettle();
 }
 
