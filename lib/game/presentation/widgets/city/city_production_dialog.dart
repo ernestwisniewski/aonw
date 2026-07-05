@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_active_production_banner.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
@@ -21,6 +22,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class CityProductionDialog extends StatelessWidget {
@@ -43,6 +45,7 @@ class CityProductionDialog extends StatelessWidget {
   final ValueChanged<CityProjectType>? onStartProject;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
   final VoidCallback? onRushProduction;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   const CityProductionDialog({
     required this.city,
@@ -64,6 +67,7 @@ class CityProductionDialog extends StatelessWidget {
     this.onStartProject,
     this.onSetSpecialization,
     this.onRushProduction,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -92,6 +96,7 @@ class CityProductionDialog extends StatelessWidget {
       onStartProject: onStartProject,
       onSetSpecialization: onSetSpecialization,
       onRushProduction: onRushProduction,
+      gamepadInputListenable: gamepadInputListenable,
       onClose: () => Navigator.of(context).maybePop(),
     );
   }
@@ -118,6 +123,7 @@ class CityProductionPanel extends StatefulWidget {
   final ValueChanged<CityProjectType>? onStartProject;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
   final VoidCallback? onRushProduction;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
   final VoidCallback onClose;
 
   const CityProductionPanel({
@@ -141,6 +147,7 @@ class CityProductionPanel extends StatefulWidget {
     this.onStartProject,
     this.onSetSpecialization,
     this.onRushProduction,
+    this.gamepadInputListenable,
     required this.onClose,
     super.key,
   });

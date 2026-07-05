@@ -13,10 +13,12 @@ class GamepadRendererInputBinding extends StatefulWidget {
   const GamepadRendererInputBinding({
     required this.renderer,
     required this.builder,
+    this.rendererInputEnabled = true,
     super.key,
   });
 
   final GameRenderer renderer;
+  final bool rendererInputEnabled;
   final GamepadRendererInputBuilder builder;
 
   @override
@@ -38,9 +40,14 @@ class _GamepadRendererInputBindingState
   @override
   void didUpdateWidget(GamepadRendererInputBinding oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.renderer == widget.renderer) return;
-    _detach(oldWidget.renderer);
-    _attach(widget.renderer);
+    if (oldWidget.renderer != widget.renderer) {
+      _detach(oldWidget.renderer);
+      _attach(widget.renderer);
+      return;
+    }
+    if (oldWidget.rendererInputEnabled != widget.rendererInputEnabled) {
+      _sync();
+    }
   }
 
   @override
@@ -56,7 +63,7 @@ class _GamepadRendererInputBindingState
   }
 
   void _attach(GameRenderer renderer) {
-    renderer.gamepadInput = _adapter.snapshot.value;
+    renderer.gamepadInput = _rendererInput();
     _adapter.snapshot.addListener(_sync);
   }
 
@@ -66,6 +73,11 @@ class _GamepadRendererInputBindingState
   }
 
   void _sync() {
-    widget.renderer.gamepadInput = _adapter.snapshot.value;
+    widget.renderer.gamepadInput = _rendererInput();
+  }
+
+  GamepadInputSnapshot _rendererInput() {
+    if (!widget.rendererInputEnabled) return GamepadInputSnapshot.empty;
+    return _adapter.snapshot.value;
   }
 }

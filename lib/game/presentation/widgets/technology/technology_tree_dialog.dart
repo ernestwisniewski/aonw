@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
@@ -20,6 +21,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,12 +59,14 @@ class TechnologyTreeDialog extends StatelessWidget {
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
   final ValueChanged<TechnologyId> onResearch;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   const TechnologyTreeDialog({
     required this.viewModel,
     this.cityRuleset = CityRulesets.standard,
     this.technologyRuleset = TechnologyRulesets.standard,
     required this.onResearch,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -76,6 +80,7 @@ class TechnologyTreeDialog extends StatelessWidget {
       technologyRuleset: technologyRuleset,
       maxHeight: size.height * 0.84,
       onResearch: onResearch,
+      gamepadInputListenable: gamepadInputListenable,
       onClose: () => Navigator.of(context).maybePop(),
     );
   }
@@ -88,6 +93,7 @@ class TechnologyTreePanel extends ConsumerStatefulWidget {
   final double maxHeight;
   final ValueChanged<TechnologyId> onResearch;
   final VoidCallback onClose;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   const TechnologyTreePanel({
     required this.viewModel,
@@ -96,6 +102,7 @@ class TechnologyTreePanel extends ConsumerStatefulWidget {
     required this.maxHeight,
     required this.onResearch,
     required this.onClose,
+    this.gamepadInputListenable,
     super.key,
   });
 

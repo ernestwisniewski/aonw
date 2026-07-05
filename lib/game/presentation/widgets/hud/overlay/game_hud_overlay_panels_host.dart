@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
 import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_context.dart';
@@ -17,11 +18,16 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
   const GameHudOverlayPanelsHost({
     required this.session,
     required this.gameSave,
+    this.gamepadInputListenable =
+        const AlwaysStoppedAnimation<GamepadInputSnapshot>(
+          GamepadInputSnapshot.empty,
+        ),
     super.key,
   });
 
   final GameSession session;
   final GameSave gameSave;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,6 +94,7 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
       cityProductionPerTurn: cityProductionContext.productionPerTurn,
       activityLogEntries: activityLogEntries,
       gameSave: gameSave,
+      gamepadInputListenable: gamepadInputListenable,
     );
   }
 }

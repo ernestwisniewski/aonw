@@ -7,6 +7,7 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart';
@@ -47,6 +48,7 @@ class GameHud extends ConsumerStatefulWidget {
   final GameSession session;
   final ValueListenable<Set<String>> animatingUnitIdsListenable;
   final ValueListenable<bool> initialCameraFocusReadyListenable;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
   final bool allowGraphicMode;
   final ValueChanged<MapViewMode> onViewModeChanged;
   final FutureOr<void> Function() onClose;
@@ -74,6 +76,10 @@ class GameHud extends ConsumerStatefulWidget {
     this.initialCameraFocusReadyListenable = const AlwaysStoppedAnimation<bool>(
       true,
     ),
+    this.gamepadInputListenable =
+        const AlwaysStoppedAnimation<GamepadInputSnapshot>(
+          GamepadInputSnapshot.empty,
+        ),
     required this.allowGraphicMode,
     required this.onViewModeChanged,
     required this.onClose,
@@ -204,7 +210,11 @@ class _GameHudState extends ConsumerState<GameHud> {
             optionsOverlayOpenOverride: _optionsOverlayPanelActive,
           ),
         if (gameSave != null && !handoffBlocksHud)
-          GameHudOverlayPanelsHost(session: widget.session, gameSave: gameSave),
+          GameHudOverlayPanelsHost(
+            session: widget.session,
+            gameSave: gameSave,
+            gamepadInputListenable: widget.gamepadInputListenable,
+          ),
         _HudMenuButton(onPressed: () => unawaited(_onClose(context))),
         GameEventNotificationsOverlay(gameSave: gameSave),
         const HudFeedbackOverlay(),
