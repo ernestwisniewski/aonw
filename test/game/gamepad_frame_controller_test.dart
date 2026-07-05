@@ -84,6 +84,23 @@ void main() {
       );
     });
 
+    test('primes held input as already consumed', () {
+      final controller = GamepadFrameController();
+      const pressed = GamepadInputSnapshot(confirm: true, dpadRight: true);
+
+      controller.prime(pressed);
+
+      final heldFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(heldFrame.confirmPressed, isFalse);
+      expect(heldFrame.cursorStep, isNull);
+
+      controller.advance(input: GamepadInputSnapshot.empty, dt: 0.016);
+
+      final freshFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(freshFrame.confirmPressed, isTrue);
+      expect(freshFrame.cursorStep, GamepadMapDirection.right);
+    });
+
     test('fires HUD focus only on stick press edges', () {
       final controller = GamepadFrameController();
       const pressed = GamepadInputSnapshot(hudFocus: true);

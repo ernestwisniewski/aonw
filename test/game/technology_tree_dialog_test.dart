@@ -214,6 +214,76 @@ void main() {
     expect(researched, [TechnologyId.agriculture]);
   });
 
+  testWidgets('ignores confirm held from opening the technology popup', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      const GamepadInputSnapshot(confirm: true),
+    );
+    addTearDown(gamepadInput.dispose);
+    final researched = <TechnologyId>[];
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            if (researched.isNotEmpty || closeCount > 0) {
+              return const Text('technology panel closed');
+            }
+            return TechnologyTreePanel(
+              maxHeight: 520,
+              gamepadInputListenable: gamepadInput,
+              viewModel: const TechnologyPanelViewModel(
+                sciencePerTurn: 2,
+                activeTechnology: null,
+                technologies: [
+                  TechnologyCardViewModel(
+                    id: TechnologyId.agriculture,
+                    state: TechnologyCardState.available,
+                    progress: 0,
+                    baseCost: 6,
+                    totalCost: 6,
+                    turnsRemaining: 3,
+                    boostActive: false,
+                  ),
+                ],
+              ),
+              onResearch: (technologyId) {
+                researched.add(technologyId);
+                setState(() {});
+              },
+              onClose: () {
+                closeCount++;
+                setState(() {});
+              },
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 180));
+
+    expect(find.byType(TechnologyTreePanel), findsOneWidget);
+    expect(find.text('technology panel closed'), findsNothing);
+    expect(researched, isEmpty);
+    expect(closeCount, 0);
+
+    gamepadInput.value = GamepadInputSnapshot.empty;
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 180));
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+
+    expect(researched, [TechnologyId.agriculture]);
+    expect(find.text('technology panel closed'), findsOneWidget);
+  });
+
   testWidgets('gamepad navigates full tree by columns and rows', (
     tester,
   ) async {

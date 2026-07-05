@@ -57,6 +57,7 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
   void initState() {
     super.initState();
     _input = _currentInput();
+    _controller.prime(_input);
     widget.input?.addListener(_handleInputChanged);
     _syncTicker();
   }
