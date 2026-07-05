@@ -493,7 +493,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Przesuwa zaznaczony kursor heksa bez wykonywania rozkazu.';
+      'Przesuwa zaznaczony kursor heksa, fokus menu głównego albo wybrany wiersz/kartę w otwartym panelu miasta lub badań.';
 
   @override
   String get manualGamepadPanAction => 'Prawy analog';
@@ -514,28 +514,35 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Potwierdza aktualny heks tak jak stuknięcie albo lewy klik na mapie.';
+      'Potwierdza aktualny heks, kontrolkę menu z fokusem albo wybór w panelu, w tym produkcję miasta i badania.';
 
   @override
   String get manualGamepadCancelAction => 'B / Back';
 
   @override
   String get manualGamepadCancelBody =>
-      'Anuluje aktywne celowanie, wybór panelu, trasę albo tryb interakcji.';
+      'Zamyka otwarte popupy menu, szczegóły panelu i panele; poza tym anuluje celowanie, trasę albo tryb interakcji.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Włącza lub wyłącza celowanie ruchem dla zaznaczonej jednostki, gdy ruch jest dostępny.';
+      'Na mapie przełącza celowanie ruchem; w badaniach przełącza rekomendacje i pełne drzewo.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Pokazuje aktualny heks kursora bez zmiany aktywnego trybu.';
+      'Pokazuje aktualny heks kursora albo szczegóły wybranej produkcji lub technologii.';
+
+  @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar. A otwiera cele, D-pad scrolluje popupy, a B je zamyka.';
 
   @override
   String get manualGamepadNextAction => 'RB';

@@ -493,7 +493,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Moves the selected hex cursor without committing an order.';
+      'Moves the selected hex cursor, main-menu focus, or the selected row/card in open city and research panels.';
 
   @override
   String get manualGamepadPanAction => 'Right stick';
@@ -514,28 +514,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirms the current hex, matching a tap or left click on the map.';
+      'Confirms the current hex, focused menu control, or selected panel choice, including city production and research picks.';
 
   @override
   String get manualGamepadCancelAction => 'B / Back';
 
   @override
   String get manualGamepadCancelBody =>
-      'Cancels the active targeting, panel choice, route, or interaction mode.';
+      'Closes open menu popups, panel details, and panels; otherwise cancels active targeting, route, or interaction mode.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Toggles movement targeting for the selected unit when movement is available.';
+      'Toggles movement targeting on the map; in research, switches recommendations and full tree view.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Inspects the current cursor hex without changing the active mode.';
+      'Inspects the current cursor hex, or opens details for the selected production or technology item.';
+
+  @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.';
 
   @override
   String get manualGamepadNextAction => 'RB';

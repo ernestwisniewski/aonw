@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_map_focus_controller_provider.dart';
@@ -15,6 +16,7 @@ import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slo
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +35,7 @@ class HudOverlayPanels extends ConsumerWidget {
   final int cityProductionPerTurn;
   final List<GameEventNotification> activityLogEntries;
   final GameSave gameSave;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
 
   const HudOverlayPanels({
     required this.panelPadding,
@@ -49,6 +52,10 @@ class HudOverlayPanels extends ConsumerWidget {
     required this.cityProductionPerTurn,
     required this.activityLogEntries,
     required this.gameSave,
+    this.gamepadInputListenable =
+        const AlwaysStoppedAnimation<GamepadInputSnapshot>(
+          GamepadInputSnapshot.empty,
+        ),
     super.key,
   });
 
@@ -80,6 +87,7 @@ class HudOverlayPanels extends ConsumerWidget {
         viewModel: technologyViewModel,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        gamepadInputListenable: gamepadInputListenable,
         maxHeight: maxHeight,
         onResearch: (technologyId) => unawaited(
           dispatcher.selectTechnology(
@@ -117,6 +125,7 @@ class HudOverlayPanels extends ConsumerWidget {
         currentTurn: gameSave.turn,
         paceBalance: gameSave.matchRules.paceBalance,
         playerGold: state.playerGold[city.ownerPlayerId] ?? 0,
+        gamepadInputListenable: gamepadInputListenable,
         maxHeight: maxHeight,
         onBuild: (buildingType) =>
             unawaited(dispatcher.startCityBuilding(city.id, buildingType)),

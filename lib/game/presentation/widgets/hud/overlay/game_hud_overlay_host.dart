@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/hud/game_options_overlay_open_provider.dart';
+import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_ring.dart';
 import 'package:aonw/game/presentation/widgets/hud/global_hud_actions.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart';
 import 'package:aonw/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart';
@@ -15,6 +21,8 @@ import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakd
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_actions.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/hud_auto_turn_hint.dart';
+import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
+import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_info.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -26,11 +34,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'game_hud_overlay_host_helpers.dart';
+part 'game_hud_overlay_host_gamepad_focus.dart';
 
 class GameHudOverlayHost extends ConsumerStatefulWidget {
   final GameSession session;
   final ValueListenable<Set<String>> animatingUnitIdsListenable;
   final ValueListenable<bool> initialCameraFocusReadyListenable;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
   final GameSave gameSave;
   final bool optionsOverlayOpenOverride;
 
@@ -38,6 +48,10 @@ class GameHudOverlayHost extends ConsumerStatefulWidget {
     required this.session,
     required this.animatingUnitIdsListenable,
     required this.initialCameraFocusReadyListenable,
+    this.gamepadInputListenable =
+        const AlwaysStoppedAnimation<GamepadInputSnapshot>(
+          GamepadInputSnapshot.empty,
+        ),
     required this.gameSave,
     this.optionsOverlayOpenOverride = false,
     super.key,
@@ -50,8 +64,17 @@ class GameHudOverlayHost extends ConsumerStatefulWidget {
 class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
   final HudResourceEconomyForecastCache _resourceEconomyForecastCache =
       HudResourceEconomyForecastCache();
+  late final HudGamepadFocusTargetRegistry _gamepadFocusRegistry;
   HudMinimizedPopupEntry? _restoredModeBannerEntry;
   bool _autoTurnHintRestored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _gamepadFocusRegistry = ref.read(
+      hudGamepadFocusTargetRegistryProvider.notifier,
+    );
+  }
 
   void _setRestoredModeBannerEntry(HudMinimizedPopupEntry? entry) {
     if (mounted) setState(() => _restoredModeBannerEntry = entry);
@@ -98,6 +121,9 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
     final cityRuleset = ref.watch(cityRulesetProvider);
     final technologyRuleset = ref.watch(technologyRulesetProvider);
     final stabilityRuleset = ref.watch(stabilityRulesetProvider);
+    final openResourceBreakdown = ref.watch(
+      hudResourceBreakdownControllerProvider,
+    );
     final openSelectionDetailChipId = ref.watch(
       openSelectionDetailControllerProvider,
     );
@@ -113,7 +139,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       stabilityRuleset: stabilityRuleset,
       economyForecastCache: _resourceEconomyForecastCache,
       panelModes: ref.watch(hudPanelControllerProvider),
-      openResourceBreakdown: ref.watch(hudResourceBreakdownControllerProvider),
+      openResourceBreakdown: openResourceBreakdown,
       technologyViewModel: ref.watch(
         technologyPanelViewModelProvider(widget.session.saveId, activePlayerId),
       ),
@@ -223,6 +249,14 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
     final closeVisibleSelectionDetail = frame.inspectingMap
         ? () => ref.read(mapInspectionControllerProvider.notifier).clear()
         : () => _closeSelectionDetail(openSelectionDetailChipId);
+    final hudGamepadFocus = _resolveHudGamepadFocus(
+      frame: frame,
+      dispatcher: dispatcher,
+      gameState: gameState,
+      activePlayerId: activePlayerId,
+      enabled: !optionsOverlayOpen && !frame.largePanelOpen,
+      selectionActions: visibleSelectionActionChips,
+    );
     _listenForMinimizedPopupRestoreRequests(
       modeBannerPopupId: frame.modeBannerPopupId,
       autoTurnHintPopupId: HudMinimizedPopupIds.autoTurnHint(
@@ -260,7 +294,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
           selection: frame.selectionInfoModel,
           openSelectionDetailChipId: frame.visibleOpenSelectionDetailChipId,
           selectionDetailPeek: frame.mapInspection.previewing,
-          selectionActions: visibleSelectionActionChips,
+          selectionActions: hudGamepadFocus.selectionActions,
           cityFoundingDraft: frame.cityFoundingDraft,
           combatPreview: frame.combatPreview,
           cityRuleset: cityRuleset,
@@ -298,6 +332,8 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
           mapData: widget.session.mapData,
           activePlayerId: activePlayerId,
           l10n: AppLocalizations.of(context),
+          gamepadFocusedTargetId: hudGamepadFocus.focusedTargetId,
+          gamepadInputListenable: widget.gamepadInputListenable,
         ),
         HudModeBannerSlot(
           layoutMetrics: frame.layoutMetrics,

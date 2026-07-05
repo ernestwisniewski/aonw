@@ -495,7 +495,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Verplaatst de geselecteerde hex-cursor zonder een opdracht uit te voeren.';
+      'Verplaatst de geselecteerde hex-cursor, de focus in het hoofdmenu, of de geselecteerde rij/kaart in open stads- en onderzoekspanelen.';
 
   @override
   String get manualGamepadPanAction => 'Rechter stick';
@@ -516,28 +516,35 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Bevestigt de huidige hex, net als tikken of links klikken op de kaart.';
+      'Bevestigt de huidige hex, de gefocuste menubediening of geselecteerde paneelkeuze, inclusief stadsproductie en onderzoek.';
 
   @override
   String get manualGamepadCancelAction => 'B / Terug';
 
   @override
   String get manualGamepadCancelBody =>
-      'Annuleert actieve targeting, paneelkeuze, route of interactiemodus.';
+      'Sluit open menupopups, paneeldetails en panelen; anders annuleert het targeting, route of interactiemodus.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Schakelt bewegingsdoelen voor de geselecteerde eenheid wanneer beweging beschikbaar is.';
+      'Schakelt op de kaart bewegingsdoelen; in onderzoek wisselt het aanbevelingen en volledige boom.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Inspecteert de huidige cursor-hex zonder de actieve modus te wijzigen.';
+      'Inspecteert de huidige cursor-hex, of opent details voor de geselecteerde productie of technologie.';
+
+  @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.';
 
   @override
   String get manualGamepadNextAction => 'RB';

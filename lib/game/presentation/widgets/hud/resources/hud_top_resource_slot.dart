@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_activity_log_entries.dart';
@@ -14,6 +16,7 @@ import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.da
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +33,8 @@ class HudTopResourceSlot extends ConsumerWidget {
     required this.mapData,
     required this.activePlayerId,
     required this.l10n,
+    this.gamepadFocusedTargetId,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -44,6 +49,8 @@ class HudTopResourceSlot extends ConsumerWidget {
   final MapData mapData;
   final String? activePlayerId;
   final AppLocalizations l10n;
+  final String? gamepadFocusedTargetId;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,9 +92,14 @@ class HudTopResourceSlot extends ConsumerWidget {
         playerName: playerName,
         playerColor: playerColor,
         turnNumber: turnNumber,
+        gamepadFocusedTargetId: gamepadFocusedTargetId,
+        gamepadInputListenable: gamepadInputListenable,
         l10n: l10n,
         onTurnPressed: () {
           dispatcher.closeResourceBreakdown();
+          ref
+              .read(hudGamepadPopupInputCaptureProvider.notifier)
+              .setCaptured(true);
           unawaited(
             showTurnTimelinePopup(
               context,
@@ -95,7 +107,13 @@ class HudTopResourceSlot extends ConsumerWidget {
               gameSave: gameSave,
               currentState: gameState,
               activePlayerId: activePlayerId,
-            ),
+              gamepadInputListenable: gamepadInputListenable,
+            ).whenComplete(() {
+              if (!context.mounted) return;
+              ref
+                  .read(hudGamepadPopupInputCaptureProvider.notifier)
+                  .setCaptured(false);
+            }),
           );
         },
         onGoldPressed: () =>

@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
@@ -9,6 +10,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class TopResourceOverlay extends StatelessWidget {
@@ -41,6 +43,8 @@ class TopResourceOverlay extends StatelessWidget {
     this.onTurnPressed,
     this.activeTechnologyCompletionTurn,
     this.resourceNetwork = EmpireResourceNetwork.empty,
+    this.gamepadFocusedTargetId,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -72,6 +76,8 @@ class TopResourceOverlay extends StatelessWidget {
   final Color? playerColor;
   final int? turnNumber;
   final VoidCallback? onTurnPressed;
+  final String? gamepadFocusedTargetId;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +111,7 @@ class TopResourceOverlay extends StatelessWidget {
                   playerColor: playerColor,
                   turnNumber: turnNumber,
                   onTurnPressed: onTurnPressed,
+                  gamepadFocusedTargetId: gamepadFocusedTargetId,
                   onGoldPressed: onGoldPressed,
                   onSciencePressed: onSciencePressed,
                   onStabilityPressed: onStabilityPressed,
@@ -221,6 +228,7 @@ class TopResourceOverlay extends StatelessWidget {
         maxWidth: maxWidth,
         maxHeight: maxHeight,
         showDragHandle: showDragHandle,
+        gamepadInputListenable: gamepadInputListenable,
       );
     }
 
@@ -254,6 +262,7 @@ class TopResourceOverlay extends StatelessWidget {
       maxWidth: maxWidth,
       maxHeight: maxHeight,
       showDragHandle: showDragHandle,
+      gamepadInputListenable: gamepadInputListenable,
     );
   }
 

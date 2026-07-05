@@ -1,6 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/technology_tree_labels.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
+import 'package:aonw/game/presentation/widgets/shared/selected_panel_item_revealer.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_unlocks_section.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
@@ -12,6 +13,8 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/material.dart';
 
+part 'technology_recommendation_widgets.dart';
+
 class TechnologyRecommendationsView extends StatelessWidget {
   const TechnologyRecommendationsView({
     required this.viewModel,
@@ -19,6 +22,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
     required this.compact,
     required this.onResearch,
     required this.onTechnologyDetails,
+    this.selectedTechnologyId,
     super.key,
   });
 
@@ -27,6 +31,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
   final bool compact;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
+  final TechnologyId? selectedTechnologyId;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +50,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
               cards: recommendations,
               compact: compact,
               l10n: l10n,
+              selectedTechnologyId: selectedTechnologyId,
               onResearch: onResearch,
               onTechnologyDetails: onTechnologyDetails,
             ),
@@ -61,6 +67,7 @@ class _RecommendationCardsLayout extends StatelessWidget {
     required this.l10n,
     required this.onResearch,
     required this.onTechnologyDetails,
+    required this.selectedTechnologyId,
   });
 
   final List<TechnologyCardViewModel> cards;
@@ -68,6 +75,7 @@ class _RecommendationCardsLayout extends StatelessWidget {
   final AppLocalizations l10n;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
+  final TechnologyId? selectedTechnologyId;
 
   @override
   Widget build(BuildContext context) {
@@ -79,13 +87,17 @@ class _RecommendationCardsLayout extends StatelessWidget {
             children: [
               for (var i = 0; i < cards.length; i++) ...[
                 if (i > 0) const SizedBox(height: 10),
-                _RecommendationCard(
-                  rank: i + 1,
-                  card: cards[i],
-                  compact: compact,
-                  l10n: l10n,
-                  onResearch: onResearch,
-                  onTechnologyDetails: onTechnologyDetails,
+                SelectedPanelItemRevealer(
+                  selected: selectedTechnologyId == cards[i].id,
+                  child: _RecommendationCard(
+                    rank: i + 1,
+                    card: cards[i],
+                    compact: compact,
+                    selected: selectedTechnologyId == cards[i].id,
+                    l10n: l10n,
+                    onResearch: onResearch,
+                    onTechnologyDetails: onTechnologyDetails,
+                  ),
                 ),
               ],
             ],
@@ -97,13 +109,17 @@ class _RecommendationCardsLayout extends StatelessWidget {
             for (var i = 0; i < cards.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
               Expanded(
-                child: _RecommendationCard(
-                  rank: i + 1,
-                  card: cards[i],
-                  compact: compact,
-                  l10n: l10n,
-                  onResearch: onResearch,
-                  onTechnologyDetails: onTechnologyDetails,
+                child: SelectedPanelItemRevealer(
+                  selected: selectedTechnologyId == cards[i].id,
+                  child: _RecommendationCard(
+                    rank: i + 1,
+                    card: cards[i],
+                    compact: compact,
+                    selected: selectedTechnologyId == cards[i].id,
+                    l10n: l10n,
+                    onResearch: onResearch,
+                    onTechnologyDetails: onTechnologyDetails,
+                  ),
                 ),
               ),
             ],
@@ -119,6 +135,7 @@ class _RecommendationCard extends StatelessWidget {
     required this.rank,
     required this.card,
     required this.compact,
+    required this.selected,
     required this.l10n,
     required this.onResearch,
     required this.onTechnologyDetails,
@@ -127,6 +144,7 @@ class _RecommendationCard extends StatelessWidget {
   final int rank;
   final TechnologyCardViewModel card;
   final bool compact;
+  final bool selected;
   final AppLocalizations l10n;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
@@ -140,11 +158,13 @@ class _RecommendationCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: SurfaceElevation.flat.decoration(
           background: const Color(0xFF1D2630),
-          backgroundAlpha: 245,
-          borderColor: rank == 1
+          backgroundAlpha: selected ? 255 : 245,
+          borderColor: selected
+              ? GameUiTheme.goldLight
+              : rank == 1
               ? GameUiTheme.scienceAccent
               : const Color(0xFF788EA7),
-          borderAlpha: rank == 1 ? 210 : 150,
+          borderAlpha: selected ? 255 : (rank == 1 ? 210 : 150),
           border: BorderEmphasis.active,
           borderRadius: BorderRadius.circular(7),
           includeShadow: false,
@@ -293,117 +313,5 @@ class _RecommendationCard extends StatelessWidget {
       return l10n.technologyRecommendationReasonFast;
     }
     return l10n.technologyRecommendationReasonDefault;
-  }
-}
-
-class _RecommendationSection extends StatelessWidget {
-  const _RecommendationSection({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          GameText.uppercase(title),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GameUiTheme.toolbarLabel.copyWith(
-            color: GameUiTheme.scienceAccent,
-            fontSize: 9,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          body,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: GameUiTheme.bodySmall.copyWith(
-            color: GameUiTheme.textPrimary,
-            height: 1.25,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final GameIconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: SurfaceElevation.flat.decoration(
-        background: color,
-        backgroundAlpha: 24,
-        borderColor: color,
-        borderAlpha: 130,
-        borderRadius: BorderRadius.circular(6),
-        includeShadow: false,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GameIcon(icon, size: GameIconSize.tiny, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GameUiTheme.bodySmall.copyWith(
-                color: GameUiTheme.textPrimary,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NoRecommendationsMessage extends StatelessWidget {
-  const _NoRecommendationsMessage({required this.l10n});
-
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: SurfaceElevation.flat.decoration(
-        background: GameUiTheme.bg,
-        backgroundAlpha: 120,
-        border: BorderEmphasis.subtle,
-        borderRadius: BorderRadius.circular(7),
-        includeShadow: false,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          l10n.technologyNoRecommendations,
-          style: GameUiTheme.bodySmall.copyWith(
-            color: GameUiTheme.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
   }
 }

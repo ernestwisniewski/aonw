@@ -42,6 +42,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
+part 'hud_overlay_frame_helpers.dart';
+
 class HudOverlayFrame {
   const HudOverlayFrame({
     required this.activePlayerCanAct,
@@ -434,9 +436,6 @@ class HudOverlayFrame {
     );
   }
 
-  static Player? _activePlayer(GameSave gameSave, String activePlayerId) =>
-      gameSave.playerById(activePlayerId);
-
   static bool _cityExpansionHexSelected(GameState? gameState) {
     final pendingAction = gameState?.pendingAction;
     if (pendingAction is! PendingCityExpansionSelection) return false;
@@ -553,9 +552,6 @@ class HudOverlayFrame {
         _canUseUnitTurnAction(unit) &&
         unit.queuedPath == null;
   }
-
-  static bool _canUseUnitTurnAction(GameUnit unit) =>
-      unit.movementPoints > 0 && !unit.isWorking && !unit.isFortified;
 
   static String? _cityFoundingBlockedReason({
     required GameState? gameState,

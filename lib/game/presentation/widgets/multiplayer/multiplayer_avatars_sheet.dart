@@ -6,6 +6,7 @@ Future<void> _showPlayersSheet(
   GameState? gameState,
   required ValueChanged<String> onAvatarTapped,
   Key? sheetRouteKey,
+  ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
 }) async {
   await showGameBottomSheet<void>(
     context: context,
@@ -23,19 +24,23 @@ Future<void> _showPlayersSheet(
           shape: GameModalShape.bottomSheet,
           centerInAvailableSpace: false,
           showCornerDiamonds: false,
-          scrollable: true,
+          scrollable: false,
           contentPadding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           header: GameModalHeader(
             title: l10n.multiplayerPlayersTitle,
             onClose: () => unawaited(Navigator.of(sheetContext).maybePop()),
           ),
-          content: MultiplayerStatusSheet(
-            tiles: tiles,
-            gameState: gameState,
-            onAvatarTapped: (playerId) {
-              unawaited(Navigator.of(sheetContext).maybePop());
-              onAvatarTapped(playerId);
-            },
+          content: GamepadScrollable(
+            input: gamepadInputListenable,
+            onCancel: () => unawaited(Navigator.of(sheetContext).maybePop()),
+            child: MultiplayerStatusSheet(
+              tiles: tiles,
+              gameState: gameState,
+              onAvatarTapped: (playerId) {
+                unawaited(Navigator.of(sheetContext).maybePop());
+                onAvatarTapped(playerId);
+              },
+            ),
           ),
         ),
       );

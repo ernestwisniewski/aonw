@@ -87,5 +87,17 @@ void main() {
         const TileTappedCommand(2, 3),
       ]);
     });
+
+    test('keeps directional HUD focus out of map commands', () {
+      final commands = mapper.commandsForFrame(
+        frame: const GamepadControlFrame(
+          hudFocusPreviousPressed: true,
+          hudFocusNextPressed: true,
+        ),
+        state: const GameState(activePlayerId: 'player_1'),
+      );
+
+      expect(commands, isEmpty);
+    });
   });
 }

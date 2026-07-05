@@ -23,6 +23,14 @@ final class GamepadFrameController {
       _heldCursorDirection == null &&
       _cursorRepeatRemaining == 0;
 
+  void prime(GamepadInputSnapshot input) {
+    _previous = input;
+    _heldCursorDirection = _cursorDirection(input);
+    _cursorRepeatRemaining = _heldCursorDirection == null
+        ? 0
+        : initialRepeatDelay;
+  }
+
   GamepadControlFrame advance({
     required GamepadInputSnapshot input,
     required double dt,
@@ -38,6 +46,12 @@ final class GamepadFrameController {
       cancelPressed: _pressed(input.cancel, _previous.cancel),
       inspectPressed: _pressed(input.inspect, _previous.inspect),
       moveModePressed: _pressed(input.moveMode, _previous.moveMode),
+      hudFocusPressed: _pressed(input.hudFocus, _previous.hudFocus),
+      hudFocusPreviousPressed: _pressed(
+        input.hudFocusPrevious,
+        _previous.hudFocusPrevious,
+      ),
+      hudFocusNextPressed: _pressed(input.hudFocusNext, _previous.hudFocusNext),
       focusPreviousPressed: _pressed(
         input.focusPrevious,
         _previous.focusPrevious,

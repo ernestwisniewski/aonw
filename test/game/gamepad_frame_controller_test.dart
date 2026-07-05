@@ -84,6 +84,74 @@ void main() {
       );
     });
 
+    test('primes held input as already consumed', () {
+      final controller = GamepadFrameController();
+      const pressed = GamepadInputSnapshot(confirm: true, dpadRight: true);
+
+      controller.prime(pressed);
+
+      final heldFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(heldFrame.confirmPressed, isFalse);
+      expect(heldFrame.cursorStep, isNull);
+
+      controller.advance(input: GamepadInputSnapshot.empty, dt: 0.016);
+
+      final freshFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(freshFrame.confirmPressed, isTrue);
+      expect(freshFrame.cursorStep, GamepadMapDirection.right);
+    });
+
+    test('fires HUD focus only on stick press edges', () {
+      final controller = GamepadFrameController();
+      const pressed = GamepadInputSnapshot(hudFocus: true);
+
+      expect(
+        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
+        isTrue,
+      );
+      expect(
+        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
+        isFalse,
+      );
+      expect(
+        controller
+            .advance(input: GamepadInputSnapshot.empty, dt: 0.016)
+            .hudFocusPressed,
+        isFalse,
+      );
+      expect(
+        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
+        isTrue,
+      );
+    });
+
+    test('fires directional HUD focus only on stick press edges', () {
+      final controller = GamepadFrameController();
+      const pressed = GamepadInputSnapshot(
+        hudFocusPrevious: true,
+        hudFocusNext: true,
+      );
+
+      final firstFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(firstFrame.hudFocusPreviousPressed, isTrue);
+      expect(firstFrame.hudFocusNextPressed, isTrue);
+
+      final repeatFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(repeatFrame.hudFocusPreviousPressed, isFalse);
+      expect(repeatFrame.hudFocusNextPressed, isFalse);
+
+      final releaseFrame = controller.advance(
+        input: GamepadInputSnapshot.empty,
+        dt: 0.016,
+      );
+      expect(releaseFrame.hudFocusPreviousPressed, isFalse);
+      expect(releaseFrame.hudFocusNextPressed, isFalse);
+
+      final secondFrame = controller.advance(input: pressed, dt: 0.016);
+      expect(secondFrame.hudFocusPreviousPressed, isTrue);
+      expect(secondFrame.hudFocusNextPressed, isTrue);
+    });
+
     test('uses D-pad before left stick and treats stick up as map up', () {
       final controller = GamepadFrameController(deadzone: 0.25);
 

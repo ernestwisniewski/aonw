@@ -10,12 +10,15 @@ import 'package:aonw/game/presentation/formatters/combat_modifier_labels.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_line.dart';
 import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line_view_model.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_ring.dart';
 import 'package:aonw/game/presentation/widgets/hud/layout/hud_layout_metrics.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_context_line.dart';
@@ -60,6 +63,7 @@ part 'hud_action_deck_auto_flow_manual_targets.dart';
 part 'hud_action_deck_auto_flow_predicates.dart';
 part 'hud_action_deck_auto_flow_research.dart';
 part 'hud_action_deck_auto_flow_signature.dart';
+part 'hud_action_deck_gamepad_focus.dart';
 part 'hud_action_deck_layout.dart';
 
 class HudActionDeck extends ConsumerStatefulWidget {

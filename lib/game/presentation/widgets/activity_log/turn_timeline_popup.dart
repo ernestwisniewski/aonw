@@ -1,28 +1,5 @@
 part of 'activity_log_dialog.dart';
 
-Future<void> showTurnTimelinePopup(
-  BuildContext context, {
-  required List<GameEventNotification> entries,
-  required GameSave gameSave,
-  GameState? currentState,
-  String? activePlayerId,
-  ValueChanged<GameEventNotification>? onEntrySelected,
-}) {
-  return showGameModal<void>(
-    context: context,
-    size: GameModalSize.wide,
-    builder: (dialogContext) => TurnTimelinePopup(
-      entries: entries,
-      gameSave: gameSave,
-      currentTurn: gameSave.turn,
-      currentState: currentState,
-      activePlayerId: activePlayerId,
-      onEntrySelected: onEntrySelected,
-      onClose: () => Navigator.of(dialogContext).maybePop(),
-    ),
-  );
-}
-
 class TurnTimelinePopup extends ConsumerStatefulWidget {
   const TurnTimelinePopup({
     required this.entries,
@@ -31,6 +8,7 @@ class TurnTimelinePopup extends ConsumerStatefulWidget {
     this.currentState,
     this.activePlayerId,
     this.onEntrySelected,
+    this.gamepadInputListenable,
     required this.onClose,
     super.key,
   });
@@ -41,6 +19,7 @@ class TurnTimelinePopup extends ConsumerStatefulWidget {
   final GameState? currentState;
   final String? activePlayerId;
   final ValueChanged<GameEventNotification>? onEntrySelected;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
   final VoidCallback onClose;
 
   @override
@@ -50,6 +29,13 @@ class TurnTimelinePopup extends ConsumerStatefulWidget {
 class _TurnTimelinePopupState extends ConsumerState<TurnTimelinePopup> {
   ActivityLogFilter _filter = ActivityLogFilter.all;
   int _visibleCount = _activityLogPageSize;
+  final ScrollController _historyScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _historyScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant TurnTimelinePopup oldWidget) {
@@ -81,132 +67,143 @@ class _TurnTimelinePopupState extends ConsumerState<TurnTimelinePopup> {
         ? const EdgeInsets.fromLTRB(10, 8, 10, 10)
         : const EdgeInsets.fromLTRB(16, 12, 16, 16);
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 680, maxHeight: 660),
-      child: GameModalScaffold(
-        surfaceKey: const Key('turnTimelinePopup.surface'),
-        size: GameModalSize.wide,
-        showCornerDiamonds: false,
-        contentPadding: padding,
-        centerInAvailableSpace: false,
-        scrollable: false,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GameUiEpicHeader(
-                        label: GameText.uppercase(l10n.turnTimelineTitle),
-                        alignment: Alignment.centerLeft,
-                        compact: compact,
-                        textKey: const Key('turnTimelinePopup.title'),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.turnTimelineSubtitle(
-                          widget.currentTurn,
-                          source.entries.length,
-                        ),
-                        style: GameUiTheme.bodySmall.copyWith(
-                          color: GameUiTheme.textSecondary,
-                          fontFeatures: GameUiTheme.tabularFigures,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  tooltip: l10n.closeAction,
-                  onPressed: widget.onClose,
-                  icon: const GameIcon(
-                    GameIcons.close,
-                    size: GameIconSize.small,
-                    color: GameUiTheme.gold,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: compact ? 8 : 10),
-            _ActivityLogFilterBar(
-              selected: _filter,
-              compact: compact,
-              onChanged: _setFilter,
-            ),
-            SizedBox(height: compact ? 8 : 10),
-            _TurnTimelineChart(
-              entries: chartEntries,
-              filter: _filter,
-              currentTurn: widget.currentTurn,
-              compact: compact,
-            ),
-            SizedBox(height: compact ? 8 : 10),
-            Flexible(
-              child: source.error != null
-                  ? SingleChildScrollView(
-                      child: _ActivityLogHistoryErrorState(
-                        error: source.error!,
-                        compact: compact,
-                        onRetry: () => ref.invalidate(
-                          gameActivityHistoryProvider(widget.gameSave.id),
-                        ),
-                      ),
-                    )
-                  : source.loading && source.entries.isEmpty
-                  ? SingleChildScrollView(
-                      child: _ActivityLogHistoryLoadingState(compact: compact),
-                    )
-                  : visibleEntries.isEmpty
-                  ? SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: compact ? 4 : 8,
-                        ),
-                        child: _ActivityLogEmptyState(
-                          filter: _filter,
+    return GamepadPanelInputListener(
+      input: widget.gamepadInputListenable,
+      onNavigate: _scrollHistory,
+      onCancel: widget.onClose,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 660),
+        child: GameModalScaffold(
+          surfaceKey: const Key('turnTimelinePopup.surface'),
+          size: GameModalSize.wide,
+          showCornerDiamonds: false,
+          contentPadding: padding,
+          centerInAvailableSpace: false,
+          scrollable: false,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GameUiEpicHeader(
+                          label: GameText.uppercase(l10n.turnTimelineTitle),
+                          alignment: Alignment.centerLeft,
                           compact: compact,
-                          onShowAll: _filter == ActivityLogFilter.all
-                              ? null
-                              : () => _setFilter(ActivityLogFilter.all),
+                          textKey: const Key('turnTimelinePopup.title'),
                         ),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: pageEntries.length + (hasMore ? 1 : 0),
-                      separatorBuilder: (_, _) =>
-                          SizedBox(height: compact ? 6 : 8),
-                      itemBuilder: (context, index) {
-                        if (index >= pageEntries.length) {
-                          return _ActivityLogShowMoreButton(
-                            compact: compact,
-                            visible: pageEntries.length,
-                            total: visibleEntries.length,
-                            onPressed: _showMore,
-                          );
-                        }
-                        final entry = pageEntries[index];
-                        final message = GameEventNotificationMessage.from(
-                          l10n,
-                          entry,
-                          widget.gameSave,
-                        );
-                        return _ActivityLogEntryTile(
-                          message: message,
-                          compact: compact,
-                          onTap: widget.onEntrySelected == null
-                              ? null
-                              : () => widget.onEntrySelected!(entry),
-                        );
-                      },
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.turnTimelineSubtitle(
+                            widget.currentTurn,
+                            source.entries.length,
+                          ),
+                          style: GameUiTheme.bodySmall.copyWith(
+                            color: GameUiTheme.textSecondary,
+                            fontFeatures: GameUiTheme.tabularFigures,
+                          ),
+                        ),
+                      ],
                     ),
-            ),
-          ],
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: l10n.closeAction,
+                    onPressed: widget.onClose,
+                    icon: const GameIcon(
+                      GameIcons.close,
+                      size: GameIconSize.small,
+                      color: GameUiTheme.gold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: compact ? 8 : 10),
+              _ActivityLogFilterBar(
+                selected: _filter,
+                compact: compact,
+                onChanged: _setFilter,
+              ),
+              SizedBox(height: compact ? 8 : 10),
+              _TurnTimelineChart(
+                entries: chartEntries,
+                filter: _filter,
+                currentTurn: widget.currentTurn,
+                compact: compact,
+              ),
+              SizedBox(height: compact ? 8 : 10),
+              Flexible(
+                child: source.error != null
+                    ? SingleChildScrollView(
+                        controller: _historyScrollController,
+                        child: _ActivityLogHistoryErrorState(
+                          error: source.error!,
+                          compact: compact,
+                          onRetry: () => ref.invalidate(
+                            gameActivityHistoryProvider(widget.gameSave.id),
+                          ),
+                        ),
+                      )
+                    : source.loading && source.entries.isEmpty
+                    ? SingleChildScrollView(
+                        controller: _historyScrollController,
+                        child: _ActivityLogHistoryLoadingState(
+                          compact: compact,
+                        ),
+                      )
+                    : visibleEntries.isEmpty
+                    ? SingleChildScrollView(
+                        controller: _historyScrollController,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: compact ? 4 : 8,
+                          ),
+                          child: _ActivityLogEmptyState(
+                            filter: _filter,
+                            compact: compact,
+                            onShowAll: _filter == ActivityLogFilter.all
+                                ? null
+                                : () => _setFilter(ActivityLogFilter.all),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        controller: _historyScrollController,
+                        itemCount: pageEntries.length + (hasMore ? 1 : 0),
+                        separatorBuilder: (_, _) =>
+                            SizedBox(height: compact ? 6 : 8),
+                        itemBuilder: (context, index) {
+                          if (index >= pageEntries.length) {
+                            return _ActivityLogShowMoreButton(
+                              compact: compact,
+                              visible: pageEntries.length,
+                              total: visibleEntries.length,
+                              onPressed: _showMore,
+                            );
+                          }
+                          final entry = pageEntries[index];
+                          final message = GameEventNotificationMessage.from(
+                            l10n,
+                            entry,
+                            widget.gameSave,
+                          );
+                          return _ActivityLogEntryTile(
+                            message: message,
+                            compact: compact,
+                            onTap: widget.onEntrySelected == null
+                                ? null
+                                : () => widget.onEntrySelected!(entry),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

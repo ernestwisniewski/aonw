@@ -126,70 +126,79 @@ class _NewGameStepChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: GameMotion.snap,
-          width: compact ? null : 196,
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected
-                ? GameUiTheme.gold.withAlpha(34)
-                : GameUiTheme.bg.withAlpha(148),
-            borderRadius: BorderRadius.circular(GameUiTheme.radiusButton),
-            border: Border.all(
-              color: selected
-                  ? GameUiTheme.gold
-                  : GameUiTheme.gold.withAlpha(78),
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: GameUiTheme.copper.withAlpha(32),
-                      blurRadius: 20,
+    return MenuGamepadAction(
+      onActivate: onTap,
+      borderRadius: BorderRadius.circular(GameUiTheme.radiusButton),
+      builder: (context, focused) {
+        final highlighted = selected || focused;
+        return Semantics(
+          button: true,
+          selected: selected,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: GameMotion.snap,
+              width: compact ? null : 196,
+              constraints: const BoxConstraints(minHeight: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: highlighted
+                    ? GameUiTheme.gold.withAlpha(34)
+                    : GameUiTheme.bg.withAlpha(148),
+                borderRadius: BorderRadius.circular(GameUiTheme.radiusButton),
+                border: Border.all(
+                  color: highlighted
+                      ? GameUiTheme.gold
+                      : GameUiTheme.gold.withAlpha(78),
+                ),
+                boxShadow: highlighted
+                    ? [
+                        BoxShadow(
+                          color: GameUiTheme.copper.withAlpha(32),
+                          blurRadius: 20,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+                children: [
+                  Text(
+                    '$number',
+                    style: GameUiTheme.toolbarLabel.copyWith(
+                      color: highlighted
+                          ? GameUiTheme.goldLight
+                          : GameUiTheme.textTertiary,
                     ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
-            children: [
-              Text(
-                '$number',
-                style: GameUiTheme.toolbarLabel.copyWith(
-                  color: selected
-                      ? GameUiTheme.goldLight
-                      : GameUiTheme.textTertiary,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                icon,
-                size: 16,
-                color: selected ? GameUiTheme.goldLight : GameUiTheme.gold,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  GameText.actionLabel(label),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GameUiTheme.actionLabel.copyWith(
-                    color: selected
-                        ? GameUiTheme.goldLight
-                        : GameUiTheme.textPrimary,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: highlighted
+                        ? GameUiTheme.goldLight
+                        : GameUiTheme.gold,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      GameText.actionLabel(label),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GameUiTheme.actionLabel.copyWith(
+                        color: highlighted
+                            ? GameUiTheme.goldLight
+                            : GameUiTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

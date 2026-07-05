@@ -7,10 +7,12 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/game_options_overlay_open_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/technology_panel_view_model.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/global_hud_actions.dart';
 import 'package:aonw/game/presentation/widgets/hud/objective/game_objectives_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/objective/hud_objective_button_signal.dart';
@@ -33,6 +35,8 @@ import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+part 'game_options_overlay_side_menu.dart';
 
 class GameOptionsOverlay extends ConsumerStatefulWidget {
   final GameSession session;
@@ -89,6 +93,7 @@ class GameOptionsOverlay extends ConsumerStatefulWidget {
 }
 
 class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
+  late final HudGamepadFocusTargetRegistry _gamepadFocusRegistry;
   bool _optionsOpen = false;
   bool _helpOpen = false;
   bool _menuCollapsed = false;
@@ -145,8 +150,11 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
+  void initState() {
+    super.initState();
+    _gamepadFocusRegistry = ref.read(
+      hudGamepadFocusTargetRegistryProvider.notifier,
+    );
   }
 
   void _publishOverlayPanelActive() {
@@ -232,6 +240,31 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
             objectives: objectiveSummary.activeObjectives,
             open: modes.objectives,
           );
+    final minimizedPopups = minimizedState.entriesForSave(helpSaveId);
+    final helpEntries = _helpEntries(
+      l10n: l10n,
+      saveId: helpSaveId,
+      minimizedPopups: minimizedPopups,
+    );
+    final sideMenuFocusTargets = _sideMenuFocusTargets(
+      l10n: l10n,
+      menuCollapsed: _menuCollapsed,
+      helpAvailable: helpEntries.isNotEmpty,
+      objectivesAvailable: objectiveButtonSignal != null,
+      activityLogAvailable: activityLogAvailable,
+      globalActionsAvailable: canShowGlobalActions,
+      activePlayerId: activePlayerId,
+      gameState: gameState,
+    );
+    _publishGamepadFocusTargets(sideMenuFocusTargets);
+    final focusState = ref.watch(hudGamepadFocusControllerProvider);
+    final focusedSideMenuTargetId =
+        focusState.active &&
+            sideMenuFocusTargets.any(
+              (target) => target.id == focusState.targetId,
+            )
+        ? focusState.targetId
+        : null;
     Widget? researchAction;
     Widget? empireAction;
     if (canShowGlobalActions) {
@@ -254,6 +287,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
           ),
         ),
         onPressed: () => _toggleTechnologyPanel(activePlayerId, gameState),
+        gamepadFocused: _sideMenuFocused(focusedSideMenuTargetId, 'research'),
       );
       empireAction = GameUiSideMenuButton(
         buttonKey: const Key('globalHud.action.empire'),
@@ -262,6 +296,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
         open: modes.empire,
         tooltip: modes.empire ? l10n.globalHudCloseEmpire : l10n.commonEmpire,
         onPressed: () => _toggleEmpirePanel(activePlayerId, gameState),
+        gamepadFocused: _sideMenuFocused(focusedSideMenuTargetId, 'empire'),
       );
     }
     Widget? objectiveAction;
@@ -275,6 +310,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
         badgeTone: objectiveButtonSignal.badgeTone,
         tooltip: objectiveButtonSignal.tooltip,
         onPressed: () => _toggleObjectivesPanel(activePlayerId, gameState),
+        gamepadFocused: _sideMenuFocused(focusedSideMenuTargetId, 'objectives'),
       );
     }
     Widget? activityLogAction;
@@ -288,14 +324,12 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
             ? l10n.globalHudCloseActivityLog
             : l10n.activityLogTitle,
         onPressed: () => _toggleActivityLogPanel(activePlayerId, gameState),
+        gamepadFocused: _sideMenuFocused(
+          focusedSideMenuTargetId,
+          'activityLog',
+        ),
       );
     }
-    final minimizedPopups = minimizedState.entriesForSave(helpSaveId);
-    final helpEntries = _helpEntries(
-      l10n: l10n,
-      saveId: helpSaveId,
-      minimizedPopups: minimizedPopups,
-    );
     final helpOpen = !_menuCollapsed && _helpOpen && helpEntries.isNotEmpty;
     if (_helpOpen && helpEntries.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -344,6 +378,10 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
                     iconBuilder: (color) =>
                         Icon(Icons.menu_open, size: 20, color: color),
                     onPressed: _expandMenu,
+                    gamepadFocused: _sideMenuFocused(
+                      focusedSideMenuTargetId,
+                      'menu',
+                    ),
                   ),
                 ),
               )
@@ -366,6 +404,10 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
                           _toggleOptions(activePlayerId, gameState),
                       onLongPress: () =>
                           _collapseMenu(activePlayerId, gameState),
+                      gamepadFocused: _sideMenuFocused(
+                        focusedSideMenuTargetId,
+                        'options',
+                      ),
                     ),
                     const _GameOptionsSideMenuSeparator(),
                     if (helpEntries.isNotEmpty)
@@ -376,6 +418,10 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
                             minimizedState.attentionRequest?.sequence ?? 0,
                         onPressed: () =>
                             _toggleHelpPanel(activePlayerId, gameState),
+                        gamepadFocused: _sideMenuFocused(
+                          focusedSideMenuTargetId,
+                          'help',
+                        ),
                       ),
                     ?objectiveAction,
                     const _GameOptionsSideMenuSeparator(),
@@ -514,85 +560,6 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
       if (!mounted) return;
       ref.read(hudMinimizedPopupsProvider.notifier).requestRestoreEntry(entry);
     });
-  }
-
-  List<HudMinimizedPopupEntry> _helpEntries({
-    required AppLocalizations l10n,
-    required String saveId,
-    required List<HudMinimizedPopupEntry> minimizedPopups,
-  }) {
-    if (saveId.isEmpty) return minimizedPopups;
-    final byId = <String, HudMinimizedPopupEntry>{
-      HudMinimizedPopupIds.firstTurnTutorial(saveId): HudMinimizedPopupEntry(
-        id: HudMinimizedPopupIds.firstTurnTutorial(saveId),
-        kind: HudMinimizedPopupKind.firstTurnCoachmarks,
-        title: l10n.firstTurnTutorialPopupTitle,
-        subtitle: l10n.firstTurnTutorialPopupSubtitle,
-      ),
-      HudMinimizedPopupIds.autoTurnHint(saveId): HudMinimizedPopupEntry(
-        id: HudMinimizedPopupIds.autoTurnHint(saveId),
-        kind: HudMinimizedPopupKind.autoTurnHint,
-        title: l10n.autoTurnHintTitle,
-        subtitle: l10n.autoTurnHintMinimizedSubtitle,
-      ),
-    };
-    for (final entry in minimizedPopups) {
-      byId[entry.id] = entry;
-    }
-    return byId.values.toList(growable: false);
-  }
-
-  void _toggleObjectivesPanel(String activePlayerId, GameState? gameState) {
-    _closeOptions();
-    ref
-        .read(hudCommandDispatcherProvider)
-        .toggleObjectivesPanel(
-          activePlayerId: activePlayerId,
-          state: gameState,
-        );
-  }
-
-  void _toggleActivityLogPanel(String activePlayerId, GameState? gameState) {
-    _closeOptions();
-    ref
-        .read(hudCommandDispatcherProvider)
-        .toggleActivityLogPanel(
-          activePlayerId: activePlayerId,
-          state: gameState,
-        );
-  }
-
-  void _toggleTechnologyPanel(String activePlayerId, GameState? gameState) {
-    _closeOptions();
-    ref
-        .read(hudCommandDispatcherProvider)
-        .toggleTechnologyPanel(
-          activePlayerId: activePlayerId,
-          state: gameState,
-        );
-  }
-
-  void _toggleEmpirePanel(String activePlayerId, GameState? gameState) {
-    _closeOptions();
-    ref
-        .read(hudCommandDispatcherProvider)
-        .toggleEmpirePanel(activePlayerId: activePlayerId, state: gameState);
-  }
-
-  void _closeHudSidePanels({
-    required String activePlayerId,
-    required GameState? gameState,
-  }) {
-    final dispatcher = ref.read(hudCommandDispatcherProvider)
-      ..closeObjectivesPanel()
-      ..closeEmpirePanel()
-      ..closeActivityLogPanel();
-    if (activePlayerId.isNotEmpty) {
-      dispatcher.closeTechnologyPanel(
-        activePlayerId: activePlayerId,
-        state: gameState,
-      );
-    }
   }
 }
 

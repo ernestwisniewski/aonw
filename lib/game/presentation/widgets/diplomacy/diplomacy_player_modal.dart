@@ -5,6 +5,7 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatar_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -23,6 +24,7 @@ import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 part 'diplomacy_player_modal_actions.dart';
@@ -42,6 +44,7 @@ Future<void> showDiplomacyPlayerModal(
   required String activePlayerId,
   required String targetPlayerId,
   required Future<void> Function(GameCommand command) onCommand,
+  ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
 }) {
   return showGameModal<void>(
     context: context,
@@ -52,6 +55,7 @@ Future<void> showDiplomacyPlayerModal(
       mapData: mapData,
       activePlayerId: activePlayerId,
       targetPlayerId: targetPlayerId,
+      gamepadInputListenable: gamepadInputListenable,
       onCommand: (command) async {
         await onCommand(command);
         if (dialogContext.mounted) {
@@ -70,6 +74,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
     required this.activePlayerId,
     required this.targetPlayerId,
     required this.onCommand,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -79,6 +84,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
   final String activePlayerId;
   final String targetPlayerId;
   final Future<void> Function(GameCommand command) onCommand;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
   Widget build(BuildContext context) {
@@ -104,127 +110,140 @@ class DiplomacyPlayerModal extends StatelessWidget {
         icon: Icons.handshake_outlined,
         onClose: () => Navigator.of(context).maybePop(),
       ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 860),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 680;
-            final children = [
-              _OverviewSection(
-                relation: relation,
-                scoreEntries: gameState.diplomacy.scoreEntriesBetween(
-                  activePlayerId,
-                  targetPlayerId,
-                ),
-                l10n: l10n,
-                currentTurn: gameSave.turn,
-              ),
-              _StatsSection(
-                l10n: l10n,
-                gameState: gameState,
-                activePlayerId: activePlayerId,
-                targetPlayerId: targetPlayerId,
-              ),
-              _ProposalsSection(
-                l10n: l10n,
-                diplomacy: gameState.diplomacy,
-                activePlayerId: activePlayerId,
-                targetPlayerId: targetPlayerId,
-                onCommand: onCommand,
-              ),
-              _ResourceTradeSection(
-                l10n: l10n,
-                gameState: gameState,
-                mapData: mapData,
-                relation: relation,
-                activePlayerId: activePlayerId,
-                targetPlayerId: targetPlayerId,
-                onCommand: onCommand,
-              ),
-              _HistorySection(
-                l10n: l10n,
-                entries: gameState.diplomacy.scoreEntriesBetween(
-                  activePlayerId,
-                  targetPlayerId,
-                ),
-                messages: gameState.diplomacy.messagesBetween(
-                  activePlayerId,
-                  targetPlayerId,
-                ),
-                proposals: gameState.diplomacy
-                    .proposalsFor(activePlayerId)
-                    .where(
-                      (proposal) =>
-                          DiplomacyState.relationKey(
-                            proposal.fromPlayerId,
-                            proposal.toPlayerId,
-                          ) ==
-                          DiplomacyState.relationKey(
-                            activePlayerId,
-                            targetPlayerId,
-                          ),
-                    )
-                    .toList(growable: false),
-                playerNameFor: (playerId) => _playerName(l10n, playerId),
-              ),
-              _MessagesSection(
-                l10n: l10n,
-                diplomacy: gameState.diplomacy,
-                activePlayerId: activePlayerId,
-                targetPlayerId: targetPlayerId,
-                onCommand: onCommand,
-              ),
-              _ActionsSection(
-                l10n: l10n,
-                gameState: gameState,
-                relation: relation,
-                currentTurn: gameSave.turn,
-                activePlayerId: activePlayerId,
-                targetPlayerId: targetPlayerId,
-                onCommand: onCommand,
-              ),
-            ];
-            if (compact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _withGaps(children, vertical: true),
-              );
-            }
-            return Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: children[0]),
-                    const SizedBox(width: 14),
-                    Expanded(child: children[1]),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: children[2]),
-                    const SizedBox(width: 14),
-                    Expanded(child: children[3]),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: children[4]),
-                    const SizedBox(width: 14),
-                    Expanded(child: children[6]),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                children[5],
-              ],
-            );
-          },
+      scrollable: false,
+      content: GamepadScrollable(
+        input: gamepadInputListenable,
+        onCancel: () => Navigator.of(context).maybePop(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 680;
+              final children = _sections(l10n: l10n, relation: relation);
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _withGaps(children, vertical: true),
+                );
+              }
+              return _wideLayout(children);
+            },
+          ),
         ),
       ),
+    );
+  }
+
+  List<Widget> _sections({
+    required AppLocalizations l10n,
+    required DiplomaticRelation relation,
+  }) {
+    return [
+      _OverviewSection(
+        relation: relation,
+        scoreEntries: gameState.diplomacy.scoreEntriesBetween(
+          activePlayerId,
+          targetPlayerId,
+        ),
+        l10n: l10n,
+        currentTurn: gameSave.turn,
+      ),
+      _StatsSection(
+        l10n: l10n,
+        gameState: gameState,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+      ),
+      _ProposalsSection(
+        l10n: l10n,
+        diplomacy: gameState.diplomacy,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+        onCommand: onCommand,
+      ),
+      _ResourceTradeSection(
+        l10n: l10n,
+        gameState: gameState,
+        mapData: mapData,
+        relation: relation,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+        onCommand: onCommand,
+      ),
+      _HistorySection(
+        l10n: l10n,
+        entries: gameState.diplomacy.scoreEntriesBetween(
+          activePlayerId,
+          targetPlayerId,
+        ),
+        messages: gameState.diplomacy.messagesBetween(
+          activePlayerId,
+          targetPlayerId,
+        ),
+        proposals: gameState.diplomacy
+            .proposalsFor(activePlayerId)
+            .where(
+              (proposal) =>
+                  DiplomacyState.relationKey(
+                    proposal.fromPlayerId,
+                    proposal.toPlayerId,
+                  ) ==
+                  DiplomacyState.relationKey(activePlayerId, targetPlayerId),
+            )
+            .toList(growable: false),
+        playerNameFor: (playerId) => _playerName(l10n, playerId),
+      ),
+      _MessagesSection(
+        l10n: l10n,
+        diplomacy: gameState.diplomacy,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+        onCommand: onCommand,
+      ),
+      _ActionsSection(
+        l10n: l10n,
+        gameState: gameState,
+        relation: relation,
+        currentTurn: gameSave.turn,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+        onCommand: onCommand,
+      ),
+    ];
+  }
+
+  Widget _wideLayout(List<Widget> children) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: children[0]),
+            const SizedBox(width: 14),
+            Expanded(child: children[1]),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: children[2]),
+            const SizedBox(width: 14),
+            Expanded(child: children[3]),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: children[4]),
+            const SizedBox(width: 14),
+            Expanded(child: children[6]),
+          ],
+        ),
+        const SizedBox(height: 14),
+        children[5],
+      ],
     );
   }
 

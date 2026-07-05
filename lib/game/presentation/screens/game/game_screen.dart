@@ -7,11 +7,13 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/engine.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart';
 import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
 import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
 import 'package:aonw/game/presentation/widgets.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';
@@ -360,6 +362,20 @@ class _GameRendererSessionHostState
   Widget build(BuildContext context) {
     final session = widget.session;
     final gameplaySettings = ref.watch(gameplaySettingsProvider);
+    final hudPanelModes = ref.watch(hudPanelControllerProvider);
+    final hudGamepadFocusActive = ref.watch(
+      hudGamepadFocusControllerProvider.select((state) => state.active),
+    );
+    final hudGamepadPopupInputCaptured = ref.watch(
+      hudGamepadPopupInputCaptureProvider,
+    );
+    final rendererGamepadInputEnabled =
+        !hudGamepadFocusActive &&
+        !hudGamepadPopupInputCaptured &&
+        !hudPanelModes.cityBuildings &&
+        !hudPanelModes.technology &&
+        !hudPanelModes.empire &&
+        !hudPanelModes.activityLog;
     return ProviderScope(
       overrides: [
         activeGameSessionProvider.overrideWithValue(session),
@@ -393,6 +409,7 @@ class _GameRendererSessionHostState
                 ],
                 child: GamepadRendererInputBinding(
                   renderer: _renderer,
+                  rendererInputEnabled: rendererGamepadInputEnabled,
                   builder: (context, gamepadInput) =>
                       GamePrimaryActionController(
                         session: session,
@@ -407,6 +424,7 @@ class _GameRendererSessionHostState
                           renderer: _renderer,
                           displaySettings: widget.displaySettings,
                           loadingProgress: _loadingProgressController,
+                          gamepadInputListenable: gamepadInput,
                           preloadFuture: _startupAssetPreload,
                           showDiceRollTestOverlay: _showDiceRollTestOverlay,
                           onToggleDiceRollTest: () {
@@ -436,6 +454,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
     required this.renderer,
     required this.displaySettings,
     required this.loadingProgress,
+    required this.gamepadInputListenable,
     required this.preloadFuture,
     required this.showDiceRollTestOverlay,
     required this.onToggleDiceRollTest,
@@ -448,6 +467,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
   final GameRenderer renderer;
   final HexDisplaySettings displaySettings;
   final ValueListenable<GameLoadingProgress> loadingProgress;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
   final Future<void> preloadFuture;
   final bool showDiceRollTestOverlay;
   final VoidCallback onToggleDiceRollTest;
@@ -503,6 +523,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
       animatingUnitIdsListenable: renderer.animatingUnitIdsListenable,
       initialCameraFocusReadyListenable:
           renderer.initialCameraFocusReadyListenable,
+      gamepadInputListenable: gamepadInputListenable,
       gameSave: gameSave,
       allowGraphicMode: session.imagePath != null,
       displaySettings: displaySettings,
@@ -780,12 +801,7 @@ class _GameStateReadyGate extends ConsumerWidget {
             error: error,
             onBack: () => context.go('/new-game'),
           ),
-          data: (state) {
-            if (state.activePlayerId.isEmpty) {
-              return GameLoadingView(progress: loadingProgress.bumpedTo(0.48));
-            }
-            return child;
-          },
+          data: (_) => child,
         );
   }
 }

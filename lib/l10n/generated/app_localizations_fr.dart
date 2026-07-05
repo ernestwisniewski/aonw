@@ -497,7 +497,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Déplace le curseur hex sélectionné sans exécuter d\'ordre.';
+      'Déplace le curseur hex sélectionné, le focus du menu principal, ou la ligne/carte sélectionnée dans les panneaux de ville et de recherche ouverts.';
 
   @override
   String get manualGamepadPanAction => 'Stick droit';
@@ -518,28 +518,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirme l\'hex actuel, comme un appui ou un clic gauche sur la carte.';
+      'Confirme l\'hex actuel, le contrôle de menu focalisé ou le choix sélectionné dans un panneau, y compris production urbaine et recherche.';
 
   @override
   String get manualGamepadCancelAction => 'B / Retour';
 
   @override
   String get manualGamepadCancelBody =>
-      'Annule le ciblage actif, le choix de panneau, l\'itinéraire ou le mode d\'interaction.';
+      'Ferme les popups de menu ouverts, les détails du panneau et les panneaux; sinon annule ciblage, itinéraire ou mode d\'interaction.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Active ou désactive le ciblage de mouvement pour l\'unité sélectionnée si elle peut bouger.';
+      'Sur la carte, alterne le ciblage de mouvement; en recherche, alterne recommandations et arbre complet.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Inspecte l\'hex du curseur sans changer le mode actif.';
+      'Inspecte l\'hex du curseur, ou ouvre les détails de la production ou technologie sélectionnée.';
+
+  @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.';
 
   @override
   String get manualGamepadNextAction => 'RB';

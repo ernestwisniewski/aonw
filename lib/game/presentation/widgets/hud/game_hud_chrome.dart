@@ -16,6 +16,33 @@ String? _outcomePerspectivePlayerId({
   return playerControl?.activePlayerId;
 }
 
+extension _GameHudGamepadFocusTargets on _GameHudState {
+  void _syncMenuGamepadFocusTarget({
+    required String label,
+    required VoidCallback onActivate,
+    required bool enabled,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(hudGamepadFocusTargetRegistryProvider.notifier)
+          .setSource(
+            'hudMenu',
+            enabled
+                ? [
+                    HudGamepadFocusTarget(
+                      section: HudGamepadFocusSection.menu,
+                      id: HudGamepadFocusTargetIds.menuReturn,
+                      label: label,
+                      onActivate: onActivate,
+                    ),
+                  ]
+                : const <HudGamepadFocusTarget>[],
+          );
+    });
+  }
+}
+
 class _HudTopFade extends StatelessWidget {
   const _HudTopFade();
 
@@ -55,8 +82,9 @@ class _HudTopFade extends StatelessWidget {
 
 class _HudMenuButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool gamepadFocused;
 
-  const _HudMenuButton({required this.onPressed});
+  const _HudMenuButton({required this.onPressed, this.gamepadFocused = false});
 
   @override
   Widget build(BuildContext context) {
@@ -68,44 +96,48 @@ class _HudMenuButton extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Tooltip(
             message: l10n.returnToMenuAction,
-            child: Material(
-              color: SurfaceElevation.flat.fill(
-                background: GameUiTheme.bg,
-                alpha: 205,
-              ),
+            child: HudGamepadFocusRing(
+              focused: gamepadFocused,
               borderRadius: GameUiTheme.borderRadius,
-              child: InkWell(
-                onTap: onPressed,
+              child: Material(
+                color: SurfaceElevation.flat.fill(
+                  background: GameUiTheme.bg,
+                  alpha: 205,
+                ),
                 borderRadius: GameUiTheme.borderRadius,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: SurfaceElevation.flat.decoration(
-                    borderRadius: GameUiTheme.borderRadius,
-                    border: BorderEmphasis.regular,
-                    includeShadow: false,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '✕',
-                        style: GameUiTheme.actionLabel.copyWith(
-                          color: GameUiTheme.gold,
-                          fontSize: 13,
+                child: InkWell(
+                  onTap: onPressed,
+                  borderRadius: GameUiTheme.borderRadius,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: SurfaceElevation.flat.decoration(
+                      borderRadius: GameUiTheme.borderRadius,
+                      border: BorderEmphasis.regular,
+                      includeShadow: false,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '✕',
+                          style: GameUiTheme.actionLabel.copyWith(
+                            color: GameUiTheme.gold,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'MENU',
-                        style: GameUiTheme.actionLabel.copyWith(
-                          color: GameUiTheme.goldLight,
-                          fontSize: 10,
+                        const SizedBox(width: 6),
+                        Text(
+                          'MENU',
+                          style: GameUiTheme.actionLabel.copyWith(
+                            color: GameUiTheme.goldLight,
+                            fontSize: 10,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -114,5 +146,62 @@ class _HudMenuButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+extension _GameHudNetworkActions on _GameHudState {
+  bool _canResign(GameSave? save, NetworkSession? networkSession) {
+    return save?.gameMode == GameMode.multiplayer &&
+        networkSession != null &&
+        networkSession.isConnected &&
+        networkSession.matchId == widget.session.saveId;
+  }
+
+  Future<void> _onResignMatch(BuildContext context) async {
+    if (_resigning) return;
+    final l10n = AppLocalizations.of(context);
+    final session = ref.read(networkSessionProvider);
+    final matchId = session?.matchId;
+    if (session == null || matchId == null) return;
+
+    final confirmed = await showGameConfirmation(
+      context: context,
+      title: l10n.resignMatchTitle,
+      message: l10n.resignMatchMessage,
+      confirmLabel: l10n.resignAction,
+      cancelLabel: l10n.selectionActionCancel,
+      tone: GameConfirmationTone.danger,
+    );
+    if (!confirmed || !mounted || !context.mounted) return;
+
+    _setResigning(true);
+    try {
+      await NetworkSessionClient(
+        serverpodHost: ref.read(apiConfigProvider).baseUrl.toString(),
+      ).resignMatch(token: session.token, matchId: matchId);
+      await const NetworkSessionStore().saveMatchId(null);
+      ref
+          .read(networkSessionStateProvider.notifier)
+          .set(
+            NetworkSession(
+              userId: session.userId,
+              token: session.token,
+              connectionState: session.connectionState.copyWith(
+                changedAt: ref.read(gameClockProvider).nowUtc(),
+              ),
+            ),
+          );
+      if (!mounted) return;
+      widget.onClose();
+    } catch (_) {
+      if (!mounted || !context.mounted) return;
+      GameToast.show(
+        context,
+        message: l10n.resignMatchError,
+        tone: GameToastTone.error,
+      );
+    } finally {
+      _setResigning(false);
+    }
   }
 }

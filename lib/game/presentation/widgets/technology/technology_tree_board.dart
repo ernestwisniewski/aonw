@@ -98,7 +98,7 @@ class TechnologyTreeBoard extends StatelessWidget {
                             child: TechnologyTreeNode(
                               card: card,
                               l10n: l10n,
-                              selected: selectedPath.targetId == card.id,
+                              selected: selectedTechnologyId == card.id,
                               inSelectedPath: selectedPath.ids.contains(
                                 card.id,
                               ),

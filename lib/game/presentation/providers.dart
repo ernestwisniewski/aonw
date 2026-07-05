@@ -9,6 +9,7 @@ export 'providers/game/game_state_provider.dart';
 export 'providers/hud/civilization_met_popup_settings_provider.dart';
 export 'providers/hud/hud_command_dispatcher_provider.dart';
 export 'providers/hud/hud_feedback_provider.dart';
+export 'providers/hud/hud_gamepad_focus_controller_provider.dart';
 export 'providers/hud/hud_map_focus_controller_provider.dart';
 export 'providers/hud/hud_minimized_popups_provider.dart';
 export 'providers/hud/technology_discovery_popup_settings_provider.dart';

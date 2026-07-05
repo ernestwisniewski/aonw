@@ -1,7 +1,10 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
+import 'package:aonw/game/presentation/widgets/technology/technology_recommendations_view.dart';
+import 'package:aonw/game/presentation/widgets/technology/technology_tree_board.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_details_layers.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
@@ -103,6 +106,272 @@ void main() {
     await tester.pump();
 
     expect(researched, [TechnologyId.agriculture]);
+  });
+
+  testWidgets('gamepad opens technology details and toggles view mode', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+    final researched = <TechnologyId>[];
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: TechnologyTreePanel(
+          maxHeight: 520,
+          gamepadInputListenable: gamepadInput,
+          viewModel: const TechnologyPanelViewModel(
+            sciencePerTurn: 2,
+            activeTechnology: null,
+            technologies: [
+              TechnologyCardViewModel(
+                id: TechnologyId.agriculture,
+                state: TechnologyCardState.available,
+                progress: 0,
+                baseCost: 6,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.mining,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                baseCost: 6,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+                treeColumn: 1,
+              ),
+            ],
+          ),
+          onResearch: researched.add,
+          onClose: () => closeCount++,
+        ),
+      ),
+    );
+
+    expect(
+      tester
+          .widget<TechnologyRecommendationsView>(
+            find.byType(TechnologyRecommendationsView),
+          )
+          .selectedTechnologyId,
+      isNull,
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadRight: true),
+    );
+    expect(
+      tester
+          .widget<TechnologyRecommendationsView>(
+            find.byType(TechnologyRecommendationsView),
+          )
+          .selectedTechnologyId,
+      TechnologyId.agriculture,
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(inspect: true),
+    );
+    expect(find.byType(TechnologyDetailsPanel), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(cancel: true),
+    );
+    expect(find.byType(TechnologyDetailsPanel), findsNothing);
+    expect(closeCount, 0);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(find.byKey(const Key('technologyTreeBoard.grid')), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(find.text('Recommended research'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+    expect(researched, [TechnologyId.agriculture]);
+  });
+
+  testWidgets('ignores confirm held from opening the technology popup', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      const GamepadInputSnapshot(confirm: true),
+    );
+    addTearDown(gamepadInput.dispose);
+    final researched = <TechnologyId>[];
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            if (researched.isNotEmpty || closeCount > 0) {
+              return const Text('technology panel closed');
+            }
+            return TechnologyTreePanel(
+              maxHeight: 520,
+              gamepadInputListenable: gamepadInput,
+              viewModel: const TechnologyPanelViewModel(
+                sciencePerTurn: 2,
+                activeTechnology: null,
+                technologies: [
+                  TechnologyCardViewModel(
+                    id: TechnologyId.agriculture,
+                    state: TechnologyCardState.available,
+                    progress: 0,
+                    baseCost: 6,
+                    totalCost: 6,
+                    turnsRemaining: 3,
+                    boostActive: false,
+                  ),
+                ],
+              ),
+              onResearch: (technologyId) {
+                researched.add(technologyId);
+                setState(() {});
+              },
+              onClose: () {
+                closeCount++;
+                setState(() {});
+              },
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 180));
+
+    expect(find.byType(TechnologyTreePanel), findsOneWidget);
+    expect(find.text('technology panel closed'), findsNothing);
+    expect(researched, isEmpty);
+    expect(closeCount, 0);
+
+    gamepadInput.value = GamepadInputSnapshot.empty;
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 180));
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+
+    expect(researched, [TechnologyId.agriculture]);
+    expect(find.text('technology panel closed'), findsOneWidget);
+  });
+
+  testWidgets('gamepad navigates full tree by columns and rows', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: TechnologyTreePanel(
+          maxHeight: 520,
+          gamepadInputListenable: gamepadInput,
+          viewModel: const TechnologyPanelViewModel(
+            sciencePerTurn: 2,
+            activeTechnology: null,
+            technologies: [
+              TechnologyCardViewModel(
+                id: TechnologyId.agriculture,
+                state: TechnologyCardState.available,
+                progress: 0,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.mining,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeRow: 1,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.hunting,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeColumn: 1,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.woodworking,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeColumn: 1,
+                treeRow: 1,
+              ),
+            ],
+          ),
+          onResearch: _noopResearch,
+          onClose: _noop,
+        ),
+      ),
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.agriculture);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadRight: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.hunting);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadDown: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.woodworking);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadLeft: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.mining);
   });
 
   testWidgets('keeps technology tree grid on narrow portrait', (tester) async {
@@ -787,11 +1056,29 @@ Future<void> _showFullTree(WidgetTester tester) async {
   await tester.pump();
 }
 
+Future<void> _pressGamepad(
+  WidgetTester tester,
+  ValueNotifier<GamepadInputSnapshot> input,
+  GamepadInputSnapshot snapshot,
+) async {
+  input.value = snapshot;
+  await tester.pump(const Duration(milliseconds: 16));
+  input.value = GamepadInputSnapshot.empty;
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump(const Duration(milliseconds: 180));
+}
+
 void _expectWarmSurface(WidgetTester tester, Key key) {
   final surface = tester.widget<DecoratedBox>(find.byKey(key));
   final decoration = surface.decoration as BoxDecoration;
   expect(decoration.gradient, isA<LinearGradient>());
   expect(decoration.color, isNull);
+}
+
+TechnologyId? _selectedTreeTechnology(WidgetTester tester) {
+  return tester
+      .widget<TechnologyTreeBoard>(find.byType(TechnologyTreeBoard))
+      .selectedTechnologyId;
 }
 
 TechnologyCardViewModel _card(

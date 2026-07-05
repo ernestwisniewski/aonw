@@ -496,7 +496,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Bewegt den ausgewählten Hex-Cursor, ohne einen Befehl auszuführen.';
+      'Bewegt den ausgewählten Hex-Cursor, den Hauptmenü-Fokus oder die ausgewählte Zeile/Karte in offenen Stadt- und Forschungsbereichen.';
 
   @override
   String get manualGamepadPanAction => 'Rechter Stick';
@@ -517,28 +517,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Bestätigt das aktuelle Hex-Feld wie Tippen oder Linksklick auf der Karte.';
+      'Bestätigt das aktuelle Hex-Feld, die fokussierte Menüsteuerung oder die ausgewählte Bereichsoption, einschließlich Stadtproduktion und Forschung.';
 
   @override
   String get manualGamepadCancelAction => 'B / Zurück';
 
   @override
   String get manualGamepadCancelBody =>
-      'Bricht aktive Zielwahl, Bereichsauswahl, Route oder Interaktionsmodus ab.';
+      'Schließt offene Menü-Popups, Bereichsdetails und Bereiche; sonst bricht es Zielwahl, Route oder Interaktionsmodus ab.';
 
   @override
   String get manualGamepadModeAction => 'X';
 
   @override
   String get manualGamepadModeBody =>
-      'Schaltet die Bewegungszielwahl für die ausgewählte Einheit um, wenn Bewegung verfügbar ist.';
+      'Schaltet auf der Karte Bewegungszielwahl um; in Forschung wechselt es Empfehlungen und vollständigen Baum.';
 
   @override
   String get manualGamepadInspectAction => 'Y';
 
   @override
   String get manualGamepadInspectBody =>
-      'Prüft das aktuelle Cursor-Hex, ohne den aktiven Modus zu ändern.';
+      'Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.';
+
+  @override
+  String get manualGamepadHudFocusAction => 'L3 / R3';
+
+  @override
+  String get manualGamepadHudFocusBody =>
+      'R3 wechselt nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar. A öffnet Ziele, das D-Pad scrollt offene Popups, und B schließt sie.';
 
   @override
   String get manualGamepadNextAction => 'RB';

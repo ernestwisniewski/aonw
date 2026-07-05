@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/app/app_release_info.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/l10n.dart';
@@ -11,11 +12,12 @@ import 'package:aonw/menu/app_exit.dart';
 import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw/menu/menu_animated_background.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
+import 'package:aonw/menu/menu_gamepad_input.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw/shared/widgets/game_ui/gold_divider.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,46 +26,53 @@ import 'package:url_launcher/url_launcher.dart';
 final _feedbackUrl = Uri.parse('https://www.reddit.com/r/aonw/');
 
 class MainMenuScreen extends StatelessWidget {
-  const MainMenuScreen({super.key, this.onExit});
+  const MainMenuScreen({super.key, this.onExit, this.gamepadInputListenable});
 
   final Future<void> Function()? onExit;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: GameUiTheme.bg,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const _MenuBackground(),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 700;
-                final panelWidth = compact
-                    ? constraints.maxWidth
-                    : constraints.maxWidth.clamp(340.0, 390.0).toDouble();
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: panelWidth,
-                    child: _MenuPanel(showBottomLinks: compact, onExit: onExit),
-                  ),
-                );
-              },
+    return MenuGamepadInputBinding(
+      input: gamepadInputListenable,
+      child: Scaffold(
+        backgroundColor: GameUiTheme.bg,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const _MenuBackground(),
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 700;
+                  final panelWidth = compact
+                      ? constraints.maxWidth
+                      : constraints.maxWidth.clamp(340.0, 390.0).toDouble();
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: panelWidth,
+                      child: _MenuPanel(
+                        showBottomLinks: compact,
+                        onExit: onExit,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const Positioned(
-            top: 12,
-            right: 16,
-            child: SafeArea(child: _VersionTag()),
-          ),
-          const Positioned(
-            right: 18,
-            bottom: 18,
-            child: SafeArea(child: _RightInfoColumn()),
-          ),
-        ],
+            const Positioned(
+              top: 12,
+              right: 16,
+              child: SafeArea(child: _VersionTag()),
+            ),
+            const Positioned(
+              right: 18,
+              bottom: 18,
+              child: SafeArea(child: _RightInfoColumn()),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -397,121 +406,133 @@ class _MenuButtonState extends State<_MenuButton> {
   Widget build(BuildContext context) {
     final item = widget.item;
     final expandable = item.panelKind != null;
-    final highlighted = _hovered || item.primary || item.active;
-    final borderColor = highlighted
-        ? GameUiTheme.gold
-        : GameUiTheme.gold.withAlpha(110);
-    final iconColor = highlighted ? GameUiTheme.gold : GameUiTheme.goldDark;
-    final textColor = item.primary || item.active
-        ? GameUiTheme.goldLight
-        : GameUiTheme.textPrimary;
     final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1, 1.3);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Semantics(
-        button: true,
-        enabled: true,
-        label: item.semanticLabel ?? item.label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: item.onPressed,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            height: 50 + ((textScale - 1) * 18),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  highlighted
-                      ? GameUiTheme.chipSurfaceDim
-                      : GameUiTheme.chipSurface,
-                  GameUiTheme.surface.withAlpha(226),
-                ],
-              ),
-              borderRadius: GameUiTheme.borderRadius,
-              border: Border.all(
-                color: borderColor,
-                width: highlighted ? 1.3 : 1,
-              ),
-              boxShadow: [
-                if (highlighted)
-                  BoxShadow(
-                    color: GameUiTheme.gold.withAlpha(_hovered ? 70 : 42),
-                    blurRadius: _hovered ? 16 : 9,
-                    offset: const Offset(0, 2),
-                  ),
-              ],
-            ),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: GameUiTheme.bg.withAlpha(highlighted ? 132 : 88),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: GameUiTheme.gold.withAlpha(highlighted ? 138 : 74),
-                    ),
-                  ),
-                  child: Icon(item.icon, size: 20, color: iconColor),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GameUiTheme.menuButton.copyWith(
-                          color: textColor,
-                        ),
-                      ),
-                      if (item.sublabel != null)
-                        Text(
-                          item.sublabel!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GameUiTheme.chipLabel.copyWith(
-                            color: GameUiTheme.textTertiary,
-                            fontSize: 9,
-                          ),
-                        ),
+    return MenuGamepadAction(
+      onActivate: item.onPressed,
+      borderRadius: GameUiTheme.borderRadius,
+      builder: (context, focused) {
+        final highlighted = focused || _hovered || item.primary || item.active;
+        final borderColor = highlighted
+            ? GameUiTheme.gold
+            : GameUiTheme.gold.withAlpha(110);
+        final iconColor = highlighted ? GameUiTheme.gold : GameUiTheme.goldDark;
+        final textColor = item.primary || item.active || focused
+            ? GameUiTheme.goldLight
+            : GameUiTheme.textPrimary;
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: Semantics(
+            button: true,
+            enabled: true,
+            label: item.semanticLabel ?? item.label,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: item.onPressed,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                height: 50 + ((textScale - 1) * 18),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      highlighted
+                          ? GameUiTheme.chipSurfaceDim
+                          : GameUiTheme.chipSurface,
+                      GameUiTheme.surface.withAlpha(226),
                     ],
                   ),
+                  borderRadius: GameUiTheme.borderRadius,
+                  border: Border.all(
+                    color: borderColor,
+                    width: highlighted ? 1.3 : 1,
+                  ),
+                  boxShadow: [
+                    if (highlighted)
+                      BoxShadow(
+                        color: GameUiTheme.gold.withAlpha(
+                          _hovered || focused ? 70 : 42,
+                        ),
+                        blurRadius: _hovered || focused ? 16 : 9,
+                        offset: const Offset(0, 2),
+                      ),
+                  ],
                 ),
-                if (expandable)
-                  AnimatedRotation(
-                    turns: item.active ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    child: Icon(
-                      Icons.expand_more_rounded,
-                      size: 20,
-                      color: GameUiTheme.gold.withAlpha(
-                        highlighted ? 220 : 110,
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: GameUiTheme.bg.withAlpha(highlighted ? 132 : 88),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: GameUiTheme.gold.withAlpha(
+                            highlighted ? 138 : 74,
+                          ),
+                        ),
+                      ),
+                      child: Icon(item.icon, size: 20, color: iconColor),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GameUiTheme.menuButton.copyWith(
+                              color: textColor,
+                            ),
+                          ),
+                          if (item.sublabel != null)
+                            Text(
+                              item.sublabel!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GameUiTheme.chipLabel.copyWith(
+                                color: GameUiTheme.textTertiary,
+                                fontSize: 9,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  )
-                else
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: GameUiTheme.gold.withAlpha(highlighted ? 220 : 110),
-                  ),
-              ],
+                    if (expandable)
+                      AnimatedRotation(
+                        turns: item.active ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOutCubic,
+                        child: Icon(
+                          Icons.expand_more_rounded,
+                          size: 20,
+                          color: GameUiTheme.gold.withAlpha(
+                            highlighted ? 220 : 110,
+                          ),
+                        ),
+                      )
+                    else
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: GameUiTheme.gold.withAlpha(
+                          highlighted ? 220 : 110,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -639,55 +660,69 @@ class _DeveloperToolButtonState extends State<_DeveloperToolButton> {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = _hovered
-        ? GameUiTheme.goldLight
-        : GameUiTheme.textPrimary;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Semantics(
-        button: true,
-        label: widget.semanticLabel ?? widget.label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onPressed,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            constraints: const BoxConstraints(minHeight: 42),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-            decoration: BoxDecoration(
-              color: _hovered
-                  ? GameUiTheme.gold.withAlpha(28)
-                  : GameUiTheme.surface.withAlpha(190),
-              borderRadius: GameUiTheme.borderRadius,
-              border: Border.all(
-                color: _hovered
-                    ? GameUiTheme.gold
-                    : GameUiTheme.gold.withAlpha(70),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(widget.icon, size: 18, color: GameUiTheme.gold),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GameUiTheme.actionLabel.copyWith(color: foreground),
+    return MenuGamepadAction(
+      onActivate: widget.onPressed,
+      borderRadius: GameUiTheme.borderRadius,
+      builder: (context, focused) {
+        final highlighted = focused || _hovered;
+        final foreground = highlighted
+            ? GameUiTheme.goldLight
+            : GameUiTheme.textPrimary;
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: Semantics(
+            button: true,
+            label: widget.semanticLabel ?? widget.label,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onPressed,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                constraints: const BoxConstraints(minHeight: 42),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: highlighted
+                      ? GameUiTheme.gold.withAlpha(28)
+                      : GameUiTheme.surface.withAlpha(190),
+                  borderRadius: GameUiTheme.borderRadius,
+                  border: Border.all(
+                    color: highlighted
+                        ? GameUiTheme.gold
+                        : GameUiTheme.gold.withAlpha(70),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  size: 17,
-                  color: GameUiTheme.gold.withAlpha(_hovered ? 220 : 130),
+                child: Row(
+                  children: [
+                    Icon(widget.icon, size: 18, color: GameUiTheme.gold),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GameUiTheme.actionLabel.copyWith(
+                          color: foreground,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 17,
+                      color: GameUiTheme.gold.withAlpha(
+                        highlighted ? 220 : 130,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

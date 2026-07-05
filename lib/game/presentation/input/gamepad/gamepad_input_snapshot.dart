@@ -18,6 +18,9 @@ final class GamepadInputSnapshot {
     this.cancel = false,
     this.inspect = false,
     this.moveMode = false,
+    this.hudFocus = false,
+    this.hudFocusPrevious = false,
+    this.hudFocusNext = false,
     this.focusPrevious = false,
     this.focusNext = false,
     this.primaryAction = false,
@@ -37,6 +40,9 @@ final class GamepadInputSnapshot {
   final bool cancel;
   final bool inspect;
   final bool moveMode;
+  final bool hudFocus;
+  final bool hudFocusPrevious;
+  final bool hudFocusNext;
   final bool focusPrevious;
   final bool focusNext;
   final bool primaryAction;
@@ -60,6 +66,9 @@ final class GamepadInputSnapshot {
     bool? cancel,
     bool? inspect,
     bool? moveMode,
+    bool? hudFocus,
+    bool? hudFocusPrevious,
+    bool? hudFocusNext,
     bool? focusPrevious,
     bool? focusNext,
     bool? primaryAction,
@@ -79,6 +88,9 @@ final class GamepadInputSnapshot {
       cancel: cancel ?? this.cancel,
       inspect: inspect ?? this.inspect,
       moveMode: moveMode ?? this.moveMode,
+      hudFocus: hudFocus ?? this.hudFocus,
+      hudFocusPrevious: hudFocusPrevious ?? this.hudFocusPrevious,
+      hudFocusNext: hudFocusNext ?? this.hudFocusNext,
       focusPrevious: focusPrevious ?? this.focusPrevious,
       focusNext: focusNext ?? this.focusNext,
       primaryAction: primaryAction ?? this.primaryAction,
@@ -102,6 +114,9 @@ final class GamepadInputSnapshot {
         other.cancel == cancel &&
         other.inspect == inspect &&
         other.moveMode == moveMode &&
+        other.hudFocus == hudFocus &&
+        other.hudFocusPrevious == hudFocusPrevious &&
+        other.hudFocusNext == hudFocusNext &&
         other.focusPrevious == focusPrevious &&
         other.focusNext == focusNext &&
         other.primaryAction == primaryAction;
@@ -123,6 +138,9 @@ final class GamepadInputSnapshot {
     cancel,
     inspect,
     moveMode,
+    hudFocus,
+    hudFocusPrevious,
+    hudFocusNext,
     focusPrevious,
     focusNext,
     primaryAction,
