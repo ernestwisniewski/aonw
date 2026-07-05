@@ -71,15 +71,12 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
   }
 
   void _applyCurrentStateIfReady() {
-    final state = ref.read(gameStateProvider(widget.session.saveId)).value;
-    if (state == null || !_canApplyState(state)) return;
+    final next = ref.read(gameStateProvider(widget.session.saveId));
+    if (next.isLoading) return;
+    final state = next.value;
+    if (state == null) return;
     widget.renderer.applyState(state, currentTurn: _currentTurn());
     _appliedState = state;
-  }
-
-  bool _canApplyState(GameState state) {
-    if (widget.session.saveId.isEmpty) return true;
-    return state.activePlayerId.isNotEmpty;
   }
 
   @override
@@ -97,9 +94,10 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
     ref.listen<AsyncValue<GameState>>(
       gameStateProvider(widget.session.saveId),
       (_, next) {
+        if (next.isLoading) return;
         if (_appliedState != null) return;
         final state = next.value;
-        if (state == null || !_canApplyState(state)) return;
+        if (state == null) return;
         if (!identical(ref.read(activeGameSessionProvider), widget.session)) {
           return;
         }

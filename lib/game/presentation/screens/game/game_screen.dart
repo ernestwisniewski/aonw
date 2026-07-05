@@ -14,7 +14,6 @@ import 'package:aonw/game/presentation/screens/game/game_primary_action_controll
 import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
-import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';
@@ -363,13 +362,7 @@ class _GameRendererSessionHostState
   Widget build(BuildContext context) {
     final session = widget.session;
     final gameplaySettings = ref.watch(gameplaySettingsProvider);
-    final gameState = widget.gameSave == null
-        ? null
-        : ref.watch(gameStateProvider(session.saveId)).value;
-    final hudPanelModes = normalizeHudPanelModes(
-      current: ref.watch(hudPanelControllerProvider),
-      gameState: gameState,
-    );
+    final hudPanelModes = ref.watch(hudPanelControllerProvider);
     final rendererGamepadInputEnabled =
         !hudPanelModes.cityBuildings &&
         !hudPanelModes.technology &&
@@ -800,12 +793,7 @@ class _GameStateReadyGate extends ConsumerWidget {
             error: error,
             onBack: () => context.go('/new-game'),
           ),
-          data: (state) {
-            if (state.activePlayerId.isEmpty) {
-              return GameLoadingView(progress: loadingProgress.bumpedTo(0.48));
-            }
-            return child;
-          },
+          data: (_) => child,
         );
   }
 }
