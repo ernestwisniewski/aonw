@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -58,115 +59,38 @@ GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
   GameState state, {
   String? viewerPlayerId,
 }) {
-  return switch (event) {
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) ||
-    UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) =>
-      _cityTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId) ??
-          _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId) ??
-          _unitTarget(state, defenderUnitId, viewerPlayerId: viewerPlayerId),
-    CityAttackedEvent(:final attackerUnitId, :final cityId) =>
-      _cityTarget(state, cityId, viewerPlayerId: viewerPlayerId) ??
-          _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId),
-    UnitKilledEvent(:final attackerUnitId) =>
-      attackerUnitId == null
-          ? null
-          : _unitTarget(state, attackerUnitId, viewerPlayerId: viewerPlayerId),
-    UnitRetreatedEvent(:final unitId) => _unitTarget(
+  for (final hint in GameEventDescriptor.forEvent(event).focusHints) {
+    final target = _focusTargetForHint(
+      hint,
+      state,
+      viewerPlayerId: viewerPlayerId,
+    );
+    if (target != null) return target;
+  }
+  return null;
+}
+
+GameEventNotificationFocusTarget? _focusTargetForHint(
+  GameEventFocusHint hint,
+  GameState state, {
+  String? viewerPlayerId,
+}) {
+  return switch (hint) {
+    UnitGameEventFocusHint(:final unitId) => _unitTarget(
       state,
       unitId,
       viewerPlayerId: viewerPlayerId,
     ),
-    CityCapturedEvent(:final cityId) => _cityTarget(
+    CityGameEventFocusHint(:final cityId) => _cityTarget(
       state,
       cityId,
       viewerPlayerId: viewerPlayerId,
     ),
-    CityDestroyedEvent() => null,
-    CityFoundedEvent(:final cityId) => _cityTarget(
-      state,
-      cityId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    CityBuiltBuildingEvent(:final cityId) => _cityTarget(
-      state,
-      cityId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    CityProducedUnitEvent(:final cityId) => _cityTarget(
-      state,
-      cityId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    CityClaimedHexEvent(:final cityId) => _cityTarget(
-      state,
-      cityId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    UnitMovedEvent(:final unitId) => _unitTarget(
-      state,
-      unitId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    UnitGainedExperienceEvent(:final unitId) => _unitTarget(
-      state,
-      unitId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    WorkerCompletedJobEvent(:final unitId) => _unitTarget(
-      state,
-      unitId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    DominationThresholdReachedEvent(:final playerId) => _playerAnchorTarget(
+    TileGameEventFocusHint(:final id, :final col, :final row) =>
+      TileNotificationFocusTarget(id: id, col: col, row: row),
+    PlayerAnchorGameEventFocusHint(:final playerId) => _playerAnchorTarget(
       state,
       playerId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    TurnEndedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    StrategicResourceDiscoveredEvent(
-      nearestUnclaimedCol: null,
-      nearestUnclaimedRow: null,
-    ) ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() => null,
-    TechnologyResearchedEvent(:final playerId) => _playerAnchorTarget(
-      state,
-      playerId,
-      viewerPlayerId: viewerPlayerId,
-    ),
-    StrategicResourceDiscoveredEvent(
-      :final nearestUnclaimedCol,
-      :final nearestUnclaimedRow,
-    ) =>
-      nearestUnclaimedCol == null || nearestUnclaimedRow == null
-          ? null
-          : TileNotificationFocusTarget(
-              id: 'resource_${nearestUnclaimedCol}_$nearestUnclaimedRow',
-              col: nearestUnclaimedCol,
-              row: nearestUnclaimedRow,
-            ),
-    MapObjectiveSecuredEvent(:final objectiveId, :final col, :final row) =>
-      TileNotificationFocusTarget(
-        id: 'objective_$objectiveId',
-        col: col,
-        row: row,
-      ),
-    CivilizationMetEvent(:final metPlayerId) => _playerAnchorTarget(
-      state,
-      metPlayerId,
       viewerPlayerId: viewerPlayerId,
     ),
   };
