@@ -73,20 +73,14 @@ final class HudResourceEconomyForecast {
         cityGoldIncome += economy.netYield.gold;
       }
 
-      final projectType = city.productionQueue?.projectType;
-      if (projectType == null) continue;
-      final output = CityProjectRules.outputFor(
-        type: projectType,
+      final projectOutput = city.productionQueue?.projectOutput(
         productionPerTurn: CityProductionRules.productionPerTurn(
           economy.netYield.production,
         ),
       );
-      switch (projectType) {
-        case CityProjectType.wealth:
-          projectGoldIncome += output;
-        case CityProjectType.research:
-          projectScience += output;
-      }
+      if (projectOutput == null) continue;
+      projectGoldIncome += projectOutput.gold;
+      projectScience += projectOutput.science;
     }
 
     final grossIncome = cityGoldIncome + projectGoldIncome;

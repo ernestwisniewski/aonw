@@ -323,6 +323,33 @@ void main() {
       expect(q.investedProduction, 0);
     });
 
+    test('projectOutput converts active projects into typed output', () {
+      final wealth = CityProductionQueue.project(
+        projectType: CityProjectType.wealth,
+      ).projectOutput(productionPerTurn: 5);
+      final research = CityProductionQueue.project(
+        projectType: CityProjectType.research,
+      ).projectOutput(productionPerTurn: 13);
+      final building = CityProductionQueue.building(
+        buildingType: CityBuildingType.granary,
+        investedProduction: 0,
+      ).projectOutput(productionPerTurn: 5);
+
+      expect(
+        wealth,
+        const CityProjectOutput(type: CityProjectType.wealth, amount: 3),
+      );
+      expect(wealth?.gold, 3);
+      expect(wealth?.science, 0);
+      expect(
+        research,
+        const CityProjectOutput(type: CityProjectType.research, amount: 2),
+      );
+      expect(research?.gold, 0);
+      expect(research?.science, 2);
+      expect(building, isNull);
+    });
+
     test('isComplete when invested production >= production cost', () {
       final q = CityProductionQueue.building(
         buildingType: CityBuildingType.granary,

@@ -240,24 +240,20 @@ class CityYieldBreakdownViewModel {
       );
     }
 
-    if (city.productionQueue?.target case ProjectProductionTarget(
-      projectType: CityProjectType.research,
-    )) {
-      final projectOutput = CityProjectRules.outputFor(
-        type: CityProjectType.research,
-        productionPerTurn: CityProductionRules.productionPerTurn(
-          economy.netYield.production,
+    final projectOutput = city.productionQueue?.projectOutput(
+      productionPerTurn: CityProductionRules.productionPerTurn(
+        economy.netYield.production,
+      ),
+    );
+    final projectScience = projectOutput?.science ?? 0;
+    if (projectScience > 0) {
+      rows.add(
+        CityScienceBreakdownRow(
+          label: text.researchProject,
+          detail: text.researchProjectDetail,
+          value: projectScience,
         ),
       );
-      if (projectOutput > 0) {
-        rows.add(
-          CityScienceBreakdownRow(
-            label: text.researchProject,
-            detail: text.researchProjectDetail,
-            value: projectOutput,
-          ),
-        );
-      }
     }
 
     return List.unmodifiable(rows);
