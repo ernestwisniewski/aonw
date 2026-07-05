@@ -22,7 +22,20 @@ extension GameRendererGamepadInput on GameRenderer {
 
   void _updateGamepadInput(double dt) {
     if (!_isReady || _isDisposed) return;
-    final frame = _gamepadFrameController.advance(input: _gamepadInput, dt: dt);
+    final input = _gamepadInput;
+    final existingFrameController = _gamepadFrameControllers[this];
+    if (input.isIdle &&
+        (existingFrameController == null || existingFrameController.isIdle)) {
+      return;
+    }
+
+    final frameController = existingFrameController ?? GamepadFrameController();
+    if (existingFrameController == null) {
+      _gamepadFrameControllers[this] = frameController;
+    }
+    final frame = frameController.advance(input: input, dt: dt);
+    if (frame.isIdle) return;
+
     _applyGamepadCameraInput(frame, dt);
     _applyGamepadCursorInput(frame);
     _applyGamepadButtonInput(frame);
@@ -30,10 +43,6 @@ extension GameRendererGamepadInput on GameRenderer {
 
   GamepadInputSnapshot get _gamepadInput =>
       _gamepadInputSnapshots[this] ?? GamepadInputSnapshot.empty;
-
-  GamepadFrameController get _gamepadFrameController {
-    return _gamepadFrameControllers[this] ??= GamepadFrameController();
-  }
 
   CityHex? get _gamepadCursorHex => _gamepadCursorHexes[this];
 
@@ -51,17 +60,31 @@ extension GameRendererGamepadInput on GameRenderer {
   }
 
   void _applyGamepadCameraInput(GamepadControlFrame frame, double dt) {
+    _applyAnalogCameraInput(
+      panX: frame.cameraX,
+      panY: frame.cameraY,
+      zoom: frame.zoom,
+      dt: dt,
+    );
+  }
+
+  void _applyAnalogCameraInput({
+    required double panX,
+    required double panY,
+    required double zoom,
+    required double dt,
+  }) {
     final panDelta = Vector2(
-      frame.cameraX * _cameraPanSpeed * dt,
-      -frame.cameraY * _cameraPanSpeed * dt,
+      panX * _cameraPanSpeed * dt,
+      -panY * _cameraPanSpeed * dt,
     );
     if (panDelta.x != 0 || panDelta.y != 0) {
       panByScreenDelta(panDelta);
     }
 
-    if (frame.zoom == 0 || size.x <= 0 || size.y <= 0) return;
+    if (zoom == 0 || size.x <= 0 || size.y <= 0) return;
     final center = Vector2(size.x / 2, size.y / 2);
-    final scale = 1 + frame.zoom * _zoomSpeed * dt;
+    final scale = 1 + zoom * _zoomSpeed * dt;
     setZoomAround(camera.viewfinder.zoom * scale, center);
   }
 

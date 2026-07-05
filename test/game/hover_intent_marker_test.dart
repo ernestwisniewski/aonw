@@ -52,6 +52,18 @@ void main() {
   });
 
   group('GameRenderer hover intent', () {
+    test('idle gamepad input does not allocate a frame controller', () async {
+      final map = _map();
+      final game = await _loadedGame(map);
+
+      game
+        ..applyState(const GameState())
+        ..gamepadInput = GamepadInputSnapshot.empty
+        ..update(0.016);
+
+      expect(game.hasGamepadFrameControllerForTesting, isFalse);
+    });
+
     test('standard mode does not show a hover marker', () async {
       final map = _map();
       final game = await _loadedGame(map);

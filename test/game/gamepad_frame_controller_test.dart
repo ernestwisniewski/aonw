@@ -3,6 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GamepadFrameController', () {
+    test('returns the shared idle frame while input remains empty', () {
+      final controller = GamepadFrameController();
+
+      final frame = controller.advance(
+        input: GamepadInputSnapshot.empty,
+        dt: 0.016,
+      );
+
+      expect(identical(frame, GamepadControlFrame.idle), isTrue);
+      expect(frame.isIdle, isTrue);
+      expect(controller.isIdle, isTrue);
+    });
+
     test('applies deadzone and rescales analog camera and zoom input', () {
       final controller = GamepadFrameController(deadzone: 0.25);
 
@@ -56,6 +69,14 @@ void main() {
             .advance(input: GamepadInputSnapshot.empty, dt: 0.016)
             .confirmPressed,
         isFalse,
+      );
+      expect(controller.isIdle, isTrue);
+      expect(
+        identical(
+          controller.advance(input: GamepadInputSnapshot.empty, dt: 0.016),
+          GamepadControlFrame.idle,
+        ),
+        isTrue,
       );
       expect(
         controller.advance(input: pressed, dt: 0.016).confirmPressed,

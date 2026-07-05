@@ -67,6 +67,10 @@ extension GameRendererTestingHooks on GameRenderer {
       _sceneBuilder.imageLayer.preferFastRendering;
 
   @visibleForTesting
+  bool get hasGamepadFrameControllerForTesting =>
+      _gamepadFrameControllers[this] != null;
+
+  @visibleForTesting
   int get markerDensitySyncCountForTesting =>
       _markerDensitySyncStateFor(this).syncCount;
 
