@@ -605,18 +605,6 @@ List<_ControlGroup> _desktopGroups(AppLocalizations l10n) => [
     ],
   ),
   _ControlGroup(
-    icon: Icons.menu_open,
-    title: l10n.manualPanelsGroup,
-    color: GameUiTheme.goldLight,
-    items: [
-      _ControlItem(
-        icon: Icons.center_focus_strong,
-        action: l10n.manualGamepadHudFocusAction,
-        body: l10n.manualGamepadHudFocusBody,
-      ),
-    ],
-  ),
-  _ControlGroup(
     icon: Icons.flag_outlined,
     title: l10n.manualTurnFlowGroup,
     color: GameUiTheme.warning,
@@ -758,6 +746,18 @@ List<_ControlGroup> _gamepadGroups(AppLocalizations l10n) => [
         icon: Icons.info_outline,
         action: l10n.manualGamepadInspectAction,
         body: l10n.manualGamepadInspectBody,
+      ),
+    ],
+  ),
+  _ControlGroup(
+    icon: Icons.menu_open,
+    title: l10n.manualPanelsGroup,
+    color: GameUiTheme.goldLight,
+    items: [
+      _ControlItem(
+        icon: Icons.center_focus_strong,
+        action: l10n.manualGamepadHudFocusAction,
+        body: l10n.manualGamepadHudFocusBody,
       ),
     ],
   ),

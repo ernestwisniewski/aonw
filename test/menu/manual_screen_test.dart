@@ -62,6 +62,15 @@ void main() {
     expect(find.text('Tap'), findsOneWidget);
     expect(find.text('D-pad / left stick'), findsOneWidget);
     expect(find.text('L3 / R3'), findsOneWidget);
+    final gamepadTop = tester
+        .getTopLeft(find.byKey(const Key('manual.gamepadSection')))
+        .dy;
+    final desktopTop = tester
+        .getTopLeft(find.byKey(const Key('manual.desktopSection')))
+        .dy;
+    final hudFocusTop = tester.getTopLeft(find.text('L3 / R3')).dy;
+    expect(hudFocusTop, greaterThan(gamepadTop));
+    expect(hudFocusTop, lessThan(desktopTop));
     expect(find.text('?'), findsWidgets);
   });
 

@@ -544,7 +544,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'Enters or leaves HUD focus. While active, use the D-pad to move through the side rail, top resource pills, and action chips; A activates, B returns to the map, and LB/RB switch HUD sections.';
+      'Schakelt HUD-focus in of uit. Terwijl die actief is, gebruik je de D-pad om door de zijbalk, bovenste grondstofpills en actiechips te gaan; A activeert, B keert terug naar de kaart en LB/RB wisselt HUD-secties.';
 
   @override
   String get manualGamepadNextAction => 'RB';
