@@ -308,6 +308,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       cards: cards,
       selectedTechnologyId: _selectedTechnologyId,
       direction: direction,
+      useTreeGeometry: showTree,
     );
     if (nextCard == null) return;
     _setSelectedTechnology(nextCard, showTree: showTree, compact: compact);

@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_recommendations_view.dart';
+import 'package:aonw/game/presentation/widgets/technology/technology_tree_board.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_details_layers.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
@@ -211,6 +212,96 @@ void main() {
       const GamepadInputSnapshot(confirm: true),
     );
     expect(researched, [TechnologyId.agriculture]);
+  });
+
+  testWidgets('gamepad navigates full tree by columns and rows', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: TechnologyTreePanel(
+          maxHeight: 520,
+          gamepadInputListenable: gamepadInput,
+          viewModel: const TechnologyPanelViewModel(
+            sciencePerTurn: 2,
+            activeTechnology: null,
+            technologies: [
+              TechnologyCardViewModel(
+                id: TechnologyId.agriculture,
+                state: TechnologyCardState.available,
+                progress: 0,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.mining,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeRow: 1,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.hunting,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeColumn: 1,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.woodworking,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                totalCost: 7,
+                turnsRemaining: 4,
+                boostActive: false,
+                treeColumn: 1,
+                treeRow: 1,
+              ),
+            ],
+          ),
+          onResearch: _noopResearch,
+          onClose: _noop,
+        ),
+      ),
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.agriculture);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadRight: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.hunting);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadDown: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.woodworking);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadLeft: true),
+    );
+    expect(_selectedTreeTechnology(tester), TechnologyId.mining);
   });
 
   testWidgets('keeps technology tree grid on narrow portrait', (tester) async {
@@ -912,6 +1003,12 @@ void _expectWarmSurface(WidgetTester tester, Key key) {
   final decoration = surface.decoration as BoxDecoration;
   expect(decoration.gradient, isA<LinearGradient>());
   expect(decoration.color, isNull);
+}
+
+TechnologyId? _selectedTreeTechnology(WidgetTester tester) {
+  return tester
+      .widget<TechnologyTreeBoard>(find.byType(TechnologyTreeBoard))
+      .selectedTechnologyId;
 }
 
 TechnologyCardViewModel _card(
