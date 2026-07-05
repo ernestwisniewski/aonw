@@ -17,11 +17,11 @@
 
 | Input | Action |
 | --- | --- |
-| D-pad / left stick | Move the selected hex cursor, the selected row/card in open HUD panels, the focused HUD target while HUD focus is active, or scroll an open HUD popup |
+| D-pad / left stick | Move the selected hex cursor, main-menu focus, the selected row/card in open HUD panels, the focused HUD target while HUD focus is active, or scroll an open popup |
 | Right stick | Pan the camera |
 | RT / LT triggers | Zoom in / zoom out |
-| A | Confirm/tap the current cursor hex, or confirm the selected panel choice |
-| B / Back | Close panel details, close the active panel or HUD popup, or cancel the active interaction mode |
+| A | Confirm/tap the current cursor hex, focused menu control, or selected panel choice |
+| B / Back | Close menu popups, panel details, the active panel or HUD popup, or cancel the active interaction mode |
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
 | L3 / R3 | Step HUD focus left/right across the left rail, menu button, top resource pills, player rail, and bottom toolbar |
@@ -54,6 +54,12 @@ popups capture the controller so the D-pad scrolls their content and `B` closes
 the popup instead of moving the map behind it. The renderer receives an idle
 gamepad snapshot while HUD focus or popup capture is active so map cursor
 movement and HUD navigation cannot both process the same frame.
+
+Main menu routes use the same normalized input, scoped to Flutter focus
+traversal. The D-pad steps through menu actions and subpage controls such as New
+Game, Load Game, Options, Manual, and Credits; `A` activates the focused control;
+and `B` closes open popup routes such as dropdown menus before returning to the
+previous menu route.
 
 ## Manual Contract
 

@@ -117,148 +117,158 @@ class _ModeChoiceCard extends StatelessWidget {
     final l10n = context.l10n;
     final disabled = !enabled;
     final effectiveSelected = selected && enabled;
-    return Semantics(
-      button: true,
+    return MenuGamepadAction(
+      onActivate: onTap,
       enabled: enabled,
-      selected: effectiveSelected,
-      label: disabledReason == null
-          ? flow.menuLabel(l10n)
-          : '${flow.menuLabel(l10n)}. $disabledReason',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: GameMotion.snap,
-          padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                effectiveSelected
-                    ? GameUiTheme.gold.withAlpha(42)
-                    : disabled
-                    ? GameUiTheme.surface.withAlpha(100)
-                    : GameUiTheme.surface.withAlpha(168),
-                GameUiTheme.bg.withAlpha(disabled ? 124 : 170),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
-            border: Border.all(
-              color: effectiveSelected
-                  ? GameUiTheme.goldLight
-                  : disabled
-                  ? GameUiTheme.goldDark.withAlpha(76)
-                  : GameUiTheme.gold.withAlpha(84),
-              width: effectiveSelected ? 1.3 : 1,
-            ),
-            boxShadow: effectiveSelected
-                ? [
-                    BoxShadow(
-                      color: GameUiTheme.gold.withAlpha(32),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: GameUiTheme.bg.withAlpha(disabled ? 98 : 150),
-                  borderRadius: BorderRadius.circular(GameUiTheme.radiusButton),
-                  border: Border.all(
-                    color: GameUiTheme.gold.withAlpha(disabled ? 58 : 120),
-                  ),
-                ),
-                child: SizedBox.square(
-                  dimension: 42,
-                  child: Icon(
-                    flow.icon,
-                    size: 22,
-                    color: effectiveSelected
-                        ? GameUiTheme.goldLight
+      borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+      builder: (context, focused) {
+        final highlighted = effectiveSelected || focused;
+        return Semantics(
+          button: true,
+          enabled: enabled,
+          selected: effectiveSelected,
+          label: disabledReason == null
+              ? flow.menuLabel(l10n)
+              : '${flow.menuLabel(l10n)}. $disabledReason',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: GameMotion.snap,
+              padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    highlighted
+                        ? GameUiTheme.gold.withAlpha(42)
                         : disabled
-                        ? GameUiTheme.textMuted
-                        : GameUiTheme.gold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      GameText.menuLabel(flow.menuLabel(l10n)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GameUiTheme.cardTitle.copyWith(
-                        color: disabled
-                            ? GameUiTheme.textMuted
-                            : GameUiTheme.textPrimary,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _flowDescription(l10n, flow),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GameUiTheme.cardMeta.copyWith(
-                        color: disabled
-                            ? GameUiTheme.textMuted
-                            : GameUiTheme.textTertiary,
-                        height: 1.25,
-                      ),
-                    ),
-                    if (disabledReason != null) ...[
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.lock_clock_outlined,
-                            size: 13,
-                            color: GameUiTheme.copper,
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              disabledReason!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GameUiTheme.toolbarLabel.copyWith(
-                                color: GameUiTheme.copper,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ? GameUiTheme.surface.withAlpha(100)
+                        : GameUiTheme.surface.withAlpha(168),
+                    GameUiTheme.bg.withAlpha(disabled ? 124 : 170),
                   ],
                 ),
+                borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+                border: Border.all(
+                  color: highlighted
+                      ? GameUiTheme.goldLight
+                      : disabled
+                      ? GameUiTheme.goldDark.withAlpha(76)
+                      : GameUiTheme.gold.withAlpha(84),
+                  width: highlighted ? 1.3 : 1,
+                ),
+                boxShadow: highlighted
+                    ? [
+                        BoxShadow(
+                          color: GameUiTheme.gold.withAlpha(32),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ]
+                    : null,
               ),
-              if (effectiveSelected) ...[
-                const SizedBox(width: 10),
-                const Icon(
-                  Icons.check_circle_outline,
-                  size: 20,
-                  color: GameUiTheme.goldLight,
-                ),
-              ] else if (disabled) ...[
-                const SizedBox(width: 10),
-                const Icon(
-                  Icons.lock_outline,
-                  size: 19,
-                  color: GameUiTheme.textMuted,
-                ),
-              ],
-            ],
+              child: Row(
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: GameUiTheme.bg.withAlpha(disabled ? 98 : 150),
+                      borderRadius: BorderRadius.circular(
+                        GameUiTheme.radiusButton,
+                      ),
+                      border: Border.all(
+                        color: GameUiTheme.gold.withAlpha(disabled ? 58 : 120),
+                      ),
+                    ),
+                    child: SizedBox.square(
+                      dimension: 42,
+                      child: Icon(
+                        flow.icon,
+                        size: 22,
+                        color: highlighted
+                            ? GameUiTheme.goldLight
+                            : disabled
+                            ? GameUiTheme.textMuted
+                            : GameUiTheme.gold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          GameText.menuLabel(flow.menuLabel(l10n)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GameUiTheme.cardTitle.copyWith(
+                            color: disabled
+                                ? GameUiTheme.textMuted
+                                : GameUiTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _flowDescription(l10n, flow),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GameUiTheme.cardMeta.copyWith(
+                            color: disabled
+                                ? GameUiTheme.textMuted
+                                : GameUiTheme.textTertiary,
+                            height: 1.25,
+                          ),
+                        ),
+                        if (disabledReason != null) ...[
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.lock_clock_outlined,
+                                size: 13,
+                                color: GameUiTheme.copper,
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  disabledReason!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GameUiTheme.toolbarLabel.copyWith(
+                                    color: GameUiTheme.copper,
+                                    fontSize: 9,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (effectiveSelected) ...[
+                    const SizedBox(width: 10),
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 20,
+                      color: GameUiTheme.goldLight,
+                    ),
+                  ] else if (disabled) ...[
+                    const SizedBox(width: 10),
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 19,
+                      color: GameUiTheme.textMuted,
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

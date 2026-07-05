@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/new_game/initial_player_country.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
@@ -12,6 +13,7 @@ import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/widgets/map_selection_tile.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
+import 'package:aonw/menu/menu_gamepad_input.dart';
 import 'package:aonw/menu/menu_route_shell.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
@@ -25,6 +27,7 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -94,11 +97,13 @@ class NewGameScreen extends ConsumerStatefulWidget {
   final NewGameFlow flow;
   final bool startAtMap;
   final PlayerCountry? initialPlayerCountry;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   const NewGameScreen({
     this.flow = NewGameFlowX.defaultFlow,
     this.startAtMap = false,
     this.initialPlayerCountry,
+    this.gamepadInputListenable,
     super.key,
   });
 
@@ -108,7 +113,7 @@ class NewGameScreen extends ConsumerStatefulWidget {
 
 class _NewGameScreenState extends ConsumerState<NewGameScreen> {
   late NewGameFlow _flow = widget.flow;
-  late _NewGameStep _step = _initialStep();
+  _NewGameStep _step = _NewGameStep.plan;
   MapSelection? _selectedMap;
   late PlayerCountry _selectedPlayerCountry =
       widget.initialPlayerCountry ?? randomInitialPlayerCountry();
@@ -127,16 +132,11 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
     if (oldWidget.flow != widget.flow ||
         oldWidget.startAtMap != widget.startAtMap) {
       _flow = widget.flow;
-      _step = _initialStep();
+      _step = _NewGameStep.plan;
       _selectedMap = null;
       _autoOpenedMultiplayerLobby = false;
       _mapPickedManually = false;
     }
-  }
-
-  _NewGameStep _initialStep() {
-    if (!widget.flow.enabled) return _NewGameStep.plan;
-    return _NewGameStep.plan;
   }
 
   @override
@@ -144,31 +144,35 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
     final l10n = context.l10n;
     final mapsAsync = ref.watch(availableMapsProvider);
 
-    return Scaffold(
-      backgroundColor: GameUiTheme.bg,
-      appBar: GameUiAppBar(
-        title: GameText.screenTitle(l10n.newGameTitle),
-        onClose: ref.withMenuBack(_handleBack),
-      ),
-      bottomNavigationBar: mapsAsync.maybeWhen(
-        data: (maps) => _buildActionBar(
-          context,
-          maps,
-          singlePlayerPlayerCount: _selectedSinglePlayerPlayerCount(),
+    return MenuGamepadInputBinding(
+      input: widget.gamepadInputListenable,
+      onCancel: ref.withMenuBack(_handleBack),
+      child: Scaffold(
+        backgroundColor: GameUiTheme.bg,
+        appBar: GameUiAppBar(
+          title: GameText.screenTitle(l10n.newGameTitle),
+          onClose: ref.withMenuBack(_handleBack),
         ),
-        orElse: () => null,
-      ),
-      body: MenuRouteBackdrop(
-        child: mapsAsync.when(
-          loading: () => const _NewGameLoading(),
-          error: (error, _) => ScrollableErrorView(
-            message: l10n.mapsLoadError('$error'),
-            actionLabel: GameText.actionLabel(l10n.retryAction),
-            onAction: ref.withMenuClick(
-              () => ref.invalidate(availableMapsProvider),
-            ),
+        bottomNavigationBar: mapsAsync.maybeWhen(
+          data: (maps) => _buildActionBar(
+            context,
+            maps,
+            singlePlayerPlayerCount: _selectedSinglePlayerPlayerCount(),
           ),
-          data: (maps) => _buildContent(context, maps),
+          orElse: () => null,
+        ),
+        body: MenuRouteBackdrop(
+          child: mapsAsync.when(
+            loading: () => const _NewGameLoading(),
+            error: (error, _) => ScrollableErrorView(
+              message: l10n.mapsLoadError('$error'),
+              actionLabel: GameText.actionLabel(l10n.retryAction),
+              onAction: ref.withMenuClick(
+                () => ref.invalidate(availableMapsProvider),
+              ),
+            ),
+            data: (maps) => _buildContent(context, maps),
+          ),
         ),
       ),
     );

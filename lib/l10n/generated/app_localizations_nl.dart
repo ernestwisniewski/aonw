@@ -495,7 +495,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Verplaatst de geselecteerde hex-cursor, of de geselecteerde rij/kaart in open stads- en onderzoekspanelen.';
+      'Verplaatst de geselecteerde hex-cursor, de focus in het hoofdmenu, of de geselecteerde rij/kaart in open stads- en onderzoekspanelen.';
 
   @override
   String get manualGamepadPanAction => 'Rechter stick';
@@ -516,14 +516,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Bevestigt de huidige hex of geselecteerde paneelkeuze, inclusief stadsproductie en onderzoek.';
+      'Bevestigt de huidige hex, de gefocuste menubediening of geselecteerde paneelkeuze, inclusief stadsproductie en onderzoek.';
 
   @override
   String get manualGamepadCancelAction => 'B / Terug';
 
   @override
   String get manualGamepadCancelBody =>
-      'Sluit eerst paneeldetails en daarna panelen; anders annuleert het targeting, route of interactiemodus.';
+      'Sluit open menupopups, paneeldetails en panelen; anders annuleert het targeting, route of interactiemodus.';
 
   @override
   String get manualGamepadModeAction => 'X';

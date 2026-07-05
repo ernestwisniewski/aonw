@@ -1,5 +1,6 @@
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:aonw/shared/widgets/game_ui/game_ui_focus_ring.dart';
 import 'package:flutter/material.dart';
 
 enum EpicButtonVariant { primary, outlined, text }
@@ -101,6 +102,7 @@ class EpicButton extends StatefulWidget {
 
 class _EpicButtonState extends State<EpicButton> {
   bool _hovered = false;
+  bool _focused = false;
   bool _pressed = false;
 
   bool get _disabled => widget.onPressed == null;
@@ -139,22 +141,47 @@ class _EpicButtonState extends State<EpicButton> {
       EpicButtonVariant.text => _wrapText(content),
     };
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() {
-        _hovered = false;
-        _pressed = false;
-      }),
-      cursor: _disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: _disabled ? null : (_) => setState(() => _pressed = true),
-        onTapUp: _disabled ? null : (_) => setState(() => _pressed = false),
-        onTapCancel: _disabled ? null : () => setState(() => _pressed = false),
-        onTap: _disabled ? null : widget.onPressed,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: widget.minWidth ?? 0),
-          child: child,
+    return FocusableActionDetector(
+      enabled: !_disabled,
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            widget.onPressed?.call();
+            return null;
+          },
+        ),
+      },
+      onFocusChange: (focused) {
+        if (_focused == focused) return;
+        setState(() => _focused = focused);
+      },
+      child: GameUiFocusRing(
+        focused: _focused,
+        borderRadius: GameUiTheme.buttonBorderRadius,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() {
+            _hovered = false;
+            _pressed = false;
+          }),
+          cursor: _disabled
+              ? SystemMouseCursors.basic
+              : SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: _disabled
+                ? null
+                : (_) => setState(() => _pressed = true),
+            onTapUp: _disabled ? null : (_) => setState(() => _pressed = false),
+            onTapCancel: _disabled
+                ? null
+                : () => setState(() => _pressed = false),
+            onTap: _disabled ? null : widget.onPressed,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: widget.minWidth ?? 0),
+              child: child,
+            ),
+          ),
         ),
       ),
     );
@@ -169,11 +196,15 @@ class _EpicButtonState extends State<EpicButton> {
       EpicButtonVariant.outlined =>
         _disabled
             ? GameUiTheme.textTertiary
-            : (_hovered ? GameUiTheme.goldLight : GameUiTheme.textPrimary),
+            : (_hovered || _focused
+                  ? GameUiTheme.goldLight
+                  : GameUiTheme.textPrimary),
       EpicButtonVariant.text =>
         _disabled
             ? GameUiTheme.textTertiary
-            : (_hovered ? GameUiTheme.goldLight : GameUiTheme.textSecondary),
+            : (_hovered || _focused
+                  ? GameUiTheme.goldLight
+                  : GameUiTheme.textSecondary),
     };
   }
 
@@ -206,7 +237,7 @@ class _EpicButtonState extends State<EpicButton> {
         shape: RoundedRectangleBorder(
           borderRadius: GameUiTheme.buttonBorderRadius,
         ),
-        shadows: !_disabled && _hovered
+        shadows: !_disabled && (_hovered || _focused)
             ? [
                 BoxShadow(
                   color: SurfaceElevation.flat.fill(
@@ -223,7 +254,9 @@ class _EpicButtonState extends State<EpicButton> {
   }
 
   Widget _wrapOutlined(Widget child) {
-    final innerColor = _hovered ? GameUiTheme.copper : GameUiTheme.copperDeep;
+    final innerColor = _hovered || _focused
+        ? GameUiTheme.copper
+        : GameUiTheme.copperDeep;
     return Container(
       key: const ValueKey('epic-button-outer'),
       decoration: ShapeDecoration(
@@ -258,7 +291,7 @@ class _EpicButtonState extends State<EpicButton> {
           child: AnimatedContainer(
             duration: GameMotion.snap,
             height: 1,
-            color: _hovered && !_disabled
+            color: (_hovered || _focused) && !_disabled
                 ? GameUiTheme.copper
                 : Colors.transparent,
           ),

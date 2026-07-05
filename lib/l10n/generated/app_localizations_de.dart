@@ -496,7 +496,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Bewegt den ausgewählten Hex-Cursor oder die ausgewählte Zeile/Karte in offenen Stadt- und Forschungsbereichen.';
+      'Bewegt den ausgewählten Hex-Cursor, den Hauptmenü-Fokus oder die ausgewählte Zeile/Karte in offenen Stadt- und Forschungsbereichen.';
 
   @override
   String get manualGamepadPanAction => 'Rechter Stick';
@@ -517,14 +517,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Bestätigt das aktuelle Hex-Feld oder die ausgewählte Bereichsoption, einschließlich Stadtproduktion und Forschung.';
+      'Bestätigt das aktuelle Hex-Feld, die fokussierte Menüsteuerung oder die ausgewählte Bereichsoption, einschließlich Stadtproduktion und Forschung.';
 
   @override
   String get manualGamepadCancelAction => 'B / Zurück';
 
   @override
   String get manualGamepadCancelBody =>
-      'Schließt zuerst Bereichsdetails, dann Bereiche; sonst bricht es Zielwahl, Route oder Interaktionsmodus ab.';
+      'Schließt offene Menü-Popups, Bereichsdetails und Bereiche; sonst bricht es Zielwahl, Route oder Interaktionsmodus ab.';
 
   @override
   String get manualGamepadModeAction => 'X';

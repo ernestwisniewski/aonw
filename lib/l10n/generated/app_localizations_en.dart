@@ -493,7 +493,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Moves the selected hex cursor, or the selected row/card in open city and research panels.';
+      'Moves the selected hex cursor, main-menu focus, or the selected row/card in open city and research panels.';
 
   @override
   String get manualGamepadPanAction => 'Right stick';
@@ -514,14 +514,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirms the current hex or selected panel choice, including city production and research picks.';
+      'Confirms the current hex, focused menu control, or selected panel choice, including city production and research picks.';
 
   @override
   String get manualGamepadCancelAction => 'B / Back';
 
   @override
   String get manualGamepadCancelBody =>
-      'Closes panel details first, then panels; otherwise cancels active targeting, route, or interaction mode.';
+      'Closes open menu popups, panel details, and panels; otherwise cancels active targeting, route, or interaction mode.';
 
   @override
   String get manualGamepadModeAction => 'X';

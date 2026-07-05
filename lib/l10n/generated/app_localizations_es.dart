@@ -496,7 +496,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Mueve el cursor hexagonal seleccionado, o la fila/tarjeta seleccionada en paneles de ciudad e investigación abiertos.';
+      'Mueve el cursor hexagonal seleccionado, el foco del menú principal, o la fila/tarjeta seleccionada en paneles de ciudad e investigación abiertos.';
 
   @override
   String get manualGamepadPanAction => 'Stick derecho';
@@ -517,14 +517,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirma el hexágono actual o la opción seleccionada del panel, incluidas producción de ciudad e investigación.';
+      'Confirma el hexágono actual, el control de menú enfocado o la opción seleccionada del panel, incluidas producción de ciudad e investigación.';
 
   @override
   String get manualGamepadCancelAction => 'B / Atrás';
 
   @override
   String get manualGamepadCancelBody =>
-      'Cierra primero los detalles del panel y luego los paneles; si no, cancela objetivo, ruta o modo de interacción.';
+      'Cierra popups de menú abiertos, detalles del panel y paneles; si no, cancela objetivo, ruta o modo de interacción.';
 
   @override
   String get manualGamepadModeAction => 'X';

@@ -3,6 +3,7 @@ import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/menu/main_menu_screen.dart';
@@ -70,6 +71,55 @@ void main() {
     expect(find.byKey(const Key('new-game-screen')), findsOneWidget);
     expect(visitedNewGameUris.last.queryParameters['mode'], 'single-player');
     expect(visitedNewGameUris.last.queryParameters['direct'], isNull);
+  });
+
+  testWidgets('main menu opens new game with gamepad focus and confirm', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) =>
+              MainMenuScreen(gamepadInputListenable: gamepadInput),
+        ),
+        GoRoute(
+          path: '/new-game',
+          builder: (context, state) =>
+              const SizedBox(key: Key('new-game-screen')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadDown: true),
+    );
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('new-game-screen')), findsOneWidget);
   });
 
   testWidgets('main menu manual link opens controls manual', (tester) async {
@@ -373,4 +423,16 @@ WireMatch _runningMatch() {
     state: 'running',
     createdAt: DateTime.utc(2026, 4, 27, 12),
   );
+}
+
+Future<void> _pressGamepad(
+  WidgetTester tester,
+  ValueNotifier<GamepadInputSnapshot> input,
+  GamepadInputSnapshot snapshot,
+) async {
+  input.value = snapshot;
+  await tester.pump(const Duration(milliseconds: 16));
+  input.value = GamepadInputSnapshot.empty;
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump(const Duration(milliseconds: 180));
 }

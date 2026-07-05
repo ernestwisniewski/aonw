@@ -1,21 +1,26 @@
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
+import 'package:aonw/menu/menu_gamepad_input.dart';
 import 'package:aonw/menu/menu_route_shell.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_app_bar.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
 import 'package:aonw/shared/widgets/scrollable_error_view.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class LoadGameScreen extends ConsumerWidget {
-  const LoadGameScreen({super.key});
+  const LoadGameScreen({super.key, this.gamepadInputListenable});
+
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   Future<void> _confirmDelete(
     BuildContext context,
@@ -59,13 +64,18 @@ class LoadGameScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: GameUiTheme.bg,
-      appBar: GameUiAppBar(
-        title: l10n.loadGameTitle,
-        onClose: ref.withMenuBack(() => context.go('/')),
+    void close() => context.go('/');
+    return MenuGamepadInputBinding(
+      input: gamepadInputListenable,
+      onCancel: ref.withMenuBack(close),
+      child: Scaffold(
+        backgroundColor: GameUiTheme.bg,
+        appBar: GameUiAppBar(
+          title: l10n.loadGameTitle,
+          onClose: ref.withMenuBack(close),
+        ),
+        body: MenuRouteBackdrop(child: _buildBody(context, ref)),
       ),
-      body: MenuRouteBackdrop(child: _buildBody(context, ref)),
     );
   }
 

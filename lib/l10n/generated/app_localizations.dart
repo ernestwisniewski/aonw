@@ -967,7 +967,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadCursorBody.
   ///
   /// In en, this message translates to:
-  /// **'Moves the selected hex cursor, or the selected row/card in open city and research panels.'**
+  /// **'Moves the selected hex cursor, main-menu focus, or the selected row/card in open city and research panels.'**
   String get manualGamepadCursorBody;
 
   /// No description provided for @manualGamepadPanAction.
@@ -1003,7 +1003,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Confirms the current hex or selected panel choice, including city production and research picks.'**
+  /// **'Confirms the current hex, focused menu control, or selected panel choice, including city production and research picks.'**
   String get manualGamepadConfirmBody;
 
   /// No description provided for @manualGamepadCancelAction.
@@ -1015,7 +1015,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadCancelBody.
   ///
   /// In en, this message translates to:
-  /// **'Closes panel details first, then panels; otherwise cancels active targeting, route, or interaction mode.'**
+  /// **'Closes open menu popups, panel details, and panels; otherwise cancels active targeting, route, or interaction mode.'**
   String get manualGamepadCancelBody;
 
   /// No description provided for @manualGamepadModeAction.

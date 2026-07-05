@@ -493,7 +493,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Przesuwa zaznaczony kursor heksa albo wybrany wiersz/kartę w otwartym panelu miasta lub badań.';
+      'Przesuwa zaznaczony kursor heksa, fokus menu głównego albo wybrany wiersz/kartę w otwartym panelu miasta lub badań.';
 
   @override
   String get manualGamepadPanAction => 'Prawy analog';
@@ -514,14 +514,14 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Potwierdza aktualny heks albo wybór w panelu, w tym produkcję miasta i badania.';
+      'Potwierdza aktualny heks, kontrolkę menu z fokusem albo wybór w panelu, w tym produkcję miasta i badania.';
 
   @override
   String get manualGamepadCancelAction => 'B / Back';
 
   @override
   String get manualGamepadCancelBody =>
-      'Najpierw zamyka szczegóły panelu, potem panel; poza tym anuluje celowanie, trasę albo tryb interakcji.';
+      'Zamyka otwarte popupy menu, szczegóły panelu i panele; poza tym anuluje celowanie, trasę albo tryb interakcji.';
 
   @override
   String get manualGamepadModeAction => 'X';

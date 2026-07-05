@@ -497,7 +497,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadCursorBody =>
-      'Déplace le curseur hex sélectionné, ou la ligne/carte sélectionnée dans les panneaux de ville et de recherche ouverts.';
+      'Déplace le curseur hex sélectionné, le focus du menu principal, ou la ligne/carte sélectionnée dans les panneaux de ville et de recherche ouverts.';
 
   @override
   String get manualGamepadPanAction => 'Stick droit';
@@ -518,14 +518,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadConfirmBody =>
-      'Confirme l\'hex actuel ou le choix sélectionné dans un panneau, y compris production urbaine et recherche.';
+      'Confirme l\'hex actuel, le contrôle de menu focalisé ou le choix sélectionné dans un panneau, y compris production urbaine et recherche.';
 
   @override
   String get manualGamepadCancelAction => 'B / Retour';
 
   @override
   String get manualGamepadCancelBody =>
-      'Ferme d\'abord les détails du panneau, puis les panneaux; sinon annule ciblage, itinéraire ou mode d\'interaction.';
+      'Ferme les popups de menu ouverts, les détails du panneau et les panneaux; sinon annule ciblage, itinéraire ou mode d\'interaction.';
 
   @override
   String get manualGamepadModeAction => 'X';
