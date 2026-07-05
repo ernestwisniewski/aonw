@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
@@ -10,6 +11,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -102,6 +104,89 @@ void main() {
     await tester.tap(find.text('RESEARCH'));
     await tester.pump();
 
+    expect(researched, [TechnologyId.agriculture]);
+  });
+
+  testWidgets('gamepad opens technology details and toggles view mode', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+    final researched = <TechnologyId>[];
+    var closeCount = 0;
+
+    await tester.pumpWidget(
+      _technologyTestApp(
+        child: TechnologyTreePanel(
+          maxHeight: 520,
+          gamepadInputListenable: gamepadInput,
+          viewModel: const TechnologyPanelViewModel(
+            sciencePerTurn: 2,
+            activeTechnology: null,
+            technologies: [
+              TechnologyCardViewModel(
+                id: TechnologyId.agriculture,
+                state: TechnologyCardState.available,
+                progress: 0,
+                baseCost: 6,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+              ),
+              TechnologyCardViewModel(
+                id: TechnologyId.mining,
+                state: TechnologyCardState.locked,
+                progress: 0,
+                baseCost: 6,
+                totalCost: 6,
+                turnsRemaining: 3,
+                boostActive: false,
+                treeColumn: 1,
+              ),
+            ],
+          ),
+          onResearch: researched.add,
+          onClose: () => closeCount++,
+        ),
+      ),
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(inspect: true),
+    );
+    expect(find.byType(TechnologyDetailsPanel), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(cancel: true),
+    );
+    expect(find.byType(TechnologyDetailsPanel), findsNothing);
+    expect(closeCount, 0);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(find.byKey(const Key('technologyTreeBoard.grid')), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(moveMode: true),
+    );
+    expect(find.text('Recommended research'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
     expect(researched, [TechnologyId.agriculture]);
   });
 
@@ -785,6 +870,18 @@ void _noopResearch(TechnologyId technologyId) {}
 Future<void> _showFullTree(WidgetTester tester) async {
   await tester.tap(find.textContaining('Show tree'));
   await tester.pump();
+}
+
+Future<void> _pressGamepad(
+  WidgetTester tester,
+  ValueNotifier<GamepadInputSnapshot> input,
+  GamepadInputSnapshot snapshot,
+) async {
+  input.value = snapshot;
+  await tester.pump(const Duration(milliseconds: 16));
+  input.value = GamepadInputSnapshot.empty;
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump(const Duration(milliseconds: 180));
 }
 
 void _expectWarmSurface(WidgetTester tester, Key key) {

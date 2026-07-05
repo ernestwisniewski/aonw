@@ -19,6 +19,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
     required this.compact,
     required this.onResearch,
     required this.onTechnologyDetails,
+    this.selectedTechnologyId,
     super.key,
   });
 
@@ -27,6 +28,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
   final bool compact;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
+  final TechnologyId? selectedTechnologyId;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,7 @@ class TechnologyRecommendationsView extends StatelessWidget {
               cards: recommendations,
               compact: compact,
               l10n: l10n,
+              selectedTechnologyId: selectedTechnologyId,
               onResearch: onResearch,
               onTechnologyDetails: onTechnologyDetails,
             ),
@@ -61,6 +64,7 @@ class _RecommendationCardsLayout extends StatelessWidget {
     required this.l10n,
     required this.onResearch,
     required this.onTechnologyDetails,
+    required this.selectedTechnologyId,
   });
 
   final List<TechnologyCardViewModel> cards;
@@ -68,6 +72,7 @@ class _RecommendationCardsLayout extends StatelessWidget {
   final AppLocalizations l10n;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
+  final TechnologyId? selectedTechnologyId;
 
   @override
   Widget build(BuildContext context) {
@@ -79,13 +84,17 @@ class _RecommendationCardsLayout extends StatelessWidget {
             children: [
               for (var i = 0; i < cards.length; i++) ...[
                 if (i > 0) const SizedBox(height: 10),
-                _RecommendationCard(
-                  rank: i + 1,
-                  card: cards[i],
-                  compact: compact,
-                  l10n: l10n,
-                  onResearch: onResearch,
-                  onTechnologyDetails: onTechnologyDetails,
+                _RevealWhenSelected(
+                  selected: selectedTechnologyId == cards[i].id,
+                  child: _RecommendationCard(
+                    rank: i + 1,
+                    card: cards[i],
+                    compact: compact,
+                    selected: selectedTechnologyId == cards[i].id,
+                    l10n: l10n,
+                    onResearch: onResearch,
+                    onTechnologyDetails: onTechnologyDetails,
+                  ),
                 ),
               ],
             ],
@@ -97,13 +106,17 @@ class _RecommendationCardsLayout extends StatelessWidget {
             for (var i = 0; i < cards.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
               Expanded(
-                child: _RecommendationCard(
-                  rank: i + 1,
-                  card: cards[i],
-                  compact: compact,
-                  l10n: l10n,
-                  onResearch: onResearch,
-                  onTechnologyDetails: onTechnologyDetails,
+                child: _RevealWhenSelected(
+                  selected: selectedTechnologyId == cards[i].id,
+                  child: _RecommendationCard(
+                    rank: i + 1,
+                    card: cards[i],
+                    compact: compact,
+                    selected: selectedTechnologyId == cards[i].id,
+                    l10n: l10n,
+                    onResearch: onResearch,
+                    onTechnologyDetails: onTechnologyDetails,
+                  ),
                 ),
               ),
             ],
@@ -119,6 +132,7 @@ class _RecommendationCard extends StatelessWidget {
     required this.rank,
     required this.card,
     required this.compact,
+    required this.selected,
     required this.l10n,
     required this.onResearch,
     required this.onTechnologyDetails,
@@ -127,6 +141,7 @@ class _RecommendationCard extends StatelessWidget {
   final int rank;
   final TechnologyCardViewModel card;
   final bool compact;
+  final bool selected;
   final AppLocalizations l10n;
   final ValueChanged<TechnologyId> onResearch;
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
@@ -140,11 +155,13 @@ class _RecommendationCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: SurfaceElevation.flat.decoration(
           background: const Color(0xFF1D2630),
-          backgroundAlpha: 245,
-          borderColor: rank == 1
+          backgroundAlpha: selected ? 255 : 245,
+          borderColor: selected
+              ? GameUiTheme.goldLight
+              : rank == 1
               ? GameUiTheme.scienceAccent
               : const Color(0xFF788EA7),
-          borderAlpha: rank == 1 ? 210 : 150,
+          borderAlpha: selected ? 255 : (rank == 1 ? 210 : 150),
           border: BorderEmphasis.active,
           borderRadius: BorderRadius.circular(7),
           includeShadow: false,
@@ -293,6 +310,48 @@ class _RecommendationCard extends StatelessWidget {
       return l10n.technologyRecommendationReasonFast;
     }
     return l10n.technologyRecommendationReasonDefault;
+  }
+}
+
+class _RevealWhenSelected extends StatefulWidget {
+  const _RevealWhenSelected({required this.selected, required this.child});
+
+  final bool selected;
+  final Widget child;
+
+  @override
+  State<_RevealWhenSelected> createState() => _RevealWhenSelectedState();
+}
+
+class _RevealWhenSelectedState extends State<_RevealWhenSelected> {
+  @override
+  void initState() {
+    super.initState();
+    _revealIfSelected();
+  }
+
+  @override
+  void didUpdateWidget(_RevealWhenSelected oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selected && !oldWidget.selected) {
+      _revealIfSelected();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+
+  void _revealIfSelected() {
+    if (!widget.selected) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 120),
+        alignment: 0.2,
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 }
 
