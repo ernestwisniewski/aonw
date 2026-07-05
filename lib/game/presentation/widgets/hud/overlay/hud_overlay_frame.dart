@@ -434,9 +434,8 @@ class HudOverlayFrame {
     );
   }
 
-  static Player? _activePlayer(GameSave gameSave, String activePlayerId) {
-    return gameSave.playerById(activePlayerId);
-  }
+  static Player? _activePlayer(GameSave gameSave, String activePlayerId) =>
+      gameSave.playerById(activePlayerId);
 
   static bool _cityExpansionHexSelected(GameState? gameState) {
     final pendingAction = gameState?.pendingAction;
@@ -468,12 +467,9 @@ class HudOverlayFrame {
     };
   }
 
-  static bool _hasOwnedCity(GameState? gameState, String activePlayerId) {
-    return gameState?.cities.any(
-          (city) => city.ownerPlayerId == activePlayerId,
-        ) ??
-        false;
-  }
+  static bool _hasOwnedCity(GameState? gameState, String activePlayerId) =>
+      gameState?.cities.any((city) => city.ownerPlayerId == activePlayerId) ??
+      false;
 
   static bool _hasCityNeedingProduction(
     GameState? gameState,
@@ -558,9 +554,8 @@ class HudOverlayFrame {
         unit.queuedPath == null;
   }
 
-  static bool _canUseUnitTurnAction(GameUnit unit) {
-    return unit.movementPoints > 0 && !unit.isWorking && !unit.isFortified;
-  }
+  static bool _canUseUnitTurnAction(GameUnit unit) =>
+      unit.movementPoints > 0 && !unit.isWorking && !unit.isFortified;
 
   static String? _cityFoundingBlockedReason({
     required GameState? gameState,
@@ -582,31 +577,27 @@ class HudOverlayFrame {
   static String? _cityFoundingFailureReason(
     CityFoundingFailure? failure,
     AppLocalizations l10n,
-  ) {
-    return switch (failure) {
-      null => null,
-      CityFoundingFailure.noCommander =>
-        l10n.selectionActionFoundCityNoCommander,
-      CityFoundingFailure.noSettlers => l10n.selectionActionFoundCityNoSettlers,
-      CityFoundingFailure.invalidCenter =>
-        l10n.selectionActionFoundCityInvalidCenter,
-      CityFoundingFailure.cityAlreadyExists =>
-        l10n.selectionActionFoundCityCityAlreadyExists,
-      CityFoundingFailure.centerOccupied =>
-        l10n.selectionActionFoundCityCenterOccupied,
-      CityFoundingFailure.tooCloseToCity =>
-        l10n.selectionActionFoundCityTooCloseToCity,
-      CityFoundingFailure.invalidControlledHexes =>
-        l10n.selectionActionFoundCityInvalidControlledHexes,
-    };
-  }
+  ) => switch (failure) {
+    null => null,
+    CityFoundingFailure.noCommander => l10n.selectionActionFoundCityNoCommander,
+    CityFoundingFailure.noSettlers => l10n.selectionActionFoundCityNoSettlers,
+    CityFoundingFailure.invalidCenter =>
+      l10n.selectionActionFoundCityInvalidCenter,
+    CityFoundingFailure.cityAlreadyExists =>
+      l10n.selectionActionFoundCityCityAlreadyExists,
+    CityFoundingFailure.centerOccupied =>
+      l10n.selectionActionFoundCityCenterOccupied,
+    CityFoundingFailure.tooCloseToCity =>
+      l10n.selectionActionFoundCityTooCloseToCity,
+    CityFoundingFailure.invalidControlledHexes =>
+      l10n.selectionActionFoundCityInvalidControlledHexes,
+  };
 
-  static bool _canStartMoveTargeting(GameUnit? unit) {
-    return unit != null &&
-        !unit.isMerchant &&
-        _canUseUnitTurnAction(unit) &&
-        unit.queuedPath == null;
-  }
+  static bool _canStartMoveTargeting(GameUnit? unit) =>
+      unit != null &&
+      !unit.isMerchant &&
+      _canUseUnitTurnAction(unit) &&
+      unit.queuedPath == null;
 
   static String? _moveTargetingBlockedReason(
     GameUnit? unit,
