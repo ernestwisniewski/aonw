@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -64,21 +65,10 @@ class _GameEventNotificationMessageFormatter {
 
   GameEventNotificationMessage message() {
     final event = notification.event;
-    return switch (event) {
-      CityFoundedEvent() ||
-      CityBuiltBuildingEvent() ||
-      CityProducedUnitEvent() ||
-      CityClaimedHexEvent() => _cityEventMessage(event),
-      UnitMovedEvent() ||
-      UnitGainedExperienceEvent() ||
-      WorkerCompletedJobEvent() => _unitEventMessage(event),
-      UnitAttackedEvent() ||
-      CityAttackedEvent() ||
-      CombatResolvedEvent() ||
-      UnitKilledEvent() ||
-      UnitRetreatedEvent() ||
-      CityCapturedEvent() ||
-      CityDestroyedEvent() => _combatEventMessage(
+    return switch (GameEventDescriptor.forEvent(event).messageGroup) {
+      GameEventMessageGroup.city => _cityEventMessage(event),
+      GameEventMessageGroup.unit => _unitEventMessage(event),
+      GameEventMessageGroup.combat => _combatEventMessage(
         l10n: l10n,
         save: save,
         state: state,
@@ -86,27 +76,11 @@ class _GameEventNotificationMessageFormatter {
         activityContext: activityContext,
         event: event,
       ),
-      TurnEndedEvent() ||
-      DominationThresholdReachedEvent() ||
-      StabilityBandChangedEvent() => _turnEventMessage(event),
-      ResearchPointsGainedEvent() ||
-      TechnologyResearchedEvent() ||
-      StrategicResourceDiscoveredEvent() => _researchEventMessage(event),
-      MapObjectiveSecuredEvent() => _objectiveEventMessage(event),
-      CivilizationMetEvent() ||
-      DiplomaticProposalSentEvent() ||
-      DiplomaticProposalRespondedEvent() ||
-      DiplomaticProposalExpiredEvent() ||
-      DiplomaticRelationChangedEvent() ||
-      DiplomaticMessageSentEvent() ||
-      DiplomaticMessageRespondedEvent() ||
-      DiplomaticScoreChangedEvent() ||
-      DiplomaticPromiseBrokenEvent() => _diplomacyEventMessage(event),
-      CommandRejectedEvent() ||
-      AllPlayersSubmittedEvent() ||
-      PlayerTimedOutEvent() ||
-      TurnAutoResolvedEvent() ||
-      PlayerKickedEvent() => _systemEventMessage(event),
+      GameEventMessageGroup.turn => _turnEventMessage(event),
+      GameEventMessageGroup.research => _researchEventMessage(event),
+      GameEventMessageGroup.objective => _objectiveEventMessage(event),
+      GameEventMessageGroup.diplomacy => _diplomacyEventMessage(event),
+      GameEventMessageGroup.system => _systemEventMessage(event),
     };
   }
 
