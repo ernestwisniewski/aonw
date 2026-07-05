@@ -4,6 +4,19 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.1.1 - 2026-07-05
+
+- Fixed controller targeting so unit move mode stays active while moving the
+  hex cursor and confirming a destination.
+- Improved gamepad navigation across the HUD, city production, technology tree,
+  main menu, and load-game cards.
+- Improved controller focus feedback so selected panels, rows, and cards are
+  easier to follow after gamepad input.
+- Prevented held controller input from accidentally carrying into newly opened
+  panels.
+- Fixed a turn-start panel flicker that could appear while the game state was
+  updating.
+
 ## 1.1.0 - 2026-07-05
 
 - Added gamepad controls for moving around the map, selecting tiles, confirming
