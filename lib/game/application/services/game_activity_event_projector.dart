@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -27,10 +28,10 @@ abstract final class GameActivityEventProjector {
     final projected = <LoggedActivityEntry>[];
     for (var i = 0; i < activityEvents.length; i++) {
       final event = activityEvents[i];
-      if (!isActivityWorthy(event)) continue;
-      final playerIds = playerIdsFor(
-        event,
-        state,
+      final descriptor = GameEventDescriptor.forEvent(event);
+      if (!descriptor.activityWorthy) continue;
+      final playerIds = descriptor.playerIdsFor(
+        state: state,
         previousState: previousState,
         visiblePlayerId: visiblePlayerId,
       );
@@ -60,43 +61,7 @@ abstract final class GameActivityEventProjector {
   }
 
   static bool isActivityWorthy(GameEvent event) {
-    return switch (event) {
-      CityFoundedEvent() ||
-      CityBuiltBuildingEvent() ||
-      CityProducedUnitEvent() ||
-      CityClaimedHexEvent() ||
-      CombatResolvedEvent() ||
-      UnitKilledEvent() ||
-      UnitRetreatedEvent() ||
-      CityCapturedEvent() ||
-      CityDestroyedEvent() ||
-      DominationThresholdReachedEvent() ||
-      StabilityBandChangedEvent() ||
-      WorkerCompletedJobEvent() ||
-      TechnologyResearchedEvent() ||
-      StrategicResourceDiscoveredEvent() ||
-      MapObjectiveSecuredEvent() ||
-      CivilizationMetEvent() ||
-      CommandRejectedEvent() ||
-      AllPlayersSubmittedEvent() ||
-      PlayerTimedOutEvent() ||
-      TurnAutoResolvedEvent() ||
-      PlayerKickedEvent() ||
-      DiplomaticProposalSentEvent() ||
-      DiplomaticProposalRespondedEvent() ||
-      DiplomaticProposalExpiredEvent() ||
-      DiplomaticRelationChangedEvent() ||
-      DiplomaticMessageSentEvent() ||
-      DiplomaticMessageRespondedEvent() ||
-      DiplomaticScoreChangedEvent() ||
-      DiplomaticPromiseBrokenEvent() => true,
-      UnitMovedEvent() ||
-      UnitGainedExperienceEvent() ||
-      UnitAttackedEvent() ||
-      CityAttackedEvent() ||
-      TurnEndedEvent() ||
-      ResearchPointsGainedEvent() => false,
-    };
+    return GameEventDescriptor.forEvent(event).activityWorthy;
   }
 
   static List<String> playerIdsFor(
@@ -105,100 +70,11 @@ abstract final class GameActivityEventProjector {
     GameState? previousState,
     String? visiblePlayerId,
   }) {
-    return switch (event) {
-      CityFoundedEvent(:final ownerPlayerId) => _playerIds([ownerPlayerId]),
-      CityBuiltBuildingEvent(:final cityId) => _playerIds([
-        _cityOwner(state, cityId),
-      ]),
-      CityProducedUnitEvent(:final cityId) => _playerIds([
-        _cityOwner(state, cityId),
-      ]),
-      CityClaimedHexEvent(:final cityId) => _playerIds([
-        _cityOwner(state, cityId),
-      ]),
-      UnitMovedEvent(:final unitId) => _playerIds([
-        _unitOwner(state, unitId) ?? _unitOwner(previousState, unitId),
-      ]),
-      UnitGainedExperienceEvent(:final ownerPlayerId) => _playerIds([
-        ownerPlayerId,
-      ]),
-      UnitAttackedEvent(
-        :final attackerOwnerPlayerId,
-        :final defenderOwnerPlayerId,
-      ) =>
-        _playerIds([attackerOwnerPlayerId, defenderOwnerPlayerId]),
-      CityAttackedEvent(
-        :final attackerOwnerPlayerId,
-        :final cityOwnerPlayerId,
-      ) =>
-        _playerIds([attackerOwnerPlayerId, cityOwnerPlayerId]),
-      CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
-        _combatPlayerIds(
-          state,
-          previousState,
-          attackerUnitId: attackerUnitId,
-          defenderUnitId: defenderUnitId,
-        ),
-      UnitKilledEvent(:final ownerPlayerId, :final attackerUnitId) =>
-        _playerIds([
-          ownerPlayerId,
-          if (attackerUnitId != null)
-            _unitOwner(state, attackerUnitId) ??
-                _unitOwner(previousState, attackerUnitId) ??
-                _cityOwner(state, attackerUnitId) ??
-                _cityOwner(previousState, attackerUnitId),
-        ]),
-      UnitRetreatedEvent(:final ownerPlayerId) => _playerIds([ownerPlayerId]),
-      CityCapturedEvent(
-        :final previousOwnerPlayerId,
-        :final newOwnerPlayerId,
-      ) =>
-        _playerIds([previousOwnerPlayerId, newOwnerPlayerId]),
-      CityDestroyedEvent(
-        :final previousOwnerPlayerId,
-        :final attackerOwnerPlayerId,
-      ) =>
-        _playerIds([previousOwnerPlayerId, attackerOwnerPlayerId]),
-      TurnEndedEvent(:final playerId) => _playerIds([playerId]),
-      WorkerCompletedJobEvent(:final unitId) => _playerIds([
-        _unitOwner(state, unitId) ?? _unitOwner(previousState, unitId),
-      ]),
-      DominationThresholdReachedEvent(:final playerId) => _playerIds([
-        visiblePlayerId,
-        playerId,
-      ]),
-      StabilityBandChangedEvent(:final playerId) => _playerIds([playerId]),
-      ResearchPointsGainedEvent(:final playerId) => _playerIds([playerId]),
-      TechnologyResearchedEvent(:final playerId) => _playerIds([playerId]),
-      StrategicResourceDiscoveredEvent(:final playerId) => _playerIds([
-        playerId,
-      ]),
-      MapObjectiveSecuredEvent(:final playerId) => _playerIds([playerId]),
-      CivilizationMetEvent(:final playerId) => _playerIds([playerId]),
-      PlayerTimedOutEvent(:final playerId) => _playerIds([playerId]),
-      TurnAutoResolvedEvent(:final playerId) => _playerIds([playerId]),
-      PlayerKickedEvent(:final playerId) => _playerIds([playerId]),
-      DiplomaticProposalSentEvent(:final fromPlayerId, :final toPlayerId) =>
-        _playerIds([fromPlayerId, toPlayerId]),
-      DiplomaticProposalRespondedEvent(
-        :final fromPlayerId,
-        :final toPlayerId,
-      ) =>
-        _playerIds([fromPlayerId, toPlayerId]),
-      DiplomaticProposalExpiredEvent(:final fromPlayerId, :final toPlayerId) =>
-        _playerIds([fromPlayerId, toPlayerId]),
-      DiplomaticRelationChangedEvent(:final playerAId, :final playerBId) =>
-        _playerIds([playerAId, playerBId]),
-      DiplomaticMessageSentEvent(:final fromPlayerId, :final toPlayerId) =>
-        _playerIds([fromPlayerId, toPlayerId]),
-      DiplomaticMessageRespondedEvent(:final fromPlayerId, :final toPlayerId) =>
-        _playerIds([fromPlayerId, toPlayerId]),
-      DiplomaticScoreChangedEvent(:final playerAId, :final playerBId) =>
-        _playerIds([playerAId, playerBId]),
-      DiplomaticPromiseBrokenEvent(:final playerAId, :final playerBId) =>
-        _playerIds([playerAId, playerBId]),
-      CommandRejectedEvent() || AllPlayersSubmittedEvent() => const <String>[],
-    };
+    return GameEventDescriptor.forEvent(event).playerIdsFor(
+      state: state,
+      previousState: previousState,
+      visiblePlayerId: visiblePlayerId,
+    );
   }
 
   static List<CivilizationMetEvent> _civilizationMetEvents(
@@ -268,23 +144,6 @@ abstract final class GameActivityEventProjector {
     return owners;
   }
 
-  static List<String> _combatPlayerIds(
-    GameState state,
-    GameState? previousState, {
-    required String attackerUnitId,
-    required String defenderUnitId,
-  }) {
-    final attackerOwner =
-        _unitOwner(state, attackerUnitId) ??
-        _unitOwner(previousState, attackerUnitId);
-    final defenderOwner =
-        _unitOwner(state, defenderUnitId) ??
-        _unitOwner(previousState, defenderUnitId) ??
-        _cityOwner(state, defenderUnitId) ??
-        _cityOwner(previousState, defenderUnitId);
-    return _playerIds([attackerOwner, defenderOwner]);
-  }
-
   static List<String> _playerIds(Iterable<String?> playerIds) {
     final ordered = <String>[];
     final seen = <String>{};
@@ -295,13 +154,5 @@ abstract final class GameActivityEventProjector {
       ordered.add(playerId);
     }
     return List.unmodifiable(ordered);
-  }
-
-  static String? _cityOwner(GameState? state, String cityId) {
-    return state?.cityById(cityId)?.ownerPlayerId;
-  }
-
-  static String? _unitOwner(GameState? state, String unitId) {
-    return state?.unitById(unitId)?.ownerPlayerId;
   }
 }
