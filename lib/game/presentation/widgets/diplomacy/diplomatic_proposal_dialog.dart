@@ -4,43 +4,55 @@ class _DiplomaticProposalDialog extends StatelessWidget {
   final String fromPlayerName;
   final Color fromPlayerColor;
   final String proposalLabel;
+  final GamepadInputRouter? gamepadRouter;
 
   const _DiplomaticProposalDialog({
     required this.fromPlayerName,
     required this.fromPlayerColor,
     required this.proposalLabel,
+    required this.gamepadRouter,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GameModalScaffold(
-      surfaceKey: const Key('diplomaticProposalDialog.surface'),
-      size: GameModalSize.regular,
-      contentPadding: EdgeInsets.zero,
-      scrollable: false,
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 540),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _DiplomaticProposalHeader(
-              fromPlayerName: fromPlayerName,
-              fromPlayerColor: fromPlayerColor,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-              child: Text(
-                proposalLabel,
-                key: const Key('diplomaticProposalDialog.proposal'),
-                style: GameUiTheme.body.copyWith(
-                  color: GameUiTheme.textPrimary,
-                  height: 1.35,
+    return GamepadInputRouteBinding(
+      router: gamepadRouter,
+      route: GamepadInputRoute(
+        priority: GamepadInputRoutePriority.modal,
+        onConfirm: () =>
+            Navigator.of(context).pop(_DiplomaticProposalDialogResult.later),
+        onCancel: () =>
+            Navigator.of(context).pop(_DiplomaticProposalDialogResult.later),
+      ),
+      child: GameModalScaffold(
+        surfaceKey: const Key('diplomaticProposalDialog.surface'),
+        size: GameModalSize.regular,
+        contentPadding: EdgeInsets.zero,
+        scrollable: false,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 540),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _DiplomaticProposalHeader(
+                fromPlayerName: fromPlayerName,
+                fromPlayerColor: fromPlayerColor,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                child: Text(
+                  proposalLabel,
+                  key: const Key('diplomaticProposalDialog.proposal'),
+                  style: GameUiTheme.body.copyWith(
+                    color: GameUiTheme.textPrimary,
+                    height: 1.35,
+                  ),
                 ),
               ),
-            ),
-            const _DiplomaticProposalFooter(),
-          ],
+              const _DiplomaticProposalFooter(),
+            ],
+          ),
         ),
       ),
     );

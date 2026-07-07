@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmark_step.dart';
 import 'package:aonw/game/presentation/widgets/onboarding/first_turn_coachmarks.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +13,7 @@ class HudFirstTurnCoachmarksSlot extends StatelessWidget {
     required this.hasSelectionActions,
     required this.readyToEndTurn,
     required this.coachmarkContext,
+    required this.gamepadInputListenable,
     super.key,
   });
 
@@ -22,6 +24,7 @@ class HudFirstTurnCoachmarksSlot extends StatelessWidget {
   final bool hasSelectionActions;
   final bool readyToEndTurn;
   final FirstTurnCoachmarkContext coachmarkContext;
+  final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +38,7 @@ class HudFirstTurnCoachmarksSlot extends StatelessWidget {
           hasSelectionActions: hasSelectionActions,
           readyToEndTurn: readyToEndTurn,
           coachmarkContext: coachmarkContext,
+          gamepadInputListenable: gamepadInputListenable,
         );
       },
     );

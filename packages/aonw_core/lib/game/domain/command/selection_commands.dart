@@ -78,18 +78,21 @@ final class FocusNextPendingActionCommand extends GameCommand {
     this.playerId, {
     this.preferredObjectiveAdvice,
     this.actionIndex,
+    this.actionStep = 1,
   });
 
   final String playerId;
   final GameObjectiveAdvice? preferredObjectiveAdvice;
   final int? actionIndex;
+  final int actionStep;
 
   @override
   bool operator ==(Object other) =>
       other is FocusNextPendingActionCommand &&
       other.playerId == playerId &&
       other.preferredObjectiveAdvice == preferredObjectiveAdvice &&
-      other.actionIndex == actionIndex;
+      other.actionIndex == actionIndex &&
+      other.actionStep == actionStep;
 
   @override
   int get hashCode => Object.hash(
@@ -97,6 +100,7 @@ final class FocusNextPendingActionCommand extends GameCommand {
     playerId,
     preferredObjectiveAdvice,
     actionIndex,
+    actionStep,
   );
 }
 

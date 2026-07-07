@@ -82,7 +82,7 @@ void main() {
       );
 
       expect(commands, [
-        const FocusTurnStartActionCommand('player_1'),
+        const FocusNextPendingActionCommand('player_1', actionStep: -1),
         const FocusNextPendingActionCommand('player_1'),
         const TileTappedCommand(2, 3),
       ]);

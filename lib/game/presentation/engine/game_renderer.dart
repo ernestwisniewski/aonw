@@ -395,7 +395,6 @@ class GameRenderer extends HexWorld
   void update(double dt) {
     super.update(dt);
     if (_isReady) _cameraController.update(dt);
-    _updateGamepadInput(dt);
     _syncFastCameraRendering(dt);
   }
 

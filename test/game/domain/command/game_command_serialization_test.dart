@@ -423,6 +423,7 @@ void main() {
         const original = FocusNextPendingActionCommand(
           'player-x',
           preferredObjectiveAdvice: GameObjectiveAdvice.improveField,
+          actionStep: -1,
         );
         expect(roundTrip(original), equals(original));
       });
@@ -452,8 +453,17 @@ void main() {
           );
 
           expect(json['preferredObjectiveAdvice'], 'improveField');
+          expect(json.containsKey('actionStep'), isFalse);
         },
       );
+
+      test('FocusNextPendingActionCommand encodes non-default action step', () {
+        final json = GameCommandSerializer.toJson(
+          const FocusNextPendingActionCommand('player-x', actionStep: -1),
+        );
+
+        expect(json['actionStep'], -1);
+      });
 
       test('CityTappedCommand encodes cityId', () {
         final json = GameCommandSerializer.toJson(

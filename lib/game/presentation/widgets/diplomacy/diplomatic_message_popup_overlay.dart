@@ -5,6 +5,7 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
@@ -319,6 +320,7 @@ class _DiplomaticMessagePopupOverlayState
     );
     final fromPlayerColor = _playerColor(message.fromPlayerId);
     final topicLabel = _topicLabel(l10n, message.topic);
+    final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
     _dialogOpen = true;
     final result = await showGameModal<_DiplomaticMessageDialogResult>(
@@ -328,6 +330,7 @@ class _DiplomaticMessagePopupOverlayState
         fromPlayerName: fromPlayerName,
         fromPlayerColor: fromPlayerColor,
         topicLabel: topicLabel,
+        gamepadRouter: gamepadRouter,
       ),
     );
     if (!mounted) return;
@@ -365,6 +368,7 @@ class _DiplomaticMessagePopupOverlayState
     );
     final fromPlayerColor = _playerColor(proposal.fromPlayerId);
     final proposalLabel = _proposalKindLabel(l10n, proposal.kind);
+    final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
     _dialogOpen = true;
     final result = await showGameModal<_DiplomaticProposalDialogResult>(
@@ -374,6 +378,7 @@ class _DiplomaticMessagePopupOverlayState
         fromPlayerName: fromPlayerName,
         fromPlayerColor: fromPlayerColor,
         proposalLabel: proposalLabel,
+        gamepadRouter: gamepadRouter,
       ),
     );
     if (!mounted) return;
@@ -410,12 +415,17 @@ class _DiplomaticMessagePopupOverlayState
       widget.gameSave,
     );
     final color = _DiplomaticPopupEventPolicy.accentFor(notification.event);
+    final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
     _dialogOpen = true;
     await showGameModal<void>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _DiplomaticEventDialog(message: message, accent: color),
+      builder: (_) => _DiplomaticEventDialog(
+        message: message,
+        accent: color,
+        gamepadRouter: gamepadRouter,
+      ),
     );
     if (!mounted) return;
     _dialogOpen = false;

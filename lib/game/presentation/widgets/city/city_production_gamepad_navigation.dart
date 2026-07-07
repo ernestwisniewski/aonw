@@ -69,14 +69,12 @@ abstract final class CityProductionGamepadNavigation {
     List<CityProductionGamepadChoice> choices,
     String? selectedKey,
   ) {
-    if (selectedKey != null &&
-        choices.any((choice) => choice.key == selectedKey)) {
-      return selectedKey;
-    }
-    for (final choice in choices) {
-      if (choice.canConfirm) return choice.key;
-    }
-    return choices.isEmpty ? null : choices.first.key;
+    return GamepadListCursor.selectedKeyFor(
+      choices,
+      selectedKey,
+      keyOf: (choice) => choice.key,
+      prefer: (choice) => choice.canConfirm,
+    );
   }
 
   static String? nextKey({
@@ -84,29 +82,24 @@ abstract final class CityProductionGamepadNavigation {
     required String? selectedKey,
     required GamepadMapDirection direction,
   }) {
-    if (choices.isEmpty) return null;
-    final step = switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.left => -1,
-      GamepadMapDirection.down || GamepadMapDirection.right => 1,
-    };
-    final effectiveKey = selectedKeyFor(choices, selectedKey);
-    final selectedIndex = choices.indexWhere(
-      (choice) => choice.key == effectiveKey,
+    return GamepadListCursor.nextKey(
+      items: choices,
+      selectedKey: selectedKey,
+      direction: direction,
+      keyOf: (choice) => choice.key,
+      prefer: (choice) => choice.canConfirm,
     );
-    final currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
-    final nextIndex = (currentIndex + step) % choices.length;
-    return choices[nextIndex].key;
   }
 
   static CityProductionGamepadChoice? selectedChoice(
     List<CityProductionGamepadChoice> choices,
     String? selectedKey,
   ) {
-    final effectiveKey = selectedKeyFor(choices, selectedKey);
-    if (effectiveKey == null) return null;
-    for (final choice in choices) {
-      if (choice.key == effectiveKey) return choice;
-    }
-    return null;
+    return GamepadListCursor.selectedItemFor(
+      choices,
+      selectedKey,
+      keyOf: (choice) => choice.key,
+      prefer: (choice) => choice.canConfirm,
+    );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line_view_model.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
 import 'package:aonw/game/presentation/widgets/theme/city_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
@@ -89,7 +91,100 @@ Future<void> _pumpButton(
   );
 }
 
+Future<void> _pumpCommandLine(
+  WidgetTester tester, {
+  bool readyToEndTurn = false,
+  int remainingActionCount = 0,
+  int currentActionIndex = 0,
+  List<HudTurnActionOption> turnActionOptions = const [],
+  VoidCallback? onEndTurn,
+  VoidCallback? onNextAction,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      locale: const Locale('en'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: Center(
+          child: HudCommandLine(
+            viewModel: HudCommandLineViewModel(
+              activePlayerColorValue: 0xFF4a7fc4,
+              playerName: 'Alice',
+              waitingForLabel: '',
+              statusLabel: 'Move',
+              selectionLabel: '',
+              remainingActionCount: remainingActionCount,
+              actionHintLabel: 'Next step: Warrior',
+              activePlayerFinished: false,
+              multiplayer: false,
+              showActionHint: remainingActionCount > 0,
+            ),
+            playerColor: const Color(0xFF4a7fc4),
+            turn: 1,
+            readyToEndTurn: readyToEndTurn,
+            isUnitAnimating: false,
+            currentActionIndex: currentActionIndex,
+            turnActionOptions: turnActionOptions,
+            pulseActionBorder: false,
+            onEndTurn: onEndTurn ?? () {},
+            onNextAction: onNextAction ?? () {},
+            onActionSelected: (_) {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
+  testWidgets('command line cycles actions before ending the turn', (
+    tester,
+  ) async {
+    var ended = false;
+    var next = false;
+
+    await _pumpCommandLine(
+      tester,
+      readyToEndTurn: true,
+      remainingActionCount: 3,
+      turnActionOptions: _turnActions,
+      onEndTurn: () => ended = true,
+      onNextAction: () => next = true,
+    );
+
+    expect(find.text('ACTION'), findsOneWidget);
+    expect(find.text('END TURN'), findsNothing);
+
+    await tester.tap(find.text('ACTION'));
+    await tester.pump();
+
+    expect(next, isTrue);
+    expect(ended, isFalse);
+  });
+
+  testWidgets('command line ends the turn when no actions remain', (
+    tester,
+  ) async {
+    var ended = false;
+    var next = false;
+
+    await _pumpCommandLine(
+      tester,
+      readyToEndTurn: true,
+      onEndTurn: () => ended = true,
+      onNextAction: () => next = true,
+    );
+
+    expect(find.text('END TURN'), findsOneWidget);
+
+    await tester.tap(find.text('END TURN'));
+    await tester.pump();
+
+    expect(ended, isTrue);
+    expect(next, isFalse);
+  });
+
   testWidgets('renders compact turn control on a narrow mobile viewport', (
     tester,
   ) async {

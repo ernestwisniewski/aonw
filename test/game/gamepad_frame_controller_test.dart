@@ -101,28 +101,32 @@ void main() {
       expect(freshFrame.cursorStep, GamepadMapDirection.right);
     });
 
-    test('fires HUD focus only on stick press edges', () {
-      final controller = GamepadFrameController();
-      const pressed = GamepadInputSnapshot(hudFocus: true);
+    test('consumes held buttons without resetting cursor repeat', () {
+      final controller = GamepadFrameController(
+        initialRepeatDelay: 0.3,
+        repeatInterval: 0.1,
+      );
+      const held = GamepadInputSnapshot(dpadRight: true);
+      const heldWithConfirm = GamepadInputSnapshot(
+        dpadRight: true,
+        confirm: true,
+      );
 
       expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isTrue,
+        controller.advance(input: held, dt: 0.016).cursorStep,
+        GamepadMapDirection.right,
       );
-      expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isFalse,
-      );
-      expect(
-        controller
-            .advance(input: GamepadInputSnapshot.empty, dt: 0.016)
-            .hudFocusPressed,
-        isFalse,
-      );
-      expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isTrue,
-      );
+      expect(controller.advance(input: held, dt: 0.15).cursorStep, isNull);
+
+      controller.consumeCurrentInput(heldWithConfirm);
+
+      final beforeRepeat = controller.advance(input: heldWithConfirm, dt: 0.14);
+      expect(beforeRepeat.confirmPressed, isFalse);
+      expect(beforeRepeat.cursorStep, isNull);
+
+      final repeat = controller.advance(input: heldWithConfirm, dt: 0.02);
+      expect(repeat.confirmPressed, isFalse);
+      expect(repeat.cursorStep, GamepadMapDirection.right);
     });
 
     test('fires directional HUD focus only on stick press edges', () {
@@ -150,6 +154,30 @@ void main() {
       final secondFrame = controller.advance(input: pressed, dt: 0.016);
       expect(secondFrame.hudFocusPreviousPressed, isTrue);
       expect(secondFrame.hudFocusNextPressed, isTrue);
+    });
+
+    test('fires primary action only on start press edges', () {
+      final controller = GamepadFrameController();
+      const pressed = GamepadInputSnapshot(primaryAction: true);
+
+      expect(
+        controller.advance(input: pressed, dt: 0.016).primaryActionPressed,
+        isTrue,
+      );
+      expect(
+        controller.advance(input: pressed, dt: 0.016).primaryActionPressed,
+        isFalse,
+      );
+      expect(
+        controller
+            .advance(input: GamepadInputSnapshot.empty, dt: 0.016)
+            .primaryActionPressed,
+        isFalse,
+      );
+      expect(
+        controller.advance(input: pressed, dt: 0.016).primaryActionPressed,
+        isTrue,
+      );
     });
 
     test('uses D-pad before left stick and treats stick up as map up', () {

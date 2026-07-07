@@ -77,6 +77,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
       paceBalance: paceBalance,
       preferredObjectiveAdvice: command.preferredObjectiveAdvice,
       actionIndex: command.actionIndex,
+      actionStep: command.actionStep,
     );
   }
 

@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/technology_discovery_popup_settings_provider.dart';
@@ -207,6 +208,7 @@ class _TechnologyDiscoveryPopupOverlayState
       l10n,
       event.technologyId,
     );
+    final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
     _dialogOpen = true;
     final result = await showGameModal<_TechnologyDiscoveryDialogResult>(
@@ -215,6 +217,7 @@ class _TechnologyDiscoveryPopupOverlayState
       builder: (_) => _TechnologyDiscoveryDialog(
         technologyId: event.technologyId,
         playerName: playerName,
+        gamepadRouter: gamepadRouter,
       ),
     );
     if (!mounted) return;

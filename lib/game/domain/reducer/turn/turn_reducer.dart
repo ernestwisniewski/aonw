@@ -85,6 +85,7 @@ abstract final class TurnReducer {
     PaceBalance paceBalance = PaceBalance.unlimited,
     GameObjectiveAdvice? preferredObjectiveAdvice,
     int? actionIndex,
+    int actionStep = 1,
   }) {
     final actions = _pendingTurnActions(
       state,
@@ -95,16 +96,14 @@ abstract final class TurnReducer {
     if (actions.isEmpty) return GameStateTransition(state: state);
 
     final requestedIndex = actionIndex;
-    final nextIndex =
-        requestedIndex != null &&
-            requestedIndex >= 0 &&
-            requestedIndex < actions.length
-        ? requestedIndex
+    final nextIndex = requestedIndex != null
+        ? _wrapTurnActionIndex(requestedIndex, actions.length)
         : _nextTurnActionIndex(
             state: state,
             playerId: playerId,
             actions: actions,
             preferredObjectiveAdvice: preferredObjectiveAdvice,
+            actionStep: actionStep,
           );
 
     return _focusPendingTurnAction(
@@ -123,21 +122,30 @@ abstract final class TurnReducer {
     required String playerId,
     required List<_PendingTurnAction> actions,
     required GameObjectiveAdvice? preferredObjectiveAdvice,
+    required int actionStep,
   }) {
     final currentIndex = _currentTurnActionIndex(state, playerId, actions);
     final preferredIndex = _preferredTurnActionIndex(
       actions,
       preferredObjectiveAdvice,
     );
+    final step = actionStep == 0 ? 1 : actionStep;
     final currentMatchesPreferred =
         currentIndex != -1 &&
         _turnActionMatchesAdvice(
           actions[currentIndex],
           preferredObjectiveAdvice,
         );
-    if (preferredIndex != -1 && !currentMatchesPreferred) return preferredIndex;
-    if (currentIndex == -1) return 0;
-    return (currentIndex + 1) % actions.length;
+    if (step > 0 && preferredIndex != -1 && !currentMatchesPreferred) {
+      return preferredIndex;
+    }
+    if (currentIndex == -1) return step > 0 ? 0 : actions.length - 1;
+    return _wrapTurnActionIndex(currentIndex + step, actions.length);
+  }
+
+  static int _wrapTurnActionIndex(int index, int actionCount) {
+    final wrapped = index.remainder(actionCount);
+    return wrapped < 0 ? wrapped + actionCount : wrapped;
   }
 
   /// Focuses the first turn-start action without cycling from old selection.

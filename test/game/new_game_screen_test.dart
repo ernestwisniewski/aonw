@@ -103,33 +103,27 @@ void main() {
       tester.getRect(find.byKey(const Key('newGame.mode.hot-seat'))).top,
       moreOrLessEquals(modeTop, epsilon: 1),
     );
-    expect(
-      modeTop,
-      lessThan(
-        tester.getRect(find.byKey(const Key('newGame.countryPanel'))).top,
-      ),
+    final countryRect = tester.getRect(
+      find.byKey(const Key('newGame.countryPanel')),
     );
-    expect(
-      tester.getRect(find.byKey(const Key('newGame.countryPanel'))).bottom,
-      lessThan(
-        tester
-            .getRect(find.byKey(const Key('newGame.singlePlayerSettingsPanel')))
-            .top,
-      ),
+    final settingsRect = tester.getRect(
+      find.byKey(const Key('newGame.singlePlayerSettingsPanel')),
     );
-    expect(
-      tester
-          .getRect(find.byKey(const Key('newGame.singlePlayerSettingsPanel')))
-          .bottom,
-      lessThan(
-        tester.getRect(find.byKey(const Key('newGame.victoryPanel'))).top,
-      ),
+    final victoryRect = tester.getRect(
+      find.byKey(const Key('newGame.victoryPanel')),
     );
+    final premiseRect = tester.getRect(
+      find.byKey(const Key('newGame.premisePanel')),
+    );
+    expect(modeTop, lessThan(countryRect.top));
+    expect(countryRect.bottom, lessThan(settingsRect.top));
+    expect(victoryRect.left, greaterThan(countryRect.right));
+    expect(victoryRect.top, moreOrLessEquals(countryRect.top, epsilon: 1));
+    expect(victoryRect.bottom, lessThan(premiseRect.top));
+    expect(premiseRect.left, greaterThan(settingsRect.right));
     expect(
-      tester.getRect(find.byKey(const Key('newGame.victoryPanel'))).bottom,
-      lessThan(
-        tester.getRect(find.byKey(const Key('newGame.premisePanel'))).top,
-      ),
+      premiseRect.bottom,
+      lessThan(tester.getRect(find.text('CONTINUE')).top),
     );
 
     expect(find.text('Victory paths'), findsOneWidget);

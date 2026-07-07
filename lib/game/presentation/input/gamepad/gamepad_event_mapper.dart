@@ -1,13 +1,17 @@
+import 'package:aonw/game/presentation/input/gamepad/gamepad_control_settings.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart';
 import 'package:gamepads/gamepads.dart';
 
 final class GamepadEventMapper {
-  const GamepadEventMapper();
+  const GamepadEventMapper({this.settings = GamepadControlSettings.defaults});
+
+  final GamepadControlSettings settings;
 
   GamepadInputSnapshot apply(
     GamepadInputSnapshot snapshot,
     NormalizedGamepadEvent event,
   ) {
+    if (!settings.enabled) return GamepadInputSnapshot.empty;
     final axis = event.axis;
     if (axis != null) return _applyAxis(snapshot, axis, event.value);
 
@@ -21,13 +25,17 @@ final class GamepadEventMapper {
     GamepadAxis axis,
     double value,
   ) {
-    return switch (axis) {
-      GamepadAxis.leftStickX => snapshot.copyWith(cursorX: value),
-      GamepadAxis.leftStickY => snapshot.copyWith(cursorY: value),
-      GamepadAxis.rightStickX => snapshot.copyWith(cameraX: value),
-      GamepadAxis.rightStickY => snapshot.copyWith(cameraY: value),
-      GamepadAxis.rightTrigger => snapshot.copyWith(zoomIn: value),
-      GamepadAxis.leftTrigger => snapshot.copyWith(zoomOut: value),
+    final action = settings.axisBindings.actionFor(axis);
+    if (action == null) return snapshot;
+    return switch (action) {
+      GamepadAxisAction.cursorX => snapshot.copyWith(cursorX: value),
+      GamepadAxisAction.cursorY => snapshot.copyWith(cursorY: value),
+      GamepadAxisAction.cameraX => snapshot.copyWith(cameraX: value),
+      GamepadAxisAction.cameraY => snapshot.copyWith(
+        cameraY: settings.invertCameraY ? -value : value,
+      ),
+      GamepadAxisAction.zoomIn => snapshot.copyWith(zoomIn: value),
+      GamepadAxisAction.zoomOut => snapshot.copyWith(zoomOut: value),
     };
   }
 
@@ -36,24 +44,44 @@ final class GamepadEventMapper {
     GamepadButton button,
     bool pressed,
   ) {
-    return switch (button) {
-      GamepadButton.a => snapshot.copyWith(confirm: pressed),
-      GamepadButton.b ||
-      GamepadButton.back => snapshot.copyWith(cancel: pressed),
-      GamepadButton.x => snapshot.copyWith(moveMode: pressed),
-      GamepadButton.y => snapshot.copyWith(inspect: pressed),
-      GamepadButton.leftStick => snapshot.copyWith(hudFocusPrevious: pressed),
-      GamepadButton.rightStick => snapshot.copyWith(hudFocusNext: pressed),
-      GamepadButton.leftBumper => snapshot.copyWith(focusPrevious: pressed),
-      GamepadButton.rightBumper => snapshot.copyWith(focusNext: pressed),
-      GamepadButton.start => snapshot.copyWith(primaryAction: pressed),
-      GamepadButton.dpadUp => snapshot.copyWith(dpadUp: pressed),
-      GamepadButton.dpadDown => snapshot.copyWith(dpadDown: pressed),
-      GamepadButton.dpadLeft => snapshot.copyWith(dpadLeft: pressed),
-      GamepadButton.dpadRight => snapshot.copyWith(dpadRight: pressed),
-      GamepadButton.rightTrigger => snapshot.copyWith(zoomIn: pressed ? 1 : 0),
-      GamepadButton.leftTrigger => snapshot.copyWith(zoomOut: pressed ? 1 : 0),
-      GamepadButton.home || GamepadButton.touchpad => snapshot,
+    var next = snapshot;
+    for (final action in settings.buttonBindings.actionsFor(button)) {
+      next = _applyButtonAction(next, action, pressed);
+    }
+    return next;
+  }
+
+  GamepadInputSnapshot _applyButtonAction(
+    GamepadInputSnapshot snapshot,
+    GamepadButtonAction action,
+    bool pressed,
+  ) {
+    return switch (action) {
+      GamepadButtonAction.confirm => snapshot.copyWith(confirm: pressed),
+      GamepadButtonAction.cancel => snapshot.copyWith(cancel: pressed),
+      GamepadButtonAction.moveMode => snapshot.copyWith(moveMode: pressed),
+      GamepadButtonAction.inspect => snapshot.copyWith(inspect: pressed),
+      GamepadButtonAction.hudFocusPrevious => snapshot.copyWith(
+        hudFocusPrevious: pressed,
+      ),
+      GamepadButtonAction.hudFocusNext => snapshot.copyWith(
+        hudFocusNext: pressed,
+      ),
+      GamepadButtonAction.focusPrevious => snapshot.copyWith(
+        focusPrevious: pressed,
+      ),
+      GamepadButtonAction.focusNext => snapshot.copyWith(focusNext: pressed),
+      GamepadButtonAction.primaryAction => snapshot.copyWith(
+        primaryAction: pressed,
+      ),
+      GamepadButtonAction.dpadUp => snapshot.copyWith(dpadUp: pressed),
+      GamepadButtonAction.dpadDown => snapshot.copyWith(dpadDown: pressed),
+      GamepadButtonAction.dpadLeft => snapshot.copyWith(dpadLeft: pressed),
+      GamepadButtonAction.dpadRight => snapshot.copyWith(dpadRight: pressed),
+      GamepadButtonAction.zoomIn => snapshot.copyWith(zoomIn: pressed ? 1 : 0),
+      GamepadButtonAction.zoomOut => snapshot.copyWith(
+        zoomOut: pressed ? 1 : 0,
+      ),
     };
   }
 }

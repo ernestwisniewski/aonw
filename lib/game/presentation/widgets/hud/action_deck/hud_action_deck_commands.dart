@@ -189,6 +189,10 @@ extension _HudActionDeckCommands on _HudActionDeckState {
   }
 
   void _endTurn() {
+    if (_hasTurnActions) {
+      _nextAction();
+      return;
+    }
     _clearActionCompletionPulse();
     _autoTurnFlowPrimed = true;
     _autoTurnFlowAdvancedThisTurn = true;

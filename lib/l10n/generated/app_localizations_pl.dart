@@ -542,21 +542,28 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar. A otwiera cele, D-pad scrolluje popupy, a B je zamyka.';
+      'Z mapy R3 skacze prosto do dolnego toolbaru, a B oddaje fokus mapie. Gdy fokus HUD jest aktywny, R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar.';
+
+  @override
+  String get manualGamepadSettingsAction => 'Ustawienia gamepada';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Opcje pozwalają wyłączyć wejście gamepada, zmienić martwą strefę i czułość kamery, odwrócić oś Y kamery, przemapować przyciski i osie albo przywrócić domyślne mapowanie.';
 
   @override
   String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'Prawy bumper przenosi fokus do kolejnej oczekującej akcji gracza w turze.';
+      'Prawy bumper uruchamia przepływ następnej akcji do przodu, otwierając lub przełączając panele produkcji miasta i badań, gdy są potrzebne.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Lewy bumper wraca fokusem do celu startowego tury, gdy trzeba odzyskać orientację.';
+      'Lewy bumper uruchamia ten sam przepływ akcji wstecz, zawijając przez jednostki, miasta i badania oraz otwierając właściwy panel, gdy jest potrzebny.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
@@ -1896,6 +1903,27 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get cinematicCameraLabel => 'Filmowa kamera';
+
+  @override
+  String get gamepadEnabledLabel => 'Wejście gamepada';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Martwa strefa gamepada';
+
+  @override
+  String get gamepadCameraSensitivityLabel => 'Czułość kamery gamepada';
+
+  @override
+  String get gamepadInvertCameraYLabel => 'Odwróć oś Y kamery gamepada';
+
+  @override
+  String get gamepadButtonBindingsLabel => 'Mapowanie przycisków gamepada';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Mapowanie osi gamepada';
+
+  @override
+  String get gamepadResetBindingsLabel => 'Resetuj mapowanie gamepada';
 
   @override
   String get performanceSectionTitle => 'Wydajność';

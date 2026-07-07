@@ -9,7 +9,7 @@ final class GamepadInputAdapter {
   GamepadInputAdapter({GamepadEventMapper mapper = const GamepadEventMapper()})
     : _mapper = mapper;
 
-  final GamepadEventMapper _mapper;
+  GamepadEventMapper _mapper;
   final ValueNotifier<GamepadInputSnapshot> snapshot =
       ValueNotifier<GamepadInputSnapshot>(GamepadInputSnapshot.empty);
 
@@ -25,6 +25,13 @@ final class GamepadInputAdapter {
     unawaited(_subscription?.cancel());
     _subscription = null;
     snapshot.dispose();
+  }
+
+  void updateMapper(GamepadEventMapper mapper) {
+    _mapper = mapper;
+    if (!mapper.settings.enabled) {
+      snapshot.value = GamepadInputSnapshot.empty;
+    }
   }
 
   void _handleEvent(NormalizedGamepadEvent event) {

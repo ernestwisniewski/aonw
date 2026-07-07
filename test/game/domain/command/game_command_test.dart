@@ -267,9 +267,11 @@ void main() {
         const cmd = FocusNextPendingActionCommand(
           'player-1',
           preferredObjectiveAdvice: GameObjectiveAdvice.improveField,
+          actionStep: -1,
         );
         expect(cmd.playerId, 'player-1');
         expect(cmd.preferredObjectiveAdvice, GameObjectiveAdvice.improveField);
+        expect(cmd.actionStep, -1);
       });
 
       test('FocusTurnStartActionCommand stores playerId', () {
@@ -965,6 +967,16 @@ void main() {
                 ),
               ),
             ),
+          );
+        },
+      );
+
+      test(
+        'FocusNextPendingActionCommand: different action step is not equal',
+        () {
+          expect(
+            const FocusNextPendingActionCommand('p', actionStep: -1),
+            isNot(equals(const FocusNextPendingActionCommand('p'))),
           );
         },
       );

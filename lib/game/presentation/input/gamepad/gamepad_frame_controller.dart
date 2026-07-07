@@ -6,11 +6,13 @@ import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart
 final class GamepadFrameController {
   GamepadFrameController({
     this.deadzone = 0.24,
+    this.cameraSensitivity = 1,
     this.initialRepeatDelay = 0.28,
     this.repeatInterval = 0.11,
   });
 
   final double deadzone;
+  final double cameraSensitivity;
   final double initialRepeatDelay;
   final double repeatInterval;
 
@@ -31,6 +33,19 @@ final class GamepadFrameController {
         : initialRepeatDelay;
   }
 
+  void consumeCurrentInput(GamepadInputSnapshot input) {
+    _previous = input;
+    final direction = _cursorDirection(input);
+    if (direction == null) {
+      _heldCursorDirection = null;
+      _cursorRepeatRemaining = 0;
+      return;
+    }
+    if (direction == _heldCursorDirection) return;
+    _heldCursorDirection = direction;
+    _cursorRepeatRemaining = initialRepeatDelay;
+  }
+
   GamepadControlFrame advance({
     required GamepadInputSnapshot input,
     required double dt,
@@ -39,14 +54,13 @@ final class GamepadFrameController {
 
     final frame = GamepadControlFrame(
       cursorStep: _advanceCursorRepeat(_cursorDirection(input), dt),
-      cameraX: _deadzone(input.cameraX),
-      cameraY: _deadzone(input.cameraY),
+      cameraX: _deadzone(input.cameraX) * cameraSensitivity,
+      cameraY: _deadzone(input.cameraY) * cameraSensitivity,
       zoom: _deadzone(input.zoom),
       confirmPressed: _pressed(input.confirm, _previous.confirm),
       cancelPressed: _pressed(input.cancel, _previous.cancel),
       inspectPressed: _pressed(input.inspect, _previous.inspect),
       moveModePressed: _pressed(input.moveMode, _previous.moveMode),
-      hudFocusPressed: _pressed(input.hudFocus, _previous.hudFocus),
       hudFocusPreviousPressed: _pressed(
         input.hudFocusPrevious,
         _previous.hudFocusPrevious,

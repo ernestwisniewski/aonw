@@ -1051,8 +1051,20 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadHudFocusBody.
   ///
   /// In en, this message translates to:
-  /// **'R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.'**
+  /// **'From the map, R3 jumps straight to the bottom toolbar and B returns focus to the map. While HUD focus is active, R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar.'**
   String get manualGamepadHudFocusBody;
+
+  /// No description provided for @manualGamepadSettingsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad settings'**
+  String get manualGamepadSettingsAction;
+
+  /// No description provided for @manualGamepadSettingsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.'**
+  String get manualGamepadSettingsBody;
 
   /// No description provided for @manualGamepadNextAction.
   ///
@@ -1063,7 +1075,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadNextBody.
   ///
   /// In en, this message translates to:
-  /// **'The right bumper focuses the next pending player action in the turn queue.'**
+  /// **'The right bumper runs the next-action flow forward, opening or switching city production and research panels when needed.'**
   String get manualGamepadNextBody;
 
   /// No description provided for @manualGamepadFocusAction.
@@ -1075,7 +1087,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadFocusBody.
   ///
   /// In en, this message translates to:
-  /// **'The left bumper returns focus to the turn-start target when you need to reorient.'**
+  /// **'The left bumper runs the same action flow backward, wrapping through units, cities, and research while opening the matching panel when needed.'**
   String get manualGamepadFocusBody;
 
   /// No description provided for @manualGamepadTurnAction.
@@ -3393,6 +3405,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cinematic camera'**
   String get cinematicCameraLabel;
+
+  /// No description provided for @gamepadEnabledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad input'**
+  String get gamepadEnabledLabel;
+
+  /// No description provided for @gamepadDeadzoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad deadzone'**
+  String get gamepadDeadzoneLabel;
+
+  /// No description provided for @gamepadCameraSensitivityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad camera sensitivity'**
+  String get gamepadCameraSensitivityLabel;
+
+  /// No description provided for @gamepadInvertCameraYLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invert gamepad camera Y'**
+  String get gamepadInvertCameraYLabel;
+
+  /// No description provided for @gamepadButtonBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad button bindings'**
+  String get gamepadButtonBindingsLabel;
+
+  /// No description provided for @gamepadAxisBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad axis bindings'**
+  String get gamepadAxisBindingsLabel;
+
+  /// No description provided for @gamepadResetBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset gamepad bindings'**
+  String get gamepadResetBindingsLabel;
 
   /// No description provided for @performanceSectionTitle.
   ///

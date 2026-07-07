@@ -545,21 +545,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 avanza a la derecha y L3 a la izquierda por la barra izquierda, el menú, las píldoras superiores, la barra de jugadores y la barra inferior. A abre objetivos, el D-pad desplaza popups abiertos y B los cierra.';
+      'Desde el mapa, R3 salta directamente a la barra inferior y B devuelve el foco al mapa. Mientras el foco del HUD está activo, R3 avanza a la derecha y L3 a la izquierda por la barra izquierda, el menú, las píldoras superiores, la barra de jugadores y la barra inferior.';
+
+  @override
+  String get manualGamepadSettingsAction => 'Ajustes de gamepad';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Las opciones permiten desactivar la entrada de gamepad, ajustar la zona muerta y la sensibilidad de la cámara, invertir Y, reasignar botones y ejes o restaurar los valores predeterminados.';
 
   @override
   String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'El bumper derecho enfoca la siguiente acción pendiente del jugador en la cola del turno.';
+      'El bumper derecho ejecuta el flujo de siguiente acción hacia delante, abriendo o cambiando paneles de producción de ciudad e investigación cuando hace falta.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'El bumper izquierdo devuelve el foco al objetivo inicial del turno cuando necesites orientarte.';
+      'El bumper izquierdo ejecuta el mismo flujo hacia atrás, recorriendo unidades, ciudades e investigación y abriendo el panel correspondiente cuando hace falta.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
@@ -1906,6 +1913,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cinematicCameraLabel => 'Cámara cinematográfica';
+
+  @override
+  String get gamepadEnabledLabel => 'Entrada de gamepad';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Zona muerta del gamepad';
+
+  @override
+  String get gamepadCameraSensitivityLabel =>
+      'Sensibilidad de cámara del gamepad';
+
+  @override
+  String get gamepadInvertCameraYLabel =>
+      'Invertir eje Y de cámara del gamepad';
+
+  @override
+  String get gamepadButtonBindingsLabel =>
+      'Asignaciones de botones del gamepad';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Asignaciones de ejes del gamepad';
+
+  @override
+  String get gamepadResetBindingsLabel =>
+      'Restablecer asignaciones del gamepad';
 
   @override
   String get performanceSectionTitle => 'Rendimiento';

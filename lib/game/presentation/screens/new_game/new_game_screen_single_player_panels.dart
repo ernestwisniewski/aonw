@@ -119,7 +119,7 @@ class _SinglePlayerSettingsPanel extends StatelessWidget {
             const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) {
-                final wide = constraints.maxWidth >= 620;
+                final wide = constraints.maxWidth >= 520;
                 final lengthDropdown =
                     _SettingsDropdown<_SinglePlayerGameLengthPreset>(
                       key: const Key('newGame.gameLengthSelector'),

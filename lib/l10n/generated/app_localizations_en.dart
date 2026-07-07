@@ -542,21 +542,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.';
+      'From the map, R3 jumps straight to the bottom toolbar and B returns focus to the map. While HUD focus is active, R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar.';
+
+  @override
+  String get manualGamepadSettingsAction => 'Gamepad settings';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.';
 
   @override
   String get manualGamepadNextAction => 'RB';
 
   @override
   String get manualGamepadNextBody =>
-      'The right bumper focuses the next pending player action in the turn queue.';
+      'The right bumper runs the next-action flow forward, opening or switching city production and research panels when needed.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'The left bumper returns focus to the turn-start target when you need to reorient.';
+      'The left bumper runs the same action flow backward, wrapping through units, cities, and research while opening the matching panel when needed.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
@@ -1897,6 +1904,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cinematicCameraLabel => 'Cinematic camera';
+
+  @override
+  String get gamepadEnabledLabel => 'Gamepad input';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Gamepad deadzone';
+
+  @override
+  String get gamepadCameraSensitivityLabel => 'Gamepad camera sensitivity';
+
+  @override
+  String get gamepadInvertCameraYLabel => 'Invert gamepad camera Y';
+
+  @override
+  String get gamepadButtonBindingsLabel => 'Gamepad button bindings';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Gamepad axis bindings';
+
+  @override
+  String get gamepadResetBindingsLabel => 'Reset gamepad bindings';
 
   @override
   String get performanceSectionTitle => 'Performance';

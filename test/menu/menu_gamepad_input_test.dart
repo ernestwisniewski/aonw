@@ -62,6 +62,64 @@ void main() {
     expect(secondActivations, 1);
   });
 
+  testWidgets('shows menu focus only while navigating with gamepad', (
+    tester,
+  ) async {
+    final input = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(input.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MenuGamepadInputBinding(
+            input: input,
+            child: Column(
+              children: [
+                MenuGamepadAction(
+                  key: const Key('firstAction'),
+                  onActivate: () {},
+                  builder: (context, focused) =>
+                      Text(focused ? 'First focused' : 'First'),
+                ),
+                MenuGamepadAction(
+                  key: const Key('secondAction'),
+                  onActivate: () {},
+                  builder: (context, focused) =>
+                      Text(focused ? 'Second focused' : 'Second'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('First focused'), findsNothing);
+    expect(find.text('Second focused'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('firstAction')));
+    await tester.pump();
+
+    expect(find.text('First focused'), findsNothing);
+    expect(find.text('Second focused'), findsNothing);
+
+    await _pressGamepad(
+      tester,
+      input,
+      const GamepadInputSnapshot(dpadDown: true),
+    );
+
+    expect(_focusedMenuLabels(), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('firstAction')));
+    await tester.pump();
+
+    expect(find.text('First focused'), findsNothing);
+    expect(find.text('Second focused'), findsNothing);
+  });
+
   testWidgets('cancel closes popup routes before invoking route cancel', (
     tester,
   ) async {
@@ -123,6 +181,14 @@ void main() {
     );
     expect(cancelCount, 1);
   });
+}
+
+Finder _focusedMenuLabels() {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is Text &&
+        (widget.data == 'First focused' || widget.data == 'Second focused'),
+  );
 }
 
 Future<void> _pressGamepad(

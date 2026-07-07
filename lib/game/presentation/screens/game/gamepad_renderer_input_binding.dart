@@ -12,12 +12,14 @@ typedef GamepadRendererInputBuilder =
 class GamepadRendererInputBinding extends StatefulWidget {
   const GamepadRendererInputBinding({
     required this.renderer,
+    required this.gamepadSettings,
     required this.builder,
     this.rendererInputEnabled = true,
     super.key,
   });
 
   final GameRenderer renderer;
+  final GamepadControlSettings gamepadSettings;
   final bool rendererInputEnabled;
   final GamepadRendererInputBuilder builder;
 
@@ -33,51 +35,52 @@ class _GamepadRendererInputBindingState
   @override
   void initState() {
     super.initState();
-    _adapter = GamepadInputAdapter()..start();
-    _attach(widget.renderer);
+    _adapter = GamepadInputAdapter(mapper: _mapper())..start();
   }
 
   @override
   void didUpdateWidget(GamepadRendererInputBinding oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.renderer != widget.renderer) {
-      _detach(oldWidget.renderer);
-      _attach(widget.renderer);
-      return;
-    }
-    if (oldWidget.rendererInputEnabled != widget.rendererInputEnabled) {
-      _sync();
+    if (oldWidget.gamepadSettings != widget.gamepadSettings) {
+      _adapter.updateMapper(_mapper());
     }
   }
 
   @override
   void dispose() {
-    _detach(widget.renderer);
     _adapter.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.builder(context, _adapter.snapshot);
+    return GamepadInputRouterScope(
+      input: _adapter.snapshot,
+      deadzone: widget.gamepadSettings.deadzone,
+      cameraSensitivity: widget.gamepadSettings.cameraSensitivity,
+      child: Builder(
+        builder: (context) {
+          return GamepadInputRouteListener(
+            route: GamepadInputRoute(
+              enabled: widget.rendererInputEnabled,
+              priority: GamepadInputRoutePriority.renderer,
+              onFrame: widget.renderer.applyGamepadAnalogFrame,
+              onNavigate: widget.renderer.moveGamepadCursor,
+              onConfirm: widget.renderer.confirmGamepadCursor,
+              onCancel: widget.renderer.cancelGamepadAction,
+              onDetails: widget.renderer.inspectGamepadCursor,
+              onMode: widget.renderer.toggleGamepadMoveMode,
+              onFocusPrevious: widget.renderer.focusPreviousGamepadAction,
+              onFocusNext: widget.renderer.focusNextGamepadAction,
+            ),
+            child: widget.builder(context, _adapter.snapshot),
+          );
+        },
+      ),
+    );
   }
 
-  void _attach(GameRenderer renderer) {
-    renderer.gamepadInput = _rendererInput();
-    _adapter.snapshot.addListener(_sync);
-  }
-
-  void _detach(GameRenderer renderer) {
-    _adapter.snapshot.removeListener(_sync);
-    renderer.gamepadInput = GamepadInputSnapshot.empty;
-  }
-
-  void _sync() {
-    widget.renderer.gamepadInput = _rendererInput();
-  }
-
-  GamepadInputSnapshot _rendererInput() {
-    if (!widget.rendererInputEnabled) return GamepadInputSnapshot.empty;
-    return _adapter.snapshot.value;
+  GamepadEventMapper _mapper() {
+    return GamepadEventMapper(settings: widget.gamepadSettings);
   }
 }

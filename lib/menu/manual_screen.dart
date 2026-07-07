@@ -769,6 +769,11 @@ List<_ControlGroup> _gamepadGroups(AppLocalizations l10n) => [
         action: l10n.manualGamepadHudFocusAction,
         body: l10n.manualGamepadHudFocusBody,
       ),
+      _ControlItem(
+        icon: Icons.tune,
+        action: l10n.manualGamepadSettingsAction,
+        body: l10n.manualGamepadSettingsBody,
+      ),
     ],
   ),
   _ControlGroup(

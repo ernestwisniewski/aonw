@@ -139,6 +139,44 @@ void main() {
     );
   });
 
+  testWidgets('options screen toggles gamepad input', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
+    );
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('Gamepad input'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Gamepad input'));
+    await tester.pump();
+
+    final context = tester.element(find.byType(OptionsScreen));
+    final container = ProviderScope.containerOf(context, listen: false);
+
+    expect(container.read(gameplaySettingsProvider).gamepad.enabled, isFalse);
+  });
+
+  testWidgets('options screen renders gamepad controls at the bottom', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
+    );
+    await tester.pump();
+
+    final gameplaySection = find.text('GAMEPLAY');
+    final performanceSection = find.text('PERFORMANCE');
+    final gamepadSection = find.text('GAMEPAD CONTROLS');
+
+    expect(gameplaySection, findsOneWidget);
+    expect(performanceSection, findsOneWidget);
+    expect(gamepadSection, findsOneWidget);
+    expect(
+      tester.getTopLeft(gamepadSection).dy,
+      greaterThan(tester.getTopLeft(performanceSection).dy),
+    );
+  });
+
   testWidgets('options screen signs out of stored multiplayer account', (
     tester,
   ) async {

@@ -6,6 +6,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     required GameState? Function() currentState,
     GameObjectiveAdvice? preferredObjectiveAdvice,
     int? actionIndex,
+    int actionStep = 1,
   }) async {
     if (activePlayerId.isEmpty) return;
 
@@ -14,6 +15,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
         activePlayerId,
         preferredObjectiveAdvice: preferredObjectiveAdvice,
         actionIndex: actionIndex,
+        actionStep: actionStep,
       ),
     );
     if (!_ref.mounted) return;

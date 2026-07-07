@@ -3,7 +3,12 @@ part of 'hud_action_deck.dart';
 extension _HudActionDeckGamepadFocus on _HudActionDeckState {
   String? _focusedHudTargetId() {
     final state = ref.watch(hudGamepadFocusControllerProvider);
-    return state.active ? state.targetId : null;
+    if (!state.active) return null;
+    if (state.targetId != null) return state.targetId;
+    if (state.section == HudGamepadFocusSection.selectionActions) {
+      return HudGamepadFocusTargetIds.bottomCommand;
+    }
+    return null;
   }
 
   void _syncActionDeckGamepadFocusTargets({
@@ -17,12 +22,13 @@ extension _HudActionDeckGamepadFocus on _HudActionDeckState {
           section: HudGamepadFocusSection.selectionActions,
           id: HudGamepadFocusTargetIds.bottomCommand,
           label: _commandLineGamepadLabel(l10n, viewModel),
-          onActivate: widget.readyToEndTurn ? _endTurn : _nextAction,
+          onActivate: _hasTurnActions ? _nextAction : _endTurn,
           activationKey: Object.hash(
             widget.gameSave.id,
             widget.activePlayerId,
             widget.gameState,
             widget.readyToEndTurn,
+            _hasTurnActions,
           ),
         ),
     ];
@@ -56,7 +62,9 @@ extension _HudActionDeckGamepadFocus on _HudActionDeckState {
     AppLocalizations l10n,
     HudCommandLineViewModel viewModel,
   ) {
-    if (widget.readyToEndTurn) return l10n.endTurnTooltip(widget.gameSave.turn);
+    if (widget.readyToEndTurn && !_hasTurnActions) {
+      return l10n.endTurnTooltip(widget.gameSave.turn);
+    }
     return viewModel.actionHintLabel ?? l10n.nextActionTooltip;
   }
 }

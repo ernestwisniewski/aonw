@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
@@ -35,44 +36,21 @@ class GamePrimaryActionController extends ConsumerStatefulWidget {
 
 class _GamePrimaryActionControllerState
     extends ConsumerState<GamePrimaryActionController> {
-  bool _primaryActionPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.gamepadInputListenable.addListener(_handleGamepadInput);
-  }
-
-  @override
-  void didUpdateWidget(GamePrimaryActionController oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.gamepadInputListenable == widget.gamepadInputListenable) {
-      return;
-    }
-    oldWidget.gamepadInputListenable.removeListener(_handleGamepadInput);
-    _primaryActionPressed = widget.gamepadInputListenable.value.primaryAction;
-    widget.gamepadInputListenable.addListener(_handleGamepadInput);
-  }
-
-  @override
-  void dispose() {
-    widget.gamepadInputListenable.removeListener(_handleGamepadInput);
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return GamePrimaryActionShortcutScope(
+    return GamepadPanelInputListener(
+      input: widget.gamepadInputListenable,
       enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
-      onActivate: _activate,
-      child: widget.child,
+      priority: GamepadInputRoutePriority.primary,
+      onPrimaryAction: _activate,
+      onFocusPrevious: () => _focusPendingAction(actionStep: -1),
+      onFocusNext: () => _focusPendingAction(actionStep: 1),
+      child: GamePrimaryActionShortcutScope(
+        enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
+        onActivate: _activate,
+        child: widget.child,
+      ),
     );
-  }
-
-  void _handleGamepadInput() {
-    final pressed = widget.gamepadInputListenable.value.primaryAction;
-    if (pressed && !_primaryActionPressed) _activate();
-    _primaryActionPressed = pressed;
   }
 
   void _activate() {
@@ -104,17 +82,67 @@ class _GamePrimaryActionControllerState
       activePlayerId: activePlayerId,
       technologyViewModel: technologyViewModel,
     );
+    final pendingActionCount = TurnReducer.pendingTurnActionCount(
+      gameState,
+      activePlayerId,
+      session.mapData,
+      technologyRuleset: ref.read(technologyRulesetProvider),
+    );
+    final dispatcher = ref.read(hudCommandDispatcherProvider);
+
+    if (pendingActionCount > 0) {
+      _focusPendingAction(actionStep: 1);
+      return;
+    }
+
+    unawaited(
+      dispatcher.endTurn(
+        animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
+        gameSave: save,
+        activePlayerId: activePlayerId,
+        readyToEndTurn: readyToEndTurn,
+        currentState: () => ref.read(gameStateProvider(session.saveId)).value,
+      ),
+    );
+  }
+
+  void _focusPendingAction({required int actionStep}) {
+    final save = widget.gameSave;
+    final session = widget.session;
+    if (save == null || session.saveId.isEmpty) return;
+    if (widget.animatingUnitIdsListenable.value.isNotEmpty) return;
+
+    final playerControl = PlayerControlCoordinator.normalize(
+      current: ref.read(gamePlayerControlControllerProvider),
+      save: save,
+    );
+    final activePlayerId = playerControl.activePlayerId;
+    if (activePlayerId.isEmpty || !playerControl.canAct) return;
+    if (save.playerStates[activePlayerId] == PlayerTurnState.finished) {
+      return;
+    }
+
+    final gameState = ref.read(gameStateProvider(session.saveId)).value;
+    if (gameState == null || gameState.hasSubmittedTurn(activePlayerId)) {
+      return;
+    }
+
+    final pendingActionCount = TurnReducer.pendingTurnActionCount(
+      gameState,
+      activePlayerId,
+      session.mapData,
+      technologyRuleset: ref.read(technologyRulesetProvider),
+    );
+    if (pendingActionCount <= 0) return;
 
     unawaited(
       ref
           .read(hudCommandDispatcherProvider)
-          .endTurn(
-            animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
-            gameSave: save,
+          .focusNextAction(
             activePlayerId: activePlayerId,
-            readyToEndTurn: readyToEndTurn,
             currentState: () =>
                 ref.read(gameStateProvider(session.saveId)).value,
+            actionStep: actionStep,
           ),
     );
   }

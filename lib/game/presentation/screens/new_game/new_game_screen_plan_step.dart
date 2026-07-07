@@ -31,6 +31,7 @@ class _PlanStep extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 760;
+          final twoColumn = constraints.maxWidth >= 900;
           final modeCards = [
             for (final value in NewGameFlowX.choiceOrder)
               _ModeChoiceCard(
@@ -42,36 +43,90 @@ class _PlanStep extends StatelessWidget {
                 onTap: value.enabled ? () => onFlowChanged(value) : null,
               ),
           ];
+          final countryPanel = _SinglePlayerCountryPanel(
+            key: const Key('newGame.countryPanel'),
+            country: playerCountry,
+            onChanged: onPlayerCountryChanged,
+          );
+          final settingsPanel = _SinglePlayerSettingsPanel(
+            key: const Key('newGame.singlePlayerSettingsPanel'),
+            gameLengthPreset: gameLengthPreset,
+            aiDifficulty: aiDifficulty,
+            onGameLengthChanged: onGameLengthChanged,
+            onAiDifficultyChanged: onAiDifficultyChanged,
+          );
+          final victoryPanel = _VictoryTypesPanel(
+            key: const Key('newGame.victoryPanel'),
+            rules: VictoryRules.forGameLength(gameLengthPreset.config),
+          );
+          final premisePanel = _GamePremisePanel(
+            key: const Key('newGame.premisePanel'),
+            flow: flow,
+            compact: twoColumn,
+          );
+
+          if (twoColumn) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ModeChoiceBlock(wide: wide, cards: modeCards),
+                const SizedBox(height: 12),
+                if (flow == NewGameFlow.singlePlayer)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 6,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            countryPanel,
+                            const SizedBox(height: 12),
+                            settingsPanel,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            victoryPanel,
+                            const SizedBox(height: 12),
+                            premisePanel,
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: victoryPanel),
+                      const SizedBox(width: 12),
+                      Expanded(child: premisePanel),
+                    ],
+                  ),
+              ],
+            );
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _ModeChoiceBlock(wide: wide, cards: modeCards),
               const SizedBox(height: 12),
               if (flow == NewGameFlow.singlePlayer) ...[
-                _SinglePlayerCountryPanel(
-                  key: const Key('newGame.countryPanel'),
-                  country: playerCountry,
-                  onChanged: onPlayerCountryChanged,
-                ),
+                countryPanel,
                 const SizedBox(height: 12),
-                _SinglePlayerSettingsPanel(
-                  key: const Key('newGame.singlePlayerSettingsPanel'),
-                  gameLengthPreset: gameLengthPreset,
-                  aiDifficulty: aiDifficulty,
-                  onGameLengthChanged: onGameLengthChanged,
-                  onAiDifficultyChanged: onAiDifficultyChanged,
-                ),
+                settingsPanel,
                 const SizedBox(height: 12),
               ],
-              _VictoryTypesPanel(
-                key: const Key('newGame.victoryPanel'),
-                rules: VictoryRules.forGameLength(gameLengthPreset.config),
-              ),
+              victoryPanel,
               const SizedBox(height: 12),
-              _GamePremisePanel(
-                key: const Key('newGame.premisePanel'),
-                flow: flow,
-              ),
+              premisePanel,
             ],
           );
         },

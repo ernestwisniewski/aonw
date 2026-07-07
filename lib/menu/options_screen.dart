@@ -22,6 +22,7 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gamepads/gamepads.dart';
 import 'package:go_router/go_router.dart';
 
 class OptionsScreen extends ConsumerWidget {
@@ -69,6 +70,8 @@ class OptionsScreen extends ConsumerWidget {
                     _GameplaySection(),
                     SizedBox(height: 12),
                     _PerformanceSection(),
+                    SizedBox(height: 12),
+                    _GamepadSection(),
                   ],
                 ),
               ),
@@ -717,6 +720,256 @@ class _GameplaySection extends ConsumerWidget {
   }
 }
 
+class _GamepadSection extends ConsumerWidget {
+  const _GamepadSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final settings = ref.watch(gameplaySettingsProvider);
+    final controller = ref.read(gameplaySettingsProvider.notifier);
+    return _SettingsSection(
+      icon: Icons.sports_esports_outlined,
+      title: l10n.manualGamepadTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SettingsToggleRow(
+            key: const Key('options.gamepadEnabled'),
+            icon: Icons.sports_esports_outlined,
+            label: l10n.gamepadEnabledLabel,
+            value: settings.gamepad.enabled,
+            onChanged: ref.withMenuClickValue(controller.setGamepadEnabled),
+          ),
+          if (settings.gamepad.enabled) ...[
+            _VolumeSlider(
+              key: const Key('options.gamepadDeadzone'),
+              label: l10n.gamepadDeadzoneLabel,
+              value: settings.gamepad.deadzone,
+              max: 0.6,
+              divisions: 12,
+              onChanged: ref.withMenuClickValue(controller.setGamepadDeadzone),
+            ),
+            _VolumeSlider(
+              key: const Key('options.gamepadCameraSensitivity'),
+              label: l10n.gamepadCameraSensitivityLabel,
+              value: settings.gamepad.cameraSensitivity,
+              min: 0.2,
+              max: 2,
+              divisions: 18,
+              step: 0.1,
+              valueLabelBuilder: (value) => '${value.toStringAsFixed(1)}x',
+              onChanged: ref.withMenuClickValue(
+                controller.setGamepadCameraSensitivity,
+              ),
+            ),
+            _SettingsToggleRow(
+              key: const Key('options.gamepadInvertCameraY'),
+              icon: Icons.swap_vert,
+              label: l10n.gamepadInvertCameraYLabel,
+              value: settings.gamepad.invertCameraY,
+              onChanged: ref.withMenuClickValue(
+                controller.setGamepadInvertCameraY,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _GamepadBindingsGroup(
+              title: l10n.gamepadButtonBindingsLabel,
+              children: [
+                for (final action in GamepadButtonAction.values)
+                  _GamepadBindingDropdown<GamepadButton>(
+                    key: ValueKey('options.gamepad.button.${action.name}'),
+                    label: _gamepadButtonActionLabel(action),
+                    value:
+                        settings.gamepad.buttonBindings.primaryButtonFor(
+                          action,
+                        ) ??
+                        GamepadButtonBindings.defaults.primaryButtonFor(
+                          action,
+                        )!,
+                    values: GamepadButton.values,
+                    labelFor: _gamepadButtonLabel,
+                    onChanged: (button) {
+                      if (button == null) return;
+                      ref.playMenuClick();
+                      controller.setGamepadButtonBinding(action, button);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _GamepadBindingsGroup(
+              title: l10n.gamepadAxisBindingsLabel,
+              children: [
+                for (final action in GamepadAxisAction.values)
+                  _GamepadBindingDropdown<GamepadAxis>(
+                    key: ValueKey('options.gamepad.axis.${action.name}'),
+                    label: _gamepadAxisActionLabel(action),
+                    value: settings.gamepad.axisBindings.axisFor(action),
+                    values: GamepadAxis.values,
+                    labelFor: _gamepadAxisLabel,
+                    onChanged: (axis) {
+                      if (axis == null) return;
+                      ref.playMenuClick();
+                      controller.setGamepadAxisBinding(action, axis);
+                    },
+                  ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: EpicButton.text(
+                key: const Key('options.gamepadResetBindings'),
+                icon: Icons.restart_alt,
+                label: l10n.gamepadResetBindingsLabel,
+                onPressed: ref.withMenuClick(controller.resetGamepadBindings),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _GamepadBindingsGroup extends StatelessWidget {
+  const _GamepadBindingsGroup({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(46, 2, 2, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: GameUiTheme.toolbarLabel.copyWith(color: GameUiTheme.gold),
+          ),
+          const SizedBox(height: 6),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _GamepadBindingDropdown<T extends Object> extends StatelessWidget {
+  const _GamepadBindingDropdown({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.labelFor,
+    required this.onChanged,
+    super.key,
+  });
+
+  final String label;
+  final T value;
+  final List<T> values;
+  final String Function(T value) labelFor;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: DropdownButtonFormField<T>(
+        initialValue: value,
+        isExpanded: true,
+        dropdownColor: GameUiTheme.surface,
+        iconEnabledColor: GameUiTheme.goldLight,
+        style: GameUiTheme.inputText,
+        decoration: GameUiTheme.textFieldDecoration(hintText: label),
+        selectedItemBuilder: (context) => [
+          for (final item in values)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '$label: ${labelFor(item)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        items: [
+          for (final item in values)
+            DropdownMenuItem(value: item, child: Text(labelFor(item))),
+        ],
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+String _gamepadButtonActionLabel(GamepadButtonAction action) {
+  return switch (action) {
+    GamepadButtonAction.confirm => 'Confirm',
+    GamepadButtonAction.cancel => 'Cancel',
+    GamepadButtonAction.moveMode => 'Move mode',
+    GamepadButtonAction.inspect => 'Inspect',
+    GamepadButtonAction.hudFocusPrevious => 'HUD previous section',
+    GamepadButtonAction.hudFocusNext => 'HUD next section',
+    GamepadButtonAction.focusPrevious => 'Turn-start focus',
+    GamepadButtonAction.focusNext => 'Next pending action',
+    GamepadButtonAction.primaryAction => 'Primary turn action',
+    GamepadButtonAction.dpadUp => 'Cursor up',
+    GamepadButtonAction.dpadDown => 'Cursor down',
+    GamepadButtonAction.dpadLeft => 'Cursor left',
+    GamepadButtonAction.dpadRight => 'Cursor right',
+    GamepadButtonAction.zoomIn => 'Zoom in',
+    GamepadButtonAction.zoomOut => 'Zoom out',
+  };
+}
+
+String _gamepadAxisActionLabel(GamepadAxisAction action) {
+  return switch (action) {
+    GamepadAxisAction.cursorX => 'Cursor horizontal',
+    GamepadAxisAction.cursorY => 'Cursor vertical',
+    GamepadAxisAction.cameraX => 'Camera horizontal',
+    GamepadAxisAction.cameraY => 'Camera vertical',
+    GamepadAxisAction.zoomIn => 'Zoom in',
+    GamepadAxisAction.zoomOut => 'Zoom out',
+  };
+}
+
+String _gamepadButtonLabel(GamepadButton button) {
+  return switch (button) {
+    GamepadButton.a => 'A',
+    GamepadButton.b => 'B',
+    GamepadButton.x => 'X',
+    GamepadButton.y => 'Y',
+    GamepadButton.leftBumper => 'LB',
+    GamepadButton.rightBumper => 'RB',
+    GamepadButton.leftTrigger => 'LT',
+    GamepadButton.rightTrigger => 'RT',
+    GamepadButton.back => 'Back',
+    GamepadButton.start => 'Start',
+    GamepadButton.home => 'Home',
+    GamepadButton.leftStick => 'L3',
+    GamepadButton.rightStick => 'R3',
+    GamepadButton.dpadUp => 'D-pad up',
+    GamepadButton.dpadDown => 'D-pad down',
+    GamepadButton.dpadLeft => 'D-pad left',
+    GamepadButton.dpadRight => 'D-pad right',
+    GamepadButton.touchpad => 'Touchpad',
+  };
+}
+
+String _gamepadAxisLabel(GamepadAxis axis) {
+  return switch (axis) {
+    GamepadAxis.leftStickX => 'Left stick X',
+    GamepadAxis.leftStickY => 'Left stick Y',
+    GamepadAxis.rightStickX => 'Right stick X',
+    GamepadAxis.rightStickY => 'Right stick Y',
+    GamepadAxis.leftTrigger => 'LT analog',
+    GamepadAxis.rightTrigger => 'RT analog',
+  };
+}
+
 class _PerformanceSection extends ConsumerWidget {
   const _PerformanceSection();
 
@@ -795,16 +1048,31 @@ class _VolumeSlider extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.min = 0,
+    this.max = 1,
+    this.divisions = 20,
+    this.step = 0.05,
+    this.valueLabelBuilder,
   });
 
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
+  final double min;
+  final double max;
+  final int? divisions;
+  final double step;
+  final String Function(double value)? valueLabelBuilder;
 
   @override
   Widget build(BuildContext context) {
+    final clampedValue = value.clamp(min, max).toDouble();
+    final valueLabel =
+        valueLabelBuilder?.call(clampedValue) ??
+        '${(clampedValue * 100).round()}%';
+
     double adjustedValue(int delta) {
-      return (value + delta * 0.05).clamp(0.0, 1.0).toDouble();
+      return (clampedValue + delta * step).clamp(min, max).toDouble();
     }
 
     return Padding(
@@ -825,7 +1093,7 @@ class _VolumeSlider extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(value * 100).round()}%',
+                valueLabel,
                 style: GameUiTheme.toolbarLabel.copyWith(
                   color: GameUiTheme.gold,
                 ),
@@ -853,11 +1121,11 @@ class _VolumeSlider extends StatelessWidget {
                 ),
               ),
               child: Slider(
-                value: value,
-                min: 0,
-                max: 1,
-                divisions: 20,
-                label: '${(value * 100).round()}%',
+                value: clampedValue,
+                min: min,
+                max: max,
+                divisions: divisions,
+                label: valueLabel,
                 onChanged: onChanged,
               ),
             ),

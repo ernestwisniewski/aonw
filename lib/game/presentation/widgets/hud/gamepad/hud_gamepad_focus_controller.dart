@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_list_cursor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,16 +91,19 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       if (state.active) state = HudGamepadFocusState.inactive;
       return;
     }
-    if (!state.active || _targetForState(available) != null) return;
-    _activateFirst(available, preferredSection: state.section);
-  }
-
-  void toggle(List<HudGamepadFocusTarget> targets) {
-    if (state.active) {
-      deactivate();
+    if (state.active && state.targetId == null) {
+      final target = _firstTargetInSection(available, state.section);
+      if (target != null) {
+        state = HudGamepadFocusState(
+          active: true,
+          section: target.section,
+          targetId: target.id,
+        );
+      }
       return;
     }
-    _activateFirst(_availableTargets(targets), preferredSection: state.section);
+    if (!state.active || _targetForState(available) != null) return;
+    _activateFirst(available, preferredSection: state.section);
   }
 
   void deactivate() {
@@ -122,15 +126,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       _activateFirst(available, preferredSection: state.section);
       return;
     }
-    if (_directionMovesWithinSection(direction, focused.section)) {
-      _moveWithinSection(
-        available,
-        focused.section,
-        _directionDelta(direction),
-      );
-      return;
-    }
-    _moveSection(available, _directionDelta(direction));
+    _moveSpatially(available, focused, direction);
   }
 
   void previousSection(List<HudGamepadFocusTarget> targets) {
@@ -139,6 +135,37 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
 
   void nextSection(List<HudGamepadFocusTarget> targets) {
     _moveSectionOrActivate(_availableTargets(targets), 1);
+  }
+
+  void focusSection(
+    List<HudGamepadFocusTarget> targets,
+    HudGamepadFocusSection section, {
+    HudGamepadFocusSection? fallbackSection,
+    bool optimistic = false,
+  }) {
+    final available = _availableTargets(targets);
+    final target = _firstTargetInSection(available, section);
+    if (target != null) {
+      state = HudGamepadFocusState(
+        active: true,
+        section: target.section,
+        targetId: target.id,
+      );
+      return;
+    }
+    if (optimistic) {
+      state = HudGamepadFocusState(
+        active: true,
+        section: section,
+        targetId: null,
+      );
+      return;
+    }
+    _activateFirst(
+      available,
+      preferredSection: section,
+      fallbackSection: fallbackSection,
+    );
   }
 
   void activateFocused(List<HudGamepadFocusTarget> targets) {
@@ -171,6 +198,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   void _activateFirst(
     List<HudGamepadFocusTarget> targets, {
     HudGamepadFocusSection? preferredSection,
+    HudGamepadFocusSection? fallbackSection,
   }) {
     if (targets.isEmpty) {
       state = HudGamepadFocusState.inactive;
@@ -178,6 +206,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     }
     final target =
         _firstTargetInSection(targets, preferredSection) ??
+        _firstTargetInSection(targets, fallbackSection) ??
         _firstTargetInOrderedSection(targets) ??
         targets.first;
     state = HudGamepadFocusState(
@@ -208,28 +237,284 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     return null;
   }
 
-  void _moveWithinSection(
+  void _moveSpatially(
+    List<HudGamepadFocusTarget> targets,
+    HudGamepadFocusTarget focused,
+    GamepadMapDirection direction,
+  ) {
+    switch (focused.section) {
+      case HudGamepadFocusSection.globalActions:
+        _moveFromGlobalActions(targets, direction);
+      case HudGamepadFocusSection.menu:
+        _moveFromMenu(targets, direction);
+      case HudGamepadFocusSection.topResources:
+        _moveFromTopResources(targets, direction);
+      case HudGamepadFocusSection.rightPlayers:
+        _moveFromRightPlayers(targets, direction);
+      case HudGamepadFocusSection.selectionActions:
+        _moveFromSelectionActions(targets, focused, direction);
+    }
+  }
+
+  void _moveFromGlobalActions(
+    List<HudGamepadFocusTarget> targets,
+    GamepadMapDirection direction,
+  ) {
+    switch (direction) {
+      case GamepadMapDirection.up:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.globalActions,
+          -1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [HudGamepadFocusSection.menu]);
+        return;
+      case GamepadMapDirection.down:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.globalActions,
+          1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.selectionActions,
+          HudGamepadFocusSection.topResources,
+        ]);
+        return;
+      case GamepadMapDirection.right:
+        _activateFirstAvailable(targets, const [HudGamepadFocusSection.menu]);
+        return;
+      case GamepadMapDirection.left:
+        return;
+    }
+  }
+
+  void _moveFromMenu(
+    List<HudGamepadFocusTarget> targets,
+    GamepadMapDirection direction,
+  ) {
+    switch (direction) {
+      case GamepadMapDirection.right:
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.topResources,
+          HudGamepadFocusSection.rightPlayers,
+          HudGamepadFocusSection.selectionActions,
+        ]);
+        return;
+      case GamepadMapDirection.down:
+      case GamepadMapDirection.left:
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.globalActions,
+          HudGamepadFocusSection.selectionActions,
+        ]);
+        return;
+      case GamepadMapDirection.up:
+        return;
+    }
+  }
+
+  void _moveFromTopResources(
+    List<HudGamepadFocusTarget> targets,
+    GamepadMapDirection direction,
+  ) {
+    switch (direction) {
+      case GamepadMapDirection.left:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.topResources,
+          -1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [HudGamepadFocusSection.menu]);
+        return;
+      case GamepadMapDirection.right:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.topResources,
+          1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.rightPlayers,
+          HudGamepadFocusSection.selectionActions,
+        ]);
+        return;
+      case GamepadMapDirection.down:
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.rightPlayers,
+          HudGamepadFocusSection.selectionActions,
+        ]);
+        return;
+      case GamepadMapDirection.up:
+        _activateFirstAvailable(targets, const [HudGamepadFocusSection.menu]);
+        return;
+    }
+  }
+
+  void _moveFromRightPlayers(
+    List<HudGamepadFocusTarget> targets,
+    GamepadMapDirection direction,
+  ) {
+    switch (direction) {
+      case GamepadMapDirection.up:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.rightPlayers,
+          -1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.topResources,
+          HudGamepadFocusSection.menu,
+        ]);
+        return;
+      case GamepadMapDirection.down:
+        if (_moveWithinSectionBounded(
+          targets,
+          HudGamepadFocusSection.rightPlayers,
+          1,
+        )) {
+          return;
+        }
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.selectionActions,
+          HudGamepadFocusSection.globalActions,
+        ]);
+        return;
+      case GamepadMapDirection.left:
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.topResources,
+          HudGamepadFocusSection.menu,
+        ]);
+        return;
+      case GamepadMapDirection.right:
+        return;
+    }
+  }
+
+  void _moveFromSelectionActions(
+    List<HudGamepadFocusTarget> targets,
+    HudGamepadFocusTarget focused,
+    GamepadMapDirection direction,
+  ) {
+    final actionTargets = _selectionActionTargets(targets);
+    final commandTarget = _bottomCommandTarget(targets);
+    if (focused.id == HudGamepadFocusTargetIds.bottomCommand) {
+      switch (direction) {
+        case GamepadMapDirection.up:
+          _activateTarget(
+            actionTargets.isNotEmpty
+                ? actionTargets.first
+                : _firstTargetInAvailableSections(targets, const [
+                    HudGamepadFocusSection.rightPlayers,
+                    HudGamepadFocusSection.topResources,
+                    HudGamepadFocusSection.menu,
+                  ]),
+          );
+          return;
+        case GamepadMapDirection.left:
+        case GamepadMapDirection.right:
+        case GamepadMapDirection.down:
+          return;
+      }
+    }
+
+    switch (direction) {
+      case GamepadMapDirection.left:
+        if (_moveWithinTargetsBounded(actionTargets, -1)) return;
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.globalActions,
+          HudGamepadFocusSection.menu,
+        ]);
+        return;
+      case GamepadMapDirection.right:
+        if (_moveWithinTargetsBounded(actionTargets, 1)) return;
+        return;
+      case GamepadMapDirection.down:
+        _activateTarget(commandTarget);
+        return;
+      case GamepadMapDirection.up:
+        _activateFirstAvailable(targets, const [
+          HudGamepadFocusSection.rightPlayers,
+          HudGamepadFocusSection.topResources,
+          HudGamepadFocusSection.menu,
+        ]);
+        return;
+    }
+  }
+
+  bool _moveWithinSectionBounded(
     List<HudGamepadFocusTarget> targets,
     HudGamepadFocusSection section,
     int delta,
   ) {
-    final sectionTargets = [
+    return _moveWithinTargetsBounded([
       for (final target in targets)
         if (target.section == section) target,
-    ];
-    if (sectionTargets.isEmpty) {
-      _moveSection(targets, delta);
-      return;
-    }
-    final currentIndex = sectionTargets.indexWhere(
+    ], delta);
+  }
+
+  bool _moveWithinTargetsBounded(
+    List<HudGamepadFocusTarget> targets,
+    int delta,
+  ) {
+    if (targets.isEmpty) return false;
+    final currentIndex = targets.indexWhere(
       (target) => target.id == state.targetId,
     );
-    final startIndex = currentIndex == -1 ? 0 : currentIndex;
-    final nextIndex = (startIndex + delta) % sectionTargets.length;
-    final target =
-        sectionTargets[nextIndex < 0
-            ? nextIndex + sectionTargets.length
-            : nextIndex];
+    if (currentIndex == -1) return false;
+    final nextIndex = currentIndex + delta;
+    if (nextIndex < 0 || nextIndex >= targets.length) return false;
+    _activateTarget(targets[nextIndex]);
+    return true;
+  }
+
+  List<HudGamepadFocusTarget> _selectionActionTargets(
+    List<HudGamepadFocusTarget> targets,
+  ) {
+    return [
+      for (final target in targets)
+        if (target.section == HudGamepadFocusSection.selectionActions &&
+            target.id != HudGamepadFocusTargetIds.bottomCommand)
+          target,
+    ];
+  }
+
+  HudGamepadFocusTarget? _bottomCommandTarget(
+    List<HudGamepadFocusTarget> targets,
+  ) {
+    for (final target in targets) {
+      if (target.id == HudGamepadFocusTargetIds.bottomCommand) return target;
+    }
+    return null;
+  }
+
+  void _activateFirstAvailable(
+    List<HudGamepadFocusTarget> targets,
+    List<HudGamepadFocusSection> sections,
+  ) {
+    _activateTarget(_firstTargetInAvailableSections(targets, sections));
+  }
+
+  HudGamepadFocusTarget? _firstTargetInAvailableSections(
+    List<HudGamepadFocusTarget> targets,
+    List<HudGamepadFocusSection> sections,
+  ) {
+    for (final section in sections) {
+      final target = _firstTargetInSection(targets, section);
+      if (target != null) return target;
+    }
+    return null;
+  }
+
+  void _activateTarget(HudGamepadFocusTarget? target) {
+    if (target == null) return;
     state = HudGamepadFocusState(
       active: true,
       section: target.section,
@@ -250,11 +535,11 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       state = HudGamepadFocusState.inactive;
       return;
     }
-    final currentIndex = sections.indexOf(state.section);
-    final startIndex = currentIndex == -1 ? 0 : currentIndex;
-    final nextIndex = (startIndex + delta) % sections.length;
-    final section =
-        sections[nextIndex < 0 ? nextIndex + sections.length : nextIndex];
+    final section = GamepadListCursor.nextValue(
+      items: sections,
+      selected: state.section,
+      delta: delta,
+    )!;
     _activateFirst(targets, preferredSection: section);
   }
 
@@ -264,26 +549,6 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       return;
     }
     _activateFirst(targets, preferredSection: state.section);
-  }
-
-  bool _directionMovesWithinSection(
-    GamepadMapDirection direction,
-    HudGamepadFocusSection section,
-  ) {
-    final vertical =
-        section == HudGamepadFocusSection.globalActions ||
-        section == HudGamepadFocusSection.rightPlayers;
-    return switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.down => vertical,
-      GamepadMapDirection.left || GamepadMapDirection.right => !vertical,
-    };
-  }
-
-  int _directionDelta(GamepadMapDirection direction) {
-    return switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.left => -1,
-      GamepadMapDirection.down || GamepadMapDirection.right => 1,
-    };
   }
 }
 

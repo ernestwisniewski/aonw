@@ -15,6 +15,7 @@ class GamepadScrollable extends StatefulWidget {
     this.padding,
     this.step = 92,
     this.onCancel,
+    this.consumeUnhandledActions = true,
     super.key,
   });
 
@@ -25,6 +26,7 @@ class GamepadScrollable extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final double step;
   final VoidCallback? onCancel;
+  final bool consumeUnhandledActions;
 
   @override
   State<GamepadScrollable> createState() => _GamepadScrollableState();
@@ -45,7 +47,16 @@ class _GamepadScrollableState extends State<GamepadScrollable> {
       input: widget.input,
       enabled: widget.enabled,
       onNavigate: _scroll,
-      onCancel: widget.onCancel,
+      onConfirm: widget.consumeUnhandledActions ? _consume : null,
+      onCancel:
+          widget.onCancel ?? (widget.consumeUnhandledActions ? _consume : null),
+      onDetails: widget.consumeUnhandledActions ? _consume : null,
+      onMode: widget.consumeUnhandledActions ? _consume : null,
+      onHudFocusPrevious: widget.consumeUnhandledActions ? _consume : null,
+      onHudFocusNext: widget.consumeUnhandledActions ? _consume : null,
+      onFocusPrevious: widget.consumeUnhandledActions ? _consume : null,
+      onFocusNext: widget.consumeUnhandledActions ? _consume : null,
+      onPrimaryAction: widget.consumeUnhandledActions ? _consume : null,
       child: SingleChildScrollView(
         controller: _controller,
         scrollDirection: widget.scrollDirection,
@@ -83,4 +94,6 @@ class _GamepadScrollableState extends State<GamepadScrollable> {
       _ => 0,
     };
   }
+
+  void _consume() {}
 }

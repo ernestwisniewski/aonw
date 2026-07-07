@@ -1,39 +1,29 @@
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-final class GamepadControlFrame {
-  const GamepadControlFrame({
-    this.cursorStep,
-    this.cameraX = 0,
-    this.cameraY = 0,
-    this.zoom = 0,
-    this.confirmPressed = false,
-    this.cancelPressed = false,
-    this.inspectPressed = false,
-    this.moveModePressed = false,
-    this.hudFocusPressed = false,
-    this.hudFocusPreviousPressed = false,
-    this.hudFocusNextPressed = false,
-    this.focusPreviousPressed = false,
-    this.focusNextPressed = false,
-    this.primaryActionPressed = false,
-  });
+part 'gamepad_control_frame.freezed.dart';
+
+@freezed
+abstract class GamepadControlFrame with _$GamepadControlFrame {
+  const GamepadControlFrame._();
 
   static const idle = GamepadControlFrame();
 
-  final GamepadMapDirection? cursorStep;
-  final double cameraX;
-  final double cameraY;
-  final double zoom;
-  final bool confirmPressed;
-  final bool cancelPressed;
-  final bool inspectPressed;
-  final bool moveModePressed;
-  final bool hudFocusPressed;
-  final bool hudFocusPreviousPressed;
-  final bool hudFocusNextPressed;
-  final bool focusPreviousPressed;
-  final bool focusNextPressed;
-  final bool primaryActionPressed;
+  const factory GamepadControlFrame({
+    GamepadMapDirection? cursorStep,
+    @Default(0) double cameraX,
+    @Default(0) double cameraY,
+    @Default(0) double zoom,
+    @Default(false) bool confirmPressed,
+    @Default(false) bool cancelPressed,
+    @Default(false) bool inspectPressed,
+    @Default(false) bool moveModePressed,
+    @Default(false) bool hudFocusPreviousPressed,
+    @Default(false) bool hudFocusNextPressed,
+    @Default(false) bool focusPreviousPressed,
+    @Default(false) bool focusNextPressed,
+    @Default(false) bool primaryActionPressed,
+  }) = _GamepadControlFrame;
 
   bool get isIdle =>
       cursorStep == null &&
@@ -44,7 +34,6 @@ final class GamepadControlFrame {
       !cancelPressed &&
       !inspectPressed &&
       !moveModePressed &&
-      !hudFocusPressed &&
       !hudFocusPreviousPressed &&
       !hudFocusNextPressed &&
       !focusPreviousPressed &&

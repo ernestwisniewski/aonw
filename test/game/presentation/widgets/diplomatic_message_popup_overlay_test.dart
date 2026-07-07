@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
@@ -135,6 +136,46 @@ void main() {
       expect(container.read(hudMinimizedPopupsProvider).entries, isEmpty);
     },
   );
+
+  testWidgets('minimizes diplomatic message with gamepad before renderer', (
+    tester,
+  ) async {
+    final input = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(input.dispose);
+    var rendererCancelCount = 0;
+
+    await _pumpOverlay(
+      tester,
+      gamepadInput: input,
+      onRendererCancel: () => rendererCancelCount += 1,
+    );
+    await tester.pumpAndSettle();
+    final container = _container(tester);
+    container
+        .read(gamePlayerControlControllerProvider.notifier)
+        .selectPlayer(_save, 'player_2');
+    await tester.pump();
+
+    _addDiplomaticMessageNotification(container);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('New dispatch'), findsOneWidget);
+
+    input.value = const GamepadInputSnapshot(cancel: true);
+    await tester.pump(const Duration(milliseconds: 16));
+    input.value = GamepadInputSnapshot.empty;
+    await tester.pumpAndSettle();
+
+    expect(find.text('New dispatch'), findsNothing);
+    expect(rendererCancelCount, 0);
+    expect(
+      container.read(hudMinimizedPopupsProvider).entries.single.kind,
+      HudMinimizedPopupKind.diplomaticMessage,
+    );
+  });
 
   testWidgets(
     'shows expired diplomatic proposals as passive diplomacy popups',
@@ -308,7 +349,24 @@ void main() {
   });
 }
 
-Future<void> _pumpOverlay(WidgetTester tester) async {
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  ValueNotifier<GamepadInputSnapshot>? gamepadInput,
+  VoidCallback? onRendererCancel,
+}) async {
+  Widget overlay = DiplomaticMessagePopupOverlay(gameSave: _save);
+  if (gamepadInput != null) {
+    overlay = GamepadInputRouterScope(
+      input: gamepadInput,
+      child: GamepadInputRouteListener(
+        route: GamepadInputRoute(
+          priority: GamepadInputRoutePriority.renderer,
+          onCancel: onRendererCancel,
+        ),
+        child: overlay,
+      ),
+    );
+  }
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -317,7 +375,7 @@ Future<void> _pumpOverlay(WidgetTester tester) async {
         supportedLocales: AppLocalizations.supportedLocales,
         home: ProviderScope(
           overrides: [gamePlayerControlSaveProvider.overrideWithValue(_save)],
-          child: Scaffold(body: DiplomaticMessagePopupOverlay(gameSave: _save)),
+          child: Scaffold(body: overlay),
         ),
       ),
     ),

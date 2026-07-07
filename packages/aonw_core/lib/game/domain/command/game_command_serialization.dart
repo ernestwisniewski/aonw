@@ -270,6 +270,7 @@ abstract final class GameCommandSerializer {
       :final playerId,
       :final preferredObjectiveAdvice,
       :final actionIndex,
+      :final actionStep,
     ) =>
       {
         'type': 'FocusNextPendingAction',
@@ -277,6 +278,7 @@ abstract final class GameCommandSerializer {
         if (preferredObjectiveAdvice != null)
           'preferredObjectiveAdvice': preferredObjectiveAdvice.name,
         'actionIndex': ?actionIndex,
+        if (actionStep != 1) 'actionStep': actionStep,
       },
     FocusTurnStartActionCommand(:final playerId) => {
       'type': 'FocusTurnStartAction',
@@ -603,6 +605,7 @@ abstract final class GameCommandSerializer {
           GameObjectiveAdvice.values,
         ),
         actionIndex: optionalIntField(json, type, 'actionIndex'),
+        actionStep: optionalIntField(json, type, 'actionStep') ?? 1,
       ),
       'FocusTurnStartAction' => FocusTurnStartActionCommand(
         requiredStringField(json, type, 'playerId'),

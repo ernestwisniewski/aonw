@@ -24,17 +24,20 @@
 | B / Back | Close menu popups, panel details, the active panel or HUD popup, or cancel the active interaction mode |
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
-| L3 / R3 | Step HUD focus left/right across the left rail, menu button, top resource pills, player rail, and bottom toolbar |
-| RB | Focus the next pending player action |
-| LB | Focus the turn-start map target |
+| L3 / R3 | R3 jumps from the map to the bottom toolbar; while HUD focus is active, L3/R3 step left/right across HUD sections |
+| RB | Run the next-action flow forward, wrapping through units, city production, and research while opening or switching the matching panel |
+| LB | Run the same action flow backward through that queue, opening or switching the matching panel |
 | Start | Run the primary turn action, matching Space |
 
 Terminology note: zoom is on the analog triggers, `RT` and `LT`. The bumpers,
 `RB` and `LB`, are separate shoulder buttons and are reserved for turn-flow
 focus shortcuts unless HUD focus is active, where they also switch HUD
 sections. The sticks are also separate: the left stick/D-pad moves the hex
-cursor, while the right stick pans the camera. Pressing `L3` moves HUD focus one
-section left; pressing `R3` moves it one section right.
+cursor, while the right stick pans the camera. Pressing `R3` from map input
+starts HUD focus directly in the bottom toolbar so unit actions, city founding,
+and attack confirmations are reachable without cycling across the full HUD.
+Once HUD focus is active, `L3` moves one section left and `R3` moves one section
+right.
 
 ## Implementation Boundary
 
@@ -45,21 +48,54 @@ local row/card selection, then call the existing production, research, details,
 and close callbacks. This keeps controller support out of save/wire state and
 avoids a parallel gameplay path.
 
-HUD focus is similarly presentation-local. Pressing `R3` activates or moves
-focus one section right, while `L3` activates or moves focus one section left
-through the left rail, menu, top resource pills, player rail, and bottom
-toolbar. The D-pad moves within a section, `A` invokes the same callback as
-tapping the highlighted widget, and `B` returns input to the map. Open HUD
-popups capture the controller so the D-pad scrolls their content and `B` closes
-the popup instead of moving the map behind it. The renderer receives an idle
-gamepad snapshot while HUD focus or popup capture is active so map cursor
-movement and HUD navigation cannot both process the same frame.
+Map cursor selection is camera-stable: D-pad and left-stick cursor movement
+selects a new hex without recentering the camera. Camera movement is reserved
+for the right stick, zoom triggers, and explicit focus shortcuts such as pending
+turn actions.
+
+The active game screen owns one `GamepadInputRouterScope`. Routes register with
+explicit priorities, and discrete actions such as confirm, cancel, inspect,
+mode, HUD focus, turn focus, and primary turn action are dispatched to the first
+eligible route. The renderer handles only analog camera and zoom deltas in its
+per-frame path; cursor movement and buttons go through the same prioritized
+dispatch as panels and HUD focus.
+
+HUD focus is presentation-local. Pressing `R3` from the map activates the
+bottom toolbar section, while an already active HUD focus uses `R3` and `L3` to
+step through the left rail, menu, top resource pills, player rail, and bottom
+toolbar. The D-pad follows the screen layout: up from the left rail reaches the
+menu button, right from menu reaches the top pills, down from the top pills
+enters the player rail, and down from the player rail reaches the bottom action
+toolbar. Inside the bottom toolbar, down from selection action chips focuses the
+main turn/action button. `A` invokes the same callback as tapping the highlighted
+widget, and `B` returns input to the map. Open HUD popups capture the controller
+so the D-pad scrolls their content and `B` closes the popup instead of moving
+the map behind it.
+
+The first-turn tutorial also registers as a modal gamepad route. D-pad left/up,
+`L3`, or `LB` move to the previous card; D-pad right/down, `R3`, `RB`, or `A`
+advance; `B` minimizes the current card. The bubble includes a "Do not show
+again" action that stores the dismissal for that save.
 
 Main menu routes use the same normalized input, scoped to Flutter focus
 traversal. The D-pad steps through menu actions and subpage controls such as New
 Game, Load Game, Options, Manual, and Credits; `A` activates the focused control;
 and `B` closes open popup routes such as dropdown menus before returning to the
 previous menu route.
+
+## Configuration
+
+Gamepad input is configurable from Options. The defaults preserve the original
+mapping: A/B/X/Y for confirm/cancel/mode/inspect, L3/R3 for HUD focus, LB/RB for
+previous/next pending action focus, Start for the primary turn action, the left
+stick and D-pad for the cursor, the right stick for camera pan, and LT/RT for
+zoom.
+
+Players can disable gamepad input, adjust deadzone and camera sensitivity,
+invert camera Y, remap button actions, remap axis actions, or reset all bindings
+to defaults. The mapper reads those settings before creating the normalized
+`GamepadInputSnapshot`, so panels, HUD focus, tutorial cards, and renderer
+routes all receive the same configured input contract.
 
 ## Manual Contract
 
