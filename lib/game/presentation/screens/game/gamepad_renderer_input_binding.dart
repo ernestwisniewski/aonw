@@ -34,50 +34,39 @@ class _GamepadRendererInputBindingState
   void initState() {
     super.initState();
     _adapter = GamepadInputAdapter()..start();
-    _attach(widget.renderer);
   }
 
   @override
   void didUpdateWidget(GamepadRendererInputBinding oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.renderer != widget.renderer) {
-      _detach(oldWidget.renderer);
-      _attach(widget.renderer);
-      return;
-    }
-    if (oldWidget.rendererInputEnabled != widget.rendererInputEnabled) {
-      _sync();
+      oldWidget.renderer.gamepadInput = GamepadInputSnapshot.empty;
     }
   }
 
   @override
   void dispose() {
-    _detach(widget.renderer);
+    widget.renderer.gamepadInput = GamepadInputSnapshot.empty;
     _adapter.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.builder(context, _adapter.snapshot);
-  }
-
-  void _attach(GameRenderer renderer) {
-    renderer.gamepadInput = _rendererInput();
-    _adapter.snapshot.addListener(_sync);
-  }
-
-  void _detach(GameRenderer renderer) {
-    _adapter.snapshot.removeListener(_sync);
-    renderer.gamepadInput = GamepadInputSnapshot.empty;
-  }
-
-  void _sync() {
-    widget.renderer.gamepadInput = _rendererInput();
-  }
-
-  GamepadInputSnapshot _rendererInput() {
-    if (!widget.rendererInputEnabled) return GamepadInputSnapshot.empty;
-    return _adapter.snapshot.value;
+    return GamepadInputRouterScope(
+      input: _adapter.snapshot,
+      child: Builder(
+        builder: (context) {
+          return GamepadInputRouteListener(
+            route: GamepadInputRoute(
+              enabled: widget.rendererInputEnabled,
+              priority: GamepadInputRoutePriority.renderer,
+              onFrame: widget.renderer.applyGamepadControlFrame,
+            ),
+            child: widget.builder(context, _adapter.snapshot),
+          );
+        },
+      ),
+    );
   }
 }

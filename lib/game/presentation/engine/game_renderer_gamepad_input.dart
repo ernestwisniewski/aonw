@@ -20,6 +20,13 @@ extension GameRendererGamepadInput on GameRenderer {
     _gamepadInputSnapshots[this] = input;
   }
 
+  void applyGamepadControlFrame(GamepadControlFrame frame, double dt) {
+    if (!_isReady || _isDisposed || frame.isIdle) return;
+    _applyGamepadCameraInput(frame, dt);
+    _applyGamepadCursorInput(frame);
+    _applyGamepadButtonInput(frame);
+  }
+
   void _updateGamepadInput(double dt) {
     if (!_isReady || _isDisposed) return;
     final input = _gamepadInput;
@@ -34,11 +41,7 @@ extension GameRendererGamepadInput on GameRenderer {
       _gamepadFrameControllers[this] = frameController;
     }
     final frame = frameController.advance(input: input, dt: dt);
-    if (frame.isIdle) return;
-
-    _applyGamepadCameraInput(frame, dt);
-    _applyGamepadCursorInput(frame);
-    _applyGamepadButtonInput(frame);
+    applyGamepadControlFrame(frame, dt);
   }
 
   GamepadInputSnapshot get _gamepadInput =>

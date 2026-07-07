@@ -33,6 +33,7 @@ class HudGamepadFocusInputLayer extends ConsumerWidget {
     return GamepadPanelInputListener(
       input: input,
       enabled: enabled,
+      priority: GamepadInputRoutePriority.hud,
       onHudFocusPrevious: popupOpen
           ? null
           : () => controller.previousSection(targets),

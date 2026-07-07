@@ -39,6 +39,7 @@ class _GamePrimaryActionControllerState
   Widget build(BuildContext context) {
     return GamepadPanelInputListener(
       input: widget.gamepadInputListenable,
+      priority: GamepadInputRoutePriority.primary,
       onPrimaryAction: _activate,
       child: GamePrimaryActionShortcutScope(
         enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
