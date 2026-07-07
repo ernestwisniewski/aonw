@@ -48,7 +48,7 @@ final class CityRulesetProvider
   }
 }
 
-String _$cityRulesetHash() => r'f6179fb99a8e0529625f33fd798a14872580dca1';
+String _$cityRulesetHash() => r'564c7527456c1f0d3411fd709a93d5ca8024789d';
 
 @ProviderFor(technologyRuleset)
 final technologyRulesetProvider = TechnologyRulesetProvider._();

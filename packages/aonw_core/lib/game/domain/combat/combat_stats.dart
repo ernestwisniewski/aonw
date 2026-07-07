@@ -1,35 +1,19 @@
 import 'package:aonw_core/game/domain/combat/combat_modifier.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class CombatStats {
-  final int attack;
-  final int defense;
-  final int hp;
-  final int range;
-  final int mobility;
+part 'combat_stats.freezed.dart';
 
-  const CombatStats({
-    this.attack = 0,
-    this.defense = 0,
-    this.hp = 0,
-    this.range = 1,
-    this.mobility = 1,
-  });
+@freezed
+abstract class CombatStats with _$CombatStats {
+  const CombatStats._();
 
-  CombatStats copyWith({
-    int? attack,
-    int? defense,
-    int? hp,
-    int? range,
-    int? mobility,
-  }) {
-    return CombatStats(
-      attack: attack ?? this.attack,
-      defense: defense ?? this.defense,
-      hp: hp ?? this.hp,
-      range: range ?? this.range,
-      mobility: mobility ?? this.mobility,
-    );
-  }
+  const factory CombatStats({
+    @Default(0) int attack,
+    @Default(0) int defense,
+    @Default(0) int hp,
+    @Default(1) int range,
+    @Default(1) int mobility,
+  }) = _CombatStats;
 
   CombatStats add(CombatStats other) {
     return CombatStats(
@@ -69,24 +53,5 @@ class CombatStats {
       stats = stats.apply(modifier);
     }
     return stats;
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CombatStats &&
-        other.attack == attack &&
-        other.defense == defense &&
-        other.hp == hp &&
-        other.range == range &&
-        other.mobility == mobility;
-  }
-
-  @override
-  int get hashCode => Object.hash(attack, defense, hp, range, mobility);
-
-  @override
-  String toString() {
-    return 'CombatStats(attack: $attack, defense: $defense, hp: $hp, '
-        'range: $range, mobility: $mobility)';
   }
 }

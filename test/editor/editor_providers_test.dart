@@ -7,6 +7,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('EditorState', () {
+    test('keeps unordered set equality and nullable objective copy', () {
+      const state = EditorState(
+        selectedTerrains: {TerrainType.desert, TerrainType.hills},
+        selectedResources: {ResourceType.iron, ResourceType.oil},
+        selectedObjectiveType: MapObjectiveType.holySite,
+        selectedHeight: 2,
+        heightActive: true,
+      );
+      const sameState = EditorState(
+        selectedTerrains: {TerrainType.hills, TerrainType.desert},
+        selectedResources: {ResourceType.oil, ResourceType.iron},
+        selectedObjectiveType: MapObjectiveType.holySite,
+        selectedHeight: 2,
+        heightActive: true,
+      );
+
+      expect(sameState, state);
+      expect(sameState.hashCode, state.hashCode);
+      expect(
+        state.copyWith(selectedObjectiveType: null).selectedObjectiveType,
+        isNull,
+      );
+    });
+  });
+
   group('EditorStateNotifier', () {
     test('initial state', () {
       final container = ProviderContainer();

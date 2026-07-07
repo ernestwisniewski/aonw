@@ -16,53 +16,26 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'game_state.freezed.dart';
 
-class GameInteractionState {
+@freezed
+abstract class GameInteractionState with _$GameInteractionState {
+  const GameInteractionState._();
+
   static const empty = GameInteractionState();
   static const Object unset = Object();
 
-  const GameInteractionState({
-    this.selection,
-    this.movePreview,
-    this.cityFoundingDraft,
-    this.pendingAction,
-    this.moveCommandActive = false,
-  });
-
-  final GameSelection? selection;
-  final UnitMovementPlan? movePreview;
-  final CityFoundingDraft? cityFoundingDraft;
-  final PendingPlayerAction? pendingAction;
-  final bool moveCommandActive;
+  const factory GameInteractionState({
+    GameSelection? selection,
+    UnitMovementPlan? movePreview,
+    CityFoundingDraft? cityFoundingDraft,
+    PendingPlayerAction? pendingAction,
+    @Default(false) bool moveCommandActive,
+  }) = _GameInteractionState;
 
   GameInteractionMode get mode {
     if (cityFoundingDraft != null) return GameInteractionMode.cityFounding;
     if (pendingAction != null) return pendingAction!.mode;
     if (moveCommandActive) return GameInteractionMode.moveTargeting;
     return GameInteractionMode.standard;
-  }
-
-  GameInteractionState copyWith({
-    Object? selection = unset,
-    Object? movePreview = unset,
-    Object? cityFoundingDraft = unset,
-    Object? pendingAction = unset,
-    bool? moveCommandActive,
-  }) {
-    return GameInteractionState(
-      selection: identical(selection, unset)
-          ? this.selection
-          : selection as GameSelection?,
-      movePreview: identical(movePreview, unset)
-          ? this.movePreview
-          : movePreview as UnitMovementPlan?,
-      cityFoundingDraft: identical(cityFoundingDraft, unset)
-          ? this.cityFoundingDraft
-          : cityFoundingDraft as CityFoundingDraft?,
-      pendingAction: identical(pendingAction, unset)
-          ? this.pendingAction
-          : pendingAction as PendingPlayerAction?,
-      moveCommandActive: moveCommandActive ?? this.moveCommandActive,
-    );
   }
 
   GameInteractionState clearMapState({bool clearPendingAction = false}) {
@@ -81,25 +54,6 @@ class GameInteractionState {
       cityFoundingDraft: null,
     );
   }
-
-  @override
-  bool operator ==(Object other) {
-    return other is GameInteractionState &&
-        other.selection == selection &&
-        other.movePreview == movePreview &&
-        other.cityFoundingDraft == cityFoundingDraft &&
-        other.pendingAction == pendingAction &&
-        other.moveCommandActive == moveCommandActive;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    selection,
-    movePreview,
-    cityFoundingDraft,
-    pendingAction,
-    moveCommandActive,
-  );
 }
 
 @freezed
@@ -150,11 +104,20 @@ abstract class GameState with _$GameState {
   }) {
     return copyWith(
       interaction: interaction.copyWith(
-        selection: selection,
-        movePreview: movePreview,
-        cityFoundingDraft: cityFoundingDraft,
-        pendingAction: pendingAction,
-        moveCommandActive: moveCommandActive,
+        selection: identical(selection, GameInteractionState.unset)
+            ? interaction.selection
+            : selection as GameSelection?,
+        movePreview: identical(movePreview, GameInteractionState.unset)
+            ? interaction.movePreview
+            : movePreview as UnitMovementPlan?,
+        cityFoundingDraft:
+            identical(cityFoundingDraft, GameInteractionState.unset)
+            ? interaction.cityFoundingDraft
+            : cityFoundingDraft as CityFoundingDraft?,
+        pendingAction: identical(pendingAction, GameInteractionState.unset)
+            ? interaction.pendingAction
+            : pendingAction as PendingPlayerAction?,
+        moveCommandActive: moveCommandActive ?? interaction.moveCommandActive,
       ),
     );
   }
