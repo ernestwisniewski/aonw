@@ -126,6 +126,38 @@ void main() {
       },
     );
 
+    test('gamepad cursor selection does not move the camera', () async {
+      final map = _map();
+      final commands = <GameCommand>[];
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final game = await _loadedGame(
+        map,
+        onCommand: (command) async => commands.add(command),
+      );
+
+      game.applyStateWithoutCameraFocus(
+        GameState(
+          activePlayerId: 'player_1',
+          units: [commander],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          ),
+        ),
+      );
+      game.camera.viewfinder
+        ..zoom = 2
+        ..position = Vector2(900, 700);
+      final start = game.camera.viewfinder.position.clone();
+
+      game.moveGamepadCursor(GamepadMapDirection.right);
+      await Future<void>.delayed(Duration.zero);
+      game.update(0.2);
+
+      expect(commands, [const SelectTileCommand(1, 0)]);
+      expect(game.camera.viewfinder.position.x, closeTo(start.x, 0.001));
+      expect(game.camera.viewfinder.position.y, closeTo(start.y, 0.001));
+    });
+
     test('gamepad cursor reanchors when the selected unit changes', () async {
       final map = _map();
       final commands = <GameCommand>[];

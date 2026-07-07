@@ -111,7 +111,6 @@ extension GameRendererGamepadInput on GameRenderer {
 
     _gamepadCursorHex = CityHex(col: tile.col, row: tile.row);
     _syncGamepadCursorTile(tile);
-    _focusGamepadCursor(tile);
   }
 
   void _syncGamepadCursorTile(TileData tile) {
@@ -255,17 +254,5 @@ extension GameRendererGamepadInput on GameRenderer {
         cursor.row < 0 ||
         cursor.col >= mapData.cols ||
         cursor.row >= mapData.rows;
-  }
-
-  void _focusGamepadCursor(TileData tile) {
-    final position = HexGeometry.tilePosition(
-      col: tile.col,
-      row: tile.row,
-      hexRadius: _sceneBuilder.grid.config.hexRadius,
-    );
-    final worldPoint = Vector2(position.x, position.y * HexGrid.perspectiveY);
-    unawaited(
-      _cameraController.smoothCenterOnWorldPoint(worldPoint, duration: 0.16),
-    );
   }
 }
