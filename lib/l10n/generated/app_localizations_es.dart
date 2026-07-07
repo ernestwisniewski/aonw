@@ -4607,6 +4607,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get futureBuildingsSubtitle => 'Desbloqueados por tecnologías';
 
   @override
+  String futureWondersSection(int count) {
+    return 'Maravillas futuras ($count)';
+  }
+
+  @override
+  String get futureWondersSubtitle =>
+      'Desbloqueadas por tecnologías, terreno y recursos';
+
+  @override
   String workerPanelTitle(String unitName) {
     return 'Trabajador - $unitName';
   }

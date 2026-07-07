@@ -2511,6 +2511,15 @@
     }
   },
   "futureBuildingsSubtitle": "Débloqué par les technologies",
+  "futureWondersSection": "Merveilles futures ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Débloquées par les technologies, le terrain et les ressources",
   "workerPanelTitle": "Travailleur - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

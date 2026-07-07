@@ -2511,6 +2511,15 @@
     }
   },
   "futureBuildingsSubtitle": "Durch Technologien freigeschaltet",
+  "futureWondersSection": "Künftige Weltwunder ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Durch Technologien, Gelände und Ressourcen freigeschaltet",
   "workerPanelTitle": "Arbeiter - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

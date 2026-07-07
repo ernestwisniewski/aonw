@@ -2523,6 +2523,15 @@
     }
   },
   "futureBuildingsSubtitle": "Unlocked by technologies",
+  "futureWondersSection": "Future wonders ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Unlocked by technologies, terrain, and resources",
   "workerPanelTitle": "Worker - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

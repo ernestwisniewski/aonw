@@ -2511,6 +2511,15 @@
     }
   },
   "futureBuildingsSubtitle": "Desbloqueados por tecnologías",
+  "futureWondersSection": "Maravillas futuras ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Desbloqueadas por tecnologías, terreno y recursos",
   "workerPanelTitle": "Trabajador - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

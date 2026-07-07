@@ -4588,6 +4588,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get futureBuildingsSubtitle => 'Odblokowywane przez technologie';
 
   @override
+  String futureWondersSection(int count) {
+    return 'Przyszłe cuda ($count)';
+  }
+
+  @override
+  String get futureWondersSubtitle =>
+      'Odblokowywane przez technologie, teren i zasoby';
+
+  @override
   String workerPanelTitle(String unitName) {
     return 'Robotnik - $unitName';
   }

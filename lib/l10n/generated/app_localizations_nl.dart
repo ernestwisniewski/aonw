@@ -4605,6 +4605,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get futureBuildingsSubtitle => 'Ontgrendeld door technologieën';
 
   @override
+  String futureWondersSection(int count) {
+    return 'Toekomstige wonderen ($count)';
+  }
+
+  @override
+  String get futureWondersSubtitle =>
+      'Ontgrendeld door technologieën, terrein en grondstoffen';
+
+  @override
   String workerPanelTitle(String unitName) {
     return 'Werknemer - $unitName';
   }

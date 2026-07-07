@@ -2511,6 +2511,15 @@
     }
   },
   "futureBuildingsSubtitle": "Odblokowywane przez technologie",
+  "futureWondersSection": "Przyszłe cuda ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Odblokowywane przez technologie, teren i zasoby",
   "workerPanelTitle": "Robotnik - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

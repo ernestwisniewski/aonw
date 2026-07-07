@@ -44,12 +44,6 @@ abstract final class CityProductionGamepadNavigation {
           onConfirm: () => onBuild(item.buildingType!),
           onDetails: () => onBuildingDetails(item),
         ),
-      for (final item in viewModel.wonders)
-        CityProductionGamepadChoice(
-          key: cityProductionItemKey(item),
-          canConfirm: !item.active && !item.locked && onBuildWonder != null,
-          onConfirm: () => onBuildWonder!(item.wonderType!),
-        ),
       for (final item in viewModel.units)
         CityProductionGamepadChoice(
           key: cityProductionItemKey(item),
@@ -57,6 +51,13 @@ abstract final class CityProductionGamepadNavigation {
           onConfirm: () => onProduceUnit(item.unitType!),
           onDetails: () => onUnitDetails(item),
         ),
+      for (final item in viewModel.wonders)
+        if (!item.locked || item.active)
+          CityProductionGamepadChoice(
+            key: cityProductionItemKey(item),
+            canConfirm: !item.active && !item.locked && onBuildWonder != null,
+            onConfirm: () => onBuildWonder!(item.wonderType!),
+          ),
       for (final item in viewModel.specializations)
         CityProductionGamepadChoice(
           key: citySpecializationItemKey(item),

@@ -65,6 +65,14 @@ class CityProductionList extends StatelessWidget {
       futureBuildings,
       buildingSortMode,
     );
+    final visibleWonders = [
+      for (final item in wonders)
+        if (!item.locked || item.active) item,
+    ];
+    final unavailableWonders = [
+      for (final item in wonders)
+        if (item.locked && !item.active) item,
+    ];
     final hasBuildingRows =
         sortedBuildings.isNotEmpty || sortedFutureBuildings.isNotEmpty;
     final children = <Widget>[];
@@ -92,6 +100,28 @@ class CityProductionList extends StatelessWidget {
               onTap: item.active || onStartProject == null
                   ? null
                   : () => onStartProject!(item.projectType!),
+            ),
+          ),
+        );
+      }
+    }
+
+    void addWonderRows(List<CityProductionItem> items) {
+      for (final item in items) {
+        final itemKey = cityProductionItemKey(item);
+        children.add(
+          SelectedPanelItemRevealer(
+            selected: selectedItemKey == itemKey,
+            alignment: 0.18,
+            child: ProductionListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onDetails: null,
+              onTap: item.active || item.locked || onBuildWonder == null
+                  ? null
+                  : () => onBuildWonder!(item.wonderType!),
             ),
           ),
         );
@@ -155,32 +185,6 @@ class CityProductionList extends StatelessWidget {
       );
     }
 
-    if (wonders.isNotEmpty) {
-      addMajorGap();
-      children.add(
-        CityProductionSectionTitle(l10n.cityProductionWondersSection),
-      );
-      for (final item in wonders) {
-        final itemKey = cityProductionItemKey(item);
-        children.add(
-          SelectedPanelItemRevealer(
-            selected: selectedItemKey == itemKey,
-            alignment: 0.18,
-            child: ProductionListTile(
-              key: ValueKey(itemKey),
-              item: item,
-              compact: compact,
-              selected: selectedItemKey == itemKey,
-              onDetails: null,
-              onTap: item.active || item.locked || onBuildWonder == null
-                  ? null
-                  : () => onBuildWonder!(item.wonderType!),
-            ),
-          ),
-        );
-      }
-    }
-
     if (units.isNotEmpty) {
       addMajorGap();
       children.add(CityProductionSectionTitle(l10n.unitsSection));
@@ -200,6 +204,30 @@ class CityProductionList extends StatelessWidget {
                   ? null
                   : () => onProduceUnit(item.unitType!),
             ),
+          ),
+        );
+      }
+    }
+
+    if (visibleWonders.isNotEmpty || unavailableWonders.isNotEmpty) {
+      addMajorGap();
+      if (visibleWonders.isNotEmpty) {
+        children.add(
+          CityProductionSectionTitle(l10n.cityProductionWondersSection),
+        );
+        addWonderRows(visibleWonders);
+        if (unavailableWonders.isNotEmpty) {
+          children.add(SizedBox(height: compact ? 6 : 8));
+        }
+      }
+      if (unavailableWonders.isNotEmpty) {
+        children.add(
+          FutureBuildingsSection(
+            items: unavailableWonders,
+            title: l10n.futureWondersSection(unavailableWonders.length),
+            subtitle: l10n.futureWondersSubtitle,
+            compact: compact,
+            onDetails: null,
           ),
         );
       }

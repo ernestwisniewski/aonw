@@ -4608,6 +4608,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get futureBuildingsSubtitle => 'Durch Technologien freigeschaltet';
 
   @override
+  String futureWondersSection(int count) {
+    return 'Künftige Weltwunder ($count)';
+  }
+
+  @override
+  String get futureWondersSubtitle =>
+      'Durch Technologien, Gelände und Ressourcen freigeschaltet';
+
+  @override
   String workerPanelTitle(String unitName) {
     return 'Arbeiter - $unitName';
   }

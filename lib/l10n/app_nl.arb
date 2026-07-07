@@ -2511,6 +2511,15 @@
     }
   },
   "futureBuildingsSubtitle": "Ontgrendeld door technologieën",
+  "futureWondersSection": "Toekomstige wonderen ({count})",
+  "@futureWondersSection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "futureWondersSubtitle": "Ontgrendeld door technologieën, terrein en grondstoffen",
   "workerPanelTitle": "Werknemer - {unitName}",
   "@workerPanelTitle": {
     "placeholders": {

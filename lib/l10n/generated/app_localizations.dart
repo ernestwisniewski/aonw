@@ -7883,6 +7883,18 @@ abstract class AppLocalizations {
   /// **'Unlocked by technologies'**
   String get futureBuildingsSubtitle;
 
+  /// No description provided for @futureWondersSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Future wonders ({count})'**
+  String futureWondersSection(int count);
+
+  /// No description provided for @futureWondersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked by technologies, terrain, and resources'**
+  String get futureWondersSubtitle;
+
   /// No description provided for @workerPanelTitle.
   ///
   /// In en, this message translates to:
