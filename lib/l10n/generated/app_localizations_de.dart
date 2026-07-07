@@ -650,6 +650,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String get countryPortugal => 'Portugal';
 
   @override
+  String get countryIndia => 'Indien';
+
+  @override
+  String get countryBrazil => 'Brasilien';
+
+  @override
+  String get countryIndonesia => 'Indonesien';
+
+  @override
+  String get countryMexico => 'Mexiko';
+
+  @override
+  String get countryTurkey => 'Türkei';
+
+  @override
+  String get countrySaudiArabia => 'Saudi-Arabien';
+
+  @override
+  String get countryEgypt => 'Ägypten';
+
+  @override
+  String get countryGreece => 'Griechenland';
+
+  @override
   String get countryLeaderPoland => 'Kasimir III. der Große';
 
   @override
@@ -696,6 +720,30 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get countryLeaderPortugal => 'Heinrich der Seefahrer';
+
+  @override
+  String get countryLeaderIndia => 'Ashoka';
+
+  @override
+  String get countryLeaderBrazil => 'Pedro II.';
+
+  @override
+  String get countryLeaderIndonesia => 'Gajah Mada';
+
+  @override
+  String get countryLeaderMexico => 'Benito Juarez';
+
+  @override
+  String get countryLeaderTurkey => 'Suleiman der Prächtige';
+
+  @override
+  String get countryLeaderSaudiArabia => 'Ibn Saud';
+
+  @override
+  String get countryLeaderEgypt => 'Hatschepsut';
+
+  @override
+  String get countryLeaderGreece => 'Perikles';
 
   @override
   String get addPlayerAction => '+ SPIELER HINZUFÜGEN';

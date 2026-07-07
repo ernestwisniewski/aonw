@@ -649,6 +649,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String get countryPortugal => 'Portugal';
 
   @override
+  String get countryIndia => 'India';
+
+  @override
+  String get countryBrazil => 'Brazilië';
+
+  @override
+  String get countryIndonesia => 'Indonesië';
+
+  @override
+  String get countryMexico => 'Mexico';
+
+  @override
+  String get countryTurkey => 'Turkije';
+
+  @override
+  String get countrySaudiArabia => 'Saoedi-Arabië';
+
+  @override
+  String get countryEgypt => 'Egypte';
+
+  @override
+  String get countryGreece => 'Griekenland';
+
+  @override
   String get countryLeaderPoland => 'Casimir III de Grote';
 
   @override
@@ -695,6 +719,30 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get countryLeaderPortugal => 'Hendrik de Zeevaarder';
+
+  @override
+  String get countryLeaderIndia => 'Ashoka';
+
+  @override
+  String get countryLeaderBrazil => 'Pedro II';
+
+  @override
+  String get countryLeaderIndonesia => 'Gajah Mada';
+
+  @override
+  String get countryLeaderMexico => 'Benito Juárez';
+
+  @override
+  String get countryLeaderTurkey => 'Suleiman de Grote';
+
+  @override
+  String get countryLeaderSaudiArabia => 'Ibn Saud';
+
+  @override
+  String get countryLeaderEgypt => 'Hatshepsut';
+
+  @override
+  String get countryLeaderGreece => 'Perikles';
 
   @override
   String get addPlayerAction => '+ SPELER TOEVOEGEN';

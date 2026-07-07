@@ -35,6 +35,18 @@ void main() {
       'japan': 'persona=aggressive; A1.15 X0.95 E1.00 S1.10; b1.20 d0.90 f0.95',
       'portugal':
           'persona=economic; A0.90 X1.15 E1.20 S1.05; b0.90 d1.20 f1.10',
+      'india': 'persona=expansive; A0.90 X1.20 E1.10 S1.10; b0.90 d1.20 f1.15',
+      'brazil': 'persona=economic; A0.90 X1.10 E1.15 S1.00; b0.90 d1.15 f1.10',
+      'indonesia':
+          'persona=economic; A0.95 X1.15 E1.15 S1.00; b0.95 d1.20 f1.10',
+      'mexico': 'persona=expansive; A1.00 X1.15 E1.05 S1.00; b1.00 d1.15 f1.10',
+      'turkey':
+          'persona=aggressive; A1.10 X1.10 E1.05 S1.00; b1.15 d1.10 f1.10',
+      'saudiArabia':
+          'persona=economic; A0.95 X1.00 E1.20 S1.05; b0.95 d1.00 f1.00',
+      'egypt': 'persona=expansive; A0.95 X1.15 E1.10 S1.05; b0.95 d1.15 f1.10',
+      'greece':
+          'persona=scientific; A0.95 X1.00 E1.10 S1.20; b0.95 d1.00 f1.00',
     });
   });
 }
