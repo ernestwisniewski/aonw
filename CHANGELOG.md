@@ -4,6 +4,21 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.1.2 - 2026-07-07
+
+- Expanded the civilization roster to 24 playable countries, each with
+  localized country and ruler names.
+- Added civilization-specific city names and AI tendencies so new matches feel
+  less uniform.
+- Improved new-game setup around choosing a civilization and reading the match
+  plan before starting.
+- Expanded gamepad options with persistent settings for input enablement,
+  deadzone, camera sensitivity, inverted camera Y, and button/axis bindings.
+- Improved gamepad navigation across diplomacy popups, technology discoveries,
+  city production, first-turn guidance, HUD actions, and end-turn flow.
+- Made first-turn guidance clearer so founding the capital, choosing research,
+  assigning production, and clearing pending actions are easier to follow.
+
 ## 1.1.1 - 2026-07-05
 
 - Fixed controller targeting so unit move mode stays active while moving the
