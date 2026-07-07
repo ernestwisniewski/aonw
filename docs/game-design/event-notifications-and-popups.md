@@ -48,3 +48,11 @@ Network snapshots after live events pass events to
 `gameEventNotificationsProvider` after the renderer has applied them. That
 keeps the same mechanism working for local commands, single-player AI, and
 opponent moves in multiplayer.
+
+## World Wonders
+
+World wonder completion uses the standard city-event notification path. A
+completed wonder emits `CityBuiltWonderEvent` for the winning city, while losing
+queues that were racing the same wonder emit `WonderProductionRefundedEvent`
+after their invested production is returned to overflow. Both events are visible
+in the activity log and can focus the affected city.

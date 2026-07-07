@@ -93,6 +93,7 @@ settlement, and expansion technologies use x1.00 before the pace multiplier.
 | --- | ---: | ---: | --- |
 | Unit | `UnitProductionDefinition.productionCost` | `unitProductionCostMultiplier` | Scales queue completion, rollover, and rush |
 | Building | `CityBuildingDefinition.productionCost` | `buildingProductionCostMultiplier` | Scales queue completion, rollover, and rush |
+| Wonder | `WonderDefinition.productionCost` | `buildingProductionCostMultiplier` | Scales queue completion, rollover, rush, and race refunds |
 | Project | 0 | none | Projects are continuous and convert production into output |
 
 `productionPerTurn` is not scaled by pace. Pace shortens or lengthens the
@@ -112,6 +113,7 @@ and building roles:
 | --- | --- | --- |
 | Early buildings | granary 6, workshop 15, marketplace 20 | Granary is the cheap opening infrastructure; other buildings remain real infrastructure investments |
 | Mid/late production buildings | forge 22, factory 30, powerPlant 62, assemblyPlant 70 | Stronger production cities close infrastructure faster, but cannot build the whole catalog without choices |
+| Wonders | Great Library 120, Central Bank 220, Mother Factory 360, Grand Exposition 400 | Globally unique long-horizon commitments, intentionally above ordinary buildings |
 | Early units | warrior 22, archer 26, worker 18, settler 30 | Units take clearly longer to produce to limit army and settler spam |
 | Mid/late units | cavalry 44, fieldCannon 68, tank 96, warship 82 | Later armies are strategic decisions, not the default filler for every queue |
 

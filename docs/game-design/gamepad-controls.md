@@ -45,8 +45,10 @@ The gamepad layer translates controller input into existing game commands such
 as `SelectTileCommand`, `TileTappedCommand`, `ToggleMoveTargetingCommand`, and
 the relevant cancel commands. HUD panels consume the same normalized input for
 local row/card selection, then call the existing production, research, details,
-and close callbacks. This keeps controller support out of save/wire state and
-avoids a parallel gameplay path.
+and close callbacks. City production choices include buildings, wonders, units,
+projects, and specializations; wonders use stable route keys in the form
+`wonder:<name>`. This keeps controller support out of save/wire state and avoids
+a parallel gameplay path.
 
 Map cursor selection is camera-stable: D-pad and left-stick cursor movement
 selects a new hex without recentering the camera. Camera movement is reserved
