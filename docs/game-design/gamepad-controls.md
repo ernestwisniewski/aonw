@@ -63,10 +63,14 @@ dispatch as panels and HUD focus.
 HUD focus is presentation-local. Pressing `R3` from the map activates the
 bottom toolbar section, while an already active HUD focus uses `R3` and `L3` to
 step through the left rail, menu, top resource pills, player rail, and bottom
-toolbar. The D-pad moves within a section, `A` invokes the same callback as
-tapping the highlighted widget, and `B` returns input to the map. Open HUD
-popups capture the controller so the D-pad scrolls their content and `B` closes
-the popup instead of moving the map behind it.
+toolbar. The D-pad follows the screen layout: up from the left rail reaches the
+menu button, right from menu reaches the top pills, down from the top pills
+enters the player rail, and down from the player rail reaches the bottom action
+toolbar. Inside the bottom toolbar, down from selection action chips focuses the
+main turn/action button. `A` invokes the same callback as tapping the highlighted
+widget, and `B` returns input to the map. Open HUD popups capture the controller
+so the D-pad scrolls their content and `B` closes the popup instead of moving
+the map behind it.
 
 The first-turn tutorial also registers as a modal gamepad route. D-pad left/up,
 `L3`, or `LB` move to the previous card; D-pad right/down, `R3`, `RB`, or `A`
