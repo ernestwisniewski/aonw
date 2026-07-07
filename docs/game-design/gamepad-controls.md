@@ -25,8 +25,8 @@
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
 | L3 / R3 | R3 jumps from the map to the bottom toolbar; while HUD focus is active, L3/R3 step left/right across HUD sections |
-| RB | Focus the next pending player action, wrapping through units, city production, and research |
-| LB | Focus the previous pending player action, wrapping through the same queue |
+| RB | Run the next-action flow forward, wrapping through units, city production, and research while opening or switching the matching panel |
+| LB | Run the same action flow backward through that queue, opening or switching the matching panel |
 | Start | Run the primary turn action, matching Space |
 
 Terminology note: zoom is on the analog triggers, `RT` and `LT`. The bumpers,

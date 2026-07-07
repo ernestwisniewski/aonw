@@ -556,14 +556,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'The right bumper focuses the next pending player action in the turn queue, including city production and research.';
+      'The right bumper runs the next-action flow forward, opening or switching city production and research panels when needed.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'The left bumper focuses the previous pending player action in the same turn queue, wrapping through units, cities, and research.';
+      'The left bumper runs the same action flow backward, wrapping through units, cities, and research while opening the matching panel when needed.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

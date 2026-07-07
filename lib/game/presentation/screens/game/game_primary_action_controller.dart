@@ -40,8 +40,11 @@ class _GamePrimaryActionControllerState
   Widget build(BuildContext context) {
     return GamepadPanelInputListener(
       input: widget.gamepadInputListenable,
+      enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
       priority: GamepadInputRoutePriority.primary,
       onPrimaryAction: _activate,
+      onFocusPrevious: () => _focusPendingAction(actionStep: -1),
+      onFocusNext: () => _focusPendingAction(actionStep: 1),
       child: GamePrimaryActionShortcutScope(
         enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
         onActivate: _activate,
@@ -88,12 +91,7 @@ class _GamePrimaryActionControllerState
     final dispatcher = ref.read(hudCommandDispatcherProvider);
 
     if (pendingActionCount > 0) {
-      unawaited(
-        dispatcher.focusNextAction(
-          activePlayerId: activePlayerId,
-          currentState: () => ref.read(gameStateProvider(session.saveId)).value,
-        ),
-      );
+      _focusPendingAction(actionStep: 1);
       return;
     }
 
@@ -105,6 +103,47 @@ class _GamePrimaryActionControllerState
         readyToEndTurn: readyToEndTurn,
         currentState: () => ref.read(gameStateProvider(session.saveId)).value,
       ),
+    );
+  }
+
+  void _focusPendingAction({required int actionStep}) {
+    final save = widget.gameSave;
+    final session = widget.session;
+    if (save == null || session.saveId.isEmpty) return;
+    if (widget.animatingUnitIdsListenable.value.isNotEmpty) return;
+
+    final playerControl = PlayerControlCoordinator.normalize(
+      current: ref.read(gamePlayerControlControllerProvider),
+      save: save,
+    );
+    final activePlayerId = playerControl.activePlayerId;
+    if (activePlayerId.isEmpty || !playerControl.canAct) return;
+    if (save.playerStates[activePlayerId] == PlayerTurnState.finished) {
+      return;
+    }
+
+    final gameState = ref.read(gameStateProvider(session.saveId)).value;
+    if (gameState == null || gameState.hasSubmittedTurn(activePlayerId)) {
+      return;
+    }
+
+    final pendingActionCount = TurnReducer.pendingTurnActionCount(
+      gameState,
+      activePlayerId,
+      session.mapData,
+      technologyRuleset: ref.read(technologyRulesetProvider),
+    );
+    if (pendingActionCount <= 0) return;
+
+    unawaited(
+      ref
+          .read(hudCommandDispatcherProvider)
+          .focusNextAction(
+            activePlayerId: activePlayerId,
+            currentState: () =>
+                ref.read(gameStateProvider(session.saveId)).value,
+            actionStep: actionStep,
+          ),
     );
   }
 }

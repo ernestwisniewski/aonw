@@ -558,14 +558,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'De rechter bumper focust de volgende openstaande speleractie in de beurtwachtrij, inclusief stadsproductie en onderzoek.';
+      'De rechter bumper voert de volgende-actieflow vooruit uit en opent of wisselt stadsproductie- en onderzoekspanels wanneer dat nodig is.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'De linker bumper focust de vorige openstaande speleractie in dezelfde wachtrij en loopt terug door eenheden, steden en onderzoek.';
+      'De linker bumper voert dezelfde actieflow achteruit uit, loopt door eenheden, steden en onderzoek en opent het bijpassende panel wanneer dat nodig is.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

@@ -560,14 +560,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'Le bumper droit focalise la prochaine action joueur en attente dans la file du tour, y compris la production de ville et la recherche.';
+      'Le bumper droit lance le flux d\'action suivante vers l\'avant, en ouvrant ou changeant les panneaux de production de ville et de recherche si nécessaire.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Le bumper gauche focalise l\'action joueur en attente précédente dans la même file, en bouclant entre unités, villes et recherche.';
+      'Le bumper gauche lance le même flux vers l\'arrière, en bouclant entre unités, villes et recherche et en ouvrant le panneau correspondant si nécessaire.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

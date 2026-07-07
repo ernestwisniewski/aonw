@@ -559,14 +559,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'Der rechte Bumper fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange, einschließlich Stadtproduktion und Forschung.';
+      'Der rechte Bumper führt den Nächste-Aktion-Ablauf vorwärts aus und öffnet oder wechselt bei Bedarf Stadtproduktions- und Forschungspanels.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Der linke Bumper fokussiert die vorherige ausstehende Spieleraktion in derselben Warteschlange und läuft durch Einheiten, Städte und Forschung zurück.';
+      'Der linke Bumper führt denselben Aktionsablauf rückwärts aus, läuft durch Einheiten, Städte und Forschung und öffnet bei Bedarf das passende Panel.';
 
   @override
   String get manualGamepadTurnAction => 'Start';
