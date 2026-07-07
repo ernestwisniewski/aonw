@@ -17,6 +17,7 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
@@ -258,6 +259,7 @@ Future<void> _pumpHud(
   GameLogger? logger,
   bool? autoActionFlowEnabled,
   bool? autoTurnFlowEnabled,
+  ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
   ValueListenable<bool> initialCameraFocusReadyListenable =
       const AlwaysStoppedAnimation<bool>(true),
 }) async {
@@ -297,6 +299,11 @@ Future<void> _pumpHud(
             session: activeSession,
             animatingUnitIdsListenable:
                 activeRenderer.animatingUnitIdsListenable,
+            gamepadInputListenable:
+                gamepadInputListenable ??
+                const AlwaysStoppedAnimation<GamepadInputSnapshot>(
+                  GamepadInputSnapshot.empty,
+                ),
             initialCameraFocusReadyListenable:
                 initialCameraFocusReadyListenable,
             allowGraphicMode: false,
@@ -430,6 +437,18 @@ void _expectCoachmarkHaloTracks(
   final targetRect = tester.getRect(target);
   expect(halo.contains(targetRect.center), isTrue, reason: reason);
   expect(halo.overlaps(targetRect), isTrue, reason: reason);
+}
+
+Future<void> _pressGamepad(
+  WidgetTester tester,
+  ValueNotifier<GamepadInputSnapshot> input,
+  GamepadInputSnapshot snapshot,
+) async {
+  input.value = snapshot;
+  await tester.pump(const Duration(milliseconds: 16));
+  input.value = GamepadInputSnapshot.empty;
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump(const Duration(milliseconds: 120));
 }
 
 void _expectWarmPanelSurface(
@@ -2670,6 +2689,201 @@ void main() {
       find.byKey(const Key('firstTurnCoachmarks.overlay')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('first turn coachmarks can be disabled from the popup', (
+    tester,
+  ) async {
+    final firstTurnSave = _save.copyWith(
+      turn: 1,
+      gameMode: GameMode.multiplayer,
+    );
+    final settler = GameUnit(
+      id: 'settler_1',
+      ownerPlayerId: 'player_1',
+      type: GameUnitType.settler,
+      name: GameUnitType.settler.defaultNameToken,
+      col: 1,
+      row: 1,
+    );
+    final repository = _FakeGameRepository(
+      snapshot: SaveSnapshot.fromGameState(
+        save: firstTurnSave,
+        state: GameState(
+          activePlayerId: 'player_1',
+          units: [settler],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+            moveCommandActive: true,
+          ),
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: firstTurnSave,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    final tutorialPopupId = HudMinimizedPopupIds.firstTurnTutorial(
+      firstTurnSave.id,
+    );
+
+    expect(
+      find.byKey(const Key('firstTurnCoachmarks.overlay')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('firstTurnCoachmarks.disable')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('firstTurnCoachmarks.disable')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final disabledEntry = container
+        .read(hudMinimizedPopupsProvider)
+        .entryFor(tutorialPopupId);
+    expect(disabledEntry, isNotNull);
+    expect(disabledEntry!.payload['disabled'], 'true');
+    expect(find.byKey(const Key('firstTurnCoachmarks.overlay')), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: firstTurnSave,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('firstTurnCoachmarks.overlay')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('gameOptions.helpPopupsButton')));
+    await tester.pump();
+    await tester.tap(find.text('Tutorial'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('firstTurnCoachmarks.overlay')),
+      findsOneWidget,
+    );
+    expect(find.text('Step 1: read the selection'), findsOneWidget);
+  });
+
+  testWidgets('first turn coachmarks navigate with gamepad input', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+    final firstTurnSave = _save.copyWith(
+      turn: 1,
+      gameMode: GameMode.multiplayer,
+    );
+    final settler = GameUnit(
+      id: 'settler_1',
+      ownerPlayerId: 'player_1',
+      type: GameUnitType.settler,
+      name: GameUnitType.settler.defaultNameToken,
+      col: 1,
+      row: 1,
+    );
+    final repository = _FakeGameRepository(
+      snapshot: SaveSnapshot.fromGameState(
+        save: firstTurnSave,
+        state: GameState(
+          activePlayerId: 'player_1',
+          units: [settler],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler),
+            moveCommandActive: true,
+          ),
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: firstTurnSave,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      gamepadInputListenable: gamepadInput,
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+
+    expect(
+      find.byKey(const Key('firstTurnCoachmarks.overlay')),
+      findsOneWidget,
+    );
+    expect(find.text('Step 1: read the selection'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(confirm: true),
+    );
+
+    expect(find.text('Step 2: check your empire'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadLeft: true),
+    );
+
+    expect(find.text('Step 1: read the selection'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(dpadRight: true),
+    );
+
+    expect(find.text('Step 2: check your empire'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(focusNext: true),
+    );
+
+    expect(find.text('Step 3: learn the left menu'), findsOneWidget);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(cancel: true),
+    );
+
+    final tutorialPopupId = HudMinimizedPopupIds.firstTurnTutorial(
+      firstTurnSave.id,
+    );
+    expect(
+      container.read(hudMinimizedPopupsProvider).hasEntry(tutorialPopupId),
+      isTrue,
+    );
+    expect(find.byKey(const Key('firstTurnCoachmarks.overlay')), findsNothing);
   });
 
   testWidgets('first turn coachmarks require first-turn ready HUD state', (

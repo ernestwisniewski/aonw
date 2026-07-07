@@ -49,6 +49,7 @@ class CoachmarkBubble extends StatelessWidget {
     required this.total,
     required this.onSkip,
     required this.onNext,
+    required this.onDisable,
     required this.onMinimize,
     super.key,
   });
@@ -58,6 +59,7 @@ class CoachmarkBubble extends StatelessWidget {
   final int total;
   final VoidCallback onSkip;
   final VoidCallback onNext;
+  final VoidCallback onDisable;
   final VoidCallback onMinimize;
 
   @override
@@ -169,7 +171,30 @@ class CoachmarkBubble extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          key: const Key('firstTurnCoachmarks.disable'),
+                          onPressed: onDisable,
+                          style: GameUiTheme.textButtonStyle(
+                            foreground: GameUiTheme.textSecondary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: Text(
+                            l10n.commonDoNotShowAgain,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
                     TextButton(
+                      key: const Key('firstTurnCoachmarks.skip'),
                       onPressed: onSkip,
                       style: GameUiTheme.textButtonStyle(
                         foreground: GameUiTheme.textSecondary,
@@ -180,8 +205,9 @@ class CoachmarkBubble extends StatelessWidget {
                       ),
                       child: Text(l10n.firstTurnCoachmarkSkipAction),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 4),
                     TextButton(
+                      key: const Key('firstTurnCoachmarks.next'),
                       onPressed: onNext,
                       style: GameUiTheme.textButtonStyle(
                         foreground: GameUiTheme.goldLight,

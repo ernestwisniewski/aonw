@@ -356,6 +356,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
           hasSelectionActions: visibleSelectionActionChips.isNotEmpty,
           readyToEndTurn: frame.readyToEndTurn,
           coachmarkContext: frame.coachmarkContext,
+          gamepadInputListenable: widget.gamepadInputListenable,
         ),
       ],
     );
