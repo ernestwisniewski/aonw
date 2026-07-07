@@ -71,6 +71,51 @@ void main() {
       expect(confirmCount, 1);
     });
 
+    testWidgets('primes held input when a route registers later', (
+      tester,
+    ) async {
+      final input = ValueNotifier<GamepadInputSnapshot>(
+        GamepadInputSnapshot.empty,
+      );
+      addTearDown(input.dispose);
+      var confirmCount = 0;
+      var routeVisible = false;
+      StateSetter? setHarnessState;
+
+      await tester.pumpWidget(
+        GamepadInputRouterScope(
+          input: input,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              setHarnessState = setState;
+              return routeVisible
+                  ? GamepadPanelInputListener(
+                      input: input,
+                      onConfirm: () => confirmCount += 1,
+                      child: const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      input.value = const GamepadInputSnapshot(confirm: true);
+      await tester.pump(const Duration(milliseconds: 16));
+      setHarnessState!(() => routeVisible = true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(confirmCount, 0);
+
+      input.value = GamepadInputSnapshot.empty;
+      await tester.pump(const Duration(milliseconds: 16));
+      input.value = const GamepadInputSnapshot(confirm: true);
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(confirmCount, 1);
+    });
+
     testWidgets('keeps HUD hotkeys active alongside the renderer frame route', (
       tester,
     ) async {

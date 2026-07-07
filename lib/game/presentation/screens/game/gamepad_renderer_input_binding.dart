@@ -12,12 +12,14 @@ typedef GamepadRendererInputBuilder =
 class GamepadRendererInputBinding extends StatefulWidget {
   const GamepadRendererInputBinding({
     required this.renderer,
+    required this.gamepadSettings,
     required this.builder,
     this.rendererInputEnabled = true,
     super.key,
   });
 
   final GameRenderer renderer;
+  final GamepadControlSettings gamepadSettings;
   final bool rendererInputEnabled;
   final GamepadRendererInputBuilder builder;
 
@@ -33,7 +35,7 @@ class _GamepadRendererInputBindingState
   @override
   void initState() {
     super.initState();
-    _adapter = GamepadInputAdapter()..start();
+    _adapter = GamepadInputAdapter(mapper: _mapper())..start();
   }
 
   @override
@@ -41,6 +43,9 @@ class _GamepadRendererInputBindingState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.renderer != widget.renderer) {
       oldWidget.renderer.gamepadInput = GamepadInputSnapshot.empty;
+    }
+    if (oldWidget.gamepadSettings != widget.gamepadSettings) {
+      _adapter.updateMapper(_mapper());
     }
   }
 
@@ -55,6 +60,8 @@ class _GamepadRendererInputBindingState
   Widget build(BuildContext context) {
     return GamepadInputRouterScope(
       input: _adapter.snapshot,
+      deadzone: widget.gamepadSettings.deadzone,
+      cameraSensitivity: widget.gamepadSettings.cameraSensitivity,
       child: Builder(
         builder: (context) {
           return GamepadInputRouteListener(
@@ -68,5 +75,9 @@ class _GamepadRendererInputBindingState
         },
       ),
     );
+  }
+
+  GamepadEventMapper _mapper() {
+    return GamepadEventMapper(settings: widget.gamepadSettings);
   }
 }

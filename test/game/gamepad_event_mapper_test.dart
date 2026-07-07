@@ -44,6 +44,76 @@ void main() {
       expect(rightPressed.hudFocusNext, isTrue);
       expect(released.hudFocusPrevious, isFalse);
     });
+
+    test('uses remapped button bindings', () {
+      final mapper = GamepadEventMapper(
+        settings: GamepadControlSettings.defaults.copyWith(
+          buttonBindings: GamepadButtonBindings.defaults.bind(
+            GamepadButtonAction.confirm,
+            GamepadButton.y,
+          ),
+        ),
+      );
+
+      final snapshot = mapper.apply(
+        GamepadInputSnapshot.empty,
+        NormalizedGamepadEvent(
+          gamepadId: 'pad',
+          timestamp: 0,
+          button: GamepadButton.y,
+          value: 1,
+          rawEvent: _rawButtonEvent(value: 1),
+        ),
+      );
+
+      expect(snapshot.confirm, isTrue);
+      expect(snapshot.inspect, isFalse);
+    });
+
+    test('uses remapped and inverted axis bindings', () {
+      final mapper = GamepadEventMapper(
+        settings: GamepadControlSettings.defaults.copyWith(
+          invertCameraY: true,
+          axisBindings: GamepadAxisBindings.defaults.bind(
+            GamepadAxisAction.cameraY,
+            GamepadAxis.leftStickY,
+          ),
+        ),
+      );
+
+      final snapshot = mapper.apply(
+        GamepadInputSnapshot.empty,
+        NormalizedGamepadEvent(
+          gamepadId: 'pad',
+          timestamp: 0,
+          axis: GamepadAxis.leftStickY,
+          value: 0.5,
+          rawEvent: _rawAxisEvent(value: 0.5),
+        ),
+      );
+
+      expect(snapshot.cameraY, -0.5);
+      expect(snapshot.cursorY, 0);
+    });
+
+    test('clears input while gamepad is disabled', () {
+      final mapper = GamepadEventMapper(
+        settings: GamepadControlSettings.defaults.copyWith(enabled: false),
+      );
+
+      final snapshot = mapper.apply(
+        const GamepadInputSnapshot(confirm: true),
+        NormalizedGamepadEvent(
+          gamepadId: 'pad',
+          timestamp: 0,
+          button: GamepadButton.a,
+          value: 1,
+          rawEvent: _rawButtonEvent(value: 1),
+        ),
+      );
+
+      expect(snapshot, GamepadInputSnapshot.empty);
+    });
   });
 }
 
@@ -53,6 +123,16 @@ GamepadEvent _rawButtonEvent({required double value}) {
     timestamp: 0,
     type: KeyType.button,
     key: 'stick',
+    value: value,
+  );
+}
+
+GamepadEvent _rawAxisEvent({required double value}) {
+  return GamepadEvent(
+    gamepadId: 'pad',
+    timestamp: 0,
+    type: KeyType.analog,
+    key: 'axis',
     value: value,
   );
 }

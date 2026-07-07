@@ -1914,6 +1914,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cinematicCameraLabel => 'Filmische Kamera';
 
   @override
+  String get gamepadEnabledLabel => 'Gamepad-Eingabe';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Gamepad-Totzone';
+
+  @override
+  String get gamepadCameraSensitivityLabel => 'Gamepad-Kameraempfindlichkeit';
+
+  @override
+  String get gamepadInvertCameraYLabel => 'Gamepad-Kamera Y invertieren';
+
+  @override
+  String get gamepadButtonBindingsLabel => 'Gamepad-Tastenbelegung';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Gamepad-Achsenbelegung';
+
+  @override
+  String get gamepadResetBindingsLabel => 'Gamepad-Belegung zurücksetzen';
+
+  @override
   String get performanceSectionTitle => 'Leistung';
 
   @override

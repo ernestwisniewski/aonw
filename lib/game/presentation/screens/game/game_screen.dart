@@ -409,6 +409,7 @@ class _GameRendererSessionHostState
                 ],
                 child: GamepadRendererInputBinding(
                   renderer: _renderer,
+                  gamepadSettings: gameplaySettings.gamepad,
                   rendererInputEnabled: rendererGamepadInputEnabled,
                   builder: (context, gamepadInput) =>
                       GamePrimaryActionController(

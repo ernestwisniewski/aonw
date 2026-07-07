@@ -97,11 +97,15 @@ class GamepadInputRouterScope extends StatefulWidget {
   const GamepadInputRouterScope({
     required this.input,
     required this.child,
+    this.deadzone = 0.24,
+    this.cameraSensitivity = 1,
     super.key,
   });
 
   final ValueListenable<GamepadInputSnapshot> input;
   final Widget child;
+  final double deadzone;
+  final double cameraSensitivity;
 
   static GamepadInputRouter? maybeOf(BuildContext context) {
     return context
@@ -121,7 +125,12 @@ class _GamepadInputRouterScopeState extends State<GamepadInputRouterScope>
   @override
   void initState() {
     super.initState();
-    _router = _GamepadInputRouterController(input: widget.input, vsync: this);
+    _router = _GamepadInputRouterController(
+      input: widget.input,
+      vsync: this,
+      deadzone: widget.deadzone,
+      cameraSensitivity: widget.cameraSensitivity,
+    );
   }
 
   @override
@@ -129,6 +138,13 @@ class _GamepadInputRouterScopeState extends State<GamepadInputRouterScope>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.input != widget.input) {
       _router.replaceInput(widget.input);
+    }
+    if (oldWidget.deadzone != widget.deadzone ||
+        oldWidget.cameraSensitivity != widget.cameraSensitivity) {
+      _router.updateFrameSettings(
+        deadzone: widget.deadzone,
+        cameraSensitivity: widget.cameraSensitivity,
+      );
     }
   }
 
@@ -214,15 +230,21 @@ final class _GamepadInputRouterController implements GamepadInputRouter {
   _GamepadInputRouterController({
     required ValueListenable<GamepadInputSnapshot> input,
     required TickerProvider vsync,
+    required double deadzone,
+    required double cameraSensitivity,
   }) : _input = input {
     _ticker = vsync.createTicker(_tick);
+    _frameController = GamepadFrameController(
+      deadzone: deadzone,
+      cameraSensitivity: cameraSensitivity,
+    );
     _currentInput = input.value;
     _frameController.prime(_currentInput);
     _input.addListener(_handleInputChanged);
     _syncTicker();
   }
 
-  final GamepadFrameController _frameController = GamepadFrameController();
+  late GamepadFrameController _frameController;
   late final Ticker _ticker;
   final Map<int, _RegisteredGamepadInputRoute> _routes = {};
   final Set<int> _pendingInputActiveNotifications = {};
@@ -270,6 +292,21 @@ final class _GamepadInputRouterController implements GamepadInputRouter {
     _currentInput = input.value;
     _frameController.prime(_currentInput);
     _input.addListener(_handleInputChanged);
+    _syncTicker();
+  }
+
+  void updateFrameSettings({
+    required double deadzone,
+    required double cameraSensitivity,
+  }) {
+    if (_frameController.deadzone == deadzone &&
+        _frameController.cameraSensitivity == cameraSensitivity) {
+      return;
+    }
+    _frameController = GamepadFrameController(
+      deadzone: deadzone,
+      cameraSensitivity: cameraSensitivity,
+    )..prime(_currentInput);
     _syncTicker();
   }
 

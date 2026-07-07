@@ -1898,6 +1898,27 @@ class AppLocalizationsPl extends AppLocalizations {
   String get cinematicCameraLabel => 'Filmowa kamera';
 
   @override
+  String get gamepadEnabledLabel => 'Wejście gamepada';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Martwa strefa gamepada';
+
+  @override
+  String get gamepadCameraSensitivityLabel => 'Czułość kamery gamepada';
+
+  @override
+  String get gamepadInvertCameraYLabel => 'Odwróć oś Y kamery gamepada';
+
+  @override
+  String get gamepadButtonBindingsLabel => 'Mapowanie przycisków gamepada';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Mapowanie osi gamepada';
+
+  @override
+  String get gamepadResetBindingsLabel => 'Resetuj mapowanie gamepada';
+
+  @override
   String get performanceSectionTitle => 'Wydajność';
 
   @override

@@ -3394,6 +3394,48 @@ abstract class AppLocalizations {
   /// **'Cinematic camera'**
   String get cinematicCameraLabel;
 
+  /// No description provided for @gamepadEnabledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad input'**
+  String get gamepadEnabledLabel;
+
+  /// No description provided for @gamepadDeadzoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad deadzone'**
+  String get gamepadDeadzoneLabel;
+
+  /// No description provided for @gamepadCameraSensitivityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad camera sensitivity'**
+  String get gamepadCameraSensitivityLabel;
+
+  /// No description provided for @gamepadInvertCameraYLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invert gamepad camera Y'**
+  String get gamepadInvertCameraYLabel;
+
+  /// No description provided for @gamepadButtonBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad button bindings'**
+  String get gamepadButtonBindingsLabel;
+
+  /// No description provided for @gamepadAxisBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad axis bindings'**
+  String get gamepadAxisBindingsLabel;
+
+  /// No description provided for @gamepadResetBindingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset gamepad bindings'**
+  String get gamepadResetBindingsLabel;
+
   /// No description provided for @performanceSectionTitle.
   ///
   /// In en, this message translates to:

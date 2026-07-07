@@ -1909,6 +1909,29 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cinematicCameraLabel => 'Caméra cinématique';
 
   @override
+  String get gamepadEnabledLabel => 'Entrée manette';
+
+  @override
+  String get gamepadDeadzoneLabel => 'Zone morte de la manette';
+
+  @override
+  String get gamepadCameraSensitivityLabel =>
+      'Sensibilité caméra de la manette';
+
+  @override
+  String get gamepadInvertCameraYLabel => 'Inverser Y caméra de la manette';
+
+  @override
+  String get gamepadButtonBindingsLabel =>
+      'Assignations des boutons de manette';
+
+  @override
+  String get gamepadAxisBindingsLabel => 'Assignations des axes de manette';
+
+  @override
+  String get gamepadResetBindingsLabel => 'Réinitialiser la manette';
+
+  @override
   String get performanceSectionTitle => 'Performances';
 
   @override
