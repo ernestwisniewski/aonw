@@ -29,6 +29,7 @@ class _MenuGamepadInputBindingState extends State<MenuGamepadInputBinding> {
   final FocusScopeNode _scopeNode = FocusScopeNode(
     debugLabel: 'menu gamepad scope',
   );
+  final ValueNotifier<bool> _gamepadFocusActive = ValueNotifier(false);
   GamepadInputAdapter? _adapter;
 
   ValueListenable<GamepadInputSnapshot> get _input {
@@ -49,27 +50,38 @@ class _MenuGamepadInputBindingState extends State<MenuGamepadInputBinding> {
   @override
   void dispose() {
     _adapter?.dispose();
+    _gamepadFocusActive.dispose();
     _scopeNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FocusTraversalGroup(
-      child: FocusScope(
-        node: _scopeNode,
-        child: GamepadPanelInputListener(
-          input: _input,
-          onNavigate: _handleNavigate,
-          onConfirm: _handleConfirm,
-          onCancel: _handleCancel,
-          child: widget.child,
+    return _MenuGamepadFocusMode(
+      notifier: _gamepadFocusActive,
+      child: MouseRegion(
+        onHover: (_) => _setGamepadFocusActive(false),
+        child: Listener(
+          onPointerDown: (_) => _setGamepadFocusActive(false),
+          child: FocusTraversalGroup(
+            child: FocusScope(
+              node: _scopeNode,
+              child: GamepadPanelInputListener(
+                input: _input,
+                onNavigate: _handleNavigate,
+                onConfirm: _handleConfirm,
+                onCancel: _handleCancel,
+                child: widget.child,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   void _handleNavigate(GamepadMapDirection direction) {
+    _setGamepadFocusActive(true);
     final focused = _focusedNode();
     if (focused == null) {
       _focusBoundary(
@@ -93,6 +105,7 @@ class _MenuGamepadInputBindingState extends State<MenuGamepadInputBinding> {
   }
 
   void _handleConfirm() {
+    _setGamepadFocusActive(true);
     final focused = _focusedNode() ?? _focusBoundary();
     final focusContext = focused?.context;
     if (focusContext == null) return;
@@ -163,6 +176,11 @@ class _MenuGamepadInputBindingState extends State<MenuGamepadInputBinding> {
       );
     });
   }
+
+  void _setGamepadFocusActive(bool value) {
+    if (_gamepadFocusActive.value == value) return;
+    _gamepadFocusActive.value = value;
+  }
 }
 
 class MenuGamepadAction extends StatefulWidget {
@@ -188,6 +206,8 @@ class _MenuGamepadActionState extends State<MenuGamepadAction> {
 
   @override
   Widget build(BuildContext context) {
+    final gamepadFocusActive = _MenuGamepadFocusMode.activeOf(context);
+    final visibleFocus = _focused && gamepadFocusActive;
     return FocusableActionDetector(
       enabled: widget.enabled && widget.onActivate != null,
       actions: {
@@ -201,12 +221,14 @@ class _MenuGamepadActionState extends State<MenuGamepadAction> {
       onFocusChange: (focused) {
         if (_focused == focused) return;
         setState(() => _focused = focused);
-        if (focused) _scrollIntoView();
+        if (focused && _MenuGamepadFocusMode.activeWithoutListening(context)) {
+          _scrollIntoView();
+        }
       },
       child: GameUiFocusRing(
-        focused: _focused,
+        focused: visibleFocus,
         borderRadius: widget.borderRadius,
-        child: widget.builder(context, _focused),
+        child: widget.builder(context, visibleFocus),
       ),
     );
   }
@@ -230,4 +252,28 @@ class MenuGamepadAdjustIntent extends Intent {
   const MenuGamepadAdjustIntent(this.delta);
 
   final int delta;
+}
+
+class _MenuGamepadFocusMode extends InheritedNotifier<ValueNotifier<bool>> {
+  const _MenuGamepadFocusMode({
+    required ValueNotifier<bool> super.notifier,
+    required super.child,
+  });
+
+  static bool activeOf(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<_MenuGamepadFocusMode>()
+            ?.notifier
+            ?.value ??
+        false;
+  }
+
+  static bool activeWithoutListening(BuildContext context) {
+    final element = context
+        .getElementForInheritedWidgetOfExactType<_MenuGamepadFocusMode>();
+    final widget = element?.widget;
+    return widget is _MenuGamepadFocusMode
+        ? widget.notifier?.value ?? false
+        : false;
+  }
 }

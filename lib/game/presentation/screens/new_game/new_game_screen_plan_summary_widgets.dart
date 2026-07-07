@@ -1,13 +1,44 @@
 part of 'new_game_screen.dart';
 
 class _GamePremisePanel extends StatelessWidget {
-  const _GamePremisePanel({required this.flow, super.key});
+  const _GamePremisePanel({
+    required this.flow,
+    this.compact = false,
+    super.key,
+  });
 
   final NewGameFlow flow;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    if (compact) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: GameUiTheme.bg.withAlpha(138),
+          borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+          border: Border.all(color: GameUiTheme.gold.withAlpha(92)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(13, 12, 13, 13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.newGamePremiseTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GameUiTheme.cardTitle.copyWith(fontSize: 15),
+              ),
+              const SizedBox(height: 10),
+              _FlowSummaryStrip(flow: flow),
+            ],
+          ),
+        ),
+      );
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: GameUiTheme.bg.withAlpha(138),
