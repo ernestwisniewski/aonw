@@ -545,6 +545,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar. A otwiera cele, D-pad scrolluje popupy, a B je zamyka.';
 
   @override
+  String get manualGamepadSettingsAction => 'Ustawienia gamepada';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Opcje pozwalają wyłączyć wejście gamepada, zmienić martwą strefę i czułość kamery, odwrócić oś Y kamery, przemapować przyciski i osie albo przywrócić domyślne mapowanie.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

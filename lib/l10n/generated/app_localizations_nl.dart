@@ -547,6 +547,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.';
 
   @override
+  String get manualGamepadSettingsAction => 'Gamepadinstellingen';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'In opties kun je gamepadinvoer uitschakelen, deadzone en cameragevoeligheid aanpassen, camera-Y omkeren, knoppen en assen opnieuw toewijzen of standaardbindings herstellen.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

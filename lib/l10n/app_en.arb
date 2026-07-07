@@ -206,6 +206,8 @@
   "manualGamepadInspectBody": "Inspects the current cursor hex, or opens details for the selected production or technology item.",
   "manualGamepadHudFocusAction": "L3 / R3",
   "manualGamepadHudFocusBody": "R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.",
+  "manualGamepadSettingsAction": "Gamepad settings",
+  "manualGamepadSettingsBody": "Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "The right bumper focuses the next pending player action in the turn queue.",
   "manualGamepadFocusAction": "LB",

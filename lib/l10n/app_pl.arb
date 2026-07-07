@@ -206,6 +206,8 @@
   "manualGamepadInspectBody": "Pokazuje aktualny heks kursora albo szczegóły wybranej produkcji lub technologii.",
   "manualGamepadHudFocusAction": "L3 / R3",
   "manualGamepadHudFocusBody": "R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar. A otwiera cele, D-pad scrolluje popupy, a B je zamyka.",
+  "manualGamepadSettingsAction": "Ustawienia gamepada",
+  "manualGamepadSettingsBody": "Opcje pozwalają wyłączyć wejście gamepada, zmienić martwą strefę i czułość kamery, odwrócić oś Y kamery, przemapować przyciski i osie albo przywrócić domyślne mapowanie.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Prawy bumper przenosi fokus do kolejnej oczekującej akcji gracza w turze.",
   "manualGamepadFocusAction": "LB",

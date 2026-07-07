@@ -206,6 +206,8 @@
   "manualGamepadInspectBody": "Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.",
   "manualGamepadHudFocusAction": "L3 / R3",
   "manualGamepadHudFocusBody": "R3 wechselt nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar. A öffnet Ziele, das D-Pad scrollt offene Popups, und B schließt sie.",
+  "manualGamepadSettingsAction": "Gamepad-Einstellungen",
+  "manualGamepadSettingsBody": "In den Optionen kannst du Gamepad-Eingaben deaktivieren, Totzone und Kameraempfindlichkeit anpassen, Kamera-Y invertieren, Tasten und Achsen neu belegen oder Standardbelegungen wiederherstellen.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Der rechte Bumper fokussiert die nächste ausstehende Spieleraktion in der Zugwarteschlange.",
   "manualGamepadFocusAction": "LB",

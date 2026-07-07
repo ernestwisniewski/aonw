@@ -549,6 +549,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.';
 
   @override
+  String get manualGamepadSettingsAction => 'Paramètres de manette';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Les options permettent de désactiver l\'entrée manette, d\'ajuster la zone morte et la sensibilité caméra, d\'inverser l\'axe Y, de remapper boutons et axes ou de rétablir les réglages par défaut.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

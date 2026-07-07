@@ -548,6 +548,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'R3 wechselt nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar. A öffnet Ziele, das D-Pad scrollt offene Popups, und B schließt sie.';
 
   @override
+  String get manualGamepadSettingsAction => 'Gamepad-Einstellungen';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'In den Optionen kannst du Gamepad-Eingaben deaktivieren, Totzone und Kameraempfindlichkeit anpassen, Kamera-Y invertieren, Tasten und Achsen neu belegen oder Standardbelegungen wiederherstellen.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override

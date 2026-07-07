@@ -206,6 +206,8 @@
   "manualGamepadInspectBody": "Inspecte l'hex du curseur, ou ouvre les détails de la production ou technologie sélectionnée.",
   "manualGamepadHudFocusAction": "L3 / R3",
   "manualGamepadHudFocusBody": "R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.",
+  "manualGamepadSettingsAction": "Paramètres de manette",
+  "manualGamepadSettingsBody": "Les options permettent de désactiver l'entrée manette, d'ajuster la zone morte et la sensibilité caméra, d'inverser l'axe Y, de remapper boutons et axes ou de rétablir les réglages par défaut.",
   "manualGamepadNextAction": "RB",
   "manualGamepadNextBody": "Le bumper droit focalise la prochaine action joueur en attente dans la file du tour.",
   "manualGamepadFocusAction": "LB",

@@ -1054,6 +1054,18 @@ abstract class AppLocalizations {
   /// **'R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.'**
   String get manualGamepadHudFocusBody;
 
+  /// No description provided for @manualGamepadSettingsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Gamepad settings'**
+  String get manualGamepadSettingsAction;
+
+  /// No description provided for @manualGamepadSettingsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.'**
+  String get manualGamepadSettingsBody;
+
   /// No description provided for @manualGamepadNextAction.
   ///
   /// In en, this message translates to:

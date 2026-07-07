@@ -545,6 +545,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.';
 
   @override
+  String get manualGamepadSettingsAction => 'Gamepad settings';
+
+  @override
+  String get manualGamepadSettingsBody =>
+      'Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.';
+
+  @override
   String get manualGamepadNextAction => 'RB';
 
   @override
