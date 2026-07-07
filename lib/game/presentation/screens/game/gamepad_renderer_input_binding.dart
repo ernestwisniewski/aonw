@@ -41,9 +41,6 @@ class _GamepadRendererInputBindingState
   @override
   void didUpdateWidget(GamepadRendererInputBinding oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.renderer != widget.renderer) {
-      oldWidget.renderer.gamepadInput = GamepadInputSnapshot.empty;
-    }
     if (oldWidget.gamepadSettings != widget.gamepadSettings) {
       _adapter.updateMapper(_mapper());
     }
@@ -51,7 +48,6 @@ class _GamepadRendererInputBindingState
 
   @override
   void dispose() {
-    widget.renderer.gamepadInput = GamepadInputSnapshot.empty;
     _adapter.dispose();
     super.dispose();
   }
@@ -68,7 +64,14 @@ class _GamepadRendererInputBindingState
             route: GamepadInputRoute(
               enabled: widget.rendererInputEnabled,
               priority: GamepadInputRoutePriority.renderer,
-              onFrame: widget.renderer.applyGamepadControlFrame,
+              onFrame: widget.renderer.applyGamepadAnalogFrame,
+              onNavigate: widget.renderer.moveGamepadCursor,
+              onConfirm: widget.renderer.confirmGamepadCursor,
+              onCancel: widget.renderer.cancelGamepadAction,
+              onDetails: widget.renderer.inspectGamepadCursor,
+              onMode: widget.renderer.toggleGamepadMoveMode,
+              onFocusPrevious: widget.renderer.focusPreviousGamepadAction,
+              onFocusNext: widget.renderer.focusNextGamepadAction,
             ),
             child: widget.builder(context, _adapter.snapshot),
           );

@@ -150,5 +150,104 @@ void main() {
       expect(frameCount, 1);
       expect(hudNextCount, 1);
     });
+
+    testWidgets('panel routes arbitrate discrete renderer actions', (
+      tester,
+    ) async {
+      final input = ValueNotifier<GamepadInputSnapshot>(
+        GamepadInputSnapshot.empty,
+      );
+      addTearDown(input.dispose);
+      var rendererFrameCount = 0;
+      var rendererNavigateCount = 0;
+      var rendererConfirmCount = 0;
+      var panelNavigateCount = 0;
+      var panelConfirmCount = 0;
+
+      await tester.pumpWidget(
+        GamepadInputRouterScope(
+          input: input,
+          child: GamepadInputRouteListener(
+            route: GamepadInputRoute(
+              priority: GamepadInputRoutePriority.renderer,
+              onFrame: (_, _) => rendererFrameCount += 1,
+              onNavigate: (_) => rendererNavigateCount += 1,
+              onConfirm: () => rendererConfirmCount += 1,
+            ),
+            child: GamepadPanelInputListener(
+              input: input,
+              onNavigate: (_) => panelNavigateCount += 1,
+              onConfirm: () => panelConfirmCount += 1,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+
+      input.value = const GamepadInputSnapshot(
+        cameraX: 0.8,
+        dpadRight: true,
+        confirm: true,
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(rendererFrameCount, 1);
+      expect(rendererNavigateCount, 0);
+      expect(rendererConfirmCount, 0);
+      expect(panelNavigateCount, 1);
+      expect(panelConfirmCount, 1);
+    });
+
+    testWidgets('scrollable panels consume unhandled map actions', (
+      tester,
+    ) async {
+      final input = ValueNotifier<GamepadInputSnapshot>(
+        GamepadInputSnapshot.empty,
+      );
+      addTearDown(input.dispose);
+      var rendererNavigateCount = 0;
+      var rendererConfirmCount = 0;
+      var rendererCancelCount = 0;
+      var rendererModeCount = 0;
+
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: GamepadInputRouterScope(
+            input: input,
+            child: GamepadInputRouteListener(
+              route: GamepadInputRoute(
+                priority: GamepadInputRoutePriority.renderer,
+                onNavigate: (_) => rendererNavigateCount += 1,
+                onConfirm: () => rendererConfirmCount += 1,
+                onCancel: () => rendererCancelCount += 1,
+                onMode: () => rendererModeCount += 1,
+              ),
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: GamepadScrollable(
+                  input: input,
+                  child: const SizedBox(height: 600),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      input.value = const GamepadInputSnapshot(
+        dpadDown: true,
+        confirm: true,
+        cancel: true,
+        moveMode: true,
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(rendererNavigateCount, 0);
+      expect(rendererConfirmCount, 0);
+      expect(rendererCancelCount, 0);
+      expect(rendererModeCount, 0);
+    });
   });
 }

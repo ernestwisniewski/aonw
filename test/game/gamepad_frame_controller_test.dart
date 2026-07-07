@@ -101,6 +101,34 @@ void main() {
       expect(freshFrame.cursorStep, GamepadMapDirection.right);
     });
 
+    test('consumes held buttons without resetting cursor repeat', () {
+      final controller = GamepadFrameController(
+        initialRepeatDelay: 0.3,
+        repeatInterval: 0.1,
+      );
+      const held = GamepadInputSnapshot(dpadRight: true);
+      const heldWithConfirm = GamepadInputSnapshot(
+        dpadRight: true,
+        confirm: true,
+      );
+
+      expect(
+        controller.advance(input: held, dt: 0.016).cursorStep,
+        GamepadMapDirection.right,
+      );
+      expect(controller.advance(input: held, dt: 0.15).cursorStep, isNull);
+
+      controller.consumeCurrentInput(heldWithConfirm);
+
+      final beforeRepeat = controller.advance(input: heldWithConfirm, dt: 0.14);
+      expect(beforeRepeat.confirmPressed, isFalse);
+      expect(beforeRepeat.cursorStep, isNull);
+
+      final repeat = controller.advance(input: heldWithConfirm, dt: 0.02);
+      expect(repeat.confirmPressed, isFalse);
+      expect(repeat.cursorStep, GamepadMapDirection.right);
+    });
+
     test('fires directional HUD focus only on stick press edges', () {
       final controller = GamepadFrameController();
       const pressed = GamepadInputSnapshot(

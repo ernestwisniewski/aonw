@@ -33,6 +33,19 @@ final class GamepadFrameController {
         : initialRepeatDelay;
   }
 
+  void consumeCurrentInput(GamepadInputSnapshot input) {
+    _previous = input;
+    final direction = _cursorDirection(input);
+    if (direction == null) {
+      _heldCursorDirection = null;
+      _cursorRepeatRemaining = 0;
+      return;
+    }
+    if (direction == _heldCursorDirection) return;
+    _heldCursorDirection = direction;
+    _cursorRepeatRemaining = initialRepeatDelay;
+  }
+
   GamepadControlFrame advance({
     required GamepadInputSnapshot input,
     required double dt,

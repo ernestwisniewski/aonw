@@ -272,6 +272,6 @@ class GameplaySettingsController extends Notifier<GameplaySettings> {
   }
 
   double _clampedSensitivity(double value) {
-    return value.clamp(0.2, 1).toDouble();
+    return value.clamp(0.2, 2).toDouble();
   }
 }

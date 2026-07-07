@@ -142,6 +142,19 @@ void main() {
     expect(prefs.getString('gameplay.gamepad.axis_bindings'), isNotNull);
   });
 
+  test('clamps gamepad tuning to supported upper ranges', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameplaySettingsProvider.notifier)
+      ..setGamepadDeadzone(0.9)
+      ..setGamepadCameraSensitivity(2.4);
+
+    final gamepad = container.read(gameplaySettingsProvider).gamepad;
+    expect(gamepad.deadzone, 0.6);
+    expect(gamepad.cameraSensitivity, 2);
+  });
+
   test(
     'falls back to default gamepad bindings after invalid storage',
     () async {

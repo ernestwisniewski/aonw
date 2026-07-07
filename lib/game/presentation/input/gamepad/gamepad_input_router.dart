@@ -266,7 +266,7 @@ final class _GamepadInputRouterController implements GamepadInputRouter {
       route: route,
       order: _nextOrder++,
     );
-    _frameController.prime(_currentInput);
+    _frameController.consumeCurrentInput(_currentInput);
     _notifyRouteInputActive(id);
     _syncTicker();
     return GamepadInputRouteHandle._(this, id);

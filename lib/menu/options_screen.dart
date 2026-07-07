@@ -725,12 +725,19 @@ class _GameplaySection extends ConsumerWidget {
               key: const Key('options.gamepadDeadzone'),
               label: l10n.gamepadDeadzoneLabel,
               value: settings.gamepad.deadzone,
+              max: 0.6,
+              divisions: 12,
               onChanged: ref.withMenuClickValue(controller.setGamepadDeadzone),
             ),
             _VolumeSlider(
               key: const Key('options.gamepadCameraSensitivity'),
               label: l10n.gamepadCameraSensitivityLabel,
               value: settings.gamepad.cameraSensitivity,
+              min: 0.2,
+              max: 2,
+              divisions: 18,
+              step: 0.1,
+              valueLabelBuilder: (value) => '${value.toStringAsFixed(1)}x',
               onChanged: ref.withMenuClickValue(
                 controller.setGamepadCameraSensitivity,
               ),
@@ -1020,16 +1027,31 @@ class _VolumeSlider extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.min = 0,
+    this.max = 1,
+    this.divisions = 20,
+    this.step = 0.05,
+    this.valueLabelBuilder,
   });
 
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
+  final double min;
+  final double max;
+  final int? divisions;
+  final double step;
+  final String Function(double value)? valueLabelBuilder;
 
   @override
   Widget build(BuildContext context) {
+    final clampedValue = value.clamp(min, max).toDouble();
+    final valueLabel =
+        valueLabelBuilder?.call(clampedValue) ??
+        '${(clampedValue * 100).round()}%';
+
     double adjustedValue(int delta) {
-      return (value + delta * 0.05).clamp(0.0, 1.0).toDouble();
+      return (clampedValue + delta * step).clamp(min, max).toDouble();
     }
 
     return Padding(
@@ -1050,7 +1072,7 @@ class _VolumeSlider extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(value * 100).round()}%',
+                valueLabel,
                 style: GameUiTheme.toolbarLabel.copyWith(
                   color: GameUiTheme.gold,
                 ),
@@ -1078,11 +1100,11 @@ class _VolumeSlider extends StatelessWidget {
                 ),
               ),
               child: Slider(
-                value: value,
-                min: 0,
-                max: 1,
-                divisions: 20,
-                label: '${(value * 100).round()}%',
+                value: clampedValue,
+                min: min,
+                max: max,
+                divisions: divisions,
+                label: valueLabel,
                 onChanged: onChanged,
               ),
             ),

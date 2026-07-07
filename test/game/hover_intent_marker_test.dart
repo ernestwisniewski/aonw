@@ -52,18 +52,6 @@ void main() {
   });
 
   group('GameRenderer hover intent', () {
-    test('idle gamepad input does not allocate a frame controller', () async {
-      final map = _map();
-      final game = await _loadedGame(map);
-
-      game
-        ..applyState(const GameState())
-        ..gamepadInput = GamepadInputSnapshot.empty
-        ..update(0.016);
-
-      expect(game.hasGamepadFrameControllerForTesting, isFalse);
-    });
-
     test('standard mode does not show a hover marker', () async {
       final map = _map();
       final game = await _loadedGame(map);
@@ -124,19 +112,14 @@ void main() {
               ),
             ),
           )
-          ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
-          ..update(0.016);
+          ..moveGamepadCursor(GamepadMapDirection.right);
 
         expect(commands, isEmpty);
         expect(game.moveCommandActiveForTesting, isTrue);
         expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
         expect(game.hoverIntentTileForTesting, (col: 1, row: 0));
 
-        game
-          ..gamepadInput = GamepadInputSnapshot.empty
-          ..update(0.016)
-          ..gamepadInput = const GamepadInputSnapshot(confirm: true)
-          ..update(0.016);
+        game.confirmGamepadCursor();
         await Future<void>.delayed(Duration.zero);
 
         expect(commands, [const TileTappedCommand(1, 0)]);
@@ -171,10 +154,7 @@ void main() {
             ),
           ),
         )
-        ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
-        ..update(0.016)
-        ..gamepadInput = GamepadInputSnapshot.empty
-        ..update(0.016);
+        ..moveGamepadCursor(GamepadMapDirection.right);
 
       expect(game.hoverIntentTileForTesting, (col: 1, row: 0));
 
@@ -189,8 +169,7 @@ void main() {
             ),
           ),
         )
-        ..gamepadInput = const GamepadInputSnapshot(dpadRight: true)
-        ..update(0.016);
+        ..moveGamepadCursor(GamepadMapDirection.right);
 
       expect(commands, isEmpty);
       expect(game.moveCommandActiveForTesting, isTrue);
@@ -228,8 +207,7 @@ void main() {
             ),
           ),
         )
-        ..gamepadInput = const GamepadInputSnapshot(cancel: true)
-        ..update(0.016);
+        ..cancelGamepadAction();
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [const CancelWorkerActionSelectionCommand('worker_1')]);
@@ -265,8 +243,7 @@ void main() {
             ),
           ),
         )
-        ..gamepadInput = const GamepadInputSnapshot(moveMode: true)
-        ..update(0.016);
+        ..toggleGamepadMoveMode();
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, isEmpty);

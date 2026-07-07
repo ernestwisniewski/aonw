@@ -1,9 +1,5 @@
 part of 'game_renderer.dart';
 
-final Expando<GamepadInputSnapshot> _gamepadInputSnapshots =
-    Expando<GamepadInputSnapshot>('GameRenderer.gamepadInputSnapshot');
-final Expando<GamepadFrameController> _gamepadFrameControllers =
-    Expando<GamepadFrameController>('GameRenderer.gamepadFrameController');
 final Expando<CityHex> _gamepadCursorHexes = Expando<CityHex>(
   'GameRenderer.gamepadCursorHex',
 );
@@ -16,36 +12,52 @@ extension GameRendererGamepadInput on GameRenderer {
   static const double _cameraPanSpeed = 520.0;
   static const double _zoomSpeed = 1.35;
 
-  set gamepadInput(GamepadInputSnapshot input) {
-    _gamepadInputSnapshots[this] = input;
-  }
-
-  void applyGamepadControlFrame(GamepadControlFrame frame, double dt) {
-    if (!_isReady || _isDisposed || frame.isIdle) return;
+  void applyGamepadAnalogFrame(GamepadControlFrame frame, double dt) {
+    if (!_isReady || _isDisposed || !_hasAnalogInput(frame)) return;
     _applyGamepadCameraInput(frame, dt);
-    _applyGamepadCursorInput(frame);
-    _applyGamepadButtonInput(frame);
   }
 
-  void _updateGamepadInput(double dt) {
+  void moveGamepadCursor(GamepadMapDirection direction) {
     if (!_isReady || _isDisposed) return;
-    final input = _gamepadInput;
-    final existingFrameController = _gamepadFrameControllers[this];
-    if (input.isIdle &&
-        (existingFrameController == null || existingFrameController.isIdle)) {
-      return;
-    }
-
-    final frameController = existingFrameController ?? GamepadFrameController();
-    if (existingFrameController == null) {
-      _gamepadFrameControllers[this] = frameController;
-    }
-    final frame = frameController.advance(input: input, dt: dt);
-    applyGamepadControlFrame(frame, dt);
+    _moveGamepadCursor(direction);
   }
 
-  GamepadInputSnapshot get _gamepadInput =>
-      _gamepadInputSnapshots[this] ?? GamepadInputSnapshot.empty;
+  void confirmGamepadCursor() {
+    if (!_isReady || _isDisposed) return;
+    final currentTile = _currentGamepadTile();
+    _dispatchGamepadCommands(
+      const GamepadControlFrame(confirmPressed: true),
+      currentTile: currentTile,
+    );
+  }
+
+  void cancelGamepadAction() {
+    _dispatchGamepadCommands(const GamepadControlFrame(cancelPressed: true));
+  }
+
+  void inspectGamepadCursor() {
+    if (!_isReady || _isDisposed) return;
+    final currentTile = _currentGamepadTile();
+    if (currentTile != null) _handleTileInspected(currentTile);
+  }
+
+  void toggleGamepadMoveMode() {
+    _dispatchGamepadCommands(const GamepadControlFrame(moveModePressed: true));
+  }
+
+  void focusPreviousGamepadAction() {
+    _dispatchGamepadCommands(
+      const GamepadControlFrame(focusPreviousPressed: true),
+    );
+  }
+
+  void focusNextGamepadAction() {
+    _dispatchGamepadCommands(const GamepadControlFrame(focusNextPressed: true));
+  }
+
+  bool _hasAnalogInput(GamepadControlFrame frame) {
+    return frame.cameraX != 0 || frame.cameraY != 0 || frame.zoom != 0;
+  }
 
   CityHex? get _gamepadCursorHex => _gamepadCursorHexes[this];
 
@@ -91,10 +103,7 @@ extension GameRendererGamepadInput on GameRenderer {
     setZoomAround(camera.viewfinder.zoom * scale, center);
   }
 
-  void _applyGamepadCursorInput(GamepadControlFrame frame) {
-    final direction = frame.cursorStep;
-    if (direction == null) return;
-
+  void _moveGamepadCursor(GamepadMapDirection direction) {
     final current = _currentGamepadCursorHex();
     if (current == null) return;
     final tile = _nextCursorTile(current, direction);
@@ -117,13 +126,11 @@ extension GameRendererGamepadInput on GameRenderer {
     return _renderState.interactionMode == GameInteractionMode.standard;
   }
 
-  void _applyGamepadButtonInput(GamepadControlFrame frame) {
-    final currentTile = frame.inspectPressed || frame.confirmPressed
-        ? _currentGamepadTile()
-        : null;
-    if (frame.inspectPressed) {
-      if (currentTile != null) _handleTileInspected(currentTile);
-    }
+  void _dispatchGamepadCommands(
+    GamepadControlFrame frame, {
+    TileData? currentTile,
+  }) {
+    if (!_isReady || _isDisposed) return;
     final commands = const GamepadCommandMapper().commandsForFrame(
       frame: frame,
       state: _renderState,
