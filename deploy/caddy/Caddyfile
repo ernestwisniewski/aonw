@@ -43,6 +43,13 @@
 		Cache-Control "no-cache, must-revalidate"
 	}
 
+	@homepageDownloads {
+		path /download/*
+	}
+	header @homepageDownloads {
+		Cache-Control "public, max-age=0, s-maxage=3600, must-revalidate"
+	}
+
 	redir /privacy-policy/ /privacy-policy 308
 
 	root * /srv/homepage

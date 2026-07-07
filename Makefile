@@ -117,6 +117,28 @@ ITCH_ANDROID_CHANNEL ?= android
 ITCH_INCLUDE_LINUX ?= 0
 ITCH_USER_VERSION ?= $(RELEASE_VERSION)
 ITCH_UPLOAD_ARGS ?=
+GAMEJOLT_DIST_DIR ?= $(STEAM_DIST_DIR)
+GAMEJOLT_BUILD_DIR ?= build/gamejolt
+GAMEJOLT_MACOS_DIR ?= $(GAMEJOLT_BUILD_DIR)/macos
+GAMEJOLT_WINDOWS_DIR ?= $(GAMEJOLT_BUILD_DIR)/windows
+GAMEJOLT_LINUX_DIR ?= $(GAMEJOLT_BUILD_DIR)/linux
+GAMEJOLT_MACOS_ZIP ?= $(GAMEJOLT_DIST_DIR)/aonw-macos.zip
+GAMEJOLT_WINDOWS_ZIP ?= $(GAMEJOLT_DIST_DIR)/aonw-windows.zip
+GAMEJOLT_LINUX_ZIP ?= $(GAMEJOLT_DIST_DIR)/aonw-linux.zip
+GAMEJOLT_ANDROID_APK ?= $(GAMEJOLT_DIST_DIR)/aonw-android.apk
+GAMEJOLT_INCLUDE_LINUX ?= $(ITCH_INCLUDE_LINUX)
+DOWNLOAD_BUILD_DIR ?= build/download
+DOWNLOAD_DEPLOY_DEST ?= $(if $(HOMEPAGE_DEPLOY_DEST),$(HOMEPAGE_DEPLOY_DEST)/download,)
+DOWNLOAD_BASE_URL ?= https://aonw.net/download
+DOWNLOAD_MACOS_FILE ?= aonw-macos.zip
+DOWNLOAD_WINDOWS_FILE ?= aonw-windows.zip
+DOWNLOAD_LINUX_FILE ?= aonw-linux.zip
+DOWNLOAD_ANDROID_FILE ?= aonw-android.apk
+DOWNLOAD_MACOS_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_MACOS_FILE)
+DOWNLOAD_WINDOWS_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_WINDOWS_FILE)
+DOWNLOAD_LINUX_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_LINUX_FILE)
+DOWNLOAD_ANDROID_APK ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_ANDROID_FILE)
+DOWNLOAD_INCLUDE_LINUX ?= $(ITCH_INCLUDE_LINUX)
 DEPLOY_ALL_STEAMWORKS ?= 1
 DEPLOY_ALL_GOOGLE_PLAY ?= 1
 DEPLOY_ALL_GOOGLE_PLAY_MODE ?= closed
@@ -138,7 +160,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload gamejolt gamejolt-prepare gamejolt-package bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -155,6 +177,7 @@ help:
 	@echo "  make build-web     LOCAL: build Flutter web bundle without deploying"
 	@echo "  make deploy-web    LOCAL: build Flutter web bundle and rsync to demo host dir"
 	@echo "  make deploy-homepage LOCAL: stage static aonw.net homepage and rsync to staging"
+	@echo "  make deploy-downloads LOCAL: publish latest downloadable builds under aonw.net/download/"
 	@echo "  make archive-ios   LOCAL: create an Xcode Organizer archive for current build"
 	@echo "  make android-keystore Create an Android upload keystore"
 	@echo "  make android-release LOCAL: test and build Play Store .aab"
@@ -170,6 +193,7 @@ help:
 	@echo "  make steam-upload LOCAL: upload prepared SteamPipe content with steamcmd"
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
 	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
+	@echo "  make gamejolt     LOCAL: prepare Game Jolt ZIP/APK artifacts from itch.io-style builds"
 	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=0 DEPLOY_ALL_GOOGLE_PLAY=0  Skip Steamworks/Google Play uploads"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
@@ -210,6 +234,9 @@ help:
 	@echo "  WEB_DEPLOY_HOST=host          deploy-web/deploy-homepage only. Required"
 	@echo "  WEB_DEPLOY_DEST=/path         deploy-web only. Required"
 	@echo "  HOMEPAGE_DEPLOY_DEST=/path    deploy-homepage only. Required"
+	@echo "  DOWNLOAD_DEPLOY_DEST=/path    deploy-downloads only. Default: HOMEPAGE_DEPLOY_DEST/download"
+	@echo "  DOWNLOAD_INCLUDE_LINUX=1      publish aonw-linux.zip too. Default: $(DOWNLOAD_INCLUDE_LINUX)"
+	@echo "  DOWNLOAD_BASE_URL=https://... public download URL. Default: $(DOWNLOAD_BASE_URL)"
 	@echo "  REMOTE_DEPLOY_PATH=/path      deploy-all remote repo path. Required"
 	@echo "  IOS_ARCHIVE_ON_DEPLOY=auto|1|0 deploy-all archive behavior. Default: $(IOS_ARCHIVE_ON_DEPLOY)"
 	@echo "  IOS_API_BASE_URL=https://...  archive-ios only. Default: $(IOS_API_BASE_URL)"
@@ -244,6 +271,7 @@ help:
 	@echo "  ITCH_LINUX_CHANNEL=linux      itch Linux channel. Default: $(ITCH_LINUX_CHANNEL)"
 	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
+	@echo "  GAMEJOLT_INCLUDE_LINUX=1      include Linux package in Game Jolt artifacts. Default: $(GAMEJOLT_INCLUDE_LINUX)"
 	@echo "  DEPLOY_ALL_STEAMWORKS=1       deploy-all uploads prepared build to Steamworks. Default: $(DEPLOY_ALL_STEAMWORKS)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY=1      deploy-all uploads Android .aab to Google Play. Default: $(DEPLOY_ALL_GOOGLE_PLAY)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY_MODE=closed|internal|alpha|beta|production Google Play mode. Default: $(DEPLOY_ALL_GOOGLE_PLAY_MODE)"
@@ -427,10 +455,81 @@ deploy-homepage: build-homepage
 	@echo "Uploading $(HOMEPAGE_BUILD_DIR)/ -> $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(HOMEPAGE_DEPLOY_DEST)/..."
 	@ssh -i "$(WEB_DEPLOY_SSH_KEY)" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST) 'mkdir -p "$(HOMEPAGE_DEPLOY_DEST)"'
 	@rsync -avz --delete \
+	  --exclude='download/***' \
 	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
 	  "$(HOMEPAGE_BUILD_DIR)/" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(HOMEPAGE_DEPLOY_DEST)/
 	@echo "deploy-homepage finished. Checking $(HOMEPAGE_HEALTH_URL) ..."
 	@$(MAKE) --no-print-directory health-homepage
+
+download-artifacts: itch-prepare download-package
+	@echo "download artifacts ready."
+
+download-package:
+	@command -v ditto >/dev/null || { echo "ditto is required for download-package."; exit 1; }
+	@command -v rg >/dev/null || { echo "rg is required for download-package."; exit 1; }
+	@command -v zip >/dev/null || { echo "zip is required for download-package."; exit 1; }
+	@command -v unzip >/dev/null || { echo "unzip is required for download-package."; exit 1; }
+	@test -d "$(ITCH_MACOS_DIR)" || { echo "Missing itch macOS folder: $(ITCH_MACOS_DIR). Run make itch-prepare first."; exit 1; }
+	@test -d "$(ITCH_WINDOWS_DIR)" || { echo "Missing itch Windows folder: $(ITCH_WINDOWS_DIR). Run make itch-prepare first."; exit 1; }
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then test -d "$(ITCH_LINUX_DIR)" || { echo "Missing itch Linux folder: $(ITCH_LINUX_DIR). Run make itch-prepare ITCH_INCLUDE_LINUX=1 first."; exit 1; }; fi
+	@test -f "$(ITCH_ANDROID_APK)" || { echo "Missing Android APK: $(ITCH_ANDROID_APK). Run make android-build-itch first."; exit 1; }
+	@rm -rf "$(DOWNLOAD_BUILD_DIR)"
+	@mkdir -p "$(DOWNLOAD_BUILD_DIR)/macos" "$(DOWNLOAD_BUILD_DIR)/windows"
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then mkdir -p "$(DOWNLOAD_BUILD_DIR)/linux"; fi
+	@ditto "$(ITCH_MACOS_DIR)" "$(DOWNLOAD_BUILD_DIR)/macos"
+	@ditto "$(ITCH_WINDOWS_DIR)" "$(DOWNLOAD_BUILD_DIR)/windows"
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then ditto "$(ITCH_LINUX_DIR)" "$(DOWNLOAD_BUILD_DIR)/linux"; fi
+	@rm -f "$(DOWNLOAD_BUILD_DIR)/macos/.itch.toml" "$(DOWNLOAD_BUILD_DIR)/windows/.itch.toml" "$(DOWNLOAD_BUILD_DIR)/linux/.itch.toml"
+	@test -d "$(DOWNLOAD_BUILD_DIR)/macos/$(STEAM_MACOS_APP_NAME)" || { echo "Download macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
+	@test -f "$(DOWNLOAD_BUILD_DIR)/windows/aonw.exe" || { echo "Download Windows folder must contain aonw.exe."; exit 1; }
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then test -f "$(DOWNLOAD_BUILD_DIR)/linux/aonw" || { echo "Download Linux folder must contain aonw."; exit 1; }; fi
+	@if find "$(DOWNLOAD_BUILD_DIR)" -name '.itch.toml' -print -quit | rg . >/dev/null; then \
+		echo "Public download packages should not include itch manifests."; \
+		exit 1; \
+	fi
+	@if find "$(DOWNLOAD_BUILD_DIR)" -iname '*steam*' -print -quit | rg . >/dev/null; then \
+		echo "Public download packages contain steam-named paths."; \
+		exit 1; \
+	fi
+	@zip_path="$$(pwd)/$(DOWNLOAD_MACOS_ZIP)"; \
+		cd "$(DOWNLOAD_BUILD_DIR)/macos" && zip -qry "$$zip_path" .
+	@zip_path="$$(pwd)/$(DOWNLOAD_WINDOWS_ZIP)"; \
+		cd "$(DOWNLOAD_BUILD_DIR)/windows" && zip -qry "$$zip_path" .
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then \
+		zip_path="$$(pwd)/$(DOWNLOAD_LINUX_ZIP)"; \
+		cd "$(DOWNLOAD_BUILD_DIR)/linux" && zip -qry "$$zip_path" .; \
+	fi
+	@cp "$(ITCH_ANDROID_APK)" "$(DOWNLOAD_ANDROID_APK)"
+	@unzip -tq "$(DOWNLOAD_MACOS_ZIP)" >/dev/null
+	@unzip -tq "$(DOWNLOAD_WINDOWS_ZIP)" >/dev/null
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then unzip -tq "$(DOWNLOAD_LINUX_ZIP)" >/dev/null; fi
+	@unzip -tq "$(DOWNLOAD_ANDROID_APK)" >/dev/null
+	@rm -rf "$(DOWNLOAD_BUILD_DIR)/macos" "$(DOWNLOAD_BUILD_DIR)/windows" "$(DOWNLOAD_BUILD_DIR)/linux"
+	@echo "Public download artifacts ready:"
+	@files="$(DOWNLOAD_MACOS_ZIP) $(DOWNLOAD_WINDOWS_ZIP) $(DOWNLOAD_ANDROID_APK)"; \
+	if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then files="$$files $(DOWNLOAD_LINUX_ZIP)"; fi; \
+	ls -lh $$files
+
+deploy-downloads: download-artifacts deploy-download-files
+	@echo "deploy-downloads finished."
+
+deploy-download-files:
+	@command -v rsync >/dev/null || { echo "rsync is required for deploy-download-files."; exit 1; }
+	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_HOST)" || { echo "WEB_DEPLOY_HOST is required."; exit 1; }
+	@test -n "$(DOWNLOAD_DEPLOY_DEST)" || { echo "DOWNLOAD_DEPLOY_DEST is required."; exit 1; }
+	@test -f "$(WEB_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(WEB_DEPLOY_SSH_KEY)"; exit 1; }
+	@test -f "$(DOWNLOAD_MACOS_ZIP)" || { echo "Missing public macOS download: $(DOWNLOAD_MACOS_ZIP). Run make download-package first."; exit 1; }
+	@test -f "$(DOWNLOAD_WINDOWS_ZIP)" || { echo "Missing public Windows download: $(DOWNLOAD_WINDOWS_ZIP). Run make download-package first."; exit 1; }
+	@test -f "$(DOWNLOAD_ANDROID_APK)" || { echo "Missing public Android download: $(DOWNLOAD_ANDROID_APK). Run make download-package first."; exit 1; }
+	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then test -f "$(DOWNLOAD_LINUX_ZIP)" || { echo "Missing public Linux download: $(DOWNLOAD_LINUX_ZIP). Run make download-package DOWNLOAD_INCLUDE_LINUX=1 first."; exit 1; }; fi
+	@echo "Uploading $(DOWNLOAD_BUILD_DIR)/ -> $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(DOWNLOAD_DEPLOY_DEST)/..."
+	@ssh -i "$(WEB_DEPLOY_SSH_KEY)" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST) 'mkdir -p "$(DOWNLOAD_DEPLOY_DEST)"'
+	@rsync -avz --delete \
+	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
+	  "$(DOWNLOAD_BUILD_DIR)/" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(DOWNLOAD_DEPLOY_DEST)/
+	@$(MAKE) --no-print-directory health-downloads
 
 archive-ios:
 	@command -v flutter >/dev/null || { echo "flutter SDK is required for archive-ios."; exit 1; }
@@ -1088,6 +1187,60 @@ itch-upload:
 	butler push "$(ITCH_ANDROID_APK)" "$(ITCH_TARGET):$(ITCH_ANDROID_CHANNEL)" --userversion "$$version" $(ITCH_UPLOAD_ARGS); \
 	echo "itch.io uploads finished."
 
+gamejolt: gamejolt-prepare
+	@echo "gamejolt finished."
+
+gamejolt-prepare:
+	@$(MAKE) --no-print-directory itch-prepare ITCH_INCLUDE_LINUX="$(GAMEJOLT_INCLUDE_LINUX)"
+	@$(MAKE) --no-print-directory gamejolt-package GAMEJOLT_INCLUDE_LINUX="$(GAMEJOLT_INCLUDE_LINUX)"
+
+gamejolt-package:
+	@command -v ditto >/dev/null || { echo "ditto is required for gamejolt-package."; exit 1; }
+	@command -v rg >/dev/null || { echo "rg is required for gamejolt-package."; exit 1; }
+	@command -v zip >/dev/null || { echo "zip is required for gamejolt-package."; exit 1; }
+	@command -v unzip >/dev/null || { echo "unzip is required for gamejolt-package."; exit 1; }
+	@test -d "$(ITCH_MACOS_DIR)" || { echo "Missing itch macOS folder: $(ITCH_MACOS_DIR). Run make itch-prepare first."; exit 1; }
+	@test -d "$(ITCH_WINDOWS_DIR)" || { echo "Missing itch Windows folder: $(ITCH_WINDOWS_DIR). Run make itch-prepare first."; exit 1; }
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then test -d "$(ITCH_LINUX_DIR)" || { echo "Missing itch Linux folder: $(ITCH_LINUX_DIR). Run make itch-prepare ITCH_INCLUDE_LINUX=1 first."; exit 1; }; fi
+	@test -f "$(ITCH_ANDROID_APK)" || { echo "Missing Android APK: $(ITCH_ANDROID_APK). Run make android-build-itch first."; exit 1; }
+	@rm -rf "$(GAMEJOLT_BUILD_DIR)"
+	@rm -f "$(GAMEJOLT_MACOS_ZIP)" "$(GAMEJOLT_WINDOWS_ZIP)" "$(GAMEJOLT_LINUX_ZIP)" "$(GAMEJOLT_ANDROID_APK)"
+	@mkdir -p "$(GAMEJOLT_MACOS_DIR)" "$(GAMEJOLT_WINDOWS_DIR)" "$(GAMEJOLT_DIST_DIR)"
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then mkdir -p "$(GAMEJOLT_LINUX_DIR)"; fi
+	@ditto "$(ITCH_MACOS_DIR)" "$(GAMEJOLT_MACOS_DIR)"
+	@ditto "$(ITCH_WINDOWS_DIR)" "$(GAMEJOLT_WINDOWS_DIR)"
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then ditto "$(ITCH_LINUX_DIR)" "$(GAMEJOLT_LINUX_DIR)"; fi
+	@rm -f "$(GAMEJOLT_MACOS_DIR)/.itch.toml" "$(GAMEJOLT_WINDOWS_DIR)/.itch.toml" "$(GAMEJOLT_LINUX_DIR)/.itch.toml"
+	@test -d "$(GAMEJOLT_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)" || { echo "Game Jolt macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
+	@test -f "$(GAMEJOLT_WINDOWS_DIR)/aonw.exe" || { echo "Game Jolt Windows folder must contain aonw.exe."; exit 1; }
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then test -f "$(GAMEJOLT_LINUX_DIR)/aonw" || { echo "Game Jolt Linux folder must contain aonw."; exit 1; }; fi
+	@if find "$(GAMEJOLT_BUILD_DIR)" -name '.itch.toml' -print -quit | rg . >/dev/null; then \
+		echo "Game Jolt packages should not include itch manifests."; \
+		exit 1; \
+	fi
+	@if find "$(GAMEJOLT_BUILD_DIR)" -iname '*steam*' -print -quit | rg . >/dev/null; then \
+		echo "Game Jolt packages contain steam-named paths."; \
+		exit 1; \
+	fi
+	@zip_path="$$(pwd)/$(GAMEJOLT_MACOS_ZIP)"; \
+		cd "$(GAMEJOLT_MACOS_DIR)" && zip -qry "$$zip_path" .
+	@zip_path="$$(pwd)/$(GAMEJOLT_WINDOWS_ZIP)"; \
+		cd "$(GAMEJOLT_WINDOWS_DIR)" && zip -qry "$$zip_path" .
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then \
+		zip_path="$$(pwd)/$(GAMEJOLT_LINUX_ZIP)"; \
+		cd "$(GAMEJOLT_LINUX_DIR)" && zip -qry "$$zip_path" .; \
+	fi
+	@cp "$(ITCH_ANDROID_APK)" "$(GAMEJOLT_ANDROID_APK)"
+	@unzip -tq "$(GAMEJOLT_MACOS_ZIP)" >/dev/null
+	@unzip -tq "$(GAMEJOLT_WINDOWS_ZIP)" >/dev/null
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then unzip -tq "$(GAMEJOLT_LINUX_ZIP)" >/dev/null; fi
+	@unzip -tq "$(GAMEJOLT_ANDROID_APK)" >/dev/null
+	@echo "Game Jolt artifacts ready:"
+	@files="$(GAMEJOLT_MACOS_ZIP) $(GAMEJOLT_WINDOWS_ZIP) $(GAMEJOLT_ANDROID_APK)"; \
+	if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then files="$$files $(GAMEJOLT_LINUX_ZIP)"; fi; \
+	ls -lh $$files
+	@echo "Upload these files manually in Game Jolt Packages/Releases."
+
 # Local-only target. Bumps the build number and, when NEW_VERSION is supplied,
 # the marketing version in pubspec.yaml and platform version metadata. Stages
 # and commits the changes. Override the build with NEW_BUILD=N; otherwise the
@@ -1151,10 +1304,11 @@ bump-version:
 	echo "bump-version finished. Commit ready to push."
 
 # Local + remote orchestration. Pushes main to origin, prepares Steam desktop
-# ZIPs, itch.io desktop folders, and Android artifacts, uploads to Steamworks
-# and Google Play by default, optionally uploads to itch.io when ITCH_TARGET is
-# set, asks the staging server to make deploy (server image rebuild + restart +
-# health), then deploys the static homepage and demo web app locally.
+# ZIPs, itch.io desktop folders, Android artifacts, and public download files,
+# uploads to Steamworks and Google Play by default, optionally uploads to
+# itch.io when ITCH_TARGET is set, asks the staging server to make deploy
+# (server image rebuild + restart + health), then deploys the static homepage,
+# public downloads, and demo web app locally.
 # Aborts on any step failure.
 deploy-all:
 	@$(MAKE) --no-print-directory preflight-release
@@ -1163,24 +1317,25 @@ deploy-all:
 	@test -n "$(REMOTE_DEPLOY_HOST)" || { echo "REMOTE_DEPLOY_HOST is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_PATH)" || { echo "REMOTE_DEPLOY_PATH is required."; exit 1; }
 	@test -f "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(REMOTE_DEPLOY_SSH_KEY)"; exit 1; }
-	@echo "[1/11] Bumping build version..."
+	@echo "[1/12] Bumping build version..."
 	@$(MAKE) --no-print-directory bump-version NEW_VERSION="$(NEW_VERSION)" NEW_BUILD="$(NEW_BUILD)"
-	@echo "[2/11] Archiving iOS build for Xcode Organizer if possible..."
+	@echo "[2/12] Archiving iOS build for Xcode Organizer if possible..."
 	@$(MAKE) --no-print-directory archive-ios-if-possible
-	@echo "[3/11] Pushing local main to origin..."
+	@echo "[3/12] Pushing local main to origin..."
 	@git push origin main
-	@echo "[4/11] Preparing Steam desktop ZIPs, itch desktop folders, and itch Android APK..."
+	@echo "[4/12] Preparing Steam desktop ZIPs, itch desktop folders, itch Android APK, and public downloads..."
 	@$(MAKE) --no-print-directory steam
 	@$(MAKE) --no-print-directory itch-desktop
 	@$(MAKE) --no-print-directory android-build-itch
-	@echo "[5/11] Uploading Steamworks build if enabled..."
+	@$(MAKE) --no-print-directory download-package
+	@echo "[5/12] Uploading Steamworks build if enabled..."
 	@if [ "$(DEPLOY_ALL_STEAMWORKS)" = "1" ]; then \
 		$(MAKE) --no-print-directory steam-prepare-from-dist; \
 		$(MAKE) --no-print-directory steam-upload; \
 	else \
 		echo "DEPLOY_ALL_STEAMWORKS=$(DEPLOY_ALL_STEAMWORKS); skipping Steamworks upload."; \
 	fi
-	@echo "[6/11] Uploading Google Play build if enabled..."
+	@echo "[6/12] Uploading Google Play build if enabled..."
 	@if [ "$(DEPLOY_ALL_GOOGLE_PLAY)" = "1" ]; then \
 		case "$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" in \
 			closed) \
@@ -1191,24 +1346,27 @@ deploy-all:
 	else \
 		echo "DEPLOY_ALL_GOOGLE_PLAY=$(DEPLOY_ALL_GOOGLE_PLAY); skipping Google Play upload."; \
 	fi
-	@echo "[7/11] Uploading itch.io artifacts if configured..."
+	@echo "[7/12] Uploading itch.io artifacts if configured..."
 	@if [ -n "$(ITCH_TARGET)" ]; then \
 		echo "Uploading itch.io artifacts to target $(ITCH_TARGET)..."; \
 		$(MAKE) --no-print-directory itch-upload; \
 	else \
 		echo "ITCH_TARGET not set; leaving itch.io desktop folders in $(ITCH_BUILD_DIR)/ and Android APK in $(ITCH_DIST_DIR)/."; \
 	fi
-	@echo "[8/11] Triggering server deploy via SSH..."
+	@echo "[8/12] Triggering server deploy via SSH..."
 	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
 	  'cd "$(REMOTE_DEPLOY_PATH)" && make deploy'
-	@echo "[9/11] Building and uploading static root homepage..."
+	@echo "[9/12] Building and uploading static root homepage..."
 	@$(MAKE) --no-print-directory deploy-homepage
-	@echo "[10/11] Building and uploading demo web bundle..."
+	@echo "[10/12] Uploading public download artifacts..."
+	@$(MAKE) --no-print-directory deploy-download-files
+	@echo "[11/12] Building and uploading demo web bundle..."
 	@$(MAKE) --no-print-directory deploy-web
-	@echo "[11/11] Final health checks..."
+	@echo "[12/12] Final health checks..."
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage
+	@$(MAKE) --no-print-directory health-downloads
 	@echo "deploy-all finished."
 
 preflight-release:
@@ -1265,6 +1423,16 @@ health-homepage:
 	@echo "Checking $(HOMEPAGE_HEALTH_URL)"
 	@curl -fsS --max-time 5 -o /dev/null -w "%{http_code}\n" "$(HOMEPAGE_HEALTH_URL)" \
 	  || { echo "Static homepage not reachable"; exit 1; }
+
+health-downloads:
+	@set -e; \
+	files="$(DOWNLOAD_MACOS_FILE) $(DOWNLOAD_WINDOWS_FILE) $(DOWNLOAD_ANDROID_FILE)"; \
+	if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then files="$$files $(DOWNLOAD_LINUX_FILE)"; fi; \
+	for file in $$files; do \
+		url="$(DOWNLOAD_BASE_URL)/$$file"; \
+		echo "Checking $$url"; \
+		curl -fsSI --max-time 10 "$$url" >/dev/null || { echo "Download not reachable: $$url"; exit 1; }; \
+	done
 
 prune:
 	@docker image prune -f

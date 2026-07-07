@@ -121,8 +121,9 @@ services:
       - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-      # The demo web bundle and static root homepage are built locally and
-      # rsynced into build/demo/ and build/homepage/ on the server.
+      # The demo web bundle, static root homepage, and public latest downloads
+      # are built locally and rsynced into build/demo/ and build/homepage/ on
+      # the server.
       - ./build/demo:/srv/demo:ro
       - ./build/homepage:/srv/homepage:ro
     depends_on:

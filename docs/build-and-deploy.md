@@ -130,8 +130,8 @@ are set.
 `make deploy-all` coordinates version bumping, optional iOS archiving, desktop
 ZIP preparation, Steamworks upload, Google Play upload, itch.io Android APK
 preparation, optional itch.io upload, a remote server deploy, homepage upload,
-web upload, and health checks. It requires all remote values to be provided
-explicitly:
+public download upload, web upload, and health checks. It requires all remote
+values to be provided explicitly:
 
 ```sh
 make deploy-all \
@@ -156,6 +156,18 @@ until the Linux Steam depot has been created in Steamworks. The helper then
 expands neutral itch.io desktop folders and builds a universal Android APK for
 itch.io.
 
+The helper also publishes stable latest-download files under
+`https://aonw.net/download/`. These filenames do not include a version number and
+are overwritten on each release:
+
+- `aonw-macos.zip`
+- `aonw-windows.zip`
+- `aonw-android.apk`
+- `aonw-linux.zip` when `DOWNLOAD_INCLUDE_LINUX=1`
+
+`deploy-homepage` excludes `/download/` from its `--delete` rsync pass so a
+homepage-only deploy does not remove public build downloads.
+
 By default, `deploy-all` uploads the prepared desktop build to Steamworks and
 uploads an Android App Bundle to the Google Play closed-test track. Set
 `DEPLOY_ALL_STEAMWORKS=0` or `DEPLOY_ALL_GOOGLE_PLAY=0` to skip either upload.
@@ -170,6 +182,35 @@ itch Linux channel is ready to include the Linux desktop folder as well. If
 the Android APK is left in `dist/`, and the itch.io upload is skipped. Uploading
 requires `butler` to be installed and authenticated with `butler login` or
 `BUTLER_API_KEY`.
+
+Game Jolt uses uploadable build files in packages/releases rather than the
+`butler` folder push flow. `make gamejolt` reuses the itch.io-style preparation,
+removes itch-specific manifests, and writes neutral Game Jolt artifacts to
+`dist/`:
+
+```sh
+make gamejolt GAMEJOLT_INCLUDE_LINUX=1
+```
+
+Upload the generated `aonw-macos.zip`, `aonw-windows.zip`,
+`aonw-linux.zip`, and `aonw-android.apk` manually in the Game
+Jolt package/release dashboard. Leave `GAMEJOLT_INCLUDE_LINUX=0` if the Linux
+package should be omitted.
+
+Public latest-download packaging and upload:
+
+```sh
+make deploy-downloads \
+  WEB_DEPLOY_SSH_KEY=/path/to/private-key \
+  WEB_DEPLOY_USER=deploy \
+  WEB_DEPLOY_HOST=example.com \
+  HOMEPAGE_DEPLOY_DEST=/srv/aonw/homepage \
+  DOWNLOAD_INCLUDE_LINUX=1
+```
+
+This prepares the same neutral desktop folders and Android APK as itch.io,
+removes `.itch.toml`, and uploads stable latest filenames to
+`HOMEPAGE_DEPLOY_DEST/download/`.
 
 ## Platform Builds
 
@@ -258,6 +299,18 @@ Android APK to the `macos`, `windows`, and `android` itch channels. Set
 `ITCH_INCLUDE_LINUX=1` to add `build/itch/linux` and push the `linux` channel.
 Override channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`,
 `ITCH_LINUX_CHANNEL`, and `ITCH_ANDROID_CHANNEL`.
+
+Game Jolt packaging:
+
+```sh
+make gamejolt GAMEJOLT_INCLUDE_LINUX=1
+```
+
+This creates Game Jolt upload files in `dist/` from the same macOS, Windows,
+Linux, and Android builds used for itch.io, without `.itch.toml` manifests.
+The filenames are stable (`aonw-macos.zip`, `aonw-windows.zip`,
+`aonw-linux.zip`, `aonw-android.apk`) so they can replace the latest release
+without changing external links.
 
 Linux runtime notes:
 

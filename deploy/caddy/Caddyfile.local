@@ -9,6 +9,14 @@
 # Homepage — the same static site served at https://aonw.net.
 http://localhost:8088 {
 	encode zstd gzip
+
+	@homepageDownloads {
+		path /download/*
+	}
+	header @homepageDownloads {
+		Cache-Control "public, max-age=0, s-maxage=3600, must-revalidate"
+	}
+
 	root * /srv/homepage
 	try_files {path} {path}/index.html /index.html
 	file_server
