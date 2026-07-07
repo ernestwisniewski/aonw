@@ -294,7 +294,7 @@ make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
 This reuses the Steam desktop build flow, expands neutral itch desktop folders
 under `build/itch/macos` and `build/itch/windows`, adds `.itch.toml` launch
 manifests for the itch app, validates them with `butler validate`, builds
-`dist/aonw-android-itch.apk`, and pushes only the two desktop folders plus the
+`dist/aonw-android.apk`, and pushes only the two desktop folders plus the
 Android APK to the `macos`, `windows`, and `android` itch channels. Set
 `ITCH_INCLUDE_LINUX=1` to add `build/itch/linux` and push the `linux` channel.
 Override channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`,
