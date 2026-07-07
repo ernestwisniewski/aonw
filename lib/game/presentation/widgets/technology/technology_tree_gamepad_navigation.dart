@@ -19,26 +19,24 @@ abstract final class TechnologyTreeGamepadNavigation {
     List<TechnologyCardViewModel> cards,
     TechnologyId? selectedTechnologyId,
   ) {
-    if (selectedTechnologyId != null &&
-        cards.any((card) => card.id == selectedTechnologyId)) {
-      return selectedTechnologyId;
-    }
-    for (final card in cards) {
-      if (card.canSelect) return card.id;
-    }
-    return cards.isEmpty ? null : cards.first.id;
+    return GamepadListCursor.selectedKeyFor(
+      cards,
+      selectedTechnologyId,
+      keyOf: (card) => card.id,
+      prefer: (card) => card.canSelect,
+    );
   }
 
   static TechnologyCardViewModel? selectedCard(
     List<TechnologyCardViewModel> cards,
     TechnologyId? selectedTechnologyId,
   ) {
-    final selectedId = selectedTechnologyIdFor(cards, selectedTechnologyId);
-    if (selectedId == null) return null;
-    for (final card in cards) {
-      if (card.id == selectedId) return card;
-    }
-    return null;
+    return GamepadListCursor.selectedItemFor(
+      cards,
+      selectedTechnologyId,
+      keyOf: (card) => card.id,
+      prefer: (card) => card.canSelect,
+    );
   }
 
   static TechnologyCardViewModel? nextCard({
@@ -55,12 +53,13 @@ abstract final class TechnologyTreeGamepadNavigation {
       return _nextTreeCard(cards, cards[currentIndex], direction) ??
           cards[currentIndex];
     }
-    final step = switch (direction) {
-      GamepadMapDirection.up || GamepadMapDirection.left => -1,
-      GamepadMapDirection.down || GamepadMapDirection.right => 1,
-    };
-    final nextIndex = (currentIndex + step) % cards.length;
-    return cards[nextIndex];
+    return GamepadListCursor.nextItem(
+      items: cards,
+      selectedKey: selectedTechnologyId,
+      delta: GamepadListCursor.deltaForDirection(direction),
+      keyOf: (card) => card.id,
+      prefer: (card) => card.canSelect,
+    );
   }
 
   static void revealTreeCard({

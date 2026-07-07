@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input_snapshot.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_list_cursor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -216,12 +217,13 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     final currentIndex = sectionTargets.indexWhere(
       (target) => target.id == state.targetId,
     );
-    final startIndex = currentIndex == -1 ? 0 : currentIndex;
-    final nextIndex = (startIndex + delta) % sectionTargets.length;
-    final target =
-        sectionTargets[nextIndex < 0
-            ? nextIndex + sectionTargets.length
-            : nextIndex];
+    final selectedKey = currentIndex == -1 ? null : state.targetId;
+    final target = GamepadListCursor.nextItem(
+      items: sectionTargets,
+      selectedKey: selectedKey,
+      delta: delta,
+      keyOf: (target) => target.id,
+    )!;
     state = HudGamepadFocusState(
       active: true,
       section: target.section,
@@ -242,11 +244,11 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       state = HudGamepadFocusState.inactive;
       return;
     }
-    final currentIndex = sections.indexOf(state.section);
-    final startIndex = currentIndex == -1 ? 0 : currentIndex;
-    final nextIndex = (startIndex + delta) % sections.length;
-    final section =
-        sections[nextIndex < 0 ? nextIndex + sections.length : nextIndex];
+    final section = GamepadListCursor.nextValue(
+      items: sections,
+      selected: state.section,
+      delta: delta,
+    )!;
     _activateFirst(targets, preferredSection: section);
   }
 
