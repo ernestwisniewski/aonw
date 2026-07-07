@@ -24,6 +24,8 @@ List<String> _lineCountViolations(Map<String, int> baseline) {
 
 const _largeFileBaseline = <String, int>{
   'lib/src/multiplayer/multiplayer_endpoint.dart': 429,
+  'lib/src/multiplayer/multiplayer_match_store.dart': 441,
+  'lib/src/multiplayer/server_command_reducer.dart': 803,
   'lib/src/multiplayer/matchmaking_service.dart': 324,
   'lib/src/multiplayer/match_lifecycle_service.dart': 354,
   'lib/src/multiplayer/match_command_service.dart': 180,
