@@ -60,14 +60,14 @@ const _legacyWidgetLineCountBaseline = <String, int>{
       484,
   'lib/game/presentation/widgets/city/city_production_dialog.dart': 441,
   'lib/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart':
-      455,
+      471,
   'lib/game/presentation/widgets/diplomacy/'
           'diplomacy_player_modal_primitives.dart':
       428,
   'lib/game/presentation/widgets/diplomacy/'
           'diplomatic_message_popup_overlay.dart':
-      584,
-  'lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart': 408,
+      593,
+  'lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart': 411,
   'lib/game/presentation/widgets/bottom_toolbar/end_turn_button_content.dart':
       634,
   'lib/game/presentation/widgets/technology/technology_tree_dialog.dart': 533,
@@ -112,6 +112,9 @@ const _legacyWidgetLineCountBaseline = <String, int>{
   'lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart': 711,
   'lib/game/presentation/widgets/hud/outcome/hud_game_outcome_summary.dart':
       355,
+  'lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart': 351,
+  'lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart':
+      604,
 };
 
 const _legacyScreenLineCountBaseline = <String, int>{

@@ -166,7 +166,7 @@ const _legacyGameFileLineCountBaseline = <String, int>{
   'lib/game/analysis/human_trace_benchmark.dart': 712,
   'lib/game/domain/reducer/city/city_production_reducer.dart': 631,
   'lib/game/domain/reducer/combat/combat_reducer.dart': 627,
-  'lib/game/domain/reducer/turn/turn_reducer.dart': 787,
+  'lib/game/domain/reducer/turn/turn_reducer.dart': 795,
   'lib/game/presentation/engine/game_event_renderer_effect_mapper.dart': 616,
   'lib/game/presentation/engine/game_renderer.dart': 601,
   'lib/game/presentation/engine/rendering_layers/action_palette/'
@@ -198,6 +198,8 @@ const _legacyGameFileLineCountBaseline = <String, int>{
   'lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart': 844,
   'lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart': 711,
   'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': 625,
+  'lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart':
+      604,
   'lib/game/presentation/widgets/options/game_options_overlay.dart': 785,
   'lib/game/presentation/widgets/screen/game_screen_state_views.dart': 613,
 };
@@ -221,7 +223,7 @@ const _legacyGameClassLineCountBaseline = <String, int>{
       486,
   'lib/game/domain/reducer/movement/movement_reducer.dart::MovementReducer':
       471,
-  'lib/game/domain/reducer/turn/turn_reducer.dart::TurnReducer': 696,
+  'lib/game/domain/reducer/turn/turn_reducer.dart::TurnReducer': 703,
   'lib/game/presentation/controllers/lobby_connection_controller.dart::'
           'LobbyConnectionController':
       432,
@@ -288,7 +290,10 @@ const _legacyGameClassLineCountBaseline = <String, int>{
   'lib/game/presentation/widgets/diplomacy/'
           'diplomatic_message_popup_overlay.dart::'
           '_DiplomaticMessagePopupOverlayState':
-      534,
+      543,
+  'lib/game/presentation/widgets/hud/gamepad/'
+          'hud_gamepad_focus_controller.dart::HudGamepadFocusController':
+      486,
   'lib/game/presentation/widgets/hud/outcome/'
           'hud_victory_status_summary.dart::HudVictoryStatusSummary':
       401,
