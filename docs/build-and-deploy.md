@@ -193,9 +193,24 @@ make gamejolt GAMEJOLT_INCLUDE_LINUX=1
 ```
 
 Upload the generated `aonw-macos.zip`, `aonw-windows.zip`,
-`aonw-linux.zip`, and `aonw-android.apk` manually in the Game
-Jolt package/release dashboard. Leave `GAMEJOLT_INCLUDE_LINUX=0` if the Linux
-package should be omitted.
+`aonw-linux.zip`, and `aonw-android.apk` manually in the Game Jolt
+package/release dashboard, or upload them locally with GJPush:
+
+```sh
+make deploy-gamejolt \
+  GAMEJOLT_TOKEN="$GJPUSH_TOKEN" \
+  GAMEJOLT_PACKAGE_MACOS=... \
+  GAMEJOLT_PACKAGE_WINDOWS=... \
+  GAMEJOLT_PACKAGE_LINUX=... \
+  GAMEJOLT_PACKAGE_ANDROID=... \
+  GAMEJOLT_INCLUDE_LINUX=1
+```
+
+The Game Jolt game ID defaults to `1079757`. Package IDs are visible in the
+Game Jolt manage-package URLs. `GAMEJOLT_RELEASE_VERSION` defaults to the
+semantic version from `pubspec.yaml` without the Flutter build suffix, for
+example `1.1.2`. Leave `GAMEJOLT_INCLUDE_LINUX=0` if the Linux package should be
+omitted.
 
 Public latest-download packaging and upload:
 
@@ -311,6 +326,20 @@ Linux, and Android builds used for itch.io, without `.itch.toml` manifests.
 The filenames are stable (`aonw-macos.zip`, `aonw-windows.zip`,
 `aonw-linux.zip`, `aonw-android.apk`) so they can replace the latest release
 without changing external links.
+
+Game Jolt local upload:
+
+```sh
+make deploy-gamejolt \
+  GAMEJOLT_TOKEN="$GJPUSH_TOKEN" \
+  GAMEJOLT_PACKAGE_MACOS=... \
+  GAMEJOLT_PACKAGE_WINDOWS=... \
+  GAMEJOLT_PACKAGE_LINUX=... \
+  GAMEJOLT_PACKAGE_ANDROID=... \
+  GAMEJOLT_INCLUDE_LINUX=1
+```
+
+Install GJPush as `gjpush`, or point `GAMEJOLT_CLI` at the downloaded binary.
 
 Linux runtime notes:
 

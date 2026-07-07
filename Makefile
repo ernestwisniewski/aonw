@@ -127,6 +127,15 @@ GAMEJOLT_WINDOWS_ZIP ?= $(GAMEJOLT_DIST_DIR)/aonw-windows.zip
 GAMEJOLT_LINUX_ZIP ?= $(GAMEJOLT_DIST_DIR)/aonw-linux.zip
 GAMEJOLT_ANDROID_APK ?= $(GAMEJOLT_DIST_DIR)/aonw-android.apk
 GAMEJOLT_INCLUDE_LINUX ?= $(ITCH_INCLUDE_LINUX)
+GAMEJOLT_CLI ?= gjpush
+GAMEJOLT_GAME_ID ?= 1079757
+GAMEJOLT_TOKEN ?= $(GJPUSH_TOKEN)
+GAMEJOLT_PACKAGE_MACOS ?=
+GAMEJOLT_PACKAGE_WINDOWS ?=
+GAMEJOLT_PACKAGE_LINUX ?=
+GAMEJOLT_PACKAGE_ANDROID ?=
+GAMEJOLT_RELEASE_VERSION ?= $(shell sed -n 's/^version:[[:space:]]*\([^+]*\).*/\1/p' "$(PUBSPEC)" 2>/dev/null | head -n 1)
+GAMEJOLT_UPLOAD_ARGS ?=
 DOWNLOAD_BUILD_DIR ?= build/download
 DOWNLOAD_DEPLOY_DEST ?= $(if $(HOMEPAGE_DEPLOY_DEST),$(HOMEPAGE_DEPLOY_DEST)/download,)
 DOWNLOAD_BASE_URL ?= https://aonw.net/download
@@ -160,7 +169,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload gamejolt gamejolt-prepare gamejolt-package bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -194,6 +203,7 @@ help:
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
 	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
 	@echo "  make gamejolt     LOCAL: prepare Game Jolt ZIP/APK artifacts from itch.io-style builds"
+	@echo "  make deploy-gamejolt LOCAL: prepare and upload Game Jolt artifacts with gjpush"
 	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=0 DEPLOY_ALL_GOOGLE_PLAY=0  Skip Steamworks/Google Play uploads"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
@@ -272,6 +282,15 @@ help:
 	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
 	@echo "  GAMEJOLT_INCLUDE_LINUX=1      include Linux package in Game Jolt artifacts. Default: $(GAMEJOLT_INCLUDE_LINUX)"
+	@echo "  GAMEJOLT_CLI=gjpush           Game Jolt upload CLI. Default: $(GAMEJOLT_CLI)"
+	@echo "  GAMEJOLT_GAME_ID=1079757      Game Jolt game ID. Default: $(GAMEJOLT_GAME_ID)"
+	@echo "  GAMEJOLT_TOKEN=...            Game Jolt token, or use GJPUSH_TOKEN/~/.gj/credentials.json"
+	@echo "  GAMEJOLT_PACKAGE_MACOS=...    Game Jolt macOS package ID"
+	@echo "  GAMEJOLT_PACKAGE_WINDOWS=...  Game Jolt Windows package ID"
+	@echo "  GAMEJOLT_PACKAGE_LINUX=...    Game Jolt Linux package ID when GAMEJOLT_INCLUDE_LINUX=1"
+	@echo "  GAMEJOLT_PACKAGE_ANDROID=...  Game Jolt Android package ID"
+	@echo "  GAMEJOLT_RELEASE_VERSION=x.y.z Game Jolt release semver. Default: $(GAMEJOLT_RELEASE_VERSION)"
+	@echo "  GAMEJOLT_UPLOAD_ARGS=...      Extra gjpush args, e.g. --no-resume"
 	@echo "  DEPLOY_ALL_STEAMWORKS=1       deploy-all uploads prepared build to Steamworks. Default: $(DEPLOY_ALL_STEAMWORKS)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY=1      deploy-all uploads Android .aab to Google Play. Default: $(DEPLOY_ALL_GOOGLE_PLAY)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY_MODE=closed|internal|alpha|beta|production Google Play mode. Default: $(DEPLOY_ALL_GOOGLE_PLAY_MODE)"
@@ -1190,6 +1209,9 @@ itch-upload:
 gamejolt: gamejolt-prepare
 	@echo "gamejolt finished."
 
+deploy-gamejolt: gamejolt-prepare gamejolt-upload
+	@echo "deploy-gamejolt finished."
+
 gamejolt-prepare:
 	@$(MAKE) --no-print-directory itch-prepare ITCH_INCLUDE_LINUX="$(GAMEJOLT_INCLUDE_LINUX)"
 	@$(MAKE) --no-print-directory gamejolt-package GAMEJOLT_INCLUDE_LINUX="$(GAMEJOLT_INCLUDE_LINUX)"
@@ -1240,6 +1262,52 @@ gamejolt-package:
 	if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then files="$$files $(GAMEJOLT_LINUX_ZIP)"; fi; \
 	ls -lh $$files
 	@echo "Upload these files manually in Game Jolt Packages/Releases."
+
+gamejolt-preflight:
+	@command -v "$(GAMEJOLT_CLI)" >/dev/null || { echo "$(GAMEJOLT_CLI) is required for Game Jolt upload. Install GJPush or set GAMEJOLT_CLI=/path/to/gjpush."; exit 1; }
+	@test -n "$(GAMEJOLT_GAME_ID)" || { echo "GAMEJOLT_GAME_ID is required."; exit 1; }
+	@test -n "$(GAMEJOLT_PACKAGE_MACOS)" || { echo "GAMEJOLT_PACKAGE_MACOS is required."; exit 1; }
+	@test -n "$(GAMEJOLT_PACKAGE_WINDOWS)" || { echo "GAMEJOLT_PACKAGE_WINDOWS is required."; exit 1; }
+	@test -n "$(GAMEJOLT_PACKAGE_ANDROID)" || { echo "GAMEJOLT_PACKAGE_ANDROID is required."; exit 1; }
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then test -n "$(GAMEJOLT_PACKAGE_LINUX)" || { echo "GAMEJOLT_PACKAGE_LINUX is required when GAMEJOLT_INCLUDE_LINUX=1."; exit 1; }; fi
+	@test -n "$(GAMEJOLT_RELEASE_VERSION)" || { echo "GAMEJOLT_RELEASE_VERSION is required."; exit 1; }
+	@printf '%s' "$(GAMEJOLT_RELEASE_VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$$' || { echo "GAMEJOLT_RELEASE_VERSION must be semver-like, for example 1.1.2. Got: $(GAMEJOLT_RELEASE_VERSION)"; exit 1; }
+	@if [ -z "$(GAMEJOLT_TOKEN)" ] && [ ! -f "$(HOME)/.gj/credentials.json" ]; then \
+		echo "GAMEJOLT_TOKEN, GJPUSH_TOKEN, or $(HOME)/.gj/credentials.json is required for non-interactive upload."; \
+		exit 1; \
+	fi
+	@test -f "$(GAMEJOLT_MACOS_ZIP)" || { echo "Missing Game Jolt macOS ZIP: $(GAMEJOLT_MACOS_ZIP). Run make gamejolt-package first."; exit 1; }
+	@test -f "$(GAMEJOLT_WINDOWS_ZIP)" || { echo "Missing Game Jolt Windows ZIP: $(GAMEJOLT_WINDOWS_ZIP). Run make gamejolt-package first."; exit 1; }
+	@test -f "$(GAMEJOLT_ANDROID_APK)" || { echo "Missing Game Jolt Android APK: $(GAMEJOLT_ANDROID_APK). Run make gamejolt-package first."; exit 1; }
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then test -f "$(GAMEJOLT_LINUX_ZIP)" || { echo "Missing Game Jolt Linux ZIP: $(GAMEJOLT_LINUX_ZIP). Run make gamejolt-package GAMEJOLT_INCLUDE_LINUX=1 first."; exit 1; }; fi
+
+gamejolt-upload-command:
+	@echo 'GJPUSH_TOKEN="$$GAMEJOLT_TOKEN" "$(GAMEJOLT_CLI)" --game "$(GAMEJOLT_GAME_ID)" --package "$(GAMEJOLT_PACKAGE_MACOS)" --release "$(GAMEJOLT_RELEASE_VERSION)" $(GAMEJOLT_UPLOAD_ARGS) "$(GAMEJOLT_MACOS_ZIP)"'
+	@echo 'GJPUSH_TOKEN="$$GAMEJOLT_TOKEN" "$(GAMEJOLT_CLI)" --game "$(GAMEJOLT_GAME_ID)" --package "$(GAMEJOLT_PACKAGE_WINDOWS)" --release "$(GAMEJOLT_RELEASE_VERSION)" $(GAMEJOLT_UPLOAD_ARGS) "$(GAMEJOLT_WINDOWS_ZIP)"'
+	@if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then echo 'GJPUSH_TOKEN="$$GAMEJOLT_TOKEN" "$(GAMEJOLT_CLI)" --game "$(GAMEJOLT_GAME_ID)" --package "$(GAMEJOLT_PACKAGE_LINUX)" --release "$(GAMEJOLT_RELEASE_VERSION)" $(GAMEJOLT_UPLOAD_ARGS) "$(GAMEJOLT_LINUX_ZIP)"'; fi
+	@echo 'GJPUSH_TOKEN="$$GAMEJOLT_TOKEN" "$(GAMEJOLT_CLI)" --game "$(GAMEJOLT_GAME_ID)" --package "$(GAMEJOLT_PACKAGE_ANDROID)" --release "$(GAMEJOLT_RELEASE_VERSION)" $(GAMEJOLT_UPLOAD_ARGS) "$(GAMEJOLT_ANDROID_APK)"'
+
+gamejolt-upload: gamejolt-preflight
+	@set -e; \
+	upload() { \
+		label="$$1"; \
+		package_id="$$2"; \
+		file="$$3"; \
+		echo "Uploading $$label build to Game Jolt game $(GAMEJOLT_GAME_ID), package $$package_id, release $(GAMEJOLT_RELEASE_VERSION)..."; \
+		GJPUSH_TOKEN="$(GAMEJOLT_TOKEN)" "$(GAMEJOLT_CLI)" \
+			--game "$(GAMEJOLT_GAME_ID)" \
+			--package "$$package_id" \
+			--release "$(GAMEJOLT_RELEASE_VERSION)" \
+			$(GAMEJOLT_UPLOAD_ARGS) \
+			"$$file"; \
+	}; \
+	upload macOS "$(GAMEJOLT_PACKAGE_MACOS)" "$(GAMEJOLT_MACOS_ZIP)"; \
+	upload Windows "$(GAMEJOLT_PACKAGE_WINDOWS)" "$(GAMEJOLT_WINDOWS_ZIP)"; \
+	if [ "$(GAMEJOLT_INCLUDE_LINUX)" = "1" ]; then \
+		upload Linux "$(GAMEJOLT_PACKAGE_LINUX)" "$(GAMEJOLT_LINUX_ZIP)"; \
+	fi; \
+	upload Android "$(GAMEJOLT_PACKAGE_ANDROID)" "$(GAMEJOLT_ANDROID_APK)"; \
+	echo "Game Jolt uploads finished."
 
 # Local-only target. Bumps the build number and, when NEW_VERSION is supplied,
 # the marketing version in pubspec.yaml and platform version metadata. Stages
@@ -1304,8 +1372,8 @@ bump-version:
 	echo "bump-version finished. Commit ready to push."
 
 # Local + remote orchestration. Pushes main to origin, prepares Steam desktop
-# ZIPs, itch.io desktop folders, Android artifacts, and public download files,
-# uploads to Steamworks and Google Play by default, optionally uploads to
+# ZIPs, itch.io desktop folders, Android artifacts, and public download files.
+# Uploads to Steamworks and Google Play by default, optionally uploads to
 # itch.io when ITCH_TARGET is set, asks the staging server to make deploy
 # (server image rebuild + restart + health), then deploys the static homepage,
 # public downloads, and demo web app locally.
