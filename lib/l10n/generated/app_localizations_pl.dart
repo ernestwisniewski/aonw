@@ -542,7 +542,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar. A otwiera cele, D-pad scrolluje popupy, a B je zamyka.';
+      'Z mapy R3 skacze prosto do dolnego toolbaru, a B oddaje fokus mapie. Gdy fokus HUD jest aktywny, R3 przechodzi w prawo, a L3 w lewo przez lewy pasek, menu, górne pillsy, rail graczy i dolny toolbar.';
 
   @override
   String get manualGamepadSettingsAction => 'Ustawienia gamepada';

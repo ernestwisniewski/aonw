@@ -29,20 +29,29 @@ class HudGamepadFocusInputLayer extends ConsumerWidget {
     final controller = ref.read(hudGamepadFocusControllerProvider.notifier);
     final popupOpen = resourceBreakdownOpen || popupInputCaptured;
     final focusNavigationActive = focusState.active && !popupOpen;
-    _syncTargets(context, controller);
+    _syncTargets(context, ref, controller);
     return GamepadPanelInputListener(
       input: input,
       enabled: enabled,
       priority: GamepadInputRoutePriority.hud,
       onHudFocusPrevious: popupOpen
           ? null
-          : () => controller.previousSection(targets),
-      onHudFocusNext: popupOpen ? null : () => controller.nextSection(targets),
+          : () => controller.previousSection(_currentTargets(ref)),
+      onHudFocusNext: popupOpen
+          ? null
+          : focusState.active
+          ? () => controller.nextSection(_currentTargets(ref))
+          : () => controller.focusSection(
+              _currentTargets(ref),
+              HudGamepadFocusSection.selectionActions,
+              fallbackSection: HudGamepadFocusSection.menu,
+              optimistic: true,
+            ),
       onNavigate: focusNavigationActive
-          ? (direction) => controller.move(direction, targets)
+          ? (direction) => controller.move(direction, _currentTargets(ref))
           : null,
       onConfirm: focusNavigationActive
-          ? () => controller.activateFocused(targets)
+          ? () => controller.activateFocused(_currentTargets(ref))
           : null,
       onCancel: resourceBreakdownOpen || (focusState.active && !popupOpen)
           ? () =>
@@ -58,13 +67,21 @@ class HudGamepadFocusInputLayer extends ConsumerWidget {
     );
   }
 
+  List<HudGamepadFocusTarget> _currentTargets(WidgetRef ref) {
+    final currentTargets = HudGamepadFocusTargetRegistry.flatten(
+      ref.read(hudGamepadFocusTargetRegistryProvider),
+    );
+    return currentTargets.isEmpty ? targets : currentTargets;
+  }
+
   void _syncTargets(
     BuildContext context,
+    WidgetRef ref,
     HudGamepadFocusController controller,
   ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!context.mounted) return;
-      controller.syncTargets(targets, enabled: enabled);
+      controller.syncTargets(_currentTargets(ref), enabled: enabled);
     });
   }
 

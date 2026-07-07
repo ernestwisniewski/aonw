@@ -3,7 +3,12 @@ part of 'hud_action_deck.dart';
 extension _HudActionDeckGamepadFocus on _HudActionDeckState {
   String? _focusedHudTargetId() {
     final state = ref.watch(hudGamepadFocusControllerProvider);
-    return state.active ? state.targetId : null;
+    if (!state.active) return null;
+    if (state.targetId != null) return state.targetId;
+    if (state.section == HudGamepadFocusSection.selectionActions) {
+      return HudGamepadFocusTargetIds.bottomCommand;
+    }
+    return null;
   }
 
   void _syncActionDeckGamepadFocusTargets({

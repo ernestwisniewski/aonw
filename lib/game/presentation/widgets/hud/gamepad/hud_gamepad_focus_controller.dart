@@ -91,6 +91,17 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       if (state.active) state = HudGamepadFocusState.inactive;
       return;
     }
+    if (state.active && state.targetId == null) {
+      final target = _firstTargetInSection(available, state.section);
+      if (target != null) {
+        state = HudGamepadFocusState(
+          active: true,
+          section: target.section,
+          targetId: target.id,
+        );
+      }
+      return;
+    }
     if (!state.active || _targetForState(available) != null) return;
     _activateFirst(available, preferredSection: state.section);
   }
@@ -134,6 +145,37 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     _moveSectionOrActivate(_availableTargets(targets), 1);
   }
 
+  void focusSection(
+    List<HudGamepadFocusTarget> targets,
+    HudGamepadFocusSection section, {
+    HudGamepadFocusSection? fallbackSection,
+    bool optimistic = false,
+  }) {
+    final available = _availableTargets(targets);
+    final target = _firstTargetInSection(available, section);
+    if (target != null) {
+      state = HudGamepadFocusState(
+        active: true,
+        section: target.section,
+        targetId: target.id,
+      );
+      return;
+    }
+    if (optimistic) {
+      state = HudGamepadFocusState(
+        active: true,
+        section: section,
+        targetId: null,
+      );
+      return;
+    }
+    _activateFirst(
+      available,
+      preferredSection: section,
+      fallbackSection: fallbackSection,
+    );
+  }
+
   void activateFocused(List<HudGamepadFocusTarget> targets) {
     if (!state.active) return;
     _targetForState(_availableTargets(targets))?.onActivate();
@@ -164,6 +206,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   void _activateFirst(
     List<HudGamepadFocusTarget> targets, {
     HudGamepadFocusSection? preferredSection,
+    HudGamepadFocusSection? fallbackSection,
   }) {
     if (targets.isEmpty) {
       state = HudGamepadFocusState.inactive;
@@ -171,6 +214,7 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     }
     final target =
         _firstTargetInSection(targets, preferredSection) ??
+        _firstTargetInSection(targets, fallbackSection) ??
         _firstTargetInOrderedSection(targets) ??
         targets.first;
     state = HudGamepadFocusState(

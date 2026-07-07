@@ -26,6 +26,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog.dart'
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_dialog.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck_slot.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/layout/hud_side_menu_metrics.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notifications_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart';
@@ -2982,6 +2983,76 @@ void main() {
       find.byKey(const Key('firstTurnCoachmarks.overlay')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('gamepad jumps between map and bottom action toolbar', (
+    tester,
+  ) async {
+    final gamepadInput = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(gamepadInput.dispose);
+
+    await _pumpHud(
+      tester,
+      repository: _FakeGameRepository(
+        snapshot: SaveSnapshot.fromGameState(
+          save: _save,
+          state: const GameState(activePlayerId: 'player_1'),
+        ),
+      ),
+      gamepadInputListenable: gamepadInput,
+    );
+    await tester.pump();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    for (var i = 0; i < 5; i += 1) {
+      final targets = HudGamepadFocusTargetRegistry.flatten(
+        container.read(hudGamepadFocusTargetRegistryProvider),
+      );
+      if (targets.any(
+        (target) => target.id == HudGamepadFocusTargetIds.bottomCommand,
+      )) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    final targets = HudGamepadFocusTargetRegistry.flatten(
+      container.read(hudGamepadFocusTargetRegistryProvider),
+    );
+    expect(
+      targets.any(
+        (target) => target.id == HudGamepadFocusTargetIds.bottomCommand,
+      ),
+      isTrue,
+    );
+    await tester.pump();
+
+    expect(container.read(hudGamepadFocusControllerProvider).active, isFalse);
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(hudFocusNext: true),
+    );
+
+    final focused = container.read(hudGamepadFocusControllerProvider);
+    expect(focused.active, isTrue);
+    expect(focused.section, HudGamepadFocusSection.selectionActions);
+    expect(
+      focused.targetId,
+      anyOf(isNull, HudGamepadFocusTargetIds.bottomCommand),
+    );
+
+    await _pressGamepad(
+      tester,
+      gamepadInput,
+      const GamepadInputSnapshot(cancel: true),
+    );
+
+    expect(container.read(hudGamepadFocusControllerProvider).active, isFalse);
   });
 
   testWidgets('top right resource pill opens controlled resources popup', (

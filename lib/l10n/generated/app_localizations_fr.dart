@@ -546,7 +546,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure. A ouvre les cibles, le D-pad fait défiler les popups ouverts et B les ferme.';
+      'Depuis la carte, R3 saute directement vers la barre inférieure et B rend le focus à la carte. Lorsque le focus du HUD est actif, R3 avance vers la droite et L3 vers la gauche dans le rail gauche, le menu, les pastilles supérieures, le rail des joueurs et la barre inférieure.';
 
   @override
   String get manualGamepadSettingsAction => 'Paramètres de manette';

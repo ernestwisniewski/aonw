@@ -544,7 +544,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get manualGamepadHudFocusBody =>
-      'R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.';
+      'Vanaf de kaart springt R3 direct naar de onderste toolbar en geeft B de focus terug aan de kaart. Terwijl HUD-focus actief is, gaat R3 naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar.';
 
   @override
   String get manualGamepadSettingsAction => 'Gamepadinstellingen';

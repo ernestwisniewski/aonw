@@ -90,6 +90,93 @@ void main() {
     );
   });
 
+  test('can jump directly to the bottom action toolbar', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(
+      hudGamepadFocusControllerProvider.notifier,
+    );
+    final targets = [
+      _target(HudGamepadFocusSection.globalActions, 'global.options'),
+      _target(HudGamepadFocusSection.menu, HudGamepadFocusTargetIds.menuReturn),
+      _target(
+        HudGamepadFocusSection.selectionActions,
+        HudGamepadFocusTargetIds.bottomCommand,
+      ),
+    ];
+
+    controller.focusSection(
+      targets,
+      HudGamepadFocusSection.selectionActions,
+      fallbackSection: HudGamepadFocusSection.menu,
+    );
+
+    final state = container.read(hudGamepadFocusControllerProvider);
+    expect(state.active, isTrue);
+    expect(state.section, HudGamepadFocusSection.selectionActions);
+    expect(state.targetId, HudGamepadFocusTargetIds.bottomCommand);
+  });
+
+  test('bottom action toolbar jump falls back to the menu', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(
+      hudGamepadFocusControllerProvider.notifier,
+    );
+    final targets = [
+      _target(HudGamepadFocusSection.globalActions, 'global.options'),
+      _target(HudGamepadFocusSection.menu, HudGamepadFocusTargetIds.menuReturn),
+      _target(HudGamepadFocusSection.topResources, 'resource.gold'),
+    ];
+
+    controller.focusSection(
+      targets,
+      HudGamepadFocusSection.selectionActions,
+      fallbackSection: HudGamepadFocusSection.menu,
+    );
+
+    final state = container.read(hudGamepadFocusControllerProvider);
+    expect(state.active, isTrue);
+    expect(state.section, HudGamepadFocusSection.menu);
+    expect(state.targetId, HudGamepadFocusTargetIds.menuReturn);
+  });
+
+  test('optimistic bottom action toolbar jump resolves after target sync', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(
+      hudGamepadFocusControllerProvider.notifier,
+    );
+    final menuTargets = [
+      _target(HudGamepadFocusSection.menu, HudGamepadFocusTargetIds.menuReturn),
+    ];
+
+    controller.focusSection(
+      menuTargets,
+      HudGamepadFocusSection.selectionActions,
+      fallbackSection: HudGamepadFocusSection.menu,
+      optimistic: true,
+    );
+
+    var state = container.read(hudGamepadFocusControllerProvider);
+    expect(state.active, isTrue);
+    expect(state.section, HudGamepadFocusSection.selectionActions);
+    expect(state.targetId, isNull);
+
+    controller.syncTargets([
+      ...menuTargets,
+      _target(
+        HudGamepadFocusSection.selectionActions,
+        HudGamepadFocusTargetIds.bottomCommand,
+      ),
+    ], enabled: true);
+
+    state = container.read(hudGamepadFocusControllerProvider);
+    expect(state.active, isTrue);
+    expect(state.section, HudGamepadFocusSection.selectionActions);
+    expect(state.targetId, HudGamepadFocusTargetIds.bottomCommand);
+  });
+
   test('moves vertically inside the right player rail', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

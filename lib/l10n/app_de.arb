@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Prüft das aktuelle Cursor-Hex oder öffnet Details zur ausgewählten Produktion oder Technologie.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "R3 wechselt nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar. A öffnet Ziele, das D-Pad scrollt offene Popups, und B schließt sie.",
+  "manualGamepadHudFocusBody": "Von der Karte springt R3 direkt zur unteren Toolbar, und B gibt den Fokus an die Karte zurück. Wenn der HUD-Fokus aktiv ist, wechselt R3 nach rechts und L3 nach links durch linke Leiste, Menü, obere Pills, Spielerleiste und untere Toolbar.",
   "manualGamepadSettingsAction": "Gamepad-Einstellungen",
   "manualGamepadSettingsBody": "In den Optionen kannst du Gamepad-Eingaben deaktivieren, Totzone und Kameraempfindlichkeit anpassen, Kamera-Y invertieren, Tasten und Achsen neu belegen oder Standardbelegungen wiederherstellen.",
   "manualGamepadNextAction": "RB",

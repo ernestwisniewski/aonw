@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspecteert de huidige cursor-hex, of opent details voor de geselecteerde productie of technologie.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "R3 gaat naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar. A opent doelen, de D-pad scrollt open popups en B sluit ze.",
+  "manualGamepadHudFocusBody": "Vanaf de kaart springt R3 direct naar de onderste toolbar en geeft B de focus terug aan de kaart. Terwijl HUD-focus actief is, gaat R3 naar rechts en L3 naar links door de linkerrail, het menu, de bovenste pills, de spelersrail en de onderste toolbar.",
   "manualGamepadSettingsAction": "Gamepadinstellingen",
   "manualGamepadSettingsBody": "In opties kun je gamepadinvoer uitschakelen, deadzone en cameragevoeligheid aanpassen, camera-Y omkeren, knoppen en assen opnieuw toewijzen of standaardbindings herstellen.",
   "manualGamepadNextAction": "RB",

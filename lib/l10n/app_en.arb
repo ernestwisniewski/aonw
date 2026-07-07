@@ -205,7 +205,7 @@
   "manualGamepadInspectAction": "Y",
   "manualGamepadInspectBody": "Inspects the current cursor hex, or opens details for the selected production or technology item.",
   "manualGamepadHudFocusAction": "L3 / R3",
-  "manualGamepadHudFocusBody": "R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar. A opens targets, the D-pad scrolls open popups, and B closes them.",
+  "manualGamepadHudFocusBody": "From the map, R3 jumps straight to the bottom toolbar and B returns focus to the map. While HUD focus is active, R3 steps right and L3 steps left through the left rail, menu, top pills, player rail, and bottom toolbar.",
   "manualGamepadSettingsAction": "Gamepad settings",
   "manualGamepadSettingsBody": "Options can disable gamepad input, adjust deadzone and camera sensitivity, invert camera Y, remap buttons and axes, or reset bindings to defaults.",
   "manualGamepadNextAction": "RB",
