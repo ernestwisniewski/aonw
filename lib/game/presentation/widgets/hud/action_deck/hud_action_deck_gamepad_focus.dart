@@ -22,12 +22,13 @@ extension _HudActionDeckGamepadFocus on _HudActionDeckState {
           section: HudGamepadFocusSection.selectionActions,
           id: HudGamepadFocusTargetIds.bottomCommand,
           label: _commandLineGamepadLabel(l10n, viewModel),
-          onActivate: widget.readyToEndTurn ? _endTurn : _nextAction,
+          onActivate: _hasTurnActions ? _nextAction : _endTurn,
           activationKey: Object.hash(
             widget.gameSave.id,
             widget.activePlayerId,
             widget.gameState,
             widget.readyToEndTurn,
+            _hasTurnActions,
           ),
         ),
     ];
@@ -61,7 +62,9 @@ extension _HudActionDeckGamepadFocus on _HudActionDeckState {
     AppLocalizations l10n,
     HudCommandLineViewModel viewModel,
   ) {
-    if (widget.readyToEndTurn) return l10n.endTurnTooltip(widget.gameSave.turn);
+    if (widget.readyToEndTurn && !_hasTurnActions) {
+      return l10n.endTurnTooltip(widget.gameSave.turn);
+    }
     return viewModel.actionHintLabel ?? l10n.nextActionTooltip;
   }
 }

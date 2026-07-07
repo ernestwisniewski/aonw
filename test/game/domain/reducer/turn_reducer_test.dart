@@ -576,6 +576,98 @@ void main() {
       expect(fourth.state.selection?.unit?.id, unit.id);
     });
 
+    test('focusNextPendingAction cycles backward through all turn actions', () {
+      final unit = GameUnit.produced(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 1,
+        row: 1,
+      );
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 2, row: 2),
+        controlledHexes: [CityHex(col: 2, row: 2)],
+        productionQueue: null,
+      );
+      final state = GameState(
+        units: [unit],
+        cities: [city],
+        activePlayerId: 'player_1',
+        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+      );
+
+      final research = TurnReducer.focusNextPendingAction(
+        state,
+        'player_1',
+        mapData,
+        actionStep: -1,
+      );
+      final production = TurnReducer.focusNextPendingAction(
+        research.state,
+        'player_1',
+        mapData,
+        actionStep: -1,
+      );
+      final backToUnit = TurnReducer.focusNextPendingAction(
+        production.state,
+        'player_1',
+        mapData,
+        actionStep: -1,
+      );
+
+      expect(
+        research.state.pendingAction,
+        const PendingResearchSelection(ownerPlayerId: 'player_1'),
+      );
+      expect(production.state.selection?.city?.id, city.id);
+      expect(backToUnit.state.selection?.unit?.id, unit.id);
+    });
+
+    test('focusNextPendingAction wraps direct action index requests', () {
+      final unit = GameUnit.produced(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 1,
+        row: 1,
+      );
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 2, row: 2),
+        controlledHexes: [CityHex(col: 2, row: 2)],
+        productionQueue: null,
+      );
+      final state = GameState(
+        units: [unit],
+        cities: [city],
+        activePlayerId: 'player_1',
+      );
+
+      final wrappedBackward = TurnReducer.focusNextPendingAction(
+        state,
+        'player_1',
+        mapData,
+        actionIndex: -1,
+      );
+      final wrappedForward = TurnReducer.focusNextPendingAction(
+        state,
+        'player_1',
+        mapData,
+        actionIndex: 3,
+      );
+
+      expect(
+        wrappedBackward.state.pendingAction,
+        const PendingResearchSelection(ownerPlayerId: 'player_1'),
+      );
+      expect(wrappedForward.state.selection?.unit?.id, unit.id);
+    });
+
     test('focusTurnStartAction always starts from first ranked action', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',

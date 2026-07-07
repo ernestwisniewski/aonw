@@ -36,8 +36,11 @@ class HudCommandLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = forceCompact || MediaQuery.sizeOf(context).width < 360;
+    final hasTurnActions =
+        viewModel.remainingActionCount > 0 || turnActionOptions.isNotEmpty;
+    final buttonReadyToEndTurn = readyToEndTurn && !hasTurnActions;
     final showActionMenu =
-        !readyToEndTurn && !viewModel.activePlayerFinished && !isUnitAnimating;
+        hasTurnActions && !viewModel.activePlayerFinished && !isUnitAnimating;
     final endTurnWidth = EndTurnButton.preferredWidth(
       compact: compact,
       includeActionSegment: showActionMenu,
@@ -54,7 +57,7 @@ class HudCommandLine extends StatelessWidget {
             playerColor: playerColor,
             turn: turn,
             waiting: viewModel.activePlayerFinished || isUnitAnimating,
-            readyToEndTurn: readyToEndTurn,
+            readyToEndTurn: buttonReadyToEndTurn,
             actionCount: viewModel.remainingActionCount,
             submitMode: viewModel.multiplayer,
             waitingForLabel: viewModel.waitingForLabel,
@@ -67,7 +70,7 @@ class HudCommandLine extends StatelessWidget {
             showActionMenu: showActionMenu,
             pulseActionBorder: pulseActionBorder,
             onActionSelected: onActionSelected,
-            onTap: readyToEndTurn ? onEndTurn : onNextAction,
+            onTap: hasTurnActions ? onNextAction : onEndTurn,
           ),
         ),
       ),

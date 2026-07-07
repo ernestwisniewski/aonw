@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/turn_action_hint.dart';
@@ -78,18 +79,32 @@ class _GamePrimaryActionControllerState
       activePlayerId: activePlayerId,
       technologyViewModel: technologyViewModel,
     );
+    final pendingActionCount = TurnReducer.pendingTurnActionCount(
+      gameState,
+      activePlayerId,
+      session.mapData,
+      technologyRuleset: ref.read(technologyRulesetProvider),
+    );
+    final dispatcher = ref.read(hudCommandDispatcherProvider);
+
+    if (pendingActionCount > 0) {
+      unawaited(
+        dispatcher.focusNextAction(
+          activePlayerId: activePlayerId,
+          currentState: () => ref.read(gameStateProvider(session.saveId)).value,
+        ),
+      );
+      return;
+    }
 
     unawaited(
-      ref
-          .read(hudCommandDispatcherProvider)
-          .endTurn(
-            animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
-            gameSave: save,
-            activePlayerId: activePlayerId,
-            readyToEndTurn: readyToEndTurn,
-            currentState: () =>
-                ref.read(gameStateProvider(session.saveId)).value,
-          ),
+      dispatcher.endTurn(
+        animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
+        gameSave: save,
+        activePlayerId: activePlayerId,
+        readyToEndTurn: readyToEndTurn,
+        currentState: () => ref.read(gameStateProvider(session.saveId)).value,
+      ),
     );
   }
 }

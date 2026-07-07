@@ -86,6 +86,7 @@ void main() {
       const command = FocusNextPendingActionCommand(
         'player_1',
         preferredObjectiveAdvice: GameObjectiveAdvice.improveField,
+        actionStep: -1,
       );
 
       expect(
@@ -96,6 +97,7 @@ void main() {
         GameCommandSerializer.toJson(command)['preferredObjectiveAdvice'],
         'improveField',
       );
+      expect(GameCommandSerializer.toJson(command)['actionStep'], -1);
     });
 
     test('decodes FoundCity without controlledHexes as an empty list', () {

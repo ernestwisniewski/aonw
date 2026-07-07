@@ -127,6 +127,9 @@ class _EndTurnButtonState extends State<EndTurnButton>
 
   _EndTurnButtonMode _modeFor(EndTurnButton w) {
     if (w.waiting) return _EndTurnButtonMode.waiting;
+    if (w.actionCount > 0 || w.actionOptions.isNotEmpty) {
+      return _EndTurnButtonMode.action;
+    }
     if (w.readyToEndTurn) return _EndTurnButtonMode.ready;
     return _EndTurnButtonMode.action;
   }
@@ -197,7 +200,7 @@ class _EndTurnButtonState extends State<EndTurnButton>
         ? widget.waitingForLabel.isEmpty
               ? l10n.waitingForPlayersTooltip
               : widget.waitingForLabel
-        : widget.readyToEndTurn
+        : mode == _EndTurnButtonMode.ready
         ? widget.submitMode
               ? l10n.submitTurnTooltip(widget.turn)
               : l10n.endTurnTooltip(widget.turn)

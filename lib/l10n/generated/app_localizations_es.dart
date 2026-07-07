@@ -559,14 +559,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'El bumper derecho enfoca la siguiente acción pendiente del jugador en la cola del turno.';
+      'El bumper derecho enfoca la siguiente acción pendiente del jugador en la cola del turno, incluidas la producción de ciudad y la investigación.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'El bumper izquierdo devuelve el foco al objetivo inicial del turno cuando necesites orientarte.';
+      'El bumper izquierdo enfoca la acción pendiente anterior en la misma cola, recorriendo unidades, ciudades e investigación.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

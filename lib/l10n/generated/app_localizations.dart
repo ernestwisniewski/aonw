@@ -1075,7 +1075,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadNextBody.
   ///
   /// In en, this message translates to:
-  /// **'The right bumper focuses the next pending player action in the turn queue.'**
+  /// **'The right bumper focuses the next pending player action in the turn queue, including city production and research.'**
   String get manualGamepadNextBody;
 
   /// No description provided for @manualGamepadFocusAction.
@@ -1087,7 +1087,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualGamepadFocusBody.
   ///
   /// In en, this message translates to:
-  /// **'The left bumper returns focus to the turn-start target when you need to reorient.'**
+  /// **'The left bumper focuses the previous pending player action in the same turn queue, wrapping through units, cities, and research.'**
   String get manualGamepadFocusBody;
 
   /// No description provided for @manualGamepadTurnAction.

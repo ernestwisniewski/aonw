@@ -21,13 +21,14 @@ extension _HudActionDeckLayout on _HudActionDeckState {
       valueListenable: widget.animatingUnitIdsListenable,
       builder: (context, animatingUnitIds, _) {
         final l10n = AppLocalizations.of(context);
+        final commandReadyToEndTurn = widget.readyToEndTurn && !_hasTurnActions;
         final viewModel = HudCommandLineViewModel.create(
           gameSave: widget.gameSave,
           activePlayerId: widget.activePlayerId,
           activePlayerCanAct: widget.activePlayerCanAct,
           gameState: widget.gameState,
           isUnitAnimating: animatingUnitIds.isNotEmpty,
-          readyToEndTurn: widget.readyToEndTurn,
+          readyToEndTurn: commandReadyToEndTurn,
           remainingActionCount: widget.remainingActionCount,
           actionHintLabel: widget.actionHintLabel,
           l10n: l10n,
@@ -76,7 +77,7 @@ extension _HudActionDeckLayout on _HudActionDeckState {
             viewModel: viewModel,
             playerColor: playerColor,
             turn: widget.gameSave.turn,
-            readyToEndTurn: widget.readyToEndTurn,
+            readyToEndTurn: commandReadyToEndTurn,
             isUnitAnimating: animatingUnitIds.isNotEmpty,
             currentActionIndex: widget.currentActionIndex,
             turnActionOptions: widget.turnActionOptions,

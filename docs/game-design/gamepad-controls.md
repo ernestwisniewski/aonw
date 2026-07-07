@@ -25,8 +25,8 @@
 | X | Toggle move targeting; in the technology panel, switch recommendations/tree view |
 | Y | Inspect the current cursor hex, or open details for the selected city/technology panel item |
 | L3 / R3 | R3 jumps from the map to the bottom toolbar; while HUD focus is active, L3/R3 step left/right across HUD sections |
-| RB | Focus the next pending player action |
-| LB | Focus the turn-start map target |
+| RB | Focus the next pending player action, wrapping through units, city production, and research |
+| LB | Focus the previous pending player action, wrapping through the same queue |
 | Start | Run the primary turn action, matching Space |
 
 Terminology note: zoom is on the analog triggers, `RT` and `LT`. The bumpers,
@@ -50,8 +50,8 @@ avoids a parallel gameplay path.
 
 Map cursor selection is camera-stable: D-pad and left-stick cursor movement
 selects a new hex without recentering the camera. Camera movement is reserved
-for the right stick, zoom triggers, and explicit focus shortcuts such as the
-turn-start target.
+for the right stick, zoom triggers, and explicit focus shortcuts such as pending
+turn actions.
 
 The active game screen owns one `GamepadInputRouterScope`. Routes register with
 explicit priorities, and discrete actions such as confirm, cancel, inspect,
@@ -87,8 +87,9 @@ previous menu route.
 
 Gamepad input is configurable from Options. The defaults preserve the original
 mapping: A/B/X/Y for confirm/cancel/mode/inspect, L3/R3 for HUD focus, LB/RB for
-turn-flow focus shortcuts, Start for the primary turn action, the left stick and
-D-pad for the cursor, the right stick for camera pan, and LT/RT for zoom.
+previous/next pending action focus, Start for the primary turn action, the left
+stick and D-pad for the cursor, the right stick for camera pan, and LT/RT for
+zoom.
 
 Players can disable gamepad input, adjust deadzone and camera sensitivity,
 invert camera Y, remap button actions, remap axis actions, or reset all bindings

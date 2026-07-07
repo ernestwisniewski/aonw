@@ -22,7 +22,9 @@ final class GamepadCommandMapper {
     final activePlayerId = state.activePlayerId;
     if (activePlayerId.isNotEmpty) {
       if (frame.focusPreviousPressed) {
-        commands.add(FocusTurnStartActionCommand(activePlayerId));
+        commands.add(
+          FocusNextPendingActionCommand(activePlayerId, actionStep: -1),
+        );
       }
       if (frame.focusNextPressed) {
         commands.add(FocusNextPendingActionCommand(activePlayerId));

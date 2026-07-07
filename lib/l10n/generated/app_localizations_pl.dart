@@ -556,14 +556,14 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get manualGamepadNextBody =>
-      'Prawy bumper przenosi fokus do kolejnej oczekującej akcji gracza w turze.';
+      'Prawy bumper przenosi fokus do kolejnej oczekującej akcji gracza w turze, w tym produkcji miasta i badań.';
 
   @override
   String get manualGamepadFocusAction => 'LB';
 
   @override
   String get manualGamepadFocusBody =>
-      'Lewy bumper wraca fokusem do celu startowego tury, gdy trzeba odzyskać orientację.';
+      'Lewy bumper przenosi fokus do poprzedniej oczekującej akcji w tej samej kolejce, zawijając przez jednostki, miasta i badania.';
 
   @override
   String get manualGamepadTurnAction => 'Start';

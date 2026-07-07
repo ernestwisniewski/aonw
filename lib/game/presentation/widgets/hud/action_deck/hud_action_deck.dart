@@ -176,6 +176,8 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
     return widget.remainingActionCount < 0 ? 0 : widget.remainingActionCount;
   }
 
+  bool get _hasTurnActions => _visibleTurnActionCount > 0;
+
   bool get _canShowSelection =>
       widget.showSelectionInfo &&
       widget.selection != null &&
