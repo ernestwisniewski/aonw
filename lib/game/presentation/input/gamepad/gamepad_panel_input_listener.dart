@@ -21,6 +21,7 @@ class GamepadPanelInputListener extends StatefulWidget {
     this.onHudFocusNext,
     this.onFocusPrevious,
     this.onFocusNext,
+    this.onPrimaryAction,
     this.onInputActive,
     super.key,
   });
@@ -36,6 +37,7 @@ class GamepadPanelInputListener extends StatefulWidget {
   final VoidCallback? onHudFocusNext;
   final VoidCallback? onFocusPrevious;
   final VoidCallback? onFocusNext;
+  final VoidCallback? onPrimaryAction;
   final VoidCallback? onInputActive;
   final Widget child;
 
@@ -102,6 +104,7 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
       hudFocusNext: widget.onHudFocusNext != null && input.hudFocusNext,
       focusPrevious: widget.onFocusPrevious != null && input.focusPrevious,
       focusNext: widget.onFocusNext != null && input.focusNext,
+      primaryAction: widget.onPrimaryAction != null && input.primaryAction,
     );
   }
 
@@ -157,5 +160,6 @@ class _GamepadPanelInputListenerState extends State<GamepadPanelInputListener>
     if (frame.hudFocusNextPressed) widget.onHudFocusNext?.call();
     if (frame.focusPreviousPressed) widget.onFocusPrevious?.call();
     if (frame.focusNextPressed) widget.onFocusNext?.call();
+    if (frame.primaryActionPressed) widget.onPrimaryAction?.call();
   }
 }

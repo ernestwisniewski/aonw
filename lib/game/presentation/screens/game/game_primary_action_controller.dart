@@ -35,44 +35,17 @@ class GamePrimaryActionController extends ConsumerStatefulWidget {
 
 class _GamePrimaryActionControllerState
     extends ConsumerState<GamePrimaryActionController> {
-  bool _primaryActionPressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.gamepadInputListenable.addListener(_handleGamepadInput);
-  }
-
-  @override
-  void didUpdateWidget(GamePrimaryActionController oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.gamepadInputListenable == widget.gamepadInputListenable) {
-      return;
-    }
-    oldWidget.gamepadInputListenable.removeListener(_handleGamepadInput);
-    _primaryActionPressed = widget.gamepadInputListenable.value.primaryAction;
-    widget.gamepadInputListenable.addListener(_handleGamepadInput);
-  }
-
-  @override
-  void dispose() {
-    widget.gamepadInputListenable.removeListener(_handleGamepadInput);
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return GamePrimaryActionShortcutScope(
-      enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
-      onActivate: _activate,
-      child: widget.child,
+    return GamepadPanelInputListener(
+      input: widget.gamepadInputListenable,
+      onPrimaryAction: _activate,
+      child: GamePrimaryActionShortcutScope(
+        enabled: widget.gameSave != null && widget.session.saveId.isNotEmpty,
+        onActivate: _activate,
+        child: widget.child,
+      ),
     );
-  }
-
-  void _handleGamepadInput() {
-    final pressed = widget.gamepadInputListenable.value.primaryAction;
-    if (pressed && !_primaryActionPressed) _activate();
-    _primaryActionPressed = pressed;
   }
 
   void _activate() {
