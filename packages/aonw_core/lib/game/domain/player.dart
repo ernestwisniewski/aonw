@@ -22,6 +22,14 @@ enum PlayerCountry {
   korea,
   japan,
   portugal,
+  india,
+  brazil,
+  indonesia,
+  mexico,
+  turkey,
+  saudiArabia,
+  egypt,
+  greece,
 }
 
 /// Immutable player value object. Color is assigned automatically by index

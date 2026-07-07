@@ -651,6 +651,30 @@ class AppLocalizationsFr extends AppLocalizations {
   String get countryPortugal => 'Portugal';
 
   @override
+  String get countryIndia => 'Inde';
+
+  @override
+  String get countryBrazil => 'Brésil';
+
+  @override
+  String get countryIndonesia => 'Indonésie';
+
+  @override
+  String get countryMexico => 'Mexique';
+
+  @override
+  String get countryTurkey => 'Turquie';
+
+  @override
+  String get countrySaudiArabia => 'Arabie saoudite';
+
+  @override
+  String get countryEgypt => 'Égypte';
+
+  @override
+  String get countryGreece => 'Grèce';
+
+  @override
   String get countryLeaderPoland => 'Casimir III le Grand';
 
   @override
@@ -697,6 +721,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get countryLeaderPortugal => 'Henry le navigateur';
+
+  @override
+  String get countryLeaderIndia => 'Ashoka';
+
+  @override
+  String get countryLeaderBrazil => 'Pierre II';
+
+  @override
+  String get countryLeaderIndonesia => 'Gajah Mada';
+
+  @override
+  String get countryLeaderMexico => 'Benito Juárez';
+
+  @override
+  String get countryLeaderTurkey => 'Soliman le Magnifique';
+
+  @override
+  String get countryLeaderSaudiArabia => 'Ibn Saoud';
+
+  @override
+  String get countryLeaderEgypt => 'Hatchepsout';
+
+  @override
+  String get countryLeaderGreece => 'Périclès';
 
   @override
   String get addPlayerAction => '+ AJOUTER';

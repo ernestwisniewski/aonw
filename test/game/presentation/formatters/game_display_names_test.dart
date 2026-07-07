@@ -60,19 +60,27 @@ void main() {
       final en = AppLocalizationsEn();
 
       expect(GameDisplayNames.sortedPlayerCountries(en), [
+        PlayerCountry.brazil,
         PlayerCountry.canada,
         PlayerCountry.china,
+        PlayerCountry.egypt,
         PlayerCountry.france,
         PlayerCountry.germany,
+        PlayerCountry.greece,
+        PlayerCountry.india,
+        PlayerCountry.indonesia,
         PlayerCountry.italy,
         PlayerCountry.japan,
         PlayerCountry.korea,
+        PlayerCountry.mexico,
         PlayerCountry.netherlands,
         PlayerCountry.poland,
         PlayerCountry.portugal,
         PlayerCountry.russia,
+        PlayerCountry.saudiArabia,
         PlayerCountry.spain,
         PlayerCountry.sweden,
+        PlayerCountry.turkey,
         PlayerCountry.ukraine,
         PlayerCountry.unitedKingdom,
         PlayerCountry.unitedStates,
@@ -139,6 +147,33 @@ void main() {
       expect(
         GameDisplayNames.playerCountryLeader(en, PlayerCountry.portugal),
         'Henry the Navigator',
+      );
+    });
+
+    test('localizes newly added civilizations and leaders', () {
+      final pl = AppLocalizationsPl();
+      final en = AppLocalizationsEn();
+
+      for (final country in const [
+        PlayerCountry.india,
+        PlayerCountry.brazil,
+        PlayerCountry.indonesia,
+        PlayerCountry.mexico,
+        PlayerCountry.turkey,
+        PlayerCountry.saudiArabia,
+        PlayerCountry.egypt,
+        PlayerCountry.greece,
+      ]) {
+        expect(GameDisplayNames.playerCountry(pl, country), isNotEmpty);
+        expect(GameDisplayNames.playerCountryLeader(pl, country), isNotEmpty);
+        expect(GameDisplayNames.playerCountry(en, country), isNotEmpty);
+        expect(GameDisplayNames.playerCountryLeader(en, country), isNotEmpty);
+      }
+
+      expect(GameDisplayNames.playerCountry(en, PlayerCountry.india), 'India');
+      expect(
+        GameDisplayNames.playerCountryLeader(en, PlayerCountry.greece),
+        'Pericles',
       );
     });
   });

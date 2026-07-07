@@ -1246,6 +1246,54 @@ abstract class AppLocalizations {
   /// **'Portugal'**
   String get countryPortugal;
 
+  /// No description provided for @countryIndia.
+  ///
+  /// In en, this message translates to:
+  /// **'India'**
+  String get countryIndia;
+
+  /// No description provided for @countryBrazil.
+  ///
+  /// In en, this message translates to:
+  /// **'Brazil'**
+  String get countryBrazil;
+
+  /// No description provided for @countryIndonesia.
+  ///
+  /// In en, this message translates to:
+  /// **'Indonesia'**
+  String get countryIndonesia;
+
+  /// No description provided for @countryMexico.
+  ///
+  /// In en, this message translates to:
+  /// **'Mexico'**
+  String get countryMexico;
+
+  /// No description provided for @countryTurkey.
+  ///
+  /// In en, this message translates to:
+  /// **'Turkey'**
+  String get countryTurkey;
+
+  /// No description provided for @countrySaudiArabia.
+  ///
+  /// In en, this message translates to:
+  /// **'Saudi Arabia'**
+  String get countrySaudiArabia;
+
+  /// No description provided for @countryEgypt.
+  ///
+  /// In en, this message translates to:
+  /// **'Egypt'**
+  String get countryEgypt;
+
+  /// No description provided for @countryGreece.
+  ///
+  /// In en, this message translates to:
+  /// **'Greece'**
+  String get countryGreece;
+
   /// No description provided for @countryLeaderPoland.
   ///
   /// In en, this message translates to:
@@ -1341,6 +1389,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Henry the Navigator'**
   String get countryLeaderPortugal;
+
+  /// No description provided for @countryLeaderIndia.
+  ///
+  /// In en, this message translates to:
+  /// **'Ashoka'**
+  String get countryLeaderIndia;
+
+  /// No description provided for @countryLeaderBrazil.
+  ///
+  /// In en, this message translates to:
+  /// **'Pedro II'**
+  String get countryLeaderBrazil;
+
+  /// No description provided for @countryLeaderIndonesia.
+  ///
+  /// In en, this message translates to:
+  /// **'Gajah Mada'**
+  String get countryLeaderIndonesia;
+
+  /// No description provided for @countryLeaderMexico.
+  ///
+  /// In en, this message translates to:
+  /// **'Benito Juarez'**
+  String get countryLeaderMexico;
+
+  /// No description provided for @countryLeaderTurkey.
+  ///
+  /// In en, this message translates to:
+  /// **'Suleiman the Magnificent'**
+  String get countryLeaderTurkey;
+
+  /// No description provided for @countryLeaderSaudiArabia.
+  ///
+  /// In en, this message translates to:
+  /// **'Ibn Saud'**
+  String get countryLeaderSaudiArabia;
+
+  /// No description provided for @countryLeaderEgypt.
+  ///
+  /// In en, this message translates to:
+  /// **'Hatshepsut'**
+  String get countryLeaderEgypt;
+
+  /// No description provided for @countryLeaderGreece.
+  ///
+  /// In en, this message translates to:
+  /// **'Pericles'**
+  String get countryLeaderGreece;
 
   /// No description provided for @addPlayerAction.
   ///

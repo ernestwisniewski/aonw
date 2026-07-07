@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/formatters/player_country_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
@@ -24,62 +25,21 @@ abstract final class GameDisplayNames {
   }
 
   static String playerCountry(AppLocalizations l10n, PlayerCountry country) {
-    return switch (country) {
-      PlayerCountry.poland => l10n.countryPoland,
-      PlayerCountry.ukraine => l10n.countryUkraine,
-      PlayerCountry.germany => l10n.countryGermany,
-      PlayerCountry.france => l10n.countryFrance,
-      PlayerCountry.unitedKingdom => l10n.countryUnitedKingdom,
-      PlayerCountry.italy => l10n.countryItaly,
-      PlayerCountry.spain => l10n.countrySpain,
-      PlayerCountry.netherlands => l10n.countryNetherlands,
-      PlayerCountry.sweden => l10n.countrySweden,
-      PlayerCountry.russia => l10n.countryRussia,
-      PlayerCountry.unitedStates => l10n.countryUnitedStates,
-      PlayerCountry.canada => l10n.countryCanada,
-      PlayerCountry.china => l10n.countryChina,
-      PlayerCountry.korea => l10n.countryKorea,
-      PlayerCountry.japan => l10n.countryJapan,
-      PlayerCountry.portugal => l10n.countryPortugal,
-    };
+    return PlayerCountryDisplayNames.country(l10n, country);
   }
 
   static List<PlayerCountry> sortedPlayerCountries(
     AppLocalizations l10n, {
     Iterable<PlayerCountry> countries = PlayerCountry.values,
   }) {
-    return countries.toList()..sort((left, right) {
-      final byName = playerCountry(
-        l10n,
-        left,
-      ).toLowerCase().compareTo(playerCountry(l10n, right).toLowerCase());
-      if (byName != 0) return byName;
-      return left.name.compareTo(right.name);
-    });
+    return PlayerCountryDisplayNames.sorted(l10n, countries: countries);
   }
 
   static String playerCountryLeader(
     AppLocalizations l10n,
     PlayerCountry country,
   ) {
-    return switch (country) {
-      PlayerCountry.poland => l10n.countryLeaderPoland,
-      PlayerCountry.ukraine => l10n.countryLeaderUkraine,
-      PlayerCountry.germany => l10n.countryLeaderGermany,
-      PlayerCountry.france => l10n.countryLeaderFrance,
-      PlayerCountry.unitedKingdom => l10n.countryLeaderUnitedKingdom,
-      PlayerCountry.italy => l10n.countryLeaderItaly,
-      PlayerCountry.spain => l10n.countryLeaderSpain,
-      PlayerCountry.netherlands => l10n.countryLeaderNetherlands,
-      PlayerCountry.sweden => l10n.countryLeaderSweden,
-      PlayerCountry.russia => l10n.countryLeaderRussia,
-      PlayerCountry.unitedStates => l10n.countryLeaderUnitedStates,
-      PlayerCountry.canada => l10n.countryLeaderCanada,
-      PlayerCountry.china => l10n.countryLeaderChina,
-      PlayerCountry.korea => l10n.countryLeaderKorea,
-      PlayerCountry.japan => l10n.countryLeaderJapan,
-      PlayerCountry.portugal => l10n.countryLeaderPortugal,
-    };
+    return PlayerCountryDisplayNames.leader(l10n, country);
   }
 
   static String worldArtifact(AppLocalizations l10n, WorldArtifactType type) {

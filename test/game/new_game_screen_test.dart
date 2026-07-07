@@ -146,9 +146,9 @@ void main() {
     expect(find.text('Normal'), findsNWidgets(2));
     await tester.tap(find.byType(DropdownButtonFormField<PlayerCountry>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('France').last);
+    await tester.tap(find.text('Portugal').last);
     await tester.pumpAndSettle();
-    expect(find.text('Napoleon Bonaparte'), findsOneWidget);
+    expect(find.text('Henry the Navigator'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('newGame.gameLengthSelector')));
     await tester.pumpAndSettle();
@@ -189,14 +189,14 @@ void main() {
     expect(players, isNotNull);
     final createdPlayers = players!;
     expect(createdPlayers, hasLength(NewGameFlowX.singlePlayerPlayerCount));
-    expect(createdPlayers[0].name, 'Napoleon Bonaparte');
-    expect(createdPlayers[0].country, PlayerCountry.france);
+    expect(createdPlayers[0].name, 'Henry the Navigator');
+    expect(createdPlayers[0].country, PlayerCountry.portugal);
     expect(createdPlayers[0].kind, PlayerKind.human);
     final aiPlayers = createdPlayers.skip(1).toList();
     expect(aiPlayers.map((player) => player.country).toSet(), hasLength(3));
     expect(
       aiPlayers.map((player) => player.country),
-      isNot(contains(PlayerCountry.france)),
+      isNot(contains(PlayerCountry.portugal)),
     );
     expect(aiPlayers.map((player) => player.kind), [
       PlayerKind.ai,
@@ -484,19 +484,27 @@ MapData _map() => MapData(
 );
 
 const _englishAlphabeticalCountries = [
+  PlayerCountry.brazil,
   PlayerCountry.canada,
   PlayerCountry.china,
+  PlayerCountry.egypt,
   PlayerCountry.france,
   PlayerCountry.germany,
+  PlayerCountry.greece,
+  PlayerCountry.india,
+  PlayerCountry.indonesia,
   PlayerCountry.italy,
   PlayerCountry.japan,
   PlayerCountry.korea,
+  PlayerCountry.mexico,
   PlayerCountry.netherlands,
   PlayerCountry.poland,
   PlayerCountry.portugal,
   PlayerCountry.russia,
+  PlayerCountry.saudiArabia,
   PlayerCountry.spain,
   PlayerCountry.sweden,
+  PlayerCountry.turkey,
   PlayerCountry.ukraine,
   PlayerCountry.unitedKingdom,
   PlayerCountry.unitedStates,

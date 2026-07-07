@@ -650,6 +650,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String get countryPortugal => 'Portugal';
 
   @override
+  String get countryIndia => 'India';
+
+  @override
+  String get countryBrazil => 'Brasil';
+
+  @override
+  String get countryIndonesia => 'Indonesia';
+
+  @override
+  String get countryMexico => 'México';
+
+  @override
+  String get countryTurkey => 'Turquía';
+
+  @override
+  String get countrySaudiArabia => 'Arabia Saudí';
+
+  @override
+  String get countryEgypt => 'Egipto';
+
+  @override
+  String get countryGreece => 'Grecia';
+
+  @override
   String get countryLeaderPoland => 'Casimiro III el Grande';
 
   @override
@@ -696,6 +720,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get countryLeaderPortugal => 'Enrique el Navegante';
+
+  @override
+  String get countryLeaderIndia => 'Ashoka';
+
+  @override
+  String get countryLeaderBrazil => 'Pedro II';
+
+  @override
+  String get countryLeaderIndonesia => 'Gajah Mada';
+
+  @override
+  String get countryLeaderMexico => 'Benito Juárez';
+
+  @override
+  String get countryLeaderTurkey => 'Solimán el Magnífico';
+
+  @override
+  String get countryLeaderSaudiArabia => 'Ibn Saud';
+
+  @override
+  String get countryLeaderEgypt => 'Hatshepsut';
+
+  @override
+  String get countryLeaderGreece => 'Pericles';
 
   @override
   String get addPlayerAction => '+ AÑADIR JUGADOR';

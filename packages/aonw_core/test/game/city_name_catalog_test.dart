@@ -28,6 +28,18 @@ void main() {
         CityNameCatalog.nextName(country: PlayerCountry.portugal, sequence: 1),
         'Lisbon',
       );
+      expect(
+        CityNameCatalog.nextName(country: PlayerCountry.india, sequence: 1),
+        'Delhi',
+      );
+      expect(
+        CityNameCatalog.nextName(country: PlayerCountry.egypt, sequence: 1),
+        'Cairo',
+      );
+      expect(
+        CityNameCatalog.nextName(country: PlayerCountry.greece, sequence: 1),
+        'Athens',
+      );
     });
 
     test('cycles with a suffix after exhausting the list', () {
