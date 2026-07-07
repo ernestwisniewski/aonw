@@ -175,6 +175,63 @@ class GamepadInputRouteListener extends StatefulWidget {
       _GamepadInputRouteListenerState();
 }
 
+class GamepadInputRouteBinding extends StatefulWidget {
+  const GamepadInputRouteBinding({
+    required this.router,
+    required this.route,
+    required this.child,
+    super.key,
+  });
+
+  final GamepadInputRouter? router;
+  final GamepadInputRoute route;
+  final Widget child;
+
+  @override
+  State<GamepadInputRouteBinding> createState() =>
+      _GamepadInputRouteBindingState();
+}
+
+class _GamepadInputRouteBindingState extends State<GamepadInputRouteBinding> {
+  GamepadInputRouter? _router;
+  GamepadInputRouteHandle? _handle;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncRoute();
+  }
+
+  @override
+  void didUpdateWidget(covariant GamepadInputRouteBinding oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncRoute();
+  }
+
+  @override
+  void dispose() {
+    _handle?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+
+  void _syncRoute() {
+    final router = widget.router;
+    if (!identical(router, _router)) {
+      _handle?.dispose();
+      _handle = null;
+      _router = router;
+      if (router != null) {
+        _handle = router.register(widget.route);
+      }
+      return;
+    }
+    _handle?.update(widget.route);
+  }
+}
+
 class _GamepadInputRouteListenerState extends State<GamepadInputRouteListener> {
   GamepadInputRouter? _router;
   GamepadInputRouteHandle? _handle;

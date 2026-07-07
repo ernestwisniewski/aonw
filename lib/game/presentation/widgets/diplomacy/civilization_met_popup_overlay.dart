@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/civilization_met_popup_settings_provider.dart';
 import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
@@ -127,12 +128,14 @@ class _CivilizationMetPopupOverlayState
       state: notification.state,
       playerId: event.metPlayerId,
     );
+    final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
     _dialogOpen = true;
     final result = await showGameModal<_CivilizationMetDialogResult>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _CivilizationMetDialog(model: model),
+      builder: (_) =>
+          _CivilizationMetDialog(model: model, gamepadRouter: gamepadRouter),
     );
     if (!mounted) return;
     _dialogOpen = false;
@@ -225,8 +228,12 @@ class _CivilizationMetPopupModel {
 
 class _CivilizationMetDialog extends StatefulWidget {
   final _CivilizationMetPopupModel model;
+  final GamepadInputRouter? gamepadRouter;
 
-  const _CivilizationMetDialog({required this.model});
+  const _CivilizationMetDialog({
+    required this.model,
+    required this.gamepadRouter,
+  });
 
   @override
   State<_CivilizationMetDialog> createState() => _CivilizationMetDialogState();
@@ -238,36 +245,52 @@ class _CivilizationMetDialogState extends State<_CivilizationMetDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return GameModalScaffold(
-      surfaceKey: const Key('civilizationMetDialog.surface'),
-      size: GameModalSize.regular,
-      contentPadding: EdgeInsets.zero,
-      scrollable: false,
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _CivilizationMetHeader(model: widget.model),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-              child: Text(
-                l10n.civilizationMetPopupBody(widget.model.civilizationName),
-                style: GameUiTheme.body.copyWith(
-                  color: GameUiTheme.textPrimary,
-                  height: 1.35,
+    return GamepadInputRouteBinding(
+      router: widget.gamepadRouter,
+      route: GamepadInputRoute(
+        priority: GamepadInputRoutePriority.modal,
+        onConfirm: _dismiss,
+        onCancel: _dismiss,
+      ),
+      child: GameModalScaffold(
+        surfaceKey: const Key('civilizationMetDialog.surface'),
+        size: GameModalSize.regular,
+        contentPadding: EdgeInsets.zero,
+        scrollable: false,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _CivilizationMetHeader(model: widget.model),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                child: Text(
+                  l10n.civilizationMetPopupBody(widget.model.civilizationName),
+                  style: GameUiTheme.body.copyWith(
+                    color: GameUiTheme.textPrimary,
+                    height: 1.35,
+                  ),
                 ),
               ),
-            ),
-            _CivilizationMetFooter(
-              doNotShowAgain: _doNotShowAgain,
-              onToggleDoNotShowAgain: (value) =>
-                  setState(() => _doNotShowAgain = value),
-            ),
-          ],
+              _CivilizationMetFooter(
+                doNotShowAgain: _doNotShowAgain,
+                onToggleDoNotShowAgain: (value) =>
+                    setState(() => _doNotShowAgain = value),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  void _dismiss() {
+    Navigator.of(context).pop(
+      _doNotShowAgain
+          ? _CivilizationMetDialogResult.disablePopup
+          : _CivilizationMetDialogResult.dismissed,
     );
   }
 }

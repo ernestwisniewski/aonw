@@ -4,43 +4,55 @@ class _DiplomaticMessageDialog extends StatelessWidget {
   final String fromPlayerName;
   final Color fromPlayerColor;
   final String topicLabel;
+  final GamepadInputRouter? gamepadRouter;
 
   const _DiplomaticMessageDialog({
     required this.fromPlayerName,
     required this.fromPlayerColor,
     required this.topicLabel,
+    required this.gamepadRouter,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GameModalScaffold(
-      surfaceKey: const Key('diplomaticMessageDialog.surface'),
-      size: GameModalSize.regular,
-      contentPadding: EdgeInsets.zero,
-      scrollable: false,
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 540),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _DiplomaticMessageHeader(
-              fromPlayerName: fromPlayerName,
-              fromPlayerColor: fromPlayerColor,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-              child: Text(
-                topicLabel,
-                key: const Key('diplomaticMessageDialog.topic'),
-                style: GameUiTheme.body.copyWith(
-                  color: GameUiTheme.textPrimary,
-                  height: 1.35,
+    return GamepadInputRouteBinding(
+      router: gamepadRouter,
+      route: GamepadInputRoute(
+        priority: GamepadInputRoutePriority.modal,
+        onConfirm: () =>
+            Navigator.of(context).pop(_DiplomaticMessageDialogResult.later),
+        onCancel: () =>
+            Navigator.of(context).pop(_DiplomaticMessageDialogResult.later),
+      ),
+      child: GameModalScaffold(
+        surfaceKey: const Key('diplomaticMessageDialog.surface'),
+        size: GameModalSize.regular,
+        contentPadding: EdgeInsets.zero,
+        scrollable: false,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 540),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _DiplomaticMessageHeader(
+                fromPlayerName: fromPlayerName,
+                fromPlayerColor: fromPlayerColor,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                child: Text(
+                  topicLabel,
+                  key: const Key('diplomaticMessageDialog.topic'),
+                  style: GameUiTheme.body.copyWith(
+                    color: GameUiTheme.textPrimary,
+                    height: 1.35,
+                  ),
                 ),
               ),
-            ),
-            const _DiplomaticMessageFooter(),
-          ],
+              const _DiplomaticMessageFooter(),
+            ],
+          ),
         ),
       ),
     );

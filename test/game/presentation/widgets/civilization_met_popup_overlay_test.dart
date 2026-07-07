@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/civilization_met_popup_settings_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
@@ -38,6 +39,37 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Civilization encountered'), findsNothing);
+  });
+
+  testWidgets('dismisses civilization met popup with gamepad before renderer', (
+    tester,
+  ) async {
+    final input = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(input.dispose);
+    var rendererCancelCount = 0;
+
+    await _pumpOverlay(
+      tester,
+      gamepadInput: input,
+      onRendererCancel: () => rendererCancelCount += 1,
+    );
+    final container = _container(tester);
+
+    _addCivilizationMetNotification(container);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Civilization encountered'), findsOneWidget);
+
+    input.value = const GamepadInputSnapshot(cancel: true);
+    await tester.pump(const Duration(milliseconds: 16));
+    input.value = GamepadInputSnapshot.empty;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Civilization encountered'), findsNothing);
+    expect(rendererCancelCount, 0);
   });
 
   testWidgets('does not show another hotseat player civilization popup', (
@@ -125,7 +157,24 @@ void main() {
   });
 }
 
-Future<void> _pumpOverlay(WidgetTester tester) async {
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  ValueNotifier<GamepadInputSnapshot>? gamepadInput,
+  VoidCallback? onRendererCancel,
+}) async {
+  Widget overlay = CivilizationMetPopupOverlay(gameSave: _save);
+  if (gamepadInput != null) {
+    overlay = GamepadInputRouterScope(
+      input: gamepadInput,
+      child: GamepadInputRouteListener(
+        route: GamepadInputRoute(
+          priority: GamepadInputRoutePriority.renderer,
+          onCancel: onRendererCancel,
+        ),
+        child: overlay,
+      ),
+    );
+  }
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -134,7 +183,7 @@ Future<void> _pumpOverlay(WidgetTester tester) async {
         supportedLocales: AppLocalizations.supportedLocales,
         home: ProviderScope(
           overrides: [gamePlayerControlSaveProvider.overrideWithValue(_save)],
-          child: Scaffold(body: CivilizationMetPopupOverlay(gameSave: _save)),
+          child: Scaffold(body: overlay),
         ),
       ),
     ),

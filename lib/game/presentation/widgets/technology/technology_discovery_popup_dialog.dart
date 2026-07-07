@@ -3,10 +3,12 @@ part of 'technology_discovery_popup_overlay.dart';
 class _TechnologyDiscoveryDialog extends StatefulWidget {
   final TechnologyId technologyId;
   final String playerName;
+  final GamepadInputRouter? gamepadRouter;
 
   const _TechnologyDiscoveryDialog({
     required this.technologyId,
     required this.playerName,
+    required this.gamepadRouter,
   });
 
   @override
@@ -29,42 +31,58 @@ class _TechnologyDiscoveryDialogState
       l10n,
       widget.technologyId,
     );
-    return GameModalScaffold(
-      surfaceKey: const Key('technologyDiscoveryDialog.surface'),
-      size: GameModalSize.regular,
-      contentPadding: EdgeInsets.zero,
-      scrollable: false,
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _TechnologyDiscoveryHeader(
-              technologyId: widget.technologyId,
-              technologyName: technologyName,
-              playerName: widget.playerName,
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-                child: Text(
-                  description,
-                  style: GameUiTheme.body.copyWith(
-                    color: GameUiTheme.textPrimary,
-                    height: 1.35,
+    return GamepadInputRouteBinding(
+      router: widget.gamepadRouter,
+      route: GamepadInputRoute(
+        priority: GamepadInputRoutePriority.modal,
+        onConfirm: _dismiss,
+        onCancel: _dismiss,
+      ),
+      child: GameModalScaffold(
+        surfaceKey: const Key('technologyDiscoveryDialog.surface'),
+        size: GameModalSize.regular,
+        contentPadding: EdgeInsets.zero,
+        scrollable: false,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TechnologyDiscoveryHeader(
+                technologyId: widget.technologyId,
+                technologyName: technologyName,
+                playerName: widget.playerName,
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                  child: Text(
+                    description,
+                    style: GameUiTheme.body.copyWith(
+                      color: GameUiTheme.textPrimary,
+                      height: 1.35,
+                    ),
                   ),
                 ),
               ),
-            ),
-            _TechnologyDiscoveryFooter(
-              doNotShowAgain: _doNotShowAgain,
-              onToggleDoNotShowAgain: (value) =>
-                  setState(() => _doNotShowAgain = value),
-            ),
-          ],
+              _TechnologyDiscoveryFooter(
+                doNotShowAgain: _doNotShowAgain,
+                onToggleDoNotShowAgain: (value) =>
+                    setState(() => _doNotShowAgain = value),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  void _dismiss() {
+    Navigator.of(context).pop(
+      _doNotShowAgain
+          ? _TechnologyDiscoveryDialogResult.disablePopup
+          : _TechnologyDiscoveryDialogResult.dismissed,
     );
   }
 }

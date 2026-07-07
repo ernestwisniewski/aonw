@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/technology_discovery_popup_settings_provider.dart';
@@ -136,6 +137,55 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('dismisses technology discovery with gamepad before renderer', (
+    tester,
+  ) async {
+    final input = ValueNotifier<GamepadInputSnapshot>(
+      GamepadInputSnapshot.empty,
+    );
+    addTearDown(input.dispose);
+    var rendererConfirmCount = 0;
+    var rendererCancelCount = 0;
+
+    await _pumpOverlay(
+      tester,
+      gamepadInput: input,
+      onRendererConfirm: () => rendererConfirmCount += 1,
+      onRendererCancel: () => rendererCancelCount += 1,
+    );
+    await tester.pumpAndSettle();
+    final container = _container(tester);
+
+    _addTechnologyNotification(container, TechnologyId.agriculture);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Technology discovered'), findsOneWidget);
+
+    input.value = const GamepadInputSnapshot(cancel: true);
+    await tester.pump(const Duration(milliseconds: 16));
+    input.value = GamepadInputSnapshot.empty;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Technology discovered'), findsNothing);
+    expect(rendererCancelCount, 0);
+
+    container.read(gameEventNotificationsProvider.notifier).clear();
+    _addTechnologyNotification(container, TechnologyId.mining);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Technology discovered'), findsOneWidget);
+
+    input.value = const GamepadInputSnapshot(confirm: true);
+    await tester.pump(const Duration(milliseconds: 16));
+    input.value = GamepadInputSnapshot.empty;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Technology discovered'), findsNothing);
+    expect(rendererConfirmCount, 0);
+  });
+
   testWidgets('checkbox disables future technology discovery popups', (
     tester,
   ) async {
@@ -267,7 +317,27 @@ void main() {
   });
 }
 
-Future<void> _pumpOverlay(WidgetTester tester, {GameSave? save}) async {
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  GameSave? save,
+  ValueNotifier<GamepadInputSnapshot>? gamepadInput,
+  VoidCallback? onRendererConfirm,
+  VoidCallback? onRendererCancel,
+}) async {
+  Widget overlay = TechnologyDiscoveryPopupOverlay(gameSave: save ?? _save);
+  if (gamepadInput != null) {
+    overlay = GamepadInputRouterScope(
+      input: gamepadInput,
+      child: GamepadInputRouteListener(
+        route: GamepadInputRoute(
+          priority: GamepadInputRoutePriority.renderer,
+          onConfirm: onRendererConfirm,
+          onCancel: onRendererCancel,
+        ),
+        child: overlay,
+      ),
+    );
+  }
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -278,9 +348,7 @@ Future<void> _pumpOverlay(WidgetTester tester, {GameSave? save}) async {
           overrides: [
             gamePlayerControlSaveProvider.overrideWithValue(save ?? _save),
           ],
-          child: Scaffold(
-            body: TechnologyDiscoveryPopupOverlay(gameSave: save ?? _save),
-          ),
+          child: Scaffold(body: overlay),
         ),
       ),
     ),
