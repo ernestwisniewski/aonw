@@ -70,6 +70,8 @@ class OptionsScreen extends ConsumerWidget {
                     _GameplaySection(),
                     SizedBox(height: 12),
                     _PerformanceSection(),
+                    SizedBox(height: 12),
+                    _GamepadSection(),
                   ],
                 ),
               ),
@@ -712,7 +714,26 @@ class _GameplaySection extends ConsumerWidget {
               controller.setCinematicCameraEnabled,
             ),
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _GamepadSection extends ConsumerWidget {
+  const _GamepadSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final settings = ref.watch(gameplaySettingsProvider);
+    final controller = ref.read(gameplaySettingsProvider.notifier);
+    return _SettingsSection(
+      icon: Icons.sports_esports_outlined,
+      title: l10n.manualGamepadTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           _SettingsToggleRow(
             key: const Key('options.gamepadEnabled'),
             icon: Icons.sports_esports_outlined,
