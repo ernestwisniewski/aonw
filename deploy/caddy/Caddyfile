@@ -48,6 +48,7 @@
 	}
 	header @homepageDownloads {
 		Cache-Control "public, max-age=0, s-maxage=3600, must-revalidate"
+		Cloudflare-CDN-Cache-Control "public, max-age=3600"
 	}
 
 	redir /privacy-policy/ /privacy-policy 308
