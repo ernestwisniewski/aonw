@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
 class PersistentGameState {
@@ -21,6 +22,7 @@ class PersistentGameState {
     this.fogOfWar = FogOfWarState.empty,
     this.research = ResearchState.empty,
     this.runtimeState = GameRuntimeState.empty,
+    this.wonderRegistry = WonderRegistry.empty,
   });
 
   factory PersistentGameState.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class PersistentGameState {
           'Expected a JSON object',
         ),
       },
+      wonderRegistry: WonderRegistry.fromJson(json['wonderRegistry']),
     );
   }
 
@@ -97,6 +100,7 @@ class PersistentGameState {
   final FogOfWarState fogOfWar;
   final ResearchState research;
   final GameRuntimeState runtimeState;
+  final WonderRegistry wonderRegistry;
 
   Set<String> get knownPlayerIds => <String>{
     ...playerColors.keys,
@@ -106,6 +110,7 @@ class PersistentGameState {
     ...playerStabilityNet.keys,
     ...fogOfWar.playerIds,
     ...runtimeState.submittedPlayerIds,
+    ...wonderRegistry.completedBy.values,
     ...runtimeState.dominationHoldTurnsByPlayerId.keys,
     ...runtimeState.culturalVictoryHoldTurnsByPlayerId.keys,
     for (final unit in units) unit.ownerPlayerId,
@@ -134,6 +139,8 @@ class PersistentGameState {
     'fogOfWar': fogOfWar.toJson(),
     'research': research.toJson(),
     'runtimeState': runtimeState.toJson(),
+    if (wonderRegistry.completedBy.isNotEmpty)
+      'wonderRegistry': wonderRegistry.toJson(),
   };
 
   PersistentGameState withoutClientInteractionState() {
@@ -153,6 +160,7 @@ class PersistentGameState {
     FogOfWarState? fogOfWar,
     ResearchState? research,
     GameRuntimeState? runtimeState,
+    WonderRegistry? wonderRegistry,
   }) {
     return PersistentGameState(
       playerColors: playerColors ?? this.playerColors,
@@ -167,6 +175,7 @@ class PersistentGameState {
       fogOfWar: fogOfWar ?? this.fogOfWar,
       research: research ?? this.research,
       runtimeState: runtimeState ?? this.runtimeState,
+      wonderRegistry: wonderRegistry ?? this.wonderRegistry,
     );
   }
 
@@ -184,7 +193,8 @@ class PersistentGameState {
       listEquals(other.fieldImprovements, fieldImprovements) &&
       other.fogOfWar == fogOfWar &&
       other.research == research &&
-      other.runtimeState == runtimeState;
+      other.runtimeState == runtimeState &&
+      other.wonderRegistry == wonderRegistry;
 
   @override
   int get hashCode => Object.hash(
@@ -200,6 +210,7 @@ class PersistentGameState {
     fogOfWar,
     research,
     runtimeState,
+    wonderRegistry,
   );
 
   PlayerCountry countryForPlayer(String playerId) {

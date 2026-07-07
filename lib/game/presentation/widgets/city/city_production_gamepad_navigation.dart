@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 
 final class CityProductionGamepadChoice {
@@ -25,6 +26,7 @@ abstract final class CityProductionGamepadNavigation {
     required CityProductionDialogViewModel viewModel,
     required CityBuildingSortMode buildingSortMode,
     required ValueChanged<CityBuildingType> onBuild,
+    required ValueChanged<WonderType>? onBuildWonder,
     required ValueChanged<GameUnitType> onProduceUnit,
     required ValueChanged<CityProductionItem> onBuildingDetails,
     required ValueChanged<CityProductionItem> onUnitDetails,
@@ -41,6 +43,12 @@ abstract final class CityProductionGamepadNavigation {
           canConfirm: !item.active,
           onConfirm: () => onBuild(item.buildingType!),
           onDetails: () => onBuildingDetails(item),
+        ),
+      for (final item in viewModel.wonders)
+        CityProductionGamepadChoice(
+          key: cityProductionItemKey(item),
+          canConfirm: !item.active && !item.locked && onBuildWonder != null,
+          onConfirm: () => onBuildWonder!(item.wonderType!),
         ),
       for (final item in viewModel.units)
         CityProductionGamepadChoice(

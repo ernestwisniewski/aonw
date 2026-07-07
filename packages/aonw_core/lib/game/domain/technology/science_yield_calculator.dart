@@ -8,6 +8,9 @@ import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/science_yield.dart';
 import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_effect_resolver.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 
 abstract final class ScienceYieldCalculator {
   static int totalAmountForPlayer({
@@ -17,6 +20,8 @@ abstract final class ScienceYieldCalculator {
     required TechnologyRuleset ruleset,
     Iterable<WorldArtifact> artifacts = const [],
     CityRuleset cityRuleset = CityRulesets.standard,
+    WonderRegistry wonderRegistry = WonderRegistry.empty,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     return _totalForPlayer(
       playerId: playerId,
@@ -25,6 +30,8 @@ abstract final class ScienceYieldCalculator {
       ruleset: ruleset,
       artifacts: artifacts,
       cityRuleset: cityRuleset,
+      wonderRegistry: wonderRegistry,
+      wonderRuleset: wonderRuleset,
       collectSources: false,
     ).total;
   }
@@ -36,6 +43,8 @@ abstract final class ScienceYieldCalculator {
     required TechnologyRuleset ruleset,
     Iterable<WorldArtifact> artifacts = const [],
     CityRuleset cityRuleset = CityRulesets.standard,
+    WonderRegistry wonderRegistry = WonderRegistry.empty,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     return _totalForPlayer(
       playerId: playerId,
@@ -44,6 +53,8 @@ abstract final class ScienceYieldCalculator {
       ruleset: ruleset,
       artifacts: artifacts,
       cityRuleset: cityRuleset,
+      wonderRegistry: wonderRegistry,
+      wonderRuleset: wonderRuleset,
       collectSources: true,
     );
   }
@@ -55,6 +66,8 @@ abstract final class ScienceYieldCalculator {
     required TechnologyRuleset ruleset,
     required Iterable<WorldArtifact> artifacts,
     required CityRuleset cityRuleset,
+    required WonderRegistry wonderRegistry,
+    required WonderRuleset wonderRuleset,
     required bool collectSources,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
@@ -83,7 +96,13 @@ abstract final class ScienceYieldCalculator {
         cityId: city.id,
         artifacts: artifacts,
       );
-      final amount = baseAmount + artifactAmount;
+      final wonderAmount = WonderEffectResolver.scienceForCity(
+        city: city,
+        cities: cities,
+        registry: wonderRegistry,
+        ruleset: wonderRuleset,
+      );
+      final amount = baseAmount + artifactAmount + wonderAmount;
       if (amount <= 0) continue;
 
       if (collectSources) {
@@ -103,6 +122,15 @@ abstract final class ScienceYieldCalculator {
               cityId: city.id,
               amount: artifactAmount,
               label: ScienceYieldSourceLabels.worldArtifact,
+            ),
+          );
+        }
+        if (wonderAmount > 0) {
+          sources!.add(
+            ScienceYieldSource(
+              cityId: city.id,
+              amount: wonderAmount,
+              label: ScienceYieldSourceLabels.worldWonder,
             ),
           );
         }

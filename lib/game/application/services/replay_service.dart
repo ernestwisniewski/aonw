@@ -157,6 +157,7 @@ class ReplayStep {
       StartBuildingCommand(:final cityId) ||
       StartUnitProductionCommand(:final cityId) ||
       StartCityProjectCommand(:final cityId) ||
+      StartWonderCommand(:final cityId) ||
       SetCitySpecializationCommand(:final cityId) ||
       RushProductionCommand(:final cityId) ||
       StartCityWorkedHexSelectionCommand(:final cityId) ||

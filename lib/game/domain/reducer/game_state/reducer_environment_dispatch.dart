@@ -32,9 +32,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   GameStateTransition cancelMerchantTradeRouteSelection(
     GameState state,
     CancelMerchantTradeRouteSelectionCommand command,
-  ) {
-    return MerchantTradeRouteReducer.cancelSelection(state, command);
-  }
+  ) => MerchantTradeRouteReducer.cancelSelection(state, command);
 
   GameStateTransition assignMerchantTradeRoute(
     GameState state,
@@ -146,6 +144,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
     );
   }
 
@@ -160,6 +159,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
     );
   }
 
@@ -174,6 +174,19 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
+    );
+  }
+
+  GameStateTransition startWonder(GameState state, StartWonderCommand command) {
+    return CityProductionReducer.startWonder(
+      state,
+      command,
+      mapData,
+      context: context,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
     );
   }
 
@@ -188,6 +201,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
     );
   }
 
@@ -202,6 +216,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
     );
   }
 
@@ -250,13 +265,13 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
   }
 
-  GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) {
-    return TurnReducer.submitTurn(state, command.playerId);
-  }
+  GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) =>
+      TurnReducer.submitTurn(state, command.playerId);
 
   GameStateTransition startCityFounding(GameState state) {
     return GameStateTransition(

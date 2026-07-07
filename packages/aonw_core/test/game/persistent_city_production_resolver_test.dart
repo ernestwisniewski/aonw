@@ -625,6 +625,79 @@ void main() {
       expect(result.reason, 'project_cannot_be_rushed');
       expect(result.state, state);
     });
+
+    test('starts available wonder production', () {
+      final state = PersistentGameState(
+        cities: [_city()],
+        research: _researchWith(TechnologyId.writing),
+      );
+
+      final result = const PersistentCityProductionResolver().startWonder(
+        state: state,
+        command: const StartWonderCommand('city_1', WonderType.greatLibrary),
+        actorPlayerId: 'player_1',
+        mapDefinition: _mapDefinition(),
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.state.cities.single.productionQueue,
+        CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: 0,
+        ),
+      );
+    });
+
+    test('rejects wonder without unlock technology', () {
+      final state = PersistentGameState(cities: [_city()]);
+
+      final result = const PersistentCityProductionResolver().startWonder(
+        state: state,
+        command: const StartWonderCommand('city_1', WonderType.greatLibrary),
+        actorPlayerId: 'player_1',
+        mapDefinition: _mapDefinition(),
+      );
+
+      expect(result.accepted, isFalse);
+      expect(result.reason, 'wonder_not_available');
+      expect(result.state, state);
+    });
+
+    test('rush production can claim a completed wonder', () {
+      final cost = CityProductionRules.wonderProductionCost(
+        WonderType.greatLibrary,
+      );
+      final city = _city().copyWith(
+        productionQueue: CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: cost - 1,
+        ),
+      );
+      final state = PersistentGameState(
+        cities: [city],
+        playerGold: const {'player_1': 10},
+      );
+
+      final result = const PersistentCityProductionResolver().rushProduction(
+        state: state,
+        command: const RushProductionCommand('city_1'),
+        actorPlayerId: 'player_1',
+        mapDefinition: _mapDefinition(),
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.state.wonderRegistry.ownerOf(WonderType.greatLibrary),
+        'player_1',
+      );
+      expect(
+        result.state.cities.single.wonders,
+        contains(WonderType.greatLibrary),
+      );
+      expect(result.state.cities.single.productionQueue, isNull);
+      expect(result.events.whereType<CityBuiltWonderEvent>(), hasLength(1));
+    });
   });
 }
 

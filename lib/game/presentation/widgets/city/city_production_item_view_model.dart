@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 class CityProductionItem {
   const CityProductionItem({
@@ -23,6 +24,7 @@ class CityProductionItem {
     required this.locked,
     required this.requirementLabel,
     required this.buildingState,
+    this.wonderType,
     this.buildingSortMetrics = CityProductionSortMetrics.zero,
     this.metaLabels = const [],
     this.continuous = false,
@@ -32,6 +34,7 @@ class CityProductionItem {
   final CityBuildingType? buildingType;
   final GameUnitType? unitType;
   final CityProjectType? projectType;
+  final WonderType? wonderType;
   final String title;
   final String? emoji;
   final GameIconData? icon;
@@ -59,6 +62,7 @@ class CityProductionItem {
       buildingType: viewModel.type,
       unitType: null,
       projectType: null,
+      wonderType: null,
       title: viewModel.displayName,
       emoji: viewModel.emoji,
       icon: null,
@@ -102,6 +106,7 @@ class CityProductionItem {
       buildingType: null,
       unitType: type,
       projectType: null,
+      wonderType: null,
       title: title,
       emoji: null,
       icon: gameIconForUnitType(type),
@@ -141,6 +146,7 @@ class CityProductionItem {
       buildingType: null,
       unitType: null,
       projectType: type,
+      wonderType: null,
       title: _projectTitle(type, l10n),
       emoji: null,
       icon: _iconForProject(type),
@@ -164,6 +170,49 @@ class CityProductionItem {
           ),
         },
       ],
+    );
+  }
+
+  factory CityProductionItem.wonder({
+    required AppLocalizations l10n,
+    required WonderType type,
+    required bool active,
+    required int investedProduction,
+    required int totalCost,
+    required int productionPerTurn,
+    required int? turnsRemaining,
+    int? currentTurn,
+    bool locked = false,
+    String? requirementLabel,
+    List<String> metaLabels = const [],
+  }) {
+    return CityProductionItem(
+      buildingType: null,
+      unitType: null,
+      projectType: null,
+      wonderType: type,
+      title: type.displayName,
+      emoji: null,
+      icon: GameIcons.victory,
+      active: active,
+      investedProduction: investedProduction,
+      totalCost: totalCost,
+      productionPerTurn: productionPerTurn,
+      turnsRemaining: turnsRemaining,
+      eta: TurnEtaFormatter.fromTurns(
+        turnsRemaining: turnsRemaining,
+        currentTurn: currentTurn,
+        blockedLabel: l10n.cityProductionNoProduction,
+      ),
+      rushGoldCost: _rushGoldCost(
+        productionCost: totalCost,
+        investedProduction: investedProduction,
+        productionPerTurn: productionPerTurn,
+      ),
+      locked: locked,
+      requirementLabel: requirementLabel,
+      buildingState: null,
+      metaLabels: metaLabels,
     );
   }
 

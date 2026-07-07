@@ -19,6 +19,12 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
     );
   }
 
+  Future<void> startCityWonder(String cityId, WonderType wonderType) {
+    return _closeCityProductionAndDispatch(
+      HudCityProductionCommands.startWonder(cityId, wonderType),
+    );
+  }
+
   Future<void> setCitySpecialization(
     String cityId,
     CitySpecializationType specialization,

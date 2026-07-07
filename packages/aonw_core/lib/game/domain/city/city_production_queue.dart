@@ -6,6 +6,8 @@ import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
 class CityProductionQueue {
   final CityProductionTarget target;
@@ -25,6 +27,11 @@ class CityProductionQueue {
     required CityProjectType projectType,
     this.investedProduction = 0,
   }) : target = ProjectProductionTarget(projectType);
+
+  CityProductionQueue.wonder({
+    required WonderType wonderType,
+    required this.investedProduction,
+  }) : target = WonderProductionTarget(wonderType);
 
   const CityProductionQueue.target({
     required this.target,
@@ -57,6 +64,7 @@ class CityProductionQueue {
 
   bool isCompleteFor(
     CityRuleset ruleset, {
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (target is ProjectProductionTarget) return false;
@@ -64,6 +72,7 @@ class CityProductionQueue {
         CityProductionRules.targetCost(
           target,
           ruleset: ruleset,
+          wonderRuleset: wonderRuleset,
           paceBalance: paceBalance,
         );
   }
@@ -105,6 +114,7 @@ abstract final class CityProductionRules {
   static int targetCost(
     CityProductionTarget target, {
     CityRuleset ruleset = CityRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     return switch (target) {
@@ -119,6 +129,11 @@ abstract final class CityProductionRules {
         paceBalance: paceBalance,
       ),
       ProjectProductionTarget() => 0,
+      WonderProductionTarget(:final wonderType) => wonderProductionCost(
+        wonderType,
+        ruleset: wonderRuleset,
+        paceBalance: paceBalance,
+      ),
     };
   }
 
@@ -139,6 +154,16 @@ abstract final class CityProductionRules {
   }) {
     return paceBalance.unitProductionCost(
       ruleset.unitDefinitionFor(type).productionCost,
+    );
+  }
+
+  static int wonderProductionCost(
+    WonderType type, {
+    WonderRuleset ruleset = WonderRuleset.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    return paceBalance.buildingProductionCost(
+      ruleset.definitionFor(type).productionCost,
     );
   }
 

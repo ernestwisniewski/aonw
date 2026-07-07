@@ -4565,6 +4565,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get unitsSection => 'Unidades';
 
   @override
+  String get cityProductionWondersSection => 'Maravillas';
+
+  @override
+  String cityProductionWonderBuiltBy(String player) {
+    return 'Construida por $player';
+  }
+
+  @override
+  String cityProductionWonderRequiresTechnology(String technology) {
+    return 'Requiere: $technology';
+  }
+
+  @override
+  String get cityProductionWonderRequiresRiver => 'Requiere: río adyacente';
+
+  @override
+  String get cityProductionWonderRequiresMountain =>
+      'Requiere: montaña adyacente';
+
+  @override
+  String cityProductionWonderRequiresTerrain(String terrain) {
+    return 'Requiere terreno: $terrain';
+  }
+
+  @override
+  String get cityProductionWonderAnotherInProgress =>
+      'Otra maravilla está en producción';
+
+  @override
+  String cityProductionWonderUnlockedBy(String technology) {
+    return 'Desbloqueada por: $technology';
+  }
+
+  @override
   String futureBuildingsSection(int count) {
     return 'Edificios futuros ($count)';
   }

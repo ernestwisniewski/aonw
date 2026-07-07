@@ -10,6 +10,7 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 class PendingCityAttackThreat {
@@ -75,6 +76,7 @@ class GameView {
   final FogVisibilityQuery visibility;
   final MapData mapData;
   final GameRuleset ruleset;
+  final WonderRegistry wonderRegistry;
 
   GameView({
     required this.forPlayerId,
@@ -103,6 +105,7 @@ class GameView {
     required this.visibility,
     required this.mapData,
     required this.ruleset,
+    this.wonderRegistry = WonderRegistry.empty,
   }) : ownUnits = List.unmodifiable(ownUnits),
        ownCities = List.unmodifiable(ownCities),
        artifacts = List.unmodifiable(artifacts),
@@ -286,6 +289,7 @@ class GameView {
       visibility: visibility,
       mapData: mapData,
       ruleset: ruleset,
+      wonderRegistry: state.wonderRegistry,
     );
   }
 

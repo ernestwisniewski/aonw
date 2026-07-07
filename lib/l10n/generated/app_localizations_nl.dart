@@ -4562,6 +4562,41 @@ class AppLocalizationsNl extends AppLocalizations {
   String get unitsSection => 'Eenheden';
 
   @override
+  String get cityProductionWondersSection => 'Wonderen';
+
+  @override
+  String cityProductionWonderBuiltBy(String player) {
+    return 'Gebouwd door $player';
+  }
+
+  @override
+  String cityProductionWonderRequiresTechnology(String technology) {
+    return 'Vereist: $technology';
+  }
+
+  @override
+  String get cityProductionWonderRequiresRiver =>
+      'Vereist: aangrenzende rivier';
+
+  @override
+  String get cityProductionWonderRequiresMountain =>
+      'Vereist: aangrenzende berg';
+
+  @override
+  String cityProductionWonderRequiresTerrain(String terrain) {
+    return 'Vereist terrein: $terrain';
+  }
+
+  @override
+  String get cityProductionWonderAnotherInProgress =>
+      'Een ander wonder is in productie';
+
+  @override
+  String cityProductionWonderUnlockedBy(String technology) {
+    return 'Ontgrendeld door: $technology';
+  }
+
+  @override
   String futureBuildingsSection(int count) {
     return 'Toekomstige gebouwen ($count)';
   }

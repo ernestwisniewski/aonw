@@ -61,6 +61,8 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
       cityRuleset: widget.cityRuleset,
       research: widget.research,
       technologyRuleset: widget.technologyRuleset,
+      wonderRegistry: widget.wonderRegistry,
+      wonderRuleset: widget.wonderRuleset,
       mapData: widget.mapData,
       cities: widget.cities,
       units: widget.units,

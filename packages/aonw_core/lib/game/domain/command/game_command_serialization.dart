@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/util/wire_json.dart';
 
@@ -122,6 +123,11 @@ abstract final class GameCommandSerializer {
       'type': 'StartCityProject',
       'cityId': cityId,
       'projectType': projectType.name,
+    },
+    StartWonderCommand(:final cityId, :final wonderType) => {
+      'type': 'StartWonder',
+      'cityId': cityId,
+      'wonderType': wonderType.name,
     },
     SetCitySpecializationCommand(:final cityId, :final specialization) => {
       'type': 'SetCitySpecialization',
@@ -474,6 +480,10 @@ abstract final class GameCommandSerializer {
       'StartCityProject' => StartCityProjectCommand(
         requiredStringField(json, type, 'cityId'),
         requiredEnumField(json, type, 'projectType', CityProjectType.values),
+      ),
+      'StartWonder' => StartWonderCommand(
+        requiredStringField(json, type, 'cityId'),
+        requiredEnumField(json, type, 'wonderType', WonderType.values),
       ),
       'SetCitySpecialization' => SetCitySpecializationCommand(
         requiredStringField(json, type, 'cityId'),

@@ -14,6 +14,9 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
+
+part 'city_production_dialog_view_model_helpers.dart';
 
 class CityProductionDialogViewModel {
   const CityProductionDialogViewModel({
@@ -23,6 +26,7 @@ class CityProductionDialogViewModel {
     required this.currentCityScience,
     required this.buildings,
     required this.futureBuildings,
+    required this.wonders,
     required this.units,
     required this.projects,
     required this.specializations,
@@ -34,6 +38,7 @@ class CityProductionDialogViewModel {
   final int currentCityScience;
   final List<CityProductionItem> buildings;
   final List<CityProductionItem> futureBuildings;
+  final List<CityProductionItem> wonders;
   final List<CityProductionItem> units;
   final List<CityProductionItem> projects;
   final List<CitySpecializationItem> specializations;
@@ -41,6 +46,7 @@ class CityProductionDialogViewModel {
   bool get hasItems =>
       buildings.isNotEmpty ||
       futureBuildings.isNotEmpty ||
+      wonders.isNotEmpty ||
       units.isNotEmpty ||
       projects.isNotEmpty ||
       specializations.isNotEmpty;
@@ -49,6 +55,7 @@ class CityProductionDialogViewModel {
     for (final item in [
       ...buildings,
       ...futureBuildings,
+      ...wonders,
       ...units,
       ...projects,
     ]) {
@@ -79,6 +86,8 @@ class CityProductionDialogViewModel {
     required CityRuleset cityRuleset,
     required ResearchState research,
     required TechnologyRuleset technologyRuleset,
+    WonderRegistry wonderRegistry = WonderRegistry.empty,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     required MapData? mapData,
     required List<GameCity> cities,
     required List<GameUnit> units,
@@ -109,6 +118,9 @@ class CityProductionDialogViewModel {
             fieldImprovements: fieldImprovements,
             cityRuleset: cityRuleset,
             technologyEffects: technologyEffects,
+            cities: cities,
+            wonderRegistry: wonderRegistry,
+            wonderRuleset: wonderRuleset,
             paceBalance: paceBalance,
           );
     final currentCityScience = _currentCityScienceFor(
@@ -117,6 +129,8 @@ class CityProductionDialogViewModel {
       research: research,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRegistry: wonderRegistry,
+      wonderRuleset: wonderRuleset,
       artifacts: artifacts,
     );
     final buildingPanel = CityBuildingsPanelViewModelFactory.from(
@@ -167,6 +181,10 @@ class CityProductionDialogViewModel {
     };
     final activeProjectType = switch (city.productionQueue?.target) {
       ProjectProductionTarget(:final projectType) => projectType,
+      _ => null,
+    };
+    final activeWonderType = switch (city.productionQueue?.target) {
+      WonderProductionTarget(:final wonderType) => wonderType,
       _ => null,
     };
     final playerCities = cities.isEmpty ? [city] : cities;
@@ -292,6 +310,21 @@ class CityProductionDialogViewModel {
       specialization: city.specialization,
       activeProjectType: activeProjectType,
     );
+    final wonderItems = mapData == null
+        ? const <CityProductionItem>[]
+        : _wonderItems(
+            city: city,
+            cities: playerCities,
+            mapData: mapData,
+            research: research,
+            ruleset: wonderRuleset,
+            registry: wonderRegistry,
+            l10n: l10n,
+            activeWonderType: activeWonderType,
+            effectiveProduction: effectiveProduction,
+            currentTurn: currentTurn,
+            paceBalance: paceBalance,
+          );
     final specializationUnlocked = research
         .forPlayer(city.ownerPlayerId)
         .hasUnlocked(TechnologyId.specialization);
@@ -321,153 +354,10 @@ class CityProductionDialogViewModel {
       currentCityScience: currentCityScience,
       buildings: buildings,
       futureBuildings: futureBuildings,
+      wonders: wonderItems,
       units: unitItems,
       projects: projects,
       specializations: specializations,
     );
   }
-}
-
-TileYield _currentCityYieldFor({
-  required GameCity city,
-  required MapData mapData,
-  required List<GameUnit> units,
-  required List<WorldArtifact> artifacts,
-  required List<FieldImprovement> fieldImprovements,
-  required CityRuleset cityRuleset,
-  required TechnologyEffectSummary technologyEffects,
-  required PaceBalance paceBalance,
-}) {
-  final tileYield = CityYieldCalculator.totalFor(
-    city,
-    mapData,
-    fieldImprovements: fieldImprovements,
-    units: units,
-    artifacts: artifacts,
-    ruleset: cityRuleset,
-  );
-  final economy = CityEconomyBreakdown.from(
-    city: city,
-    tileYield: tileYield,
-    mapData: mapData,
-    ruleset: cityRuleset,
-    technologyEffects: technologyEffects,
-    paceBalance: paceBalance,
-  );
-  return TileYield(
-    food: economy.netYield.food,
-    production: CityProductionRules.productionPerTurn(
-      economy.netYield.production,
-    ),
-    gold: economy.netYield.gold,
-    defense: economy.netYield.defense,
-  );
-}
-
-int _currentCityScienceFor({
-  required GameCity city,
-  required List<GameCity> cities,
-  required ResearchState research,
-  required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
-  required List<WorldArtifact> artifacts,
-}) {
-  final playerCities = cities.any((candidate) => candidate.id == city.id)
-      ? cities
-      : [...cities, city];
-  final science = ScienceYieldCalculator.totalForPlayer(
-    playerId: city.ownerPlayerId,
-    cities: playerCities,
-    research: research,
-    ruleset: technologyRuleset,
-    artifacts: artifacts,
-    cityRuleset: cityRuleset,
-  );
-  return science.byCityId[city.id] ?? 0;
-}
-
-CityProductionSortMetrics _buildingSortMetricsFor(
-  GameCity city,
-  CityBuildingType type, {
-  required CityRuleset cityRuleset,
-  required MapData? mapData,
-}) {
-  var food = 0;
-  var production = 0;
-  var gold = 0;
-  var defense = 0;
-  var science = 0;
-  var maxControlledHexes = 0;
-  var foodDepositBonusPercent = 0;
-
-  for (final effect in cityRuleset.buildingDefinitionFor(type).effects) {
-    switch (effect) {
-      case FlatCityYieldEffect(:final yield):
-        food += yield.food;
-        production += yield.production;
-        gold += yield.gold;
-        defense += yield.defense;
-      case RiverHexCityYieldEffect(
-        :final yieldPerRiverHex,
-        :final maxApplications,
-      ):
-        final applications = mapData == null
-            ? 1
-            : _effectiveApplications(
-                _riverHexCount(city, mapData),
-                maxApplications,
-              );
-        food += yieldPerRiverHex.food * applications;
-        production += yieldPerRiverHex.production * applications;
-        gold += yieldPerRiverHex.gold * applications;
-        defense += yieldPerRiverHex.defense * applications;
-      case FlatCityScienceEffect(:final amount):
-        science += amount;
-      case MaxControlledHexesEffect(:final amount):
-        maxControlledHexes += amount;
-      case FoodDepositMultiplierEffect(:final multiplier):
-        foodDepositBonusPercent += ((multiplier - 1) * 100).round();
-    }
-  }
-
-  return CityProductionSortMetrics(
-    food: food,
-    production: production,
-    gold: gold,
-    defense: defense,
-    science: science,
-    maxControlledHexes: maxControlledHexes,
-    foodDepositBonusPercent: foodDepositBonusPercent,
-  );
-}
-
-int _effectiveApplications(int count, int? maxApplications) {
-  if (maxApplications == null) return count;
-  return count < maxApplications ? count : maxApplications;
-}
-
-int _riverHexCount(GameCity city, MapData mapData) {
-  var count = 0;
-  for (final hex in city.territoryHexes) {
-    final tile = mapData.tileAt(hex.col, hex.row);
-    if (tile != null && TileYieldRules.hasRiver(tile)) count++;
-  }
-  return count;
-}
-
-List<String> _unitMetaLabels({
-  required GameUnitType type,
-  required int supplyCost,
-  required CityUnitSupplyBreakdown? unitSupply,
-  required UnitUpkeepBreakdown unitUpkeep,
-  required AppLocalizations l10n,
-}) {
-  return [
-    if (unitSupply != null) ...[
-      l10n.cityProductionUnitSupplyCost(supplyCost),
-      l10n.cityProductionUnitSupplyUsed(unitSupply.used, unitSupply.capacity),
-    ],
-    if (type == GameUnitType.worker)
-      l10n.cityProductionNextWorkerUpkeep(unitUpkeep.nextWorkerUpkeep),
-  ];
 }

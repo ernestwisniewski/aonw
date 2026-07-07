@@ -160,14 +160,13 @@ bool _hasCombatEventForPlayer({
       );
 }
 
-bool _isCombatEvent(GameEvent event) {
-  return event is UnitAttackedEvent ||
-      event is CityAttackedEvent ||
-      event is CombatResolvedEvent ||
-      event is UnitKilledEvent ||
-      event is CityCapturedEvent ||
-      event is CityDestroyedEvent;
-}
+bool _isCombatEvent(GameEvent event) =>
+    event is UnitAttackedEvent ||
+    event is CityAttackedEvent ||
+    event is CombatResolvedEvent ||
+    event is UnitKilledEvent ||
+    event is CityCapturedEvent ||
+    event is CityDestroyedEvent;
 
 bool _eventBelongsToPlayer({
   required GameEvent event,
@@ -180,6 +179,9 @@ bool _eventBelongsToPlayer({
     CityBuiltBuildingEvent(:final cityId) =>
       _cityOwner(state, cityId) == playerId ||
           _cityOwner(previousState, cityId) == playerId,
+    CityBuiltWonderEvent(:final ownerPlayerId) => ownerPlayerId == playerId,
+    WonderProductionRefundedEvent(:final ownerPlayerId) =>
+      ownerPlayerId == playerId,
     CityProducedUnitEvent(:final cityId, :final producedUnitId) =>
       _cityOwner(state, cityId) == playerId ||
           _cityOwner(previousState, cityId) == playerId ||
@@ -260,13 +262,11 @@ bool _eventBelongsToPlayer({
   };
 }
 
-String? _unitOwner(PersistentGameState? state, String unitId) {
-  return state?.units.byId(unitId)?.ownerPlayerId;
-}
+String? _unitOwner(PersistentGameState? state, String unitId) =>
+    state?.units.byId(unitId)?.ownerPlayerId;
 
-String? _cityOwner(PersistentGameState? state, String cityId) {
-  return state?.cities.byId(cityId)?.ownerPlayerId;
-}
+String? _cityOwner(PersistentGameState? state, String cityId) =>
+    state?.cities.byId(cityId)?.ownerPlayerId;
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
   final seen = <String>{};

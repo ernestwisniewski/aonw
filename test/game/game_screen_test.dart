@@ -953,11 +953,11 @@ void main() {
       surfaceKey: const Key('cityProductionPanel.surface'),
       expectedTitle: 'City',
       verifyContent: (panel) async {
-        final firstUnit = tester.getRect(find.text('Warrior'));
+        final wondersSection = tester.getRect(find.text('WONDERS'));
         expect(
-          firstUnit.bottom,
+          wondersSection.bottom,
           lessThanOrEqualTo(panel.bottom),
-          reason: 'production keeps the first unit decision visible',
+          reason: 'production keeps the wonders section visible',
         );
       },
     );

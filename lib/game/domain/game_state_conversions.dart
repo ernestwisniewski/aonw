@@ -15,6 +15,7 @@ extension GameStatePersistence on GameState {
       fieldImprovements: fieldImprovements,
       fogOfWar: fogOfWar,
       research: research,
+      wonderRegistry: wonderRegistry,
       runtimeState: runtimeState,
     );
   }

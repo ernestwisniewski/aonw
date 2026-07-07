@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/protocol.dart';
 
 class CommandCodec {
@@ -139,6 +140,7 @@ class SnapshotCodec {
           'Expected a JSON object or null',
         ),
       },
+      wonderRegistry: WonderRegistry.fromJson(state['wonderRegistry']),
       runtimeState: switch (state['runtimeState']) {
         final Map<Object?, Object?> value => GameRuntimeState.fromJson(
           Map<String, dynamic>.from(value),
@@ -173,6 +175,8 @@ class SnapshotCodec {
           .toList(),
       'fogOfWar': _fogOfWarToJson(snapshot.fogOfWar),
       'research': snapshot.research.toJson(),
+      if (snapshot.wonderRegistry.completedBy.isNotEmpty)
+        'wonderRegistry': snapshot.wonderRegistry.toJson(),
       'runtimeState': snapshot.runtimeState.toJson(),
     };
   }

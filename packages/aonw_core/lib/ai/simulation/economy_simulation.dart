@@ -26,13 +26,12 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 
 part 'economy_simulation_command_applier.dart';
+part 'economy_simulation_command_applier_production.dart';
 part 'economy_simulation_hostility_memory.dart';
 part 'economy_simulation_setup.dart';
 part 'economy_simulation_strategy_selector.dart';
 part 'economy_simulation_telemetry.dart';
 part 'economy_simulation_turn_row_factory.dart';
-
-const _militaryAssessment = AiMilitaryAssessment();
 
 abstract final class EconomySimulation {
   static const adaptiveLateGameTurnThreshold = 55;

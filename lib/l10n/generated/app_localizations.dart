@@ -7823,6 +7823,54 @@ abstract class AppLocalizations {
   /// **'Units'**
   String get unitsSection;
 
+  /// No description provided for @cityProductionWondersSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonders'**
+  String get cityProductionWondersSection;
+
+  /// No description provided for @cityProductionWonderBuiltBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Built by {player}'**
+  String cityProductionWonderBuiltBy(String player);
+
+  /// No description provided for @cityProductionWonderRequiresTechnology.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires: {technology}'**
+  String cityProductionWonderRequiresTechnology(String technology);
+
+  /// No description provided for @cityProductionWonderRequiresRiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires: adjacent river'**
+  String get cityProductionWonderRequiresRiver;
+
+  /// No description provided for @cityProductionWonderRequiresMountain.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires: adjacent mountain'**
+  String get cityProductionWonderRequiresMountain;
+
+  /// No description provided for @cityProductionWonderRequiresTerrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires terrain: {terrain}'**
+  String cityProductionWonderRequiresTerrain(String terrain);
+
+  /// No description provided for @cityProductionWonderAnotherInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Another wonder is in progress'**
+  String get cityProductionWonderAnotherInProgress;
+
+  /// No description provided for @cityProductionWonderUnlockedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked by: {technology}'**
+  String cityProductionWonderUnlockedBy(String technology);
+
   /// No description provided for @futureBuildingsSection.
   ///
   /// In en, this message translates to:

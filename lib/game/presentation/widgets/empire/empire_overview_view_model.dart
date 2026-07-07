@@ -328,6 +328,7 @@ String empireCityProductionLabel(AppLocalizations l10n, GameCity city) {
       l10n,
       projectType,
     ),
+    WonderProductionTarget(:final wonderType) => wonderType.displayName,
   };
 }
 

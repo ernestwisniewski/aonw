@@ -2466,6 +2466,42 @@
   "productionEmptyState": "No hay producción disponible actualmente.",
   "buildingsSection": "Edificios",
   "unitsSection": "Unidades",
+  "cityProductionWondersSection": "Maravillas",
+  "cityProductionWonderBuiltBy": "Construida por {player}",
+  "@cityProductionWonderBuiltBy": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresTechnology": "Requiere: {technology}",
+  "@cityProductionWonderRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresRiver": "Requiere: río adyacente",
+  "cityProductionWonderRequiresMountain": "Requiere: montaña adyacente",
+  "cityProductionWonderRequiresTerrain": "Requiere terreno: {terrain}",
+  "@cityProductionWonderRequiresTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderAnotherInProgress": "Otra maravilla está en producción",
+  "cityProductionWonderUnlockedBy": "Desbloqueada por: {technology}",
+  "@cityProductionWonderUnlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
   "futureBuildingsSection": "Edificios futuros ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

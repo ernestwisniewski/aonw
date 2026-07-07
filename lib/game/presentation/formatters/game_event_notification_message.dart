@@ -19,6 +19,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 part 'game_event_notification_combat_messages.dart';
+part 'game_event_notification_city_messages.dart';
 
 class GameEventNotificationMessage {
   final String title;
@@ -84,39 +85,14 @@ class _GameEventNotificationMessageFormatter {
     };
   }
 
-  GameEventNotificationMessage _cityEventMessage(GameEvent event) {
-    return switch (event) {
-      CityFoundedEvent(:final cityId, :final ownerPlayerId) =>
-        GameEventNotificationMessage(
-          title: l10n.eventCityFoundedTitle,
-          body:
-              '${_cityName(l10n, state, cityId, activityContext)} (${_playerName(l10n, save, ownerPlayerId)})',
-          thumbnail: const CityEventNotificationThumbnail(),
-        ),
-      CityBuiltBuildingEvent(:final cityId, :final buildingType) =>
-        GameEventNotificationMessage(
-          title: l10n.eventCityBuiltBuildingTitle,
-          body:
-              '${_cityName(l10n, state, cityId, activityContext)}: ${GameDisplayNames.cityBuilding(l10n, buildingType)}',
-          thumbnail: BuildingEventNotificationThumbnail(buildingType),
-        ),
-      CityProducedUnitEvent(:final cityId, :final unitType) =>
-        GameEventNotificationMessage(
-          title: l10n.eventCityProducedUnitTitle,
-          body:
-              '${_cityName(l10n, state, cityId, activityContext)}: ${GameDisplayNames.unitType(l10n, unitType)}',
-          thumbnail: UnitEventNotificationThumbnail(unitType),
-        ),
-      CityClaimedHexEvent(:final cityId) => GameEventNotificationMessage(
-        title: l10n.eventCityClaimedHexTitle,
-        body: l10n.eventCityClaimedHexBody(
-          _cityName(l10n, state, cityId, activityContext),
-        ),
-        thumbnail: const CityEventNotificationThumbnail(),
-      ),
-      _ => _unsupportedEvent('city', event),
-    };
-  }
+  GameEventNotificationMessage _cityEventMessage(GameEvent event) =>
+      _cityNotificationMessage(
+        l10n: l10n,
+        save: save,
+        state: state,
+        activityContext: activityContext,
+        event: event,
+      );
 
   GameEventNotificationMessage _unitEventMessage(GameEvent event) {
     return switch (event) {

@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names_terrain.dart';
 import 'package:aonw/game/presentation/formatters/player_country_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -24,23 +25,18 @@ abstract final class GameDisplayNames {
     return l10n.defaultPlayerName(int.parse(match.group(1)!));
   }
 
-  static String playerCountry(AppLocalizations l10n, PlayerCountry country) {
-    return PlayerCountryDisplayNames.country(l10n, country);
-  }
+  static String playerCountry(AppLocalizations l10n, PlayerCountry country) =>
+      PlayerCountryDisplayNames.country(l10n, country);
 
   static List<PlayerCountry> sortedPlayerCountries(
     AppLocalizations l10n, {
     Iterable<PlayerCountry> countries = PlayerCountry.values,
-  }) {
-    return PlayerCountryDisplayNames.sorted(l10n, countries: countries);
-  }
+  }) => PlayerCountryDisplayNames.sorted(l10n, countries: countries);
 
   static String playerCountryLeader(
     AppLocalizations l10n,
     PlayerCountry country,
-  ) {
-    return PlayerCountryDisplayNames.leader(l10n, country);
-  }
+  ) => PlayerCountryDisplayNames.leader(l10n, country);
 
   static String worldArtifact(AppLocalizations l10n, WorldArtifactType type) {
     return switch (type) {
@@ -498,6 +494,9 @@ abstract final class GameDisplayNames {
       TechnologyId.nuclearPhysics => l10n.technologyNuclearPhysics,
     };
   }
+
+  static String terrain(AppLocalizations l10n, TerrainType terrain) =>
+      terrainDisplayName(l10n, terrain);
 
   static String technologyDescription(AppLocalizations l10n, TechnologyId id) {
     return switch (id) {

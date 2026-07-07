@@ -8,6 +8,10 @@ void main() {
         playerColors: const {'player_1': 0xFF4a7fc4},
         playerCountries: const {'player_1': PlayerCountry.japan},
         playerGold: const {'player_1': 12},
+        wonderRegistry: WonderRegistry.empty.complete(
+          type: WonderType.greatLibrary,
+          playerId: 'player_1',
+        ),
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_1')],
         cities: const [
           GameCity(
@@ -44,6 +48,10 @@ void main() {
       expect(restored, state);
       expect(restored.countryForPlayer('player_1'), PlayerCountry.japan);
       expect(restored.units.single.ownerPlayerId, 'player_1');
+      expect(
+        restored.wonderRegistry.ownerOf(WonderType.greatLibrary),
+        'player_1',
+      );
       expect(restored.cities.single.center, const CityHex(col: 2, row: 3));
       expect(restored.fieldImprovements.single.type, FieldImprovementType.farm);
       expect(

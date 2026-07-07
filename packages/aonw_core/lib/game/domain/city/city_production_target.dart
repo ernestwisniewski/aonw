@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/city/city_building.dart';
 import 'package:aonw_core/game/domain/city/city_project_type.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
 sealed class CityProductionTarget {
   const CityProductionTarget();
@@ -16,6 +17,9 @@ sealed class CityProductionTarget {
       ),
       ProjectProductionTarget.kind => ProjectProductionTarget(
         CityProjectType.fromName(json['projectType'] as String),
+      ),
+      WonderProductionTarget.kind => WonderProductionTarget(
+        WonderType.fromString(json['wonderType'] as String),
       ),
       _ => throw ArgumentError('Unknown city production target kind: $kind'),
     };
@@ -82,4 +86,25 @@ class ProjectProductionTarget extends CityProductionTarget {
 
   @override
   int get hashCode => Object.hash(kind, projectType);
+}
+
+class WonderProductionTarget extends CityProductionTarget {
+  static const String kind = 'wonder';
+
+  final WonderType wonderType;
+
+  const WonderProductionTarget(this.wonderType);
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': kind,
+    'wonderType': wonderType.name,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is WonderProductionTarget && other.wonderType == wonderType;
+
+  @override
+  int get hashCode => Object.hash(kind, wonderType);
 }

@@ -230,6 +230,10 @@ const _commandFixtures = <({GameCommand command, String type})>[
     type: 'StartCityProject',
   ),
   (
+    command: StartWonderCommand('city_1', WonderType.greatLibrary),
+    type: 'StartWonder',
+  ),
+  (
     command: SetCitySpecializationCommand(
       'city_1',
       CitySpecializationType.science,
@@ -428,6 +432,7 @@ const _expectedCommandTypes = {
   'StartBuilding',
   'StartUnitProduction',
   'StartCityProject',
+  'StartWonder',
   'SetCitySpecialization',
   'RushProduction',
   'SelectTechnology',

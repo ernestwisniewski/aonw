@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/stability/stability_inputs.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/stability/stability_source_catalog.dart';
 import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -158,6 +159,11 @@ abstract final class StabilityInputBuilder {
           luxuryResourceTypes.length * ruleset.stabilityPerLuxuryResource,
       techSources: orderTechnologyCount * ruleset.stabilityPerOrderTechnology,
       artifactSources: storedArtifactCount * ruleset.stabilityPerStoredArtifact,
+      wonderSources: WonderEffectResolver.stabilityForPlayer(
+        playerId: playerId,
+        cities: state.cities,
+        registry: state.wonderRegistry,
+      ),
       warWeariness: warWeariness ?? state.playerWarWeariness[playerId] ?? 0,
       controlPercent: controlPercent,
       playerCount: playerCount <= 0 ? 1 : playerCount,

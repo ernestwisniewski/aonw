@@ -2478,6 +2478,42 @@
   "productionEmptyState": "No production is currently available.",
   "buildingsSection": "Buildings",
   "unitsSection": "Units",
+  "cityProductionWondersSection": "Wonders",
+  "cityProductionWonderBuiltBy": "Built by {player}",
+  "@cityProductionWonderBuiltBy": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresTechnology": "Requires: {technology}",
+  "@cityProductionWonderRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresRiver": "Requires: adjacent river",
+  "cityProductionWonderRequiresMountain": "Requires: adjacent mountain",
+  "cityProductionWonderRequiresTerrain": "Requires terrain: {terrain}",
+  "@cityProductionWonderRequiresTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderAnotherInProgress": "Another wonder is in progress",
+  "cityProductionWonderUnlockedBy": "Unlocked by: {technology}",
+  "@cityProductionWonderUnlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
   "futureBuildingsSection": "Future buildings ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

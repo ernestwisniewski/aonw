@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/turn/persistent_city_hit_point_recovery_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 class PersistentTurnEconomyResult {
@@ -283,6 +284,8 @@ abstract final class PersistentTurnEconomyProcessor {
       ruleset: ruleset.city,
       research: state.research,
       technologyRuleset: ruleset.technology,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: ruleset.wonders,
       stabilityModifier: PersistentStabilityProcessor.modifierForPlayer(
         state: state,
         playerId: playerId,
@@ -290,8 +293,17 @@ abstract final class PersistentTurnEconomyProcessor {
       ),
       paceBalance: ruleset.paceBalance,
     );
-    final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
+    final wonderCompletion = WonderCompletionResolver.resolveCompletedForPlayer(
+      playerId: playerId,
       cities: result.cities,
+      registry: state.wonderRegistry,
+      playerGold: state.playerGold,
+      research: state.research,
+      ruleset: ruleset.wonders,
+      paceBalance: ruleset.paceBalance,
+    );
+    final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
+      cities: wonderCompletion.cities,
       artifacts: state.artifacts,
       events: priorEvents,
       combatRuleset: ruleset.combat,
@@ -313,16 +325,21 @@ abstract final class PersistentTurnEconomyProcessor {
         cities: nextCities,
         fieldImprovements: nextFieldImprovements,
         playerGold: _addGoldDelta(
-          state.playerGold,
+          wonderCompletion.playerGold,
           playerId,
           result.goldGained - unitUpkeep.total,
         ),
+        research: wonderCompletion.research,
+        wonderRegistry: wonderCompletion.registry,
       ),
-      events: _eventsFromCityTurn(
-        previousCities: state.cities,
-        cityEvents: result.events,
-        updatedCities: nextCities,
-      ),
+      events: [
+        ..._eventsFromCityTurn(
+          previousCities: state.cities,
+          cityEvents: result.events,
+          updatedCities: nextCities,
+        ),
+        ...wonderCompletion.events,
+      ],
       scienceGained: result.scienceGained,
     );
   }
@@ -342,6 +359,8 @@ abstract final class PersistentTurnEconomyProcessor {
       mapData: mapData,
       ruleset: ruleset.technology,
       cityRuleset: ruleset.city,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: ruleset.wonders,
       bonusScience: bonusScience,
       paceBalance: ruleset.paceBalance,
     );

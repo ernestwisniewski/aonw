@@ -2466,6 +2466,42 @@
   "productionEmptyState": "Derzeit ist keine Produktion verfügbar.",
   "buildingsSection": "Gebäude",
   "unitsSection": "Einheiten",
+  "cityProductionWondersSection": "Weltwunder",
+  "cityProductionWonderBuiltBy": "Gebaut von {player}",
+  "@cityProductionWonderBuiltBy": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresTechnology": "Benötigt: {technology}",
+  "@cityProductionWonderRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresRiver": "Benötigt: angrenzender Fluss",
+  "cityProductionWonderRequiresMountain": "Benötigt: angrenzender Berg",
+  "cityProductionWonderRequiresTerrain": "Benötigt Gelände: {terrain}",
+  "@cityProductionWonderRequiresTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderAnotherInProgress": "Ein anderes Weltwunder ist im Bau",
+  "cityProductionWonderUnlockedBy": "Freigeschaltet durch: {technology}",
+  "@cityProductionWonderUnlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
   "futureBuildingsSection": "Künftige Gebäude ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

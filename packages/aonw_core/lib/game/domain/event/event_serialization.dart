@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/stability/stability_band.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_core/util/wire_json.dart';
@@ -22,6 +23,30 @@ abstract final class GameEventSerializer {
       'cityId': cityId,
       'buildingType': buildingType.name,
     },
+    CityBuiltWonderEvent(
+      :final cityId,
+      :final ownerPlayerId,
+      :final wonderType,
+    ) =>
+      {
+        'type': 'CityBuiltWonder',
+        'cityId': cityId,
+        'ownerPlayerId': ownerPlayerId,
+        'wonderType': wonderType.name,
+      },
+    WonderProductionRefundedEvent(
+      :final cityId,
+      :final ownerPlayerId,
+      :final wonderType,
+      :final refundedProduction,
+    ) =>
+      {
+        'type': 'WonderProductionRefunded',
+        'cityId': cityId,
+        'ownerPlayerId': ownerPlayerId,
+        'wonderType': wonderType.name,
+        'refundedProduction': refundedProduction,
+      },
     CityProducedUnitEvent(
       :final cityId,
       :final unitType,
@@ -441,6 +466,27 @@ abstract final class GameEventSerializer {
           'buildingType',
           CityBuildingType.values,
         ),
+      ),
+      'CityBuiltWonder' => CityBuiltWonderEvent(
+        cityId: requiredStringField(json, type, 'cityId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        wonderType: requiredEnumField(
+          json,
+          type,
+          'wonderType',
+          WonderType.values,
+        ),
+      ),
+      'WonderProductionRefunded' => WonderProductionRefundedEvent(
+        cityId: requiredStringField(json, type, 'cityId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        wonderType: requiredEnumField(
+          json,
+          type,
+          'wonderType',
+          WonderType.values,
+        ),
+        refundedProduction: requiredIntField(json, type, 'refundedProduction'),
       ),
       'CityProducedUnit' => CityProducedUnitEvent(
         cityId: requiredStringField(json, type, 'cityId'),

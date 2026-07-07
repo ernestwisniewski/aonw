@@ -2466,6 +2466,42 @@
   "productionEmptyState": "Aucune production n'est actuellement disponible.",
   "buildingsSection": "Bâtiments",
   "unitsSection": "Unités",
+  "cityProductionWondersSection": "Merveilles",
+  "cityProductionWonderBuiltBy": "Construite par {player}",
+  "@cityProductionWonderBuiltBy": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresTechnology": "Requiert: {technology}",
+  "@cityProductionWonderRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresRiver": "Requiert: rivière adjacente",
+  "cityProductionWonderRequiresMountain": "Requiert: montagne adjacente",
+  "cityProductionWonderRequiresTerrain": "Requiert un terrain: {terrain}",
+  "@cityProductionWonderRequiresTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderAnotherInProgress": "Une autre merveille est en production",
+  "cityProductionWonderUnlockedBy": "Débloquée par: {technology}",
+  "@cityProductionWonderUnlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
   "futureBuildingsSection": "Bâtiments futurs ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

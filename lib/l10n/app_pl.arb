@@ -2466,6 +2466,42 @@
   "productionEmptyState": "Brak aktualnie dostępnej produkcji.",
   "buildingsSection": "Budynki",
   "unitsSection": "Jednostki",
+  "cityProductionWondersSection": "Cuda",
+  "cityProductionWonderBuiltBy": "Zbudowane przez {player}",
+  "@cityProductionWonderBuiltBy": {
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresTechnology": "Wymaga: {technology}",
+  "@cityProductionWonderRequiresTechnology": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderRequiresRiver": "Wymaga: sąsiednia rzeka",
+  "cityProductionWonderRequiresMountain": "Wymaga: sąsiednia góra",
+  "cityProductionWonderRequiresTerrain": "Wymaga terenu: {terrain}",
+  "@cityProductionWonderRequiresTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "cityProductionWonderAnotherInProgress": "Inny cud jest już w produkcji",
+  "cityProductionWonderUnlockedBy": "Odblokowane przez: {technology}",
+  "@cityProductionWonderUnlockedBy": {
+    "placeholders": {
+      "technology": {
+        "type": "String"
+      }
+    }
+  },
   "futureBuildingsSection": "Przyszłe budynki ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

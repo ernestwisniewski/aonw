@@ -23,6 +23,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,8 @@ class CityProductionDialog extends StatelessWidget {
   final CityRuleset cityRuleset;
   final ResearchState research;
   final TechnologyRuleset technologyRuleset;
+  final WonderRegistry wonderRegistry;
+  final WonderRuleset wonderRuleset;
   final MapData? mapData;
   final List<GameCity> cities;
   final List<GameUnit> units;
@@ -44,6 +47,7 @@ class CityProductionDialog extends StatelessWidget {
   final PaceBalance paceBalance;
   final int playerGold;
   final ValueChanged<CityBuildingType> onBuild;
+  final ValueChanged<WonderType>? onBuildWonder;
   final ValueChanged<GameUnitType> onProduceUnit;
   final ValueChanged<CityProjectType>? onStartProject;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
@@ -55,6 +59,8 @@ class CityProductionDialog extends StatelessWidget {
     required this.cityRuleset,
     required this.research,
     required this.technologyRuleset,
+    this.wonderRegistry = WonderRegistry.empty,
+    this.wonderRuleset = WonderRuleset.standard,
     this.mapData,
     this.cities = const [],
     this.units = const [],
@@ -66,6 +72,7 @@ class CityProductionDialog extends StatelessWidget {
     this.paceBalance = PaceBalance.unlimited,
     this.playerGold = 0,
     required this.onBuild,
+    this.onBuildWonder,
     required this.onProduceUnit,
     this.onStartProject,
     this.onSetSpecialization,
@@ -83,6 +90,8 @@ class CityProductionDialog extends StatelessWidget {
       cityRuleset: cityRuleset,
       research: research,
       technologyRuleset: technologyRuleset,
+      wonderRegistry: wonderRegistry,
+      wonderRuleset: wonderRuleset,
       mapData: mapData,
       cities: cities,
       units: units,
@@ -95,6 +104,7 @@ class CityProductionDialog extends StatelessWidget {
       playerGold: playerGold,
       maxHeight: size.height * 0.82,
       onBuild: onBuild,
+      onBuildWonder: onBuildWonder,
       onProduceUnit: onProduceUnit,
       onStartProject: onStartProject,
       onSetSpecialization: onSetSpecialization,
@@ -110,6 +120,8 @@ class CityProductionPanel extends StatefulWidget {
   final CityRuleset cityRuleset;
   final ResearchState research;
   final TechnologyRuleset technologyRuleset;
+  final WonderRegistry wonderRegistry;
+  final WonderRuleset wonderRuleset;
   final MapData? mapData;
   final List<GameCity> cities;
   final List<GameUnit> units;
@@ -122,6 +134,7 @@ class CityProductionPanel extends StatefulWidget {
   final int playerGold;
   final double? maxHeight;
   final ValueChanged<CityBuildingType> onBuild;
+  final ValueChanged<WonderType>? onBuildWonder;
   final ValueChanged<GameUnitType> onProduceUnit;
   final ValueChanged<CityProjectType>? onStartProject;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
@@ -134,6 +147,8 @@ class CityProductionPanel extends StatefulWidget {
     required this.cityRuleset,
     required this.research,
     required this.technologyRuleset,
+    this.wonderRegistry = WonderRegistry.empty,
+    this.wonderRuleset = WonderRuleset.standard,
     this.mapData,
     this.cities = const [],
     this.units = const [],
@@ -146,6 +161,7 @@ class CityProductionPanel extends StatefulWidget {
     this.playerGold = 0,
     this.maxHeight,
     required this.onBuild,
+    this.onBuildWonder,
     required this.onProduceUnit,
     this.onStartProject,
     this.onSetSpecialization,
@@ -193,6 +209,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
       viewModel: viewModel,
       buildingSortMode: _buildingSortMode,
       onBuild: widget.onBuild,
+      onBuildWonder: widget.onBuildWonder,
       onProduceUnit: widget.onProduceUnit,
       onBuildingDetails: _showBuildingDetails,
       onUnitDetails: _showUnitDetails,
@@ -261,6 +278,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
                             child: CityProductionList(
                               buildings: viewModel.buildings,
                               futureBuildings: viewModel.futureBuildings,
+                              wonders: viewModel.wonders,
                               units: viewModel.units,
                               projects: viewModel.projects,
                               specializations: viewModel.specializations,
@@ -272,6 +290,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
                               onBuildingDetails: _showBuildingDetails,
                               onUnitDetails: _showUnitDetails,
                               onBuild: widget.onBuild,
+                              onBuildWonder: widget.onBuildWonder,
                               onProduceUnit: widget.onProduceUnit,
                               onStartProject: widget.onStartProject,
                               onSetSpecialization: widget.onSetSpecialization,

@@ -12,6 +12,8 @@ import 'package:aonw_core/game/domain/technology/technology_boost_evaluator.dart
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 class ResearchTurnResult {
@@ -37,6 +39,8 @@ abstract final class ResearchTurnProcessor {
     required MapData mapData,
     TechnologyRuleset ruleset = TechnologyRulesets.standard,
     CityRuleset cityRuleset = CityRulesets.standard,
+    WonderRegistry wonderRegistry = WonderRegistry.empty,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     ScienceYieldBreakdown bonusScience = ScienceYieldBreakdown.empty,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -47,6 +51,8 @@ abstract final class ResearchTurnProcessor {
         research: research,
         ruleset: ruleset,
         cityRuleset: cityRuleset,
+        wonderRegistry: wonderRegistry,
+        wonderRuleset: wonderRuleset,
       ),
       bonusScience,
     );

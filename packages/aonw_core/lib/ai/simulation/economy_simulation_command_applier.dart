@@ -41,47 +41,16 @@ final class _EconomySimulationCommandApplier {
           state: result.state,
           reason: result.reason,
         );
-      case StartBuildingCommand():
-        final result = const PersistentCityProductionResolver().startBuilding(
+      case StartBuildingCommand() ||
+          StartUnitProductionCommand() ||
+          StartCityProjectCommand() ||
+          StartWonderCommand():
+        return _applyProductionCommand(
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
           mapDefinition: mapDefinition,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: ruleset.paceBalance,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case StartUnitProductionCommand():
-        final result = const PersistentCityProductionResolver()
-            .startUnitProduction(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case StartCityProjectCommand():
-        final result = const PersistentCityProductionResolver()
-            .startCityProject(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              cityRuleset: ruleset.city,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
+          ruleset: ruleset,
         );
       case SetCitySpecializationCommand():
         final result = const PersistentCityProductionResolver()

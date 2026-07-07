@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/city/city_progression_catalog.dart';
 import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
 class GameCity {
   static const Object _unset = Object();
@@ -30,6 +31,7 @@ class GameCity {
   final List<CityHex> controlledHexes;
   final List<CityHex> workedHexes;
   final Set<CityBuildingType> buildings;
+  final Set<WonderType> wonders;
   final CityProductionQueue? productionQueue;
   final int productionOverflow;
   final CitySpecializationType? specialization;
@@ -49,6 +51,7 @@ class GameCity {
     this.controlledHexes = const [],
     this.workedHexes = const [],
     this.buildings = const {},
+    this.wonders = const {},
     this.productionQueue,
     this.productionOverflow = 0,
     this.specialization,
@@ -104,6 +107,7 @@ class GameCity {
               .toList() ??
           const [],
       buildings: _buildingsFromJson(json['buildings'] as List<dynamic>?),
+      wonders: _wondersFromJson(json['wonders'] as List<dynamic>?),
       productionQueue: json['productionQueue'] == null
           ? null
           : CityProductionQueue.fromJson(
@@ -136,6 +140,7 @@ class GameCity {
     'controlledHexes': controlledHexes.map((hex) => hex.toJson()).toList(),
     'workedHexes': workedHexes.map((hex) => hex.toJson()).toList(),
     'buildings': _buildingsToJson(buildings),
+    if (wonders.isNotEmpty) 'wonders': _wondersToJson(wonders),
     if (productionQueue != null) 'productionQueue': productionQueue!.toJson(),
     'productionOverflow': productionOverflow,
     if (specialization != null) 'specialization': specialization!.name,
@@ -157,6 +162,7 @@ class GameCity {
     List<CityHex>? controlledHexes,
     List<CityHex>? workedHexes,
     Set<CityBuildingType>? buildings,
+    Set<WonderType>? wonders,
     Object? productionQueue = _unset,
     int? productionOverflow,
     Object? specialization = _unset,
@@ -180,6 +186,7 @@ class GameCity {
       controlledHexes: controlledHexes ?? this.controlledHexes,
       workedHexes: workedHexes ?? this.workedHexes,
       buildings: buildings ?? this.buildings,
+      wonders: wonders ?? this.wonders,
       productionQueue: identical(productionQueue, _unset)
           ? this.productionQueue
           : productionQueue as CityProductionQueue?,
@@ -236,6 +243,7 @@ class GameCity {
         _sameList(other.controlledHexes, controlledHexes) &&
         _sameList(other.workedHexes, workedHexes) &&
         _sameSet(other.buildings, buildings) &&
+        _sameSet(other.wonders, wonders) &&
         other.productionQueue == productionQueue &&
         other.productionOverflow == productionOverflow &&
         other.specialization == specialization &&
@@ -257,6 +265,7 @@ class GameCity {
     Object.hashAll(controlledHexes),
     Object.hashAll(workedHexes),
     Object.hashAllUnordered(buildings),
+    Object.hashAllUnordered(wonders),
     productionQueue,
     productionOverflow,
     specialization,
@@ -272,6 +281,7 @@ class GameCity {
         'maxHexes: $maxHexes, territoryRadius: $territoryRadius, '
         'center: $center, controlledHexes: $controlledHexes, '
         'workedHexes: $workedHexes, buildings: $buildings, '
+        'wonders: $wonders, '
         'productionQueue: $productionQueue, '
         'productionOverflow: $productionOverflow, '
         'specialization: $specialization, '
@@ -288,6 +298,14 @@ class GameCity {
 
   static List<String> _buildingsToJson(Set<CityBuildingType> values) =>
       values.map((building) => building.name).toList();
+
+  static Set<WonderType> _wondersFromJson(List<dynamic>? values) =>
+      values == null
+      ? const {}
+      : values.map((value) => WonderType.fromString(value as String)).toSet();
+
+  static List<String> _wondersToJson(Set<WonderType> values) =>
+      values.map((wonder) => wonder.name).toList();
 
   static bool _sameList<T>(List<T> left, List<T> right) {
     if (left.length != right.length) return false;

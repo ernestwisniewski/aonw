@@ -60,7 +60,7 @@ final class _EconomySimulationTurnRowFactory {
       unitSupplyAvailable: unitSupply.available,
       militaryCount: ownUnits
           .where(
-            (unit) => _militaryAssessment.canServeAsMilitaryUnit(
+            (unit) => const AiMilitaryAssessment().canServeAsMilitaryUnit(
               unit,
               ruleset.combat,
             ),

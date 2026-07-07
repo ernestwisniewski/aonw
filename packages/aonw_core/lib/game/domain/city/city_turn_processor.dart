@@ -23,6 +23,8 @@ import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart'
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 abstract final class CityTurnProcessor {
@@ -36,6 +38,8 @@ abstract final class CityTurnProcessor {
     CityRuleset ruleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRegistry wonderRegistry = WonderRegistry.empty,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     StabilityModifier stabilityModifier = StabilityModifier.stable,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -67,6 +71,8 @@ abstract final class CityTurnProcessor {
         mapData: mapData,
         ruleset: ruleset,
         paceBalance: paceBalance,
+        wonderRegistry: wonderRegistry,
+        wonderRuleset: wonderRuleset,
         technologyEffects: technologyEffects,
         stabilityModifier: stabilityModifier,
         artifacts: artifacts,
@@ -109,6 +115,8 @@ abstract final class CityTurnProcessor {
     required MapData mapData,
     required CityRuleset ruleset,
     required PaceBalance paceBalance,
+    required WonderRegistry wonderRegistry,
+    required WonderRuleset wonderRuleset,
     required TechnologyEffectSummary technologyEffects,
     required StabilityModifier stabilityModifier,
     required List<WorldArtifact> artifacts,
@@ -130,6 +138,9 @@ abstract final class CityTurnProcessor {
       paceBalance: paceBalance,
       technologyEffects: technologyEffects,
       stabilityModifier: stabilityModifier,
+      cities: cities,
+      wonderRegistry: wonderRegistry,
+      wonderRuleset: wonderRuleset,
     );
     final goldGained = economy.netYield.gold < 0 ? 0 : economy.netYield.gold;
     var projectGoldGained = 0;
@@ -222,6 +233,7 @@ abstract final class CityTurnProcessor {
             units: units,
             mapData: mapData,
             ruleset: ruleset,
+            wonderRuleset: wonderRuleset,
             paceBalance: paceBalance,
             events: events,
             updateUnits: (updated) => units = updated,
@@ -245,6 +257,28 @@ abstract final class CityTurnProcessor {
             units: units,
             mapData: mapData,
             ruleset: ruleset,
+            wonderRuleset: wonderRuleset,
+            paceBalance: paceBalance,
+            events: events,
+            updateUnits: (updated) => units = updated,
+            artifactExperience: 0,
+          );
+        case WonderProductionTarget():
+          productionPerTurn =
+              CitySpecializationRules.productionPerTurnForTarget(
+                productionPerTurn: productionPerTurn,
+                target: queue.target,
+                specialization: nextCity.specialization,
+              );
+          nextCity = _advanceFiniteProduction(
+            city: city,
+            nextCity: nextCity,
+            queue: queue,
+            productionPerTurn: productionPerTurn,
+            units: units,
+            mapData: mapData,
+            ruleset: ruleset,
+            wonderRuleset: wonderRuleset,
             paceBalance: paceBalance,
             events: events,
             updateUnits: (updated) => units = updated,
@@ -274,18 +308,29 @@ abstract final class CityTurnProcessor {
     required List<GameUnit> units,
     required MapData mapData,
     required CityRuleset ruleset,
+    required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
     required List<CityTurnEvent> events,
     required void Function(List<GameUnit> units) updateUnits,
     required int artifactExperience,
   }) {
-    final advanced = queue.isCompleteFor(ruleset, paceBalance: paceBalance)
+    final advanced =
+        queue.isCompleteFor(
+          ruleset,
+          wonderRuleset: wonderRuleset,
+          paceBalance: paceBalance,
+        )
         ? queue
         : queue.advancedBy(productionPerTurn);
-    if (advanced.isCompleteFor(ruleset, paceBalance: paceBalance)) {
+    if (advanced.isCompleteFor(
+      ruleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
+    )) {
       final targetCost = CityProductionRules.targetCost(
         advanced.target,
         ruleset: ruleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       );
       final productionOverflow = CityProductionRules.completionOverflow(
@@ -335,6 +380,8 @@ abstract final class CityTurnProcessor {
           }
         case ProjectProductionTarget():
           return nextCity;
+        case WonderProductionTarget():
+          return nextCity.copyWith(productionQueue: advanced);
       }
     }
     return nextCity.copyWith(productionQueue: advanced);

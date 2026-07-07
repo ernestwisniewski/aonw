@@ -11,6 +11,8 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
+part 'production_scoring_cache_economy.dart';
+
 class AiProductionScoringCache {
   AiProductionScoringCache({required this.view, required this.context});
 
@@ -33,25 +35,7 @@ class AiProductionScoringCache {
         ruleset: view.ruleset.technology,
       );
 
-  CityEconomyBreakdown economyFor(GameCity city) {
-    return _economyByCityId.putIfAbsent(city.id, () {
-      final cityYield = CityYieldCalculator.totalFor(
-        city,
-        view.mapData,
-        fieldImprovements: view.ownImprovements,
-        units: view.ownUnits,
-        ruleset: view.ruleset.city,
-      );
-      return CityEconomyBreakdown.from(
-        city: city,
-        tileYield: cityYield,
-        mapData: view.mapData,
-        ruleset: view.ruleset.city,
-        paceBalance: view.ruleset.paceBalance,
-        technologyEffects: technologyEffects,
-      );
-    });
-  }
+  CityEconomyBreakdown economyFor(GameCity city) => _economyFor(this, city);
 
   int availableUnitSupply(AiProductionPlanState planState) {
     return _availableSupplyByReservedSupply.putIfAbsent(
