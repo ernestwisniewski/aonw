@@ -94,14 +94,6 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
     _activateFirst(available, preferredSection: state.section);
   }
 
-  void toggle(List<HudGamepadFocusTarget> targets) {
-    if (state.active) {
-      deactivate();
-      return;
-    }
-    _activateFirst(_availableTargets(targets), preferredSection: state.section);
-  }
-
   void deactivate() {
     if (!state.active) return;
     state = HudGamepadFocusState.inactive;

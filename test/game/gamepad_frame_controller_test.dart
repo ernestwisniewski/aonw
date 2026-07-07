@@ -101,30 +101,6 @@ void main() {
       expect(freshFrame.cursorStep, GamepadMapDirection.right);
     });
 
-    test('fires HUD focus only on stick press edges', () {
-      final controller = GamepadFrameController();
-      const pressed = GamepadInputSnapshot(hudFocus: true);
-
-      expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isTrue,
-      );
-      expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isFalse,
-      );
-      expect(
-        controller
-            .advance(input: GamepadInputSnapshot.empty, dt: 0.016)
-            .hudFocusPressed,
-        isFalse,
-      );
-      expect(
-        controller.advance(input: pressed, dt: 0.016).hudFocusPressed,
-        isTrue,
-      );
-    });
-
     test('fires directional HUD focus only on stick press edges', () {
       final controller = GamepadFrameController();
       const pressed = GamepadInputSnapshot(

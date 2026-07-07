@@ -19,7 +19,7 @@ void main() {
       _target(HudGamepadFocusSection.selectionActions, 'selection.move'),
     ];
 
-    controller.toggle(targets);
+    controller.nextSection(targets);
 
     expect(
       container.read(hudGamepadFocusControllerProvider).section,
@@ -103,7 +103,7 @@ void main() {
     ];
 
     controller
-      ..toggle(targets)
+      ..nextSection(targets)
       ..move(GamepadMapDirection.down, targets);
 
     expect(
