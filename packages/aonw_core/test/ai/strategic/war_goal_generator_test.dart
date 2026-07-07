@@ -25,6 +25,30 @@ void main() {
       expect(updated.assignedUnitIds, const ['warrior_1', 'archer_1']);
       expect(updated.targetCity, goal.targetCity);
     });
+
+    test('accepts lazy unit id iterables and freezes assigned units', () {
+      final goal = WarGoal(
+        targetPlayerId: 'player_2',
+        kind: WarGoalKind.defend,
+        targetHex: const HexCoordinate(col: 1, row: 2),
+        turnsBudget: 4,
+        assignedUnitIds: _lazyUnitIds(),
+        priority: 2,
+      );
+      final sameGoal = WarGoal(
+        targetPlayerId: 'player_2',
+        kind: WarGoalKind.defend,
+        targetHex: const HexCoordinate(col: 1, row: 2),
+        turnsBudget: 4,
+        assignedUnitIds: const ['warrior_1', 'archer_1'],
+        priority: 2,
+      );
+
+      expect(goal.assignedUnitIds, const ['warrior_1', 'archer_1']);
+      expect(goal, sameGoal);
+      expect(goal.hashCode, sameGoal.hashCode);
+      expect(() => goal.assignedUnitIds.add('scout_1'), throwsUnsupportedError);
+    });
   });
 
   group('TargetabilityScorer', () {
@@ -1213,6 +1237,11 @@ GameView _view(
     recentHostilePlayerIds: recentHostilePlayerIds,
     pressureTargetPlayerIds: pressureTargetPlayerIds,
   );
+}
+
+Iterable<String> _lazyUnitIds() sync* {
+  yield 'warrior_1';
+  yield 'archer_1';
 }
 
 AiContext _context(

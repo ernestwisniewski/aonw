@@ -12,6 +12,275 @@ part of 'game_state.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$GameInteractionState {
+
+ GameSelection? get selection; UnitMovementPlan? get movePreview; CityFoundingDraft? get cityFoundingDraft; PendingPlayerAction? get pendingAction; bool get moveCommandActive;
+/// Create a copy of GameInteractionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GameInteractionStateCopyWith<GameInteractionState> get copyWith => _$GameInteractionStateCopyWithImpl<GameInteractionState>(this as GameInteractionState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameInteractionState&&(identical(other.selection, selection) || other.selection == selection)&&(identical(other.movePreview, movePreview) || other.movePreview == movePreview)&&(identical(other.cityFoundingDraft, cityFoundingDraft) || other.cityFoundingDraft == cityFoundingDraft)&&(identical(other.pendingAction, pendingAction) || other.pendingAction == pendingAction)&&(identical(other.moveCommandActive, moveCommandActive) || other.moveCommandActive == moveCommandActive));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,selection,movePreview,cityFoundingDraft,pendingAction,moveCommandActive);
+
+@override
+String toString() {
+  return 'GameInteractionState(selection: $selection, movePreview: $movePreview, cityFoundingDraft: $cityFoundingDraft, pendingAction: $pendingAction, moveCommandActive: $moveCommandActive)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GameInteractionStateCopyWith<$Res>  {
+  factory $GameInteractionStateCopyWith(GameInteractionState value, $Res Function(GameInteractionState) _then) = _$GameInteractionStateCopyWithImpl;
+@useResult
+$Res call({
+ GameSelection? selection, UnitMovementPlan? movePreview, CityFoundingDraft? cityFoundingDraft, PendingPlayerAction? pendingAction, bool moveCommandActive
+});
+
+
+
+
+}
+/// @nodoc
+class _$GameInteractionStateCopyWithImpl<$Res>
+    implements $GameInteractionStateCopyWith<$Res> {
+  _$GameInteractionStateCopyWithImpl(this._self, this._then);
+
+  final GameInteractionState _self;
+  final $Res Function(GameInteractionState) _then;
+
+/// Create a copy of GameInteractionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? selection = freezed,Object? movePreview = freezed,Object? cityFoundingDraft = freezed,Object? pendingAction = freezed,Object? moveCommandActive = null,}) {
+  return _then(_self.copyWith(
+selection: freezed == selection ? _self.selection : selection // ignore: cast_nullable_to_non_nullable
+as GameSelection?,movePreview: freezed == movePreview ? _self.movePreview : movePreview // ignore: cast_nullable_to_non_nullable
+as UnitMovementPlan?,cityFoundingDraft: freezed == cityFoundingDraft ? _self.cityFoundingDraft : cityFoundingDraft // ignore: cast_nullable_to_non_nullable
+as CityFoundingDraft?,pendingAction: freezed == pendingAction ? _self.pendingAction : pendingAction // ignore: cast_nullable_to_non_nullable
+as PendingPlayerAction?,moveCommandActive: null == moveCommandActive ? _self.moveCommandActive : moveCommandActive // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GameInteractionState].
+extension GameInteractionStatePatterns on GameInteractionState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GameInteractionState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GameInteractionState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GameInteractionState value)  $default,){
+final _that = this;
+switch (_that) {
+case _GameInteractionState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GameInteractionState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GameInteractionState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameSelection? selection,  UnitMovementPlan? movePreview,  CityFoundingDraft? cityFoundingDraft,  PendingPlayerAction? pendingAction,  bool moveCommandActive)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GameInteractionState() when $default != null:
+return $default(_that.selection,_that.movePreview,_that.cityFoundingDraft,_that.pendingAction,_that.moveCommandActive);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameSelection? selection,  UnitMovementPlan? movePreview,  CityFoundingDraft? cityFoundingDraft,  PendingPlayerAction? pendingAction,  bool moveCommandActive)  $default,) {final _that = this;
+switch (_that) {
+case _GameInteractionState():
+return $default(_that.selection,_that.movePreview,_that.cityFoundingDraft,_that.pendingAction,_that.moveCommandActive);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameSelection? selection,  UnitMovementPlan? movePreview,  CityFoundingDraft? cityFoundingDraft,  PendingPlayerAction? pendingAction,  bool moveCommandActive)?  $default,) {final _that = this;
+switch (_that) {
+case _GameInteractionState() when $default != null:
+return $default(_that.selection,_that.movePreview,_that.cityFoundingDraft,_that.pendingAction,_that.moveCommandActive);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GameInteractionState extends GameInteractionState {
+  const _GameInteractionState({this.selection, this.movePreview, this.cityFoundingDraft, this.pendingAction, this.moveCommandActive = false}): super._();
+  
+
+@override final  GameSelection? selection;
+@override final  UnitMovementPlan? movePreview;
+@override final  CityFoundingDraft? cityFoundingDraft;
+@override final  PendingPlayerAction? pendingAction;
+@override@JsonKey() final  bool moveCommandActive;
+
+/// Create a copy of GameInteractionState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GameInteractionStateCopyWith<_GameInteractionState> get copyWith => __$GameInteractionStateCopyWithImpl<_GameInteractionState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameInteractionState&&(identical(other.selection, selection) || other.selection == selection)&&(identical(other.movePreview, movePreview) || other.movePreview == movePreview)&&(identical(other.cityFoundingDraft, cityFoundingDraft) || other.cityFoundingDraft == cityFoundingDraft)&&(identical(other.pendingAction, pendingAction) || other.pendingAction == pendingAction)&&(identical(other.moveCommandActive, moveCommandActive) || other.moveCommandActive == moveCommandActive));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,selection,movePreview,cityFoundingDraft,pendingAction,moveCommandActive);
+
+@override
+String toString() {
+  return 'GameInteractionState(selection: $selection, movePreview: $movePreview, cityFoundingDraft: $cityFoundingDraft, pendingAction: $pendingAction, moveCommandActive: $moveCommandActive)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GameInteractionStateCopyWith<$Res> implements $GameInteractionStateCopyWith<$Res> {
+  factory _$GameInteractionStateCopyWith(_GameInteractionState value, $Res Function(_GameInteractionState) _then) = __$GameInteractionStateCopyWithImpl;
+@override @useResult
+$Res call({
+ GameSelection? selection, UnitMovementPlan? movePreview, CityFoundingDraft? cityFoundingDraft, PendingPlayerAction? pendingAction, bool moveCommandActive
+});
+
+
+
+
+}
+/// @nodoc
+class __$GameInteractionStateCopyWithImpl<$Res>
+    implements _$GameInteractionStateCopyWith<$Res> {
+  __$GameInteractionStateCopyWithImpl(this._self, this._then);
+
+  final _GameInteractionState _self;
+  final $Res Function(_GameInteractionState) _then;
+
+/// Create a copy of GameInteractionState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? selection = freezed,Object? movePreview = freezed,Object? cityFoundingDraft = freezed,Object? pendingAction = freezed,Object? moveCommandActive = null,}) {
+  return _then(_GameInteractionState(
+selection: freezed == selection ? _self.selection : selection // ignore: cast_nullable_to_non_nullable
+as GameSelection?,movePreview: freezed == movePreview ? _self.movePreview : movePreview // ignore: cast_nullable_to_non_nullable
+as UnitMovementPlan?,cityFoundingDraft: freezed == cityFoundingDraft ? _self.cityFoundingDraft : cityFoundingDraft // ignore: cast_nullable_to_non_nullable
+as CityFoundingDraft?,pendingAction: freezed == pendingAction ? _self.pendingAction : pendingAction // ignore: cast_nullable_to_non_nullable
+as PendingPlayerAction?,moveCommandActive: null == moveCommandActive ? _self.moveCommandActive : moveCommandActive // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$GameState {
 
  Map<String, int> get playerColors; Map<String, PlayerCountry> get playerCountries; Map<String, int> get playerGold; Map<String, int> get playerWarWeariness; Map<String, int> get playerStabilityNet; List<GameUnit> get units; List<GameCity> get cities; List<WorldArtifact> get artifacts; List<FieldImprovement> get fieldImprovements; FogOfWarState get fogOfWar; ResearchState get research; DiplomacyState get diplomacy; List<IntendedAttack> get intendedAttacks; List<ResourceTradeAgreement> get resourceTradeAgreements; Map<String, int> get dominationHoldTurnsByPlayerId; Map<String, int> get culturalVictoryHoldTurnsByPlayerId; Map<String, MapObjectiveHoldState> get mapObjectiveHoldStatesByObjectiveId; String get activePlayerId; bool get activePlayerCanAct; Set<String> get submittedPlayerIds; GameInteractionState get interaction;
@@ -49,7 +318,7 @@ $Res call({
 });
 
 
-
+$GameInteractionStateCopyWith<$Res> get interaction;
 
 }
 /// @nodoc
@@ -88,7 +357,16 @@ as Set<String>,interaction: null == interaction ? _self.interaction : interactio
 as GameInteractionState,
   ));
 }
-
+/// Create a copy of GameState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GameInteractionStateCopyWith<$Res> get interaction {
+  
+  return $GameInteractionStateCopyWith<$Res>(_self.interaction, (value) {
+    return _then(_self.copyWith(interaction: value));
+  });
+}
 }
 
 
@@ -375,7 +653,7 @@ $Res call({
 });
 
 
-
+@override $GameInteractionStateCopyWith<$Res> get interaction;
 
 }
 /// @nodoc
@@ -415,7 +693,16 @@ as GameInteractionState,
   ));
 }
 
-
+/// Create a copy of GameState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GameInteractionStateCopyWith<$Res> get interaction {
+  
+  return $GameInteractionStateCopyWith<$Res>(_self.interaction, (value) {
+    return _then(_self.copyWith(interaction: value));
+  });
+}
 }
 
 // dart format on

@@ -8,105 +8,28 @@ import 'package:aonw_core/ai/strategic/war_goal.dart';
 import 'package:aonw_core/ai/strategic/worker_assignment_plan.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/util/collection_equality.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class StrategicPlan {
-  final int computedAtTurn;
-  final StrategicMode mode;
-  final EconomyExpectations expectations;
-  final EconomyHealth economyHealth;
-  final List<PlayerThreatScore> rivalRanking;
-  final List<TechnologyId> techPath;
-  final List<CityHex> citySiteRanking;
-  final Map<String, CityHex> settlerAssignments;
-  final Map<String, StrategicWorkerAssignment> workerAssignments;
-  final Map<String, StrategicFrontierClearingAssignment>
-  frontierClearingAssignments;
-  final List<WarGoal> warGoals;
-  final Map<String, StrategicDefenseAssignment> defenses;
+part 'strategic_plan.freezed.dart';
 
-  const StrategicPlan({
-    required this.computedAtTurn,
-    required this.mode,
-    required this.expectations,
-    this.economyHealth = EconomyHealth.stable,
-    this.rivalRanking = const [],
-    this.techPath = const [],
-    this.citySiteRanking = const [],
-    this.settlerAssignments = const {},
-    this.workerAssignments = const {},
-    this.frontierClearingAssignments = const {},
-    this.warGoals = const [],
-    this.defenses = const {},
-  });
+@freezed
+abstract class StrategicPlan with _$StrategicPlan {
+  const StrategicPlan._();
 
-  StrategicPlan copyWith({
-    int? computedAtTurn,
-    StrategicMode? mode,
-    EconomyExpectations? expectations,
-    EconomyHealth? economyHealth,
-    List<PlayerThreatScore>? rivalRanking,
-    List<TechnologyId>? techPath,
-    List<CityHex>? citySiteRanking,
-    Map<String, CityHex>? settlerAssignments,
-    Map<String, StrategicWorkerAssignment>? workerAssignments,
-    Map<String, StrategicFrontierClearingAssignment>?
+  const factory StrategicPlan({
+    required int computedAtTurn,
+    required StrategicMode mode,
+    required EconomyExpectations expectations,
+    @Default(EconomyHealth.stable) EconomyHealth economyHealth,
+    @Default([]) List<PlayerThreatScore> rivalRanking,
+    @Default([]) List<TechnologyId> techPath,
+    @Default([]) List<CityHex> citySiteRanking,
+    @Default({}) Map<String, CityHex> settlerAssignments,
+    @Default({}) Map<String, StrategicWorkerAssignment> workerAssignments,
+    @Default({})
+    Map<String, StrategicFrontierClearingAssignment>
     frontierClearingAssignments,
-    List<WarGoal>? warGoals,
-    Map<String, StrategicDefenseAssignment>? defenses,
-  }) {
-    return StrategicPlan(
-      computedAtTurn: computedAtTurn ?? this.computedAtTurn,
-      mode: mode ?? this.mode,
-      expectations: expectations ?? this.expectations,
-      economyHealth: economyHealth ?? this.economyHealth,
-      rivalRanking: rivalRanking ?? this.rivalRanking,
-      techPath: techPath ?? this.techPath,
-      citySiteRanking: citySiteRanking ?? this.citySiteRanking,
-      settlerAssignments: settlerAssignments ?? this.settlerAssignments,
-      workerAssignments: workerAssignments ?? this.workerAssignments,
-      frontierClearingAssignments:
-          frontierClearingAssignments ?? this.frontierClearingAssignments,
-      warGoals: warGoals ?? this.warGoals,
-      defenses: defenses ?? this.defenses,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is StrategicPlan &&
-        other.computedAtTurn == computedAtTurn &&
-        other.mode == mode &&
-        other.expectations == expectations &&
-        other.economyHealth == economyHealth &&
-        listEquals(other.rivalRanking, rivalRanking) &&
-        listEquals(other.techPath, techPath) &&
-        listEquals(other.citySiteRanking, citySiteRanking) &&
-        mapEquals(other.settlerAssignments, settlerAssignments) &&
-        mapEquals(other.workerAssignments, workerAssignments) &&
-        mapEquals(
-          other.frontierClearingAssignments,
-          frontierClearingAssignments,
-        ) &&
-        listEquals(other.warGoals, warGoals) &&
-        mapEquals(other.defenses, defenses);
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(
-      computedAtTurn,
-      mode,
-      expectations,
-      economyHealth,
-      Object.hashAll(rivalRanking),
-      Object.hashAll(techPath),
-      Object.hashAll(citySiteRanking),
-      mapHash(settlerAssignments),
-      mapHash(workerAssignments),
-      mapHash(frontierClearingAssignments),
-      Object.hashAll(warGoals),
-      mapHash(defenses),
-    );
-  }
+    @Default([]) List<WarGoal> warGoals,
+    @Default({}) Map<String, StrategicDefenseAssignment> defenses,
+  }) = _StrategicPlan;
 }

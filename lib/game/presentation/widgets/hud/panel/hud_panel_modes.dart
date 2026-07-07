@@ -1,37 +1,21 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_next_action_panel.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class HudPanelModes {
-  const HudPanelModes({
-    this.cityBuildings = false,
-    this.technology = false,
-    this.objectives = false,
-    this.empire = false,
-    this.activityLog = false,
-  });
+part 'hud_panel_modes.freezed.dart';
 
-  final bool cityBuildings;
-  final bool technology;
-  final bool objectives;
-  final bool empire;
-  final bool activityLog;
+@freezed
+abstract class HudPanelModes with _$HudPanelModes {
+  const HudPanelModes._();
 
-  HudPanelModes copyWith({
-    bool? cityBuildings,
-    bool? technology,
-    bool? objectives,
-    bool? empire,
-    bool? activityLog,
-  }) {
-    return HudPanelModes(
-      cityBuildings: cityBuildings ?? this.cityBuildings,
-      technology: technology ?? this.technology,
-      objectives: objectives ?? this.objectives,
-      empire: empire ?? this.empire,
-      activityLog: activityLog ?? this.activityLog,
-    );
-  }
+  const factory HudPanelModes({
+    @Default(false) bool cityBuildings,
+    @Default(false) bool technology,
+    @Default(false) bool objectives,
+    @Default(false) bool empire,
+    @Default(false) bool activityLog,
+  }) = _HudPanelModes;
 
   HudPanelModes openCityBuildings() => copyWith(
     cityBuildings: true,
@@ -102,19 +86,6 @@ class HudPanelModes {
 
   HudPanelModes closeUnitActionPanels() =>
       copyWith(technology: false, objectives: false);
-
-  @override
-  bool operator ==(Object other) =>
-      other is HudPanelModes &&
-      other.cityBuildings == cityBuildings &&
-      other.technology == technology &&
-      other.objectives == objectives &&
-      other.empire == empire &&
-      other.activityLog == activityLog;
-
-  @override
-  int get hashCode =>
-      Object.hash(cityBuildings, technology, objectives, empire, activityLog);
 }
 
 HudPanelModes normalizeHudPanelModes({

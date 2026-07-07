@@ -1,11 +1,13 @@
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-sealed class UnitProductionRequirement {
-  const UnitProductionRequirement();
-}
+part 'unit_production_requirement.freezed.dart';
 
-final class UnitResourceRequirement extends UnitProductionRequirement {
-  final Set<ResourceType> resources;
+@freezed
+sealed class UnitProductionRequirement with _$UnitProductionRequirement {
+  const UnitProductionRequirement._();
 
-  const UnitResourceRequirement(this.resources);
+  const factory UnitProductionRequirement.resource(
+    Set<ResourceType> resources,
+  ) = UnitResourceRequirement;
 }
