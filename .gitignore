@@ -22,7 +22,6 @@ migrate_working_dir/
 backups/
 .claude/
 .codex/
-.superpowers/
 
 # Local environment files
 .env
