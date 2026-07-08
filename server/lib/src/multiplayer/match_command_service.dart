@@ -1,5 +1,4 @@
-import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import '../generated/protocol.dart';
@@ -8,6 +7,8 @@ import 'match_connection_registry.dart';
 import 'match_state_access.dart';
 import 'multiplayer_match_store.dart';
 import 'server_command_reducer.dart';
+
+part 'match_command_service_timeout.dart';
 
 final class MatchCommandService {
   const MatchCommandService({
@@ -24,16 +25,6 @@ final class MatchCommandService {
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final DateTime Function() _nowUtc;
-
-  Future<MatchConnectionAuthorization> authorizeConnection({
-    required MultiplayerMatchStore store,
-    required String matchId,
-    required String userIdentifier,
-  }) async {
-    final state = await _stateAccess.requireMatch(store, matchId);
-    final player = _stateAccess.requireParticipant(state, userIdentifier);
-    return MatchConnectionAuthorization(state: state, participant: player);
-  }
 
   Future<void> handleClientMessage({
     required MultiplayerMatchStore store,

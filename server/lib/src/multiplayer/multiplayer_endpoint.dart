@@ -24,7 +24,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<List<WireMatch>> listMatches(Session session) async {
     final user = _requireUser(session);
-    return _hub.listMatches(
+    return multiplayerHub.listMatches(
       store: _store(session),
       userIdentifier: user.userIdentifier,
     );
@@ -35,7 +35,7 @@ class MultiplayerEndpoint extends Endpoint {
     CreateMatchRequest request,
   ) async {
     final user = await _requirePlayerIdentity(session);
-    return _hub.createMatch(
+    return multiplayerHub.createMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       displayName: user.displayName,
@@ -48,7 +48,7 @@ class MultiplayerEndpoint extends Endpoint {
     CreateMatchRequest request,
   ) async {
     final user = await _requirePlayerIdentity(session);
-    return _hub.quickplay(
+    return multiplayerHub.quickplay(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       displayName: user.displayName,
@@ -62,7 +62,7 @@ class MultiplayerEndpoint extends Endpoint {
     String? countryId,
   ]) async {
     final user = await _requirePlayerIdentity(session);
-    return _hub.joinMatch(
+    return multiplayerHub.joinMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       displayName: user.displayName,
@@ -77,7 +77,7 @@ class MultiplayerEndpoint extends Endpoint {
     String? countryId,
   ]) async {
     final user = await _requirePlayerIdentity(session);
-    return _hub.joinPrivateMatch(
+    return multiplayerHub.joinPrivateMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       displayName: user.displayName,
@@ -88,7 +88,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> loadMatch(Session session, String matchId) async {
     final user = _requireUser(session);
-    return _hub.loadMatch(
+    return multiplayerHub.loadMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -97,7 +97,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireSnapshot> loadSnapshot(Session session, String matchId) async {
     final user = _requireUser(session);
-    return _hub.loadSnapshot(
+    return multiplayerHub.loadSnapshot(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -110,7 +110,7 @@ class MultiplayerEndpoint extends Endpoint {
     int afterOffset,
   ) async {
     final user = _requireUser(session);
-    return _hub.listEvents(
+    return multiplayerHub.listEvents(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -120,7 +120,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> startMatch(Session session, String matchId) async {
     final user = _requireUser(session);
-    return _hub.startMatch(
+    return multiplayerHub.startMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -129,7 +129,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> markMapLoaded(Session session, String matchId) async {
     final user = _requireUser(session);
-    return _hub.loadMatch(
+    return multiplayerHub.loadMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -138,7 +138,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> resignMatch(Session session, String matchId) async {
     final user = _requireUser(session);
-    return _hub.resignMatch(
+    return multiplayerHub.resignMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -147,7 +147,7 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<void> leaveMatch(Session session, String matchId) async {
     final user = _requireUser(session);
-    await _hub.leaveMatch(
+    await multiplayerHub.leaveMatch(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -161,7 +161,7 @@ class MultiplayerEndpoint extends Endpoint {
     Stream<MultiplayerClientMessage> input,
   ) {
     final user = _requireUser(session);
-    return _hub.connect(
+    return multiplayerHub.connect(
       store: _store(session),
       userIdentifier: user.userIdentifier,
       matchId: matchId,
@@ -198,12 +198,11 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  MultiplayerMatchStore _store(Session session) {
-    return ServerpodMultiplayerMatchStore(session);
-  }
+  MultiplayerMatchStore _store(Session session) =>
+      ServerpodMultiplayerMatchStore(session);
 }
 
-final _hub = RealtimeMatchHub();
+final multiplayerHub = RealtimeMatchHub();
 
 class RealtimeMatchHub {
   RealtimeMatchHub({
@@ -250,9 +249,7 @@ class RealtimeMatchHub {
   Future<List<WireMatch>> listMatches({
     required MultiplayerMatchStore store,
     required String userIdentifier,
-  }) {
-    return _queries.listMatches(store: store, userIdentifier: userIdentifier);
-  }
+  }) => _queries.listMatches(store: store, userIdentifier: userIdentifier);
 
   Future<WireMatch> quickplay({
     required MultiplayerMatchStore store,
@@ -336,13 +333,11 @@ class RealtimeMatchHub {
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
-  }) {
-    return _queries.loadSnapshot(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-    );
-  }
+  }) => _queries.loadSnapshot(
+    store: store,
+    userIdentifier: userIdentifier,
+    matchId: matchId,
+  );
 
   Future<List<WireEvent>> listEvents({
     required MultiplayerMatchStore store,
@@ -396,6 +391,9 @@ class RealtimeMatchHub {
       matchId: matchId,
     );
   }
+
+  Future<void> advanceTimedOutTurns({required MultiplayerMatchStore store}) =>
+      _commands.advanceTimedOutTurns(store: store);
 
   Stream<MultiplayerServerMessage> connect({
     required MultiplayerMatchStore store,

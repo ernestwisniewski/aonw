@@ -5,6 +5,8 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'game_match_row_mapper.dart';
 
+part 'multiplayer_match_store_queries.dart';
+
 class StoredMatchState {
   const StoredMatchState({required this.match, required this.snapshot});
 
@@ -29,6 +31,8 @@ abstract interface class MultiplayerMatchStore {
   );
 
   Future<List<StoredMatchState>> listVisibleMatchStates(String userIdentifier);
+
+  Future<List<StoredMatchState>> listRunningStates();
 
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest request,
@@ -111,6 +115,10 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     }
     return states;
   }
+
+  @override
+  Future<List<StoredMatchState>> listRunningStates() =>
+      _listRunningStates(this);
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(

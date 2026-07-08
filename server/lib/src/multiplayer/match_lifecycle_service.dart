@@ -1,5 +1,4 @@
-import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_player_capacity.dart';
+import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'initial_multiplayer_snapshot_factory.dart';
@@ -8,6 +7,8 @@ import 'match_state_access.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 import 'quickplay_lobby_policy.dart';
+
+part 'match_lifecycle_service_resignation.dart';
 
 final class MatchLifecycleService {
   const MatchLifecycleService({
@@ -98,16 +99,15 @@ final class MatchLifecycleService {
         lock: true,
       );
       _stateAccess.requireParticipant(state, userIdentifier);
-      final updated = state.copyWith(
-        match: state.match.copyWith(state: 'finished'),
-        snapshot: state.snapshot.copyWith(
-          state: {
-            ...state.snapshot.state,
-            'phase': 'finished',
-            'resignedUserIdentifier': userIdentifier,
-          },
-        ),
-      );
+      final updated = state.match.state == 'running'
+          ? _runningStateAfterParticipantResigned(
+              state,
+              userIdentifier: userIdentifier,
+            )
+          : _finishedStateAfterResignation(
+              state,
+              userIdentifier: userIdentifier,
+            );
       await txStore.saveState(updated);
       _broadcaster.broadcastState(updated);
       return updated.match;

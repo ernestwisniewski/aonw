@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 import 'initial_multiplayer_snapshot_factory.dart';
 
 part 'server_command_reducer_production.dart';
+part 'server_command_reducer_turns.dart';
 
 class ServerCommandReduction {
   const ServerCommandReduction({
@@ -19,12 +20,26 @@ class ServerCommandReduction {
   final String? reason;
 }
 
+const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
+
 class ServerCommandReducer {
   const ServerCommandReducer({
     MultiplayerMapCatalog mapCatalog = const FileMultiplayerMapCatalog(),
-  }) : _mapCatalog = mapCatalog;
+    Duration turnTimeout = defaultMultiplayerTurnTimeout,
+  }) : _mapCatalog = mapCatalog,
+       _turnTimeout = turnTimeout;
 
   final MultiplayerMapCatalog _mapCatalog;
+  final Duration _turnTimeout;
+
+  bool hasTurnTimedOut({
+    required WireSnapshot snapshot,
+    required DateTime now,
+  }) {
+    final save = GameSave.fromJson(snapshot.save);
+    final state = PersistentGameState.fromJson(snapshot.state);
+    return _turnTimedOut(save, state, now);
+  }
 
   Future<ServerCommandReduction> reduce({
     required WireMatch match,
@@ -43,6 +58,9 @@ class ServerCommandReducer {
     if (wireCommand.turn != null && wireCommand.turn != save.turn) {
       return _reject(snapshot, 'stale_turn');
     }
+    if (state.runtimeState.isKicked(actorPlayerId)) {
+      return _reject(snapshot, 'player_eliminated');
+    }
     if (command is! SubmitTurnCommand &&
         command is! EndTurnCommand &&
         state.runtimeState.hasSubmitted(actorPlayerId)) {
@@ -58,6 +76,7 @@ class ServerCommandReducer {
     final result = _applyCommand(
       save: save,
       state: state,
+      match: match,
       command: command,
       actorPlayerId: actorPlayerId,
       now: now.toUtc(),
@@ -86,6 +105,7 @@ class ServerCommandReducer {
   _CommandApplication _applyCommand({
     required GameSave save,
     required PersistentGameState state,
+    required WireMatch match,
     required GameCommand command,
     required String actorPlayerId,
     required DateTime now,
@@ -98,6 +118,7 @@ class ServerCommandReducer {
         return _submitTurn(
           save: save,
           state: state,
+          match: match,
           command: command,
           actorPlayerId: actorPlayerId,
           now: now,
@@ -109,6 +130,7 @@ class ServerCommandReducer {
         return _submitTurn(
           save: save,
           state: state,
+          match: match,
           command: SubmitTurnCommand(playerId),
           actorPlayerId: actorPlayerId,
           now: now,
@@ -375,162 +397,6 @@ class ServerCommandReducer {
     }
   }
 
-  _CommandApplication _submitTurn({
-    required GameSave save,
-    required PersistentGameState state,
-    required SubmitTurnCommand command,
-    required String actorPlayerId,
-    required DateTime now,
-    required MapData mapData,
-    required MapDefinition mapDefinition,
-    required GameRuleset ruleset,
-  }) {
-    if (command.playerId != actorPlayerId) {
-      return _CommandApplication.reject(
-        save: save,
-        state: state,
-        reason: 'turn_player_not_controlled',
-      );
-    }
-    final playerIds = _activePlayerIds(save);
-    if (playerIds.isEmpty || !playerIds.contains(command.playerId)) {
-      return _CommandApplication.reject(
-        save: save,
-        state: state,
-        reason: 'turn_player_not_active',
-      );
-    }
-    if (state.runtimeState.hasSubmitted(command.playerId)) {
-      return _CommandApplication.accept(save: save, state: state);
-    }
-
-    final submitted = {
-      ...state.runtimeState.submittedPlayerIds,
-      command.playerId,
-    };
-    final submittedState = state.copyWith(
-      runtimeState: state.runtimeState.copyWith(submittedPlayerIds: submitted),
-    );
-    if (!playerIds.every(submitted.contains)) {
-      return _CommandApplication.accept(
-        save: save
-            .withPlayerFinished(command.playerId)
-            .copyWith(savedAt: now.toUtc()),
-        state: submittedState,
-      );
-    }
-
-    return _finalizeSimultaneousTurn(
-      save: save,
-      state: submittedState,
-      playerIds: playerIds,
-      now: now,
-      mapData: mapData,
-      mapDefinition: mapDefinition,
-      ruleset: ruleset,
-    );
-  }
-
-  _CommandApplication _finalizeSimultaneousTurn({
-    required GameSave save,
-    required PersistentGameState state,
-    required List<String> playerIds,
-    required DateTime now,
-    required MapData mapData,
-    required MapDefinition mapDefinition,
-    required GameRuleset ruleset,
-  }) {
-    final combat = PersistentTurnCombatResolver.resolve(
-      turn: save.turn,
-      state: state,
-      mapDefinition: mapDefinition,
-      ruleset: ruleset,
-    );
-    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: combat.state,
-      playerIds: playerIds,
-      mapData: mapData,
-      ruleset: ruleset,
-      priorEvents: combat.events,
-      mapObjectives: mapData.objectives,
-      turn: save.turn,
-    );
-    final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
-      state: economy.state,
-      playerIds: playerIds,
-    );
-    final movement = PersistentTurnMovementProcessor.resetForPlayers(
-      state: artifactProgress.state,
-      playerIds: playerIds,
-      mapData: mapData,
-    );
-    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: movement.state.runtimeState.diplomacy,
-      fogOfWar: movement.state.fogOfWar,
-      units: movement.state.units,
-      cities: movement.state.cities,
-      playerIds: playerIds,
-    );
-    final diplomacy = DiplomacyTurnResolver.resolve(
-      diplomacy: discoveredDiplomacy,
-      turn: save.turn + 1,
-      units: movement.state.units,
-      cities: movement.state.cities,
-    );
-    const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns =
-        movement.state.runtimeState.dominationHoldTurnsByPlayerId;
-    final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
-      playerIds: playerIds,
-      state: movement.state,
-      mapData: mapData,
-      victoryRules: save.matchRules.victory,
-      previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-    );
-    final dominationEvents = dominationProgressCalculator
-        .thresholdReachedEvents(
-          playerIds: playerIds,
-          state: movement.state,
-          mapData: mapData,
-          victoryRules: save.matchRules.victory,
-          previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-          nextHoldTurnsByPlayerId: dominationHoldTurns,
-        );
-    final previousCulturalHoldTurns =
-        movement.state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
-    final culturalHoldTurns = save.matchRules.victory.culturalEnabled
-        ? CulturalVictoryProgressCalculator.advanceHoldTurns(
-            playerIds: playerIds,
-            state: movement.state,
-            previousHoldTurnsByPlayerId: previousCulturalHoldTurns,
-            requiredArtifactCount:
-                save.matchRules.victory.culturalRequiredArtifacts,
-          )
-        : previousCulturalHoldTurns;
-    final runtimeState = movement.state.runtimeState.copyWith(
-      submittedPlayerIds: const {},
-      intendedAttacks: const [],
-      diplomacy: diplomacy.diplomacy,
-      dominationHoldTurnsByPlayerId: dominationHoldTurns,
-      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-      turnStartedAt: now.toUtc(),
-    );
-    final nextSave = save.withNewTurn().copyWith(savedAt: now.toUtc());
-    final nextState = movement.state.copyWith(runtimeState: runtimeState);
-    return _CommandApplication.accept(
-      save: nextSave,
-      state: nextState,
-      events: [
-        AllPlayersSubmittedEvent(turn: save.turn, playerIds: playerIds),
-        ...combat.events,
-        ...economy.events,
-        ...diplomacy.events,
-        ...dominationEvents,
-        for (final playerId in playerIds) TurnEndedEvent(playerId: playerId),
-      ],
-    );
-  }
-
   _CommandApplication _fromPersistentResult(GameSave save, Object result) {
     return switch (result) {
       PersistentMoveUnitResult(
@@ -703,15 +569,6 @@ class ServerCommandReducer {
       );
     }
     return _CommandApplication.accept(save: save, state: state, events: events);
-  }
-
-  List<String> _activePlayerIds(GameSave save) {
-    final ids = save.players
-        .map((player) => player.id)
-        .where((id) => id.isNotEmpty)
-        .toList();
-    if (ids.isNotEmpty) return ids..sort();
-    return save.playerStates.keys.where((id) => id.isNotEmpty).toList()..sort();
   }
 
   MapDefinition _mapDefinitionFrom(MapData mapData) {

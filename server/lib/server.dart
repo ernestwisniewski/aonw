@@ -8,9 +8,12 @@ import 'src/auth/steam_auth_route.dart';
 import 'src/auth/steam_auth_service.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
+import 'src/multiplayer/multiplayer_endpoint.dart';
+import 'src/multiplayer/multiplayer_turn_timeout_future_call.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
+  _registerTurnTimeoutSweep(pod);
   final appleConfigured = _appleIdpConfigured(pod);
 
   pod.initializeAuthServices(
@@ -31,6 +34,7 @@ void run(List<String> args) async {
   );
 
   await pod.start();
+  await _scheduleTurnTimeoutSweep(pod);
 }
 
 bool _appleIdpConfigured(Serverpod pod) {
@@ -45,4 +49,25 @@ bool _appleIdpConfigured(Serverpod pod) {
 bool _hasPassword(Serverpod pod, String key) {
   final value = pod.getPassword(key);
   return value != null && value.trim().isNotEmpty;
+}
+
+void _registerTurnTimeoutSweep(Serverpod pod) {
+  try {
+    pod.registerFutureCall(
+      MultiplayerTurnTimeoutSweepCall(hub: multiplayerHub),
+      multiplayerTurnTimeoutSweepCallName,
+    );
+  } on StateError {
+    // Future calls can be disabled for maintenance/test roles; turn timeout
+    // enforcement still runs on direct command handling in those modes.
+  }
+}
+
+Future<void> _scheduleTurnTimeoutSweep(Serverpod pod) async {
+  try {
+    await scheduleMultiplayerTurnTimeoutSweep(pod);
+  } on StateError {
+    // Future calls can be disabled for maintenance/test roles; turn timeout
+    // enforcement still runs on direct command handling in those modes.
+  }
 }
