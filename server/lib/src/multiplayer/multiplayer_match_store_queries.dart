@@ -13,14 +13,10 @@ Future<List<StoredMatchState>> _listRunningStates(
   for (final row in rows) {
     try {
       states.add(await store._stateFromRow(row));
-    } on ArgumentError catch (error, stackTrace) {
-      store._session.log(
-        'Skipping running multiplayer match with incompatible snapshot: '
-        '${row.publicId}',
-        level: LogLevel.warning,
-        exception: error,
-        stackTrace: stackTrace,
-      );
+    } on ArgumentError {
+      // Old snapshots can remain in the database after a wire protocol bump.
+      // They cannot be resumed by the current server, but they also must not
+      // stop timeout processing for healthy running matches.
     }
   }
   return states;
