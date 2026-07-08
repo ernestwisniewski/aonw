@@ -4,6 +4,20 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.1.4 - 2026-07-08
+
+- Improved multiplayer synchronization so live matches recover more reliably
+  after reconnects, delayed updates, duplicate messages, or stale snapshots.
+- Preserved visible multiplayer action effects during sync updates so opponent
+  moves, attacks, and other turn events are easier to follow.
+- Hardened turn handling around timeouts, resignations, leaving matches, and
+  reconnecting players so stalled multiplayer games are less likely to get
+  stuck.
+- Improved matchmaking and connection cleanup for stale lobbies and active
+  multiplayer sessions.
+- Expanded multiplayer smoke tests and protocol coverage to reduce regressions
+  in online matches.
+
 ## 1.1.3 - 2026-07-08
 
 - Added the first version of world wonders, including unique wonder projects,
