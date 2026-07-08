@@ -34,6 +34,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
   double _spriteScale = 1.0;
   double _tacticalViewEmphasis = 0.0;
   bool _animateIdle = true;
+  Set<String> _visibleUnitIds = const {};
 
   Set<String> get animatingUnitIds => _animator.animatingUnitIds;
 
@@ -292,6 +293,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     final visibleUnits = units.toList(growable: false);
     final cityPlacements = _cityUnitPlacements(visibleUnits, cityTiles);
     final unitIds = visibleUnits.map((unit) => unit.id).toSet();
+    _visibleUnitIds = unitIds;
     final resolvedPendingActionUnitId =
         pendingActionUnitId ??
         UnitMarkerLayer.pendingActionUnitId(pendingAction);
@@ -504,7 +506,12 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       fromCol: fromCol,
       fromRow: fromRow,
       steps: steps,
-      onComplete: onComplete,
+      onComplete: () {
+        scheduleMicrotask(() {
+          _removeMarkerIfNoLongerVisible(unitId);
+          onComplete();
+        });
+      },
     );
   }
 
@@ -522,6 +529,12 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       defenderKilled: defenderKilled,
       onComplete: onComplete,
     );
+  }
+
+  void _removeMarkerIfNoLongerVisible(String unitId) {
+    if (_visibleUnitIds.contains(unitId)) return;
+    final marker = _markers.remove(unitId);
+    marker?.removeFromParent();
   }
 
   Vector2 _worldPositionFor(int col, int row) {

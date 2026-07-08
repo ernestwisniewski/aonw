@@ -195,6 +195,7 @@ void main() {
       );
 
       expect(effects.whereType<SmoothCameraEffect>(), isEmpty);
+      expect(effects.whereType<ShakeCameraEffect>(), isEmpty);
       expect(effects.whereType<ShowCombatHexAlertEffect>(), isEmpty);
       expect(effects.whereType<SpawnParticleBurstEffect>(), isEmpty);
       expect(effects.whereType<ShowFloatingTextEffect>(), isEmpty);

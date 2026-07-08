@@ -1302,7 +1302,9 @@ void main() {
       expect(firstCompleted, isFalse);
       expect(secondCompleted, isFalse);
 
-      game.update(0.7);
+      game
+        ..update(0.3)
+        ..update(0.4);
       await first.timeout(const Duration(seconds: 1));
 
       expect(firstCompleted, isTrue);
@@ -1352,6 +1354,59 @@ void main() {
       );
 
       _expectVectorClose(_visibleCenter(game), before);
+    });
+
+    test('animates visible enemy movement before it leaves vision', () async {
+      final map = _map(3, 1);
+      final enemy = GameUnit.produced(
+        id: 'enemy_1',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.warrior,
+        col: 0,
+        row: 0,
+      );
+      final game = GameRenderer(mapData: map, onCommand: (_) async {});
+      addTearDown(game.disposeRenderer);
+      final fog = _fog(visible: {const HexCoordinate(col: 0, row: 0)});
+
+      game
+        ..applyState(
+          GameState(activePlayerId: 'player_1', fogOfWar: fog, units: [enemy]),
+        )
+        ..onGameResize(Vector2(800, 600));
+      await game.onLoad();
+
+      expect(game.unitMarkerPositionForTesting(enemy.id), isNotNull);
+
+      final transition = game.applyTransition(
+        GameState(
+          activePlayerId: 'player_1',
+          fogOfWar: fog,
+          units: [enemy.copyWith(col: 1, row: 0)],
+        ),
+        const [
+          AnimateUnitMoveEffect(
+            unitId: 'enemy_1',
+            fromCol: 0,
+            fromRow: 0,
+            steps: [
+              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            ],
+          ),
+        ],
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(game.animatingUnitIdsListenable.value, contains(enemy.id));
+      _expectVectorClose(
+        game.unitMarkerPositionForTesting(enemy.id)!,
+        UnitMarkerLayer.worldPositionFor(0, 0),
+      );
+
+      game.update(0.7);
+      await transition.timeout(const Duration(seconds: 1));
+
+      expect(game.unitMarkerPositionForTesting(enemy.id), isNull);
     });
 
     test('focuses the active player when the first state is applied', () async {

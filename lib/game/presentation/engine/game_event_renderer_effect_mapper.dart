@@ -162,6 +162,45 @@ abstract final class GameEventRendererEffectMapper {
     String? viewerPlayerId,
     int? turn,
   }) {
+    final attacker =
+        (previousState ?? state).unitById(event.attackerUnitId) ??
+        state.unitById(event.attackerUnitId);
+    final defender =
+        (previousState ?? state).unitById(event.defenderUnitId) ??
+        state.unitById(event.defenderUnitId);
+    final attackerAlertUnit = state.unitById(event.attackerUnitId);
+    final defenderAlertUnit = state.unitById(event.defenderUnitId);
+    final defenderCity =
+        (previousState ?? state).cityById(event.defenderUnitId) ??
+        state.cityById(event.defenderUnitId);
+
+    final combatVisible =
+        (attacker != null &&
+            _canRenderTransientAtEither(
+              state,
+              previousState,
+              attacker.col,
+              attacker.row,
+              viewerPlayerId: viewerPlayerId,
+            )) ||
+        (defender != null &&
+            _canRenderTransientAtEither(
+              state,
+              previousState,
+              defender.col,
+              defender.row,
+              viewerPlayerId: viewerPlayerId,
+            )) ||
+        (defenderCity != null &&
+            _canRenderTransientAtEither(
+              state,
+              previousState,
+              defenderCity.center.col,
+              defenderCity.center.row,
+              viewerPlayerId: viewerPlayerId,
+            ));
+    if (!combatVisible) return const [];
+
     final effects = <RendererEffect>[const ShakeCameraEffect()];
     var defenderDamage = 0;
     var attackerDamage = 0;
@@ -176,21 +215,10 @@ abstract final class GameEventRendererEffectMapper {
       }
     }
 
-    final attacker =
-        (previousState ?? state).unitById(event.attackerUnitId) ??
-        state.unitById(event.attackerUnitId);
-    final defender =
-        (previousState ?? state).unitById(event.defenderUnitId) ??
-        state.unitById(event.defenderUnitId);
-    final attackerAlertUnit = state.unitById(event.attackerUnitId);
-    final defenderAlertUnit = state.unitById(event.defenderUnitId);
-    final defenderCity =
-        (previousState ?? state).cityById(event.defenderUnitId) ??
-        state.cityById(event.defenderUnitId);
-
     if (attackerAlertUnit != null &&
-        _canRenderTransientAt(
+        _canRenderTransientAtEither(
           state,
+          previousState,
           attackerAlertUnit.col,
           attackerAlertUnit.row,
           viewerPlayerId: viewerPlayerId,
@@ -210,8 +238,9 @@ abstract final class GameEventRendererEffectMapper {
     }
 
     if (defenderAlertUnit != null &&
-        _canRenderTransientAt(
+        _canRenderTransientAtEither(
           state,
+          previousState,
           defenderAlertUnit.col,
           defenderAlertUnit.row,
           viewerPlayerId: viewerPlayerId,
@@ -229,8 +258,9 @@ abstract final class GameEventRendererEffectMapper {
         ),
       );
     } else if (defenderCity != null &&
-        _canRenderTransientAt(
+        _canRenderTransientAtEither(
           state,
+          previousState,
           defenderCity.center.col,
           defenderCity.center.row,
           viewerPlayerId: viewerPlayerId,
@@ -251,8 +281,9 @@ abstract final class GameEventRendererEffectMapper {
 
     if (defenderDamage > 0) {
       if (defender != null &&
-          _canRenderTransientAt(
+          _canRenderTransientAtEither(
             state,
+            previousState,
             defender.col,
             defender.row,
             viewerPlayerId: viewerPlayerId,
@@ -260,8 +291,9 @@ abstract final class GameEventRendererEffectMapper {
         effects.add(_damageTextEffect(defender, defenderDamage));
       } else {
         if (defenderCity != null) {
-          final defenderCityVisible = _canRenderTransientAt(
+          final defenderCityVisible = _canRenderTransientAtEither(
             state,
+            previousState,
             defenderCity.center.col,
             defenderCity.center.row,
             viewerPlayerId: viewerPlayerId,
@@ -299,8 +331,9 @@ abstract final class GameEventRendererEffectMapper {
 
     if (attackerDamage > 0) {
       if (attacker != null &&
-          _canRenderTransientAt(
+          _canRenderTransientAtEither(
             state,
+            previousState,
             attacker.col,
             attacker.row,
             viewerPlayerId: viewerPlayerId,
@@ -525,6 +558,30 @@ abstract final class GameEventRendererEffectMapper {
   }) {
     return MapFocusVisibility.canRenderTransientAt(
       state,
+      col,
+      row,
+      viewerPlayerId: viewerPlayerId,
+    );
+  }
+
+  static bool _canRenderTransientAtEither(
+    GameState state,
+    GameState? previousState,
+    int col,
+    int row, {
+    String? viewerPlayerId,
+  }) {
+    if (_canRenderTransientAt(
+      state,
+      col,
+      row,
+      viewerPlayerId: viewerPlayerId,
+    )) {
+      return true;
+    }
+    if (previousState == null) return false;
+    return _canRenderTransientAt(
+      previousState,
       col,
       row,
       viewerPlayerId: viewerPlayerId,
