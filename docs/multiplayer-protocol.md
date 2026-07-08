@@ -61,6 +61,11 @@ The runtime keeps these synchronization invariants:
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
 
+Quickplay uses one global public queue. A player's requested map is a lobby
+preference for newly created queues; once they join an existing queue, the
+existing lobby's map preference and the final player count determine the start
+map through `MapPlayerCapacityRules.multiplayerStartMapName`.
+
 ## Protocol Versioning
 
 All wire payloads carry `v: 2` and are validated by `kProtocolVersion`.

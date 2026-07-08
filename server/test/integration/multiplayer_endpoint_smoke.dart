@@ -242,9 +242,6 @@ void main() {
         expect(acks.map((message) => message.ack?.accepted), [true, true]);
         expect(acks.map((message) => message.ack?.offset).toSet(), {1});
 
-        await input.close();
-        await subscription.cancel();
-
         final persistedEvents = await endpoints.multiplayer.listEvents(
           owner.session,
           created.id,
@@ -252,6 +249,41 @@ void main() {
         );
         expect(persistedEvents, hasLength(1));
         expect(persistedEvents.single.offset, acks.first.ack?.offset);
+
+        final guestPlayer = started.players.firstWhere(
+          (player) => player.userId == guest.userIdentifier,
+        );
+        final guestAck = await _sendClientCommand(
+          endpoints,
+          session: guest.session,
+          matchId: created.id,
+          afterOffset: persistedEvents.single.offset,
+          message: MultiplayerClientMessage(
+            clientMessageId: 'submit-turn-guest',
+            lastSeenOffset: persistedEvents.single.offset,
+            requestSnapshot: false,
+            command: WireCommand(
+              matchId: created.id,
+              tick: 2,
+              turn: 1,
+              actorPlayerId: guestPlayer.id,
+              command: GameCommandSerializer.toJson(
+                SubmitTurnCommand(guestPlayer.id),
+              ),
+            ),
+          ),
+        );
+        expect(guestAck.accepted, isTrue);
+        expect(GameSave.fromJson(guestAck.snapshot.save).turn, 2);
+
+        final reloadedAfterTurn = await endpoints.multiplayer.loadMatch(
+          owner.session,
+          created.id,
+        );
+        expect(reloadedAfterTurn.turn, 2);
+
+        await input.close();
+        await subscription.cancel();
       });
 
       test(
@@ -630,6 +662,49 @@ Future<List<MultiplayerServerMessage>> _connectUntilInitialSnapshot(
     if (!input.isClosed) await input.close();
     return messages;
   } finally {
+    await subscription.cancel();
+  }
+}
+
+Future<WireCommandAck> _sendClientCommand(
+  TestEndpoints endpoints, {
+  required TestSessionBuilder session,
+  required String matchId,
+  required int afterOffset,
+  required MultiplayerClientMessage message,
+}) async {
+  final input = StreamController<MultiplayerClientMessage>();
+  final initialSnapshot = Completer<void>();
+  final ackMessage = Completer<WireCommandAck>();
+  late final StreamSubscription<MultiplayerServerMessage> subscription;
+  subscription = endpoints.multiplayer
+      .connect(session, matchId, afterOffset, input.stream)
+      .listen(
+        (serverMessage) {
+          if (serverMessage.snapshot != null && !initialSnapshot.isCompleted) {
+            initialSnapshot.complete();
+          }
+          final ack = serverMessage.ack;
+          if (ack != null && !ackMessage.isCompleted) {
+            ackMessage.complete(ack);
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (!initialSnapshot.isCompleted) {
+            initialSnapshot.completeError(error, stackTrace);
+          }
+          if (!ackMessage.isCompleted) {
+            ackMessage.completeError(error, stackTrace);
+          }
+        },
+      );
+
+  try {
+    await initialSnapshot.future.timeout(_streamTimeout);
+    input.add(message);
+    return await ackMessage.future.timeout(_streamTimeout);
+  } finally {
+    await input.close();
     await subscription.cancel();
   }
 }

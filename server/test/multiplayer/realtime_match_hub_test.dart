@@ -1345,6 +1345,89 @@ void main() {
       );
     },
   );
+
+  test('rejects joins for private and non-open matches', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+    );
+    final store = _MemoryMatchStore();
+    final publicMatch = await hub.createMatch(
+      store: store,
+      userIdentifier: 'public-owner',
+      request: CreateMatchRequest(
+        name: 'Public lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    await hub.joinMatch(
+      store: store,
+      userIdentifier: 'public-guest',
+      matchId: publicMatch.id,
+    );
+    final runningPublic = await hub.startMatch(
+      store: store,
+      userIdentifier: 'public-owner',
+      matchId: publicMatch.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+
+    await expectLater(
+      hub.joinMatch(
+        store: store,
+        userIdentifier: 'late-public-guest',
+        matchId: runningPublic.id,
+      ),
+      throwsA(_multiplayerError('match_not_open')),
+    );
+
+    final privateMatch = await hub.createMatch(
+      store: store,
+      userIdentifier: 'private-owner',
+      request: CreateMatchRequest(
+        name: 'Private lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: true,
+      ),
+    );
+    await expectLater(
+      hub.joinMatch(
+        store: store,
+        userIdentifier: 'public-id-guest',
+        matchId: privateMatch.id,
+      ),
+      throwsA(_multiplayerError('match_not_found')),
+    );
+    await hub.joinPrivateMatch(
+      store: store,
+      userIdentifier: 'private-guest',
+      inviteCode: privateMatch.inviteCode!,
+    );
+    final runningPrivate = await hub.startMatch(
+      store: store,
+      userIdentifier: 'private-owner',
+      matchId: privateMatch.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+
+    await expectLater(
+      hub.joinPrivateMatch(
+        store: store,
+        userIdentifier: 'late-private-guest',
+        inviteCode: runningPrivate.inviteCode!,
+      ),
+      throwsA(_multiplayerError('match_not_open')),
+    );
+  });
 }
 
 Matcher _multiplayerError(String code) {
