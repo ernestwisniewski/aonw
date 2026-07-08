@@ -13,8 +13,8 @@ unless they explicitly say they are historical logs.
 - Devlog: [ernest.dev](https://ernest.dev)
 - GitHub: [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw)
 - iOS: [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591)
-- Windows/macOS: [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw)
-- Android (soon)
+- Windows/Linux/macOS: [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw)
+- Android: [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw)
 
 ## Architecture
 
