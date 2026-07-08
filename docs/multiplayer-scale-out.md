@@ -1,9 +1,16 @@
 # Multiplayer Scale-Out Contract
 
 The current production-ready scale-out mode is Serverpod API instances behind a
-reverse proxy, with PostgreSQL as the durable source of truth and Redis enabled
-for Serverpod realtime coordination. Clients reconnect with their last event
-offset and recover through Serverpod endpoints/streams plus persisted snapshots.
+reverse proxy, with PostgreSQL as the durable source of truth. Clients reconnect
+with their last event offset and recover through Serverpod endpoints/streams
+plus persisted snapshots.
+
+The application-level match subscriber registry is process-local. Until match
+event fan-out is moved to a shared Redis/NATS channel, run live match streams
+with sticky routing or a single active API instance per match. Cross-instance
+recovery is still authoritative through PostgreSQL snapshots and event offsets,
+but live broadcasts only reach subscribers attached to the process that emits
+the event.
 
 ## Load Balancer Rules
 
@@ -13,6 +20,8 @@ offset and recover through Serverpod endpoints/streams plus persisted snapshots.
   stay `200` while `/readyz` returns
   `503` during deploy drain.
 - Preserve HTTP upgrade headers for Serverpod realtime streams and Insights.
+- Keep all players in the same live match pinned to the same API instance unless
+  a shared match event bus has been deployed.
 - Preserve request-id headers such as `X-Request-Id` at the reverse-proxy layer
   if your deployment adds them. The current Serverpod app does not implement
   custom request-id echoing or JSON-log enrichment itself.
@@ -47,10 +56,10 @@ Readiness polling should be fast enough to remove draining instances before new
 match streams are opened. Keep API and Insights ports private unless the reverse
 proxy terminates TLS and applies the public host policy.
 
-## Future Redis/NATS Mode
+## Shared Event Bus Mode
 
-If the runtime needs a custom event bus beyond Serverpod/Redis, the replacement
-contract is:
+When live match fan-out moves beyond the process-local subscriber registry, the
+replacement contract is:
 
 - persist command event + snapshot in PostgreSQL first;
 - publish the committed event offset to Redis/NATS after commit;
