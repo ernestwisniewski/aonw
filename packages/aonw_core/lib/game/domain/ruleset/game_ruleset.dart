@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 class GameRuleset {
   final CityRuleset city;
@@ -11,6 +12,7 @@ class GameRuleset {
   final TechnologyRuleset technology;
   final PaceBalance paceBalance;
   final StabilityRuleset stability;
+  final WonderRuleset wonders;
 
   const GameRuleset({
     required this.city,
@@ -18,6 +20,7 @@ class GameRuleset {
     required this.technology,
     this.paceBalance = PaceBalance.unlimited,
     this.stability = StabilityRuleset.standard,
+    this.wonders = WonderRuleset.standard,
   });
 
   factory GameRuleset.standard() => _standard;
@@ -27,6 +30,7 @@ class GameRuleset {
     combat: CombatRuleset.standard,
     technology: TechnologyRulesets.standard,
     stability: StabilityRuleset.standard,
+    wonders: WonderRuleset.standard,
   );
 
   static final GameRuleset _standard = defaults.copyWith(
@@ -39,6 +43,7 @@ class GameRuleset {
     TechnologyRuleset? technology,
     PaceBalance? paceBalance,
     StabilityRuleset? stability,
+    WonderRuleset? wonders,
   }) {
     return GameRuleset(
       city: city ?? this.city,
@@ -46,6 +51,7 @@ class GameRuleset {
       technology: technology ?? this.technology,
       paceBalance: paceBalance ?? this.paceBalance,
       stability: stability ?? this.stability,
+      wonders: wonders ?? this.wonders,
     );
   }
 }

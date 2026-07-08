@@ -14,6 +14,12 @@ void main() {
       );
       expect(
         PreferredImageAssets.targetDecodeWidthFor(
+          PreferredImageAssets.wonderAtlas,
+        ),
+        isNull,
+      );
+      expect(
+        PreferredImageAssets.targetDecodeWidthFor(
           'assets/sprites/units/warrior.png',
         ),
         PreferredImageAssets.unitAtlasDecodeWidth,
@@ -48,6 +54,33 @@ void main() {
         PreferredImageAssets.isUnitAtlasPath(
           'assets/sprites/units/warrior.png',
         ),
+        isTrue,
+      );
+    });
+
+    test('prefers WebP wonder atlas with PNG fallback', () {
+      expect(
+        PreferredImageAssets.candidatesFor(
+          PreferredImageAssets.wonderAtlas,
+          preferredCandidateFailed: false,
+        ),
+        [
+          'assets/sprites/wonders_atlas_a_5x4_512.webp',
+          'assets/sprites/wonders_atlas_a_5x4_512.png',
+        ],
+      );
+      expect(
+        PreferredImageAssets.candidatesFor(
+          PreferredImageAssets.wonderAtlas,
+          preferredCandidateFailed: true,
+        ),
+        ['assets/sprites/wonders_atlas_a_5x4_512.png'],
+      );
+      expect(File(PreferredImageAssets.wonderAtlas).existsSync(), isTrue);
+      expect(
+        File(
+          PreferredImageAssets.webpPathFor(PreferredImageAssets.wonderAtlas),
+        ).existsSync(),
         isTrue,
       );
     });

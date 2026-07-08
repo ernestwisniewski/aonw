@@ -191,6 +191,7 @@ class GameEffectDispatcher {
           ),
           ProjectProductionTarget(:final projectType) =>
             GameDisplayNames.cityProject(_l10n, projectType),
+          WonderProductionTarget(:final wonderType) => wonderType.displayName,
         };
 
   String _productionEtaLabel(ShowCityProductionBubbleEffect effect) {

@@ -64,6 +64,10 @@ final class BasicStrategyProductionPlanner {
         cityId,
         projectType,
       ),
+      WonderProductionTarget(:final wonderType) => StartWonderCommand(
+        cityId,
+        wonderType,
+      ),
     };
   }
 

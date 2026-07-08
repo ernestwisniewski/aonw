@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 /// Immutable dependency bundle shared by reducers for a single command pass.
 ///
@@ -29,6 +30,8 @@ final class ReducerEnvironment {
   TechnologyRuleset get technologyRuleset => ruleset.technology;
 
   StabilityRuleset get stabilityRuleset => ruleset.stability;
+
+  WonderRuleset get wonderRuleset => ruleset.wonders;
 
   PaceBalance get paceBalance => context.paceBalance;
 

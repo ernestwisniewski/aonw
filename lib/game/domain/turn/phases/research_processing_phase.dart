@@ -17,6 +17,8 @@ class ResearchProcessingPhase extends TurnPhase {
       mapData: context.mapData,
       ruleset: context.ruleset.technology,
       cityRuleset: context.ruleset.city,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: context.ruleset.wonders,
       bonusScience: context.bonusScience,
       paceBalance: context.ruleset.paceBalance,
     );

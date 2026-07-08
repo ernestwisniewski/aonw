@@ -9,6 +9,7 @@ import 'package:aonw/game/presentation/widgets/city/city_specialization_list_til
 import 'package:aonw/game/presentation/widgets/shared/selected_panel_item_revealer.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 export 'package:aonw/game/presentation/widgets/city/city_building_sort_controls.dart'
@@ -25,10 +26,13 @@ class CityProductionList extends StatelessWidget {
     required this.specializations,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     required this.onBuild,
     required this.onProduceUnit,
     required this.onStartProject,
     required this.onSetSpecialization,
+    this.wonders = const [],
+    this.onBuildWonder,
     this.buildingSortMode = CityBuildingSortMode.recommended,
     this.onBuildingSortModeChanged,
     this.selectedItemKey,
@@ -38,12 +42,15 @@ class CityProductionList extends StatelessWidget {
 
   final List<CityProductionItem> buildings;
   final List<CityProductionItem> futureBuildings;
+  final List<CityProductionItem> wonders;
   final List<CityProductionItem> units;
   final List<CityProductionItem> projects;
   final List<CitySpecializationItem> specializations;
   final ValueChanged<CityProductionItem> onBuildingDetails;
   final ValueChanged<CityProductionItem> onUnitDetails;
+  final ValueChanged<CityProductionItem> onWonderDetails;
   final ValueChanged<CityBuildingType> onBuild;
+  final ValueChanged<WonderType>? onBuildWonder;
   final ValueChanged<GameUnitType> onProduceUnit;
   final ValueChanged<CityProjectType>? onStartProject;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
@@ -60,6 +67,14 @@ class CityProductionList extends StatelessWidget {
       futureBuildings,
       buildingSortMode,
     );
+    final visibleWonders = [
+      for (final item in wonders)
+        if (!item.locked || item.active) item,
+    ];
+    final unavailableWonders = [
+      for (final item in wonders)
+        if (item.locked && !item.active) item,
+    ];
     final hasBuildingRows =
         sortedBuildings.isNotEmpty || sortedFutureBuildings.isNotEmpty;
     final children = <Widget>[];
@@ -87,6 +102,28 @@ class CityProductionList extends StatelessWidget {
               onTap: item.active || onStartProject == null
                   ? null
                   : () => onStartProject!(item.projectType!),
+            ),
+          ),
+        );
+      }
+    }
+
+    void addWonderRows(List<CityProductionItem> items) {
+      for (final item in items) {
+        final itemKey = cityProductionItemKey(item);
+        children.add(
+          SelectedPanelItemRevealer(
+            selected: selectedItemKey == itemKey,
+            alignment: 0.18,
+            child: ProductionListTile(
+              key: ValueKey(itemKey),
+              item: item,
+              compact: compact,
+              selected: selectedItemKey == itemKey,
+              onDetails: () => onWonderDetails(item),
+              onTap: item.active || item.locked || onBuildWonder == null
+                  ? null
+                  : () => onBuildWonder!(item.wonderType!),
             ),
           ),
         );
@@ -174,6 +211,30 @@ class CityProductionList extends StatelessWidget {
       }
     }
 
+    if (visibleWonders.isNotEmpty || unavailableWonders.isNotEmpty) {
+      addMajorGap();
+      if (visibleWonders.isNotEmpty) {
+        children.add(
+          CityProductionSectionTitle(l10n.cityProductionWondersSection),
+        );
+        addWonderRows(visibleWonders);
+        if (unavailableWonders.isNotEmpty) {
+          children.add(SizedBox(height: compact ? 6 : 8));
+        }
+      }
+      if (unavailableWonders.isNotEmpty) {
+        children.add(
+          FutureBuildingsSection(
+            items: unavailableWonders,
+            title: l10n.futureWondersSection(unavailableWonders.length),
+            subtitle: l10n.futureWondersSubtitle,
+            compact: compact,
+            onDetails: onWonderDetails,
+          ),
+        );
+      }
+    }
+
     if (specializations.isNotEmpty) {
       addMajorGap();
       children.add(
@@ -243,6 +304,8 @@ String cityProductionItemKey(CityProductionItem item) {
   if (unitType != null) return 'unit:${unitType.name}';
   final projectType = item.projectType;
   if (projectType != null) return 'project:${projectType.name}';
+  final wonderType = item.wonderType;
+  if (wonderType != null) return 'wonder:${wonderType.name}';
   return 'item:${item.title}';
 }
 

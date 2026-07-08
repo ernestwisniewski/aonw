@@ -5,6 +5,7 @@ class StabilityBreakdown {
   final int luxurySources;
   final int techSources;
   final int artifactSources;
+  final int wonderSources;
   final int cityCost;
   final int populationCost;
   final int cohesionCost;
@@ -19,6 +20,7 @@ class StabilityBreakdown {
     required this.luxurySources,
     required this.techSources,
     required this.artifactSources,
+    this.wonderSources = 0,
     required this.cityCost,
     required this.populationCost,
     required this.cohesionCost,
@@ -32,7 +34,8 @@ class StabilityBreakdown {
       buildingSources +
       luxurySources +
       techSources +
-      artifactSources;
+      artifactSources +
+      wonderSources;
 
   int get costs =>
       cityCost +
@@ -53,6 +56,7 @@ class StabilityBreakdown {
         other.luxurySources == luxurySources &&
         other.techSources == techSources &&
         other.artifactSources == artifactSources &&
+        other.wonderSources == wonderSources &&
         other.cityCost == cityCost &&
         other.populationCost == populationCost &&
         other.cohesionCost == cohesionCost &&
@@ -69,6 +73,7 @@ class StabilityBreakdown {
     luxurySources,
     techSources,
     artifactSources,
+    wonderSources,
     cityCost,
     populationCost,
     cohesionCost,

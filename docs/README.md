@@ -117,6 +117,8 @@ rendering behavior:
   victory, and end-state behavior.
 - [Turn Flow and Action Focus](game-design/turn-flow-and-action-focus.md) -
   turn progression, action focus, and next-action behavior.
+- [World Wonders](game-design/world-wonders.md) - globally unique wonder
+  production, race resolution, effects, UI, AI, and serialization.
 - [Yield Unification](game-design/yield-unification.md) - yield model
   consolidation across city, tile, and resource systems.
 

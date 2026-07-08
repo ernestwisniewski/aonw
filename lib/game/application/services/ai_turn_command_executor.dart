@@ -193,6 +193,8 @@ final class AiTurnCommandExecutor {
         'start ${command.buildingType.name} in city ${command.cityId}',
       StartCityProjectCommand() =>
         'start ${command.projectType.name} project in city ${command.cityId}',
+      StartWonderCommand() =>
+        'start ${command.wonderType.name} wonder in city ${command.cityId}',
       SetCitySpecializationCommand() =>
         'set city ${command.cityId} specialization to '
             '${command.specialization.name}',

@@ -16,6 +16,7 @@ import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slo
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,6 +116,8 @@ class HudOverlayPanels extends ConsumerWidget {
         cityRuleset: cityRuleset,
         research: state.research,
         technologyRuleset: technologyRuleset,
+        wonderRegistry: state.wonderRegistry,
+        wonderRuleset: WonderRuleset.standard,
         mapData: mapData,
         cities: state.cities,
         units: state.units,
@@ -133,6 +136,8 @@ class HudOverlayPanels extends ConsumerWidget {
             unawaited(dispatcher.startCityUnitProduction(city.id, unitType)),
         onStartProject: (projectType) =>
             unawaited(dispatcher.startCityProject(city.id, projectType)),
+        onBuildWonder: (wonderType) =>
+            unawaited(dispatcher.startCityWonder(city.id, wonderType)),
         onSetSpecialization: (specialization) => unawaited(
           dispatcher.setCitySpecialization(city.id, specialization),
         ),

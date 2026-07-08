@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -202,6 +203,50 @@ void main() {
       expect(
         technologies[TechnologyId.strategy]!.unlocks,
         contains(const UnlockUnitType(GameUnitType.commander)),
+      );
+      expect(
+        technologies[TechnologyId.writing]!.unlocks,
+        contains(const UnlockWonder(WonderType.greatLibrary)),
+      );
+      expect(
+        technologies[TechnologyId.waterEngineering]!.unlocks,
+        contains(const UnlockWonder(WonderType.hangingGardens)),
+      );
+      expect(
+        technologies[TechnologyId.militaryOrganization]!.unlocks,
+        contains(const UnlockWonder(WonderType.greatWall)),
+      );
+      expect(
+        technologies[TechnologyId.stoneworking]!.unlocks,
+        contains(const UnlockWonder(WonderType.petra)),
+      );
+      expect(
+        technologies[TechnologyId.banking]!.unlocks,
+        contains(const UnlockWonder(WonderType.centralBank)),
+      );
+      expect(
+        technologies[TechnologyId.education]!.unlocks,
+        contains(const UnlockWonder(WonderType.imperialUniversity)),
+      );
+      expect(
+        technologies[TechnologyId.law]!.unlocks,
+        contains(const UnlockWonder(WonderType.grandCathedral)),
+      );
+      expect(
+        technologies[TechnologyId.steamPower]!.unlocks,
+        contains(const UnlockWonder(WonderType.motherFactory)),
+      );
+      expect(
+        technologies[TechnologyId.scientificMethod]!.unlocks,
+        contains(const UnlockWonder(WonderType.nationalObservatory)),
+      );
+      expect(
+        technologies[TechnologyId.nuclearPhysics]!.unlocks,
+        contains(const UnlockWonder(WonderType.svalbardSeedVault)),
+      );
+      expect(
+        technologies[TechnologyId.radio]!.unlocks,
+        contains(const UnlockWonder(WonderType.grandExposition)),
       );
     });
 

@@ -6,6 +6,7 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -51,6 +52,39 @@ void main() {
         contains('Research'),
       );
       expect(viewModel.specializations, isEmpty);
+    },
+  );
+
+  test(
+    'CityProductionDialogViewModel does not duplicate locked wonder tech labels',
+    () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Krakow',
+        center: CityHex(col: 0, row: 0),
+      );
+
+      final viewModel = CityProductionDialogViewModel.from(
+        city,
+        l10n: l10n,
+        cityRuleset: CityRulesets.standard,
+        research: ResearchState.empty,
+        technologyRuleset: TechnologyRulesets.standard,
+        mapData: _map(),
+        cities: const [city],
+        units: const [],
+        fieldImprovements: const [],
+        productionPerTurn: 2,
+      );
+
+      final greatLibrary = viewModel.wonders.singleWhere(
+        (item) => item.wonderType == WonderType.greatLibrary,
+      );
+
+      expect(greatLibrary.locked, isTrue);
+      expect(greatLibrary.requirementLabel, 'Requires: Writing');
+      expect(greatLibrary.metaLabels, isEmpty);
     },
   );
 

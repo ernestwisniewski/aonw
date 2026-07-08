@@ -29,6 +29,7 @@ export 'game/domain/tile_yield.dart';
 export 'game/domain/trade.dart';
 export 'game/domain/turn.dart';
 export 'game/domain/unit.dart';
+export 'game/domain/wonder.dart';
 export 'map/domain/hex_grid_topology.dart';
 export 'map/domain/map_config.dart';
 export 'map/domain/map_constraints.dart';

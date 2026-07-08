@@ -8,6 +8,7 @@ class _TechnologyUnlockSummary extends StatelessWidget {
     required this.showDetails,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
   });
 
   final TechnologyCardViewModel card;
@@ -16,13 +17,15 @@ class _TechnologyUnlockSummary extends StatelessWidget {
   final bool showDetails;
   final ValueChanged<CityBuildingType> onBuildingDetails;
   final ValueChanged<GameUnitType> onUnitDetails;
+  final ValueChanged<WonderType> onWonderDetails;
 
   @override
   Widget build(BuildContext context) {
     final inspectableUnlocks = [
       for (final unlock in card.unlocks)
         if (_buildingTypeForUnlock(unlock) != null ||
-            _unitTypeForUnlock(unlock) != null)
+            _unitTypeForUnlock(unlock) != null ||
+            _wonderTypeForUnlock(unlock) != null)
           unlock,
     ];
 
@@ -59,9 +62,13 @@ class _TechnologyUnlockSummary extends StatelessWidget {
   }
 
   String _tooltipForUnlock(AppLocalizations l10n, TechnologyUnlock unlock) {
-    return _buildingTypeForUnlock(unlock) != null
-        ? l10n.buildingDetailsTooltip
-        : l10n.unitDetailsTooltip;
+    if (_buildingTypeForUnlock(unlock) != null) {
+      return l10n.buildingDetailsTooltip;
+    }
+    if (_unitTypeForUnlock(unlock) != null) {
+      return l10n.unitDetailsTooltip;
+    }
+    return l10n.wonderDetailsTooltip;
   }
 
   void _showDetailsForUnlock(TechnologyUnlock unlock) {
@@ -74,6 +81,12 @@ class _TechnologyUnlockSummary extends StatelessWidget {
     final unitType = _unitTypeForUnlock(unlock);
     if (unitType != null) {
       onUnitDetails(unitType);
+      return;
+    }
+
+    final wonderType = _wonderTypeForUnlock(unlock);
+    if (wonderType != null) {
+      onWonderDetails(wonderType);
     }
   }
 }
@@ -118,13 +131,22 @@ CityBuildingType? _buildingTypeForUnlock(TechnologyUnlock unlock) {
   return switch (unlock) {
     UnlockCityBuilding(:final buildingId) =>
       TechnologyUnlockQuery.buildingTypeForUnlock(buildingId),
-    UnlockFieldImprovement() || UnlockUnitType() => null,
+    UnlockFieldImprovement() || UnlockUnitType() || UnlockWonder() => null,
   };
 }
 
 GameUnitType? _unitTypeForUnlock(TechnologyUnlock unlock) {
   return switch (unlock) {
     UnlockUnitType(:final unitType) => unitType,
-    UnlockCityBuilding() || UnlockFieldImprovement() => null,
+    UnlockCityBuilding() || UnlockFieldImprovement() || UnlockWonder() => null,
+  };
+}
+
+WonderType? _wonderTypeForUnlock(TechnologyUnlock unlock) {
+  return switch (unlock) {
+    UnlockWonder(:final wonderType) => wonderType,
+    UnlockCityBuilding() ||
+    UnlockFieldImprovement() ||
+    UnlockUnitType() => null,
   };
 }

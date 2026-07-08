@@ -2,6 +2,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_item_view_mo
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
@@ -48,6 +49,21 @@ class ProductionLeading extends StatelessWidget {
 
     final unitType = item.unitType;
     final icon = item.icon;
+    final wonderType = item.wonderType;
+    if (wonderType != null) {
+      return WonderSpriteIcon(
+        type: wonderType,
+        size: compact ? 38 : 46,
+        fallback: icon == null
+            ? const SizedBox.shrink()
+            : GameIcon(
+                icon,
+                size: compact ? GameIconSize.regular : GameIconSize.large,
+                color: GameUiTheme.goldLight,
+              ),
+      );
+    }
+
     if (unitType != null) {
       return UnitSpriteIcon(
         type: unitType,

@@ -17,6 +17,9 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 class PersistentCityProductionResult {
@@ -43,6 +46,7 @@ class PersistentCityProductionResolver {
     required MapDefinition mapDefinition,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final lookup = _cityLookup(state.cities, command.cityId);
@@ -205,6 +209,52 @@ class PersistentCityProductionResolver {
     );
   }
 
+  PersistentCityProductionResult startWonder({
+    required PersistentGameState state,
+    required StartWonderCommand command,
+    required String actorPlayerId,
+    required MapDefinition mapDefinition,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    final lookup = _cityLookup(state.cities, command.cityId);
+    if (lookup == null) return _reject(state, 'city_not_found');
+    final (:cityIndex, :city) = lookup;
+    if (city.ownerPlayerId != actorPlayerId) {
+      return _reject(state, 'city_not_controlled');
+    }
+
+    final availability = WonderAvailabilityPolicy.availabilityFor(
+      city: city,
+      cities: state.cities,
+      mapData: _mapDataFromDefinition(mapDefinition),
+      research: state.research,
+      registry: state.wonderRegistry,
+      ruleset: wonderRuleset,
+      wonderType: command.wonderType,
+    );
+    if (!availability.isAvailable) {
+      return _reject(state, 'wonder_not_available');
+    }
+
+    return PersistentCityProductionResult(
+      accepted: true,
+      state: state.copyWith(
+        cities: _replaceCity(
+          state.cities,
+          cityIndex,
+          _queueProduction(
+            city,
+            WonderProductionTarget(command.wonderType),
+            CityRulesets.standard,
+            paceBalance,
+            wonderRuleset: wonderRuleset,
+          ),
+        ),
+      ),
+    );
+  }
+
   PersistentCityProductionResult setCitySpecialization({
     required PersistentGameState state,
     required SetCitySpecializationCommand command,
@@ -250,6 +300,7 @@ class PersistentCityProductionResolver {
     required MapDefinition mapDefinition,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final lookup = _cityLookup(state.cities, command.cityId);
@@ -285,6 +336,9 @@ class PersistentCityProductionResolver {
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
       paceBalance: paceBalance,
+      cities: state.cities,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: wonderRuleset,
     );
     var productionPerTurn = CityProductionRules.productionPerTurn(
       cityEconomy.netYield.production,
@@ -304,6 +358,7 @@ class PersistentCityProductionResolver {
     final targetCost = CityProductionRules.targetCost(
       queue.target,
       ruleset: cityRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
     final rushedProduction = CityProductionRules.rushProductionAmount(
@@ -322,15 +377,23 @@ class PersistentCityProductionResolver {
     }
 
     final advanced = queue.advancedBy(rushedProduction);
-    final updatedGold = {
+    var updatedGold = {
       ...state.playerGold,
       city.ownerPlayerId: currentGold - rushCost,
     };
     final events = <GameEvent>[];
     var updatedCity = city.copyWith(productionQueue: advanced);
+    var updatedCities = state.cities;
+    var updatedResearch = state.research;
+    var updatedWonderRegistry = state.wonderRegistry;
     var updatedUnits = state.units;
+    var resolvedWonderCompletion = false;
 
-    if (advanced.isCompleteFor(cityRuleset, paceBalance: paceBalance)) {
+    if (advanced.isCompleteFor(
+      cityRuleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
+    )) {
       final productionOverflow = CityProductionRules.completionOverflow(
         productionCost: targetCost,
         investedProduction: advanced.investedProduction,
@@ -371,15 +434,36 @@ class PersistentCityProductionResolver {
           }
         case ProjectProductionTarget():
           break;
+        case WonderProductionTarget():
+          final completion = WonderCompletionResolver.resolveCompletedForPlayer(
+            playerId: actorPlayerId,
+            cities: _replaceCity(state.cities, cityIndex, updatedCity),
+            registry: updatedWonderRegistry,
+            playerGold: updatedGold,
+            research: updatedResearch,
+            ruleset: wonderRuleset,
+            paceBalance: paceBalance,
+          );
+          updatedCities = completion.cities;
+          updatedGold = completion.playerGold;
+          updatedResearch = completion.research;
+          updatedWonderRegistry = completion.registry;
+          events.addAll(completion.events);
+          resolvedWonderCompletion = true;
       }
+    }
+    if (!resolvedWonderCompletion) {
+      updatedCities = _replaceCity(state.cities, cityIndex, updatedCity);
     }
 
     return PersistentCityProductionResult(
       accepted: true,
       state: state.copyWith(
-        cities: _replaceCity(state.cities, cityIndex, updatedCity),
+        cities: updatedCities,
         units: updatedUnits,
         playerGold: updatedGold,
+        research: updatedResearch,
+        wonderRegistry: updatedWonderRegistry,
       ),
       events: events,
     );
@@ -400,8 +484,9 @@ class PersistentCityProductionResolver {
     GameCity city,
     CityProductionTarget target,
     CityRuleset cityRuleset,
-    PaceBalance paceBalance,
-  ) {
+    PaceBalance paceBalance, {
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+  }) {
     final activeInvestment = city.productionQueue?.investedProduction;
     final rolloverInvestment = activeInvestment == null
         ? CityProductionRules.rolloverInvestment(
@@ -409,6 +494,7 @@ class PersistentCityProductionResolver {
             productionCost: CityProductionRules.targetCost(
               target,
               ruleset: cityRuleset,
+              wonderRuleset: wonderRuleset,
               paceBalance: paceBalance,
             ),
           )

@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -299,6 +300,7 @@ void main() {
         const StartBuildingCommand('c', CityBuildingType.granary),
         const StartUnitProductionCommand('c', GameUnitType.warrior),
         const StartCityProjectCommand('c', CityProjectType.wealth),
+        const StartWonderCommand('c', WonderType.greatLibrary),
         const SetCitySpecializationCommand(
           'c',
           CitySpecializationType.industry,
@@ -386,8 +388,8 @@ void main() {
         const FocusTurnStartActionCommand('p'),
       ];
 
-      test('there are exactly 63 subtype instances', () {
-        expect(allSubtypes, hasLength(63));
+      test('there are exactly 64 subtype instances', () {
+        expect(allSubtypes, hasLength(64));
       });
 
       test('every subtype is a GameCommand', () {
@@ -426,6 +428,7 @@ void main() {
           StartBuildingCommand() => 'StartBuilding',
           StartUnitProductionCommand() => 'StartUnitProduction',
           StartCityProjectCommand() => 'StartCityProject',
+          StartWonderCommand() => 'StartWonder',
           SetCitySpecializationCommand() => 'SetCitySpecialization',
           RushProductionCommand() => 'RushProduction',
           SelectTechnologyCommand() => 'SelectTechnology',

@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/turn/turn_phase.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 class CityProcessingPhase extends TurnPhase {
   const CityProcessingPhase();
@@ -21,15 +22,26 @@ class CityProcessingPhase extends TurnPhase {
       ruleset: context.ruleset.city,
       research: state.research,
       technologyRuleset: context.ruleset.technology,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: context.ruleset.wonders,
       stabilityModifier: PersistentStabilityProcessor.modifierForNet(
         state.playerStabilityNet[context.playerId] ?? 0,
         ruleset: context.ruleset.stability,
       ),
       paceBalance: context.ruleset.paceBalance,
     );
+    final wonderCompletion = WonderCompletionResolver.resolveCompletedForPlayer(
+      playerId: context.playerId,
+      cities: result.cities,
+      registry: state.wonderRegistry,
+      playerGold: state.playerGold,
+      research: state.research,
+      ruleset: context.ruleset.wonders,
+      paceBalance: context.ruleset.paceBalance,
+    );
 
     final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
-      cities: result.cities,
+      cities: wonderCompletion.cities,
       artifacts: state.artifacts,
       events: context.events,
       combatRuleset: context.ruleset.combat,
@@ -57,12 +69,14 @@ class CityProcessingPhase extends TurnPhase {
         cities: nextCities,
         fieldImprovements: nextFieldImprovements,
         playerGold: _addGoldDelta(
-          state.playerGold,
+          wonderCompletion.playerGold,
           context.playerId,
           result.goldGained - unitUpkeep.total,
         ),
+        research: wonderCompletion.research,
+        wonderRegistry: wonderCompletion.registry,
       ),
-      events: [...context.events, ...events],
+      events: [...context.events, ...events, ...wonderCompletion.events],
       bonusScience: result.scienceGained,
     );
   }

@@ -1,4 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names_terrain.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/formatters/player_country_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -11,7 +13,6 @@ import 'package:aonw_core/game/domain/unit.dart';
 abstract final class GameDisplayNames {
   static final RegExp _defaultCityNamePattern = RegExp(r'^city_(\d+)$');
   static final RegExp _defaultPlayerNamePattern = RegExp(r'^player_(\d+)$');
-
   static String city(AppLocalizations l10n, GameCity city) {
     final match = _defaultCityNamePattern.firstMatch(city.name);
     if (match == null) return city.name;
@@ -24,23 +25,18 @@ abstract final class GameDisplayNames {
     return l10n.defaultPlayerName(int.parse(match.group(1)!));
   }
 
-  static String playerCountry(AppLocalizations l10n, PlayerCountry country) {
-    return PlayerCountryDisplayNames.country(l10n, country);
-  }
+  static String playerCountry(AppLocalizations l10n, PlayerCountry country) =>
+      PlayerCountryDisplayNames.country(l10n, country);
 
   static List<PlayerCountry> sortedPlayerCountries(
     AppLocalizations l10n, {
     Iterable<PlayerCountry> countries = PlayerCountry.values,
-  }) {
-    return PlayerCountryDisplayNames.sorted(l10n, countries: countries);
-  }
+  }) => PlayerCountryDisplayNames.sorted(l10n, countries: countries);
 
   static String playerCountryLeader(
     AppLocalizations l10n,
     PlayerCountry country,
-  ) {
-    return PlayerCountryDisplayNames.leader(l10n, country);
-  }
+  ) => PlayerCountryDisplayNames.leader(l10n, country);
 
   static String worldArtifact(AppLocalizations l10n, WorldArtifactType type) {
     return switch (type) {
@@ -499,6 +495,9 @@ abstract final class GameDisplayNames {
     };
   }
 
+  static String terrain(AppLocalizations l10n, TerrainType terrain) =>
+      terrainDisplayName(l10n, terrain);
+
   static String technologyDescription(AppLocalizations l10n, TechnologyId id) {
     return switch (id) {
       TechnologyId.agriculture => l10n.technologyAgricultureDescription,
@@ -585,6 +584,7 @@ abstract final class GameDisplayNames {
         l10n,
         buildingId,
       ),
+      UnlockWonder(:final wonderType) => wonderDisplayName(l10n, wonderType),
       UnlockUnitType(:final unitType) => GameDisplayNames.unitType(
         l10n,
         unitType,

@@ -8,6 +8,7 @@ class StabilityInputs {
   final int luxurySources;
   final int techSources;
   final int artifactSources;
+  final int wonderSources;
   final int warWeariness;
   final double controlPercent;
   final int playerCount;
@@ -22,6 +23,7 @@ class StabilityInputs {
     required this.luxurySources,
     required this.techSources,
     required this.artifactSources,
+    this.wonderSources = 0,
     required this.warWeariness,
     required this.controlPercent,
     required this.playerCount,
@@ -39,6 +41,7 @@ class StabilityInputs {
         other.luxurySources == luxurySources &&
         other.techSources == techSources &&
         other.artifactSources == artifactSources &&
+        other.wonderSources == wonderSources &&
         other.warWeariness == warWeariness &&
         other.controlPercent == controlPercent &&
         other.playerCount == playerCount;
@@ -55,6 +58,7 @@ class StabilityInputs {
     luxurySources,
     techSources,
     artifactSources,
+    wonderSources,
     warWeariness,
     controlPercent,
     playerCount,

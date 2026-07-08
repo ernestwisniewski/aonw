@@ -12,6 +12,7 @@ class AiProductionPlanState {
   final int reservedUnitSupply;
   final int wealthProjectCount;
   final int researchProjectCount;
+  final bool hasPlannedWonder;
 
   const AiProductionPlanState({
     required this.hasPlannedResearch,
@@ -22,6 +23,7 @@ class AiProductionPlanState {
     this.reservedUnitSupply = 0,
     this.wealthProjectCount = 0,
     this.researchProjectCount = 0,
+    this.hasPlannedWonder = false,
   });
 
   factory AiProductionPlanState.fromAssessment(
@@ -41,6 +43,9 @@ class AiProductionPlanState {
         cities,
         CityProjectType.research,
       ),
+      hasPlannedWonder: cities.any(
+        (city) => city.productionQueue?.target is WonderProductionTarget,
+      ),
     );
   }
 
@@ -51,6 +56,7 @@ class AiProductionPlanState {
       UnitProductionTarget(:final unitType) => _afterUnit(unitType),
       BuildingProductionTarget() => this,
       ProjectProductionTarget(:final projectType) => _afterProject(projectType),
+      WonderProductionTarget() => _afterWonder(),
     };
   }
 
@@ -62,6 +68,7 @@ class AiProductionPlanState {
       ProjectProductionTarget(:final projectType) => _withoutProject(
         projectType,
       ),
+      WonderProductionTarget() => _withoutWonder(),
       _ => this,
     };
     return withoutPrevious.after(target);
@@ -79,6 +86,7 @@ class AiProductionPlanState {
           reservedUnitSupply + CityUnitSupplyRules.supplyCostForType(unitType),
       wealthProjectCount: wealthProjectCount,
       researchProjectCount: researchProjectCount,
+      hasPlannedWonder: hasPlannedWonder,
     );
   }
 
@@ -95,6 +103,21 @@ class AiProductionPlanState {
       researchProjectCount:
           researchProjectCount +
           (projectType == CityProjectType.research ? 1 : 0),
+      hasPlannedWonder: hasPlannedWonder,
+    );
+  }
+
+  AiProductionPlanState _afterWonder() {
+    return AiProductionPlanState(
+      hasPlannedResearch: hasPlannedResearch,
+      workerCount: workerCount,
+      settlerCount: settlerCount,
+      militaryCount: militaryCount,
+      reconCount: reconCount,
+      reservedUnitSupply: reservedUnitSupply,
+      wealthProjectCount: wealthProjectCount,
+      researchProjectCount: researchProjectCount,
+      hasPlannedWonder: true,
     );
   }
 
@@ -112,6 +135,21 @@ class AiProductionPlanState {
       researchProjectCount: projectType == CityProjectType.research
           ? (researchProjectCount - 1).clamp(0, 1 << 30).toInt()
           : researchProjectCount,
+      hasPlannedWonder: hasPlannedWonder,
+    );
+  }
+
+  AiProductionPlanState _withoutWonder() {
+    return AiProductionPlanState(
+      hasPlannedResearch: hasPlannedResearch,
+      workerCount: workerCount,
+      settlerCount: settlerCount,
+      militaryCount: militaryCount,
+      reconCount: reconCount,
+      reservedUnitSupply: reservedUnitSupply,
+      wealthProjectCount: wealthProjectCount,
+      researchProjectCount: researchProjectCount,
+      hasPlannedWonder: false,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
 enum CityBuildingUnlockId {
   workshop,
@@ -111,4 +112,17 @@ class UnlockUnitType extends TechnologyUnlock {
 
   @override
   int get hashCode => Object.hash(UnlockUnitType, unitType);
+}
+
+class UnlockWonder extends TechnologyUnlock {
+  final WonderType wonderType;
+
+  const UnlockWonder(this.wonderType);
+
+  @override
+  bool operator ==(Object other) =>
+      other is UnlockWonder && other.wonderType == wonderType;
+
+  @override
+  int get hashCode => Object.hash(UnlockWonder, wonderType);
 }

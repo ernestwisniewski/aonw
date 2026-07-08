@@ -6,6 +6,7 @@ final class EconomySimulationCommandStats {
   var startUnit = 0;
   var startBuilding = 0;
   var startProject = 0;
+  var startWonder = 0;
   var workerJob = 0;
   var move = 0;
   var attack = 0;
@@ -22,6 +23,8 @@ final class EconomySimulationCommandStats {
         startBuilding += 1;
       case StartCityProjectCommand():
         startProject += 1;
+      case StartWonderCommand():
+        startWonder += 1;
       case SetCitySpecializationCommand():
         break;
       case SelectWorkerImprovementCommand() || AssignWorkerToHexCommand():

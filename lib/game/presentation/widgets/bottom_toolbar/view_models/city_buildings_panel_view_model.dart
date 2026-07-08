@@ -128,6 +128,7 @@ abstract final class CityBuildingsPanelViewModelFactory {
       BuildingProductionTarget(:final buildingType) => buildingType,
       UnitProductionTarget() => null,
       ProjectProductionTarget() => null,
+      WonderProductionTarget() => null,
       null => null,
     };
     final effectiveProductionPerTurn = CityProductionRules.productionPerTurn(

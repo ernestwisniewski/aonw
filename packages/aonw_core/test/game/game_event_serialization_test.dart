@@ -14,6 +14,17 @@ void main() {
           cityId: 'city_1',
           buildingType: CityBuildingType.granary,
         ),
+        const CityBuiltWonderEvent(
+          cityId: 'city_1',
+          ownerPlayerId: 'player_1',
+          wonderType: WonderType.greatLibrary,
+        ),
+        const WonderProductionRefundedEvent(
+          cityId: 'city_2',
+          ownerPlayerId: 'player_2',
+          wonderType: WonderType.greatLibrary,
+          refundedProduction: 42,
+        ),
         const CityProducedUnitEvent(
           cityId: 'city_1',
           unitType: GameUnitType.warrior,

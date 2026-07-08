@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 class SaveSnapshot {
   final GameSave save;
@@ -23,6 +24,7 @@ class SaveSnapshot {
   final List<FieldImprovement> fieldImprovements;
   final FogOfWarState fogOfWar;
   final ResearchState research;
+  final WonderRegistry wonderRegistry;
   final GameRuntimeState runtimeState;
   final int eventLogOffset;
 
@@ -39,6 +41,7 @@ class SaveSnapshot {
     this.fieldImprovements = const [],
     this.fogOfWar = FogOfWarState.empty,
     this.research = ResearchState.empty,
+    this.wonderRegistry = WonderRegistry.empty,
     this.runtimeState = GameRuntimeState.empty,
     this.eventLogOffset = 0,
   });
@@ -73,6 +76,7 @@ class SaveSnapshot {
       fieldImprovements: state.fieldImprovements,
       fogOfWar: state.fogOfWar,
       research: state.research,
+      wonderRegistry: state.wonderRegistry,
       runtimeState: state.runtimeState,
       eventLogOffset: eventLogOffset,
     );
@@ -90,6 +94,7 @@ class SaveSnapshot {
     fieldImprovements: fieldImprovements,
     fogOfWar: fogOfWar,
     research: research,
+    wonderRegistry: wonderRegistry,
     runtimeState: runtimeState,
   );
 
@@ -109,6 +114,7 @@ class SaveSnapshot {
       fieldImprovements: fieldImprovements,
       fogOfWar: fogOfWar,
       research: research,
+      wonderRegistry: wonderRegistry,
       diplomacy: runtimeState.diplomacy,
       activePlayerId: activePlayerId,
       activePlayerCanAct: activePlayerCanAct,
@@ -140,6 +146,7 @@ class SaveSnapshot {
     List<FieldImprovement>? fieldImprovements,
     FogOfWarState? fogOfWar,
     ResearchState? research,
+    WonderRegistry? wonderRegistry,
     GameRuntimeState? runtimeState,
     int? eventLogOffset,
   }) {
@@ -156,6 +163,7 @@ class SaveSnapshot {
       fieldImprovements: fieldImprovements ?? this.fieldImprovements,
       fogOfWar: fogOfWar ?? this.fogOfWar,
       research: research ?? this.research,
+      wonderRegistry: wonderRegistry ?? this.wonderRegistry,
       runtimeState: runtimeState ?? this.runtimeState,
       eventLogOffset: eventLogOffset ?? this.eventLogOffset,
     );

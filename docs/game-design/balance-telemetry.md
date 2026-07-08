@@ -75,8 +75,8 @@ A turn is not dead if any condition is true:
 | Condition | Examples |
 | --- | --- |
 | `meaningfulCommandsByPlayerId[playerId] > 0` | Movement, research choice, production, attack |
-| Domain event assigned to the player | Building built, technology unlocked, combat, worker job completed |
-| Snapshot shows new progress | More discovered hexes, new unit, new city, new building, population growth, new improvement, unit movement |
+| Domain event assigned to the player | Building or wonder built, technology unlocked, combat, worker job completed |
+| Snapshot shows new progress | More discovered hexes, new unit, new city, new building or wonder, population growth, new improvement, unit movement |
 
 Passive science income alone does not count as meaningful change. This catches
 cases where the player only advances turns while research slowly increments.

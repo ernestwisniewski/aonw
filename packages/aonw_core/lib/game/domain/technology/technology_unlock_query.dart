@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/technology/technology_definition.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_unlock.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
 abstract final class TechnologyUnlockQuery {
   static bool hasBuildingUnlocked({
@@ -70,6 +71,34 @@ abstract final class TechnologyUnlockQuery {
     return null;
   }
 
+  static bool hasWonderUnlocked({
+    required String playerId,
+    required WonderType wonderType,
+    required ResearchState research,
+    required TechnologyRuleset ruleset,
+  }) {
+    final requiredTechnology = unlockingTechnologyForWonder(
+      wonderType: wonderType,
+      ruleset: ruleset,
+    );
+    if (requiredTechnology == null) return true;
+
+    final playerResearch = research.forPlayer(playerId);
+    return playerResearch.hasUnlocked(requiredTechnology.id);
+  }
+
+  static TechnologyDefinition? unlockingTechnologyForWonder({
+    required WonderType wonderType,
+    required TechnologyRuleset ruleset,
+  }) {
+    for (final technology in ruleset.technologies.values) {
+      if (_unlocksWonder(technology, wonderType)) {
+        return technology;
+      }
+    }
+    return null;
+  }
+
   static bool hasFieldImprovementUnlocked({
     required String playerId,
     required FieldImprovementType improvementType,
@@ -127,6 +156,18 @@ abstract final class TechnologyUnlockQuery {
   ) {
     for (final unlock in technology.unlocks) {
       if (unlock is UnlockUnitType && unlock.unitType == unitType) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static bool _unlocksWonder(
+    TechnologyDefinition technology,
+    WonderType wonderType,
+  ) {
+    for (final unlock in technology.unlocks) {
+      if (unlock is UnlockWonder && unlock.wonderType == wonderType) {
         return true;
       }
     }

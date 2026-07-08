@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 
 final class CityProductionGamepadChoice {
@@ -25,9 +26,11 @@ abstract final class CityProductionGamepadNavigation {
     required CityProductionDialogViewModel viewModel,
     required CityBuildingSortMode buildingSortMode,
     required ValueChanged<CityBuildingType> onBuild,
+    required ValueChanged<WonderType>? onBuildWonder,
     required ValueChanged<GameUnitType> onProduceUnit,
     required ValueChanged<CityProductionItem> onBuildingDetails,
     required ValueChanged<CityProductionItem> onUnitDetails,
+    required ValueChanged<CityProductionItem> onWonderDetails,
     required ValueChanged<CityProjectType>? onStartProject,
     required ValueChanged<CitySpecializationType>? onSetSpecialization,
   }) {
@@ -49,6 +52,14 @@ abstract final class CityProductionGamepadNavigation {
           onConfirm: () => onProduceUnit(item.unitType!),
           onDetails: () => onUnitDetails(item),
         ),
+      for (final item in viewModel.wonders)
+        if (!item.locked || item.active)
+          CityProductionGamepadChoice(
+            key: cityProductionItemKey(item),
+            canConfirm: !item.active && !item.locked && onBuildWonder != null,
+            onConfirm: () => onBuildWonder!(item.wonderType!),
+            onDetails: () => onWonderDetails(item),
+          ),
       for (final item in viewModel.specializations)
         CityProductionGamepadChoice(
           key: citySpecializationItemKey(item),

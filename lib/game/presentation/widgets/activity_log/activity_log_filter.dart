@@ -253,6 +253,8 @@ extension ActivityLogFilterPresentation on ActivityLogFilter {
       ActivityLogFilter.city =>
         event is CityFoundedEvent ||
             event is CityBuiltBuildingEvent ||
+            event is CityBuiltWonderEvent ||
+            event is WonderProductionRefundedEvent ||
             event is CityProducedUnitEvent ||
             event is CityClaimedHexEvent ||
             event is CityCapturedEvent ||

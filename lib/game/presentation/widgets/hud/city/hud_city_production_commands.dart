@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 abstract final class HudCityProductionCommands {
   static GameCommand startBuilding(
@@ -16,6 +17,10 @@ abstract final class HudCityProductionCommands {
 
   static GameCommand startProject(String cityId, CityProjectType projectType) {
     return StartCityProjectCommand(cityId, projectType);
+  }
+
+  static GameCommand startWonder(String cityId, WonderType wonderType) {
+    return StartWonderCommand(cityId, wonderType);
   }
 
   static GameCommand setSpecialization(

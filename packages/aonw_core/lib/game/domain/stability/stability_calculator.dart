@@ -16,6 +16,7 @@ abstract final class StabilityCalculator {
       luxurySources: inputs.luxurySources,
       techSources: inputs.techSources,
       artifactSources: inputs.artifactSources,
+      wonderSources: inputs.wonderSources,
       cityCost: citiesBeyondFirst * ruleset.costPerCity,
       populationCost:
           inputs.sumPopulationOverThreshold *

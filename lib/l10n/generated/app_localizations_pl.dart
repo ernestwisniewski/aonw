@@ -4436,6 +4436,152 @@ class AppLocalizationsPl extends AppLocalizations {
   String get buildingDetailsNoYieldChange => 'Brak zmiany zasobów';
 
   @override
+  String get wonderDetailsTooltip => 'Szczegóły cudu';
+
+  @override
+  String get wonderGreatLibrary => 'Wielka Biblioteka';
+
+  @override
+  String get wonderHangingGardens => 'Wiszące Ogrody';
+
+  @override
+  String get wonderGreatWall => 'Wielki Mur';
+
+  @override
+  String get wonderPetra => 'Petra';
+
+  @override
+  String get wonderCentralBank => 'Bank Centralny';
+
+  @override
+  String get wonderImperialUniversity => 'Uniwersytet Imperialny';
+
+  @override
+  String get wonderGrandCathedral => 'Wielka Katedra';
+
+  @override
+  String get wonderMotherFactory => 'Matka Fabryk';
+
+  @override
+  String get wonderNationalObservatory => 'Narodowe Obserwatorium';
+
+  @override
+  String get wonderSvalbardSeedVault => 'Globalny Bank Nasion Svalbard';
+
+  @override
+  String get wonderGrandExposition => 'Wielka Wystawa';
+
+  @override
+  String get wonderGreatLibraryDescription =>
+      'Światowe centrum wiedzy pisanej. Dodaje naukę w całym imperium i kończy aktywne badanie po ukończeniu.';
+
+  @override
+  String get wonderHangingGardensDescription =>
+      'Legendarny kompleks ogrodów, który zamienia miasto nad rzeką w zaplecze żywnościowe całego imperium.';
+
+  @override
+  String get wonderGreatWallDescription =>
+      'Defensywny megaprojekt wzmacniający odporność każdego miasta na ataki.';
+
+  @override
+  String get wonderPetraDescription =>
+      'Wykuty w skale cud handlu, który czyni pustynne miasto gospodarza produktywnym i bogatym.';
+
+  @override
+  String get wonderCentralBankDescription =>
+      'Instytucja finansowa wzmacniająca złoto imperium i dająca natychmiastową rezerwę skarbca.';
+
+  @override
+  String get wonderImperialUniversityDescription =>
+      'Prestiżowy kampus zwiększający naukę w każdym mieście.';
+
+  @override
+  String get wonderGrandCathedralDescription =>
+      'Obywatelski i duchowy monument, który dodaje stabilność, gdy wspiera go marmur.';
+
+  @override
+  String get wonderMotherFactoryDescription =>
+      'Ciężki kompleks przemysłowy zwiększający produkcję imperium i przyspieszający miasto gospodarza po ukończeniu.';
+
+  @override
+  String get wonderNationalObservatoryDescription =>
+      'Obserwatorium zwrócone ku górom, które podnosi późną naukę całego imperium.';
+
+  @override
+  String get wonderSvalbardSeedVaultDescription =>
+      'Polarne miejsce zachowania nasion, poprawiające bezpieczeństwo żywności i stabilność imperium.';
+
+  @override
+  String get wonderGrandExpositionDescription =>
+      'Późna wystawa kulturowa, która zamienia globalną uwagę w złoto i stabilność.';
+
+  @override
+  String get wonderDetailsStandingEffects => 'Efekty stałe';
+
+  @override
+  String get wonderDetailsCompletionEffects => 'Efekty ukończenia';
+
+  @override
+  String get wonderDetailsNoStandingEffects => 'Brak efektów stałych';
+
+  @override
+  String get wonderDetailsNoCompletionEffects => 'Brak efektów ukończenia';
+
+  @override
+  String get wonderDetailsRequirementAdjacentRiver => 'Sąsiedztwo rzeki';
+
+  @override
+  String get wonderDetailsRequirementAdjacentMountain => 'Sąsiedztwo góry';
+
+  @override
+  String wonderDetailsRequirementTerrain(String terrain) {
+    return 'Teren: $terrain';
+  }
+
+  @override
+  String wonderDetailsEmpireFlatYieldEffect(String yield) {
+    return '$yield w każdym mieście';
+  }
+
+  @override
+  String wonderDetailsHostCityFlatYieldEffect(String yield) {
+    return '$yield w mieście gospodarzu';
+  }
+
+  @override
+  String wonderDetailsEmpireScienceEffect(String amount) {
+    return '$amount nauki w każdym mieście';
+  }
+
+  @override
+  String wonderDetailsEmpireGoldMultiplierEffect(String percent) {
+    return '$percent złota imperium';
+  }
+
+  @override
+  String wonderDetailsEmpireProductionMultiplierEffect(String percent) {
+    return '$percent produkcji imperium';
+  }
+
+  @override
+  String wonderDetailsStabilityEffect(String amount) {
+    return '$amount stabilności';
+  }
+
+  @override
+  String get wonderDetailsGrantFreeTechnology => 'Kończy aktywne badanie';
+
+  @override
+  String wonderDetailsProductionBurst(int amount) {
+    return '+$amount nadwyżki produkcji w mieście gospodarzu';
+  }
+
+  @override
+  String wonderDetailsGrantGold(int amount) {
+    return '+$amount złota';
+  }
+
+  @override
   String get unitDetailsTooltip => 'Szczegóły jednostki';
 
   @override
@@ -4518,6 +4664,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get productionCategoryUnit => 'Jednostka';
 
   @override
+  String get productionCategoryWonder => 'Cud';
+
+  @override
   String get productionTitle => 'PRODUKCJA';
 
   @override
@@ -4547,12 +4696,49 @@ class AppLocalizationsPl extends AppLocalizations {
   String get unitsSection => 'Jednostki';
 
   @override
+  String get cityProductionWondersSection => 'Cuda';
+
+  @override
+  String cityProductionWonderBuiltBy(String player) {
+    return 'Zbudowane przez $player';
+  }
+
+  @override
+  String cityProductionWonderRequiresTechnology(String technology) {
+    return 'Wymaga: $technology';
+  }
+
+  @override
+  String get cityProductionWonderRequiresRiver => 'Wymaga: sąsiednia rzeka';
+
+  @override
+  String get cityProductionWonderRequiresMountain => 'Wymaga: sąsiednia góra';
+
+  @override
+  String cityProductionWonderRequiresTerrain(String terrain) {
+    return 'Wymaga terenu: $terrain';
+  }
+
+  @override
+  String get cityProductionWonderAnotherInProgress =>
+      'Inny cud jest już w produkcji';
+
+  @override
   String futureBuildingsSection(int count) {
     return 'Przyszłe budynki ($count)';
   }
 
   @override
   String get futureBuildingsSubtitle => 'Odblokowywane przez technologie';
+
+  @override
+  String futureWondersSection(int count) {
+    return 'Przyszłe cuda ($count)';
+  }
+
+  @override
+  String get futureWondersSubtitle =>
+      'Odblokowywane przez technologie, teren i zasoby';
 
   @override
   String workerPanelTitle(String unitName) {
@@ -5047,6 +5233,10 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get technologyRecommendationReasonBuilding =>
       'Nowy budynek miasta otwiera kolejny kierunek rozwoju.';
+
+  @override
+  String get technologyRecommendationReasonWonder =>
+      'Cud świata otwiera unikalny bonus imperium.';
 
   @override
   String get technologyRecommendationReasonUnit =>

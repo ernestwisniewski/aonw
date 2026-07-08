@@ -77,6 +77,23 @@ final class StartCityProjectCommand extends GameCommand {
   int get hashCode => Object.hash(StartCityProjectCommand, cityId, projectType);
 }
 
+/// Player starts building [wonderType] in city [cityId].
+final class StartWonderCommand extends GameCommand {
+  const StartWonderCommand(this.cityId, this.wonderType);
+
+  final String cityId;
+  final WonderType wonderType;
+
+  @override
+  bool operator ==(Object other) =>
+      other is StartWonderCommand &&
+      other.cityId == cityId &&
+      other.wonderType == wonderType;
+
+  @override
+  int get hashCode => Object.hash(StartWonderCommand, cityId, wonderType);
+}
+
 /// Player sets the long-term specialization for city [cityId].
 final class SetCitySpecializationCommand extends GameCommand {
   const SetCitySpecializationCommand(this.cityId, this.specialization);

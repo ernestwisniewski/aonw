@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
+import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_recommendations_view.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_board.dart';
@@ -22,6 +24,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +37,7 @@ export 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas
 
 part 'technology_tree_panel_details.dart';
 part 'technology_tree_panel_gamepad_selection.dart';
+part 'technology_tree_mode_bar.dart';
 
 enum TechnologyTreeViewMode { recommendations, tree }
 
@@ -124,6 +128,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
   TechnologyId? _detailsTechnologyId;
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
+  WonderType? _detailsWonderType;
   bool _gamepadSelectionVisible = false;
 
   void _setDetailsState(void Function() update) {
@@ -161,7 +166,8 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
     final hasDetailsLayer =
         detailsCard != null ||
         _detailsBuildingType != null ||
-        _detailsUnitType != null;
+        _detailsUnitType != null ||
+        _detailsWonderType != null;
     final gamepadCards = TechnologyTreeGamepadNavigation.cardsFor(
       viewModel: widget.viewModel,
       showTree: showTree,
@@ -244,6 +250,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
                               onTechnologyDetails: _showTechnologyDetails,
                               onBuildingDetails: _showBuildingDetails,
                               onUnitDetails: _showUnitDetails,
+                              onWonderDetails: _showWonderDetails,
                               onResearch: _researchTechnology,
                             )
                           : TechnologyRecommendationsView(
@@ -272,6 +279,16 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
                           unitType: _detailsUnitType!,
                           l10n: l10n,
                           cityRuleset: widget.cityRuleset,
+                          technologyRuleset: widget.technologyRuleset,
+                          compact: compact,
+                          onClose: _closeDetailsLayer,
+                        ),
+                      ),
+                    if (_detailsWonderType != null)
+                      Positioned.fill(
+                        child: TechnologyInlineWonderDetailsLayer(
+                          wonderType: _detailsWonderType!,
+                          l10n: l10n,
                           technologyRuleset: widget.technologyRuleset,
                           compact: compact,
                           onClose: _closeDetailsLayer,
@@ -324,6 +341,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
     if (showTree) {
       TechnologyTreeGamepadNavigation.revealTreeCard(
@@ -379,6 +397,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -390,13 +409,15 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
   bool _closeAnyDetails() {
     if (_detailsTechnologyId == null &&
         _detailsBuildingType == null &&
-        _detailsUnitType == null) {
+        _detailsUnitType == null &&
+        _detailsWonderType == null) {
       return false;
     }
     setState(() {
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
     return true;
   }
@@ -407,6 +428,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
     widget.onResearch(technologyId);
   }
@@ -429,6 +451,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -439,95 +462,7 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
-  }
-}
-
-class _TechnologyTreeModeBar extends StatelessWidget {
-  const _TechnologyTreeModeBar({
-    required this.mode,
-    required this.compact,
-    required this.technologyCount,
-    required this.onShowTree,
-    required this.onShowRecommendations,
-  });
-
-  final TechnologyTreeViewMode mode;
-  final bool compact;
-  final int technologyCount;
-  final VoidCallback onShowTree;
-  final VoidCallback onShowRecommendations;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final showTree = mode == TechnologyTreeViewMode.tree;
-    final title = showTree
-        ? l10n.technologyFullTreeTitle
-        : l10n.technologyRecommendationsTitle;
-    final actionLabel = showTree
-        ? l10n.technologyRecommendationsBackAction
-        : technologyCount > 0
-        ? l10n.technologyShowTreeCountAction(technologyCount)
-        : l10n.technologyShowTreeAction;
-    final actionIcon = showTree ? GameIcons.back : GameIcons.layers;
-    final action = showTree ? onShowRecommendations : onShowTree;
-    return Container(
-      width: double.infinity,
-      padding: compact
-          ? const EdgeInsets.fromLTRB(12, 8, 12, 8)
-          : const EdgeInsets.fromLTRB(16, 9, 16, 9),
-      decoration: SurfaceElevation.flat.bandDecoration(
-        background: GameUiTheme.bg,
-        backgroundAlpha: 126,
-        border: BorderEmphasis.subtle,
-      ),
-      child: Row(
-        children: [
-          GameIcon(
-            showTree ? GameIcons.layers : GameIcons.science,
-            size: GameIconSize.small,
-            color: GameUiTheme.scienceAccent,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              key: showTree
-                  ? const Key('technologyTreeModeBar.title')
-                  : const Key('technologyRecommendations.title'),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GameUiTheme.bodySmall.copyWith(
-                color: GameUiTheme.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: compact ? 11 : 12,
-              ),
-            ),
-          ),
-          TextButton.icon(
-            onPressed: action,
-            style: TextButton.styleFrom(
-              foregroundColor: GameUiTheme.scienceAccent,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: GameIcon(
-              actionIcon,
-              size: GameIconSize.tiny,
-              color: GameUiTheme.scienceAccent,
-            ),
-            label: Text(
-              actionLabel,
-              style: GameUiTheme.actionLabel.copyWith(
-                color: GameUiTheme.scienceAccent,
-                fontSize: compact ? 10 : 11,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

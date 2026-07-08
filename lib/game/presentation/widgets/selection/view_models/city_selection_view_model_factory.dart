@@ -246,6 +246,7 @@ abstract final class CitySelectionViewModelFactory {
       ),
       ProjectProductionTarget(:final projectType) =>
         GameDisplayNames.cityProject(l10n, projectType),
+      WonderProductionTarget(:final wonderType) => wonderType.displayName,
     };
   }
 
@@ -265,8 +266,7 @@ abstract final class CitySelectionViewModelFactory {
   static int _cityVisualLevelFor(GameCity city) {
     if (city.population >= 10) return 3;
     if (city.population >= 6) return 2;
-    if (city.population >= 4) return 1;
-    return 0;
+    return city.population >= 4 ? 1 : 0;
   }
 
   static int _cityTechnologyProfileIndexFor(

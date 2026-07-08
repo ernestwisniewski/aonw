@@ -1,4 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_model.dart';
+import 'package:aonw/game/presentation/widgets/city/city_production_gamepad_navigation.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_sections.dart';
@@ -7,6 +9,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -49,6 +52,7 @@ void main() {
             specializations: const [],
             onBuildingDetails: (_) => detailCount++,
             onUnitDetails: (_) {},
+            onWonderDetails: (_) {},
             onBuild: built.add,
             onProduceUnit: (_) {},
             onStartProject: null,
@@ -131,6 +135,7 @@ void main() {
               ],
               onBuildingDetails: (_) {},
               onUnitDetails: (_) => unitDetails++,
+              onWonderDetails: (_) {},
               onBuild: (_) {},
               onProduceUnit: produced.add,
               onStartProject: projects.add,
@@ -236,6 +241,7 @@ void main() {
               ],
               onBuildingDetails: (_) {},
               onUnitDetails: (_) {},
+              onWonderDetails: (_) {},
               onBuild: (_) {},
               onProduceUnit: (_) {},
               onStartProject: (_) {},
@@ -271,6 +277,220 @@ void main() {
     expect(
       tester.getTopLeft(find.text('Wealth')).dy,
       greaterThan(tester.getTopLeft(find.text('Science')).dy),
+    );
+  });
+
+  testWidgets(
+    'CityProductionList puts collapsed unavailable wonders after units',
+    (tester) async {
+      final builtWonders = <WonderType>[];
+      final wonderDetails = <WonderType>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          locale: const Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: CityProductionList(
+              buildings: const [],
+              futureBuildings: const [],
+              units: const [
+                CityProductionItem(
+                  buildingType: null,
+                  unitType: GameUnitType.warrior,
+                  projectType: null,
+                  title: 'Warrior',
+                  emoji: null,
+                  icon: GameIcons.warrior,
+                  active: false,
+                  investedProduction: 0,
+                  totalCost: 20,
+                  productionPerTurn: 5,
+                  turnsRemaining: 4,
+                  rushGoldCost: 0,
+                  locked: false,
+                  requirementLabel: null,
+                  buildingState: null,
+                ),
+              ],
+              wonders: const [
+                CityProductionItem(
+                  buildingType: null,
+                  unitType: null,
+                  projectType: null,
+                  wonderType: WonderType.greatLibrary,
+                  title: 'Great Library',
+                  emoji: null,
+                  icon: GameIcons.victory,
+                  active: false,
+                  investedProduction: 0,
+                  totalCost: 120,
+                  productionPerTurn: 5,
+                  turnsRemaining: 24,
+                  rushGoldCost: 0,
+                  locked: false,
+                  requirementLabel: null,
+                  buildingState: null,
+                ),
+                CityProductionItem(
+                  buildingType: null,
+                  unitType: null,
+                  projectType: null,
+                  wonderType: WonderType.petra,
+                  title: 'Petra',
+                  emoji: null,
+                  icon: GameIcons.victory,
+                  active: false,
+                  investedProduction: 0,
+                  totalCost: 150,
+                  productionPerTurn: 5,
+                  turnsRemaining: 30,
+                  rushGoldCost: 0,
+                  locked: true,
+                  requirementLabel: 'Requires terrain: Desert',
+                  buildingState: null,
+                ),
+              ],
+              projects: const [],
+              specializations: const [],
+              onBuildingDetails: (_) {},
+              onUnitDetails: (_) {},
+              onWonderDetails: (item) => wonderDetails.add(item.wonderType!),
+              onBuild: (_) {},
+              onBuildWonder: builtWonders.add,
+              onProduceUnit: (_) {},
+              onStartProject: null,
+              onSetSpecialization: null,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('UNITS'), findsOneWidget);
+      expect(find.text('WONDERS'), findsOneWidget);
+      expect(find.text('Great Library'), findsOneWidget);
+      expect(find.text('Future wonders (1)'), findsNothing);
+      expect(find.text('FUTURE WONDERS (1)'), findsOneWidget);
+      expect(find.text('Petra'), findsNothing);
+
+      expect(
+        tester.getTopLeft(find.text('WONDERS')).dy,
+        greaterThan(tester.getTopLeft(find.text('UNITS')).dy),
+      );
+
+      await tester.tap(find.text('Great Library'));
+      await tester.pump();
+
+      expect(builtWonders, [WonderType.greatLibrary]);
+
+      await tester.tap(find.byTooltip('Wonder details'));
+      await tester.pump();
+
+      expect(wonderDetails, [WonderType.greatLibrary]);
+
+      await tester.tap(find.text('FUTURE WONDERS (1)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Petra'), findsOneWidget);
+      expect(find.text('Requires terrain: Desert'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Wonder details').last);
+      await tester.pump();
+
+      expect(wonderDetails, [WonderType.greatLibrary, WonderType.petra]);
+    },
+  );
+
+  test('CityProductionGamepadNavigation follows visible production order', () {
+    final choices = CityProductionGamepadNavigation.choicesFor(
+      viewModel: const CityProductionDialogViewModel(
+        cityName: 'City',
+        productionPerTurn: 5,
+        currentCityYield: null,
+        currentCityScience: 0,
+        buildings: [],
+        futureBuildings: [],
+        wonders: [
+          CityProductionItem(
+            buildingType: null,
+            unitType: null,
+            projectType: null,
+            wonderType: WonderType.greatLibrary,
+            title: 'Great Library',
+            emoji: null,
+            icon: GameIcons.victory,
+            active: false,
+            investedProduction: 0,
+            totalCost: 120,
+            productionPerTurn: 5,
+            turnsRemaining: 24,
+            rushGoldCost: 0,
+            locked: false,
+            requirementLabel: null,
+            buildingState: null,
+          ),
+          CityProductionItem(
+            buildingType: null,
+            unitType: null,
+            projectType: null,
+            wonderType: WonderType.petra,
+            title: 'Petra',
+            emoji: null,
+            icon: GameIcons.victory,
+            active: false,
+            investedProduction: 0,
+            totalCost: 150,
+            productionPerTurn: 5,
+            turnsRemaining: 30,
+            rushGoldCost: 0,
+            locked: true,
+            requirementLabel: 'Requires terrain: Desert',
+            buildingState: null,
+          ),
+        ],
+        units: [
+          CityProductionItem(
+            buildingType: null,
+            unitType: GameUnitType.warrior,
+            projectType: null,
+            title: 'Warrior',
+            emoji: null,
+            icon: GameIcons.warrior,
+            active: false,
+            investedProduction: 0,
+            totalCost: 20,
+            productionPerTurn: 5,
+            turnsRemaining: 4,
+            rushGoldCost: 0,
+            locked: false,
+            requirementLabel: null,
+            buildingState: null,
+          ),
+        ],
+        projects: [],
+        specializations: [],
+      ),
+      buildingSortMode: CityBuildingSortMode.recommended,
+      onBuild: (_) {},
+      onBuildWonder: (_) {},
+      onProduceUnit: (_) {},
+      onBuildingDetails: (_) {},
+      onUnitDetails: (_) {},
+      onWonderDetails: (_) {},
+      onStartProject: null,
+      onSetSpecialization: null,
+    );
+
+    expect(choices.map((choice) => choice.key), [
+      'unit:warrior',
+      'wonder:greatLibrary',
+    ]);
+    expect(
+      choices
+          .singleWhere((choice) => choice.key == 'wonder:greatLibrary')
+          .onDetails,
+      isNotNull,
     );
   });
 
@@ -340,6 +560,7 @@ void main() {
             onBuildingSortModeChanged: (_) {},
             onBuildingDetails: (_) {},
             onUnitDetails: (_) {},
+            onWonderDetails: (_) {},
             onBuild: (_) {},
             onProduceUnit: (_) {},
             onStartProject: null,

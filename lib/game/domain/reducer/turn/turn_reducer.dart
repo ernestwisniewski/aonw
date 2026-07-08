@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 abstract final class TurnReducer {
   static GameStateTransition submitTurn(GameState state, String playerId) {
@@ -49,6 +50,7 @@ abstract final class TurnReducer {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final result = TurnPipeline.playerEndTurn(fogOfWarService: fogOfWarService)
@@ -60,6 +62,7 @@ abstract final class TurnReducer {
               city: cityRuleset,
               technology: technologyRuleset,
               stability: stabilityRuleset,
+              wonders: wonderRuleset,
               paceBalance: paceBalance,
             ),
             playerId: playerId,
@@ -432,16 +435,14 @@ abstract final class TurnReducer {
   static GameStateTransition _focusResearchAction(
     GameState state,
     String playerId,
-  ) {
-    final newState = state.copyWithInteraction(
+  ) => GameStateTransition(
+    state: state.copyWithInteraction(
       moveCommandActive: false,
       movePreview: null,
       cityFoundingDraft: null,
       pendingAction: PendingResearchSelection(ownerPlayerId: playerId),
-    );
-
-    return GameStateTransition(state: newState);
-  }
+    ),
+  );
 
   static List<_PendingTurnAction> _pendingTurnActions(
     GameState state,
@@ -668,9 +669,8 @@ abstract final class TurnReducer {
     return false;
   }
 
-  static bool _needsManualUnitAction(GameUnit unit, String playerId) {
-    return UnitTurnActionRules.needsManualOrder(unit, playerId: playerId);
-  }
+  static bool _needsManualUnitAction(GameUnit unit, String playerId) =>
+      UnitTurnActionRules.needsManualOrder(unit, playerId: playerId);
 
   static _UnitActionCategory _unitActionCategory(GameUnit unit) {
     if (UnitCombatStats.derive(unit).attack > 0) {

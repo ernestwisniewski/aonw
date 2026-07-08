@@ -3,6 +3,8 @@ import 'package:aonw_core/protocol.dart';
 
 import 'initial_multiplayer_snapshot_factory.dart';
 
+part 'server_command_reducer_production.dart';
+
 class ServerCommandReduction {
   const ServerCommandReduction({
     required this.accepted,
@@ -224,39 +226,18 @@ class ServerCommandReducer {
           cityRuleset: ruleset.city,
         );
         return _fromPersistentResult(save, result);
-      case StartBuildingCommand():
-        final result = const PersistentCityProductionResolver().startBuilding(
+      case StartBuildingCommand() ||
+          StartUnitProductionCommand() ||
+          StartCityProjectCommand() ||
+          StartWonderCommand():
+        return _applyProductionCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
           mapDefinition: mapDefinition,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          paceBalance: ruleset.paceBalance,
+          ruleset: ruleset,
         );
-        return _fromPersistentResult(save, result);
-      case StartUnitProductionCommand():
-        final result = const PersistentCityProductionResolver()
-            .startUnitProduction(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _fromPersistentResult(save, result);
-      case StartCityProjectCommand():
-        final result = const PersistentCityProductionResolver()
-            .startCityProject(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              cityRuleset: ruleset.city,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _fromPersistentResult(save, result);
       case SetCitySpecializationCommand():
         final result = const PersistentCityProductionResolver()
             .setCitySpecialization(
@@ -273,6 +254,7 @@ class ServerCommandReducer {
           mapDefinition: mapDefinition,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
+          wonderRuleset: ruleset.wonders,
           paceBalance: ruleset.paceBalance,
         );
         return _fromPersistentResult(save, result);

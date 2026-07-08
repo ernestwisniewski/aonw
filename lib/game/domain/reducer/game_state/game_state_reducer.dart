@@ -129,6 +129,7 @@ class GameStateReducer {
         command,
       ),
       StartCityProjectCommand() => environment.startCityProject(state, command),
+      StartWonderCommand() => environment.startWonder(state, command),
       SetCitySpecializationCommand() => environment.setCitySpecialization(
         state,
         command,

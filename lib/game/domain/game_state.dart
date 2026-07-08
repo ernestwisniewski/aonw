@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'game_state.freezed.dart';
@@ -72,6 +73,7 @@ abstract class GameState with _$GameState {
     @Default([]) List<FieldImprovement> fieldImprovements,
     @Default(FogOfWarState.empty) FogOfWarState fogOfWar,
     @Default(ResearchState.empty) ResearchState research,
+    @Default(WonderRegistry.empty) WonderRegistry wonderRegistry,
     @Default(DiplomacyState.empty) DiplomacyState diplomacy,
     @Default([]) List<IntendedAttack> intendedAttacks,
     @Default([]) List<ResourceTradeAgreement> resourceTradeAgreements,

@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -240,6 +241,42 @@ void main() {
       );
 
       expect(technology?.id, TechnologyId.trade);
+    });
+
+    test('unlocks wonders from discovered technology unlocks', () {
+      expect(
+        TechnologyUnlockQuery.hasWonderUnlocked(
+          playerId: 'player_1',
+          wonderType: WonderType.greatLibrary,
+          research: ResearchState.empty,
+          ruleset: ruleset,
+        ),
+        isFalse,
+      );
+      expect(
+        TechnologyUnlockQuery.hasWonderUnlocked(
+          playerId: 'player_1',
+          wonderType: WonderType.greatLibrary,
+          research: researchWith({TechnologyId.writing}),
+          ruleset: ruleset,
+        ),
+        isTrue,
+      );
+    });
+
+    test('maps every standard wonder to its required technology', () {
+      for (final entry in WonderRuleset.standard.wonders.entries) {
+        final technology = TechnologyUnlockQuery.unlockingTechnologyForWonder(
+          wonderType: entry.key,
+          ruleset: ruleset,
+        );
+
+        expect(
+          technology?.id,
+          entry.value.unlockTech,
+          reason: '${entry.key.name} should have the expected tech gate',
+        );
+      }
     });
 
     test('locks field improvements until their technology is discovered', () {

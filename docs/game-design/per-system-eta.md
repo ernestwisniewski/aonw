@@ -67,12 +67,12 @@ Fallback:
 
 ## City Production
 
-Production ETA is calculated for buildings and units. Continuous projects such
-as wealth or research do not have completion dates.
+Production ETA is calculated for buildings, units, and wonders. Continuous
+projects such as wealth or research do not have completion dates.
 
 | Parameter | Source |
 | --- | --- |
-| `target` | Building or unit production cost |
+| `target` | Building, unit, or wonder production cost |
 | `currentProgress` | `investedProduction` |
 | `progressPerTurn` | Effective city production for the target |
 | `completionTurn` | `gameSave.turn + turnsRemaining` |
@@ -83,7 +83,7 @@ Visibility locations:
 | --- | --- |
 | Active production banner | `N turns • TX` |
 | Production list tile | Separate `N turns` and `TX` pills |
-| Building/unit details | Progress with appended `N turns • turn X` |
+| Building/unit/wonder details | Progress with appended `N turns • turn X` |
 
 Fallback:
 

@@ -10,6 +10,12 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
+
+part 'city_production_reducer_rush.dart';
+part 'city_production_reducer_wonder.dart';
 
 typedef _RushProductionApplication = ({
   GameCity city,
@@ -25,6 +31,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
     if (target == null) {
@@ -70,6 +77,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
   }
@@ -81,6 +89,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
     if (target == null) {
@@ -149,6 +158,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
   }
@@ -160,6 +170,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
     if (target == null) {
@@ -182,9 +193,28 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
   }
+
+  static GameStateTransition startWonder(
+    GameState state,
+    StartWonderCommand command,
+    MapData mapData, {
+    GameCommandContext context = const GameCommandContext(),
+    CityRuleset cityRuleset = CityRulesets.standard,
+    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+  }) => _startWonderProduction(
+    state,
+    command,
+    mapData,
+    context: context,
+    cityRuleset: cityRuleset,
+    technologyRuleset: technologyRuleset,
+    wonderRuleset: wonderRuleset,
+  );
 
   static GameStateTransition setCitySpecialization(
     GameState state,
@@ -193,6 +223,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
     if (target == null) {
@@ -225,6 +256,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
   }
@@ -236,87 +268,16 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-  }) {
-    final target = _controlledCityTarget(state, command.cityId, context);
-    if (target == null) {
-      return GameStateTransition(state: state);
-    }
-    final city = target.city;
-
-    final queue = city.productionQueue;
-    if (queue == null) return GameStateTransition(state: state);
-    if (!CityProductionRules.canRush(queue.target)) {
-      return GameStateTransition(state: state);
-    }
-
-    final productionPerTurn = _productionPerTurnForTarget(
-      state: state,
-      city: city,
-      mapData: mapData,
-      target: queue.target,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: context.paceBalance,
-    );
-
-    final targetCost = CityProductionRules.targetCost(
-      queue.target,
-      ruleset: cityRuleset,
-      paceBalance: context.paceBalance,
-    );
-    final rushedProduction = CityProductionRules.rushProductionAmount(
-      productionCost: targetCost,
-      investedProduction: queue.investedProduction,
-      productionPerTurn: productionPerTurn,
-    );
-    final rushCost = CityProductionRules.rushGoldCost(
-      productionCost: targetCost,
-      investedProduction: queue.investedProduction,
-      productionPerTurn: productionPerTurn,
-    );
-    final currentGold = state.playerGold[city.ownerPlayerId] ?? 0;
-    if (rushedProduction <= 0 || rushCost <= 0 || currentGold < rushCost) {
-      return GameStateTransition(state: state);
-    }
-
-    final advanced = queue.advancedBy(rushedProduction);
-    final updatedGold = {
-      ...state.playerGold,
-      city.ownerPlayerId: currentGold - rushCost,
-    };
-    final applied = _applyRushedProduction(
-      city: city,
-      units: state.units,
-      advancedQueue: advanced,
-      targetCost: targetCost,
-      mapData: mapData,
-      cityRuleset: cityRuleset,
-      paceBalance: context.paceBalance,
-    );
-
-    final updatedCities = _replaceCityAt(
-      state.cities,
-      index: target.index,
-      city: applied.city,
-    );
-    var next = state.copyWith(
-      cities: updatedCities,
-      units: applied.units,
-      playerGold: updatedGold,
-    );
-
-    next = _refreshCitySelectionIfSelected(
-      next,
-      cityId: command.cityId,
-      city: applied.city,
-      mapData: mapData,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: context.paceBalance,
-    );
-
-    return GameStateTransition(state: next, events: applied.events);
-  }
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+  }) => _rushCityProduction(
+    state,
+    command,
+    mapData,
+    context: context,
+    cityRuleset: cityRuleset,
+    technologyRuleset: technologyRuleset,
+    wonderRuleset: wonderRuleset,
+  );
 
   static GameStateTransition finishQueuedProductionUpdate(
     GameState state, {
@@ -326,6 +287,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) => _finishQueuedProductionUpdate(
     state,
@@ -335,6 +297,7 @@ abstract final class CityProductionReducer {
     mapData: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    wonderRuleset: wonderRuleset,
     paceBalance: paceBalance,
   );
 
@@ -349,6 +312,7 @@ abstract final class CityProductionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) => _citySelection(
     state,
@@ -356,6 +320,7 @@ abstract final class CityProductionReducer {
     mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    wonderRuleset: wonderRuleset,
     paceBalance: paceBalance,
   );
 
@@ -365,6 +330,7 @@ abstract final class CityProductionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final cityYield = CityYieldCalculator.totalFor(
@@ -386,6 +352,9 @@ abstract final class CityProductionReducer {
         research: state.research,
         ruleset: technologyRuleset,
       ),
+      cities: state.cities,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: wonderRuleset,
     );
     return GameSelection.city(
       city,
@@ -396,120 +365,13 @@ abstract final class CityProductionReducer {
     );
   }
 
-  static int _productionPerTurnForTarget({
-    required GameState state,
-    required GameCity city,
-    required MapData mapData,
-    required CityProductionTarget target,
-    required CityRuleset cityRuleset,
-    required TechnologyRuleset technologyRuleset,
-    required PaceBalance paceBalance,
-  }) {
-    final technologyEffects = TechnologyEffectSummary.forPlayer(
-      playerId: city.ownerPlayerId,
-      research: state.research,
-      ruleset: technologyRuleset,
-    );
-    final cityYield = CityYieldCalculator.totalFor(
-      city,
-      mapData,
-      fieldImprovements: state.fieldImprovements,
-      units: state.units,
-      artifacts: state.artifacts,
-      ruleset: cityRuleset,
-    );
-    final cityEconomy = CityEconomyBreakdown.from(
-      city: city,
-      tileYield: cityYield,
-      mapData: mapData,
-      ruleset: cityRuleset,
-      paceBalance: paceBalance,
-      technologyEffects: technologyEffects,
-    );
-    var productionPerTurn = CityProductionRules.productionPerTurn(
-      cityEconomy.netYield.production,
-    );
-    if (target is UnitProductionTarget) {
-      productionPerTurn = CityTechnologyEffectRules.unitProductionPerTurn(
-        productionPerTurn,
-        effects: technologyEffects,
-      );
-    }
-    return CitySpecializationRules.productionPerTurnForTarget(
-      productionPerTurn: productionPerTurn,
-      target: target,
-      specialization: city.specialization,
-    );
-  }
-
-  static _RushProductionApplication _applyRushedProduction({
-    required GameCity city,
-    required List<GameUnit> units,
-    required CityProductionQueue advancedQueue,
-    required int targetCost,
-    required MapData mapData,
-    required CityRuleset cityRuleset,
-    required PaceBalance paceBalance,
-  }) {
-    var updatedCity = city.copyWith(productionQueue: advancedQueue);
-    var updatedUnits = units;
-    final events = <GameEvent>[];
-
-    if (!advancedQueue.isCompleteFor(cityRuleset, paceBalance: paceBalance)) {
-      return (city: updatedCity, units: updatedUnits, events: events);
-    }
-
-    final productionOverflow = CityProductionRules.completionOverflow(
-      productionCost: targetCost,
-      investedProduction: advancedQueue.investedProduction,
-    );
-    switch (advancedQueue.target) {
-      case BuildingProductionTarget(:final buildingType):
-        updatedCity = updatedCity.copyWith(
-          buildings: {...updatedCity.buildings, buildingType},
-          productionQueue: null,
-          productionOverflow: productionOverflow,
-        );
-        events.add(
-          CityBuiltBuildingEvent(
-            cityId: updatedCity.id,
-            buildingType: buildingType,
-          ),
-        );
-      case UnitProductionTarget(:final unitType):
-        final producedUnit = CityUnitProductionRules.produce(
-          city: updatedCity,
-          unitType: unitType,
-          units: updatedUnits,
-          mapData: mapData,
-        );
-        if (producedUnit != null) {
-          updatedUnits = [...updatedUnits, producedUnit];
-          updatedCity = updatedCity.copyWith(
-            productionQueue: null,
-            productionOverflow: productionOverflow,
-          );
-          events.add(
-            CityProducedUnitEvent(
-              cityId: updatedCity.id,
-              unitType: unitType,
-              producedUnitId: producedUnit.id,
-            ),
-          );
-        }
-      case ProjectProductionTarget():
-        break;
-    }
-
-    return (city: updatedCity, units: updatedUnits, events: events);
-  }
-
   static GameCity _queueProduction(
     GameCity city,
     CityProductionTarget target,
     CityRuleset cityRuleset,
-    PaceBalance paceBalance,
-  ) {
+    PaceBalance paceBalance, {
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+  }) {
     final activeInvestment = city.productionQueue?.investedProduction;
     final rolloverInvestment = activeInvestment == null
         ? CityProductionRules.rolloverInvestment(
@@ -517,6 +379,7 @@ abstract final class CityProductionReducer {
             productionCost: CityProductionRules.targetCost(
               target,
               ruleset: cityRuleset,
+              wonderRuleset: wonderRuleset,
               paceBalance: paceBalance,
             ),
           )
@@ -580,6 +443,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
   }) {
     final updatedCities = _replaceCityAt(
@@ -596,6 +460,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
 
@@ -609,6 +474,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
   }) {
     final selection = state.selection;
@@ -624,6 +490,7 @@ abstract final class CityProductionReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
     );

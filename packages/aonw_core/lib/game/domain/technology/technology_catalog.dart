@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/technology/technology_id.dart';
 import 'package:aonw_core/game/domain/technology/technology_tree_position.dart';
 import 'package:aonw_core/game/domain/technology/technology_unlock.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class TechnologyCatalog {
@@ -160,7 +161,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.expansion,
       baseCost: 12,
       prerequisites: [TechnologyId.agriculture],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.waterMill)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.waterMill),
+        UnlockWonder(WonderType.hangingGardens),
+      ],
       treePosition: TechnologyTreePosition(column: 2, row: 1),
     ),
     TechnologyId.stoneworking: TechnologyDefinition(
@@ -173,6 +177,7 @@ abstract final class TechnologyCatalog {
       unlocks: [
         UnlockFieldImprovement(FieldImprovementType.quarry),
         UnlockCityBuilding(CityBuildingUnlockId.stonemason),
+        UnlockWonder(WonderType.petra),
       ],
       treePosition: TechnologyTreePosition(column: 2, row: 4),
     ),
@@ -187,6 +192,7 @@ abstract final class TechnologyCatalog {
         UnlockCityBuilding(CityBuildingUnlockId.barracks),
         UnlockCityBuilding(CityBuildingUnlockId.armory),
         UnlockUnitType(GameUnitType.spearman),
+        UnlockWonder(WonderType.greatWall),
       ],
       effects: [ArmyCombatStatsBonus(hp: 1)],
       treePosition: TechnologyTreePosition(column: 2, row: 8),
@@ -251,7 +257,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.specialization,
       baseCost: 19,
       prerequisites: [TechnologyId.advancedTrade],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.bank)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.bank),
+        UnlockWonder(WonderType.centralBank),
+      ],
       treePosition: TechnologyTreePosition(column: 3, row: 2),
     ),
     TechnologyId.engineering: TechnologyDefinition(
@@ -313,7 +322,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.settlement,
       baseCost: 8,
       prerequisites: [TechnologyId.agriculture],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.archive)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.archive),
+        UnlockWonder(WonderType.greatLibrary),
+      ],
       treePosition: TechnologyTreePosition(column: 1, row: 2),
     ),
     TechnologyId.mathematics: TechnologyDefinition(
@@ -400,7 +412,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.specialization,
       baseCost: 22,
       prerequisites: [TechnologyId.writing, TechnologyId.administration],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.court)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.court),
+        UnlockWonder(WonderType.grandCathedral),
+      ],
       treePosition: TechnologyTreePosition(column: 4, row: 3),
     ),
     TechnologyId.education: TechnologyDefinition(
@@ -413,6 +428,7 @@ abstract final class TechnologyCatalog {
       unlocks: [
         UnlockCityBuilding(CityBuildingUnlockId.academy),
         UnlockCityBuilding(CityBuildingUnlockId.university),
+        UnlockWonder(WonderType.imperialUniversity),
       ],
       treePosition: TechnologyTreePosition(column: 4, row: 0),
     ),
@@ -628,6 +644,7 @@ abstract final class TechnologyCatalog {
       unlocks: [
         UnlockCityBuilding(CityBuildingUnlockId.observatory),
         UnlockCityBuilding(CityBuildingUnlockId.laboratory),
+        UnlockWonder(WonderType.nationalObservatory),
       ],
       treePosition: TechnologyTreePosition(column: 6, row: 0),
     ),
@@ -638,7 +655,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.strategy,
       baseCost: 34,
       prerequisites: [TechnologyId.steel, TechnologyId.machinery],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.railDepot)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.railDepot),
+        UnlockWonder(WonderType.motherFactory),
+      ],
       treePosition: TechnologyTreePosition(column: 6, row: 4),
     ),
     TechnologyId.electricity: TechnologyDefinition(
@@ -702,7 +722,10 @@ abstract final class TechnologyCatalog {
       era: TechnologyEra.strategy,
       baseCost: 40,
       prerequisites: [TechnologyId.electricity, TechnologyId.flight],
-      unlocks: [UnlockCityBuilding(CityBuildingUnlockId.broadcastTower)],
+      unlocks: [
+        UnlockCityBuilding(CityBuildingUnlockId.broadcastTower),
+        UnlockWonder(WonderType.grandExposition),
+      ],
       treePosition: TechnologyTreePosition(column: 9, row: 2),
     ),
     TechnologyId.nuclearPhysics: TechnologyDefinition(
@@ -715,6 +738,7 @@ abstract final class TechnologyCatalog {
       unlocks: [
         UnlockCityBuilding(CityBuildingUnlockId.reactor),
         UnlockFieldImprovement(FieldImprovementType.uraniumMine),
+        UnlockWonder(WonderType.svalbardSeedVault),
       ],
       treePosition: TechnologyTreePosition(column: 9, row: 0),
     ),

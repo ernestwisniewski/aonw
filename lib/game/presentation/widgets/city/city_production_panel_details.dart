@@ -11,6 +11,7 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
     _setDetailsState(() {
       _detailsBuildingType = buildingType;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -61,6 +62,8 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
       cityRuleset: widget.cityRuleset,
       research: widget.research,
       technologyRuleset: widget.technologyRuleset,
+      wonderRegistry: widget.wonderRegistry,
+      wonderRuleset: widget.wonderRuleset,
       mapData: widget.mapData,
       cities: widget.cities,
       units: widget.units,
@@ -106,6 +109,7 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
     _setDetailsState(() {
       _detailsBuildingType = null;
       _detailsUnitType = unitType;
+      _detailsWonderType = null;
     });
   }
 
@@ -142,5 +146,56 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
 
   void _closeUnitDetails() {
     _setDetailsState(() => _detailsUnitType = null);
+  }
+
+  void _showWonderDetails(CityProductionItem item) {
+    final wonderType = item.wonderType;
+    if (wonderType == null) return;
+    if (_opensDetailsAsModal(context)) {
+      _showWonderDetailsModal(item);
+      return;
+    }
+    _setDetailsState(() {
+      _detailsBuildingType = null;
+      _detailsUnitType = null;
+      _detailsWonderType = wonderType;
+    });
+  }
+
+  void _showWonderDetailsModal(CityProductionItem item) {
+    final wonderType = item.wonderType;
+    if (wonderType == null) return;
+    final l10n = AppLocalizations.of(context);
+    final definition = widget.wonderRuleset.definitionFor(wonderType);
+
+    unawaited(
+      showGameModal<void>(
+        context: context,
+        builder: (dialogContext) => WonderDetailsDialog(
+          wonderType: wonderType,
+          definition: definition,
+          unlockingTechnology:
+              TechnologyUnlockQuery.unlockingTechnologyForWonder(
+                wonderType: wonderType,
+                ruleset: widget.technologyRuleset,
+              ),
+          l10n: l10n,
+          title: item.title,
+          statusLabel: item.active
+              ? l10n.productionInProgressLabel
+              : item.locked
+              ? l10n.productionButtonLocked
+              : l10n.cityProductionAvailableLabel,
+          costLabel: l10n.cityProductionCostShort(definition.productionCost),
+          progressLabel: _buildingProgressLabel(l10n, item),
+          paceLabel: l10n.cityProductionPaceShort(item.productionPerTurn),
+          onClose: () => Navigator.of(dialogContext).maybePop(),
+        ),
+      ),
+    );
+  }
+
+  void _closeWonderDetails() {
+    _setDetailsState(() => _detailsWonderType = null);
   }
 }

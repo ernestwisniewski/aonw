@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'selection_commands.dart';

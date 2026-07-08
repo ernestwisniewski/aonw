@@ -20,7 +20,7 @@ class FutureBuildingsSection extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool compact;
-  final ValueChanged<CityProductionItem> onDetails;
+  final ValueChanged<CityProductionItem>? onDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,9 @@ class FutureBuildingsSection extends StatelessWidget {
                   ProductionListTile(
                     item: item,
                     compact: compact,
-                    onDetails: () => onDetails(item),
+                    onDetails: onDetails == null
+                        ? null
+                        : () => onDetails!(item),
                     onTap: null,
                   ),
               ],
