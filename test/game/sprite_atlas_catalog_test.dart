@@ -6,9 +6,11 @@ import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dar
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -152,6 +154,60 @@ void main() {
     });
   });
 
+  group('WonderSpriteCatalog', () {
+    test('maps current wonder enum order to the generated atlas grid', () {
+      expect(
+        WonderSpriteCatalog.assetPath,
+        'assets/sprites/wonders_atlas_a_5x4_512.png',
+      );
+      expect(WonderSpriteCatalog.columns, 5);
+      expect(WonderSpriteCatalog.rows, 4);
+      expect(WonderSpriteCatalog.slotsPerAtlas, 20);
+
+      final greatLibrary = WonderSpriteCatalog.iconFor(WonderType.greatLibrary);
+      expect(greatLibrary.assetPath, WonderSpriteCatalog.assetPath);
+      expect(greatLibrary.column, 0);
+      expect(greatLibrary.row, 0);
+      expect(greatLibrary.sourceInset, 0);
+      expect(greatLibrary.cropToContent, isFalse);
+
+      final centralBank = WonderSpriteCatalog.iconFor(WonderType.centralBank);
+      expect(centralBank.column, 4);
+      expect(centralBank.row, 0);
+
+      final imperialUniversity = WonderSpriteCatalog.iconFor(
+        WonderType.imperialUniversity,
+      );
+      expect(imperialUniversity.column, 0);
+      expect(imperialUniversity.row, 1);
+
+      final grandCathedral = WonderSpriteCatalog.iconFor(
+        WonderType.grandCathedral,
+      );
+      expect(grandCathedral.column, 1);
+      expect(grandCathedral.row, 1);
+
+      final grandExposition = WonderSpriteCatalog.iconFor(
+        WonderType.grandExposition,
+      );
+      expect(grandExposition.column, 0);
+      expect(grandExposition.row, 2);
+    });
+
+    test('does not use asset adjustment ids for wonder icons', () {
+      final data = WonderSpriteCatalog.iconFor(WonderType.greatLibrary);
+      final catalog = const AnimationFrameAdjustmentCatalog.empty().withFrame(
+        assetPath: WonderSpriteCatalog.assetPath,
+        animationId: 'wonder.greatLibrary',
+        frameIndex: 0,
+        adjustment: const AnimationFrameAdjustment(cropLeft: 4),
+      );
+
+      expect(data.adjustmentId, isNull);
+      expect(data.adjustmentFor(catalog), const AnimationFrameAdjustment());
+    });
+  });
+
   group('FieldImprovementSpriteCatalog', () {
     test('uses prompt order instead of FieldImprovementType enum order', () {
       expect(
@@ -239,6 +295,7 @@ void main() {
           'lib/game/presentation/widgets/theme/sprite_atlas_icon.dart',
           'lib/game/presentation/widgets/theme/technology_sprite_catalog.dart',
           'lib/game/presentation/widgets/theme/unit_sprite_icon.dart',
+          'lib/game/presentation/widgets/theme/wonder_sprite_catalog.dart',
         };
         final offenders = <String>[];
 

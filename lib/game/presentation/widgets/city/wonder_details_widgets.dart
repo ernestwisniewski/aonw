@@ -2,11 +2,13 @@ part of 'wonder_details_dialog.dart';
 
 class _WonderDetailsHeader extends StatelessWidget {
   const _WonderDetailsHeader({
+    required this.wonderType,
     required this.title,
     required this.l10n,
     required this.onClose,
   });
 
+  final WonderType wonderType;
   final String title;
   final AppLocalizations l10n;
   final VoidCallback onClose;
@@ -32,11 +34,15 @@ class _WonderDetailsHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               includeShadow: false,
             ),
-            child: const Center(
-              child: GameIcon(
-                GameIcons.victory,
-                size: GameIconSize.large,
-                color: GameUiTheme.goldLight,
+            child: Center(
+              child: WonderSpriteIcon(
+                type: wonderType,
+                size: 50,
+                fallback: const GameIcon(
+                  GameIcons.victory,
+                  size: GameIconSize.large,
+                  color: GameUiTheme.goldLight,
+                ),
               ),
             ),
           ),

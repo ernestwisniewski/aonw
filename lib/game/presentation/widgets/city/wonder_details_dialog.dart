@@ -1,6 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
@@ -113,7 +114,12 @@ class WonderDetailsPanel extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _WonderDetailsHeader(title: title, l10n: l10n, onClose: onClose),
+            _WonderDetailsHeader(
+              wonderType: wonderType,
+              title: title,
+              l10n: l10n,
+              onClose: onClose,
+            ),
             Flexible(
               child: GameModalContentScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),

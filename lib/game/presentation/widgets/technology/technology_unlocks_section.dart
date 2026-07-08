@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dar
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
@@ -134,10 +135,12 @@ class TechnologyUnlockRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
         ] else if (wonderType != null) ...[
-          const SizedBox.square(
+          SizedBox.square(
             dimension: 38,
-            child: Center(
-              child: GameIcon(
+            child: WonderSpriteIcon(
+              type: wonderType,
+              size: 38,
+              fallback: const GameIcon(
                 GameIcons.victory,
                 size: GameIconSize.regular,
                 color: GameUiTheme.goldLight,

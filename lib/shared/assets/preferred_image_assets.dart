@@ -7,6 +7,8 @@ abstract final class PreferredImageAssets {
       'assets/sprites/buildings_atlas_c_5x4_512.png';
   static const String technologyAtlas =
       'assets/sprites/technologies_atlas_8x7_512.png';
+  static const String wonderAtlas =
+      'assets/sprites/wonders_atlas_a_5x4_512.png';
   static const String cityAtlas = 'assets/sprites/cities_atlas_6x4_512x320.jpg';
   static const String unitAtlasDirectory = 'assets/sprites/units/';
   static const int technologyAtlasDecodeWidth = 2048;
@@ -36,6 +38,7 @@ abstract final class PreferredImageAssets {
     buildingAtlasB,
     buildingAtlasC,
     technologyAtlas,
+    wonderAtlas,
     ...unitAtlasPaths,
   };
 
