@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
+import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
@@ -13,6 +15,7 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_layout.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 class TechnologyInlineTechnologyDetailsLayer extends StatelessWidget {
@@ -147,6 +150,49 @@ class TechnologyInlineUnitDetailsLayer extends StatelessWidget {
     } on ArgumentError {
       return null;
     }
+  }
+}
+
+class TechnologyInlineWonderDetailsLayer extends StatelessWidget {
+  const TechnologyInlineWonderDetailsLayer({
+    required this.wonderType,
+    required this.l10n,
+    required this.technologyRuleset,
+    required this.compact,
+    required this.onClose,
+    super.key,
+  });
+
+  final WonderType wonderType;
+  final AppLocalizations l10n;
+  final TechnologyRuleset technologyRuleset;
+  final bool compact;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final definition = WonderRuleset.standard.definitionFor(wonderType);
+    return _TechnologyInlineDetailsLayer(
+      compact: compact,
+      childBuilder: (maxWidth, maxHeight) {
+        return WonderDetailsPanel(
+          wonderType: wonderType,
+          definition: definition,
+          unlockingTechnology:
+              TechnologyUnlockQuery.unlockingTechnologyForWonder(
+                wonderType: wonderType,
+                ruleset: technologyRuleset,
+              ),
+          l10n: l10n,
+          title: WonderDisplayNames.wonder(l10n, wonderType),
+          statusLabel: l10n.technologyDetailsUnlockStatus,
+          costLabel: l10n.cityProductionCostShort(definition.productionCost),
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+          onClose: onClose,
+        );
+      },
+    );
   }
 }
 

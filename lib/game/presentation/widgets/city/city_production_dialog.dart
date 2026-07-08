@@ -12,6 +12,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_gamepad_navi
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
+import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -178,6 +179,7 @@ class CityProductionPanel extends StatefulWidget {
 class _CityProductionPanelState extends State<CityProductionPanel> {
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
+  WonderType? _detailsWonderType;
   String? _selectedItemKey;
   bool _gamepadSelectionVisible = false;
   CityBuildingSortMode _buildingSortMode = CityBuildingSortMode.recommended;
@@ -192,6 +194,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     if (oldWidget.city.id != widget.city.id) {
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
       _selectedItemKey = null;
       _gamepadSelectionVisible = false;
     }
@@ -204,6 +207,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     final viewModel = _viewModelFor(l10n);
     final detailsBuildingItem = viewModel.itemForBuilding(_detailsBuildingType);
     final detailsUnitItem = viewModel.itemForUnit(_detailsUnitType);
+    final detailsWonderItem = viewModel.itemForWonder(_detailsWonderType);
     final activeItem = viewModel.activeItem;
     final gamepadChoices = CityProductionGamepadNavigation.choicesFor(
       viewModel: viewModel,
@@ -213,6 +217,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
       onProduceUnit: widget.onProduceUnit,
       onBuildingDetails: _showBuildingDetails,
       onUnitDetails: _showUnitDetails,
+      onWonderDetails: _showWonderDetails,
       onStartProject: widget.onStartProject,
       onSetSpecialization: widget.onSetSpecialization,
     );
@@ -289,6 +294,7 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
                                   : null,
                               onBuildingDetails: _showBuildingDetails,
                               onUnitDetails: _showUnitDetails,
+                              onWonderDetails: _showWonderDetails,
                               onBuild: widget.onBuild,
                               onBuildWonder: widget.onBuildWonder,
                               onProduceUnit: widget.onProduceUnit,
@@ -335,6 +341,23 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
                                     ),
                                 compact: compact,
                                 onClose: _closeUnitDetails,
+                              ),
+                            ),
+                          if (detailsWonderItem != null)
+                            Positioned.fill(
+                              child: CityProductionWonderDetailsLayer(
+                                item: detailsWonderItem,
+                                l10n: l10n,
+                                definition: widget.wonderRuleset.definitionFor(
+                                  detailsWonderItem.wonderType!,
+                                ),
+                                unlockingTechnology:
+                                    TechnologyUnlockQuery.unlockingTechnologyForWonder(
+                                      wonderType: detailsWonderItem.wonderType!,
+                                      ruleset: widget.technologyRuleset,
+                                    ),
+                                compact: compact,
+                                onClose: _closeWonderDetails,
                               ),
                             ),
                         ],
@@ -393,10 +416,15 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
   }
 
   bool _closeInlineDetails() {
-    if (_detailsBuildingType == null && _detailsUnitType == null) return false;
+    if (_detailsBuildingType == null &&
+        _detailsUnitType == null &&
+        _detailsWonderType == null) {
+      return false;
+    }
     setState(() {
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
     return true;
   }

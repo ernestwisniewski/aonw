@@ -1,8 +1,10 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/formatters/technology_tree_labels.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
+import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_header.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_sections.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_unlocks_section.dart';
@@ -17,6 +19,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal_layout.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 class TechnologyDetailsDialog extends StatelessWidget {
@@ -77,6 +80,7 @@ class TechnologyDetailsPanel extends StatefulWidget {
 class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
   CityBuildingType? _selectedBuildingType;
   GameUnitType? _selectedUnitType;
+  WonderType? _selectedWonderType;
 
   @override
   void didUpdateWidget(covariant TechnologyDetailsPanel oldWidget) {
@@ -84,6 +88,7 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
     if (oldWidget.card.id != widget.card.id) {
       _selectedBuildingType = null;
       _selectedUnitType = null;
+      _selectedWonderType = null;
     }
   }
 
@@ -135,6 +140,29 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
         maxWidth: widget.maxWidth,
         maxHeight: widget.maxHeight,
         onClose: () => setState(() => _selectedUnitType = null),
+      );
+    }
+    final selectedWonderType = _selectedWonderType;
+    if (selectedWonderType != null) {
+      final definition = WonderRuleset.standard.definitionFor(
+        selectedWonderType,
+      );
+      return WonderDetailsPanel(
+        wonderType: selectedWonderType,
+        definition: definition,
+        unlockingTechnology: TechnologyUnlockQuery.unlockingTechnologyForWonder(
+          wonderType: selectedWonderType,
+          ruleset: widget.technologyRuleset,
+        ),
+        l10n: widget.l10n,
+        title: WonderDisplayNames.wonder(widget.l10n, selectedWonderType),
+        statusLabel: widget.l10n.technologyDetailsUnlockStatus,
+        costLabel: widget.l10n.cityProductionCostShort(
+          definition.productionCost,
+        ),
+        maxWidth: widget.maxWidth,
+        maxHeight: widget.maxHeight,
+        onClose: () => setState(() => _selectedWonderType = null),
       );
     }
 
@@ -209,6 +237,7 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
                     l10n: widget.l10n,
                     onBuildingDetails: _openBuildingDetails,
                     onUnitDetails: _openUnitDetails,
+                    onWonderDetails: _openWonderDetails,
                   ),
                   TechnologyDetailsSection(
                     title: widget.l10n.technologyDetailsEffects,
@@ -237,6 +266,7 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
     setState(() {
       _selectedBuildingType = buildingType;
       _selectedUnitType = null;
+      _selectedWonderType = null;
     });
   }
 
@@ -244,6 +274,15 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
     setState(() {
       _selectedBuildingType = null;
       _selectedUnitType = unitType;
+      _selectedWonderType = null;
+    });
+  }
+
+  void _openWonderDetails(WonderType wonderType) {
+    setState(() {
+      _selectedBuildingType = null;
+      _selectedUnitType = null;
+      _selectedWonderType = wonderType;
     });
   }
 

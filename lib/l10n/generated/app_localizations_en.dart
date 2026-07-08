@@ -4428,6 +4428,153 @@ class AppLocalizationsEn extends AppLocalizations {
   String get buildingDetailsNoYieldChange => 'No resource change';
 
   @override
+  String get wonderDetailsTooltip => 'Wonder details';
+
+  @override
+  String get wonderGreatLibrary => 'Great Library';
+
+  @override
+  String get wonderHangingGardens => 'Hanging Gardens';
+
+  @override
+  String get wonderGreatWall => 'Great Wall';
+
+  @override
+  String get wonderPetra => 'Petra';
+
+  @override
+  String get wonderCentralBank => 'Central Bank';
+
+  @override
+  String get wonderImperialUniversity => 'Imperial University';
+
+  @override
+  String get wonderGrandCathedral => 'Grand Cathedral';
+
+  @override
+  String get wonderMotherFactory => 'Mother Factory';
+
+  @override
+  String get wonderNationalObservatory => 'National Observatory';
+
+  @override
+  String get wonderSvalbardSeedVault => 'Svalbard Seed Vault';
+
+  @override
+  String get wonderGrandExposition => 'Grand Exposition';
+
+  @override
+  String get wonderGreatLibraryDescription =>
+      'A world center of written knowledge. Adds science across the empire and completes the current research when finished.';
+
+  @override
+  String get wonderHangingGardensDescription =>
+      'A legendary garden complex that turns a river city into a food engine for the whole empire.';
+
+  @override
+  String get wonderGreatWallDescription =>
+      'A defensive megaproject that strengthens every city\'s ability to withstand attacks.';
+
+  @override
+  String get wonderPetraDescription =>
+      'A stone-carved trade wonder that makes a desert host city productive and wealthy.';
+
+  @override
+  String get wonderCentralBankDescription =>
+      'A financial institution that boosts empire gold and grants an immediate treasury reserve.';
+
+  @override
+  String get wonderImperialUniversityDescription =>
+      'A prestigious campus that lifts science in every city.';
+
+  @override
+  String get wonderGrandCathedralDescription =>
+      'A civic and spiritual landmark that adds stability when supported by marble.';
+
+  @override
+  String get wonderMotherFactoryDescription =>
+      'A heavy industrial complex that boosts empire production and surges the host city forward when finished.';
+
+  @override
+  String get wonderNationalObservatoryDescription =>
+      'A mountain-facing observatory that advances late scientific output across the empire.';
+
+  @override
+  String get wonderSvalbardSeedVaultDescription =>
+      'A polar preservation site that improves food security and empire stability.';
+
+  @override
+  String get wonderGrandExpositionDescription =>
+      'A late cultural showcase that turns global attention into gold and stability.';
+
+  @override
+  String get wonderDetailsStandingEffects => 'Standing effects';
+
+  @override
+  String get wonderDetailsCompletionEffects => 'Completion effects';
+
+  @override
+  String get wonderDetailsNoStandingEffects => 'No standing effects';
+
+  @override
+  String get wonderDetailsNoCompletionEffects => 'No completion effects';
+
+  @override
+  String get wonderDetailsRequirementAdjacentRiver => 'Adjacent river';
+
+  @override
+  String get wonderDetailsRequirementAdjacentMountain => 'Adjacent mountain';
+
+  @override
+  String wonderDetailsRequirementTerrain(String terrain) {
+    return 'Terrain: $terrain';
+  }
+
+  @override
+  String wonderDetailsEmpireFlatYieldEffect(String yield) {
+    return '$yield in every city';
+  }
+
+  @override
+  String wonderDetailsHostCityFlatYieldEffect(String yield) {
+    return '$yield in the host city';
+  }
+
+  @override
+  String wonderDetailsEmpireScienceEffect(String amount) {
+    return '$amount science in every city';
+  }
+
+  @override
+  String wonderDetailsEmpireGoldMultiplierEffect(String percent) {
+    return '$percent empire gold';
+  }
+
+  @override
+  String wonderDetailsEmpireProductionMultiplierEffect(String percent) {
+    return '$percent empire production';
+  }
+
+  @override
+  String wonderDetailsStabilityEffect(String amount) {
+    return '$amount stability';
+  }
+
+  @override
+  String get wonderDetailsGrantFreeTechnology =>
+      'Completes the active research';
+
+  @override
+  String wonderDetailsProductionBurst(int amount) {
+    return '+$amount production overflow in the host city';
+  }
+
+  @override
+  String wonderDetailsGrantGold(int amount) {
+    return '+$amount gold';
+  }
+
+  @override
   String get unitDetailsTooltip => 'Unit details';
 
   @override
@@ -4508,6 +4655,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productionCategoryUnit => 'Unit';
+
+  @override
+  String get productionCategoryWonder => 'Wonder';
 
   @override
   String get productionTitle => 'PRODUCTION';
@@ -5078,6 +5228,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get technologyRecommendationReasonBuilding =>
       'A new city building opens another development direction.';
+
+  @override
+  String get technologyRecommendationReasonWonder =>
+      'A world wonder opens a unique empire bonus.';
 
   @override
   String get technologyRecommendationReasonUnit =>

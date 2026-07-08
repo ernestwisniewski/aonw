@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names_terrain.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/formatters/player_country_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -12,7 +13,6 @@ import 'package:aonw_core/game/domain/unit.dart';
 abstract final class GameDisplayNames {
   static final RegExp _defaultCityNamePattern = RegExp(r'^city_(\d+)$');
   static final RegExp _defaultPlayerNamePattern = RegExp(r'^player_(\d+)$');
-
   static String city(AppLocalizations l10n, GameCity city) {
     final match = _defaultCityNamePattern.firstMatch(city.name);
     if (match == null) return city.name;
@@ -584,6 +584,7 @@ abstract final class GameDisplayNames {
         l10n,
         buildingId,
       ),
+      UnlockWonder(:final wonderType) => wonderDisplayName(l10n, wonderType),
       UnlockUnitType(:final unitType) => GameDisplayNames.unitType(
         l10n,
         unitType,

@@ -42,7 +42,6 @@ class CityProductionDialogViewModel {
   final List<CityProductionItem> units;
   final List<CityProductionItem> projects;
   final List<CitySpecializationItem> specializations;
-
   bool get hasItems =>
       buildings.isNotEmpty ||
       futureBuildings.isNotEmpty ||
@@ -76,6 +75,14 @@ class CityProductionDialogViewModel {
     if (unitType == null) return null;
     for (final item in units) {
       if (item.unitType == unitType) return item;
+    }
+    return null;
+  }
+
+  CityProductionItem? itemForWonder(WonderType? wonderType) {
+    if (wonderType == null) return null;
+    for (final item in wonders) {
+      if (item.wonderType == wonderType) return item;
     }
     return null;
   }

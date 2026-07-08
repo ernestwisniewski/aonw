@@ -12,6 +12,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 class TechnologyUnlocksSection extends StatelessWidget {
@@ -21,6 +22,7 @@ class TechnologyUnlocksSection extends StatelessWidget {
     required this.l10n,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     super.key,
   });
 
@@ -29,6 +31,7 @@ class TechnologyUnlocksSection extends StatelessWidget {
   final AppLocalizations l10n;
   final ValueChanged<CityBuildingType> onBuildingDetails;
   final ValueChanged<GameUnitType> onUnitDetails;
+  final ValueChanged<WonderType> onWonderDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +82,7 @@ class TechnologyUnlocksSection extends StatelessWidget {
                             l10n: l10n,
                             onBuildingDetails: onBuildingDetails,
                             onUnitDetails: onUnitDetails,
+                            onWonderDetails: onWonderDetails,
                           ),
                         ],
                       ],
@@ -97,6 +101,7 @@ class TechnologyUnlockRow extends StatelessWidget {
     required this.l10n,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     super.key,
   });
 
@@ -104,11 +109,13 @@ class TechnologyUnlockRow extends StatelessWidget {
   final AppLocalizations l10n;
   final ValueChanged<CityBuildingType> onBuildingDetails;
   final ValueChanged<GameUnitType> onUnitDetails;
+  final ValueChanged<WonderType> onWonderDetails;
 
   @override
   Widget build(BuildContext context) {
     final buildingType = _buildingTypeFor(unlock);
     final unitType = _unitTypeFor(unlock);
+    final wonderType = _wonderTypeFor(unlock);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -123,6 +130,18 @@ class TechnologyUnlockRow extends StatelessWidget {
               gameIconForUnitType(unitType),
               size: GameIconSize.regular,
               color: GameUiTheme.goldLight,
+            ),
+          ),
+          const SizedBox(width: 10),
+        ] else if (wonderType != null) ...[
+          const SizedBox.square(
+            dimension: 38,
+            child: Center(
+              child: GameIcon(
+                GameIcons.victory,
+                size: GameIconSize.regular,
+                color: GameUiTheme.goldLight,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -164,6 +183,12 @@ class TechnologyUnlockRow extends StatelessWidget {
             tooltip: l10n.unitDetailsTooltip,
             onPressed: () => onUnitDetails(unitType),
           ),
+        ] else if (wonderType != null) ...[
+          const SizedBox(width: 8),
+          UnlockHelpButton(
+            tooltip: l10n.wonderDetailsTooltip,
+            onPressed: () => onWonderDetails(wonderType),
+          ),
         ],
       ],
     );
@@ -173,14 +198,25 @@ class TechnologyUnlockRow extends StatelessWidget {
     return switch (unlock) {
       UnlockCityBuilding(:final buildingId) =>
         TechnologyUnlockQuery.buildingTypeForUnlock(buildingId),
-      UnlockFieldImprovement() || UnlockUnitType() => null,
+      UnlockFieldImprovement() || UnlockUnitType() || UnlockWonder() => null,
     };
   }
 
   GameUnitType? _unitTypeFor(TechnologyUnlock unlock) {
     return switch (unlock) {
       UnlockUnitType(:final unitType) => unitType,
-      UnlockCityBuilding() || UnlockFieldImprovement() => null,
+      UnlockCityBuilding() ||
+      UnlockFieldImprovement() ||
+      UnlockWonder() => null,
+    };
+  }
+
+  WonderType? _wonderTypeFor(TechnologyUnlock unlock) {
+    return switch (unlock) {
+      UnlockWonder(:final wonderType) => wonderType,
+      UnlockCityBuilding() ||
+      UnlockFieldImprovement() ||
+      UnlockUnitType() => null,
     };
   }
 }

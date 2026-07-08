@@ -7649,6 +7649,240 @@ abstract class AppLocalizations {
   /// **'No resource change'**
   String get buildingDetailsNoYieldChange;
 
+  /// No description provided for @wonderDetailsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonder details'**
+  String get wonderDetailsTooltip;
+
+  /// No description provided for @wonderGreatLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Great Library'**
+  String get wonderGreatLibrary;
+
+  /// No description provided for @wonderHangingGardens.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanging Gardens'**
+  String get wonderHangingGardens;
+
+  /// No description provided for @wonderGreatWall.
+  ///
+  /// In en, this message translates to:
+  /// **'Great Wall'**
+  String get wonderGreatWall;
+
+  /// No description provided for @wonderPetra.
+  ///
+  /// In en, this message translates to:
+  /// **'Petra'**
+  String get wonderPetra;
+
+  /// No description provided for @wonderCentralBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Central Bank'**
+  String get wonderCentralBank;
+
+  /// No description provided for @wonderImperialUniversity.
+  ///
+  /// In en, this message translates to:
+  /// **'Imperial University'**
+  String get wonderImperialUniversity;
+
+  /// No description provided for @wonderGrandCathedral.
+  ///
+  /// In en, this message translates to:
+  /// **'Grand Cathedral'**
+  String get wonderGrandCathedral;
+
+  /// No description provided for @wonderMotherFactory.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother Factory'**
+  String get wonderMotherFactory;
+
+  /// No description provided for @wonderNationalObservatory.
+  ///
+  /// In en, this message translates to:
+  /// **'National Observatory'**
+  String get wonderNationalObservatory;
+
+  /// No description provided for @wonderSvalbardSeedVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Svalbard Seed Vault'**
+  String get wonderSvalbardSeedVault;
+
+  /// No description provided for @wonderGrandExposition.
+  ///
+  /// In en, this message translates to:
+  /// **'Grand Exposition'**
+  String get wonderGrandExposition;
+
+  /// No description provided for @wonderGreatLibraryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A world center of written knowledge. Adds science across the empire and completes the current research when finished.'**
+  String get wonderGreatLibraryDescription;
+
+  /// No description provided for @wonderHangingGardensDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A legendary garden complex that turns a river city into a food engine for the whole empire.'**
+  String get wonderHangingGardensDescription;
+
+  /// No description provided for @wonderGreatWallDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A defensive megaproject that strengthens every city\'s ability to withstand attacks.'**
+  String get wonderGreatWallDescription;
+
+  /// No description provided for @wonderPetraDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A stone-carved trade wonder that makes a desert host city productive and wealthy.'**
+  String get wonderPetraDescription;
+
+  /// No description provided for @wonderCentralBankDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A financial institution that boosts empire gold and grants an immediate treasury reserve.'**
+  String get wonderCentralBankDescription;
+
+  /// No description provided for @wonderImperialUniversityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A prestigious campus that lifts science in every city.'**
+  String get wonderImperialUniversityDescription;
+
+  /// No description provided for @wonderGrandCathedralDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A civic and spiritual landmark that adds stability when supported by marble.'**
+  String get wonderGrandCathedralDescription;
+
+  /// No description provided for @wonderMotherFactoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A heavy industrial complex that boosts empire production and surges the host city forward when finished.'**
+  String get wonderMotherFactoryDescription;
+
+  /// No description provided for @wonderNationalObservatoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A mountain-facing observatory that advances late scientific output across the empire.'**
+  String get wonderNationalObservatoryDescription;
+
+  /// No description provided for @wonderSvalbardSeedVaultDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A polar preservation site that improves food security and empire stability.'**
+  String get wonderSvalbardSeedVaultDescription;
+
+  /// No description provided for @wonderGrandExpositionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A late cultural showcase that turns global attention into gold and stability.'**
+  String get wonderGrandExpositionDescription;
+
+  /// No description provided for @wonderDetailsStandingEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Standing effects'**
+  String get wonderDetailsStandingEffects;
+
+  /// No description provided for @wonderDetailsCompletionEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion effects'**
+  String get wonderDetailsCompletionEffects;
+
+  /// No description provided for @wonderDetailsNoStandingEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'No standing effects'**
+  String get wonderDetailsNoStandingEffects;
+
+  /// No description provided for @wonderDetailsNoCompletionEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'No completion effects'**
+  String get wonderDetailsNoCompletionEffects;
+
+  /// No description provided for @wonderDetailsRequirementAdjacentRiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjacent river'**
+  String get wonderDetailsRequirementAdjacentRiver;
+
+  /// No description provided for @wonderDetailsRequirementAdjacentMountain.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjacent mountain'**
+  String get wonderDetailsRequirementAdjacentMountain;
+
+  /// No description provided for @wonderDetailsRequirementTerrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Terrain: {terrain}'**
+  String wonderDetailsRequirementTerrain(String terrain);
+
+  /// No description provided for @wonderDetailsEmpireFlatYieldEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{yield} in every city'**
+  String wonderDetailsEmpireFlatYieldEffect(String yield);
+
+  /// No description provided for @wonderDetailsHostCityFlatYieldEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{yield} in the host city'**
+  String wonderDetailsHostCityFlatYieldEffect(String yield);
+
+  /// No description provided for @wonderDetailsEmpireScienceEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} science in every city'**
+  String wonderDetailsEmpireScienceEffect(String amount);
+
+  /// No description provided for @wonderDetailsEmpireGoldMultiplierEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} empire gold'**
+  String wonderDetailsEmpireGoldMultiplierEffect(String percent);
+
+  /// No description provided for @wonderDetailsEmpireProductionMultiplierEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} empire production'**
+  String wonderDetailsEmpireProductionMultiplierEffect(String percent);
+
+  /// No description provided for @wonderDetailsStabilityEffect.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} stability'**
+  String wonderDetailsStabilityEffect(String amount);
+
+  /// No description provided for @wonderDetailsGrantFreeTechnology.
+  ///
+  /// In en, this message translates to:
+  /// **'Completes the active research'**
+  String get wonderDetailsGrantFreeTechnology;
+
+  /// No description provided for @wonderDetailsProductionBurst.
+  ///
+  /// In en, this message translates to:
+  /// **'+{amount} production overflow in the host city'**
+  String wonderDetailsProductionBurst(int amount);
+
+  /// No description provided for @wonderDetailsGrantGold.
+  ///
+  /// In en, this message translates to:
+  /// **'+{amount} gold'**
+  String wonderDetailsGrantGold(int amount);
+
   /// No description provided for @unitDetailsTooltip.
   ///
   /// In en, this message translates to:
@@ -7768,6 +8002,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unit'**
   String get productionCategoryUnit;
+
+  /// No description provided for @productionCategoryWonder.
+  ///
+  /// In en, this message translates to:
+  /// **'Wonder'**
+  String get productionCategoryWonder;
 
   /// No description provided for @productionTitle.
   ///
@@ -8721,6 +8961,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A new city building opens another development direction.'**
   String get technologyRecommendationReasonBuilding;
+
+  /// No description provided for @technologyRecommendationReasonWonder.
+  ///
+  /// In en, this message translates to:
+  /// **'A world wonder opens a unique empire bonus.'**
+  String get technologyRecommendationReasonWonder;
 
   /// No description provided for @technologyRecommendationReasonUnit.
   ///

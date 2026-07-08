@@ -97,6 +97,7 @@ void main() {
                   onTechnologyDetails: (card) => detailsTechnologyId = card.id,
                   onBuildingDetails: (_) {},
                   onUnitDetails: (_) {},
+                  onWonderDetails: (_) {},
                   onResearch: (technologyId) =>
                       researchedTechnologyId = technologyId,
                 );
@@ -174,6 +175,7 @@ void main() {
                   onTechnologyDetails: (_) {},
                   onBuildingDetails: (_) {},
                   onUnitDetails: (_) {},
+                  onWonderDetails: (_) {},
                   onResearch: (_) {},
                 );
               },
@@ -232,6 +234,7 @@ void main() {
                 onTechnologyDetails: (_) {},
                 onBuildingDetails: (_) {},
                 onUnitDetails: (_) {},
+                onWonderDetails: (_) {},
                 onResearch: (_) {},
               );
             },

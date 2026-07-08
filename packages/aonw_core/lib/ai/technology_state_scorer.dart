@@ -17,7 +17,6 @@ final class AiTechnologyStateScorer {
   });
 
   final AiTechnologyBranchClassifier branchClassifier;
-
   double score({
     required GameView view,
     required TechnologyDefinition definition,
@@ -128,6 +127,7 @@ final class AiTechnologyStateScorer {
         assessment: assessment,
         snapshot: snapshot,
       ),
+      UnlockWonder() => 0.18,
     };
   }
 

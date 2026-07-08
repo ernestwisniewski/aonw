@@ -26,6 +26,7 @@ class CityProductionList extends StatelessWidget {
     required this.specializations,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     required this.onBuild,
     required this.onProduceUnit,
     required this.onStartProject,
@@ -47,6 +48,7 @@ class CityProductionList extends StatelessWidget {
   final List<CitySpecializationItem> specializations;
   final ValueChanged<CityProductionItem> onBuildingDetails;
   final ValueChanged<CityProductionItem> onUnitDetails;
+  final ValueChanged<CityProductionItem> onWonderDetails;
   final ValueChanged<CityBuildingType> onBuild;
   final ValueChanged<WonderType>? onBuildWonder;
   final ValueChanged<GameUnitType> onProduceUnit;
@@ -118,7 +120,7 @@ class CityProductionList extends StatelessWidget {
               item: item,
               compact: compact,
               selected: selectedItemKey == itemKey,
-              onDetails: null,
+              onDetails: () => onWonderDetails(item),
               onTap: item.active || item.locked || onBuildWonder == null
                   ? null
                   : () => onBuildWonder!(item.wonderType!),
@@ -227,7 +229,7 @@ class CityProductionList extends StatelessWidget {
             title: l10n.futureWondersSection(unavailableWonders.length),
             subtitle: l10n.futureWondersSubtitle,
             compact: compact,
-            onDetails: null,
+            onDetails: onWonderDetails,
           ),
         );
       }

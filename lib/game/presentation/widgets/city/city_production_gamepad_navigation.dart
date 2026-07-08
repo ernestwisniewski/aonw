@@ -30,6 +30,7 @@ abstract final class CityProductionGamepadNavigation {
     required ValueChanged<GameUnitType> onProduceUnit,
     required ValueChanged<CityProductionItem> onBuildingDetails,
     required ValueChanged<CityProductionItem> onUnitDetails,
+    required ValueChanged<CityProductionItem> onWonderDetails,
     required ValueChanged<CityProjectType>? onStartProject,
     required ValueChanged<CitySpecializationType>? onSetSpecialization,
   }) {
@@ -57,6 +58,7 @@ abstract final class CityProductionGamepadNavigation {
             key: cityProductionItemKey(item),
             canConfirm: !item.active && !item.locked && onBuildWonder != null,
             onConfirm: () => onBuildWonder!(item.wonderType!),
+            onDetails: () => onWonderDetails(item),
           ),
       for (final item in viewModel.specializations)
         CityProductionGamepadChoice(

@@ -11,6 +11,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 part 'technology_tree_node_chrome.dart';
@@ -27,6 +28,7 @@ class TechnologyTreeNode extends StatelessWidget {
     required this.showUnlockDetails,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     required this.onResearch,
     super.key,
   });
@@ -40,6 +42,7 @@ class TechnologyTreeNode extends StatelessWidget {
   final bool showUnlockDetails;
   final ValueChanged<CityBuildingType> onBuildingDetails;
   final ValueChanged<GameUnitType> onUnitDetails;
+  final ValueChanged<WonderType> onWonderDetails;
   final VoidCallback? onResearch;
 
   @override
@@ -179,6 +182,7 @@ class TechnologyTreeNode extends StatelessWidget {
                 showDetails: showUnlockDetails,
                 onBuildingDetails: onBuildingDetails,
                 onUnitDetails: onUnitDetails,
+                onWonderDetails: onWonderDetails,
               ),
               const Spacer(),
               Row(

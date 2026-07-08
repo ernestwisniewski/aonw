@@ -10,6 +10,7 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
       _detailsTechnologyId = card.id;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -26,6 +27,7 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
       _detailsTechnologyId = null;
       _detailsBuildingType = buildingType;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -38,6 +40,20 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = unitType;
+      _detailsWonderType = null;
+    });
+  }
+
+  void _showWonderDetails(WonderType wonderType) {
+    if (_opensDetailsAsModal(context)) {
+      _showWonderDetailsModal(wonderType);
+      return;
+    }
+    _setDetailsState(() {
+      _detailsTechnologyId = null;
+      _detailsBuildingType = null;
+      _detailsUnitType = null;
+      _detailsWonderType = wonderType;
     });
   }
 
@@ -115,16 +131,43 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
     );
   }
 
+  void _showWonderDetailsModal(WonderType wonderType) {
+    final l10n = AppLocalizations.of(context);
+    final definition = WonderRuleset.standard.definitionFor(wonderType);
+    _clearInlineDetails();
+    unawaited(
+      showGameModal<void>(
+        context: context,
+        builder: (dialogContext) => WonderDetailsDialog(
+          wonderType: wonderType,
+          definition: definition,
+          unlockingTechnology:
+              TechnologyUnlockQuery.unlockingTechnologyForWonder(
+                wonderType: wonderType,
+                ruleset: widget.technologyRuleset,
+              ),
+          l10n: l10n,
+          title: WonderDisplayNames.wonder(l10n, wonderType),
+          statusLabel: l10n.technologyDetailsUnlockStatus,
+          costLabel: l10n.cityProductionCostShort(definition.productionCost),
+          onClose: () => Navigator.of(dialogContext).maybePop(),
+        ),
+      ),
+    );
+  }
+
   void _clearInlineDetails() {
     if (_detailsTechnologyId == null &&
         _detailsBuildingType == null &&
-        _detailsUnitType == null) {
+        _detailsUnitType == null &&
+        _detailsWonderType == null) {
       return;
     }
     _setDetailsState(() {
       _detailsTechnologyId = null;
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 
@@ -140,6 +183,7 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
     _setDetailsState(() {
       _detailsBuildingType = null;
       _detailsUnitType = null;
+      _detailsWonderType = null;
     });
   }
 

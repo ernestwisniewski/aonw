@@ -2360,6 +2360,108 @@
     }
   },
   "buildingDetailsNoYieldChange": "Brak zmiany zasobów",
+  "wonderDetailsTooltip": "Szczegóły cudu",
+  "wonderGreatLibrary": "Wielka Biblioteka",
+  "wonderHangingGardens": "Wiszące Ogrody",
+  "wonderGreatWall": "Wielki Mur",
+  "wonderPetra": "Petra",
+  "wonderCentralBank": "Bank Centralny",
+  "wonderImperialUniversity": "Uniwersytet Imperialny",
+  "wonderGrandCathedral": "Wielka Katedra",
+  "wonderMotherFactory": "Matka Fabryk",
+  "wonderNationalObservatory": "Narodowe Obserwatorium",
+  "wonderSvalbardSeedVault": "Globalny Bank Nasion Svalbard",
+  "wonderGrandExposition": "Wielka Wystawa",
+  "wonderGreatLibraryDescription": "Światowe centrum wiedzy pisanej. Dodaje naukę w całym imperium i kończy aktywne badanie po ukończeniu.",
+  "wonderHangingGardensDescription": "Legendarny kompleks ogrodów, który zamienia miasto nad rzeką w zaplecze żywnościowe całego imperium.",
+  "wonderGreatWallDescription": "Defensywny megaprojekt wzmacniający odporność każdego miasta na ataki.",
+  "wonderPetraDescription": "Wykuty w skale cud handlu, który czyni pustynne miasto gospodarza produktywnym i bogatym.",
+  "wonderCentralBankDescription": "Instytucja finansowa wzmacniająca złoto imperium i dająca natychmiastową rezerwę skarbca.",
+  "wonderImperialUniversityDescription": "Prestiżowy kampus zwiększający naukę w każdym mieście.",
+  "wonderGrandCathedralDescription": "Obywatelski i duchowy monument, który dodaje stabilność, gdy wspiera go marmur.",
+  "wonderMotherFactoryDescription": "Ciężki kompleks przemysłowy zwiększający produkcję imperium i przyspieszający miasto gospodarza po ukończeniu.",
+  "wonderNationalObservatoryDescription": "Obserwatorium zwrócone ku górom, które podnosi późną naukę całego imperium.",
+  "wonderSvalbardSeedVaultDescription": "Polarne miejsce zachowania nasion, poprawiające bezpieczeństwo żywności i stabilność imperium.",
+  "wonderGrandExpositionDescription": "Późna wystawa kulturowa, która zamienia globalną uwagę w złoto i stabilność.",
+  "wonderDetailsStandingEffects": "Efekty stałe",
+  "wonderDetailsCompletionEffects": "Efekty ukończenia",
+  "wonderDetailsNoStandingEffects": "Brak efektów stałych",
+  "wonderDetailsNoCompletionEffects": "Brak efektów ukończenia",
+  "wonderDetailsRequirementAdjacentRiver": "Sąsiedztwo rzeki",
+  "wonderDetailsRequirementAdjacentMountain": "Sąsiedztwo góry",
+  "wonderDetailsRequirementTerrain": "Teren: {terrain}",
+  "@wonderDetailsRequirementTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireFlatYieldEffect": "{yield} w każdym mieście",
+  "@wonderDetailsEmpireFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsHostCityFlatYieldEffect": "{yield} w mieście gospodarzu",
+  "@wonderDetailsHostCityFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireScienceEffect": "{amount} nauki w każdym mieście",
+  "@wonderDetailsEmpireScienceEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireGoldMultiplierEffect": "{percent} złota imperium",
+  "@wonderDetailsEmpireGoldMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireProductionMultiplierEffect": "{percent} produkcji imperium",
+  "@wonderDetailsEmpireProductionMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsStabilityEffect": "{amount} stabilności",
+  "@wonderDetailsStabilityEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsGrantFreeTechnology": "Kończy aktywne badanie",
+  "wonderDetailsProductionBurst": "+{amount} nadwyżki produkcji w mieście gospodarzu",
+  "@wonderDetailsProductionBurst": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "wonderDetailsGrantGold": "+{amount} złota",
+  "@wonderDetailsGrantGold": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
   "unitDetailsTooltip": "Szczegóły jednostki",
   "unitDetailsMovement": "Ruch",
   "unitDetailsCombat": "Walka",
@@ -2450,6 +2552,7 @@
   "requirementCoastalAccess": "Wymaga: dostęp do wybrzeża",
   "productionCategoryBuilding": "Budynek",
   "productionCategoryUnit": "Jednostka",
+  "productionCategoryWonder": "Cud",
   "productionTitle": "PRODUKCJA",
   "productionInProgressLabel": "W TRAKCIE",
   "productionPerTurn": "{production} produkcji/turę",
@@ -2902,6 +3005,7 @@
   "technologyRecommendationReasonSection": "Warto teraz",
   "technologyRecommendationReasonImprovements": "Nowe ulepszenia pól szybko zmieniają zasoby w yield.",
   "technologyRecommendationReasonBuilding": "Nowy budynek miasta otwiera kolejny kierunek rozwoju.",
+  "technologyRecommendationReasonWonder": "Cud świata otwiera unikalny bonus imperium.",
   "technologyRecommendationReasonUnit": "Nowa jednostka wzmacnia bezpieczeństwo i kontrolę mapy.",
   "technologyRecommendationReasonEffect": "Stały bonus działa na całą gospodarkę.",
   "technologyRecommendationReasonFast": "Szybkie badanie bez dodatkowych wymagań.",

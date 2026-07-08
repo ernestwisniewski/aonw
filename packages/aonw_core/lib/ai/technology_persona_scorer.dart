@@ -11,7 +11,6 @@ final class AiTechnologyPersonaScorer {
   });
 
   final AiTechnologyBranchClassifier branchClassifier;
-
   double score({
     required TechnologyDefinition definition,
     required PersonaWeights weights,
@@ -73,6 +72,7 @@ final class AiTechnologyPersonaScorer {
         buildingId,
         weights,
       ),
+      UnlockWonder() => (weights.science + weights.economy) / 2,
     };
   }
 

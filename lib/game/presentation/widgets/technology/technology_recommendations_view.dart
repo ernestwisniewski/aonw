@@ -303,6 +303,9 @@ class _RecommendationCard extends StatelessWidget {
     if (card.unlocks.whereType<UnlockCityBuilding>().isNotEmpty) {
       return l10n.technologyRecommendationReasonBuilding;
     }
+    if (card.unlocks.whereType<UnlockWonder>().isNotEmpty) {
+      return l10n.technologyRecommendationReasonWonder;
+    }
     if (card.unlocks.whereType<UnlockUnitType>().isNotEmpty) {
       return l10n.technologyRecommendationReasonUnit;
     }

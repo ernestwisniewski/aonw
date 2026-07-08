@@ -154,7 +154,9 @@ class ProductionListTile extends StatelessWidget {
                 SizedBox(width: compact ? 8 : 10),
                 if (onDetails != null) ...[
                   ProductionHelpButton(
-                    tooltip: item.unitType == null
+                    tooltip: item.wonderType != null
+                        ? l10n.wonderDetailsTooltip
+                        : item.unitType == null
                         ? l10n.buildingDetailsTooltip
                         : l10n.unitDetailsTooltip,
                     compact: compact,

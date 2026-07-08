@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -191,7 +192,7 @@ class CityProductionItem {
       unitType: null,
       projectType: null,
       wonderType: type,
-      title: type.displayName,
+      title: WonderDisplayNames.wonder(l10n, type),
       emoji: null,
       icon: GameIcons.victory,
       active: active,

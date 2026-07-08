@@ -2360,6 +2360,108 @@
     }
   },
   "buildingDetailsNoYieldChange": "Sin cambio de recursos",
+  "wonderDetailsTooltip": "Wonder details",
+  "wonderGreatLibrary": "Great Library",
+  "wonderHangingGardens": "Hanging Gardens",
+  "wonderGreatWall": "Great Wall",
+  "wonderPetra": "Petra",
+  "wonderCentralBank": "Central Bank",
+  "wonderImperialUniversity": "Imperial University",
+  "wonderGrandCathedral": "Grand Cathedral",
+  "wonderMotherFactory": "Mother Factory",
+  "wonderNationalObservatory": "National Observatory",
+  "wonderSvalbardSeedVault": "Svalbard Seed Vault",
+  "wonderGrandExposition": "Grand Exposition",
+  "wonderGreatLibraryDescription": "A world center of written knowledge. Adds science across the empire and completes the current research when finished.",
+  "wonderHangingGardensDescription": "A legendary garden complex that turns a river city into a food engine for the whole empire.",
+  "wonderGreatWallDescription": "A defensive megaproject that strengthens every city's ability to withstand attacks.",
+  "wonderPetraDescription": "A stone-carved trade wonder that makes a desert host city productive and wealthy.",
+  "wonderCentralBankDescription": "A financial institution that boosts empire gold and grants an immediate treasury reserve.",
+  "wonderImperialUniversityDescription": "A prestigious campus that lifts science in every city.",
+  "wonderGrandCathedralDescription": "A civic and spiritual landmark that adds stability when supported by marble.",
+  "wonderMotherFactoryDescription": "A heavy industrial complex that boosts empire production and surges the host city forward when finished.",
+  "wonderNationalObservatoryDescription": "A mountain-facing observatory that advances late scientific output across the empire.",
+  "wonderSvalbardSeedVaultDescription": "A polar preservation site that improves food security and empire stability.",
+  "wonderGrandExpositionDescription": "A late cultural showcase that turns global attention into gold and stability.",
+  "wonderDetailsStandingEffects": "Standing effects",
+  "wonderDetailsCompletionEffects": "Completion effects",
+  "wonderDetailsNoStandingEffects": "No standing effects",
+  "wonderDetailsNoCompletionEffects": "No completion effects",
+  "wonderDetailsRequirementAdjacentRiver": "Adjacent river",
+  "wonderDetailsRequirementAdjacentMountain": "Adjacent mountain",
+  "wonderDetailsRequirementTerrain": "Terrain: {terrain}",
+  "@wonderDetailsRequirementTerrain": {
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireFlatYieldEffect": "{yield} in every city",
+  "@wonderDetailsEmpireFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsHostCityFlatYieldEffect": "{yield} in the host city",
+  "@wonderDetailsHostCityFlatYieldEffect": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireScienceEffect": "{amount} science in every city",
+  "@wonderDetailsEmpireScienceEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireGoldMultiplierEffect": "{percent} empire gold",
+  "@wonderDetailsEmpireGoldMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsEmpireProductionMultiplierEffect": "{percent} empire production",
+  "@wonderDetailsEmpireProductionMultiplierEffect": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsStabilityEffect": "{amount} stability",
+  "@wonderDetailsStabilityEffect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "wonderDetailsGrantFreeTechnology": "Completes the active research",
+  "wonderDetailsProductionBurst": "+{amount} production overflow in the host city",
+  "@wonderDetailsProductionBurst": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "wonderDetailsGrantGold": "+{amount} gold",
+  "@wonderDetailsGrantGold": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
   "unitDetailsTooltip": "Detalles de unidad",
   "unitDetailsMovement": "Movimiento",
   "unitDetailsCombat": "Combate",
@@ -2450,6 +2552,7 @@
   "requirementCoastalAccess": "Requiere: acceso costero",
   "productionCategoryBuilding": "Edificio",
   "productionCategoryUnit": "Unidad",
+  "productionCategoryWonder": "Maravilla",
   "productionTitle": "PRODUCCIÓN",
   "productionInProgressLabel": "EN PROGRESO",
   "productionPerTurn": "{production} producción/turno",
@@ -2902,6 +3005,7 @@
   "technologyRecommendationReasonSection": "Por qué ahora",
   "technologyRecommendationReasonImprovements": "Nuevas mejoras de casilla convierten recursos en rendimiento rápidamente.",
   "technologyRecommendationReasonBuilding": "Un nuevo edificio de ciudad abre otra dirección de desarrollo.",
+  "technologyRecommendationReasonWonder": "A world wonder opens a unique empire bonus.",
   "technologyRecommendationReasonUnit": "Una nueva unidad refuerza la seguridad y el control del mapa.",
   "technologyRecommendationReasonEffect": "Una bonificación permanente se aplica a toda la economía.",
   "technologyRecommendationReasonFast": "Investigación rápida sin requisitos extra.",

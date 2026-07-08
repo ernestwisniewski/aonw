@@ -131,6 +131,7 @@ class TechnologyTreeLabels {
         l10n.productionCategoryBuilding,
       ),
       UnlockUnitType() => GameText.uppercase(l10n.productionCategoryUnit),
+      UnlockWonder() => GameText.uppercase(l10n.productionCategoryWonder),
       UnlockFieldImprovement() => GameText.uppercase(
         l10n.technologyUnlockFieldImprovementCategory,
       ),

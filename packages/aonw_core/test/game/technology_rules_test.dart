@@ -79,6 +79,28 @@ void main() {
       }
     });
 
+    test('unlocks every standard wonder through its catalog tech gate', () {
+      for (final entry in WonderRuleset.standard.wonders.entries) {
+        final wonderType = entry.key;
+        final definition = entry.value;
+        final technology = TechnologyUnlockQuery.unlockingTechnologyForWonder(
+          wonderType: wonderType,
+          ruleset: ruleset,
+        );
+
+        expect(
+          technology?.id,
+          definition.unlockTech,
+          reason: '${wonderType.name} should use its catalog tech gate',
+        );
+        expect(
+          technology?.unlocks,
+          contains(UnlockWonder(wonderType)),
+          reason: '${wonderType.name} should be visible in tech unlocks',
+        );
+      }
+    });
+
     test('reports availability from player research state', () {
       final playerResearch = PlayerResearchState(
         unlockedTechnologyIds: {TechnologyId.agriculture},

@@ -5,6 +5,7 @@ import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +20,7 @@ void main() {
     var researched = 0;
     CityBuildingType? buildingDetails;
     GameUnitType? unitDetails;
+    WonderType? wonderDetails;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -38,6 +40,7 @@ void main() {
                 unlocks: [
                   UnlockCityBuilding(CityBuildingUnlockId.workshop),
                   UnlockUnitType(GameUnitType.archer),
+                  UnlockWonder(WonderType.greatLibrary),
                 ],
               ),
               l10n: l10n,
@@ -48,6 +51,7 @@ void main() {
               onDetails: () => details++,
               onBuildingDetails: (value) => buildingDetails = value,
               onUnitDetails: (value) => unitDetails = value,
+              onWonderDetails: (value) => wonderDetails = value,
               onResearch: () => researched++,
             ),
           ),
@@ -82,9 +86,12 @@ void main() {
     await tester.pump();
     await tester.tap(find.byTooltip(l10n.unitDetailsTooltip));
     await tester.pump();
+    await tester.tap(find.byTooltip(l10n.wonderDetailsTooltip));
+    await tester.pump();
 
     expect(buildingDetails, CityBuildingType.workshop);
     expect(unitDetails, GameUnitType.archer);
+    expect(wonderDetails, WonderType.greatLibrary);
   });
 
   testWidgets('TechnologyTreeNode hides unlock detail buttons when asked', (
@@ -115,6 +122,7 @@ void main() {
               onDetails: () {},
               onBuildingDetails: (_) {},
               onUnitDetails: (_) {},
+              onWonderDetails: (_) {},
               onResearch: null,
             ),
           ),

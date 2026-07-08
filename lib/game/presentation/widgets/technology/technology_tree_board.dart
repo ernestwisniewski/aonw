@@ -11,6 +11,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
 class TechnologyTreeBoard extends StatelessWidget {
@@ -27,6 +28,7 @@ class TechnologyTreeBoard extends StatelessWidget {
     required this.onTechnologyDetails,
     required this.onBuildingDetails,
     required this.onUnitDetails,
+    required this.onWonderDetails,
     required this.onResearch,
     super.key,
   });
@@ -43,6 +45,7 @@ class TechnologyTreeBoard extends StatelessWidget {
   final ValueChanged<TechnologyCardViewModel> onTechnologyDetails;
   final ValueChanged<CityBuildingType> onBuildingDetails;
   final ValueChanged<GameUnitType> onUnitDetails;
+  final ValueChanged<WonderType> onWonderDetails;
   final ValueChanged<TechnologyId> onResearch;
 
   @override
@@ -107,6 +110,7 @@ class TechnologyTreeBoard extends StatelessWidget {
                               showUnlockDetails: !hasDetailsLayer,
                               onBuildingDetails: onBuildingDetails,
                               onUnitDetails: onUnitDetails,
+                              onWonderDetails: onWonderDetails,
                               onResearch: card.canSelect
                                   ? () => onResearch(card.id)
                                   : null,

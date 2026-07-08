@@ -52,6 +52,7 @@ void main() {
             specializations: const [],
             onBuildingDetails: (_) => detailCount++,
             onUnitDetails: (_) {},
+            onWonderDetails: (_) {},
             onBuild: built.add,
             onProduceUnit: (_) {},
             onStartProject: null,
@@ -134,6 +135,7 @@ void main() {
               ],
               onBuildingDetails: (_) {},
               onUnitDetails: (_) => unitDetails++,
+              onWonderDetails: (_) {},
               onBuild: (_) {},
               onProduceUnit: produced.add,
               onStartProject: projects.add,
@@ -239,6 +241,7 @@ void main() {
               ],
               onBuildingDetails: (_) {},
               onUnitDetails: (_) {},
+              onWonderDetails: (_) {},
               onBuild: (_) {},
               onProduceUnit: (_) {},
               onStartProject: (_) {},
@@ -281,6 +284,7 @@ void main() {
     'CityProductionList puts collapsed unavailable wonders after units',
     (tester) async {
       final builtWonders = <WonderType>[];
+      final wonderDetails = <WonderType>[];
 
       await tester.pumpWidget(
         MaterialApp(
@@ -352,6 +356,7 @@ void main() {
               specializations: const [],
               onBuildingDetails: (_) {},
               onUnitDetails: (_) {},
+              onWonderDetails: (item) => wonderDetails.add(item.wonderType!),
               onBuild: (_) {},
               onBuildWonder: builtWonders.add,
               onProduceUnit: (_) {},
@@ -379,11 +384,21 @@ void main() {
 
       expect(builtWonders, [WonderType.greatLibrary]);
 
+      await tester.tap(find.byTooltip('Wonder details'));
+      await tester.pump();
+
+      expect(wonderDetails, [WonderType.greatLibrary]);
+
       await tester.tap(find.text('FUTURE WONDERS (1)'));
       await tester.pumpAndSettle();
 
       expect(find.text('Petra'), findsOneWidget);
       expect(find.text('Requires terrain: Desert'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Wonder details').last);
+      await tester.pump();
+
+      expect(wonderDetails, [WonderType.greatLibrary, WonderType.petra]);
     },
   );
 
@@ -462,6 +477,7 @@ void main() {
       onProduceUnit: (_) {},
       onBuildingDetails: (_) {},
       onUnitDetails: (_) {},
+      onWonderDetails: (_) {},
       onStartProject: null,
       onSetSpecialization: null,
     );
@@ -470,6 +486,12 @@ void main() {
       'unit:warrior',
       'wonder:greatLibrary',
     ]);
+    expect(
+      choices
+          .singleWhere((choice) => choice.key == 'wonder:greatLibrary')
+          .onDetails,
+      isNotNull,
+    );
   });
 
   testWidgets('CityProductionList sorts visible and collapsed buildings', (
@@ -538,6 +560,7 @@ void main() {
             onBuildingSortModeChanged: (_) {},
             onBuildingDetails: (_) {},
             onUnitDetails: (_) {},
+            onWonderDetails: (_) {},
             onBuild: (_) {},
             onProduceUnit: (_) {},
             onStartProject: null,
