@@ -911,7 +911,7 @@ void main() {
   );
 
   test(
-    'broadcasts participant connection state from stream lifecycle',
+    'keeps a running match resumable when stream clients disconnect',
     () async {
       final mapCatalog = _FakeMapCatalog(_testMap());
       final hub = RealtimeMatchHub(
@@ -1046,10 +1046,23 @@ void main() {
       await ownerSubscription.cancel();
       await ownerInput.close();
 
-      final abandoned = (await store.findState(match.id))!;
-      expect(abandoned.match.state, 'abandoned');
-      expect(abandoned.snapshot.state['phase'], 'abandoned');
-      expect(abandoned.snapshot.state['reason'], 'all_players_offline');
+      final disconnected = (await store.findState(match.id))!;
+      expect(disconnected.match.state, 'running');
+      expect(disconnected.snapshot.state['phase'], isNot('abandoned'));
+      expect(
+        disconnected.match.players.map((player) => player.connectionState),
+        everyElement(WirePlayerConnectionState.offline),
+      );
+
+      final resumed = await hub.loadMatch(
+        store: store,
+        userIdentifier: guest.userId,
+        matchId: match.id,
+        snapshotFactory: InitialMultiplayerSnapshotFactory(
+          mapCatalog: mapCatalog,
+        ),
+      );
+      expect(resumed.state, 'running');
     },
   );
 

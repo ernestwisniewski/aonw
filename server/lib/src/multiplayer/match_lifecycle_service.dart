@@ -267,21 +267,9 @@ final class MatchLifecycleService {
 
       final players = [...state.match.players];
       players[playerIndex] = player.copyWith(connectionState: connectionState);
-      final connectionUpdated = state.copyWith(
+      final updated = state.copyWith(
         match: state.match.copyWith(players: players),
       );
-      final updated =
-          connectionState == WirePlayerConnectionState.offline &&
-              connectionUpdated.match.state == 'running' &&
-              !_stateAccess.hasActiveHumanPlayer(
-                connectionUpdated.match.players,
-              )
-          ? _stateAccess.abandonedState(
-              connectionUpdated,
-              reason: 'all_players_offline',
-              userIdentifier: userIdentifier,
-            )
-          : connectionUpdated;
       await txStore.saveState(updated);
       _broadcaster.broadcastState(updated);
       return updated;
