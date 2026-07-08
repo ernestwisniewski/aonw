@@ -4,6 +4,24 @@
 
 - No unreleased player-facing changes yet.
 
+## 1.1.3 - 2026-07-08
+
+- Added the first version of world wonders, including unique wonder projects,
+  requirements, completion effects, map-ready artwork, and localized names.
+- Expanded city production with dedicated wonder details, clearer production
+  sections, and better explanations for why buildings, units, or wonders are
+  available or locked.
+- Improved technology details so unlocks, wonder requirements, and future
+  production options are easier to understand before choosing research.
+- Improved AI production planning so computer players can reason about wonder
+  opportunities alongside units, buildings, and economy needs.
+- Made saved games and multiplayer command handling preserve more production
+  and wonder state across turns.
+- Added clearer event messages for production, rush actions, wonder completion,
+  and visibility-limited activity updates.
+- Improved asset loading for wonder artwork and kept release packaging aligned
+  with the latest public download builds.
+
 ## 1.1.2 - 2026-07-07
 
 - Expanded the civilization roster to 24 playable countries, each with
