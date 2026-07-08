@@ -7,6 +7,7 @@ import 'initial_multiplayer_snapshot_factory.dart';
 import 'match_broadcaster.dart';
 import 'match_lifecycle_service.dart';
 import 'match_state_access.dart';
+import 'matchmaking_policies.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 import 'player_seat_allocator.dart';
@@ -39,7 +40,7 @@ final class MatchmakingService {
         const InitialMultiplayerSnapshotFactory(),
   }) {
     return store.transaction((txStore) async {
-      final quickplayRequest = _quickplayRequest(request);
+      final quickplayRequest = quickplayMatchRequest(request);
       while (true) {
         final state = await txStore.findOpenQuickplayCandidate(
           quickplayRequest,
@@ -110,6 +111,7 @@ final class MatchmakingService {
         matchId,
         lock: true,
       );
+      requirePublicOpenLobby(state);
       final joined = await _joinState(
         store: txStore,
         state: state,
@@ -144,6 +146,7 @@ final class MatchmakingService {
           'Private match not found.',
         );
       }
+      requireOpenLobby(state);
       return _joinState(
         store: txStore,
         state: state,
@@ -307,15 +310,6 @@ final class MatchmakingService {
     } on PlayerSeatAllocationFailure catch (error) {
       throw multiplayerException(error.code, error.message);
     }
-  }
-
-  CreateMatchRequest _quickplayRequest(CreateMatchRequest request) {
-    return request.copyWith(
-      name: 'Quickplay',
-      maxPlayers: 4,
-      minPlayers: 2,
-      private: false,
-    );
   }
 }
 

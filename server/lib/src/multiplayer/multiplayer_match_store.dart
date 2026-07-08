@@ -3,6 +3,9 @@ import 'package:aonw_core/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
+import 'game_match_row_mapper.dart';
+
+part 'multiplayer_match_store_queries.dart';
 
 class StoredMatchState {
   const StoredMatchState({required this.match, required this.snapshot});
@@ -28,6 +31,8 @@ abstract interface class MultiplayerMatchStore {
   );
 
   Future<List<StoredMatchState>> listVisibleMatchStates(String userIdentifier);
+
+  Future<List<StoredMatchState>> listRunningStates();
 
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest request,
@@ -110,6 +115,10 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     }
     return states;
   }
+
+  @override
+  Future<List<StoredMatchState>> listRunningStates() =>
+      _listRunningStates(this);
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(
@@ -204,22 +213,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       final row = await txStore._requireMatchRow(state.match.id, lock: true);
       final updatedRow = await GameMatch.db.updateRow(
         txStore._session,
-        row.copyWith(
-          ownerUserIdentifier: state.match.ownerUserId,
-          name: state.match.name,
-          mapName: state.match.mapName,
-          state: state.match.state,
-          turn: state.match.turn,
-          maxPlayers: state.match.maxPlayers,
-          minPlayers: state.match.minPlayers,
-          private: state.match.inviteCode != null,
-          quickplay: state.match.quickplay,
-          autoStartAt: state.match.autoStartAt,
-          inviteCode: state.match.inviteCode,
-          startedAt: state.match.state == 'running'
-              ? row.startedAt ?? DateTime.now().toUtc()
-              : row.startedAt,
-        ),
+        gameMatchRowForState(row, state.match, DateTime.now().toUtc()),
         transaction: txStore._transaction,
       );
       await txStore._replacePlayers(updatedRow.id!, state.match.players);
@@ -238,10 +232,15 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     return transaction((store) async {
       final txStore = store as ServerpodMultiplayerMatchStore;
       final row = await txStore._requireMatchRow(state.match.id, lock: true);
+      final updatedRow = await GameMatch.db.updateRow(
+        txStore._session,
+        gameMatchRowForState(row, state.match, DateTime.now().toUtc()),
+        transaction: txStore._transaction,
+      );
       await GameEvent.db.insertRow(
         txStore._session,
         GameEvent(
-          matchId: row.id!,
+          matchId: updatedRow.id!,
           offset: event.offset,
           actorPlayerId: actorPlayerId,
           clientMessageId: clientMessageId,
@@ -250,7 +249,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
         ),
         transaction: txStore._transaction,
       );
-      await txStore._upsertSnapshot(row.id!, state.snapshot);
+      await txStore._upsertSnapshot(updatedRow.id!, state.snapshot);
       return state;
     });
   }

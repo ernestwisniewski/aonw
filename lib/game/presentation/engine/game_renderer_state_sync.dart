@@ -37,7 +37,7 @@ extension GameRendererStateSync on GameRenderer {
     };
     _unitMarkerLayer
       ..pinPendingMovePositions(animatedIds)
-      ..retainPendingAnimationMarkers(combatAnimatedIds);
+      ..retainPendingAnimationMarkers({...animatedIds, ...combatAnimatedIds});
     _applyState(
       state,
       suppressCameraFocus: transitionControlsCamera,

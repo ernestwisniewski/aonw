@@ -268,10 +268,19 @@ class NetworkCommandTransport implements CommandTransport {
     }
     final snapshot = snapshotCodec.fromWire(ack.snapshot);
     final effectiveOffset = _effectiveOffset(ack.offset, snapshot);
-    _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
     final events = eventCodec.eventsFromJsonList(ack.events);
     _clearRetryableCommand(wire);
     if (!ack.accepted) {
+      if (_isStaleAckReason(ack.reason)) {
+        return _snapshotRecoveryResult(
+          saveId: saveId,
+          currentState: currentState,
+          command: command,
+          snapshot: snapshot,
+          offset: effectiveOffset,
+        );
+      }
+      _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
       return CommandTransportResult(
         state: currentState,
         snapshot: snapshot,
@@ -279,6 +288,7 @@ class NetworkCommandTransport implements CommandTransport {
         events: events,
       );
     }
+    _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
 
     final nextState = snapshot.toGameState(
       activePlayerId: currentState.activePlayerId,
@@ -409,6 +419,30 @@ class NetworkCommandTransport implements CommandTransport {
     );
   }
 
+  CommandTransportResult _snapshotRecoveryResult({
+    required String saveId,
+    required GameState currentState,
+    required GameCommand command,
+    required SaveSnapshot snapshot,
+    required int offset,
+  }) {
+    _rememberSnapshot(saveId, snapshot, offset: offset);
+    final nextState = snapshot.toGameState(
+      activePlayerId: currentState.activePlayerId,
+      activePlayerCanAct: _activePlayerCanActAfter(
+        currentState: currentState,
+        command: command,
+        snapshot: snapshot,
+      ),
+    );
+    return CommandTransportResult(
+      state: nextState,
+      snapshot: snapshot,
+      offset: offset,
+      storedSnapshot: true,
+    );
+  }
+
   void _clearRetryableCommand(WireCommand wire) {
     final retryable = _retryableCommand;
     if (retryable == null || identical(retryable.wire, wire)) {
@@ -425,6 +459,10 @@ class NetworkCommandTransport implements CommandTransport {
 
   bool _isStaleCommandVersionError(NetworkCommandConflictException error) {
     return error.code == 'stale_tick' || error.code == 'stale_turn';
+  }
+
+  bool _isStaleAckReason(String? reason) {
+    return reason == 'stale_tick' || reason == 'stale_turn';
   }
 
   bool _isStaleTickError(NetworkCommandConflictException error) {

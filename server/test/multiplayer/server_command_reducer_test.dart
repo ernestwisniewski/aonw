@@ -335,6 +335,147 @@ void main() {
       expect(reduction.snapshot.toJson(), snapshot.toJson());
     });
   });
+
+  group('ServerCommandReducer turn timeouts', () {
+    test(
+      'finalizes when the remaining unsubmitted player is offline',
+      () async {
+        final players = _wirePlayers();
+        final reducer = ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        );
+
+        final reduction = await reducer.reduce(
+          match: _runningMatch(
+            players: [
+              players[0],
+              players[1].copyWith(
+                connectionState: WirePlayerConnectionState.offline,
+              ),
+            ],
+          ),
+          snapshot: _snapshot(_diplomacyState()),
+          wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+          actorPlayerId: 'player_1',
+          now: DateTime.utc(2026, 6, 30, 11, 1),
+        );
+        final save = GameSave.fromJson(reduction.snapshot.save);
+        final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+        expect(reduction.accepted, isTrue);
+        expect(save.turn, 2);
+        expect(state.runtimeState.timeoutStreaksByPlayerId, {'player_2': 1});
+        expect(
+          reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
+          'player_2',
+        );
+      },
+    );
+
+    test('keeps waiting for connected players before the deadline', () async {
+      final reducer = ServerCommandReducer(
+        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+      );
+
+      final reduction = await reducer.reduce(
+        match: _runningMatch(),
+        snapshot: _snapshot(_diplomacyState()),
+        wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 11, 1),
+      );
+      final save = GameSave.fromJson(reduction.snapshot.save);
+      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+      expect(reduction.accepted, isTrue);
+      expect(save.turn, 1);
+      expect(save.playerStates['player_1'], PlayerTurnState.finished);
+      expect(state.runtimeState.submittedPlayerIds, {'player_1'});
+      expect(reduction.events, isEmpty);
+    });
+
+    test('finalizes an already submitted turn after the deadline', () async {
+      final reducer = ServerCommandReducer(
+        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        turnTimeout: const Duration(seconds: 10),
+      );
+      final snapshot = _snapshot(
+        _diplomacyState(
+          runtimeState: GameRuntimeState(
+            submittedPlayerIds: const {'player_1'},
+            turnStartedAt: DateTime.utc(2026, 6, 30, 11),
+          ),
+        ),
+        save: _save(
+          playerStates: const {
+            'player_1': PlayerTurnState.finished,
+            'player_2': PlayerTurnState.active,
+          },
+        ),
+      );
+
+      final reduction = await reducer.reduce(
+        match: _runningMatch(),
+        snapshot: snapshot,
+        wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 11, 0, 11),
+      );
+      final save = GameSave.fromJson(reduction.snapshot.save);
+      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+      expect(reduction.accepted, isTrue);
+      expect(save.turn, 2);
+      expect(state.runtimeState.timeoutStreaksByPlayerId, {'player_2': 1});
+      expect(
+        reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
+        'player_2',
+      );
+    });
+
+    test('does not wait for AI players in multiplayer snapshots', () async {
+      final players = _wirePlayers();
+      final aiPlayer = players[1].copyWith(
+        kind: WirePlayerKind.ai,
+        ai: const WireAiPlayer(
+          strategyId: AiStrategyId.basic,
+          difficulty: AiDifficulty.normal,
+          persona: AiPersona.balanced,
+        ),
+      );
+      final reducer = ServerCommandReducer(
+        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+      );
+
+      final reduction = await reducer.reduce(
+        match: _runningMatch(players: [players[0], aiPlayer]),
+        snapshot: _snapshot(
+          _diplomacyState(),
+          save: _save(
+            players: [
+              _domainPlayers()[0],
+              _domainPlayers()[1].copyWith(
+                kind: PlayerKind.ai,
+                ai: const AiPlayer(
+                  strategyId: AiStrategyId.basic,
+                  difficulty: AiDifficulty.normal,
+                  persona: AiPersona.balanced,
+                  seed: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+        wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 11, 1),
+      );
+      final save = GameSave.fromJson(reduction.snapshot.save);
+
+      expect(reduction.accepted, isTrue);
+      expect(save.turn, 2);
+    });
+  });
 }
 
 Future<ServerCommandReduction> _reduceDiplomacyCommand({
@@ -356,65 +497,61 @@ Future<ServerCommandReduction> _reduceDiplomacyCommand({
 PersistentGameState _diplomacyState({
   Map<String, int> playerGold = const {},
   DiplomacyState? diplomacy,
+  GameRuntimeState? runtimeState,
 }) {
   return PersistentGameState(
     playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
     playerGold: playerGold,
-    runtimeState: GameRuntimeState(
-      diplomacy:
-          diplomacy ?? DiplomacyState.empty.addContact('player_1', 'player_2'),
-    ),
+    runtimeState:
+        runtimeState ??
+        GameRuntimeState(
+          diplomacy:
+              diplomacy ??
+              DiplomacyState.empty.addContact('player_1', 'player_2'),
+        ),
   );
 }
 
-WireMatch _runningMatch() {
+WireMatch _runningMatch({List<WirePlayer>? players}) {
   return WireMatch(
     id: 'match_1',
     ownerUserId: 'user_1',
     name: 'Server reducer trade',
     mapName: 'test_map',
-    players: _wirePlayers(),
+    players: players ?? _wirePlayers(),
     turn: 1,
     state: 'running',
     createdAt: DateTime.utc(2026, 6, 30, 11),
   );
 }
 
-WireSnapshot _snapshot(PersistentGameState state) {
+WireSnapshot _snapshot(PersistentGameState state, {GameSave? save}) {
   return WireSnapshot(
     matchId: 'match_1',
     offset: 0,
-    save: _save().toJson(),
+    save: (save ?? _save()).toJson(),
     state: state.toJson(),
   );
 }
 
-GameSave _save() {
+GameSave _save({
+  Map<String, PlayerTurnState>? playerStates,
+  List<Player>? players,
+}) {
   return GameSave(
     id: 'save_1',
     name: 'Server reducer trade',
     mapName: 'test_map',
     turn: 1,
-    playerStates: const {
-      'player_1': PlayerTurnState.active,
-      'player_2': PlayerTurnState.active,
-    },
+    playerStates:
+        playerStates ??
+        const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+        },
     savedAt: DateTime.utc(2026, 6, 30, 11),
     camera: CameraState.zero,
-    players: const [
-      Player(
-        id: 'player_1',
-        name: 'Player 1',
-        colorValue: 0xFF3D5FA8,
-        country: PlayerCountry.poland,
-      ),
-      Player(
-        id: 'player_2',
-        name: 'Player 2',
-        colorValue: 0xFFB83A3A,
-        country: PlayerCountry.france,
-      ),
-    ],
+    players: players ?? _domainPlayers(),
     gameMode: GameMode.multiplayer,
   );
 }
@@ -451,6 +588,23 @@ List<WirePlayer> _wirePlayers() {
       country: PlayerCountry.france,
       kind: WirePlayerKind.human,
       connectionState: WirePlayerConnectionState.connected,
+    ),
+  ];
+}
+
+List<Player> _domainPlayers() {
+  return const [
+    Player(
+      id: 'player_1',
+      name: 'Player 1',
+      colorValue: 0xFF3D5FA8,
+      country: PlayerCountry.poland,
+    ),
+    Player(
+      id: 'player_2',
+      name: 'Player 2',
+      colorValue: 0xFFB83A3A,
+      country: PlayerCountry.france,
     ),
   ];
 }

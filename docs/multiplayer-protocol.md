@@ -61,6 +61,18 @@ The runtime keeps these synchronization invariants:
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
 
+Quickplay uses one global public queue. A player's requested map is a lobby
+preference for newly created queues; once they join an existing queue, the
+existing lobby's map preference and the final player count determine the start
+map through `MapPlayerCapacityRules.multiplayerStartMapName`.
+
+Network multiplayer matchmaking allocates human seats only. The shared wire
+model can serialize AI players for snapshot compatibility, but the Serverpod
+runtime does not run AI turns for multiplayer matches. If AI seats are enabled
+later, add a server-side AI turn runner before allowing those seats to block
+turn completion; current server timeout handling treats AI seats as
+non-blocking.
+
 ## Protocol Versioning
 
 All wire payloads carry `v: 2` and are validated by `kProtocolVersion`.

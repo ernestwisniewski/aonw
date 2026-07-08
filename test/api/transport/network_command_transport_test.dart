@@ -355,6 +355,63 @@ void main() {
       expect(result.storedSnapshot, isTrue);
     });
 
+    test(
+      'applies the server snapshot when stale turn is returned as a rejected ACK',
+      () async {
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+        final currentState = GameState(
+          units: [commander],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+        );
+        final authoritativeState = GameState(
+          units: [commander.copyWith(col: 3, row: 0)],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+        );
+        final authoritativeSnapshot = SaveSnapshot.fromGameState(
+          save: _save().copyWith(turn: 2),
+          state: authoritativeState,
+          eventLogOffset: 12,
+        );
+        const snapshotCodec = SnapshotCodec();
+        final dispatcher = _ScriptedCommandDispatcher((sentCommand) {
+          return WireCommandAck(
+            matchId: 'save_1',
+            accepted: false,
+            offset: 12,
+            snapshot: snapshotCodec.toWire(
+              matchId: 'save_1',
+              snapshot: authoritativeSnapshot,
+            ),
+            reason: 'stale_turn',
+          );
+        });
+        final transport = NetworkCommandTransport(
+          commandDispatcher: dispatcher,
+          token: AuthToken('jwt-token'),
+          actorPlayerId: 'player_1',
+          tickGenerator: ClientTickGenerator(startAt: 3),
+          localReducer: GameStateReducer(mapData: _map()),
+          gameRepository: _SnapshotRepository(authoritativeSnapshot),
+        );
+
+        final result = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: currentState,
+          command: MoveUnitCommand(commander.id, 1, 0),
+        );
+
+        expect(dispatcher.sentCommands, hasLength(1));
+        expect(result.offset, 12);
+        expect(result.snapshot.eventLogOffset, 12);
+        expect(result.snapshot.save.turn, 2);
+        expect(result.state.units.single.col, 3);
+        expect(result.events, isEmpty);
+        expect(result.storedSnapshot, isTrue);
+      },
+    );
+
     test('tracks the snapshot offset when a cached ACK is older', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final state = GameState(

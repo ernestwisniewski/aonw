@@ -60,11 +60,13 @@ class UnitMarkerLayerAnimator {
 
     final marker = _markerFor(unitId);
     if (marker == null) {
+      _clearRetention(unitId);
       onComplete();
       return;
     }
 
     if (_reduceMotion) {
+      _clearRetention(unitId);
       marker
         ..onCity = false
         ..position = _worldPositionFor(steps.last.col, steps.last.row)
@@ -90,6 +92,7 @@ class UnitMarkerLayerAnimator {
       ..onComplete = () {
         scheduleMicrotask(sequence.removeFromParent);
         _animatingUnitIds.remove(unitId);
+        _clearRetention(unitId);
         marker.playIdle();
         onComplete();
       };
@@ -169,6 +172,10 @@ class UnitMarkerLayerAnimator {
     _retainedAnimationUnitIds
       ..remove(attackerUnitId)
       ..remove(defenderUnitId);
+  }
+
+  void _clearRetention(String unitId) {
+    _retainedAnimationUnitIds.remove(unitId);
   }
 
   SequenceEffect _buildMoveSequence(

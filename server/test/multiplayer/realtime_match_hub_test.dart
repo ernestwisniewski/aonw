@@ -585,6 +585,274 @@ void main() {
     },
   );
 
+  test('advanceTimedOutTurns finalizes a stored partial turn', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    var now = DateTime.utc(2026, 6, 30, 12);
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(
+        mapCatalog: mapCatalog,
+        turnTimeout: const Duration(seconds: 10),
+      ),
+      nowUtc: () => now,
+    );
+    final store = _MemoryMatchStore();
+    final match = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Timeout match',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    await hub.joinMatch(
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: match.id,
+    );
+    final started = await hub.startMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: match.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+    final running = (await store.findState(started.id))!;
+    final ownerPlayerId = running.match.players
+        .firstWhere((player) => player.userId == 'owner-user')
+        .id;
+    final save = GameSave.fromJson(running.snapshot.save);
+    final persistentState = PersistentGameState.fromJson(
+      running.snapshot.state,
+    );
+    await store.saveState(
+      running.copyWith(
+        snapshot: running.snapshot.copyWith(
+          save: save
+              .copyWith(
+                playerStates: {
+                  ...save.playerStates,
+                  ownerPlayerId: PlayerTurnState.finished,
+                },
+              )
+              .toJson(),
+          state: persistentState
+              .copyWith(
+                runtimeState: persistentState.runtimeState.copyWith(
+                  submittedPlayerIds: {ownerPlayerId},
+                  turnStartedAt: now,
+                ),
+              )
+              .toJson(),
+        ),
+      ),
+    );
+
+    now = now.add(const Duration(seconds: 11));
+    await hub.advanceTimedOutTurns(store: store);
+
+    final updated = (await store.findState(started.id))!;
+    final updatedSave = GameSave.fromJson(updated.snapshot.save);
+    final events = await store.listEvents(started.id, 0);
+    expect(updatedSave.turn, 2);
+    expect(events, hasLength(1));
+    expect(
+      events.single.events
+          .map(GameEventSerializer.fromJson)
+          .whereType<PlayerTimedOutEvent>(),
+      hasLength(1),
+    );
+  });
+
+  test(
+    'advanceTimedOutTurns finalizes a stored turn with no submissions',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      var now = DateTime.utc(2026, 6, 30, 13);
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(
+          mapCatalog: mapCatalog,
+          turnTimeout: const Duration(seconds: 10),
+        ),
+        nowUtc: () => now,
+      );
+      final store = _MemoryMatchStore();
+      final started = await _startRunningMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: 'timeout-empty',
+        mapCatalog: mapCatalog,
+      );
+      final running = (await store.findState(started.id))!;
+      final persistentState = PersistentGameState.fromJson(
+        running.snapshot.state,
+      );
+      await store.saveState(
+        running.copyWith(
+          snapshot: running.snapshot.copyWith(
+            state: persistentState
+                .copyWith(
+                  runtimeState: persistentState.runtimeState.copyWith(
+                    submittedPlayerIds: const {},
+                    turnStartedAt: now,
+                  ),
+                )
+                .toJson(),
+          ),
+        ),
+      );
+
+      now = now.add(const Duration(seconds: 11));
+      await hub.advanceTimedOutTurns(store: store);
+
+      final updated = (await store.findState(started.id))!;
+      final updatedSave = GameSave.fromJson(updated.snapshot.save);
+      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
+      final events = await store.listEvents(started.id, 0);
+      final timedOutEvents = events.single.events
+          .map(GameEventSerializer.fromJson)
+          .whereType<PlayerTimedOutEvent>()
+          .toList();
+
+      expect(updatedSave.turn, 2);
+      expect(timedOutEvents.map((event) => event.playerId).toSet(), {
+        for (final player in started.players) player.id,
+      });
+      expect(updatedState.runtimeState.timeoutStreaksByPlayerId, {
+        for (final player in started.players) player.id: 1,
+      });
+    },
+  );
+
+  test('advanceTimedOutTurns continues after a match sweep failure', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    var now = DateTime.utc(2026, 6, 30, 14);
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(
+        mapCatalog: mapCatalog,
+        turnTimeout: const Duration(seconds: 10),
+      ),
+      nowUtc: () => now,
+    );
+    final store = _FindStateFailingMatchStore();
+    final failing = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'timeout-failing',
+      mapCatalog: mapCatalog,
+    );
+    final healthy = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'timeout-healthy',
+      mapCatalog: mapCatalog,
+    );
+    for (final match in [failing, healthy]) {
+      final running = (await store.findState(match.id))!;
+      final persistentState = PersistentGameState.fromJson(
+        running.snapshot.state,
+      );
+      await store.saveState(
+        running.copyWith(
+          snapshot: running.snapshot.copyWith(
+            state: persistentState
+                .copyWith(
+                  runtimeState: persistentState.runtimeState.copyWith(
+                    submittedPlayerIds: const {},
+                    turnStartedAt: now,
+                  ),
+                )
+                .toJson(),
+          ),
+        ),
+      );
+    }
+    store.failFindStateFor(failing.id);
+
+    now = now.add(const Duration(seconds: 11));
+    await hub.advanceTimedOutTurns(store: store);
+
+    final failedState = (await store.findState(failing.id))!;
+    final healthyState = (await store.findState(healthy.id))!;
+    expect(GameSave.fromJson(failedState.snapshot.save).turn, 1);
+    expect(GameSave.fromJson(healthyState.snapshot.save).turn, 2);
+  });
+
+  test(
+    'resignMatch keeps a running FFA alive until one player remains',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+      );
+      final store = _MemoryMatchStore();
+      final match = await hub.createMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        request: CreateMatchRequest(
+          name: 'FFA resign',
+          mapName: 'test_map',
+          maxPlayers: 3,
+          minPlayers: 3,
+          private: false,
+        ),
+      );
+      await hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-one',
+        matchId: match.id,
+      );
+      await hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-two',
+        matchId: match.id,
+      );
+      final started = await hub.startMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: match.id,
+        snapshotFactory: InitialMultiplayerSnapshotFactory(
+          mapCatalog: mapCatalog,
+        ),
+      );
+
+      final afterFirstResign = await hub.resignMatch(
+        store: store,
+        userIdentifier: 'guest-one',
+        matchId: started.id,
+      );
+      final running = (await store.findState(started.id))!;
+      final firstGuest = running.match.players.firstWhere(
+        (player) => player.userId == 'guest-one',
+      );
+      final runningSave = GameSave.fromJson(running.snapshot.save);
+      final runningState = PersistentGameState.fromJson(running.snapshot.state);
+
+      expect(afterFirstResign.state, 'running');
+      expect(firstGuest.connectionState, WirePlayerConnectionState.offline);
+      expect(runningSave.playerStates[firstGuest.id], PlayerTurnState.finished);
+      expect(
+        runningState.runtimeState.kickedPlayerIds,
+        contains(firstGuest.id),
+      );
+
+      final afterSecondResign = await hub.resignMatch(
+        store: store,
+        userIdentifier: 'guest-two',
+        matchId: started.id,
+      );
+
+      expect(afterSecondResign.state, 'finished');
+      expect(
+        (await store.findState(started.id))!.snapshot.state['phase'],
+        'finished',
+      );
+    },
+  );
+
   test(
     'broadcasts participant connection state from stream lifecycle',
     () async {
@@ -1345,6 +1613,89 @@ void main() {
       );
     },
   );
+
+  test('rejects joins for private and non-open matches', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+    );
+    final store = _MemoryMatchStore();
+    final publicMatch = await hub.createMatch(
+      store: store,
+      userIdentifier: 'public-owner',
+      request: CreateMatchRequest(
+        name: 'Public lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    await hub.joinMatch(
+      store: store,
+      userIdentifier: 'public-guest',
+      matchId: publicMatch.id,
+    );
+    final runningPublic = await hub.startMatch(
+      store: store,
+      userIdentifier: 'public-owner',
+      matchId: publicMatch.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+
+    await expectLater(
+      hub.joinMatch(
+        store: store,
+        userIdentifier: 'late-public-guest',
+        matchId: runningPublic.id,
+      ),
+      throwsA(_multiplayerError('match_not_open')),
+    );
+
+    final privateMatch = await hub.createMatch(
+      store: store,
+      userIdentifier: 'private-owner',
+      request: CreateMatchRequest(
+        name: 'Private lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: true,
+      ),
+    );
+    await expectLater(
+      hub.joinMatch(
+        store: store,
+        userIdentifier: 'public-id-guest',
+        matchId: privateMatch.id,
+      ),
+      throwsA(_multiplayerError('match_not_found')),
+    );
+    await hub.joinPrivateMatch(
+      store: store,
+      userIdentifier: 'private-guest',
+      inviteCode: privateMatch.inviteCode!,
+    );
+    final runningPrivate = await hub.startMatch(
+      store: store,
+      userIdentifier: 'private-owner',
+      matchId: privateMatch.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
+
+    await expectLater(
+      hub.joinPrivateMatch(
+        store: store,
+        userIdentifier: 'late-private-guest',
+        inviteCode: runningPrivate.inviteCode!,
+      ),
+      throwsA(_multiplayerError('match_not_open')),
+    );
+  });
 }
 
 Matcher _multiplayerError(String code) {
@@ -1386,6 +1737,36 @@ Future<_RunningMatchFixture> _startRunningMatch(String suffix) async {
   return _RunningMatchFixture(hub: hub, store: store, match: match);
 }
 
+Future<WireMatch> _startRunningMatchInStore({
+  required RealtimeMatchHub hub,
+  required _MemoryMatchStore store,
+  required String suffix,
+  required _FakeMapCatalog mapCatalog,
+}) async {
+  final openMatch = await hub.createMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    request: CreateMatchRequest(
+      name: 'Running match $suffix',
+      mapName: 'test_map',
+      maxPlayers: 2,
+      minPlayers: 2,
+      private: false,
+    ),
+  );
+  final joined = await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-user-$suffix',
+    matchId: openMatch.id,
+  );
+  return hub.startMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: joined.id,
+    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
+  );
+}
+
 final class _RunningMatchFixture {
   const _RunningMatchFixture({
     required this.hub,
@@ -1396,6 +1777,26 @@ final class _RunningMatchFixture {
   final RealtimeMatchHub hub;
   final _MemoryMatchStore store;
   final WireMatch match;
+}
+
+class _FindStateFailingMatchStore extends _MemoryMatchStore {
+  String? _failedMatchId;
+
+  void failFindStateFor(String matchId) {
+    _failedMatchId = matchId;
+  }
+
+  @override
+  Future<StoredMatchState?> findState(
+    String matchId, {
+    bool lock = false,
+  }) async {
+    if (_failedMatchId == matchId) {
+      _failedMatchId = null;
+      throw StateError('Injected findState failure for $matchId');
+    }
+    return super.findState(matchId, lock: lock);
+  }
 }
 
 class _MemoryMatchStore implements MultiplayerMatchStore {
@@ -1499,6 +1900,14 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
     return [
       for (final state in _states.values)
         if (_isVisibleToUser(state.match, userIdentifier)) state,
+    ];
+  }
+
+  @override
+  Future<List<StoredMatchState>> listRunningStates() async {
+    return [
+      for (final state in _states.values)
+        if (state.match.state == 'running') state,
     ];
   }
 
