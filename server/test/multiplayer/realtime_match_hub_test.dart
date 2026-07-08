@@ -782,6 +782,63 @@ void main() {
   });
 
   test(
+    'advanceTimedOutTurns skips snapshots from older protocol versions',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      var now = DateTime.utc(2026, 6, 30, 15);
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(
+          mapCatalog: mapCatalog,
+          turnTimeout: const Duration(seconds: 10),
+        ),
+        nowUtc: () => now,
+      );
+      final store = _MemoryMatchStore();
+      final stale = await _startRunningMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: 'timeout-stale-protocol',
+        mapCatalog: mapCatalog,
+      );
+      final healthy = await _startRunningMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: 'timeout-current-protocol',
+        mapCatalog: mapCatalog,
+      );
+      for (final match in [stale, healthy]) {
+        final running = (await store.findState(match.id))!;
+        final persistentState = PersistentGameState.fromJson(
+          running.snapshot.state,
+        );
+        await store.saveState(
+          running.copyWith(
+            snapshot: running.snapshot.copyWith(
+              v: match.id == stale.id ? kProtocolVersion - 1 : null,
+              state: persistentState
+                  .copyWith(
+                    runtimeState: persistentState.runtimeState.copyWith(
+                      submittedPlayerIds: const {},
+                      turnStartedAt: now,
+                    ),
+                  )
+                  .toJson(),
+            ),
+          ),
+        );
+      }
+
+      now = now.add(const Duration(seconds: 11));
+      await hub.advanceTimedOutTurns(store: store);
+
+      final staleState = (await store.findState(stale.id))!;
+      final healthyState = (await store.findState(healthy.id))!;
+      expect(GameSave.fromJson(staleState.snapshot.save).turn, 1);
+      expect(GameSave.fromJson(healthyState.snapshot.save).turn, 2);
+    },
+  );
+
+  test(
     'resignMatch keeps a running FFA alive until one player remains',
     () async {
       final mapCatalog = _FakeMapCatalog(_testMap());

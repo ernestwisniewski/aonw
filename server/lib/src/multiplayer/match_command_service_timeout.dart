@@ -16,6 +16,9 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
   }) async {
     final states = await store.listRunningStates();
     for (final state in states) {
+      if (state.snapshot.v != kProtocolVersion) {
+        continue;
+      }
       try {
         await advanceTimedOutTurn(store: store, matchId: state.match.id);
       } catch (_) {

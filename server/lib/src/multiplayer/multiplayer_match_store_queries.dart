@@ -9,5 +9,19 @@ Future<List<StoredMatchState>> _listRunningStates(
     orderBy: (table) => table.createdAt,
     transaction: store._transaction,
   );
-  return Future.wait(rows.map(store._stateFromRow));
+  final states = <StoredMatchState>[];
+  for (final row in rows) {
+    try {
+      states.add(await store._stateFromRow(row));
+    } on ArgumentError catch (error, stackTrace) {
+      store._session.log(
+        'Skipping running multiplayer match with incompatible snapshot: '
+        '${row.publicId}',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+  return states;
 }
