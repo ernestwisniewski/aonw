@@ -16,7 +16,12 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
   }) async {
     final states = await store.listRunningStates();
     for (final state in states) {
-      await advanceTimedOutTurn(store: store, matchId: state.match.id);
+      try {
+        await advanceTimedOutTurn(store: store, matchId: state.match.id);
+      } catch (_) {
+        // Keep the sweep alive for other matches; the next scheduled sweep can
+        // retry this match after transient store/snapshot failures.
+      }
     }
   }
 
@@ -44,20 +49,17 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       final persistentState = PersistentGameState.fromJson(
         state.snapshot.state,
       );
-      final actorPlayerId = _timeoutActorPlayerId(state.match, persistentState);
+      final actorPlayerId = _timeoutActorPlayerId(
+        state.match,
+        save,
+        persistentState,
+      );
       if (actorPlayerId == null) return;
 
       final command = SubmitTurnCommand(actorPlayerId);
-      final reduction = await _commandReducer.reduce(
+      final reduction = await _commandReducer.reduceTimedOutTurn(
         match: state.match,
         snapshot: state.snapshot,
-        wireCommand: WireCommand(
-          matchId: state.match.id,
-          tick: state.nextOffset(),
-          turn: save.turn,
-          actorPlayerId: actorPlayerId,
-          command: GameCommandSerializer.toJson(command),
-        ),
         actorPlayerId: actorPlayerId,
         now: now,
       );
@@ -99,14 +101,38 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     });
   }
 
-  String? _timeoutActorPlayerId(WireMatch match, PersistentGameState state) {
+  String? _timeoutActorPlayerId(
+    WireMatch match,
+    GameSave save,
+    PersistentGameState state,
+  ) {
     final kickedPlayerIds = state.runtimeState.kickedPlayerIds;
-    for (final submittedPlayerId in state.runtimeState.submittedPlayerIds) {
-      if (kickedPlayerIds.contains(submittedPlayerId)) continue;
-      if (match.players.any((player) => player.id == submittedPlayerId)) {
+    final matchPlayerIds = match.players.map((player) => player.id).toSet();
+    final activePlayerIds = {
+      for (final player in save.players)
+        if (player.id.isNotEmpty) player.id,
+      for (final playerId in save.playerStates.keys)
+        if (playerId.isNotEmpty) playerId,
+    };
+    final submittedPlayerIds = state.runtimeState.submittedPlayerIds.toList()
+      ..sort();
+    for (final submittedPlayerId in submittedPlayerIds) {
+      if (!kickedPlayerIds.contains(submittedPlayerId) &&
+          matchPlayerIds.contains(submittedPlayerId) &&
+          activePlayerIds.contains(submittedPlayerId)) {
         return submittedPlayerId;
       }
     }
+    final fallbackPlayerIds =
+        activePlayerIds
+            .where(
+              (playerId) =>
+                  !kickedPlayerIds.contains(playerId) &&
+                  matchPlayerIds.contains(playerId),
+            )
+            .toList()
+          ..sort();
+    if (fallbackPlayerIds.isNotEmpty) return fallbackPlayerIds.first;
     return null;
   }
 

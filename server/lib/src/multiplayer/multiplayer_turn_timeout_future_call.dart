@@ -15,10 +15,13 @@ final class MultiplayerTurnTimeoutSweepCall
 
   @override
   Future<void> invoke(Session session, SerializableModel? object) async {
-    await _hub.advanceTimedOutTurns(
-      store: ServerpodMultiplayerMatchStore(session),
-    );
-    await scheduleMultiplayerTurnTimeoutSweep(session.serverpod);
+    try {
+      await _hub.advanceTimedOutTurns(
+        store: ServerpodMultiplayerMatchStore(session),
+      );
+    } finally {
+      await scheduleMultiplayerTurnTimeoutSweep(session.serverpod);
+    }
   }
 }
 

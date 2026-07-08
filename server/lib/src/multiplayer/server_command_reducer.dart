@@ -102,6 +102,66 @@ class ServerCommandReducer {
     );
   }
 
+  Future<ServerCommandReduction> reduceTimedOutTurn({
+    required WireMatch match,
+    required WireSnapshot snapshot,
+    required String actorPlayerId,
+    required DateTime now,
+  }) async {
+    if (match.state != 'running') {
+      return _reject(snapshot, 'match_not_running');
+    }
+
+    final save = GameSave.fromJson(snapshot.save);
+    final state = PersistentGameState.fromJson(snapshot.state);
+    final nowUtc = now.toUtc();
+    if (!_turnTimedOut(save, state, nowUtc)) {
+      return _reject(snapshot, 'turn_not_timed_out');
+    }
+    if (state.runtimeState.isKicked(actorPlayerId)) {
+      return _reject(snapshot, 'player_eliminated');
+    }
+
+    final playerIds = _turnPlayerIds(save, state);
+    if (playerIds.isEmpty || !playerIds.contains(actorPlayerId)) {
+      return _reject(snapshot, 'turn_player_not_active');
+    }
+
+    final mapData = await _mapCatalog.loadAssetMap(save.mapName);
+    mapData.mapName ??= save.mapName;
+    final mapDefinition = _mapDefinitionFrom(mapData);
+    final ruleset = GameRuleset.standard().copyWith(
+      paceBalance: save.matchRules.paceBalance,
+    );
+    final submittedPlayerIds = state.runtimeState.submittedPlayerIds;
+    final skippedPlayerIds = playerIds
+        .where((playerId) => !submittedPlayerIds.contains(playerId))
+        .toList();
+    final result = _finalizeSimultaneousTurn(
+      save: save,
+      state: state,
+      playerIds: playerIds,
+      skippedPlayerIds: skippedPlayerIds,
+      now: nowUtc,
+      mapData: mapData,
+      mapDefinition: mapDefinition,
+      ruleset: ruleset,
+    );
+
+    final nextSave = result.save.copyWith(savedAt: nowUtc);
+    final nextSnapshot = WireSnapshot(
+      matchId: snapshot.matchId,
+      offset: snapshot.offset,
+      save: nextSave.toJson(),
+      state: result.state.toJson(),
+    );
+    return ServerCommandReduction(
+      accepted: true,
+      snapshot: nextSnapshot,
+      events: result.events,
+    );
+  }
+
   _CommandApplication _applyCommand({
     required GameSave save,
     required PersistentGameState state,

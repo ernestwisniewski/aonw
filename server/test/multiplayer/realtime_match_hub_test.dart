@@ -668,6 +668,120 @@ void main() {
   });
 
   test(
+    'advanceTimedOutTurns finalizes a stored turn with no submissions',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      var now = DateTime.utc(2026, 6, 30, 13);
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(
+          mapCatalog: mapCatalog,
+          turnTimeout: const Duration(seconds: 10),
+        ),
+        nowUtc: () => now,
+      );
+      final store = _MemoryMatchStore();
+      final started = await _startRunningMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: 'timeout-empty',
+        mapCatalog: mapCatalog,
+      );
+      final running = (await store.findState(started.id))!;
+      final persistentState = PersistentGameState.fromJson(
+        running.snapshot.state,
+      );
+      await store.saveState(
+        running.copyWith(
+          snapshot: running.snapshot.copyWith(
+            state: persistentState
+                .copyWith(
+                  runtimeState: persistentState.runtimeState.copyWith(
+                    submittedPlayerIds: const {},
+                    turnStartedAt: now,
+                  ),
+                )
+                .toJson(),
+          ),
+        ),
+      );
+
+      now = now.add(const Duration(seconds: 11));
+      await hub.advanceTimedOutTurns(store: store);
+
+      final updated = (await store.findState(started.id))!;
+      final updatedSave = GameSave.fromJson(updated.snapshot.save);
+      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
+      final events = await store.listEvents(started.id, 0);
+      final timedOutEvents = events.single.events
+          .map(GameEventSerializer.fromJson)
+          .whereType<PlayerTimedOutEvent>()
+          .toList();
+
+      expect(updatedSave.turn, 2);
+      expect(timedOutEvents.map((event) => event.playerId).toSet(), {
+        for (final player in started.players) player.id,
+      });
+      expect(updatedState.runtimeState.timeoutStreaksByPlayerId, {
+        for (final player in started.players) player.id: 1,
+      });
+    },
+  );
+
+  test('advanceTimedOutTurns continues after a match sweep failure', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    var now = DateTime.utc(2026, 6, 30, 14);
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(
+        mapCatalog: mapCatalog,
+        turnTimeout: const Duration(seconds: 10),
+      ),
+      nowUtc: () => now,
+    );
+    final store = _FindStateFailingMatchStore();
+    final failing = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'timeout-failing',
+      mapCatalog: mapCatalog,
+    );
+    final healthy = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'timeout-healthy',
+      mapCatalog: mapCatalog,
+    );
+    for (final match in [failing, healthy]) {
+      final running = (await store.findState(match.id))!;
+      final persistentState = PersistentGameState.fromJson(
+        running.snapshot.state,
+      );
+      await store.saveState(
+        running.copyWith(
+          snapshot: running.snapshot.copyWith(
+            state: persistentState
+                .copyWith(
+                  runtimeState: persistentState.runtimeState.copyWith(
+                    submittedPlayerIds: const {},
+                    turnStartedAt: now,
+                  ),
+                )
+                .toJson(),
+          ),
+        ),
+      );
+    }
+    store.failFindStateFor(failing.id);
+
+    now = now.add(const Duration(seconds: 11));
+    await hub.advanceTimedOutTurns(store: store);
+
+    final failedState = (await store.findState(failing.id))!;
+    final healthyState = (await store.findState(healthy.id))!;
+    expect(GameSave.fromJson(failedState.snapshot.save).turn, 1);
+    expect(GameSave.fromJson(healthyState.snapshot.save).turn, 2);
+  });
+
+  test(
     'resignMatch keeps a running FFA alive until one player remains',
     () async {
       final mapCatalog = _FakeMapCatalog(_testMap());
@@ -1623,6 +1737,36 @@ Future<_RunningMatchFixture> _startRunningMatch(String suffix) async {
   return _RunningMatchFixture(hub: hub, store: store, match: match);
 }
 
+Future<WireMatch> _startRunningMatchInStore({
+  required RealtimeMatchHub hub,
+  required _MemoryMatchStore store,
+  required String suffix,
+  required _FakeMapCatalog mapCatalog,
+}) async {
+  final openMatch = await hub.createMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    request: CreateMatchRequest(
+      name: 'Running match $suffix',
+      mapName: 'test_map',
+      maxPlayers: 2,
+      minPlayers: 2,
+      private: false,
+    ),
+  );
+  final joined = await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-user-$suffix',
+    matchId: openMatch.id,
+  );
+  return hub.startMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: joined.id,
+    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
+  );
+}
+
 final class _RunningMatchFixture {
   const _RunningMatchFixture({
     required this.hub,
@@ -1633,6 +1777,26 @@ final class _RunningMatchFixture {
   final RealtimeMatchHub hub;
   final _MemoryMatchStore store;
   final WireMatch match;
+}
+
+class _FindStateFailingMatchStore extends _MemoryMatchStore {
+  String? _failedMatchId;
+
+  void failFindStateFor(String matchId) {
+    _failedMatchId = matchId;
+  }
+
+  @override
+  Future<StoredMatchState?> findState(
+    String matchId, {
+    bool lock = false,
+  }) async {
+    if (_failedMatchId == matchId) {
+      _failedMatchId = null;
+      throw StateError('Injected findState failure for $matchId');
+    }
+    return super.findState(matchId, lock: lock);
+  }
 }
 
 class _MemoryMatchStore implements MultiplayerMatchStore {

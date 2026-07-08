@@ -268,7 +268,6 @@ class NetworkCommandTransport implements CommandTransport {
     }
     final snapshot = snapshotCodec.fromWire(ack.snapshot);
     final effectiveOffset = _effectiveOffset(ack.offset, snapshot);
-    _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
     final events = eventCodec.eventsFromJsonList(ack.events);
     _clearRetryableCommand(wire);
     if (!ack.accepted) {
@@ -281,6 +280,7 @@ class NetworkCommandTransport implements CommandTransport {
           offset: effectiveOffset,
         );
       }
+      _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
       return CommandTransportResult(
         state: currentState,
         snapshot: snapshot,
@@ -288,6 +288,7 @@ class NetworkCommandTransport implements CommandTransport {
         events: events,
       );
     }
+    _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
 
     final nextState = snapshot.toGameState(
       activePlayerId: currentState.activePlayerId,
