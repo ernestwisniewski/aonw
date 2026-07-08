@@ -2494,14 +2494,6 @@
     }
   },
   "cityProductionWonderAnotherInProgress": "Une autre merveille est en production",
-  "cityProductionWonderUnlockedBy": "Débloquée par: {technology}",
-  "@cityProductionWonderUnlockedBy": {
-    "placeholders": {
-      "technology": {
-        "type": "String"
-      }
-    }
-  },
   "futureBuildingsSection": "Bâtiments futurs ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

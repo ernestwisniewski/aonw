@@ -2494,14 +2494,6 @@
     }
   },
   "cityProductionWonderAnotherInProgress": "Een ander wonder is in productie",
-  "cityProductionWonderUnlockedBy": "Ontgrendeld door: {technology}",
-  "@cityProductionWonderUnlockedBy": {
-    "placeholders": {
-      "technology": {
-        "type": "String"
-      }
-    }
-  },
   "futureBuildingsSection": "Toekomstige gebouwen ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

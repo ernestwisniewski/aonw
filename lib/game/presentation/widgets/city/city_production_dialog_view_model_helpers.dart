@@ -157,11 +157,6 @@ CityProductionItem _wonderItem({
     currentTurn: currentTurn,
     locked: !active && !availability.isAvailable,
     requirementLabel: requirementLabel,
-    metaLabels: [
-      l10n.cityProductionWonderUnlockedBy(
-        GameDisplayNames.technology(l10n, definition.unlockTech),
-      ),
-    ],
   );
 }
 

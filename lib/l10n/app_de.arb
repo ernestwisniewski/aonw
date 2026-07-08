@@ -2494,14 +2494,6 @@
     }
   },
   "cityProductionWonderAnotherInProgress": "Ein anderes Weltwunder ist im Bau",
-  "cityProductionWonderUnlockedBy": "Freigeschaltet durch: {technology}",
-  "@cityProductionWonderUnlockedBy": {
-    "placeholders": {
-      "technology": {
-        "type": "String"
-      }
-    }
-  },
   "futureBuildingsSection": "Künftige Gebäude ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

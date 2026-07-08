@@ -4592,11 +4592,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Een ander wonder is in productie';
 
   @override
-  String cityProductionWonderUnlockedBy(String technology) {
-    return 'Ontgrendeld door: $technology';
-  }
-
-  @override
   String futureBuildingsSection(int count) {
     return 'Toekomstige gebouwen ($count)';
   }

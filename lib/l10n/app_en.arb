@@ -2506,14 +2506,6 @@
     }
   },
   "cityProductionWonderAnotherInProgress": "Another wonder is in progress",
-  "cityProductionWonderUnlockedBy": "Unlocked by: {technology}",
-  "@cityProductionWonderUnlockedBy": {
-    "placeholders": {
-      "technology": {
-        "type": "String"
-      }
-    }
-  },
   "futureBuildingsSection": "Future buildings ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

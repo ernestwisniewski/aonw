@@ -4594,11 +4594,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Otra maravilla está en producción';
 
   @override
-  String cityProductionWonderUnlockedBy(String technology) {
-    return 'Desbloqueada por: $technology';
-  }
-
-  @override
   String futureBuildingsSection(int count) {
     return 'Edificios futuros ($count)';
   }

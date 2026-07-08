@@ -2494,14 +2494,6 @@
     }
   },
   "cityProductionWonderAnotherInProgress": "Inny cud jest już w produkcji",
-  "cityProductionWonderUnlockedBy": "Odblokowane przez: {technology}",
-  "@cityProductionWonderUnlockedBy": {
-    "placeholders": {
-      "technology": {
-        "type": "String"
-      }
-    }
-  },
   "futureBuildingsSection": "Przyszłe budynki ({count})",
   "@futureBuildingsSection": {
     "placeholders": {

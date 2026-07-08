@@ -7865,12 +7865,6 @@ abstract class AppLocalizations {
   /// **'Another wonder is in progress'**
   String get cityProductionWonderAnotherInProgress;
 
-  /// No description provided for @cityProductionWonderUnlockedBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlocked by: {technology}'**
-  String cityProductionWonderUnlockedBy(String technology);
-
   /// No description provided for @futureBuildingsSection.
   ///
   /// In en, this message translates to:
