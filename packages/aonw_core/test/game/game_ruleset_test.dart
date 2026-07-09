@@ -6,6 +6,7 @@ void main() {
     test('standard ruleset aggregates shared rulesets', () {
       final ruleset = GameRuleset.standard();
 
+      expect(ruleset, same(GameRuleset.defaults));
       expect(ruleset.city.progression, same(CityRulesets.standard.progression));
       expect(
         ruleset.city.cityCenterYield,

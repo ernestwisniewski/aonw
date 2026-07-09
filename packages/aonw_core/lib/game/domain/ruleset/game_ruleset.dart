@@ -3,7 +3,6 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
 class GameRuleset {
@@ -23,7 +22,7 @@ class GameRuleset {
     this.wonders = WonderRuleset.standard,
   });
 
-  factory GameRuleset.standard() => _standard;
+  factory GameRuleset.standard() => defaults;
 
   static const GameRuleset defaults = GameRuleset(
     city: CityRulesets.standard,
@@ -31,10 +30,6 @@ class GameRuleset {
     technology: TechnologyRulesets.standard,
     stability: StabilityRuleset.standard,
     wonders: WonderRuleset.standard,
-  );
-
-  static final GameRuleset _standard = defaults.copyWith(
-    city: CityRulesets.fromUnitSpecs(UnitSpecResolver.standard),
   );
 
   GameRuleset copyWith({
