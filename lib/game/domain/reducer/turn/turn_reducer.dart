@@ -1,6 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -12,6 +14,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
@@ -53,25 +56,77 @@ abstract final class TurnReducer {
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final result = TurnPipeline.playerEndTurn(fogOfWarService: fogOfWarService)
-        .run(
-          TurnContext(
-            state: state,
-            mapData: mapData,
-            ruleset: GameRuleset.standard().copyWith(
-              city: cityRuleset,
-              technology: technologyRuleset,
-              stability: stabilityRuleset,
-              wonders: wonderRuleset,
-              paceBalance: paceBalance,
-            ),
-            playerId: playerId,
-          ),
-        );
-    return GameStateTransition(
-      state: result.state,
-      uiEffects: result.uiEffects,
-      events: result.events,
+    final ruleset = GameRuleset.standard().copyWith(
+      city: cityRuleset,
+      technology: technologyRuleset,
+      stability: stabilityRuleset,
+      wonders: wonderRuleset,
+      paceBalance: paceBalance,
+    );
+    final result = PersistentTurnPipeline.run(
+      PersistentTurnPipelineRequest.playerEndTurn(
+        save: _syntheticHotSeatSave(playerId),
+        state: state.toPersistentState(),
+        playerId: playerId,
+        savedAt: _syntheticSavedAt,
+        mapData: mapData,
+        ruleset: ruleset,
+        fogOfWarService: fogOfWarService,
+        syncRulesetPaceWithSave: false,
+      ),
+    );
+    final refreshed = const SelectionRefreshPhase().apply(
+      TurnContext(
+        state: _withPersistentState(state, result.state),
+        mapData: mapData,
+        ruleset: ruleset,
+        playerId: playerId,
+      ),
+    );
+    return GameStateTransition(state: refreshed.state, events: result.events);
+  }
+
+  static GameSave _syntheticHotSeatSave(String playerId) {
+    return GameSave(
+      id: 'turn_reducer_context',
+      name: 'Turn reducer context',
+      mapName: '',
+      turn: 1,
+      playerStates: {playerId: PlayerTurnState.active},
+      savedAt: _syntheticSavedAt,
+      camera: CameraState.zero,
+    );
+  }
+
+  static final DateTime _syntheticSavedAt = DateTime.utc(1970);
+
+  static GameState _withPersistentState(
+    GameState state,
+    PersistentGameState persistent,
+  ) {
+    final runtime = persistent.runtimeState;
+    return state.copyWith(
+      playerColors: persistent.playerColors,
+      playerCountries: persistent.playerCountries,
+      playerGold: persistent.playerGold,
+      playerWarWeariness: persistent.playerWarWeariness,
+      playerStabilityNet: persistent.playerStabilityNet,
+      units: persistent.units,
+      cities: persistent.cities,
+      artifacts: persistent.artifacts,
+      fieldImprovements: persistent.fieldImprovements,
+      fogOfWar: persistent.fogOfWar,
+      research: persistent.research,
+      wonderRegistry: persistent.wonderRegistry,
+      diplomacy: runtime.diplomacy,
+      submittedPlayerIds: runtime.submittedPlayerIds,
+      intendedAttacks: runtime.intendedAttacks,
+      resourceTradeAgreements: runtime.resourceTradeAgreements,
+      dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId:
+          runtime.culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId:
+          runtime.mapObjectiveHoldStatesByObjectiveId,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -43,6 +44,8 @@ final class PersistentTurnPipelineRequest {
     required this.mapData,
     this.mapDefinition,
     this.ruleset = GameRuleset.defaults,
+    this.fogOfWarService = const FogOfWarService(),
+    this.syncRulesetPaceWithSave = true,
   }) : mode = PersistentTurnPipelineMode.playerEndTurn,
        playerIds = List.unmodifiable([playerId]),
        skippedPlayerIds = const [],
@@ -57,9 +60,11 @@ final class PersistentTurnPipelineRequest {
     required this.mapData,
     this.mapDefinition,
     this.ruleset = GameRuleset.defaults,
+    this.fogOfWarService = const FogOfWarService(),
     Iterable<String> skippedPlayerIds = const [],
     this.preserveNonParticipantPlayerStates = false,
     this.trackTimeoutStreaks = false,
+    this.syncRulesetPaceWithSave = true,
   }) : mode = PersistentTurnPipelineMode.simultaneousFinalize,
        playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
        skippedPlayerIds = List.unmodifiable(
@@ -74,9 +79,11 @@ final class PersistentTurnPipelineRequest {
   final MapData mapData;
   final MapDefinition? mapDefinition;
   final GameRuleset ruleset;
+  final FogOfWarService fogOfWarService;
   final List<String> skippedPlayerIds;
   final bool preserveNonParticipantPlayerStates;
   final bool trackTimeoutStreaks;
+  final bool syncRulesetPaceWithSave;
 }
 
 final class PersistentTurnPipelineResult {
@@ -123,6 +130,7 @@ abstract final class PersistentTurnPipeline {
       playerIds: [playerId],
       mapData: request.mapData,
       ruleset: _rulesetFor(request),
+      fogOfWarService: request.fogOfWarService,
       turn: request.save.turn,
     );
     final previousCulturalHoldTurns =
@@ -172,6 +180,7 @@ abstract final class PersistentTurnPipeline {
       playerIds: playerIds,
       mapData: request.mapData,
       ruleset: ruleset,
+      fogOfWarService: request.fogOfWarService,
       priorEvents: combat.events,
       mapObjectives: request.mapData.objectives,
       turn: request.save.turn,
@@ -180,6 +189,7 @@ abstract final class PersistentTurnPipeline {
       state: economy.state,
       playerIds: playerIds,
       mapData: request.mapData,
+      fogOfWarService: request.fogOfWarService,
     );
     final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
       diplomacy: movement.state.runtimeState.diplomacy,
@@ -269,6 +279,7 @@ abstract final class PersistentTurnPipeline {
   }
 
   static GameRuleset _rulesetFor(PersistentTurnPipelineRequest request) {
+    if (!request.syncRulesetPaceWithSave) return request.ruleset;
     return request.ruleset.copyWith(
       paceBalance: request.save.matchRules.paceBalance,
     );
