@@ -3,6 +3,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/map/domain/map_selection.dart';
+import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -35,6 +36,20 @@ void main() {
       expect(wire.command['type'], 'MoveUnit');
       expect(codec.fromWire(WireCommand.fromJson(wire.toJson())), command);
       expect(codec.contextFromWire(wire).actorPlayerId, 'player_1');
+    });
+
+    test('wire command copyWith can clear nullable turn', () {
+      const wire = WireCommand(
+        matchId: 'match_1',
+        tick: 42,
+        turn: 3,
+        actorPlayerId: 'player_1',
+        command: {'type': 'EndTurn', 'playerId': 'player_1'},
+      );
+
+      final cleared = wire.copyWith(turn: null);
+
+      expect(cleared.turn, isNull);
     });
 
     test('rejects unsupported protocol versions', () {
@@ -86,6 +101,27 @@ void main() {
       expect(moved.unitId, 'unit_1');
       expect(moved.fromCol, 2);
       expect(moved.toCol, 3);
+    });
+
+    test('wire event copyWith can clear nullable metadata', () {
+      final wire = WireEvent(
+        matchId: 'match_1',
+        offset: 9,
+        timestamp: DateTime.utc(2026, 4, 26, 10, 30),
+        actorPlayerId: 'player_1',
+        tick: 7,
+        command: const {'type': 'MoveUnit'},
+      );
+
+      final cleared = wire.copyWith(
+        actorPlayerId: null,
+        tick: null,
+        command: null,
+      );
+
+      expect(cleared.actorPlayerId, isNull);
+      expect(cleared.tick, isNull);
+      expect(cleared.command, isNull);
     });
 
     test('parses server command rejection events', () {
@@ -344,6 +380,46 @@ void main() {
       expect(restored.quickplay, isTrue);
       expect(restored.autoStartAt, DateTime.utc(2026, 4, 26, 11, 0, 30));
       expect(restored.copyWith(autoStartAt: null).autoStartAt, isNull);
+    });
+
+    test('wire player copyWith can clear AI metadata', () {
+      const player = WirePlayer(
+        id: 'ai_1',
+        userId: 'ai_1',
+        name: 'AI',
+        colorValue: 0xFF2563EB,
+        kind: WirePlayerKind.ai,
+        connectionState: WirePlayerConnectionState.connected,
+        ai: WireAiPlayer(
+          strategyId: AiStrategyId.basic,
+          difficulty: AiDifficulty.normal,
+          persona: AiPersona.balanced,
+        ),
+      );
+
+      final cleared = player.copyWith(ai: null);
+
+      expect(cleared.ai, isNull);
+    });
+
+    test('wire command ack copyWith can clear rejection reason', () {
+      const snapshot = WireSnapshot(
+        matchId: 'match_1',
+        offset: 1,
+        save: {},
+        state: {},
+      );
+      const ack = WireCommandAck(
+        matchId: 'match_1',
+        accepted: false,
+        offset: 1,
+        snapshot: snapshot,
+        reason: 'stale_turn',
+      );
+
+      final cleared = ack.copyWith(reason: null);
+
+      expect(cleared.reason, isNull);
     });
   });
 }

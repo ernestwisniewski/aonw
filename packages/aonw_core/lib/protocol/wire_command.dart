@@ -1,22 +1,21 @@
 import 'package:aonw_core/protocol/protocol_version.dart';
 import 'package:aonw_core/protocol/wire_json.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class WireCommand {
-  final int v;
-  final String matchId;
-  final int tick;
-  final int? turn;
-  final String actorPlayerId;
-  final Map<String, dynamic> command;
+part 'wire_command.freezed.dart';
 
-  const WireCommand({
-    this.v = kProtocolVersion,
-    required this.matchId,
-    required this.tick,
-    this.turn,
-    required this.actorPlayerId,
-    required this.command,
-  });
+@freezed
+abstract class WireCommand with _$WireCommand {
+  const WireCommand._();
+
+  const factory WireCommand({
+    @Default(kProtocolVersion) int v,
+    required String matchId,
+    required int tick,
+    int? turn,
+    required String actorPlayerId,
+    required Map<String, dynamic> command,
+  }) = _WireCommand;
 
   factory WireCommand.fromJson(Map<String, dynamic> json) {
     return WireCommand(
@@ -41,22 +40,4 @@ class WireCommand {
     'actorPlayerId': actorPlayerId,
     'command': Map<String, dynamic>.from(command),
   };
-
-  WireCommand copyWith({
-    int? v,
-    String? matchId,
-    int? tick,
-    int? turn,
-    String? actorPlayerId,
-    Map<String, dynamic>? command,
-  }) {
-    return WireCommand(
-      v: v ?? this.v,
-      matchId: matchId ?? this.matchId,
-      tick: tick ?? this.tick,
-      turn: turn ?? this.turn,
-      actorPlayerId: actorPlayerId ?? this.actorPlayerId,
-      command: command ?? this.command,
-    );
-  }
 }

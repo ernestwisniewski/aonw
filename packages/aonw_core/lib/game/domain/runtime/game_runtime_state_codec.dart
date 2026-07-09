@@ -26,11 +26,6 @@ Set<String> _readStringSet(Object? value, String field) {
   return Set.unmodifiable(result);
 }
 
-int _stringSetHash(Set<String> values) {
-  final sorted = [...values]..sort();
-  return Object.hashAll(sorted);
-}
-
 Map<String, int> _readNonNegativeIntMap(Object? value, String field) {
   if (value == null) return const {};
   if (value is! Map<Object?, Object?>) {
@@ -77,14 +72,6 @@ Map<String, int> _sortedIntMap(Map<String, int> map) {
   return {for (final entry in entries) entry.key: entry.value};
 }
 
-int _intMapHash(Map<String, int> map) {
-  final entries = map.entries.toList()
-    ..sort((left, right) => left.key.compareTo(right.key));
-  return Object.hashAll(
-    entries.map((entry) => Object.hash(entry.key, entry.value)),
-  );
-}
-
 Map<String, MapObjectiveHoldState> _readMapObjectiveHoldStates(Object? value) {
   final result = <String, MapObjectiveHoldState>{};
   for (final hold in _readJsonObjectList(
@@ -103,26 +90,6 @@ List<Map<String, dynamic>> _sortedMapObjectiveHoldStates(
   final entries = map.entries.toList()
     ..sort((left, right) => left.key.compareTo(right.key));
   return [for (final entry in entries) entry.value.toJson()];
-}
-
-bool _mapObjectiveHoldStateMapEquals(
-  Map<String, MapObjectiveHoldState> a,
-  Map<String, MapObjectiveHoldState> b,
-) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (final entry in a.entries) {
-    if (b[entry.key] != entry.value) return false;
-  }
-  return true;
-}
-
-int _mapObjectiveHoldStateMapHash(Map<String, MapObjectiveHoldState> map) {
-  final entries = map.entries.toList()
-    ..sort((left, right) => left.key.compareTo(right.key));
-  return Object.hashAll(
-    entries.map((entry) => Object.hash(entry.key, entry.value)),
-  );
 }
 
 List<ResourceTradeAgreement> _readResourceTradeAgreements(Object? value) {

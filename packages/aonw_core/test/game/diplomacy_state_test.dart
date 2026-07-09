@@ -58,6 +58,56 @@ void main() {
       expect(relation.other('player_3'), isNull);
     });
 
+    test('relation copyWith can clear nullable metadata', () {
+      final relation = DiplomaticRelation.between(
+        playerAId: 'player_1',
+        playerBId: 'player_2',
+        status: DiplomaticRelationStatus.truce,
+        statusExpiresOnTurn: 12,
+        lastChangedTurn: 2,
+        lastChangeReason: DiplomaticRelationChangeReason.manual,
+      );
+
+      final cleared = relation.copyWith(
+        statusExpiresOnTurn: null,
+        lastChangedTurn: null,
+        lastChangeReason: null,
+      );
+
+      expect(cleared.statusExpiresOnTurn, isNull);
+      expect(cleared.lastChangedTurn, isNull);
+      expect(cleared.lastChangeReason, isNull);
+    });
+
+    test('message copyWith can clear nullable response metadata', () {
+      final message =
+          DiplomaticMessage.create(
+            id: 'message_1',
+            fromPlayerId: 'player_1',
+            toPlayerId: 'player_2',
+            topic: DiplomaticMessageTopic.withdrawScouts,
+            createdTurn: 4,
+            expiresOnTurn: 9,
+          ).copyWith(
+            response: DiplomaticMessageResponse.conciliatory,
+            respondedTurn: 5,
+            relationScoreAfter: 12,
+            promiseDueTurn: 8,
+          );
+
+      final cleared = message.copyWith(
+        response: null,
+        respondedTurn: null,
+        relationScoreAfter: null,
+        promiseDueTurn: null,
+      );
+
+      expect(cleared.response, isNull);
+      expect(cleared.respondedTurn, isNull);
+      expect(cleared.relationScoreAfter, isNull);
+      expect(cleared.promiseDueTurn, isNull);
+    });
+
     test('derives attitude from relation score thresholds', () {
       final diplomacy = DiplomacyState.empty
           .adjustRelationScore(

@@ -22,9 +22,9 @@ enum GameInteractionMode {
 }
 
 sealed class PendingPlayerAction {
-  const PendingPlayerAction({required this.ownerPlayerId});
+  const PendingPlayerAction();
 
-  final String ownerPlayerId;
+  String get ownerPlayerId;
 
   GameInteractionMode get mode;
 
@@ -150,7 +150,10 @@ sealed class PendingPlayerAction {
 }
 
 final class PendingResearchSelection extends PendingPlayerAction {
-  const PendingResearchSelection({required super.ownerPlayerId});
+  const PendingResearchSelection({required this.ownerPlayerId});
+
+  @override
+  final String ownerPlayerId;
 
   @override
   GameInteractionMode get mode => GameInteractionMode.researchSelection;
@@ -158,10 +161,12 @@ final class PendingResearchSelection extends PendingPlayerAction {
 
 final class PendingCityWorkedHexSelection extends PendingPlayerAction {
   const PendingCityWorkedHexSelection({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.cityId,
   });
 
+  @override
+  final String ownerPlayerId;
   final String cityId;
 
   @override
@@ -176,10 +181,12 @@ final class PendingCityWorkedHexSelection extends PendingPlayerAction {
 
 final class PendingCityExpansionSelection extends PendingPlayerAction {
   const PendingCityExpansionSelection({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.cityId,
   });
 
+  @override
+  final String ownerPlayerId;
   final String cityId;
 
   @override
@@ -192,25 +199,16 @@ final class PendingCityExpansionSelection extends PendingPlayerAction {
   List<Object?> get equalityFields => [cityId];
 }
 
-final class PendingWorkerActionSelection extends PendingPlayerAction {
-  const PendingWorkerActionSelection({
-    required super.ownerPlayerId,
-    required this.unitId,
-    this.improvementType,
-  });
+@freezed
+abstract class PendingWorkerActionSelection extends PendingPlayerAction
+    with _$PendingWorkerActionSelection {
+  const PendingWorkerActionSelection._();
 
-  final String unitId;
-  final FieldImprovementType? improvementType;
-
-  PendingWorkerActionSelection copyWith({
+  const factory PendingWorkerActionSelection({
+    required String ownerPlayerId,
+    required String unitId,
     FieldImprovementType? improvementType,
-  }) {
-    return PendingWorkerActionSelection(
-      ownerPlayerId: ownerPlayerId,
-      unitId: unitId,
-      improvementType: improvementType ?? this.improvementType,
-    );
-  }
+  }) = _PendingWorkerActionSelection;
 
   @override
   GameInteractionMode get mode => GameInteractionMode.workerAction;
@@ -230,10 +228,12 @@ final class PendingWorkerActionSelection extends PendingPlayerAction {
 
 final class PendingMerchantTradeRouteSelection extends PendingPlayerAction {
   const PendingMerchantTradeRouteSelection({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.unitId,
   });
 
+  @override
+  final String ownerPlayerId;
   final String unitId;
 
   @override
@@ -252,10 +252,12 @@ final class PendingMerchantTradeRouteSelection extends PendingPlayerAction {
 
 final class PendingMerchantMoveToCitySelection extends PendingPlayerAction {
   const PendingMerchantMoveToCitySelection({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.unitId,
   });
 
+  @override
+  final String ownerPlayerId;
   final String unitId;
 
   @override
@@ -274,11 +276,13 @@ final class PendingMerchantMoveToCitySelection extends PendingPlayerAction {
 
 final class PendingUnitTurnSkip extends PendingPlayerAction {
   const PendingUnitTurnSkip({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.unitId,
     required this.restoreMovementPoints,
   });
 
+  @override
+  final String ownerPlayerId;
   final String unitId;
   final int restoreMovementPoints;
 
@@ -298,28 +302,19 @@ final class PendingUnitTurnSkip extends PendingPlayerAction {
   List<Object?> get equalityFields => [unitId, restoreMovementPoints];
 }
 
-final class PendingAttackTargeting extends PendingPlayerAction {
-  const PendingAttackTargeting({
-    required super.ownerPlayerId,
-    required this.attackerUnitId,
-    this.defenderCol,
-    this.defenderRow,
-  });
+@freezed
+abstract class PendingAttackTargeting extends PendingPlayerAction
+    with _$PendingAttackTargeting {
+  const PendingAttackTargeting._();
 
-  final String attackerUnitId;
-  final int? defenderCol;
-  final int? defenderRow;
+  const factory PendingAttackTargeting({
+    required String ownerPlayerId,
+    required String attackerUnitId,
+    int? defenderCol,
+    int? defenderRow,
+  }) = _PendingAttackTargeting;
 
   bool get hasDefenderTarget => defenderCol != null && defenderRow != null;
-
-  PendingAttackTargeting copyWith({int? defenderCol, int? defenderRow}) {
-    return PendingAttackTargeting(
-      ownerPlayerId: ownerPlayerId,
-      attackerUnitId: attackerUnitId,
-      defenderCol: defenderCol ?? this.defenderCol,
-      defenderRow: defenderRow ?? this.defenderRow,
-    );
-  }
 
   @override
   GameInteractionMode get mode => GameInteractionMode.attackTargeting;
@@ -344,10 +339,12 @@ final class PendingAttackTargeting extends PendingPlayerAction {
 
 final class PendingCommanderMergeSelection extends PendingPlayerAction {
   const PendingCommanderMergeSelection({
-    required super.ownerPlayerId,
+    required this.ownerPlayerId,
     required this.commanderUnitId,
   });
 
+  @override
+  final String ownerPlayerId;
   final String commanderUnitId;
 
   @override

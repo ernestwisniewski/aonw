@@ -8,36 +8,28 @@ import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class AiContext {
-  final GameRuleset ruleset;
-  final MapData mapData;
-  final int turn;
-  final AiRng rng;
-  final AiPersona persona;
-  final AiDifficulty difficulty;
-  final CivilizationProfile civProfile;
-  final StrategicPlan? strategicPlan;
-  final ScoreRaceAnalysis? scoreRace;
-  final DateTime? deadline;
+part 'ai_context.freezed.dart';
 
-  final double ownControlPercent;
-  final int knownPlayerCount;
+@freezed
+abstract class AiContext with _$AiContext {
+  const AiContext._();
 
-  const AiContext({
-    required this.ruleset,
-    required this.mapData,
-    required this.turn,
-    required this.rng,
-    this.persona = AiPersona.balanced,
-    this.difficulty = AiDifficulty.normal,
-    this.civProfile = CivilizationProfiles.poland,
-    this.strategicPlan,
-    this.scoreRace,
-    this.deadline,
-    this.ownControlPercent = 0.0,
-    this.knownPlayerCount = 1,
-  });
+  const factory AiContext({
+    required GameRuleset ruleset,
+    required MapData mapData,
+    required int turn,
+    required AiRng rng,
+    @Default(AiPersona.balanced) AiPersona persona,
+    @Default(AiDifficulty.normal) AiDifficulty difficulty,
+    @Default(CivilizationProfiles.poland) CivilizationProfile civProfile,
+    StrategicPlan? strategicPlan,
+    ScoreRaceAnalysis? scoreRace,
+    DateTime? deadline,
+    @Default(0.0) double ownControlPercent,
+    @Default(1) int knownPlayerCount,
+  }) = _AiContext;
 
   AiDifficultyProfile get difficultyProfile => difficulty.profile;
 
@@ -45,35 +37,5 @@ class AiContext {
     return civProfile
         .effectiveWeights(persona)
         .multiply(difficultyProfile.weightMultiplier);
-  }
-
-  AiContext copyWith({
-    GameRuleset? ruleset,
-    MapData? mapData,
-    int? turn,
-    AiRng? rng,
-    AiPersona? persona,
-    AiDifficulty? difficulty,
-    CivilizationProfile? civProfile,
-    StrategicPlan? strategicPlan,
-    ScoreRaceAnalysis? scoreRace,
-    DateTime? deadline,
-    double? ownControlPercent,
-    int? knownPlayerCount,
-  }) {
-    return AiContext(
-      ruleset: ruleset ?? this.ruleset,
-      mapData: mapData ?? this.mapData,
-      turn: turn ?? this.turn,
-      rng: rng ?? this.rng,
-      persona: persona ?? this.persona,
-      difficulty: difficulty ?? this.difficulty,
-      civProfile: civProfile ?? this.civProfile,
-      strategicPlan: strategicPlan ?? this.strategicPlan,
-      scoreRace: scoreRace ?? this.scoreRace,
-      deadline: deadline ?? this.deadline,
-      ownControlPercent: ownControlPercent ?? this.ownControlPercent,
-      knownPlayerCount: knownPlayerCount ?? this.knownPlayerCount,
-    );
   }
 }

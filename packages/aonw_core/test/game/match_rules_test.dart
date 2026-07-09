@@ -99,6 +99,21 @@ void main() {
       expect(GameLengthConfig.long120.turnLimit, 240);
     });
 
+    test('copyWith can clear nullable time limits', () {
+      final gameLength = GameLengthConfig.standard60.copyWith(
+        targetMinutes: null,
+        turnLimit: null,
+      );
+      final victory = VictoryRules.standard
+          .copyWith(turnLimit: 120, hardTimeLimitMinutes: 60)
+          .copyWith(turnLimit: null, hardTimeLimitMinutes: null);
+
+      expect(gameLength.targetMinutes, isNull);
+      expect(gameLength.turnLimit, isNull);
+      expect(victory.turnLimit, isNull);
+      expect(victory.hardTimeLimitMinutes, isNull);
+    });
+
     test('serializes and deserializes clean ruleset JSON', () {
       for (final gameLength in [
         GameLengthConfig.standard60,

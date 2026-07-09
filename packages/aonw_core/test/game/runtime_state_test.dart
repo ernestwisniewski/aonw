@@ -175,6 +175,55 @@ void main() {
       expect(stripped.turnStartedAt, DateTime.utc(2026, 4, 29));
     });
 
+    test('copyWith can clear nullable client runtime fields', () {
+      final runtimeState = GameRuntimeState(
+        cityFoundingDraft: CityFoundingDraft(
+          unitId: 'settler_1',
+          ownerPlayerId: 'player_1',
+          center: const CityHex(col: 0, row: 0),
+        ),
+        pendingAction: const PendingResearchSelection(
+          ownerPlayerId: 'player_1',
+        ),
+        turnStartedAt: DateTime.utc(2026, 4, 29),
+      );
+
+      final cleared = runtimeState.copyWith(
+        cityFoundingDraft: null,
+        pendingAction: null,
+        turnStartedAt: null,
+      );
+
+      expect(cleared.cityFoundingDraft, isNull);
+      expect(cleared.pendingAction, isNull);
+      expect(cleared.turnStartedAt, isNull);
+    });
+
+    test('pending action copyWith can clear nullable target fields', () {
+      const workerAction = PendingWorkerActionSelection(
+        ownerPlayerId: 'player_1',
+        unitId: 'worker_1',
+        improvementType: FieldImprovementType.mine,
+      );
+      const attackTargeting = PendingAttackTargeting(
+        ownerPlayerId: 'player_1',
+        attackerUnitId: 'warrior_1',
+        defenderCol: 2,
+        defenderRow: 3,
+      );
+
+      expect(
+        workerAction.copyWith(improvementType: null).improvementType,
+        isNull,
+      );
+      expect(
+        attackTargeting
+            .copyWith(defenderCol: null, defenderRow: null)
+            .hasDefenderTarget,
+        isFalse,
+      );
+    });
+
     test('parses pending action modes', () {
       const actions = <PendingPlayerAction>[
         PendingResearchSelection(ownerPlayerId: 'player_1'),

@@ -48,6 +48,57 @@ void main() {
     expect(state.restoreRequest?.sequence, 1);
   });
 
+  test('copyWith can clear transient popup requests', () {
+    const entry = HudMinimizedPopupEntry(
+      id: 'popup.1',
+      kind: HudMinimizedPopupKind.modeBanner,
+      title: 'Movement mode',
+      subtitle: 'Choose a target hex.',
+    );
+    final state = HudMinimizedPopupsState(
+      restoreRequest: HudPopupRestoreRequest(popupId: entry.id, sequence: 1),
+      attentionRequest: HudPopupAttentionRequest(
+        popupId: entry.id,
+        sequence: 2,
+      ),
+    );
+
+    final cleared = state.copyWith(
+      restoreRequest: null,
+      attentionRequest: null,
+    );
+
+    expect(cleared.restoreRequest, isNull);
+    expect(cleared.attentionRequest, isNull);
+  });
+
+  test('removing entries clears the previous attention request', () {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    const entry = HudMinimizedPopupEntry(
+      id: 'popup.1',
+      kind: HudMinimizedPopupKind.modeBanner,
+      title: 'Movement mode',
+      subtitle: 'Choose a target hex.',
+    );
+
+    container.read(hudMinimizedPopupsProvider.notifier).minimize(entry);
+    expect(
+      container.read(hudMinimizedPopupsProvider).attentionRequest?.popupId,
+      entry.id,
+    );
+
+    container
+        .read(hudMinimizedPopupsProvider.notifier)
+        .removeWhere((candidate) => candidate.id == entry.id);
+
+    final state = container.read(hudMinimizedPopupsProvider);
+    expect(state.entries, isEmpty);
+    expect(state.attentionRequest, isNull);
+  });
+
   test(
     'creates restore requests for help entries outside minimized storage',
     () {

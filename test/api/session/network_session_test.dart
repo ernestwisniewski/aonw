@@ -1,4 +1,5 @@
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,6 +41,23 @@ void main() {
       expect(copied.playerId, 'player_1');
       expect(copied.refreshToken, 'refresh-token');
       expect(copied.matchId, 'match_1');
+    });
+  });
+
+  group('NetworkConnectionState', () {
+    test('copyWith can clear nullable status metadata', () {
+      final changedAt = DateTime.utc(2026, 7, 9);
+      final state = NetworkConnectionState(
+        status: NetworkConnectionStatus.reconnecting,
+        lastError: 'timeout',
+        changedAt: changedAt,
+      );
+
+      final cleared = state.copyWith(lastError: null, changedAt: null);
+
+      expect(cleared.status, NetworkConnectionStatus.reconnecting);
+      expect(cleared.lastError, isNull);
+      expect(cleared.changedAt, isNull);
     });
   });
 }

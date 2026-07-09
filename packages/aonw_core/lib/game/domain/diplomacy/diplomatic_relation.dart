@@ -1,15 +1,18 @@
 part of 'diplomacy_state.dart';
 
-final class DiplomaticRelation {
-  const DiplomaticRelation({
-    required this.playerAId,
-    required this.playerBId,
-    this.status = DiplomaticRelationStatus.neutral,
-    this.relationScore = 0,
-    this.statusExpiresOnTurn,
-    this.lastChangedTurn,
-    this.lastChangeReason,
-  });
+@freezed
+abstract class DiplomaticRelation with _$DiplomaticRelation {
+  const DiplomaticRelation._();
+
+  const factory DiplomaticRelation({
+    required String playerAId,
+    required String playerBId,
+    @Default(DiplomaticRelationStatus.neutral) DiplomaticRelationStatus status,
+    @Default(0) int relationScore,
+    int? statusExpiresOnTurn,
+    int? lastChangedTurn,
+    DiplomaticRelationChangeReason? lastChangeReason,
+  }) = _DiplomaticRelation;
 
   factory DiplomaticRelation.between({
     required String playerAId,
@@ -48,14 +51,6 @@ final class DiplomaticRelation {
     );
   }
 
-  final String playerAId;
-  final String playerBId;
-  final DiplomaticRelationStatus status;
-  final int relationScore;
-  final int? statusExpiresOnTurn;
-  final int? lastChangedTurn;
-  final DiplomaticRelationChangeReason? lastChangeReason;
-
   String get key => DiplomacyState.relationKey(playerAId, playerBId);
 
   bool get isTruceExpired =>
@@ -67,26 +62,6 @@ final class DiplomaticRelation {
     return null;
   }
 
-  DiplomaticRelation copyWith({
-    DiplomaticRelationStatus? status,
-    int? relationScore,
-    Object? statusExpiresOnTurn = _unset,
-    int? lastChangedTurn,
-    DiplomaticRelationChangeReason? lastChangeReason,
-  }) {
-    return DiplomaticRelation(
-      playerAId: playerAId,
-      playerBId: playerBId,
-      status: status ?? this.status,
-      relationScore: relationScore ?? this.relationScore,
-      statusExpiresOnTurn: identical(statusExpiresOnTurn, _unset)
-          ? this.statusExpiresOnTurn
-          : statusExpiresOnTurn as int?,
-      lastChangedTurn: lastChangedTurn ?? this.lastChangedTurn,
-      lastChangeReason: lastChangeReason ?? this.lastChangeReason,
-    );
-  }
-
   Map<String, dynamic> toJson() => {
     'playerAId': playerAId,
     'playerBId': playerBId,
@@ -96,30 +71,6 @@ final class DiplomaticRelation {
     if (lastChangedTurn != null) 'lastChangedTurn': lastChangedTurn,
     if (lastChangeReason != null) 'lastChangeReason': lastChangeReason!.name,
   };
-
-  @override
-  bool operator ==(Object other) =>
-      other is DiplomaticRelation &&
-      other.playerAId == playerAId &&
-      other.playerBId == playerBId &&
-      other.status == status &&
-      other.relationScore == relationScore &&
-      other.statusExpiresOnTurn == statusExpiresOnTurn &&
-      other.lastChangedTurn == lastChangedTurn &&
-      other.lastChangeReason == lastChangeReason;
-
-  @override
-  int get hashCode => Object.hash(
-    playerAId,
-    playerBId,
-    status,
-    relationScore,
-    statusExpiresOnTurn,
-    lastChangedTurn,
-    lastChangeReason,
-  );
-
-  static const Object _unset = Object();
 
   static int? _optionalRelationScore(Object? value) {
     final score = optionalIntValue(value, 'DiplomaticRelation.relationScore');

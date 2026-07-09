@@ -1,21 +1,22 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'game_length_config.freezed.dart';
+
 enum GameLengthKind { unlimited, targetMinutes }
 
 enum PaceProfile { unlimited, standard60, normal90, long120 }
 
-class GameLengthConfig {
-  final GameLengthKind kind;
-  final int? targetMinutes;
-  final int? turnLimit;
-  final PaceProfile paceProfile;
-  final bool scoreFallbackEnabled;
+@freezed
+abstract class GameLengthConfig with _$GameLengthConfig {
+  const GameLengthConfig._();
 
-  const GameLengthConfig({
-    required this.kind,
-    this.targetMinutes,
-    this.turnLimit,
-    required this.paceProfile,
-    required this.scoreFallbackEnabled,
-  });
+  const factory GameLengthConfig({
+    required GameLengthKind kind,
+    int? targetMinutes,
+    int? turnLimit,
+    required PaceProfile paceProfile,
+    required bool scoreFallbackEnabled,
+  }) = _GameLengthConfig;
 
   static const estimatedMultiplayerTurnSeconds = 30;
   static const standard60TurnLimit = 120;
@@ -113,50 +114,6 @@ class GameLengthConfig {
       'paceProfile': paceProfile.name,
       'scoreFallbackEnabled': scoreFallbackEnabled,
     };
-  }
-
-  GameLengthConfig copyWith({
-    GameLengthKind? kind,
-    int? targetMinutes,
-    int? turnLimit,
-    PaceProfile? paceProfile,
-    bool? scoreFallbackEnabled,
-  }) {
-    return GameLengthConfig(
-      kind: kind ?? this.kind,
-      targetMinutes: targetMinutes ?? this.targetMinutes,
-      turnLimit: turnLimit ?? this.turnLimit,
-      paceProfile: paceProfile ?? this.paceProfile,
-      scoreFallbackEnabled: scoreFallbackEnabled ?? this.scoreFallbackEnabled,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is GameLengthConfig &&
-        other.kind == kind &&
-        other.targetMinutes == targetMinutes &&
-        other.turnLimit == turnLimit &&
-        other.paceProfile == paceProfile &&
-        other.scoreFallbackEnabled == scoreFallbackEnabled;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(
-      kind,
-      targetMinutes,
-      turnLimit,
-      paceProfile,
-      scoreFallbackEnabled,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'GameLengthConfig(kind: $kind, targetMinutes: $targetMinutes, '
-        'turnLimit: $turnLimit, paceProfile: $paceProfile, '
-        'scoreFallbackEnabled: $scoreFallbackEnabled)';
   }
 }
 

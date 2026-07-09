@@ -1,29 +1,24 @@
 import 'package:aonw_core/game/domain/match_rules/game_length_config.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class VictoryRules {
-  final bool conquestEnabled;
-  final bool dominationEnabled;
-  final double dominationControlPercent;
-  final int dominationHoldTurns;
-  final bool scoreFallbackEnabled;
-  final int? turnLimit;
-  final int? hardTimeLimitMinutes;
-  final bool culturalEnabled;
-  final int culturalRequiredArtifacts;
-  final int culturalHoldTurns;
+part 'victory_rules.freezed.dart';
 
-  const VictoryRules({
-    required this.conquestEnabled,
-    required this.dominationEnabled,
-    required this.dominationControlPercent,
-    required this.dominationHoldTurns,
-    required this.scoreFallbackEnabled,
-    this.turnLimit,
-    this.hardTimeLimitMinutes,
-    this.culturalEnabled = true,
-    this.culturalRequiredArtifacts = 6,
-    this.culturalHoldTurns = 5,
-  });
+@freezed
+abstract class VictoryRules with _$VictoryRules {
+  const VictoryRules._();
+
+  const factory VictoryRules({
+    required bool conquestEnabled,
+    required bool dominationEnabled,
+    required double dominationControlPercent,
+    required int dominationHoldTurns,
+    required bool scoreFallbackEnabled,
+    int? turnLimit,
+    int? hardTimeLimitMinutes,
+    @Default(true) bool culturalEnabled,
+    @Default(6) int culturalRequiredArtifacts,
+    @Default(5) int culturalHoldTurns,
+  }) = _VictoryRules;
 
   static const standard = VictoryRules(
     conquestEnabled: true,
@@ -87,78 +82,6 @@ class VictoryRules {
       'culturalRequiredArtifacts': culturalRequiredArtifacts,
       'culturalHoldTurns': culturalHoldTurns,
     };
-  }
-
-  VictoryRules copyWith({
-    bool? conquestEnabled,
-    bool? dominationEnabled,
-    double? dominationControlPercent,
-    int? dominationHoldTurns,
-    bool? scoreFallbackEnabled,
-    int? turnLimit,
-    int? hardTimeLimitMinutes,
-    bool? culturalEnabled,
-    int? culturalRequiredArtifacts,
-    int? culturalHoldTurns,
-  }) {
-    return VictoryRules(
-      conquestEnabled: conquestEnabled ?? this.conquestEnabled,
-      dominationEnabled: dominationEnabled ?? this.dominationEnabled,
-      dominationControlPercent:
-          dominationControlPercent ?? this.dominationControlPercent,
-      dominationHoldTurns: dominationHoldTurns ?? this.dominationHoldTurns,
-      scoreFallbackEnabled: scoreFallbackEnabled ?? this.scoreFallbackEnabled,
-      turnLimit: turnLimit ?? this.turnLimit,
-      hardTimeLimitMinutes: hardTimeLimitMinutes ?? this.hardTimeLimitMinutes,
-      culturalEnabled: culturalEnabled ?? this.culturalEnabled,
-      culturalRequiredArtifacts:
-          culturalRequiredArtifacts ?? this.culturalRequiredArtifacts,
-      culturalHoldTurns: culturalHoldTurns ?? this.culturalHoldTurns,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is VictoryRules &&
-        other.conquestEnabled == conquestEnabled &&
-        other.dominationEnabled == dominationEnabled &&
-        other.dominationControlPercent == dominationControlPercent &&
-        other.dominationHoldTurns == dominationHoldTurns &&
-        other.scoreFallbackEnabled == scoreFallbackEnabled &&
-        other.turnLimit == turnLimit &&
-        other.hardTimeLimitMinutes == hardTimeLimitMinutes &&
-        other.culturalEnabled == culturalEnabled &&
-        other.culturalRequiredArtifacts == culturalRequiredArtifacts &&
-        other.culturalHoldTurns == culturalHoldTurns;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(
-      conquestEnabled,
-      dominationEnabled,
-      dominationControlPercent,
-      dominationHoldTurns,
-      scoreFallbackEnabled,
-      turnLimit,
-      hardTimeLimitMinutes,
-      culturalEnabled,
-      culturalRequiredArtifacts,
-      culturalHoldTurns,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'VictoryRules(conquestEnabled: $conquestEnabled, '
-        'dominationEnabled: $dominationEnabled, '
-        'dominationControlPercent: $dominationControlPercent, '
-        'dominationHoldTurns: $dominationHoldTurns, '
-        'scoreFallbackEnabled: $scoreFallbackEnabled, turnLimit: $turnLimit, '
-        'hardTimeLimitMinutes: $hardTimeLimitMinutes, '
-        'culturalEnabled: $culturalEnabled, '
-        'culturalRequiredArtifacts: $culturalRequiredArtifacts, '
-        'culturalHoldTurns: $culturalHoldTurns)';
   }
 }
 

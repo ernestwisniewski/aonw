@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+part 'hud_minimized_popups_provider.freezed.dart';
 
 enum HudMinimizedPopupKind {
   firstTurnCoachmarks,
@@ -133,20 +136,18 @@ class HudPopupAttentionRequest {
   });
 }
 
-class HudMinimizedPopupsState {
-  final bool loaded;
-  final List<HudMinimizedPopupEntry> entries;
-  final Map<String, List<HudMinimizedPopupEntry>> transientEntriesByScope;
-  final HudPopupRestoreRequest? restoreRequest;
-  final HudPopupAttentionRequest? attentionRequest;
+@freezed
+abstract class HudMinimizedPopupsState with _$HudMinimizedPopupsState {
+  const HudMinimizedPopupsState._();
 
-  const HudMinimizedPopupsState({
-    this.loaded = false,
-    this.entries = const [],
-    this.transientEntriesByScope = const {},
-    this.restoreRequest,
-    this.attentionRequest,
-  });
+  const factory HudMinimizedPopupsState({
+    @Default(false) bool loaded,
+    @Default(<HudMinimizedPopupEntry>[]) List<HudMinimizedPopupEntry> entries,
+    @Default(<String, List<HudMinimizedPopupEntry>>{})
+    Map<String, List<HudMinimizedPopupEntry>> transientEntriesByScope,
+    HudPopupRestoreRequest? restoreRequest,
+    HudPopupAttentionRequest? attentionRequest,
+  }) = _HudMinimizedPopupsState;
 
   bool hasEntry(String id) => entries.any((entry) => entry.id == id);
 
@@ -173,23 +174,6 @@ class HudMinimizedPopupsState {
       if (entry.belongsToSave(saveId)) byId[entry.id] = entry;
     }
     return byId.values.toList(growable: false);
-  }
-
-  HudMinimizedPopupsState copyWith({
-    bool? loaded,
-    List<HudMinimizedPopupEntry>? entries,
-    Map<String, List<HudMinimizedPopupEntry>>? transientEntriesByScope,
-    HudPopupRestoreRequest? restoreRequest,
-    HudPopupAttentionRequest? attentionRequest,
-  }) {
-    return HudMinimizedPopupsState(
-      loaded: loaded ?? this.loaded,
-      entries: entries ?? this.entries,
-      transientEntriesByScope:
-          transientEntriesByScope ?? this.transientEntriesByScope,
-      restoreRequest: restoreRequest ?? this.restoreRequest,
-      attentionRequest: attentionRequest ?? this.attentionRequest,
-    );
   }
 }
 

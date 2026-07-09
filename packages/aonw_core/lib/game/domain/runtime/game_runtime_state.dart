@@ -4,28 +4,36 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/util/collection_equality.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'game_runtime_state.freezed.dart';
 part 'game_runtime_state_codec.dart';
 part 'pending_player_action.dart';
 
-class GameRuntimeState {
+@freezed
+abstract class GameRuntimeState with _$GameRuntimeState {
+  const GameRuntimeState._();
+
   static const empty = GameRuntimeState();
 
-  const GameRuntimeState({
-    this.cityFoundingDraft,
-    this.pendingAction,
-    this.submittedPlayerIds = const {},
-    this.timeoutStreaksByPlayerId = const {},
-    this.afkPlayerIds = const {},
-    this.kickedPlayerIds = const {},
-    this.intendedAttacks = const [],
-    this.diplomacy = DiplomacyState.empty,
-    this.dominationHoldTurnsByPlayerId = const {},
-    this.culturalVictoryHoldTurnsByPlayerId = const {},
-    this.mapObjectiveHoldStatesByObjectiveId = const {},
-    this.resourceTradeAgreements = const [],
-    this.turnStartedAt,
-  });
+  const factory GameRuntimeState({
+    CityFoundingDraft? cityFoundingDraft,
+    PendingPlayerAction? pendingAction,
+    @Default(<String>{}) Set<String> submittedPlayerIds,
+    @Default(<String, int>{}) Map<String, int> timeoutStreaksByPlayerId,
+    @Default(<String>{}) Set<String> afkPlayerIds,
+    @Default(<String>{}) Set<String> kickedPlayerIds,
+    @Default(<IntendedAttack>[]) List<IntendedAttack> intendedAttacks,
+    @Default(DiplomacyState.empty) DiplomacyState diplomacy,
+    @Default(<String, int>{}) Map<String, int> dominationHoldTurnsByPlayerId,
+    @Default(<String, int>{})
+    Map<String, int> culturalVictoryHoldTurnsByPlayerId,
+    @Default(<String, MapObjectiveHoldState>{})
+    Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId,
+    @Default(<ResourceTradeAgreement>[])
+    List<ResourceTradeAgreement> resourceTradeAgreements,
+    DateTime? turnStartedAt,
+  }) = _GameRuntimeState;
 
   factory GameRuntimeState.fromJson(Map<String, dynamic>? json) {
     if (json == null || json.isEmpty) return empty;
@@ -71,20 +79,6 @@ class GameRuntimeState {
     );
   }
 
-  final CityFoundingDraft? cityFoundingDraft;
-  final PendingPlayerAction? pendingAction;
-  final Set<String> submittedPlayerIds;
-  final Map<String, int> timeoutStreaksByPlayerId;
-  final Set<String> afkPlayerIds;
-  final Set<String> kickedPlayerIds;
-  final List<IntendedAttack> intendedAttacks;
-  final DiplomacyState diplomacy;
-  final Map<String, int> dominationHoldTurnsByPlayerId;
-  final Map<String, int> culturalVictoryHoldTurnsByPlayerId;
-  final Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId;
-  final List<ResourceTradeAgreement> resourceTradeAgreements;
-  final DateTime? turnStartedAt;
-
   bool hasSubmitted(String playerId) => submittedPlayerIds.contains(playerId);
   bool isAfk(String playerId) => afkPlayerIds.contains(playerId);
   bool isKicked(String playerId) => kickedPlayerIds.contains(playerId);
@@ -102,45 +96,6 @@ class GameRuntimeState {
       mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
       resourceTradeAgreements: resourceTradeAgreements,
       turnStartedAt: turnStartedAt,
-    );
-  }
-
-  GameRuntimeState copyWith({
-    CityFoundingDraft? cityFoundingDraft,
-    PendingPlayerAction? pendingAction,
-    Set<String>? submittedPlayerIds,
-    Map<String, int>? timeoutStreaksByPlayerId,
-    Set<String>? afkPlayerIds,
-    Set<String>? kickedPlayerIds,
-    List<IntendedAttack>? intendedAttacks,
-    DiplomacyState? diplomacy,
-    Map<String, int>? dominationHoldTurnsByPlayerId,
-    Map<String, int>? culturalVictoryHoldTurnsByPlayerId,
-    Map<String, MapObjectiveHoldState>? mapObjectiveHoldStatesByObjectiveId,
-    List<ResourceTradeAgreement>? resourceTradeAgreements,
-    DateTime? turnStartedAt,
-  }) {
-    return GameRuntimeState(
-      cityFoundingDraft: cityFoundingDraft ?? this.cityFoundingDraft,
-      pendingAction: pendingAction ?? this.pendingAction,
-      submittedPlayerIds: submittedPlayerIds ?? this.submittedPlayerIds,
-      timeoutStreaksByPlayerId:
-          timeoutStreaksByPlayerId ?? this.timeoutStreaksByPlayerId,
-      afkPlayerIds: afkPlayerIds ?? this.afkPlayerIds,
-      kickedPlayerIds: kickedPlayerIds ?? this.kickedPlayerIds,
-      intendedAttacks: intendedAttacks ?? this.intendedAttacks,
-      diplomacy: diplomacy ?? this.diplomacy,
-      dominationHoldTurnsByPlayerId:
-          dominationHoldTurnsByPlayerId ?? this.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          culturalVictoryHoldTurnsByPlayerId ??
-          this.culturalVictoryHoldTurnsByPlayerId,
-      mapObjectiveHoldStatesByObjectiveId:
-          mapObjectiveHoldStatesByObjectiveId ??
-          this.mapObjectiveHoldStatesByObjectiveId,
-      resourceTradeAgreements:
-          resourceTradeAgreements ?? this.resourceTradeAgreements,
-      turnStartedAt: turnStartedAt ?? this.turnStartedAt,
     );
   }
 
@@ -179,47 +134,4 @@ class GameRuntimeState {
     if (turnStartedAt != null)
       'turnStartedAt': turnStartedAt!.toUtc().toIso8601String(),
   };
-
-  @override
-  bool operator ==(Object other) =>
-      other is GameRuntimeState &&
-      other.cityFoundingDraft == cityFoundingDraft &&
-      other.pendingAction == pendingAction &&
-      setEquals(other.submittedPlayerIds, submittedPlayerIds) &&
-      mapEquals(other.timeoutStreaksByPlayerId, timeoutStreaksByPlayerId) &&
-      setEquals(other.afkPlayerIds, afkPlayerIds) &&
-      setEquals(other.kickedPlayerIds, kickedPlayerIds) &&
-      listEquals(other.intendedAttacks, intendedAttacks) &&
-      other.diplomacy == diplomacy &&
-      mapEquals(
-        other.dominationHoldTurnsByPlayerId,
-        dominationHoldTurnsByPlayerId,
-      ) &&
-      mapEquals(
-        other.culturalVictoryHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId,
-      ) &&
-      _mapObjectiveHoldStateMapEquals(
-        other.mapObjectiveHoldStatesByObjectiveId,
-        mapObjectiveHoldStatesByObjectiveId,
-      ) &&
-      listEquals(other.resourceTradeAgreements, resourceTradeAgreements) &&
-      other.turnStartedAt == turnStartedAt;
-
-  @override
-  int get hashCode => Object.hash(
-    cityFoundingDraft,
-    pendingAction,
-    _stringSetHash(submittedPlayerIds),
-    _intMapHash(timeoutStreaksByPlayerId),
-    _stringSetHash(afkPlayerIds),
-    _stringSetHash(kickedPlayerIds),
-    Object.hashAll(intendedAttacks),
-    diplomacy,
-    _intMapHash(dominationHoldTurnsByPlayerId),
-    _intMapHash(culturalVictoryHoldTurnsByPlayerId),
-    _mapObjectiveHoldStateMapHash(mapObjectiveHoldStatesByObjectiveId),
-    Object.hashAll(resourceTradeAgreements),
-    turnStartedAt,
-  );
 }

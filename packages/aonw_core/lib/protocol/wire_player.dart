@@ -1,33 +1,30 @@
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol/wire_json.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'wire_player.freezed.dart';
 
 enum WirePlayerKind { human, ai }
 
 enum WirePlayerConnectionState { connected, connecting, reconnecting, offline }
 
-class WirePlayer {
-  final String id;
-  final String userId;
-  final String name;
-  final int colorValue;
-  final PlayerCountry country;
-  final WirePlayerKind kind;
-  final WirePlayerConnectionState connectionState;
-  final bool ready;
-  final WireAiPlayer? ai;
+@freezed
+abstract class WirePlayer with _$WirePlayer {
+  const WirePlayer._();
 
-  const WirePlayer({
-    required this.id,
-    required this.userId,
-    required this.name,
-    required this.colorValue,
-    this.country = PlayerCountry.poland,
-    required this.kind,
-    required this.connectionState,
-    this.ready = false,
-    this.ai,
-  }) : assert(ai == null || kind == WirePlayerKind.ai);
+  @Assert('ai == null || kind == WirePlayerKind.ai')
+  const factory WirePlayer({
+    required String id,
+    required String userId,
+    required String name,
+    required int colorValue,
+    @Default(PlayerCountry.poland) PlayerCountry country,
+    required WirePlayerKind kind,
+    required WirePlayerConnectionState connectionState,
+    @Default(false) bool ready,
+    WireAiPlayer? ai,
+  }) = _WirePlayer;
 
   factory WirePlayer.fromJson(Map<String, dynamic> json) {
     final kind = WireJson.requiredEnum(
@@ -80,30 +77,6 @@ class WirePlayer {
     'ready': ready,
     if (ai != null) 'ai': ai!.toJson(),
   };
-
-  WirePlayer copyWith({
-    String? id,
-    String? userId,
-    String? name,
-    int? colorValue,
-    PlayerCountry? country,
-    WirePlayerKind? kind,
-    WirePlayerConnectionState? connectionState,
-    bool? ready,
-    WireAiPlayer? ai,
-  }) {
-    return WirePlayer(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      name: name ?? this.name,
-      colorValue: colorValue ?? this.colorValue,
-      country: country ?? this.country,
-      kind: kind ?? this.kind,
-      connectionState: connectionState ?? this.connectionState,
-      ready: ready ?? this.ready,
-      ai: ai ?? this.ai,
-    );
-  }
 
   static WireAiPlayer? _optionalAi(Object? value) {
     if (value == null) return null;

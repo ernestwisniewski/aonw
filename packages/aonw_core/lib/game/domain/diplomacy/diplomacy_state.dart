@@ -1,6 +1,8 @@
 import 'package:aonw_core/util/collection_equality.dart';
 import 'package:aonw_core/util/wire_json.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'diplomacy_state.freezed.dart';
 part 'diplomatic_relation.dart';
 part 'diplomatic_gold_gift_rules.dart';
 part 'diplomatic_proposal.dart';
@@ -53,24 +55,20 @@ enum DiplomaticMessageTopic {
 enum DiplomaticMessageResponse { conciliatory, neutral, evasive, aggressive }
 
 extension DiplomaticMessageTopicRules on DiplomaticMessageTopic {
-  DiplomaticMessageCategory get category {
-    return switch (this) {
-      DiplomaticMessageTopic.troopsNearCities =>
-        DiplomaticMessageCategory.warning,
-      DiplomaticMessageTopic.citiesTooClose =>
-        DiplomaticMessageCategory.complaint,
-      DiplomaticMessageTopic.blockedRoutes => DiplomaticMessageCategory.request,
-      DiplomaticMessageTopic.withdrawScouts =>
-        DiplomaticMessageCategory.request,
-      DiplomaticMessageTopic.avoidEscalation =>
-        DiplomaticMessageCategory.cooperation,
-      DiplomaticMessageTopic.commonEnemy =>
-        DiplomaticMessageCategory.cooperation,
-      DiplomaticMessageTopic.expansionProvocation =>
-        DiplomaticMessageCategory.threat,
-      DiplomaticMessageTopic.peacefulPraise => DiplomaticMessageCategory.praise,
-    };
-  }
+  DiplomaticMessageCategory get category => switch (this) {
+    DiplomaticMessageTopic.troopsNearCities =>
+      DiplomaticMessageCategory.warning,
+    DiplomaticMessageTopic.citiesTooClose =>
+      DiplomaticMessageCategory.complaint,
+    DiplomaticMessageTopic.blockedRoutes => DiplomaticMessageCategory.request,
+    DiplomaticMessageTopic.withdrawScouts => DiplomaticMessageCategory.request,
+    DiplomaticMessageTopic.avoidEscalation =>
+      DiplomaticMessageCategory.cooperation,
+    DiplomaticMessageTopic.commonEnemy => DiplomaticMessageCategory.cooperation,
+    DiplomaticMessageTopic.expansionProvocation =>
+      DiplomaticMessageCategory.threat,
+    DiplomaticMessageTopic.peacefulPraise => DiplomaticMessageCategory.praise,
+  };
 
   bool get canCreateWithdrawalPromise =>
       this == DiplomaticMessageTopic.troopsNearCities ||

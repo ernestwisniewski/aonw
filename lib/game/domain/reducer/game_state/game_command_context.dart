@@ -3,6 +3,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'game_command_context.freezed.dart';
 
 abstract interface class CommandAuthorizer {
   String? get actorPlayerId;
@@ -33,54 +36,27 @@ abstract interface class CommandVisibilityProvider {
 /// Hotseat can omit [actorPlayerId] and keep using [GameState.activePlayerId].
 /// Online multiplayer can pass the player issuing a command without mutating
 /// the shared game state just to validate that single command.
-class GameCommandContext
+@freezed
+abstract class GameCommandContext
+    with _$GameCommandContext
     implements
         CommandAuthorizer,
         CommandCombatSeed,
         CommandPacing,
         CommandVisibilityProvider {
-  @override
-  final String? actorPlayerId;
-  @override
-  final bool canAct;
-  @override
-  final int combatSeedTurn;
-  @override
-  final int commandTick;
-  @override
-  final PaceBalance paceBalance;
-  @override
-  final bool ignoreFogOfWar;
+  const GameCommandContext._();
 
-  const GameCommandContext({
-    this.actorPlayerId,
-    this.canAct = true,
-    this.combatSeedTurn = 0,
-    this.commandTick = 0,
-    this.paceBalance = PaceBalance.unlimited,
-    this.ignoreFogOfWar = false,
-  });
+  const factory GameCommandContext({
+    String? actorPlayerId,
+    @Default(true) bool canAct,
+    @Default(0) int combatSeedTurn,
+    @Default(0) int commandTick,
+    @Default(PaceBalance.unlimited) PaceBalance paceBalance,
+    @Default(false) bool ignoreFogOfWar,
+  }) = _GameCommandContext;
 
   @override
   bool get hasActor => actorPlayerId != null && actorPlayerId!.isNotEmpty;
-
-  GameCommandContext copyWith({
-    String? actorPlayerId,
-    bool? canAct,
-    int? combatSeedTurn,
-    int? commandTick,
-    PaceBalance? paceBalance,
-    bool? ignoreFogOfWar,
-  }) {
-    return GameCommandContext(
-      actorPlayerId: actorPlayerId ?? this.actorPlayerId,
-      canAct: canAct ?? this.canAct,
-      combatSeedTurn: combatSeedTurn ?? this.combatSeedTurn,
-      commandTick: commandTick ?? this.commandTick,
-      paceBalance: paceBalance ?? this.paceBalance,
-      ignoreFogOfWar: ignoreFogOfWar ?? this.ignoreFogOfWar,
-    );
-  }
 
   @override
   bool canControlUnit(GameState state, GameUnit unit) {

@@ -1,25 +1,23 @@
 import 'package:aonw_core/protocol/protocol_version.dart';
 import 'package:aonw_core/protocol/wire_json.dart';
 import 'package:aonw_core/protocol/wire_snapshot.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class WireCommandAck {
-  final int v;
-  final String matchId;
-  final bool accepted;
-  final int offset;
-  final WireSnapshot snapshot;
-  final List<Map<String, dynamic>> events;
-  final String? reason;
+part 'wire_command_ack.freezed.dart';
 
-  const WireCommandAck({
-    this.v = kProtocolVersion,
-    required this.matchId,
-    required this.accepted,
-    required this.offset,
-    required this.snapshot,
-    this.events = const [],
-    this.reason,
-  });
+@freezed
+abstract class WireCommandAck with _$WireCommandAck {
+  const WireCommandAck._();
+
+  const factory WireCommandAck({
+    @Default(kProtocolVersion) int v,
+    required String matchId,
+    required bool accepted,
+    required int offset,
+    required WireSnapshot snapshot,
+    @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
+    String? reason,
+  }) = _WireCommandAck;
 
   factory WireCommandAck.fromJson(Map<String, dynamic> json) {
     final accepted = json['accepted'];
@@ -65,24 +63,4 @@ class WireCommandAck {
     'events': events.map(Map<String, dynamic>.from).toList(),
     if (reason != null) 'reason': reason,
   };
-
-  WireCommandAck copyWith({
-    int? v,
-    String? matchId,
-    bool? accepted,
-    int? offset,
-    WireSnapshot? snapshot,
-    List<Map<String, dynamic>>? events,
-    String? reason,
-  }) {
-    return WireCommandAck(
-      v: v ?? this.v,
-      matchId: matchId ?? this.matchId,
-      accepted: accepted ?? this.accepted,
-      offset: offset ?? this.offset,
-      snapshot: snapshot ?? this.snapshot,
-      events: events ?? this.events,
-      reason: reason ?? this.reason,
-    );
-  }
 }

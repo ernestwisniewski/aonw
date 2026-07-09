@@ -5,51 +5,23 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class TurnContext {
-  final GameState state;
-  final GameSave? save;
-  final MapData mapData;
-  final GameRuleset ruleset;
-  final String playerId;
-  final DateTime? savedAt;
-  final List<GameEvent> events;
-  final List<UiEffect> uiEffects;
-  final ScienceYieldBreakdown bonusScience;
+part 'turn_context.freezed.dart';
 
-  const TurnContext({
-    required this.state,
-    required this.mapData,
-    required this.ruleset,
-    required this.playerId,
-    this.save,
-    this.savedAt,
-    this.events = const [],
-    this.uiEffects = const [],
-    this.bonusScience = ScienceYieldBreakdown.empty,
-  });
+@freezed
+abstract class TurnContext with _$TurnContext {
+  const TurnContext._();
 
-  TurnContext copyWith({
-    GameState? state,
+  const factory TurnContext({
+    required GameState state,
     GameSave? save,
-    MapData? mapData,
-    GameRuleset? ruleset,
-    String? playerId,
+    required MapData mapData,
+    required GameRuleset ruleset,
+    required String playerId,
     DateTime? savedAt,
-    List<GameEvent>? events,
-    List<UiEffect>? uiEffects,
-    ScienceYieldBreakdown? bonusScience,
-  }) {
-    return TurnContext(
-      state: state ?? this.state,
-      save: save ?? this.save,
-      mapData: mapData ?? this.mapData,
-      ruleset: ruleset ?? this.ruleset,
-      playerId: playerId ?? this.playerId,
-      savedAt: savedAt ?? this.savedAt,
-      events: events ?? this.events,
-      uiEffects: uiEffects ?? this.uiEffects,
-      bonusScience: bonusScience ?? this.bonusScience,
-    );
-  }
+    @Default(<GameEvent>[]) List<GameEvent> events,
+    @Default(<UiEffect>[]) List<UiEffect> uiEffects,
+    @Default(ScienceYieldBreakdown.empty) ScienceYieldBreakdown bonusScience,
+  }) = _TurnContext;
 }
