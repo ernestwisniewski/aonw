@@ -14,7 +14,6 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
@@ -77,7 +76,7 @@ abstract final class TurnReducer {
     );
     final refreshed = const SelectionRefreshPhase().apply(
       TurnContext(
-        state: _withPersistentState(state, result.state),
+        state: state.copyWithPersistentState(result.state),
         mapData: mapData,
         ruleset: ruleset,
         playerId: playerId,
@@ -99,36 +98,6 @@ abstract final class TurnReducer {
   }
 
   static final DateTime _syntheticSavedAt = DateTime.utc(1970);
-
-  static GameState _withPersistentState(
-    GameState state,
-    PersistentGameState persistent,
-  ) {
-    final runtime = persistent.runtimeState;
-    return state.copyWith(
-      playerColors: persistent.playerColors,
-      playerCountries: persistent.playerCountries,
-      playerGold: persistent.playerGold,
-      playerWarWeariness: persistent.playerWarWeariness,
-      playerStabilityNet: persistent.playerStabilityNet,
-      units: persistent.units,
-      cities: persistent.cities,
-      artifacts: persistent.artifacts,
-      fieldImprovements: persistent.fieldImprovements,
-      fogOfWar: persistent.fogOfWar,
-      research: persistent.research,
-      wonderRegistry: persistent.wonderRegistry,
-      diplomacy: runtime.diplomacy,
-      submittedPlayerIds: runtime.submittedPlayerIds,
-      intendedAttacks: runtime.intendedAttacks,
-      resourceTradeAgreements: runtime.resourceTradeAgreements,
-      dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          runtime.culturalVictoryHoldTurnsByPlayerId,
-      mapObjectiveHoldStatesByObjectiveId:
-          runtime.mapObjectiveHoldStatesByObjectiveId,
-    );
-  }
 
   /// Finds the next turn action needing manual attention and focuses it.
   ///

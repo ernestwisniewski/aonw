@@ -19,4 +19,31 @@ extension GameStatePersistence on GameState {
       runtimeState: runtimeState,
     );
   }
+
+  GameState copyWithPersistentState(PersistentGameState persistent) {
+    final runtime = persistent.runtimeState;
+    return copyWith(
+      playerColors: persistent.playerColors,
+      playerCountries: persistent.playerCountries,
+      playerGold: persistent.playerGold,
+      playerWarWeariness: persistent.playerWarWeariness,
+      playerStabilityNet: persistent.playerStabilityNet,
+      units: persistent.units,
+      cities: persistent.cities,
+      artifacts: persistent.artifacts,
+      fieldImprovements: persistent.fieldImprovements,
+      fogOfWar: persistent.fogOfWar,
+      research: persistent.research,
+      wonderRegistry: persistent.wonderRegistry,
+      diplomacy: runtime.diplomacy,
+      submittedPlayerIds: runtime.submittedPlayerIds,
+      intendedAttacks: runtime.intendedAttacks,
+      resourceTradeAgreements: runtime.resourceTradeAgreements,
+      dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId:
+          runtime.culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId:
+          runtime.mapObjectiveHoldStatesByObjectiveId,
+    );
+  }
 }
