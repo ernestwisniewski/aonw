@@ -1,28 +1,37 @@
 # Age of New Worlds
 
-Age of New Worlds is a Flutter and Flame prototype of a hex-based 4X strategy
-game. The current runtime focuses on playloop, fog of war, movement, city
-growth, production, research, save/load, and the foundations for server-backed
-multiplayer.
+[![CI](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml/badge.svg)](https://github.com/ernestwisniewski/aonw/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
 
-The repository is organized as a Flutter client, a Dart-only shared core
-package, a generated Serverpod client package, and a Serverpod backend.
+Age of New Worlds is an open-source hex-based 4X strategy game built with
+Flutter, Flame, Dart, and Serverpod. It includes a playable cross-platform
+client, a shared rules package, and a server-backed multiplayer foundation.
 
-## Supported Targets
+The game currently focuses on the core 4X loop: exploration, fog of war,
+movement, city growth, production, research, combat, save/load, AI opponents,
+and online multiplayer infrastructure.
 
-- Flutter app: web, macOS, iOS, Android, Windows, and Linux project scaffolds.
-- Backend: Serverpod server with PostgreSQL and Redis.
-- Tooling: local balance and benchmark CLIs under `tool/` and
-  `packages/aonw_core/tool/`.
+## Play
 
-## Public Links
+| Platform | Link |
+| --- | --- |
+| Website | [aonw.net](https://aonw.net/) |
+| Web demo | [demo.aonw.net](https://demo.aonw.net/) |
+| Steam | [Age of New Worlds](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/) |
+| itch.io | [ernest-dev.itch.io/aonw](https://ernest-dev.itch.io/aonw) |
+| App Store | [Age of New Worlds](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
+| Google Play | [Age of New Worlds](https://play.google.com/store/apps/details?id=aonw.net.game) |
 
-- Website: [aonw.net](https://aonw.net/)
-- Devlog: [ernest.dev](https://ernest.dev)
-- GitHub: [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw)
-- iOS: [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591)
-- Windows/Linux/macOS: [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw)
-- Android: [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw)
+## Repository
+
+| Area | Purpose |
+| --- | --- |
+| `lib/game/` | Flutter client gameplay, UI, Flame rendering, local persistence, and adapters. |
+| `packages/aonw_core/` | Dart-only rules, protocol models, AI planning, and shared game logic. |
+| `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
+| `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
+| `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
 
 ## Quick Start
 
@@ -43,18 +52,6 @@ make ci
 `make ci` checks formatting, then analyzes and tests the Flutter app, the
 shared core package, the generated Serverpod client package, and the Serverpod
 backend tests that do not require external services.
-
-## New Contributor Path
-
-If you are new to the project, read the docs in this order:
-
-1. [docs/README.md](docs/README.md) for the architecture map and document index.
-2. [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) if you are touching
-   multiplayer or generated Serverpod code.
-3. [docs/game-design/pace-profiles.md](docs/game-design/pace-profiles.md) and
-   [docs/game-design/scoring-and-outcomes.md](docs/game-design/scoring-and-outcomes.md)
-   before changing balance, objectives, victory rules, or AI pacing.
-4. [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## Local Backend
 
@@ -91,41 +88,28 @@ tool/run_postgres_smoke.sh
 make server-integration-test
 ```
 
-## Project Map
-
-- `lib/game/domain/` - pure client-side game state, reducers, commands, events,
-  and value objects.
-- `lib/game/application/` - use cases and ports around persistence, logging,
-  clocks, ids, and transport.
-- `lib/game/infrastructure/` - JSON persistence, migrations, local transport,
-  and system adapters.
-- `lib/game/presentation/` - Riverpod providers, Flutter UI, Flame rendering,
-  and renderer effects.
-- `lib/map/` - map data, loading, topology, terrain rendering, and editor-facing
-  map support.
-- `packages/aonw_core/` - Dart-only shared game rules, protocol models, and
-  computer-opponent planning code.
-- `packages/aonw_server_client/` - generated Serverpod client package.
-- `server/` - Serverpod backend, persistence, auth adapters, endpoints, and
-  realtime multiplayer services.
-- `assets/`, `web/`, and platform folders - runtime assets and platform
-  integration.
-- `docs/` - durable architecture, gameplay, operations, and publishing
-  references.
-
 ## Documentation
 
-Start with [docs/README.md](docs/README.md) for the architecture map and the
-current documentation index. Deployment guidance is in
-[docs/build-and-deploy.md](docs/build-and-deploy.md), and gameplay system
-references are under `docs/game-design/`.
+Start with [docs/README.md](docs/README.md) for the architecture map and
+document index.
+
+Recommended entry points:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, localization, and pull
+  request expectations.
+- [docs/build-and-deploy.md](docs/build-and-deploy.md) for builds, releases,
+  server deploys, store uploads, and public download packaging.
+- [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) before changing
+  Serverpod protocol surfaces, multiplayer sessions, or realtime streams.
+- `docs/game-design/` for gameplay systems, balance, UX, and
+  rendering behavior.
 
 ## Localization
 
-The app ships English, Polish, German, Spanish, Dutch, and French. English
-(`lib/l10n/app_en.arb`) is the source language and template; other locales
-translate it and fall back to English. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for how to add or change localized text.
+The app ships English, Polish, German, Spanish, Dutch, and French. English is
+the source language in `lib/l10n/app_en.arb`; other locales translate it and
+fall back to English. See [CONTRIBUTING.md](CONTRIBUTING.md) before changing
+user-facing text.
 
 ## Contributing
 

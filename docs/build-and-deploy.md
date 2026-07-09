@@ -1,11 +1,31 @@
 # Build And Deploy Runbook
 
-This document describes the public, repeatable build and deploy flow for Age of
-New Worlds. It intentionally uses placeholders for private infrastructure. Keep
-real hosts, SSH keys, service accounts, signing material, and `.env` files out
-of source control.
+This runbook describes the repeatable build and deploy flow for Age of New
+Worlds. It uses placeholders for private infrastructure; keep real hosts, SSH
+keys, service accounts, signing material, and `.env` files out of source
+control.
 
-## Local Quality Gate
+## Release Principles
+
+- Build from a clean `main` checkout.
+- Pass local checks before release packaging.
+- Keep secrets in local environment files or CI secrets.
+- Use stable public download filenames without version numbers.
+- Verify health endpoints after server, web, and homepage deploys.
+
+## Common Commands
+
+| Task | Command |
+| --- | --- |
+| Full local quality gate | `make ci` |
+| Backend/deploy config checks | `make serverpod-ops-check` |
+| Stage static homepage | `make build-homepage` |
+| Deploy static homepage | `make deploy-homepage ...` |
+| Deploy web demo | `make deploy-web ...` |
+| Full release flow | `make deploy-all ...` |
+| Publish latest downloads | `make deploy-downloads ...` |
+
+## Local Checks
 
 From the repository root:
 
@@ -24,7 +44,7 @@ make serverpod-ops-check
 `serverpod-ops-check` validates generated Serverpod migrations and Docker
 Compose config. It requires Docker and the Serverpod CLI.
 
-## Local Docker Stack
+## Local Backend Stack
 
 Create a local environment file from placeholders:
 
@@ -51,24 +71,25 @@ Reset local database volumes:
 docker compose --profile dev down -v
 ```
 
-## Web And Homepage Builds
+## Static Sites
 
-The Flutter web demo is built locally and uploaded to a static directory served
-by Caddy or another web server:
+The Flutter web demo and public homepage are static assets served by Caddy or
+another web server.
+
+Build the web demo:
 
 ```sh
 flutter build web --wasm --release \
   --dart-define=AONW_API_BASE_URL=https://api.aonw.net
 ```
 
-The static homepage is staged by:
+Stage the homepage:
 
 ```sh
 make build-homepage
 ```
 
-`make deploy-web` and `make deploy-homepage` are intentionally generic. Provide
-the remote details at runtime:
+Deploy targets are intentionally generic. Provide the remote values at runtime:
 
 ```sh
 make deploy-web \
@@ -87,7 +108,7 @@ make deploy-homepage \
 ## Server Deploy
 
 Production and staging deploys should use a private environment file on the
-host. Do not commit it.
+host. Do not commit that file.
 
 Minimum production-style values:
 
@@ -125,13 +146,11 @@ load balancer. The included `deploy/caddy/Caddyfile` can serve the API,
 Insights, homepage, and web demo when the corresponding environment variables
 are set.
 
-## Full Release Helper
+## Full Release Flow
 
-`make deploy-all` coordinates version bumping, optional iOS archiving, desktop
-ZIP preparation, Steamworks upload, Google Play upload, itch.io Android APK
-preparation, optional itch.io upload, a remote server deploy, homepage upload,
-public download upload, web upload, and health checks. It requires all remote
-values to be provided explicitly:
+`make deploy-all` is the main release command. It coordinates version bumping,
+store packaging, server deploy, homepage deploy, public downloads, web deploy,
+and health checks. Provide remote values explicitly:
 
 ```sh
 make deploy-all \
@@ -146,19 +165,27 @@ make deploy-all \
   WEB_DEPLOY_DEST=/srv/aonw/demo
 ```
 
-The helper expects a clean `main` checkout and pushes `main` before triggering
-artifact preparation and remote deploy. The desktop ZIP step runs `make steam`,
-so macOS is built locally and Windows is built locally, downloaded from GitHub
-Actions, or packaged from an existing release according to
-`STEAM_WINDOWS_SOURCE`. Linux packaging is available as an opt-in path through
-`STEAM_INCLUDE_LINUX=1` and `STEAM_LINUX_SOURCE`, but it should stay disabled
-until the Linux Steam depot has been created in Steamworks. The helper then
-expands neutral itch.io desktop folders and builds a universal Android APK for
-itch.io.
+The helper expects a clean `main` checkout and pushes `main` before release
+work starts. By default it uploads the prepared desktop build to Steamworks and
+an Android App Bundle to the Google Play closed-test track.
 
-The helper also publishes stable latest-download files under
-`https://aonw.net/download/`. These filenames do not include a version number and
-are overwritten on each release:
+### Release Options
+
+| Variable | Purpose |
+| --- | --- |
+| `DEPLOY_ALL_STEAMWORKS=0` | Skip Steamworks upload. |
+| `DEPLOY_ALL_GOOGLE_PLAY=0` | Skip Google Play upload. |
+| `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed` | Upload to the configured closed-test track. |
+| `DEPLOY_ALL_GOOGLE_PLAY_MODE=internal` | Upload to a named Play track instead. |
+| `ITCH_TARGET=user/game` | Upload prepared macOS, Windows, and Android builds to itch.io. |
+| `ITCH_INCLUDE_LINUX=1` | Include Linux after the itch Linux channel exists. |
+| `STEAM_INCLUDE_LINUX=1` | Include Linux after the Steam Linux depot exists. |
+| `DOWNLOAD_INCLUDE_LINUX=1` | Publish `aonw-linux.zip` under public downloads. |
+
+### Public Downloads
+
+The release flow can publish stable latest-download files under
+`https://aonw.net/download/`. These filenames are overwritten on each release:
 
 - `aonw-macos.zip`
 - `aonw-windows.zip`
@@ -168,25 +195,36 @@ are overwritten on each release:
 `deploy-homepage` excludes `/download/` from its `--delete` rsync pass so a
 homepage-only deploy does not remove public build downloads.
 
-By default, `deploy-all` uploads the prepared desktop build to Steamworks and
-uploads an Android App Bundle to the Google Play closed-test track. Set
-`DEPLOY_ALL_STEAMWORKS=0` or `DEPLOY_ALL_GOOGLE_PLAY=0` to skip either upload.
-Google Play defaults to `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed`, which uses
-`ANDROID_PLAY_CLOSED_TRACK`; set it to a track name such as `internal`, `alpha`,
-`beta`, or `production` to upload via `ANDROID_PLAY_TRACK`.
+Publish downloads without running the full release:
 
-Set `ITCH_TARGET=user/game` to upload the prepared macOS, Windows, and Android
-artifacts to itch.io during `deploy-all`. Set `ITCH_INCLUDE_LINUX=1` after the
-itch Linux channel is ready to include the Linux desktop folder as well. If
-`ITCH_TARGET` is omitted, the desktop upload folders are left in `build/itch/`,
-the Android APK is left in `dist/`, and the itch.io upload is skipped. Uploading
-requires `butler` to be installed and authenticated with `butler login` or
-`BUTLER_API_KEY`.
+```sh
+make deploy-downloads \
+  WEB_DEPLOY_SSH_KEY=/path/to/private-key \
+  WEB_DEPLOY_USER=deploy \
+  WEB_DEPLOY_HOST=example.com \
+  HOMEPAGE_DEPLOY_DEST=/srv/aonw/homepage \
+  DOWNLOAD_INCLUDE_LINUX=1
+```
+
+## Store And Portal Packaging
+
+### itch.io
+
+`make itch` prepares neutral desktop folders, adds itch launch manifests,
+validates them with `butler`, builds the Android APK, and uploads configured
+channels when `ITCH_TARGET` is provided:
+
+```sh
+make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
+```
+
+Uploading requires `butler` to be installed and authenticated with
+`butler login` or `BUTLER_API_KEY`.
+
+### Game Jolt
 
 Game Jolt uses uploadable build files in packages/releases rather than the
-`butler` folder push flow. `make gamejolt` reuses the itch.io-style preparation,
-removes itch-specific manifests, and writes neutral Game Jolt artifacts to
-`dist/`:
+`butler` folder push flow. `make gamejolt` writes neutral artifacts to `dist/`:
 
 ```sh
 make gamejolt GAMEJOLT_INCLUDE_LINUX=1
@@ -206,26 +244,7 @@ make deploy-gamejolt \
   GAMEJOLT_INCLUDE_LINUX=1
 ```
 
-The Game Jolt game ID defaults to `1079757`. Package IDs are visible in the
-Game Jolt manage-package URLs. `GAMEJOLT_RELEASE_VERSION` defaults to the
-semantic version from `pubspec.yaml` without the Flutter build suffix, for
-example `1.1.2`. Leave `GAMEJOLT_INCLUDE_LINUX=0` if the Linux package should be
-omitted.
-
-Public latest-download packaging and upload:
-
-```sh
-make deploy-downloads \
-  WEB_DEPLOY_SSH_KEY=/path/to/private-key \
-  WEB_DEPLOY_USER=deploy \
-  WEB_DEPLOY_HOST=example.com \
-  HOMEPAGE_DEPLOY_DEST=/srv/aonw/homepage \
-  DOWNLOAD_INCLUDE_LINUX=1
-```
-
-This prepares the same neutral desktop folders and Android APK as itch.io,
-removes `.itch.toml`, and uploads stable latest filenames to
-`HOMEPAGE_DEPLOY_DEST/download/`.
+Package IDs are visible in the Game Jolt manage-package URLs.
 
 ## Platform Builds
 
@@ -299,47 +318,6 @@ app. See the Steamworks
 [Packages](https://partner.steamgames.com/doc/store/application/packages), and
 [Builds](https://partner.steamgames.com/doc/store/application/builds)
 documentation for the Steam object model.
-
-itch.io packaging and upload:
-
-```sh
-make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
-```
-
-This reuses the Steam desktop build flow, expands neutral itch desktop folders
-under `build/itch/macos` and `build/itch/windows`, adds `.itch.toml` launch
-manifests for the itch app, validates them with `butler validate`, builds
-`dist/aonw-android.apk`, and pushes only the two desktop folders plus the
-Android APK to the `macos`, `windows`, and `android` itch channels. Set
-`ITCH_INCLUDE_LINUX=1` to add `build/itch/linux` and push the `linux` channel.
-Override channels with `ITCH_MACOS_CHANNEL`, `ITCH_WINDOWS_CHANNEL`,
-`ITCH_LINUX_CHANNEL`, and `ITCH_ANDROID_CHANNEL`.
-
-Game Jolt packaging:
-
-```sh
-make gamejolt GAMEJOLT_INCLUDE_LINUX=1
-```
-
-This creates Game Jolt upload files in `dist/` from the same macOS, Windows,
-Linux, and Android builds used for itch.io, without `.itch.toml` manifests.
-The filenames are stable (`aonw-macos.zip`, `aonw-windows.zip`,
-`aonw-linux.zip`, `aonw-android.apk`) so they can replace the latest release
-without changing external links.
-
-Game Jolt local upload:
-
-```sh
-make deploy-gamejolt \
-  GAMEJOLT_TOKEN="$GJPUSH_TOKEN" \
-  GAMEJOLT_PACKAGE_MACOS=... \
-  GAMEJOLT_PACKAGE_WINDOWS=... \
-  GAMEJOLT_PACKAGE_LINUX=... \
-  GAMEJOLT_PACKAGE_ANDROID=... \
-  GAMEJOLT_INCLUDE_LINUX=1
-```
-
-Install GJPush as `gjpush`, or point `GAMEJOLT_CLI` at the downloaded binary.
 
 Linux runtime notes:
 

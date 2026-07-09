@@ -57,7 +57,8 @@ access. If local port `8080` is busy, change `AONW_SERVER_PUBLIC_PORT` and keep
 
 ## Cloudflare Quick Tunnel Smoke
 
-For a quick public HTTPS URL without buying a VPS:
+For a short-lived public HTTPS URL without provisioning long-lived
+infrastructure:
 
 ```sh
 cp .env.example .env
@@ -71,7 +72,7 @@ app to use the temporary tunnel instead of the local development default.
 Quick Tunnel URLs are temporary. They are useful for a short smoke test, but a
 TestFlight build should use a stable domain if testers need more than one run.
 
-## Cheap VPS Staging
+## VPS Staging
 
 1. Point DNS `A` records for `api.aonw.net` and `insights.aonw.net` at the VPS
    IP.

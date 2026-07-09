@@ -1,35 +1,41 @@
-# Age of New Worlds Docs
+# Age of New Worlds Documentation
 
-This folder contains durable project documentation for contributors, operators,
-and release work.
+This directory contains the durable project documentation for contributors,
+operators, release work, and gameplay design. Documents describe current
+behavior unless they explicitly call out historical context or future work.
 
-If you are new to the codebase, start with the architecture section below, then
-use the document index as a map. Gameplay documents describe current behavior
-unless they explicitly say they are historical logs.
+## Start Here
+
+| Need | Read |
+| --- | --- |
+| Understand the codebase | [Architecture](#architecture), then [Multiplayer Protocol](multiplayer-protocol.md) if networking is involved. |
+| Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
+| Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
+| Work on backend operations | [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
+| Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
 
 ## Public Links
 
-- Website: [aonw.net](https://aonw.net/)
-- Devlog: [ernest.dev](https://ernest.dev)
-- GitHub: [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw)
-- iOS: [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591)
-- Windows/Linux/macOS: [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw)
-- Android: [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw)
+| Destination | Link |
+| --- | --- |
+| Website | [aonw.net](https://aonw.net/) |
+| Devlog | [ernest.dev](https://ernest.dev) |
+| GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
+| iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
+| Windows/Linux/macOS | [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw) |
 
 ## Architecture
 
-- `packages/aonw_core/` contains Dart-only game rules, protocol models, and
-  computer-opponent planning code shared by the client and server.
-- `lib/game/domain/` contains client-side domain aggregates that still belong to
-  the Flutter app boundary, especially save-state and UI-facing reducers.
-- `lib/game/application/` owns use cases and ports. It depends on domain
-  contracts, not Flutter widgets or persistence details.
-- `lib/game/infrastructure/` implements persistence, transport, clocks, ids, and
-  other adapters behind application ports.
-- `lib/game/presentation/` owns Riverpod providers, Flutter UI, Flame rendering,
-  view models, and user-facing formatting.
-- `server/lib/` contains the Serverpod backend: endpoints, Auth Core adapters,
-  multiplayer services, ORM-backed persistence, and realtime streams.
+| Area | Responsibility |
+| --- | --- |
+| `packages/aonw_core/` | Shared Dart-only game rules, protocol models, and AI planning. |
+| `lib/game/domain/` | Client-side domain aggregates, save-state reducers, commands, events, and value objects. |
+| `lib/game/application/` | Use cases and ports around persistence, logging, clocks, ids, and transport. |
+| `lib/game/infrastructure/` | Persistence, migrations, local transport, and system adapters. |
+| `lib/game/presentation/` | Riverpod providers, Flutter UI, Flame rendering, view models, and user-facing formatting. |
+| `lib/map/` | Map data, loading, topology, terrain rendering, and editor-facing map support. |
+| `server/lib/` | Serverpod endpoints, Auth Core adapters, multiplayer services, ORM persistence, and realtime streams. |
 
 ```mermaid
 flowchart LR
@@ -62,83 +68,61 @@ intentional, update this document and the architecture test in the same change.
 
 ### Release And Operations
 
-- [Build And Deploy Runbook](build-and-deploy.md) - local builds, release
-  packaging, server deploys, web deploys, and store build commands.
-- [Multiplayer Protocol](multiplayer-protocol.md) - client/server protocol
-  boundaries, generated Serverpod surfaces, and live stream invariants.
+| Document | Use It For |
+| --- | --- |
+| [Build And Deploy Runbook](build-and-deploy.md) | Local builds, release packaging, server deploys, web deploys, store uploads, and public downloads. |
+| [PostgreSQL Backup And Restore](postgres-backup.md) | Database backup, restore, and recovery procedures. |
+| [Serverpod Insights Runbook](serverpod-insights-runbook.md) | Insights setup, health checks, and production visibility. |
 
 ### Multiplayer And Backend
 
-- [Multiplayer TestFlight Readiness](multiplayer-testflight.md) - staging setup,
-  production API targeting, and multiplayer readiness checks for TestFlight.
-- [Multiplayer Scale-Out Contract](multiplayer-scale-out.md) - expectations and
-  constraints for scaling multiplayer services.
-- [Multiplayer Serverpod Smoke And Alerts](multiplayer-chaos-alerts.md) -
-  smoke-test coverage, failure modes, and alerting expectations.
-- [Serverpod Insights Runbook](serverpod-insights-runbook.md) - operational
-  checks for Serverpod Insights and related health endpoints.
-- [Serverpod Social Auth Setup](serverpod-social-auth-setup.md) - Google, Apple,
-  and Steam auth configuration for the backend.
-- [PostgreSQL Backup And Restore](postgres-backup.md) - database backup,
-  restore, and recovery procedures.
+| Document | Use It For |
+| --- | --- |
+| [Multiplayer Protocol](multiplayer-protocol.md) | Client/server protocol boundaries, generated Serverpod surfaces, and stream invariants. |
+| [Multiplayer TestFlight Readiness](multiplayer-testflight.md) | Staging setup and mobile multiplayer readiness checks. |
+| [Multiplayer Scale-Out Contract](multiplayer-scale-out.md) | Constraints for scaling multiplayer services. |
+| [Multiplayer Serverpod Smoke And Alerts](multiplayer-chaos-alerts.md) | Smoke-test coverage, failure modes, and alerting expectations. |
+| [Serverpod Social Auth Setup](serverpod-social-auth-setup.md) | Google, Apple, and Steam auth configuration. |
 
 ### Game Design
 
-Documents under `game-design/` cover gameplay systems, balance, UX flow, and
-rendering behavior:
-
-- [Asset Icon Rendering](game-design/asset-icon-rendering.md) - shared icon
-  rendering rules for gameplay assets.
-- [Balance Telemetry](game-design/balance-telemetry.md) - telemetry hooks and
-  balancing signals.
-- [Combat Feedback](game-design/combat-feedback.md) - audiovisual and UI
-  feedback for combat moments.
-- [Combat Preview](game-design/combat-preview.md) - forecast behavior and
-  presentation for attacks.
-- [Event Notifications and Popups](game-design/event-notifications-and-popups.md)
-  - notification behavior, popup layering, and activity feedback.
-- [Gamepad Controls](game-design/gamepad-controls.md) - controller research,
-  input mapping, and the in-game manual contract.
-- [Map Display Preferences](game-design/map-display-preferences.md) - player
-  display toggles and map visualization options.
-- [Map Validation](game-design/map-validation.md) - bundled map validation
-  rules and failure handling.
-- [Mobile QoL Automation](game-design/mobile-qol-automation.md) - mobile-first
-  turn flow and automation quality-of-life notes.
-- [Objective Chain](game-design/objective-chain.md) - objective progression and
-  guidance structure.
-- [Pace Profiles](game-design/pace-profiles.md) - pacing presets and expected
-  game rhythm.
-- [Per-System ETA](game-design/per-system-eta.md) - turn ETA display behavior
-  for research, production, and growth.
-- [Resource Value Cards](game-design/resource-value-cards.md) - resource
-  presentation and valuation cards.
-- [Scoring and Outcomes](game-design/scoring-and-outcomes.md) - scoring,
-  victory, and end-state behavior.
-- [Turn Flow and Action Focus](game-design/turn-flow-and-action-focus.md) -
-  turn progression, action focus, and next-action behavior.
-- [World Wonders](game-design/world-wonders.md) - globally unique wonder
-  production, race resolution, effects, UI, AI, and serialization.
-- [Yield Unification](game-design/yield-unification.md) - yield model
-  consolidation across city, tile, and resource systems.
+| Document | Use It For |
+| --- | --- |
+| [Asset Icon Rendering](game-design/asset-icon-rendering.md) | Shared icon rendering rules for gameplay assets. |
+| [Balance Telemetry](game-design/balance-telemetry.md) | Telemetry hooks, balance signals, and simulation output. |
+| [Combat Feedback](game-design/combat-feedback.md) | UI, audio, timing, and notification feedback for combat. |
+| [Combat Preview](game-design/combat-preview.md) | Attack forecast behavior and presentation. |
+| [Event Notifications and Popups](game-design/event-notifications-and-popups.md) | Notification behavior, popup layering, and activity feedback. |
+| [Gamepad Controls](game-design/gamepad-controls.md) | Controller input mapping and in-game manual contract. |
+| [Map Display Preferences](game-design/map-display-preferences.md) | Player display toggles and map visualization options. |
+| [Map Validation](game-design/map-validation.md) | Bundled map validation rules and failure handling. |
+| [Mobile QoL Automation](game-design/mobile-qol-automation.md) | Mobile-first turn flow and automation quality-of-life behavior. |
+| [Objective Chain](game-design/objective-chain.md) | Objective progression, guidance, and player-facing prompts. |
+| [Pace Profiles](game-design/pace-profiles.md) | Pacing presets and expected game rhythm. |
+| [Per-System ETA](game-design/per-system-eta.md) | Turn ETA display behavior for research, production, and growth. |
+| [Resource Value Cards](game-design/resource-value-cards.md) | Resource presentation and valuation cards. |
+| [Scoring and Outcomes](game-design/scoring-and-outcomes.md) | Scoring, victory, and end-state behavior. |
+| [Turn Flow and Action Focus](game-design/turn-flow-and-action-focus.md) | Turn progression, action focus, and next-action behavior. |
+| [World Wonders](game-design/world-wonders.md) | Wonder production, race resolution, effects, UI, AI, and serialization. |
+| [Yield Unification](game-design/yield-unification.md) | Yield model consolidation across city, tile, and resource systems. |
 
 ### Assets And Publishing
 
-- [Asset Templates](templates/README.md) - source templates for generated or
-  exported game art in `templates/`.
-- [Marketing Assets](marketing/README.md) - App Store, Play Store, and brand
-  collateral in `marketing/`.
+| Document | Use It For |
+| --- | --- |
+| [Asset Templates](templates/README.md) | Source templates for generated or exported game art. |
+| [Marketing Assets](marketing/README.md) | Store and brand collateral. |
 
-## Contribution Notes
+## Maintenance Notes
 
 - Keep generated files such as `*.g.dart`, `*.freezed.dart`, localization
   output, and Serverpod protocol output in sync with their sources.
 - Keep generated build artifacts, editor state, local environment files, and
   machine-specific output out of the repository.
 - Avoid committing operating-system files, asset-export sidecars, local
-  environment files, or signing material.
-- Prefer small comments that explain intent, invariants, or cross-layer
-  contracts. Avoid comments that restate the next expression.
+  environment files, signing material, or credentials.
+- Update docs when behavior, persistence, APIs, game rules, or release flows
+  change.
 
 Run `make check` before handoff. Run `make serverpod-ops-check` before backend
 deployments when Docker and the Serverpod CLI are available.
