@@ -169,5 +169,125 @@ void main() {
 
       expect(next, state);
     });
+
+    test(
+      'incrementally reveals a moved unit when old visibility is preserved',
+      () {
+        final counters = FogOfWarRecomputeCounters();
+        final service = FogOfWarService(counters: counters);
+        final map = _heightBonusMap();
+        final previous = GameUnit.startingCommander(
+          ownerPlayerId: 'player_1',
+          col: 2,
+          row: 2,
+        );
+        final moved = previous.copyWith(col: 3, row: 2);
+        final initial = service.recomputePlayer(
+          current: FogOfWarState.empty,
+          mapData: map,
+          playerId: 'player_1',
+          units: [previous],
+          cities: const [],
+        );
+        counters.reset();
+
+        final incremental = service.recomputeAfterUnitMove(
+          current: initial,
+          mapData: map,
+          previousUnit: previous,
+          movedUnit: moved,
+          units: [moved],
+          cities: const [],
+        );
+        final full = service.recomputePlayer(
+          current: initial,
+          mapData: map,
+          playerId: 'player_1',
+          units: [moved],
+          cities: const [],
+        );
+
+        expect(incremental, full);
+        expect(counters.unitMoveIncrementalCount, 1);
+        expect(counters.unitMoveFallbackCount, 0);
+      },
+    );
+
+    test('falls back when a moved unit would lose visible hexes', () {
+      final counters = FogOfWarRecomputeCounters();
+      final service = FogOfWarService(counters: counters);
+      final map = _flatMap(8, 8);
+      final previous = GameUnit.startingCommander(
+        ownerPlayerId: 'player_1',
+        col: 2,
+        row: 2,
+      );
+      final moved = previous.copyWith(col: 3, row: 2);
+      final initial = service.recomputePlayer(
+        current: FogOfWarState.empty,
+        mapData: map,
+        playerId: 'player_1',
+        units: [previous],
+        cities: const [],
+      );
+      counters.reset();
+
+      final next = service.recomputeAfterUnitMove(
+        current: initial,
+        mapData: map,
+        previousUnit: previous,
+        movedUnit: moved,
+        units: [moved],
+        cities: const [],
+      );
+      final full = service.recomputePlayer(
+        current: initial,
+        mapData: map,
+        playerId: 'player_1',
+        units: [moved],
+        cities: const [],
+      );
+
+      expect(next, full);
+      expect(counters.unitMoveIncrementalCount, 0);
+      expect(counters.unitMoveFallbackCount, 1);
+      expect(counters.playerRecomputeCount, 2);
+    });
   });
+}
+
+MapData _flatMap(int cols, int rows) {
+  return MapData(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var row = 0; row < rows; row++)
+        for (var col = 0; col < cols; col++)
+          TileData(
+            col: col,
+            row: row,
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: 0,
+          ),
+    ],
+  );
+}
+
+MapData _heightBonusMap() {
+  return MapData(
+    cols: 8,
+    rows: 8,
+    tiles: [
+      for (var row = 0; row < 8; row++)
+        for (var col = 0; col < 8; col++)
+          TileData(
+            col: col,
+            row: row,
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: col == 3 && row == 2 ? 2 : 0,
+          ),
+    ],
+  );
 }
