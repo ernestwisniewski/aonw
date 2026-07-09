@@ -40,6 +40,10 @@ class TurnPipeline {
     );
   }
 
+  @Deprecated(
+    'Use PersistentTurnPipeline.simultaneousFinalize as the shared '
+    'simultaneous turn core. This factory is kept only as a compatibility shim.',
+  )
   factory TurnPipeline.simultaneousTurn({
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
