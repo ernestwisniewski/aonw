@@ -4,15 +4,6 @@ import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 
-class NetworkEventFormatException implements Exception {
-  final String message;
-
-  const NetworkEventFormatException(this.message);
-
-  @override
-  String toString() => 'NetworkEventFormatException: $message';
-}
-
 class NetworkEventLog implements EventLog {
   final String serverpodHost;
   final AuthToken token;
@@ -38,9 +29,10 @@ class NetworkEventLog implements EventLog {
 
   @override
   Future<int> latestOffset(String saveId) async {
+    final events = await _backend().listEvents(saveId, 0);
     var latest = 0;
-    await for (final command in readSince(saveId)) {
-      if (command.offset > latest) latest = command.offset;
+    for (final event in events) {
+      if (event.offset > latest) latest = event.offset;
     }
     return latest;
   }
@@ -50,11 +42,7 @@ class NetworkEventLog implements EventLog {
     final events = await _backend().listEvents(saveId, offset);
     for (final wire in events) {
       final command = eventCodec.commandFromWire(wire);
-      if (command == null) {
-        throw NetworkEventFormatException(
-          'WireEvent at offset ${wire.offset} does not contain a command',
-        );
-      }
+      if (command == null) continue;
       yield LoggedCommand(
         offset: wire.offset,
         timestamp: wire.timestamp,

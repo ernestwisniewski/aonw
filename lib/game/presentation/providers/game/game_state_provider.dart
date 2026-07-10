@@ -6,7 +6,6 @@ import 'package:aonw/api/transport/live_wire_command_dispatcher.dart';
 import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
-import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
@@ -89,12 +88,6 @@ class GameStateNotifier extends _$GameStateNotifier {
     final bootstrap = BootstrapGameStateUseCase(
       repository: repository,
       dispatchCommand: _dispatchCommand!,
-      eventReplay: session.gameMode == GameMode.multiplayer
-          ? EventLogReplayService(
-              eventLog: eventLogForSave(ref, saveId),
-              reducer: reducer,
-            )
-          : null,
     );
     final bootstrapped = await bootstrap.executeWithResult(
       saveId: saveId,

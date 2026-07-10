@@ -45,26 +45,28 @@ void main() {
       expect(entries.single.events.single, isA<UnitMovedEvent>());
     });
 
-    test('rejects wire events without command payloads', () async {
-      final backend = _FakeMultiplayerBackend(
-        events: [
-          WireEvent(
-            matchId: 'match_1',
-            offset: 1,
-            timestamp: DateTime.utc(2026),
-          ),
-        ],
-      );
-      final log = NetworkEventLog(
-        backendClient: backend,
-        token: AuthToken('jwt-token'),
-      );
+    test(
+      'skips redacted events while preserving their latest offset',
+      () async {
+        final backend = _FakeMultiplayerBackend(
+          events: [
+            WireEvent(
+              matchId: 'match_1',
+              offset: 9,
+              timestamp: DateTime.utc(2026),
+            ),
+          ],
+        );
+        final log = NetworkEventLog(
+          backendClient: backend,
+          token: AuthToken('jwt-token'),
+        );
 
-      await expectLater(
-        log.readSince('match_1').toList(),
-        throwsA(isA<NetworkEventFormatException>()),
-      );
-    });
+        expect(await log.readSince('match_1').toList(), isEmpty);
+        expect(await log.latestOffset('match_1'), 9);
+        expect(backend.listEventsAfterOffset, 0);
+      },
+    );
   });
 }
 

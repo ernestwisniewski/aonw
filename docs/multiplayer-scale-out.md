@@ -2,8 +2,8 @@
 
 The current production-ready scale-out mode is Serverpod API instances behind a
 reverse proxy, with PostgreSQL as the durable source of truth. Clients reconnect
-with their last event offset and recover through Serverpod endpoints/streams
-plus persisted snapshots.
+with their last event offset, but recovery is snapshot-authoritative: the server
+sends the latest recipient-scoped snapshot before any newer event markers.
 
 The application-level match subscriber registry is process-local. Until match
 event fan-out is moved to a shared Redis/NATS channel, run live match streams
@@ -40,7 +40,18 @@ On `SIGTERM` or `SIGINT`, deploy automation should:
 4. Rely on client reconnect plus last-seen event offset for match convergence.
 
 Clients reconnect with their last event offset, so a drained stream should
-resume through normal backlog replay on another ready instance.
+resume from the latest projected snapshot on another ready instance. Persisted
+event history is viewer-scoped and may contain redacted offset markers; clients
+must not treat it as a canonical command replay log.
+
+## Player-Scoped Recovery
+
+PostgreSQL stores the complete authoritative match state. Network responses are
+projected for the authenticated player before they leave the server. A client
+therefore must recover from `loadSnapshot` or the initial/reconnect stream
+snapshot, not by replaying canonical server events. Redacted event markers keep
+offset tracking monotonic without exposing another player's commands or turn
+resolution details.
 
 ## Environment
 
