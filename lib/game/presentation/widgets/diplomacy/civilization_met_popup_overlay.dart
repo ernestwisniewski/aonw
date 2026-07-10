@@ -111,33 +111,26 @@ class _CivilizationMetPopupOverlayState
         continue;
       }
       final descriptor = GameEventDescriptor.forEvent(notification.event);
-      final playerId = descriptor.civilizationPlayerId;
-      final metPlayerId = descriptor.civilizationMetPlayerId;
-      if (playerId == null || metPlayerId == null) continue;
+      if (descriptor.civilizationMetPlayerId == null) continue;
       if (!settings.showPopup) continue;
-      await _showCivilizationMet(
-        notification,
-        playerId: playerId,
-        metPlayerId: metPlayerId,
-      );
+      await _showCivilizationMet(notification, descriptor);
       return;
     }
   }
 
   Future<void> _showCivilizationMet(
-    GameEventNotification notification, {
-    required String playerId,
-    required String metPlayerId,
-  }) async {
+    GameEventNotification notification,
+    GameEventDescriptor descriptor,
+  ) async {
     final l10n = AppLocalizations.of(context);
+    final playerId = descriptor.civilizationPlayerId!;
     final model = _CivilizationMetPopupModel.from(
       l10n: l10n,
       save: widget.gameSave,
       state: notification.state,
-      playerId: metPlayerId,
+      playerId: descriptor.civilizationMetPlayerId!,
     );
     final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
-
     _dialogOpen = true;
     final result = await showGameModal<_CivilizationMetDialogResult>(
       context: context,
