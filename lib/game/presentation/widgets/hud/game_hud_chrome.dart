@@ -191,17 +191,21 @@ extension _GameHudNetworkActions on _GameHudState {
 
     _setResigning(true);
     try {
-      await NetworkSessionClient(
-        serverpodHost: ref.read(apiConfigProvider).baseUrl.toString(),
-      ).resignMatch(token: session.token, matchId: matchId);
-      await const NetworkSessionStore().saveMatchId(null);
+      await ref
+          .read(networkSessionClientProvider)
+          .resignMatch(token: session.token, matchId: matchId);
+      await ref.read(networkSessionStoreProvider).saveMatchId(null);
+      final latestSession = ref.read(networkSessionProvider);
+      if (latestSession == null || latestSession.userId != session.userId) {
+        return;
+      }
       ref
           .read(networkSessionStateProvider.notifier)
           .set(
-            NetworkSession(
-              userId: session.userId,
-              token: session.token,
-              connectionState: session.connectionState.copyWith(
+            latestSession.copyWith(
+              playerId: null,
+              matchId: null,
+              connectionState: latestSession.connectionState.copyWith(
                 changedAt: ref.read(gameClockProvider).nowUtc(),
               ),
             ),

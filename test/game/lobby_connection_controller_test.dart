@@ -83,6 +83,61 @@ void main() {
       },
     );
 
+    test(
+      'authentication is not published when credentials cannot be persisted',
+      () async {
+        final client = _FakeNetworkSessionClient(
+          quickplayMatch: _match(state: 'open'),
+        );
+        final store = _MemoryNetworkSessionStore(
+          displayName: 'Stored Alice',
+          saveError: const NetworkSessionCredentialPersistenceException(),
+        );
+        NetworkSession? currentSession;
+        final presentedErrors = <String>[];
+        final primaryDisplayNames = <String>[];
+        final controller = LobbyConnectionController(
+          mapName: 'verdantia',
+          mapSource: MapSource.asset,
+          sessionClient: client,
+          sessionStore: store,
+          streamConnector: _emptyStreamConnector,
+          serverpodHost: 'http://localhost:8080',
+          now: () => DateTime.utc(2026, 6, 2, 12),
+          canContinue: () => true,
+          currentSession: () => currentSession,
+          setSession: (session) => currentSession = session,
+          authenticate: ({required initialDisplayName}) async {
+            return NetworkAuthResult(
+              userId: 'user_1',
+              token: AuthToken('fresh-token'),
+              refreshToken: 'refresh-token',
+              displayName: 'Authenticated Alice',
+            );
+          },
+          displayName: () => 'Lobby Alice',
+          setPrimaryDisplayName: primaryDisplayNames.add,
+          country: () => PlayerCountry.china,
+          validateMap: () async => _validValidation(),
+          mapNotReadyMessage: () => 'Map is not ready',
+          inviteCodeRequiredMessage: () => 'Invite code required',
+          errorTextFor: (error) => 'mapped $error',
+          presentError: presentedErrors.add,
+          publishMatch: (_) {},
+          navigateTo: (_) {},
+        );
+        addTearDown(controller.dispose);
+
+        await controller.startQuickplayQueue();
+
+        expect(currentSession, isNull);
+        expect(client.quickplayRequest, isNull);
+        expect(primaryDisplayNames, isEmpty);
+        expect(controller.activeMatch, isNull);
+        expect(presentedErrors.single, contains('CredentialPersistence'));
+      },
+    );
+
     test('sign out revokes the session before clearing local state', () async {
       final client = _FakeNetworkSessionClient(
         quickplayMatch: _match(state: 'open'),
@@ -315,11 +370,12 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
 
 final class _MemoryNetworkSessionStore extends NetworkSessionStore {
   String displayName;
+  final Object? saveError;
   StoredNetworkSession? stored;
   final savedMatchIds = <String?>[];
   var cleared = false;
 
-  _MemoryNetworkSessionStore({required this.displayName});
+  _MemoryNetworkSessionStore({required this.displayName, this.saveError});
 
   @override
   Future<StoredNetworkSession?> load() async => stored;
@@ -329,7 +385,10 @@ final class _MemoryNetworkSessionStore extends NetworkSessionStore {
 
   @override
   Future<void> save(StoredNetworkSession session) async {
+    final error = saveError;
+    if (error != null) throw error;
     stored = session;
+    displayName = session.displayName;
   }
 
   @override

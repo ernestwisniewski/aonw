@@ -91,7 +91,7 @@ class GameStateNotifier extends _$GameStateNotifier {
     );
     final bootstrapped = await bootstrap.executeWithResult(
       saveId: saveId,
-      preferredPlayerId: ref.watch(networkSessionProvider)?.playerId,
+      preferredPlayerId: ref.read(networkSessionProvider)?.playerId,
     );
     _eventLogOffset = bootstrapped.offset;
     if (!ref.mounted) return bootstrapped.state;
@@ -198,6 +198,8 @@ class GameStateNotifier extends _$GameStateNotifier {
       final handle = await subscription.subscribe(
         matchId: saveId,
         token: session.token,
+        tokenReader: () =>
+            ref.read(networkSessionRefreshCoordinatorProvider).currentToken(),
         fromOffset: _eventLogOffset + 1,
         nextOffset: () => _eventLogOffset + 1,
         onEvent: (event) {

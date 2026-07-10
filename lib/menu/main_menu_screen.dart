@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
@@ -148,17 +147,11 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     setState(() => _resumeLoading = true);
     try {
       final client = ref.read(networkSessionClientProvider);
-      final refresh = await client.refresh(refreshToken: stored.refreshToken);
-      await store.save(
-        StoredNetworkSession(
-          userId: stored.userId,
-          refreshToken: refresh.refreshToken,
-          displayName: stored.displayName,
-          matchId: stored.matchId,
-        ),
-      );
+      final refreshedSession = await ref
+          .read(networkSessionRefreshCoordinatorProvider)
+          .ensureValidSession(forceRefresh: true);
       final match = await client.loadMatch(
-        token: refresh.token,
+        token: refreshedSession.token,
         matchId: matchId,
       );
       final playerId = _playerIdForUser(match, stored.userId);
@@ -166,10 +159,12 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
         await _handleResumeFailure(store, forgetPersistedMatch: true);
         return;
       }
-      final session = NetworkSession(
-        userId: stored.userId,
-        token: refresh.token,
-        refreshToken: refresh.refreshToken,
+      final latestSession = ref.read(networkSessionProvider);
+      if (latestSession == null || latestSession.userId != stored.userId) {
+        await _handleResumeFailure(store, forgetPersistedMatch: true);
+        return;
+      }
+      final session = latestSession.copyWith(
         matchId: match.id,
         playerId: playerId,
         connectionState: NetworkConnectionState(
@@ -185,9 +180,16 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
         '&source=${MapSource.asset.name}',
       );
     } catch (error) {
+      var sessionEnded = false;
+      try {
+        sessionEnded = await store.load() == null;
+      } catch (_) {
+        sessionEnded = ref.read(networkSessionProvider) == null;
+      }
       await _handleResumeFailure(
         store,
-        forgetPersistedMatch: _isAuthoritativeMissingResumeMatch(error),
+        forgetPersistedMatch:
+            sessionEnded || _isAuthoritativeMissingResumeMatch(error),
       );
     } finally {
       if (mounted) setState(() => _resumeLoading = false);
@@ -200,7 +202,15 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
   }) async {
     if (forgetPersistedMatch) await store.saveMatchId(null);
     if (!mounted) return;
-    if (forgetPersistedMatch) setState(() => _resumeMatchId = null);
+    if (forgetPersistedMatch) {
+      final session = ref.read(networkSessionProvider);
+      if (session != null) {
+        ref
+            .read(networkSessionStateProvider.notifier)
+            .set(session.copyWith(playerId: null, matchId: null));
+      }
+      setState(() => _resumeMatchId = null);
+    }
     GameToast.show(
       context,
       message: context.l10n.multiplayerResumeFailed,

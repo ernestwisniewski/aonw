@@ -282,32 +282,17 @@ class _MultiplayerProfileSectionState
   Future<void> _signOut() async {
     if (_saving) return;
     final l10n = context.l10n;
-    final store = ref.read(networkSessionStoreProvider);
-    final session = ref.read(networkSessionProvider);
     final client = ref.read(networkSessionClientProvider);
+    final coordinator = ref.read(networkSessionRefreshCoordinatorProvider);
     setState(() {
       _saving = true;
       _error = null;
     });
     Object? signOutError;
     try {
-      final sessionRefreshToken = session?.refreshToken;
-      final stored = sessionRefreshToken == null || sessionRefreshToken.isEmpty
-          ? await store.load()
-          : null;
-      await client.signOutCurrentSession(
-        token: session?.token,
-        refreshToken: sessionRefreshToken == null || sessionRefreshToken.isEmpty
-            ? stored?.refreshToken
-            : sessionRefreshToken,
-      );
+      await coordinator.revokeAndTerminate(client.signOutCurrentSession);
     } catch (error) {
       signOutError = error;
-    }
-    try {
-      await store.clear();
-    } catch (error) {
-      signOutError ??= error;
     } finally {
       ref.read(networkSessionStateProvider.notifier).set(null);
     }

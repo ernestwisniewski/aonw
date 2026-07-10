@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -26,6 +27,7 @@ typedef MultiplayerStreamConnector =
       required int afterOffset,
       required Stream<sp.MultiplayerClientMessage> input,
     });
+typedef MultiplayerAuthTokenReader = Future<AuthToken> Function();
 
 class LiveServerEvent {
   final WireEvent wire;
@@ -41,8 +43,12 @@ class LiveServerEvent {
 
 class ServerpodMultiplayerStreamConnector {
   final String serverpodHost;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
-  const ServerpodMultiplayerStreamConnector(this.serverpodHost);
+  const ServerpodMultiplayerStreamConnector(
+    this.serverpodHost, {
+    this.authKeyProviderFactory,
+  });
 
   Stream<sp.MultiplayerServerMessage> connect({
     required String matchId,
@@ -50,7 +56,12 @@ class ServerpodMultiplayerStreamConnector {
     required int afterOffset,
     required Stream<sp.MultiplayerClientMessage> input,
   }) {
-    final client = createServerpodClient(serverpodHost, token: token);
+    final authKeyProvider = authKeyProviderFactory?.call();
+    final client = createServerpodClient(
+      serverpodHost,
+      token: authKeyProvider == null ? token : null,
+      authKeyProvider: authKeyProvider,
+    );
     return client.multiplayer.connect(matchId, afterOffset, input);
   }
 }
@@ -72,6 +83,7 @@ class LiveEventSubscription {
   Future<LiveEventSubscriptionHandle> subscribe({
     required String matchId,
     required AuthToken token,
+    MultiplayerAuthTokenReader? tokenReader,
     required int fromOffset,
     int Function()? nextOffset,
     required void Function(LiveServerEvent event) onEvent,
@@ -89,6 +101,7 @@ class LiveEventSubscription {
       snapshotCodec: snapshotCodec,
       matchId: matchId,
       token: token,
+      tokenReader: tokenReader,
       fromOffset: fromOffset,
       nextOffset: nextOffset,
       onEvent: onEvent,
@@ -118,6 +131,7 @@ class _LiveEventSubscriptionController {
   final SnapshotCodec snapshotCodec;
   final String matchId;
   final AuthToken token;
+  final MultiplayerAuthTokenReader? tokenReader;
   final int Function()? nextOffset;
   final void Function(LiveServerEvent event) onEvent;
   final void Function(SaveSnapshot snapshot) onSnapshotResync;
@@ -142,6 +156,7 @@ class _LiveEventSubscriptionController {
     required this.snapshotCodec,
     required this.matchId,
     required this.token,
+    required this.tokenReader,
     required int fromOffset,
     required this.nextOffset,
     required this.onEvent,
@@ -202,13 +217,20 @@ class _LiveEventSubscriptionController {
   }
 
   Future<void> _connectOnce() async {
+    final currentToken = await tokenReader?.call() ?? token;
     final input = StreamController<sp.MultiplayerClientMessage>();
-    final messages = connect(
-      matchId: matchId,
-      token: token,
-      afterOffset: _afterOffsetForReconnect(),
-      input: input.stream,
-    );
+    late final Stream<sp.MultiplayerServerMessage> messages;
+    try {
+      messages = connect(
+        matchId: matchId,
+        token: currentToken,
+        afterOffset: _afterOffsetForReconnect(),
+        input: input.stream,
+      );
+    } catch (_) {
+      await input.close();
+      rethrow;
+    }
     if (_closed) {
       await input.close();
       return;
@@ -289,6 +311,11 @@ class _LiveEventSubscriptionController {
         return;
       } catch (error, stackTrace) {
         onError?.call(error, stackTrace);
+        if (error is NetworkSessionAuthenticationException) {
+          _closed = true;
+          await _disconnectCurrent();
+          break;
+        }
         attempt += 1;
       }
     }

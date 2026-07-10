@@ -50,6 +50,7 @@ part 'lobby_screen_player_row.dart';
 part 'lobby_screen_player_setup_widgets.dart';
 part 'lobby_screen_private_match_panel.dart';
 part 'lobby_screen_queue_countdown.dart';
+part 'lobby_screen_session_actions.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String mapName;
@@ -117,6 +118,12 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       now: () => ref.read(gameClockProvider).nowUtc(),
       canContinue: () => mounted,
       currentSession: () => ref.read(networkSessionProvider),
+      ensureValidSession: () => ref
+          .read(networkSessionRefreshCoordinatorProvider)
+          .ensureValidSession(),
+      terminateSession: () =>
+          ref.read(networkSessionRefreshCoordinatorProvider).terminateSession(),
+      signOutSession: _signOutNetworkSession,
       setSession: (session) {
         ref.read(networkSessionStateProvider.notifier).set(session);
       },
@@ -289,23 +296,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       context,
       message: context.l10n.multiplayerInviteCopied,
       tone: GameToastTone.success,
-    );
-  }
-
-  Future<NetworkAuthResult?> _authenticateNetworkSession({
-    required String initialDisplayName,
-  }) async {
-    if (!mounted) return null;
-    final client = ref.read(networkSessionClientProvider);
-    return showMultiplayerAccountDialog(
-      context: context,
-      login: client.login,
-      createAccount: client.createAccount,
-      socialAuthClientFactory: () =>
-          createMultiplayerSocialAuthClient(client.serverpodHost),
-      completeSocialAuth: client.completeSocialAuth,
-      steamAuth: client.loginWithSteam,
-      initialDisplayName: initialDisplayName,
     );
   }
 

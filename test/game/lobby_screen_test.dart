@@ -460,6 +460,20 @@ class _FakeNetworkSessionStore extends NetworkSessionStore {
   }
 
   @override
+  Future<void> saveCredentials({
+    required String userId,
+    required String refreshToken,
+  }) async {
+    final current = session;
+    session = StoredNetworkSession(
+      userId: userId,
+      refreshToken: refreshToken,
+      displayName: current?.displayName ?? displayName,
+      matchId: current?.matchId,
+    );
+  }
+
+  @override
   Future<void> saveDisplayName(String displayName) async {
     this.displayName = displayName;
   }

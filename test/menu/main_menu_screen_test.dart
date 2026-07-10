@@ -539,6 +539,27 @@ class _FakeNetworkSessionStore extends NetworkSessionStore {
   }
 
   @override
+  Future<void> saveCredentials({
+    required String userId,
+    required String refreshToken,
+  }) async {
+    final current = session;
+    final updated = StoredNetworkSession(
+      userId: userId,
+      refreshToken: refreshToken,
+      displayName: current?.displayName ?? 'Player',
+      matchId: current?.matchId,
+    );
+    session = updated;
+    savedSessions.add(updated);
+  }
+
+  @override
+  Future<void> clear() async {
+    session = null;
+  }
+
+  @override
   Future<void> saveMatchId(String? matchId) async {
     savedMatchIds.add(matchId);
     session = session?.copyWith(matchId: matchId);

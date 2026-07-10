@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
@@ -21,6 +22,7 @@ class NetworkGameRepository implements GameRepository {
   final SnapshotStore? snapshotCache;
   final int fallbackMaxPlayers;
   final MultiplayerBackendClient? backendClient;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
   NetworkGameRepository({
     String? serverpodHost,
@@ -30,6 +32,7 @@ class NetworkGameRepository implements GameRepository {
     this.snapshotCache,
     this.fallbackMaxPlayers = 4,
     this.backendClient,
+    this.authKeyProviderFactory,
   }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient) {
     if (userId.trim().isEmpty) {
       throw ArgumentError.value(
@@ -162,6 +165,7 @@ class NetworkGameRepository implements GameRepository {
         ServerpodMultiplayerBackendClient(
           serverpodHost: serverpodHost,
           token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
         );
   }
 }

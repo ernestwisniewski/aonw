@@ -18,12 +18,16 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 
+part 'lobby_connection_session_actions.dart';
+
 enum LobbyMultiplayerMode { home, quickplay, privateHost, privateJoin }
 
 typedef LobbyConnectionClock = DateTime Function();
 typedef LobbyConnectionContinuation = bool Function();
 typedef LobbyConnectionSessionReader = NetworkSession? Function();
 typedef LobbyConnectionSessionSetter = void Function(NetworkSession? session);
+typedef LobbyConnectionSessionTerminator = Future<void> Function();
+typedef LobbyConnectionSessionSignOut = Future<void> Function();
 typedef LobbyConnectionAuthenticator =
     Future<NetworkAuthResult?> Function({required String initialDisplayName});
 typedef LobbyConnectionDisplayNameReader = String Function();
@@ -47,6 +51,8 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionContinuation canContinue;
   final LobbyConnectionSessionReader currentSession;
   final LobbyConnectionSessionSetter setSession;
+  final LobbyConnectionSessionTerminator? terminateSession;
+  final LobbyConnectionSessionSignOut? signOutSession;
   final LobbyConnectionAuthenticator authenticate;
   final LobbyConnectionDisplayNameReader displayName;
   final LobbyConnectionDisplayNameWriter setPrimaryDisplayName;
@@ -58,6 +64,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionErrorPresenter presentError;
   final LobbyConnectionMatchPublisher publishMatch;
   final LobbyConnectionRouter navigateTo;
+  final LobbyValidSessionEnsurer? ensureValidSession;
 
   late final LobbyAutoStartCoordinator _autoStartCoordinator;
   late final LobbyLiveMatchCoordinator _liveMatchCoordinator;
@@ -80,6 +87,8 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.canContinue,
     required this.currentSession,
     required this.setSession,
+    this.terminateSession,
+    this.signOutSession,
     required this.authenticate,
     required this.displayName,
     required this.setPrimaryDisplayName,
@@ -91,6 +100,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.presentError,
     required this.publishMatch,
     required this.navigateTo,
+    this.ensureValidSession,
   }) {
     _autoStartCoordinator = LobbyAutoStartCoordinator(
       now: now,
@@ -169,40 +179,6 @@ final class LobbyConnectionController extends ChangeNotifier {
     });
     if (!_canContinue()) return;
     _setMode(LobbyMultiplayerMode.home);
-  }
-
-  Future<bool> signOut() async {
-    stopLobbyUpdates();
-    final session = currentSession();
-    Object? signOutError;
-    try {
-      final sessionRefreshToken = session?.refreshToken;
-      final stored = sessionRefreshToken == null || sessionRefreshToken.isEmpty
-          ? await sessionStore.load()
-          : null;
-      await sessionClient.signOutCurrentSession(
-        token: session?.token,
-        refreshToken: sessionRefreshToken == null || sessionRefreshToken.isEmpty
-            ? stored?.refreshToken
-            : sessionRefreshToken,
-      );
-    } catch (error) {
-      signOutError = error;
-    }
-    try {
-      await sessionStore.clear();
-    } catch (error) {
-      signOutError ??= error;
-    } finally {
-      setSession(null);
-    }
-    if (!_canContinue()) return signOutError == null;
-    _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
-    if (signOutError != null) {
-      _showNetworkError(signOutError);
-      return false;
-    }
-    return true;
   }
 
   Future<void> createPrivateMatch() async {
@@ -297,25 +273,6 @@ final class LobbyConnectionController extends ChangeNotifier {
     return match == null || LobbyMatchStatusRules.canEnter(match);
   }
 
-  Future<NetworkSession> _ensureNetworkSession() async {
-    final storedDisplayName = await sessionStore.loadDisplayName();
-    try {
-      return await _networkSessionCoordinator().ensureSession(
-        displayName: storedDisplayName,
-      );
-    } on NetworkSignInRequiredException {
-      final auth = await authenticate(initialDisplayName: displayName());
-      if (auth == null) throw const _LobbyNetworkAuthCancelledException();
-      final session = auth.toSession(changedAt: now());
-      setSession(session);
-      setPrimaryDisplayName(auth.displayName);
-      await sessionStore.saveDisplayName(auth.displayName);
-      final stored = auth.toStoredSession(displayName: auth.displayName);
-      if (stored != null) await sessionStore.save(stored);
-      return session;
-    }
-  }
-
   LobbyMatchActionCoordinator _matchActionCoordinator() {
     return LobbyMatchActionCoordinator(
       ensureSession: _ensureNetworkSession,
@@ -382,6 +339,8 @@ final class LobbyConnectionController extends ChangeNotifier {
       saveMatchId: sessionStore.saveMatchId,
       refreshToken: sessionClient.refresh,
       now: now,
+      ensureValidSession: ensureValidSession,
+      terminateSession: terminateSession,
     );
   }
 

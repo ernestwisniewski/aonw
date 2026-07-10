@@ -137,8 +137,12 @@ class JoinPrivateMatchRequest {
 
 class NetworkSessionClient {
   final String serverpodHost;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
-  NetworkSessionClient({required this.serverpodHost});
+  NetworkSessionClient({
+    required this.serverpodHost,
+    this.authKeyProviderFactory,
+  });
 
   Future<String> versionStatus({
     required String platform,
@@ -220,7 +224,7 @@ class NetworkSessionClient {
       return;
     }
     if (token == null || token.value.isEmpty) return;
-    await _withToken(
+    await _withExplicitToken(
       token,
       (client) => client.modules.serverpod_auth_core.status.signOutDevice(),
     );
@@ -230,7 +234,7 @@ class NetworkSessionClient {
     required sp_auth.AuthSuccess auth,
   }) async {
     final token = AuthToken(auth.token, expiresAt: auth.tokenExpiresAt);
-    final displayName = await _withToken(
+    final displayName = await _withExplicitToken(
       token,
       (client) => client.accountProfile.ensureAccount(),
     );
@@ -399,9 +403,13 @@ class NetworkSessionClient {
   }
 
   sp.Client _client({AuthToken? token, Duration? connectionTimeout}) {
+    final dynamicAuthKeyProvider = token == null
+        ? null
+        : authKeyProviderFactory?.call();
     return createServerpodClient(
       serverpodHost,
-      token: token,
+      token: dynamicAuthKeyProvider == null ? token : null,
+      authKeyProvider: dynamicAuthKeyProvider,
       connectionTimeout: connectionTimeout,
     );
   }
@@ -413,13 +421,24 @@ class NetworkSessionClient {
     return run(_client(token: token));
   }
 
+  Future<T> _withExplicitToken<T>(
+    AuthToken token,
+    Future<T> Function(sp.Client client) run,
+  ) {
+    return run(createServerpodClient(serverpodHost, token: token));
+  }
+
   Future<NetworkAuthResult> _authResult(
     sp_auth.AuthSuccess auth, {
     String? displayName,
   }) async {
     final token = AuthToken(auth.token, expiresAt: auth.tokenExpiresAt);
-    final resolvedDisplayName =
-        displayName ?? await this.displayName(token: token);
+    final String resolvedDisplayName =
+        displayName ??
+        await _withExplicitToken<String>(
+          token,
+          (client) => client.emailIdp.displayName(),
+        );
     return NetworkAuthResult(
       userId: auth.authUserId.toString(),
       token: token,

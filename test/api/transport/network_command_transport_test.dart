@@ -67,6 +67,33 @@ void main() {
     );
 
     test(
+      'reads the current JWT immediately before sending a command',
+      () async {
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+        final server = _FakeCommandServer(
+          save: _save(),
+          state: GameState(
+            units: [commander],
+            activePlayerId: 'player_1',
+            activePlayerCanAct: true,
+          ),
+        );
+        final transport = _transport(
+          server,
+          tokenReader: () async => AuthToken('rotated-jwt'),
+        );
+
+        await transport.dispatch(
+          saveId: 'save_1',
+          currentState: server.state,
+          command: MoveUnitCommand(commander.id, 1, 0),
+        );
+
+        expect(server.sentCommands.single.token.value, 'rotated-jwt');
+      },
+    );
+
+    test(
       'uses local reducer movement effects for accepted server moves',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
@@ -825,10 +852,12 @@ void main() {
 NetworkCommandTransport _transport(
   _FakeCommandServer server, {
   int startTickAt = 1,
+  CommandAuthTokenReader? tokenReader,
 }) {
   return NetworkCommandTransport(
     commandDispatcher: server,
     token: AuthToken('jwt-token'),
+    tokenReader: tokenReader,
     actorPlayerId: 'player_1',
     tickGenerator: ClientTickGenerator(startAt: startTickAt),
     localReducer: server.reducer,

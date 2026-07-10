@@ -19,32 +19,45 @@ class ServerpodMultiplayerBackendClient implements MultiplayerBackendClient {
   ServerpodMultiplayerBackendClient({
     required String serverpodHost,
     required AuthToken token,
-  }) : _client = createServerpodClient(serverpodHost, token: token);
+    this.authKeyProviderFactory,
+  }) : _serverpodHost = serverpodHost,
+       _token = token;
 
-  final sp.Client _client;
+  final String _serverpodHost;
+  final AuthToken _token;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
   @override
   Future<List<WireMatch>> listMatches() {
-    return _client.multiplayer.listMatches();
+    return _client().multiplayer.listMatches();
   }
 
   @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) {
-    return _client.multiplayer.createMatch(request);
+    return _client().multiplayer.createMatch(request);
   }
 
   @override
   Future<WireSnapshot> loadSnapshot(String matchId) {
-    return _client.multiplayer.loadSnapshot(matchId);
+    return _client().multiplayer.loadSnapshot(matchId);
   }
 
   @override
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset) {
-    return _client.multiplayer.listEvents(matchId, afterOffset);
+    return _client().multiplayer.listEvents(matchId, afterOffset);
   }
 
   @override
   Future<void> leaveMatch(String matchId) {
-    return _client.multiplayer.leaveMatch(matchId);
+    return _client().multiplayer.leaveMatch(matchId);
+  }
+
+  sp.Client _client() {
+    final authKeyProvider = authKeyProviderFactory?.call();
+    return createServerpodClient(
+      _serverpodHost,
+      token: authKeyProvider == null ? _token : null,
+      authKeyProvider: authKeyProvider,
+    );
   }
 }

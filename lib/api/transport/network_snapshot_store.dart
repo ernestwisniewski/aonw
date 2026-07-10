@@ -1,5 +1,6 @@
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
@@ -9,12 +10,14 @@ class NetworkSnapshotStore implements SnapshotStore {
   final AuthToken token;
   final SnapshotCodec snapshotCodec;
   final MultiplayerBackendClient? backendClient;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
   NetworkSnapshotStore({
     String? serverpodHost,
     required this.token,
     this.snapshotCodec = const SnapshotCodec(),
     this.backendClient,
+    this.authKeyProviderFactory,
   }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient);
 
   @override
@@ -43,6 +46,7 @@ class NetworkSnapshotStore implements SnapshotStore {
         ServerpodMultiplayerBackendClient(
           serverpodHost: serverpodHost,
           token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
         );
   }
 }

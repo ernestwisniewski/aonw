@@ -71,13 +71,17 @@ abstract interface class WireCommandDispatcher {
   });
 }
 
+typedef CommandAuthTokenReader = Future<AuthToken> Function();
+
 class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
   final String serverpodHost;
   final Duration timeout;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
   const ServerpodWireCommandDispatcher({
     required this.serverpodHost,
     this.timeout = const Duration(seconds: 10),
+    this.authKeyProviderFactory,
   });
 
   @override
@@ -91,7 +95,12 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
     StreamSubscription<sp.MultiplayerServerMessage>? subscription;
     final ack = Completer<WireCommandAck>();
     try {
-      final client = createServerpodClient(serverpodHost, token: token);
+      final authKeyProvider = authKeyProviderFactory?.call();
+      final client = createServerpodClient(
+        serverpodHost,
+        token: authKeyProvider == null ? token : null,
+        authKeyProvider: authKeyProvider,
+      );
       final output = client.multiplayer.connect(
         saveId,
         afterOffset,
@@ -135,6 +144,7 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
 
 class NetworkCommandTransport implements CommandTransport {
   final AuthToken token;
+  final CommandAuthTokenReader? tokenReader;
   final String actorPlayerId;
   final WireCommandDispatcher commandDispatcher;
   final CommandCodec commandCodec;
@@ -151,6 +161,7 @@ class NetworkCommandTransport implements CommandTransport {
     String? serverpodHost,
     WireCommandDispatcher? commandDispatcher,
     required this.token,
+    this.tokenReader,
     required this.actorPlayerId,
     this.commandCodec = const CommandCodec(),
     this.eventCodec = const EventCodec(),
@@ -384,9 +395,10 @@ class NetworkCommandTransport implements CommandTransport {
     required WireCommand wire,
   }) async {
     try {
+      final currentToken = await tokenReader?.call() ?? token;
       return await commandDispatcher.send(
         saveId: saveId,
-        token: token,
+        token: currentToken,
         afterOffset: _lastKnownOffsetBySaveId[saveId] ?? 0,
         wire: wire,
       );

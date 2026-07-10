@@ -198,6 +198,24 @@ void main() {
       expect(setSessions.last?.playerId, isNull);
       expect(savedMatchIds, const ['match_1', null]);
     });
+
+    test('match updates preserve credentials refreshed after stream start', () {
+      final streamedSession = _session(userId: 'user_1');
+      final refreshedSession = streamedSession.copyWith(
+        token: AuthToken('fresh-jwt'),
+        refreshToken: 'rotated-refresh',
+      );
+      final coordinator = _coordinator(currentSession: () => refreshedSession);
+
+      final updated = coordinator.sessionForMatch(
+        session: streamedSession,
+        match: _match(),
+      );
+
+      expect(updated.token.value, 'fresh-jwt');
+      expect(updated.refreshToken, 'rotated-refresh');
+      expect(updated.matchId, 'match_1');
+    });
   });
 }
 

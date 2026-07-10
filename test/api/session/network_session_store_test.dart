@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,25 +96,130 @@ void main() {
       },
     );
 
-    test('does not persist refresh token when secure save fails', () async {
+    test('reports secure save failure without a plaintext fallback', () async {
       final secureTokens = _FakeSecureTokenStore(
         writeException: _secureStorageFailure(),
       );
       final store = NetworkSessionStore(secureTokens: secureTokens);
 
-      await store.save(
-        const StoredNetworkSession(
-          userId: 'user_1',
-          refreshToken: 'refresh-token',
-          displayName: 'Alice',
-          matchId: 'match_1',
+      await expectLater(
+        store.save(
+          const StoredNetworkSession(
+            userId: 'user_1',
+            refreshToken: 'refresh-token',
+            displayName: 'Alice',
+            matchId: 'match_1',
+          ),
         ),
+        throwsA(isA<NetworkSessionCredentialPersistenceException>()),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('network.session.userId'), isNull);
+      expect(prefs.getString('network.session.refreshToken'), isNull);
+      expect(secureTokens.values['network.session.refreshToken'], isNull);
+    });
+
+    test('credential rotation preserves profile and match metadata', () async {
+      SharedPreferences.setMockInitialValues({
+        'network.session.userId': 'user_1',
+        'network.session.displayName': 'Updated Alice',
+        'network.session.matchId': 'new_match',
+      });
+      final secureTokens = _FakeSecureTokenStore(
+        values: {'network.session.refreshToken': 'old-refresh'},
+      );
+      final store = NetworkSessionStore(secureTokens: secureTokens);
+
+      await store.saveCredentials(
+        userId: 'user_1',
+        refreshToken: 'rotated-refresh',
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('network.session.displayName'), 'Updated Alice');
+      expect(prefs.getString('network.session.matchId'), 'new_match');
+      expect(
+        secureTokens.values['network.session.refreshToken'],
+        'rotated-refresh',
+      );
+    });
+
+    test('credential rotation reports secure storage failure', () async {
+      final secureTokens = _FakeSecureTokenStore(
+        writeException: _secureStorageFailure(),
+      );
+      final store = NetworkSessionStore(secureTokens: secureTokens);
+
+      await expectLater(
+        store.saveCredentials(
+          userId: 'user_1',
+          refreshToken: 'rotated-refresh',
+        ),
+        throwsA(isA<NetworkSessionCredentialPersistenceException>()),
       );
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('network.session.refreshToken'), isNull);
-      expect(secureTokens.values['network.session.refreshToken'], isNull);
     });
+
+    test(
+      'clear queued during credential rotation wins the storage race',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'network.session.userId': 'user_1',
+          'network.session.displayName': 'Alice',
+        });
+        final secureTokens = _BlockingFirstWriteSecureTokenStore();
+        final store = NetworkSessionStore(secureTokens: secureTokens);
+
+        final rotation = store.saveCredentials(
+          userId: 'user_1',
+          refreshToken: 'stale-rotated-refresh',
+        );
+        await secureTokens.writeStarted.future;
+        final clear = store.clear();
+
+        secureTokens.releaseWrite.complete();
+        await Future.wait([rotation, clear]);
+
+        expect(await store.load(), isNull);
+        expect(secureTokens.values['network.session.refreshToken'], isNull);
+      },
+    );
+
+    test(
+      'new login queued during old rotation remains authoritative',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'network.session.userId': 'user_1',
+          'network.session.displayName': 'Alice',
+        });
+        final secureTokens = _BlockingFirstWriteSecureTokenStore();
+        final store = NetworkSessionStore(secureTokens: secureTokens);
+
+        final rotation = store.saveCredentials(
+          userId: 'user_1',
+          refreshToken: 'stale-rotated-refresh',
+        );
+        await secureTokens.writeStarted.future;
+        final login = store.save(
+          const StoredNetworkSession(
+            userId: 'user_2',
+            refreshToken: 'new-login-refresh',
+            displayName: 'Bob',
+          ),
+        );
+
+        secureTokens.releaseWrite.complete();
+        await Future.wait([rotation, login]);
+
+        final stored = await store.load();
+        expect(stored?.userId, 'user_2');
+        expect(stored?.refreshToken, 'new-login-refresh');
+        expect(stored?.displayName, 'Bob');
+      },
+    );
 
     test('saves and loads standalone display name preference', () async {
       final store = NetworkSessionStore(secureTokens: _FakeSecureTokenStore());
@@ -203,6 +310,32 @@ class _FakeSecureTokenStore implements SecureSessionTokenStore {
   Future<void> write(String key, String value) async {
     final exception = writeException;
     if (exception != null) throw exception;
+    values[key] = value;
+  }
+}
+
+final class _BlockingFirstWriteSecureTokenStore
+    implements SecureSessionTokenStore {
+  final values = <String, String>{};
+  final writeStarted = Completer<void>();
+  final releaseWrite = Completer<void>();
+  var _writeCount = 0;
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
+
+  @override
+  Future<String?> read(String key) async => values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    _writeCount += 1;
+    if (_writeCount == 1) {
+      writeStarted.complete();
+      await releaseWrite.future;
+    }
     values[key] = value;
   }
 }

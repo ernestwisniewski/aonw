@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
@@ -317,14 +315,14 @@ class _GameRendererSessionHostState
   void _scheduleResumeMatchPersistence() {
     final matchId = _activeMultiplayerMatchId();
     if (matchId == null) return;
-    unawaited(const NetworkSessionStore().saveMatchId(matchId));
+    unawaited(ref.read(networkSessionStoreProvider).saveMatchId(matchId));
   }
 
   Future<void> _rememberActiveMultiplayerMatch() async {
     final matchId = _activeMultiplayerMatchId();
     if (matchId == null) return;
 
-    await const NetworkSessionStore().saveMatchId(matchId);
+    await ref.read(networkSessionStoreProvider).saveMatchId(matchId);
   }
 
   String? _activeMultiplayerMatchId() {
@@ -688,9 +686,8 @@ class _GameStartupLoadingOverlayState
     }
     _mapLoadedSentFor = widget.saveId;
     unawaited(
-      NetworkSessionClient(
-            serverpodHost: ref.read(apiConfigProvider).baseUrl.toString(),
-          )
+      ref
+          .read(networkSessionClientProvider)
           .markMapLoaded(token: session.token, matchId: widget.saveId)
           .then((match) {
             if (!mounted) return;
@@ -698,6 +695,7 @@ class _GameStartupLoadingOverlayState
           })
           .catchError((Object error, StackTrace stackTrace) {
             if (!mounted) return;
+            if (_mapLoadedSentFor == widget.saveId) _mapLoadedSentFor = null;
             ref
                 .read(multiplayerConnectionStatusProvider.notifier)
                 .setStatus(

@@ -2,6 +2,11 @@ import 'dart:async';
 
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/connection_state.dart';
+import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
+import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -314,6 +319,150 @@ void main() {
         await handle.close();
       },
     );
+
+    test('reconnect after expiry uses the refreshed JWT', () async {
+      var now = DateTime.utc(2026, 7, 10, 12);
+      NetworkSession? session = NetworkSession(
+        userId: 'user_1',
+        token: AuthToken(
+          'jwt-before-expiry',
+          expiresAt: DateTime.utc(2026, 7, 10, 12, 1),
+        ),
+        refreshToken: 'refresh-before-expiry',
+        matchId: 'match_1',
+        connectionState: NetworkConnectionState(
+          status: NetworkConnectionStatus.connected,
+          changedAt: now,
+        ),
+      );
+      final store = _RefreshableSessionStore(
+        const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'refresh-before-expiry',
+          displayName: 'Alice',
+          matchId: 'match_1',
+        ),
+      );
+      var refreshCalls = 0;
+      final refreshCoordinator = NetworkSessionRefreshCoordinator(
+        currentSession: () => session,
+        setSession: (value) => session = value,
+        sessionStore: store,
+        refreshToken: ({required refreshToken}) async {
+          refreshCalls += 1;
+          expect(refreshToken, 'refresh-before-expiry');
+          return NetworkSessionRefreshResult(
+            token: AuthToken(
+              'jwt-after-refresh',
+              expiresAt: DateTime.utc(2026, 7, 10, 13),
+            ),
+            refreshToken: 'refresh-after-rotation',
+          );
+        },
+        now: () => now,
+      );
+      final reconnected = Completer<void>();
+      final connector = _FakeServerpodStreamConnector(
+        onConnect: (count) {
+          if (count == 2) reconnected.complete();
+        },
+      );
+      final live = LiveEventSubscription(
+        serverpodHost: 'https://api.example.test',
+        connector: connector.connect,
+      );
+
+      final handle = await live.subscribe(
+        matchId: 'match_1',
+        token: session!.token,
+        tokenReader: refreshCoordinator.currentToken,
+        fromOffset: 0,
+        reconnectDelays: const [Duration.zero],
+        onEvent: (_) {},
+        onSnapshotResync: (_) {},
+      );
+      expect(connector.connections.single.token.value, 'jwt-before-expiry');
+
+      now = DateTime.utc(2026, 7, 10, 12, 2);
+      await connector.connections.single.close();
+      await reconnected.future.timeout(const Duration(seconds: 1));
+
+      expect(
+        connector.connections.map((connection) => connection.token.value),
+        ['jwt-before-expiry', 'jwt-after-refresh'],
+      );
+      expect(refreshCalls, 1);
+      expect(store.stored?.refreshToken, 'refresh-after-rotation');
+      expect(session?.token.value, 'jwt-after-refresh');
+      await handle.close();
+    });
+
+    test('refresh failure terminates reconnect without a retry loop', () async {
+      var now = DateTime.utc(2026, 7, 10, 12);
+      NetworkSession? session = NetworkSession(
+        userId: 'user_1',
+        token: AuthToken(
+          'jwt-before-failure',
+          expiresAt: DateTime.utc(2026, 7, 10, 12, 1),
+        ),
+        refreshToken: 'refresh-before-failure',
+        matchId: 'match_1',
+        connectionState: const NetworkConnectionState(
+          status: NetworkConnectionStatus.connected,
+        ),
+      );
+      final store = _RefreshableSessionStore(
+        const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'refresh-before-failure',
+          displayName: 'Alice',
+          matchId: 'match_1',
+        ),
+      );
+      var refreshCalls = 0;
+      final refreshCoordinator = NetworkSessionRefreshCoordinator(
+        currentSession: () => session,
+        setSession: (value) => session = value,
+        sessionStore: store,
+        refreshToken: ({required refreshToken}) async {
+          refreshCalls += 1;
+          throw const sp.ServerpodClientException('refresh unavailable', 503);
+        },
+        now: () => now,
+      );
+      final connector = _FakeServerpodStreamConnector();
+      final terminalError = Completer<Object>();
+      final live = LiveEventSubscription(
+        serverpodHost: 'https://api.example.test',
+        connector: connector.connect,
+      );
+      final handle = await live.subscribe(
+        matchId: 'match_1',
+        token: session!.token,
+        tokenReader: refreshCoordinator.currentToken,
+        fromOffset: 0,
+        reconnectDelays: const [Duration.zero],
+        onEvent: (_) {},
+        onSnapshotResync: (_) {},
+        onError: (error, _) {
+          if (error is NetworkSessionAuthenticationException &&
+              !terminalError.isCompleted) {
+            terminalError.complete(error);
+          }
+        },
+      );
+
+      now = DateTime.utc(2026, 7, 10, 12, 2);
+      await connector.connections.single.close();
+      await terminalError.future.timeout(const Duration(seconds: 1));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(refreshCalls, 1);
+      expect(connector.connections, hasLength(1));
+      expect(session, isNull);
+      expect(store.stored, isNull);
+      await handle.close();
+    });
   });
 }
 
@@ -384,6 +533,34 @@ class _FakeServerpodStreamConnection {
 
   Future<void> close() {
     return _messages.close();
+  }
+}
+
+final class _RefreshableSessionStore extends NetworkSessionStore {
+  StoredNetworkSession? stored;
+
+  _RefreshableSessionStore(this.stored);
+
+  @override
+  Future<StoredNetworkSession?> load() async => stored;
+
+  @override
+  Future<void> saveCredentials({
+    required String userId,
+    required String refreshToken,
+  }) async {
+    final current = stored;
+    stored = StoredNetworkSession(
+      userId: userId,
+      refreshToken: refreshToken,
+      displayName: current?.displayName ?? 'Player',
+      matchId: current?.matchId,
+    );
+  }
+
+  @override
+  Future<void> clear() async {
+    stored = null;
   }
 }
 

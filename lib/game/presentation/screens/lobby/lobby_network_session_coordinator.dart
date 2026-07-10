@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
@@ -21,6 +22,7 @@ typedef LobbySessionTokenRefresher =
       required String refreshToken,
     });
 typedef LobbySessionClockReader = DateTime Function();
+typedef LobbyValidSessionEnsurer = Future<NetworkSession> Function();
 
 final class LobbyNetworkSessionCoordinator {
   static const tokenRefreshSkew = Duration(seconds: 30);
@@ -33,6 +35,8 @@ final class LobbyNetworkSessionCoordinator {
   final LobbyMatchIdSaver saveMatchId;
   final LobbySessionTokenRefresher refreshToken;
   final LobbySessionClockReader now;
+  final LobbyValidSessionEnsurer? ensureValidSession;
+  final LobbyStoredSessionClearer? terminateSession;
 
   const LobbyNetworkSessionCoordinator({
     required this.currentSession,
@@ -43,6 +47,8 @@ final class LobbyNetworkSessionCoordinator {
     required this.saveMatchId,
     required this.refreshToken,
     required this.now,
+    this.ensureValidSession,
+    this.terminateSession,
   });
 
   Future<NetworkSession> ensureSession({required String displayName}) async {
@@ -64,10 +70,22 @@ final class LobbyNetworkSessionCoordinator {
       displayName: displayName,
       now: currentTime,
     )) {
-      await clearStoredSession();
-      setSession(null);
+      final terminate = terminateSession;
+      if (terminate == null) {
+        await clearStoredSession();
+        setSession(null);
+      } else {
+        await terminate();
+      }
     } else if (stored != null && stored.displayName != displayName) {
       await clearStoredSession();
+    } else if (ensureValidSession != null &&
+        (stored != null || current?.refreshToken?.isNotEmpty == true)) {
+      try {
+        return await ensureValidSession!();
+      } on NetworkSessionAuthenticationException {
+        // The central coordinator already ended the unusable session.
+      }
     } else if (stored != null) {
       final refreshed = await _tryRefreshStoredSession(stored, currentTime);
       if (refreshed != null) return refreshed;
@@ -97,11 +115,13 @@ final class LobbyNetworkSessionCoordinator {
     required NetworkSession session,
     required WireMatch match,
   }) {
+    final latest = currentSession();
+    final base = latest?.userId == session.userId ? latest! : session;
     return NetworkSession(
-      userId: session.userId,
-      playerId: LobbyMatchStatusRules.playerIdForUser(match, session.userId),
-      token: session.token,
-      refreshToken: session.refreshToken,
+      userId: base.userId,
+      playerId: LobbyMatchStatusRules.playerIdForUser(match, base.userId),
+      token: base.token,
+      refreshToken: base.refreshToken,
       matchId: match.id,
       connectionState: NetworkConnectionState(
         status: NetworkConnectionStatus.connected,
@@ -111,11 +131,13 @@ final class LobbyNetworkSessionCoordinator {
   }
 
   NetworkSession sessionWithoutActiveMatch(NetworkSession session) {
+    final latest = currentSession();
+    final base = latest?.userId == session.userId ? latest! : session;
     return NetworkSession(
-      userId: session.userId,
-      token: session.token,
-      refreshToken: session.refreshToken,
-      connectionState: session.connectionState.copyWith(changedAt: now()),
+      userId: base.userId,
+      token: base.token,
+      refreshToken: base.refreshToken,
+      connectionState: base.connectionState.copyWith(changedAt: now()),
     );
   }
 

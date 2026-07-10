@@ -1,7 +1,9 @@
 import 'package:aonw/api/client/api_config.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/api/transport/network_event_log.dart';
@@ -49,8 +51,12 @@ GameRepository gameRepository(Ref ref) {
 }
 
 GameRepository gameRepositoryForSave(Ref ref, String saveId) {
-  final session = ref.watch(networkSessionProvider);
-  if (_isActiveNetworkSave(session: session, saveId: saveId)) {
+  final activeNetworkSave = ref.watch(
+    networkSessionProvider.select(
+      (session) => _isActiveNetworkSave(session: session, saveId: saveId),
+    ),
+  );
+  if (activeNetworkSave) {
     return ref.watch(networkGameRepositoryProvider);
   }
 
@@ -70,8 +76,12 @@ EventLog eventLog(Ref ref) {
 }
 
 EventLog eventLogForSave(Ref ref, String saveId) {
-  final session = ref.watch(networkSessionProvider);
-  if (_isActiveNetworkSave(session: session, saveId: saveId)) {
+  final activeNetworkSave = ref.watch(
+    networkSessionProvider.select(
+      (session) => _isActiveNetworkSave(session: session, saveId: saveId),
+    ),
+  );
+  if (activeNetworkSave) {
     return ref.watch(networkEventLogProvider);
   }
 
@@ -79,7 +89,8 @@ EventLog eventLogForSave(Ref ref, String saveId) {
 }
 
 final networkGameRepositoryProvider = fr.Provider<GameRepository>((ref) {
-  final session = ref.watch(networkSessionProvider);
+  ref.watch(networkSessionProvider.select(_transportSessionScope));
+  final session = ref.read(networkSessionProvider);
   if (session == null || !session.isConnected || session.matchId == null) {
     throw StateError('No active multiplayer session for network repository.');
   }
@@ -88,17 +99,20 @@ final networkGameRepositoryProvider = fr.Provider<GameRepository>((ref) {
     userId: session.userId,
     token: session.token,
     snapshotCache: ref.watch(snapshotStoreProvider),
+    authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
 });
 
 final networkEventLogProvider = fr.Provider<EventLog>((ref) {
-  final session = ref.watch(networkSessionProvider);
+  ref.watch(networkSessionProvider.select(_transportSessionScope));
+  final session = ref.read(networkSessionProvider);
   if (session == null || !session.isConnected || session.matchId == null) {
     throw StateError('No active multiplayer session for network event log.');
   }
   return NetworkEventLog(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
     token: session.token,
+    authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
 });
 
@@ -145,26 +159,45 @@ String _defaultLocalApiBaseUrl() {
 @Riverpod(keepAlive: true)
 MultiplayerStreamConnector multiplayerStreamConnector(Ref ref) {
   final host = ref.watch(apiConfigProvider).baseUrl.toString();
-  return ServerpodMultiplayerStreamConnector(host).connect;
+  return ServerpodMultiplayerStreamConnector(
+    host,
+    authKeyProviderFactory: _authKeyProviderFactory(ref),
+  ).connect;
 }
 
 @Riverpod(keepAlive: true)
 WireCommandDispatcher wireCommandDispatcher(Ref ref) {
   final host = ref.watch(apiConfigProvider).baseUrl.toString();
-  return ServerpodWireCommandDispatcher(serverpodHost: host);
+  return ServerpodWireCommandDispatcher(
+    serverpodHost: host,
+    authKeyProviderFactory: _authKeyProviderFactory(ref),
+  );
 }
 
 @Riverpod(keepAlive: true)
 NetworkSessionClient networkSessionClient(Ref ref) {
   return NetworkSessionClient(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
+    authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
 }
 
 @Riverpod(keepAlive: true)
 NetworkSessionStore networkSessionStore(Ref ref) {
-  return const NetworkSessionStore();
+  return NetworkSessionStore();
 }
+
+final networkSessionRefreshCoordinatorProvider =
+    fr.Provider<NetworkSessionRefreshCoordinator>((ref) {
+      final sessionClient = ref.read(networkSessionClientProvider);
+      return NetworkSessionRefreshCoordinator(
+        currentSession: () => ref.read(networkSessionProvider),
+        setSession: ref.read(networkSessionStateProvider.notifier).set,
+        sessionStore: ref.read(networkSessionStoreProvider),
+        refreshToken: sessionClient.refresh,
+        now: () => ref.read(gameClockProvider).nowUtc(),
+      );
+    });
 
 @Riverpod(keepAlive: true)
 class NetworkSessionState extends _$NetworkSessionState {
@@ -186,7 +219,8 @@ DispatchCommandUseCase buildDispatchCommandUseCase(
   required String saveId,
   WireCommandDispatcher? commandDispatcher,
 }) {
-  final session = ref.watch(networkSessionProvider);
+  ref.watch(networkSessionProvider.select(_transportSessionScope));
+  final session = ref.read(networkSessionProvider);
   final repository = gameRepositoryForSave(ref, saveId);
   if (gameMode == GameMode.multiplayer &&
       session != null &&
@@ -196,6 +230,9 @@ DispatchCommandUseCase buildDispatchCommandUseCase(
       commandTransport: NetworkCommandTransport(
         serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
         token: session.token,
+        tokenReader: ref
+            .read(networkSessionRefreshCoordinatorProvider)
+            .currentToken,
         actorPlayerId: session.playerId ?? session.userId,
         commandDispatcher:
             commandDispatcher ?? ref.watch(wireCommandDispatcherProvider),
@@ -214,5 +251,21 @@ DispatchCommandUseCase buildDispatchCommandUseCase(
       snapshotStore: ref.watch(snapshotStoreProvider),
       clock: ref.watch(gameClockProvider),
     ),
+  );
+}
+
+ServerpodAuthKeyProviderFactory _authKeyProviderFactory(fr.Ref ref) {
+  return () => NetworkSessionAuthKeyProvider(
+    ref.read(networkSessionRefreshCoordinatorProvider),
+  );
+}
+
+({String? userId, String? playerId, String? matchId, bool connected})
+_transportSessionScope(NetworkSession? session) {
+  return (
+    userId: session?.userId,
+    playerId: session?.playerId,
+    matchId: session?.matchId,
+    connected: session?.isConnected ?? false,
   );
 }

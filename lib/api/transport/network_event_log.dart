@@ -1,5 +1,6 @@
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
@@ -9,12 +10,14 @@ class NetworkEventLog implements EventLog {
   final AuthToken token;
   final EventCodec eventCodec;
   final MultiplayerBackendClient? backendClient;
+  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
 
   NetworkEventLog({
     String? serverpodHost,
     required this.token,
     this.eventCodec = const EventCodec(),
     this.backendClient,
+    this.authKeyProviderFactory,
   }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient);
 
   @override
@@ -59,6 +62,7 @@ class NetworkEventLog implements EventLog {
         ServerpodMultiplayerBackendClient(
           serverpodHost: serverpodHost,
           token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
         );
   }
 }
