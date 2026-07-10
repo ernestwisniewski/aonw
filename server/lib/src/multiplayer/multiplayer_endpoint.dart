@@ -13,6 +13,7 @@ import 'match_query_service.dart';
 import 'match_state_access.dart';
 import 'matchmaking_service.dart';
 import 'multiplayer_errors.dart';
+import 'multiplayer_input_validator.dart';
 import 'multiplayer_match_store.dart';
 import 'player_seat_allocator.dart';
 import 'player_match_view_projector.dart';
@@ -253,6 +254,8 @@ class RealtimeMatchHub {
   final DateTime Function() _nowUtc;
   final MatchStateAccess _stateAccess;
   final PlayerMatchViewProjector _viewProjector;
+  final MultiplayerInputValidator _inputValidator =
+      const MultiplayerInputValidator();
   late final MatchBroadcaster _broadcaster;
   late final MatchLifecycleService _lifecycle;
   late final MatchmakingService _matchmaking;
