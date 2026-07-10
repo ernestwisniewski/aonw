@@ -34,6 +34,12 @@ final class MatchRequestValidator {
         !_mapNamePattern.hasMatch(mapName)) {
       throw multiplayerException('invalid_map_name', 'Map name is invalid.');
     }
+    if (MapPlayerCapacityRules.profileForMapName(mapName) == null) {
+      throw multiplayerException(
+        'map_not_available',
+        'Map is not available on this server.',
+      );
+    }
 
     final maxPlayers = request.maxPlayers;
     final minPlayers = request.minPlayers;

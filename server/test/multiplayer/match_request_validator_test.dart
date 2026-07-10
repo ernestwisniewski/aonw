@@ -43,6 +43,13 @@ void main() {
     }
   });
 
+  test('rejects unavailable maps with otherwise valid names', () {
+    expect(
+      () => validator.validate(_request(mapName: 'missing_map')),
+      throwsA(_error('map_not_available')),
+    );
+  });
+
   test('rejects player counts outside global bounds', () {
     for (final request in [
       _request(minPlayers: 1),
@@ -85,11 +92,25 @@ void main() {
     );
     expect(store.transactionCalled, isFalse);
   });
+
+  test('hub rejects an unavailable map before opening a transaction', () async {
+    final store = _TransactionTrackingStore();
+
+    await expectLater(
+      RealtimeMatchHub().createMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        request: _request(mapName: 'missing_map'),
+      ),
+      throwsA(_error('map_not_available')),
+    );
+    expect(store.transactionCalled, isFalse);
+  });
 }
 
 CreateMatchRequest _request({
   String name = 'Test match',
-  String mapName = 'test_map',
+  String mapName = 'verdantia',
   int maxPlayers = 3,
   int minPlayers = 2,
 }) {

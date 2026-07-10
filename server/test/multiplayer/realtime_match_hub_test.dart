@@ -24,7 +24,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Quickplay',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 3,
           minPlayers: 2,
           private: false,
@@ -42,7 +42,7 @@ void main() {
         userIdentifier: 'guest-user',
         request: CreateMatchRequest(
           name: 'Quickplay',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 3,
           minPlayers: 2,
           private: false,
@@ -85,7 +85,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Ignored',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -103,7 +103,7 @@ void main() {
         userIdentifier: 'guest-user',
         request: CreateMatchRequest(
           name: 'Ignored',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -128,7 +128,6 @@ void main() {
       expect(started.state, 'running');
       expect(started.turn, 1);
       expect(started.autoStartAt, isNull);
-      expect(started.mapName, isNot('test_map'));
       expect(
         MapPlayerCapacityRules.official.map((profile) => profile.mapName),
         contains(started.mapName),
@@ -149,7 +148,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Quickplay',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 4,
         minPlayers: 2,
         private: false,
@@ -164,7 +163,7 @@ void main() {
       displayName: 'Owner Renamed',
       request: CreateMatchRequest(
         name: 'Quickplay',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 4,
         minPlayers: 2,
         private: false,
@@ -188,7 +187,7 @@ void main() {
       userIdentifier: 'simulator-user',
       request: CreateMatchRequest(
         name: 'Quickplay',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 4,
         minPlayers: 2,
         private: false,
@@ -203,7 +202,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Quickplay',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 4,
         minPlayers: 2,
         private: false,
@@ -269,7 +268,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Test match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -323,7 +322,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Resume match',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -498,7 +497,7 @@ void main() {
       userIdentifier: 'public-owner',
       request: CreateMatchRequest(
         name: 'Public lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -509,7 +508,7 @@ void main() {
       userIdentifier: 'private-owner',
       request: CreateMatchRequest(
         name: 'Private lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: true,
@@ -520,7 +519,7 @@ void main() {
       userIdentifier: 'resume-owner',
       request: CreateMatchRequest(
         name: 'Running match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -544,7 +543,7 @@ void main() {
       userIdentifier: 'finished-owner',
       request: CreateMatchRequest(
         name: 'Finished match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -582,7 +581,7 @@ void main() {
       userIdentifier: 'legacy-owner',
       request: CreateMatchRequest(
         name: 'Legacy identifiers',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -593,7 +592,7 @@ void main() {
       userIdentifier: 'stale-owner',
       request: CreateMatchRequest(
         name: 'Stale protocol',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -643,7 +642,7 @@ void main() {
       userIdentifier: 'replacement-owner',
       request: CreateMatchRequest(
         name: 'Replacement quickplay',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -668,7 +667,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Abandoned match',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -736,7 +735,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Abandoned match',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -794,7 +793,7 @@ void main() {
       userIdentifier: 'owner-lifecycle-commit-failure',
       request: CreateMatchRequest(
         name: 'Lifecycle commit failure',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -856,7 +855,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Timeout match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -1218,7 +1217,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'FFA resign',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 3,
           minPlayers: 3,
           private: false,
@@ -1315,7 +1314,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Presence match',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -1677,7 +1676,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Diplomacy match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -1818,7 +1817,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Test match',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -2038,7 +2037,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Reconnect smoke',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -2151,7 +2150,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Retry smoke',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
         private: false,
@@ -2298,7 +2297,7 @@ void main() {
         userIdentifier: 'owner-user',
         request: CreateMatchRequest(
           name: 'Tiny match',
-          mapName: 'test_map',
+          mapName: 'verdantia',
           maxPlayers: 2,
           minPlayers: 2,
           private: false,
@@ -2364,7 +2363,7 @@ void main() {
       userIdentifier: 'public-owner',
       request: CreateMatchRequest(
         name: 'Public lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 3,
         minPlayers: 2,
         private: false,
@@ -2398,7 +2397,7 @@ void main() {
       userIdentifier: 'private-owner',
       request: CreateMatchRequest(
         name: 'Private lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 3,
         minPlayers: 2,
         private: true,
@@ -2448,7 +2447,7 @@ void main() {
     final store = _MemoryMatchStore();
     final request = CreateMatchRequest(
       name: 'Private lobby',
-      mapName: 'test_map',
+      mapName: 'verdantia',
       maxPlayers: 3,
       minPlayers: 2,
       private: true,
@@ -2485,7 +2484,7 @@ void main() {
       userIdentifier: 'owner-user',
       request: CreateMatchRequest(
         name: 'Private lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 3,
         minPlayers: 2,
         private: true,
@@ -2505,7 +2504,7 @@ void main() {
       final store = _MemoryMatchStore();
       final request = CreateMatchRequest(
         name: 'Private lobby',
-        mapName: 'test_map',
+        mapName: 'verdantia',
         maxPlayers: 3,
         minPlayers: 2,
         private: true,
@@ -2548,7 +2547,7 @@ Future<_RunningMatchFixture> _startRunningMatch(String suffix) async {
     userIdentifier: 'owner-user-$suffix',
     request: CreateMatchRequest(
       name: 'Retry burst $suffix',
-      mapName: 'test_map',
+      mapName: 'verdantia',
       maxPlayers: 2,
       minPlayers: 2,
       private: false,
@@ -2579,7 +2578,7 @@ Future<WireMatch> _startRunningMatchInStore({
     userIdentifier: 'owner-user-$suffix',
     request: CreateMatchRequest(
       name: 'Running match $suffix',
-      mapName: 'test_map',
+      mapName: 'verdantia',
       maxPlayers: 2,
       minPlayers: 2,
       private: false,
