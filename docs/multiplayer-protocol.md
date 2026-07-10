@@ -22,9 +22,12 @@ protocol envelopes and shared `aonw_core` wire DTOs.
   snapshot, event, match, player, and protocol-version payloads.
 - Live match sync: Serverpod stream methods with generated protocol envelopes.
 - Recovery: PostgreSQL is authoritative for match metadata, snapshots, events,
-  and offsets; reconnecting clients can reload current state and backlog.
+  and offsets; reconnecting clients first receive a recipient-projected current
+  snapshot and then any newer visible events or redacted offset markers.
 - Operations: Serverpod health endpoints (`/livez`, `/readyz`, `/startupz`) and
-  Serverpod Insights are the operational surface.
+  Serverpod Insights are the built-in operational surface. The repository does
+  not itself provision request correlation, a metrics backend, or alert
+  delivery.
 
 ## Protocol Surface
 
@@ -56,8 +59,8 @@ The runtime keeps these synchronization invariants:
 - every command has a client request id or tick for idempotent retry;
 - server persists accepted command, event offset, and snapshot before broadcast;
 - clients deduplicate stream events and command ACKs by offset;
-- reconnect uses last seen offset and receives backlog plus latest snapshot
-  when needed;
+- reconnect uses the last seen offset, but the latest projected snapshot is
+  authoritative and precedes any newer projected event markers;
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
 

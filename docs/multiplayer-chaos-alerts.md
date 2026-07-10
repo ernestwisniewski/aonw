@@ -55,4 +55,12 @@ Prometheus starter rules live in
 - API readiness probe failure;
 - Serverpod Insights probe failure.
 
-Tune thresholds after the first TestFlight sessions produce baseline traffic.
+The rule file is configuration, not a running monitoring stack. It only becomes
+effective after an operator deploys Prometheus, configures blackbox probe jobs
+with the expected `job` labels, loads the rule file, and connects Alertmanager
+to a tested notification route. Until those pieces exist, `/livez` and
+`/readyz` remain release checks but no automated alert is delivered.
+
+Tune thresholds after the first TestFlight sessions produce baseline traffic,
+and record a successful synthetic alert before treating monitoring as a
+production control.

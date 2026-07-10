@@ -1,16 +1,20 @@
 # Multiplayer Scale-Out Contract
 
-The current production-ready scale-out mode is Serverpod API instances behind a
-reverse proxy, with PostgreSQL as the durable source of truth. Clients reconnect
-with their last event offset, but recovery is snapshot-authoritative: the server
-sends the latest recipient-scoped snapshot before any newer event markers.
+PostgreSQL is the durable source of truth. Clients reconnect with their last
+event offset, but recovery is snapshot-authoritative: the server sends the
+latest recipient-scoped snapshot before any newer event markers.
 
-The application-level match subscriber registry is process-local. Until match
-event fan-out is moved to a shared Redis/NATS channel, run live match streams
-with sticky routing or a single active API instance per match. Cross-instance
-recovery is still authoritative through PostgreSQL snapshots and event offsets,
-but live broadcasts only reach subscribers attached to the process that emits
-the event.
+The currently implemented live-delivery mode is a single active API instance,
+or strict per-match affinity covering both streams and match mutations. The
+application-level subscriber registry is process-local. Redis is configured for
+Serverpod infrastructure, but the application does not publish match events to
+a shared Redis channel. Running unrestricted active-active API replicas would
+therefore miss some live broadcasts.
+
+PostgreSQL still makes recovery on another instance authoritative, but recovery
+after a reconnect is not a substitute for cross-instance live fan-out. Use one
+active instance unless the reverse proxy can guarantee that every participant
+and mutation for a match reaches the same process.
 
 ## Load Balancer Rules
 
@@ -40,9 +44,11 @@ On `SIGTERM` or `SIGINT`, deploy automation should:
 4. Rely on client reconnect plus last-seen event offset for match convergence.
 
 Clients reconnect with their last event offset, so a drained stream should
-resume from the latest projected snapshot on another ready instance. Persisted
-event history is viewer-scoped and may contain redacted offset markers; clients
-must not treat it as a canonical command replay log.
+resume from the latest projected snapshot on another ready instance. PostgreSQL
+stores canonical events, not viewer-scoped copies. On every response or stream
+delivery, the server projects those events for the authenticated recipient and
+may replace hidden data with redacted offset markers. Clients must not treat the
+projected history as a canonical command replay log.
 
 ## Player-Scoped Recovery
 
@@ -66,6 +72,10 @@ SERVERPOD_SERVICE_SECRET=<strong-secret>
 Readiness polling should be fast enough to remove draining instances before new
 match streams are opened. Keep API and Insights ports private unless the reverse
 proxy terminates TLS and applies the public host policy.
+
+These environment values do not enable application match fan-out. The shared
+event bus described below is a future mode and must be implemented and tested
+before removing single-instance or per-match-affinity routing.
 
 ## Shared Event Bus Mode
 

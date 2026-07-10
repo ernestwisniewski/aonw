@@ -69,8 +69,11 @@ Connect Insights to:
 https://insights.aonw.net
 ```
 
-Keep the Insights host restricted to the team through DNS, firewall, VPN, or
-reverse-proxy access rules before production rollout.
+The bundled Caddy route terminates TLS and proxies Insights; it does not enforce
+user access control. DNS alone is not an access boundary. Before production,
+restrict the host with a firewall/VPN or add an authenticated reverse-proxy
+policy such as an identity-aware access gateway, mTLS, or separately managed
+basic auth. Keep port `8081` private in every case.
 
 ## Multiplayer Verification
 
@@ -88,10 +91,13 @@ Run this checklist with two clients after each substantial multiplayer change:
 6. Background one mobile/desktop client or switch away from the web tab.
 7. Return and confirm both clients converge to the same snapshot and event
    offset.
-8. Check Insights logs for auth failures, stream disconnects, command rejects,
-   and unexpected reconnect loops.
-9. Check health metrics for PostgreSQL and Redis latency spikes during the
-   reconnect test.
+8. Check Insights logs for emitted auth-abuse, stream lifecycle, command-reject,
+   and projection-failure events, plus unexpected reconnect loops. Do not expect
+   tokens, email addresses, IP addresses, nonces, or raw command payloads in
+   those events.
+9. Check `/readyz` and the Serverpod database/Redis health records during the
+   reconnect test. Latency dashboards require a separately configured metrics
+   backend; this repository does not provision one.
 
 Treat this checklist as a completion gate for the Serverpod multiplayer
 refactor together with analyzer/test results and migration checks.
