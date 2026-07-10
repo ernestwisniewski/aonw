@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
+import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -14,6 +15,7 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 
 class NetworkGameRepository implements GameRepository {
   final String serverpodHost;
+  final String userId;
   final AuthToken token;
   final SnapshotCodec snapshotCodec;
   final SnapshotStore? snapshotCache;
@@ -22,12 +24,21 @@ class NetworkGameRepository implements GameRepository {
 
   NetworkGameRepository({
     String? serverpodHost,
+    required this.userId,
     required this.token,
     this.snapshotCodec = const SnapshotCodec(),
     this.snapshotCache,
     this.fallbackMaxPlayers = 4,
     this.backendClient,
-  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient);
+  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient) {
+    if (userId.trim().isEmpty) {
+      throw ArgumentError.value(
+        userId,
+        'userId',
+        'Expected a non-empty multiplayer account id',
+      );
+    }
+  }
 
   @override
   String defaultSaveName(String mapDisplayName, DateTime now) {
@@ -119,7 +130,7 @@ class NetworkGameRepository implements GameRepository {
         return null;
       }
       if (!_canReadCachedSnapshot(error)) rethrow;
-      final cached = await snapshotCache?.latest(saveId);
+      final cached = await snapshotCache?.latest(_cacheKey(saveId));
       if (cached != null) return cached;
       rethrow;
     }
@@ -129,7 +140,7 @@ class NetworkGameRepository implements GameRepository {
     final cache = snapshotCache;
     if (cache == null) return;
     try {
-      await cache.save(saveId, snapshot);
+      await cache.save(_cacheKey(saveId), snapshot);
     } catch (_) {
       // Cache writes are best-effort; a fresh network snapshot should still load.
     }
@@ -140,6 +151,10 @@ class NetworkGameRepository implements GameRepository {
         error is sp.MethodStreamException ||
         (error is sp.ServerpodClientException &&
             (error.statusCode < 0 || error.statusCode >= 500));
+  }
+
+  String _cacheKey(String saveId) {
+    return multiplayerSnapshotCacheKey(userId: userId, matchId: saveId);
   }
 
   MultiplayerBackendClient _backend() {

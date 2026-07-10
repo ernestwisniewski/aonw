@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/api/transport/live_wire_command_dispatcher.dart';
+import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
@@ -461,7 +462,7 @@ class GameStateNotifier extends _$GameStateNotifier {
       await ref
           .read(snapshotStoreProvider)
           .save(
-            saveId,
+            _multiplayerCacheKey(session.userId, saveId),
             Snapshot(
               offset: offset,
               state: snapshot,
@@ -487,4 +488,8 @@ class GameStateNotifier extends _$GameStateNotifier {
     _liveEventsStarting = null;
     await liveEvents?.close();
   }
+}
+
+String _multiplayerCacheKey(String userId, String saveId) {
+  return multiplayerSnapshotCacheKey(userId: userId, matchId: saveId);
 }

@@ -1,6 +1,7 @@
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
+import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/api/transport/network_game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -121,13 +122,22 @@ void main() {
       expect(loaded.save.id, 'match_1');
       expect(loaded.eventLogOffset, 12);
       expect(loaded.playerColors, {'player_1': 0xFF2563EB});
-      expect(cache.snapshots['match_1']?.state.eventLogOffset, 12);
+      expect(
+        cache
+            .snapshots[multiplayerSnapshotCacheKey(
+              userId: 'user_1',
+              matchId: 'match_1',
+            )]
+            ?.state
+            .eventLogOffset,
+        12,
+      );
     });
 
     test('falls back to cached snapshots when network load fails', () async {
       final cache = _MemorySnapshotStore();
       await cache.save(
-        'match_1',
+        multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
         Snapshot(
           offset: 8,
           state: SaveSnapshot(
@@ -151,6 +161,39 @@ void main() {
       expect(snapshot.eventLogOffset, 8);
       expect(snapshot.playerColors, {'player_1': 0xFF2563EB});
     });
+
+    test(
+      'never reads a multiplayer snapshot cached for another user',
+      () async {
+        final cache = _MemorySnapshotStore();
+        final cached = Snapshot(
+          offset: 8,
+          state: SaveSnapshot(
+            save: _save(),
+            playerGold: const {'player_1': 999},
+            eventLogOffset: 8,
+          ),
+          createdAt: DateTime.utc(2026, 4, 26, 10),
+        );
+        await cache.save(
+          multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
+          cached,
+        );
+        await cache.save('match_1', cached);
+        final repository = _repository(
+          _FakeMultiplayerBackend(
+            loadSnapshotError: const sp.ServerpodClientException('offline', -1),
+          ),
+          userId: 'user_2',
+          snapshotCache: cache,
+        );
+
+        await expectLater(
+          repository.load('match_1'),
+          throwsA(isA<sp.ServerpodClientException>()),
+        );
+      },
+    );
 
     test('leaves matches through Serverpod on delete', () async {
       final backend = _FakeMultiplayerBackend();
@@ -178,10 +221,12 @@ void main() {
 
 NetworkGameRepository _repository(
   MultiplayerBackendClient backend, {
+  String userId = 'user_1',
   SnapshotStore? snapshotCache,
 }) {
   return NetworkGameRepository(
     backendClient: backend,
+    userId: userId,
     token: AuthToken('jwt-token'),
     snapshotCache: snapshotCache,
   );

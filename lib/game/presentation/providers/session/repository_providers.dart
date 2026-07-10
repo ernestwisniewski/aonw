@@ -85,6 +85,7 @@ final networkGameRepositoryProvider = fr.Provider<GameRepository>((ref) {
   }
   return NetworkGameRepository(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
+    userId: session.userId,
     token: session.token,
     snapshotCache: ref.watch(snapshotStoreProvider),
   );

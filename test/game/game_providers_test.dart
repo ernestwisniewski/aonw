@@ -5,6 +5,7 @@ import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart' as api;
 import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_logger.dart';
@@ -193,6 +194,7 @@ class _TrackedEventLog extends _FakeEventLog {
 
 class _FakeSnapshotStore implements SnapshotStore {
   final snapshots = <Snapshot>[];
+  final saveIds = <String>[];
 
   @override
   Future<Snapshot?> latest(String saveId) async {
@@ -201,6 +203,7 @@ class _FakeSnapshotStore implements SnapshotStore {
 
   @override
   Future<void> save(String saveId, Snapshot snapshot) async {
+    saveIds.add(saveId);
     snapshots.add(snapshot);
   }
 }
@@ -1340,6 +1343,10 @@ void main() {
 
         expect(result.state.units.single.col, 1);
         expect(result.events.single, isA<UnitMovedEvent>());
+        expect(
+          snapshotStore.saveIds.single,
+          multiplayerSnapshotCacheKey(userId: 'user_1', matchId: save.id),
+        );
         expect(snapshotStore.snapshots.single.offset, 4);
         expect(snapshotStore.snapshots.single.state.units.single.col, 1);
       },
