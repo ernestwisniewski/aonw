@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'game_match_row_mapper.dart';
 
+part 'multiplayer_match_store_creation.dart';
 part 'multiplayer_match_store_queries.dart';
 
 class StoredMatchState {
@@ -166,45 +167,8 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<StoredMatchState> createState(StoredMatchState state) {
-    return transaction((store) async {
-      final txStore = store as ServerpodMultiplayerMatchStore;
-      final now = DateTime.now().toUtc();
-      final match = state.match;
-      final row = await GameMatch.db.insertRow(
-        txStore._session,
-        GameMatch(
-          publicId: match.id,
-          ownerUserIdentifier: match.ownerUserId,
-          name: match.name,
-          mapName: match.mapName,
-          state: match.state,
-          turn: match.turn,
-          maxPlayers: match.maxPlayers,
-          minPlayers: match.minPlayers,
-          private: match.inviteCode != null,
-          quickplay: match.quickplay,
-          createdAt: match.createdAt,
-          autoStartAt: match.autoStartAt,
-          inviteCode: match.inviteCode,
-          startedAt: match.state == 'running' ? now : null,
-        ),
-        transaction: txStore._transaction,
-      );
-      await txStore._replacePlayers(row.id!, match.players);
-      await GameSnapshot.db.insertRow(
-        txStore._session,
-        GameSnapshot(
-          matchId: row.id!,
-          offset: state.snapshot.offset,
-          snapshot: state.snapshot,
-          createdAt: now,
-        ),
-        transaction: txStore._transaction,
-      );
-      return state;
-    });
-  }
+  Future<StoredMatchState> createState(StoredMatchState state) =>
+      _createState(this, state);
 
   @override
   Future<StoredMatchState> saveState(StoredMatchState state) {
