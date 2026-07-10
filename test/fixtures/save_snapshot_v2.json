@@ -1,0 +1,66 @@
+{
+  "offset": 2,
+  "createdAt": "2026-05-31T13:26:24.342180Z",
+  "state": {
+    "save": {
+      "id": "fixture_v2_quickplay",
+      "schemaVersion": 2,
+      "name": "Quickplay Verdantia",
+      "mapName": "verdantia",
+      "mapSource": "asset",
+      "turn": 2,
+      "playerStates": {
+        "player_1": "active"
+      },
+      "savedAt": "2026-05-31T13:24:20.901323Z",
+      "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+      },
+      "ruleset": {
+        "gameLength": {
+          "kind": "unlimited",
+          "paceProfile": "unlimited",
+          "scoreFallbackEnabled": false
+        },
+        "victory": {
+          "conquestEnabled": true,
+          "dominationEnabled": true,
+          "dominationControlPercent": 60.0,
+          "dominationHoldTurns": 5,
+          "scoreFallbackEnabled": false
+        },
+        "balance": {}
+      },
+      "players": [
+        {
+          "id": "player_1",
+          "name": "Player 1",
+          "colorValue": 4280640491,
+          "country": "poland",
+          "kind": "human"
+        }
+      ],
+      "gameMode": "multiplayer"
+    },
+    "playerColors": {
+      "player_1": 4280640491
+    },
+    "playerCountries": {
+      "player_1": "poland"
+    },
+    "playerGold": {},
+    "units": [],
+    "cities": [],
+    "fieldImprovements": [],
+    "fogOfWar": [],
+    "research": {
+      "players": {}
+    },
+    "runtimeState": {
+      "turnStartedAt": "2026-05-31T13:26:23.904895Z"
+    },
+    "eventLogOffset": 2
+  }
+}

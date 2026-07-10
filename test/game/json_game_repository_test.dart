@@ -96,7 +96,7 @@ void main() {
       expect(snapshot.save.matchRules, matchRules);
     });
 
-    test('marks unreadable saves as corrupted in list()', () async {
+    test('marks future-schema saves as corrupted in list()', () async {
       final saveId = await repository.create(
         const NewGameRequest(
           name: 'Old save',
@@ -109,7 +109,7 @@ void main() {
           jsonDecode(await snapshotFile.readAsString()) as Map<String, dynamic>;
       ((raw['state'] as Map<String, dynamic>)['save']
               as Map<String, dynamic>)['schemaVersion'] =
-          2;
+          4;
       await snapshotFile.writeAsString(jsonEncode(raw));
 
       final saves = await repository.list();

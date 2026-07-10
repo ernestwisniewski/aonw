@@ -74,7 +74,7 @@ void main() {
     });
 
     test(
-      'marks saves with unreadable snapshots as corrupted in list()',
+      'marks saves with unknown older schemas as corrupted in list()',
       () async {
         final id = await repository.create(
           const NewGameRequest(
@@ -90,7 +90,7 @@ void main() {
           Snapshot(
             offset: 0,
             state: loaded.copyWith(
-              save: loaded.save.copyWith(schemaVersion: 2),
+              save: loaded.save.copyWith(schemaVersion: 1),
             ),
             createdAt: DateTime.utc(2026, 4, 24),
           ),
