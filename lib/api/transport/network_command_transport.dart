@@ -14,7 +14,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
@@ -269,7 +268,6 @@ class NetworkCommandTransport implements CommandTransport {
     }
     final snapshot = snapshotCodec.fromWire(ack.snapshot);
     final effectiveOffset = _effectiveOffset(ack.offset, snapshot);
-    final events = eventCodec.eventsFromJsonList(ack.events);
     _clearRetryableCommand(wire);
     if (!ack.accepted) {
       if (_isStaleAckReason(ack.reason)) {
@@ -290,13 +288,19 @@ class NetworkCommandTransport implements CommandTransport {
           snapshot: snapshot,
         ),
       );
-      final rejectionEvents =
-          events.any((event) => event is CommandRejectedEvent)
-          ? events
-          : [
-              ...events,
-              CommandRejectedEvent(reason: ack.reason ?? 'command_rejected'),
-            ];
+      final hasRejectionEvent = ack.events.any(
+        (event) => event['type'] == SystemEventWire.commandRejectedType,
+      );
+      final reason = ack.reason?.trim();
+      final rejectionEvents = eventCodec.eventsFromJsonList([
+        ...ack.events,
+        if (!hasRejectionEvent)
+          SystemEventWire.commandRejected(
+            reason: reason == null || reason.isEmpty
+                ? 'command_rejected'
+                : reason,
+          ),
+      ]);
       return CommandTransportResult(
         state: nextState,
         snapshot: snapshot,
@@ -306,6 +310,7 @@ class NetworkCommandTransport implements CommandTransport {
       );
     }
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+    final events = eventCodec.eventsFromJsonList(ack.events);
 
     final nextState = snapshot.toGameState(
       activePlayerId: currentState.activePlayerId,
