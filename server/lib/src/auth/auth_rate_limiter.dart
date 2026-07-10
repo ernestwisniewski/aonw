@@ -6,6 +6,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 
 import '../generated/protocol.dart';
 import '../observability/server_operational_event_sink.dart';
+import 'auth_rate_limit_constants.dart';
 
 enum AuthRateLimitAction {
   emailLogin,
@@ -97,7 +98,7 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
       key,
       () => DatabaseRateLimitedRequestAttemptUtil<String>(
         RateLimitedRequestAttemptConfig<String>(
-          domain: 'aonw_auth',
+          domain: aonwAuthRateLimitDomain,
           source: source,
           maxAttempts: maxAttempts,
           timeframe: timeframe,
