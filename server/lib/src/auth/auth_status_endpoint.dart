@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import 'auth_input_validator.dart';
+import 'auth_rate_limiter.dart';
 
 /// Manages the lifecycle of authenticated sessions.
 ///
@@ -9,6 +10,11 @@ import 'auth_input_validator.dart';
 /// status endpoint. This endpoint covers clients that only have a persisted
 /// refresh token, or whose short-lived access token expired.
 class AuthStatusEndpoint extends Endpoint {
+  AuthStatusEndpoint({AuthRequestLimiter? rateLimiter})
+    : _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
+
+  final AuthRequestLimiter _rateLimiter;
+
   /// Revokes the session represented by [refreshToken].
   ///
   /// Rotating the token first proves possession of its complete secret. Merely
@@ -20,6 +26,11 @@ class AuthStatusEndpoint extends Endpoint {
     required String refreshToken,
   }) async {
     const AuthInputValidator().refreshToken(refreshToken);
+    await _rateLimiter.enforce(
+      session,
+      action: AuthRateLimitAction.sessionLogout,
+      credential: DatabaseAuthRateLimiter.refreshTokenCredential(refreshToken),
+    );
     final jwt = AuthServices.getTokenManager<JwtTokenManager>().jwt;
     final rotated = await jwt.refreshAccessToken(
       session,

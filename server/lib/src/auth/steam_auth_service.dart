@@ -7,11 +7,15 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 
 import '../generated/protocol.dart';
 import 'auth_input_validator.dart';
+import 'auth_rate_limiter.dart';
 import 'steam_open_id_verifier.dart';
 
 class SteamAuthService {
-  SteamAuthService({SteamOpenIdVerifier? openIdVerifier})
-    : _openIdVerifier = openIdVerifier ?? SteamOpenIdVerifier();
+  SteamAuthService({
+    SteamOpenIdVerifier? openIdVerifier,
+    AuthRequestLimiter? rateLimiter,
+  }) : _openIdVerifier = openIdVerifier ?? SteamOpenIdVerifier(),
+       _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
 
   static const authMethod = 'steam';
   static const callbackPath = '/auth/steam/callback';
@@ -29,8 +33,10 @@ class SteamAuthService {
   static const _inputValidator = AuthInputValidator();
 
   final SteamOpenIdVerifier _openIdVerifier;
+  final AuthRequestLimiter _rateLimiter;
 
   Future<SteamAuthStart> start(Session session) async {
+    await _rateLimiter.enforce(session, action: AuthRateLimitAction.steamStart);
     final now = DateTime.now().toUtc();
     final expiresAt = now.add(const Duration(minutes: 10));
     final requestId = _secureRequestId();
@@ -68,11 +74,15 @@ class SteamAuthService {
   Future<SteamAuthPollResult> poll(
     Session session, {
     required String requestId,
-  }) {
-    if (!_inputValidator.isValidSteamRequestId(requestId)) {
-      return Future.value(
-        SteamAuthPollResult(status: _statusFailed, error: 'not_found'),
-      );
+  }) async {
+    final validRequestId = _inputValidator.isValidSteamRequestId(requestId);
+    await _rateLimiter.enforce(
+      session,
+      action: AuthRateLimitAction.steamPoll,
+      credential: validRequestId ? requestId : null,
+    );
+    if (!validRequestId) {
+      return SteamAuthPollResult(status: _statusFailed, error: 'not_found');
     }
     final now = DateTime.now().toUtc();
     return session.db.transaction((transaction) async {
@@ -127,8 +137,14 @@ class SteamAuthService {
   ) async {
     final query = uri.queryParameters;
     final requestId = query['requestId'];
-    if (requestId == null ||
-        !_inputValidator.isValidSteamRequestId(requestId)) {
+    final validRequestId =
+        requestId != null && _inputValidator.isValidSteamRequestId(requestId);
+    await _rateLimiter.enforce(
+      session,
+      action: AuthRateLimitAction.steamCallback,
+      credential: validRequestId ? requestId : null,
+    );
+    if (requestId == null || !validRequestId) {
       return (
         success: false,
         title: 'Steam sign-in failed',

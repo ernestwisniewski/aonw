@@ -4,17 +4,22 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 
 import '../generated/protocol.dart';
 import 'auth_input_validator.dart';
+import 'auth_rate_limiter.dart';
 import 'email_password_verifier.dart';
 
 /// Email/password account endpoint backed by Serverpod Auth Core.
 class EmailIdpEndpoint extends Endpoint {
-  EmailIdpEndpoint({EmailPasswordVerifier? passwordVerifier})
-    : _passwordVerifier = passwordVerifier;
+  EmailIdpEndpoint({
+    EmailPasswordVerifier? passwordVerifier,
+    AuthRequestLimiter? rateLimiter,
+  }) : _passwordVerifier = passwordVerifier,
+       _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
 
   static const _authMethod = 'email';
   static const _hashSaltLength = 16;
   static const _inputValidator = AuthInputValidator();
   EmailPasswordVerifier? _passwordVerifier;
+  final AuthRequestLimiter _rateLimiter;
 
   @unauthenticatedClientCall
   Future<auth_core.AuthSuccess> login(
@@ -24,6 +29,11 @@ class EmailIdpEndpoint extends Endpoint {
   }) async {
     final normalizedEmail = _inputValidator.loginEmail(email);
     _inputValidator.loginPassword(password);
+    await _rateLimiter.enforce(
+      session,
+      action: AuthRateLimitAction.emailLogin,
+      credential: normalizedEmail,
+    );
     final account = await AonwAccount.db.findFirstRow(
       session,
       where: (table) => table.email.equals(normalizedEmail),
@@ -54,6 +64,11 @@ class EmailIdpEndpoint extends Endpoint {
     _inputValidator.newAccountPassword(password);
     final normalizedDisplayName = _inputValidator.displayName(displayName);
     final displayNameKey = _displayNameKey(normalizedDisplayName);
+    await _rateLimiter.enforce(
+      session,
+      action: AuthRateLimitAction.emailCreate,
+      credential: normalized,
+    );
 
     final passwordHash = await _hashUtil().createHashFromString(
       secret: password,

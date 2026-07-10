@@ -67,6 +67,29 @@ void main() {
           );
         },
       );
+
+      test('persists account creation limits across calls', () async {
+        _ensureAuthServices();
+        final results = <Object>[];
+        for (var attempt = 0; attempt < 4; attempt += 1) {
+          results.add(
+            await _capture(
+              endpoints.emailIdp.createAccount(
+                sessionBuilder,
+                email: 'limited@example.test',
+                password: 'long-password',
+                displayName: 'Limited $attempt',
+              ),
+            ),
+          );
+        }
+
+        expect(results.first, isA<auth_core.AuthSuccess>());
+        expect(
+          results.whereType<AccountAuthException>().map((error) => error.code),
+          ['account_exists', 'account_exists', 'rate_limited'],
+        );
+      });
     },
     rollbackDatabase: RollbackDatabase.afterEach,
     testServerOutputMode: TestServerOutputMode.normal,
