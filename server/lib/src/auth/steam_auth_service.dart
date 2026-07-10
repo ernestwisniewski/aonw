@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
@@ -7,8 +6,12 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 
 import '../generated/protocol.dart';
+import 'steam_open_id_verifier.dart';
 
 class SteamAuthService {
+  SteamAuthService({SteamOpenIdVerifier? openIdVerifier})
+    : _openIdVerifier = openIdVerifier ?? SteamOpenIdVerifier();
+
   static const authMethod = 'steam';
   static const callbackPath = '/auth/steam/callback';
 
@@ -19,12 +22,11 @@ class SteamAuthService {
   static const _statusExpired = 'expired';
   static const _statusAuthenticated = 'authenticated';
 
-  static final _steamOpenIdEndpoint = Uri.parse(
-    'https://steamcommunity.com/openid/login',
-  );
   static final _steamClaimedIdPattern = RegExp(
     r'^https://steamcommunity\.com/openid/id/(\d{17})$',
   );
+
+  final SteamOpenIdVerifier _openIdVerifier;
 
   Future<SteamAuthStart> start(Session session) async {
     final now = DateTime.now().toUtc();
@@ -32,7 +34,7 @@ class SteamAuthService {
     final requestId = _secureRequestId();
     final returnTo = _publicWebUri(callbackPath, {'requestId': requestId});
     final realm = _publicWebOrigin();
-    final authUrl = _steamOpenIdEndpoint.replace(
+    final authUrl = SteamOpenIdVerifier.steamEndpoint.replace(
       queryParameters: {
         'openid.ns': 'http://specs.openid.net/auth/2.0',
         'openid.mode': 'checkid_setup',
@@ -183,7 +185,7 @@ class SteamAuthService {
       );
     }
 
-    final valid = await _validateOpenIdResponse(query);
+    final valid = await _openIdVerifier.verify(query);
     if (!valid) {
       await _failRequest(session, requestId, 'invalid_signature');
       return (
@@ -297,33 +299,6 @@ class SteamAuthService {
       transaction: transaction,
     );
     return authUser.id;
-  }
-
-  Future<bool> _validateOpenIdResponse(Map<String, String> query) async {
-    final params = <String, String>{};
-    for (final entry in query.entries) {
-      if (entry.key.startsWith('openid.')) params[entry.key] = entry.value;
-    }
-    params['openid.mode'] = 'check_authentication';
-
-    final client = HttpClient();
-    try {
-      final request = await client.postUrl(_steamOpenIdEndpoint);
-      request.headers.contentType = ContentType(
-        'application',
-        'x-www-form-urlencoded',
-        charset: 'utf-8',
-      );
-      request.write(Uri(queryParameters: params).query);
-      final response = await request.close();
-      final body = await utf8.decoder.bind(response).join();
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return false;
-      }
-      return body.split('\n').any((line) => line.trim() == 'is_valid:true');
-    } finally {
-      client.close(force: true);
-    }
   }
 
   String? _extractSteamId(String? claimedId) {
