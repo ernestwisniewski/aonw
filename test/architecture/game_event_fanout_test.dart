@@ -84,9 +84,8 @@ final _gameEventClassPattern = RegExp(
 );
 
 const _allowedSwitchEventPaths = {
-  // Central descriptor and visibility mapping.
+  // The central descriptor factory is the only production event switch.
   'lib/game/application/services/game_event_descriptor.dart',
-  'lib/game/application/services/game_event_descriptor_player_visibility.dart',
 
   // Serialization is an explicit architecture exception.
   'packages/aonw_core/lib/game/domain/event/event_serialization.dart',

@@ -63,378 +63,378 @@ final class PlayerAnchorGameEventFocusHint extends GameEventFocusHint {
   final String playerId;
 }
 
+typedef _GameEventPlayerIdsResolver =
+    List<String> Function(
+      GameState state,
+      GameState? previousState,
+      String? visiblePlayerId,
+    );
+
 final class GameEventDescriptor {
-  const GameEventDescriptor._(this.event);
+  GameEventDescriptor._({
+    required this.activityWorthy,
+    required this.messageGroup,
+    this.rendererEffectKind = GameEventRendererEffectKind.none,
+    this.soundCueKind = GameEventSoundCueKind.none,
+    Iterable<String> unitIds = const [],
+    Iterable<String> cityIds = const [],
+    Iterable<GameEventFocusHint> focusHints = const [],
+    Iterable<String?> playerIds = const [],
+    _GameEventPlayerIdsResolver? playerIdsResolver,
+  }) : unitIds = Set.unmodifiable(unitIds),
+       cityIds = Set.unmodifiable(cityIds),
+       focusHints = List.unmodifiable(focusHints),
+       _playerIds = List.unmodifiable(playerIds),
+       _playerIdsResolver = playerIdsResolver;
 
   factory GameEventDescriptor.forEvent(GameEvent event) {
-    return GameEventDescriptor._(event);
+    return switch (event) {
+      CityFoundedEvent(:final cityId, :final ownerPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.city,
+          rendererEffectKind: GameEventRendererEffectKind.cityFounded,
+          soundCueKind: GameEventSoundCueKind.city,
+          cityIds: [cityId],
+          focusHints: [CityGameEventFocusHint(cityId)],
+          playerIds: [ownerPlayerId],
+        ),
+      CityBuiltBuildingEvent(:final cityId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.city,
+        soundCueKind: GameEventSoundCueKind.city,
+        cityIds: [cityId],
+        focusHints: [CityGameEventFocusHint(cityId)],
+        playerIdsResolver: _cityOwnerPlayerIds(cityId),
+      ),
+      CityBuiltWonderEvent(:final cityId, :final ownerPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.city,
+          soundCueKind: GameEventSoundCueKind.city,
+          cityIds: [cityId],
+          focusHints: [CityGameEventFocusHint(cityId)],
+          playerIds: [ownerPlayerId],
+        ),
+      WonderProductionRefundedEvent(:final cityId, :final ownerPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.city,
+          cityIds: [cityId],
+          focusHints: [CityGameEventFocusHint(cityId)],
+          playerIds: [ownerPlayerId],
+        ),
+      CityProducedUnitEvent(:final cityId, :final producedUnitId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.city,
+          rendererEffectKind: GameEventRendererEffectKind.cityProducedUnit,
+          soundCueKind: GameEventSoundCueKind.city,
+          unitIds: [producedUnitId],
+          cityIds: [cityId],
+          focusHints: [CityGameEventFocusHint(cityId)],
+          playerIdsResolver: _cityOwnerPlayerIds(cityId),
+        ),
+      CityClaimedHexEvent(:final cityId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.city,
+        rendererEffectKind: GameEventRendererEffectKind.cityClaimedHex,
+        cityIds: [cityId],
+        focusHints: [CityGameEventFocusHint(cityId)],
+        playerIdsResolver: _cityOwnerPlayerIds(cityId),
+      ),
+      UnitMovedEvent(:final unitId) => GameEventDescriptor._(
+        activityWorthy: false,
+        messageGroup: GameEventMessageGroup.unit,
+        rendererEffectKind: GameEventRendererEffectKind.unitMoved,
+        unitIds: [unitId],
+        focusHints: [UnitGameEventFocusHint(unitId)],
+        playerIdsResolver: _unitOwnerPlayerIds(unitId),
+      ),
+      UnitGainedExperienceEvent(:final unitId, :final ownerPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: false,
+          messageGroup: GameEventMessageGroup.unit,
+          unitIds: [unitId],
+          focusHints: [UnitGameEventFocusHint(unitId)],
+          playerIds: [ownerPlayerId],
+        ),
+      UnitAttackedEvent(
+        :final attackerUnitId,
+        :final attackerOwnerPlayerId,
+        :final defenderUnitId,
+        :final defenderOwnerPlayerId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: false,
+          messageGroup: GameEventMessageGroup.combat,
+          unitIds: [attackerUnitId, defenderUnitId],
+          focusHints: [
+            CityGameEventFocusHint(defenderUnitId),
+            UnitGameEventFocusHint(attackerUnitId),
+            UnitGameEventFocusHint(defenderUnitId),
+          ],
+          playerIds: [attackerOwnerPlayerId, defenderOwnerPlayerId],
+        ),
+      CityAttackedEvent(
+        :final attackerUnitId,
+        :final attackerOwnerPlayerId,
+        :final cityId,
+        :final cityOwnerPlayerId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: false,
+          messageGroup: GameEventMessageGroup.combat,
+          unitIds: [attackerUnitId],
+          cityIds: [cityId],
+          focusHints: [
+            CityGameEventFocusHint(cityId),
+            UnitGameEventFocusHint(attackerUnitId),
+          ],
+          playerIds: [attackerOwnerPlayerId, cityOwnerPlayerId],
+        ),
+      CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.combat,
+          rendererEffectKind: GameEventRendererEffectKind.combatResolved,
+          soundCueKind: GameEventSoundCueKind.combat,
+          unitIds: [attackerUnitId, defenderUnitId],
+          cityIds: [defenderUnitId],
+          focusHints: [
+            CityGameEventFocusHint(defenderUnitId),
+            UnitGameEventFocusHint(attackerUnitId),
+            UnitGameEventFocusHint(defenderUnitId),
+          ],
+          playerIdsResolver: _combatPlayerIds(
+            attackerUnitId: attackerUnitId,
+            defenderUnitId: defenderUnitId,
+          ),
+        ),
+      UnitKilledEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final attackerUnitId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.combat,
+          rendererEffectKind: GameEventRendererEffectKind.unitKilled,
+          unitIds: [unitId, ?attackerUnitId],
+          focusHints: [
+            if (attackerUnitId != null) UnitGameEventFocusHint(attackerUnitId),
+          ],
+          playerIdsResolver: _unitKilledPlayerIds(
+            ownerPlayerId: ownerPlayerId,
+            attackerUnitId: attackerUnitId,
+          ),
+        ),
+      UnitRetreatedEvent(:final unitId, :final ownerPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.combat,
+          rendererEffectKind: GameEventRendererEffectKind.unitRetreated,
+          unitIds: [unitId],
+          focusHints: [UnitGameEventFocusHint(unitId)],
+          playerIds: [ownerPlayerId],
+        ),
+      CityCapturedEvent(
+        :final cityId,
+        :final previousOwnerPlayerId,
+        :final newOwnerPlayerId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.combat,
+          soundCueKind: GameEventSoundCueKind.city,
+          cityIds: [cityId],
+          focusHints: [CityGameEventFocusHint(cityId)],
+          playerIds: [previousOwnerPlayerId, newOwnerPlayerId],
+        ),
+      CityDestroyedEvent(
+        :final cityId,
+        :final previousOwnerPlayerId,
+        :final attackerOwnerPlayerId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.combat,
+          cityIds: [cityId],
+          playerIds: [previousOwnerPlayerId, attackerOwnerPlayerId],
+        ),
+      TurnEndedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: false,
+        messageGroup: GameEventMessageGroup.turn,
+        playerIds: [playerId],
+      ),
+      WorkerCompletedJobEvent(:final unitId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.unit,
+        rendererEffectKind: GameEventRendererEffectKind.workerCompletedJob,
+        unitIds: [unitId],
+        focusHints: [UnitGameEventFocusHint(unitId)],
+        playerIdsResolver: _unitOwnerPlayerIds(unitId),
+      ),
+      DominationThresholdReachedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.turn,
+        focusHints: [PlayerAnchorGameEventFocusHint(playerId)],
+        playerIdsResolver: _visiblePlayerAnd(playerId),
+      ),
+      StabilityBandChangedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.turn,
+        playerIds: [playerId],
+      ),
+      ResearchPointsGainedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: false,
+        messageGroup: GameEventMessageGroup.research,
+        playerIds: [playerId],
+      ),
+      TechnologyResearchedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.research,
+        rendererEffectKind: GameEventRendererEffectKind.technologyResearched,
+        focusHints: [PlayerAnchorGameEventFocusHint(playerId)],
+        playerIds: [playerId],
+      ),
+      StrategicResourceDiscoveredEvent(
+        :final playerId,
+        :final nearestUnclaimedCol,
+        :final nearestUnclaimedRow,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.research,
+          focusHints: nearestUnclaimedCol == null || nearestUnclaimedRow == null
+              ? const []
+              : [
+                  TileGameEventFocusHint(
+                    id: 'resource_${nearestUnclaimedCol}_$nearestUnclaimedRow',
+                    col: nearestUnclaimedCol,
+                    row: nearestUnclaimedRow,
+                  ),
+                ],
+          playerIds: [playerId],
+        ),
+      MapObjectiveSecuredEvent(
+        :final playerId,
+        :final objectiveId,
+        :final col,
+        :final row,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.objective,
+          focusHints: [
+            TileGameEventFocusHint(
+              id: 'objective_$objectiveId',
+              col: col,
+              row: row,
+            ),
+          ],
+          playerIds: [playerId],
+        ),
+      CivilizationMetEvent(:final playerId, :final metPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          focusHints: [PlayerAnchorGameEventFocusHint(metPlayerId)],
+          playerIds: [playerId],
+        ),
+      DiplomaticProposalSentEvent(:final fromPlayerId, :final toPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [fromPlayerId, toPlayerId],
+        ),
+      DiplomaticProposalRespondedEvent(
+        :final fromPlayerId,
+        :final toPlayerId,
+      ) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [fromPlayerId, toPlayerId],
+        ),
+      DiplomaticProposalExpiredEvent(:final fromPlayerId, :final toPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [fromPlayerId, toPlayerId],
+        ),
+      DiplomaticRelationChangedEvent(:final playerAId, :final playerBId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [playerAId, playerBId],
+        ),
+      DiplomaticMessageSentEvent(:final fromPlayerId, :final toPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [fromPlayerId, toPlayerId],
+        ),
+      DiplomaticMessageRespondedEvent(:final fromPlayerId, :final toPlayerId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [fromPlayerId, toPlayerId],
+        ),
+      DiplomaticScoreChangedEvent(:final playerAId, :final playerBId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [playerAId, playerBId],
+        ),
+      DiplomaticPromiseBrokenEvent(:final playerAId, :final playerBId) =>
+        GameEventDescriptor._(
+          activityWorthy: true,
+          messageGroup: GameEventMessageGroup.diplomacy,
+          playerIds: [playerAId, playerBId],
+        ),
+      CommandRejectedEvent() => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+      ),
+      AllPlayersSubmittedEvent() => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+      ),
+      PlayerTimedOutEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+        playerIds: [playerId],
+      ),
+      TurnAutoResolvedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+        playerIds: [playerId],
+      ),
+      PlayerKickedEvent(:final playerId) => GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+        playerIds: [playerId],
+      ),
+    };
   }
 
-  final GameEvent event;
-
-  bool get activityWorthy => _eventActivityWorthy(event);
-
-  GameEventMessageGroup get messageGroup => _eventMessageGroup(event);
-
-  GameEventRendererEffectKind get rendererEffectKind {
-    return _eventRendererEffectKind(event);
-  }
-
-  GameEventSoundCueKind get soundCueKind => _eventSoundCueKind(event);
-
-  Set<String> get unitIds => _eventUnitIds(event);
-
-  Set<String> get cityIds => _eventCityIds(event);
-
-  List<GameEventFocusHint> get focusHints => _eventFocusHints(event);
+  final bool activityWorthy;
+  final GameEventMessageGroup messageGroup;
+  final GameEventRendererEffectKind rendererEffectKind;
+  final GameEventSoundCueKind soundCueKind;
+  final Set<String> unitIds;
+  final Set<String> cityIds;
+  final List<GameEventFocusHint> focusHints;
+  final List<String?> _playerIds;
+  final _GameEventPlayerIdsResolver? _playerIdsResolver;
 
   List<String> playerIdsFor({
     required GameState state,
     GameState? previousState,
     String? visiblePlayerId,
   }) {
-    return _eventPlayerIdsFor(
-      event,
-      state: state,
-      previousState: previousState,
-      visiblePlayerId: visiblePlayerId,
-    );
+    return _playerIdsResolver?.call(state, previousState, visiblePlayerId) ??
+        _orderedPlayerIds(_playerIds);
   }
-}
-
-bool _eventActivityWorthy(GameEvent event) {
-  return switch (event) {
-    CityFoundedEvent() ||
-    CityBuiltBuildingEvent() ||
-    CityBuiltWonderEvent() ||
-    WonderProductionRefundedEvent() ||
-    CityProducedUnitEvent() ||
-    CityClaimedHexEvent() ||
-    CombatResolvedEvent() ||
-    UnitKilledEvent() ||
-    UnitRetreatedEvent() ||
-    CityCapturedEvent() ||
-    CityDestroyedEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    WorkerCompletedJobEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() => true,
-    UnitMovedEvent() ||
-    UnitGainedExperienceEvent() ||
-    UnitAttackedEvent() ||
-    CityAttackedEvent() ||
-    TurnEndedEvent() ||
-    ResearchPointsGainedEvent() => false,
-  };
-}
-
-GameEventMessageGroup _eventMessageGroup(GameEvent event) {
-  return switch (event) {
-    CityFoundedEvent() ||
-    CityBuiltBuildingEvent() ||
-    CityBuiltWonderEvent() ||
-    WonderProductionRefundedEvent() ||
-    CityProducedUnitEvent() ||
-    CityClaimedHexEvent() => GameEventMessageGroup.city,
-    UnitMovedEvent() ||
-    UnitGainedExperienceEvent() ||
-    WorkerCompletedJobEvent() => GameEventMessageGroup.unit,
-    UnitAttackedEvent() ||
-    CityAttackedEvent() ||
-    CombatResolvedEvent() ||
-    UnitKilledEvent() ||
-    UnitRetreatedEvent() ||
-    CityCapturedEvent() ||
-    CityDestroyedEvent() => GameEventMessageGroup.combat,
-    TurnEndedEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() => GameEventMessageGroup.turn,
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() => GameEventMessageGroup.research,
-    MapObjectiveSecuredEvent() => GameEventMessageGroup.objective,
-    CivilizationMetEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() => GameEventMessageGroup.diplomacy,
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => GameEventMessageGroup.system,
-  };
-}
-
-GameEventRendererEffectKind _eventRendererEffectKind(GameEvent event) {
-  return switch (event) {
-    UnitMovedEvent() => GameEventRendererEffectKind.unitMoved,
-    CityFoundedEvent() => GameEventRendererEffectKind.cityFounded,
-    CityProducedUnitEvent() => GameEventRendererEffectKind.cityProducedUnit,
-    CityClaimedHexEvent() => GameEventRendererEffectKind.cityClaimedHex,
-    UnitKilledEvent() => GameEventRendererEffectKind.unitKilled,
-    UnitRetreatedEvent() => GameEventRendererEffectKind.unitRetreated,
-    CombatResolvedEvent() => GameEventRendererEffectKind.combatResolved,
-    WorkerCompletedJobEvent() => GameEventRendererEffectKind.workerCompletedJob,
-    TechnologyResearchedEvent() =>
-      GameEventRendererEffectKind.technologyResearched,
-    CityBuiltBuildingEvent() ||
-    CityBuiltWonderEvent() ||
-    WonderProductionRefundedEvent() ||
-    UnitGainedExperienceEvent() ||
-    UnitAttackedEvent() ||
-    CityAttackedEvent() ||
-    CityCapturedEvent() ||
-    CityDestroyedEvent() ||
-    TurnEndedEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() => GameEventRendererEffectKind.none,
-  };
-}
-
-GameEventSoundCueKind _eventSoundCueKind(GameEvent event) {
-  return switch (event) {
-    CityFoundedEvent() ||
-    CityBuiltBuildingEvent() ||
-    CityBuiltWonderEvent() ||
-    CityProducedUnitEvent() ||
-    CityCapturedEvent() => GameEventSoundCueKind.city,
-    CombatResolvedEvent() => GameEventSoundCueKind.combat,
-    WonderProductionRefundedEvent() ||
-    CityClaimedHexEvent() ||
-    UnitMovedEvent() ||
-    UnitGainedExperienceEvent() ||
-    UnitAttackedEvent() ||
-    UnitKilledEvent() ||
-    UnitRetreatedEvent() ||
-    CityAttackedEvent() ||
-    CityDestroyedEvent() ||
-    TurnEndedEvent() ||
-    WorkerCompletedJobEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() => GameEventSoundCueKind.none,
-  };
-}
-
-Set<String> _eventUnitIds(GameEvent event) {
-  return switch (event) {
-    CityProducedUnitEvent(:final producedUnitId) => {producedUnitId},
-    UnitMovedEvent(:final unitId) => {unitId},
-    UnitGainedExperienceEvent(:final unitId) => {unitId},
-    UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) => {
-      attackerUnitId,
-      defenderUnitId,
-    },
-    CityAttackedEvent(:final attackerUnitId) => {attackerUnitId},
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) => {
-      attackerUnitId,
-      defenderUnitId,
-    },
-    UnitKilledEvent(:final unitId, :final attackerUnitId) => {
-      unitId,
-      ?attackerUnitId,
-    },
-    UnitRetreatedEvent(:final unitId) => {unitId},
-    WorkerCompletedJobEvent(:final unitId) => {unitId},
-    CityFoundedEvent() ||
-    CityBuiltBuildingEvent() ||
-    CityBuiltWonderEvent() ||
-    WonderProductionRefundedEvent() ||
-    CityClaimedHexEvent() ||
-    CityCapturedEvent() ||
-    CityDestroyedEvent() ||
-    TurnEndedEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => const <String>{},
-  };
-}
-
-Set<String> _eventCityIds(GameEvent event) {
-  return switch (event) {
-    CityFoundedEvent(:final cityId) => {cityId},
-    CityBuiltBuildingEvent(:final cityId) => {cityId},
-    CityBuiltWonderEvent(:final cityId) => {cityId},
-    WonderProductionRefundedEvent(:final cityId) => {cityId},
-    CityProducedUnitEvent(:final cityId) => {cityId},
-    CityClaimedHexEvent(:final cityId) => {cityId},
-    CityAttackedEvent(:final cityId) => {cityId},
-    CombatResolvedEvent(:final defenderUnitId) => {defenderUnitId},
-    CityCapturedEvent(:final cityId) => {cityId},
-    CityDestroyedEvent(:final cityId) => {cityId},
-    UnitMovedEvent() ||
-    UnitGainedExperienceEvent() ||
-    UnitAttackedEvent() ||
-    UnitKilledEvent() ||
-    UnitRetreatedEvent() ||
-    TurnEndedEvent() ||
-    WorkerCompletedJobEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    TechnologyResearchedEvent() ||
-    StrategicResourceDiscoveredEvent() ||
-    MapObjectiveSecuredEvent() ||
-    CivilizationMetEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => const <String>{},
-  };
-}
-
-List<GameEventFocusHint> _eventFocusHints(GameEvent event) {
-  return switch (event) {
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) ||
-    UnitAttackedEvent(:final attackerUnitId, :final defenderUnitId) => [
-      CityGameEventFocusHint(defenderUnitId),
-      UnitGameEventFocusHint(attackerUnitId),
-      UnitGameEventFocusHint(defenderUnitId),
-    ],
-    CityAttackedEvent(:final attackerUnitId, :final cityId) => [
-      CityGameEventFocusHint(cityId),
-      UnitGameEventFocusHint(attackerUnitId),
-    ],
-    UnitKilledEvent(:final attackerUnitId) => [
-      if (attackerUnitId != null) UnitGameEventFocusHint(attackerUnitId),
-    ],
-    UnitRetreatedEvent(:final unitId) => [UnitGameEventFocusHint(unitId)],
-    CityCapturedEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    CityFoundedEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    CityBuiltBuildingEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    CityBuiltWonderEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    WonderProductionRefundedEvent(:final cityId) => [
-      CityGameEventFocusHint(cityId),
-    ],
-    CityProducedUnitEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    CityClaimedHexEvent(:final cityId) => [CityGameEventFocusHint(cityId)],
-    UnitMovedEvent(:final unitId) => [UnitGameEventFocusHint(unitId)],
-    UnitGainedExperienceEvent(:final unitId) => [
-      UnitGameEventFocusHint(unitId),
-    ],
-    WorkerCompletedJobEvent(:final unitId) => [UnitGameEventFocusHint(unitId)],
-    DominationThresholdReachedEvent(:final playerId) => [
-      PlayerAnchorGameEventFocusHint(playerId),
-    ],
-    TechnologyResearchedEvent(:final playerId) => [
-      PlayerAnchorGameEventFocusHint(playerId),
-    ],
-    StrategicResourceDiscoveredEvent(
-      :final nearestUnclaimedCol,
-      :final nearestUnclaimedRow,
-    ) =>
-      nearestUnclaimedCol == null || nearestUnclaimedRow == null
-          ? const []
-          : [
-              TileGameEventFocusHint(
-                id: 'resource_${nearestUnclaimedCol}_$nearestUnclaimedRow',
-                col: nearestUnclaimedCol,
-                row: nearestUnclaimedRow,
-              ),
-            ],
-    MapObjectiveSecuredEvent(:final objectiveId, :final col, :final row) => [
-      TileGameEventFocusHint(id: 'objective_$objectiveId', col: col, row: row),
-    ],
-    CivilizationMetEvent(:final metPlayerId) => [
-      PlayerAnchorGameEventFocusHint(metPlayerId),
-    ],
-    CityDestroyedEvent() ||
-    TurnEndedEvent() ||
-    StabilityBandChangedEvent() ||
-    ResearchPointsGainedEvent() ||
-    DiplomaticProposalSentEvent() ||
-    DiplomaticProposalRespondedEvent() ||
-    DiplomaticProposalExpiredEvent() ||
-    DiplomaticRelationChangedEvent() ||
-    DiplomaticMessageSentEvent() ||
-    DiplomaticMessageRespondedEvent() ||
-    DiplomaticScoreChangedEvent() ||
-    DiplomaticPromiseBrokenEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() ||
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() => const [],
-  };
 }
