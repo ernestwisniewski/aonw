@@ -374,6 +374,7 @@ server-integration-test:
 		SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-test-jwt-hmac-sha512-private-key}" \
 		SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-test-jwt-refresh-token-hash-pepper}" \
 		dart test \
+			test/integration/account_profile_endpoint_smoke.dart \
 			test/integration/multiplayer_endpoint_smoke.dart \
 			test/integration/auth_status_endpoint_smoke.dart \
 			test/integration/email_idp_endpoint_smoke.dart \

@@ -8,7 +8,30 @@ import '../generated/protocol.dart';
 class AccountProfileEndpoint extends Endpoint {
   Future<String> ensureAccount(Session session) async {
     final user = _requireUser(session);
-    final account = await session.db.transaction((transaction) async {
+    for (var attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        final account = await _provisionAccount(session, user);
+        return account.displayName;
+      } on DatabaseQueryException catch (error) {
+        if (!_isProvisioningConflict(error)) rethrow;
+        final winner = await AonwAccount.db.findFirstRow(
+          session,
+          where: (table) => table.authUserId.equals(user.authUserId),
+        );
+        if (winner != null) return winner.displayName;
+      }
+    }
+    throw AccountAuthException(
+      code: 'account_provisioning_failed',
+      message: 'Account provisioning could not be completed.',
+    );
+  }
+
+  Future<AonwAccount> _provisionAccount(
+    Session session,
+    AuthenticationInfo user,
+  ) {
+    return session.db.transaction((transaction) async {
       final existing = await AonwAccount.db.findFirstRow(
         session,
         where: (table) => table.authUserId.equals(user.authUserId),
@@ -30,7 +53,6 @@ class AccountProfileEndpoint extends Endpoint {
         candidate: _displayNameCandidate(profile, user.authUserId),
         authUserId: user.authUserId,
       );
-
       return AonwAccount.db.insertRow(
         session,
         AonwAccount(
@@ -44,8 +66,15 @@ class AccountProfileEndpoint extends Endpoint {
         transaction: transaction,
       );
     });
+  }
 
-    return account.displayName;
+  bool _isProvisioningConflict(DatabaseQueryException error) {
+    return error.code == '23505' &&
+        const {
+          'aonw_account_auth_user_idx',
+          'aonw_account_email_idx',
+          'aonw_account_display_name_idx',
+        }.contains(error.constraintName);
   }
 
   AuthenticationInfo _requireUser(Session session) {
