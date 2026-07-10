@@ -2057,12 +2057,10 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<StoredMatchState>> listVisibleMatchStates(
-    String userIdentifier,
-  ) async {
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
     return [
       for (final state in _states.values)
-        if (_isVisibleToUser(state.match, userIdentifier)) state,
+        if (_isVisibleToUser(state.match, userIdentifier)) state.match,
     ];
   }
 

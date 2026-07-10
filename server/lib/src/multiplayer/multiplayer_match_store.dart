@@ -31,7 +31,7 @@ abstract interface class MultiplayerMatchStore {
     Future<T> Function(MultiplayerMatchStore store) action,
   );
 
-  Future<List<StoredMatchState>> listVisibleMatchStates(String userIdentifier);
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier);
 
   Future<List<StoredMatchState>> listRunningStates();
 
@@ -97,24 +97,22 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<StoredMatchState>> listVisibleMatchStates(
-    String userIdentifier,
-  ) async {
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
     final rows = await GameMatch.db.find(
       _session,
       where: (table) =>
           (table.state.equals('open')) | (table.state.equals('running')),
       orderBy: (table) => table.createdAt,
       transaction: _transaction,
+      include: GameMatch.include(
+        players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+      ),
     );
-    final states = <StoredMatchState>[];
-    for (final row in rows) {
-      final state = await _stateFromRow(row);
-      if (_isVisibleToUser(state.match, userIdentifier)) {
-        states.add(state);
-      }
-    }
-    return states;
+    final matches = [for (final row in rows) _wireMatch(row, row.players!)];
+    return [
+      for (final match in matches)
+        if (_isVisibleToUser(match, userIdentifier)) match,
+    ];
   }
 
   @override
