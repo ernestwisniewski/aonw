@@ -91,13 +91,10 @@ const _allowedSwitchEventPaths = {
   'packages/aonw_core/lib/game/domain/event/event_serialization.dart',
 
   // Legacy fanout that should be migrated behind GameEventDescriptor.
-  'lib/game/analysis/human_trace_analyzer.dart',
-  'lib/game/application/services/ai_recent_hostility_tracker.dart',
   'lib/game/presentation/formatters/diplomacy_history_presenter.dart',
   'lib/game/presentation/formatters/game_event_notification_city_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_combat_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_message.dart',
-  'lib/game/presentation/widgets/diplomacy/diplomatic_popup_event_policy.dart',
   'packages/aonw_core/lib/ai/simulation/economy_simulation_hostility_memory.dart',
   'packages/aonw_core/lib/game/domain/stability/persistent_stability_processor.dart',
   'packages/aonw_core/lib/game/domain/telemetry/balance_telemetry_player_activity.dart',
@@ -105,13 +102,5 @@ const _allowedSwitchEventPaths = {
 
 const _allowedEventIsPaths = {
   // Legacy fanout that should be migrated behind GameEventDescriptor.
-  'lib/game/presentation/providers/game/game_actions_provider_turns.dart',
-  'lib/game/presentation/providers/game/game_state_provider_renderer_effects.dart',
-  'lib/game/presentation/services/hidden_ai_command_presenter.dart',
-  'lib/game/presentation/widgets/activity_log/activity_log_filter.dart',
-  'lib/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart',
-  'lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart',
-  'lib/game/presentation/widgets/diplomacy/diplomatic_popup_event_policy.dart',
-  'lib/game/presentation/widgets/hud/notifications/game_event_notifications_overlay.dart',
   'packages/aonw_core/lib/game/domain/telemetry/balance_telemetry_player_activity.dart',
 };

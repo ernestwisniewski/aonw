@@ -61,3 +61,7 @@ String? _cityOwner(GameState? state, String cityId) {
 String? _unitOwner(GameState? state, String unitId) {
   return state?.unitById(unitId)?.ownerPlayerId;
 }
+
+bool _unitBelongsTo(GameState state, String unitId, String playerId) {
+  return _unitOwner(state, unitId) == playerId;
+}

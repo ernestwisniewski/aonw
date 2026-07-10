@@ -20,7 +20,8 @@ extension GameCommandControllerTurnContext on GameCommandController {
 
   int? _eventTurnFor(DispatchCommandResult result) {
     for (final event in result.events) {
-      if (event is AllPlayersSubmittedEvent) return event.turn;
+      final completedTurn = GameEventDescriptor.forEvent(event).completedTurn;
+      if (completedTurn != null) return completedTurn;
     }
     return _turnFor(result);
   }

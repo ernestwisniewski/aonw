@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/use_cases/autosave_camera_use_case.dart';
 import 'package:aonw/game/application/use_cases/detach_troop_use_case.dart';
@@ -24,7 +25,6 @@ import 'package:aonw/game/presentation/services/turn_start_focus_coordinator.dar
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/providers/language_settings_provider.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

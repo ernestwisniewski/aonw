@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
@@ -18,7 +19,6 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +69,8 @@ class _CivilizationMetPopupOverlayState
       }
       for (final notification in next) {
         if (!_seenNotificationIds.add(notification.id)) continue;
-        if (notification.event is CivilizationMetEvent) {
+        final descriptor = GameEventDescriptor.forEvent(notification.event);
+        if (descriptor.civilizationMetPlayerId != null) {
           _pending.add(notification);
         }
       }
@@ -109,24 +110,31 @@ class _CivilizationMetPopupOverlayState
         _pending.add(notification);
         continue;
       }
-      final event = notification.event;
-      if (event is! CivilizationMetEvent) continue;
+      final descriptor = GameEventDescriptor.forEvent(notification.event);
+      final playerId = descriptor.civilizationPlayerId;
+      final metPlayerId = descriptor.civilizationMetPlayerId;
+      if (playerId == null || metPlayerId == null) continue;
       if (!settings.showPopup) continue;
-      await _showCivilizationMet(notification, event);
+      await _showCivilizationMet(
+        notification,
+        playerId: playerId,
+        metPlayerId: metPlayerId,
+      );
       return;
     }
   }
 
   Future<void> _showCivilizationMet(
-    GameEventNotification notification,
-    CivilizationMetEvent event,
-  ) async {
+    GameEventNotification notification, {
+    required String playerId,
+    required String metPlayerId,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final model = _CivilizationMetPopupModel.from(
       l10n: l10n,
       save: widget.gameSave,
       state: notification.state,
-      playerId: event.metPlayerId,
+      playerId: metPlayerId,
     );
     final gamepadRouter = GamepadInputRouterScope.maybeOf(context);
 
@@ -144,13 +152,11 @@ class _CivilizationMetPopupOverlayState
       ref
           .read(
             civilizationMetPopupSettingsProvider(
-              _settingsKeyFor(event.playerId),
+              _settingsKeyFor(playerId),
             ).notifier,
           )
           .setShowPopup(false);
-      _pending.removeWhere(
-        (notification) => notification.playerId == event.playerId,
-      );
+      _pending.removeWhere((notification) => notification.playerId == playerId);
       return;
     }
     _scheduleShowNext();

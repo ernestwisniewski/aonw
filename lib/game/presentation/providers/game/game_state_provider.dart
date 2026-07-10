@@ -6,6 +6,7 @@ import 'package:aonw/api/transport/live_wire_command_dispatcher.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';

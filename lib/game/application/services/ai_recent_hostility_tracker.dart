@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 class AiRecentHostilityTracker {
@@ -49,28 +50,9 @@ class AiRecentHostilityTracker {
     required GameEvent event,
     required String playerId,
   }) {
-    return switch (event) {
-      UnitAttackedEvent(
-        :final attackerOwnerPlayerId,
-        :final defenderOwnerPlayerId,
-      )
-          when defenderOwnerPlayerId == playerId =>
-        attackerOwnerPlayerId,
-      CityCapturedEvent(:final previousOwnerPlayerId, :final newOwnerPlayerId)
-          when previousOwnerPlayerId == playerId =>
-        newOwnerPlayerId,
-      CityDestroyedEvent(
-        :final previousOwnerPlayerId,
-        :final attackerOwnerPlayerId,
-      )
-          when previousOwnerPlayerId == playerId =>
-        attackerOwnerPlayerId,
-      UnitKilledEvent(:final ownerPlayerId)
-          when ownerPlayerId == playerId &&
-              logged.actorPlayerId != null &&
-              logged.actorPlayerId!.isNotEmpty =>
-        logged.actorPlayerId,
-      _ => null,
-    };
+    return GameEventDescriptor.forEvent(event).hostilePlayerIdFor(
+      playerId: playerId,
+      actorPlayerId: logged.actorPlayerId,
+    );
   }
 }

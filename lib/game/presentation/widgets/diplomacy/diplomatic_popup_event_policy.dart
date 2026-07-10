@@ -2,31 +2,14 @@ part of 'diplomatic_message_popup_overlay.dart';
 
 abstract final class _DiplomaticPopupEventPolicy {
   static bool isPassivePopupEvent(GameEvent event) {
-    return switch (event) {
-      DiplomaticMessageSentEvent() || DiplomaticProposalSentEvent() => false,
-      DiplomaticProposalRespondedEvent() ||
-      DiplomaticProposalExpiredEvent() ||
-      DiplomaticRelationChangedEvent() ||
-      DiplomaticMessageRespondedEvent() ||
-      DiplomaticPromiseBrokenEvent() => true,
-      DiplomaticScoreChangedEvent() => false,
-      _ => false,
-    };
+    return GameEventDescriptor.forEvent(event).passiveDiplomaticPopup;
   }
 
   static Color accentFor(GameEvent event) {
-    return switch (event) {
-      DiplomaticProposalExpiredEvent() ||
-      DiplomaticPromiseBrokenEvent() => GameUiTheme.danger,
-      DiplomaticProposalRespondedEvent(:final accepted) =>
-        accepted ? GameUiTheme.success : GameUiTheme.danger,
-      DiplomaticMessageRespondedEvent(:final relationDelta) =>
-        relationDelta >= 0 ? GameUiTheme.success : GameUiTheme.danger,
-      DiplomaticRelationChangedEvent(:final newStatus) =>
-        newStatus == DiplomaticRelationStatus.war
-            ? GameUiTheme.danger
-            : GameUiTheme.info,
-      _ => GameUiTheme.info,
+    return switch (GameEventDescriptor.forEvent(event).diplomaticPopupTone) {
+      GameEventDiplomaticPopupTone.positive => GameUiTheme.success,
+      GameEventDiplomaticPopupTone.negative => GameUiTheme.danger,
+      GameEventDiplomaticPopupTone.neutral => GameUiTheme.info,
     };
   }
 
@@ -41,13 +24,10 @@ abstract final class _DiplomaticPopupEventPolicy {
   }
 
   static String _recipientPlayerId(GameEventNotification notification) {
-    final event = notification.event;
-    if (event is DiplomaticMessageSentEvent && event.toPlayerId.isNotEmpty) {
-      return event.toPlayerId;
-    }
-    if (event is DiplomaticProposalSentEvent && event.toPlayerId.isNotEmpty) {
-      return event.toPlayerId;
-    }
+    final recipientPlayerId = GameEventDescriptor.forEvent(
+      notification.event,
+    ).diplomaticPopupRecipientPlayerId;
+    if (recipientPlayerId?.isNotEmpty == true) return recipientPlayerId!;
     return notification.playerId;
   }
 }
