@@ -11,7 +11,7 @@ behavior unless they explicitly call out historical context or future work.
 | Understand the codebase | [Architecture](#architecture), then [Multiplayer Protocol](multiplayer-protocol.md) if networking is involved. |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
-| Work on backend operations | [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
+| Work on backend operations | [Data Retention](data-retention.md), [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
 | Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
 
 ## Public Links
@@ -71,6 +71,7 @@ intentional, update this document and the architecture test in the same change.
 | Document | Use It For |
 | --- | --- |
 | [Build And Deploy Runbook](build-and-deploy.md) | Local builds, release packaging, server deploys, web deploys, store uploads, and public downloads. |
+| [Data Retention](data-retention.md) | Automatic cleanup, data without retention, and backup-lifecycle boundaries. |
 | [PostgreSQL Backup And Restore](postgres-backup.md) | Database backup, restore, and recovery procedures. |
 | [Serverpod Insights Runbook](serverpod-insights-runbook.md) | Insights setup, health checks, and production visibility. |
 

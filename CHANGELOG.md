@@ -2,7 +2,14 @@
 
 ## Unreleased
 
-- No unreleased player-facing changes yet.
+- Improved online session recovery so reconnects and multiplayer actions use
+  the latest credentials after an access token expires.
+- Made multiplayer sign-out more reliable when a session refresh or network
+  request is already in progress.
+- Made long multiplayer histories load across multiple pages so established
+  matches can resume and replay beyond the first history page.
+- Improved matchmaking and multiplayer match-list stability under larger
+  queues by bounding how much stale-lobby and discovery work one request does.
 
 ## 1.1.4 - 2026-07-08
 
