@@ -16,9 +16,18 @@ final class MultiplayerTurnTimeoutSweepCall
   @override
   Future<void> invoke(Session session, SerializableModel? object) async {
     try {
-      await _hub.advanceTimedOutTurns(
+      final failures = await _hub.advanceTimedOutTurns(
         store: ServerpodMultiplayerMatchStore(session),
       );
+      for (final failure in failures) {
+        session.log(
+          'event=multiplayer_timeout_sweep_failure '
+          'match_id=${failure.matchId}',
+          level: LogLevel.error,
+          exception: failure.error,
+          stackTrace: failure.stackTrace,
+        );
+      }
     } finally {
       await scheduleMultiplayerTurnTimeoutSweep(session.serverpod);
     }

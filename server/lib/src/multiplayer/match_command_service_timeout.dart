@@ -1,5 +1,17 @@
 part of 'match_command_service.dart';
 
+final class MatchTimeoutSweepFailure {
+  const MatchTimeoutSweepFailure({
+    required this.matchId,
+    required this.error,
+    required this.stackTrace,
+  });
+
+  final String matchId;
+  final Object error;
+  final StackTrace stackTrace;
+}
+
 extension MatchCommandServiceTimeouts on MatchCommandService {
   Future<MatchConnectionAuthorization> authorizeConnection({
     required MultiplayerMatchStore store,
@@ -11,9 +23,10 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     return MatchConnectionAuthorization(state: state, participant: player);
   }
 
-  Future<void> advanceTimedOutTurns({
+  Future<List<MatchTimeoutSweepFailure>> advanceTimedOutTurns({
     required MultiplayerMatchStore store,
   }) async {
+    final failures = <MatchTimeoutSweepFailure>[];
     final states = await store.listRunningStates();
     for (final state in states) {
       if (state.snapshot.v != kProtocolVersion) {
@@ -21,11 +34,19 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
       try {
         await advanceTimedOutTurn(store: store, matchId: state.match.id);
-      } catch (_) {
+      } catch (error, stackTrace) {
         // Keep the sweep alive for other matches; the next scheduled sweep can
         // retry this match after transient store/snapshot failures.
+        failures.add(
+          MatchTimeoutSweepFailure(
+            matchId: state.match.id,
+            error: error,
+            stackTrace: stackTrace,
+          ),
+        );
       }
     }
+    return failures;
   }
 
   Future<void> advanceTimedOutTurn({

@@ -394,9 +394,9 @@ class RealtimeMatchHub {
     );
   }
 
-  Future<void> advanceTimedOutTurns({required MultiplayerMatchStore store}) =>
-      _commands.advanceTimedOutTurns(store: store);
-
+  Future<List<MatchTimeoutSweepFailure>> advanceTimedOutTurns({
+    required MultiplayerMatchStore store,
+  }) => _commands.advanceTimedOutTurns(store: store);
   Stream<MultiplayerServerMessage> connect({
     required MultiplayerMatchStore store,
     required String userIdentifier,

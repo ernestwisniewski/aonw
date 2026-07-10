@@ -908,10 +908,21 @@ void main() {
     store.failFindStateFor(failing.id);
 
     now = now.add(const Duration(seconds: 11));
-    await hub.advanceTimedOutTurns(store: store);
+    final failures = await hub.advanceTimedOutTurns(store: store);
 
     final failedState = (await store.findState(failing.id))!;
     final healthyState = (await store.findState(healthy.id))!;
+    expect(failures, hasLength(1));
+    expect(failures.single.matchId, failing.id);
+    expect(
+      failures.single.error,
+      isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        'Injected findState failure for ${failing.id}',
+      ),
+    );
+    expect(failures.single.stackTrace.toString(), isNotEmpty);
     expect(GameSave.fromJson(failedState.snapshot.save).turn, 1);
     expect(GameSave.fromJson(healthyState.snapshot.save).turn, 2);
   });
