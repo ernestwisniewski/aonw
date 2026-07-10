@@ -186,7 +186,7 @@ class PersistentUnitActionResolver {
   ) {
     return state.copyWith(
       units: _replaceUnit(state.units, updated),
-      runtimeState: GameRuntimeState(
+      runtimeState: state.runtimeState.copyWith(
         cityFoundingDraft:
             state.runtimeState.cityFoundingDraft?.unitId == original.id
             ? null
@@ -196,17 +196,6 @@ class PersistentUnitActionResolver {
           unitId: original.id,
           restoreMovementPoints: original.movementPoints,
         ),
-        submittedPlayerIds: state.runtimeState.submittedPlayerIds,
-        timeoutStreaksByPlayerId: state.runtimeState.timeoutStreaksByPlayerId,
-        afkPlayerIds: state.runtimeState.afkPlayerIds,
-        kickedPlayerIds: state.runtimeState.kickedPlayerIds,
-        intendedAttacks: state.runtimeState.intendedAttacks,
-        diplomacy: state.runtimeState.diplomacy,
-        dominationHoldTurnsByPlayerId:
-            state.runtimeState.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            state.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-        turnStartedAt: state.runtimeState.turnStartedAt,
       ),
     );
   }
@@ -219,19 +208,9 @@ class PersistentUnitActionResolver {
     final clearDraft = runtimeState.cityFoundingDraft?.unitId == unitId;
     if (!clearPending && !clearDraft) return runtimeState;
 
-    return GameRuntimeState(
+    return runtimeState.copyWith(
       cityFoundingDraft: clearDraft ? null : runtimeState.cityFoundingDraft,
       pendingAction: clearPending ? null : runtimeState.pendingAction,
-      submittedPlayerIds: runtimeState.submittedPlayerIds,
-      timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
-      afkPlayerIds: runtimeState.afkPlayerIds,
-      kickedPlayerIds: runtimeState.kickedPlayerIds,
-      intendedAttacks: runtimeState.intendedAttacks,
-      diplomacy: runtimeState.diplomacy,
-      dominationHoldTurnsByPlayerId: runtimeState.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      turnStartedAt: runtimeState.turnStartedAt,
     );
   }
 

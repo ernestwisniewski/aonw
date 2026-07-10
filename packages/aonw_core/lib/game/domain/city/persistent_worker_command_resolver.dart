@@ -256,20 +256,7 @@ class PersistentWorkerCommandResolver {
     if (pending is PendingWorkerActionSelection &&
         pending.ownerPlayerId == actorPlayerId &&
         pending.unitId == unitId) {
-      return GameRuntimeState(
-        cityFoundingDraft: runtimeState.cityFoundingDraft,
-        submittedPlayerIds: runtimeState.submittedPlayerIds,
-        timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
-        afkPlayerIds: runtimeState.afkPlayerIds,
-        kickedPlayerIds: runtimeState.kickedPlayerIds,
-        intendedAttacks: runtimeState.intendedAttacks,
-        diplomacy: runtimeState.diplomacy,
-        dominationHoldTurnsByPlayerId:
-            runtimeState.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            runtimeState.culturalVictoryHoldTurnsByPlayerId,
-        turnStartedAt: runtimeState.turnStartedAt,
-      );
+      return runtimeState.copyWith(pendingAction: null);
     }
     return runtimeState;
   }

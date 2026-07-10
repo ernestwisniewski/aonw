@@ -26,6 +26,8 @@ void main() {
       const state = PersistentGameState(
         runtimeState: GameRuntimeState(
           pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
+          mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
+          resourceTradeAgreements: _resourceTradeAgreements,
         ),
       );
 
@@ -37,6 +39,7 @@ void main() {
 
       expect(result.accepted, isTrue);
       expect(result.state.runtimeState.pendingAction, isNull);
+      _expectPersistentRuntimeSlices(result.state.runtimeState);
     });
 
     test('rejects missing prerequisites', () {
@@ -124,3 +127,30 @@ TechnologyRuleset _rulesetWithTradeBlockedByMining() {
     },
   );
 }
+
+void _expectPersistentRuntimeSlices(GameRuntimeState runtimeState) {
+  expect(
+    runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    _mapObjectiveHoldStates,
+  );
+  expect(runtimeState.resourceTradeAgreements, _resourceTradeAgreements);
+}
+
+const _mapObjectiveHoldStates = <String, MapObjectiveHoldState>{
+  'objective_1': MapObjectiveHoldState(
+    objectiveId: 'objective_1',
+    playerId: 'player_1',
+    holdTurns: 2,
+  ),
+};
+
+const _resourceTradeAgreements = <ResourceTradeAgreement>[
+  ResourceTradeAgreement(
+    id: 'trade_1',
+    exporterPlayerId: 'player_2',
+    importerPlayerId: 'player_1',
+    resource: ResourceType.horses,
+    goldPerTurn: 2,
+    remainingTurns: 3,
+  ),
+];
