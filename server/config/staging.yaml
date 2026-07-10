@@ -34,3 +34,6 @@ sessionLogs:
   persistentEnabled: true
   consoleEnabled: true
   consoleLogFormat: json
+  cleanupInterval: 24h
+  retentionPeriod: 90d
+  retentionCount: 100000

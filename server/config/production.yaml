@@ -34,3 +34,6 @@ websocketPingInterval: 20
 sessionLogs:
   persistentEnabled: true
   consoleEnabled: false
+  cleanupInterval: 24h
+  retentionPeriod: 90d
+  retentionCount: 100000
