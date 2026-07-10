@@ -4,7 +4,7 @@ COMPOSE ?= docker compose
 PROFILE ?= staging
 SERVER_SERVICE ?= server
 BRANCH ?=
-HEALTH_URL ?= https://api.aonw.net/livez
+HEALTH_URL ?= https://api.aonw.net/readyz
 WEB_HEALTH_URL ?= https://demo.aonw.net/
 HOMEPAGE_HEALTH_URL ?= https://aonw.net/
 HEALTH_ATTEMPTS ?= 30
@@ -236,7 +236,7 @@ help:
 	@echo "  COMPOSE_CHECK_PROFILES=\"dev staging prod\" compose-check profiles. Default: $(COMPOSE_CHECK_PROFILES)"
 	@echo "  PULL=0                         Build from cached base images"
 	@echo "  AONW_APP_VERSION=x.y.z+n      Server image app version. Default: $(AONW_APP_VERSION)"
-	@echo "  HEALTH_URL=https://.../livez  Default: $(HEALTH_URL)"
+	@echo "  HEALTH_URL=https://.../readyz Default: $(HEALTH_URL)"
 	@echo "  WEB_HEALTH_URL=https://...    Default: $(WEB_HEALTH_URL)"
 	@echo "  HOMEPAGE_HEALTH_URL=https://... Default: $(HOMEPAGE_HEALTH_URL)"
 	@echo "  WEB_API_BASE_URL=https://...  deploy-web only. Default: $(WEB_API_BASE_URL)"
