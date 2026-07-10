@@ -3,11 +3,13 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 
 import '../generated/protocol.dart';
+import 'auth_input_validator.dart';
 
 /// Email/password account endpoint backed by Serverpod Auth Core.
 class EmailIdpEndpoint extends Endpoint {
   static const _authMethod = 'email';
   static const _hashSaltLength = 16;
+  static const _inputValidator = AuthInputValidator();
 
   @unauthenticatedClientCall
   Future<auth_core.AuthSuccess> login(
@@ -15,9 +17,11 @@ class EmailIdpEndpoint extends Endpoint {
     required String email,
     required String password,
   }) async {
+    final normalizedEmail = _inputValidator.loginEmail(email);
+    _inputValidator.loginPassword(password);
     final account = await AonwAccount.db.findFirstRow(
       session,
-      where: (table) => table.email.equals(_normalizeEmail(email)),
+      where: (table) => table.email.equals(normalizedEmail),
     );
     if (account == null ||
         account.passwordHash.isEmpty ||
@@ -42,19 +46,10 @@ class EmailIdpEndpoint extends Endpoint {
     required String password,
     required String displayName,
   }) async {
-    final normalized = _normalizeEmail(email);
-    if (normalized.isEmpty || !normalized.contains('@')) {
-      throw _authError('invalid_email', 'Email address is invalid.');
-    }
-    final normalizedDisplayName = _normalizeDisplayName(displayName);
-    _validateDisplayName(normalizedDisplayName);
+    final normalized = _inputValidator.newAccountEmail(email);
+    _inputValidator.newAccountPassword(password);
+    final normalizedDisplayName = _inputValidator.displayName(displayName);
     final displayNameKey = _displayNameKey(normalizedDisplayName);
-    if (password.length < 8) {
-      throw _authError(
-        'weak_password',
-        'Password must be at least 8 characters long.',
-      );
-    }
 
     final passwordHash = await _hashUtil().createHashFromString(
       secret: password,
@@ -129,8 +124,7 @@ class EmailIdpEndpoint extends Endpoint {
     required String displayName,
   }) async {
     final user = _requireUser(session);
-    final normalizedDisplayName = _normalizeDisplayName(displayName);
-    _validateDisplayName(normalizedDisplayName);
+    final normalizedDisplayName = _inputValidator.displayName(displayName);
     final displayNameKey = _displayNameKey(normalizedDisplayName);
     return session.db.transaction((transaction) async {
       final account = await _requireAccountForUser(
@@ -256,37 +250,12 @@ class EmailIdpEndpoint extends Endpoint {
     );
   }
 
-  String _normalizeEmail(String email) => email.trim().toLowerCase();
-
   UuidValue _authUserId(AuthenticationInfo user) {
     return UuidValue.withValidation(user.userIdentifier);
   }
 
-  String _normalizeDisplayName(String displayName) {
-    return displayName.trim().replaceAll(RegExp(r'\s+'), ' ');
-  }
-
   String _displayNameKey(String displayName) {
-    return _normalizeDisplayName(displayName).toLowerCase();
-  }
-
-  void _validateDisplayName(String displayName) {
-    if (displayName.length < 3 || displayName.length > 24) {
-      throw _authError(
-        'invalid_display_name',
-        'Nickname must be 3-24 characters long.',
-      );
-    }
-    final valid = RegExp(
-      r'^[\p{L}\p{N} _-]+$',
-      unicode: true,
-    ).hasMatch(displayName);
-    if (!valid) {
-      throw _authError(
-        'invalid_display_name',
-        'Nickname can contain letters, numbers, spaces, underscores, or hyphens.',
-      );
-    }
+    return displayName.toLowerCase();
   }
 
   AccountAuthException _authError(String code, String message) {

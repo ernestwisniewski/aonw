@@ -6,6 +6,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 
 import '../generated/protocol.dart';
+import 'auth_input_validator.dart';
 import 'steam_open_id_verifier.dart';
 
 class SteamAuthService {
@@ -25,6 +26,7 @@ class SteamAuthService {
   static final _steamClaimedIdPattern = RegExp(
     r'^https://steamcommunity\.com/openid/id/(\d{17})$',
   );
+  static const _inputValidator = AuthInputValidator();
 
   final SteamOpenIdVerifier _openIdVerifier;
 
@@ -67,6 +69,11 @@ class SteamAuthService {
     Session session, {
     required String requestId,
   }) {
+    if (!_inputValidator.isValidSteamRequestId(requestId)) {
+      return Future.value(
+        SteamAuthPollResult(status: _statusFailed, error: 'not_found'),
+      );
+    }
     final now = DateTime.now().toUtc();
     return session.db.transaction((transaction) async {
       final request = await SteamAuthRequest.db.findFirstRow(
@@ -120,11 +127,12 @@ class SteamAuthService {
   ) async {
     final query = uri.queryParameters;
     final requestId = query['requestId'];
-    if (requestId == null || requestId.isEmpty) {
+    if (requestId == null ||
+        !_inputValidator.isValidSteamRequestId(requestId)) {
       return (
         success: false,
         title: 'Steam sign-in failed',
-        message: 'Missing authentication request id.',
+        message: 'Invalid authentication request id.',
       );
     }
 
