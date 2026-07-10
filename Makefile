@@ -345,7 +345,12 @@ build:
 ci: format-check check
 
 format-check:
-	@dart format --set-exit-if-changed .
+	@files=$$(git ls-files -- '*.dart' \
+		':(exclude)server/lib/src/generated/**' \
+		':(exclude)server/test/integration/test_tools/**' \
+		':(exclude)packages/aonw_server_client/lib/src/protocol/**'); \
+		test -n "$$files" || { echo "No tracked Dart files found."; exit 1; }; \
+		dart format --output=none --set-exit-if-changed $$files
 
 check: flutter-test core-test client-test server-test
 

@@ -24,7 +24,7 @@ jobs:
             get: flutter pub get
             analyze: flutter analyze --no-pub
             test: flutter test --no-pub
-            format: dart format --set-exit-if-changed .
+            format: make format-check
           - package: core
             working-directory: packages/aonw_core
             get: dart pub get
