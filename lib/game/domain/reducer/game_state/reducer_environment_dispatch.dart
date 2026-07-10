@@ -11,6 +11,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
 import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
+import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
 import 'package:aonw/game/domain/reducer/worker/worker_reducer.dart';
@@ -256,19 +257,18 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition endTurn(GameState state, EndTurnCommand command) {
-    return TurnReducer.advanceCitiesForPlayer(
-      state,
-      command.playerId,
-      mapData,
-      fogOfWarService: fogOfWarService,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
-      paceBalance: paceBalance,
-    );
-  }
+  GameStateTransition endTurn(GameState state, EndTurnCommand command) =>
+      EndTurnReducer.advanceCitiesForPlayer(
+        state,
+        command.playerId,
+        mapData,
+        fogOfWarService: fogOfWarService,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
+        wonderRuleset: wonderRuleset,
+        paceBalance: paceBalance,
+      );
 
   GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) =>
       TurnReducer.submitTurn(state, command.playerId);

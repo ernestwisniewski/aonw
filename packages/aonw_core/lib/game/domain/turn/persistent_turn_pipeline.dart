@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -14,8 +15,6 @@ import 'package:aonw_core/game/domain/turn/persistent_turn_movement_processor.da
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
-enum PersistentTurnPipelineMode { playerEndTurn, simultaneousFinalize }
-
 final class PersistentTurnMovementDelta {
   PersistentTurnMovementDelta({
     required Iterable<GameUnit> beforeUnits,
@@ -25,33 +24,9 @@ final class PersistentTurnMovementDelta {
 
   final List<GameUnit> beforeUnits;
   final List<GameUnit> afterUnits;
-
-  bool get changed {
-    if (beforeUnits.length != afterUnits.length) return true;
-    for (var i = 0; i < beforeUnits.length; i++) {
-      if (beforeUnits[i] != afterUnits[i]) return true;
-    }
-    return false;
-  }
 }
 
 final class PersistentTurnPipelineRequest {
-  PersistentTurnPipelineRequest.playerEndTurn({
-    required this.save,
-    required this.state,
-    required String playerId,
-    required this.savedAt,
-    required this.mapData,
-    this.mapDefinition,
-    this.ruleset = GameRuleset.defaults,
-    this.fogOfWarService = const FogOfWarService(),
-    this.syncRulesetPaceWithSave = true,
-  }) : mode = PersistentTurnPipelineMode.playerEndTurn,
-       playerIds = List.unmodifiable([playerId]),
-       skippedPlayerIds = const [],
-       preserveNonParticipantPlayerStates = false,
-       trackTimeoutStreaks = false;
-
   PersistentTurnPipelineRequest.simultaneousFinalize({
     required this.save,
     required this.state,
@@ -64,14 +39,11 @@ final class PersistentTurnPipelineRequest {
     Iterable<String> skippedPlayerIds = const [],
     this.preserveNonParticipantPlayerStates = false,
     this.trackTimeoutStreaks = false,
-    this.syncRulesetPaceWithSave = true,
-  }) : mode = PersistentTurnPipelineMode.simultaneousFinalize,
-       playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
+  }) : playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
        skippedPlayerIds = List.unmodifiable(
          _orderedDistinctPlayerIds(skippedPlayerIds),
        );
 
-  final PersistentTurnPipelineMode mode;
   final GameSave save;
   final PersistentGameState state;
   final List<String> playerIds;
@@ -83,7 +55,6 @@ final class PersistentTurnPipelineRequest {
   final List<String> skippedPlayerIds;
   final bool preserveNonParticipantPlayerStates;
   final bool trackTimeoutStreaks;
-  final bool syncRulesetPaceWithSave;
 }
 
 final class PersistentTurnPipelineResult {
@@ -100,61 +71,51 @@ final class PersistentTurnPipelineResult {
   final PersistentTurnMovementDelta? movementDelta;
 }
 
+final class PersistentPlayerTurnResult {
+  PersistentPlayerTurnResult({
+    required this.state,
+    Iterable<GameEvent> events = const [],
+  }) : events = List.unmodifiable(events);
+
+  final PersistentGameState state;
+  final List<GameEvent> events;
+}
+
 abstract final class PersistentTurnPipeline {
-  static PersistentTurnPipelineResult run(
-    PersistentTurnPipelineRequest request,
-  ) {
-    return switch (request.mode) {
-      PersistentTurnPipelineMode.playerEndTurn => _playerEndTurn(request),
-      PersistentTurnPipelineMode.simultaneousFinalize => _simultaneousFinalize(
-        request,
-      ),
-    };
-  }
-
-  static PersistentTurnPipelineResult _playerEndTurn(
-    PersistentTurnPipelineRequest request,
-  ) {
-    if (request.playerIds.length != 1) {
-      throw ArgumentError.value(
-        request.playerIds,
-        'PersistentTurnPipelineRequest.playerIds',
-        'playerEndTurn requires exactly one player id',
-      );
-    }
-
-    final playerId = request.playerIds.single;
-    final savedAt = request.savedAt.toUtc();
+  static PersistentPlayerTurnResult advancePlayer({
+    required PersistentGameState state,
+    required String playerId,
+    required MapData mapData,
+    GameRuleset ruleset = GameRuleset.defaults,
+    FogOfWarService fogOfWarService = const FogOfWarService(),
+    VictoryRules victoryRules = VictoryRules.standard,
+    int? turn,
+  }) {
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: request.state,
+      state: state,
       playerIds: [playerId],
-      mapData: request.mapData,
-      ruleset: _rulesetFor(request),
-      fogOfWarService: request.fogOfWarService,
-      turn: request.save.turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      fogOfWarService: fogOfWarService,
+      turn: turn,
     );
     final previousCulturalHoldTurns =
         economy.state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
-    final culturalHoldTurns = request.save.matchRules.victory.culturalEnabled
+    final culturalHoldTurns = victoryRules.culturalEnabled
         ? CulturalVictoryProgressCalculator.advanceHoldTurns(
             playerIds: [playerId],
             state: economy.state,
             previousHoldTurnsByPlayerId: previousCulturalHoldTurns,
-            requiredArtifactCount:
-                request.save.matchRules.victory.culturalRequiredArtifacts,
+            requiredArtifactCount: victoryRules.culturalRequiredArtifacts,
           )
         : previousCulturalHoldTurns;
-    final runtimeState = economy.state.runtimeState.copyWith(
-      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-    );
-    final state = economy.state.copyWith(runtimeState: runtimeState);
-    final save = request.save
-        .withPlayerFinished(playerId)
-        .copyWith(savedAt: savedAt);
 
-    return PersistentTurnPipelineResult(
-      save: save,
-      state: state,
+    return PersistentPlayerTurnResult(
+      state: economy.state.copyWith(
+        runtimeState: economy.state.runtimeState.copyWith(
+          culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
+        ),
+      ),
       events: [
         ...economy.events,
         TurnEndedEvent(playerId: playerId),
@@ -162,13 +123,15 @@ abstract final class PersistentTurnPipeline {
     );
   }
 
-  static PersistentTurnPipelineResult _simultaneousFinalize(
+  static PersistentTurnPipelineResult simultaneousFinalize(
     PersistentTurnPipelineRequest request,
   ) {
     final playerIds = request.playerIds;
     final skippedPlayerIds = _skippedPlayerIdsFor(request);
     final savedAt = request.savedAt.toUtc();
-    final ruleset = _rulesetFor(request);
+    final ruleset = request.ruleset.copyWith(
+      paceBalance: request.save.matchRules.paceBalance,
+    );
     final combat = PersistentTurnCombatResolver.resolve(
       turn: request.save.turn,
       state: request.state,
@@ -275,13 +238,6 @@ abstract final class PersistentTurnPipeline {
         beforeUnits: economy.state.units,
         afterUnits: movement.state.units,
       ),
-    );
-  }
-
-  static GameRuleset _rulesetFor(PersistentTurnPipelineRequest request) {
-    if (!request.syncRulesetPaceWithSave) return request.ruleset;
-    return request.ruleset.copyWith(
-      paceBalance: request.save.matchRules.paceBalance,
     );
   }
 

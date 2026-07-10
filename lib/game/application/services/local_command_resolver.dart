@@ -140,7 +140,7 @@ class LocalCommandResolver {
     required List<String> playerIds,
     required DateTime savedAt,
   }) {
-    final result = PersistentTurnPipeline.run(
+    final result = PersistentTurnPipeline.simultaneousFinalize(
       PersistentTurnPipelineRequest.simultaneousFinalize(
         save: save,
         state: state.toPersistentState(),

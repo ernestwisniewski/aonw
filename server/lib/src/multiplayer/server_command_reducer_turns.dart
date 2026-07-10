@@ -78,7 +78,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required MapDefinition mapDefinition,
     required GameRuleset ruleset,
   }) {
-    final result = PersistentTurnPipeline.run(
+    final result = PersistentTurnPipeline.simultaneousFinalize(
       PersistentTurnPipelineRequest.simultaneousFinalize(
         save: save,
         state: state,

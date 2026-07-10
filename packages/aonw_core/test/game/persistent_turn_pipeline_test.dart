@@ -3,22 +3,13 @@ import 'package:test/test.dart';
 
 void main() {
   group('PersistentTurnPipeline', () {
-    test('playerEndTurn advances one player without simultaneous events', () {
-      final result = PersistentTurnPipeline.run(
-        PersistentTurnPipelineRequest.playerEndTurn(
-          save: _save(),
-          state: const PersistentGameState(),
-          playerId: 'player_1',
-          savedAt: _savedAt,
-          mapData: _mapData(),
-        ),
+    test('advancePlayer advances one player without simultaneous events', () {
+      final result = PersistentTurnPipeline.advancePlayer(
+        state: const PersistentGameState(),
+        playerId: 'player_1',
+        mapData: _mapData(),
       );
 
-      expect(result.save.turn, 1);
-      expect(result.save.savedAt, _savedAt.toUtc());
-      expect(result.save.playerStates['player_1'], PlayerTurnState.finished);
-      expect(result.save.playerStates['player_2'], PlayerTurnState.active);
-      expect(result.movementDelta, isNull);
       expect(result.events.whereType<AllPlayersSubmittedEvent>(), isEmpty);
       expect(
         result.events.whereType<TurnEndedEvent>().map(
@@ -29,12 +20,41 @@ void main() {
     });
 
     test(
+      'advancePlayer applies plain peace decay when turn number is unknown',
+      () {
+        const state = PersistentGameState(
+          playerWarWeariness: {'player_1': 7},
+          runtimeState: GameRuntimeState(
+            diplomacy: DiplomacyState(
+              relations: {
+                'player_1|player_2': DiplomaticRelation(
+                  playerAId: 'player_1',
+                  playerBId: 'player_2',
+                  status: DiplomaticRelationStatus.truce,
+                  lastChangedTurn: 1,
+                ),
+              },
+            ),
+          ),
+        );
+
+        final result = PersistentTurnPipeline.advancePlayer(
+          state: state,
+          playerId: 'player_1',
+          mapData: _mapData(),
+        );
+
+        expect(result.state.playerWarWeariness['player_1'], 6);
+      },
+    );
+
+    test(
       'simultaneousFinalize advances a shared turn and clears submissions',
       () {
-        final state = PersistentGameState(
+        const state = PersistentGameState(
           runtimeState: GameRuntimeState(
-            submittedPlayerIds: const {'player_1', 'player_2'},
-            intendedAttacks: const [
+            submittedPlayerIds: {'player_1', 'player_2'},
+            intendedAttacks: [
               IntendedAttack(
                 attackerUnitId: 'missing_attacker',
                 defenderCol: 2,
@@ -46,7 +66,7 @@ void main() {
           ),
         );
 
-        final result = PersistentTurnPipeline.run(
+        final result = PersistentTurnPipeline.simultaneousFinalize(
           PersistentTurnPipelineRequest.simultaneousFinalize(
             save: _save(),
             state: state,
@@ -80,7 +100,7 @@ void main() {
     );
 
     test('simultaneousFinalize preserves server-only finished players', () {
-      final result = PersistentTurnPipeline.run(
+      final result = PersistentTurnPipeline.simultaneousFinalize(
         PersistentTurnPipelineRequest.simultaneousFinalize(
           save: _save(
             playerStates: const {
@@ -135,7 +155,7 @@ void main() {
         ),
       );
 
-      final result = PersistentTurnPipeline.run(
+      final result = PersistentTurnPipeline.simultaneousFinalize(
         PersistentTurnPipelineRequest.simultaneousFinalize(
           save: _save(),
           state: PersistentGameState(
