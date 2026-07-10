@@ -185,28 +185,51 @@ class _SteamAccountImpl extends SteamAccount {
 class SteamAccountUpdateTable extends _i1.UpdateTable<SteamAccountTable> {
   SteamAccountUpdateTable(super.table);
 
-  _i1.ColumnValue<String, String> steamId(String value) =>
-      _i1.ColumnValue(table.steamId, value);
+  _i1.ColumnValue<String, String> steamId(String value) => _i1.ColumnValue(
+    table.steamId,
+    value,
+  );
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> authUserId(
     _i1.UuidValue value,
-  ) => _i1.ColumnValue(table.authUserId, value);
+  ) => _i1.ColumnValue(
+    table.authUserId,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> lastSeenAt(DateTime value) =>
-      _i1.ColumnValue(table.lastSeenAt, value);
+      _i1.ColumnValue(
+        table.lastSeenAt,
+        value,
+      );
 }
 
 class SteamAccountTable extends _i1.Table<_i1.UuidValue?> {
   SteamAccountTable({super.tableRelation})
     : super(tableName: 'aonw_steam_account') {
     updateTable = SteamAccountUpdateTable(this);
-    steamId = _i1.ColumnString('steamId', this);
-    authUserId = _i1.ColumnUuid('authUserId', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
-    lastSeenAt = _i1.ColumnDateTime('lastSeenAt', this);
+    steamId = _i1.ColumnString(
+      'steamId',
+      this,
+    );
+    authUserId = _i1.ColumnUuid(
+      'authUserId',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
+    lastSeenAt = _i1.ColumnDateTime(
+      'lastSeenAt',
+      this,
+    );
   }
 
   late final SteamAccountUpdateTable updateTable;
@@ -431,7 +454,10 @@ class SteamAccountRepository {
     SteamAccount row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<SteamAccount>(row, transaction: transaction);
+    return session.db.insertRow<SteamAccount>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [SteamAccount]s in the list and returns the updated rows. If
@@ -516,7 +542,10 @@ class SteamAccountRepository {
     List<SteamAccount> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<SteamAccount>(rows, transaction: transaction);
+    return session.db.delete<SteamAccount>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [SteamAccount].
@@ -525,7 +554,10 @@ class SteamAccountRepository {
     SteamAccount row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<SteamAccount>(row, transaction: transaction);
+    return session.db.deleteRow<SteamAccount>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

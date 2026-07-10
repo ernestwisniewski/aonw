@@ -82,6 +82,104 @@ void main() {
         expect(routes, isEmpty);
       },
     );
+
+    test('sign out revokes the session before clearing local state', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Alice')
+        ..stored = const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'stored-refresh-token',
+          displayName: 'Alice',
+        );
+      NetworkSession? currentSession = NetworkSession(
+        userId: 'user_1',
+        token: AuthToken('access-token'),
+        refreshToken: 'active-refresh-token',
+      );
+      final presentedErrors = <String>[];
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        streamConnector: _emptyStreamConnector,
+        serverpodHost: 'http://localhost:8080',
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async => null,
+        displayName: () => 'Alice',
+        setPrimaryDisplayName: (_) {},
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: presentedErrors.add,
+        publishMatch: (_) {},
+        navigateTo: (_) {},
+      );
+      addTearDown(controller.dispose);
+
+      final revoked = await controller.signOut();
+
+      expect(revoked, isTrue);
+      expect(client.signedOutToken?.value, 'access-token');
+      expect(client.signedOutRefreshToken, 'active-refresh-token');
+      expect(store.cleared, isTrue);
+      expect(currentSession, isNull);
+      expect(presentedErrors, isEmpty);
+    });
+
+    test('sign out still clears local state when revocation fails', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+        signOutError: StateError('offline'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Alice')
+        ..stored = const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'stored-refresh-token',
+          displayName: 'Alice',
+        );
+      NetworkSession? currentSession;
+      final presentedErrors = <String>[];
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        streamConnector: _emptyStreamConnector,
+        serverpodHost: 'http://localhost:8080',
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async => null,
+        displayName: () => 'Alice',
+        setPrimaryDisplayName: (_) {},
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: presentedErrors.add,
+        publishMatch: (_) {},
+        navigateTo: (_) {},
+      );
+      addTearDown(controller.dispose);
+
+      final revoked = await controller.signOut();
+
+      expect(revoked, isFalse);
+      expect(client.signedOutRefreshToken, 'stored-refresh-token');
+      expect(store.cleared, isTrue);
+      expect(currentSession, isNull);
+      expect(presentedErrors.single, contains('offline'));
+    });
   });
 }
 
@@ -146,10 +244,24 @@ WireMatch _match({required String state}) {
 
 final class _FakeNetworkSessionClient extends NetworkSessionClient {
   final WireMatch quickplayMatch;
+  final Object? signOutError;
   QuickplayMatchRequest? quickplayRequest;
+  AuthToken? signedOutToken;
+  String? signedOutRefreshToken;
 
-  _FakeNetworkSessionClient({required this.quickplayMatch})
+  _FakeNetworkSessionClient({required this.quickplayMatch, this.signOutError})
     : super(serverpodHost: 'http://localhost:8080');
+
+  @override
+  Future<void> signOutCurrentSession({
+    AuthToken? token,
+    String? refreshToken,
+  }) async {
+    signedOutToken = token;
+    signedOutRefreshToken = refreshToken;
+    final error = signOutError;
+    if (error != null) throw error;
+  }
 
   @override
   Future<WireMatch> quickplay({

@@ -204,6 +204,28 @@ class NetworkSessionClient {
     );
   }
 
+  /// Revokes the current server-side session when enough credentials remain.
+  ///
+  /// The refresh token is preferred because it still works after the
+  /// short-lived access token expires. Clients without one can fall back to
+  /// Serverpod Auth's current-device sign-out endpoint.
+  Future<void> signOutCurrentSession({
+    AuthToken? token,
+    String? refreshToken,
+  }) async {
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _client().authStatus.signOutRefreshToken(
+        refreshToken: refreshToken,
+      );
+      return;
+    }
+    if (token == null || token.value.isEmpty) return;
+    await _withToken(
+      token,
+      (client) => client.modules.serverpod_auth_core.status.signOutDevice(),
+    );
+  }
+
   Future<NetworkAuthResult> completeSocialAuth({
     required sp_auth.AuthSuccess auth,
   }) async {

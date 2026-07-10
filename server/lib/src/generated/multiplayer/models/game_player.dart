@@ -254,50 +254,103 @@ class _GamePlayerImpl extends GamePlayer {
 class GamePlayerUpdateTable extends _i1.UpdateTable<GamePlayerTable> {
   GamePlayerUpdateTable(super.table);
 
-  _i1.ColumnValue<int, int> matchId(int value) =>
-      _i1.ColumnValue(table.matchId, value);
+  _i1.ColumnValue<int, int> matchId(int value) => _i1.ColumnValue(
+    table.matchId,
+    value,
+  );
 
   _i1.ColumnValue<String, String> publicPlayerId(String value) =>
-      _i1.ColumnValue(table.publicPlayerId, value);
+      _i1.ColumnValue(
+        table.publicPlayerId,
+        value,
+      );
 
   _i1.ColumnValue<String, String> userIdentifier(String value) =>
-      _i1.ColumnValue(table.userIdentifier, value);
+      _i1.ColumnValue(
+        table.userIdentifier,
+        value,
+      );
 
-  _i1.ColumnValue<String, String> displayName(String value) =>
-      _i1.ColumnValue(table.displayName, value);
+  _i1.ColumnValue<String, String> displayName(String value) => _i1.ColumnValue(
+    table.displayName,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> colorValue(int value) =>
-      _i1.ColumnValue(table.colorValue, value);
+  _i1.ColumnValue<int, int> colorValue(int value) => _i1.ColumnValue(
+    table.colorValue,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> countryId(String value) =>
-      _i1.ColumnValue(table.countryId, value);
+  _i1.ColumnValue<String, String> countryId(String value) => _i1.ColumnValue(
+    table.countryId,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> kind(String value) =>
-      _i1.ColumnValue(table.kind, value);
+  _i1.ColumnValue<String, String> kind(String value) => _i1.ColumnValue(
+    table.kind,
+    value,
+  );
 
   _i1.ColumnValue<String, String> connectionState(String value) =>
-      _i1.ColumnValue(table.connectionState, value);
+      _i1.ColumnValue(
+        table.connectionState,
+        value,
+      );
 
-  _i1.ColumnValue<bool, bool> ready(bool value) =>
-      _i1.ColumnValue(table.ready, value);
+  _i1.ColumnValue<bool, bool> ready(bool value) => _i1.ColumnValue(
+    table.ready,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> seatOrder(int value) =>
-      _i1.ColumnValue(table.seatOrder, value);
+  _i1.ColumnValue<int, int> seatOrder(int value) => _i1.ColumnValue(
+    table.seatOrder,
+    value,
+  );
 }
 
 class GamePlayerTable extends _i1.Table<int?> {
   GamePlayerTable({super.tableRelation}) : super(tableName: 'aonw_player') {
     updateTable = GamePlayerUpdateTable(this);
-    matchId = _i1.ColumnInt('matchId', this);
-    publicPlayerId = _i1.ColumnString('publicPlayerId', this);
-    userIdentifier = _i1.ColumnString('userIdentifier', this);
-    displayName = _i1.ColumnString('displayName', this);
-    colorValue = _i1.ColumnInt('colorValue', this);
-    countryId = _i1.ColumnString('countryId', this);
-    kind = _i1.ColumnString('kind', this);
-    connectionState = _i1.ColumnString('connectionState', this);
-    ready = _i1.ColumnBool('ready', this);
-    seatOrder = _i1.ColumnInt('seatOrder', this);
+    matchId = _i1.ColumnInt(
+      'matchId',
+      this,
+    );
+    publicPlayerId = _i1.ColumnString(
+      'publicPlayerId',
+      this,
+    );
+    userIdentifier = _i1.ColumnString(
+      'userIdentifier',
+      this,
+    );
+    displayName = _i1.ColumnString(
+      'displayName',
+      this,
+    );
+    colorValue = _i1.ColumnInt(
+      'colorValue',
+      this,
+    );
+    countryId = _i1.ColumnString(
+      'countryId',
+      this,
+    );
+    kind = _i1.ColumnString(
+      'kind',
+      this,
+    );
+    connectionState = _i1.ColumnString(
+      'connectionState',
+      this,
+    );
+    ready = _i1.ColumnBool(
+      'ready',
+      this,
+    );
+    seatOrder = _i1.ColumnInt(
+      'seatOrder',
+      this,
+    );
   }
 
   late final GamePlayerUpdateTable updateTable;
@@ -540,7 +593,10 @@ class GamePlayerRepository {
     GamePlayer row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<GamePlayer>(row, transaction: transaction);
+    return session.db.insertRow<GamePlayer>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [GamePlayer]s in the list and returns the updated rows. If
@@ -625,7 +681,10 @@ class GamePlayerRepository {
     List<GamePlayer> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<GamePlayer>(rows, transaction: transaction);
+    return session.db.delete<GamePlayer>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [GamePlayer].
@@ -634,7 +693,10 @@ class GamePlayerRepository {
     GamePlayer row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<GamePlayer>(row, transaction: transaction);
+    return session.db.deleteRow<GamePlayer>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

@@ -6,6 +6,7 @@ final class AuthInputValidator {
   static const int maxEmailLength = 254;
   static const int minNewPasswordLength = 8;
   static const int maxPasswordLength = 128;
+  static const int maxRefreshTokenLength = 2048;
   static const int maxRawDisplayNameLength = 64;
   static const int minDisplayNameLength = 3;
   static const int maxDisplayNameLength = 24;
@@ -55,6 +56,12 @@ final class AuthInputValidator {
         'Password must be $minNewPasswordLength-$maxPasswordLength '
             'characters long.',
       );
+    }
+  }
+
+  void refreshToken(String token) {
+    if (token.isEmpty || token.length > maxRefreshTokenLength) {
+      throw _error('invalid_session', 'Session token is invalid.');
     }
   }
 

@@ -171,12 +171,38 @@ final class LobbyConnectionController extends ChangeNotifier {
     _setMode(LobbyMultiplayerMode.home);
   }
 
-  Future<void> signOut() async {
+  Future<bool> signOut() async {
     stopLobbyUpdates();
-    await sessionStore.clear();
-    setSession(null);
-    if (!_canContinue()) return;
+    final session = currentSession();
+    Object? signOutError;
+    try {
+      final sessionRefreshToken = session?.refreshToken;
+      final stored = sessionRefreshToken == null || sessionRefreshToken.isEmpty
+          ? await sessionStore.load()
+          : null;
+      await sessionClient.signOutCurrentSession(
+        token: session?.token,
+        refreshToken: sessionRefreshToken == null || sessionRefreshToken.isEmpty
+            ? stored?.refreshToken
+            : sessionRefreshToken,
+      );
+    } catch (error) {
+      signOutError = error;
+    }
+    try {
+      await sessionStore.clear();
+    } catch (error) {
+      signOutError ??= error;
+    } finally {
+      setSession(null);
+    }
+    if (!_canContinue()) return signOutError == null;
     _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
+    if (signOutError != null) {
+      _showNetworkError(signOutError);
+      return false;
+    }
+    return true;
   }
 
   Future<void> createPrivateMatch() async {

@@ -373,7 +373,10 @@ server-integration-test:
 		SERVERPOD_PASSWORD_emailSecretHashPepper="$${SERVERPOD_PASSWORD_emailSecretHashPepper:-test-email-secret-hash-pepper}" \
 		SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-test-jwt-hmac-sha512-private-key}" \
 		SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-test-jwt-refresh-token-hash-pepper}" \
-		dart test test/integration/multiplayer_endpoint_smoke.dart -P integration --chain-stack-traces
+		dart test \
+			test/integration/multiplayer_endpoint_smoke.dart \
+			test/integration/auth_status_endpoint_smoke.dart \
+			-P integration --chain-stack-traces
 
 serverpod-runtime-smoke:
 	@dart run tool/serverpod_multiplayer_smoke.dart --host "$(SERVERPOD_SMOKE_HOST)" --map "$(SERVERPOD_SMOKE_MAP)"

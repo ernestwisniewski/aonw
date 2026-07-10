@@ -5,6 +5,8 @@ accountProfile:
 appleIdp:
   - login:
   - hasAccount:
+authStatus:
+  - signOutRefreshToken:
 emailIdp:
   - login:
   - createAccount:

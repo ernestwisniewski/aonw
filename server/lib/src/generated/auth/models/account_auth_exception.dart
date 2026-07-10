@@ -17,10 +17,15 @@ abstract class AccountAuthException
         _i1.SerializableException,
         _i1.SerializableModel,
         _i1.ProtocolSerialization {
-  AccountAuthException._({required this.code, this.message});
+  AccountAuthException._({
+    required this.code,
+    this.message,
+  });
 
-  factory AccountAuthException({required String code, String? message}) =
-      _AccountAuthExceptionImpl;
+  factory AccountAuthException({
+    required String code,
+    String? message,
+  }) = _AccountAuthExceptionImpl;
 
   factory AccountAuthException.fromJson(
     Map<String, dynamic> jsonSerialization,
@@ -38,7 +43,10 @@ abstract class AccountAuthException
   /// Returns a shallow copy of this [AccountAuthException]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  AccountAuthException copyWith({String? code, String? message});
+  AccountAuthException copyWith({
+    String? code,
+    String? message,
+  });
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -66,14 +74,22 @@ abstract class AccountAuthException
 class _Undefined {}
 
 class _AccountAuthExceptionImpl extends AccountAuthException {
-  _AccountAuthExceptionImpl({required String code, String? message})
-    : super._(code: code, message: message);
+  _AccountAuthExceptionImpl({
+    required String code,
+    String? message,
+  }) : super._(
+         code: code,
+         message: message,
+       );
 
   /// Returns a shallow copy of this [AccountAuthException]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  AccountAuthException copyWith({String? code, Object? message = _Undefined}) {
+  AccountAuthException copyWith({
+    String? code,
+    Object? message = _Undefined,
+  }) {
     return AccountAuthException(
       code: code ?? this.code,
       message: message is String? ? message : this.message,

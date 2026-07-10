@@ -17,10 +17,15 @@ abstract class MultiplayerException
         _i1.SerializableException,
         _i1.SerializableModel,
         _i1.ProtocolSerialization {
-  MultiplayerException._({required this.code, this.message});
+  MultiplayerException._({
+    required this.code,
+    this.message,
+  });
 
-  factory MultiplayerException({required String code, String? message}) =
-      _MultiplayerExceptionImpl;
+  factory MultiplayerException({
+    required String code,
+    String? message,
+  }) = _MultiplayerExceptionImpl;
 
   factory MultiplayerException.fromJson(
     Map<String, dynamic> jsonSerialization,
@@ -38,7 +43,10 @@ abstract class MultiplayerException
   /// Returns a shallow copy of this [MultiplayerException]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  MultiplayerException copyWith({String? code, String? message});
+  MultiplayerException copyWith({
+    String? code,
+    String? message,
+  });
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -66,14 +74,22 @@ abstract class MultiplayerException
 class _Undefined {}
 
 class _MultiplayerExceptionImpl extends MultiplayerException {
-  _MultiplayerExceptionImpl({required String code, String? message})
-    : super._(code: code, message: message);
+  _MultiplayerExceptionImpl({
+    required String code,
+    String? message,
+  }) : super._(
+         code: code,
+         message: message,
+       );
 
   /// Returns a shallow copy of this [MultiplayerException]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  MultiplayerException copyWith({String? code, Object? message = _Undefined}) {
+  MultiplayerException copyWith({
+    String? code,
+    Object? message = _Undefined,
+  }) {
     return MultiplayerException(
       code: code ?? this.code,
       message: message is String? ? message : this.message,

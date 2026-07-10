@@ -366,66 +366,140 @@ class _GameMatchImpl extends GameMatch {
 class GameMatchUpdateTable extends _i1.UpdateTable<GameMatchTable> {
   GameMatchUpdateTable(super.table);
 
-  _i1.ColumnValue<String, String> publicId(String value) =>
-      _i1.ColumnValue(table.publicId, value);
+  _i1.ColumnValue<String, String> publicId(String value) => _i1.ColumnValue(
+    table.publicId,
+    value,
+  );
 
   _i1.ColumnValue<String, String> ownerUserIdentifier(String value) =>
-      _i1.ColumnValue(table.ownerUserIdentifier, value);
+      _i1.ColumnValue(
+        table.ownerUserIdentifier,
+        value,
+      );
 
-  _i1.ColumnValue<String, String> name(String value) =>
-      _i1.ColumnValue(table.name, value);
+  _i1.ColumnValue<String, String> name(String value) => _i1.ColumnValue(
+    table.name,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> mapName(String value) =>
-      _i1.ColumnValue(table.mapName, value);
+  _i1.ColumnValue<String, String> mapName(String value) => _i1.ColumnValue(
+    table.mapName,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> state(String value) =>
-      _i1.ColumnValue(table.state, value);
+  _i1.ColumnValue<String, String> state(String value) => _i1.ColumnValue(
+    table.state,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> turn(int value) =>
-      _i1.ColumnValue(table.turn, value);
+  _i1.ColumnValue<int, int> turn(int value) => _i1.ColumnValue(
+    table.turn,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> maxPlayers(int value) =>
-      _i1.ColumnValue(table.maxPlayers, value);
+  _i1.ColumnValue<int, int> maxPlayers(int value) => _i1.ColumnValue(
+    table.maxPlayers,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> minPlayers(int value) =>
-      _i1.ColumnValue(table.minPlayers, value);
+  _i1.ColumnValue<int, int> minPlayers(int value) => _i1.ColumnValue(
+    table.minPlayers,
+    value,
+  );
 
-  _i1.ColumnValue<bool, bool> private(bool value) =>
-      _i1.ColumnValue(table.private, value);
+  _i1.ColumnValue<bool, bool> private(bool value) => _i1.ColumnValue(
+    table.private,
+    value,
+  );
 
-  _i1.ColumnValue<bool, bool> quickplay(bool value) =>
-      _i1.ColumnValue(table.quickplay, value);
+  _i1.ColumnValue<bool, bool> quickplay(bool value) => _i1.ColumnValue(
+    table.quickplay,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> startedAt(DateTime? value) =>
-      _i1.ColumnValue(table.startedAt, value);
+      _i1.ColumnValue(
+        table.startedAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> autoStartAt(DateTime? value) =>
-      _i1.ColumnValue(table.autoStartAt, value);
+      _i1.ColumnValue(
+        table.autoStartAt,
+        value,
+      );
 
-  _i1.ColumnValue<String, String> inviteCode(String? value) =>
-      _i1.ColumnValue(table.inviteCode, value);
+  _i1.ColumnValue<String, String> inviteCode(String? value) => _i1.ColumnValue(
+    table.inviteCode,
+    value,
+  );
 }
 
 class GameMatchTable extends _i1.Table<int?> {
   GameMatchTable({super.tableRelation}) : super(tableName: 'aonw_match') {
     updateTable = GameMatchUpdateTable(this);
-    publicId = _i1.ColumnString('publicId', this);
-    ownerUserIdentifier = _i1.ColumnString('ownerUserIdentifier', this);
-    name = _i1.ColumnString('name', this);
-    mapName = _i1.ColumnString('mapName', this);
-    state = _i1.ColumnString('state', this);
-    turn = _i1.ColumnInt('turn', this);
-    maxPlayers = _i1.ColumnInt('maxPlayers', this);
-    minPlayers = _i1.ColumnInt('minPlayers', this);
-    private = _i1.ColumnBool('private', this);
-    quickplay = _i1.ColumnBool('quickplay', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
-    startedAt = _i1.ColumnDateTime('startedAt', this);
-    autoStartAt = _i1.ColumnDateTime('autoStartAt', this);
-    inviteCode = _i1.ColumnString('inviteCode', this);
+    publicId = _i1.ColumnString(
+      'publicId',
+      this,
+    );
+    ownerUserIdentifier = _i1.ColumnString(
+      'ownerUserIdentifier',
+      this,
+    );
+    name = _i1.ColumnString(
+      'name',
+      this,
+    );
+    mapName = _i1.ColumnString(
+      'mapName',
+      this,
+    );
+    state = _i1.ColumnString(
+      'state',
+      this,
+    );
+    turn = _i1.ColumnInt(
+      'turn',
+      this,
+    );
+    maxPlayers = _i1.ColumnInt(
+      'maxPlayers',
+      this,
+    );
+    minPlayers = _i1.ColumnInt(
+      'minPlayers',
+      this,
+    );
+    private = _i1.ColumnBool(
+      'private',
+      this,
+    );
+    quickplay = _i1.ColumnBool(
+      'quickplay',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
+    startedAt = _i1.ColumnDateTime(
+      'startedAt',
+      this,
+    );
+    autoStartAt = _i1.ColumnDateTime(
+      'autoStartAt',
+      this,
+    );
+    inviteCode = _i1.ColumnString(
+      'inviteCode',
+      this,
+    );
   }
 
   late final GameMatchUpdateTable updateTable;
@@ -799,7 +873,10 @@ class GameMatchRepository {
     GameMatch row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<GameMatch>(row, transaction: transaction);
+    return session.db.insertRow<GameMatch>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [GameMatch]s in the list and returns the updated rows. If
@@ -884,7 +961,10 @@ class GameMatchRepository {
     List<GameMatch> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<GameMatch>(rows, transaction: transaction);
+    return session.db.delete<GameMatch>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [GameMatch].
@@ -893,7 +973,10 @@ class GameMatchRepository {
     GameMatch row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<GameMatch>(row, transaction: transaction);
+    return session.db.deleteRow<GameMatch>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

@@ -1,5 +1,6 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -188,10 +189,12 @@ void main() {
     final secureTokens = _MemorySecureSessionTokenStore({
       'network.session.refreshToken': 'refresh_1',
     });
+    final client = _FakeLogoutNetworkSessionClient();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          networkSessionClientProvider.overrideWithValue(client),
           networkSessionStoreProvider.overrideWithValue(
             NetworkSessionStore(secureTokens: secureTokens),
           ),
@@ -210,9 +213,11 @@ void main() {
     expect(signOutButton.onPressed, isNotNull);
 
     await tester.tap(find.byKey(const Key('options.multiplayer.signOut')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();
+    expect(client.signedOutToken, isNull);
+    expect(client.signedOutRefreshToken, 'refresh_1');
     expect(prefs.getString('network.session.userId'), isNull);
     expect(prefs.getString('network.session.matchId'), isNull);
     expect(prefs.getString('network.session.displayName'), 'Alice');
@@ -228,8 +233,10 @@ void main() {
       'network.session.matchId': 'match_1',
     });
     final secureTokens = _MemorySecureSessionTokenStore();
+    final client = _FakeLogoutNetworkSessionClient();
     final providerContainer = ProviderContainer(
       overrides: [
+        networkSessionClientProvider.overrideWithValue(client),
         networkSessionStoreProvider.overrideWithValue(
           NetworkSessionStore(secureTokens: secureTokens),
         ),
@@ -264,11 +271,13 @@ void main() {
     expect(signOutButton.onPressed, isNotNull);
 
     await tester.tap(find.byKey(const Key('options.multiplayer.signOut')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(OptionsScreen));
     final container = ProviderScope.containerOf(context, listen: false);
     final prefs = await SharedPreferences.getInstance();
+    expect(client.signedOutToken?.value, 'jwt-token');
+    expect(client.signedOutRefreshToken, 'refresh_1');
     expect(container.read(networkSessionProvider), isNull);
     expect(prefs.getString('network.session.userId'), isNull);
     expect(prefs.getString('network.session.matchId'), isNull);
@@ -356,6 +365,23 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+}
+
+class _FakeLogoutNetworkSessionClient extends NetworkSessionClient {
+  _FakeLogoutNetworkSessionClient()
+    : super(serverpodHost: 'http://localhost:8080');
+
+  AuthToken? signedOutToken;
+  String? signedOutRefreshToken;
+
+  @override
+  Future<void> signOutCurrentSession({
+    AuthToken? token,
+    String? refreshToken,
+  }) async {
+    signedOutToken = token;
+    signedOutRefreshToken = refreshToken;
+  }
 }
 
 class _MemorySecureSessionTokenStore implements SecureSessionTokenStore {

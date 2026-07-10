@@ -189,27 +189,49 @@ class _GameSnapshotImpl extends GameSnapshot {
 class GameSnapshotUpdateTable extends _i1.UpdateTable<GameSnapshotTable> {
   GameSnapshotUpdateTable(super.table);
 
-  _i1.ColumnValue<int, int> matchId(int value) =>
-      _i1.ColumnValue(table.matchId, value);
+  _i1.ColumnValue<int, int> matchId(int value) => _i1.ColumnValue(
+    table.matchId,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> offset(int value) =>
-      _i1.ColumnValue(table.offset, value);
+  _i1.ColumnValue<int, int> offset(int value) => _i1.ColumnValue(
+    table.offset,
+    value,
+  );
 
   _i1.ColumnValue<_i3.WireSnapshot, _i3.WireSnapshot> snapshot(
     _i3.WireSnapshot value,
-  ) => _i1.ColumnValue(table.snapshot, value);
+  ) => _i1.ColumnValue(
+    table.snapshot,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 }
 
 class GameSnapshotTable extends _i1.Table<int?> {
   GameSnapshotTable({super.tableRelation}) : super(tableName: 'aonw_snapshot') {
     updateTable = GameSnapshotUpdateTable(this);
-    matchId = _i1.ColumnInt('matchId', this);
-    offset = _i1.ColumnInt('offset', this);
-    snapshot = _i1.ColumnSerializable<_i3.WireSnapshot>('snapshot', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
+    matchId = _i1.ColumnInt(
+      'matchId',
+      this,
+    );
+    offset = _i1.ColumnInt(
+      'offset',
+      this,
+    );
+    snapshot = _i1.ColumnSerializable<_i3.WireSnapshot>(
+      'snapshot',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
   }
 
   late final GameSnapshotUpdateTable updateTable;
@@ -238,7 +260,13 @@ class GameSnapshotTable extends _i1.Table<int?> {
   }
 
   @override
-  List<_i1.Column> get columns => [id, matchId, offset, snapshot, createdAt];
+  List<_i1.Column> get columns => [
+    id,
+    matchId,
+    offset,
+    snapshot,
+    createdAt,
+  ];
 
   @override
   _i1.Table? getRelationTable(String relationField) {
@@ -428,7 +456,10 @@ class GameSnapshotRepository {
     GameSnapshot row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<GameSnapshot>(row, transaction: transaction);
+    return session.db.insertRow<GameSnapshot>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [GameSnapshot]s in the list and returns the updated rows. If
@@ -513,7 +544,10 @@ class GameSnapshotRepository {
     List<GameSnapshot> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<GameSnapshot>(rows, transaction: transaction);
+    return session.db.delete<GameSnapshot>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [GameSnapshot].
@@ -522,7 +556,10 @@ class GameSnapshotRepository {
     GameSnapshot row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<GameSnapshot>(row, transaction: transaction);
+    return session.db.deleteRow<GameSnapshot>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

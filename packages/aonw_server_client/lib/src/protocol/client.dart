@@ -41,10 +41,15 @@ class EndpointAppStatus extends _i1.EndpointRef {
   _i2.Future<String> versionStatus({
     required String platform,
     required int buildNumber,
-  }) => caller.callServerEndpoint<String>('appStatus', 'versionStatus', {
-    'platform': platform,
-    'buildNumber': buildNumber,
-  }, authenticated: false);
+  }) => caller.callServerEndpoint<String>(
+    'appStatus',
+    'versionStatus',
+    {
+      'platform': platform,
+      'buildNumber': buildNumber,
+    },
+    authenticated: false,
+  );
 }
 
 /// Keeps the game account table in sync with Serverpod Auth users.
@@ -55,8 +60,11 @@ class EndpointAccountProfile extends _i1.EndpointRef {
   @override
   String get name => 'accountProfile';
 
-  _i2.Future<String> ensureAccount() =>
-      caller.callServerEndpoint<String>('accountProfile', 'ensureAccount', {});
+  _i2.Future<String> ensureAccount() => caller.callServerEndpoint<String>(
+    'accountProfile',
+    'ensureAccount',
+    {},
+  );
 }
 
 /// Apple account endpoint backed by Serverpod Auth IDP.
@@ -82,17 +90,50 @@ class EndpointAppleIdp extends _i3.EndpointAppleIdpBase {
     required bool isNativeApplePlatformSignIn,
     String? firstName,
     String? lastName,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>('appleIdp', 'login', {
-    'identityToken': identityToken,
-    'authorizationCode': authorizationCode,
-    'isNativeApplePlatformSignIn': isNativeApplePlatformSignIn,
-    'firstName': firstName,
-    'lastName': lastName,
-  });
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+    'appleIdp',
+    'login',
+    {
+      'identityToken': identityToken,
+      'authorizationCode': authorizationCode,
+      'isNativeApplePlatformSignIn': isNativeApplePlatformSignIn,
+      'firstName': firstName,
+      'lastName': lastName,
+    },
+  );
 
   @override
-  _i2.Future<bool> hasAccount() =>
-      caller.callServerEndpoint<bool>('appleIdp', 'hasAccount', {});
+  _i2.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'appleIdp',
+    'hasAccount',
+    {},
+  );
+}
+
+/// Manages the lifecycle of authenticated sessions.
+///
+/// Serverpod Auth already exposes access-token based sign-out through its
+/// status endpoint. This endpoint covers clients that only have a persisted
+/// refresh token, or whose short-lived access token expired.
+/// {@category Endpoint}
+class EndpointAuthStatus extends _i1.EndpointRef {
+  EndpointAuthStatus(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'authStatus';
+
+  /// Revokes the session represented by [refreshToken].
+  ///
+  /// Rotating the token first proves possession of its complete secret. Merely
+  /// decoding its public id and deleting that row would allow anyone holding an
+  /// old access token to sign another device out.
+  _i2.Future<void> signOutRefreshToken({required String refreshToken}) =>
+      caller.callServerEndpoint<void>(
+        'authStatus',
+        'signOutRefreshToken',
+        {'refreshToken': refreshToken},
+        authenticated: false,
+      );
 }
 
 /// Email/password account endpoint backed by Serverpod Auth Core.
@@ -106,10 +147,15 @@ class EndpointEmailIdp extends _i1.EndpointRef {
   _i2.Future<_i4.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>('emailIdp', 'login', {
-    'email': email,
-    'password': password,
-  }, authenticated: false);
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+    'emailIdp',
+    'login',
+    {
+      'email': email,
+      'password': password,
+    },
+    authenticated: false,
+  );
 
   _i2.Future<_i4.AuthSuccess> createAccount({
     required String email,
@@ -118,20 +164,32 @@ class EndpointEmailIdp extends _i1.EndpointRef {
   }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'emailIdp',
     'createAccount',
-    {'email': email, 'password': password, 'displayName': displayName},
+    {
+      'email': email,
+      'password': password,
+      'displayName': displayName,
+    },
     authenticated: false,
   );
 
-  _i2.Future<String> displayName() =>
-      caller.callServerEndpoint<String>('emailIdp', 'displayName', {});
+  _i2.Future<String> displayName() => caller.callServerEndpoint<String>(
+    'emailIdp',
+    'displayName',
+    {},
+  );
 
   _i2.Future<String> updateDisplayName({required String displayName}) =>
-      caller.callServerEndpoint<String>('emailIdp', 'updateDisplayName', {
-        'displayName': displayName,
-      });
+      caller.callServerEndpoint<String>(
+        'emailIdp',
+        'updateDisplayName',
+        {'displayName': displayName},
+      );
 
-  _i2.Future<bool> hasAccount() =>
-      caller.callServerEndpoint<bool>('emailIdp', 'hasAccount', {});
+  _i2.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'emailIdp',
+    'hasAccount',
+    {},
+  );
 }
 
 /// Google account endpoint backed by Serverpod Auth IDP.
@@ -150,14 +208,21 @@ class EndpointGoogleIdp extends _i3.EndpointGoogleIdpBase {
   _i2.Future<_i4.AuthSuccess> login({
     required String idToken,
     required String? accessToken,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>('googleIdp', 'login', {
-    'idToken': idToken,
-    'accessToken': accessToken,
-  });
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+    'googleIdp',
+    'login',
+    {
+      'idToken': idToken,
+      'accessToken': accessToken,
+    },
+  );
 
   @override
-  _i2.Future<bool> hasAccount() =>
-      caller.callServerEndpoint<bool>('googleIdp', 'hasAccount', {});
+  _i2.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'googleIdp',
+    'hasAccount',
+    {},
+  );
 }
 
 /// JWT refresh endpoint used by Serverpod auth clients.
@@ -213,9 +278,12 @@ class EndpointSteamAuth extends _i1.EndpointRef {
       );
 
   _i2.Future<_i6.SteamAuthPollResult> poll({required String requestId}) =>
-      caller.callServerEndpoint<_i6.SteamAuthPollResult>('steamAuth', 'poll', {
-        'requestId': requestId,
-      }, authenticated: false);
+      caller.callServerEndpoint<_i6.SteamAuthPollResult>(
+        'steamAuth',
+        'poll',
+        {'requestId': requestId},
+        authenticated: false,
+      );
 }
 
 /// {@category Endpoint}
@@ -233,20 +301,30 @@ class EndpointMultiplayer extends _i1.EndpointRef {
       );
 
   _i2.Future<_i7.WireMatch> createMatch(_i8.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'createMatch', {
-        'request': request,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'createMatch',
+        {'request': request},
+      );
 
   _i2.Future<_i7.WireMatch> quickplay(_i8.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'quickplay', {
-        'request': request,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'quickplay',
+        {'request': request},
+      );
 
-  _i2.Future<_i7.WireMatch> joinMatch(String matchId, [String? countryId]) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'joinMatch', {
-        'matchId': matchId,
-        'countryId': countryId,
-      });
+  _i2.Future<_i7.WireMatch> joinMatch(
+    String matchId, [
+    String? countryId,
+  ]) => caller.callServerEndpoint<_i7.WireMatch>(
+    'multiplayer',
+    'joinMatch',
+    {
+      'matchId': matchId,
+      'countryId': countryId,
+    },
+  );
 
   _i2.Future<_i7.WireMatch> joinPrivateMatch(
     String inviteCode, [
@@ -254,13 +332,18 @@ class EndpointMultiplayer extends _i1.EndpointRef {
   ]) => caller.callServerEndpoint<_i7.WireMatch>(
     'multiplayer',
     'joinPrivateMatch',
-    {'inviteCode': inviteCode, 'countryId': countryId},
+    {
+      'inviteCode': inviteCode,
+      'countryId': countryId,
+    },
   );
 
   _i2.Future<_i7.WireMatch> loadMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'loadMatch', {
-        'matchId': matchId,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'loadMatch',
+        {'matchId': matchId},
+      );
 
   _i2.Future<_i9.WireSnapshot> loadSnapshot(String matchId) =>
       caller.callServerEndpoint<_i9.WireSnapshot>(
@@ -275,28 +358,39 @@ class EndpointMultiplayer extends _i1.EndpointRef {
   ) => caller.callServerEndpoint<List<_i10.WireEvent>>(
     'multiplayer',
     'listEvents',
-    {'matchId': matchId, 'afterOffset': afterOffset},
+    {
+      'matchId': matchId,
+      'afterOffset': afterOffset,
+    },
   );
 
   _i2.Future<_i7.WireMatch> startMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'startMatch', {
-        'matchId': matchId,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'startMatch',
+        {'matchId': matchId},
+      );
 
   _i2.Future<_i7.WireMatch> markMapLoaded(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'markMapLoaded', {
-        'matchId': matchId,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'markMapLoaded',
+        {'matchId': matchId},
+      );
 
   _i2.Future<_i7.WireMatch> resignMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>('multiplayer', 'resignMatch', {
-        'matchId': matchId,
-      });
+      caller.callServerEndpoint<_i7.WireMatch>(
+        'multiplayer',
+        'resignMatch',
+        {'matchId': matchId},
+      );
 
   _i2.Future<void> leaveMatch(String matchId) =>
-      caller.callServerEndpoint<void>('multiplayer', 'leaveMatch', {
-        'matchId': matchId,
-      });
+      caller.callServerEndpoint<void>(
+        'multiplayer',
+        'leaveMatch',
+        {'matchId': matchId},
+      );
 
   _i2.Stream<_i11.MultiplayerServerMessage> connect(
     String matchId,
@@ -309,7 +403,10 @@ class EndpointMultiplayer extends _i1.EndpointRef {
       >(
         'multiplayer',
         'connect',
-        {'matchId': matchId, 'afterOffset': afterOffset},
+        {
+          'matchId': matchId,
+          'afterOffset': afterOffset,
+        },
         {'input': input},
       );
 }
@@ -335,7 +432,12 @@ class Client extends _i1.ServerpodClientShared {
     super.authenticationKeyManager,
     Duration? streamingConnectionTimeout,
     Duration? connectionTimeout,
-    Function(_i1.MethodCallContext, Object, StackTrace)? onFailedCall,
+    Function(
+      _i1.MethodCallContext,
+      Object,
+      StackTrace,
+    )?
+    onFailedCall,
     Function(_i1.MethodCallContext)? onSucceededCall,
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
@@ -352,6 +454,7 @@ class Client extends _i1.ServerpodClientShared {
     appStatus = EndpointAppStatus(this);
     accountProfile = EndpointAccountProfile(this);
     appleIdp = EndpointAppleIdp(this);
+    authStatus = EndpointAuthStatus(this);
     emailIdp = EndpointEmailIdp(this);
     googleIdp = EndpointGoogleIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
@@ -365,6 +468,8 @@ class Client extends _i1.ServerpodClientShared {
   late final EndpointAccountProfile accountProfile;
 
   late final EndpointAppleIdp appleIdp;
+
+  late final EndpointAuthStatus authStatus;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -383,6 +488,7 @@ class Client extends _i1.ServerpodClientShared {
     'appStatus': appStatus,
     'accountProfile': accountProfile,
     'appleIdp': appleIdp,
+    'authStatus': authStatus,
     'emailIdp': emailIdp,
     'googleIdp': googleIdp,
     'jwtRefresh': jwtRefresh,

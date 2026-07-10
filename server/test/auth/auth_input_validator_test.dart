@@ -60,6 +60,23 @@ void main() {
     }
   });
 
+  test('bounds refresh tokens before cryptographic work', () {
+    expect(
+      () => validator.refreshToken('bounded-refresh-token'),
+      returnsNormally,
+    );
+    expect(
+      () => validator.refreshToken(''),
+      throwsA(_error('invalid_session')),
+    );
+    expect(
+      () => validator.refreshToken(
+        List.filled(AuthInputValidator.maxRefreshTokenLength + 1, 'x').join(),
+      ),
+      throwsA(_error('invalid_session')),
+    );
+  });
+
   test('normalizes and bounds display names before database work', () {
     expect(validator.displayName('  Player   One  '), 'Player One');
     expect(

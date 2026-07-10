@@ -143,9 +143,13 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _AppStatusEndpoint appStatus;
+
   late final _AccountProfileEndpoint accountProfile;
 
   late final _AppleIdpEndpoint appleIdp;
+
+  late final _AuthStatusEndpoint authStatus;
 
   late final _EmailIdpEndpoint emailIdp;
 
@@ -165,18 +169,96 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.SerializationManager serializationManager,
     _i2.EndpointDispatch endpoints,
   ) {
-    accountProfile = _AccountProfileEndpoint(endpoints, serializationManager);
-    appleIdp = _AppleIdpEndpoint(endpoints, serializationManager);
-    emailIdp = _EmailIdpEndpoint(endpoints, serializationManager);
-    googleIdp = _GoogleIdpEndpoint(endpoints, serializationManager);
-    jwtRefresh = _JwtRefreshEndpoint(endpoints, serializationManager);
-    steamAuth = _SteamAuthEndpoint(endpoints, serializationManager);
-    multiplayer = _MultiplayerEndpoint(endpoints, serializationManager);
+    appStatus = _AppStatusEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    accountProfile = _AccountProfileEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    appleIdp = _AppleIdpEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    authStatus = _AuthStatusEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    emailIdp = _EmailIdpEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    googleIdp = _GoogleIdpEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    jwtRefresh = _JwtRefreshEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    steamAuth = _SteamAuthEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    multiplayer = _MultiplayerEndpoint(
+      endpoints,
+      serializationManager,
+    );
+  }
+}
+
+class _AppStatusEndpoint {
+  _AppStatusEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<String> versionStatus(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String platform,
+    required int buildNumber,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'appStatus',
+            method: 'versionStatus',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'appStatus',
+          methodName: 'versionStatus',
+          parameters: _i1.testObjectToJson({
+            'platform': platform,
+            'buildNumber': buildNumber,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 
 class _AccountProfileEndpoint {
-  _AccountProfileEndpoint(this._endpointDispatch, this._serializationManager);
+  _AccountProfileEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -214,7 +296,10 @@ class _AccountProfileEndpoint {
 }
 
 class _AppleIdpEndpoint {
-  _AppleIdpEndpoint(this._endpointDispatch, this._serializationManager);
+  _AppleIdpEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -290,8 +375,53 @@ class _AppleIdpEndpoint {
   }
 }
 
+class _AuthStatusEndpoint {
+  _AuthStatusEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<void> signOutRefreshToken(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String refreshToken,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'authStatus',
+            method: 'signOutRefreshToken',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'authStatus',
+          methodName: 'signOutRefreshToken',
+          parameters: _i1.testObjectToJson({'refreshToken': refreshToken}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _EmailIdpEndpoint {
-  _EmailIdpEndpoint(this._endpointDispatch, this._serializationManager);
+  _EmailIdpEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -458,7 +588,10 @@ class _EmailIdpEndpoint {
 }
 
 class _GoogleIdpEndpoint {
-  _GoogleIdpEndpoint(this._endpointDispatch, this._serializationManager);
+  _GoogleIdpEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -529,7 +662,10 @@ class _GoogleIdpEndpoint {
 }
 
 class _JwtRefreshEndpoint {
-  _JwtRefreshEndpoint(this._endpointDispatch, this._serializationManager);
+  _JwtRefreshEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -568,7 +704,10 @@ class _JwtRefreshEndpoint {
 }
 
 class _SteamAuthEndpoint {
-  _SteamAuthEndpoint(this._endpointDispatch, this._serializationManager);
+  _SteamAuthEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -637,7 +776,10 @@ class _SteamAuthEndpoint {
 }
 
 class _MultiplayerEndpoint {
-  _MultiplayerEndpoint(this._endpointDispatch, this._serializationManager);
+  _MultiplayerEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -1034,27 +1176,33 @@ class _MultiplayerEndpoint {
   ) {
     var _localTestStreamManager =
         _i1.TestStreamManager<_i11.MultiplayerServerMessage>();
-    _i1.callStreamFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'multiplayer',
-            method: 'connect',
-          );
-      var _localCallContext = await _endpointDispatch
-          .getMethodStreamCallContext(
-            createSessionCallback: (_) => _localUniqueSession,
-            endpointPath: 'multiplayer',
-            methodName: 'connect',
-            arguments: {'matchId': matchId, 'afterOffset': afterOffset},
-            requestedInputStreams: ['input'],
-            serializationManager: _serializationManager,
-          );
-      await _localTestStreamManager.callStreamMethod(
-        _localCallContext,
-        _localUniqueSession,
-        {'input': input},
-      );
-    }, _localTestStreamManager.outputStreamController);
+    _i1.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'multiplayer',
+              method: 'connect',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'multiplayer',
+              methodName: 'connect',
+              arguments: {
+                'matchId': matchId,
+                'afterOffset': afterOffset,
+              },
+              requestedInputStreams: ['input'],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {'input': input},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
     return _localTestStreamManager.outputStreamController.stream;
   }
 }

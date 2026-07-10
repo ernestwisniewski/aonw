@@ -217,34 +217,68 @@ class _GameEventImpl extends GameEvent {
 class GameEventUpdateTable extends _i1.UpdateTable<GameEventTable> {
   GameEventUpdateTable(super.table);
 
-  _i1.ColumnValue<int, int> matchId(int value) =>
-      _i1.ColumnValue(table.matchId, value);
+  _i1.ColumnValue<int, int> matchId(int value) => _i1.ColumnValue(
+    table.matchId,
+    value,
+  );
 
-  _i1.ColumnValue<int, int> offset(int value) =>
-      _i1.ColumnValue(table.offset, value);
+  _i1.ColumnValue<int, int> offset(int value) => _i1.ColumnValue(
+    table.offset,
+    value,
+  );
 
   _i1.ColumnValue<String, String> actorPlayerId(String? value) =>
-      _i1.ColumnValue(table.actorPlayerId, value);
+      _i1.ColumnValue(
+        table.actorPlayerId,
+        value,
+      );
 
   _i1.ColumnValue<String, String> clientMessageId(String? value) =>
-      _i1.ColumnValue(table.clientMessageId, value);
+      _i1.ColumnValue(
+        table.clientMessageId,
+        value,
+      );
 
   _i1.ColumnValue<_i3.WireEvent, _i3.WireEvent> event(_i3.WireEvent value) =>
-      _i1.ColumnValue(table.event, value);
+      _i1.ColumnValue(
+        table.event,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 }
 
 class GameEventTable extends _i1.Table<int?> {
   GameEventTable({super.tableRelation}) : super(tableName: 'aonw_event') {
     updateTable = GameEventUpdateTable(this);
-    matchId = _i1.ColumnInt('matchId', this);
-    offset = _i1.ColumnInt('offset', this);
-    actorPlayerId = _i1.ColumnString('actorPlayerId', this);
-    clientMessageId = _i1.ColumnString('clientMessageId', this);
-    event = _i1.ColumnSerializable<_i3.WireEvent>('event', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
+    matchId = _i1.ColumnInt(
+      'matchId',
+      this,
+    );
+    offset = _i1.ColumnInt(
+      'offset',
+      this,
+    );
+    actorPlayerId = _i1.ColumnString(
+      'actorPlayerId',
+      this,
+    );
+    clientMessageId = _i1.ColumnString(
+      'clientMessageId',
+      this,
+    );
+    event = _i1.ColumnSerializable<_i3.WireEvent>(
+      'event',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
   }
 
   late final GameEventUpdateTable updateTable;
@@ -475,7 +509,10 @@ class GameEventRepository {
     GameEvent row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<GameEvent>(row, transaction: transaction);
+    return session.db.insertRow<GameEvent>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [GameEvent]s in the list and returns the updated rows. If
@@ -560,7 +597,10 @@ class GameEventRepository {
     List<GameEvent> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<GameEvent>(rows, transaction: transaction);
+    return session.db.delete<GameEvent>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [GameEvent].
@@ -569,7 +609,10 @@ class GameEventRepository {
     GameEvent row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<GameEvent>(row, transaction: transaction);
+    return session.db.deleteRow<GameEvent>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

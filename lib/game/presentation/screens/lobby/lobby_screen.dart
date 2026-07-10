@@ -259,8 +259,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Future<void> _signOutMultiplayerAccount() async {
-    await _connection.signOut();
-    if (!mounted) return;
+    final revoked = await _connection.signOut();
+    if (!mounted || !revoked) return;
     GameToast.show(
       context,
       message: context.l10n.multiplayerAccountSignedOut,

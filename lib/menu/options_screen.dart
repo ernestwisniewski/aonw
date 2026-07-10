@@ -281,20 +281,48 @@ class _MultiplayerProfileSectionState
 
   Future<void> _signOut() async {
     if (_saving) return;
+    final l10n = context.l10n;
+    final store = ref.read(networkSessionStoreProvider);
+    final session = ref.read(networkSessionProvider);
+    final client = ref.read(networkSessionClientProvider);
     setState(() {
       _saving = true;
       _error = null;
     });
-    await ref.read(networkSessionStoreProvider).clear();
-    ref.read(networkSessionStateProvider.notifier).set(null);
+    Object? signOutError;
+    try {
+      final sessionRefreshToken = session?.refreshToken;
+      final stored = sessionRefreshToken == null || sessionRefreshToken.isEmpty
+          ? await store.load()
+          : null;
+      await client.signOutCurrentSession(
+        token: session?.token,
+        refreshToken: sessionRefreshToken == null || sessionRefreshToken.isEmpty
+            ? stored?.refreshToken
+            : sessionRefreshToken,
+      );
+    } catch (error) {
+      signOutError = error;
+    }
+    try {
+      await store.clear();
+    } catch (error) {
+      signOutError ??= error;
+    } finally {
+      ref.read(networkSessionStateProvider.notifier).set(null);
+    }
     if (!mounted) return;
     setState(() {
       _saving = false;
       _signedIn = false;
+      _error = signOutError == null
+          ? null
+          : l10n.multiplayerAccountGenericError;
     });
+    if (signOutError != null) return;
     GameToast.show(
       context,
-      message: context.l10n.multiplayerAccountSignedOut,
+      message: l10n.multiplayerAccountSignedOut,
       tone: GameToastTone.success,
     );
   }

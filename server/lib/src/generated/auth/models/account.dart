@@ -207,33 +207,66 @@ class AonwAccountUpdateTable extends _i1.UpdateTable<AonwAccountTable> {
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> authUserId(
     _i1.UuidValue value,
-  ) => _i1.ColumnValue(table.authUserId, value);
+  ) => _i1.ColumnValue(
+    table.authUserId,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> email(String value) =>
-      _i1.ColumnValue(table.email, value);
+  _i1.ColumnValue<String, String> email(String value) => _i1.ColumnValue(
+    table.email,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> displayName(String value) =>
-      _i1.ColumnValue(table.displayName, value);
+  _i1.ColumnValue<String, String> displayName(String value) => _i1.ColumnValue(
+    table.displayName,
+    value,
+  );
 
   _i1.ColumnValue<String, String> displayNameKey(String value) =>
-      _i1.ColumnValue(table.displayNameKey, value);
+      _i1.ColumnValue(
+        table.displayNameKey,
+        value,
+      );
 
-  _i1.ColumnValue<String, String> passwordHash(String value) =>
-      _i1.ColumnValue(table.passwordHash, value);
+  _i1.ColumnValue<String, String> passwordHash(String value) => _i1.ColumnValue(
+    table.passwordHash,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 }
 
 class AonwAccountTable extends _i1.Table<_i1.UuidValue?> {
   AonwAccountTable({super.tableRelation}) : super(tableName: 'aonw_account') {
     updateTable = AonwAccountUpdateTable(this);
-    authUserId = _i1.ColumnUuid('authUserId', this);
-    email = _i1.ColumnString('email', this);
-    displayName = _i1.ColumnString('displayName', this);
-    displayNameKey = _i1.ColumnString('displayNameKey', this);
-    passwordHash = _i1.ColumnString('passwordHash', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
+    authUserId = _i1.ColumnUuid(
+      'authUserId',
+      this,
+    );
+    email = _i1.ColumnString(
+      'email',
+      this,
+    );
+    displayName = _i1.ColumnString(
+      'displayName',
+      this,
+    );
+    displayNameKey = _i1.ColumnString(
+      'displayNameKey',
+      this,
+    );
+    passwordHash = _i1.ColumnString(
+      'passwordHash',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
   }
 
   late final AonwAccountUpdateTable updateTable;
@@ -464,7 +497,10 @@ class AonwAccountRepository {
     AonwAccount row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.insertRow<AonwAccount>(row, transaction: transaction);
+    return session.db.insertRow<AonwAccount>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Updates all [AonwAccount]s in the list and returns the updated rows. If
@@ -549,7 +585,10 @@ class AonwAccountRepository {
     List<AonwAccount> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<AonwAccount>(rows, transaction: transaction);
+    return session.db.delete<AonwAccount>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [AonwAccount].
@@ -558,7 +597,10 @@ class AonwAccountRepository {
     AonwAccount row, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.deleteRow<AonwAccount>(row, transaction: transaction);
+    return session.db.deleteRow<AonwAccount>(
+      row,
+      transaction: transaction,
+    );
   }
 
   /// Deletes all rows matching the [where] expression.

@@ -81,7 +81,11 @@ class _SteamAuthStartImpl extends SteamAuthStart {
     required String requestId,
     required String authUrl,
     required DateTime expiresAt,
-  }) : super._(requestId: requestId, authUrl: authUrl, expiresAt: expiresAt);
+  }) : super._(
+         requestId: requestId,
+         authUrl: authUrl,
+         expiresAt: expiresAt,
+       );
 
   /// Returns a shallow copy of this [SteamAuthStart]
   /// with some or all fields replaced by the given arguments.

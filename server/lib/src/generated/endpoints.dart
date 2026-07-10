@@ -11,41 +11,82 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
-import '../auth/account_profile_endpoint.dart' as _i2;
-import '../auth/apple_idp_endpoint.dart' as _i3;
-import '../auth/email_idp_endpoint.dart' as _i4;
-import '../auth/google_idp_endpoint.dart' as _i5;
-import '../auth/jwt_refresh_endpoint.dart' as _i6;
-import '../auth/steam_auth_endpoint.dart' as _i7;
-import '../multiplayer/multiplayer_endpoint.dart' as _i8;
+import '../app_status/app_status_endpoint.dart' as _i2;
+import '../auth/account_profile_endpoint.dart' as _i3;
+import '../auth/apple_idp_endpoint.dart' as _i4;
+import '../auth/auth_status_endpoint.dart' as _i5;
+import '../auth/email_idp_endpoint.dart' as _i6;
+import '../auth/google_idp_endpoint.dart' as _i7;
+import '../auth/jwt_refresh_endpoint.dart' as _i8;
+import '../auth/steam_auth_endpoint.dart' as _i9;
+import '../multiplayer/multiplayer_endpoint.dart' as _i10;
 import 'package:aonw_server/src/generated/multiplayer/models/create_match_request.dart'
-    as _i9;
-import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_client_message.dart'
-    as _i10;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i11;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_client_message.dart'
     as _i12;
-import '../app_status/app_status_endpoint.dart' as _i13;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i13;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i14;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
-      'appStatus': _i13.AppStatusEndpoint()
-        ..initialize(server, 'appStatus', null),
-      'accountProfile': _i2.AccountProfileEndpoint()
-        ..initialize(server, 'accountProfile', null),
-      'appleIdp': _i3.AppleIdpEndpoint()..initialize(server, 'appleIdp', null),
-      'emailIdp': _i4.EmailIdpEndpoint()..initialize(server, 'emailIdp', null),
-      'googleIdp': _i5.GoogleIdpEndpoint()
-        ..initialize(server, 'googleIdp', null),
-      'jwtRefresh': _i6.JwtRefreshEndpoint()
-        ..initialize(server, 'jwtRefresh', null),
-      'steamAuth': _i7.SteamAuthEndpoint()
-        ..initialize(server, 'steamAuth', null),
-      'multiplayer': _i8.MultiplayerEndpoint()
-        ..initialize(server, 'multiplayer', null),
+      'appStatus': _i2.AppStatusEndpoint()
+        ..initialize(
+          server,
+          'appStatus',
+          null,
+        ),
+      'accountProfile': _i3.AccountProfileEndpoint()
+        ..initialize(
+          server,
+          'accountProfile',
+          null,
+        ),
+      'appleIdp': _i4.AppleIdpEndpoint()
+        ..initialize(
+          server,
+          'appleIdp',
+          null,
+        ),
+      'authStatus': _i5.AuthStatusEndpoint()
+        ..initialize(
+          server,
+          'authStatus',
+          null,
+        ),
+      'emailIdp': _i6.EmailIdpEndpoint()
+        ..initialize(
+          server,
+          'emailIdp',
+          null,
+        ),
+      'googleIdp': _i7.GoogleIdpEndpoint()
+        ..initialize(
+          server,
+          'googleIdp',
+          null,
+        ),
+      'jwtRefresh': _i8.JwtRefreshEndpoint()
+        ..initialize(
+          server,
+          'jwtRefresh',
+          null,
+        ),
+      'steamAuth': _i9.SteamAuthEndpoint()
+        ..initialize(
+          server,
+          'steamAuth',
+          null,
+        ),
+      'multiplayer': _i10.MultiplayerEndpoint()
+        ..initialize(
+          server,
+          'multiplayer',
+          null,
+        ),
     };
     connectors['appStatus'] = _i1.EndpointConnector(
       name: 'appStatus',
@@ -65,12 +106,16 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['appStatus'] as _i13.AppStatusEndpoint).versionStatus(
-                session,
-                platform: params['platform'],
-                buildNumber: params['buildNumber'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['appStatus'] as _i2.AppStatusEndpoint)
+                  .versionStatus(
+                    session,
+                    platform: params['platform'],
+                    buildNumber: params['buildNumber'],
+                  ),
         ),
       },
     );
@@ -81,9 +126,13 @@ class Endpoints extends _i1.EndpointDispatch {
         'ensureAccount': _i1.MethodConnector(
           name: 'ensureAccount',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['accountProfile'] as _i2.AccountProfileEndpoint)
-                  .ensureAccount(session),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['accountProfile'] as _i3.AccountProfileEndpoint)
+                      .ensureAccount(session),
         ),
       },
     );
@@ -120,8 +169,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: true,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['appleIdp'] as _i3.AppleIdpEndpoint).login(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['appleIdp'] as _i4.AppleIdpEndpoint).login(
                 session,
                 identityToken: params['identityToken'],
                 authorizationCode: params['authorizationCode'],
@@ -134,10 +186,37 @@ class Endpoints extends _i1.EndpointDispatch {
         'hasAccount': _i1.MethodConnector(
           name: 'hasAccount',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['appleIdp'] as _i3.AppleIdpEndpoint).hasAccount(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['appleIdp'] as _i4.AppleIdpEndpoint)
+                  .hasAccount(session),
+        ),
+      },
+    );
+    connectors['authStatus'] = _i1.EndpointConnector(
+      name: 'authStatus',
+      endpoint: endpoints['authStatus']!,
+      methodConnectors: {
+        'signOutRefreshToken': _i1.MethodConnector(
+          name: 'signOutRefreshToken',
+          params: {
+            'refreshToken': _i1.ParameterDescription(
+              name: 'refreshToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['authStatus'] as _i5.AuthStatusEndpoint)
+                  .signOutRefreshToken(
+                    session,
+                    refreshToken: params['refreshToken'],
+                  ),
         ),
       },
     );
@@ -159,8 +238,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['emailIdp'] as _i4.EmailIdpEndpoint).login(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i6.EmailIdpEndpoint).login(
                 session,
                 email: params['email'],
                 password: params['password'],
@@ -185,21 +267,27 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['emailIdp'] as _i4.EmailIdpEndpoint).createAccount(
-                session,
-                email: params['email'],
-                password: params['password'],
-                displayName: params['displayName'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['emailIdp'] as _i6.EmailIdpEndpoint).createAccount(
+                    session,
+                    email: params['email'],
+                    password: params['password'],
+                    displayName: params['displayName'],
+                  ),
         ),
         'displayName': _i1.MethodConnector(
           name: 'displayName',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['emailIdp'] as _i4.EmailIdpEndpoint).displayName(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i6.EmailIdpEndpoint)
+                  .displayName(session),
         ),
         'updateDisplayName': _i1.MethodConnector(
           name: 'updateDisplayName',
@@ -210,19 +298,25 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['emailIdp'] as _i4.EmailIdpEndpoint).updateDisplayName(
-                session,
-                displayName: params['displayName'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i6.EmailIdpEndpoint)
+                  .updateDisplayName(
+                    session,
+                    displayName: params['displayName'],
+                  ),
         ),
         'hasAccount': _i1.MethodConnector(
           name: 'hasAccount',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['emailIdp'] as _i4.EmailIdpEndpoint).hasAccount(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i6.EmailIdpEndpoint)
+                  .hasAccount(session),
         ),
       },
     );
@@ -244,20 +338,26 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: true,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['googleIdp'] as _i5.GoogleIdpEndpoint).login(
-                session,
-                idToken: params['idToken'],
-                accessToken: params['accessToken'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['googleIdp'] as _i7.GoogleIdpEndpoint).login(
+                    session,
+                    idToken: params['idToken'],
+                    accessToken: params['accessToken'],
+                  ),
         ),
         'hasAccount': _i1.MethodConnector(
           name: 'hasAccount',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['googleIdp'] as _i5.GoogleIdpEndpoint).hasAccount(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['googleIdp'] as _i7.GoogleIdpEndpoint)
+                  .hasAccount(session),
         ),
       },
     );
@@ -274,8 +374,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['jwtRefresh'] as _i6.JwtRefreshEndpoint)
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['jwtRefresh'] as _i8.JwtRefreshEndpoint)
                   .refreshAccessToken(
                     session,
                     refreshToken: params['refreshToken'],
@@ -290,8 +393,12 @@ class Endpoints extends _i1.EndpointDispatch {
         'start': _i1.MethodConnector(
           name: 'start',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['steamAuth'] as _i7.SteamAuthEndpoint).start(session),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['steamAuth'] as _i9.SteamAuthEndpoint)
+                  .start(session),
         ),
         'poll': _i1.MethodConnector(
           name: 'poll',
@@ -302,8 +409,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['steamAuth'] as _i7.SteamAuthEndpoint).poll(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['steamAuth'] as _i9.SteamAuthEndpoint).poll(
                 session,
                 requestId: params['requestId'],
               ),
@@ -317,40 +427,50 @@ class Endpoints extends _i1.EndpointDispatch {
         'listMatches': _i1.MethodConnector(
           name: 'listMatches',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).listMatches(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .listMatches(session),
         ),
         'createMatch': _i1.MethodConnector(
           name: 'createMatch',
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i9.CreateMatchRequest>(),
+              type: _i1.getType<_i11.CreateMatchRequest>(),
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).createMatch(
-                session,
-                params['request'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .createMatch(
+                    session,
+                    params['request'],
+                  ),
         ),
         'quickplay': _i1.MethodConnector(
           name: 'quickplay',
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i9.CreateMatchRequest>(),
+              type: _i1.getType<_i11.CreateMatchRequest>(),
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).quickplay(
-                session,
-                params['request'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .quickplay(
+                    session,
+                    params['request'],
+                  ),
         ),
         'joinMatch': _i1.MethodConnector(
           name: 'joinMatch',
@@ -366,12 +486,16 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: true,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).joinMatch(
-                session,
-                params['matchId'],
-                params['countryId'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .joinMatch(
+                    session,
+                    params['matchId'],
+                    params['countryId'],
+                  ),
         ),
         'joinPrivateMatch': _i1.MethodConnector(
           name: 'joinPrivateMatch',
@@ -387,8 +511,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: true,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint)
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
                   .joinPrivateMatch(
                     session,
                     params['inviteCode'],
@@ -404,11 +531,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).loadMatch(
-                session,
-                params['matchId'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .loadMatch(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'loadSnapshot': _i1.MethodConnector(
           name: 'loadSnapshot',
@@ -419,9 +550,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint)
-                  .loadSnapshot(session, params['matchId']),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .loadSnapshot(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'listEvents': _i1.MethodConnector(
           name: 'listEvents',
@@ -437,12 +574,16 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).listEvents(
-                session,
-                params['matchId'],
-                params['afterOffset'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .listEvents(
+                    session,
+                    params['matchId'],
+                    params['afterOffset'],
+                  ),
         ),
         'startMatch': _i1.MethodConnector(
           name: 'startMatch',
@@ -453,11 +594,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).startMatch(
-                session,
-                params['matchId'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .startMatch(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'markMapLoaded': _i1.MethodConnector(
           name: 'markMapLoaded',
@@ -468,9 +613,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint)
-                  .markMapLoaded(session, params['matchId']),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .markMapLoaded(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'resignMatch': _i1.MethodConnector(
           name: 'resignMatch',
@@ -481,11 +632,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).resignMatch(
-                session,
-                params['matchId'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .resignMatch(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'leaveMatch': _i1.MethodConnector(
           name: 'leaveMatch',
@@ -496,11 +651,15 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).leaveMatch(
-                session,
-                params['matchId'],
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .leaveMatch(
+                    session,
+                    params['matchId'],
+                  ),
         ),
         'connect': _i1.MethodStreamConnector(
           name: 'connect',
@@ -518,7 +677,7 @@ class Endpoints extends _i1.EndpointDispatch {
           },
           streamParams: {
             'input':
-                _i1.StreamParameterDescription<_i10.MultiplayerClientMessage>(
+                _i1.StreamParameterDescription<_i12.MultiplayerClientMessage>(
                   name: 'input',
                   nullable: false,
                 ),
@@ -529,20 +688,20 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
                 Map<String, Stream> streamParams,
-              ) =>
-                  (endpoints['multiplayer'] as _i8.MultiplayerEndpoint).connect(
+              ) => (endpoints['multiplayer'] as _i10.MultiplayerEndpoint)
+                  .connect(
                     session,
                     params['matchId'],
                     params['afterOffset'],
                     streamParams['input']!
-                        .cast<_i10.MultiplayerClientMessage>(),
+                        .cast<_i12.MultiplayerClientMessage>(),
                   ),
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i11.Endpoints()
+    modules['serverpod_auth_core'] = _i13.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i12.Endpoints()
+    modules['serverpod_auth_idp'] = _i14.Endpoints()
       ..initializeEndpoints(server);
   }
 }

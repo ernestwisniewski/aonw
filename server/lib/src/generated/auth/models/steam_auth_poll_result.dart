@@ -17,7 +17,11 @@ import 'package:aonw_server/src/generated/protocol.dart' as _i3;
 
 abstract class SteamAuthPollResult
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
-  SteamAuthPollResult._({required this.status, this.auth, this.error});
+  SteamAuthPollResult._({
+    required this.status,
+    this.auth,
+    this.error,
+  });
 
   factory SteamAuthPollResult({
     required String status,
@@ -84,7 +88,11 @@ class _SteamAuthPollResultImpl extends SteamAuthPollResult {
     required String status,
     _i2.AuthSuccess? auth,
     String? error,
-  }) : super._(status: status, auth: auth, error: error);
+  }) : super._(
+         status: status,
+         auth: auth,
+         error: error,
+       );
 
   /// Returns a shallow copy of this [SteamAuthPollResult]
   /// with some or all fields replaced by the given arguments.

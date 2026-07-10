@@ -228,48 +228,98 @@ class SteamAuthRequestUpdateTable
     extends _i1.UpdateTable<SteamAuthRequestTable> {
   SteamAuthRequestUpdateTable(super.table);
 
-  _i1.ColumnValue<String, String> requestId(String value) =>
-      _i1.ColumnValue(table.requestId, value);
+  _i1.ColumnValue<String, String> requestId(String value) => _i1.ColumnValue(
+    table.requestId,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> status(String value) =>
-      _i1.ColumnValue(table.status, value);
+  _i1.ColumnValue<String, String> status(String value) => _i1.ColumnValue(
+    table.status,
+    value,
+  );
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> authUserId(
     _i1.UuidValue? value,
-  ) => _i1.ColumnValue(table.authUserId, value);
+  ) => _i1.ColumnValue(
+    table.authUserId,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> steamId(String? value) =>
-      _i1.ColumnValue(table.steamId, value);
+  _i1.ColumnValue<String, String> steamId(String? value) => _i1.ColumnValue(
+    table.steamId,
+    value,
+  );
 
-  _i1.ColumnValue<String, String> error(String? value) =>
-      _i1.ColumnValue(table.error, value);
+  _i1.ColumnValue<String, String> error(String? value) => _i1.ColumnValue(
+    table.error,
+    value,
+  );
 
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
-      _i1.ColumnValue(table.createdAt, value);
+      _i1.ColumnValue(
+        table.createdAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> expiresAt(DateTime value) =>
-      _i1.ColumnValue(table.expiresAt, value);
+      _i1.ColumnValue(
+        table.expiresAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> completedAt(DateTime? value) =>
-      _i1.ColumnValue(table.completedAt, value);
+      _i1.ColumnValue(
+        table.completedAt,
+        value,
+      );
 
   _i1.ColumnValue<DateTime, DateTime> consumedAt(DateTime? value) =>
-      _i1.ColumnValue(table.consumedAt, value);
+      _i1.ColumnValue(
+        table.consumedAt,
+        value,
+      );
 }
 
 class SteamAuthRequestTable extends _i1.Table<_i1.UuidValue?> {
   SteamAuthRequestTable({super.tableRelation})
     : super(tableName: 'aonw_steam_auth_request') {
     updateTable = SteamAuthRequestUpdateTable(this);
-    requestId = _i1.ColumnString('requestId', this);
-    status = _i1.ColumnString('status', this);
-    authUserId = _i1.ColumnUuid('authUserId', this);
-    steamId = _i1.ColumnString('steamId', this);
-    error = _i1.ColumnString('error', this);
-    createdAt = _i1.ColumnDateTime('createdAt', this);
-    expiresAt = _i1.ColumnDateTime('expiresAt', this);
-    completedAt = _i1.ColumnDateTime('completedAt', this);
-    consumedAt = _i1.ColumnDateTime('consumedAt', this);
+    requestId = _i1.ColumnString(
+      'requestId',
+      this,
+    );
+    status = _i1.ColumnString(
+      'status',
+      this,
+    );
+    authUserId = _i1.ColumnUuid(
+      'authUserId',
+      this,
+    );
+    steamId = _i1.ColumnString(
+      'steamId',
+      this,
+    );
+    error = _i1.ColumnString(
+      'error',
+      this,
+    );
+    createdAt = _i1.ColumnDateTime(
+      'createdAt',
+      this,
+    );
+    expiresAt = _i1.ColumnDateTime(
+      'expiresAt',
+      this,
+    );
+    completedAt = _i1.ColumnDateTime(
+      'completedAt',
+      this,
+    );
+    consumedAt = _i1.ColumnDateTime(
+      'consumedAt',
+      this,
+    );
   }
 
   late final SteamAuthRequestUpdateTable updateTable;
@@ -564,7 +614,10 @@ class SteamAuthRequestRepository {
     List<SteamAuthRequest> rows, {
     _i1.Transaction? transaction,
   }) async {
-    return session.db.delete<SteamAuthRequest>(rows, transaction: transaction);
+    return session.db.delete<SteamAuthRequest>(
+      rows,
+      transaction: transaction,
+    );
   }
 
   /// Deletes a single [SteamAuthRequest].
