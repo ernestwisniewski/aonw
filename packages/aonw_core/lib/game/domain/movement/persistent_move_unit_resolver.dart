@@ -160,10 +160,11 @@ class PersistentMoveUnitResolver {
         ? moved.copyWithQueuedPath(null)
         : moved.copyWithQueuedPath(_queuedPathFor(plan));
     final updatedUnits = _replaceUnit(state.units, movedWithPath);
-    final updatedFog = fogOfWarService.recomputePlayer(
+    final updatedFog = fogOfWarService.recomputeAfterUnitMove(
       current: state.fogOfWar,
       mapData: mapData,
-      playerId: movedWithPath.ownerPlayerId,
+      previousUnit: unit,
+      movedUnit: movedWithPath,
       units: updatedUnits,
       cities: state.cities,
     );

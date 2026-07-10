@@ -78,106 +78,24 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required MapDefinition mapDefinition,
     required GameRuleset ruleset,
   }) {
-    final combat = PersistentTurnCombatResolver.resolve(
-      turn: save.turn,
-      state: state,
-      mapDefinition: mapDefinition,
-      ruleset: ruleset,
+    final result = PersistentTurnPipeline.simultaneousFinalize(
+      PersistentTurnPipelineRequest.simultaneousFinalize(
+        save: save,
+        state: state,
+        playerIds: playerIds,
+        skippedPlayerIds: skippedPlayerIds,
+        savedAt: now,
+        mapData: mapData,
+        mapDefinition: mapDefinition,
+        ruleset: ruleset,
+        preserveNonParticipantPlayerStates: true,
+        trackTimeoutStreaks: true,
+      ),
     );
-    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: combat.state,
-      playerIds: playerIds,
-      mapData: mapData,
-      ruleset: ruleset,
-      priorEvents: combat.events,
-      mapObjectives: mapData.objectives,
-      turn: save.turn,
-    );
-    final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
-      state: economy.state,
-      playerIds: playerIds,
-    );
-    final movement = PersistentTurnMovementProcessor.resetForPlayers(
-      state: artifactProgress.state,
-      playerIds: playerIds,
-      mapData: mapData,
-    );
-    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: movement.state.runtimeState.diplomacy,
-      fogOfWar: movement.state.fogOfWar,
-      units: movement.state.units,
-      cities: movement.state.cities,
-      playerIds: playerIds,
-    );
-    final diplomacy = DiplomacyTurnResolver.resolve(
-      diplomacy: discoveredDiplomacy,
-      turn: save.turn + 1,
-      units: movement.state.units,
-      cities: movement.state.cities,
-    );
-    const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns =
-        movement.state.runtimeState.dominationHoldTurnsByPlayerId;
-    final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
-      playerIds: playerIds,
-      state: movement.state,
-      mapData: mapData,
-      victoryRules: save.matchRules.victory,
-      previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-    );
-    final dominationEvents = dominationProgressCalculator
-        .thresholdReachedEvents(
-          playerIds: playerIds,
-          state: movement.state,
-          mapData: mapData,
-          victoryRules: save.matchRules.victory,
-          previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-          nextHoldTurnsByPlayerId: dominationHoldTurns,
-        );
-    final previousCulturalHoldTurns =
-        movement.state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
-    final culturalHoldTurns = save.matchRules.victory.culturalEnabled
-        ? CulturalVictoryProgressCalculator.advanceHoldTurns(
-            playerIds: playerIds,
-            state: movement.state,
-            previousHoldTurnsByPlayerId: previousCulturalHoldTurns,
-            requiredArtifactCount:
-                save.matchRules.victory.culturalRequiredArtifacts,
-          )
-        : previousCulturalHoldTurns;
-    final timeoutStreaks = _timeoutStreaksAfterTurn(
-      previous: movement.state.runtimeState.timeoutStreaksByPlayerId,
-      playerIds: playerIds,
-      skippedPlayerIds: skippedPlayerIds,
-    );
-    final runtimeState = movement.state.runtimeState.copyWith(
-      submittedPlayerIds: const {},
-      timeoutStreaksByPlayerId: timeoutStreaks,
-      intendedAttacks: const [],
-      diplomacy: diplomacy.diplomacy,
-      dominationHoldTurnsByPlayerId: dominationHoldTurns,
-      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-      turnStartedAt: now.toUtc(),
-    );
-    final nextSave = _saveWithNewTurnForPlayers(
-      save,
-      playerIds: playerIds,
-      now: now,
-    );
-    final nextState = movement.state.copyWith(runtimeState: runtimeState);
     return _CommandApplication.accept(
-      save: nextSave,
-      state: nextState,
-      events: [
-        for (final playerId in skippedPlayerIds)
-          PlayerTimedOutEvent(turn: save.turn, playerId: playerId),
-        AllPlayersSubmittedEvent(turn: save.turn, playerIds: playerIds),
-        ...combat.events,
-        ...economy.events,
-        ...diplomacy.events,
-        ...dominationEvents,
-        for (final playerId in playerIds) TurnEndedEvent(playerId: playerId),
-      ],
+      save: result.save,
+      state: result.state,
+      events: result.events,
     );
   }
 
@@ -227,36 +145,5 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       WirePlayerConnectionState.reconnecting => true,
       WirePlayerConnectionState.offline => false,
     };
-  }
-
-  Map<String, int> _timeoutStreaksAfterTurn({
-    required Map<String, int> previous,
-    required List<String> playerIds,
-    required List<String> skippedPlayerIds,
-  }) {
-    final skipped = skippedPlayerIds.toSet();
-    return {
-      for (final playerId in playerIds)
-        if (skipped.contains(playerId)) playerId: (previous[playerId] ?? 0) + 1,
-    };
-  }
-
-  GameSave _saveWithNewTurnForPlayers(
-    GameSave save, {
-    required List<String> playerIds,
-    required DateTime now,
-  }) {
-    final activePlayerIds = playerIds.toSet();
-    final playerStates = {
-      for (final entry in save.playerStates.entries)
-        entry.key: activePlayerIds.contains(entry.key)
-            ? PlayerTurnState.active
-            : PlayerTurnState.finished,
-    };
-    return save.copyWith(
-      turn: save.turn + 1,
-      playerStates: playerStates,
-      savedAt: now.toUtc(),
-    );
   }
 }

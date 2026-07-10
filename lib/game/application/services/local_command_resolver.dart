@@ -8,11 +8,8 @@ import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/domain/map_definition.dart';
-import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/outcome.dart';
 
 class LocalCommandResolution {
   final GameSave save;
@@ -143,111 +140,37 @@ class LocalCommandResolver {
     required List<String> playerIds,
     required DateTime savedAt,
   }) {
-    final ruleset = reducer.ruleset.copyWith(
-      paceBalance: save.matchRules.paceBalance,
+    final result = PersistentTurnPipeline.simultaneousFinalize(
+      PersistentTurnPipelineRequest.simultaneousFinalize(
+        save: save,
+        state: state.toPersistentState(),
+        playerIds: playerIds,
+        savedAt: savedAt,
+        mapData: reducer.mapData,
+        mapDefinition: _mapDefinition(),
+        ruleset: reducer.ruleset,
+      ),
     );
-    final persistent = state.toPersistentState();
-    final combat = PersistentTurnCombatResolver.resolve(
-      turn: save.turn,
-      state: persistent,
-      mapDefinition: _mapDefinition(),
-      ruleset: ruleset,
-    );
-    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: combat.state,
-      playerIds: playerIds,
-      mapData: reducer.mapData,
-      ruleset: ruleset,
-      priorEvents: combat.events,
-      mapObjectives: reducer.mapData.objectives,
-      turn: save.turn,
-    );
-    final artifactProgress = PersistentArtifactTurnProcessor.advanceForPlayers(
-      state: economy.state,
-      playerIds: playerIds,
-    );
-    final movement = PersistentTurnMovementProcessor.resetForPlayers(
-      state: artifactProgress.state,
-      playerIds: playerIds,
-      mapData: reducer.mapData,
-    );
-    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: movement.state.runtimeState.diplomacy,
-      fogOfWar: movement.state.fogOfWar,
-      units: movement.state.units,
-      cities: movement.state.cities,
-      playerIds: playerIds,
-    );
-    final diplomacy = DiplomacyTurnResolver.resolve(
-      diplomacy: discoveredDiplomacy,
-      turn: save.turn + 1,
-      units: movement.state.units,
-      cities: movement.state.cities,
-    );
-    final uiEffects = QueuedMovementEffectBuilder.fromUnitDelta(
-      beforeUnits: economy.state.units,
-      afterUnits: movement.state.units,
-    );
-    const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns =
-        movement.state.runtimeState.dominationHoldTurnsByPlayerId;
-    final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
-      playerIds: playerIds,
-      state: movement.state,
-      mapData: reducer.mapData,
-      victoryRules: save.matchRules.victory,
-      previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-    );
-    final dominationEvents = dominationProgressCalculator
-        .thresholdReachedEvents(
-          playerIds: playerIds,
-          state: movement.state,
-          mapData: reducer.mapData,
-          victoryRules: save.matchRules.victory,
-          previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-          nextHoldTurnsByPlayerId: dominationHoldTurns,
-        );
-    final previousCulturalHoldTurns =
-        movement.state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
-    final culturalHoldTurns = save.matchRules.victory.culturalEnabled
-        ? CulturalVictoryProgressCalculator.advanceHoldTurns(
-            playerIds: playerIds,
-            state: movement.state,
-            previousHoldTurnsByPlayerId: previousCulturalHoldTurns,
-            requiredArtifactCount:
-                save.matchRules.victory.culturalRequiredArtifacts,
-          )
-        : previousCulturalHoldTurns;
-    final runtimeState = movement.state.runtimeState.copyWith(
-      submittedPlayerIds: const {},
-      intendedAttacks: const [],
-      diplomacy: diplomacy.diplomacy,
-      dominationHoldTurnsByPlayerId: dominationHoldTurns,
-      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-      turnStartedAt: savedAt,
-    );
-    final nextSave = save.withNewTurn().copyWith(savedAt: savedAt);
-    final nextPersistent = movement.state.copyWith(runtimeState: runtimeState);
+    final movementDelta = result.movementDelta;
+    final uiEffects = movementDelta == null
+        ? const <UiEffect>[]
+        : QueuedMovementEffectBuilder.fromUnitDelta(
+            beforeUnits: movementDelta.beforeUnits,
+            afterUnits: movementDelta.afterUnits,
+          );
     final nextState =
         SaveSnapshot.fromPersistentState(
-          save: nextSave,
-          state: nextPersistent,
+          save: result.save,
+          state: result.state,
         ).toGameState(
           activePlayerId: state.activePlayerId,
           activePlayerCanAct: state.activePlayerCanAct,
         );
 
     return _ResolvedLocalCommand(
-      save: nextSave,
+      save: result.save,
       state: nextState,
-      events: [
-        AllPlayersSubmittedEvent(turn: save.turn, playerIds: playerIds),
-        ...combat.events,
-        ...economy.events,
-        ...diplomacy.events,
-        ...dominationEvents,
-        for (final playerId in playerIds) TurnEndedEvent(playerId: playerId),
-      ],
+      events: result.events,
       uiEffects: uiEffects,
     );
   }

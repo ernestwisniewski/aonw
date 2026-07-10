@@ -3,7 +3,7 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
+import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -110,7 +110,7 @@ void main() {
         stateWithDraft,
         mapData,
       );
-      final transition = TurnReducer.advanceCitiesForPlayer(
+      final transition = EndTurnReducer.advanceCitiesForPlayer(
         scheduled.state,
         'player_1',
         mapData,
@@ -122,7 +122,7 @@ void main() {
       expect(event.cityId, isNotEmpty);
       expect(transition.state.cities.single.name, 'Paris');
     });
-    test('TurnReducer.advanceCitiesForPlayer emits TurnEndedEvent', () {
+    test('EndTurnReducer.advanceCitiesForPlayer emits TurnEndedEvent', () {
       final mapData = _map(5, 5);
       const city = GameCity(
         id: 'city_1',
@@ -142,7 +142,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final transition = TurnReducer.advanceCitiesForPlayer(
+      final transition = EndTurnReducer.advanceCitiesForPlayer(
         state,
         'player_1',
         mapData,
@@ -164,7 +164,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final transition = TurnReducer.advanceCitiesForPlayer(
+      final transition = EndTurnReducer.advanceCitiesForPlayer(
         state,
         'player_1',
         mapData,
@@ -181,7 +181,7 @@ void main() {
       );
     });
     test(
-      'TurnReducer.advanceCitiesForPlayer emits TurnEndedEvent even when nothing changed',
+      'EndTurnReducer.advanceCitiesForPlayer emits TurnEndedEvent even when nothing changed',
       () {
         final mapData = _map(5, 5);
 
@@ -189,7 +189,7 @@ void main() {
         // will return changed: false — exercising the no-change code path.
         const state = GameState(activePlayerId: 'player_2');
 
-        final transition = TurnReducer.advanceCitiesForPlayer(
+        final transition = EndTurnReducer.advanceCitiesForPlayer(
           state,
           'player_2',
           mapData,

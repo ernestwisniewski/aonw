@@ -33,6 +33,33 @@ void main() {
   });
 
   group('UnitProductionCatalog', () {
+    test('standard production catalog matches resolved unit specs', () {
+      final expected = UnitProductionCatalog.fromUnitSpecs(
+        UnitSpecResolver.standard,
+      );
+
+      expect(
+        UnitProductionCatalog.standard.keys,
+        unorderedEquals(expected.keys),
+      );
+      for (final type in GameUnitType.values) {
+        final standard = UnitProductionCatalog.standard[type]!;
+        final fromSpec = expected[type]!;
+
+        expect(standard.type, fromSpec.type, reason: '$type type');
+        expect(
+          standard.productionCost,
+          fromSpec.productionCost,
+          reason: '$type production cost',
+        );
+        _expectRequirements(
+          standard.requirements,
+          fromSpec.requirements,
+          reason: '$type requirements',
+        );
+      }
+    });
+
     test('builds production definitions from resolved unit specs', () {
       final production = UnitProductionCatalog.fromUnitSpecs(
         UnitSpecResolver.standard,

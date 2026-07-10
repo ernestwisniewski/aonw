@@ -15,6 +15,7 @@ import 'package:aonw/game/infrastructure/transport/local_command_transport.dart'
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -413,6 +414,71 @@ void main() {
               .having((effect) => effect.fromCol, 'fromCol', 1)
               .having((effect) => effect.fromRow, 'fromRow', 0),
         );
+      },
+    );
+
+    test(
+      'submit turn advances artifact excavation once during finalization',
+      () async {
+        final unit = GameUnit.produced(
+          id: 'scout_1',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.scout,
+          col: 1,
+          row: 1,
+        ).copyWithExcavatingArtifact('artifact_1');
+        const artifact = WorldArtifact(
+          id: 'artifact_1',
+          type: WorldArtifactType.heroSword,
+          location: WorldArtifactLocation.excavation(
+            unitId: 'scout_1',
+            col: 1,
+            row: 1,
+            remainingTurns: 2,
+          ),
+        );
+        final save = _save(
+          players: const [_player1, _player2],
+          gameMode: GameMode.multiplayer,
+          playerStates: const {
+            'player_1': PlayerTurnState.finished,
+            'player_2': PlayerTurnState.active,
+          },
+        );
+        final repository = _MemoryGameRepository(
+          SaveSnapshot(
+            save: save,
+            units: [unit],
+            artifacts: const [artifact],
+            runtimeState: const GameRuntimeState(
+              submittedPlayerIds: {'player_1'},
+            ),
+          ),
+        );
+        final transport = LocalCommandTransport(
+          reducer: GameStateReducer(mapData: _map()),
+          gameRepository: repository,
+          eventLog: _MemoryEventLog(),
+          snapshotStore: _MemorySnapshotStore(),
+          clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
+        );
+
+        final result = await transport.dispatch(
+          saveId: save.id,
+          currentState: GameState(
+            units: [unit],
+            artifacts: const [artifact],
+            activePlayerId: 'player_2',
+            activePlayerCanAct: true,
+            submittedPlayerIds: const {'player_1'},
+          ),
+          command: const SubmitTurnCommand('player_2'),
+        );
+
+        expect(result.state.units.single.excavatingArtifactId, 'artifact_1');
+        expect(result.state.units.single.carriedArtifactId, isNull);
+        expect(result.state.artifacts.single.location.remainingTurns, 1);
+        expect(repository.snapshot.artifacts.single.location.remainingTurns, 1);
       },
     );
 

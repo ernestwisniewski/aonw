@@ -167,7 +167,7 @@ const _legacyGameFileLineCountBaseline = <String, int>{
   'lib/game/application/services/game_event_descriptor.dart': 549,
   'lib/game/domain/reducer/city/city_production_reducer.dart': 631,
   'lib/game/domain/reducer/combat/combat_reducer.dart': 627,
-  'lib/game/domain/reducer/turn/turn_reducer.dart': 795,
+  'lib/game/domain/reducer/turn/turn_reducer.dart': 754,
   'lib/game/presentation/engine/game_event_renderer_effect_mapper.dart': 586,
   'lib/game/presentation/engine/game_renderer.dart': 595,
   'lib/game/presentation/engine/game_rendering_coordinator.dart': 534,
@@ -245,7 +245,7 @@ const _legacyGameClassLineCountBaseline = <String, int>{
       462,
   'lib/game/domain/reducer/movement/movement_reducer.dart::MovementReducer':
       451,
-  'lib/game/domain/reducer/turn/turn_reducer.dart::TurnReducer': 703,
+  'lib/game/domain/reducer/turn/turn_reducer.dart::TurnReducer': 665,
   'lib/game/presentation/controllers/lobby_connection_controller.dart::'
           'LobbyConnectionController':
       432,

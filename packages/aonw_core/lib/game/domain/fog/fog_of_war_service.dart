@@ -10,8 +10,12 @@ import 'package:aonw_core/map/domain/map_data.dart';
 
 class FogOfWarService {
   final FogRevealCalculator revealCalculator;
+  final FogOfWarRecomputeCounters? counters;
 
-  const FogOfWarService({this.revealCalculator = const FogRevealCalculator()});
+  const FogOfWarService({
+    this.revealCalculator = const FogRevealCalculator(),
+    this.counters,
+  });
 
   FogOfWarState recompute({
     required FogOfWarState current,
@@ -20,6 +24,7 @@ class FogOfWarService {
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
   }) {
+    counters?.fullRecomputeCount++;
     final updated = <PlayerFogOfWar>[];
     for (final playerId in playerIds.where((id) => id.isNotEmpty)) {
       updated.add(
@@ -43,6 +48,7 @@ class FogOfWarService {
     required Iterable<GameCity> cities,
   }) {
     if (playerId.isEmpty) return current;
+    counters?.playerRecomputeCount++;
     return current.updatePlayer(
       _recomputedFogForPlayer(
         current: current,
@@ -51,6 +57,66 @@ class FogOfWarService {
         units: units,
         cities: cities,
       ),
+    );
+  }
+
+  FogOfWarState recomputeAfterUnitMove({
+    required FogOfWarState current,
+    required MapData mapData,
+    required GameUnit previousUnit,
+    required GameUnit movedUnit,
+    required Iterable<GameUnit> units,
+    required Iterable<GameCity> cities,
+  }) {
+    final playerId = movedUnit.ownerPlayerId;
+    if (playerId.isEmpty || previousUnit.ownerPlayerId != playerId) {
+      counters?.unitMoveFallbackCount++;
+      return recompute(
+        current: current,
+        mapData: mapData,
+        playerIds: {previousUnit.ownerPlayerId, movedUnit.ownerPlayerId},
+        units: units,
+        cities: cities,
+      );
+    }
+
+    final previousVisible = revealCalculator.visibleHexesFor(
+      mapData: mapData,
+      sources: [
+        unitRevealSource(
+          playerId: playerId,
+          unit: previousUnit,
+          mapData: mapData,
+        ),
+      ],
+    );
+    final movedVisible = revealCalculator.visibleHexesFor(
+      mapData: mapData,
+      sources: [
+        unitRevealSource(playerId: playerId, unit: movedUnit, mapData: mapData),
+      ],
+    );
+    final currentPlayerFog = current.fogForPlayer(playerId);
+    final potentiallyLostVisible = previousVisible.difference(movedVisible);
+    for (final hex in potentiallyLostVisible) {
+      if (currentPlayerFog.visibleHexes.contains(hex)) {
+        counters?.unitMoveFallbackCount++;
+        return recomputePlayer(
+          current: current,
+          mapData: mapData,
+          playerId: playerId,
+          units: units,
+          cities: cities,
+        );
+      }
+    }
+
+    counters?.unitMoveIncrementalCount++;
+    return current.updatePlayer(
+      currentPlayerFog.withVisibleHexes({
+        ...currentPlayerFog.visibleHexes,
+        ...movedVisible,
+      }),
     );
   }
 
@@ -121,5 +187,19 @@ class FogOfWarService {
       range: effectiveRange,
       observerHeight: observerHeight,
     );
+  }
+}
+
+final class FogOfWarRecomputeCounters {
+  int fullRecomputeCount = 0;
+  int playerRecomputeCount = 0;
+  int unitMoveIncrementalCount = 0;
+  int unitMoveFallbackCount = 0;
+
+  void reset() {
+    fullRecomputeCount = 0;
+    playerRecomputeCount = 0;
+    unitMoveIncrementalCount = 0;
+    unitMoveFallbackCount = 0;
   }
 }

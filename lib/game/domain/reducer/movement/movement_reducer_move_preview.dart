@@ -179,10 +179,11 @@ abstract final class _MovePreviewReducer {
 
     final updatedUnits = replaceUnit(workState.units, movedWithPath);
 
-    final newFog = fogOfWarService.recomputePlayer(
+    final newFog = fogOfWarService.recomputeAfterUnitMove(
       current: state.fogOfWar,
       mapData: mapData,
-      playerId: movedWithPath.ownerPlayerId,
+      previousUnit: selected,
+      movedUnit: movedWithPath,
       units: updatedUnits,
       cities: state.cities,
     );
