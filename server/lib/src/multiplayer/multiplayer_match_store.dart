@@ -181,7 +181,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
         transaction: txStore._transaction,
       );
       await txStore._replacePlayers(updatedRow.id!, state.match.players);
-      await txStore._upsertSnapshot(updatedRow.id!, state.snapshot);
+      await txStore._saveLatestSnapshot(updatedRow.id!, state.snapshot);
       return state;
     });
   }
@@ -213,7 +213,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
         ),
         transaction: txStore._transaction,
       );
-      await txStore._upsertSnapshot(updatedRow.id!, state.snapshot);
+      await txStore._saveLatestSnapshot(updatedRow.id!, state.snapshot);
       return state;
     });
   }
@@ -317,16 +317,26 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     ], transaction: _transaction);
   }
 
-  Future<void> _upsertSnapshot(int matchRowId, WireSnapshot snapshot) async {
-    final existing = await GameSnapshot.db.findFirstRow(
+  Future<void> _saveLatestSnapshot(
+    int matchRowId,
+    WireSnapshot snapshot,
+  ) async {
+    final latest = await GameSnapshot.db.findFirstRow(
       _session,
-      where: (table) =>
-          (table.matchId.equals(matchRowId)) &
-          (table.offset.equals(snapshot.offset)),
+      where: (table) => table.matchId.equals(matchRowId),
+      orderBy: (table) => table.offset,
+      orderDescending: true,
       transaction: _transaction,
     );
+    if (latest != null && latest.offset > snapshot.offset) {
+      throw StateError(
+        'Cannot replace snapshot at offset ${latest.offset} with stale '
+        'offset ${snapshot.offset}.',
+      );
+    }
+
     final now = DateTime.now().toUtc();
-    if (existing == null) {
+    if (latest == null) {
       await GameSnapshot.db.insertRow(
         _session,
         GameSnapshot(
@@ -337,11 +347,22 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
         ),
         transaction: _transaction,
       );
-      return;
+    } else {
+      await GameSnapshot.db.updateRow(
+        _session,
+        latest.copyWith(
+          offset: snapshot.offset,
+          snapshot: snapshot,
+          createdAt: now,
+        ),
+        transaction: _transaction,
+      );
     }
-    await GameSnapshot.db.updateRow(
+
+    await GameSnapshot.db.deleteWhere(
       _session,
-      existing.copyWith(snapshot: snapshot, createdAt: now),
+      where: (table) =>
+          (table.matchId.equals(matchRowId)) & (table.offset < snapshot.offset),
       transaction: _transaction,
     );
   }

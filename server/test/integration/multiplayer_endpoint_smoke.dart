@@ -179,6 +179,20 @@ void main() {
         expect(snapshot.save, isNotEmpty);
         expect(snapshot.state, isNotEmpty);
 
+        final databaseSession = sessionBuilder.build();
+        final persistedMatch = await GameMatch.db.findFirstRow(
+          databaseSession,
+          where: (table) => table.publicId.equals(created.id),
+        );
+        expect(persistedMatch, isNotNull);
+        final matchRowId = persistedMatch!.id!;
+        final initialSnapshotRows = await GameSnapshot.db.find(
+          databaseSession,
+          where: (table) => table.matchId.equals(matchRowId),
+        );
+        expect(initialSnapshotRows, hasLength(1));
+        final snapshotRowId = initialSnapshotRows.single.id;
+
         final events = await endpoints.multiplayer.listEvents(
           owner.session,
           created.id,
@@ -249,6 +263,18 @@ void main() {
         );
         expect(persistedEvents, hasLength(1));
         expect(persistedEvents.single.offset, acks.first.ack?.offset);
+
+        final persistedSnapshots = await GameSnapshot.db.find(
+          databaseSession,
+          where: (table) => table.matchId.equals(matchRowId),
+        );
+        expect(persistedSnapshots, hasLength(1));
+        expect(persistedSnapshots.single.id, snapshotRowId);
+        expect(persistedSnapshots.single.offset, persistedEvents.single.offset);
+        expect(
+          persistedSnapshots.single.snapshot.toJson(),
+          acks.first.ack!.snapshot.toJson(),
+        );
 
         final guestPlayer = started.players.firstWhere(
           (player) => player.userId == guest.userIdentifier,
