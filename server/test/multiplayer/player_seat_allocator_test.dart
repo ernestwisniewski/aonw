@@ -5,7 +5,9 @@ import 'package:test/test.dart';
 
 void main() {
   group('PlayerSeatAllocator', () {
-    const allocator = PlayerSeatAllocator();
+    final allocator = PlayerSeatAllocator(
+      idGenerator: _SequentialPlayerIdGenerator(),
+    );
 
     test('creates a human player with the requested civilization', () {
       final player = allocator.createHumanPlayer(
@@ -16,7 +18,8 @@ void main() {
         requestedCountryId: PlayerCountry.japan.name,
       );
 
-      expect(player.id, 'player-1-owner-user');
+      expect(player.id, 'public-player-1-1');
+      expect(player.id, isNot(contains('owner-user')));
       expect(player.name, 'Owner Nick');
       expect(player.country, PlayerCountry.japan);
       expect(player.kind, WirePlayerKind.human);
@@ -61,6 +64,36 @@ void main() {
       );
     });
   });
+
+  test('default ids are opaque UUID-backed values', () {
+    const allocator = PlayerSeatAllocator();
+    final player = allocator.createHumanPlayer(
+      userIdentifier: 'sensitive-auth-user-id',
+      index: 0,
+      existingPlayers: const [],
+    );
+
+    expect(
+      player.id,
+      matches(
+        RegExp(
+          r'^player-1-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-'
+          r'[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+    expect(player.id, isNot(contains(player.userId)));
+  });
+}
+
+final class _SequentialPlayerIdGenerator implements PlayerPublicIdGenerator {
+  var _sequence = 0;
+
+  @override
+  String next({required int seatIndex}) {
+    _sequence += 1;
+    return 'public-player-${seatIndex + 1}-$_sequence';
+  }
 }
 
 WirePlayer _player({

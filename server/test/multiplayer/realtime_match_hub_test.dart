@@ -300,15 +300,15 @@ void main() {
     expect(save.id, match.id);
     expect(save.gameMode, GameMode.multiplayer);
     expect(save.turn, 1);
-    expect(save.players.map((player) => player.id), [
-      'player-1-owner-user',
-      'player-2-guest-user',
-    ]);
+    final playerIds = started.players.map((player) => player.id).toSet();
+    expect(save.players.map((player) => player.id).toSet(), playerIds);
+    expect(playerIds, hasLength(2));
+    expect(playerIds, everyElement(isNot(contains('user'))));
     expect(gameState.units, hasLength(4));
-    expect(gameState.units.map((unit) => unit.ownerPlayerId).toSet(), {
-      'player-1-owner-user',
-      'player-2-guest-user',
-    });
+    expect(
+      gameState.units.map((unit) => unit.ownerPlayerId).toSet(),
+      playerIds,
+    );
     expect(gameState.fogOfWar.playerIds, containsAll(save.playerStates.keys));
   });
 

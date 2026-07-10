@@ -1,8 +1,26 @@
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:serverpod/serverpod.dart';
+
+abstract interface class PlayerPublicIdGenerator {
+  String next({required int seatIndex});
+}
+
+final class UuidPlayerPublicIdGenerator implements PlayerPublicIdGenerator {
+  const UuidPlayerPublicIdGenerator();
+
+  @override
+  String next({required int seatIndex}) {
+    return 'player-${seatIndex + 1}-${const Uuid().v4()}';
+  }
+}
 
 class PlayerSeatAllocator {
-  const PlayerSeatAllocator();
+  const PlayerSeatAllocator({
+    PlayerPublicIdGenerator idGenerator = const UuidPlayerPublicIdGenerator(),
+  }) : _idGenerator = idGenerator;
+
+  final PlayerPublicIdGenerator _idGenerator;
 
   WirePlayer createHumanPlayer({
     required String userIdentifier,
@@ -18,7 +36,7 @@ class PlayerSeatAllocator {
       index: index,
     );
     return WirePlayer(
-      id: 'player-${index + 1}-$userIdentifier',
+      id: _idGenerator.next(seatIndex: index),
       userId: userIdentifier,
       name: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
