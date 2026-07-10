@@ -80,3 +80,50 @@ jobs:
       - name: Test
         working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.test }}
+
+  server-integration:
+    name: server integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: aonw_test
+          POSTGRES_USER: aonw
+          POSTGRES_PASSWORD: aonw_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aonw -d aonw_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+          cache: true
+
+      - name: Get server dependencies
+        working-directory: server
+        run: dart pub get
+
+      - name: Run Serverpod PostgreSQL integration smoke
+        working-directory: server
+        env:
+          SERVERPOD_PASSWORD_database: aonw_dev
+          SERVERPOD_PASSWORD_emailSecretHashPepper: test-email-secret-hash-pepper
+          SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey: test-jwt-hmac-sha512-private-key
+          SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper: test-jwt-refresh-token-hash-pepper
+        run: >-
+          dart test test/integration/multiplayer_endpoint_smoke.dart
+          -P integration
+          --chain-stack-traces
