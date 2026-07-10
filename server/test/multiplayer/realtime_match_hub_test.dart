@@ -5,6 +5,10 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_command_service.dart';
+import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
+import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
@@ -586,6 +590,60 @@ void main() {
     },
   );
 
+  test('emits no lifecycle update when transaction commit fails', () async {
+    final hub = RealtimeMatchHub();
+    final store = _CommitFailingMatchStore();
+    final match = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-lifecycle-commit-failure',
+      request: CreateMatchRequest(
+        name: 'Lifecycle commit failure',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final input = StreamController<MultiplayerClientMessage>();
+    final initial = Completer<void>();
+    final messages = <MultiplayerServerMessage>[];
+    var recordMessages = false;
+    final subscription = hub
+        .connect(
+          store: store,
+          userIdentifier: match.ownerUserId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: input.stream,
+        )
+        .listen((message) {
+          if (message.snapshot != null && !initial.isCompleted) {
+            initial.complete();
+          } else if (recordMessages) {
+            messages.add(message);
+          }
+        });
+    await initial.future.timeout(const Duration(seconds: 1));
+
+    recordMessages = true;
+    store.failNextCommit();
+    await expectLater(
+      hub.resignMatch(
+        store: store,
+        userIdentifier: match.ownerUserId,
+        matchId: match.id,
+      ),
+      throwsA(isA<StateError>()),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(messages.where((message) => message.match != null), isEmpty);
+    expect((await store.findState(match.id))!.match.state, 'open');
+
+    await subscription.cancel();
+    await input.close();
+  });
+
   test('advanceTimedOutTurns finalizes a stored partial turn', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
     var now = DateTime.utc(2026, 6, 30, 12);
@@ -727,6 +785,82 @@ void main() {
       });
     },
   );
+
+  test('emits no timeout event when transaction commit fails', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    var now = DateTime.utc(2026, 6, 30, 13, 30);
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(
+        mapCatalog: mapCatalog,
+        turnTimeout: const Duration(seconds: 10),
+      ),
+      nowUtc: () => now,
+    );
+    final store = _CommitFailingMatchStore();
+    final started = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'timeout-commit-failure',
+      mapCatalog: mapCatalog,
+    );
+    final running = (await store.findState(started.id))!;
+    final persistentState = PersistentGameState.fromJson(
+      running.snapshot.state,
+    );
+    await store.saveState(
+      running.copyWith(
+        snapshot: running.snapshot.copyWith(
+          state: persistentState
+              .copyWith(
+                runtimeState: persistentState.runtimeState.copyWith(
+                  submittedPlayerIds: const {},
+                  turnStartedAt: now,
+                ),
+              )
+              .toJson(),
+        ),
+      ),
+    );
+
+    final input = StreamController<MultiplayerClientMessage>();
+    final initial = Completer<void>();
+    final messages = <MultiplayerServerMessage>[];
+    var recordMessages = false;
+    final subscription = hub
+        .connect(
+          store: store,
+          userIdentifier: started.ownerUserId,
+          matchId: started.id,
+          afterOffset: 0,
+          input: input.stream,
+        )
+        .listen((message) {
+          if (message.snapshot != null && !initial.isCompleted) {
+            initial.complete();
+          } else if (recordMessages) {
+            messages.add(message);
+          }
+        });
+    await initial.future.timeout(const Duration(seconds: 1));
+
+    recordMessages = true;
+    store.failNextCommit();
+    now = now.add(const Duration(seconds: 11));
+    await hub.advanceTimedOutTurns(store: store);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(messages.where((message) => message.event != null), isEmpty);
+    expect(
+      GameSave.fromJson(
+        (await store.findState(started.id))!.snapshot.save,
+      ).turn,
+      1,
+    );
+    expect(await store.listEvents(started.id, 0), isEmpty);
+
+    await subscription.cancel();
+    await input.close();
+  });
 
   test('advanceTimedOutTurns continues after a match sweep failure', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
@@ -1336,6 +1470,14 @@ void main() {
     expect((await guestStream.first).snapshot?.offset, 0);
 
     final ownerAck = ownerStream.firstWhere((message) => message.ack != null);
+    final ownerAckMessages = <MultiplayerServerMessage>[];
+    final guestEventMessages = <MultiplayerServerMessage>[];
+    final ownerAckSubscription = ownerStream
+        .where((message) => message.ack != null)
+        .listen(ownerAckMessages.add);
+    final guestEventSubscription = guestStream
+        .where((message) => message.event != null)
+        .listen(guestEventMessages.add);
     final ownerBroadcastEvent = ownerStream
         .firstWhere((message) => message.event != null)
         .timeout(const Duration(milliseconds: 100));
@@ -1363,7 +1505,11 @@ void main() {
 
     expect(ackMessage.ack?.accepted, isTrue);
     expect(ackMessage.offset, eventMessage.offset);
+    expect(ackMessage.ack?.offset, eventMessage.event?.offset);
     expect(eventMessage.event?.command?['type'], 'SubmitTurn');
+    expect(ownerAckMessages, [same(ackMessage)]);
+    expect(guestEventMessages, [same(eventMessage)]);
+    expect((await store.findState(match.id))!.offset, ackMessage.offset);
     await expectLater(ownerBroadcastEvent, throwsA(isA<TimeoutException>()));
 
     final reconnectInput = StreamController<MultiplayerClientMessage>();
@@ -1384,9 +1530,110 @@ void main() {
       throwsA(isA<TimeoutException>()),
     );
 
+    await ownerAckSubscription.cancel();
+    await guestEventSubscription.cancel();
     await ownerInput.close();
     await guestInput.close();
     await reconnectInput.close();
+  });
+
+  test('emits no command messages when transaction commit fails', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    final hub = RealtimeMatchHub(
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+    );
+    final store = _CommitFailingMatchStore();
+    final match = await _startRunningMatchInStore(
+      hub: hub,
+      store: store,
+      suffix: 'command-commit-failure',
+      mapCatalog: mapCatalog,
+    );
+    final owner = match.players.first;
+    final guest = match.players.last;
+    final registry = MatchConnectionRegistry();
+    final broadcaster = MatchBroadcaster(registry);
+    final commandService = MatchCommandService(
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+      stateAccess: const MatchStateAccess(),
+      broadcaster: broadcaster,
+      nowUtc: () => DateTime.utc(2026, 7, 1),
+    );
+    final guestInput = StreamController<MultiplayerClientMessage>();
+    final guestInitial = Completer<void>();
+    final guestMessages = <MultiplayerServerMessage>[];
+    final callerMessages = <MultiplayerServerMessage>[];
+    final guestSubscription = registry
+        .connect(
+          store: store,
+          userIdentifier: guest.userId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: guestInput.stream,
+          authorize:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+              }) async {
+                final state = (await store.findState(matchId))!;
+                return MatchConnectionAuthorization(
+                  state: state,
+                  participant: state.match.players.firstWhere(
+                    (player) => player.userId == userIdentifier,
+                  ),
+                );
+              },
+          updateConnectionState:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+                required WirePlayerConnectionState connectionState,
+              }) async => (await store.findState(matchId))!,
+          handleClientMessage: commandService.handleClientMessage,
+          createMessage: broadcaster.message,
+        )
+        .listen((message) {
+          if (message.snapshot != null && !guestInitial.isCompleted) {
+            guestInitial.complete();
+          } else {
+            guestMessages.add(message);
+          }
+        });
+    await guestInitial.future.timeout(const Duration(seconds: 1));
+
+    store.failNextCommit();
+    await expectLater(
+      commandService.handleClientMessage(
+        store: store,
+        matchId: match.id,
+        userIdentifier: owner.userId,
+        message: MultiplayerClientMessage(
+          clientMessageId: 'client-commit-failure',
+          lastSeenOffset: 0,
+          requestSnapshot: false,
+          command: WireCommand(
+            matchId: match.id,
+            tick: 1,
+            turn: 1,
+            actorPlayerId: owner.id,
+            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          ),
+        ),
+        emitToCaller: callerMessages.add,
+      ),
+      throwsA(isA<StateError>()),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(callerMessages, isEmpty);
+    expect(guestMessages.where((message) => message.event != null), isEmpty);
+    expect((await store.findState(match.id))!.offset, 0);
+    expect(await store.listEvents(match.id, 0), isEmpty);
+
+    await guestSubscription.cancel();
+    await guestInput.close();
   });
 
   test(
@@ -1964,6 +2211,46 @@ class _FindStateFailingMatchStore extends _MemoryMatchStore {
       throw StateError('Injected findState failure for $matchId');
     }
     return super.findState(matchId, lock: lock);
+  }
+}
+
+class _CommitFailingMatchStore extends _MemoryMatchStore {
+  var _failNextCommit = false;
+
+  void failNextCommit() {
+    _failNextCommit = true;
+  }
+
+  @override
+  Future<T> transaction<T>(
+    Future<T> Function(MultiplayerMatchStore store) action,
+  ) async {
+    final statesBefore = Map<String, StoredMatchState>.of(_states);
+    final eventsBefore = {
+      for (final entry in _events.entries) entry.key: [...entry.value],
+    };
+    final clientEventsBefore = Map<String, WireEvent>.of(
+      _eventsByClientMessageId,
+    );
+    try {
+      final result = await action(this);
+      if (_failNextCommit) {
+        _failNextCommit = false;
+        throw StateError('Injected transaction commit failure');
+      }
+      return result;
+    } catch (_) {
+      _states
+        ..clear()
+        ..addAll(statesBefore);
+      _events
+        ..clear()
+        ..addAll(eventsBefore);
+      _eventsByClientMessageId
+        ..clear()
+        ..addAll(clientEventsBefore);
+      rethrow;
+    }
   }
 }
 

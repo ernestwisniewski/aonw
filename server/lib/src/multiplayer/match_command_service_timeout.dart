@@ -32,20 +32,22 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     required MultiplayerMatchStore store,
     required String matchId,
   }) async {
-    await store.transaction((txStore) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
         lock: true,
       );
-      if (state.match.state != 'running') return;
+      if (state.match.state != 'running') {
+        return const MatchMutationOutcome<bool>(false);
+      }
 
       final now = _nowUtc();
       if (!_commandReducer.hasTurnTimedOut(
         snapshot: state.snapshot,
         now: now,
       )) {
-        return;
+        return const MatchMutationOutcome<bool>(false);
       }
 
       final save = GameSave.fromJson(state.snapshot.save);
@@ -57,7 +59,9 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         save,
         persistentState,
       );
-      if (actorPlayerId == null) return;
+      if (actorPlayerId == null) {
+        return const MatchMutationOutcome<bool>(false);
+      }
 
       final command = SubmitTurnCommand(actorPlayerId);
       final reduction = await _commandReducer.reduceTimedOutTurn(
@@ -66,10 +70,14 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         actorPlayerId: actorPlayerId,
         now: now,
       );
-      if (!reduction.accepted) return;
+      if (!reduction.accepted) {
+        return const MatchMutationOutcome<bool>(false);
+      }
 
       final nextSave = GameSave.fromJson(reduction.snapshot.save);
-      if (nextSave.turn == save.turn) return;
+      if (nextSave.turn == save.turn) {
+        return const MatchMutationOutcome<bool>(false);
+      }
 
       final nextOffset = state.nextOffset();
       final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
@@ -93,15 +101,19 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         clientMessageId: _timeoutClientMessageId(state.match.id, save.turn),
       );
 
-      _broadcaster.broadcast(
-        _broadcaster.message(
-          matchId: state.match.id,
-          offset: event.offset,
-          snapshot: updated.snapshot,
-          event: event,
+      return MatchMutationOutcome<bool>(
+        true,
+        notifications: MatchNotificationPlan.broadcastMessage(
+          _broadcaster.message(
+            matchId: state.match.id,
+            offset: event.offset,
+            snapshot: updated.snapshot,
+            event: event,
+          ),
         ),
       );
     });
+    outcome.notifications.deliver(_broadcaster);
   }
 
   String? _timeoutActorPlayerId(

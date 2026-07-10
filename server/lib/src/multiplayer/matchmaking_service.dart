@@ -7,6 +7,7 @@ import 'initial_multiplayer_snapshot_factory.dart';
 import 'invite_code_generator.dart';
 import 'match_broadcaster.dart';
 import 'match_lifecycle_service.dart';
+import 'match_mutation_outcome.dart';
 import 'match_request_validator.dart';
 import 'match_state_access.dart';
 import 'matchmaking_policies.dart';
@@ -17,6 +18,7 @@ import 'player_seat_allocator.dart';
 export 'invite_code_generator.dart' show InviteCodeGenerator;
 
 part 'matchmaking_service_creation.dart';
+part 'matchmaking_service_transactions.dart';
 
 final class MatchmakingService {
   MatchmakingService({
@@ -43,119 +45,6 @@ final class MatchmakingService {
   final DateTime Function() _nowUtc;
   final MatchRequestValidator _requestValidator;
   final InviteCodeGenerator _inviteCodeGenerator;
-
-  Future<WireMatch> quickplay({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required CreateMatchRequest request,
-    InitialMultiplayerSnapshotFactory snapshotFactory =
-        const InitialMultiplayerSnapshotFactory(),
-  }) {
-    final quickplayRequest = _requestValidator.validate(
-      quickplayMatchRequest(request),
-      enforceMapCapacity: false,
-    );
-    return store.transaction((txStore) async {
-      while (true) {
-        final state = await txStore.findOpenQuickplayCandidate(
-          quickplayRequest,
-        );
-        if (state == null) {
-          final created = await _createMatch(
-            store: txStore,
-            userIdentifier: userIdentifier,
-            displayName: displayName,
-            request: quickplayRequest,
-            quickplay: true,
-          );
-          return _lifecycle.advanceQuickplayLobby(
-            store: txStore,
-            state: (await txStore.findState(created.id, lock: true))!,
-            snapshotFactory: snapshotFactory,
-          );
-        }
-        if (await _lifecycle.abandonStaleQuickplayLobby(
-          store: txStore,
-          state: state,
-        )) {
-          continue;
-        }
-        final joined = await _joinState(
-          store: txStore,
-          state: state,
-          userIdentifier: userIdentifier,
-          displayName: displayName,
-          countryId: quickplayRequest.countryId,
-          broadcast: false,
-        );
-        return _lifecycle.advanceQuickplayLobby(
-          store: txStore,
-          state: (await txStore.findState(joined.id, lock: true))!,
-          snapshotFactory: snapshotFactory,
-        );
-      }
-    });
-  }
-
-  Future<WireMatch> joinMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required String matchId,
-    String? countryId,
-  }) {
-    return store.transaction((txStore) async {
-      final state = await _stateAccess.requireMatch(
-        txStore,
-        matchId,
-        lock: true,
-      );
-      requirePublicOpenLobby(state);
-      final joined = await _joinState(
-        store: txStore,
-        state: state,
-        userIdentifier: userIdentifier,
-        displayName: displayName,
-        countryId: countryId,
-        broadcast: !state.match.quickplay,
-      );
-      if (joined.quickplay && joined.state == 'open') {
-        return _lifecycle.advanceQuickplayLobby(
-          store: txStore,
-          state: (await txStore.findState(joined.id, lock: true))!,
-        );
-      }
-      return joined;
-    });
-  }
-
-  Future<WireMatch> joinPrivateMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required String inviteCode,
-    String? countryId,
-  }) {
-    return store.transaction((txStore) async {
-      final normalized = inviteCode.trim().toUpperCase();
-      final state = await txStore.findPrivateState(normalized, lock: true);
-      if (state == null) {
-        throw multiplayerException(
-          'private_match_not_found',
-          'Private match not found.',
-        );
-      }
-      requireOpenLobby(state);
-      return _joinState(
-        store: txStore,
-        state: state,
-        userIdentifier: userIdentifier,
-        displayName: displayName,
-        countryId: countryId,
-      );
-    });
-  }
 
   Future<WireMatch> _createMatch({
     required MultiplayerMatchStore store,
@@ -199,7 +88,7 @@ final class MatchmakingService {
     return match;
   }
 
-  Future<WireMatch> _joinState({
+  Future<MatchMutationOutcome<StoredMatchState>> _joinState({
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     required String userIdentifier,
@@ -219,7 +108,7 @@ final class MatchmakingService {
         countryId: countryId,
         broadcast: broadcast,
       );
-      return updated.match;
+      return updated;
     }
     if (state.match.players.length >= state.match.maxPlayers) {
       throw multiplayerException('match_full', 'Match is full.');
@@ -236,11 +125,15 @@ final class MatchmakingService {
       match: state.match.copyWith(players: [...state.match.players, player]),
     );
     await store.saveState(updated);
-    if (broadcast) _broadcaster.broadcastState(updated);
-    return updated.match;
+    return MatchMutationOutcome(
+      updated,
+      notifications: broadcast
+          ? MatchNotificationPlan.broadcastState(updated)
+          : const MatchNotificationPlan.empty(),
+    );
   }
 
-  Future<StoredMatchState> _updateExistingPlayerSeat({
+  Future<MatchMutationOutcome<StoredMatchState>> _updateExistingPlayerSeat({
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     required int playerIndex,
@@ -271,7 +164,7 @@ final class MatchmakingService {
       }
       updatedPlayer = updatedPlayer.copyWith(country: requestedCountry);
     }
-    if (updatedPlayer == player) return state;
+    if (updatedPlayer == player) return MatchMutationOutcome(state);
 
     final updatedPlayers = [...players];
     updatedPlayers[playerIndex] = updatedPlayer;
@@ -279,8 +172,12 @@ final class MatchmakingService {
       match: state.match.copyWith(players: updatedPlayers),
     );
     await store.saveState(updated);
-    if (broadcast) _broadcaster.broadcastState(updated);
-    return updated;
+    return MatchMutationOutcome(
+      updated,
+      notifications: broadcast
+          ? MatchNotificationPlan.broadcastState(updated)
+          : const MatchNotificationPlan.empty(),
+    );
   }
 
   WirePlayer _createHumanPlayer({

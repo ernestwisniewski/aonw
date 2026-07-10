@@ -3,11 +3,13 @@ import 'package:aonw_core/protocol.dart';
 
 import 'initial_multiplayer_snapshot_factory.dart';
 import 'match_broadcaster.dart';
+import 'match_mutation_outcome.dart';
 import 'match_state_access.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 import 'quickplay_lobby_policy.dart';
 
+part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';
 
 final class MatchLifecycleService {
@@ -32,8 +34,8 @@ final class MatchLifecycleService {
     required String matchId,
     InitialMultiplayerSnapshotFactory snapshotFactory =
         const InitialMultiplayerSnapshotFactory(),
-  }) {
-    return store.transaction((txStore) async {
+  }) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
@@ -46,6 +48,8 @@ final class MatchLifecycleService {
         snapshotFactory: snapshotFactory,
       );
     });
+    outcome.notifications.deliver(_broadcaster);
+    return outcome.value;
   }
 
   Future<WireMatch> startMatch({
@@ -54,8 +58,8 @@ final class MatchLifecycleService {
     required String matchId,
     InitialMultiplayerSnapshotFactory snapshotFactory =
         const InitialMultiplayerSnapshotFactory(),
-  }) {
-    return store.transaction((txStore) async {
+  }) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
@@ -85,14 +89,16 @@ final class MatchLifecycleService {
         snapshotFactory: snapshotFactory,
       );
     });
+    outcome.notifications.deliver(_broadcaster);
+    return outcome.value;
   }
 
   Future<WireMatch> resignMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
-  }) {
-    return store.transaction((txStore) async {
+  }) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
@@ -109,17 +115,21 @@ final class MatchLifecycleService {
               userIdentifier: userIdentifier,
             );
       await txStore.saveState(updated);
-      _broadcaster.broadcastState(updated);
-      return updated.match;
+      return MatchMutationOutcome(
+        updated.match,
+        notifications: MatchNotificationPlan.broadcastState(updated),
+      );
     });
+    outcome.notifications.deliver(_broadcaster);
+    return outcome.value;
   }
 
   Future<void> leaveMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
-  }) {
-    return store.transaction((txStore) async {
+  }) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
@@ -149,93 +159,19 @@ final class MatchLifecycleService {
       }
       await txStore.saveState(updated);
       if (updated.match.quickplay && updated.match.state == 'open') {
-        await advanceQuickplayLobby(
+        final advanced = await advanceQuickplayLobby(
           store: txStore,
           state: updated,
           broadcastUnchanged: true,
         );
-      } else {
-        _broadcaster.broadcastState(updated);
+        return advanced.withValue(true);
       }
+      return MatchMutationOutcome(
+        true,
+        notifications: MatchNotificationPlan.broadcastState(updated),
+      );
     });
-  }
-
-  Future<bool> abandonStaleQuickplayLobby({
-    required MultiplayerMatchStore store,
-    required StoredMatchState state,
-  }) async {
-    final match = state.match;
-    if (!match.quickplay || match.state != 'open') return false;
-    final stale = _quickplayLobbyPolicy.isStaleWaitingForPlayers(
-      humanPlayers: _stateAccess.humanPlayerCount(match),
-      minPlayers: match.minPlayers,
-      createdAt: match.createdAt,
-      nowUtc: _nowUtc(),
-      currentAutoStartAt: match.autoStartAt,
-    );
-    if (!stale) return false;
-    final abandoned = _stateAccess.abandonedState(
-      state,
-      reason: 'quickplay_stale',
-    );
-    await store.saveState(abandoned);
-    _broadcaster.broadcastState(abandoned);
-    return true;
-  }
-
-  Future<WireMatch> advanceQuickplayLobby({
-    required MultiplayerMatchStore store,
-    required StoredMatchState state,
-    InitialMultiplayerSnapshotFactory snapshotFactory =
-        const InitialMultiplayerSnapshotFactory(),
-    bool broadcastUnchanged = false,
-  }) async {
-    final match = state.match;
-    if (!match.quickplay || match.state != 'open') {
-      if (broadcastUnchanged) _broadcaster.broadcastState(state);
-      return match;
-    }
-
-    final decision = _quickplayLobbyPolicy.evaluate(
-      humanPlayers: _stateAccess.humanPlayerCount(match),
-      minPlayers: match.minPlayers,
-      maxPlayers: match.maxPlayers,
-      nowUtc: _nowUtc(),
-      currentAutoStartAt: match.autoStartAt,
-    );
-
-    switch (decision.action) {
-      case QuickplayLobbyAction.waitForPlayers:
-        if (match.autoStartAt == null) {
-          if (broadcastUnchanged) _broadcaster.broadcastState(state);
-          return match;
-        }
-        final updated = state.copyWith(
-          match: match.copyWith(autoStartAt: null),
-        );
-        await store.saveState(updated);
-        _broadcaster.broadcastState(updated);
-        return updated.match;
-      case QuickplayLobbyAction.waitForCountdown:
-        final autoStartAt = decision.autoStartAt;
-        if (autoStartAt == null ||
-            _sameInstant(match.autoStartAt, autoStartAt)) {
-          if (broadcastUnchanged) _broadcaster.broadcastState(state);
-          return match;
-        }
-        final updated = state.copyWith(
-          match: match.copyWith(autoStartAt: autoStartAt),
-        );
-        await store.saveState(updated);
-        _broadcaster.broadcastState(updated);
-        return updated.match;
-      case QuickplayLobbyAction.start:
-        return _startOpenMatch(
-          store: store,
-          state: state,
-          snapshotFactory: snapshotFactory,
-        );
-    }
+    outcome.notifications.deliver(_broadcaster);
   }
 
   Future<StoredMatchState> setParticipantConnectionState({
@@ -243,15 +179,15 @@ final class MatchLifecycleService {
     required String matchId,
     required String userIdentifier,
     required WirePlayerConnectionState connectionState,
-  }) {
-    return store.transaction((txStore) async {
+  }) async {
+    final outcome = await store.transaction((txStore) async {
       final state = await _stateAccess.requireMatch(
         txStore,
         matchId,
         lock: true,
       );
       if (state.match.state != 'open' && state.match.state != 'running') {
-        return state;
+        return MatchMutationOutcome(state);
       }
       final playerIndex = state.match.players.indexWhere(
         (player) => player.userId == userIdentifier,
@@ -263,7 +199,9 @@ final class MatchLifecycleService {
         );
       }
       final player = state.match.players[playerIndex];
-      if (player.connectionState == connectionState) return state;
+      if (player.connectionState == connectionState) {
+        return MatchMutationOutcome(state);
+      }
 
       final players = [...state.match.players];
       players[playerIndex] = player.copyWith(connectionState: connectionState);
@@ -271,9 +209,13 @@ final class MatchLifecycleService {
         match: state.match.copyWith(players: players),
       );
       await txStore.saveState(updated);
-      _broadcaster.broadcastState(updated);
-      return updated;
+      return MatchMutationOutcome(
+        updated,
+        notifications: MatchNotificationPlan.broadcastState(updated),
+      );
     });
+    outcome.notifications.deliver(_broadcaster);
+    return outcome.value;
   }
 
   StoredMatchState _runningStateAfterParticipantLeft(
@@ -301,7 +243,7 @@ final class MatchLifecycleService {
     return state.copyWith(match: state.match.copyWith(players: players));
   }
 
-  Future<WireMatch> _startOpenMatch({
+  Future<MatchMutationOutcome<WireMatch>> _startOpenMatch({
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     InitialMultiplayerSnapshotFactory snapshotFactory =
@@ -332,8 +274,10 @@ final class MatchLifecycleService {
     );
     final updated = state.copyWith(match: runningMatch, snapshot: snapshot);
     await store.saveState(updated);
-    _broadcaster.broadcastState(updated);
-    return updated.match;
+    return MatchMutationOutcome(
+      updated.match,
+      notifications: MatchNotificationPlan.broadcastState(updated),
+    );
   }
 
   bool _sameInstant(DateTime? a, DateTime b) {

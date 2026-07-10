@@ -4,10 +4,12 @@ import 'package:aonw_core/protocol.dart';
 import '../generated/protocol.dart';
 import 'match_broadcaster.dart';
 import 'match_connection_registry.dart';
+import 'match_mutation_outcome.dart';
 import 'match_state_access.dart';
 import 'multiplayer_match_store.dart';
 import 'server_command_reducer.dart';
 
+part 'match_command_service_handling.dart';
 part 'match_command_service_timeout.dart';
 
 final class MatchCommandService {
@@ -49,123 +51,16 @@ final class MatchCommandService {
     final command = message.command;
     if (command == null) return;
 
-    await store.transaction((txStore) async {
-      final state = await _stateAccess.requireMatch(
-        txStore,
-        matchId,
-        lock: true,
-      );
-      final player = _stateAccess.requireParticipant(state, userIdentifier);
-      if (command.actorPlayerId != player.id) {
-        final ack = WireCommandAck(
-          matchId: state.match.id,
-          accepted: false,
-          offset: state.offset,
-          snapshot: state.snapshot,
-          reason: 'Command actor does not match the authenticated player.',
-        );
-        emitToCaller(
-          _broadcaster.message(
-            matchId: state.match.id,
-            offset: state.offset,
-            ack: ack,
-          ),
-        );
-        return;
-      }
-
-      final duplicate = await txStore.findEventByClientMessageId(
-        state.match.id,
-        actorPlayerId: player.id,
-        clientMessageId: message.clientMessageId,
-      );
-      if (duplicate != null) {
-        emitToCaller(
-          _broadcaster.message(
-            matchId: state.match.id,
-            offset: duplicate.offset,
-            ack: WireCommandAck(
-              matchId: state.match.id,
-              accepted: true,
-              offset: duplicate.offset,
-              snapshot: state.snapshot,
-              events: duplicate.events,
-            ),
-          ),
-        );
-        return;
-      }
-
-      final now = _nowUtc();
-      final reduction = await _commandReducer.reduce(
-        match: state.match,
-        snapshot: state.snapshot,
-        wireCommand: command,
-        actorPlayerId: player.id,
-        now: now,
-      );
-      if (!reduction.accepted) {
-        final ack = WireCommandAck(
-          matchId: state.match.id,
-          accepted: false,
-          offset: state.offset,
-          snapshot: reduction.snapshot,
-          reason: reduction.reason ?? 'Command rejected.',
-        );
-        emitToCaller(
-          _broadcaster.message(
-            matchId: state.match.id,
-            offset: state.offset,
-            ack: ack,
-          ),
-        );
-        return;
-      }
-
-      final nextOffset = state.nextOffset();
-      final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
-      final nextSave = GameSave.fromJson(nextSnapshot.save);
-      final event = WireEvent(
-        matchId: state.match.id,
-        offset: nextOffset,
-        timestamp: now,
-        actorPlayerId: player.id,
-        tick: command.tick,
-        command: command.command,
-        events: reduction.events.map(GameEventSerializer.toJson).toList(),
-      );
-      final updated = state.copyWith(
-        match: state.match.copyWith(turn: nextSave.turn),
-        snapshot: nextSnapshot,
-      );
-      await txStore.appendEvent(
-        updated,
-        event,
-        actorPlayerId: player.id,
-        clientMessageId: message.clientMessageId,
-      );
-
-      final update = _broadcaster.message(
-        matchId: state.match.id,
-        offset: event.offset,
-        snapshot: updated.snapshot,
-        event: event,
-      );
-      _broadcaster.broadcast(update, except: emitToCaller);
-
-      emitToCaller(
-        _broadcaster.message(
-          matchId: state.match.id,
-          offset: event.offset,
-          ack: WireCommandAck(
-            matchId: state.match.id,
-            accepted: true,
-            offset: event.offset,
-            snapshot: updated.snapshot,
-            events: event.events,
-          ),
-        ),
+    final outcome = await store.transaction((txStore) {
+      return _handleCommand(
+        store: txStore,
+        matchId: matchId,
+        userIdentifier: userIdentifier,
+        message: message,
+        command: command,
+        emitToCaller: emitToCaller,
       );
     });
+    outcome.notifications.deliver(_broadcaster);
   }
 }
