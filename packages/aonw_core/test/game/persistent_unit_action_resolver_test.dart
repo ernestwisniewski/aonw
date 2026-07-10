@@ -37,6 +37,8 @@ void main() {
               unitId: 'worker_1',
             ),
             submittedPlayerIds: const {'player_2'},
+            mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
+            resourceTradeAgreements: _resourceTradeAgreements,
             turnStartedAt: DateTime.utc(2026, 4, 27),
           ),
         );
@@ -59,6 +61,7 @@ void main() {
           result.state.runtimeState.turnStartedAt,
           DateTime.utc(2026, 4, 27),
         );
+        _expectPersistentRuntimeSlices(result.state.runtimeState);
       },
     );
 
@@ -73,7 +76,13 @@ void main() {
         movementPoints: 3,
         queuedPath: _queuedPath(),
       );
-      final state = PersistentGameState(units: [unit]);
+      final state = PersistentGameState(
+        units: [unit],
+        runtimeState: const GameRuntimeState(
+          mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
+          resourceTradeAgreements: _resourceTradeAgreements,
+        ),
+      );
 
       final result = const PersistentUnitActionResolver().skipUnitTurn(
         state: state,
@@ -89,6 +98,7 @@ void main() {
         result.state.runtimeState.pendingAction,
         isA<PendingUnitTurnSkip>(),
       );
+      _expectPersistentRuntimeSlices(result.state.runtimeState);
     });
 
     test('cancelUnitAction restores movement after skipping turn', () {
@@ -385,3 +395,30 @@ QueuedMovePath _queuedPath() {
     ],
   );
 }
+
+void _expectPersistentRuntimeSlices(GameRuntimeState runtimeState) {
+  expect(
+    runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    _mapObjectiveHoldStates,
+  );
+  expect(runtimeState.resourceTradeAgreements, _resourceTradeAgreements);
+}
+
+const _mapObjectiveHoldStates = <String, MapObjectiveHoldState>{
+  'objective_1': MapObjectiveHoldState(
+    objectiveId: 'objective_1',
+    playerId: 'player_1',
+    holdTurns: 2,
+  ),
+};
+
+const _resourceTradeAgreements = <ResourceTradeAgreement>[
+  ResourceTradeAgreement(
+    id: 'trade_1',
+    exporterPlayerId: 'player_2',
+    importerPlayerId: 'player_1',
+    resource: ResourceType.horses,
+    goldPerTurn: 2,
+    remainingTurns: 3,
+  ),
+];

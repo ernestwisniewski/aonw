@@ -95,19 +95,7 @@ class PersistentResearchCommandResolver {
         pendingAction.ownerPlayerId != playerId) {
       return runtimeState;
     }
-    return GameRuntimeState(
-      cityFoundingDraft: runtimeState.cityFoundingDraft,
-      submittedPlayerIds: runtimeState.submittedPlayerIds,
-      timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
-      afkPlayerIds: runtimeState.afkPlayerIds,
-      kickedPlayerIds: runtimeState.kickedPlayerIds,
-      intendedAttacks: runtimeState.intendedAttacks,
-      diplomacy: runtimeState.diplomacy,
-      dominationHoldTurnsByPlayerId: runtimeState.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      turnStartedAt: runtimeState.turnStartedAt,
-    );
+    return runtimeState.copyWith(pendingAction: null);
   }
 
   static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {

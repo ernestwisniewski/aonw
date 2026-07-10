@@ -4,6 +4,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
@@ -1766,6 +1767,98 @@ void main() {
       throwsA(_multiplayerError('match_not_open')),
     );
   });
+
+  test('private match creation retries an existing invite code', () async {
+    const firstCode = 'ABCDEFGHJKLMN';
+    const secondCode = 'PQRSTUVWXYZ23';
+    final inviteCodeGenerator = _SequenceInviteCodeGenerator([
+      firstCode,
+      firstCode,
+      secondCode,
+    ]);
+    final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
+    final store = _MemoryMatchStore();
+    final request = CreateMatchRequest(
+      name: 'Private lobby',
+      mapName: 'test_map',
+      maxPlayers: 3,
+      minPlayers: 2,
+      private: true,
+    );
+
+    final first = await hub.createMatch(
+      store: store,
+      userIdentifier: 'first-owner',
+      request: request,
+    );
+    final second = await hub.createMatch(
+      store: store,
+      userIdentifier: 'second-owner',
+      request: request,
+    );
+
+    expect(first.inviteCode, firstCode);
+    expect(second.inviteCode, secondCode);
+    expect(inviteCodeGenerator.calls, 3);
+  });
+
+  test('private match creation retries a concurrent code conflict', () async {
+    const firstCode = 'ABCDEFGHJKLMN';
+    const secondCode = 'PQRSTUVWXYZ23';
+    final inviteCodeGenerator = _SequenceInviteCodeGenerator([
+      firstCode,
+      secondCode,
+    ]);
+    final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
+    final store = _CreateConflictOnceMatchStore();
+
+    final match = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Private lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: true,
+      ),
+    );
+
+    expect(match.inviteCode, secondCode);
+    expect(inviteCodeGenerator.calls, 2);
+  });
+
+  test(
+    'private match creation fails after bounded collision retries',
+    () async {
+      const inviteCode = 'ABCDEFGHJKLMN';
+      final inviteCodeGenerator = _SequenceInviteCodeGenerator([inviteCode]);
+      final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
+      final store = _MemoryMatchStore();
+      final request = CreateMatchRequest(
+        name: 'Private lobby',
+        mapName: 'test_map',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: true,
+      );
+      await hub.createMatch(
+        store: store,
+        userIdentifier: 'first-owner',
+        request: request,
+      );
+
+      await expectLater(
+        hub.createMatch(
+          store: store,
+          userIdentifier: 'second-owner',
+          request: request,
+        ),
+        throwsA(_multiplayerError('invite_code_unavailable')),
+      );
+      expect(inviteCodeGenerator.calls, 17);
+    },
+  );
 }
 
 Matcher _multiplayerError(String code) {
@@ -1964,12 +2057,10 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<StoredMatchState>> listVisibleMatchStates(
-    String userIdentifier,
-  ) async {
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
     return [
       for (final state in _states.values)
-        if (_isVisibleToUser(state.match, userIdentifier)) state,
+        if (_isVisibleToUser(state.match, userIdentifier)) state.match,
     ];
   }
 
@@ -1987,6 +2078,33 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
       for (final event in _events[matchId] ?? const <WireEvent>[])
         if (event.offset > afterOffset) event,
     ];
+  }
+}
+
+final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
+  var _conflictPending = true;
+
+  @override
+  Future<StoredMatchState> createState(StoredMatchState state) {
+    if (_conflictPending && state.match.inviteCode != null) {
+      _conflictPending = false;
+      throw const InviteCodeConflictException();
+    }
+    return super.createState(state);
+  }
+}
+
+final class _SequenceInviteCodeGenerator implements InviteCodeGenerator {
+  _SequenceInviteCodeGenerator(this._codes);
+
+  final List<String> _codes;
+  var calls = 0;
+
+  @override
+  String generate() {
+    final code = _codes[calls.clamp(0, _codes.length - 1)];
+    calls += 1;
+    return code;
   }
 }
 

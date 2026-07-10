@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -17,6 +18,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw/shared/widgets/game_ui/gold_divider.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -146,16 +148,28 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     setState(() => _resumeLoading = true);
     try {
       final client = ref.read(networkSessionClientProvider);
-      final token = await client.refresh(refreshToken: stored.refreshToken);
-      final match = await client.loadMatch(token: token, matchId: matchId);
+      final refresh = await client.refresh(refreshToken: stored.refreshToken);
+      await store.save(
+        StoredNetworkSession(
+          userId: stored.userId,
+          refreshToken: refresh.refreshToken,
+          displayName: stored.displayName,
+          matchId: stored.matchId,
+        ),
+      );
+      final match = await client.loadMatch(
+        token: refresh.token,
+        matchId: matchId,
+      );
       final playerId = _playerIdForUser(match, stored.userId);
       if (match.state != 'running' || playerId == null) {
-        throw StateError('No active multiplayer match to resume.');
+        await _handleResumeFailure(store, forgetPersistedMatch: true);
+        return;
       }
       final session = NetworkSession(
         userId: stored.userId,
-        token: token,
-        refreshToken: stored.refreshToken,
+        token: refresh.token,
+        refreshToken: refresh.refreshToken,
         matchId: match.id,
         playerId: playerId,
         connectionState: NetworkConnectionState(
@@ -170,18 +184,33 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
         '&name=${Uri.encodeComponent(match.mapName)}'
         '&source=${MapSource.asset.name}',
       );
-    } catch (_) {
-      await store.saveMatchId(null);
-      if (!mounted) return;
-      setState(() => _resumeMatchId = null);
-      GameToast.show(
-        context,
-        message: context.l10n.multiplayerResumeFailed,
-        tone: GameToastTone.error,
+    } catch (error) {
+      await _handleResumeFailure(
+        store,
+        forgetPersistedMatch: _isAuthoritativeMissingResumeMatch(error),
       );
     } finally {
       if (mounted) setState(() => _resumeLoading = false);
     }
+  }
+
+  Future<void> _handleResumeFailure(
+    NetworkSessionStore store, {
+    required bool forgetPersistedMatch,
+  }) async {
+    if (forgetPersistedMatch) await store.saveMatchId(null);
+    if (!mounted) return;
+    if (forgetPersistedMatch) setState(() => _resumeMatchId = null);
+    GameToast.show(
+      context,
+      message: context.l10n.multiplayerResumeFailed,
+      tone: GameToastTone.error,
+    );
+  }
+
+  bool _isAuthoritativeMissingResumeMatch(Object error) {
+    return error is sp.MultiplayerException &&
+        (error.code == 'match_not_found' || error.code == 'not_match_player');
   }
 
   String? _playerIdForUser(WireMatch match, String userId) {

@@ -10,6 +10,7 @@ import 'package:aonw/menu/main_menu_screen.dart';
 import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw/menu/manual_screen.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -288,7 +289,7 @@ void main() {
     );
   });
 
-  testWidgets('main menu resumes a persisted running multiplayer match', (
+  testWidgets('main menu resumes twice with each rotated refresh token', (
     tester,
   ) async {
     final store = _FakeNetworkSessionStore(
@@ -338,10 +339,180 @@ void main() {
 
     expect(client.refreshTokens, ['refresh-token']);
     expect(client.loadedMatchIds, ['match_1']);
+    expect(client.loadedTokens, [AuthToken('fresh-jwt-token-1')]);
+    expect(store.session?.refreshToken, 'rotated-refresh-token-1');
     expect(container.read(networkSessionProvider)?.matchId, 'match_1');
     expect(container.read(networkSessionProvider)?.playerId, 'player_1');
+    expect(
+      container.read(networkSessionProvider)?.refreshToken,
+      'rotated-refresh-token-1',
+    );
+    expect(find.byKey(const Key('game-screen')), findsOneWidget);
+
+    router.go('/');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RESUME GAME'));
+    await tester.pumpAndSettle();
+
+    expect(client.refreshTokens, ['refresh-token', 'rotated-refresh-token-1']);
+    expect(client.loadedMatchIds, ['match_1', 'match_1']);
+    expect(client.loadedTokens, [
+      AuthToken('fresh-jwt-token-1'),
+      AuthToken('fresh-jwt-token-2'),
+    ]);
+    expect(store.session?.refreshToken, 'rotated-refresh-token-2');
+    expect(store.savedSessions.map((session) => session.refreshToken), [
+      'rotated-refresh-token-1',
+      'rotated-refresh-token-2',
+    ]);
+    expect(
+      container.read(networkSessionProvider)?.refreshToken,
+      'rotated-refresh-token-2',
+    );
     expect(find.byKey(const Key('game-screen')), findsOneWidget);
   });
+
+  testWidgets(
+    'main menu keeps the persisted match after a transient resume failure',
+    (tester) async {
+      final store = _FakeNetworkSessionStore(
+        const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'refresh-token',
+          displayName: 'Alice',
+          matchId: 'match_1',
+        ),
+      );
+      final client = _FakeNetworkSessionClient(
+        match: _runningMatch(),
+        loadMatchError: const sp.ServerpodClientException(
+          'Service temporarily unavailable',
+          503,
+        ),
+      );
+      await _pumpResumeMenu(tester, store: store, client: client);
+
+      await tester.tap(find.text('RESUME GAME'));
+      await tester.pumpAndSettle();
+
+      expect(client.refreshTokens, ['refresh-token']);
+      expect(store.savedMatchIds, isEmpty);
+      expect(store.session?.matchId, 'match_1');
+      expect(store.session?.refreshToken, 'rotated-refresh-token-1');
+      expect(find.text('RESUME GAME'), findsOneWidget);
+      expect(find.byKey(const Key('game-screen')), findsNothing);
+      expect(
+        find.text('Could not resume the last multiplayer session.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('RESUME GAME'));
+      await tester.pumpAndSettle();
+
+      expect(client.refreshTokens, [
+        'refresh-token',
+        'rotated-refresh-token-1',
+      ]);
+      expect(store.savedMatchIds, isEmpty);
+      expect(store.session?.matchId, 'match_1');
+      expect(find.byKey(const Key('game-screen')), findsOneWidget);
+    },
+  );
+
+  for (final code in const ['match_not_found', 'not_match_player']) {
+    testWidgets('main menu forgets a match after authoritative $code', (
+      tester,
+    ) async {
+      final store = _FakeNetworkSessionStore(
+        const StoredNetworkSession(
+          userId: 'user_1',
+          refreshToken: 'refresh-token',
+          displayName: 'Alice',
+          matchId: 'match_1',
+        ),
+      );
+      final client = _FakeNetworkSessionClient(
+        match: _runningMatch(),
+        loadMatchError: sp.MultiplayerException(
+          code: code,
+          message: 'No resumable match.',
+        ),
+      );
+      await _pumpResumeMenu(tester, store: store, client: client);
+
+      await tester.tap(find.text('RESUME GAME'));
+      await tester.pumpAndSettle();
+
+      expect(store.savedMatchIds, [null]);
+      expect(store.session?.matchId, isNull);
+      expect(find.text('RESUME GAME'), findsNothing);
+      expect(find.byKey(const Key('game-screen')), findsNothing);
+    });
+  }
+
+  testWidgets('main menu forgets a match that is no longer running', (
+    tester,
+  ) async {
+    final store = _FakeNetworkSessionStore(
+      const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'refresh-token',
+        displayName: 'Alice',
+        matchId: 'match_1',
+      ),
+    );
+    final client = _FakeNetworkSessionClient(
+      match: _runningMatch(state: 'finished'),
+    );
+    await _pumpResumeMenu(tester, store: store, client: client);
+
+    await tester.tap(find.text('RESUME GAME'));
+    await tester.pumpAndSettle();
+
+    expect(store.savedMatchIds, [null]);
+    expect(store.session?.matchId, isNull);
+    expect(find.text('RESUME GAME'), findsNothing);
+    expect(find.byKey(const Key('game-screen')), findsNothing);
+  });
+}
+
+Future<void> _pumpResumeMenu(
+  WidgetTester tester, {
+  required _FakeNetworkSessionStore store,
+  required _FakeNetworkSessionClient client,
+}) async {
+  final container = ProviderContainer(
+    overrides: [
+      networkSessionStoreProvider.overrideWithValue(store),
+      networkSessionClientProvider.overrideWithValue(client),
+    ],
+  );
+  addTearDown(container.dispose);
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => const MainMenuScreen()),
+      GoRoute(
+        path: '/game',
+        builder: (context, state) => const SizedBox(key: Key('game-screen')),
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  expect(find.text('RESUME GAME'), findsOneWidget);
 }
 
 class _ThrowingAudioController extends GameAudioController {
@@ -353,12 +524,19 @@ class _ThrowingAudioController extends GameAudioController {
 
 class _FakeNetworkSessionStore extends NetworkSessionStore {
   StoredNetworkSession? session;
+  final savedSessions = <StoredNetworkSession>[];
   final savedMatchIds = <String?>[];
 
   _FakeNetworkSessionStore(this.session);
 
   @override
   Future<StoredNetworkSession?> load() async => session;
+
+  @override
+  Future<void> save(StoredNetworkSession session) async {
+    this.session = session;
+    savedSessions.add(session);
+  }
 
   @override
   Future<void> saveMatchId(String? matchId) async {
@@ -369,16 +547,24 @@ class _FakeNetworkSessionStore extends NetworkSessionStore {
 
 class _FakeNetworkSessionClient extends NetworkSessionClient {
   final WireMatch match;
+  Object? loadMatchError;
   final refreshTokens = <String>[];
   final loadedMatchIds = <String>[];
+  final loadedTokens = <AuthToken>[];
 
-  _FakeNetworkSessionClient({required this.match})
+  _FakeNetworkSessionClient({required this.match, this.loadMatchError})
     : super(serverpodHost: 'https://api.example.test');
 
   @override
-  Future<AuthToken> refresh({required String refreshToken}) async {
+  Future<NetworkSessionRefreshResult> refresh({
+    required String refreshToken,
+  }) async {
     refreshTokens.add(refreshToken);
-    return AuthToken('fresh-jwt-token');
+    final refreshNumber = refreshTokens.length;
+    return NetworkSessionRefreshResult(
+      token: AuthToken('fresh-jwt-token-$refreshNumber'),
+      refreshToken: 'rotated-refresh-token-$refreshNumber',
+    );
   }
 
   @override
@@ -387,11 +573,15 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
     required String matchId,
   }) async {
     loadedMatchIds.add(matchId);
+    loadedTokens.add(token);
+    final error = loadMatchError;
+    loadMatchError = null;
+    if (error != null) throw error;
     return match;
   }
 }
 
-WireMatch _runningMatch() {
+WireMatch _runningMatch({String state = 'running'}) {
   return WireMatch(
     id: 'match_1',
     ownerUserId: 'user_1',
@@ -420,7 +610,7 @@ WireMatch _runningMatch() {
     maxPlayers: 4,
     minPlayers: 2,
     turn: 1,
-    state: 'running',
+    state: state,
     createdAt: DateTime.utc(2026, 4, 27, 12),
   );
 }

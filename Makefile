@@ -169,7 +169,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -180,6 +180,7 @@ help:
 	@echo ""
 	@echo "Individual targets:"
 	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
+	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
 	@echo "  make deploy        Pull repo, rebuild Docker, restart staging, check health"
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
@@ -344,6 +345,11 @@ format-check:
 	@dart format --set-exit-if-changed .
 
 check: flutter-test core-test client-test server-test
+
+release-check:
+	@$(MAKE) --no-print-directory ci
+	@$(MAKE) --no-print-directory serverpod-ops-check
+	@tool/run_postgres_smoke.sh
 
 flutter-test:
 	@flutter analyze --no-pub
@@ -1380,6 +1386,8 @@ bump-version:
 # Aborts on any step failure.
 deploy-all:
 	@$(MAKE) --no-print-directory preflight-release
+	@echo "Running mandatory release quality gate..."
+	@$(MAKE) --no-print-directory release-check
 	@test -n "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "REMOTE_DEPLOY_SSH_KEY is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_USER)" || { echo "REMOTE_DEPLOY_USER is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_HOST)" || { echo "REMOTE_DEPLOY_HOST is required."; exit 1; }

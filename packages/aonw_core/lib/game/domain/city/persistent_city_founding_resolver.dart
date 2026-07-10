@@ -152,19 +152,7 @@ class PersistentCityFoundingResolver {
   }) {
     final clearDraft = runtimeState.cityFoundingDraft?.unitId == founderId;
     if (!clearDraft) return runtimeState;
-    return GameRuntimeState(
-      pendingAction: runtimeState.pendingAction,
-      submittedPlayerIds: runtimeState.submittedPlayerIds,
-      timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
-      afkPlayerIds: runtimeState.afkPlayerIds,
-      kickedPlayerIds: runtimeState.kickedPlayerIds,
-      intendedAttacks: runtimeState.intendedAttacks,
-      diplomacy: runtimeState.diplomacy,
-      dominationHoldTurnsByPlayerId: runtimeState.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      turnStartedAt: runtimeState.turnStartedAt,
-    );
+    return runtimeState.copyWith(cityFoundingDraft: null);
   }
 
   static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {

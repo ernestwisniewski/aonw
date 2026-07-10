@@ -44,6 +44,16 @@ make serverpod-ops-check
 `serverpod-ops-check` validates generated Serverpod migrations and Docker
 Compose config. It requires Docker and the Serverpod CLI.
 
+Before any multi-platform release, run the mandatory aggregate gate:
+
+```sh
+make release-check
+```
+
+`release-check` runs the full local CI suite, Serverpod migration and Compose
+validation, and the PostgreSQL-backed endpoint smoke. `make deploy-all` invokes
+this gate before changing the version, pushing `main`, or uploading artifacts.
+
 ## Local Backend Stack
 
 Create a local environment file from placeholders:

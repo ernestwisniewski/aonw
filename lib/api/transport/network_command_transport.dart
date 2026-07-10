@@ -268,7 +268,6 @@ class NetworkCommandTransport implements CommandTransport {
     }
     final snapshot = snapshotCodec.fromWire(ack.snapshot);
     final effectiveOffset = _effectiveOffset(ack.offset, snapshot);
-    final events = eventCodec.eventsFromJsonList(ack.events);
     _clearRetryableCommand(wire);
     if (!ack.accepted) {
       if (_isStaleAckReason(ack.reason)) {
@@ -281,14 +280,37 @@ class NetworkCommandTransport implements CommandTransport {
         );
       }
       _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+      final nextState = snapshot.toGameState(
+        activePlayerId: currentState.activePlayerId,
+        activePlayerCanAct: _activePlayerCanActAfter(
+          currentState: currentState,
+          command: command,
+          snapshot: snapshot,
+        ),
+      );
+      final hasRejectionEvent = ack.events.any(
+        (event) => event['type'] == SystemEventWire.commandRejectedType,
+      );
+      final reason = ack.reason?.trim();
+      final rejectionEvents = eventCodec.eventsFromJsonList([
+        ...ack.events,
+        if (!hasRejectionEvent)
+          SystemEventWire.commandRejected(
+            reason: reason == null || reason.isEmpty
+                ? 'command_rejected'
+                : reason,
+          ),
+      ]);
       return CommandTransportResult(
-        state: currentState,
+        state: nextState,
         snapshot: snapshot,
         offset: effectiveOffset,
-        events: events,
+        events: rejectionEvents,
+        storedSnapshot: true,
       );
     }
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+    final events = eventCodec.eventsFromJsonList(ack.events);
 
     final nextState = snapshot.toGameState(
       activePlayerId: currentState.activePlayerId,

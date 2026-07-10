@@ -11,6 +11,15 @@ void main() {
           players: {'player_1': PlayerFogOfWar(playerId: 'player_1')},
         ),
         units: [_settler()],
+        runtimeState: GameRuntimeState(
+          cityFoundingDraft: CityFoundingDraft(
+            unitId: 'settler_1',
+            ownerPlayerId: 'player_1',
+            center: const CityHex(col: 0, row: 0),
+          ),
+          mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
+          resourceTradeAgreements: _resourceTradeAgreements,
+        ),
       );
 
       final result = const PersistentCityFoundingResolver().foundCity(
@@ -27,6 +36,8 @@ void main() {
       expect(result.state.units.single.cityFoundingJob, isNotNull);
       expect(result.state.cities, isEmpty);
       expect(result.events, isEmpty);
+      expect(result.state.runtimeState.cityFoundingDraft, isNull);
+      _expectPersistentRuntimeSlices(result.state.runtimeState);
 
       final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
         state: result.state,
@@ -255,3 +266,30 @@ MapDefinition _mapDefinition() {
     ],
   );
 }
+
+void _expectPersistentRuntimeSlices(GameRuntimeState runtimeState) {
+  expect(
+    runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    _mapObjectiveHoldStates,
+  );
+  expect(runtimeState.resourceTradeAgreements, _resourceTradeAgreements);
+}
+
+const _mapObjectiveHoldStates = <String, MapObjectiveHoldState>{
+  'objective_1': MapObjectiveHoldState(
+    objectiveId: 'objective_1',
+    playerId: 'player_1',
+    holdTurns: 2,
+  ),
+};
+
+const _resourceTradeAgreements = <ResourceTradeAgreement>[
+  ResourceTradeAgreement(
+    id: 'trade_1',
+    exporterPlayerId: 'player_2',
+    importerPlayerId: 'player_1',
+    resource: ResourceType.horses,
+    goldPerTurn: 2,
+    remainingTurns: 3,
+  ),
+];

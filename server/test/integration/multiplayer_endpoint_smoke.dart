@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:serverpod/serverpod.dart' show QueryParameters;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:test/test.dart';
@@ -82,6 +83,67 @@ void main() {
             ),
           ),
         );
+      });
+
+      test('lists lobby metadata without deserializing its snapshot', () async {
+        final owner = await _accountSession(
+          sessionBuilder,
+          endpoints,
+          email: 'listing-owner@example.test',
+          displayName: 'Listing Owner',
+        );
+        final guest = await _accountSession(
+          sessionBuilder,
+          endpoints,
+          email: 'listing-guest@example.test',
+          displayName: 'Listing Guest',
+        );
+        final viewer = await _accountSession(
+          sessionBuilder,
+          endpoints,
+          email: 'listing-viewer@example.test',
+          displayName: 'Listing Viewer',
+        );
+        final created = await endpoints.multiplayer.createMatch(
+          owner.session,
+          CreateMatchRequest(
+            name: 'Snapshot-independent listing',
+            mapName: 'myranth',
+            maxPlayers: 2,
+            minPlayers: 2,
+            private: false,
+          ),
+        );
+        final joined = await endpoints.multiplayer.joinMatch(
+          guest.session,
+          created.id,
+        );
+
+        final databaseSession = sessionBuilder.build();
+        final persistedMatch = await GameMatch.db.findFirstRow(
+          databaseSession,
+          where: (table) => table.publicId.equals(joined.id),
+        );
+        expect(persistedMatch, isNotNull);
+        final affectedRows = await databaseSession.db.unsafeExecute('''
+UPDATE "aonw_snapshot"
+SET "snapshot" = jsonb_set(
+  "snapshot"::jsonb,
+  '{v}',
+  '999'::jsonb
+)::json
+WHERE "matchId" = @matchId
+''', parameters: QueryParameters.named({'matchId': persistedMatch!.id!}));
+        expect(affectedRows, 1);
+
+        final listed = await endpoints.multiplayer.listMatches(viewer.session);
+        final listedMatch = listed.singleWhere(
+          (match) => match.id == joined.id,
+        );
+        expect(listedMatch.players.map((player) => player.userId), [
+          owner.userIdentifier,
+          guest.userIdentifier,
+        ]);
       });
 
       test('creates, joins, starts, and loads a persisted match', () async {
@@ -179,6 +241,20 @@ void main() {
         expect(snapshot.save, isNotEmpty);
         expect(snapshot.state, isNotEmpty);
 
+        final databaseSession = sessionBuilder.build();
+        final persistedMatch = await GameMatch.db.findFirstRow(
+          databaseSession,
+          where: (table) => table.publicId.equals(created.id),
+        );
+        expect(persistedMatch, isNotNull);
+        final matchRowId = persistedMatch!.id!;
+        final initialSnapshotRows = await GameSnapshot.db.find(
+          databaseSession,
+          where: (table) => table.matchId.equals(matchRowId),
+        );
+        expect(initialSnapshotRows, hasLength(1));
+        final snapshotRowId = initialSnapshotRows.single.id;
+
         final events = await endpoints.multiplayer.listEvents(
           owner.session,
           created.id,
@@ -249,6 +325,18 @@ void main() {
         );
         expect(persistedEvents, hasLength(1));
         expect(persistedEvents.single.offset, acks.first.ack?.offset);
+
+        final persistedSnapshots = await GameSnapshot.db.find(
+          databaseSession,
+          where: (table) => table.matchId.equals(matchRowId),
+        );
+        expect(persistedSnapshots, hasLength(1));
+        expect(persistedSnapshots.single.id, snapshotRowId);
+        expect(persistedSnapshots.single.offset, persistedEvents.single.offset);
+        expect(
+          persistedSnapshots.single.snapshot.toJson(),
+          acks.first.ack!.snapshot.toJson(),
+        );
 
         final guestPlayer = started.players.firstWhere(
           (player) => player.userId == guest.userIdentifier,

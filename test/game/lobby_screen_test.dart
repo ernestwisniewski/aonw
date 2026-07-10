@@ -399,8 +399,13 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
     : super(serverpodHost: 'https://api.example.test');
 
   @override
-  Future<AuthToken> refresh({required String refreshToken}) async {
-    return AuthToken('fresh-jwt-token');
+  Future<NetworkSessionRefreshResult> refresh({
+    required String refreshToken,
+  }) async {
+    return NetworkSessionRefreshResult(
+      token: AuthToken('fresh-jwt-token'),
+      refreshToken: 'rotated-refresh-token',
+    );
   }
 
   @override

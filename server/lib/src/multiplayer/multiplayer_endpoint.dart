@@ -211,6 +211,7 @@ class RealtimeMatchHub {
     QuickplayLobbyPolicy quickplayLobbyPolicy = const QuickplayLobbyPolicy(),
     DateTime Function()? nowUtc,
     MatchConnectionRegistry? connectionRegistry,
+    InviteCodeGenerator? inviteCodeGenerator,
   }) : _connectionRegistry = connectionRegistry ?? MatchConnectionRegistry(),
        _nowUtc = nowUtc ?? (() => DateTime.now().toUtc()),
        _stateAccess = const MatchStateAccess() {
@@ -227,6 +228,7 @@ class RealtimeMatchHub {
       broadcaster: _broadcaster,
       lifecycle: _lifecycle,
       nowUtc: _nowUtc,
+      inviteCodeGenerator: inviteCodeGenerator,
     );
     _queries = MatchQueryService(stateAccess: _stateAccess);
     _commands = MatchCommandService(

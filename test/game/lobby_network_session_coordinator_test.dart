@@ -1,6 +1,7 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
 import 'package:aonw_core/protocol.dart';
@@ -22,7 +23,10 @@ void main() {
           loadStoredSession: () async => null,
           refreshToken: ({required refreshToken}) async {
             refreshed = true;
-            return AuthToken('fresh-token');
+            return NetworkSessionRefreshResult(
+              token: AuthToken('fresh-token'),
+              refreshToken: 'rotated-refresh-token',
+            );
           },
         );
 
@@ -35,11 +39,13 @@ void main() {
     );
 
     test(
-      'refreshes a stored account session and keeps the stored match id',
+      'rotates and persists a stored session while keeping its match id',
       () async {
         final setSessions = <NetworkSession?>[];
+        final savedSessions = <StoredNetworkSession>[];
         final coordinator = _coordinator(
           setSession: setSessions.add,
+          saveStoredSession: (session) async => savedSessions.add(session),
           loadStoredSession: () async {
             return const StoredNetworkSession(
               userId: 'user_1',
@@ -50,7 +56,10 @@ void main() {
           },
           refreshToken: ({required refreshToken}) async {
             expect(refreshToken, 'refresh-token');
-            return AuthToken('fresh-token');
+            return NetworkSessionRefreshResult(
+              token: AuthToken('fresh-token'),
+              refreshToken: 'rotated-refresh-token',
+            );
           },
         );
 
@@ -58,11 +67,58 @@ void main() {
 
         expect(session.userId, 'user_1');
         expect(session.token, AuthToken('fresh-token'));
-        expect(session.refreshToken, 'refresh-token');
+        expect(session.refreshToken, 'rotated-refresh-token');
         expect(session.matchId, 'match_1');
         expect(setSessions.single, session);
+        expect(savedSessions.single.userId, 'user_1');
+        expect(savedSessions.single.refreshToken, 'rotated-refresh-token');
+        expect(savedSessions.single.displayName, 'Alice');
+        expect(savedSessions.single.matchId, 'match_1');
       },
     );
+
+    test('uses each persisted rotated token for the next refresh', () async {
+      StoredNetworkSession stored = const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'initial-refresh-token',
+        displayName: 'Alice',
+        matchId: 'match_1',
+      );
+      final requestedRefreshTokens = <String>[];
+      final savedSessions = <StoredNetworkSession>[];
+      var refreshCount = 0;
+      final coordinator = _coordinator(
+        loadStoredSession: () async => stored,
+        saveStoredSession: (session) async {
+          stored = session;
+          savedSessions.add(session);
+        },
+        refreshToken: ({required refreshToken}) async {
+          requestedRefreshTokens.add(refreshToken);
+          refreshCount += 1;
+          return NetworkSessionRefreshResult(
+            token: AuthToken('access-token-$refreshCount'),
+            refreshToken: 'rotated-refresh-token-$refreshCount',
+          );
+        },
+      );
+
+      final first = await coordinator.ensureSession(displayName: 'Alice');
+      final second = await coordinator.ensureSession(displayName: 'Alice');
+
+      expect(requestedRefreshTokens, [
+        'initial-refresh-token',
+        'rotated-refresh-token-1',
+      ]);
+      expect(first.refreshToken, 'rotated-refresh-token-1');
+      expect(second.token, AuthToken('access-token-2'));
+      expect(second.refreshToken, 'rotated-refresh-token-2');
+      expect(savedSessions.map((session) => session.refreshToken), [
+        'rotated-refresh-token-1',
+        'rotated-refresh-token-2',
+      ]);
+      expect(stored.refreshToken, 'rotated-refresh-token-2');
+    });
 
     test('clears a rejected stored session and requires sign in', () async {
       final cleared = <String>[];

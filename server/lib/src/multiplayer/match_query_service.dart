@@ -12,10 +12,7 @@ final class MatchQueryService {
   Future<List<WireMatch>> listMatches({
     required MultiplayerMatchStore store,
     required String userIdentifier,
-  }) async {
-    final states = await store.listVisibleMatchStates(userIdentifier);
-    return [for (final state in states) state.match];
-  }
+  }) => store.listVisibleMatches(userIdentifier);
 
   Future<WireSnapshot> loadSnapshot({
     required MultiplayerMatchStore store,

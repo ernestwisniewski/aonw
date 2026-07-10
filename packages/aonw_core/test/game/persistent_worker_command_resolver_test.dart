@@ -12,6 +12,8 @@ void main() {
             unitId: 'worker_1',
             improvementType: FieldImprovementType.farm,
           ),
+          mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
+          resourceTradeAgreements: _resourceTradeAgreements,
         ),
       );
 
@@ -34,6 +36,7 @@ void main() {
       expect(worker.workerJob?.improvementType, FieldImprovementType.farm);
       expect(worker.workerJob?.remainingTurns, 3);
       expect(result.state.runtimeState.pendingAction, isNull);
+      _expectPersistentRuntimeSlices(result.state.runtimeState);
     });
 
     test('uses the selected pace for worker improvement duration', () {
@@ -251,3 +254,30 @@ MapDefinition _mapDefinition() {
     ],
   );
 }
+
+void _expectPersistentRuntimeSlices(GameRuntimeState runtimeState) {
+  expect(
+    runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    _mapObjectiveHoldStates,
+  );
+  expect(runtimeState.resourceTradeAgreements, _resourceTradeAgreements);
+}
+
+const _mapObjectiveHoldStates = <String, MapObjectiveHoldState>{
+  'objective_1': MapObjectiveHoldState(
+    objectiveId: 'objective_1',
+    playerId: 'player_1',
+    holdTurns: 2,
+  ),
+};
+
+const _resourceTradeAgreements = <ResourceTradeAgreement>[
+  ResourceTradeAgreement(
+    id: 'trade_1',
+    exporterPlayerId: 'player_2',
+    importerPlayerId: 'player_1',
+    resource: ResourceType.horses,
+    goldPerTurn: 2,
+    remainingTurns: 3,
+  ),
+];

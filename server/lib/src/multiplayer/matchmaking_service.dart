@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
 import 'initial_multiplayer_snapshot_factory.dart';
+import 'invite_code_generator.dart';
 import 'match_broadcaster.dart';
 import 'match_lifecycle_service.dart';
 import 'match_state_access.dart';
@@ -12,24 +13,32 @@ import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 import 'player_seat_allocator.dart';
 
+export 'invite_code_generator.dart' show InviteCodeGenerator;
+
+part 'matchmaking_service_creation.dart';
+
 final class MatchmakingService {
-  const MatchmakingService({
+  MatchmakingService({
     required PlayerSeatAllocator seatAllocator,
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
     required MatchLifecycleService lifecycle,
     required DateTime Function() nowUtc,
+    InviteCodeGenerator? inviteCodeGenerator,
   }) : _seatAllocator = seatAllocator,
        _stateAccess = stateAccess,
        _broadcaster = broadcaster,
        _lifecycle = lifecycle,
-       _nowUtc = nowUtc;
+       _nowUtc = nowUtc,
+       _inviteCodeGenerator =
+           inviteCodeGenerator ?? SecureInviteCodeGenerator();
 
   final PlayerSeatAllocator _seatAllocator;
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final MatchLifecycleService _lifecycle;
   final DateTime Function() _nowUtc;
+  final InviteCodeGenerator _inviteCodeGenerator;
 
   Future<WireMatch> quickplay({
     required MultiplayerMatchStore store,
@@ -79,22 +88,6 @@ final class MatchmakingService {
           snapshotFactory: snapshotFactory,
         );
       }
-    });
-  }
-
-  Future<WireMatch> createMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required CreateMatchRequest request,
-  }) {
-    return store.transaction((txStore) {
-      return _createMatch(
-        store: txStore,
-        userIdentifier: userIdentifier,
-        displayName: displayName,
-        request: request,
-      );
     });
   }
 
@@ -163,6 +156,7 @@ final class MatchmakingService {
     String? displayName,
     required CreateMatchRequest request,
     bool quickplay = false,
+    String? inviteCode,
   }) async {
     final matchId = 'match-${const Uuid().v4()}';
     final now = _nowUtc();
@@ -186,7 +180,7 @@ final class MatchmakingService {
       turn: 0,
       state: 'open',
       createdAt: now,
-      inviteCode: request.private ? _shortCode(matchId) : null,
+      inviteCode: inviteCode,
     );
     final snapshot = WireSnapshot(
       matchId: matchId,
@@ -311,8 +305,4 @@ final class MatchmakingService {
       throw multiplayerException(error.code, error.message);
     }
   }
-}
-
-String _shortCode(String matchId) {
-  return matchId.replaceAll('-', '').substring(0, 8).toUpperCase();
 }
