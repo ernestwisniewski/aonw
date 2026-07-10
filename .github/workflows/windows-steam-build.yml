@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: "3.44.2"
           channel: stable
@@ -76,7 +76,7 @@ jobs:
           Compress-Archive -Path "$artifactRoot/*" -DestinationPath $zipPath -Force
 
       - name: Upload Windows Steam artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: aonw-windows-steam-${{ github.run_number }}
           path: dist/aonw-windows-steam.zip

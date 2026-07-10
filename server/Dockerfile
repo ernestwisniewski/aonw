@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM dart:stable AS builder
+FROM dart:stable@sha256:a74253f8c88f341629a471b8706f8f7b9938207248d5f2ac6a8c2d2230b466c0 AS builder
 
 WORKDIR /workspace
 
@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/root/.pub-cache \
       bin/main.dart \
       -o /workspace/server_bin
 
-FROM debian:bookworm-slim AS runtime
+FROM debian:bookworm-slim@sha256:60eac759739651111db372c07be67863818726f754804b8707c90979bda511df AS runtime
 
 ARG DEBIAN_FRONTEND=noninteractive
 

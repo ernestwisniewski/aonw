@@ -2,7 +2,7 @@ name: aonw
 
 services:
   postgres:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg16@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
     profiles: ["dev", "staging", "prod", "tunnel"]
     restart: unless-stopped
     environment:
@@ -24,7 +24,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     profiles: ["dev", "staging", "prod", "tunnel"]
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --requirepass \"$${SERVERPOD_PASSWORD_redis}\""]
@@ -105,7 +105,7 @@ services:
         condition: service_healthy
 
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     profiles: ["staging", "prod"]
     restart: unless-stopped
     environment:
@@ -132,7 +132,7 @@ services:
       - server
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:latest@sha256:188bb03589a32affed3cf4d0590565ffe67b78866e6b5582574afab2b705bafe
     profiles: ["tunnel"]
     restart: unless-stopped
     command: tunnel --no-autoupdate --url http://server:${SERVERPOD_API_SERVER_PORT:-8080}
