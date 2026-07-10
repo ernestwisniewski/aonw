@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
@@ -17,7 +17,9 @@ typedef LobbyStoredSessionSaver =
 typedef LobbyStoredSessionClearer = Future<void> Function();
 typedef LobbyMatchIdSaver = Future<void> Function(String? matchId);
 typedef LobbySessionTokenRefresher =
-    Future<AuthToken> Function({required String refreshToken});
+    Future<NetworkSessionRefreshResult> Function({
+      required String refreshToken,
+    });
 typedef LobbySessionClockReader = DateTime Function();
 
 final class LobbyNetworkSessionCoordinator {
@@ -153,11 +155,18 @@ final class LobbyNetworkSessionCoordinator {
     DateTime now,
   ) async {
     try {
-      final token = await refreshToken(refreshToken: stored.refreshToken);
+      final refresh = await refreshToken(refreshToken: stored.refreshToken);
+      final refreshedStoredSession = StoredNetworkSession(
+        userId: stored.userId,
+        refreshToken: refresh.refreshToken,
+        displayName: stored.displayName,
+        matchId: stored.matchId,
+      );
+      await saveStoredSession(refreshedStoredSession);
       final session = NetworkSession(
         userId: stored.userId,
-        token: token,
-        refreshToken: stored.refreshToken,
+        token: refresh.token,
+        refreshToken: refresh.refreshToken,
         matchId: stored.matchId,
         connectionState: NetworkConnectionState(
           status: NetworkConnectionStatus.connected,

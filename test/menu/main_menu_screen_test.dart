@@ -288,7 +288,7 @@ void main() {
     );
   });
 
-  testWidgets('main menu resumes a persisted running multiplayer match', (
+  testWidgets('main menu resumes twice with each rotated refresh token', (
     tester,
   ) async {
     final store = _FakeNetworkSessionStore(
@@ -338,8 +338,36 @@ void main() {
 
     expect(client.refreshTokens, ['refresh-token']);
     expect(client.loadedMatchIds, ['match_1']);
+    expect(client.loadedTokens, [AuthToken('fresh-jwt-token-1')]);
+    expect(store.session?.refreshToken, 'rotated-refresh-token-1');
     expect(container.read(networkSessionProvider)?.matchId, 'match_1');
     expect(container.read(networkSessionProvider)?.playerId, 'player_1');
+    expect(
+      container.read(networkSessionProvider)?.refreshToken,
+      'rotated-refresh-token-1',
+    );
+    expect(find.byKey(const Key('game-screen')), findsOneWidget);
+
+    router.go('/');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RESUME GAME'));
+    await tester.pumpAndSettle();
+
+    expect(client.refreshTokens, ['refresh-token', 'rotated-refresh-token-1']);
+    expect(client.loadedMatchIds, ['match_1', 'match_1']);
+    expect(client.loadedTokens, [
+      AuthToken('fresh-jwt-token-1'),
+      AuthToken('fresh-jwt-token-2'),
+    ]);
+    expect(store.session?.refreshToken, 'rotated-refresh-token-2');
+    expect(store.savedSessions.map((session) => session.refreshToken), [
+      'rotated-refresh-token-1',
+      'rotated-refresh-token-2',
+    ]);
+    expect(
+      container.read(networkSessionProvider)?.refreshToken,
+      'rotated-refresh-token-2',
+    );
     expect(find.byKey(const Key('game-screen')), findsOneWidget);
   });
 }
@@ -353,12 +381,19 @@ class _ThrowingAudioController extends GameAudioController {
 
 class _FakeNetworkSessionStore extends NetworkSessionStore {
   StoredNetworkSession? session;
+  final savedSessions = <StoredNetworkSession>[];
   final savedMatchIds = <String?>[];
 
   _FakeNetworkSessionStore(this.session);
 
   @override
   Future<StoredNetworkSession?> load() async => session;
+
+  @override
+  Future<void> save(StoredNetworkSession session) async {
+    this.session = session;
+    savedSessions.add(session);
+  }
 
   @override
   Future<void> saveMatchId(String? matchId) async {
@@ -371,14 +406,21 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
   final WireMatch match;
   final refreshTokens = <String>[];
   final loadedMatchIds = <String>[];
+  final loadedTokens = <AuthToken>[];
 
   _FakeNetworkSessionClient({required this.match})
     : super(serverpodHost: 'https://api.example.test');
 
   @override
-  Future<AuthToken> refresh({required String refreshToken}) async {
+  Future<NetworkSessionRefreshResult> refresh({
+    required String refreshToken,
+  }) async {
     refreshTokens.add(refreshToken);
-    return AuthToken('fresh-jwt-token');
+    final refreshNumber = refreshTokens.length;
+    return NetworkSessionRefreshResult(
+      token: AuthToken('fresh-jwt-token-$refreshNumber'),
+      refreshToken: 'rotated-refresh-token-$refreshNumber',
+    );
   }
 
   @override
@@ -387,6 +429,7 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
     required String matchId,
   }) async {
     loadedMatchIds.add(matchId);
+    loadedTokens.add(token);
     return match;
   }
 }

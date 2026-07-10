@@ -49,6 +49,16 @@ class NetworkAuthResult {
   }
 }
 
+class NetworkSessionRefreshResult {
+  final AuthToken token;
+  final String refreshToken;
+
+  const NetworkSessionRefreshResult({
+    required this.token,
+    required this.refreshToken,
+  });
+}
+
 class CreateMatchRequest {
   final String name;
   final String mapName;
@@ -178,11 +188,20 @@ class NetworkSessionClient {
     );
   }
 
-  Future<AuthToken> refresh({required String refreshToken}) async {
+  Future<NetworkSessionRefreshResult> refresh({
+    required String refreshToken,
+  }) async {
     final auth = await _client().jwtRefresh.refreshAccessToken(
       refreshToken: refreshToken,
     );
-    return AuthToken(auth.token, expiresAt: auth.tokenExpiresAt);
+    final rotatedRefreshToken = auth.refreshToken;
+    if (rotatedRefreshToken == null || rotatedRefreshToken.isEmpty) {
+      throw StateError('Server did not return a rotated refresh token.');
+    }
+    return NetworkSessionRefreshResult(
+      token: AuthToken(auth.token, expiresAt: auth.tokenExpiresAt),
+      refreshToken: rotatedRefreshToken,
+    );
   }
 
   Future<NetworkAuthResult> completeSocialAuth({

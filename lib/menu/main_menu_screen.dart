@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -146,16 +147,27 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     setState(() => _resumeLoading = true);
     try {
       final client = ref.read(networkSessionClientProvider);
-      final token = await client.refresh(refreshToken: stored.refreshToken);
-      final match = await client.loadMatch(token: token, matchId: matchId);
+      final refresh = await client.refresh(refreshToken: stored.refreshToken);
+      await store.save(
+        StoredNetworkSession(
+          userId: stored.userId,
+          refreshToken: refresh.refreshToken,
+          displayName: stored.displayName,
+          matchId: stored.matchId,
+        ),
+      );
+      final match = await client.loadMatch(
+        token: refresh.token,
+        matchId: matchId,
+      );
       final playerId = _playerIdForUser(match, stored.userId);
       if (match.state != 'running' || playerId == null) {
         throw StateError('No active multiplayer match to resume.');
       }
       final session = NetworkSession(
         userId: stored.userId,
-        token: token,
-        refreshToken: stored.refreshToken,
+        token: refresh.token,
+        refreshToken: refresh.refreshToken,
         matchId: match.id,
         playerId: playerId,
         connectionState: NetworkConnectionState(
