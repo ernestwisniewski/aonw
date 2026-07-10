@@ -26,53 +26,13 @@ final class _EconomySimulationHostilityMemory {
 
   void record({required Iterable<GameEvent> events, required int turn}) {
     for (final event in events) {
-      switch (event) {
-        case UnitAttackedEvent(
-          :final attackerOwnerPlayerId,
-          :final defenderOwnerPlayerId,
-        ):
-          _mark(
-            victimPlayerId: defenderOwnerPlayerId,
-            hostilePlayerId: attackerOwnerPlayerId,
-            turn: turn,
-          );
-        case CityCapturedEvent(
-          :final previousOwnerPlayerId,
-          :final newOwnerPlayerId,
-        ):
-          _mark(
-            victimPlayerId: previousOwnerPlayerId,
-            hostilePlayerId: newOwnerPlayerId,
-            turn: turn,
-          );
-        case CityDestroyedEvent(
-          :final previousOwnerPlayerId,
-          :final attackerOwnerPlayerId,
-        ):
-          _mark(
-            victimPlayerId: previousOwnerPlayerId,
-            hostilePlayerId: attackerOwnerPlayerId,
-            turn: turn,
-          );
-        case DiplomaticRelationChangedEvent(
-          :final playerAId,
-          :final playerBId,
-          :final newStatus,
-        ):
-          if (newStatus == DiplomaticRelationStatus.war) {
-            _mark(
-              victimPlayerId: playerAId,
-              hostilePlayerId: playerBId,
-              turn: turn,
-            );
-            _mark(
-              victimPlayerId: playerBId,
-              hostilePlayerId: playerAId,
-              turn: turn,
-            );
-          }
-        default:
-          break;
+      final descriptor = GameEventDomainDescriptor.forEvent(event);
+      for (final hostility in descriptor.hostilities) {
+        _mark(
+          victimPlayerId: hostility.victimPlayerId,
+          hostilePlayerId: hostility.hostilePlayerId,
+          turn: turn,
+        );
       }
     }
   }

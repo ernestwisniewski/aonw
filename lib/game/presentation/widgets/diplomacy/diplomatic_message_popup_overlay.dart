@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
@@ -471,8 +472,8 @@ class _DiplomaticMessagePopupOverlayState
   void _dismissNotificationsForMessage(String messageId) {
     final notifications = [...ref.read(gameEventNotificationsProvider)];
     for (final notification in notifications) {
-      final event = notification.event;
-      if (event is DiplomaticMessageSentEvent && event.messageId == messageId) {
+      final descriptor = GameEventDescriptor.forEvent(notification.event);
+      if (descriptor.diplomaticMessageId == messageId) {
         ref
             .read(gameEventNotificationsProvider.notifier)
             .dismiss(notification.id);
@@ -483,9 +484,8 @@ class _DiplomaticMessagePopupOverlayState
   void _dismissNotificationsForProposal(String proposalId) {
     final notifications = [...ref.read(gameEventNotificationsProvider)];
     for (final notification in notifications) {
-      final event = notification.event;
-      if (event is DiplomaticProposalSentEvent &&
-          event.proposalId == proposalId) {
+      final descriptor = GameEventDescriptor.forEvent(notification.event);
+      if (descriptor.diplomaticProposalId == proposalId) {
         ref
             .read(gameEventNotificationsProvider.notifier)
             .dismiss(notification.id);

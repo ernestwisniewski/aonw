@@ -49,28 +49,9 @@ class AiRecentHostilityTracker {
     required GameEvent event,
     required String playerId,
   }) {
-    return switch (event) {
-      UnitAttackedEvent(
-        :final attackerOwnerPlayerId,
-        :final defenderOwnerPlayerId,
-      )
-          when defenderOwnerPlayerId == playerId =>
-        attackerOwnerPlayerId,
-      CityCapturedEvent(:final previousOwnerPlayerId, :final newOwnerPlayerId)
-          when previousOwnerPlayerId == playerId =>
-        newOwnerPlayerId,
-      CityDestroyedEvent(
-        :final previousOwnerPlayerId,
-        :final attackerOwnerPlayerId,
-      )
-          when previousOwnerPlayerId == playerId =>
-        attackerOwnerPlayerId,
-      UnitKilledEvent(:final ownerPlayerId)
-          when ownerPlayerId == playerId &&
-              logged.actorPlayerId != null &&
-              logged.actorPlayerId!.isNotEmpty =>
-        logged.actorPlayerId,
-      _ => null,
-    };
+    return GameEventDomainDescriptor.forEvent(event).hostilePlayerIdFor(
+      playerId: playerId,
+      actorPlayerId: logged.actorPlayerId,
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -17,8 +18,6 @@ import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
-import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/stability.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -102,10 +101,9 @@ class _GameEventNotificationsOverlayState
                         ),
                         dismissing: notification.id == _dismissingId,
                         fadeDuration: _notificationFadeDuration,
-                        maxDetailCount:
-                            notification.event is CombatResolvedEvent
-                            ? 2
-                            : null,
+                        maxDetailCount: GameEventDescriptor.forEvent(
+                          notification.event,
+                        ).notificationMaxDetailCount,
                         onTap: _focusTargetFor(notification) == null
                             ? null
                             : () => unawaited(_focusNotification(notification)),
@@ -206,35 +204,12 @@ Duration _holdDurationFor(GameEventNotification notification) {
 
 bool _isCriticalNotification(GameEventNotification notification) {
   final unitLookupState = notification.previousState ?? notification.state;
-  return switch (notification.event) {
-    CityCapturedEvent() ||
-    CityDestroyedEvent() ||
-    TechnologyResearchedEvent() ||
-    CivilizationMetEvent() ||
-    DominationThresholdReachedEvent() ||
-    StabilityBandChangedEvent(
-      newBand: StabilityBand.strained || StabilityBand.unrest,
-    ) ||
-    UnitKilledEvent() => true,
-    CombatResolvedEvent(:final outcome) =>
-      (outcome.attackerKilled &&
-              _unitBelongsTo(
-                unitLookupState,
-                outcome.attackerUnitId,
-                notification.playerId,
-              )) ||
-          (outcome.defenderKilled &&
-              _unitBelongsTo(
-                unitLookupState,
-                outcome.defenderUnitId,
-                notification.playerId,
-              )),
-    _ => false,
-  };
-}
-
-bool _unitBelongsTo(GameState state, String unitId, String playerId) {
-  return state.unitById(unitId)?.ownerPlayerId == playerId;
+  return GameEventDescriptor.forEvent(
+    notification.event,
+  ).isCriticalNotificationFor(
+    state: unitLookupState,
+    playerId: notification.playerId,
+  );
 }
 
 class _NotificationOverflowPill extends StatelessWidget {

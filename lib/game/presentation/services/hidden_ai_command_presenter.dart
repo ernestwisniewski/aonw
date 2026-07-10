@@ -1,9 +1,9 @@
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 
 typedef HiddenAiCommandDispatch =
     Future<DispatchCommandResult> Function(
@@ -71,7 +71,8 @@ final class HiddenAiCommandPresenter {
 
   static int? _eventTurnFor(DispatchCommandResult result) {
     for (final event in result.events) {
-      if (event is AllPlayersSubmittedEvent) return event.turn;
+      final completedTurn = GameEventDescriptor.forEvent(event).completedTurn;
+      if (completedTurn != null) return completedTurn;
     }
     return result.snapshot?.save.turn;
   }

@@ -244,32 +244,21 @@ extension ActivityLogFilterPresentation on ActivityLogFilter {
   }
 
   bool matches(GameEvent event) {
+    final categories = GameEventDescriptor.forEvent(event).activityCategories;
     return switch (this) {
       ActivityLogFilter.all => true,
-      ActivityLogFilter.combat =>
-        event is CombatResolvedEvent ||
-            event is UnitKilledEvent ||
-            event is UnitRetreatedEvent,
-      ActivityLogFilter.city =>
-        event is CityFoundedEvent ||
-            event is CityBuiltBuildingEvent ||
-            event is CityBuiltWonderEvent ||
-            event is WonderProductionRefundedEvent ||
-            event is CityProducedUnitEvent ||
-            event is CityClaimedHexEvent ||
-            event is CityCapturedEvent ||
-            event is WorkerCompletedJobEvent,
-      ActivityLogFilter.diplomacy =>
-        event is CivilizationMetEvent ||
-            event is DiplomaticProposalSentEvent ||
-            event is DiplomaticProposalRespondedEvent ||
-            event is DiplomaticProposalExpiredEvent ||
-            event is DiplomaticRelationChangedEvent ||
-            event is DiplomaticMessageSentEvent ||
-            event is DiplomaticMessageRespondedEvent ||
-            event is DiplomaticScoreChangedEvent ||
-            event is DiplomaticPromiseBrokenEvent,
-      ActivityLogFilter.technology => event is TechnologyResearchedEvent,
+      ActivityLogFilter.combat => categories.contains(
+        GameEventActivityCategory.combat,
+      ),
+      ActivityLogFilter.city => categories.contains(
+        GameEventActivityCategory.city,
+      ),
+      ActivityLogFilter.diplomacy => categories.contains(
+        GameEventActivityCategory.diplomacy,
+      ),
+      ActivityLogFilter.technology => categories.contains(
+        GameEventActivityCategory.technology,
+      ),
     };
   }
 }

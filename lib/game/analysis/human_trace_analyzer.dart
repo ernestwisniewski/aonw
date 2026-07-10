@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 
 class HumanTraceAnalyzer {
   const HumanTraceAnalyzer();
@@ -177,14 +177,15 @@ class HumanTraceAnalyzer {
       }
 
       for (final event in entry.events) {
-        switch (event) {
-          case AllPlayersSubmittedEvent(turn: final completedTurn):
-            lastCompletedTurn = completedTurn;
-            turn = completedTurn + 1;
-          case WorkerCompletedJobEvent(:final unitId):
-            _increment(workerCompletions, unitId);
-          default:
-            break;
+        final descriptor = GameEventDescriptor.forEvent(event);
+        final completedTurn = descriptor.completedTurn;
+        if (completedTurn != null) {
+          lastCompletedTurn = completedTurn;
+          turn = completedTurn + 1;
+        }
+        final completedWorkerUnitId = descriptor.completedWorkerUnitId;
+        if (completedWorkerUnitId != null) {
+          _increment(workerCompletions, completedWorkerUnitId);
         }
       }
     }
@@ -258,9 +259,8 @@ class HumanTraceAnalyzer {
     );
   }
 
-  static void _increment(Map<String, int> counts, String key) {
-    counts[key] = (counts[key] ?? 0) + 1;
-  }
+  static void _increment(Map<String, int> counts, String key) =>
+      counts[key] = (counts[key] ?? 0) + 1;
 
   static bool _isMeaningfulHumanCommand(GameCommand command) {
     return switch (command) {

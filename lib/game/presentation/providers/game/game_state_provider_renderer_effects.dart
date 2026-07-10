@@ -30,7 +30,8 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
 
   int? _eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
     for (final event in events) {
-      if (event is AllPlayersSubmittedEvent) return event.turn;
+      final completedTurn = GameEventDescriptor.forEvent(event).completedTurn;
+      if (completedTurn != null) return completedTurn;
     }
     return fallbackTurn;
   }

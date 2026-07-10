@@ -149,7 +149,7 @@ bool _hasCombatEventForPlayer({
   required Iterable<GameEvent> events,
 }) {
   return events
-      .where(_isCombatEvent)
+      .where((event) => GameEventDomainDescriptor.forEvent(event).combat)
       .any(
         (event) => _eventBelongsToPlayer(
           event: event,
@@ -160,113 +160,18 @@ bool _hasCombatEventForPlayer({
       );
 }
 
-bool _isCombatEvent(GameEvent event) =>
-    event is UnitAttackedEvent ||
-    event is CityAttackedEvent ||
-    event is CombatResolvedEvent ||
-    event is UnitKilledEvent ||
-    event is CityCapturedEvent ||
-    event is CityDestroyedEvent;
-
 bool _eventBelongsToPlayer({
   required GameEvent event,
   required String playerId,
   required PersistentGameState state,
   required PersistentGameState? previousState,
 }) {
-  return switch (event) {
-    CityFoundedEvent(:final ownerPlayerId) => ownerPlayerId == playerId,
-    CityBuiltBuildingEvent(:final cityId) =>
-      _cityOwner(state, cityId) == playerId ||
-          _cityOwner(previousState, cityId) == playerId,
-    CityBuiltWonderEvent(:final ownerPlayerId) => ownerPlayerId == playerId,
-    WonderProductionRefundedEvent(:final ownerPlayerId) =>
-      ownerPlayerId == playerId,
-    CityProducedUnitEvent(:final cityId, :final producedUnitId) =>
-      _cityOwner(state, cityId) == playerId ||
-          _cityOwner(previousState, cityId) == playerId ||
-          _unitOwner(state, producedUnitId) == playerId,
-    CityClaimedHexEvent(:final cityId) =>
-      _cityOwner(state, cityId) == playerId ||
-          _cityOwner(previousState, cityId) == playerId,
-    ResearchPointsGainedEvent() => false,
-    TechnologyResearchedEvent(playerId: final eventPlayerId) =>
-      eventPlayerId == playerId,
-    StrategicResourceDiscoveredEvent(playerId: final eventPlayerId) =>
-      eventPlayerId == playerId,
-    MapObjectiveSecuredEvent(playerId: final eventPlayerId) =>
-      eventPlayerId == playerId,
-    UnitMovedEvent(:final unitId) =>
-      _unitOwner(state, unitId) == playerId ||
-          _unitOwner(previousState, unitId) == playerId,
-    UnitGainedExperienceEvent(:final ownerPlayerId) =>
-      ownerPlayerId == playerId,
-    UnitAttackedEvent(
-      :final attackerOwnerPlayerId,
-      :final defenderOwnerPlayerId,
-    ) =>
-      attackerOwnerPlayerId == playerId || defenderOwnerPlayerId == playerId,
-    CityAttackedEvent(:final attackerOwnerPlayerId, :final cityOwnerPlayerId) =>
-      attackerOwnerPlayerId == playerId || cityOwnerPlayerId == playerId,
-    CombatResolvedEvent(:final attackerUnitId, :final defenderUnitId) =>
-      _unitOwner(state, attackerUnitId) == playerId ||
-          _unitOwner(previousState, attackerUnitId) == playerId ||
-          _unitOwner(state, defenderUnitId) == playerId ||
-          _unitOwner(previousState, defenderUnitId) == playerId ||
-          _cityOwner(state, defenderUnitId) == playerId ||
-          _cityOwner(previousState, defenderUnitId) == playerId,
-    UnitKilledEvent(:final ownerPlayerId, :final attackerUnitId) =>
-      ownerPlayerId == playerId ||
-          (attackerUnitId != null &&
-              (_unitOwner(state, attackerUnitId) == playerId ||
-                  _unitOwner(previousState, attackerUnitId) == playerId)),
-    UnitRetreatedEvent(:final ownerPlayerId) => ownerPlayerId == playerId,
-    CityCapturedEvent(:final previousOwnerPlayerId, :final newOwnerPlayerId) =>
-      previousOwnerPlayerId == playerId || newOwnerPlayerId == playerId,
-    CityDestroyedEvent(
-      :final previousOwnerPlayerId,
-      :final attackerOwnerPlayerId,
-    ) =>
-      previousOwnerPlayerId == playerId || attackerOwnerPlayerId == playerId,
-    TurnEndedEvent(playerId: final eventPlayerId) => eventPlayerId == playerId,
-    WorkerCompletedJobEvent(:final unitId) =>
-      _unitOwner(state, unitId) == playerId ||
-          _unitOwner(previousState, unitId) == playerId,
-    DominationThresholdReachedEvent(playerId: final eventPlayerId) =>
-      eventPlayerId == playerId,
-    StabilityBandChangedEvent(playerId: final eventPlayerId) =>
-      eventPlayerId == playerId,
-    CivilizationMetEvent(playerId: final eventPlayerId, :final metPlayerId) =>
-      eventPlayerId == playerId || metPlayerId == playerId,
-    DiplomaticProposalSentEvent(:final fromPlayerId, :final toPlayerId) =>
-      fromPlayerId == playerId || toPlayerId == playerId,
-    DiplomaticProposalRespondedEvent(:final fromPlayerId, :final toPlayerId) =>
-      fromPlayerId == playerId || toPlayerId == playerId,
-    DiplomaticProposalExpiredEvent(:final fromPlayerId, :final toPlayerId) =>
-      fromPlayerId == playerId || toPlayerId == playerId,
-    DiplomaticRelationChangedEvent(:final playerAId, :final playerBId) =>
-      playerAId == playerId || playerBId == playerId,
-    DiplomaticMessageSentEvent(:final fromPlayerId, :final toPlayerId) =>
-      fromPlayerId == playerId || toPlayerId == playerId,
-    DiplomaticMessageRespondedEvent(:final fromPlayerId, :final toPlayerId) =>
-      fromPlayerId == playerId || toPlayerId == playerId,
-    DiplomaticScoreChangedEvent(:final playerAId, :final playerBId) =>
-      playerAId == playerId || playerBId == playerId,
-    DiplomaticPromiseBrokenEvent(:final playerAId, :final playerBId) =>
-      playerAId == playerId || playerBId == playerId,
-    CommandRejectedEvent() ||
-    AllPlayersSubmittedEvent() ||
-    PlayerTimedOutEvent() ||
-    TurnAutoResolvedEvent() ||
-    PlayerKickedEvent() => false,
-  };
+  return GameEventDomainDescriptor.forEvent(event).belongsToPlayer(
+    playerId: playerId,
+    state: state,
+    previousState: previousState,
+  );
 }
-
-String? _unitOwner(PersistentGameState? state, String unitId) =>
-    state?.units.byId(unitId)?.ownerPlayerId;
-
-String? _cityOwner(PersistentGameState? state, String cityId) =>
-    state?.cities.byId(cityId)?.ownerPlayerId;
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
   final seen = <String>{};
