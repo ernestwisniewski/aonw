@@ -224,31 +224,64 @@ void main() {
       },
     );
 
-    test('keeps current state when the server rejects a command', () async {
-      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
-        units: [commander],
-        activePlayerId: 'player_1',
-        activePlayerCanAct: true,
-      );
-      final server = _FakeCommandServer(
-        save: _save(),
-        state: state,
-        rejectNextCommand: true,
-      );
-      final transport = _transport(server);
+    test(
+      'applies the authoritative snapshot and emits feedback when rejected',
+      () async {
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+        final currentState = GameState(
+          units: [commander],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+        );
+        final authoritativeSnapshot = SaveSnapshot.fromGameState(
+          save: _save(),
+          state: GameState(
+            units: [commander.copyWith(col: 2, row: 0)],
+            activePlayerId: 'player_1',
+            activePlayerCanAct: true,
+          ),
+          eventLogOffset: 7,
+        );
+        const snapshotCodec = SnapshotCodec();
+        final dispatcher = _ScriptedCommandDispatcher((sentCommand) {
+          return WireCommandAck(
+            matchId: sentCommand.saveId,
+            accepted: false,
+            offset: 7,
+            snapshot: snapshotCodec.toWire(
+              matchId: sentCommand.saveId,
+              snapshot: authoritativeSnapshot,
+            ),
+            reason: 'unit_unavailable',
+          );
+        });
+        final transport = NetworkCommandTransport(
+          commandDispatcher: dispatcher,
+          token: AuthToken('jwt-token'),
+          actorPlayerId: 'player_1',
+          tickGenerator: ClientTickGenerator(),
+          localReducer: GameStateReducer(mapData: _map()),
+          gameRepository: _SnapshotRepository(authoritativeSnapshot),
+        );
 
-      final result = await transport.dispatch(
-        saveId: 'save_1',
-        currentState: state,
-        command: MoveUnitCommand(commander.id, 1, 0),
-      );
+        final result = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: currentState,
+          command: MoveUnitCommand(commander.id, 1, 0),
+        );
 
-      expect(result.state, state);
-      expect(result.events.single, isA<CommandRejectedEvent>());
-      expect(result.offset, 1);
-      expect(result.storedSnapshot, isFalse);
-    });
+        expect(result.state.units.single.col, 2);
+        expect(result.events, [
+          isA<CommandRejectedEvent>().having(
+            (event) => event.reason,
+            'reason',
+            'unit_unavailable',
+          ),
+        ]);
+        expect(result.offset, 7);
+        expect(result.storedSnapshot, isTrue);
+      },
+    );
 
     for (final errorCode in const ['stale_tick', 'stale_turn']) {
       test('reloads snapshot when the server reports a $errorCode', () async {
@@ -872,7 +905,6 @@ class _FakeCommandServer implements WireCommandDispatcher {
   final List<_SentCommand> sentCommands = [];
   GameSave save;
   GameState state;
-  bool rejectNextCommand;
   SaveSnapshot? nextAcceptedSnapshot;
   Object? nextError;
   int offset = 0;
@@ -880,7 +912,6 @@ class _FakeCommandServer implements WireCommandDispatcher {
   _FakeCommandServer({
     required this.save,
     required this.state,
-    this.rejectNextCommand = false,
     this.nextAcceptedSnapshot,
     this.nextError,
   });
@@ -906,27 +937,6 @@ class _FakeCommandServer implements WireCommandDispatcher {
       throw error;
     }
     offset += 1;
-
-    if (rejectNextCommand) {
-      rejectNextCommand = false;
-      return WireCommandAck(
-        matchId: wire.matchId,
-        accepted: false,
-        offset: offset,
-        snapshot: snapshotCodec.toWire(
-          matchId: wire.matchId,
-          snapshot: SaveSnapshot.fromGameState(
-            save: save,
-            state: state,
-            eventLogOffset: offset,
-          ),
-        ),
-        events: eventCodec.eventsToJsonList(const [
-          CommandRejectedEvent(reason: 'rejected by fake server'),
-        ]),
-        reason: 'rejected by fake server',
-      );
-    }
 
     final command = commandCodec.fromWire(wire);
     final transition = reducer.reduce(

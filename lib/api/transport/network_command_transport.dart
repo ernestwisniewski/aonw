@@ -14,6 +14,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
@@ -281,11 +282,27 @@ class NetworkCommandTransport implements CommandTransport {
         );
       }
       _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+      final nextState = snapshot.toGameState(
+        activePlayerId: currentState.activePlayerId,
+        activePlayerCanAct: _activePlayerCanActAfter(
+          currentState: currentState,
+          command: command,
+          snapshot: snapshot,
+        ),
+      );
+      final rejectionEvents =
+          events.any((event) => event is CommandRejectedEvent)
+          ? events
+          : [
+              ...events,
+              CommandRejectedEvent(reason: ack.reason ?? 'command_rejected'),
+            ];
       return CommandTransportResult(
-        state: currentState,
+        state: nextState,
         snapshot: snapshot,
         offset: effectiveOffset,
-        events: events,
+        events: rejectionEvents,
+        storedSnapshot: true,
       );
     }
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
