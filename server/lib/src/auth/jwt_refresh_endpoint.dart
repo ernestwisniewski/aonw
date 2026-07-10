@@ -3,14 +3,20 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import 'auth_input_validator.dart';
 import 'auth_rate_limiter.dart';
+import 'refresh_token_rotation_service.dart';
 
 /// JWT refresh endpoint used by Serverpod auth clients.
 class JwtRefreshEndpoint extends RefreshJwtTokensEndpoint {
-  JwtRefreshEndpoint({AuthRequestLimiter? rateLimiter})
-    : _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
+  JwtRefreshEndpoint({
+    AuthRequestLimiter? rateLimiter,
+    RefreshTokenRotationService rotationService =
+        const RefreshTokenRotationService(),
+  }) : _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter(),
+       _rotationService = rotationService;
 
   static const _inputValidator = AuthInputValidator();
   final AuthRequestLimiter _rateLimiter;
+  final RefreshTokenRotationService _rotationService;
 
   @override
   @unauthenticatedClientCall
@@ -24,6 +30,6 @@ class JwtRefreshEndpoint extends RefreshJwtTokensEndpoint {
       action: AuthRateLimitAction.jwtRefresh,
       credential: DatabaseAuthRateLimiter.refreshTokenCredential(refreshToken),
     );
-    return super.refreshAccessToken(session, refreshToken: refreshToken);
+    return _rotationService.refresh(session, refreshToken: refreshToken);
   }
 }

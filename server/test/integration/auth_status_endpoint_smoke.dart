@@ -47,10 +47,55 @@ void main() {
           expect(rotatedSecondSession.authUserId, firstSession.authUserId);
         },
       );
+
+      test('serializes concurrent refresh-token rotation', () async {
+        _ensureAuthServices();
+        final session = await endpoints.emailIdp.createAccount(
+          sessionBuilder,
+          email: 'refresh-race@example.test',
+          password: 'long-password',
+          displayName: 'Refresh Race',
+        );
+        final refreshToken = session.refreshToken!;
+
+        final results = await Future.wait([
+          _captureRefresh(
+            endpoints.jwtRefresh.refreshAccessToken(
+              sessionBuilder,
+              refreshToken: refreshToken,
+            ),
+          ),
+          _captureRefresh(
+            endpoints.jwtRefresh.refreshAccessToken(
+              sessionBuilder,
+              refreshToken: refreshToken,
+            ),
+          ),
+        ]);
+
+        final winner = results.whereType<auth_core.AuthSuccess>().single;
+        expect(
+          results.whereType<auth_core.RefreshTokenInvalidSecretException>(),
+          hasLength(1),
+        );
+        final next = await endpoints.jwtRefresh.refreshAccessToken(
+          sessionBuilder,
+          refreshToken: winner.refreshToken!,
+        );
+        expect(next.authUserId, session.authUserId);
+      });
     },
     rollbackDatabase: RollbackDatabase.afterEach,
     testServerOutputMode: TestServerOutputMode.normal,
   );
+}
+
+Future<Object> _captureRefresh(Future<Object> operation) async {
+  try {
+    return await operation;
+  } catch (error) {
+    return error;
+  }
 }
 
 void _ensureAuthServices() {

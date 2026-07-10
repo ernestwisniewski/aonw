@@ -1,8 +1,8 @@
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart';
 
 import 'auth_input_validator.dart';
 import 'auth_rate_limiter.dart';
+import 'refresh_token_rotation_service.dart';
 
 /// Manages the lifecycle of authenticated sessions.
 ///
@@ -10,10 +10,15 @@ import 'auth_rate_limiter.dart';
 /// status endpoint. This endpoint covers clients that only have a persisted
 /// refresh token, or whose short-lived access token expired.
 class AuthStatusEndpoint extends Endpoint {
-  AuthStatusEndpoint({AuthRequestLimiter? rateLimiter})
-    : _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
+  AuthStatusEndpoint({
+    AuthRequestLimiter? rateLimiter,
+    RefreshTokenRotationService rotationService =
+        const RefreshTokenRotationService(),
+  }) : _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter(),
+       _rotationService = rotationService;
 
   final AuthRequestLimiter _rateLimiter;
+  final RefreshTokenRotationService _rotationService;
 
   /// Revokes the session represented by [refreshToken].
   ///
@@ -31,15 +36,10 @@ class AuthStatusEndpoint extends Endpoint {
       action: AuthRateLimitAction.sessionLogout,
       credential: DatabaseAuthRateLimiter.refreshTokenCredential(refreshToken),
     );
-    final jwt = AuthServices.getTokenManager<JwtTokenManager>().jwt;
-    final rotated = await jwt.refreshAccessToken(
+    await _rotationService.refresh(
       session,
       refreshToken: refreshToken,
-    );
-    await AuthServices.instance.tokenManager.revokeToken(
-      session,
-      tokenId: rotated.jwtRefreshTokenId.uuid,
-      tokenIssuer: JwtTokenManager.tokenIssuerName,
+      revokeRotatedToken: true,
     );
   }
 }
