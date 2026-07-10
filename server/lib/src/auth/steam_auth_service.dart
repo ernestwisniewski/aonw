@@ -10,9 +10,11 @@ import 'auth_input_validator.dart';
 import 'auth_rate_limiter.dart';
 import 'steam_open_id_verifier.dart';
 
+enum _SteamCallbackCommit { completed, alreadyCompleted, expired, rejected }
+
 class SteamAuthService {
   SteamAuthService({
-    SteamOpenIdVerifier? openIdVerifier,
+    SteamOpenIdVerification? openIdVerifier,
     AuthRequestLimiter? rateLimiter,
   }) : _openIdVerifier = openIdVerifier ?? SteamOpenIdVerifier(),
        _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
@@ -32,7 +34,7 @@ class SteamAuthService {
   );
   static const _inputValidator = AuthInputValidator();
 
-  final SteamOpenIdVerifier _openIdVerifier;
+  final SteamOpenIdVerification _openIdVerifier;
   final AuthRequestLimiter _rateLimiter;
 
   Future<SteamAuthStart> start(Session session) async {
@@ -139,11 +141,20 @@ class SteamAuthService {
     final requestId = query['requestId'];
     final validRequestId =
         requestId != null && _inputValidator.isValidSteamRequestId(requestId);
-    await _rateLimiter.enforce(
-      session,
-      action: AuthRateLimitAction.steamCallback,
-      credential: validRequestId ? requestId : null,
-    );
+    try {
+      await _rateLimiter.enforce(
+        session,
+        action: AuthRateLimitAction.steamCallback,
+        credential: validRequestId ? requestId : null,
+      );
+    } on AccountAuthException catch (error) {
+      if (error.code != 'rate_limited') rethrow;
+      return (
+        success: false,
+        title: 'Too many Steam sign-in attempts',
+        message: 'Please wait and try again.',
+      );
+    }
     if (requestId == null || !validRequestId) {
       return (
         success: false,
@@ -188,7 +199,7 @@ class SteamAuthService {
         message: 'Please return to the game and try again.',
       );
     }
-    if (_requestIdFromReturnTo(query['openid.return_to']) != requestId) {
+    if (!_isExpectedReturnTo(query['openid.return_to'], requestId)) {
       await _failRequest(session, requestId, 'invalid_return_to');
       return (
         success: false,
@@ -219,42 +230,89 @@ class SteamAuthService {
       );
     }
 
-    await session.db.transaction((transaction) async {
-      final lockedRequest = await SteamAuthRequest.db.findFirstRow(
-        session,
-        where: (table) => table.requestId.equals(requestId),
-        transaction: transaction,
-        lockMode: LockMode.forUpdate,
-        lockBehavior: LockBehavior.wait,
-      );
-      if (lockedRequest == null ||
-          lockedRequest.status != _statusPending ||
-          lockedRequest.expiresAt.isBefore(DateTime.now().toUtc())) {
-        return;
-      }
-
-      final authUserId = await _upsertSteamAccount(
-        session,
-        steamId: steamId,
-        transaction: transaction,
-      );
-      await SteamAuthRequest.db.updateRow(
-        session,
-        lockedRequest.copyWith(
-          status: _statusCompleted,
-          authUserId: authUserId,
-          steamId: steamId,
-          completedAt: DateTime.now().toUtc(),
-        ),
-        transaction: transaction,
-      );
-    });
-
-    return (
-      success: true,
-      title: 'Steam sign-in complete',
-      message: 'You can return to Age of New Worlds.',
+    final commit = await _commitVerifiedCallback(
+      session,
+      requestId: requestId,
+      steamId: steamId,
     );
+    return switch (commit) {
+      _SteamCallbackCommit.completed ||
+      _SteamCallbackCommit.alreadyCompleted => (
+        success: true,
+        title: 'Steam sign-in complete',
+        message: 'You can return to Age of New Worlds.',
+      ),
+      _SteamCallbackCommit.expired => (
+        success: false,
+        title: 'Steam sign-in expired',
+        message: 'Please return to the game and try again.',
+      ),
+      _SteamCallbackCommit.rejected => (
+        success: false,
+        title: 'Steam sign-in failed',
+        message: 'The authentication request could not be completed.',
+      ),
+    };
+  }
+
+  Future<_SteamCallbackCommit> _commitVerifiedCallback(
+    Session session, {
+    required String requestId,
+    required String steamId,
+  }) async {
+    for (var attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await session.db.transaction((transaction) async {
+          final lockedRequest = await SteamAuthRequest.db.findFirstRow(
+            session,
+            where: (table) => table.requestId.equals(requestId),
+            transaction: transaction,
+            lockMode: LockMode.forUpdate,
+            lockBehavior: LockBehavior.wait,
+          );
+          if (lockedRequest == null) return _SteamCallbackCommit.rejected;
+          if (lockedRequest.status == _statusCompleted ||
+              lockedRequest.status == _statusConsumed) {
+            return _SteamCallbackCommit.alreadyCompleted;
+          }
+          if (lockedRequest.status != _statusPending) {
+            return _SteamCallbackCommit.rejected;
+          }
+          final now = DateTime.now().toUtc();
+          if (lockedRequest.expiresAt.isBefore(now)) {
+            await SteamAuthRequest.db.updateRow(
+              session,
+              lockedRequest.copyWith(status: _statusExpired),
+              transaction: transaction,
+            );
+            return _SteamCallbackCommit.expired;
+          }
+
+          final authUserId = await _upsertSteamAccount(
+            session,
+            steamId: steamId,
+            transaction: transaction,
+          );
+          await SteamAuthRequest.db.updateRow(
+            session,
+            lockedRequest.copyWith(
+              status: _statusCompleted,
+              authUserId: authUserId,
+              steamId: steamId,
+              completedAt: now,
+            ),
+            transaction: transaction,
+          );
+          return _SteamCallbackCommit.completed;
+        });
+      } on DatabaseQueryException catch (error) {
+        final steamAccountRace =
+            error.code == '23505' &&
+            error.constraintName == 'aonw_steam_account_steam_id_idx';
+        if (!steamAccountRace) rethrow;
+      }
+    }
+    return _SteamCallbackCommit.rejected;
   }
 
   Future<void> _failRequest(
@@ -330,9 +388,11 @@ class SteamAuthService {
     return _steamClaimedIdPattern.firstMatch(claimedId)?.group(1);
   }
 
-  String? _requestIdFromReturnTo(String? returnTo) {
-    if (returnTo == null) return null;
-    return Uri.tryParse(returnTo)?.queryParameters['requestId'];
+  bool _isExpectedReturnTo(String? returnTo, String requestId) {
+    if (returnTo == null) return false;
+    final actual = Uri.tryParse(returnTo);
+    final expected = _publicWebUri(callbackPath, {'requestId': requestId});
+    return actual != null && actual.toString() == expected.toString();
   }
 
   String _profileName(String steamId) {

@@ -23,11 +23,9 @@ void main() {
       return (method: request.method, body: body);
     });
 
-    final verified = await _verifier(server).verify({
-      'openid.mode': 'id_res',
-      'openid.claimed_id': 'https://steamcommunity.com/openid/id/123',
-      'ignored': 'not-forwarded',
-    });
+    final verified = await _verifier(
+      server,
+    ).verify({..._query, 'ignored': 'not-forwarded'});
     final request = await handled;
 
     expect(verified, isTrue);
@@ -44,8 +42,8 @@ void main() {
     );
 
     final verified = await verifier.verify({
-      'openid.mode': 'id_res',
-      'openid.signature': List.filled(128, 'x').join(),
+      ..._query,
+      'openid.sig': List.filled(128, 'x').join(),
     });
 
     expect(verified, isFalse);
@@ -88,6 +86,25 @@ void main() {
       await handled;
     },
   );
+
+  test('rejects a response from another OpenID operator before I/O', () async {
+    final verified = await _verifier(server).verify({
+      ..._query,
+      'openid.op_endpoint': 'https://attacker.example/openid',
+    });
+
+    expect(verified, isFalse);
+  });
+
+  test('rejects mismatched claimed and identity values before I/O', () async {
+    final verified = await _verifier(server).verify({
+      ..._query,
+      'openid.identity':
+          'https://steamcommunity.com/openid/id/00000000000000000',
+    });
+
+    expect(verified, isFalse);
+  });
 }
 
 SteamOpenIdVerifier _verifier(HttpServer server) {
@@ -99,6 +116,14 @@ Uri _endpoint(HttpServer server) {
 }
 
 const _query = <String, String>{
+  'openid.ns': 'http://specs.openid.net/auth/2.0',
   'openid.mode': 'id_res',
-  'openid.signature': 'signature',
+  'openid.op_endpoint': 'https://steamcommunity.com/openid/login',
+  'openid.claimed_id': 'https://steamcommunity.com/openid/id/12345678901234567',
+  'openid.identity': 'https://steamcommunity.com/openid/id/12345678901234567',
+  'openid.return_to': 'https://api.example/auth/steam/callback?requestId=test',
+  'openid.response_nonce': '2026-07-10T10:00:00Znonce',
+  'openid.assoc_handle': 'assoc',
+  'openid.signed': 'signed-fields',
+  'openid.sig': 'signature',
 };

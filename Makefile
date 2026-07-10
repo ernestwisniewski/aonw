@@ -378,6 +378,7 @@ server-integration-test:
 			test/integration/multiplayer_endpoint_smoke.dart \
 			test/integration/auth_status_endpoint_smoke.dart \
 			test/integration/email_idp_endpoint_smoke.dart \
+			test/integration/steam_auth_service_smoke.dart \
 			-P integration --chain-stack-traces
 
 serverpod-runtime-smoke:
