@@ -79,8 +79,10 @@ void main() {
     expect(visibleEnemyCity.controlledHexes, [const CityHex(col: 2, row: 3)]);
 
     expect(state.fieldImprovements, hasLength(2));
+    expect(state.fieldImprovements.last.builtByCityId, isNull);
     expect(state.artifacts.map((artifact) => artifact.id), [
       'visible-artifact',
+      'own-carried-artifact',
     ]);
     expect(state.runtimeState.cityFoundingDraft, isNull);
     expect(state.runtimeState.pendingAction, isNull);
@@ -91,6 +93,18 @@ void main() {
       'player-owner',
     );
     expect(state.runtimeState.diplomacy.relations, hasLength(1));
+    expect(
+      state.runtimeState.diplomacy.hasContact('player-owner', 'player-ai'),
+      isTrue,
+    );
+    expect(
+      state.runtimeState.diplomacy.scoreHistory.values.single,
+      hasLength(1),
+    );
+    expect(
+      state.runtimeState.diplomacy.scoreHistory.values.single.single.sourceId,
+      'owner-score',
+    );
     expect(state.runtimeState.dominationHoldTurnsByPlayerId, {
       'player-owner': 2,
     });
@@ -258,7 +272,7 @@ WireSnapshot _snapshot() {
     },
   );
   final state = PersistentGameState(
-    playerColors: const {'player-owner': 1, 'player-guest': 2},
+    playerColors: const {'player-owner': 1, 'player-guest': 2, 'player-ai': 3},
     playerCountries: const {
       'player-owner': PlayerCountry.poland,
       'player-guest': PlayerCountry.france,
@@ -337,6 +351,26 @@ WireSnapshot _snapshot() {
         type: WorldArtifactType.queensMirror,
         location: WorldArtifactLocation.map(col: 7, row: 7),
       ),
+      WorldArtifact(
+        id: 'own-carried-artifact',
+        type: WorldArtifactType.merchantsSeal,
+        location: WorldArtifactLocation.carried(unitId: 'own-unit'),
+      ),
+      WorldArtifact(
+        id: 'enemy-carried-artifact',
+        type: WorldArtifactType.prophetMask,
+        location: WorldArtifactLocation.carried(unitId: 'visible-enemy-unit'),
+      ),
+      WorldArtifact(
+        id: 'enemy-excavation-artifact',
+        type: WorldArtifactType.ancientImperialCrown,
+        location: WorldArtifactLocation.excavation(
+          unitId: 'visible-enemy-unit',
+          col: 4,
+          row: 4,
+          remainingTurns: 9,
+        ),
+      ),
     ],
     fieldImprovements: const [
       FieldImprovement(
@@ -406,6 +440,7 @@ WireSnapshot _snapshot() {
       diplomacy: DiplomacyState(
         contactKeys: {
           DiplomacyState.relationKey('player-owner', 'player-guest'),
+          DiplomacyState.relationKey('player-owner', 'player-ai'),
           DiplomacyState.relationKey('player-guest', 'player-ai'),
         },
         relations: {
@@ -425,6 +460,28 @@ WireSnapshot _snapshot() {
             playerBId: 'player-ai',
             relationScore: 99,
           ),
+        },
+        scoreHistory: {
+          'corrupt-mixed-key': [
+            DiplomaticScoreEntry.between(
+              playerAId: 'player-owner',
+              playerBId: 'player-guest',
+              turn: 1,
+              delta: 1,
+              scoreAfter: 1,
+              reason: DiplomaticScoreChangeReason.manual,
+              sourceId: 'owner-score',
+            ),
+            DiplomaticScoreEntry.between(
+              playerAId: 'player-guest',
+              playerBId: 'player-ai',
+              turn: 1,
+              delta: 99,
+              scoreAfter: 99,
+              reason: DiplomaticScoreChangeReason.manual,
+              sourceId: 'guest-secret-score',
+            ),
+          ],
         },
       ),
       dominationHoldTurnsByPlayerId: const {

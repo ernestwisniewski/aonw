@@ -15,8 +15,11 @@ import 'matchmaking_service.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 import 'player_seat_allocator.dart';
+import 'player_match_view_projector.dart';
 import 'quickplay_lobby_policy.dart';
 import 'server_command_reducer.dart';
+
+part 'realtime_match_hub_api.dart';
 
 class MultiplayerEndpoint extends Endpoint {
   @override
@@ -212,9 +215,13 @@ class RealtimeMatchHub {
     DateTime Function()? nowUtc,
     MatchConnectionRegistry? connectionRegistry,
     InviteCodeGenerator? inviteCodeGenerator,
-  }) : _connectionRegistry = connectionRegistry ?? MatchConnectionRegistry(),
+    PlayerMatchViewProjector viewProjector = const PlayerMatchViewProjector(),
+  }) : _connectionRegistry =
+           connectionRegistry ??
+           MatchConnectionRegistry(viewProjector: viewProjector),
        _nowUtc = nowUtc ?? (() => DateTime.now().toUtc()),
-       _stateAccess = const MatchStateAccess() {
+       _stateAccess = const MatchStateAccess(),
+       _viewProjector = connectionRegistry?.viewProjector ?? viewProjector {
     _broadcaster = MatchBroadcaster(_connectionRegistry);
     _lifecycle = MatchLifecycleService(
       stateAccess: _stateAccess,
@@ -230,7 +237,10 @@ class RealtimeMatchHub {
       nowUtc: _nowUtc,
       inviteCodeGenerator: inviteCodeGenerator,
     );
-    _queries = MatchQueryService(stateAccess: _stateAccess);
+    _queries = MatchQueryService(
+      stateAccess: _stateAccess,
+      viewProjector: _viewProjector,
+    );
     _commands = MatchCommandService(
       commandReducer: commandReducer,
       stateAccess: _stateAccess,
@@ -242,180 +252,12 @@ class RealtimeMatchHub {
   final MatchConnectionRegistry _connectionRegistry;
   final DateTime Function() _nowUtc;
   final MatchStateAccess _stateAccess;
+  final PlayerMatchViewProjector _viewProjector;
   late final MatchBroadcaster _broadcaster;
   late final MatchLifecycleService _lifecycle;
   late final MatchmakingService _matchmaking;
   late final MatchQueryService _queries;
   late final MatchCommandService _commands;
-
-  Future<List<WireMatch>> listMatches({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-  }) => _queries.listMatches(store: store, userIdentifier: userIdentifier);
-
-  Future<WireMatch> quickplay({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required CreateMatchRequest request,
-    InitialMultiplayerSnapshotFactory snapshotFactory =
-        const InitialMultiplayerSnapshotFactory(),
-  }) {
-    return _matchmaking.quickplay(
-      store: store,
-      userIdentifier: userIdentifier,
-      displayName: displayName,
-      request: request,
-      snapshotFactory: snapshotFactory,
-    );
-  }
-
-  Future<WireMatch> createMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required CreateMatchRequest request,
-  }) {
-    return _matchmaking.createMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      displayName: displayName,
-      request: request,
-    );
-  }
-
-  Future<WireMatch> joinMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required String matchId,
-    String? countryId,
-  }) {
-    return _matchmaking.joinMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      displayName: displayName,
-      matchId: matchId,
-      countryId: countryId,
-    );
-  }
-
-  Future<WireMatch> joinPrivateMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    String? displayName,
-    required String inviteCode,
-    String? countryId,
-  }) {
-    return _matchmaking.joinPrivateMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      displayName: displayName,
-      inviteCode: inviteCode,
-      countryId: countryId,
-    );
-  }
-
-  Future<WireMatch> loadMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-    InitialMultiplayerSnapshotFactory snapshotFactory =
-        const InitialMultiplayerSnapshotFactory(),
-  }) {
-    return _lifecycle.loadMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-      snapshotFactory: snapshotFactory,
-    );
-  }
-
-  Future<WireSnapshot> loadSnapshot({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-  }) => _queries.loadSnapshot(
-    store: store,
-    userIdentifier: userIdentifier,
-    matchId: matchId,
-  );
-
-  Future<List<WireEvent>> listEvents({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-    required int afterOffset,
-  }) {
-    return _queries.listEvents(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-      afterOffset: afterOffset,
-    );
-  }
-
-  Future<WireMatch> startMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-    InitialMultiplayerSnapshotFactory snapshotFactory =
-        const InitialMultiplayerSnapshotFactory(),
-  }) {
-    return _lifecycle.startMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-      snapshotFactory: snapshotFactory,
-    );
-  }
-
-  Future<WireMatch> resignMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-  }) {
-    return _lifecycle.resignMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-    );
-  }
-
-  Future<void> leaveMatch({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-  }) {
-    return _lifecycle.leaveMatch(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-    );
-  }
-
-  Future<List<MatchTimeoutSweepFailure>> advanceTimedOutTurns({
-    required MultiplayerMatchStore store,
-  }) => _commands.advanceTimedOutTurns(store: store);
-  Stream<MultiplayerServerMessage> connect({
-    required MultiplayerMatchStore store,
-    required String userIdentifier,
-    required String matchId,
-    required int afterOffset,
-    required Stream<MultiplayerClientMessage> input,
-  }) {
-    return _connectionRegistry.connect(
-      store: store,
-      userIdentifier: userIdentifier,
-      matchId: matchId,
-      afterOffset: afterOffset,
-      input: input,
-      authorize: _commands.authorizeConnection,
-      updateConnectionState: _lifecycle.setParticipantConnectionState,
-      handleClientMessage: _commands.handleClientMessage,
-      createMessage: _broadcaster.message,
-    );
-  }
 }
 
 final class _PlayerIdentity {

@@ -121,6 +121,15 @@ final class PlayerMatchViewProjector {
       for (final city in canonical.cities)
         if (city.ownerPlayerId == playerId) city.id,
     };
+    final ownUnitIds = {
+      for (final unit in canonical.units)
+        if (unit.ownerPlayerId == playerId) unit.id,
+    };
+    final knownPlayerIds = {
+      playerId,
+      ...canonical.playerColors.keys,
+      ...canonical.playerCountries.keys,
+    };
     final units = [
       for (final unit in canonical.units)
         if (unit.ownerPlayerId == playerId)
@@ -135,9 +144,6 @@ final class PlayerMatchViewProjector {
         else if (visibility.canSeeDynamicAt(city.center.col, city.center.row))
           _visibleOpponentCity(city, visibility),
     ];
-    final visibleUnitIds = {for (final unit in units) unit.id};
-    final visibleCityIds = {for (final city in cities) city.id};
-
     return PersistentGameState(
       playerColors: Map<String, int>.from(canonical.playerColors),
       playerCountries: Map<String, PlayerCountry>.from(
@@ -154,20 +160,19 @@ final class PlayerMatchViewProjector {
             artifact,
             visibility: visibility,
             ownCities: ownCities,
-            visibleUnitIds: visibleUnitIds,
-            visibleCityIds: visibleCityIds,
+            ownUnitIds: ownUnitIds,
           ))
             artifact,
       ],
       fieldImprovements: [
         for (final improvement in canonical.fieldImprovements)
-          if ((improvement.builtByCityId != null &&
-                  ownCities.contains(improvement.builtByCityId)) ||
-              visibility.canSeeDynamicAt(
-                improvement.hex.col,
-                improvement.hex.row,
-              ))
-            improvement,
+          if (ownCities.contains(improvement.builtByCityId))
+            improvement
+          else if (visibility.canSeeDynamicAt(
+            improvement.hex.col,
+            improvement.hex.row,
+          ))
+            FieldImprovement(hex: improvement.hex, type: improvement.type),
       ],
       fogOfWar: FogOfWarState(
         players: {playerId: canonical.fogOfWar.fogForPlayer(playerId)},
@@ -175,12 +180,20 @@ final class PlayerMatchViewProjector {
       research: ResearchState(
         players: {playerId: canonical.research.forPlayer(playerId)},
       ),
-      runtimeState: _runtimeFor(canonical.runtimeState, playerId),
+      runtimeState: _runtimeFor(
+        canonical.runtimeState,
+        playerId,
+        knownPlayerIds,
+      ),
       wonderRegistry: canonical.wonderRegistry,
     );
   }
 
-  GameRuntimeState _runtimeFor(GameRuntimeState canonical, String playerId) {
+  GameRuntimeState _runtimeFor(
+    GameRuntimeState canonical,
+    String playerId,
+    Set<String> knownPlayerIds,
+  ) {
     return GameRuntimeState(
       cityFoundingDraft: canonical.cityFoundingDraft?.ownerPlayerId == playerId
           ? canonical.cityFoundingDraft
@@ -199,7 +212,7 @@ final class PlayerMatchViewProjector {
         for (final attack in canonical.intendedAttacks)
           if (attack.declaringPlayerId == playerId) attack,
       ],
-      diplomacy: _diplomacyFor(canonical.diplomacy, playerId),
+      diplomacy: _diplomacyFor(canonical.diplomacy, playerId, knownPlayerIds),
       dominationHoldTurnsByPlayerId: _ownEntry(
         canonical.dominationHoldTurnsByPlayerId,
         playerId,
@@ -223,11 +236,15 @@ final class PlayerMatchViewProjector {
     );
   }
 
-  DiplomacyState _diplomacyFor(DiplomacyState canonical, String playerId) {
+  DiplomacyState _diplomacyFor(
+    DiplomacyState canonical,
+    String playerId,
+    Set<String> knownPlayerIds,
+  ) {
     final contactKeys = {
       for (final relation in canonical.relations.values)
         if (relation.other(playerId) != null) relation.key,
-      for (final otherPlayerId in _diplomacyPlayerIds(canonical))
+      for (final otherPlayerId in knownPlayerIds)
         if (canonical.hasContact(playerId, otherPlayerId))
           DiplomacyState.relationKey(playerId, otherPlayerId),
     };
@@ -245,31 +262,26 @@ final class PlayerMatchViewProjector {
         for (final entry in canonical.messages.entries)
           if (entry.value.involves(playerId)) entry.key: entry.value,
       },
-      scoreHistory: {
-        for (final entry in canonical.scoreHistory.entries)
-          if (entry.value.any(
-            (score) =>
-                score.playerAId == playerId || score.playerBId == playerId,
-          ))
-            entry.key: List.unmodifiable(entry.value),
-      },
+      scoreHistory: _scoreHistoryFor(canonical.scoreHistory, playerId),
     );
   }
 
-  Set<String> _diplomacyPlayerIds(DiplomacyState state) {
+  Map<String, List<DiplomaticScoreEntry>> _scoreHistoryFor(
+    Map<String, List<DiplomaticScoreEntry>> canonical,
+    String playerId,
+  ) {
+    final projected = <String, List<DiplomaticScoreEntry>>{};
+    for (final scores in canonical.values) {
+      for (final score in scores) {
+        if (score.playerAId != playerId && score.playerBId != playerId) {
+          continue;
+        }
+        projected.putIfAbsent(score.key, () => []).add(score);
+      }
+    }
     return {
-      for (final relation in state.relations.values) ...[
-        relation.playerAId,
-        relation.playerBId,
-      ],
-      for (final proposal in state.pendingProposals.values) ...[
-        proposal.fromPlayerId,
-        proposal.toPlayerId,
-      ],
-      for (final message in state.messages.values) ...[
-        message.fromPlayerId,
-        message.toPlayerId,
-      ],
+      for (final entry in projected.entries)
+        entry.key: List.unmodifiable(entry.value),
     };
   }
 
@@ -319,21 +331,20 @@ final class PlayerMatchViewProjector {
     WorldArtifact artifact, {
     required FogVisibilityQuery visibility,
     required Set<String> ownCities,
-    required Set<String> visibleUnitIds,
-    required Set<String> visibleCityIds,
+    required Set<String> ownUnitIds,
   }) {
     final location = artifact.location;
     return switch (location.kind) {
-      WorldArtifactLocationKind.map || WorldArtifactLocationKind.excavation =>
+      WorldArtifactLocationKind.map =>
         location.col != null &&
             location.row != null &&
             visibility.canSeeDynamicAt(location.col!, location.row!),
+      WorldArtifactLocationKind.excavation =>
+        location.unitId != null && ownUnitIds.contains(location.unitId),
       WorldArtifactLocationKind.carried =>
-        location.unitId != null && visibleUnitIds.contains(location.unitId),
+        location.unitId != null && ownUnitIds.contains(location.unitId),
       WorldArtifactLocationKind.stored =>
-        location.cityId != null &&
-            ownCities.contains(location.cityId) &&
-            visibleCityIds.contains(location.cityId),
+        location.cityId != null && ownCities.contains(location.cityId),
     };
   }
 

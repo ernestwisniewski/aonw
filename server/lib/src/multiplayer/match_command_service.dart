@@ -33,12 +33,13 @@ final class MatchCommandService {
     required String matchId,
     required String userIdentifier,
     required MultiplayerClientMessage message,
-    required MatchServerMessageSink emitToCaller,
+    required MatchMessageTarget caller,
   }) async {
     if (message.requestSnapshot) {
       final state = await _stateAccess.requireMatch(store, matchId);
       _stateAccess.requireParticipant(state, userIdentifier);
-      emitToCaller(
+      _broadcaster.sendTo(
+        caller,
         _broadcaster.message(
           matchId: state.match.id,
           offset: state.offset,
@@ -58,7 +59,7 @@ final class MatchCommandService {
         userIdentifier: userIdentifier,
         message: message,
         command: command,
-        emitToCaller: emitToCaller,
+        caller: caller,
       );
     });
     outcome.notifications.deliver(_broadcaster);

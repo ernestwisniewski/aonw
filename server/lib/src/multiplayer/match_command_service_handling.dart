@@ -7,13 +7,13 @@ extension MatchCommandServiceHandling on MatchCommandService {
     required String userIdentifier,
     required MultiplayerClientMessage message,
     required WireCommand command,
-    required MatchServerMessageSink emitToCaller,
+    required MatchMessageTarget caller,
   }) async {
     final state = await _stateAccess.requireMatch(store, matchId, lock: true);
     final player = _stateAccess.requireParticipant(state, userIdentifier);
     if (command.actorPlayerId != player.id) {
       return _directOutcome(
-        emitToCaller,
+        caller,
         _broadcaster.message(
           matchId: state.match.id,
           offset: state.offset,
@@ -35,7 +35,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
     );
     if (duplicate != null) {
       return _directOutcome(
-        emitToCaller,
+        caller,
         _broadcaster.message(
           matchId: state.match.id,
           offset: duplicate.offset,
@@ -60,7 +60,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
     );
     if (!reduction.accepted) {
       return _directOutcome(
-        emitToCaller,
+        caller,
         _broadcaster.message(
           matchId: state.match.id,
           offset: state.offset,
@@ -105,7 +105,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         snapshot: updated.snapshot,
         event: event,
       ),
-      except: emitToCaller,
+      except: caller,
     );
     final ack = MatchNotificationPlan.directMessage(
       _broadcaster.message(
@@ -119,7 +119,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
           events: event.events,
         ),
       ),
-      recipient: emitToCaller,
+      recipient: caller,
     );
     return MatchMutationOutcome<void>(
       null,
@@ -128,7 +128,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
   }
 
   MatchMutationOutcome<void> _directOutcome(
-    MatchServerMessageSink recipient,
+    MatchMessageTarget recipient,
     MultiplayerServerMessage message,
   ) {
     return MatchMutationOutcome<void>(

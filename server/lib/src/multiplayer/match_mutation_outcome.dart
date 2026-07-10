@@ -24,7 +24,7 @@ final class MatchNotificationPlan {
 
   factory MatchNotificationPlan.broadcastMessage(
     MultiplayerServerMessage message, {
-    MatchServerMessageSink? except,
+    MatchMessageTarget? except,
   }) {
     return MatchNotificationPlan._([
       _BroadcastMessageNotification(message, except: except),
@@ -37,7 +37,7 @@ final class MatchNotificationPlan {
 
   factory MatchNotificationPlan.directMessage(
     MultiplayerServerMessage message, {
-    required MatchServerMessageSink recipient,
+    required MatchMessageTarget recipient,
   }) {
     return MatchNotificationPlan._([
       _DirectMessageNotification(message, recipient),
@@ -72,7 +72,7 @@ final class _BroadcastMessageNotification extends _MatchNotification {
   const _BroadcastMessageNotification(this.message, {this.except});
 
   final MultiplayerServerMessage message;
-  final MatchServerMessageSink? except;
+  final MatchMessageTarget? except;
 
   @override
   void deliver(MatchBroadcaster broadcaster) {
@@ -95,10 +95,10 @@ final class _DirectMessageNotification extends _MatchNotification {
   const _DirectMessageNotification(this.message, this.recipient);
 
   final MultiplayerServerMessage message;
-  final MatchServerMessageSink recipient;
+  final MatchMessageTarget recipient;
 
   @override
   void deliver(MatchBroadcaster broadcaster) {
-    recipient(message);
+    broadcaster.sendTo(recipient, message);
   }
 }

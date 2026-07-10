@@ -9,7 +9,6 @@ final class MatchBroadcaster {
   MatchBroadcaster(this._connectionRegistry);
 
   final MatchConnectionRegistry _connectionRegistry;
-
   MultiplayerServerMessage message({
     required String matchId,
     required int offset,
@@ -31,10 +30,11 @@ final class MatchBroadcaster {
 
   void broadcast(
     MultiplayerServerMessage update, {
-    MatchServerMessageSink? except,
-  }) {
-    _connectionRegistry.broadcast(update, except: except);
-  }
+    MatchMessageTarget? except,
+  }) => _connectionRegistry.broadcast(update, except: except);
+
+  void sendTo(MatchMessageTarget target, MultiplayerServerMessage update) =>
+      _connectionRegistry.sendTo(target, update);
 
   void broadcastState(StoredMatchState state) {
     broadcast(

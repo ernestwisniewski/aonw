@@ -6,9 +6,7 @@ import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
-import 'package:aonw_server/src/multiplayer/match_command_service.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
-import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
@@ -362,14 +360,131 @@ void main() {
       expect(resumed.id, started.id);
       expect(resumed.state, 'running');
       expect(resumed.turn, 1);
-      expect(
-        resumed.players.map((player) => player.userId),
-        containsAll(['owner-user', 'guest-user']),
-      );
+      expect(resumed.players.first.userId, resumed.players.first.id);
+      expect(resumed.players.last.userId, 'guest-user');
+      expect(resumed.toJson().toString(), isNot(contains('owner-user')));
       expect(snapshot.matchId, started.id);
       expect(GameSave.fromJson(snapshot.save).gameMode, GameMode.multiplayer);
     },
   );
+
+  test('projects snapshot requests and event history per recipient', () async {
+    final fixture = await _startRunningMatch('recipient-views');
+    final owner = fixture.match.players.first;
+    final guest = fixture.match.players.last;
+    final stored = (await fixture.store.findState(fixture.match.id))!;
+    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    final stateWithCanaries = canonicalState.copyWith(
+      playerGold: {owner.id: 111, guest.id: 999},
+    );
+    await fixture.store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(state: stateWithCanaries.toJson()),
+      ),
+    );
+
+    final input = StreamController<MultiplayerClientMessage>();
+    final stream = fixture.hub
+        .connect(
+          store: fixture.store,
+          userIdentifier: 'guest-user-recipient-views',
+          matchId: fixture.match.id,
+          afterOffset: 0,
+          input: input.stream,
+        )
+        .asBroadcastStream();
+    final initial = await stream.first;
+    expect(PersistentGameState.fromJson(initial.snapshot!.state).playerGold, {
+      guest.id: 999,
+    });
+
+    final requestedSnapshot = stream.firstWhere(
+      (message) => message.snapshot != null,
+    );
+    input.add(
+      MultiplayerClientMessage(
+        clientMessageId: 'guest-snapshot-request',
+        lastSeenOffset: 0,
+        requestSnapshot: true,
+      ),
+    );
+    final requested = await requestedSnapshot;
+    expect(PersistentGameState.fromJson(requested.snapshot!.state).playerGold, {
+      guest.id: 999,
+    });
+    expect(requested.toJson().toString(), isNot(contains('owner-user')));
+
+    final latest = (await fixture.store.findState(fixture.match.id))!;
+    final event = WireEvent(
+      matchId: fixture.match.id,
+      offset: 1,
+      timestamp: DateTime.utc(2026, 7, 10),
+      actorPlayerId: owner.id,
+      tick: 1,
+      command: const {'type': 'owner-command', 'secret': 'owner-only'},
+      events: const [
+        {'type': 'resolution', 'secret': 'canonical-event-secret'},
+      ],
+    );
+    await fixture.store.appendEvent(
+      latest.copyWith(snapshot: latest.snapshot.copyWith(offset: 1)),
+      event,
+      actorPlayerId: owner.id,
+      clientMessageId: 'owner-event',
+    );
+
+    final ownerHistory = await fixture.hub.listEvents(
+      store: fixture.store,
+      userIdentifier: 'owner-user-recipient-views',
+      matchId: fixture.match.id,
+      afterOffset: 0,
+    );
+    final guestHistory = await fixture.hub.listEvents(
+      store: fixture.store,
+      userIdentifier: 'guest-user-recipient-views',
+      matchId: fixture.match.id,
+      afterOffset: 0,
+    );
+    expect(ownerHistory.single.command?['type'], 'owner-command');
+    expect(ownerHistory.single.events, isEmpty);
+    expect(guestHistory.single.actorPlayerId, isNull);
+    expect(guestHistory.single.tick, isNull);
+    expect(guestHistory.single.command, isNull);
+    expect(guestHistory.single.events, isEmpty);
+    expect(
+      (await fixture.store.listEvents(fixture.match.id, 0)).single.events,
+      isNotEmpty,
+    );
+
+    await input.close();
+  });
+
+  test('returns a generic error for malformed snapshot projections', () async {
+    final fixture = await _startRunningMatch('malformed-projection');
+    final stored = (await fixture.store.findState(fixture.match.id))!;
+    await fixture.store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(
+          save: const {'secret': 'must-not-escape'},
+        ),
+      ),
+    );
+
+    await expectLater(
+      fixture.hub.loadSnapshot(
+        store: fixture.store,
+        userIdentifier: 'owner-user-malformed-projection',
+        matchId: fixture.match.id,
+      ),
+      throwsA(
+        _multiplayerError('snapshot_projection_failed').having(
+          (error) => error.message,
+          'message',
+          isNot(contains('must-not-escape')),
+        ),
+      ),
+    );
+  });
 
   test('listMatches returns public lobbies and own active matches', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
@@ -683,6 +798,9 @@ void main() {
     final ownerPlayerId = running.match.players
         .firstWhere((player) => player.userId == 'owner-user')
         .id;
+    final guestPlayerId = running.match.players
+        .firstWhere((player) => player.userId == 'guest-user')
+        .id;
     final save = GameSave.fromJson(running.snapshot.save);
     final persistentState = PersistentGameState.fromJson(
       running.snapshot.state,
@@ -700,6 +818,7 @@ void main() {
               .toJson(),
           state: persistentState
               .copyWith(
+                playerGold: {ownerPlayerId: 111, guestPlayerId: 999},
                 runtimeState: persistentState.runtimeState.copyWith(
                   submittedPlayerIds: {ownerPlayerId},
                   turnStartedAt: now,
@@ -710,8 +829,22 @@ void main() {
       ),
     );
 
+    final input = StreamController<MultiplayerClientMessage>();
+    final stream = hub
+        .connect(
+          store: store,
+          userIdentifier: 'guest-user',
+          matchId: started.id,
+          afterOffset: 0,
+          input: input.stream,
+        )
+        .asBroadcastStream();
+    await stream.first;
+    final timeoutUpdate = stream.firstWhere((message) => message.event != null);
+
     now = now.add(const Duration(seconds: 11));
     await hub.advanceTimedOutTurns(store: store);
+    final projectedUpdate = await timeoutUpdate;
 
     final updated = (await store.findState(started.id))!;
     final updatedSave = GameSave.fromJson(updated.snapshot.save);
@@ -724,6 +857,13 @@ void main() {
           .whereType<PlayerTimedOutEvent>(),
       hasLength(1),
     );
+    expect(projectedUpdate.event?.events, isEmpty);
+    expect(
+      PersistentGameState.fromJson(projectedUpdate.snapshot!.state).playerGold,
+      {guestPlayerId: 999},
+    );
+
+    await input.close();
   });
 
   test(
@@ -1021,6 +1161,21 @@ void main() {
           mapCatalog: mapCatalog,
         ),
       );
+      final ownerInput = StreamController<MultiplayerClientMessage>();
+      final ownerStream = hub
+          .connect(
+            store: store,
+            userIdentifier: 'owner-user',
+            matchId: started.id,
+            afterOffset: 0,
+            input: ownerInput.stream,
+          )
+          .asBroadcastStream();
+      await ownerStream.first;
+      final lifecycleUpdates = ownerStream
+          .where((message) => message.match != null)
+          .take(2)
+          .toList();
 
       final afterFirstResign = await hub.resignMatch(
         store: store,
@@ -1053,6 +1208,16 @@ void main() {
         (await store.findState(started.id))!.snapshot.state['phase'],
         'finished',
       );
+      final updates = await lifecycleUpdates;
+      expect(updates, hasLength(2));
+      expect(updates.last.snapshot?.state['phase'], 'finished');
+      expect(
+        updates.last.snapshot!.state,
+        isNot(contains('resignedUserIdentifier')),
+      );
+      expect(updates.last.toJson().toString(), isNot(contains('guest-two')));
+
+      await ownerInput.close();
     },
   );
 
@@ -1134,7 +1299,7 @@ void main() {
         final subscription = hub
             .connect(
               store: store,
-              userIdentifier: guest.userId,
+              userIdentifier: 'guest-user',
               matchId: match.id,
               afterOffset: 0,
               input: input.stream,
@@ -1157,7 +1322,7 @@ void main() {
       await guestInputA.close();
       final stillConnected = (await store.findState(
         match.id,
-      ))!.match.players.firstWhere((player) => player.userId == guest.userId);
+      ))!.match.players.firstWhere((player) => player.id == guest.id);
       expect(
         stillConnected.connectionState,
         WirePlayerConnectionState.connected,
@@ -1202,7 +1367,7 @@ void main() {
 
       final resumed = await hub.loadMatch(
         store: store,
-        userIdentifier: guest.userId,
+        userIdentifier: 'guest-user',
         matchId: match.id,
         snapshotFactory: InitialMultiplayerSnapshotFactory(
           mapCatalog: mapCatalog,
@@ -1211,6 +1376,120 @@ void main() {
       expect(resumed.state, 'running');
     },
   );
+
+  test('rejects a forged connection authorization before emitting', () async {
+    final fixture = await _startRunningMatch('forged-authorization');
+    final stored = (await fixture.store.findState(fixture.match.id))!;
+    final victim = stored.match.players.last;
+    final registry = MatchConnectionRegistry();
+    final broadcaster = MatchBroadcaster(registry);
+    final input = StreamController<MultiplayerClientMessage>();
+    final messages = <MultiplayerServerMessage>[];
+    final error = Completer<Object>();
+    final done = Completer<void>();
+
+    final subscription = registry
+        .connect(
+          store: fixture.store,
+          userIdentifier: 'owner-user-forged-authorization',
+          matchId: fixture.match.id,
+          afterOffset: 0,
+          input: input.stream,
+          authorize:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+              }) async => MatchConnectionAuthorization(
+                state: stored,
+                participant: victim,
+              ),
+          updateConnectionState:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+                required WirePlayerConnectionState connectionState,
+              }) async => stored,
+          handleClientMessage:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+                required MultiplayerClientMessage message,
+                required MatchMessageTarget caller,
+              }) async {},
+          createMessage: broadcaster.message,
+        )
+        .listen(
+          messages.add,
+          onError: (Object value) {
+            if (!error.isCompleted) error.complete(value);
+          },
+          onDone: done.complete,
+        );
+
+    await done.future.timeout(const Duration(seconds: 1));
+    expect(await error.future, _multiplayerError('authorization_mismatch'));
+    expect(messages, isEmpty);
+
+    await subscription.cancel();
+    unawaited(input.close());
+  });
+
+  test('projects rejected command acknowledgements for the caller', () async {
+    final fixture = await _startRunningMatch('rejected-ack');
+    final owner = fixture.match.players.first;
+    final guest = fixture.match.players.last;
+    final stored = (await fixture.store.findState(fixture.match.id))!;
+    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    await fixture.store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(
+          state: canonicalState
+              .copyWith(playerGold: {owner.id: 111, guest.id: 999})
+              .toJson(),
+        ),
+      ),
+    );
+    final input = StreamController<MultiplayerClientMessage>();
+    final stream = fixture.hub
+        .connect(
+          store: fixture.store,
+          userIdentifier: 'owner-user-rejected-ack',
+          matchId: fixture.match.id,
+          afterOffset: 0,
+          input: input.stream,
+        )
+        .asBroadcastStream();
+    await stream.first;
+    final acknowledgement = stream.firstWhere((message) => message.ack != null);
+
+    input.add(
+      MultiplayerClientMessage(
+        clientMessageId: 'forged-actor-command',
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: fixture.match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: guest.id,
+          command: GameCommandSerializer.toJson(SubmitTurnCommand(guest.id)),
+        ),
+      ),
+    );
+    final ack = (await acknowledgement).ack!;
+
+    expect(ack.accepted, isFalse);
+    expect(ack.events, isEmpty);
+    expect(PersistentGameState.fromJson(ack.snapshot.state).playerGold, {
+      owner.id: 111,
+    });
+    expect(await fixture.store.listEvents(fixture.match.id, 0), isEmpty);
+
+    await input.close();
+  });
 
   test('moves units through the authoritative server reducer', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
@@ -1301,7 +1580,7 @@ void main() {
     expect(ackMessage.ack?.accepted, isTrue);
     expect(moved.col, target.col);
     expect(moved.row, target.row);
-    expect(ackMessage.ack?.events.single['type'], 'UnitMoved');
+    expect(ackMessage.ack?.events, isEmpty);
 
     await ownerInput.close();
   });
@@ -1354,6 +1633,7 @@ void main() {
     );
 
     final ownerInput = StreamController<MultiplayerClientMessage>();
+    final secondOwnerInput = StreamController<MultiplayerClientMessage>();
     final guestInput = StreamController<MultiplayerClientMessage>();
     final ownerStream = hub
         .connect(
@@ -1367,18 +1647,31 @@ void main() {
     final guestStream = hub
         .connect(
           store: store,
-          userIdentifier: guest.userId,
+          userIdentifier: 'guest-user',
           matchId: match.id,
           afterOffset: 0,
           input: guestInput.stream,
         )
         .asBroadcastStream();
+    final secondOwnerStream = hub
+        .connect(
+          store: store,
+          userIdentifier: owner.userId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: secondOwnerInput.stream,
+        )
+        .asBroadcastStream();
 
     expect((await ownerStream.first).snapshot?.offset, 0);
     expect((await guestStream.first).snapshot?.offset, 0);
+    expect((await secondOwnerStream.first).snapshot?.offset, 0);
 
     final ownerAck = ownerStream.firstWhere((message) => message.ack != null);
     final guestEvent = guestStream.firstWhere(
+      (message) => message.event != null,
+    );
+    final secondOwnerEvent = secondOwnerStream.firstWhere(
       (message) => message.event != null,
     );
 
@@ -1405,21 +1698,31 @@ void main() {
 
     final ackMessage = await ownerAck;
     final eventMessage = await guestEvent;
+    final secondOwnerEventMessage = await secondOwnerEvent;
     final nextState = PersistentGameState.fromJson(
       ackMessage.ack!.snapshot.state,
     );
 
     expect(ackMessage.ack?.accepted, isTrue);
     expect(nextState.playerGold[owner.id], 10);
-    expect(nextState.playerGold[guest.id], 10);
+    expect(nextState.playerGold, isNot(contains(guest.id)));
     expect(
       nextState.runtimeState.diplomacy.relationScoreBetween(owner.id, guest.id),
       2,
     );
-    expect(ackMessage.ack?.events.single['type'], 'DiplomaticScoreChanged');
-    expect(eventMessage.event?.events.single['type'], 'DiplomaticScoreChanged');
+    expect(ackMessage.ack?.events, isEmpty);
+    expect(eventMessage.event?.command, isNull);
+    expect(eventMessage.event?.events, isEmpty);
+    expect(secondOwnerEventMessage.event?.actorPlayerId, owner.id);
+    expect(secondOwnerEventMessage.event?.command, isNotNull);
+    expect(secondOwnerEventMessage.event?.events, isEmpty);
+    expect(
+      PersistentGameState.fromJson(eventMessage.snapshot!.state).playerGold,
+      {guest.id: 10},
+    );
 
     await ownerInput.close();
+    await secondOwnerInput.close();
     await guestInput.close();
   });
 
@@ -1454,7 +1757,6 @@ void main() {
       ),
     );
     final owner = match.players.first;
-    final guest = match.players.last;
 
     final ownerInput = StreamController<MultiplayerClientMessage>();
     final guestInput = StreamController<MultiplayerClientMessage>();
@@ -1470,7 +1772,7 @@ void main() {
     final guestStream = hub
         .connect(
           store: store,
-          userIdentifier: guest.userId,
+          userIdentifier: 'guest-user',
           matchId: match.id,
           afterOffset: 0,
           input: guestInput.stream,
@@ -1517,7 +1819,9 @@ void main() {
     expect(ackMessage.ack?.accepted, isTrue);
     expect(ackMessage.offset, eventMessage.offset);
     expect(ackMessage.ack?.offset, eventMessage.event?.offset);
-    expect(eventMessage.event?.command?['type'], 'SubmitTurn');
+    expect(eventMessage.event?.actorPlayerId, isNull);
+    expect(eventMessage.event?.command, isNull);
+    expect(eventMessage.event?.events, isEmpty);
     expect(ownerAckMessages, [same(ackMessage)]);
     expect(guestEventMessages, [same(eventMessage)]);
     expect((await store.findState(match.id))!.offset, ackMessage.offset);
@@ -1527,7 +1831,7 @@ void main() {
     final reconnectStream = hub
         .connect(
           store: store,
-          userIdentifier: guest.userId,
+          userIdentifier: 'guest-user',
           matchId: match.id,
           afterOffset: 0,
           input: reconnectInput.stream,
@@ -1561,49 +1865,20 @@ void main() {
       mapCatalog: mapCatalog,
     );
     final owner = match.players.first;
-    final guest = match.players.last;
-    final registry = MatchConnectionRegistry();
-    final broadcaster = MatchBroadcaster(registry);
-    final commandService = MatchCommandService(
-      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-      stateAccess: const MatchStateAccess(),
-      broadcaster: broadcaster,
-      nowUtc: () => DateTime.utc(2026, 7, 1),
-    );
     final guestInput = StreamController<MultiplayerClientMessage>();
+    final ownerInput = StreamController<MultiplayerClientMessage>();
     final guestInitial = Completer<void>();
+    final ownerInitial = Completer<void>();
+    final ownerError = Completer<Object>();
     final guestMessages = <MultiplayerServerMessage>[];
     final callerMessages = <MultiplayerServerMessage>[];
-    final guestSubscription = registry
+    final guestSubscription = hub
         .connect(
           store: store,
-          userIdentifier: guest.userId,
+          userIdentifier: 'guest-user-command-commit-failure',
           matchId: match.id,
           afterOffset: 0,
           input: guestInput.stream,
-          authorize:
-              ({
-                required MultiplayerMatchStore store,
-                required String matchId,
-                required String userIdentifier,
-              }) async {
-                final state = (await store.findState(matchId))!;
-                return MatchConnectionAuthorization(
-                  state: state,
-                  participant: state.match.players.firstWhere(
-                    (player) => player.userId == userIdentifier,
-                  ),
-                );
-              },
-          updateConnectionState:
-              ({
-                required MultiplayerMatchStore store,
-                required String matchId,
-                required String userIdentifier,
-                required WirePlayerConnectionState connectionState,
-              }) async => (await store.findState(matchId))!,
-          handleClientMessage: commandService.handleClientMessage,
-          createMessage: broadcaster.message,
         )
         .listen((message) {
           if (message.snapshot != null && !guestInitial.isCompleted) {
@@ -1612,29 +1887,49 @@ void main() {
             guestMessages.add(message);
           }
         });
-    await guestInitial.future.timeout(const Duration(seconds: 1));
+    final ownerSubscription = hub
+        .connect(
+          store: store,
+          userIdentifier: owner.userId,
+          matchId: match.id,
+          afterOffset: 0,
+          input: ownerInput.stream,
+        )
+        .listen(
+          (message) {
+            if (message.snapshot != null && !ownerInitial.isCompleted) {
+              ownerInitial.complete();
+            } else {
+              callerMessages.add(message);
+            }
+          },
+          onError: (Object error) {
+            if (!ownerError.isCompleted) ownerError.complete(error);
+          },
+        );
+    await Future.wait([
+      guestInitial.future,
+      ownerInitial.future,
+    ]).timeout(const Duration(seconds: 1));
 
     store.failNextCommit();
-    await expectLater(
-      commandService.handleClientMessage(
-        store: store,
-        matchId: match.id,
-        userIdentifier: owner.userId,
-        message: MultiplayerClientMessage(
-          clientMessageId: 'client-commit-failure',
-          lastSeenOffset: 0,
-          requestSnapshot: false,
-          command: WireCommand(
-            matchId: match.id,
-            tick: 1,
-            turn: 1,
-            actorPlayerId: owner.id,
-            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
-          ),
+    ownerInput.add(
+      MultiplayerClientMessage(
+        clientMessageId: 'client-commit-failure',
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
         ),
-        emitToCaller: callerMessages.add,
       ),
-      throwsA(isA<StateError>()),
+    );
+    expect(
+      await ownerError.future.timeout(const Duration(seconds: 1)),
+      isA<StateError>(),
     );
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
@@ -1644,7 +1939,9 @@ void main() {
     expect(await store.listEvents(match.id, 0), isEmpty);
 
     await guestSubscription.cancel();
+    await ownerSubscription.cancel();
     await guestInput.close();
+    await ownerInput.close();
   });
 
   test(
@@ -1686,7 +1983,7 @@ void main() {
       final guestInitialStream = hub
           .connect(
             store: store,
-            userIdentifier: guest.userId,
+            userIdentifier: 'guest-user',
             matchId: match.id,
             afterOffset: 0,
             input: guestInitialInput.stream,
@@ -1731,7 +2028,7 @@ void main() {
       final reconnectStream = hub
           .connect(
             store: store,
-            userIdentifier: guest.userId,
+            userIdentifier: 'guest-user',
             matchId: match.id,
             afterOffset: guestInitial.offset,
             input: reconnectInput.stream,
@@ -1742,7 +2039,13 @@ void main() {
       expect(reconnectMessage.offset, ackMessage.offset);
       expect(
         reconnectMessage.snapshot?.toJson(),
-        authoritative!.snapshot.toJson(),
+        isNot(authoritative!.snapshot.toJson()),
+      );
+      expect(
+        PersistentGameState.fromJson(
+          reconnectMessage.snapshot!.state,
+        ).playerGold.keys,
+        everyElement(guest.id),
       );
       await expectLater(
         reconnectStream
@@ -1787,6 +2090,18 @@ void main() {
       ),
     );
     final owner = match.players.first;
+    final guest = match.players.last;
+    final stored = (await store.findState(match.id))!;
+    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    await store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(
+          state: canonicalState
+              .copyWith(playerGold: {owner.id: 111, guest.id: 999})
+              .toJson(),
+        ),
+      ),
+    );
     final ownerInput = StreamController<MultiplayerClientMessage>();
     final ownerStream = hub
         .connect(
@@ -1822,6 +2137,15 @@ void main() {
 
     expect(ackMessages.map((message) => message.ack?.accepted), [true, true]);
     expect(ackMessages.map((message) => message.ack?.offset).toSet(), {1});
+    for (final message in ackMessages) {
+      expect(message.ack!.events, isEmpty);
+      expect(
+        PersistentGameState.fromJson(
+          message.ack!.snapshot.state,
+        ).playerGold.keys,
+        [owner.id],
+      );
+    }
     expect(await store.listEvents(match.id, 0), hasLength(1));
     expect((await store.findState(match.id))!.offset, 1);
 
@@ -2124,7 +2448,7 @@ void main() {
   );
 }
 
-Matcher _multiplayerError(String code) {
+TypeMatcher<MultiplayerException> _multiplayerError(String code) {
   return isA<MultiplayerException>().having(
     (error) => error.code,
     'code',

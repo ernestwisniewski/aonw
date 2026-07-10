@@ -4,12 +4,27 @@ import 'package:aonw_core/protocol.dart';
 
 import '../generated/protocol.dart';
 import 'client_message_guard.dart';
+import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
+import 'player_match_view_projector.dart';
 
 part 'match_connection_registry_connect.dart';
 
 typedef MatchServerMessageSink =
     void Function(MultiplayerServerMessage message);
+
+final class MatchMessageTarget {
+  const MatchMessageTarget._({
+    required this.recipient,
+    required MatchServerMessageSink sink,
+    required void Function(Object error, StackTrace stackTrace) errorSink,
+  }) : _sink = sink,
+       _errorSink = errorSink;
+
+  final MatchRecipient recipient;
+  final MatchServerMessageSink _sink;
+  final void Function(Object error, StackTrace stackTrace) _errorSink;
+}
 
 typedef MatchServerMessageFactory =
     MultiplayerServerMessage Function({
@@ -42,7 +57,7 @@ typedef MatchClientMessageHandler =
       required String matchId,
       required String userIdentifier,
       required MultiplayerClientMessage message,
-      required MatchServerMessageSink emitToCaller,
+      required MatchMessageTarget caller,
     });
 
 final class MatchConnectionAuthorization {
@@ -56,7 +71,14 @@ final class MatchConnectionAuthorization {
 }
 
 final class MatchConnectionRegistry {
-  final Map<String, List<MatchServerMessageSink>> _subscribers = {};
+  MatchConnectionRegistry({
+    PlayerMatchViewProjector viewProjector = const PlayerMatchViewProjector(),
+  }) : _viewProjector = viewProjector;
+
+  final PlayerMatchViewProjector _viewProjector;
+  PlayerMatchViewProjector get viewProjector => _viewProjector;
+
+  final Map<String, List<MatchMessageTarget>> _subscribers = {};
   final Map<String, Future<void>> _matchQueues = {};
   final Map<String, Map<String, int>> _connectionCounts = {};
 
@@ -73,17 +95,26 @@ final class MatchConnectionRegistry {
   }) {
     StreamSubscription<MultiplayerClientMessage>? inputSubscription;
     final controller = StreamController<MultiplayerServerMessage>();
+    MatchMessageTarget? caller;
     var connectionRegistered = false;
     var disconnected = false;
 
     void emit(MultiplayerServerMessage message) {
-      if (!controller.isClosed) controller.add(message);
+      final currentCaller = caller;
+      if (currentCaller == null) {
+        controller.addError(
+          StateError('Match message emitted before recipient authorization.'),
+        );
+        return;
+      }
+      sendTo(currentCaller, message);
     }
 
     Future<void> disconnect({bool cancelInput = true}) async {
       if (disconnected) return;
       disconnected = true;
-      _unsubscribe(matchId, emit);
+      final currentCaller = caller;
+      if (currentCaller != null) _unsubscribe(matchId, currentCaller);
       if (cancelInput) await inputSubscription?.cancel();
       if (!connectionRegistered) return;
       final remaining = _releaseConnection(matchId, userIdentifier);
@@ -118,6 +149,22 @@ final class MatchConnectionRegistry {
             _retainConnection(matchId, userIdentifier);
             connectionRegistered = true;
           },
+          setRecipient: (recipient) {
+            caller = MatchMessageTarget._(
+              recipient: recipient,
+              sink: (message) {
+                if (!controller.isClosed) controller.add(message);
+              },
+              errorSink: (error, stackTrace) {
+                if (!controller.isClosed) {
+                  controller.addError(error, stackTrace);
+                }
+              },
+            );
+          },
+          requireCaller: () =>
+              caller ??
+              (throw StateError('Match recipient was not authorized.')),
           disconnect: disconnect,
           authorize: authorize,
           updateConnectionState: updateConnectionState,
@@ -134,13 +181,27 @@ final class MatchConnectionRegistry {
 
   void broadcast(
     MultiplayerServerMessage update, {
-    MatchServerMessageSink? except,
+    MatchMessageTarget? except,
   }) {
     for (final subscriber in List.of(
-      _subscribers[update.matchId] ?? const <MatchServerMessageSink>[],
+      _subscribers[update.matchId] ?? const <MatchMessageTarget>[],
     )) {
       if (identical(subscriber, except)) continue;
-      subscriber(update);
+      sendTo(subscriber, update);
+    }
+  }
+
+  void sendTo(MatchMessageTarget target, MultiplayerServerMessage message) {
+    try {
+      target._sink(_viewProjector.messageFor(message, target.recipient));
+    } catch (_, stackTrace) {
+      target._errorSink(
+        multiplayerException(
+          'snapshot_projection_failed',
+          'Unable to project multiplayer state.',
+        ),
+        stackTrace,
+      );
     }
   }
 
@@ -151,22 +212,29 @@ final class MatchConnectionRegistry {
     final previous = _matchQueues[matchId] ?? Future<void>.value();
     final barrier = previous.then<void>((_) {}, onError: (_, _) {});
     final next = barrier.then((_) => action());
-    _matchQueues[matchId] = next.whenComplete(() {
-      if (identical(_matchQueues[matchId], next)) {
+    late final Future<void> tracked;
+    void clearQueue() {
+      if (identical(_matchQueues[matchId], tracked)) {
         _matchQueues.remove(matchId);
       }
-    });
+    }
+
+    tracked = next.then<void>(
+      (_) => clearQueue(),
+      onError: (_, _) => clearQueue(),
+    );
+    _matchQueues[matchId] = tracked;
     await next;
   }
 
-  void _subscribe(String matchId, MatchServerMessageSink emit) {
-    _subscribers.putIfAbsent(matchId, () => []).add(emit);
+  void _subscribe(String matchId, MatchMessageTarget target) {
+    _subscribers.putIfAbsent(matchId, () => []).add(target);
   }
 
-  void _unsubscribe(String matchId, MatchServerMessageSink emit) {
+  void _unsubscribe(String matchId, MatchMessageTarget target) {
     final subscribers = _subscribers[matchId];
     if (subscribers == null) return;
-    subscribers.remove(emit);
+    subscribers.remove(target);
     if (subscribers.isEmpty) {
       _subscribers.remove(matchId);
     }

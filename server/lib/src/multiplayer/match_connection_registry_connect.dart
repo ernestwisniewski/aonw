@@ -12,6 +12,8 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
     required void Function(StreamSubscription<MultiplayerClientMessage>)
     setInputSubscription,
     required void Function() registerConnection,
+    required void Function(MatchRecipient recipient) setRecipient,
+    required MatchMessageTarget Function() requireCaller,
     required Future<void> Function({bool cancelInput}) disconnect,
     required MatchConnectionAuthorizer authorize,
     required MatchConnectionStateUpdater updateConnectionState,
@@ -41,6 +43,22 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
         );
         var state = authorization.state;
         final player = authorization.participant;
+        final participantIsAuthorized =
+            player.userId == userIdentifier &&
+            state.match.players.any(
+              (candidate) =>
+                  candidate.id == player.id &&
+                  candidate.userId == userIdentifier,
+            );
+        if (!participantIsAuthorized) {
+          throw multiplayerException(
+            'authorization_mismatch',
+            'Authenticated player does not match the authorized participant.',
+          );
+        }
+        setRecipient(
+          MatchRecipient(userIdentifier: userIdentifier, playerId: player.id),
+        );
         registerConnection();
         if (player.connectionState != WirePlayerConnectionState.connected) {
           state = await updateConnectionState(
@@ -72,7 +90,7 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
                         matchId: matchId,
                         userIdentifier: userIdentifier,
                         message: message,
-                        emitToCaller: emit,
+                        caller: requireCaller(),
                       ),
                     )
                     .catchError((Object error, StackTrace stackTrace) {
@@ -92,7 +110,7 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
             },
           ),
         );
-        _subscribe(matchId, emit);
+        _subscribe(matchId, requireCaller());
         emit(
           createMessage(
             matchId: matchId,
