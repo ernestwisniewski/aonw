@@ -7,6 +7,7 @@ import 'initial_multiplayer_snapshot_factory.dart';
 import 'invite_code_generator.dart';
 import 'match_broadcaster.dart';
 import 'match_lifecycle_service.dart';
+import 'match_request_validator.dart';
 import 'match_state_access.dart';
 import 'matchmaking_policies.dart';
 import 'multiplayer_errors.dart';
@@ -25,11 +26,13 @@ final class MatchmakingService {
     required MatchLifecycleService lifecycle,
     required DateTime Function() nowUtc,
     InviteCodeGenerator? inviteCodeGenerator,
+    MatchRequestValidator requestValidator = const MatchRequestValidator(),
   }) : _seatAllocator = seatAllocator,
        _stateAccess = stateAccess,
        _broadcaster = broadcaster,
        _lifecycle = lifecycle,
        _nowUtc = nowUtc,
+       _requestValidator = requestValidator,
        _inviteCodeGenerator =
            inviteCodeGenerator ?? SecureInviteCodeGenerator();
 
@@ -38,6 +41,7 @@ final class MatchmakingService {
   final MatchBroadcaster _broadcaster;
   final MatchLifecycleService _lifecycle;
   final DateTime Function() _nowUtc;
+  final MatchRequestValidator _requestValidator;
   final InviteCodeGenerator _inviteCodeGenerator;
 
   Future<WireMatch> quickplay({
@@ -48,8 +52,11 @@ final class MatchmakingService {
     InitialMultiplayerSnapshotFactory snapshotFactory =
         const InitialMultiplayerSnapshotFactory(),
   }) {
+    final quickplayRequest = _requestValidator.validate(
+      quickplayMatchRequest(request),
+      enforceMapCapacity: false,
+    );
     return store.transaction((txStore) async {
-      final quickplayRequest = quickplayMatchRequest(request);
       while (true) {
         final state = await txStore.findOpenQuickplayCandidate(
           quickplayRequest,

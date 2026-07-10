@@ -9,13 +9,14 @@ extension MatchmakingServiceCreation on MatchmakingService {
     String? displayName,
     required CreateMatchRequest request,
   }) async {
-    if (!request.private) {
+    final validatedRequest = _requestValidator.validate(request);
+    if (!validatedRequest.private) {
       return store.transaction((txStore) {
         return _createMatch(
           store: txStore,
           userIdentifier: userIdentifier,
           displayName: displayName,
-          request: request,
+          request: validatedRequest,
         );
       });
     }
@@ -33,7 +34,7 @@ extension MatchmakingServiceCreation on MatchmakingService {
             store: txStore,
             userIdentifier: userIdentifier,
             displayName: displayName,
-            request: request,
+            request: validatedRequest,
             inviteCode: inviteCode,
           );
         });

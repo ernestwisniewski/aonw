@@ -1636,10 +1636,15 @@ void main() {
         request: CreateMatchRequest(
           name: 'Tiny match',
           mapName: 'test_map',
-          maxPlayers: 1,
-          minPlayers: 1,
+          maxPlayers: 2,
+          minPlayers: 2,
           private: false,
         ),
+      );
+      await hub.joinMatch(
+        store: store,
+        userIdentifier: 'filler-user',
+        matchId: match.id,
       );
 
       await expectLater(
