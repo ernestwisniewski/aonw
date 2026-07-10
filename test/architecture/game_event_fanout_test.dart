@@ -84,8 +84,9 @@ final _gameEventClassPattern = RegExp(
 );
 
 const _allowedSwitchEventPaths = {
-  // The central descriptor factory is the only production event switch.
+  // Central application and domain descriptor factories.
   'lib/game/application/services/game_event_descriptor.dart',
+  'packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart',
 
   // Serialization is an explicit architecture exception.
   'packages/aonw_core/lib/game/domain/event/event_serialization.dart',
@@ -95,12 +96,6 @@ const _allowedSwitchEventPaths = {
   'lib/game/presentation/formatters/game_event_notification_city_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_combat_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_message.dart',
-  'packages/aonw_core/lib/ai/simulation/economy_simulation_hostility_memory.dart',
-  'packages/aonw_core/lib/game/domain/stability/persistent_stability_processor.dart',
-  'packages/aonw_core/lib/game/domain/telemetry/balance_telemetry_player_activity.dart',
 };
 
-const _allowedEventIsPaths = {
-  // Legacy fanout that should be migrated behind GameEventDescriptor.
-  'packages/aonw_core/lib/game/domain/telemetry/balance_telemetry_player_activity.dart',
-};
+const _allowedEventIsPaths = <String>{};

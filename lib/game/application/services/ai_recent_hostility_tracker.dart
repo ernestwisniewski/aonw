@@ -1,7 +1,6 @@
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 class AiRecentHostilityTracker {
@@ -50,7 +49,7 @@ class AiRecentHostilityTracker {
     required GameEvent event,
     required String playerId,
   }) {
-    return GameEventDescriptor.forEvent(event).hostilePlayerIdFor(
+    return GameEventDomainDescriptor.forEvent(event).hostilePlayerIdFor(
       playerId: playerId,
       actorPlayerId: logged.actorPlayerId,
     );

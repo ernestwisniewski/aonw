@@ -73,6 +73,3 @@ typedef _GameEventPlayerIdsResolver =
 
 typedef _CriticalNotificationResolver =
     bool Function(GameState state, String playerId);
-
-typedef _HostilePlayerIdResolver =
-    String? Function(String playerId, String? actorPlayerId);

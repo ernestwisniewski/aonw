@@ -189,34 +189,15 @@ class _WarWearinessEventCounts {
     final signedPeacePlayerIds = <String>{};
 
     for (final event in events) {
-      switch (event) {
-        case UnitAttackedEvent(:final attackerOwnerPlayerId):
-          _increment(attacksByPlayerId, attackerOwnerPlayerId);
-        case CityAttackedEvent(:final attackerOwnerPlayerId):
-          _increment(attacksByPlayerId, attackerOwnerPlayerId);
-        case CityCapturedEvent(:final previousOwnerPlayerId):
-          _increment(citiesLostByPlayerId, previousOwnerPlayerId);
-        case CityDestroyedEvent(:final previousOwnerPlayerId):
-          _increment(citiesLostByPlayerId, previousOwnerPlayerId);
-        case DiplomaticProposalRespondedEvent(
-          kind: DiplomaticProposalKind.truce,
-          accepted: true,
-          :final fromPlayerId,
-          :final toPlayerId,
-        ):
-          _addPlayer(signedPeacePlayerIds, fromPlayerId);
-          _addPlayer(signedPeacePlayerIds, toPlayerId);
-        case DiplomaticRelationChangedEvent(
-              oldStatus: DiplomaticRelationStatus.war,
-              :final newStatus,
-              :final playerAId,
-              :final playerBId,
-            )
-            when newStatus != DiplomaticRelationStatus.war:
-          _addPlayer(signedPeacePlayerIds, playerAId);
-          _addPlayer(signedPeacePlayerIds, playerBId);
-        default:
-          break;
+      final descriptor = GameEventDomainDescriptor.forEvent(event);
+      for (final playerId in descriptor.attackingPlayerIds) {
+        _increment(attacksByPlayerId, playerId);
+      }
+      for (final playerId in descriptor.citiesLostPlayerIds) {
+        _increment(citiesLostByPlayerId, playerId);
+      }
+      for (final playerId in descriptor.signedPeacePlayerIds) {
+        _addPlayer(signedPeacePlayerIds, playerId);
       }
     }
 

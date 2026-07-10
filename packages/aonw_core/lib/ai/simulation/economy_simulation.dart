@@ -6,7 +6,6 @@ import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';

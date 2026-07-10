@@ -30,15 +30,13 @@ final class GameEventDescriptor {
     this.diplomaticPopupTone = GameEventDiplomaticPopupTone.neutral,
     this.criticalNotification = false,
     _CriticalNotificationResolver? criticalNotificationResolver,
-    _HostilePlayerIdResolver? hostilePlayerIdResolver,
   }) : unitIds = Set.unmodifiable(unitIds),
        cityIds = Set.unmodifiable(cityIds),
        focusHints = List.unmodifiable(focusHints),
        activityCategories = Set.unmodifiable(activityCategories),
        _playerIds = List.unmodifiable(playerIds),
        _playerIdsResolver = playerIdsResolver,
-       _criticalNotificationResolver = criticalNotificationResolver,
-       _hostilePlayerIdResolver = hostilePlayerIdResolver;
+       _criticalNotificationResolver = criticalNotificationResolver;
 
   factory GameEventDescriptor.forEvent(GameEvent event) {
     return _describeGameEvent(event);
@@ -66,7 +64,6 @@ final class GameEventDescriptor {
   final List<String?> _playerIds;
   final _GameEventPlayerIdsResolver? _playerIdsResolver;
   final _CriticalNotificationResolver? _criticalNotificationResolver;
-  final _HostilePlayerIdResolver? _hostilePlayerIdResolver;
 
   List<String> playerIdsFor({
     required GameState state,
@@ -83,13 +80,6 @@ final class GameEventDescriptor {
   }) {
     return criticalNotification ||
         (_criticalNotificationResolver?.call(state, playerId) ?? false);
-  }
-
-  String? hostilePlayerIdFor({
-    required String playerId,
-    String? actorPlayerId,
-  }) {
-    return _hostilePlayerIdResolver?.call(playerId, actorPlayerId);
   }
 }
 
@@ -187,11 +177,6 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
           UnitGameEventFocusHint(defenderUnitId),
         ],
         playerIds: [attackerOwnerPlayerId, defenderOwnerPlayerId],
-        hostilePlayerIdResolver: (playerId, actorPlayerId) {
-          return defenderOwnerPlayerId == playerId
-              ? attackerOwnerPlayerId
-              : null;
-        },
       ),
     CityAttackedEvent(
       :final attackerUnitId,
@@ -259,11 +244,6 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
           ownerPlayerId: ownerPlayerId,
           attackerUnitId: attackerUnitId,
         ),
-        hostilePlayerIdResolver: (playerId, actorPlayerId) {
-          return ownerPlayerId == playerId && actorPlayerId?.isNotEmpty == true
-              ? actorPlayerId
-              : null;
-        },
       ),
     UnitRetreatedEvent(:final unitId, :final ownerPlayerId) =>
       GameEventDescriptor._(
@@ -289,9 +269,6 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
         activityCategories: const [GameEventActivityCategory.city],
         criticalNotification: true,
         playerIds: [previousOwnerPlayerId, newOwnerPlayerId],
-        hostilePlayerIdResolver: (playerId, actorPlayerId) {
-          return previousOwnerPlayerId == playerId ? newOwnerPlayerId : null;
-        },
       ),
     CityDestroyedEvent(
       :final cityId,
@@ -304,11 +281,6 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
         cityIds: [cityId],
         criticalNotification: true,
         playerIds: [previousOwnerPlayerId, attackerOwnerPlayerId],
-        hostilePlayerIdResolver: (playerId, actorPlayerId) {
-          return previousOwnerPlayerId == playerId
-              ? attackerOwnerPlayerId
-              : null;
-        },
       ),
     TurnEndedEvent(:final playerId) => GameEventDescriptor._(
       activityWorthy: false,
