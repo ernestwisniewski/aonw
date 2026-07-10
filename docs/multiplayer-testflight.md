@@ -97,6 +97,7 @@ AONW_INSIGHTS_HOST=insights.aonw.net
 docker compose --profile staging up -d --build
 docker compose --profile staging ps
 curl -fsS https://api.aonw.net/livez
+curl -fsS https://api.aonw.net/readyz
 ```
 
 The staging profile runs PostgreSQL, the game server, and Caddy. Caddy
@@ -118,9 +119,12 @@ That is the right shape for a small single-host production-like staging box.
 If PostgreSQL is managed outside the VPS, keep using the same Caddy proxy and
 set `SERVERPOD_DATABASE_HOST`, `SERVERPOD_DATABASE_PORT`,
 `SERVERPOD_DATABASE_NAME`, `SERVERPOD_DATABASE_USER`, and
-`SERVERPOD_DATABASE_PASSWORD` for the external database. Then either remove the
-`postgres` service from the deployed Compose file, use a deployment-specific
-override file, or start the explicit services that should run on the host:
+`SERVERPOD_DATABASE_PASSWORD` for the external database. Also set
+`SERVERPOD_DATABASE_REQUIRE_SSL=true` when the provider requires TLS. For an
+external TLS-enabled Redis service, set `SERVERPOD_REDIS_REQUIRE_SSL=true`.
+Then either remove the `postgres` service from the deployed Compose file, use a
+deployment-specific override file, or start the explicit services that should
+run on the host:
 
 ```sh
 docker compose --profile prod up -d --build redis server caddy

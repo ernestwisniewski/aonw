@@ -67,6 +67,7 @@ Replace every `replace-with-*` value before starting services:
 ```sh
 docker compose --profile dev up --build
 curl -fsS http://localhost:8080/livez
+curl -fsS http://localhost:8080/readyz
 ```
 
 Stop the stack:
@@ -133,9 +134,11 @@ SERVERPOD_DATABASE_PORT=5432
 SERVERPOD_DATABASE_NAME=aonw
 SERVERPOD_DATABASE_USER=aonw
 SERVERPOD_DATABASE_PASSWORD=<database-password>
+SERVERPOD_DATABASE_REQUIRE_SSL=false
 SERVERPOD_SERVICE_SECRET=<long-random-secret>
 SERVERPOD_REDIS_ENABLED=true
 SERVERPOD_REDIS_HOST=<redis-host>
+SERVERPOD_REDIS_REQUIRE_SSL=false
 SERVERPOD_PASSWORD_redis=<redis-password>
 SERVERPOD_PASSWORD_emailSecretHashPepper=<long-random-secret>
 SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey=<long-random-secret>
@@ -148,8 +151,17 @@ Deploy with:
 ```sh
 docker compose --env-file .env.prod --profile prod pull
 docker compose --env-file .env.prod --profile prod up -d
-curl -fsS https://api.aonw.net/livez
+curl -fsS https://api.aonw.net/readyz
 ```
+
+Use `/livez` for process liveness and `/readyz` as the deploy gate. Readiness
+also verifies the configured PostgreSQL and Redis dependencies, so a deploy
+must not be considered complete until it returns successfully.
+
+The bundled PostgreSQL and Redis services use unencrypted container-network
+connections. Set `SERVERPOD_DATABASE_REQUIRE_SSL=true` and/or
+`SERVERPOD_REDIS_REQUIRE_SSL=true` when an external managed service requires
+TLS.
 
 TLS and public routing should terminate in Caddy, a reverse proxy, or a cloud
 load balancer. The included `deploy/caddy/Caddyfile` can serve the API,

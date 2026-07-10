@@ -81,6 +81,18 @@ jobs:
         working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.test }}
 
+  compose-config:
+    name: compose config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose configuration
+        run: make compose-check
+
   server-integration:
     name: server integration
     runs-on: ubuntu-latest
