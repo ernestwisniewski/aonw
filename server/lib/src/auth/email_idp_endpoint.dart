@@ -4,12 +4,17 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 
 import '../generated/protocol.dart';
 import 'auth_input_validator.dart';
+import 'email_password_verifier.dart';
 
 /// Email/password account endpoint backed by Serverpod Auth Core.
 class EmailIdpEndpoint extends Endpoint {
+  EmailIdpEndpoint({EmailPasswordVerifier? passwordVerifier})
+    : _passwordVerifier = passwordVerifier;
+
   static const _authMethod = 'email';
   static const _hashSaltLength = 16;
   static const _inputValidator = AuthInputValidator();
+  EmailPasswordVerifier? _passwordVerifier;
 
   @unauthenticatedClientCall
   Future<auth_core.AuthSuccess> login(
@@ -23,12 +28,11 @@ class EmailIdpEndpoint extends Endpoint {
       session,
       where: (table) => table.email.equals(normalizedEmail),
     );
-    if (account == null ||
-        account.passwordHash.isEmpty ||
-        !await _hashUtil().validateHashFromString(
-          secret: password,
-          hashString: account.passwordHash,
-        )) {
+    final passwordMatches = await _passwordVerifierForServer().matches(
+      password: password,
+      storedHash: account?.passwordHash,
+    );
+    if (account == null || !passwordMatches) {
       throw _authError('invalid_credentials', 'Invalid email or password.');
     }
 
@@ -214,6 +218,19 @@ class EmailIdpEndpoint extends Endpoint {
     return auth_core.Argon2HashUtil(
       hashPepper: hashPepper,
       hashSaltLength: _hashSaltLength,
+    );
+  }
+
+  EmailPasswordVerifier _passwordVerifierForServer() {
+    final existing = _passwordVerifier;
+    if (existing != null) return existing;
+    final hashUtil = _hashUtil();
+    return _passwordVerifier = EmailPasswordVerifier(
+      createHash: (secret) => hashUtil.createHashFromString(secret: secret),
+      validateHash: (secret, hashString) => hashUtil.validateHashFromString(
+        secret: secret,
+        hashString: hashString,
+      ),
     );
   }
 
