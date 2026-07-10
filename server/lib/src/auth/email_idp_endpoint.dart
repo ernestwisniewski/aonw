@@ -58,64 +58,79 @@ class EmailIdpEndpoint extends Endpoint {
     final passwordHash = await _hashUtil().createHashFromString(
       secret: password,
     );
-    return session.db.transaction((transaction) async {
-      final existing = await AonwAccount.db.findFirstRow(
-        session,
-        where: (table) => table.email.equals(normalized),
-        transaction: transaction,
-        lockMode: LockMode.forUpdate,
-        lockBehavior: LockBehavior.wait,
-      );
-      if (existing != null) {
-        throw _authError('account_exists', 'Account already exists.');
-      }
-      final existingDisplayName = await AonwAccount.db.findFirstRow(
-        session,
-        where: (table) => table.displayNameKey.equals(displayNameKey),
-        transaction: transaction,
-        lockMode: LockMode.forUpdate,
-        lockBehavior: LockBehavior.wait,
-      );
-      if (existingDisplayName != null) {
-        throw _authError(
-          'display_name_taken',
-          'This nickname is already taken.',
+    try {
+      return await session.db.transaction((transaction) async {
+        final existing = await AonwAccount.db.findFirstRow(
+          session,
+          where: (table) => table.email.equals(normalized),
+          transaction: transaction,
+          lockMode: LockMode.forUpdate,
+          lockBehavior: LockBehavior.wait,
         );
-      }
+        if (existing != null) {
+          throw _authError('account_exists', 'Account already exists.');
+        }
+        final existingDisplayName = await AonwAccount.db.findFirstRow(
+          session,
+          where: (table) => table.displayNameKey.equals(displayNameKey),
+          transaction: transaction,
+          lockMode: LockMode.forUpdate,
+          lockBehavior: LockBehavior.wait,
+        );
+        if (existingDisplayName != null) {
+          throw _authError(
+            'display_name_taken',
+            'This nickname is already taken.',
+          );
+        }
 
-      final authUser = await auth_core.AuthServices.instance.authUsers.create(
-        session,
-        transaction: transaction,
-      );
-      await auth_core.AuthServices.instance.userProfiles.createUserProfile(
-        session,
-        authUser.id,
-        auth_core.UserProfileData(
-          userName: normalizedDisplayName,
-          fullName: normalizedDisplayName,
-          email: normalized,
-        ),
-        transaction: transaction,
-      );
-      await AonwAccount.db.insertRow(
-        session,
-        AonwAccount(
+        final authUser = await auth_core.AuthServices.instance.authUsers.create(
+          session,
+          transaction: transaction,
+        );
+        await auth_core.AuthServices.instance.userProfiles.createUserProfile(
+          session,
+          authUser.id,
+          auth_core.UserProfileData(
+            userName: normalizedDisplayName,
+            fullName: normalizedDisplayName,
+            email: normalized,
+          ),
+          transaction: transaction,
+        );
+        await AonwAccount.db.insertRow(
+          session,
+          AonwAccount(
+            authUserId: authUser.id,
+            email: normalized,
+            displayName: normalizedDisplayName,
+            displayNameKey: displayNameKey,
+            passwordHash: passwordHash,
+            createdAt: DateTime.now().toUtc(),
+          ),
+          transaction: transaction,
+        );
+        return auth_core.AuthServices.instance.tokenManager.issueToken(
+          session,
           authUserId: authUser.id,
-          email: normalized,
-          displayName: normalizedDisplayName,
-          displayNameKey: displayNameKey,
-          passwordHash: passwordHash,
-          createdAt: DateTime.now().toUtc(),
-        ),
-        transaction: transaction,
-      );
-      return auth_core.AuthServices.instance.tokenManager.issueToken(
-        session,
-        authUserId: authUser.id,
-        method: _authMethod,
-        transaction: transaction,
-      );
-    });
+          method: _authMethod,
+          transaction: transaction,
+        );
+      });
+    } on DatabaseQueryException catch (error) {
+      if (error.code == '23505') {
+        if (error.constraintName == 'aonw_account_email_idx') {
+          throw _authError('account_exists', 'Account already exists.');
+        }
+        if (error.constraintName == 'aonw_account_display_name_idx') {
+          throw _authError(
+            'display_name_taken',
+            'This nickname is already taken.',
+          );
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<String> displayName(Session session) async {
@@ -130,41 +145,52 @@ class EmailIdpEndpoint extends Endpoint {
     final user = _requireUser(session);
     final normalizedDisplayName = _inputValidator.displayName(displayName);
     final displayNameKey = _displayNameKey(normalizedDisplayName);
-    return session.db.transaction((transaction) async {
-      final account = await _requireAccountForUser(
-        session,
-        user,
-        transaction: transaction,
-        lock: true,
-      );
-      final existing = await AonwAccount.db.findFirstRow(
-        session,
-        where: (table) => table.displayNameKey.equals(displayNameKey),
-        transaction: transaction,
-        lockMode: LockMode.forUpdate,
-        lockBehavior: LockBehavior.wait,
-      );
-      if (existing != null && existing.authUserId != account.authUserId) {
+    try {
+      return await session.db.transaction((transaction) async {
+        final account = await _requireAccountForUser(
+          session,
+          user,
+          transaction: transaction,
+          lock: true,
+        );
+        final existing = await AonwAccount.db.findFirstRow(
+          session,
+          where: (table) => table.displayNameKey.equals(displayNameKey),
+          transaction: transaction,
+          lockMode: LockMode.forUpdate,
+          lockBehavior: LockBehavior.wait,
+        );
+        if (existing != null && existing.authUserId != account.authUserId) {
+          throw _authError(
+            'display_name_taken',
+            'This nickname is already taken.',
+          );
+        }
+        final updated = await AonwAccount.db.updateRow(
+          session,
+          account.copyWith(
+            displayName: normalizedDisplayName,
+            displayNameKey: displayNameKey,
+          ),
+          transaction: transaction,
+        );
+        await _syncUserProfileDisplayName(
+          session,
+          account: updated,
+          transaction: transaction,
+        );
+        return updated.displayName;
+      });
+    } on DatabaseQueryException catch (error) {
+      if (error.code == '23505' &&
+          error.constraintName == 'aonw_account_display_name_idx') {
         throw _authError(
           'display_name_taken',
           'This nickname is already taken.',
         );
       }
-      final updated = await AonwAccount.db.updateRow(
-        session,
-        account.copyWith(
-          displayName: normalizedDisplayName,
-          displayNameKey: displayNameKey,
-        ),
-        transaction: transaction,
-      );
-      await _syncUserProfileDisplayName(
-        session,
-        account: updated,
-        transaction: transaction,
-      );
-      return updated.displayName;
-    });
+      rethrow;
+    }
   }
 
   Future<bool> hasAccount(Session session) async {
