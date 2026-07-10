@@ -4,8 +4,11 @@ import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw_core/protocol.dart';
 
 class NetworkEventLog implements EventLog {
+  static const _eventPageSize = 256;
+
   final String serverpodHost;
   final AuthToken token;
   final EventCodec eventCodec;
@@ -32,18 +35,17 @@ class NetworkEventLog implements EventLog {
 
   @override
   Future<int> latestOffset(String saveId) async {
-    final events = await _backend().listEvents(saveId, 0);
     var latest = 0;
-    for (final event in events) {
-      if (event.offset > latest) latest = event.offset;
+    await for (final wire in _wireEvents(saveId, afterOffset: 0)) {
+      latest = wire.offset;
     }
     return latest;
   }
 
   @override
   Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
-    final events = await _backend().listEvents(saveId, offset);
-    for (final wire in events) {
+    final afterOffset = offset <= 0 ? 0 : offset - 1;
+    await for (final wire in _wireEvents(saveId, afterOffset: afterOffset)) {
       final command = eventCodec.commandFromWire(wire);
       if (command == null) continue;
       yield LoggedCommand(
@@ -54,6 +56,33 @@ class NetworkEventLog implements EventLog {
         command: command,
         events: eventCodec.eventsFromWire(wire),
       );
+    }
+  }
+
+  Stream<WireEvent> _wireEvents(
+    String saveId, {
+    required int afterOffset,
+  }) async* {
+    final backend = _backend();
+    var cursor = afterOffset;
+    while (true) {
+      final page = await backend.listEvents(saveId, cursor);
+      if (page.length > _eventPageSize) {
+        throw StateError(
+          'Multiplayer event page exceeded $_eventPageSize entries.',
+        );
+      }
+      for (final wire in page) {
+        if (wire.offset <= cursor) {
+          throw StateError(
+            'Multiplayer event offsets must increase strictly: '
+            '${wire.offset} followed $cursor.',
+          );
+        }
+        cursor = wire.offset;
+        yield wire;
+      }
+      if (page.length < _eventPageSize) return;
     }
   }
 
