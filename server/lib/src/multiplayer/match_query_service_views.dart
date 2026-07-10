@@ -9,7 +9,10 @@ extension MatchQueryServiceViews on MatchQueryService {
     final state = await _stateAccess.requireMatch(store, matchId);
     final player = _stateAccess.requireParticipant(state, userIdentifier);
     return _projectPlayerView(
-      () => _viewProjector.snapshotFor(
+      store: store,
+      matchId: state.match.id,
+      surface: MultiplayerProjectionSurface.snapshot,
+      project: () => _viewProjector.snapshotFor(
         state.snapshot,
         MatchRecipient(userIdentifier: userIdentifier, playerId: player.id),
       ),
@@ -29,18 +32,34 @@ extension MatchQueryServiceViews on MatchQueryService {
       userIdentifier: userIdentifier,
       playerId: player.id,
     );
-    return _projectPlayerView(() {
-      return [
-        for (final event in events) _viewProjector.eventFor(event, recipient),
-      ];
-    });
+    return _projectPlayerView(
+      store: store,
+      matchId: state.match.id,
+      surface: MultiplayerProjectionSurface.eventHistory,
+      project: () {
+        return [
+          for (final event in events) _viewProjector.eventFor(event, recipient),
+        ];
+      },
+    );
   }
 }
 
-T _projectPlayerView<T>(T Function() project) {
+T _projectPlayerView<T>({
+  required MultiplayerMatchStore store,
+  required String matchId,
+  required MultiplayerProjectionSurface surface,
+  required T Function() project,
+}) {
   try {
     return project();
-  } catch (_) {
+  } catch (error, stackTrace) {
+    store.operationalEvents.projectionFailed(
+      matchId: matchId,
+      surface: surface,
+      error: error,
+      stackTrace: stackTrace,
+    );
     throw multiplayerException(
       'snapshot_projection_failed',
       'Unable to project multiplayer state.',

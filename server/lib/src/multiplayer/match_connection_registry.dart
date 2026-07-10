@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/protocol.dart';
 
 import '../generated/protocol.dart';
+import '../observability/server_operational_event_sink.dart';
 import 'client_message_guard.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
@@ -18,12 +19,15 @@ final class MatchMessageTarget {
     required this.recipient,
     required MatchServerMessageSink sink,
     required void Function(Object error, StackTrace stackTrace) errorSink,
+    required ServerOperationalEventSink operationalEvents,
   }) : _sink = sink,
-       _errorSink = errorSink;
+       _errorSink = errorSink,
+       _operationalEvents = operationalEvents;
 
   final MatchRecipient recipient;
   final MatchServerMessageSink _sink;
   final void Function(Object error, StackTrace stackTrace) _errorSink;
+  final ServerOperationalEventSink _operationalEvents;
 }
 
 typedef MatchServerMessageFactory =
@@ -118,6 +122,7 @@ final class MatchConnectionRegistry {
       if (cancelInput) await inputSubscription?.cancel();
       if (!connectionRegistered) return;
       final remaining = _releaseConnection(matchId, userIdentifier);
+      store.operationalEvents.streamDisconnected(matchId: matchId);
       if (remaining > 0) return;
       try {
         await updateConnectionState(
@@ -160,6 +165,7 @@ final class MatchConnectionRegistry {
                   controller.addError(error, stackTrace);
                 }
               },
+              operationalEvents: store.operationalEvents,
             );
           },
           requireCaller: () =>
@@ -194,7 +200,13 @@ final class MatchConnectionRegistry {
   void sendTo(MatchMessageTarget target, MultiplayerServerMessage message) {
     try {
       target._sink(_viewProjector.messageFor(message, target.recipient));
-    } catch (_, stackTrace) {
+    } catch (error, stackTrace) {
+      target._operationalEvents.projectionFailed(
+        matchId: message.matchId,
+        surface: MultiplayerProjectionSurface.stream,
+        error: error,
+        stackTrace: stackTrace,
+      );
       target._errorSink(
         multiplayerException(
           'snapshot_projection_failed',

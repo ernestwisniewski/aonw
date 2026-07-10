@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 
 import '../generated/protocol.dart';
+import '../observability/server_operational_event_sink.dart';
 
 enum AuthRateLimitAction {
   emailLogin,
@@ -38,7 +39,14 @@ abstract interface class AuthRequestLimiter {
 
 /// Persistent authentication abuse limits shared by every server instance.
 final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
+  DatabaseAuthRateLimiter({
+    ServerOperationalEventSink Function(Session session)? operationalEventsFor,
+  }) : _operationalEventsFor =
+           operationalEventsFor ?? ServerpodOperationalEventSink.new;
+
   final Map<String, DatabaseRateLimitedRequestAttemptUtil<String>> _limits = {};
+  final ServerOperationalEventSink Function(Session session)
+  _operationalEventsFor;
 
   @override
   Future<void> enforce(
@@ -57,7 +65,10 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
       maxAttempts: policy.maxIpAttempts,
       timeframe: policy.timeframe,
     );
-    if (ipLimited) throw _rateLimited();
+    if (ipLimited) {
+      _operationalEventsFor(session).authRateLimited(action: action);
+      throw _rateLimited();
+    }
 
     final maxCredentialAttempts = policy.maxCredentialAttempts;
     if (credential == null || maxCredentialAttempts == null) return;
@@ -68,7 +79,10 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
       maxAttempts: maxCredentialAttempts,
       timeframe: policy.timeframe,
     );
-    if (credentialLimited) throw _rateLimited();
+    if (credentialLimited) {
+      _operationalEventsFor(session).authRateLimited(action: action);
+      throw _rateLimited();
+    }
   }
 
   Future<bool> _hasTooManyAttempts(

@@ -3,6 +3,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
+import '../observability/server_operational_event_sink.dart';
 import 'game_match_row_mapper.dart';
 
 part 'multiplayer_match_store_creation.dart';
@@ -27,6 +28,8 @@ class StoredMatchState {
 }
 
 abstract interface class MultiplayerMatchStore {
+  ServerOperationalEventSink get operationalEvents;
+
   Future<T> transaction<T>(
     Future<T> Function(MultiplayerMatchStore store) action,
   );
@@ -68,16 +71,24 @@ abstract interface class MultiplayerMatchStore {
 
 class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   ServerpodMultiplayerMatchStore(Session session)
-    : this._(session: session, transaction: null);
+    : this._(
+        session: session,
+        transaction: null,
+        operationalEvents: ServerpodOperationalEventSink(session),
+      );
 
-  const ServerpodMultiplayerMatchStore._({
+  ServerpodMultiplayerMatchStore._({
     required Session session,
     required Transaction? transaction,
+    required this.operationalEvents,
   }) : _session = session,
        _transaction = transaction;
 
   final Session _session;
   final Transaction? _transaction;
+
+  @override
+  final ServerOperationalEventSink operationalEvents;
 
   @override
   Future<T> transaction<T>(
@@ -91,6 +102,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
         ServerpodMultiplayerMatchStore._(
           session: _session,
           transaction: transaction,
+          operationalEvents: operationalEvents,
         ),
       );
     });

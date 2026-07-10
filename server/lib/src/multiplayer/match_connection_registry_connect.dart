@@ -56,6 +56,10 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
             'Authenticated player does not match the authorized participant.',
           );
         }
+        final reconnect =
+            afterOffset > 0 ||
+            player.connectionState == WirePlayerConnectionState.offline ||
+            player.connectionState == WirePlayerConnectionState.reconnecting;
         setRecipient(
           MatchRecipient(userIdentifier: userIdentifier, playerId: player.id),
         );
@@ -111,6 +115,10 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
           ),
         );
         _subscribe(matchId, requireCaller());
+        store.operationalEvents.streamConnected(
+          matchId: state.match.id,
+          reconnect: reconnect,
+        );
         emit(
           createMessage(
             matchId: matchId,

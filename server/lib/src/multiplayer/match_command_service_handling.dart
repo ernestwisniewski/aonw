@@ -12,6 +12,10 @@ extension MatchCommandServiceHandling on MatchCommandService {
     final state = await _stateAccess.requireMatch(store, matchId, lock: true);
     final player = _stateAccess.requireParticipant(state, userIdentifier);
     if (command.actorPlayerId != player.id) {
+      store.operationalEvents.commandRejected(
+        matchId: state.match.id,
+        reasonCode: 'actor_mismatch',
+      );
       return _directOutcome(
         caller,
         _broadcaster.message(
@@ -59,6 +63,10 @@ extension MatchCommandServiceHandling on MatchCommandService {
       now: now,
     );
     if (!reduction.accepted) {
+      store.operationalEvents.commandRejected(
+        matchId: state.match.id,
+        reasonCode: reduction.reason ?? 'command_rejected',
+      );
       return _directOutcome(
         caller,
         _broadcaster.message(

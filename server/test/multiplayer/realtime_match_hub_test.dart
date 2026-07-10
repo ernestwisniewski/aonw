@@ -10,6 +10,7 @@ import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
+import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -459,7 +460,11 @@ void main() {
   });
 
   test('returns a generic error for malformed snapshot projections', () async {
-    final fixture = await _startRunningMatch('malformed-projection');
+    final logs = <String>[];
+    final fixture = await _startRunningMatch(
+      'malformed-projection',
+      operationalEvents: _recordingOperationalEvents(logs),
+    );
     final stored = (await fixture.store.findState(fixture.match.id))!;
     await fixture.store.saveState(
       stored.copyWith(
@@ -483,6 +488,16 @@ void main() {
         ),
       ),
     );
+    expect(
+      logs,
+      contains(
+        startsWith(
+          'event=multiplayer_projection_failed '
+          'match_id=${fixture.match.id} surface=snapshot error_type=',
+        ),
+      ),
+    );
+    expect(logs.join(' '), isNot(contains('must-not-escape')));
   });
 
   test('listMatches returns public lobbies and own active matches', () async {
@@ -1308,7 +1323,10 @@ void main() {
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
       );
-      final store = _MemoryMatchStore();
+      final logs = <String>[];
+      final store = _MemoryMatchStore(
+        operationalEvents: _recordingOperationalEvents(logs),
+      );
       final openMatch = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',
@@ -1444,6 +1462,16 @@ void main() {
         disconnected.match.players.map((player) => player.connectionState),
         everyElement(WirePlayerConnectionState.offline),
       );
+      expect(
+        logs,
+        contains('event=multiplayer_stream_reconnected match_id=${match.id}'),
+      );
+      expect(
+        logs,
+        contains('event=multiplayer_stream_disconnected match_id=${match.id}'),
+      );
+      expect(logs.join(' '), isNot(contains('guest-user')));
+      expect(logs.join(' '), isNot(contains('owner-user')));
 
       final resumed = await hub.loadMatch(
         store: store,
@@ -1518,7 +1546,11 @@ void main() {
   });
 
   test('projects rejected command acknowledgements for the caller', () async {
-    final fixture = await _startRunningMatch('rejected-ack');
+    final logs = <String>[];
+    final fixture = await _startRunningMatch(
+      'rejected-ack',
+      operationalEvents: _recordingOperationalEvents(logs),
+    );
     final owner = fixture.match.players.first;
     final guest = fixture.match.players.last;
     final stored = (await fixture.store.findState(fixture.match.id))!;
@@ -1567,6 +1599,14 @@ void main() {
       owner.id: 111,
     });
     expect(await fixture.store.listEvents(fixture.match.id, 0), isEmpty);
+    expect(
+      logs,
+      contains(
+        'event=multiplayer_command_rejected '
+        'match_id=${fixture.match.id} reason=actor_mismatch',
+      ),
+    );
+    expect(logs.join(' '), isNot(contains('forged-actor-command')));
 
     await input.close();
   });
@@ -2536,12 +2576,28 @@ TypeMatcher<MultiplayerException> _multiplayerError(String code) {
   );
 }
 
-Future<_RunningMatchFixture> _startRunningMatch(String suffix) async {
+ServerpodOperationalEventSink _recordingOperationalEvents(
+  List<String> messages,
+) {
+  return ServerpodOperationalEventSink.withWriter((
+    message, {
+    required level,
+    stackTrace,
+  }) {
+    messages.add(message);
+  });
+}
+
+Future<_RunningMatchFixture> _startRunningMatch(
+  String suffix, {
+  ServerOperationalEventSink operationalEvents =
+      const NoopServerOperationalEventSink(),
+}) async {
   final mapCatalog = _FakeMapCatalog(_testMap());
   final hub = RealtimeMatchHub(
     commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
   );
-  final store = _MemoryMatchStore();
+  final store = _MemoryMatchStore(operationalEvents: operationalEvents);
   final openMatch = await hub.createMatch(
     store: store,
     userIdentifier: 'owner-user-$suffix',
@@ -2670,6 +2726,13 @@ class _CommitFailingMatchStore extends _MemoryMatchStore {
 }
 
 class _MemoryMatchStore implements MultiplayerMatchStore {
+  _MemoryMatchStore({
+    this.operationalEvents = const NoopServerOperationalEventSink(),
+  });
+
+  @override
+  final ServerOperationalEventSink operationalEvents;
+
   final Map<String, StoredMatchState> _states = {};
   final Map<String, List<WireEvent>> _events = {};
   final Map<String, WireEvent> _eventsByClientMessageId = {};
