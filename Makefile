@@ -369,17 +369,13 @@ server-test:
 
 server-integration-test:
 	@cd server && \
+		tests=$$(find test/integration -type f -name '*_smoke.dart' | sort); \
+		test -n "$$tests" || { echo "No Serverpod integration smokes found."; exit 1; }; \
 		SERVERPOD_PASSWORD_database="$(SERVERPOD_TEST_DATABASE_PASSWORD)" \
 		SERVERPOD_PASSWORD_emailSecretHashPepper="$${SERVERPOD_PASSWORD_emailSecretHashPepper:-test-email-secret-hash-pepper}" \
 		SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-test-jwt-hmac-sha512-private-key}" \
 		SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-test-jwt-refresh-token-hash-pepper}" \
-		dart test \
-			test/integration/account_profile_endpoint_smoke.dart \
-			test/integration/multiplayer_endpoint_smoke.dart \
-			test/integration/auth_status_endpoint_smoke.dart \
-			test/integration/email_idp_endpoint_smoke.dart \
-			test/integration/steam_auth_service_smoke.dart \
-			-P integration --chain-stack-traces
+			dart test $$tests -P integration --chain-stack-traces
 
 serverpod-runtime-smoke:
 	@dart run tool/serverpod_multiplayer_smoke.dart --host "$(SERVERPOD_SMOKE_HOST)" --map "$(SERVERPOD_SMOKE_MAP)"
@@ -1463,12 +1459,16 @@ preflight-release:
 
 check-migrations:
 	@test -x "$(SERVERPOD_CLI)" || { echo "Serverpod CLI not found: $(SERVERPOD_CLI)"; exit 1; }
+	@if [ -n "$$(git status --porcelain -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations)" ]; then \
+		echo "Serverpod drift check requires clean generated and migration paths."; \
+		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations; \
+		exit 1; \
+	fi
 	@cd server && "$(SERVERPOD_CLI)" generate
-	@cd server && "$(SERVERPOD_CLI)" create-migration --force
-	@dart format server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools >/dev/null
-	@if ! git diff --quiet -- server/lib/src/generated packages/aonw_server_client/lib/src server/migrations; then \
+	@cd server && "$(SERVERPOD_CLI)" create-migration
+	@if [ -n "$$(git status --porcelain -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations)" ]; then \
 		echo "Serverpod generated files or migrations changed. Review and commit them before deploy."; \
-		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/migrations; \
+		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations; \
 		exit 1; \
 	fi
 

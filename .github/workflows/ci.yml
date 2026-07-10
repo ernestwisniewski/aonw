@@ -93,6 +93,32 @@ jobs:
       - name: Validate Docker Compose configuration
         run: make compose-check
 
+  serverpod-drift:
+    name: serverpod generated and migration drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          channel: stable
+          cache: true
+
+      - name: Get server dependencies
+        working-directory: server
+        run: dart pub get
+
+      - name: Install pinned Serverpod CLI
+        run: dart pub global activate serverpod_cli 3.4.10
+
+      - name: Check generated code and migration drift
+        run: make check-migrations
+
   server-integration:
     name: server integration
     runs-on: ubuntu-latest
@@ -128,14 +154,7 @@ jobs:
         working-directory: server
         run: dart pub get
 
-      - name: Run Serverpod PostgreSQL integration smoke
-        working-directory: server
+      - name: Run every Serverpod PostgreSQL integration smoke
         env:
-          SERVERPOD_PASSWORD_database: aonw_dev
-          SERVERPOD_PASSWORD_emailSecretHashPepper: test-email-secret-hash-pepper
-          SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey: test-jwt-hmac-sha512-private-key
-          SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper: test-jwt-refresh-token-hash-pepper
-        run: >-
-          dart test test/integration/multiplayer_endpoint_smoke.dart
-          -P integration
-          --chain-stack-traces
+          SERVERPOD_TEST_DATABASE_PASSWORD: aonw_dev
+        run: make server-integration-test
