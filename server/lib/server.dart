@@ -14,7 +14,7 @@ import 'src/multiplayer/multiplayer_turn_timeout_future_call.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
-  _registerTurnTimeoutSweep(pod);
+  final turnTimeoutSweepRegistered = _registerTurnTimeoutSweep(pod);
   final authMaintenanceRegistered = _registerAuthMaintenance(pod);
   final appleConfigured = _appleIdpConfigured(pod);
 
@@ -36,7 +36,14 @@ void run(List<String> args) async {
   );
 
   await pod.start();
-  await _scheduleTurnTimeoutSweep(pod);
+  if (turnTimeoutSweepRegistered) {
+    final turnTimeoutReconciler = MultiplayerTurnTimeoutScheduleReconciler(pod);
+    await turnTimeoutReconciler.start();
+    pod.experimental.shutdownTasks.addTask(
+      multiplayerTurnTimeoutReconcilerShutdownTaskId,
+      turnTimeoutReconciler.close,
+    );
+  }
   if (authMaintenanceRegistered) {
     final authMaintenanceReconciler = AuthMaintenanceScheduleReconciler(pod);
     await authMaintenanceReconciler.start();
@@ -61,24 +68,17 @@ bool _hasPassword(Serverpod pod, String key) {
   return value != null && value.trim().isNotEmpty;
 }
 
-void _registerTurnTimeoutSweep(Serverpod pod) {
+bool _registerTurnTimeoutSweep(Serverpod pod) {
   try {
     pod.registerFutureCall(
       MultiplayerTurnTimeoutSweepCall(hub: multiplayerHub),
       multiplayerTurnTimeoutSweepCallName,
     );
+    return true;
   } on StateError {
     // Future calls can be disabled for maintenance/test roles; turn timeout
     // enforcement still runs on direct command handling in those modes.
-  }
-}
-
-Future<void> _scheduleTurnTimeoutSweep(Serverpod pod) async {
-  try {
-    await scheduleMultiplayerTurnTimeoutSweep(pod);
-  } on StateError {
-    // Future calls can be disabled for maintenance/test roles; turn timeout
-    // enforcement still runs on direct command handling in those modes.
+    return false;
   }
 }
 
