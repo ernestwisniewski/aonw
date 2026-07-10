@@ -195,6 +195,37 @@ void main() {
       },
     );
 
+    test('never reads a snapshot from the pre-projection namespace', () async {
+      final cache = _MemorySnapshotStore();
+      await cache.save(
+        'multiplayer-v1.dXNlcl8x.bWF0Y2hfMQ',
+        Snapshot(
+          offset: 8,
+          state: SaveSnapshot(
+            save: _save(),
+            playerGold: const {'other-player': 999999},
+            eventLogOffset: 8,
+          ),
+          createdAt: DateTime.utc(2026, 4, 26, 10),
+        ),
+      );
+      final repository = _repository(
+        _FakeMultiplayerBackend(
+          loadSnapshotError: const sp.ServerpodClientException('offline', -1),
+        ),
+        snapshotCache: cache,
+      );
+
+      await expectLater(
+        repository.load('match_1'),
+        throwsA(isA<sp.ServerpodClientException>()),
+      );
+      expect(
+        multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
+        startsWith('multiplayer-v2.'),
+      );
+    });
+
     test('leaves matches through Serverpod on delete', () async {
       final backend = _FakeMultiplayerBackend();
       final repository = _repository(backend);

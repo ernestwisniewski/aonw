@@ -25,7 +25,8 @@ final class MatchQueryService {
     return _projectPlayerView(() {
       return [
         for (final match in matches)
-          _viewProjector.matchFor(match, userIdentifier: userIdentifier),
+          if (_stateAccess.supportsCurrentMatch(match))
+            _viewProjector.matchFor(match, userIdentifier: userIdentifier),
       ];
     });
   }

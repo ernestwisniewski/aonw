@@ -1,1 +1,1 @@
-const int kProtocolVersion = 2;
+const int kProtocolVersion = 3;

@@ -75,9 +75,15 @@ non-blocking.
 
 ## Protocol Versioning
 
-All wire payloads carry `v: 2` and are validated by `kProtocolVersion`.
+All wire payloads carry `v: 3` and are validated by `kProtocolVersion`.
 Persisted snapshots/events from earlier wire versions must be cleared or
 migrated before replaying them with the current client and server.
+
+Version 3 introduced recipient-scoped snapshots and redacted event history.
+The server intentionally rejects earlier matches, including legacy matches
+whose player identifiers embedded account identifiers. The client uses the
+`multiplayer-v2` snapshot-cache namespace so pre-projection snapshots cannot
+be loaded as an offline fallback.
 
 Use this path for the first coordinated protocol bump:
 

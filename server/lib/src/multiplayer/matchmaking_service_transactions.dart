@@ -38,6 +38,13 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           );
         }
 
+        if (!_stateAccess.supportsCurrentProtocol(state)) {
+          await txStore.saveState(
+            _stateAccess.abandonedState(state, reason: 'protocol_upgrade'),
+          );
+          continue;
+        }
+
         final stale = await _lifecycle.abandonStaleQuickplayLobby(
           store: txStore,
           state: state,
@@ -125,6 +132,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           'Private match not found.',
         );
       }
+      _stateAccess.requireCurrentProtocol(state);
       requireOpenLobby(state);
       final joined = await _joinState(
         store: txStore,

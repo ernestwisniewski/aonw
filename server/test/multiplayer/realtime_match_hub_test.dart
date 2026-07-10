@@ -574,6 +574,87 @@ void main() {
     expect(visible.map((match) => match.id), isNot(contains(finishedOpen.id)));
   });
 
+  test('retires pre-projection matches and legacy player ids', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
+    final legacy = await hub.createMatch(
+      store: store,
+      userIdentifier: 'legacy-owner',
+      request: CreateMatchRequest(
+        name: 'Legacy identifiers',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final stale = await hub.createMatch(
+      store: store,
+      userIdentifier: 'stale-owner',
+      request: CreateMatchRequest(
+        name: 'Stale protocol',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final legacyState = (await store.findState(legacy.id))!;
+    await store.saveState(
+      legacyState.copyWith(
+        match: legacyState.match.copyWith(
+          quickplay: true,
+          players: [
+            legacyState.match.players.single.copyWith(
+              id: 'player-1-legacy-owner',
+            ),
+          ],
+        ),
+      ),
+    );
+    final staleState = (await store.findState(stale.id))!;
+    await store.saveState(
+      staleState.copyWith(
+        match: staleState.match.copyWith(v: kProtocolVersion - 1),
+        snapshot: staleState.snapshot.copyWith(v: kProtocolVersion - 1),
+      ),
+    );
+
+    expect(
+      await hub.listMatches(store: store, userIdentifier: 'legacy-owner'),
+      isEmpty,
+    );
+    for (final entry in [
+      (matchId: legacy.id, userId: 'legacy-owner'),
+      (matchId: stale.id, userId: 'stale-owner'),
+    ]) {
+      await expectLater(
+        hub.loadSnapshot(
+          store: store,
+          userIdentifier: entry.userId,
+          matchId: entry.matchId,
+        ),
+        throwsA(_multiplayerError('unsupported_match_protocol')),
+      );
+    }
+
+    final replacement = await hub.quickplay(
+      store: store,
+      userIdentifier: 'replacement-owner',
+      request: CreateMatchRequest(
+        name: 'Replacement quickplay',
+        mapName: 'test_map',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    expect(replacement.id, isNot(legacy.id));
+    final retired = (await store.findState(legacy.id))!;
+    expect(retired.match.state, 'abandoned');
+    expect(retired.snapshot.state['reason'], 'protocol_upgrade');
+  });
+
   test(
     'leaveMatch keeps a running match resumable while another player is active',
     () async {

@@ -3,6 +3,8 @@ import 'package:aonw_core/protocol.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 
+part 'match_state_access_protocol.dart';
+
 final class MatchStateAccess {
   const MatchStateAccess();
 
@@ -15,6 +17,7 @@ final class MatchStateAccess {
     if (state == null) {
       throw multiplayerException('match_not_found', 'Match not found.');
     }
+    requireCurrentProtocol(state);
     return state;
   }
 
@@ -26,12 +29,6 @@ final class MatchStateAccess {
       'not_match_player',
       'User is not a participant in this match.',
     );
-  }
-
-  int humanPlayerCount(WireMatch match) {
-    return match.players
-        .where((player) => player.kind == WirePlayerKind.human)
-        .length;
   }
 
   StoredMatchState abandonedState(
