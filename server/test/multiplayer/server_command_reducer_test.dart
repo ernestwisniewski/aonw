@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
@@ -5,6 +7,74 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('ServerCommandReducer map cache', () {
+    test('reuses a loaded map across sequential reductions', () async {
+      final catalog = _CountingMapCatalog({'test_map': _resourceTradeMap()});
+      final reducer = ServerCommandReducer(mapCatalog: catalog);
+
+      await _reduceForMap(reducer, 'test_map');
+      await _reduceForMap(reducer, 'test_map');
+
+      expect(catalog.loadCountFor('test_map'), 1);
+    });
+
+    test('deduplicates concurrent loads for the same map', () async {
+      final release = Completer<void>();
+      final catalog = _CountingMapCatalog({
+        'test_map': _resourceTradeMap(),
+      }, release: release);
+      final reducer = ServerCommandReducer(mapCatalog: catalog);
+
+      final first = _reduceForMap(reducer, 'test_map');
+      final second = _reduceForMap(reducer, 'test_map');
+      await catalog.firstLoadStarted;
+
+      expect(catalog.loadCountFor('test_map'), 1);
+      release.complete();
+      final reductions = await Future.wait([first, second]);
+      expect(reductions.every((reduction) => reduction.accepted), isTrue);
+      expect(catalog.loadCountFor('test_map'), 1);
+    });
+
+    test('keeps separate cache entries for different maps', () async {
+      final catalog = _CountingMapCatalog({
+        'map_a': _resourceTradeMap(),
+        'map_b': _resourceTradeMap(),
+      });
+      final reducer = ServerCommandReducer(mapCatalog: catalog);
+
+      await _reduceForMap(reducer, 'map_a');
+      await _reduceForMap(reducer, 'map_b');
+      await _reduceForMap(reducer, 'map_a');
+
+      expect(catalog.loadCountFor('map_a'), 1);
+      expect(catalog.loadCountFor('map_b'), 1);
+    });
+
+    test('evicts a failed load so the map can be retried', () async {
+      final catalog = _CountingMapCatalog(
+        {'test_map': _resourceTradeMap()},
+        failuresBeforeSuccess: const {'test_map': 1},
+      );
+      final reducer = ServerCommandReducer(mapCatalog: catalog);
+
+      await expectLater(
+        _reduceForMap(reducer, 'test_map'),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'Injected map load failure for test_map',
+          ),
+        ),
+      );
+      final retried = await _reduceForMap(reducer, 'test_map');
+
+      expect(retried.accepted, isTrue);
+      expect(catalog.loadCountFor('test_map'), 2);
+    });
+  });
+
   group('ServerCommandReducer diplomacy commands', () {
     test(
       'routes proposals through the persistent diplomacy resolver',
@@ -548,6 +618,19 @@ Future<ServerCommandReduction> _reduceDiplomacyCommand({
   );
 }
 
+Future<ServerCommandReduction> _reduceForMap(
+  ServerCommandReducer reducer,
+  String mapName,
+) {
+  return reducer.reduce(
+    match: _runningMatch(mapName: mapName),
+    snapshot: _snapshot(_diplomacyState(), save: _save(mapName: mapName)),
+    wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+    actorPlayerId: 'player_1',
+    now: DateTime.utc(2026, 6, 30, 12),
+  );
+}
+
 PersistentGameState _diplomacyState({
   Map<String, int> playerGold = const {},
   DiplomacyState? diplomacy,
@@ -566,12 +649,15 @@ PersistentGameState _diplomacyState({
   );
 }
 
-WireMatch _runningMatch({List<WirePlayer>? players}) {
+WireMatch _runningMatch({
+  List<WirePlayer>? players,
+  String mapName = 'test_map',
+}) {
   return WireMatch(
     id: 'match_1',
     ownerUserId: 'user_1',
     name: 'Server reducer trade',
-    mapName: 'test_map',
+    mapName: mapName,
     players: players ?? _wirePlayers(),
     turn: 1,
     state: 'running',
@@ -591,11 +677,12 @@ WireSnapshot _snapshot(PersistentGameState state, {GameSave? save}) {
 GameSave _save({
   Map<String, PlayerTurnState>? playerStates,
   List<Player>? players,
+  String mapName = 'test_map',
 }) {
   return GameSave(
     id: 'save_1',
     name: 'Server reducer trade',
-    mapName: 'test_map',
+    mapName: mapName,
     turn: 1,
     playerStates:
         playerStates ??
@@ -718,4 +805,40 @@ class _FakeMapCatalog implements MultiplayerMapCatalog {
 
   @override
   Future<MapData> loadAssetMap(String mapName) async => mapData;
+}
+
+class _CountingMapCatalog implements MultiplayerMapCatalog {
+  _CountingMapCatalog(
+    this._maps, {
+    Map<String, int> failuresBeforeSuccess = const {},
+    this.release,
+  }) : _failuresRemaining = Map.of(failuresBeforeSuccess);
+
+  final Map<String, MapData> _maps;
+  final Completer<void>? release;
+  final Map<String, int> _failuresRemaining;
+  final Map<String, int> _loadCounts = {};
+  final Completer<void> _firstLoadStarted = Completer<void>();
+
+  Future<void> get firstLoadStarted => _firstLoadStarted.future;
+
+  int loadCountFor(String mapName) => _loadCounts[mapName] ?? 0;
+
+  @override
+  Future<MapData> loadAssetMap(String mapName) async {
+    _loadCounts.update(mapName, (count) => count + 1, ifAbsent: () => 1);
+    if (!_firstLoadStarted.isCompleted) _firstLoadStarted.complete();
+
+    final failuresRemaining = _failuresRemaining[mapName] ?? 0;
+    if (failuresRemaining > 0) {
+      _failuresRemaining[mapName] = failuresRemaining - 1;
+      throw StateError('Injected map load failure for $mapName');
+    }
+
+    final release = this.release;
+    if (release != null) await release.future;
+    final map = _maps[mapName];
+    if (map == null) throw StateError('Map not found: $mapName');
+    return map;
+  }
 }

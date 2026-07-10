@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 import 'initial_multiplayer_snapshot_factory.dart';
 
 part 'server_command_reducer_production.dart';
+part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_turns.dart';
 
 class ServerCommandReduction {
@@ -23,7 +24,7 @@ class ServerCommandReduction {
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 
 class ServerCommandReducer {
-  const ServerCommandReducer({
+  ServerCommandReducer({
     MultiplayerMapCatalog mapCatalog = const FileMultiplayerMapCatalog(),
     Duration turnTimeout = defaultMultiplayerTurnTimeout,
   }) : _mapCatalog = mapCatalog,
@@ -31,6 +32,7 @@ class ServerCommandReducer {
 
   final MultiplayerMapCatalog _mapCatalog;
   final Duration _turnTimeout;
+  final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
 
   bool hasTurnTimedOut({
     required WireSnapshot snapshot,
@@ -67,9 +69,9 @@ class ServerCommandReducer {
       return _reject(snapshot, 'player_already_submitted');
     }
 
-    final mapData = await _mapCatalog.loadAssetMap(save.mapName);
-    mapData.mapName ??= save.mapName;
-    final mapDefinition = _mapDefinitionFrom(mapData);
+    final loadedMap = await _loadServerMap(save.mapName);
+    final mapData = loadedMap.data;
+    final mapDefinition = loadedMap.definition;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
@@ -127,9 +129,9 @@ class ServerCommandReducer {
       return _reject(snapshot, 'turn_player_not_active');
     }
 
-    final mapData = await _mapCatalog.loadAssetMap(save.mapName);
-    mapData.mapName ??= save.mapName;
-    final mapDefinition = _mapDefinitionFrom(mapData);
+    final loadedMap = await _loadServerMap(save.mapName);
+    final mapData = loadedMap.data;
+    final mapDefinition = loadedMap.definition;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );

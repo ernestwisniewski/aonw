@@ -209,7 +209,7 @@ final multiplayerHub = RealtimeMatchHub();
 
 class RealtimeMatchHub {
   RealtimeMatchHub({
-    ServerCommandReducer commandReducer = const ServerCommandReducer(),
+    ServerCommandReducer? commandReducer,
     PlayerSeatAllocator seatAllocator = const PlayerSeatAllocator(),
     QuickplayLobbyPolicy quickplayLobbyPolicy = const QuickplayLobbyPolicy(),
     DateTime Function()? nowUtc,
@@ -242,7 +242,7 @@ class RealtimeMatchHub {
       viewProjector: _viewProjector,
     );
     _commands = MatchCommandService(
-      commandReducer: commandReducer,
+      commandReducer: commandReducer ?? ServerCommandReducer(),
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
       nowUtc: _nowUtc,

@@ -1,0 +1,33 @@
+part of 'server_command_reducer.dart';
+
+extension _ServerCommandReducerMapCache on ServerCommandReducer {
+  Future<_LoadedServerMap> _loadServerMap(String rawMapName) {
+    final mapName = rawMapName.trim();
+    final cached = _loadedMaps[mapName];
+    if (cached != null) return cached;
+
+    final source = Future<_LoadedServerMap>.sync(() async {
+      final data = await _mapCatalog.loadAssetMap(mapName);
+      data.mapName ??= mapName;
+      return _LoadedServerMap(data: data, definition: _mapDefinitionFrom(data));
+    });
+    late final Future<_LoadedServerMap> loading;
+    loading = source.onError((Object error, StackTrace stackTrace) {
+      if (identical(_loadedMaps[mapName], loading)) {
+        _loadedMaps.remove(mapName);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    });
+    _loadedMaps[mapName] = loading;
+    return loading;
+  }
+}
+
+final class _LoadedServerMap {
+  const _LoadedServerMap({required this.data, required this.definition});
+
+  // Asset maps are read-only in the reducer. Keeping this cache reducer-owned
+  // avoids changing the mutable map catalog contract used by editor tooling.
+  final MapData data;
+  final MapDefinition definition;
+}
