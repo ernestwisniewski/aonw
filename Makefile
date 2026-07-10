@@ -21,6 +21,8 @@ SERVERPOD_SEED_HOST ?= http://127.0.0.1:8080/
 SERVERPOD_SEED_PASSWORD ?= AonwTest123!
 SERVERPOD_SEED_EMAIL_DOMAIN ?= example.test
 COMPOSE_CHECK_PROFILES ?= dev staging prod
+CADDY_VALIDATE_IMAGE ?= caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+PROMTOOL_IMAGE ?= prom/prometheus:latest@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
 PULL ?= 1
 ifeq ($(PULL),1)
 PULL_FLAGS ?= --pull
@@ -169,7 +171,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -213,7 +215,8 @@ help:
 	@echo "  make serverpod-runtime-smoke LOCAL: run two-account stream/reconnect smoke against a running Serverpod host"
 	@echo "  make serverpod-seed-test-users LOCAL: create/update four local Serverpod test users"
 	@echo "  make compose-check LOCAL: validate Docker Compose files without starting services"
-	@echo "  make serverpod-ops-check LOCAL: validate Serverpod migrations and Compose config"
+	@echo "  make infra-config-check LOCAL: validate Caddy, Prometheus rules, and the server Dockerfile"
+	@echo "  make serverpod-ops-check LOCAL: validate Serverpod drift and deployment configs"
 	@echo "  make check-migrations LOCAL: regenerate Serverpod code/migrations and fail if repo changed"
 	@echo "  make migrate       Explain Serverpod startup migration flow"
 	@echo "  make health        Check deployed Serverpod health endpoint"
@@ -404,7 +407,25 @@ compose-check:
 			$(COMPOSE) config >/dev/null
 	@echo "Docker Compose config OK."
 
-serverpod-ops-check: check-migrations compose-check
+infra-config-check:
+	@command -v docker >/dev/null || { echo "docker is required."; exit 1; }
+	@docker run --rm \
+		-e AONW_API_HOST=api.example.test \
+		-e AONW_INSIGHTS_HOST=insights.example.test \
+		-e AONW_HOMEPAGE_HOST=example.test \
+		-e AONW_DEMO_HOST=demo.example.test \
+		-e AONW_UPSTREAM=server:8080 \
+		-e AONW_WEB_UPSTREAM=server:8082 \
+		-e AONW_INSIGHTS_UPSTREAM=server:8081 \
+		-v "$(CURDIR)/deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+		"$(CADDY_VALIDATE_IMAGE)" validate --config /etc/caddy/Caddyfile --adapter caddyfile
+	@docker run --rm --entrypoint /bin/promtool \
+		-v "$(CURDIR)/deploy/prometheus:/etc/prometheus:ro" \
+		"$(PROMTOOL_IMAGE)" check rules /etc/prometheus/aonw-alerts.yml
+	@docker buildx build --check --file server/Dockerfile .
+	@echo "Infrastructure config OK."
+
+serverpod-ops-check: check-migrations compose-check infra-config-check
 
 build-web:
 	@command -v flutter >/dev/null || { echo "flutter SDK is required for build-web."; exit 1; }
