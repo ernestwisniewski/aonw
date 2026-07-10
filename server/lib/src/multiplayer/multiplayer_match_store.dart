@@ -7,6 +7,7 @@ import '../observability/server_operational_event_sink.dart';
 import 'game_match_row_mapper.dart';
 
 part 'multiplayer_match_store_creation.dart';
+part 'multiplayer_match_store_limits.dart';
 part 'multiplayer_match_store_queries.dart';
 
 class StoredMatchState {
@@ -34,6 +35,7 @@ abstract interface class MultiplayerMatchStore {
     Future<T> Function(MultiplayerMatchStore store) action,
   );
 
+  /// Returns bounded participant and public-lobby sets, merged newest first.
   Future<List<WireMatch>> listVisibleMatches(String userIdentifier);
 
   Future<List<StoredMatchState>> listRunningStates();
@@ -66,6 +68,7 @@ abstract interface class MultiplayerMatchStore {
     required String clientMessageId,
   });
 
+  /// Returns at most [multiplayerEventPageSize] events after [afterOffset].
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset);
 }
 
@@ -109,23 +112,8 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
-    final rows = await GameMatch.db.find(
-      _session,
-      where: (table) =>
-          (table.state.equals('open')) | (table.state.equals('running')),
-      orderBy: (table) => table.createdAt,
-      transaction: _transaction,
-      include: GameMatch.include(
-        players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
-      ),
-    );
-    final matches = [for (final row in rows) _wireMatch(row, row.players!)];
-    return [
-      for (final match in matches)
-        if (_isVisibleToUser(match, userIdentifier)) match,
-    ];
-  }
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) =>
+      _listVisibleMatches(this, userIdentifier);
 
   @override
   Future<List<StoredMatchState>> listRunningStates() =>
@@ -133,29 +121,8 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(
-    CreateMatchRequest _,
-  ) async {
-    final rows = await GameMatch.db.find(
-      _session,
-      where: (table) =>
-          (table.state.equals('open')) &
-          (table.private.equals(false)) &
-          (table.quickplay.equals(true)) &
-          (table.inviteCode.equals(null)),
-      orderBy: (table) => table.createdAt,
-      transaction: _transaction,
-      lockMode: _transaction == null ? null : LockMode.forUpdate,
-      lockBehavior: _transaction == null ? null : LockBehavior.wait,
-    );
-
-    for (final row in rows) {
-      final state = await _stateFromRow(row);
-      if (state.match.players.length < state.match.maxPlayers) {
-        return state;
-      }
-    }
-    return null;
-  }
+    CreateMatchRequest request,
+  ) => _findOpenQuickplayCandidate(this, request);
 
   @override
   Future<StoredMatchState?> findState(String matchId, {bool lock = false}) {
@@ -247,17 +214,8 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<WireEvent>> listEvents(String matchId, int afterOffset) async {
-    final row = await _requireMatchRow(matchId);
-    final eventRows = await GameEvent.db.find(
-      _session,
-      where: (table) =>
-          (table.matchId.equals(row.id!)) & (table.offset > afterOffset),
-      orderBy: (table) => table.offset,
-      transaction: _transaction,
-    );
-    return [for (final eventRow in eventRows) eventRow.event];
-  }
+  Future<List<WireEvent>> listEvents(String matchId, int afterOffset) =>
+      _listEvents(this, matchId, afterOffset);
 
   Future<StoredMatchState?> _findStateBy({
     required Expression<dynamic> Function(GameMatchTable table) where,
@@ -424,12 +382,4 @@ GamePlayer _gamePlayer(int matchRowId, WirePlayer player, int seatOrder) {
     ready: player.ready,
     seatOrder: seatOrder,
   );
-}
-
-bool _isVisibleToUser(WireMatch match, String userIdentifier) {
-  final participant = match.players.any(
-    (player) => player.userId == userIdentifier,
-  );
-  if (participant) return true;
-  return match.state == 'open' && match.inviteCode == null;
 }

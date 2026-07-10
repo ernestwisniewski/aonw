@@ -15,28 +15,15 @@ extension MatchmakingServiceTransactions on MatchmakingService {
     );
     final outcome = await store.transaction((txStore) async {
       var notifications = const MatchNotificationPlan.empty();
-      while (true) {
+      for (
+        var retired = 0;
+        retired < multiplayerQuickplayCandidateRetirementLimit;
+        retired += 1
+      ) {
         final state = await txStore.findOpenQuickplayCandidate(
           quickplayRequest,
         );
-        if (state == null) {
-          final created = await _createMatch(
-            store: txStore,
-            userIdentifier: userIdentifier,
-            displayName: displayName,
-            request: quickplayRequest,
-            quickplay: true,
-          );
-          final advanced = await _lifecycle.advanceQuickplayLobby(
-            store: txStore,
-            state: (await txStore.findState(created.id, lock: true))!,
-            snapshotFactory: snapshotFactory,
-          );
-          return MatchMutationOutcome(
-            advanced.value,
-            notifications: notifications.followedBy(advanced.notifications),
-          );
-        }
+        if (state == null) break;
 
         if (!_stateAccess.supportsCurrentProtocol(state)) {
           await txStore.saveState(
@@ -71,6 +58,23 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           notifications: notifications.followedBy(advanced.notifications),
         );
       }
+
+      final created = await _createMatch(
+        store: txStore,
+        userIdentifier: userIdentifier,
+        displayName: displayName,
+        request: quickplayRequest,
+        quickplay: true,
+      );
+      final advanced = await _lifecycle.advanceQuickplayLobby(
+        store: txStore,
+        state: (await txStore.findState(created.id, lock: true))!,
+        snapshotFactory: snapshotFactory,
+      );
+      return MatchMutationOutcome(
+        advanced.value,
+        notifications: notifications.followedBy(advanced.notifications),
+      );
     });
     outcome.notifications.deliver(_broadcaster);
     return outcome.value;

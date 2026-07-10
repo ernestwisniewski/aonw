@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:serverpod/serverpod.dart' show QueryParameters;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
@@ -145,6 +146,114 @@ WHERE "matchId" = @matchId
           guest.userIdentifier,
         ]);
       });
+
+      test(
+        'merges relation-backed participant and public match queries',
+        () async {
+          final session = sessionBuilder.build();
+          const viewer = 'relation-list-viewer';
+          const stranger = 'relation-list-stranger';
+          final baseTime = DateTime.utc(2026, 7, 10);
+          final specs = [
+            (
+              id: 'relation-private-viewer',
+              user: viewer,
+              state: 'open',
+              isPrivate: true,
+              inviteCode: 'RELATIONPRIVATE',
+              age: 0,
+            ),
+            (
+              id: 'relation-public-viewer',
+              user: viewer,
+              state: 'open',
+              isPrivate: false,
+              inviteCode: null,
+              age: 1,
+            ),
+            (
+              id: 'relation-public-stranger',
+              user: stranger,
+              state: 'open',
+              isPrivate: false,
+              inviteCode: null,
+              age: 2,
+            ),
+            (
+              id: 'relation-running-viewer',
+              user: viewer,
+              state: 'running',
+              isPrivate: false,
+              inviteCode: null,
+              age: 3,
+            ),
+            (
+              id: 'relation-running-stranger',
+              user: stranger,
+              state: 'running',
+              isPrivate: false,
+              inviteCode: null,
+              age: 4,
+            ),
+            (
+              id: 'relation-finished-viewer',
+              user: viewer,
+              state: 'finished',
+              isPrivate: false,
+              inviteCode: null,
+              age: 5,
+            ),
+          ];
+          final rows = await GameMatch.db.insert(session, [
+            for (final spec in specs)
+              GameMatch(
+                publicId: spec.id,
+                ownerUserIdentifier: spec.user,
+                name: spec.id,
+                mapName: 'verdantia',
+                state: spec.state,
+                turn: 0,
+                maxPlayers: 2,
+                minPlayers: 2,
+                private: spec.isPrivate,
+                quickplay: false,
+                createdAt: baseTime.add(Duration(seconds: spec.age)),
+                inviteCode: spec.inviteCode,
+              ),
+          ]);
+          final usersByMatchId = {for (final spec in specs) spec.id: spec.user};
+          await GamePlayer.db.insert(session, [
+            for (var index = 0; index < rows.length; index += 1)
+              GamePlayer(
+                matchId: rows[index].id!,
+                publicPlayerId: 'relation-player-$index',
+                userIdentifier: usersByMatchId[rows[index].publicId]!,
+                displayName: 'Relation player $index',
+                colorValue: index,
+                countryId: PlayerCountry.values[index].name,
+                kind: WirePlayerKind.human.name,
+                connectionState: WirePlayerConnectionState.connected.name,
+                ready: false,
+                seatOrder: 0,
+              ),
+          ]);
+
+          final visible = await ServerpodMultiplayerMatchStore(
+            session,
+          ).listVisibleMatches(viewer);
+
+          expect(visible.map((match) => match.id), [
+            'relation-running-viewer',
+            'relation-public-stranger',
+            'relation-public-viewer',
+            'relation-private-viewer',
+          ]);
+          expect(
+            visible.where((match) => match.id == 'relation-public-viewer'),
+            hasLength(1),
+          );
+        },
+      );
 
       test('creates, joins, starts, and loads a persisted match', () async {
         final owner = await _accountSession(

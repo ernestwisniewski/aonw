@@ -258,6 +258,135 @@ void main() {
     expect(save.players, hasLength(4));
   });
 
+  test('quickplay does not scan past the bounded candidate window', () async {
+    final now = DateTime.utc(2026, 7, 10, 12);
+    final hub = RealtimeMatchHub(nowUtc: () => now);
+    final store = _MemoryMatchStore();
+
+    Future<WireMatch> createCandidate(int index, {required bool full}) async {
+      final created = await hub.createMatch(
+        store: store,
+        userIdentifier: 'candidate-owner-$index',
+        request: CreateMatchRequest(
+          name: 'Candidate $index',
+          mapName: 'verdantia',
+          maxPlayers: 2,
+          minPlayers: 2,
+          private: false,
+        ),
+      );
+      var state = (await store.findState(created.id))!;
+      final owner = state.match.players.single;
+      state = state.copyWith(
+        match: state.match.copyWith(
+          quickplay: true,
+          createdAt: full
+              ? DateTime.utc(2026, 7, 10).add(Duration(seconds: index))
+              : now,
+          players: full
+              ? [
+                  owner,
+                  owner.copyWith(
+                    id: 'full-player-$index',
+                    userId: 'full-user-$index',
+                    name: 'Full player $index',
+                  ),
+                ]
+              : null,
+        ),
+      );
+      await store.saveState(state);
+      return state.match;
+    }
+
+    for (
+      var index = 0;
+      index < multiplayerQuickplayCandidateScanLimit;
+      index += 1
+    ) {
+      await createCandidate(index, full: true);
+    }
+    final candidatePastWindow = await createCandidate(
+      multiplayerQuickplayCandidateScanLimit,
+      full: false,
+    );
+
+    final matched = await hub.quickplay(
+      store: store,
+      userIdentifier: 'bounded-candidate-user',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.china.name,
+      ),
+    );
+
+    expect(matched.id, isNot(candidatePastWindow.id));
+    expect(matched.players.single.userId, 'bounded-candidate-user');
+    final candidateState = (await store.findState(candidatePastWindow.id))!;
+    expect(candidateState.match.state, 'open');
+    expect(candidateState.match.players, hasLength(1));
+  });
+
+  test('quickplay caps stale candidate retirement per request', () async {
+    final now = DateTime.utc(2026, 7, 10, 12);
+    final hub = RealtimeMatchHub(nowUtc: () => now);
+    final store = _MemoryMatchStore();
+    final staleIds = <String>[];
+    final staleCount = multiplayerQuickplayCandidateRetirementLimit + 2;
+    for (var index = 0; index < staleCount; index += 1) {
+      final created = await hub.createMatch(
+        store: store,
+        userIdentifier: 'stale-owner-$index',
+        request: CreateMatchRequest(
+          name: 'Stale candidate $index',
+          mapName: 'verdantia',
+          maxPlayers: 2,
+          minPlayers: 2,
+          private: false,
+        ),
+      );
+      var state = (await store.findState(created.id))!;
+      state = state.copyWith(
+        match: state.match.copyWith(
+          quickplay: true,
+          createdAt: DateTime.utc(2026, 7, 1).add(Duration(seconds: index)),
+        ),
+      );
+      await store.saveState(state);
+      staleIds.add(created.id);
+    }
+
+    final matched = await hub.quickplay(
+      store: store,
+      userIdentifier: 'fresh-after-retirement-budget',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.china.name,
+      ),
+    );
+    final staleStates = await Future.wait([
+      for (final id in staleIds) store.findState(id),
+    ]);
+
+    expect(matched.id, isNot(isIn(staleIds)));
+    expect(
+      staleStates.where((state) => state!.match.state == 'abandoned'),
+      hasLength(multiplayerQuickplayCandidateRetirementLimit),
+    );
+    expect(
+      staleStates.where((state) => state!.match.state == 'open'),
+      hasLength(2),
+    );
+  });
+
   test('startMatch persists a full initial game snapshot', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
     final hub = RealtimeMatchHub(
@@ -459,6 +588,60 @@ void main() {
     await input.close();
   });
 
+  test(
+    'returns stable bounded event pages after the requested offset',
+    () async {
+      final fixture = await _startRunningMatch('bounded-event-pages');
+      final owner = fixture.match.players.first;
+      var state = (await fixture.store.findState(fixture.match.id))!;
+      final eventCount = multiplayerEventPageSize + 2;
+      for (var offset = 1; offset <= eventCount; offset += 1) {
+        state = state.copyWith(
+          snapshot: state.snapshot.copyWith(offset: offset),
+        );
+        await fixture.store.appendEvent(
+          state,
+          WireEvent(
+            matchId: fixture.match.id,
+            offset: offset,
+            timestamp: DateTime.utc(2026, 7, 10).add(Duration(seconds: offset)),
+            actorPlayerId: owner.id,
+            tick: offset,
+            command: {'type': 'paged-command-$offset'},
+            events: const [],
+          ),
+          actorPlayerId: owner.id,
+          clientMessageId: 'paged-command-$offset',
+        );
+      }
+
+      final firstPage = await fixture.hub.listEvents(
+        store: fixture.store,
+        userIdentifier: owner.userId,
+        matchId: fixture.match.id,
+        afterOffset: 0,
+      );
+      final secondPage = await fixture.hub.listEvents(
+        store: fixture.store,
+        userIdentifier: owner.userId,
+        matchId: fixture.match.id,
+        afterOffset: firstPage.last.offset,
+      );
+
+      expect(firstPage, hasLength(multiplayerEventPageSize));
+      expect(
+        firstPage.map((event) => event.offset),
+        orderedEquals(
+          List.generate(multiplayerEventPageSize, (index) => index + 1),
+        ),
+      );
+      expect(secondPage.map((event) => event.offset), [
+        multiplayerEventPageSize + 1,
+        multiplayerEventPageSize + 2,
+      ]);
+    },
+  );
+
   test('returns a generic error for malformed snapshot projections', () async {
     final logs = <String>[];
     final fixture = await _startRunningMatch(
@@ -579,7 +762,7 @@ void main() {
       userIdentifier: 'private-owner',
     );
 
-    expect(visible.map((match) => match.id), [publicLobby.id, running.id]);
+    expect(visible.map((match) => match.id), [running.id, publicLobby.id]);
     expect(
       privateOwnerVisible.map((match) => match.id),
       contains(privateLobby.id),
@@ -587,6 +770,78 @@ void main() {
     expect(visible.map((match) => match.id), isNot(contains(privateLobby.id)));
     expect(visible.map((match) => match.id), isNot(contains(finishedOpen.id)));
   });
+
+  test(
+    'listMatches bounds public discovery without starving participant matches',
+    () async {
+      final hub = RealtimeMatchHub();
+      final store = _MemoryMatchStore();
+      final baseTime = DateTime.utc(2026, 7, 10);
+      const viewer = 'bounded-list-viewer';
+
+      final privateMatch = await hub.createMatch(
+        store: store,
+        userIdentifier: viewer,
+        request: CreateMatchRequest(
+          name: 'Private resumable match',
+          mapName: 'verdantia',
+          maxPlayers: 2,
+          minPlayers: 2,
+          private: true,
+        ),
+      );
+      var privateState = (await store.findState(privateMatch.id))!;
+      privateState = privateState.copyWith(
+        match: privateState.match.copyWith(createdAt: baseTime),
+      );
+      await store.saveState(privateState);
+
+      final publicMatches = <WireMatch>[];
+      final publicCount = multiplayerVisiblePublicLobbyLimit + 4;
+      for (var index = 0; index < publicCount; index += 1) {
+        final viewerOwnsMatch = index == 0 || index == publicCount - 1;
+        final created = await hub.createMatch(
+          store: store,
+          userIdentifier: viewerOwnsMatch ? viewer : 'public-owner-$index',
+          request: CreateMatchRequest(
+            name: 'Public lobby $index',
+            mapName: 'verdantia',
+            maxPlayers: 2,
+            minPlayers: 2,
+            private: false,
+          ),
+        );
+        var state = (await store.findState(created.id))!;
+        state = state.copyWith(
+          match: state.match.copyWith(
+            createdAt: baseTime.add(Duration(seconds: index + 1)),
+          ),
+        );
+        await store.saveState(state);
+        publicMatches.add(state.match);
+      }
+
+      final visible = await hub.listMatches(
+        store: store,
+        userIdentifier: viewer,
+      );
+      final newestPublicIds = publicMatches.reversed
+          .take(multiplayerVisiblePublicLobbyLimit)
+          .map((match) => match.id)
+          .toList();
+
+      expect(visible, hasLength(multiplayerVisiblePublicLobbyLimit + 2));
+      expect(visible.map((match) => match.id), [
+        ...newestPublicIds,
+        publicMatches.first.id,
+        privateMatch.id,
+      ]);
+      expect(
+        visible.map((match) => match.id).toSet(),
+        hasLength(visible.length),
+      );
+    },
+  );
 
   test('retires pre-projection matches and legacy player ids', () async {
     final hub = RealtimeMatchHub();
@@ -2814,12 +3069,25 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest _,
   ) async {
-    for (final state in _states.values) {
+    final candidates =
+        [
+          for (final state in _states.values)
+            if (state.match.state == 'open' &&
+                state.match.quickplay &&
+                state.match.inviteCode == null)
+              state,
+        ]..sort((first, second) {
+          final createdAtOrder = first.match.createdAt.compareTo(
+            second.match.createdAt,
+          );
+          if (createdAtOrder != 0) return createdAtOrder;
+          return first.match.id.compareTo(second.match.id);
+        });
+    for (final state in candidates.take(
+      multiplayerQuickplayCandidateScanLimit,
+    )) {
       final match = state.match;
-      if (match.state == 'open' &&
-          match.quickplay &&
-          match.inviteCode == null &&
-          match.players.length < match.maxPlayers) {
+      if (match.players.length < match.maxPlayers) {
         return state;
       }
     }
@@ -2828,10 +3096,39 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
-    return [
+    final participantMatches = [
       for (final state in _states.values)
-        if (_isVisibleToUser(state.match, userIdentifier)) state.match,
-    ];
+        if (_isActiveMatch(state.match) &&
+            state.match.players.any(
+              (player) => player.userId == userIdentifier,
+            ))
+          state.match,
+    ]..sort(_compareTestMatchesNewestFirst);
+    final publicLobbies = [
+      for (final state in _states.values)
+        if (state.match.state == 'open' && state.match.inviteCode == null)
+          state.match,
+    ]..sort(_compareTestMatchesNewestFirst);
+    final participantIds = {for (final match in participantMatches) match.id};
+    final matchesById = <String, WireMatch>{};
+    for (final match in [
+      ...participantMatches.take(multiplayerVisibleParticipantMatchLimit),
+      ...publicLobbies.take(multiplayerVisiblePublicLobbyLimit),
+    ]) {
+      matchesById.putIfAbsent(match.id, () => match);
+    }
+    final matches = matchesById.values.toList();
+    matches.sort((first, second) {
+      final createdAtOrder = second.createdAt.compareTo(first.createdAt);
+      if (createdAtOrder != 0) return createdAtOrder;
+      final firstIsParticipant = participantIds.contains(first.id);
+      final secondIsParticipant = participantIds.contains(second.id);
+      if (firstIsParticipant != secondIsParticipant) {
+        return firstIsParticipant ? -1 : 1;
+      }
+      return second.id.compareTo(first.id);
+    });
+    return matches;
   }
 
   @override
@@ -2844,10 +3141,11 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset) async {
-    return [
+    final events = [
       for (final event in _events[matchId] ?? const <WireEvent>[])
         if (event.offset > afterOffset) event,
-    ];
+    ]..sort((first, second) => first.offset.compareTo(second.offset));
+    return events.take(multiplayerEventPageSize).toList();
   }
 }
 
@@ -2886,13 +3184,13 @@ String _clientMessageKey(
   return '$matchId:$actorPlayerId:$clientMessageId';
 }
 
-bool _isVisibleToUser(WireMatch match, String userIdentifier) {
-  final active = match.state == 'open' || match.state == 'running';
-  if (!active) return false;
-  final participant = match.players.any(
-    (player) => player.userId == userIdentifier,
-  );
-  return participant || (match.state == 'open' && match.inviteCode == null);
+bool _isActiveMatch(WireMatch match) =>
+    match.state == 'open' || match.state == 'running';
+
+int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
+  final createdAtOrder = second.createdAt.compareTo(first.createdAt);
+  if (createdAtOrder != 0) return createdAtOrder;
+  return second.id.compareTo(first.id);
 }
 
 class _FakeMapCatalog implements MultiplayerMapCatalog {
