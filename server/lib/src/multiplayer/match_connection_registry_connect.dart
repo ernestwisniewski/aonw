@@ -18,6 +18,20 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
     required MatchClientMessageHandler handleClientMessage,
     required MatchServerMessageFactory createMessage,
   }) async {
+    final messageGuard = ClientMessageGuard(expectedMatchId: matchId);
+    var inputRejected = false;
+
+    void rejectInput(Object error, StackTrace stackTrace) {
+      if (inputRejected || controller.isClosed) return;
+      inputRejected = true;
+      controller.addError(error, stackTrace);
+      unawaited(
+        disconnect().whenComplete(() async {
+          if (!controller.isClosed) await controller.close();
+        }),
+      );
+    }
+
     try {
       await _enqueueMatch(matchId, () async {
         final authorization = await authorize(
@@ -43,24 +57,35 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
         setInputSubscription(
           input.listen(
             (message) {
+              if (inputRejected) return;
+              try {
+                messageGuard.admit(message);
+              } catch (error, stackTrace) {
+                rejectInput(error, stackTrace);
+                return;
+              }
               unawaited(
                 _enqueueMatch(
-                  matchId,
-                  () => handleClientMessage(
-                    store: store,
-                    matchId: matchId,
-                    userIdentifier: userIdentifier,
-                    message: message,
-                    emitToCaller: emit,
-                  ),
-                ).catchError((Object error, StackTrace stackTrace) {
-                  if (!controller.isClosed) {
-                    controller.addError(error, stackTrace);
-                  }
-                }),
+                      matchId,
+                      () => handleClientMessage(
+                        store: store,
+                        matchId: matchId,
+                        userIdentifier: userIdentifier,
+                        message: message,
+                        emitToCaller: emit,
+                      ),
+                    )
+                    .catchError((Object error, StackTrace stackTrace) {
+                      if (!controller.isClosed) {
+                        controller.addError(error, stackTrace);
+                      }
+                    })
+                    .whenComplete(messageGuard.release),
               );
             },
-            onError: controller.addError,
+            onError: (Object error, StackTrace stackTrace) {
+              rejectInput(error, stackTrace);
+            },
             onDone: () async {
               await disconnect(cancelInput: false);
               await controller.close();

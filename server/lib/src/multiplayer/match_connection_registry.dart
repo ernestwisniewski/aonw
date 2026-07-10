@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/protocol.dart';
 
 import '../generated/protocol.dart';
+import 'client_message_guard.dart';
 import 'multiplayer_match_store.dart';
 
 part 'match_connection_registry_connect.dart';
