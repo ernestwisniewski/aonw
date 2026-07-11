@@ -2415,6 +2415,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gameOutcomeConditionDomination => 'Dominación';
 
   @override
+  String get gameOutcomeConditionResignation => 'Rendición';
+
+  @override
   String get gameOutcomeConquestNoWinner => 'Queda un imperio en el mapa.';
 
   @override
@@ -2441,6 +2444,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String gameOutcomeDominationWinner(String winner) {
     return '$winner mantiene la dominación territorial.';
+  }
+
+  @override
+  String get gameOutcomeResignationNoWinner =>
+      'La partida terminó por rendición.';
+
+  @override
+  String gameOutcomeResignationWinner(String winner) {
+    return '$winner gana tras la rendición de los demás imperios.';
   }
 
   @override

@@ -9,6 +9,9 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/protocol.dart';
+
+part 'hud_game_outcome_summary_helpers.dart';
 
 enum HudGameOutcomeTone { victory, defeat, draw, complete }
 
@@ -44,10 +47,26 @@ class HudGameOutcomeSummary {
     required GameState? gameState,
     required MapData mapData,
     required String? activePlayerId,
+    WireMatch? multiplayerMatch,
+    bool networkBackedMultiplayer = false,
     GameOutcomeDetector detector = const GameOutcomeDetector(),
   }) {
+    if (networkBackedMultiplayer) {
+      final outcome = _authoritativeMultiplayerOutcome(
+        gameSave: gameSave,
+        match: multiplayerMatch,
+      );
+      if (outcome == null) return null;
+      return HudGameOutcomeSummary._fromOutcome(
+        l10n: l10n,
+        gameSave: gameSave,
+        state: null,
+        mapData: mapData,
+        activePlayerId: activePlayerId,
+        outcome: outcome,
+      );
+    }
     if (gameState == null) return null;
-    if (_hasProjectedMultiplayerState(gameSave, gameState)) return null;
 
     final persistentState = gameState.toPersistentState();
     final outcome = detector.evaluate(
@@ -72,7 +91,7 @@ class HudGameOutcomeSummary {
   factory HudGameOutcomeSummary._fromOutcome({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState state,
+    required PersistentGameState? state,
     required MapData mapData,
     required String? activePlayerId,
     required GameOutcome outcome,
@@ -147,6 +166,29 @@ class HudGameOutcomeSummary {
         winnerLabel: winnerLabel,
         metrics: _scoreMetrics(gameSave, outcome.scoreByPlayerId),
       ),
+      GameOutcomeCondition.resignation => HudGameOutcomeSummary(
+        outcome: outcome,
+        tone: tone,
+        title: titleLabel,
+        conditionLabel: GameText.sectionLabel(
+          l10n.gameOutcomeConditionResignation,
+        ),
+        subtitle: winnerLabel == null
+            ? l10n.gameOutcomeResignationNoWinner
+            : l10n.gameOutcomeResignationWinner(winnerLabel),
+        winnerLabel: winnerLabel,
+        metrics: [
+          if (winnerLabel != null)
+            HudGameOutcomeMetric(
+              label: l10n.gameOutcomeWinnerMetric,
+              value: winnerLabel,
+            ),
+          HudGameOutcomeMetric(
+            label: l10n.gameOutcomeConditionMetric,
+            value: l10n.gameOutcomeConditionResignation,
+          ),
+        ],
+      ),
       GameOutcomeCondition.draw => HudGameOutcomeSummary(
         outcome: outcome,
         tone: HudGameOutcomeTone.draw,
@@ -167,20 +209,22 @@ class HudGameOutcomeSummary {
   static HudGameOutcomeSummary _dominationSummary({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState state,
+    required PersistentGameState? state,
     required MapData mapData,
     required GameOutcome outcome,
     required HudGameOutcomeTone tone,
     required String title,
     required String? winnerLabel,
   }) {
-    final progress = const DominationProgressCalculator().snapshot(
-      playerIds: gameSave.players.map((player) => player.id),
-      state: state,
-      mapData: mapData,
-      victoryRules: gameSave.matchRules.victory,
-    );
-    final winnerEntry = outcome.winnerPlayerId == null
+    final progress = state == null
+        ? null
+        : const DominationProgressCalculator().snapshot(
+            playerIds: gameSave.players.map((player) => player.id),
+            state: state,
+            mapData: mapData,
+            victoryRules: gameSave.matchRules.victory,
+          );
+    final winnerEntry = outcome.winnerPlayerId == null || progress == null
         ? null
         : progress.entryFor(outcome.winnerPlayerId!);
     return HudGameOutcomeSummary(
@@ -225,7 +269,7 @@ class HudGameOutcomeSummary {
   static HudGameOutcomeSummary _culturalSummary({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState state,
+    required PersistentGameState? state,
     required GameOutcome outcome,
     required HudGameOutcomeTone tone,
     required String title,
@@ -233,7 +277,7 @@ class HudGameOutcomeSummary {
   }) {
     final winnerId = outcome.winnerPlayerId;
     final victory = gameSave.matchRules.victory;
-    final progress = winnerId == null
+    final progress = winnerId == null || state == null
         ? null
         : CulturalVictoryProgressCalculator.progressForPlayer(
             playerId: winnerId,
@@ -292,48 +336,5 @@ class HudGameOutcomeSummary {
           value: entry.value.toString(),
         ),
     ];
-  }
-
-  static HudGameOutcomeTone _tone({
-    required String? activePlayerId,
-    required String? winnerPlayerId,
-  }) {
-    if (winnerPlayerId == null) return HudGameOutcomeTone.draw;
-    if (activePlayerId == null || activePlayerId.isEmpty) {
-      return HudGameOutcomeTone.complete;
-    }
-    return winnerPlayerId == activePlayerId
-        ? HudGameOutcomeTone.victory
-        : HudGameOutcomeTone.defeat;
-  }
-
-  static bool _hasProjectedMultiplayerState(GameSave save, GameState state) {
-    if (save.gameMode != GameMode.multiplayer) return false;
-    final playerIds = {
-      for (final player in save.players)
-        if (player.id.isNotEmpty) player.id,
-    };
-    if (playerIds.length <= 1) return false;
-
-    return _hasPartialPlayerScope(state.fogOfWar.playerIds, playerIds) ||
-        _hasPartialPlayerScope(state.playerGold.keys, playerIds) ||
-        _hasPartialPlayerScope(state.playerStabilityNet.keys, playerIds) ||
-        _hasPartialPlayerScope(state.research.players.keys, playerIds);
-  }
-
-  static bool _hasPartialPlayerScope(
-    Iterable<String> scopedPlayerIds,
-    Set<String> expectedPlayerIds,
-  ) {
-    final matchingIds = {
-      for (final playerId in scopedPlayerIds)
-        if (expectedPlayerIds.contains(playerId)) playerId,
-    };
-    return matchingIds.isNotEmpty &&
-        matchingIds.length != expectedPlayerIds.length;
-  }
-
-  static String _playerName(GameSave save, String playerId) {
-    return save.playerById(playerId)?.name ?? playerId;
   }
 }

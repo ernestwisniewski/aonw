@@ -1236,6 +1236,7 @@
   "gameOutcomeConditionScore": "Punktzahl",
   "gameOutcomeConditionScoreDraw": "Punkte-Unentschieden",
   "gameOutcomeConditionDomination": "Dominanz",
+  "gameOutcomeConditionResignation": "Aufgabe",
   "gameOutcomeConquestNoWinner": "Ein Imperium bleibt auf der Karte.",
   "gameOutcomeConquestWinner": "{winner} ist das letzte Imperium auf der Karte.",
   "@gameOutcomeConquestWinner": {
@@ -1258,6 +1259,15 @@
   "gameOutcomeDominationNoWinner": "Kartenkontrolle wurde gehalten.",
   "gameOutcomeDominationWinner": "{winner} hält territoriale Dominanz.",
   "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeResignationNoWinner": "Die Partie endete durch Aufgabe.",
+  "gameOutcomeResignationWinner": "{winner} gewinnt, nachdem die anderen Reiche aufgegeben haben.",
+  "@gameOutcomeResignationWinner": {
     "placeholders": {
       "winner": {
         "type": "String"

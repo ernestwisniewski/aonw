@@ -1,10 +1,25 @@
 part of 'game_hud.dart';
 
+extension _GameHudLifecycleActions on _GameHudState {
+  Future<void> _onClose(BuildContext context) async {
+    await ref.read(gameCommandControllerProvider.notifier).saveCamera();
+    if (!context.mounted) return;
+    await widget.onClose();
+  }
+}
+
 String? _outcomePerspectivePlayerId({
   required GameSave gameSave,
   required String? gameStateActivePlayerId,
   required PlayerControlState? playerControl,
+  required bool networkBackedMultiplayer,
+  String? networkPlayerId,
 }) {
+  if (networkBackedMultiplayer) {
+    return networkPlayerId != null && networkPlayerId.isNotEmpty
+        ? networkPlayerId
+        : null;
+  }
   final activeSavePlayers = [
     for (final entry in gameSave.playerStates.entries)
       if (entry.value == PlayerTurnState.active) entry.key,

@@ -6,6 +6,7 @@ enum GameOutcomeCondition {
   domination,
   cultural,
   score,
+  resignation,
   draw,
 }
 
@@ -52,6 +53,12 @@ class GameOutcome {
       scoreByPlayerId: Map.unmodifiable(scoreByPlayerId),
     );
   }
+
+  const GameOutcome.resignation(String playerId)
+    : this._(
+        condition: GameOutcomeCondition.resignation,
+        winnerPlayerId: playerId,
+      );
 
   factory GameOutcome.draw({required Map<String, int> scoreByPlayerId}) {
     return GameOutcome._(

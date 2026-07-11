@@ -19,6 +19,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
@@ -59,6 +60,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -247,6 +249,42 @@ GameSession _makeSession(
   gameMode: gameMode,
 );
 
+WireMatch _terminalMatch({
+  required String outcomeCondition,
+  required String? winnerPlayerId,
+}) {
+  return WireMatch(
+    id: 'save',
+    ownerUserId: 'user_1',
+    name: 'Game',
+    mapName: 'verdantia',
+    players: const [
+      WirePlayer(
+        id: 'player_1',
+        userId: 'user_1',
+        name: 'Alice',
+        colorValue: 0xFF4a7fc4,
+        kind: WirePlayerKind.human,
+        connectionState: WirePlayerConnectionState.connected,
+      ),
+      WirePlayer(
+        id: 'player_2',
+        userId: 'user_2',
+        name: 'Bob',
+        colorValue: 0xFFc45050,
+        kind: WirePlayerKind.human,
+        connectionState: WirePlayerConnectionState.connected,
+      ),
+    ],
+    turn: 2,
+    state: 'finished',
+    createdAt: DateTime.utc(2026, 5, 11),
+    endedAt: DateTime.utc(2026, 5, 12),
+    outcomeCondition: outcomeCondition,
+    winnerPlayerId: winnerPlayerId,
+  );
+}
+
 Future<void> _pumpHud(
   WidgetTester tester, {
   required _FakeGameRepository repository,
@@ -254,6 +292,7 @@ Future<void> _pumpHud(
   GameSave? gameSave,
   GameSession? session,
   NetworkSession? networkSession,
+  WireMatch? multiplayerMatch,
   bool showEntryHandoff = false,
   bool aiAutopilotEnabled = false,
   GameRenderer? renderer,
@@ -294,6 +333,10 @@ Future<void> _pumpHud(
           ),
         if (networkSession != null)
           networkSessionProvider.overrideWithValue(networkSession),
+        if (multiplayerMatch != null)
+          multiplayerMatchProvider.overrideWithValue({
+            multiplayerMatch.id: multiplayerMatch,
+          }),
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -2364,9 +2407,227 @@ void main() {
     expect(find.textContaining('Alice'), findsWidgets);
   });
 
+  testWidgets(
+    'local single-player mode still shows victory without a network match',
+    (tester) async {
+      final aiPlayer = _player2.copyWith(
+        kind: PlayerKind.ai,
+        ai: const AiPlayer(
+          strategyId: AiStrategyId.random,
+          difficulty: AiDifficulty.normal,
+          persona: AiPersona.balanced,
+          seed: 42,
+        ),
+      );
+      final localMode = NewGameFlow.singlePlayer.gameMode;
+      final save = _save.copyWith(
+        gameMode: localMode,
+        players: [_player, aiPlayer],
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+        },
+      );
+      final repository = _FakeGameRepository(
+        snapshot: SaveSnapshot.fromGameState(
+          save: save,
+          state: GameState(
+            activePlayerId: 'player_1',
+            units: [
+              GameUnit.produced(
+                id: 'warrior_1',
+                ownerPlayerId: 'player_1',
+                type: GameUnitType.warrior,
+                col: 0,
+                row: 0,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(NewGameFlow.singlePlayer.startsLocally, isTrue);
+      expect(localMode, GameMode.multiplayer);
+      await _pumpHud(
+        tester,
+        repository: repository,
+        gameSave: save,
+        session: _makeSession(_makeMap(), gameMode: localMode),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
+      expect(find.text('VICTORY'), findsOneWidget);
+      expect(find.text('COMPLETE'), findsNothing);
+      expect(find.text('CONQUEST'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'terminal multiplayer outcome uses network player perspective with projected state',
+    (tester) async {
+      final save = _save.copyWith(
+        gameMode: GameMode.multiplayer,
+        players: const [_player, _player2],
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+        },
+      );
+      final repository = _FakeGameRepository(
+        snapshot: SaveSnapshot.fromGameState(
+          save: save,
+          state: GameState(
+            activePlayerId: 'player_1',
+            playerGold: const {'player_2': 0},
+            units: [
+              GameUnit.produced(
+                id: 'warrior_1',
+                ownerPlayerId: 'player_1',
+                type: GameUnitType.warrior,
+                col: 0,
+                row: 0,
+              ),
+            ],
+            fogOfWar: FogOfWarState(
+              players: {
+                'player_2': PlayerFogOfWar(
+                  playerId: 'player_2',
+                  visibleHexes: {const HexCoordinate(col: 0, row: 0)},
+                ),
+              },
+            ),
+          ),
+        ),
+      );
+
+      await _pumpHud(
+        tester,
+        repository: repository,
+        gameSave: save,
+        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        networkSession: NetworkSession(
+          userId: 'user_2',
+          playerId: 'player_2',
+          token: AuthToken('token'),
+          matchId: save.id,
+        ),
+        multiplayerMatch: _terminalMatch(
+          outcomeCondition: 'conquest',
+          winnerPlayerId: 'player_1',
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
+      expect(find.text('DEFEAT'), findsOneWidget);
+      expect(find.text('CONQUEST'), findsOneWidget);
+      expect(find.textContaining('Alice'), findsWidgets);
+      expect(find.text('VICTORY'), findsNothing);
+    },
+  );
+
+  testWidgets('remaining player sees victory after authoritative resignation', (
+    tester,
+  ) async {
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: const [_player, _player2],
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'player_2': PlayerTurnState.finished,
+      },
+    );
+    final repository = _FakeGameRepository(
+      snapshot: SaveSnapshot.fromGameState(
+        save: save,
+        state: GameState(
+          activePlayerId: 'player_2',
+          playerGold: const {'player_1': 0},
+          fogOfWar: FogOfWarState(
+            players: {'player_1': PlayerFogOfWar(playerId: 'player_1')},
+          ),
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      networkSession: NetworkSession(
+        userId: 'user_1',
+        playerId: 'player_1',
+        token: AuthToken('token'),
+        matchId: save.id,
+      ),
+      multiplayerMatch: _terminalMatch(
+        outcomeCondition: 'resignation',
+        winnerPlayerId: 'player_1',
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
+    expect(find.text('VICTORY'), findsOneWidget);
+    expect(find.text('RESIGNATION'), findsOneWidget);
+    expect(find.textContaining('Alice'), findsWidgets);
+  });
+
+  testWidgets('terminal multiplayer draw ignores active-turn perspective', (
+    tester,
+  ) async {
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: const [_player, _player2],
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'player_2': PlayerTurnState.active,
+      },
+    );
+    final repository = _FakeGameRepository(
+      snapshot: SaveSnapshot.fromGameState(
+        save: save,
+        state: GameState(
+          activePlayerId: 'player_1',
+          playerGold: const {'player_2': 0},
+          fogOfWar: FogOfWarState(
+            players: {'player_2': PlayerFogOfWar(playerId: 'player_2')},
+          ),
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      networkSession: NetworkSession(
+        userId: 'user_2',
+        playerId: 'player_2',
+        token: AuthToken('token'),
+        matchId: save.id,
+      ),
+      multiplayerMatch: _terminalMatch(
+        outcomeCondition: 'draw',
+        winnerPlayerId: null,
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
+    expect(find.text('DRAW'), findsOneWidget);
+    expect(find.text('SCORE DRAW'), findsOneWidget);
+    expect(find.text('VICTORY'), findsNothing);
+    expect(find.text('DEFEAT'), findsNothing);
+  });
+
   testWidgets('outcome overlay shows score draw rows', (tester) async {
     final turnLimit = GameLengthConfig.standard60.turnLimit!;
     final save = _save.copyWith(
+      gameMode: NewGameFlow.singlePlayer.gameMode,
       turn: turnLimit,
       matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
       players: const [_player, _player2],
@@ -2400,15 +2661,33 @@ void main() {
       ),
     );
 
-    await _pumpHud(tester, repository: repository, gameSave: save);
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(
+        _makeMap(),
+        gameMode: NewGameFlow.singlePlayer.gameMode,
+      ),
+    );
     await tester.pump();
 
     expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
     expect(find.text('DRAW'), findsOneWidget);
     expect(find.text('SCORE DRAW'), findsOneWidget);
-    expect(find.text('Alice'), findsOneWidget);
-    expect(find.text('Bob'), findsOneWidget);
-    expect(find.text('15'), findsNWidgets(2));
+    final outcomeOverlay = find.byKey(const Key('gameHud.outcomeOverlay'));
+    expect(
+      find.descendant(of: outcomeOverlay, matching: find.text('Alice')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: outcomeOverlay, matching: find.text('Bob')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: outcomeOverlay, matching: find.text('15')),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('first turn first game walks through unit-led coachmarks', (

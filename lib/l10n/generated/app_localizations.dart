@@ -4276,6 +4276,12 @@ abstract class AppLocalizations {
   /// **'Domination'**
   String get gameOutcomeConditionDomination;
 
+  /// No description provided for @gameOutcomeConditionResignation.
+  ///
+  /// In en, this message translates to:
+  /// **'Resignation'**
+  String get gameOutcomeConditionResignation;
+
   /// No description provided for @gameOutcomeConquestNoWinner.
   ///
   /// In en, this message translates to:
@@ -4317,6 +4323,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{winner} holds territorial domination.'**
   String gameOutcomeDominationWinner(String winner);
+
+  /// No description provided for @gameOutcomeResignationNoWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'The match ended by resignation.'**
+  String get gameOutcomeResignationNoWinner;
+
+  /// No description provided for @gameOutcomeResignationWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'{winner} wins after the other empires resigned.'**
+  String gameOutcomeResignationWinner(String winner);
 
   /// No description provided for @gameOutcomeWinnerMetric.
   ///

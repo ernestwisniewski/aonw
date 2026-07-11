@@ -45,6 +45,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'game_hud_chrome.dart';
+part 'game_hud_handoff.dart';
 
 class GameHud extends ConsumerStatefulWidget {
   final GameSession session;
@@ -120,12 +121,6 @@ class _GameHudState extends ConsumerState<GameHud> {
     setState(() => _resigning = resigning);
   }
 
-  Future<void> _onClose(BuildContext context) async {
-    await ref.read(gameCommandControllerProvider.notifier).saveCamera();
-    if (!context.mounted) return;
-    await widget.onClose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -139,6 +134,18 @@ class _GameHudState extends ConsumerState<GameHud> {
             current: ref.watch(gamePlayerControlControllerProvider),
             save: gameSave,
           );
+    final networkSession = ref.watch(networkSessionProvider);
+    final multiplayerMatch = gameSave?.gameMode == GameMode.multiplayer
+        ? ref.watch(
+            multiplayerMatchProvider.select(
+              (matches) => matches[widget.session.saveId],
+            ),
+          )
+        : null;
+    final networkBackedMultiplayer =
+        gameSave?.gameMode == GameMode.multiplayer &&
+        (networkSession?.matchId == widget.session.saveId ||
+            multiplayerMatch != null);
     final outcomeSummary = gameSave == null
         ? null
         : HudGameOutcomeSummary.from(
@@ -146,13 +153,18 @@ class _GameHudState extends ConsumerState<GameHud> {
             gameSave: gameSave,
             gameState: gameState,
             mapData: widget.session.mapData,
+            multiplayerMatch: multiplayerMatch,
+            networkBackedMultiplayer: networkBackedMultiplayer,
             activePlayerId: _outcomePerspectivePlayerId(
               gameSave: gameSave,
               gameStateActivePlayerId: gameState?.activePlayerId,
               playerControl: playerControl,
+              networkBackedMultiplayer: networkBackedMultiplayer,
+              networkPlayerId: networkSession?.matchId == widget.session.saveId
+                  ? networkSession?.playerId
+                  : null,
             ),
           );
-    final networkSession = ref.watch(networkSessionProvider);
     final pendingHandoff = ref.watch(gameHandoffProvider);
     final entryHandoff = pendingHandoff == null && outcomeSummary == null
         ? _entryHandoffFor(gameSave)
@@ -310,21 +322,6 @@ class _GameHudState extends ConsumerState<GameHud> {
       playerColorValue: player.colorValue,
       turnNumber: save.turn,
     );
-  }
-
-  String _handoffPreparationKey(
-    HandoffData handoff, {
-    required bool clearPending,
-    required String? entrySaveId,
-  }) {
-    final saveId = entrySaveId ?? widget.gameSave?.id ?? widget.session.saveId;
-    return [
-      saveId,
-      handoff.playerId,
-      handoff.turnNumber,
-      handoff.freshTurn,
-      clearPending,
-    ].join('|');
   }
 
   Future<void> _prepareHandoffControlAndCamera(

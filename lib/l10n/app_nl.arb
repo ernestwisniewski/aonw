@@ -1236,6 +1236,7 @@
   "gameOutcomeConditionScore": "Scoren",
   "gameOutcomeConditionScoreDraw": "Score gelijkspel",
   "gameOutcomeConditionDomination": "Overheersing",
+  "gameOutcomeConditionResignation": "Opgave",
   "gameOutcomeConquestNoWinner": "Eén imperium blijft op de kaart staan.",
   "gameOutcomeConquestWinner": "{winner} is het laatste imperium op de kaart.",
   "@gameOutcomeConquestWinner": {
@@ -1258,6 +1259,15 @@
   "gameOutcomeDominationNoWinner": "Kaartcontrole werd gehouden.",
   "gameOutcomeDominationWinner": "{winner} heeft territoriale overheersing.",
   "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeResignationNoWinner": "De wedstrijd eindigde door opgave.",
+  "gameOutcomeResignationWinner": "{winner} wint nadat de andere rijken zich hebben teruggetrokken.",
+  "@gameOutcomeResignationWinner": {
     "placeholders": {
       "winner": {
         "type": "String"

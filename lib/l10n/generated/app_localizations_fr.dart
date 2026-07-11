@@ -2418,6 +2418,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gameOutcomeConditionDomination => 'Domination';
 
   @override
+  String get gameOutcomeConditionResignation => 'Abandon';
+
+  @override
   String get gameOutcomeConquestNoWinner => 'Un empire reste sur la carte.';
 
   @override
@@ -2445,6 +2448,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String gameOutcomeDominationWinner(String winner) {
     return '$winner détient la domination territoriale.';
+  }
+
+  @override
+  String get gameOutcomeResignationNoWinner =>
+      'La partie s\'est terminée par abandon.';
+
+  @override
+  String gameOutcomeResignationWinner(String winner) {
+    return '$winner gagne après l\'abandon des autres empires.';
   }
 
   @override

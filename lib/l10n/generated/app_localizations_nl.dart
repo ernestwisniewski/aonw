@@ -2412,6 +2412,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get gameOutcomeConditionDomination => 'Overheersing';
 
   @override
+  String get gameOutcomeConditionResignation => 'Opgave';
+
+  @override
   String get gameOutcomeConquestNoWinner =>
       'Eén imperium blijft op de kaart staan.';
 
@@ -2439,6 +2442,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String gameOutcomeDominationWinner(String winner) {
     return '$winner heeft territoriale overheersing.';
+  }
+
+  @override
+  String get gameOutcomeResignationNoWinner =>
+      'De wedstrijd eindigde door opgave.';
+
+  @override
+  String gameOutcomeResignationWinner(String winner) {
+    return '$winner wint nadat de andere rijken zich hebben teruggetrokken.';
   }
 
   @override

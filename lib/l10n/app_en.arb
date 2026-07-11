@@ -1237,6 +1237,7 @@
   "gameOutcomeConditionScore": "Score",
   "gameOutcomeConditionScoreDraw": "Score draw",
   "gameOutcomeConditionDomination": "Domination",
+  "gameOutcomeConditionResignation": "Resignation",
   "gameOutcomeConquestNoWinner": "One empire remains on the map.",
   "gameOutcomeConquestWinner": "{winner} is the last empire on the map.",
   "@gameOutcomeConquestWinner": {
@@ -1259,6 +1260,15 @@
   "gameOutcomeDominationNoWinner": "Map control was held.",
   "gameOutcomeDominationWinner": "{winner} holds territorial domination.",
   "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeResignationNoWinner": "The match ended by resignation.",
+  "gameOutcomeResignationWinner": "{winner} wins after the other empires resigned.",
+  "@gameOutcomeResignationWinner": {
     "placeholders": {
       "winner": {
         "type": "String"

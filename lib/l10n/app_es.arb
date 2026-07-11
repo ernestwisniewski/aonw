@@ -1236,6 +1236,7 @@
   "gameOutcomeConditionScore": "Puntuación",
   "gameOutcomeConditionScoreDraw": "Empate por puntuación",
   "gameOutcomeConditionDomination": "Dominación",
+  "gameOutcomeConditionResignation": "Rendición",
   "gameOutcomeConquestNoWinner": "Queda un imperio en el mapa.",
   "gameOutcomeConquestWinner": "{winner} es el último imperio en el mapa.",
   "@gameOutcomeConquestWinner": {
@@ -1258,6 +1259,15 @@
   "gameOutcomeDominationNoWinner": "Se mantuvo el control del mapa.",
   "gameOutcomeDominationWinner": "{winner} mantiene la dominación territorial.",
   "@gameOutcomeDominationWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameOutcomeResignationNoWinner": "La partida terminó por rendición.",
+  "gameOutcomeResignationWinner": "{winner} gana tras la rendición de los demás imperios.",
+  "@gameOutcomeResignationWinner": {
     "placeholders": {
       "winner": {
         "type": "String"

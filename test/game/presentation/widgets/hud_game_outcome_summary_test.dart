@@ -9,8 +9,10 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -70,6 +72,20 @@ void main() {
       expect(summary.winnerLabel, 'Alice');
     });
 
+    test('detects outcomes for local games encoded as multiplayer', () {
+      final summary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(gameMode: GameMode.multiplayer),
+        gameState: GameState(units: [_unit('warrior_1', 'player_1', 0)]),
+        mapData: _mapData(4),
+        activePlayerId: 'player_1',
+      );
+
+      expect(summary, isNotNull);
+      expect(summary!.title, 'VICTORY');
+      expect(summary.conditionLabel, 'CONQUEST');
+    });
+
     test('ignores conquest from projected multiplayer visibility state', () {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
@@ -80,6 +96,7 @@ void main() {
         ),
         mapData: _mapData(4),
         activePlayerId: 'player_2',
+        networkBackedMultiplayer: true,
       );
 
       expect(summary, isNull);
@@ -110,13 +127,14 @@ void main() {
           ),
           mapData: _mapData(4),
           activePlayerId: 'player_1',
+          networkBackedMultiplayer: true,
         );
 
         expect(summary, isNull);
       },
     );
 
-    test('describes real multiplayer conquest from a full snapshot', () {
+    test('waits for server metadata even with a full multiplayer snapshot', () {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
@@ -135,11 +153,97 @@ void main() {
         ),
         mapData: _mapData(4),
         activePlayerId: 'player_1',
+        networkBackedMultiplayer: true,
+      );
+
+      expect(summary, isNull);
+    });
+
+    test('uses terminal server metadata for projected multiplayer state', () {
+      final projectedState = GameState(
+        activePlayerId: 'player_1',
+        playerGold: const {'player_2': 0},
+        units: [_unit('warrior_1', 'player_1', 0)],
+        fogOfWar: _fogFor('player_2', const [HexCoordinate(col: 0, row: 0)]),
+      );
+      final match = _match(
+        outcomeCondition: 'conquest',
+        winnerPlayerId: 'player_1',
+      );
+
+      final winnerSummary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(gameMode: GameMode.multiplayer),
+        gameState: projectedState,
+        mapData: _mapData(4),
+        activePlayerId: 'player_1',
+        multiplayerMatch: match,
+        networkBackedMultiplayer: true,
+      );
+      final loserSummary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(gameMode: GameMode.multiplayer),
+        gameState: projectedState,
+        mapData: _mapData(4),
+        activePlayerId: 'player_2',
+        multiplayerMatch: match,
+        networkBackedMultiplayer: true,
+      );
+
+      expect(winnerSummary?.tone, HudGameOutcomeTone.victory);
+      expect(winnerSummary?.title, 'VICTORY');
+      expect(loserSummary?.tone, HudGameOutcomeTone.defeat);
+      expect(loserSummary?.title, 'DEFEAT');
+      expect(loserSummary?.conditionLabel, 'CONQUEST');
+      expect(loserSummary?.winnerLabel, 'Alice');
+    });
+
+    test('describes an authoritative resignation outcome', () {
+      final summary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(gameMode: GameMode.multiplayer),
+        gameState: GameState(
+          playerGold: const {'player_1': 0},
+          fogOfWar: _fogFor('player_1', const []),
+        ),
+        mapData: _mapData(4),
+        activePlayerId: 'player_1',
+        multiplayerMatch: _match(
+          outcomeCondition: 'resignation',
+          winnerPlayerId: 'player_1',
+        ),
+        networkBackedMultiplayer: true,
       );
 
       expect(summary, isNotNull);
-      expect(summary!.tone, HudGameOutcomeTone.victory);
-      expect(summary.conditionLabel, 'CONQUEST');
+      expect(summary!.outcome.condition, GameOutcomeCondition.resignation);
+      expect(summary.tone, HudGameOutcomeTone.victory);
+      expect(summary.conditionLabel, 'RESIGNATION');
+      expect(summary.subtitle, contains('Alice'));
+    });
+
+    test('describes an authoritative multiplayer draw', () {
+      final summary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(gameMode: GameMode.multiplayer),
+        gameState: GameState(
+          playerGold: const {'player_2': 0},
+          fogOfWar: _fogFor('player_2', const []),
+        ),
+        mapData: _mapData(4),
+        activePlayerId: 'player_2',
+        multiplayerMatch: _match(
+          outcomeCondition: 'draw',
+          winnerPlayerId: null,
+        ),
+        networkBackedMultiplayer: true,
+      );
+
+      expect(summary, isNotNull);
+      expect(summary!.outcome.condition, GameOutcomeCondition.draw);
+      expect(summary.tone, HudGameOutcomeTone.draw);
+      expect(summary.title, 'DRAW');
+      expect(summary.conditionLabel, 'SCORE DRAW');
     });
 
     test('describes score draw with score rows', () {
@@ -284,5 +388,41 @@ MapData _mapData(int validTiles) {
           height: 0,
         ),
     ],
+  );
+}
+
+WireMatch _match({
+  required String outcomeCondition,
+  required String? winnerPlayerId,
+}) {
+  return WireMatch(
+    id: 'save',
+    ownerUserId: 'user_1',
+    name: 'Game',
+    mapName: 'verdantia',
+    players: const [
+      WirePlayer(
+        id: 'player_1',
+        userId: 'user_1',
+        name: 'Alice',
+        colorValue: 0xFF4a7fc4,
+        kind: WirePlayerKind.human,
+        connectionState: WirePlayerConnectionState.connected,
+      ),
+      WirePlayer(
+        id: 'player_2',
+        userId: 'user_2',
+        name: 'Bob',
+        colorValue: 0xFFc45050,
+        kind: WirePlayerKind.human,
+        connectionState: WirePlayerConnectionState.connected,
+      ),
+    ],
+    turn: 2,
+    state: 'finished',
+    createdAt: DateTime.utc(2026, 5, 11),
+    endedAt: DateTime.utc(2026, 5, 12),
+    outcomeCondition: outcomeCondition,
+    winnerPlayerId: winnerPlayerId,
   );
 }
