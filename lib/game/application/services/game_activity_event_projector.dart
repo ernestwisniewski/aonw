@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/fog.dart';
 
 abstract final class GameActivityEventProjector {
   static List<LoggedActivityEntry> project({
@@ -86,8 +86,11 @@ abstract final class GameActivityEventProjector {
     if (playerIds.isEmpty) return const [];
     final metEvents = <CivilizationMetEvent>[];
     for (final playerId in playerIds) {
-      final previouslyKnown = _knownOpponentPlayerIds(previousState, playerId);
-      final currentlyKnown = _knownOpponentPlayerIds(state, playerId);
+      final previouslyKnown = _contactOpponentPlayerIds(
+        previousState,
+        playerId,
+      );
+      final currentlyKnown = _contactOpponentPlayerIds(state, playerId);
       final newlyMet = currentlyKnown.difference(previouslyKnown).toList()
         ..sort();
       for (final metPlayerId in newlyMet) {
@@ -110,6 +113,10 @@ abstract final class GameActivityEventProjector {
     return _playerIds([
       state.activePlayerId,
       previousState?.activePlayerId,
+      ...state.playerColors.keys,
+      ...state.playerCountries.keys,
+      ...?previousState?.playerColors.keys,
+      ...?previousState?.playerCountries.keys,
       ...state.fogOfWar.players.keys,
       ...?previousState?.fogOfWar.players.keys,
       for (final unit in state.units) unit.ownerPlayerId,
@@ -119,29 +126,21 @@ abstract final class GameActivityEventProjector {
     ]);
   }
 
-  static Set<String> _knownOpponentPlayerIds(GameState state, String playerId) {
-    final visibility = FogVisibilityQuery(
-      playerId: playerId,
-      state: state.fogOfWar,
-    );
-    final owners = <String>{};
-    for (final city in state.cities) {
-      if (city.ownerPlayerId == playerId || city.ownerPlayerId.isEmpty) {
-        continue;
-      }
-      if (visibility.canRememberStaticAt(city.center.col, city.center.row)) {
-        owners.add(city.ownerPlayerId);
-      }
-    }
-    for (final unit in state.units) {
-      if (unit.ownerPlayerId == playerId || unit.ownerPlayerId.isEmpty) {
-        continue;
-      }
-      if (visibility.canSeeDynamicAt(unit.col, unit.row)) {
-        owners.add(unit.ownerPlayerId);
+  static Set<String> _contactOpponentPlayerIds(
+    GameState state,
+    String playerId,
+  ) {
+    // Contact keys are durable and add-only for the lifetime of a game. Fog
+    // visibility is transient, so it must not define first-contact events.
+    final opponents = <String>{};
+    for (final (playerAId, playerBId) in state.diplomacy.decodedContactPairs) {
+      if (playerAId == playerId) {
+        opponents.add(playerBId);
+      } else if (playerBId == playerId) {
+        opponents.add(playerAId);
       }
     }
-    return owners;
+    return opponents;
   }
 
   static List<String> _playerIds(Iterable<String?> playerIds) {

@@ -2,9 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw_core/game/domain/combat.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,34 +166,16 @@ void main() {
     expect(container.read(gameActivityLogProvider), hasLength(1));
   });
 
-  test('newly visible opponent creates civilization met notification', () {
+  test('new diplomatic contact creates civilization met notification', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final enemy = GameUnit(
-      id: 'enemy_1',
-      ownerPlayerId: 'player_2',
-      type: GameUnitType.scout,
-      name: 'Scout',
-      col: 3,
-      row: 4,
-    );
-    final previousState = GameState(
+    const previousState = GameState(
       activePlayerId: 'player_1',
-      units: [enemy],
-      fogOfWar: _fogForPlayer(
-        'player_1',
-        visible: const [HexCoordinate(col: 0, row: 0)],
-      ),
+      playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
     );
     final state = previousState.copyWith(
-      fogOfWar: _fogForPlayer(
-        'player_1',
-        visible: const [
-          HexCoordinate(col: 0, row: 0),
-          HexCoordinate(col: 3, row: 4),
-        ],
-      ),
+      diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
     );
 
     container
@@ -262,18 +243,4 @@ void main() {
     expect(notification.playerId, 'player_1');
     expect(notification.event, isA<CombatResolvedEvent>());
   });
-}
-
-FogOfWarState _fogForPlayer(
-  String playerId, {
-  required List<HexCoordinate> visible,
-}) {
-  return FogOfWarState(
-    players: {
-      playerId: PlayerFogOfWar(
-        playerId: playerId,
-        visibleHexes: visible.toSet(),
-      ),
-    },
-  );
 }

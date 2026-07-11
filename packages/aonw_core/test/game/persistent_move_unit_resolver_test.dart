@@ -50,6 +50,54 @@ void main() {
       expect(movedEvent.toRow, 0);
     });
 
+    test('persists diplomatic contact immediately after discovery', () {
+      final state = PersistentGameState(
+        playerColors: const {'player_1': 0xff0000, 'player_2': 0x00ff00},
+        fogOfWar: FogOfWarState(
+          players: {
+            'player_1': PlayerFogOfWar(playerId: 'player_1'),
+            'player_2': PlayerFogOfWar(playerId: 'player_2'),
+          },
+        ),
+        units: [
+          GameUnit(
+            id: 'commander_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.commander,
+            name: 'Commander 1',
+            col: 0,
+            row: 0,
+          ),
+          GameUnit(
+            id: 'commander_2',
+            ownerPlayerId: 'player_2',
+            type: GameUnitType.commander,
+            name: 'Commander 2',
+            col: 2,
+            row: 0,
+          ),
+        ],
+      );
+
+      final result = const PersistentMoveUnitResolver().resolve(
+        state: state,
+        command: const MoveUnitCommand('commander_1', 1, 0),
+        actorPlayerId: 'player_1',
+        mapDefinition: _mapDefinition(cols: 4, rows: 1),
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.state.runtimeState.diplomacy.hasContact('player_1', 'player_2'),
+        isTrue,
+      );
+      final restored = PersistentGameState.fromJson(result.state.toJson());
+      expect(
+        restored.runtimeState.diplomacy.hasContact('player_1', 'player_2'),
+        isTrue,
+      );
+    });
+
     test('rejects moves into foreign city centers', () {
       final state = PersistentGameState(
         units: [

@@ -168,10 +168,23 @@ class PersistentMoveUnitResolver {
       units: updatedUnits,
       cities: state.cities,
     );
+    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
+      diplomacy: state.runtimeState.diplomacy,
+      fogOfWar: updatedFog,
+      units: updatedUnits,
+      cities: state.cities,
+      playerIds: state.knownPlayerIds,
+    );
 
     return PersistentMoveUnitResult(
       accepted: true,
-      state: state.copyWith(units: updatedUnits, fogOfWar: updatedFog),
+      state: state.copyWith(
+        units: updatedUnits,
+        fogOfWar: updatedFog,
+        runtimeState: state.runtimeState.copyWith(
+          diplomacy: discoveredDiplomacy,
+        ),
+      ),
       events: [
         UnitMovedEvent(
           unitId: unit.id,

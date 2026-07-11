@@ -2,6 +2,7 @@ import 'package:aonw/game/application/services/game_activity_event_projector.dar
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/combat.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -168,6 +169,66 @@ void main() {
       expect(activity.map((entry) => entry.playerId), ['player_2', 'player_2']);
       expect(activity.first.event, isA<AllPlayersSubmittedEvent>());
       expect(activity.last.event, isA<CommandRejectedEvent>());
+    });
+
+    test('projects first contact from durable diplomacy exactly once', () {
+      const before = GameState(
+        playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
+      );
+      final met = before.copyWith(
+        diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
+      );
+
+      final firstContact = GameActivityEventProjector.project(
+        events: const [],
+        state: met,
+        previousState: before,
+        visiblePlayerId: 'player_1',
+      );
+      final repeatedContact = GameActivityEventProjector.project(
+        events: const [],
+        state: met,
+        previousState: met,
+        visiblePlayerId: 'player_1',
+      );
+
+      expect(firstContact, hasLength(1));
+      expect(
+        firstContact.single.event,
+        isA<CivilizationMetEvent>()
+            .having((event) => event.playerId, 'playerId', 'player_1')
+            .having((event) => event.metPlayerId, 'metPlayerId', 'player_2'),
+      );
+      expect(repeatedContact, isEmpty);
+    });
+
+    test('projects one first-contact event for each player perspective', () {
+      const before = GameState(
+        playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
+      );
+      final met = before.copyWith(
+        diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
+      );
+
+      final activity = GameActivityEventProjector.project(
+        events: const [],
+        state: met,
+        previousState: before,
+      );
+
+      expect(activity, hasLength(2));
+      expect(activity.map((entry) => entry.playerId).toSet(), {
+        'player_1',
+        'player_2',
+      });
+      expect(
+        activity
+            .map((entry) => entry.event)
+            .whereType<CivilizationMetEvent>()
+            .map((event) => (event.playerId, event.metPlayerId))
+            .toSet(),
+        {('player_1', 'player_2'), ('player_2', 'player_1')},
+      );
     });
   });
 }
