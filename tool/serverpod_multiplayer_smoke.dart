@@ -214,12 +214,18 @@ class _RuntimeSmoke {
 
     const eventCodec = EventCodec();
     const snapshotCodec = SnapshotCodec();
+    final guestLiveBroadcastSeen = Completer<sp.MultiplayerServerMessage>();
     final guestBeforeInput = StreamController<sp.MultiplayerClientMessage>();
-    final guestBefore = await _connectUntilInitialSnapshot(
+    final guestBefore = await _openUntilInitialSnapshot(
       guestClient.multiplayer.connect(started.id, 0, guestBeforeInput.stream),
       guestBeforeInput,
+      onMessage: (message) {
+        if (message.event != null && !guestLiveBroadcastSeen.isCompleted) {
+          guestLiveBroadcastSeen.complete(message);
+        }
+      },
     );
-    final guestBeforeSnapshot = guestBefore.single.snapshot;
+    final guestBeforeSnapshot = guestBefore.initialMessage.snapshot;
     _expect(
       guestBeforeSnapshot != null && guestBeforeSnapshot.offset == 0,
       'Expected guest initial snapshot at offset 0, got '
@@ -273,70 +279,120 @@ class _RuntimeSmoke {
             }
           },
         );
-    final ownerInitial = await ownerInitialMessage.future.timeout(
-      config.streamTimeout,
-    );
-    final ownerInitialSnapshot = ownerInitial.snapshot;
-    _expect(
-      ownerInitialSnapshot != null && ownerInitialSnapshot.offset == 0,
-      'Expected owner initial snapshot at offset 0, got '
-      '${ownerInitialSnapshot?.offset}.',
-    );
+    late final WirePlayer targetPlayer;
+    late final _SmokeMove move;
+    late final WireCommandAck moveAck;
+    late final sp.MultiplayerServerMessage guestLiveBroadcast;
+    late final SaveSnapshot guestLiveState;
+    try {
+      final ownerInitial = await ownerInitialMessage.future.timeout(
+        config.streamTimeout,
+      );
+      final ownerInitialSnapshot = ownerInitial.snapshot;
+      _expect(
+        ownerInitialSnapshot != null && ownerInitialSnapshot.offset == 0,
+        'Expected owner initial snapshot at offset 0, got '
+        '${ownerInitialSnapshot?.offset}.',
+      );
 
-    final initialSnapshot = snapshotCodec.fromWire(ownerInitialSnapshot!);
-    final targetPlayer = started.players.firstWhere(
-      (player) => player.id != ownerPlayer.id,
-      orElse: () => throw StateError(
-        'Started match has no opponent for owner player ${ownerPlayer.id}.',
-      ),
-    );
-    final move = _movementCommandFor(
-      mapData: mapData,
-      snapshot: initialSnapshot,
-      actorPlayerId: ownerPlayer.id,
-    );
-    ownerInput.add(
-      sp.MultiplayerClientMessage(
-        clientMessageId: 'move-unit-$seed',
-        lastSeenOffset: ownerInitial.offset,
-        requestSnapshot: false,
-        command: WireCommand(
-          matchId: started.id,
-          tick: 1,
-          turn: started.turn,
-          actorPlayerId: ownerPlayer.id,
-          command: GameCommandSerializer.toJson(move.command),
+      final initialSnapshot = snapshotCodec.fromWire(ownerInitialSnapshot!);
+      targetPlayer = started.players.firstWhere(
+        (player) => player.id != ownerPlayer.id,
+        orElse: () => throw StateError(
+          'Started match has no opponent for owner player ${ownerPlayer.id}.',
         ),
-      ),
-    );
+      );
+      move = _movementCommandFor(
+        mapData: mapData,
+        snapshot: initialSnapshot,
+        actorPlayerId: ownerPlayer.id,
+      );
+      final movementMessages = Future.wait<sp.MultiplayerServerMessage>([
+        firstAckSeen.future.timeout(config.streamTimeout),
+        guestLiveBroadcastSeen.future.timeout(config.streamTimeout),
+      ]);
+      ownerInput.add(
+        sp.MultiplayerClientMessage(
+          clientMessageId: 'move-unit-$seed',
+          lastSeenOffset: ownerInitial.offset,
+          requestSnapshot: false,
+          command: WireCommand(
+            matchId: started.id,
+            tick: 1,
+            turn: started.turn,
+            actorPlayerId: ownerPlayer.id,
+            command: GameCommandSerializer.toJson(move.command),
+          ),
+        ),
+      );
 
-    final moveAckMessage = await firstAckSeen.future.timeout(
-      config.streamTimeout,
-    );
-    final moveAck = moveAckMessage.ack;
-    _expect(moveAck != null, 'Expected movement command ACK.');
-    _expect(moveAck!.accepted, 'Expected movement command to be accepted.');
-    _expect(
-      moveAck.offset == 1,
-      'Expected movement ACK offset 1, got ${moveAck.offset}.',
-    );
-    _expect(
-      moveAck.snapshot.offset == moveAck.offset,
-      'Expected movement ACK snapshot offset ${moveAck.offset}, got '
-      '${moveAck.snapshot.offset}.',
-    );
-    final moveEvents = eventCodec.eventsFromJsonList(moveAck.events);
-    _expect(
-      moveEvents.whereType<UnitMovedEvent>().any(
-        (event) =>
-            event.unitId == move.command.unitId &&
-            event.fromCol == move.fromCol &&
-            event.fromRow == move.fromRow &&
-            event.toCol == move.command.targetCol &&
-            event.toRow == move.command.targetRow,
-      ),
-      'Expected movement ACK to include the committed UnitMovedEvent.',
-    );
+      final movementResponses = await movementMessages;
+      final moveAckMessage = movementResponses[0];
+      guestLiveBroadcast = movementResponses[1];
+      final receivedMoveAck = moveAckMessage.ack;
+      _expect(receivedMoveAck != null, 'Expected movement command ACK.');
+      moveAck = receivedMoveAck!;
+      _expect(moveAck.accepted, 'Expected movement command to be accepted.');
+      _expect(
+        moveAck.offset == 1,
+        'Expected movement ACK offset 1, got ${moveAck.offset}.',
+      );
+      _expect(
+        moveAck.snapshot.offset == moveAck.offset,
+        'Expected movement ACK snapshot offset ${moveAck.offset}, got '
+        '${moveAck.snapshot.offset}.',
+      );
+      final moveEvents = eventCodec.eventsFromJsonList(moveAck.events);
+      _expect(
+        moveEvents.whereType<UnitMovedEvent>().any(
+          (event) =>
+              event.unitId == move.command.unitId &&
+              event.fromCol == move.fromCol &&
+              event.fromRow == move.fromRow &&
+              event.toCol == move.command.targetCol &&
+              event.toRow == move.command.targetRow,
+        ),
+        'Expected movement ACK to include the committed UnitMovedEvent.',
+      );
+
+      final guestLiveSnapshot = guestLiveBroadcast.snapshot;
+      final guestLiveEvent = guestLiveBroadcast.event;
+      _expect(
+        guestLiveBroadcast.matchId == started.id &&
+            guestLiveBroadcast.offset == moveAck.offset,
+        'Expected guest live broadcast for ${started.id} at offset '
+        '${moveAck.offset}, got ${guestLiveBroadcast.matchId}/'
+        '${guestLiveBroadcast.offset}.',
+      );
+      _expect(
+        guestLiveSnapshot != null && guestLiveSnapshot.offset == moveAck.offset,
+        'Expected guest live snapshot at offset ${moveAck.offset}, got '
+        '${guestLiveSnapshot?.offset}.',
+      );
+      _expect(
+        guestLiveEvent != null && guestLiveEvent.offset == moveAck.offset,
+        'Expected guest live event envelope at offset ${moveAck.offset}, got '
+        '${guestLiveEvent?.offset}.',
+      );
+      _expect(
+        guestLiveBroadcast.ack == null &&
+            guestLiveEvent!.command == null &&
+            guestLiveEvent.tick == null &&
+            guestLiveEvent.actorPlayerId == null &&
+            guestLiveEvent.events.isEmpty,
+        'Expected guest live event to advance the projected offset without '
+        'exposing the owner command or private movement event.',
+      );
+      guestLiveState = snapshotCodec.fromWire(guestLiveSnapshot!);
+      _expect(
+        guestLiveState.fogOfWar.players.keys.toSet().length == 1 &&
+            guestLiveState.fogOfWar.players.containsKey(targetPlayer.id),
+        'Expected guest live snapshot to contain only ${targetPlayer.id} fog '
+        'state, got ${guestLiveState.fogOfWar.players.keys.join(', ')}.',
+      );
+    } finally {
+      await guestBefore.close();
+    }
 
     final postMoveSnapshot = snapshotCodec.fromWire(moveAck.snapshot);
     final diplomacyCommand = SendDiplomaticMessageCommand(
@@ -500,19 +556,37 @@ class _RuntimeSmoke {
       'Expected reconnect to include the latest authoritative snapshot.',
     );
     final resumedSnapshot = snapshotCodec.fromWire(reconnectSnapshot!);
-    final resumedUnit = resumedSnapshot.units.firstWhere(
-      (unit) => unit.id == move.command.unitId,
-      orElse: () => throw StateError(
-        'Reconnect snapshot is missing moved unit ${move.command.unitId}.',
-      ),
-    );
     _expect(
-      resumedUnit.col == move.command.targetCol &&
-          resumedUnit.row == move.command.targetRow,
-      'Expected reconnect snapshot to contain moved unit at '
-      '${move.command.targetCol}:${move.command.targetRow}, got '
-      '${resumedUnit.col}:${resumedUnit.row}.',
+      resumedSnapshot.fogOfWar.players.length == 1 &&
+          resumedSnapshot.fogOfWar.players.containsKey(targetPlayer.id),
+      'Expected reconnect snapshot to preserve ${targetPlayer.id} projection, '
+      'got ${resumedSnapshot.fogOfWar.players.keys.join(', ')}.',
     );
+    final liveVisibleMovedUnits = guestLiveState.units
+        .where((unit) => unit.id == move.command.unitId)
+        .toList();
+    final reconnectVisibleMovedUnits = resumedSnapshot.units
+        .where((unit) => unit.id == move.command.unitId)
+        .toList();
+    _expect(
+      liveVisibleMovedUnits.length == reconnectVisibleMovedUnits.length,
+      'Expected reconnect to preserve guest visibility of moved unit '
+      '${move.command.unitId}; live=${liveVisibleMovedUnits.length}, '
+      'reconnect=${reconnectVisibleMovedUnits.length}.',
+    );
+    if (liveVisibleMovedUnits.isNotEmpty) {
+      _expect(
+        liveVisibleMovedUnits.length == 1 &&
+            reconnectVisibleMovedUnits.length == 1 &&
+            liveVisibleMovedUnits.single.col == move.command.targetCol &&
+            liveVisibleMovedUnits.single.row == move.command.targetRow &&
+            reconnectVisibleMovedUnits.single.col == move.command.targetCol &&
+            reconnectVisibleMovedUnits.single.row == move.command.targetRow,
+        'Expected visible moved unit ${move.command.unitId} at '
+        '${move.command.targetCol}:${move.command.targetRow} in live and '
+        'reconnect snapshots.',
+      );
+    }
 
     final events = await guestClient.multiplayer
         .listEvents(started.id, 0)
@@ -527,12 +601,14 @@ class _RuntimeSmoke {
       'Expected persisted event offsets ${moveAck.offset}, ${ack.offset}, got '
       '${events.map((event) => event.offset).join(', ')}.',
     );
+    final guestMovementEvent = events.first;
     _expect(
-      eventCodec
-          .eventsFromWire(events.first)
-          .whereType<UnitMovedEvent>()
-          .any((event) => event.unitId == move.command.unitId),
-      'Expected first persisted event to describe the movement command.',
+      guestMovementEvent.command == null &&
+          guestMovementEvent.tick == null &&
+          guestMovementEvent.actorPlayerId == null &&
+          guestMovementEvent.events.isEmpty,
+      'Expected persisted guest movement event to advance the offset without '
+      'exposing the owner command or private movement event.',
     );
     if (expectsDiplomacyAccepted) {
       final diplomacyEvent = events.firstWhere(
@@ -588,6 +664,7 @@ class _RuntimeSmoke {
         '${move.command.targetCol}:${move.command.targetRow}',
       )
       ..writeln('  movement ack offset: ${moveAck.offset}')
+      ..writeln('  guest live broadcast offset: ${guestLiveBroadcast.offset}')
       ..writeln(
         '  diplomacy ack offset: ${diplomacyAck.offset} '
         '(${diplomacyAck.accepted ? 'accepted' : 'rejected: ${diplomacyAck.reason}'})',
@@ -690,15 +767,17 @@ class _RuntimeSmoke {
 
   Future<_OpenStream> _openUntilInitialSnapshot(
     Stream<sp.MultiplayerServerMessage> stream,
-    StreamController<sp.MultiplayerClientMessage> input,
-  ) async {
-    final snapshotSeen = Completer<void>();
+    StreamController<sp.MultiplayerClientMessage> input, {
+    void Function(sp.MultiplayerServerMessage message)? onMessage,
+  }) async {
+    final snapshotSeen = Completer<sp.MultiplayerServerMessage>();
     late final StreamSubscription<sp.MultiplayerServerMessage> subscription;
     subscription = stream.listen(
       (message) {
         if (message.snapshot != null && !snapshotSeen.isCompleted) {
-          snapshotSeen.complete();
+          snapshotSeen.complete(message);
         }
+        onMessage?.call(message);
       },
       onError: (Object error, StackTrace stackTrace) {
         if (!snapshotSeen.isCompleted) {
@@ -706,8 +785,20 @@ class _RuntimeSmoke {
         }
       },
     );
-    await snapshotSeen.future.timeout(config.streamTimeout);
-    return _OpenStream(input: input, subscription: subscription);
+    try {
+      final initialMessage = await snapshotSeen.future.timeout(
+        config.streamTimeout,
+      );
+      return _OpenStream(
+        input: input,
+        subscription: subscription,
+        initialMessage: initialMessage,
+      );
+    } catch (_) {
+      if (!input.isClosed) await input.close();
+      await subscription.cancel();
+      rethrow;
+    }
   }
 
   static AuthToken _token(sp_auth.AuthSuccess auth) {
@@ -811,10 +902,15 @@ class _RuntimeSmoke {
 }
 
 class _OpenStream {
-  const _OpenStream({required this.input, required this.subscription});
+  const _OpenStream({
+    required this.input,
+    required this.subscription,
+    required this.initialMessage,
+  });
 
   final StreamController<sp.MultiplayerClientMessage> input;
   final StreamSubscription<sp.MultiplayerServerMessage> subscription;
+  final sp.MultiplayerServerMessage initialMessage;
 
   Future<void> close() async {
     if (!input.isClosed) await input.close();

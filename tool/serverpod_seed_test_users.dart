@@ -58,17 +58,24 @@ class _SeedTestUsers {
   ) async {
     try {
       return await client.emailIdp
-          .createAccount(
-            email: user.email,
-            password: config.password,
-            displayName: user.displayName,
-          )
-          .timeout(config.requestTimeout);
-    } on sp.AccountAuthException catch (error) {
-      if (error.code != 'account_exists') rethrow;
-      return client.emailIdp
           .login(email: user.email, password: config.password)
           .timeout(config.requestTimeout);
+    } on sp.AccountAuthException catch (error) {
+      if (error.code != 'invalid_credentials') rethrow;
+      try {
+        return await client.emailIdp
+            .createAccount(
+              email: user.email,
+              password: config.password,
+              displayName: user.displayName,
+            )
+            .timeout(config.requestTimeout);
+      } on sp.AccountAuthException catch (createError) {
+        if (createError.code != 'account_exists') rethrow;
+        return client.emailIdp
+            .login(email: user.email, password: config.password)
+            .timeout(config.requestTimeout);
+      }
     }
   }
 
