@@ -23,6 +23,12 @@ void main() {
     final migration = File(
       'migrations/$migrationVersion/migration.sql',
     ).readAsStringSync();
+    final quickplayMapMigrationVersion = versions.singleWhere(
+      (version) => version.endsWith('-quickplay-map-index'),
+    );
+    final quickplayMapMigration = File(
+      'migrations/$quickplayMapMigrationVersion/migration.sql',
+    ).readAsStringSync();
 
     const participantIndex =
         'CREATE UNIQUE INDEX "aonw_player_user_match_idx" '
@@ -37,17 +43,28 @@ void main() {
     const quickplayIndex =
         'CREATE INDEX "aonw_match_quickplay_candidate_idx" ON "aonw_match" '
         'USING btree ("state", "private", "quickplay", "inviteCode", '
+        '"mapName", "createdAt", "publicId");';
+    const originalQuickplayIndex =
+        'CREATE INDEX "aonw_match_quickplay_candidate_idx" ON "aonw_match" '
+        'USING btree ("state", "private", "quickplay", "inviteCode", '
         '"createdAt", "publicId");';
 
     for (final index in [
       participantIndex,
       stateOrderIndex,
       publicDiscoveryIndex,
-      quickplayIndex,
     ]) {
       expect(latestDefinition, contains(index));
       expect(migration, contains(index));
     }
+    expect(latestDefinition, contains(quickplayIndex));
+    expect(migration, contains(originalQuickplayIndex));
+    expect(
+      quickplayMapMigration,
+      contains('DROP INDEX "aonw_match_quickplay_candidate_idx";'),
+    );
+    expect(quickplayMapMigration, contains(quickplayIndex));
+    expect(quickplayMapMigration, contains('during a maintenance window'));
 
     expect(latestDefinition, contains('"aonw_player_match_public_idx"'));
     expect(

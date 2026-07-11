@@ -30,4 +30,4 @@ indexes:
   aonw_match_public_discovery_idx:
     fields: state, private, inviteCode, createdAt, publicId
   aonw_match_quickplay_candidate_idx:
-    fields: state, private, quickplay, inviteCode, createdAt, publicId
+    fields: state, private, quickplay, inviteCode, mapName, createdAt, publicId

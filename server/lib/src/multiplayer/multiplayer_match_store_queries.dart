@@ -47,7 +47,7 @@ Future<List<WireMatch>> _listVisibleMatches(
 
 Future<StoredMatchState?> _findOpenQuickplayCandidate(
   ServerpodMultiplayerMatchStore store,
-  CreateMatchRequest _,
+  CreateMatchRequest request,
 ) async {
   final rows = await GameMatch.db.find(
     store._session,
@@ -55,7 +55,8 @@ Future<StoredMatchState?> _findOpenQuickplayCandidate(
         table.state.equals('open') &
         table.private.equals(false) &
         table.quickplay.equals(true) &
-        table.inviteCode.equals(null),
+        table.inviteCode.equals(null) &
+        table.mapName.equals(request.mapName),
     orderByList: (table) => [
       Order(column: table.createdAt),
       Order(column: table.publicId),
@@ -68,7 +69,10 @@ Future<StoredMatchState?> _findOpenQuickplayCandidate(
 
   for (final row in rows) {
     final state = await store._stateFromRow(row);
-    if (state.match.players.length < state.match.maxPlayers) return state;
+    if (state.match.mapName == request.mapName &&
+        state.match.players.length < state.match.maxPlayers) {
+      return state;
+    }
   }
   return null;
 }
@@ -108,7 +112,9 @@ Future<RunningMatchStatePage> _listRunningStates(
       Order(column: table.createdAt),
       Order(column: table.publicId),
     ],
-    limit: multiplayerRunningMatchPageSize,
+    // One look-ahead row distinguishes a full final page from a page that
+    // actually has a successor, while keeping the query strictly bounded.
+    limit: multiplayerRunningMatchPageSize + 1,
     transaction: store._transaction,
     include: GameMatch.include(
       players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
@@ -118,8 +124,9 @@ Future<RunningMatchStatePage> _listRunningStates(
       ),
     ),
   );
+  final pageRows = rows.take(multiplayerRunningMatchPageSize).toList();
   final states = <StoredMatchState>[];
-  for (final row in rows) {
+  for (final row in pageRows) {
     try {
       final snapshots = row.snapshots;
       if (snapshots == null || snapshots.isEmpty) {
@@ -142,11 +149,11 @@ Future<RunningMatchStatePage> _listRunningStates(
       // stop timeout processing for healthy running matches.
     }
   }
-  final lastRawRow = rows.isEmpty ? null : rows.last;
+  final lastRawRow = pageRows.isEmpty ? null : pageRows.last;
   return RunningMatchStatePage(
     states: states,
     nextCursor:
-        rows.length < multiplayerRunningMatchPageSize || lastRawRow == null
+        rows.length <= multiplayerRunningMatchPageSize || lastRawRow == null
         ? null
         : RunningMatchCursor(
             createdAt: lastRawRow.createdAt,

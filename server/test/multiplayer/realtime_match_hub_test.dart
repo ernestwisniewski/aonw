@@ -70,6 +70,108 @@ void main() {
     },
   );
 
+  test('quickplay matches only lobbies using the requested map', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
+
+    final verdantia = await hub.quickplay(
+      store: store,
+      userIdentifier: 'verdantia-owner',
+      request: CreateMatchRequest(
+        name: 'Ignored',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final myranth = await hub.quickplay(
+      store: store,
+      userIdentifier: 'myranth-owner',
+      request: CreateMatchRequest(
+        name: 'Ignored',
+        mapName: 'myranth',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+
+    expect(myranth.id, isNot(verdantia.id));
+    expect(verdantia.mapName, 'verdantia');
+    expect(myranth.mapName, 'myranth');
+    expect(verdantia.players, hasLength(1));
+    expect(myranth.players, hasLength(1));
+  });
+
+  test('quickplay is not starved by newer lobbies for other maps', () async {
+    final now = DateTime.utc(2026, 7, 11, 12);
+    final hub = RealtimeMatchHub(nowUtc: () => now);
+    final store = _MemoryMatchStore();
+
+    for (
+      var index = 0;
+      index <= multiplayerQuickplayCandidateScanLimit;
+      index += 1
+    ) {
+      final foreign = await hub.createMatch(
+        store: store,
+        userIdentifier: 'foreign-owner-$index',
+        request: CreateMatchRequest(
+          name: 'Foreign $index',
+          mapName: 'verdantia',
+          maxPlayers: 2,
+          minPlayers: 2,
+          private: false,
+        ),
+      );
+      final state = (await store.findState(foreign.id))!;
+      await store.saveState(
+        state.copyWith(
+          match: state.match.copyWith(
+            quickplay: true,
+            createdAt: now.add(Duration(seconds: index)),
+          ),
+        ),
+      );
+    }
+    final compatible = await hub.createMatch(
+      store: store,
+      userIdentifier: 'compatible-owner',
+      request: CreateMatchRequest(
+        name: 'Compatible',
+        mapName: 'myranth',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    final compatibleState = (await store.findState(compatible.id))!;
+    await store.saveState(
+      compatibleState.copyWith(
+        match: compatibleState.match.copyWith(
+          quickplay: true,
+          createdAt: now.subtract(const Duration(seconds: 1)),
+        ),
+      ),
+    );
+
+    final matched = await hub.quickplay(
+      store: store,
+      userIdentifier: 'compatible-guest',
+      request: CreateMatchRequest(
+        name: 'Ignored',
+        mapName: 'myranth',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+
+    expect(matched.id, compatible.id);
+    expect(matched.players, hasLength(2));
+  });
+
   test(
     'quickplay starts after two players and a 30 second countdown',
     () async {
@@ -1201,13 +1303,22 @@ void main() {
     final events = await store.listEvents(started.id, 0);
     expect(updatedSave.turn, 2);
     expect(events, hasLength(1));
+    expect(events.single.turn, running.match.turn);
+    expect(projectedUpdate.event?.turn, running.match.turn);
     expect(
       events.single.events
           .map(GameEventSerializer.fromJson)
           .whereType<PlayerTimedOutEvent>(),
       hasLength(1),
     );
-    expect(projectedUpdate.event?.events, isEmpty);
+    expect(
+      projectedUpdate.event!.events.map(GameEventSerializer.fromJson).toList(),
+      unorderedEquals([
+        isA<PlayerTimedOutEvent>(),
+        isA<AllPlayersSubmittedEvent>(),
+        isA<TurnEndedEvent>(),
+      ]),
+    );
     expect(
       PersistentGameState.fromJson(projectedUpdate.snapshot!.state).playerGold,
       {guestPlayerId: 999},
@@ -1520,6 +1631,47 @@ void main() {
       null,
     ]);
   });
+
+  test(
+    'advanceTimedOutTurns wraps without an empty exactly-full page',
+    () async {
+      final hub = RealtimeMatchHub();
+      final store = _MemoryMatchStore();
+      final createdAt = DateTime.utc(2026, 7, 11, 8);
+      for (var index = 0; index < multiplayerRunningMatchPageSize; index++) {
+        final id = 'exact-page-${index.toString().padLeft(3, '0')}';
+        store._states[id] = StoredMatchState(
+          match: WireMatch(
+            id: id,
+            ownerUserId: 'exact-page-owner',
+            name: 'Exact page $index',
+            mapName: 'verdantia',
+            players: const [],
+            maxPlayers: 2,
+            minPlayers: 2,
+            turn: 1,
+            state: 'running',
+            createdAt: createdAt,
+          ),
+          snapshot: WireSnapshot(
+            v: kProtocolVersion - 1,
+            matchId: id,
+            offset: 0,
+            save: const {},
+            state: const {},
+          ),
+        );
+      }
+
+      await hub.advanceTimedOutTurns(store: store);
+      await hub.advanceTimedOutTurns(store: store);
+
+      expect(store.runningPages, hasLength(2));
+      expect(store.runningPages[0], hasLength(multiplayerRunningMatchPageSize));
+      expect(store.runningPages[1], store.runningPages[0]);
+      expect(store.runningCursors, [null, null]);
+    },
+  );
 
   test(
     'resignMatch keeps a running FFA alive until one player remains',
@@ -2002,7 +2154,9 @@ void main() {
     expect(ackMessage.ack?.accepted, isTrue);
     expect(moved.col, target.col);
     expect(moved.row, target.row);
-    expect(ackMessage.ack?.events, isEmpty);
+    expect(ackMessage.ack!.events.map(GameEventSerializer.fromJson).toList(), [
+      isA<UnitMovedEvent>(),
+    ]);
 
     await ownerInput.close();
   });
@@ -2132,12 +2286,24 @@ void main() {
       nextState.runtimeState.diplomacy.relationScoreBetween(owner.id, guest.id),
       2,
     );
-    expect(ackMessage.ack?.events, isEmpty);
+    expect(ackMessage.ack!.events.map(GameEventSerializer.fromJson).toList(), [
+      isA<DiplomaticScoreChangedEvent>(),
+    ]);
     expect(eventMessage.event?.command, isNull);
-    expect(eventMessage.event?.events, isEmpty);
+    expect(eventMessage.event?.turn, 1);
+    expect(
+      eventMessage.event!.events.map(GameEventSerializer.fromJson).toList(),
+      [isA<DiplomaticScoreChangedEvent>()],
+    );
     expect(secondOwnerEventMessage.event?.actorPlayerId, owner.id);
+    expect(secondOwnerEventMessage.event?.turn, 1);
     expect(secondOwnerEventMessage.event?.command, isNotNull);
-    expect(secondOwnerEventMessage.event?.events, isEmpty);
+    expect(
+      secondOwnerEventMessage.event!.events
+          .map(GameEventSerializer.fromJson)
+          .toList(),
+      [isA<DiplomaticScoreChangedEvent>()],
+    );
     expect(
       PersistentGameState.fromJson(eventMessage.snapshot!.state).playerGold,
       {guest.id: 10},
@@ -2619,8 +2785,8 @@ void main() {
       );
       expect(ackMessages.map((message) => message.ack?.offset).toSet(), {1});
       expect(
-        ackMessages.map((message) => message.ack?.events).toSet(),
-        hasLength(1),
+        ackMessages.map((message) => message.ack!.events),
+        everyElement(isEmpty),
       );
       expect(await fixture.store.listEvents(fixture.match.id, 0), hasLength(1));
       expect((await fixture.store.findState(fixture.match.id))!.offset, 1);
@@ -3116,14 +3282,15 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(
-    CreateMatchRequest _,
+    CreateMatchRequest request,
   ) async {
     final candidates =
         [
           for (final state in _states.values)
             if (state.match.state == 'open' &&
                 state.match.quickplay &&
-                state.match.inviteCode == null)
+                state.match.inviteCode == null &&
+                state.match.mapName == request.mapName)
               state,
         ]..sort((first, second) {
           final createdAtOrder = first.match.createdAt.compareTo(
@@ -3198,12 +3365,16 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
           if (createdAtOrder != 0) return createdAtOrder;
           return first.match.id.compareTo(second.match.id);
         });
-    final page = candidates.take(multiplayerRunningMatchPageSize).toList();
+    final window = candidates
+        .take(multiplayerRunningMatchPageSize + 1)
+        .toList();
+    final page = window.take(multiplayerRunningMatchPageSize).toList();
     runningPages.add([for (final state in page) state.match.id]);
     final last = page.isEmpty ? null : page.last.match;
     return RunningMatchStatePage(
       states: page,
-      nextCursor: page.length < multiplayerRunningMatchPageSize || last == null
+      nextCursor:
+          window.length <= multiplayerRunningMatchPageSize || last == null
           ? null
           : RunningMatchCursor(createdAt: last.createdAt, publicId: last.id),
     );
