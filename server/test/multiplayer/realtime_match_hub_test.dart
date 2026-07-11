@@ -1474,6 +1474,53 @@ void main() {
     },
   );
 
+  test('advanceTimedOutTurns rotates bounded running-match pages', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
+    final createdAt = DateTime.utc(2026, 7, 11, 8);
+    final matchCount = multiplayerRunningMatchPageSize + 2;
+    for (var index = 0; index < matchCount; index += 1) {
+      final id = 'rotation-${index.toString().padLeft(3, '0')}';
+      store._states[id] = StoredMatchState(
+        match: WireMatch(
+          id: id,
+          ownerUserId: 'rotation-owner',
+          name: 'Rotation $index',
+          mapName: 'verdantia',
+          players: const [],
+          maxPlayers: 2,
+          minPlayers: 2,
+          turn: 1,
+          state: 'running',
+          createdAt: createdAt,
+        ),
+        snapshot: WireSnapshot(
+          v: kProtocolVersion - 1,
+          matchId: id,
+          offset: 0,
+          save: const {},
+          state: const {},
+        ),
+      );
+    }
+
+    await hub.advanceTimedOutTurns(store: store);
+    await hub.advanceTimedOutTurns(store: store);
+    await hub.advanceTimedOutTurns(store: store);
+
+    expect(store.runningPages, hasLength(3));
+    expect(store.runningPages[0], hasLength(multiplayerRunningMatchPageSize));
+    expect(store.runningPages[0].first, 'rotation-000');
+    expect(store.runningPages[0].last, 'rotation-063');
+    expect(store.runningPages[1], ['rotation-064', 'rotation-065']);
+    expect(store.runningPages[2], store.runningPages[0]);
+    expect(store.runningCursors, [
+      null,
+      RunningMatchCursor(createdAt: createdAt, publicId: 'rotation-063'),
+      null,
+    ]);
+  });
+
   test(
     'resignMatch keeps a running FFA alive until one player remains',
     () async {
@@ -2991,6 +3038,8 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   final Map<String, StoredMatchState> _states = {};
   final Map<String, List<WireEvent>> _events = {};
   final Map<String, WireEvent> _eventsByClientMessageId = {};
+  final List<RunningMatchCursor?> runningCursors = [];
+  final List<List<String>> runningPages = [];
 
   @override
   Future<T> transaction<T>(
@@ -3132,11 +3181,32 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<StoredMatchState>> listRunningStates() async {
-    return [
-      for (final state in _states.values)
-        if (state.match.state == 'running') state,
-    ];
+  Future<RunningMatchStatePage> listRunningStates({
+    RunningMatchCursor? after,
+  }) async {
+    runningCursors.add(after);
+    final candidates =
+        [
+          for (final state in _states.values)
+            if (state.match.state == 'running' &&
+                _isAfterRunningCursor(state.match, after))
+              state,
+        ]..sort((first, second) {
+          final createdAtOrder = first.match.createdAt.compareTo(
+            second.match.createdAt,
+          );
+          if (createdAtOrder != 0) return createdAtOrder;
+          return first.match.id.compareTo(second.match.id);
+        });
+    final page = candidates.take(multiplayerRunningMatchPageSize).toList();
+    runningPages.add([for (final state in page) state.match.id]);
+    final last = page.isEmpty ? null : page.last.match;
+    return RunningMatchStatePage(
+      states: page,
+      nextCursor: page.length < multiplayerRunningMatchPageSize || last == null
+          ? null
+          : RunningMatchCursor(createdAt: last.createdAt, publicId: last.id),
+    );
   }
 
   @override
@@ -3186,6 +3256,13 @@ String _clientMessageKey(
 
 bool _isActiveMatch(WireMatch match) =>
     match.state == 'open' || match.state == 'running';
+
+bool _isAfterRunningCursor(WireMatch match, RunningMatchCursor? cursor) {
+  if (cursor == null) return true;
+  final createdAtOrder = match.createdAt.compareTo(cursor.createdAt);
+  return createdAtOrder > 0 ||
+      (createdAtOrder == 0 && match.id.compareTo(cursor.publicId) > 0);
+}
 
 int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
   final createdAtOrder = second.createdAt.compareTo(first.createdAt);

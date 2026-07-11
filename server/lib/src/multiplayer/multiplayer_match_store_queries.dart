@@ -90,26 +90,69 @@ Future<List<WireEvent>> _listEvents(
   return [for (final eventRow in eventRows) eventRow.event];
 }
 
-Future<List<StoredMatchState>> _listRunningStates(
-  ServerpodMultiplayerMatchStore store,
-) async {
+Future<RunningMatchStatePage> _listRunningStates(
+  ServerpodMultiplayerMatchStore store, {
+  RunningMatchCursor? after,
+}) async {
   final rows = await GameMatch.db.find(
     store._session,
-    where: (table) => table.state.equals('running'),
-    orderBy: (table) => table.createdAt,
+    where: (table) {
+      final running = table.state.equals('running');
+      if (after == null) return running;
+      return running &
+          ((table.createdAt > after.createdAt) |
+              (table.createdAt.equals(after.createdAt) &
+                  (table.publicId > after.publicId)));
+    },
+    orderByList: (table) => [
+      Order(column: table.createdAt),
+      Order(column: table.publicId),
+    ],
+    limit: multiplayerRunningMatchPageSize,
     transaction: store._transaction,
+    include: GameMatch.include(
+      players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+      snapshots: GameSnapshot.includeList(
+        orderBy: (table) => table.offset,
+        orderDescending: true,
+      ),
+    ),
   );
   final states = <StoredMatchState>[];
   for (final row in rows) {
     try {
-      states.add(await store._stateFromRow(row));
+      final snapshots = row.snapshots;
+      if (snapshots == null || snapshots.isEmpty) {
+        throw StateError('Running match snapshot not found.');
+      }
+      states.add(
+        StoredMatchState(
+          match: _wireMatch(row, row.players!),
+          snapshot: snapshots
+              .reduce(
+                (latest, candidate) =>
+                    candidate.offset > latest.offset ? candidate : latest,
+              )
+              .snapshot,
+        ),
+      );
     } on ArgumentError {
       // Old snapshots can remain in the database after a wire protocol bump.
       // They cannot be resumed by the current server, but they also must not
       // stop timeout processing for healthy running matches.
     }
   }
-  return states;
+  final lastRawRow = rows.isEmpty ? null : rows.last;
+  return RunningMatchStatePage(
+    states: states,
+    nextCursor:
+        rows.length < multiplayerRunningMatchPageSize || lastRawRow == null
+        ? null
+        : RunningMatchCursor(
+            createdAt: lastRawRow.createdAt,
+            publicId: lastRawRow.publicId,
+          ),
+  );
 }
 
 List<Order> _newestMatchOrder(GameMatchTable table) => [

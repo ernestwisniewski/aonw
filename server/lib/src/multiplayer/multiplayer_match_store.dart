@@ -28,6 +28,33 @@ class StoredMatchState {
   }
 }
 
+final class RunningMatchCursor {
+  const RunningMatchCursor({required this.createdAt, required this.publicId});
+
+  final DateTime createdAt;
+  final String publicId;
+
+  @override
+  bool operator ==(Object other) {
+    return other is RunningMatchCursor &&
+        other.createdAt == createdAt &&
+        other.publicId == publicId;
+  }
+
+  @override
+  int get hashCode => Object.hash(createdAt, publicId);
+}
+
+final class RunningMatchStatePage {
+  RunningMatchStatePage({
+    required Iterable<StoredMatchState> states,
+    required this.nextCursor,
+  }) : states = List.unmodifiable(states);
+
+  final List<StoredMatchState> states;
+  final RunningMatchCursor? nextCursor;
+}
+
 abstract interface class MultiplayerMatchStore {
   ServerOperationalEventSink get operationalEvents;
 
@@ -38,7 +65,7 @@ abstract interface class MultiplayerMatchStore {
   /// Returns bounded participant and public-lobby sets, merged newest first.
   Future<List<WireMatch>> listVisibleMatches(String userIdentifier);
 
-  Future<List<StoredMatchState>> listRunningStates();
+  Future<RunningMatchStatePage> listRunningStates({RunningMatchCursor? after});
 
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest request,
@@ -116,8 +143,9 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       _listVisibleMatches(this, userIdentifier);
 
   @override
-  Future<List<StoredMatchState>> listRunningStates() =>
-      _listRunningStates(this);
+  Future<RunningMatchStatePage> listRunningStates({
+    RunningMatchCursor? after,
+  }) => _listRunningStates(this, after: after);
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(

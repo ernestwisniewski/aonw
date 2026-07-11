@@ -13,7 +13,7 @@ part 'match_command_service_handling.dart';
 part 'match_command_service_timeout.dart';
 
 final class MatchCommandService {
-  const MatchCommandService({
+  MatchCommandService({
     required ServerCommandReducer commandReducer,
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
@@ -27,6 +27,7 @@ final class MatchCommandService {
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final DateTime Function() _nowUtc;
+  RunningMatchCursor? _nextTimeoutSweepCursor;
 
   Future<void> handleClientMessage({
     required MultiplayerMatchStore store,

@@ -141,10 +141,11 @@ WHERE "matchId" = @matchId
         final listedMatch = listed.singleWhere(
           (match) => match.id == joined.id,
         );
-        expect(listedMatch.players.map((player) => player.userId), [
-          owner.userIdentifier,
-          guest.userIdentifier,
-        ]);
+        expect(
+          listedMatch.players.every((player) => player.userId == player.id),
+          isTrue,
+        );
+        expect(listedMatch.ownerUserId, listedMatch.players.first.id);
       });
 
       test(
@@ -255,6 +256,76 @@ WHERE "matchId" = @matchId
         },
       );
 
+      test('pages running matches with included latest snapshots', () async {
+        final session = sessionBuilder.build();
+        final createdAt = DateTime.utc(2026, 7, 11, 8);
+        final matchCount = multiplayerRunningMatchPageSize + 2;
+        final rows = await GameMatch.db.insert(session, [
+          for (var index = 0; index < matchCount; index += 1)
+            GameMatch(
+              publicId: 'running-page-${index.toString().padLeft(3, '0')}',
+              ownerUserIdentifier: 'running-page-owner',
+              name: 'Running page $index',
+              mapName: 'verdantia',
+              state: 'running',
+              turn: 1,
+              maxPlayers: 2,
+              minPlayers: 2,
+              private: false,
+              quickplay: false,
+              createdAt: createdAt,
+            ),
+        ]);
+        await GameSnapshot.db.insert(session, [
+          GameSnapshot(
+            matchId: rows.first.id!,
+            offset: 0,
+            snapshot: WireSnapshot(
+              matchId: rows.first.publicId,
+              offset: 0,
+              save: const {},
+              state: const {},
+            ),
+            createdAt: createdAt,
+          ),
+          for (var index = 0; index < rows.length; index += 1)
+            GameSnapshot(
+              matchId: rows[index].id!,
+              offset: index == 0 ? 1 : 0,
+              snapshot: WireSnapshot(
+                matchId: rows[index].publicId,
+                offset: index == 0 ? 1 : 0,
+                save: const {},
+                state: const {},
+              ),
+              createdAt: createdAt.add(const Duration(seconds: 1)),
+            ),
+        ]);
+        final store = ServerpodMultiplayerMatchStore(session);
+
+        final firstPage = await store.listRunningStates();
+        final secondPage = await store.listRunningStates(
+          after: firstPage.nextCursor,
+        );
+
+        expect(firstPage.states, hasLength(multiplayerRunningMatchPageSize));
+        expect(firstPage.states.first.match.id, 'running-page-000');
+        expect(firstPage.states.first.snapshot.offset, 1);
+        expect(firstPage.states.last.match.id, 'running-page-063');
+        expect(
+          firstPage.nextCursor,
+          RunningMatchCursor(
+            createdAt: createdAt,
+            publicId: 'running-page-063',
+          ),
+        );
+        expect(secondPage.states.map((state) => state.match.id), [
+          'running-page-064',
+          'running-page-065',
+        ]);
+        expect(secondPage.nextCursor, isNull);
+      });
+
       test('creates, joins, starts, and loads a persisted match', () async {
         final owner = await _accountSession(
           sessionBuilder,
@@ -292,6 +363,7 @@ WHERE "matchId" = @matchId
         ]);
         expect(created.players.map((player) => player.name), ['Owner Nick']);
         expect(created.state, 'open');
+        final ownerPublicId = created.players.single.id;
 
         final listed = await endpoints.multiplayer.listMatches(guest.session);
         expect(listed.map((match) => match.id), contains(created.id));
@@ -300,10 +372,14 @@ WHERE "matchId" = @matchId
           guest.session,
           created.id,
         );
+        final guestPublicId = joined.players
+            .singleWhere((player) => player.userId == guest.userIdentifier)
+            .id;
         expect(joined.players.map((player) => player.userId), [
-          owner.userIdentifier,
+          ownerPublicId,
           guest.userIdentifier,
         ]);
+        expect(joined.ownerUserId, ownerPublicId);
         expect(joined.players.map((player) => player.name), [
           'Owner Nick',
           'Guest Nick',
@@ -315,6 +391,10 @@ WHERE "matchId" = @matchId
         );
         expect(started.state, 'running');
         expect(started.turn, 1);
+        expect(started.players.map((player) => player.userId), [
+          owner.userIdentifier,
+          guestPublicId,
+        ]);
 
         final loaded = await endpoints.multiplayer.loadMatch(
           guest.session,
@@ -322,9 +402,10 @@ WHERE "matchId" = @matchId
         );
         expect(loaded.state, 'running');
         expect(loaded.players.map((player) => player.userId), [
-          owner.userIdentifier,
+          ownerPublicId,
           guest.userIdentifier,
         ]);
+        expect(loaded.ownerUserId, ownerPublicId);
 
         final guestRunningMatches = await endpoints.multiplayer.listMatches(
           guest.session,
@@ -442,13 +523,33 @@ WHERE "matchId" = @matchId
         expect(persistedSnapshots, hasLength(1));
         expect(persistedSnapshots.single.id, snapshotRowId);
         expect(persistedSnapshots.single.offset, persistedEvents.single.offset);
-        expect(
-          persistedSnapshots.single.snapshot.toJson(),
-          acks.first.ack!.snapshot.toJson(),
+        final canonicalState = PersistentGameState.fromJson(
+          persistedSnapshots.single.snapshot.state,
         );
+        final projectedState = PersistentGameState.fromJson(
+          acks.first.ack!.snapshot.state,
+        );
+        expect(acks.first.ack!.snapshot.matchId, created.id);
+        expect(
+          acks.first.ack!.snapshot.offset,
+          persistedSnapshots.single.offset,
+        );
+        expect(
+          canonicalState.units.any(
+            (unit) => unit.ownerPlayerId == guestPublicId,
+          ),
+          isTrue,
+        );
+        expect(
+          projectedState.units.every(
+            (unit) => unit.ownerPlayerId == ownerPlayer.id,
+          ),
+          isTrue,
+        );
+        expect(projectedState.fogOfWar.players.keys, {ownerPlayer.id});
 
         final guestPlayer = started.players.firstWhere(
-          (player) => player.userId == guest.userIdentifier,
+          (player) => player.id == guestPublicId,
         );
         final guestAck = await _sendClientCommand(
           endpoints,

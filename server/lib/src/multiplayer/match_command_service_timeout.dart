@@ -27,8 +27,9 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     required MultiplayerMatchStore store,
   }) async {
     final failures = <MatchTimeoutSweepFailure>[];
-    final states = await store.listRunningStates();
-    for (final state in states) {
+    final page = await store.listRunningStates(after: _nextTimeoutSweepCursor);
+    _nextTimeoutSweepCursor = page.nextCursor;
+    for (final state in page.states) {
       if (state.snapshot.v != kProtocolVersion) {
         continue;
       }

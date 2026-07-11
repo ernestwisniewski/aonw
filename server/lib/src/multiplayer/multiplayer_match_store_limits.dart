@@ -5,6 +5,9 @@ part of 'multiplayer_match_store.dart';
 /// stable page.
 const multiplayerEventPageSize = 256;
 
+/// Maximum number of running matches inspected by one timeout sweep.
+const multiplayerRunningMatchPageSize = 64;
+
 /// Participant-owned active matches are queried independently so a busy public
 /// lobby list cannot hide private or resumable matches from the caller.
 const multiplayerVisibleParticipantMatchLimit = 64;
