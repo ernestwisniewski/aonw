@@ -72,6 +72,44 @@ void main() {
       );
     });
 
+    test('projects unit and city combat outcomes to both owners', () {
+      final previousState = PersistentGameState(
+        units: [
+          _unit('attacker', ownerPlayerId: 'player-1'),
+          _unit('defender', ownerPlayerId: 'player-2'),
+        ],
+        cities: [_city('city-2', ownerPlayerId: 'player-2')],
+      );
+      final canonical = PlayerMatchEventAudience.annotateForStorage(
+        events: [
+          _combatResolved('attacker', 'defender'),
+          _combatResolved('attacker', 'city-2'),
+        ],
+        participantPlayerIds: const ['player-1', 'player-2', 'observer'],
+        previousState: previousState,
+        state: previousState,
+      );
+
+      final attacker = PlayerMatchEventAudience.projectForRecipient(
+        canonical,
+        recipientPlayerId: 'player-1',
+      );
+      final defender = PlayerMatchEventAudience.projectForRecipient(
+        canonical,
+        recipientPlayerId: 'player-2',
+      );
+
+      expect(attacker, hasLength(2));
+      expect(defender, attacker);
+      expect(
+        PlayerMatchEventAudience.projectForRecipient(
+          canonical,
+          recipientPlayerId: 'observer',
+        ),
+        isEmpty,
+      );
+    });
+
     test('makes turn-completion events visible to all participants', () {
       final canonical = PlayerMatchEventAudience.annotateForStorage(
         events: [
@@ -163,5 +201,21 @@ GameUnit _unit(String id, {required String ownerPlayerId}) {
     name: id,
     col: 1,
     row: 1,
+  );
+}
+
+CombatResolvedEvent _combatResolved(String attackerId, String defenderId) {
+  return CombatResolvedEvent(
+    attackerUnitId: attackerId,
+    defenderUnitId: defenderId,
+    outcome: CombatOutcome(
+      attackerUnitId: attackerId,
+      defenderUnitId: defenderId,
+      attackerHpAfter: 5,
+      defenderHpAfter: 4,
+      attackerKilled: false,
+      defenderKilled: false,
+      steps: [AttackStep(damage: 1)],
+    ),
   );
 }

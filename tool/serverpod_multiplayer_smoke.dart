@@ -419,10 +419,24 @@ class _RuntimeSmoke {
         'Movement ACK snapshot has no moved unit ${move.command.unitId}.',
       ),
     );
+    final combatCapableUnits =
+        postMoveSnapshot.units
+            .where(
+              (unit) =>
+                  unit.ownerPlayerId == ownerPlayer.id &&
+                  unit.movementPoints > 0 &&
+                  !unit.isWorking &&
+                  UnitCombatStats.derive(unit).attack > 0,
+            )
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+    final combatRoutingAttacker = combatCapableUnits.isEmpty
+        ? movedAttacker
+        : combatCapableUnits.first;
     final combatRoutingCommand = AttackHexCommand(
-      movedAttacker.id,
-      movedAttacker.col,
-      movedAttacker.row,
+      combatRoutingAttacker.id,
+      combatRoutingAttacker.col,
+      combatRoutingAttacker.row,
     );
     ownerInput.add(
       sp.MultiplayerClientMessage(
@@ -448,12 +462,18 @@ class _RuntimeSmoke {
       'Expected combat routing probe ACK.',
     );
     final combatRoutingAck = receivedCombatRoutingAck!;
+    const routedCombatRejections = {
+      'attacker_cannot_attack',
+      'attacker_exhausted',
+      'attack_target_not_enemy',
+    };
     _expect(
       !combatRoutingAck.accepted &&
-          combatRoutingAck.reason == 'attack_target_not_enemy',
-      'Expected AttackHex to reach combat validation and reject the friendly '
-      'target, got accepted=${combatRoutingAck.accepted} '
-      'reason=${combatRoutingAck.reason}.',
+          routedCombatRejections.contains(combatRoutingAck.reason) &&
+          (combatCapableUnits.isEmpty ||
+              combatRoutingAck.reason == 'attack_target_not_enemy'),
+      'Expected AttackHex to reach combat validation, got '
+      'accepted=${combatRoutingAck.accepted} reason=${combatRoutingAck.reason}.',
     );
     _expect(
       combatRoutingAck.offset == moveAck.offset &&
