@@ -106,7 +106,18 @@ Authorized JavaScript origins, for example:
 Run local Flutter Web on a stable port:
 
 ```sh
-flutter run -d chrome --web-hostname localhost --web-port 7357
+make local
+```
+
+`make local` starts the Docker API at `http://localhost:8080`, seeds reusable
+multiplayer accounts, and runs Flutter Web at the registered Google origin
+`http://localhost:7357`. The equivalent direct Flutter command is:
+
+```sh
+flutter run -d chrome \
+  --web-hostname localhost \
+  --web-port 7357 \
+  --dart-define=AONW_API_BASE_URL=http://localhost:8080
 ```
 
 9. For iOS/macOS Google Sign-In, native configuration is also required:

@@ -60,12 +60,35 @@ services:
 
 ```sh
 cp .env.example .env
-docker compose --profile dev up --build
+make local-start
 ```
 
-The dev profile starts PostgreSQL, Redis, and the Serverpod API. The Flutter
-client uses `http://localhost:8080` on desktop/web and
-`http://10.0.2.2:8080` on the Android emulator by default.
+`make local-start` starts PostgreSQL, Redis, and the Serverpod API in Docker,
+waits for readiness, and seeds four reusable multiplayer accounts. Run the web
+client with the stable Google OAuth origin and Docker API in one command:
+
+```sh
+make local
+```
+
+The local web app runs at `http://localhost:7357` and targets the Docker API at
+`http://localhost:8080`. The seeded accounts are `test1@example.test` through
+`test4@example.test`, all using `AonwTest123!`. Use separate browser profiles
+or a normal and private window to test two players concurrently.
+
+For an automated multiplayer round trip, including quickplay, create/join,
+realtime streams, commands, reconnect, and persisted event history, run:
+
+```sh
+make local-multiplayer-smoke
+```
+
+Desktop/web/iOS/macOS builds use `http://localhost:8080` by default. The
+Android emulator uses `http://10.0.2.2:8080`. Google Web requires the stable
+`http://localhost:7357` origin. Apple Web still requires a registered public
+HTTPS callback; native Apple sign-in can use the local API.
+
+Stop the local stack without deleting its data with `make local-down`.
 
 For a faster server edit loop, run only dependencies in Docker and start
 Serverpod on the host:

@@ -44,16 +44,25 @@ If a special build needs to hide multiplayer, pass
 
 ```sh
 cp .env.example .env
-docker compose --profile dev up --build
-curl -fsS http://localhost:8080/livez
-curl -fsS http://localhost:8080/readyz
+make local-start
+make local-multiplayer-smoke
+make local
 ```
 
-This starts PostgreSQL, Redis, and the Serverpod server. The API and Insights
-ports are bound to `127.0.0.1` by default. PostgreSQL and Redis are also bound
-to `127.0.0.1`. Set `AONW_SERVER_BIND=0.0.0.0` only if you explicitly need LAN
-access. If local port `8080` is busy, change `AONW_SERVER_PUBLIC_PORT` and keep
-`SERVERPOD_API_SERVER_PORT=8080`.
+This starts PostgreSQL, Redis, and Serverpod, waits for API readiness, seeds
+four reusable users, runs the multiplayer runtime smoke, and launches Flutter
+Web at the stable Google OAuth origin `http://localhost:7357`. The client uses
+the Docker API at `http://localhost:8080`. API and Insights ports are bound to
+`127.0.0.1` by default. PostgreSQL and Redis are also bound to `127.0.0.1`.
+Set `AONW_SERVER_BIND=0.0.0.0` only if you explicitly need LAN access. If local
+port `8080` is busy, override `LOCAL_API_PORT` consistently and keep
+`SERVERPOD_API_SERVER_PORT=8080` inside the container.
+
+The seeded accounts are `test1@example.test` through `test4@example.test`, all
+using `AonwTest123!`. Open normal and private browser windows for a manual
+two-player check. Google Web requires the exact `http://localhost:7357` origin.
+Apple Web cannot use a localhost callback because Apple requires registered
+HTTPS; native Apple sign-in can still verify through the local API.
 
 ## Cloudflare Quick Tunnel Smoke
 

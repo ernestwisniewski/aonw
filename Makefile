@@ -20,6 +20,15 @@ SERVERPOD_SMOKE_MAP ?= myranth
 SERVERPOD_SEED_HOST ?= http://127.0.0.1:8080/
 SERVERPOD_SEED_PASSWORD ?= AonwTest123!
 SERVERPOD_SEED_EMAIL_DOMAIN ?= example.test
+LOCAL_API_HOST ?= localhost
+LOCAL_API_PORT ?= 8080
+LOCAL_API_BASE_URL ?= http://$(LOCAL_API_HOST):$(LOCAL_API_PORT)
+LOCAL_INSIGHTS_PORT ?= 8081
+LOCAL_SERVER_WEB_PORT ?= 8082
+LOCAL_WEB_HOST ?= localhost
+LOCAL_WEB_PORT ?= 7357
+LOCAL_WEB_DEVICE ?= chrome
+LOCAL_HEALTH_URL ?= $(LOCAL_API_BASE_URL)/readyz
 COMPOSE_CHECK_PROFILES ?= dev staging prod
 CADDY_VALIDATE_IMAGE ?= caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
 PROMTOOL_IMAGE ?= prom/prometheus:latest@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
@@ -171,7 +180,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -181,6 +190,10 @@ help:
 	@echo "  make deploy steam  Build Steam macOS + Windows ZIPs into dist/"
 	@echo ""
 	@echo "Individual targets:"
+	@echo "  make local        LOCAL: start Docker API, seed users, and run Flutter Web on OAuth origin localhost:7357"
+	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
+	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
+	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
 	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
@@ -226,6 +239,8 @@ help:
 	@echo "  make logs          Follow server logs"
 	@echo ""
 	@echo "Options:"
+	@echo "  LOCAL_API_BASE_URL=http://... Local Flutter/Serverpod API. Default: $(LOCAL_API_BASE_URL)"
+	@echo "  LOCAL_WEB_PORT=7357            Stable Google OAuth web origin port. Default: $(LOCAL_WEB_PORT)"
 	@echo "  PROFILE=staging|prod|dev       Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
 	@echo "  CHECK_MIGRATIONS=1             Run local Serverpod migration drift check after build"
@@ -390,6 +405,50 @@ serverpod-runtime-smoke:
 
 serverpod-seed-test-users:
 	@dart run tool/serverpod_seed_test_users.dart --host "$(SERVERPOD_SEED_HOST)" --password "$(SERVERPOD_SEED_PASSWORD)" --email-domain "$(SERVERPOD_SEED_EMAIL_DOMAIN)"
+
+local: local-web
+
+local-start: local-seed
+
+local-up:
+	@test -f .env || { echo "Missing .env. Run: cp .env.example .env, then replace placeholder secrets."; exit 1; }
+	@SERVERPOD_RUN_MODE=development \
+		SERVERPOD_SERVER_ID=local \
+		SERVERPOD_API_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
+		SERVERPOD_API_SERVER_PUBLIC_PORT="$(LOCAL_API_PORT)" \
+		SERVERPOD_API_SERVER_PUBLIC_SCHEME=http \
+		SERVERPOD_INSIGHTS_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
+		SERVERPOD_INSIGHTS_SERVER_PUBLIC_PORT="$(LOCAL_INSIGHTS_PORT)" \
+		SERVERPOD_INSIGHTS_SERVER_PUBLIC_SCHEME=http \
+		SERVERPOD_WEB_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
+		SERVERPOD_WEB_SERVER_PUBLIC_PORT="$(LOCAL_SERVER_WEB_PORT)" \
+		SERVERPOD_WEB_SERVER_PUBLIC_SCHEME=http \
+		AONW_SERVER_PUBLIC_PORT="$(LOCAL_API_PORT)" \
+		AONW_INSIGHTS_PUBLIC_PORT="$(LOCAL_INSIGHTS_PORT)" \
+		AONW_WEB_PUBLIC_PORT="$(LOCAL_SERVER_WEB_PORT)" \
+		AONW_APP_VERSION="$(AONW_APP_VERSION)" \
+		AONW_RELEASE_CHANNEL="$(AONW_RELEASE_CHANNEL)" \
+		$(COMPOSE) --profile dev up -d --build --remove-orphans
+	@$(MAKE) --no-print-directory local-health
+
+local-health:
+	@$(MAKE) --no-print-directory health PROFILE=dev HEALTH_URL="$(LOCAL_HEALTH_URL)"
+
+local-seed: local-up
+	@$(MAKE) --no-print-directory serverpod-seed-test-users SERVERPOD_SEED_HOST="$(LOCAL_API_BASE_URL)/"
+
+local-multiplayer-smoke: local-up
+	@$(MAKE) --no-print-directory serverpod-runtime-smoke SERVERPOD_SMOKE_HOST="$(LOCAL_API_BASE_URL)/"
+
+local-web: local-start
+	@echo "Starting Flutter Web at http://$(LOCAL_WEB_HOST):$(LOCAL_WEB_PORT) with API=$(LOCAL_API_BASE_URL)"
+	@flutter run -d "$(LOCAL_WEB_DEVICE)" \
+		--web-hostname "$(LOCAL_WEB_HOST)" \
+		--web-port "$(LOCAL_WEB_PORT)" \
+		"--dart-define=AONW_API_BASE_URL=$(LOCAL_API_BASE_URL)"
+
+local-down:
+	@$(COMPOSE) --profile dev down --remove-orphans
 
 compose-check:
 	@command -v docker >/dev/null || { echo "docker is required."; exit 1; }

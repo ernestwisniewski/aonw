@@ -65,15 +65,25 @@ cp .env.example .env
 Replace every `replace-with-*` value before starting services:
 
 ```sh
-docker compose --profile dev up --build
-curl -fsS http://localhost:8080/livez
-curl -fsS http://localhost:8080/readyz
+make local-start
 ```
+
+This starts the Docker development profile, waits for
+`http://localhost:8080/readyz`, and seeds four reusable multiplayer users. Run
+the Flutter web client on the stable Google OAuth origin with:
+
+```sh
+make local
+```
+
+The web origin is `http://localhost:7357`; its API is the Docker Serverpod
+service at `http://localhost:8080`. Exercise the automated multiplayer flow
+against that same stack with `make local-multiplayer-smoke`.
 
 Stop the stack:
 
 ```sh
-docker compose --profile dev down
+make local-down
 ```
 
 Reset local database volumes:
