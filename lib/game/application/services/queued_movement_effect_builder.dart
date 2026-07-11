@@ -3,9 +3,16 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class QueuedMovementEffectBuilder {
+  /// Builds animations from an authoritative before/after unit delta.
+  ///
+  /// Ordinary moves have no path data in recipient-projected snapshots.
+  /// Enable [inferDirectMoves] only for a contiguous live transition; snapshot
+  /// reloads and offset-gap recovery do not contain enough history to animate
+  /// a direct delta reliably.
   static List<AnimateUnitMoveEffect> fromUnitDelta({
     required Iterable<GameUnit> beforeUnits,
     required Iterable<GameUnit> afterUnits,
+    bool inferDirectMoves = false,
   }) {
     final beforeById = {for (final unit in beforeUnits) unit.id: unit};
     final effects = <AnimateUnitMoveEffect>[];
@@ -15,7 +22,11 @@ abstract final class QueuedMovementEffectBuilder {
       if (before == null) continue;
       if (before.col == after.col && before.row == after.row) continue;
 
-      final steps = _stepsForMovedUnit(before: before, after: after);
+      final steps = _stepsForMovedUnit(
+        before: before,
+        after: after,
+        inferDirectMoves: inferDirectMoves,
+      );
       if (steps == null) continue;
 
       effects.add(
@@ -34,10 +45,11 @@ abstract final class QueuedMovementEffectBuilder {
   static List<UnitMovementStep>? _stepsForMovedUnit({
     required GameUnit before,
     required GameUnit after,
+    required bool inferDirectMoves,
   }) {
     final pathSteps = _pathStepsFor(before);
     if (pathSteps == null) {
-      return before.isAutoExploring || after.isAutoExploring
+      return inferDirectMoves || before.isAutoExploring || after.isAutoExploring
           ? [_destinationStep(after)]
           : null;
     }

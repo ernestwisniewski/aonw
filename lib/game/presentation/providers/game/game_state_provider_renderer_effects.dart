@@ -5,12 +5,14 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required GameState previousState,
     required GameState nextState,
     required Iterable<GameEvent> events,
+    bool inferDirectMoves = false,
     String? viewerPlayerId,
     int? turn,
   }) {
     final movementEffects = QueuedMovementEffectBuilder.fromUnitDelta(
       beforeUnits: previousState.units,
       afterUnits: nextState.units,
+      inferDirectMoves: inferDirectMoves,
     );
     final animatedUnitIds = {
       for (final effect in movementEffects) effect.unitId,

@@ -427,6 +427,7 @@ class GameStateNotifier extends _$GameStateNotifier {
         previousState: previousState,
         nextState: nextState,
         events: liveEvents,
+        inferDirectMoves: liveEvent != null && !hasOffsetGap,
         viewerPlayerId: viewerPlayerId,
         turn: _eventTurnFor(liveEvents, fallbackTurn: snapshot.save.turn),
       );

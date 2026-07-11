@@ -202,5 +202,32 @@ void main() {
         expect(effects, isEmpty);
       },
     );
+
+    test('infers an ordinary movement step when explicitly requested', () {
+      final before = GameUnit.produced(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 1,
+        row: 1,
+      );
+      final after = before.copyWith(col: 2, row: 1, movementPoints: 1);
+
+      final effects = QueuedMovementEffectBuilder.fromUnitDelta(
+        beforeUnits: [before],
+        afterUnits: [after],
+        inferDirectMoves: true,
+      );
+
+      expect(
+        effects.single,
+        isA<AnimateUnitMoveEffect>()
+            .having((effect) => effect.unitId, 'unitId', 'warrior_1')
+            .having((effect) => effect.fromCol, 'fromCol', 1)
+            .having((effect) => effect.fromRow, 'fromRow', 1)
+            .having((effect) => effect.steps.single.col, 'step col', 2)
+            .having((effect) => effect.steps.single.row, 'step row', 1),
+      );
+    });
   });
 }

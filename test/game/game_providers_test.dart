@@ -740,17 +740,7 @@ void main() {
               matchId: save.id,
               offset: 1,
               timestamp: DateTime.utc(2026, 4, 27, 12),
-              actorPlayerId: 'player_2',
-              command: const MoveUnitCommand('commander_player_2', 1, 0),
-              events: const [
-                UnitMovedEvent(
-                  unitId: 'commander_player_2',
-                  fromCol: 0,
-                  fromRow: 0,
-                  toCol: 1,
-                  toRow: 0,
-                ),
-              ],
+              events: const [],
             ),
           ),
         );
