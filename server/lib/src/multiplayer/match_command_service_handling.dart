@@ -38,6 +38,26 @@ extension MatchCommandServiceHandling on MatchCommandService {
       clientMessageId: message.clientMessageId,
     );
     if (duplicate != null) {
+      if (!_isSameCommandDelivery(duplicate, command)) {
+        store.operationalEvents.commandRejected(
+          matchId: state.match.id,
+          reasonCode: 'client_message_id_conflict',
+        );
+        return _directOutcome(
+          caller,
+          _broadcaster.message(
+            matchId: state.match.id,
+            offset: state.offset,
+            ack: WireCommandAck(
+              matchId: state.match.id,
+              accepted: false,
+              offset: state.offset,
+              snapshot: state.snapshot,
+              reason: 'client_message_id_conflict',
+            ),
+          ),
+        );
+      }
       return _directOutcome(
         caller,
         _broadcaster.message(
@@ -138,6 +158,29 @@ extension MatchCommandServiceHandling on MatchCommandService {
       null,
       notifications: broadcast.followedBy(ack),
     );
+  }
+
+  bool _isSameCommandDelivery(WireEvent event, WireCommand command) {
+    final actorPlayerId = event.actorPlayerId;
+    final tick = event.tick;
+    final turn = event.turn;
+    final payload = event.command;
+    if (actorPlayerId == null ||
+        tick == null ||
+        turn == null ||
+        payload == null) {
+      return false;
+    }
+
+    return WireCommand(
+          v: command.v,
+          matchId: event.matchId,
+          tick: tick,
+          turn: turn,
+          actorPlayerId: actorPlayerId,
+          command: payload,
+        ) ==
+        command;
   }
 
   MatchMutationOutcome<void> _directOutcome(

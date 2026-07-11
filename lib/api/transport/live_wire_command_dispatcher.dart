@@ -25,6 +25,7 @@ class LiveWireCommandDispatcher implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   }) async {
     LiveEventSubscriptionHandle? handle;
     try {
@@ -38,11 +39,13 @@ class LiveWireCommandDispatcher implements WireCommandDispatcher {
         token: token,
         afterOffset: afterOffset,
         wire: wire,
+        clientMessageId: clientMessageId,
       );
     }
     return handle.sendCommand(
       afterOffset: afterOffset,
       wire: wire,
+      clientMessageId: clientMessageId,
       timeout: timeout,
     );
   }

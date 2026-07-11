@@ -203,6 +203,45 @@ void main() {
       expect(ticks, [7, 8]);
     });
 
+    test('keeps command ids unique when a match is resumed', () async {
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final initial = GameState(
+        units: [commander],
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+      );
+      final server = _FakeCommandServer(save: _save(), state: initial);
+
+      final firstSession = _transport(server);
+      final first = await firstSession.dispatch(
+        saveId: 'save_1',
+        currentState: initial,
+        command: MoveUnitCommand(commander.id, 1, 0),
+      );
+
+      final resumedSession = _transport(server);
+      final resumed = await resumedSession.dispatch(
+        saveId: 'save_1',
+        currentState: first.state,
+        command: MoveUnitCommand(commander.id, 2, 0),
+      );
+
+      expect(server.sentCommands.map((sent) => sent.wire.tick), [1, 1]);
+      expect(
+        server.sentCommands.map((sent) => sent.clientMessageId).toSet(),
+        hasLength(2),
+      );
+      expect(
+        server.sentCommands.map((sent) => sent.clientMessageId.length),
+        everyElement(lessThanOrEqualTo(128)),
+      );
+      expect(
+        server.sentCommands.map((sent) => sent.clientMessageId),
+        everyElement(matches(RegExp(r'^[A-Za-z0-9][A-Za-z0-9._:-]*$'))),
+      );
+      expect(resumed.state.units.single.col, 2);
+    });
+
     test('reuses the client tick when the same command is retried', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final initial = GameState(
@@ -241,6 +280,11 @@ void main() {
         for (final sentCommand in server.sentCommands) sentCommand.wire.tick,
       ];
       expect(ticks, [9, 9, 10]);
+      final messageIds = server.sentCommands
+          .map((sent) => sent.clientMessageId)
+          .toList(growable: false);
+      expect(messageIds[1], messageIds[0]);
+      expect(messageIds[2], isNot(messageIds[0]));
       expect(retried.state.units.single.col, 1);
     });
 
@@ -1009,12 +1053,14 @@ class _SentCommand {
   final AuthToken token;
   final int afterOffset;
   final WireCommand wire;
+  final String clientMessageId;
 
   const _SentCommand({
     required this.saveId,
     required this.token,
     required this.afterOffset,
     required this.wire,
+    required this.clientMessageId,
   });
 }
 
@@ -1030,6 +1076,7 @@ class _ScriptedSentCommand extends _SentCommand {
     required super.token,
     required super.afterOffset,
     required super.wire,
+    required super.clientMessageId,
   });
 }
 
@@ -1045,6 +1092,7 @@ class _ScriptedCommandDispatcher implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   }) async {
     final command = _ScriptedSentCommand(
       call: sentCommands.length + 1,
@@ -1052,6 +1100,7 @@ class _ScriptedCommandDispatcher implements WireCommandDispatcher {
       token: token,
       afterOffset: afterOffset,
       wire: wire,
+      clientMessageId: clientMessageId,
     );
     sentCommands.add(command);
     return handler(command);
@@ -1090,6 +1139,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   }) async {
     sentCommands.add(
       _SentCommand(
@@ -1097,6 +1147,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
         token: token,
         afterOffset: afterOffset,
         wire: wire,
+        clientMessageId: clientMessageId,
       ),
     );
     final error = nextError;

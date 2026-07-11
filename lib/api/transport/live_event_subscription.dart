@@ -247,7 +247,6 @@ class _LiveEventSubscriptionController {
   var _trackedNextOffset = 0;
   var _closed = false;
   var _reconnecting = false;
-  var _nextClientMessageId = 0;
 
   _LiveEventSubscriptionController({
     required this.connect,
@@ -281,6 +280,7 @@ class _LiveEventSubscriptionController {
   Future<WireCommandAck> sendCommand({
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
     Duration timeout = const Duration(seconds: 10),
   }) {
     final input = _input;
@@ -290,7 +290,6 @@ class _LiveEventSubscriptionController {
 
     final ack = Completer<WireCommandAck>();
     _pendingAcks.add(ack);
-    final clientMessageId = _nextCommandClientMessageId(wire);
     try {
       _localCommandEchoGuard.remember(wire);
       input.add(
@@ -453,11 +452,6 @@ class _LiveEventSubscriptionController {
     return reconnectDelays.last;
   }
 
-  String _nextCommandClientMessageId(WireCommand wire) {
-    _nextClientMessageId += 1;
-    return 'live-cmd-${wire.actorPlayerId}-${wire.tick}-$_nextClientMessageId';
-  }
-
   void _completeNextAck(WireCommandAck ack) {
     if (_pendingAcks.isEmpty) return;
     final pending = _pendingAcks.removeFirst();
@@ -547,11 +541,13 @@ class LiveEventSubscriptionHandle {
   Future<WireCommandAck> sendCommand({
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
     Duration timeout = const Duration(seconds: 10),
   }) {
     return _controller.sendCommand(
       afterOffset: afterOffset,
       wire: wire,
+      clientMessageId: clientMessageId,
       timeout: timeout,
     );
   }

@@ -215,6 +215,7 @@ void main() {
       final pendingAck = handle.sendCommand(
         afterOffset: 8,
         wire: wire,
+        clientMessageId: 'command-session-1',
         timeout: const Duration(seconds: 1),
       );
       await _waitFor(() => connection.clientMessages.isNotEmpty);
@@ -223,6 +224,7 @@ void main() {
       expect(sent.lastSeenOffset, 8);
       expect(sent.requestSnapshot, isFalse);
       expect(sent.command, wire);
+      expect(sent.clientMessageId, 'command-session-1');
 
       connection.add(
         _message(

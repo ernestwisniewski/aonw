@@ -2672,6 +2672,66 @@ void main() {
     await ownerInput.close();
   });
 
+  test('rejects a reused client message id for another command', () async {
+    final fixture = await _startRunningMatch('message-id-conflict');
+    final owner = fixture.match.players.first;
+    final ownerInput = StreamController<MultiplayerClientMessage>();
+    final ownerStream = fixture.hub
+        .connect(
+          store: fixture.store,
+          userIdentifier: owner.userId,
+          matchId: fixture.match.id,
+          afterOffset: 0,
+          input: ownerInput.stream,
+        )
+        .asBroadcastStream();
+    expect((await ownerStream.first).snapshot?.offset, 0);
+
+    final acks = ownerStream
+        .where((message) => message.ack != null)
+        .take(2)
+        .toList();
+    const clientMessageId = 'owner-reused-command-id';
+    ownerInput.add(
+      MultiplayerClientMessage(
+        clientMessageId: clientMessageId,
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: fixture.match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+        ),
+      ),
+    );
+    ownerInput.add(
+      MultiplayerClientMessage(
+        clientMessageId: clientMessageId,
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: fixture.match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(EndTurnCommand(owner.id)),
+        ),
+      ),
+    );
+
+    final ackMessages = await acks;
+
+    expect(ackMessages.map((message) => message.ack?.accepted), [true, false]);
+    expect(ackMessages.map((message) => message.ack?.offset), [1, 1]);
+    expect(ackMessages.last.ack?.reason, 'client_message_id_conflict');
+    expect(await fixture.store.listEvents(fixture.match.id, 0), hasLength(1));
+    expect((await fixture.store.findState(fixture.match.id))!.offset, 1);
+
+    await ownerInput.close();
+  });
+
   test('deduplicates retry bursts under duplicate delivery patterns', () async {
     for (final duplicateCount in [2, 3, 5, 8]) {
       final fixture = await _startRunningMatch('retry-burst-$duplicateCount');

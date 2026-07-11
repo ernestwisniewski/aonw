@@ -265,6 +265,7 @@ class _FakeWireCommandDispatcher implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   })
   handler;
 
@@ -276,12 +277,14 @@ class _FakeWireCommandDispatcher implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   }) {
     return handler(
       saveId: saveId,
       token: token,
       afterOffset: afterOffset,
       wire: wire,
+      clientMessageId: clientMessageId,
     );
   }
 }
@@ -1379,6 +1382,7 @@ void main() {
           required token,
           required afterOffset,
           required wire,
+          required clientMessageId,
         }) async {
           fallbackCommandCount += 1;
           throw StateError('Expected command to use the live match channel.');

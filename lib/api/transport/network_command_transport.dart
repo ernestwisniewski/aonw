@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/api/transport/wire_command_message_id.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -64,11 +65,14 @@ class NetworkCommandConflictException implements Exception {
 }
 
 abstract interface class WireCommandDispatcher {
+  /// Sends one delivery attempt of [wire]. Retries of the same command must
+  /// reuse [clientMessageId] so the server can deduplicate them safely.
   Future<WireCommandAck> send({
     required String saveId,
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   });
 }
 
@@ -101,6 +105,7 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
     required AuthToken token,
     required int afterOffset,
     required WireCommand wire,
+    required String clientMessageId,
   }) async {
     final client = _activeClient;
     if (authKeyProviderFactory == null) {
@@ -136,8 +141,7 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
       );
       input.add(
         sp.MultiplayerClientMessage(
-          clientMessageId:
-              'cmd-${wire.actorPlayerId}-${wire.tick}-${DateTime.now().microsecondsSinceEpoch}',
+          clientMessageId: clientMessageId,
           lastSeenOffset: afterOffset,
           requestSnapshot: false,
           command: wire,
@@ -182,6 +186,7 @@ class NetworkCommandTransport implements CommandTransport {
   final ClientTickGenerator tickGenerator;
   final GameStateReducer localReducer;
   final GameRepository gameRepository;
+  final WireCommandMessageIdGenerator messageIdGenerator;
   final bool _ownsCommandDispatcher;
   _RetryableServerCommand? _retryableCommand;
   final Map<String, int> _lastKnownTurnBySaveId = {};
@@ -199,7 +204,10 @@ class NetworkCommandTransport implements CommandTransport {
     required this.tickGenerator,
     required this.localReducer,
     required this.gameRepository,
+    WireCommandMessageIdGenerator? messageIdGenerator,
   }) : _ownsCommandDispatcher = commandDispatcher == null,
+       messageIdGenerator =
+           messageIdGenerator ?? WireCommandMessageIdGenerator(),
        commandDispatcher =
            commandDispatcher ??
            ServerpodWireCommandDispatcher(
@@ -294,15 +302,20 @@ class NetworkCommandTransport implements CommandTransport {
             )
         ? retryable.turn
         : await _turnFor(saveId);
-    final wire = _wireCommandForRetryableDispatch(
+    final outgoing = _wireCommandForRetryableDispatch(
       saveId: saveId,
       actorPlayerId: actor,
       turn: turn,
       command: command,
     );
+    final wire = outgoing.wire;
     final WireCommandAck ack;
     try {
-      ack = await _sendWireCommand(saveId: saveId, wire: wire);
+      ack = await _sendWireCommand(
+        saveId: saveId,
+        wire: wire,
+        clientMessageId: outgoing.clientMessageId,
+      );
     } on NetworkCommandConflictException catch (error) {
       final nextTick = _nextTickFromStaleTickError(error);
       if (_isStaleTickError(error) &&
@@ -417,7 +430,8 @@ class NetworkCommandTransport implements CommandTransport {
     );
   }
 
-  WireCommand _wireCommandForRetryableDispatch({
+  ({WireCommand wire, String clientMessageId})
+  _wireCommandForRetryableDispatch({
     required String saveId,
     required String actorPlayerId,
     required int? turn,
@@ -431,22 +445,24 @@ class NetworkCommandTransport implements CommandTransport {
           turn: turn,
           command: command,
         )) {
-      return retryable.wire;
+      return (wire: retryable.wire, clientMessageId: retryable.clientMessageId);
     }
 
     _retryableCommand = null;
-    return commandCodec.toWire(
+    final wire = commandCodec.toWire(
       matchId: saveId,
       tick: tickGenerator.next(),
       turn: turn,
       actorPlayerId: actorPlayerId,
       command: command,
     );
+    return (wire: wire, clientMessageId: messageIdGenerator.next());
   }
 
   Future<WireCommandAck> _sendWireCommand({
     required String saveId,
     required WireCommand wire,
+    required String clientMessageId,
   }) async {
     try {
       final currentToken = await tokenReader?.call() ?? token;
@@ -455,6 +471,7 @@ class NetworkCommandTransport implements CommandTransport {
         token: currentToken,
         afterOffset: _lastKnownOffsetBySaveId[saveId] ?? 0,
         wire: wire,
+        clientMessageId: clientMessageId,
       );
     } catch (error) {
       if (_isRetryableCommandSendError(error)) {
@@ -464,6 +481,7 @@ class NetworkCommandTransport implements CommandTransport {
           turn: wire.turn,
           command: commandCodec.fromWire(wire),
           wire: wire,
+          clientMessageId: clientMessageId,
         );
       } else {
         _clearRetryableCommand(wire);
@@ -670,6 +688,7 @@ class _RetryableServerCommand {
   final int? turn;
   final GameCommand command;
   final WireCommand wire;
+  final String clientMessageId;
 
   const _RetryableServerCommand({
     required this.saveId,
@@ -677,6 +696,7 @@ class _RetryableServerCommand {
     required this.turn,
     required this.command,
     required this.wire,
+    required this.clientMessageId,
   });
 
   bool matches({

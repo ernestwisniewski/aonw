@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:serverpod/serverpod.dart' show QueryParameters;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -788,6 +789,92 @@ WHERE "matchId" = @matchId
         },
       );
 
+      test('accepts unit movement after a resume reconnect', () async {
+        final owner = await _accountSession(
+          sessionBuilder,
+          endpoints,
+          email: 'owner-resume-move@example.test',
+          displayName: 'Owner Resume Move',
+        );
+        final guest = await _accountSession(
+          sessionBuilder,
+          endpoints,
+          email: 'guest-resume-move@example.test',
+          displayName: 'Guest Resume Move',
+        );
+        final started = await _startTwoPlayerMatch(
+          endpoints,
+          ownerSession: owner.session,
+          guestSession: guest.session,
+        );
+        final ownerPlayer = started.players.firstWhere(
+          (player) => player.userId == owner.userIdentifier,
+        );
+        final mapData = await const FileMultiplayerMapCatalog().loadAssetMap(
+          'myranth',
+        );
+        final initialSnapshot = await endpoints.multiplayer.loadSnapshot(
+          owner.session,
+          started.id,
+        );
+        final initialState = PersistentGameState.fromJson(
+          initialSnapshot.state,
+        );
+        final initialUnitPositions = _unitPositionsFor(
+          initialState,
+          ownerPlayer.id,
+        );
+
+        final firstAck = await _connectAndDispatchMove(
+          endpoints: endpoints,
+          session: owner.session,
+          matchId: started.id,
+          afterOffset: initialSnapshot.offset,
+          actorPlayerId: ownerPlayer.id,
+          mapData: mapData,
+          tick: 1,
+          clientMessageId: 'resume-move-first',
+        );
+        expect(
+          firstAck.accepted,
+          isTrue,
+          reason: 'first-session move rejected: ${firstAck.reason}',
+        );
+        expect(firstAck.offset, initialSnapshot.offset + 1);
+        final firstState = PersistentGameState.fromJson(
+          firstAck.snapshot.state,
+        );
+        final firstUnitPositions = _unitPositionsFor(
+          firstState,
+          ownerPlayer.id,
+        );
+        expect(firstUnitPositions, isNot(equals(initialUnitPositions)));
+
+        final resumedAck = await _connectAndDispatchMove(
+          endpoints: endpoints,
+          session: owner.session,
+          matchId: started.id,
+          afterOffset: firstAck.offset,
+          actorPlayerId: ownerPlayer.id,
+          mapData: mapData,
+          tick: 1,
+          clientMessageId: 'resume-move-second',
+        );
+        expect(
+          resumedAck.accepted,
+          isTrue,
+          reason: 'post-resume move rejected: ${resumedAck.reason}',
+        );
+        expect(resumedAck.offset, firstAck.offset + 1);
+        final resumedState = PersistentGameState.fromJson(
+          resumedAck.snapshot.state,
+        );
+        expect(
+          _unitPositionsFor(resumedState, ownerPlayer.id),
+          isNot(equals(firstUnitPositions)),
+        );
+      });
+
       test(
         'quickplay enforces seats, countdown, country conflicts, and capacity',
         () async {
@@ -1083,4 +1170,125 @@ Future<WireCommandAck> _sendClientCommand(
     await input.close();
     await subscription.cancel();
   }
+}
+
+Future<WireCommandAck> _connectAndDispatchMove({
+  required TestEndpoints endpoints,
+  required TestSessionBuilder session,
+  required String matchId,
+  required int afterOffset,
+  required String actorPlayerId,
+  required MapData mapData,
+  required int tick,
+  required String clientMessageId,
+}) async {
+  final input = StreamController<MultiplayerClientMessage>();
+  final initial = Completer<MultiplayerServerMessage>();
+  final ackMessage = Completer<MultiplayerServerMessage>();
+  final subscription = endpoints.multiplayer
+      .connect(session, matchId, afterOffset, input.stream)
+      .listen(
+        (message) {
+          if (message.snapshot != null && !initial.isCompleted) {
+            initial.complete(message);
+          }
+          if (message.ack != null && !ackMessage.isCompleted) {
+            ackMessage.complete(message);
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (!initial.isCompleted) initial.completeError(error, stackTrace);
+          if (!ackMessage.isCompleted) {
+            ackMessage.completeError(error, stackTrace);
+          }
+        },
+      );
+  try {
+    final initialMessage = await initial.future.timeout(_streamTimeout);
+    final snapshot = initialMessage.snapshot!;
+    final save = GameSave.fromJson(snapshot.save);
+    final state = PersistentGameState.fromJson(snapshot.state);
+    final move = _legalMoveCommandFor(
+      mapData: mapData,
+      state: state,
+      actorPlayerId: actorPlayerId,
+    );
+    input.add(
+      MultiplayerClientMessage(
+        clientMessageId: clientMessageId,
+        lastSeenOffset: snapshot.offset,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: matchId,
+          tick: tick,
+          turn: save.turn,
+          actorPlayerId: actorPlayerId,
+          command: GameCommandSerializer.toJson(move),
+        ),
+      ),
+    );
+    final acked = await ackMessage.future.timeout(_streamTimeout);
+    return acked.ack!;
+  } finally {
+    await input.close();
+    await subscription.cancel();
+  }
+}
+
+MoveUnitCommand _legalMoveCommandFor({
+  required MapData mapData,
+  required PersistentGameState state,
+  required String actorPlayerId,
+}) {
+  final pathfinder = UnitMovementPathfinder(
+    mapData: mapData,
+    units: state.units,
+  );
+  final actorUnits =
+      state.units
+          .where(
+            (unit) =>
+                unit.ownerPlayerId == actorPlayerId &&
+                !unit.isWorking &&
+                unit.type != GameUnitType.merchant &&
+                unit.movementPoints > 0,
+          )
+          .toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+  for (final unit in actorUnits) {
+    final reachable =
+        pathfinder
+            .movementCostsFrom(unit: unit, maxCost: unit.movementPoints)
+            .entries
+            .toList()
+          ..sort((a, b) {
+            final cost = a.value.compareTo(b.value);
+            if (cost != 0) return cost;
+            final col = a.key.col.compareTo(b.key.col);
+            if (col != 0) return col;
+            return a.key.row.compareTo(b.key.row);
+          });
+    for (final entry in reachable) {
+      final coords = entry.key;
+      final foreignCityCenter = state.cities.any(
+        (city) =>
+            city.ownerPlayerId != actorPlayerId &&
+            city.occupiesCenter(coords.col, coords.row),
+      );
+      if (foreignCityCenter) continue;
+      return MoveUnitCommand(unit.id, coords.col, coords.row);
+    }
+  }
+  throw StateError('No legal movement candidate for $actorPlayerId.');
+}
+
+Map<String, ({int col, int row})> _unitPositionsFor(
+  PersistentGameState state,
+  String playerId,
+) {
+  return {
+    for (final unit in state.units)
+      if (unit.ownerPlayerId == playerId)
+        unit.id: (col: unit.col, row: unit.row),
+  };
 }
