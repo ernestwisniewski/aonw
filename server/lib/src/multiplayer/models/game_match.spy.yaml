@@ -25,5 +25,9 @@ indexes:
   aonw_match_invite_code_idx:
     fields: inviteCode
     unique: true
-  aonw_match_state_idx:
-    fields: state
+  aonw_match_state_created_public_idx:
+    fields: state, createdAt, publicId
+  aonw_match_public_discovery_idx:
+    fields: state, private, inviteCode, createdAt, publicId
+  aonw_match_quickplay_candidate_idx:
+    fields: state, private, quickplay, inviteCode, createdAt, publicId

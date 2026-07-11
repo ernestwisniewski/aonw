@@ -12,8 +12,10 @@ fields:
   ready: bool
   seatOrder: int
 indexes:
-  aonw_player_match_user_idx:
-    fields: matchId, userIdentifier
+  # Keeps the existing unique (match, user) invariant while putting the lookup
+  # key first for participant discovery.
+  aonw_player_user_match_idx:
+    fields: userIdentifier, matchId
     unique: true
   aonw_player_match_public_idx:
     fields: matchId, publicPlayerId
