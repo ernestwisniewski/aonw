@@ -31,6 +31,9 @@ abstract class GameMatch implements _i1.SerializableModel {
     required this.quickplay,
     required this.createdAt,
     this.startedAt,
+    this.endedAt,
+    this.outcomeCondition,
+    this.winnerPlayerId,
     this.autoStartAt,
     this.inviteCode,
     this.players,
@@ -52,6 +55,9 @@ abstract class GameMatch implements _i1.SerializableModel {
     required bool quickplay,
     required DateTime createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -78,6 +84,11 @@ abstract class GameMatch implements _i1.SerializableModel {
       startedAt: jsonSerialization['startedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['startedAt']),
+      endedAt: jsonSerialization['endedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['endedAt']),
+      outcomeCondition: jsonSerialization['outcomeCondition'] as String?,
+      winnerPlayerId: jsonSerialization['winnerPlayerId'] as String?,
       autoStartAt: jsonSerialization['autoStartAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
@@ -131,6 +142,12 @@ abstract class GameMatch implements _i1.SerializableModel {
 
   DateTime? startedAt;
 
+  DateTime? endedAt;
+
+  String? outcomeCondition;
+
+  String? winnerPlayerId;
+
   DateTime? autoStartAt;
 
   String? inviteCode;
@@ -158,6 +175,9 @@ abstract class GameMatch implements _i1.SerializableModel {
     bool? quickplay,
     DateTime? createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -181,6 +201,9 @@ abstract class GameMatch implements _i1.SerializableModel {
       'quickplay': quickplay,
       'createdAt': createdAt.toJson(),
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      if (endedAt != null) 'endedAt': endedAt?.toJson(),
+      if (outcomeCondition != null) 'outcomeCondition': outcomeCondition,
+      if (winnerPlayerId != null) 'winnerPlayerId': winnerPlayerId,
       if (autoStartAt != null) 'autoStartAt': autoStartAt?.toJson(),
       if (inviteCode != null) 'inviteCode': inviteCode,
       if (players != null)
@@ -215,6 +238,9 @@ class _GameMatchImpl extends GameMatch {
     required bool quickplay,
     required DateTime createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -234,6 +260,9 @@ class _GameMatchImpl extends GameMatch {
          quickplay: quickplay,
          createdAt: createdAt,
          startedAt: startedAt,
+         endedAt: endedAt,
+         outcomeCondition: outcomeCondition,
+         winnerPlayerId: winnerPlayerId,
          autoStartAt: autoStartAt,
          inviteCode: inviteCode,
          players: players,
@@ -259,6 +288,9 @@ class _GameMatchImpl extends GameMatch {
     bool? quickplay,
     DateTime? createdAt,
     Object? startedAt = _Undefined,
+    Object? endedAt = _Undefined,
+    Object? outcomeCondition = _Undefined,
+    Object? winnerPlayerId = _Undefined,
     Object? autoStartAt = _Undefined,
     Object? inviteCode = _Undefined,
     Object? players = _Undefined,
@@ -279,6 +311,13 @@ class _GameMatchImpl extends GameMatch {
       quickplay: quickplay ?? this.quickplay,
       createdAt: createdAt ?? this.createdAt,
       startedAt: startedAt is DateTime? ? startedAt : this.startedAt,
+      endedAt: endedAt is DateTime? ? endedAt : this.endedAt,
+      outcomeCondition: outcomeCondition is String?
+          ? outcomeCondition
+          : this.outcomeCondition,
+      winnerPlayerId: winnerPlayerId is String?
+          ? winnerPlayerId
+          : this.winnerPlayerId,
       autoStartAt: autoStartAt is DateTime? ? autoStartAt : this.autoStartAt,
       inviteCode: inviteCode is String? ? inviteCode : this.inviteCode,
       players: players is List<_i2.GamePlayer>?

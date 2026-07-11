@@ -1203,6 +1203,12 @@ void main() {
           state: persistentState
               .copyWith(
                 playerGold: {ownerPlayerId: 111, guestPlayerId: 999},
+                units: persistentState.units
+                    .where((unit) => unit.ownerPlayerId != guestPlayerId)
+                    .toList(),
+                cities: persistentState.cities
+                    .where((city) => city.ownerPlayerId != guestPlayerId)
+                    .toList(),
                 runtimeState: persistentState.runtimeState.copyWith(
                   submittedPlayerIds: {ownerPlayerId},
                   turnStartedAt: now,
@@ -1234,6 +1240,11 @@ void main() {
     final updatedSave = GameSave.fromJson(updated.snapshot.save);
     final events = await store.listEvents(started.id, 0);
     expect(updatedSave.turn, 2);
+    expect(updated.match.state, 'finished');
+    expect(updated.match.endedAt, now);
+    expect(updated.match.outcomeCondition, 'conquest');
+    expect(updated.match.winnerPlayerId, ownerPlayerId);
+    expect(projectedUpdate.match?.state, 'finished');
     expect(events, hasLength(1));
     expect(events.single.turn, running.match.turn);
     expect(projectedUpdate.event?.turn, running.match.turn);
@@ -1609,8 +1620,10 @@ void main() {
     'resignMatch keeps a running FFA alive until one player remains',
     () async {
       final mapCatalog = _FakeMapCatalog(_testMap());
+      final endedAt = DateTime.utc(2026, 7, 12, 15);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+        nowUtc: () => endedAt,
       );
       final store = _MemoryMatchStore();
       final match = await hub.createMatch(
@@ -1671,6 +1684,7 @@ void main() {
       final runningState = PersistentGameState.fromJson(running.snapshot.state);
 
       expect(afterFirstResign.state, 'running');
+      expect(afterFirstResign.endedAt, isNull);
       expect(firstGuest.connectionState, WirePlayerConnectionState.offline);
       expect(runningSave.playerStates[firstGuest.id], PlayerTurnState.finished);
       expect(
@@ -1685,6 +1699,9 @@ void main() {
       );
 
       expect(afterSecondResign.state, 'finished');
+      expect(afterSecondResign.endedAt, endedAt);
+      expect(afterSecondResign.outcomeCondition, 'resignation');
+      expect(afterSecondResign.winnerPlayerId, started.players.first.id);
       expect(
         (await store.findState(started.id))!.snapshot.state['phase'],
         'finished',
@@ -1701,6 +1718,165 @@ void main() {
       await ownerInput.close();
     },
   );
+
+  test(
+    'resignMatch ignores eliminated FFA seats when choosing the winner',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      final endedAt = DateTime.utc(2026, 7, 12, 15, 30);
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+        nowUtc: () => endedAt,
+      );
+      final store = _MemoryMatchStore();
+      const suffix = 'alive-contenders';
+      final started = await _startRunningFfaMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: suffix,
+        mapCatalog: mapCatalog,
+      );
+      final canonical = (await store.findState(started.id))!.match;
+      final eliminated = canonical.players.firstWhere(
+        (player) => player.userId == 'owner-user-$suffix',
+      );
+      final resigning = canonical.players.firstWhere(
+        (player) => player.userId == 'guest-one-$suffix',
+      );
+      final surviving = canonical.players.firstWhere(
+        (player) => player.userId == 'guest-two-$suffix',
+      );
+      await _eliminatePlayersInStoredMatch(
+        store: store,
+        matchId: started.id,
+        playerIds: {eliminated.id},
+      );
+
+      final resigned = await hub.resignMatch(
+        store: store,
+        userIdentifier: resigning.userId,
+        matchId: started.id,
+      );
+
+      expect(resigned.state, 'finished');
+      expect(resigned.endedAt, endedAt);
+      expect(resigned.outcomeCondition, 'resignation');
+      expect(resigned.winnerPlayerId, surviving.id);
+      expect(resigned.winnerPlayerId, isNot(eliminated.id));
+    },
+  );
+
+  test(
+    'resignMatch abandons an FFA when no living contender remains',
+    () async {
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      final endedAt = DateTime.utc(2026, 7, 12, 15, 45);
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+        nowUtc: () => endedAt,
+      );
+      final store = _MemoryMatchStore();
+      const suffix = 'no-alive-contenders';
+      final started = await _startRunningFfaMatchInStore(
+        hub: hub,
+        store: store,
+        suffix: suffix,
+        mapCatalog: mapCatalog,
+      );
+      final canonical = (await store.findState(started.id))!.match;
+      final resigning = canonical.players.firstWhere(
+        (player) => player.userId == 'guest-two-$suffix',
+      );
+      await _eliminatePlayersInStoredMatch(
+        store: store,
+        matchId: started.id,
+        playerIds: {
+          for (final player in canonical.players)
+            if (player.id != resigning.id) player.id,
+        },
+      );
+
+      final resigned = await hub.resignMatch(
+        store: store,
+        userIdentifier: resigning.userId,
+        matchId: started.id,
+      );
+      final stored = (await store.findState(started.id))!;
+
+      expect(resigned.state, 'abandoned');
+      expect(resigned.endedAt, endedAt);
+      expect(resigned.outcomeCondition, isNull);
+      expect(resigned.winnerPlayerId, isNull);
+      expect(stored.snapshot.state['phase'], 'abandoned');
+      expect(
+        stored.snapshot.state['reason'],
+        'no_alive_players_after_resignation',
+      );
+    },
+  );
+
+  test('resigning an open lobby abandons it without a game outcome', () async {
+    final endedAt = DateTime.utc(2026, 7, 12, 16);
+    final hub = RealtimeMatchHub(nowUtc: () => endedAt);
+    final store = _MemoryMatchStore();
+    final open = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Cancelled lobby',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+
+    final resigned = await hub.resignMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: open.id,
+    );
+
+    expect(resigned.state, 'abandoned');
+    expect(resigned.endedAt, endedAt);
+    expect(resigned.outcomeCondition, isNull);
+    expect(resigned.winnerPlayerId, isNull);
+  });
+
+  test('only the owner can abandon an open lobby by resigning', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
+    final open = await hub.createMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Protected lobby',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+      ),
+    );
+    await hub.joinMatch(
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: open.id,
+    );
+
+    await expectLater(
+      hub.resignMatch(
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: open.id,
+      ),
+      throwsA(_multiplayerError('not_match_owner')),
+    );
+
+    final stored = (await store.findState(open.id))!.match;
+    expect(stored.state, 'open');
+    expect(stored.players, hasLength(2));
+    expect(stored.endedAt, isNull);
+  });
 
   test(
     'keeps a running match resumable when stream clients disconnect',
@@ -2092,6 +2268,138 @@ void main() {
 
     await ownerInput.close();
   });
+
+  test(
+    'persists a natural outcome and rejects later multiplayer commands',
+    () async {
+      final endedAt = DateTime.utc(2026, 7, 12, 17);
+      final mapCatalog = _FakeMapCatalog(_testMap());
+      final hub = RealtimeMatchHub(
+        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+        nowUtc: () => endedAt,
+      );
+      final store = _MemoryMatchStore();
+      final open = await hub.createMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        request: CreateMatchRequest(
+          name: 'Natural outcome',
+          mapName: 'verdantia',
+          maxPlayers: 2,
+          minPlayers: 2,
+          private: false,
+        ),
+      );
+      final joined = await hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: open.id,
+      );
+      final match = await hub.startMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: joined.id,
+        snapshotFactory: InitialMultiplayerSnapshotFactory(
+          mapCatalog: mapCatalog,
+        ),
+      );
+      final owner = match.players.first;
+      final guest = match.players.last;
+      final stored = (await store.findState(match.id))!;
+      final state = PersistentGameState.fromJson(stored.snapshot.state);
+      await store.saveState(
+        stored.copyWith(
+          snapshot: stored.snapshot.copyWith(
+            state: state
+                .copyWith(
+                  units: state.units
+                      .where((unit) => unit.ownerPlayerId != guest.id)
+                      .toList(),
+                  cities: state.cities
+                      .where((city) => city.ownerPlayerId != guest.id)
+                      .toList(),
+                )
+                .toJson(),
+          ),
+        ),
+      );
+
+      final input = StreamController<MultiplayerClientMessage>();
+      final stream = hub
+          .connect(
+            store: store,
+            userIdentifier: owner.userId,
+            matchId: match.id,
+            afterOffset: 0,
+            input: input.stream,
+          )
+          .asBroadcastStream();
+      await stream.first;
+      final finishedAck = stream.firstWhere((message) => message.ack != null);
+      final finishingCommand = MultiplayerClientMessage(
+        clientMessageId: 'natural-outcome-command',
+        lastSeenOffset: 0,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: match.id,
+          tick: 1,
+          turn: 1,
+          actorPlayerId: owner.id,
+          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+        ),
+      );
+      input.add(finishingCommand);
+
+      final finishMessage = await finishedAck;
+      final authoritative = (await store.findState(match.id))!;
+      expect(finishMessage.ack!.accepted, isTrue);
+      expect(finishMessage.match?.state, 'finished');
+      expect(authoritative.match.state, 'finished');
+      expect(authoritative.match.endedAt, endedAt);
+      expect(authoritative.match.outcomeCondition, 'conquest');
+      expect(authoritative.match.winnerPlayerId, owner.id);
+      expect(authoritative.snapshot.state['phase'], 'finished');
+
+      final duplicateAck = stream.firstWhere((message) => message.ack != null);
+      input.add(finishingCommand);
+      final duplicateMessage = await duplicateAck;
+      expect(duplicateMessage.ack!.accepted, isTrue);
+      expect(duplicateMessage.match?.state, 'finished');
+      expect(duplicateMessage.match?.outcomeCondition, 'conquest');
+      expect(duplicateMessage.match?.winnerPlayerId, owner.id);
+
+      final rejectedAck = stream.firstWhere((message) => message.ack != null);
+      input.add(
+        MultiplayerClientMessage(
+          clientMessageId: 'command-after-finish',
+          lastSeenOffset: authoritative.offset,
+          requestSnapshot: false,
+          command: WireCommand(
+            matchId: match.id,
+            tick: 2,
+            turn: 1,
+            actorPlayerId: owner.id,
+            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          ),
+        ),
+      );
+      final rejectedMessage = await rejectedAck;
+      expect(rejectedMessage.ack!.accepted, isFalse);
+      expect(rejectedMessage.ack!.reason, 'match_not_running');
+
+      await hub.leaveMatch(
+        store: store,
+        userIdentifier: owner.userId,
+        matchId: match.id,
+      );
+      final afterLeave = (await store.findState(match.id))!.match;
+      expect(afterLeave.state, 'finished');
+      expect(afterLeave.outcomeCondition, 'conquest');
+      expect(afterLeave.winnerPlayerId, owner.id);
+
+      await input.close();
+    },
+  );
 
   test('routes diplomacy commands through the authoritative hub', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
@@ -3110,6 +3418,66 @@ Future<WireMatch> _startRunningMatchInStore({
     userIdentifier: 'owner-user-$suffix',
     matchId: joined.id,
     snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
+  );
+}
+
+Future<WireMatch> _startRunningFfaMatchInStore({
+  required RealtimeMatchHub hub,
+  required _MemoryMatchStore store,
+  required String suffix,
+  required _FakeMapCatalog mapCatalog,
+}) async {
+  final openMatch = await hub.createMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    request: CreateMatchRequest(
+      name: 'Running FFA $suffix',
+      mapName: 'verdantia',
+      maxPlayers: 3,
+      minPlayers: 3,
+      private: false,
+    ),
+  );
+  await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-one-$suffix',
+    matchId: openMatch.id,
+  );
+  final joined = await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-two-$suffix',
+    matchId: openMatch.id,
+  );
+  return hub.startMatch(
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: joined.id,
+    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
+  );
+}
+
+Future<void> _eliminatePlayersInStoredMatch({
+  required _MemoryMatchStore store,
+  required String matchId,
+  required Set<String> playerIds,
+}) async {
+  final stored = (await store.findState(matchId))!;
+  final state = PersistentGameState.fromJson(stored.snapshot.state);
+  await store.saveState(
+    stored.copyWith(
+      snapshot: stored.snapshot.copyWith(
+        state: state
+            .copyWith(
+              units: state.units
+                  .where((unit) => !playerIds.contains(unit.ownerPlayerId))
+                  .toList(),
+              cities: state.cities
+                  .where((city) => !playerIds.contains(city.ownerPlayerId))
+                  .toList(),
+            )
+            .toJson(),
+      ),
+    ),
   );
 }
 

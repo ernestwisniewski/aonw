@@ -103,8 +103,11 @@ void main() {
         name: 'Duel',
         mapName: 'verdantia',
         turn: 1,
-        state: 'open',
+        state: 'finished',
         createdAt: DateTime.utc(2026, 4, 27, 12),
+        endedAt: DateTime.utc(2026, 4, 27, 13),
+        outcomeCondition: 'conquest',
+        winnerPlayerId: 'player_1',
         players: const [
           WirePlayer(
             id: 'player_1',
@@ -131,11 +134,22 @@ void main() {
         ],
       );
 
-      expect(WireMatch.fromJson(match.toJson()).players.single.id, 'player_1');
-      expect(WireMatch.fromJson(match.toJson()).players.single.ready, isTrue);
+      final decodedMatch = WireMatch.fromJson(match.toJson());
+      expect(decodedMatch.players.single.id, 'player_1');
+      expect(decodedMatch.players.single.ready, isTrue);
+      expect(decodedMatch.players.single.country, PlayerCountry.france);
+      expect(decodedMatch.endedAt, DateTime.utc(2026, 4, 27, 13));
+      expect(decodedMatch.outcomeCondition, 'conquest');
+      expect(decodedMatch.winnerPlayerId, 'player_1');
       expect(
-        WireMatch.fromJson(match.toJson()).players.single.country,
-        PlayerCountry.france,
+        decodedMatch
+            .copyWith(
+              endedAt: null,
+              outcomeCondition: null,
+              winnerPlayerId: null,
+            )
+            .toJson(),
+        isNot(contains('endedAt')),
       );
       expect(
         WireEvent.fromJson(event.toJson()).command?['type'],

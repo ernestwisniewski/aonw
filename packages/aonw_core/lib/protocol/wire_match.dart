@@ -15,6 +15,9 @@ class WireMatch {
   final int turn;
   final String state;
   final DateTime createdAt;
+  final DateTime? endedAt;
+  final String? outcomeCondition;
+  final String? winnerPlayerId;
   final DateTime? autoStartAt;
   final String? inviteCode;
 
@@ -31,6 +34,9 @@ class WireMatch {
     required this.turn,
     required this.state,
     required this.createdAt,
+    this.endedAt,
+    this.outcomeCondition,
+    this.winnerPlayerId,
     this.autoStartAt,
     this.inviteCode,
   }) : maxPlayers = maxPlayers ?? players.length,
@@ -65,6 +71,17 @@ class WireMatch {
       turn: WireJson.requiredInt(json, 'WireMatch', 'turn'),
       state: WireJson.requiredString(json, 'WireMatch', 'state'),
       createdAt: WireJson.requiredDateTimeUtc(json, 'WireMatch', 'createdAt'),
+      endedAt: _optionalDateTimeUtc(json, 'endedAt'),
+      outcomeCondition: WireJson.optionalString(
+        json,
+        'WireMatch',
+        'outcomeCondition',
+      ),
+      winnerPlayerId: WireJson.optionalString(
+        json,
+        'WireMatch',
+        'winnerPlayerId',
+      ),
       autoStartAt: _optionalDateTimeUtc(json, 'autoStartAt'),
       inviteCode: WireJson.optionalString(json, 'WireMatch', 'inviteCode'),
     );
@@ -83,6 +100,9 @@ class WireMatch {
     'turn': turn,
     'state': state,
     'createdAt': createdAt.toUtc().toIso8601String(),
+    if (endedAt != null) 'endedAt': endedAt!.toUtc().toIso8601String(),
+    if (outcomeCondition != null) 'outcomeCondition': outcomeCondition,
+    if (winnerPlayerId != null) 'winnerPlayerId': winnerPlayerId,
     if (autoStartAt != null)
       'autoStartAt': autoStartAt!.toUtc().toIso8601String(),
     if (inviteCode != null) 'inviteCode': inviteCode,
@@ -101,6 +121,9 @@ class WireMatch {
     int? turn,
     String? state,
     DateTime? createdAt,
+    Object? endedAt = _undefined,
+    Object? outcomeCondition = _undefined,
+    Object? winnerPlayerId = _undefined,
     Object? autoStartAt = _undefined,
     Object? inviteCode = _undefined,
   }) {
@@ -117,6 +140,15 @@ class WireMatch {
       turn: turn ?? this.turn,
       state: state ?? this.state,
       createdAt: createdAt ?? this.createdAt,
+      endedAt: identical(endedAt, _undefined)
+          ? this.endedAt
+          : endedAt as DateTime?,
+      outcomeCondition: identical(outcomeCondition, _undefined)
+          ? this.outcomeCondition
+          : outcomeCondition as String?,
+      winnerPlayerId: identical(winnerPlayerId, _undefined)
+          ? this.winnerPlayerId
+          : winnerPlayerId as String?,
       autoStartAt: identical(autoStartAt, _undefined)
           ? this.autoStartAt
           : autoStartAt as DateTime?,

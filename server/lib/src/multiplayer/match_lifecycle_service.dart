@@ -105,15 +105,26 @@ final class MatchLifecycleService {
         lock: true,
       );
       _stateAccess.requireParticipant(state, userIdentifier);
-      final updated = state.match.state == 'running'
-          ? _runningStateAfterParticipantResigned(
-              state,
-              userIdentifier: userIdentifier,
-            )
-          : _finishedStateAfterResignation(
-              state,
-              userIdentifier: userIdentifier,
-            );
+      final now = _nowUtc();
+      final updated = switch (state.match.state) {
+        'running' => _runningStateAfterParticipantResigned(
+          state,
+          userIdentifier: userIdentifier,
+          endedAt: now,
+        ),
+        'open' when state.match.ownerUserId == userIdentifier =>
+          _stateAccess.abandonedState(
+            state,
+            reason: 'player_resigned',
+            endedAt: now,
+            userIdentifier: userIdentifier,
+          ),
+        'open' => throw multiplayerException(
+          'not_match_owner',
+          'Only the owner can abandon an open lobby.',
+        ),
+        _ => state,
+      };
       await txStore.saveState(updated);
       return MatchMutationOutcome(
         updated.match,
@@ -142,13 +153,15 @@ final class MatchLifecycleService {
           state,
           userIdentifier: userIdentifier,
         );
-      } else if (state.match.ownerUserId == userIdentifier) {
+      } else if (state.match.state == 'open' &&
+          state.match.ownerUserId == userIdentifier) {
         updated = _stateAccess.abandonedState(
           state,
           reason: 'owner_left',
+          endedAt: _nowUtc(),
           userIdentifier: userIdentifier,
         );
-      } else {
+      } else if (state.match.state == 'open') {
         final match = state.match.copyWith(
           players: [
             for (final player in state.match.players)
@@ -156,6 +169,8 @@ final class MatchLifecycleService {
           ],
         );
         updated = state.copyWith(match: match);
+      } else {
+        updated = state;
       }
       await txStore.saveState(updated);
       if (updated.match.quickplay && updated.match.state == 'open') {
@@ -237,6 +252,7 @@ final class MatchLifecycleService {
       return _stateAccess.abandonedState(
         state,
         reason: 'player_left',
+        endedAt: _nowUtc(),
         userIdentifier: userIdentifier,
       );
     }
@@ -266,6 +282,9 @@ final class MatchLifecycleService {
       mapName: mapName,
       state: 'running',
       turn: 1,
+      endedAt: null,
+      outcomeCondition: null,
+      winnerPlayerId: null,
       autoStartAt: null,
     );
     final snapshot = await snapshotFactory.create(

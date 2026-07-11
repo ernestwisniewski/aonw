@@ -4,6 +4,7 @@ import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
 
 part 'match_state_access_protocol.dart';
+part 'match_state_access_lifecycle.dart';
 
 final class MatchStateAccess {
   const MatchStateAccess();
@@ -28,24 +29,6 @@ final class MatchStateAccess {
     throw multiplayerException(
       'not_match_player',
       'User is not a participant in this match.',
-    );
-  }
-
-  StoredMatchState abandonedState(
-    StoredMatchState state, {
-    required String reason,
-    String? userIdentifier,
-  }) {
-    return state.copyWith(
-      match: state.match.copyWith(state: 'abandoned', autoStartAt: null),
-      snapshot: state.snapshot.copyWith(
-        state: {
-          ...state.snapshot.state,
-          'phase': 'abandoned',
-          'reason': reason,
-          'leftUserIdentifier': ?userIdentifier,
-        },
-      ),
     );
   }
 

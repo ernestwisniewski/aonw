@@ -30,6 +30,40 @@ final class MatchCommandService {
   final DateTime Function() _nowUtc;
   RunningMatchCursor? _nextTimeoutSweepCursor;
 
+  StoredMatchState _stateAfterAcceptedReduction({
+    required StoredMatchState state,
+    required ServerCommandReduction reduction,
+    required WireSnapshot snapshot,
+    required DateTime now,
+  }) {
+    final outcome = reduction.outcome!;
+    if (!outcome.finished) {
+      return state.copyWith(
+        match: state.match.copyWith(turn: reduction.turn!),
+        snapshot: snapshot,
+      );
+    }
+    if (outcome.condition != GameOutcomeCondition.draw &&
+        outcome.winnerPlayerId == null) {
+      throw StateError(
+        'A finished ${outcome.condition.name} outcome requires a winner.',
+      );
+    }
+    return state.copyWith(
+      match: state.match.copyWith(
+        turn: reduction.turn!,
+        state: 'finished',
+        endedAt: now.toUtc(),
+        outcomeCondition: outcome.condition.name,
+        winnerPlayerId: outcome.winnerPlayerId,
+        autoStartAt: null,
+      ),
+      snapshot: snapshot.copyWith(
+        state: {...snapshot.state, 'phase': 'finished'},
+      ),
+    );
+  }
+
   Future<void> handleClientMessage({
     required MultiplayerMatchStore store,
     required String matchId,

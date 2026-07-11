@@ -17,6 +17,9 @@ GameMatch gameMatchRowForState(
     minPlayers: match.minPlayers,
     private: match.inviteCode != null,
     quickplay: match.quickplay,
+    endedAt: match.endedAt,
+    outcomeCondition: match.outcomeCondition,
+    winnerPlayerId: match.winnerPlayerId,
     autoStartAt: match.autoStartAt,
     inviteCode: match.inviteCode,
     startedAt: match.state == 'running'

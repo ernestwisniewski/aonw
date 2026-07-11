@@ -33,6 +33,9 @@ abstract class GameMatch
     required this.quickplay,
     required this.createdAt,
     this.startedAt,
+    this.endedAt,
+    this.outcomeCondition,
+    this.winnerPlayerId,
     this.autoStartAt,
     this.inviteCode,
     this.players,
@@ -54,6 +57,9 @@ abstract class GameMatch
     required bool quickplay,
     required DateTime createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -80,6 +86,11 @@ abstract class GameMatch
       startedAt: jsonSerialization['startedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['startedAt']),
+      endedAt: jsonSerialization['endedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['endedAt']),
+      outcomeCondition: jsonSerialization['outcomeCondition'] as String?,
+      winnerPlayerId: jsonSerialization['winnerPlayerId'] as String?,
       autoStartAt: jsonSerialization['autoStartAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(
@@ -135,6 +146,12 @@ abstract class GameMatch
 
   DateTime? startedAt;
 
+  DateTime? endedAt;
+
+  String? outcomeCondition;
+
+  String? winnerPlayerId;
+
   DateTime? autoStartAt;
 
   String? inviteCode;
@@ -165,6 +182,9 @@ abstract class GameMatch
     bool? quickplay,
     DateTime? createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -188,6 +208,9 @@ abstract class GameMatch
       'quickplay': quickplay,
       'createdAt': createdAt.toJson(),
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      if (endedAt != null) 'endedAt': endedAt?.toJson(),
+      if (outcomeCondition != null) 'outcomeCondition': outcomeCondition,
+      if (winnerPlayerId != null) 'winnerPlayerId': winnerPlayerId,
       if (autoStartAt != null) 'autoStartAt': autoStartAt?.toJson(),
       if (inviteCode != null) 'inviteCode': inviteCode,
       if (players != null)
@@ -216,6 +239,9 @@ abstract class GameMatch
       'quickplay': quickplay,
       'createdAt': createdAt.toJson(),
       if (startedAt != null) 'startedAt': startedAt?.toJson(),
+      if (endedAt != null) 'endedAt': endedAt?.toJson(),
+      if (outcomeCondition != null) 'outcomeCondition': outcomeCondition,
+      if (winnerPlayerId != null) 'winnerPlayerId': winnerPlayerId,
       if (autoStartAt != null) 'autoStartAt': autoStartAt?.toJson(),
       if (inviteCode != null) 'inviteCode': inviteCode,
       if (players != null)
@@ -284,6 +310,9 @@ class _GameMatchImpl extends GameMatch {
     required bool quickplay,
     required DateTime createdAt,
     DateTime? startedAt,
+    DateTime? endedAt,
+    String? outcomeCondition,
+    String? winnerPlayerId,
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
@@ -303,6 +332,9 @@ class _GameMatchImpl extends GameMatch {
          quickplay: quickplay,
          createdAt: createdAt,
          startedAt: startedAt,
+         endedAt: endedAt,
+         outcomeCondition: outcomeCondition,
+         winnerPlayerId: winnerPlayerId,
          autoStartAt: autoStartAt,
          inviteCode: inviteCode,
          players: players,
@@ -328,6 +360,9 @@ class _GameMatchImpl extends GameMatch {
     bool? quickplay,
     DateTime? createdAt,
     Object? startedAt = _Undefined,
+    Object? endedAt = _Undefined,
+    Object? outcomeCondition = _Undefined,
+    Object? winnerPlayerId = _Undefined,
     Object? autoStartAt = _Undefined,
     Object? inviteCode = _Undefined,
     Object? players = _Undefined,
@@ -348,6 +383,13 @@ class _GameMatchImpl extends GameMatch {
       quickplay: quickplay ?? this.quickplay,
       createdAt: createdAt ?? this.createdAt,
       startedAt: startedAt is DateTime? ? startedAt : this.startedAt,
+      endedAt: endedAt is DateTime? ? endedAt : this.endedAt,
+      outcomeCondition: outcomeCondition is String?
+          ? outcomeCondition
+          : this.outcomeCondition,
+      winnerPlayerId: winnerPlayerId is String?
+          ? winnerPlayerId
+          : this.winnerPlayerId,
       autoStartAt: autoStartAt is DateTime? ? autoStartAt : this.autoStartAt,
       inviteCode: inviteCode is String? ? inviteCode : this.inviteCode,
       players: players is List<_i2.GamePlayer>?
@@ -429,6 +471,24 @@ class GameMatchUpdateTable extends _i1.UpdateTable<GameMatchTable> {
         value,
       );
 
+  _i1.ColumnValue<DateTime, DateTime> endedAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.endedAt,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> outcomeCondition(String? value) =>
+      _i1.ColumnValue(
+        table.outcomeCondition,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> winnerPlayerId(String? value) =>
+      _i1.ColumnValue(
+        table.winnerPlayerId,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> autoStartAt(DateTime? value) =>
       _i1.ColumnValue(
         table.autoStartAt,
@@ -492,6 +552,18 @@ class GameMatchTable extends _i1.Table<int?> {
       'startedAt',
       this,
     );
+    endedAt = _i1.ColumnDateTime(
+      'endedAt',
+      this,
+    );
+    outcomeCondition = _i1.ColumnString(
+      'outcomeCondition',
+      this,
+    );
+    winnerPlayerId = _i1.ColumnString(
+      'winnerPlayerId',
+      this,
+    );
     autoStartAt = _i1.ColumnDateTime(
       'autoStartAt',
       this,
@@ -527,6 +599,12 @@ class GameMatchTable extends _i1.Table<int?> {
   late final _i1.ColumnDateTime createdAt;
 
   late final _i1.ColumnDateTime startedAt;
+
+  late final _i1.ColumnDateTime endedAt;
+
+  late final _i1.ColumnString outcomeCondition;
+
+  late final _i1.ColumnString winnerPlayerId;
 
   late final _i1.ColumnDateTime autoStartAt;
 
@@ -655,6 +733,9 @@ class GameMatchTable extends _i1.Table<int?> {
     quickplay,
     createdAt,
     startedAt,
+    endedAt,
+    outcomeCondition,
+    winnerPlayerId,
     autoStartAt,
     inviteCode,
   ];

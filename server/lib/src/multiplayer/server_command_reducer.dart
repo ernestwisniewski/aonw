@@ -5,30 +5,8 @@ import 'initial_multiplayer_snapshot_factory.dart';
 
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_map_cache.dart';
+part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_turns.dart';
-
-class ServerCommandReduction {
-  const ServerCommandReduction({
-    required this.accepted,
-    required this.snapshot,
-    this.events = const [],
-    this.turn,
-    this.previousState,
-    this.state,
-    this.reason,
-  }) : assert(
-         !accepted || (turn != null && previousState != null && state != null),
-         'Accepted reductions must expose their decoded transition.',
-       );
-
-  final bool accepted;
-  final WireSnapshot snapshot;
-  final List<GameEvent> events;
-  final int? turn;
-  final PersistentGameState? previousState;
-  final PersistentGameState? state;
-  final String? reason;
-}
 
 final class DecodedMatchSnapshot {
   const DecodedMatchSnapshot({required this.save, required this.state});
@@ -127,6 +105,12 @@ class ServerCommandReducer {
       turn: nextSave.turn,
       previousState: state,
       state: result.state,
+      outcome: _gameOutcome(
+        match: match,
+        save: nextSave,
+        state: result.state,
+        mapData: mapData,
+      ),
     );
   }
 
@@ -191,6 +175,12 @@ class ServerCommandReducer {
       turn: nextSave.turn,
       previousState: state,
       state: result.state,
+      outcome: _gameOutcome(
+        match: match,
+        save: nextSave,
+        state: result.state,
+        mapData: mapData,
+      ),
     );
   }
 

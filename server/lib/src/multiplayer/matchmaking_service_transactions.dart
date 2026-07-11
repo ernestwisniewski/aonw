@@ -27,7 +27,11 @@ extension MatchmakingServiceTransactions on MatchmakingService {
 
         if (!_stateAccess.supportsCurrentProtocol(state)) {
           await txStore.saveState(
-            _stateAccess.abandonedState(state, reason: 'protocol_upgrade'),
+            _stateAccess.abandonedState(
+              state,
+              reason: 'protocol_upgrade',
+              endedAt: _nowUtc(),
+            ),
           );
           continue;
         }

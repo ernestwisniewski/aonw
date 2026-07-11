@@ -4,6 +4,7 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
   StoredMatchState _runningStateAfterParticipantResigned(
     StoredMatchState state, {
     required String userIdentifier,
+    required DateTime endedAt,
   }) {
     final player = _stateAccess.requireParticipant(state, userIdentifier);
     final persistentState = PersistentGameState.fromJson(state.snapshot.state);
@@ -45,9 +46,29 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
         state: nextPersistentState.toJson(),
       ),
     );
-    if (_remainingHumanPlayerCount(runningState.match, kickedPlayerIds) <= 1) {
+    final remainingPlayers = _remainingHumanPlayers(
+      runningState.match,
+      kickedPlayerIds,
+    );
+    final alivePlayerIds = const GameOutcomeDetector().alivePlayerIds(
+      playerIds: remainingPlayers.map((player) => player.id),
+      state: nextPersistentState,
+    );
+    if (alivePlayerIds.length == 1) {
       return _finishedStateAfterResignation(
         runningState,
+        resignedUserIdentifier: userIdentifier,
+        winnerPlayerId: alivePlayerIds.single,
+        endedAt: endedAt,
+      );
+    }
+    if (alivePlayerIds.isEmpty) {
+      return _stateAccess.abandonedState(
+        runningState,
+        reason: remainingPlayers.isEmpty
+            ? 'all_players_resigned'
+            : 'no_alive_players_after_resignation',
+        endedAt: endedAt,
         userIdentifier: userIdentifier,
       );
     }
@@ -56,27 +77,38 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
 
   StoredMatchState _finishedStateAfterResignation(
     StoredMatchState state, {
-    required String userIdentifier,
+    required String resignedUserIdentifier,
+    required String winnerPlayerId,
+    required DateTime endedAt,
   }) {
     return state.copyWith(
-      match: state.match.copyWith(state: 'finished'),
+      match: state.match.copyWith(
+        state: 'finished',
+        endedAt: endedAt.toUtc(),
+        outcomeCondition: 'resignation',
+        winnerPlayerId: winnerPlayerId,
+        autoStartAt: null,
+      ),
       snapshot: state.snapshot.copyWith(
         state: {
           ...state.snapshot.state,
           'phase': 'finished',
-          'resignedUserIdentifier': userIdentifier,
+          'resignedUserIdentifier': resignedUserIdentifier,
         },
       ),
     );
   }
 
-  int _remainingHumanPlayerCount(WireMatch match, Set<String> kickedPlayerIds) {
+  List<WirePlayer> _remainingHumanPlayers(
+    WireMatch match,
+    Set<String> kickedPlayerIds,
+  ) {
     return match.players
         .where(
           (player) =>
               player.kind == WirePlayerKind.human &&
               !kickedPlayerIds.contains(player.id),
         )
-        .length;
+        .toList(growable: false);
   }
 }

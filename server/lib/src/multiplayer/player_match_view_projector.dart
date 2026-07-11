@@ -365,6 +365,9 @@ final class PlayerMatchViewProjector {
     'turn',
     'state',
     'createdAt',
+    'endedAt',
+    'outcomeCondition',
+    'winnerPlayerId',
     'autoStartAt',
     'inviteCode',
   };

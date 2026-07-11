@@ -26,12 +26,7 @@ class GameOutcomeDetector {
     };
     if (players.length <= 1) return GameOutcome.ongoing;
 
-    final alivePlayers = <String>{
-      for (final unit in state.units)
-        if (players.contains(unit.ownerPlayerId)) unit.ownerPlayerId,
-      for (final city in state.cities)
-        if (players.contains(city.ownerPlayerId)) city.ownerPlayerId,
-    };
+    final alivePlayers = alivePlayerIds(playerIds: players, state: state);
 
     if (matchRules.victory.conquestEnabled && alivePlayers.length == 1) {
       return GameOutcome.conquest(alivePlayers.single);
@@ -62,6 +57,22 @@ class GameOutcomeDetector {
     if (cappedOutcome != null) return cappedOutcome;
 
     return GameOutcome.ongoing;
+  }
+
+  Set<String> alivePlayerIds({
+    required Iterable<String> playerIds,
+    required PersistentGameState state,
+  }) {
+    final players = {
+      for (final id in playerIds)
+        if (id.isNotEmpty) id,
+    };
+    return {
+      for (final unit in state.units)
+        if (players.contains(unit.ownerPlayerId)) unit.ownerPlayerId,
+      for (final city in state.cities)
+        if (players.contains(city.ownerPlayerId)) city.ownerPlayerId,
+    };
   }
 
   GameOutcome? _culturalOutcome({

@@ -330,6 +330,9 @@ WireMatch _wireMatch(GameMatch row, List<GamePlayer> players) {
     turn: row.turn,
     state: row.state,
     createdAt: row.createdAt,
+    endedAt: row.endedAt,
+    outcomeCondition: row.outcomeCondition,
+    winnerPlayerId: row.winnerPlayerId,
     autoStartAt: row.autoStartAt,
     inviteCode: row.inviteCode,
   );

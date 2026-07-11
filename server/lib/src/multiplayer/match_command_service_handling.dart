@@ -63,6 +63,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         _broadcaster.message(
           matchId: state.match.id,
           offset: duplicate.offset,
+          match: state.match.state == 'running' ? null : state.match,
           ack: WireCommandAck(
             matchId: state.match.id,
             accepted: true,
@@ -120,9 +121,11 @@ extension MatchCommandServiceHandling on MatchCommandService {
         state: reduction.state!,
       ),
     );
-    final updated = state.copyWith(
-      match: state.match.copyWith(turn: reduction.turn!),
+    final updated = _stateAfterAcceptedReduction(
+      state: state,
+      reduction: reduction,
       snapshot: nextSnapshot,
+      now: now,
     );
     await store.appendEvent(
       updated,
@@ -135,6 +138,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
       _broadcaster.message(
         matchId: state.match.id,
         offset: event.offset,
+        match: updated.match.state == state.match.state ? null : updated.match,
         snapshot: updated.snapshot,
         event: event,
       ),
@@ -144,6 +148,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
       _broadcaster.message(
         matchId: state.match.id,
         offset: event.offset,
+        match: updated.match.state == state.match.state ? null : updated.match,
         ack: WireCommandAck(
           matchId: state.match.id,
           accepted: true,

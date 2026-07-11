@@ -20,6 +20,7 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     final abandoned = _stateAccess.abandonedState(
       state,
       reason: 'quickplay_stale',
+      endedAt: _nowUtc(),
     );
     await store.saveState(abandoned);
     return MatchMutationOutcome(

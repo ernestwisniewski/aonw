@@ -117,9 +117,11 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
           state: reduction.state!,
         ),
       );
-      final updated = state.copyWith(
-        match: state.match.copyWith(turn: reduction.turn!),
+      final updated = _stateAfterAcceptedReduction(
+        state: state,
+        reduction: reduction,
         snapshot: nextSnapshot,
+        now: now,
       );
       await txStore.appendEvent(
         updated,
@@ -134,6 +136,9 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
           _broadcaster.message(
             matchId: state.match.id,
             offset: event.offset,
+            match: updated.match.state == state.match.state
+                ? null
+                : updated.match,
             snapshot: updated.snapshot,
             event: event,
           ),
