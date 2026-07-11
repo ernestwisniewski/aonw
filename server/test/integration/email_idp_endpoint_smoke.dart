@@ -4,11 +4,16 @@ import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
+import 'integration_database_cleanup.dart';
 
 void main() {
   withServerpod(
     'EmailIdpEndpoint concurrency',
     (sessionBuilder, endpoints) {
+      tearDown(() async {
+        await clearAonwAuthRateLimitAttempts(sessionBuilder.build());
+      });
+
       test('maps a concurrent email conflict to account_exists', () async {
         _ensureAuthServices();
         final results = await Future.wait([
@@ -91,7 +96,9 @@ void main() {
         );
       });
     },
-    rollbackDatabase: RollbackDatabase.afterEach,
+    // Conflict tests intentionally overlap database transactions. The smoke
+    // runner recreates the test database before every integration run.
+    rollbackDatabase: RollbackDatabase.disabled,
     testServerOutputMode: TestServerOutputMode.normal,
   );
 }

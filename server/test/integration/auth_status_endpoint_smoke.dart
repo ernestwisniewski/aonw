@@ -3,11 +3,16 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
+import 'integration_database_cleanup.dart';
 
 void main() {
   withServerpod(
     'AuthStatusEndpoint',
     (sessionBuilder, endpoints) {
+      tearDown(() async {
+        await clearAonwAuthRateLimitAttempts(sessionBuilder.build());
+      });
+
       test(
         'revokes only the session represented by the refresh token',
         () async {
@@ -85,7 +90,9 @@ void main() {
         expect(next.authUserId, session.authUserId);
       });
     },
-    rollbackDatabase: RollbackDatabase.afterEach,
+    // Refresh rotation intentionally overlaps database transactions. The
+    // smoke runner recreates the test database before every integration run.
+    rollbackDatabase: RollbackDatabase.disabled,
     testServerOutputMode: TestServerOutputMode.normal,
   );
 }

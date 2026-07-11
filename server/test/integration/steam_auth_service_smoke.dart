@@ -119,7 +119,9 @@ void main() {
         expect(request?.error, 'invalid_return_to');
       });
     },
-    rollbackDatabase: RollbackDatabase.afterEach,
+    // Callback races intentionally overlap database transactions. The smoke
+    // runner recreates the test database before every integration run.
+    rollbackDatabase: RollbackDatabase.disabled,
     testServerOutputMode: TestServerOutputMode.normal,
   );
 }

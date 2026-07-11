@@ -383,7 +383,7 @@ server-integration-test:
 		SERVERPOD_PASSWORD_emailSecretHashPepper="$${SERVERPOD_PASSWORD_emailSecretHashPepper:-test-email-secret-hash-pepper}" \
 		SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-test-jwt-hmac-sha512-private-key}" \
 		SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-test-jwt-refresh-token-hash-pepper}" \
-			dart test $$tests -P integration --chain-stack-traces
+			dart test $$tests -P integration --chain-stack-traces --concurrency=1
 
 serverpod-runtime-smoke:
 	@dart run tool/serverpod_multiplayer_smoke.dart --host "$(SERVERPOD_SMOKE_HOST)" --map "$(SERVERPOD_SMOKE_MAP)"
@@ -414,7 +414,7 @@ compose-check:
 
 infra-config-check:
 	@command -v docker >/dev/null || { echo "docker is required."; exit 1; }
-	@docker run --rm \
+	@docker run --rm --entrypoint /usr/bin/caddy \
 		-e AONW_API_HOST=api.example.test \
 		-e AONW_INSIGHTS_HOST=insights.example.test \
 		-e AONW_HOMEPAGE_HOST=example.test \

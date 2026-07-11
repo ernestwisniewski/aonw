@@ -13,17 +13,6 @@ export SERVERPOD_PASSWORD_redis="${SERVERPOD_PASSWORD_redis:-local-smoke-redis-p
 postgres_user="${POSTGRES_USER:-aonw}"
 main_database="${POSTGRES_DB:-aonw}"
 test_database="${SERVERPOD_TEST_DATABASE:-aonw_test}"
-current_migration="$(
-  awk '
-    $0 !~ /^#/ && NF {
-      version = $1
-    }
-    END {
-      print version
-    }
-  ' server/migrations/migration_registry.txt
-)"
-
 database_exists() {
   local database="$1"
   docker compose exec -T postgres psql \
@@ -33,32 +22,16 @@ database_exists() {
 }
 
 ensure_fresh_test_database() {
-  if ! database_exists "${test_database}"; then
-    docker compose exec -T postgres createdb \
-      -U "${postgres_user}" \
-      "${test_database}"
-    return
-  fi
-
-  local applied_migration
-  applied_migration="$(
-    docker compose exec -T postgres psql \
-      -U "${postgres_user}" \
-      -d "${test_database}" \
-      -tAc "SELECT version FROM serverpod_migrations WHERE module='aonw'" \
-      2>/dev/null || true
-  )"
-
-  if [ -n "${applied_migration}" ] &&
-    [ "${applied_migration}" != "${current_migration}" ]; then
-    echo "Resetting ${test_database}: migration ${applied_migration} is not the current clean test migration ${current_migration}."
+  if database_exists "${test_database}"; then
+    echo "Resetting ${test_database} for a hermetic integration run."
     docker compose exec -T postgres dropdb \
-      -U "${postgres_user}" \
-      "${test_database}"
-    docker compose exec -T postgres createdb \
+      --force \
       -U "${postgres_user}" \
       "${test_database}"
   fi
+  docker compose exec -T postgres createdb \
+    -U "${postgres_user}" \
+    "${test_database}"
 }
 
 docker compose --profile dev up -d postgres

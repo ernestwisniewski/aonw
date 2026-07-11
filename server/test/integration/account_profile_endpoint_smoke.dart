@@ -45,7 +45,9 @@ void main() {
         },
       );
     },
-    rollbackDatabase: RollbackDatabase.afterEach,
+    // This group intentionally overlaps two database transactions. The smoke
+    // runner recreates the test database before every integration run.
+    rollbackDatabase: RollbackDatabase.disabled,
     testServerOutputMode: TestServerOutputMode.normal,
   );
 }
