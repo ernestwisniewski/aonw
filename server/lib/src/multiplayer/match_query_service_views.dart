@@ -1,7 +1,7 @@
 part of 'match_query_service.dart';
 
 extension MatchQueryServiceViews on MatchQueryService {
-  Future<WireSnapshot> loadSnapshot({
+  Future<ProjectedWireSnapshot> loadSnapshot({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
@@ -19,7 +19,7 @@ extension MatchQueryServiceViews on MatchQueryService {
     );
   }
 
-  Future<List<WireEvent>> listEvents({
+  Future<List<ProjectedWireEvent>> listEvents({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,

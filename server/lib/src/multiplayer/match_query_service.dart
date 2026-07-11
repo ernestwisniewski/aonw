@@ -1,5 +1,3 @@
-import 'package:aonw_core/protocol.dart';
-
 import '../observability/server_operational_event_sink.dart';
 import 'match_state_access.dart';
 import 'multiplayer_errors.dart';
@@ -18,7 +16,7 @@ final class MatchQueryService {
   final MatchStateAccess _stateAccess;
   final PlayerMatchViewProjector _viewProjector;
 
-  Future<List<WireMatch>> listMatches({
+  Future<List<ProjectedWireMatch>> listMatches({
     required MultiplayerMatchStore store,
     required String userIdentifier,
   }) async {

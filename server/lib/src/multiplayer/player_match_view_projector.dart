@@ -48,6 +48,26 @@ final class ProjectedPlayerMatchMessage {
   final MultiplayerServerMessage wire;
 }
 
+/// Nominal proof that a match passed recipient projection.
+///
+/// Implements the canonical wire type, so projected values flow into generated
+/// protocol signatures unchanged, while the private constructor forces every
+/// boundary that declares this return type through the projector.
+extension type const ProjectedWireMatch._(WireMatch wire)
+    implements WireMatch {}
+
+/// Nominal proof that a snapshot passed recipient projection.
+extension type const ProjectedWireSnapshot._(WireSnapshot wire)
+    implements WireSnapshot {}
+
+/// Nominal proof that an event passed recipient projection.
+extension type const ProjectedWireEvent._(WireEvent wire)
+    implements WireEvent {}
+
+/// Nominal proof that a command ack passed recipient projection.
+extension type const ProjectedWireCommandAck._(WireCommandAck wire)
+    implements WireCommandAck {}
+
 /// Builds a fail-closed, recipient-specific view of canonical match state.
 ///
 /// Canonical snapshots and events remain in the store. Every network boundary
@@ -62,7 +82,10 @@ final class PlayerMatchViewProjector {
   final PlayerMatchSaveDecoder _decodeSave;
   final PlayerMatchStateDecoder _decodeState;
 
-  WireMatch matchFor(WireMatch canonical, {required String userIdentifier}) {
+  ProjectedWireMatch matchFor(
+    WireMatch canonical, {
+    required String userIdentifier,
+  }) {
     _requireKnownFields('match', canonical.toJson(), _knownMatchFields);
     for (final player in canonical.players) {
       _requireKnownFields(
@@ -84,17 +107,19 @@ final class PlayerMatchViewProjector {
       (player) => player.userId == canonical.ownerUserId,
     );
     final publicOwnerId = owner.isEmpty ? canonical.id : owner.first.id;
-    return canonical.copyWith(
-      ownerUserId: isOwner ? userIdentifier : publicOwnerId,
-      players: [
-        for (final player in canonical.players)
-          player.copyWith(
-            userId: player.userId == userIdentifier
-                ? userIdentifier
-                : player.id,
-          ),
-      ],
-      inviteCode: isOwner ? canonical.inviteCode : null,
+    return ProjectedWireMatch._(
+      canonical.copyWith(
+        ownerUserId: isOwner ? userIdentifier : publicOwnerId,
+        players: [
+          for (final player in canonical.players)
+            player.copyWith(
+              userId: player.userId == userIdentifier
+                  ? userIdentifier
+                  : player.id,
+            ),
+        ],
+        inviteCode: isOwner ? canonical.inviteCode : null,
+      ),
     );
   }
 
@@ -137,11 +162,14 @@ final class PlayerMatchViewProjector {
     return save;
   }
 
-  WireSnapshot snapshotFor(WireSnapshot canonical, MatchRecipient recipient) {
+  ProjectedWireSnapshot snapshotFor(
+    WireSnapshot canonical,
+    MatchRecipient recipient,
+  ) {
     return projectSnapshot(prepareSnapshot(canonical), recipient);
   }
 
-  WireSnapshot projectSnapshot(
+  ProjectedWireSnapshot projectSnapshot(
     PreparedPlayerMatchSnapshot prepared,
     MatchRecipient recipient,
   ) {
@@ -149,39 +177,51 @@ final class PlayerMatchViewProjector {
     final publicSave = prepared.publicSave;
     final state = prepared.state;
     if (publicSave == null || state == null) {
-      return canonical.copyWith(state: _lifecycleState(canonical.state));
+      return ProjectedWireSnapshot._(
+        canonical.copyWith(state: _lifecycleState(canonical.state)),
+      );
     }
     final projectedState = _stateFor(state, recipient.playerId);
-    return WireSnapshot(
-      v: canonical.v,
-      matchId: canonical.matchId,
-      offset: canonical.offset,
-      save: publicSave,
-      state: {...projectedState.toJson(), ..._lifecycleState(canonical.state)},
+    return ProjectedWireSnapshot._(
+      WireSnapshot(
+        v: canonical.v,
+        matchId: canonical.matchId,
+        offset: canonical.offset,
+        save: publicSave,
+        state: {
+          ...projectedState.toJson(),
+          ..._lifecycleState(canonical.state),
+        },
+      ),
     );
   }
 
-  WireEvent eventFor(WireEvent canonical, MatchRecipient recipient) {
+  ProjectedWireEvent eventFor(WireEvent canonical, MatchRecipient recipient) {
     final isActor = canonical.actorPlayerId == recipient.playerId;
     final events = PlayerMatchEventAudience.projectForRecipient(
       canonical.events,
       recipientPlayerId: recipient.playerId,
     );
     final actorIsVisible = isActor || events.isNotEmpty;
-    return WireEvent(
-      v: canonical.v,
-      matchId: canonical.matchId,
-      offset: canonical.offset,
-      timestamp: canonical.timestamp,
-      actorPlayerId: actorIsVisible ? canonical.actorPlayerId : null,
-      tick: isActor ? canonical.tick : null,
-      turn: canonical.turn,
-      command: isActor ? canonical.command : null,
-      events: events,
+    return ProjectedWireEvent._(
+      WireEvent(
+        v: canonical.v,
+        matchId: canonical.matchId,
+        offset: canonical.offset,
+        timestamp: canonical.timestamp,
+        actorPlayerId: actorIsVisible ? canonical.actorPlayerId : null,
+        tick: isActor ? canonical.tick : null,
+        turn: canonical.turn,
+        command: isActor ? canonical.command : null,
+        events: events,
+      ),
     );
   }
 
-  WireCommandAck ackFor(WireCommandAck canonical, MatchRecipient recipient) {
+  ProjectedWireCommandAck ackFor(
+    WireCommandAck canonical,
+    MatchRecipient recipient,
+  ) {
     return _ackForPrepared(
       canonical,
       prepareSnapshot(canonical.snapshot),
@@ -189,22 +229,24 @@ final class PlayerMatchViewProjector {
     );
   }
 
-  WireCommandAck _ackForPrepared(
+  ProjectedWireCommandAck _ackForPrepared(
     WireCommandAck canonical,
     PreparedPlayerMatchSnapshot snapshot,
     MatchRecipient recipient,
   ) {
-    return WireCommandAck(
-      v: canonical.v,
-      matchId: canonical.matchId,
-      accepted: canonical.accepted,
-      offset: canonical.offset,
-      snapshot: projectSnapshot(snapshot, recipient),
-      events: PlayerMatchEventAudience.projectForRecipient(
-        canonical.events,
-        recipientPlayerId: recipient.playerId,
+    return ProjectedWireCommandAck._(
+      WireCommandAck(
+        v: canonical.v,
+        matchId: canonical.matchId,
+        accepted: canonical.accepted,
+        offset: canonical.offset,
+        snapshot: projectSnapshot(snapshot, recipient),
+        events: PlayerMatchEventAudience.projectForRecipient(
+          canonical.events,
+          recipientPlayerId: recipient.playerId,
+        ),
+        reason: canonical.reason,
       ),
-      reason: canonical.reason,
     );
   }
 

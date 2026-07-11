@@ -80,6 +80,34 @@ void main() {
       );
     }
   });
+
+  test('reviewed read surfaces declare projection-proof return types', () {
+    final hubApi = File(
+      'lib/src/multiplayer/realtime_match_hub_api.dart',
+    ).readAsStringSync();
+    const projectedSignatures = <String>[
+      'Future<List<ProjectedWireMatch>> listMatches(',
+      'Future<ProjectedWireMatch> quickplay(',
+      'Future<ProjectedWireMatch> createMatch(',
+      'Future<ProjectedWireMatch> joinMatch(',
+      'Future<ProjectedWireMatch> joinPrivateMatch(',
+      'Future<ProjectedWireMatch> loadMatch(',
+      'Future<ProjectedWireSnapshot> loadSnapshot(',
+      'Future<List<ProjectedWireEvent>> listEvents(',
+      'Future<ProjectedWireMatch> startMatch(',
+      'Future<ProjectedWireMatch> resignMatch(',
+    ];
+
+    for (final signature in projectedSignatures) {
+      expect(
+        hubApi,
+        contains(signature),
+        reason:
+            'Hub read surfaces must return Projected* wire types so the '
+            'compiler rejects unprojected canonical state.',
+      );
+    }
+  });
 }
 
 String _methodBody(String source, String methodName) {

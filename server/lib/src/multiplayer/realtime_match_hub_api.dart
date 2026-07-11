@@ -1,12 +1,12 @@
 part of 'multiplayer_endpoint.dart';
 
 extension RealtimeMatchHubApi on RealtimeMatchHub {
-  Future<List<WireMatch>> listMatches({
+  Future<List<ProjectedWireMatch>> listMatches({
     required MultiplayerMatchStore store,
     required String userIdentifier,
   }) => _queries.listMatches(store: store, userIdentifier: userIdentifier);
 
-  Future<WireMatch> quickplay({
+  Future<ProjectedWireMatch> quickplay({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     String? displayName,
@@ -24,7 +24,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireMatch> createMatch({
+  Future<ProjectedWireMatch> createMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     String? displayName,
@@ -39,7 +39,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireMatch> joinMatch({
+  Future<ProjectedWireMatch> joinMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     String? displayName,
@@ -57,7 +57,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireMatch> joinPrivateMatch({
+  Future<ProjectedWireMatch> joinPrivateMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     String? displayName,
@@ -75,7 +75,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireMatch> loadMatch({
+  Future<ProjectedWireMatch> loadMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
@@ -92,7 +92,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireSnapshot> loadSnapshot({
+  Future<ProjectedWireSnapshot> loadSnapshot({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
@@ -104,7 +104,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     );
   }
 
-  Future<List<WireEvent>> listEvents({
+  Future<List<ProjectedWireEvent>> listEvents({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
@@ -118,7 +118,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     );
   }
 
-  Future<WireMatch> startMatch({
+  Future<ProjectedWireMatch> startMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
@@ -135,7 +135,7 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     return _viewProjector.matchFor(match, userIdentifier: userIdentifier);
   }
 
-  Future<WireMatch> resignMatch({
+  Future<ProjectedWireMatch> resignMatch({
     required MultiplayerMatchStore store,
     required String userIdentifier,
     required String matchId,
