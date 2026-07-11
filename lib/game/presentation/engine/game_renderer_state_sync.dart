@@ -35,15 +35,33 @@ extension GameRendererStateSync on GameRenderer {
           e.defenderUnitId,
         ],
     };
+    final combatAnimatedCityIds = <String>{
+      for (final effect in pending.whereType<PlayCombatAnimationEffect>()) ...[
+        if (_renderState.cityById(effect.attackerUnitId) != null ||
+            state.cityById(effect.attackerUnitId) != null)
+          effect.attackerUnitId,
+        if (_renderState.cityById(effect.defenderUnitId) != null ||
+            state.cityById(effect.defenderUnitId) != null)
+          effect.defenderUnitId,
+      ],
+    };
     _unitMarkerLayer
       ..pinPendingMovePositions(animatedIds)
       ..retainPendingAnimationMarkers({...animatedIds, ...combatAnimatedIds});
-    _applyState(
-      state,
-      suppressCameraFocus: transitionControlsCamera,
-      currentTurn: currentTurn,
-    );
-    await _handleEffectsNow(pending);
+    _cityMarkerLayer.retainPendingAnimationMarkers(combatAnimatedCityIds);
+    try {
+      _applyState(
+        state,
+        suppressCameraFocus: transitionControlsCamera,
+        currentTurn: currentTurn,
+      );
+      await _handleEffectsNow(pending);
+    } finally {
+      _cityMarkerLayer.releasePendingAnimationMarkers(combatAnimatedCityIds);
+      if (!_isDisposed && combatAnimatedCityIds.isNotEmpty) {
+        _syncAfterAction(suppressCameraFocus: true);
+      }
+    }
   }
 
   Future<void> _handleEffectsNow(Iterable<RendererEffect> effects) async {

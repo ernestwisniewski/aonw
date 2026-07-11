@@ -167,6 +167,21 @@ abstract final class _CombatOutcomeApplier {
   }
 }
 
+Combatant _combatant({
+  required GameUnit unit,
+  required CombatStats baseStats,
+  required List<CombatModifier> modifiers,
+  required CombatStats effectiveStats,
+}) {
+  return Combatant(
+    unitId: unit.id,
+    ownerPlayerId: unit.ownerPlayerId,
+    baseStats: baseStats,
+    modifiers: modifiers,
+    currentHp: UnitCombatHealth.currentHp(unit, effectiveStats: effectiveStats),
+  );
+}
+
 abstract final class _CombatArtifactPolicy {
   static List<WorldArtifact> afterUnitCombat(
     List<WorldArtifact> artifacts, {

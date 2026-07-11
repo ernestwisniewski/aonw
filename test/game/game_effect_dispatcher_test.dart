@@ -120,6 +120,7 @@ class _FakeUnitAnimationController extends UnitAnimationController {
     required String defenderUnitId,
     required bool attackerKilled,
     required bool defenderKilled,
+    bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
     this.attackerUnitId = attackerUnitId;

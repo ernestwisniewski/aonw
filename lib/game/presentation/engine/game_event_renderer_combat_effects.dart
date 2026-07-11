@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -58,7 +59,18 @@ abstract final class GameEventRendererCombatEffects {
             ));
     if (!combatVisible) return const [];
 
-    final effects = <RendererEffect>[const ShakeCameraEffect()];
+    final effects = <RendererEffect>[
+      PlayCombatAnimationEffect(
+        attackerUnitId: event.attackerUnitId,
+        defenderUnitId: event.defenderUnitId,
+        attackerKilled: event.outcome.attackerKilled,
+        defenderKilled: event.outcome.defenderKilled,
+        defenderRetaliated: event.outcome.steps.any(
+          (step) => step is RetaliationStep,
+        ),
+      ),
+      const ShakeCameraEffect(),
+    ];
     var defenderDamage = 0;
     var attackerDamage = 0;
     for (final step in event.outcome.steps) {
@@ -170,6 +182,37 @@ abstract final class GameEventRendererCombatEffects {
       effects.add(_damageTextEffect(attacker, attackerDamage));
     }
 
+    final previousDefender = previousState?.unitById(event.defenderUnitId);
+    final nextDefender = state.unitById(event.defenderUnitId);
+    if (event.outcome.defenderRetreated &&
+        previousDefender != null &&
+        nextDefender != null &&
+        (previousDefender.col != nextDefender.col ||
+            previousDefender.row != nextDefender.row) &&
+        _canRenderTransientAtEither(
+          state,
+          previousState,
+          previousDefender.col,
+          previousDefender.row,
+          viewerPlayerId: viewerPlayerId,
+        )) {
+      effects.add(
+        AnimateUnitMoveEffect(
+          unitId: event.defenderUnitId,
+          fromCol: previousDefender.col,
+          fromRow: previousDefender.row,
+          steps: [
+            UnitMovementStep(
+              col: nextDefender.col,
+              row: nextDefender.row,
+              enterCost: 0,
+              cumulativeCost: 0,
+            ),
+          ],
+        ),
+      );
+    }
+
     return effects;
   }
 
@@ -190,26 +233,25 @@ abstract final class GameEventRendererCombatEffects {
     );
     if (_isViewerCity(state, city, viewerPlayerId: viewerPlayerId)) {
       effects.insert(
-        0,
+        1,
         SmoothCameraEffect(
           col: city.center.col,
           row: city.center.row,
           duration: 0.36,
         ),
       );
-      if (cityVisible) {
-        effects.add(
+    }
+    if (cityVisible) {
+      effects
+        ..add(
           SpawnParticleBurstEffect(
             kind: ParticleBurstKind.cityAttacked,
             col: city.center.col,
             row: city.center.row,
             colorValue: _damageTextColor,
           ),
-        );
-      }
-    }
-    if (cityVisible) {
-      effects.add(_cityDamageTextEffect(city, damage));
+        )
+        ..add(_cityDamageTextEffect(city, damage));
     }
   }
 

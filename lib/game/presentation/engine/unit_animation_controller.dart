@@ -60,6 +60,7 @@ class UnitAnimationController {
     required String defenderUnitId,
     required bool attackerKilled,
     required bool defenderKilled,
+    bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
     if (_isDisposed) return Future<void>.error(_disposedError);
@@ -84,6 +85,7 @@ class UnitAnimationController {
       defenderUnitId: defenderUnitId,
       attackerKilled: attackerKilled,
       defenderKilled: defenderKilled,
+      defenderRetaliated: defenderRetaliated,
       onComplete: () =>
           _onLayerAnimationCompleteFor(unitIds, completer, onComplete),
     );

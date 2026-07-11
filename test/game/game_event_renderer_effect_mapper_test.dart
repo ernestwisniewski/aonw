@@ -325,7 +325,12 @@ void main() {
         turn: 31,
       );
 
-      final shake = effects[0] as ShakeCameraEffect;
+      final combat = effects[0] as PlayCombatAnimationEffect;
+      expect(combat.attackerUnitId, 'attacker');
+      expect(combat.defenderUnitId, 'defender');
+      expect(combat.defenderRetaliated, isTrue);
+
+      final shake = effects[1] as ShakeCameraEffect;
       expect(shake.intensity, 8.0);
       expect(shake.duration, 0.28);
 
@@ -405,11 +410,12 @@ void main() {
         previousState: previousState,
       );
 
-      final focus = effects[0] as SmoothCameraEffect;
+      expect(effects[0], isA<PlayCombatAnimationEffect>());
+      final focus = effects[1] as SmoothCameraEffect;
       expect(focus.col, 4);
       expect(focus.row, 5);
       expect(focus.duration, 0.36);
-      expect(effects[1], isA<ShakeCameraEffect>());
+      expect(effects[2], isA<ShakeCameraEffect>());
 
       final burst = effects.whereType<SpawnParticleBurstEffect>().single;
       expect(burst.kind, ParticleBurstKind.cityAttacked);
@@ -512,8 +518,9 @@ void main() {
         previousState: previousState,
       );
 
-      expect(effects, hasLength(5));
-      expect(effects[0], isA<ShakeCameraEffect>());
+      expect(effects, hasLength(6));
+      expect(effects[0], isA<PlayCombatAnimationEffect>());
+      expect(effects[1], isA<ShakeCameraEffect>());
       final alerts = effects.whereType<ShowCombatHexAlertEffect>().toList();
       expect(alerts, hasLength(1));
       expect(alerts.single.id, 'attacker:attacker');

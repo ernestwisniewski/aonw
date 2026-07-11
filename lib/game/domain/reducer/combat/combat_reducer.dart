@@ -310,6 +310,9 @@ abstract final class CombatReducer {
           defenderUnitId: defender.id,
           attackerKilled: outcome.attackerKilled,
           defenderKilled: outcome.defenderKilled,
+          defenderRetaliated: outcome.steps.any(
+            (step) => step is RetaliationStep,
+          ),
         ),
       ],
     );
@@ -432,6 +435,9 @@ abstract final class CombatReducer {
           defenderUnitId: setup.city.id,
           attackerKilled: outcome.attackerKilled,
           defenderKilled: outcome.defenderKilled,
+          defenderRetaliated: outcome.steps.any(
+            (step) => step is RetaliationStep,
+          ),
         ),
       ],
     );
@@ -490,24 +496,6 @@ abstract final class CombatReducer {
     return state
         .cityAt(command.defenderCol, command.defenderRow)
         ?.ownerPlayerId;
-  }
-
-  static Combatant _combatant({
-    required GameUnit unit,
-    required CombatStats baseStats,
-    required List<CombatModifier> modifiers,
-    required CombatStats effectiveStats,
-  }) {
-    return Combatant(
-      unitId: unit.id,
-      ownerPlayerId: unit.ownerPlayerId,
-      baseStats: baseStats,
-      modifiers: modifiers,
-      currentHp: UnitCombatHealth.currentHp(
-        unit,
-        effectiveStats: effectiveStats,
-      ),
-    );
   }
 
   static GameStateTransition _recordIntent(

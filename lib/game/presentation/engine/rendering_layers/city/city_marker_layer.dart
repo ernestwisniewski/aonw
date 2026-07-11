@@ -16,6 +16,7 @@ class CityMarkerLayer extends Component with LayerAttachment {
   final int Function(String playerId) colorForPlayer;
   final void Function(GameCity city)? onCityTapped;
   final Map<String, CityMarker> _markers = {};
+  final Set<String> _retainedAnimationCityIds = {};
   bool _reduceMotion;
   bool _showHealthBar = true;
   double _markerWorldScale = 1.0;
@@ -123,6 +124,14 @@ class CityMarkerLayer extends Component with LayerAttachment {
 
   int? markerPriorityForTesting(String cityId) => _markers[cityId]?.priority;
 
+  void retainPendingAnimationMarkers(Set<String> cityIds) {
+    _retainedAnimationCityIds.addAll(cityIds);
+  }
+
+  void releasePendingAnimationMarkers(Set<String> cityIds) {
+    _retainedAnimationCityIds.removeAll(cityIds);
+  }
+
   void setLabelVisibility(bool visible) {
     for (final marker in _markers.values) {
       marker.showLabel = visible;
@@ -146,11 +155,16 @@ class CityMarkerLayer extends Component with LayerAttachment {
     final cityIds = knownCities.map((city) => city.id).toSet();
     for (final entry in _markers.entries.toList()) {
       if (cityIds.contains(entry.key)) continue;
+      if (_retainedAnimationCityIds.contains(entry.key)) continue;
       entry.value.removeFromParent();
       _markers.remove(entry.key);
     }
 
     for (final city in knownCities) {
+      if (_retainedAnimationCityIds.contains(city.id) &&
+          _markers.containsKey(city.id)) {
+        continue;
+      }
       final position = _cityWorldPosition(city);
       final selected = city.id == selectedCityId;
       final healthFraction = healthFractions[city.id] ?? 1.0;
@@ -213,6 +227,7 @@ class CityMarkerLayer extends Component with LayerAttachment {
       marker.removeFromParent();
     }
     _markers.clear();
+    _retainedAnimationCityIds.clear();
     super.onRemove();
   }
 

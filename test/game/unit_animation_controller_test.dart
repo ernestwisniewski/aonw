@@ -45,6 +45,7 @@ class _FakeUnitMarkerLayer extends UnitMarkerLayer {
     required String defenderUnitId,
     required bool attackerKilled,
     required bool defenderKilled,
+    bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
     onCombatComplete = onComplete;

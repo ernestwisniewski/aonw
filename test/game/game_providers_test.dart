@@ -21,6 +21,8 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/json_game_repository.dart';
+import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
+import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -28,9 +30,11 @@ import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -426,6 +430,20 @@ class _SpyGameRenderer extends GameRenderer {
   @override
   Future<void> handleEffects(Iterable<RendererEffect> effects) async {
     handledEffects.addAll(effects);
+  }
+}
+
+class _RecordingAudioController extends GameAudioController {
+  final cues = <GameSoundCue>[];
+
+  @override
+  Future<void> play(GameSoundCue cue, {double volume = 1}) async {
+    cues.add(cue);
+  }
+
+  @override
+  void playAll(Iterable<GameSoundCue> cues) {
+    this.cues.addAll(cues);
   }
 }
 
@@ -880,6 +898,147 @@ void main() {
       },
     );
 
+    test('plays live combat before animating a defender retreat', () async {
+      final attacker = GameUnit.produced(
+        id: 'attacker',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.archer,
+        col: 0,
+        row: 0,
+      );
+      final defender = GameUnit.produced(
+        id: 'defender',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 1,
+        row: 0,
+      );
+      final retreated = defender.copyWith(col: 2, row: 0, hitPoints: 1);
+      final save = _makeSave(
+        players: const [_player1, _player2],
+        gameMode: GameMode.multiplayer,
+      );
+      final fog = FogOfWarState(
+        players: {
+          'player_1': PlayerFogOfWar(
+            playerId: 'player_1',
+            visibleHexes: {
+              const HexCoordinate(col: 0, row: 0),
+              const HexCoordinate(col: 1, row: 0),
+              const HexCoordinate(col: 2, row: 0),
+            },
+          ),
+        },
+      );
+      final gameRepository = _FakeGameRepository(
+        snapshots: {
+          save.id: _makeSnapshot(
+            save: save,
+            units: [attacker, defender],
+            fogOfWar: fog,
+          ),
+        },
+      );
+      final fakeStream = _FakeMultiplayerStream();
+      final renderer = _SpyGameRenderer(mapData: _makeLandMap());
+      final audio = _RecordingAudioController();
+      final container = ProviderContainer(
+        overrides: [
+          activeGameSessionProvider.overrideWithValue(
+            _makeSession(
+              mapData: _makeLandMap(),
+              gameMode: GameMode.multiplayer,
+            ),
+          ),
+          activeGameRendererProvider.overrideWithValue(renderer),
+          gameAudioControllerProvider.overrideWithValue(audio),
+          gameRepositoryProvider.overrideWithValue(gameRepository),
+          multiplayerStreamConnectorProvider.overrideWithValue(
+            fakeStream.connector,
+          ),
+          networkSessionProvider.overrideWithValue(
+            api.NetworkSession(
+              userId: 'user_1',
+              playerId: 'player_1',
+              token: AuthToken('jwt-token'),
+              matchId: save.id,
+              connectionState: const NetworkConnectionState(
+                status: NetworkConnectionStatus.connected,
+              ),
+            ),
+          ),
+          ..._transportOverrides(),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        gameStateProvider(save.id),
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
+      await container.read(gameStateProvider(save.id).future);
+      await fakeStream.listened.timeout(const Duration(seconds: 1));
+
+      final snapshot = _makeSnapshot(
+        save: save,
+        units: [attacker, retreated],
+        fogOfWar: fog,
+        eventLogOffset: 1,
+      );
+      final combat = CombatResolvedEvent(
+        attackerUnitId: 'attacker',
+        defenderUnitId: 'defender',
+        outcome: CombatOutcome(
+          attackerUnitId: 'attacker',
+          defenderUnitId: 'defender',
+          attackerHpAfter: 7,
+          defenderHpAfter: 1,
+          attackerKilled: false,
+          defenderKilled: false,
+          defenderRetreated: true,
+          steps: [AttackStep(damage: 5), RetaliationStep(damage: 1)],
+        ),
+      );
+      fakeStream.add(
+        sp.MultiplayerServerMessage(
+          serverMessageId: 'combat_1',
+          matchId: save.id,
+          offset: 1,
+          snapshot: const SnapshotCodec().toWire(
+            matchId: save.id,
+            snapshot: snapshot,
+          ),
+          event: const EventCodec().toWire(
+            matchId: save.id,
+            offset: 1,
+            timestamp: DateTime.utc(2026, 4, 27, 12),
+            events: [combat],
+          ),
+        ),
+      );
+
+      await _waitFor(() {
+        final state = container.read(gameStateProvider(save.id)).value;
+        return state?.unitById('defender')?.col == 2;
+      });
+
+      final effects = renderer.handledEffects;
+      final combatIndex = effects.indexWhere(
+        (effect) => effect is PlayCombatAnimationEffect,
+      );
+      final retreatEffects = effects
+          .whereType<AnimateUnitMoveEffect>()
+          .where((effect) => effect.unitId == 'defender')
+          .toList();
+      expect(combatIndex, greaterThanOrEqualTo(0));
+      expect(retreatEffects, hasLength(1));
+      expect(effects.indexOf(retreatEffects.single), greaterThan(combatIndex));
+      expect(retreatEffects.single.fromCol, 1);
+      expect(retreatEffects.single.steps.single.col, 2);
+      expect(audio.cues, contains(GameSoundCue.attack));
+    });
+
     test(
       'does not synthesize movement animation from snapshot-only direct deltas',
       () async {
@@ -1161,10 +1320,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
-                gameMode: GameMode.multiplayer,
-              ),
+              _makeSession(mapData: _makeLandMap(), gameMode: GameMode.hotSeat),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             eventLogProvider.overrideWithValue(eventLog),

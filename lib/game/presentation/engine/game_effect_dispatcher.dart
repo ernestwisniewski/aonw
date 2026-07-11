@@ -119,12 +119,14 @@ class GameEffectDispatcher {
         :final defenderUnitId,
         :final attackerKilled,
         :final defenderKilled,
+        :final defenderRetaliated,
       ):
         await _unitAnimationController.animateUnitCombat(
           attackerUnitId: attackerUnitId,
           defenderUnitId: defenderUnitId,
           attackerKilled: attackerKilled,
           defenderKilled: defenderKilled,
+          defenderRetaliated: defenderRetaliated,
           onComplete: _onRendererStateChanged,
         );
       case ShakeCameraEffect(:final intensity, :final duration):

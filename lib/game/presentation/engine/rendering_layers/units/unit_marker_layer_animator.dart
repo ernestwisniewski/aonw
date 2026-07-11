@@ -104,6 +104,7 @@ class UnitMarkerLayerAnimator {
     required String defenderUnitId,
     required bool attackerKilled,
     required bool defenderKilled,
+    bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
     final attackerMarker = _markerFor(attackerUnitId);
@@ -130,13 +131,15 @@ class UnitMarkerLayerAnimator {
         from: attackerMarker.position,
         to: defenderMarker.position,
       );
-      defenderMarker.playAttackToward(
-        from: defenderMarker.position,
-        to: attackerMarker.position,
-      );
+      if (defenderRetaliated) {
+        defenderMarker.playAttackToward(
+          from: defenderMarker.position,
+          to: attackerMarker.position,
+        );
+      }
     } else {
       attackerMarker?.playAttack();
-      defenderMarker?.playAttack();
+      if (defenderRetaliated) defenderMarker?.playAttack();
     }
 
     var defenderDieStarted = false;

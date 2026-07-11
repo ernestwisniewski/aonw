@@ -53,12 +53,14 @@ class PlayCombatAnimationEffect extends RendererEffect {
   final String defenderUnitId;
   final bool attackerKilled;
   final bool defenderKilled;
+  final bool defenderRetaliated;
 
   const PlayCombatAnimationEffect({
     required this.attackerUnitId,
     required this.defenderUnitId,
     this.attackerKilled = false,
     this.defenderKilled = false,
+    this.defenderRetaliated = true,
   });
 }
 

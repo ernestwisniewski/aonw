@@ -451,6 +451,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     required String defenderUnitId,
     required bool attackerKilled,
     required bool defenderKilled,
+    bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
     _animator.animateCombat(
@@ -458,6 +459,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       defenderUnitId: defenderUnitId,
       attackerKilled: attackerKilled,
       defenderKilled: defenderKilled,
+      defenderRetaliated: defenderRetaliated,
       onComplete: onComplete,
     );
   }

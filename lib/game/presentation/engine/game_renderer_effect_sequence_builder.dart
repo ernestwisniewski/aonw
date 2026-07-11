@@ -14,17 +14,32 @@ abstract final class GameRendererEffectSequenceBuilder {
     int? turn,
   }) {
     final visibleCommandEffects = commandEffects.toList(growable: false);
+    final commandCombatKeys = {
+      for (final effect
+          in visibleCommandEffects.whereType<PlayCombatAnimationEffect>())
+        _combatKey(effect.attackerUnitId, effect.defenderUnitId),
+    };
+    final eventEffects = GameEventRendererEffectMapper.effectsFor(
+      events: events,
+      state: state,
+      previousState: previousState,
+      l10n: l10n,
+      turn: turn,
+      skipUnitMoveIds: _animatedUnitIds(visibleCommandEffects),
+    );
     return [
       ...visibleCommandEffects,
-      ...GameEventRendererEffectMapper.effectsFor(
-        events: events,
-        state: state,
-        previousState: previousState,
-        l10n: l10n,
-        turn: turn,
-        skipUnitMoveIds: _animatedUnitIds(visibleCommandEffects),
-      ),
+      for (final effect in eventEffects)
+        if (effect is! PlayCombatAnimationEffect ||
+            !commandCombatKeys.contains(
+              _combatKey(effect.attackerUnitId, effect.defenderUnitId),
+            ))
+          effect,
     ];
+  }
+
+  static String _combatKey(String attackerUnitId, String defenderUnitId) {
+    return '$attackerUnitId\u0000$defenderUnitId';
   }
 
   static Set<String> _animatedUnitIds(Iterable<RendererEffect> effects) {

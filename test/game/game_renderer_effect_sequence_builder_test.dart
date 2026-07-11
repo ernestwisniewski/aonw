@@ -1,8 +1,10 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -90,6 +92,52 @@ void main() {
 
       expect(effects, hasLength(2));
       expect((effects.last as AnimateUnitMoveEffect).unitId, 'scout_1');
+    });
+
+    test('does not duplicate combat animation already emitted by command', () {
+      const commandCombat = PlayCombatAnimationEffect(
+        attackerUnitId: 'attacker',
+        defenderUnitId: 'defender',
+      );
+      final attacker = GameUnit(
+        id: 'attacker',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Attacker',
+        col: 0,
+        row: 0,
+      );
+      final defender = GameUnit(
+        id: 'defender',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.warrior,
+        name: 'Defender',
+        col: 1,
+        row: 0,
+      );
+
+      final effects = GameRendererEffectSequenceBuilder.build(
+        commandEffects: const [commandCombat],
+        events: [
+          CombatResolvedEvent(
+            attackerUnitId: 'attacker',
+            defenderUnitId: 'defender',
+            outcome: CombatOutcome(
+              attackerUnitId: 'attacker',
+              defenderUnitId: 'defender',
+              attackerHpAfter: 5,
+              defenderHpAfter: 5,
+              attackerKilled: false,
+              defenderKilled: false,
+              steps: [AttackStep(damage: 1)],
+            ),
+          ),
+        ],
+        state: GameState(units: [attacker, defender]),
+      );
+
+      expect(effects.whereType<PlayCombatAnimationEffect>(), [commandCombat]);
+      expect(effects.whereType<ShakeCameraEffect>(), hasLength(1));
     });
   });
 }

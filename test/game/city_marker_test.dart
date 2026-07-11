@@ -208,6 +208,56 @@ void main() {
       expect(layer.markerPriorityForTesting(city.id), lessThan(20));
     });
 
+    test('retains a captured or destroyed city until combat completes', () {
+      final layer = CityMarkerLayer(
+        colorForPlayer: (playerId) =>
+            playerId == 'player_1' ? 0xFF111111 : 0xFF222222,
+      );
+      final parent = Component();
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 0, row: 0),
+      );
+      layer.sync(parent: parent, cities: const [city], selectedCityId: null);
+      expect(layer.markerColorValueForTesting(city.id), 0xFF111111);
+
+      layer
+        ..retainPendingAnimationMarkers(const {'city_1'})
+        ..sync(parent: parent, cities: const [], selectedCityId: null);
+      expect(layer.markerColorValueForTesting(city.id), 0xFF111111);
+      layer.sync(
+        parent: parent,
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_2',
+            name: 'City',
+            center: CityHex(col: 0, row: 0),
+          ),
+        ],
+        selectedCityId: null,
+      );
+      expect(layer.markerColorValueForTesting(city.id), 0xFF111111);
+
+      layer
+        ..releasePendingAnimationMarkers(const {'city_1'})
+        ..sync(
+          parent: parent,
+          cities: const [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: 'player_2',
+              name: 'City',
+              center: CityHex(col: 0, row: 0),
+            ),
+          ],
+          selectedCityId: null,
+        );
+      expect(layer.markerColorValueForTesting(city.id), 0xFF222222);
+    });
+
     test('accepts taps on the city name label above the asset', () async {
       final marker = CityMarker(
         position: Vector2.zero(),
