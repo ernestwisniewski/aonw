@@ -2362,6 +2362,125 @@ void main() {
       expect(container.read(gameHandoffProvider), isNull);
     });
 
+    test(
+      'connected multiplayer endTurn reloads through the network repository',
+      () async {
+        final save = _makeSave(
+          players: const [_player1, _player2],
+          gameMode: GameMode.multiplayer,
+        );
+        final initialSnapshot = _makeSnapshot(save: save);
+        final submittedSave = save.copyWith(
+          playerStates: const {
+            'player_1': PlayerTurnState.finished,
+            'player_2': PlayerTurnState.active,
+          },
+        );
+        final submittedSnapshot = _makeSnapshot(
+          save: submittedSave,
+          runtimeState: const GameRuntimeState(
+            submittedPlayerIds: {'player_1'},
+          ),
+          eventLogOffset: 1,
+        );
+        final localRepository = _FakeGameRepository(throwOnLoad: true);
+        final networkRepository = _FakeGameRepository(
+          snapshots: {save.id: initialSnapshot},
+        );
+        final logger = _FakeGameLogger();
+        final fakeStream = _FakeMultiplayerStream();
+        final fallbackDispatcher = _FakeWireCommandDispatcher(({
+          required saveId,
+          required token,
+          required afterOffset,
+          required wire,
+          required clientMessageId,
+        }) async {
+          throw StateError('Expected end turn to use the live match channel.');
+        });
+        const snapshotCodec = SnapshotCodec();
+        final container = ProviderContainer(
+          overrides: [
+            activeGameSessionProvider.overrideWithValue(
+              _makeSession(
+                mapData: _makeLandMap(),
+                gameMode: GameMode.multiplayer,
+              ),
+            ),
+            gameRepositoryProvider.overrideWithValue(localRepository),
+            networkGameRepositoryProvider.overrideWithValue(networkRepository),
+            gameLoggerProvider.overrideWithValue(logger),
+            eventLogProvider.overrideWithValue(_FakeEventLog()),
+            networkEventLogProvider.overrideWith(
+              (ref) => ref.watch(eventLogProvider),
+            ),
+            snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+            wireCommandDispatcherProvider.overrideWithValue(fallbackDispatcher),
+            multiplayerStreamConnectorProvider.overrideWithValue(
+              fakeStream.connector,
+            ),
+            networkSessionProvider.overrideWithValue(
+              api.NetworkSession(
+                userId: 'user_1',
+                playerId: 'player_1',
+                token: AuthToken('jwt-token'),
+                matchId: save.id,
+                connectionState: const NetworkConnectionState(
+                  status: NetworkConnectionStatus.connected,
+                ),
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        addTearDown(fakeStream.close);
+        final gameStateSubscription = container.listen(
+          gameStateProvider(save.id),
+          (_, _) {},
+        );
+        addTearDown(gameStateSubscription.close);
+
+        await container.read(gameStateProvider(save.id).future);
+        await fakeStream.listened;
+        final controller = container.read(
+          gamePlayerControlControllerProvider.notifier,
+        )..syncWithSave(save);
+
+        final pendingEndTurn = controller.endTurn(save);
+        await _waitFor(() => fakeStream.clientMessages.isNotEmpty);
+
+        final wire = fakeStream.clientMessages.single.command!;
+        expect(wire.command['type'], 'SubmitTurn');
+        networkRepository.snapshots[save.id] = submittedSnapshot;
+        fakeStream.add(
+          sp.MultiplayerServerMessage(
+            serverMessageId: 'submit-turn-ack',
+            matchId: save.id,
+            offset: 1,
+            ack: WireCommandAck(
+              matchId: save.id,
+              accepted: true,
+              offset: 1,
+              snapshot: snapshotCodec.toWire(
+                matchId: save.id,
+                snapshot: submittedSnapshot,
+              ),
+            ),
+          ),
+        );
+
+        final updated = await pendingEndTurn;
+
+        expect(updated, submittedSave);
+        expect(localRepository.loadCount, 0);
+        expect(networkRepository.loadCount, greaterThanOrEqualTo(3));
+        expect(logger.warnings, isEmpty);
+        final control = container.read(gamePlayerControlControllerProvider);
+        expect(control.activePlayerId, 'player_1');
+        expect(control.canAct, isFalse);
+      },
+    );
+
     test('endTurn does not use Ref after control provider disposal', () async {
       final save = _makeSave();
       final gate = Completer<void>();

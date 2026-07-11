@@ -79,7 +79,7 @@ class GamePlayerControlController extends _$GamePlayerControlController {
     try {
       final endTurnResult =
           await EndTurnUseCase(
-            repository: ref.read(gameRepositoryProvider),
+            repository: gameRepositoryForSave(ref, gameSave.id),
             strategy: EndTurnStrategies.forMode(session.gameMode),
           ).execute(
             save: gameSave,
