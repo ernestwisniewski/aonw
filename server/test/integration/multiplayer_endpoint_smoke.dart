@@ -324,7 +324,85 @@ WHERE "matchId" = @matchId
           'running-page-065',
         ]);
         expect(secondPage.nextCursor, isNull);
+
+        await GameMatch.db.delete(session, rows.skip(64).toList());
+        final exactFinalPage = await store.listRunningStates();
+        expect(
+          exactFinalPage.states,
+          hasLength(multiplayerRunningMatchPageSize),
+        );
+        expect(exactFinalPage.nextCursor, isNull);
       });
+
+      test(
+        'updates only the latest snapshot and rejects stale offsets',
+        () async {
+          final session = sessionBuilder.build();
+          final store = ServerpodMultiplayerMatchStore(session);
+          final createdAt = DateTime.utc(2026, 7, 11, 9);
+          final initial = StoredMatchState(
+            match: WireMatch(
+              id: 'snapshot-offset-guard',
+              ownerUserId: 'snapshot-offset-owner',
+              name: 'Snapshot offset guard',
+              mapName: 'verdantia',
+              players: const [],
+              maxPlayers: 2,
+              minPlayers: 2,
+              turn: 1,
+              state: 'open',
+              createdAt: createdAt,
+            ),
+            snapshot: const WireSnapshot(
+              matchId: 'snapshot-offset-guard',
+              offset: 0,
+              save: {'turn': 1},
+              state: {'phase': 'lobby'},
+            ),
+          );
+          await store.createState(initial);
+          final next = initial.copyWith(
+            snapshot: initial.snapshot.copyWith(
+              offset: 1,
+              save: const {'turn': 2},
+              state: const {
+                'phase': 'running',
+                'payload': {'nested': 'preserved'},
+              },
+            ),
+          );
+
+          await store.saveState(next);
+          final matchRow = await GameMatch.db.findFirstRow(
+            session,
+            where: (table) => table.publicId.equals(initial.match.id),
+          );
+          expect(matchRow, isNotNull);
+          final matchRowId = matchRow!.id!;
+          final snapshots = await GameSnapshot.db.find(
+            session,
+            where: (table) => table.matchId.equals(matchRowId),
+          );
+          expect(snapshots, hasLength(1));
+          expect(snapshots.single.offset, 1);
+          expect(snapshots.single.snapshot.toJson(), next.snapshot.toJson());
+
+          await expectLater(
+            store.saveState(initial),
+            throwsA(isA<StateError>()),
+          );
+          final afterStaleWrite = await GameSnapshot.db.find(
+            session,
+            where: (table) => table.matchId.equals(matchRowId),
+          );
+          expect(afterStaleWrite, hasLength(1));
+          expect(afterStaleWrite.single.offset, 1);
+          expect(
+            afterStaleWrite.single.snapshot.toJson(),
+            next.snapshot.toJson(),
+          );
+        },
+      );
 
       test('creates, joins, starts, and loads a persisted match', () async {
         final owner = await _accountSession(

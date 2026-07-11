@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:serverpod/serverpod.dart';
@@ -9,6 +11,7 @@ import 'game_match_row_mapper.dart';
 part 'multiplayer_match_store_creation.dart';
 part 'multiplayer_match_store_limits.dart';
 part 'multiplayer_match_store_queries.dart';
+part 'multiplayer_match_store_snapshots.dart';
 
 class StoredMatchState {
   const StoredMatchState({required this.match, required this.snapshot});
@@ -311,56 +314,6 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       for (var index = 0; index < players.length; index++)
         _gamePlayer(matchRowId, players[index], index),
     ], transaction: _transaction);
-  }
-
-  Future<void> _saveLatestSnapshot(
-    int matchRowId,
-    WireSnapshot snapshot,
-  ) async {
-    final latest = await GameSnapshot.db.findFirstRow(
-      _session,
-      where: (table) => table.matchId.equals(matchRowId),
-      orderBy: (table) => table.offset,
-      orderDescending: true,
-      transaction: _transaction,
-    );
-    if (latest != null && latest.offset > snapshot.offset) {
-      throw StateError(
-        'Cannot replace snapshot at offset ${latest.offset} with stale '
-        'offset ${snapshot.offset}.',
-      );
-    }
-
-    final now = DateTime.now().toUtc();
-    if (latest == null) {
-      await GameSnapshot.db.insertRow(
-        _session,
-        GameSnapshot(
-          matchId: matchRowId,
-          offset: snapshot.offset,
-          snapshot: snapshot,
-          createdAt: now,
-        ),
-        transaction: _transaction,
-      );
-    } else {
-      await GameSnapshot.db.updateRow(
-        _session,
-        latest.copyWith(
-          offset: snapshot.offset,
-          snapshot: snapshot,
-          createdAt: now,
-        ),
-        transaction: _transaction,
-      );
-    }
-
-    await GameSnapshot.db.deleteWhere(
-      _session,
-      where: (table) =>
-          (table.matchId.equals(matchRowId)) & (table.offset < snapshot.offset),
-      transaction: _transaction,
-    );
   }
 }
 
