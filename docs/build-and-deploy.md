@@ -19,7 +19,7 @@ control.
 | --- | --- |
 | Full local quality gate | `make ci` |
 | Backend/deploy config checks | `make serverpod-ops-check` |
-| Stage static homepage | `make build-homepage` |
+| Stage homepage and `/stats` | `make build-homepage` |
 | Deploy static homepage | `make deploy-homepage ...` |
 | Deploy web demo | `make deploy-web ...` |
 | Full release flow | `make deploy-all ...` |
@@ -104,11 +104,17 @@ flutter build web --wasm --release \
   --dart-define=AONW_API_BASE_URL=https://api.aonw.net
 ```
 
-Stage the homepage:
+Stage the homepage, including the extensionless `/stats` dashboard:
 
 ```sh
 make build-homepage
 ```
+
+The dashboard reads its aggregate, non-personal payload from the same-origin
+`GET /api/stats` route. Caddy serves `/stats` as HTML, redirects `/stats/` to
+the canonical path, and proxies only that exact API route to the Serverpod web
+port. After a deploy, `make health-stats` validates both the page marker and
+the versioned JSON contract.
 
 Deploy targets are intentionally generic. Provide the remote values at runtime:
 
@@ -175,8 +181,10 @@ TLS.
 
 TLS and public routing should terminate in Caddy, a reverse proxy, or a cloud
 load balancer. The included `deploy/caddy/Caddyfile` can serve the API,
-Insights, homepage, and web demo when the corresponding environment variables
-are set.
+Insights, homepage, multiplayer statistics dashboard, and web demo when the
+corresponding environment variables are set. Production and staging `make up`
+runs force a Caddy recreation so bind-mounted route changes take effect
+reliably.
 
 ## Full Release Flow
 

@@ -7,6 +7,8 @@ BRANCH ?=
 HEALTH_URL ?= https://api.aonw.net/readyz
 WEB_HEALTH_URL ?= https://demo.aonw.net/
 HOMEPAGE_HEALTH_URL ?= https://aonw.net/
+STATS_HEALTH_URL ?= https://aonw.net/stats
+STATS_API_HEALTH_URL ?= https://aonw.net/api/stats
 HEALTH_ATTEMPTS ?= 30
 HEALTH_SLEEP ?= 2
 PRUNE ?= 1
@@ -180,7 +182,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage prune status logs
+.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -235,6 +237,7 @@ help:
 	@echo "  make health        Check deployed Serverpod health endpoint"
 	@echo "  make health-web    Check deployed demo web frontend"
 	@echo "  make health-homepage Check deployed aonw.net homepage"
+	@echo "  make health-stats  Check deployed aonw.net multiplayer statistics page"
 	@echo "  make status        Show Docker Compose service status"
 	@echo "  make logs          Follow server logs"
 	@echo ""
@@ -257,6 +260,8 @@ help:
 	@echo "  HEALTH_URL=https://.../readyz Default: $(HEALTH_URL)"
 	@echo "  WEB_HEALTH_URL=https://...    Default: $(WEB_HEALTH_URL)"
 	@echo "  HOMEPAGE_HEALTH_URL=https://... Default: $(HOMEPAGE_HEALTH_URL)"
+	@echo "  STATS_HEALTH_URL=https://... Default: $(STATS_HEALTH_URL)"
+	@echo "  STATS_API_HEALTH_URL=https://... Default: $(STATS_API_HEALTH_URL)"
 	@echo "  WEB_API_BASE_URL=https://...  deploy-web only. Default: $(WEB_API_BASE_URL)"
 	@echo "  WEB_DEPLOY_SSH_KEY=/path      deploy-web/deploy-homepage only. Required"
 	@echo "  WEB_DEPLOY_USER=user          deploy-web/deploy-homepage only. Required"
@@ -483,6 +488,10 @@ infra-config-check:
 		-e AONW_INSIGHTS_UPSTREAM=server:8081 \
 		-v "$(CURDIR)/deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
 		"$(CADDY_VALIDATE_IMAGE)" validate --config /etc/caddy/Caddyfile --adapter caddyfile
+	@docker run --rm --entrypoint /usr/bin/caddy \
+		-e AONW_WEB_UPSTREAM=host.docker.internal:8082 \
+		-v "$(CURDIR)/deploy/caddy/Caddyfile.local:/etc/caddy/Caddyfile:ro" \
+		"$(CADDY_VALIDATE_IMAGE)" validate --config /etc/caddy/Caddyfile --adapter caddyfile
 	@docker run --rm --entrypoint /bin/promtool \
 		-v "$(CURDIR)/deploy/prometheus:/etc/prometheus:ro" \
 		"$(PROMTOOL_IMAGE)" check rules /etc/prometheus/aonw-alerts.yml
@@ -522,8 +531,10 @@ deploy-web:
 	@$(MAKE) --no-print-directory health-web
 
 build-homepage:
+	@command -v rg >/dev/null || { echo "rg is required for build-homepage."; exit 1; }
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/index.html not found"; exit 1; }
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html not found"; exit 1; }
+	@test -f "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/stats/index.html not found"; exit 1; }
 	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
 	@test -f assets/aonw-mobile.png || { echo "assets/aonw-mobile.png not found"; exit 1; }
 	@test -f assets/fonts/Cinzel-VariableFont_wght.ttf || { echo "assets/fonts/Cinzel-VariableFont_wght.ttf not found"; exit 1; }
@@ -545,6 +556,7 @@ build-homepage:
 	@mkdir -p "$(HOMEPAGE_BUILD_DIR)/assets/main_menu" "$(HOMEPAGE_BUILD_DIR)/assets/fonts" "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/index.html" "$(HOMEPAGE_BUILD_DIR)/index.html"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html" "$(HOMEPAGE_BUILD_DIR)/privacy-policy"
+	@cp "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" "$(HOMEPAGE_BUILD_DIR)/stats"
 	@cp web/favicon.png "$(HOMEPAGE_BUILD_DIR)/favicon.png"
 	@cp web/icons/Icon-192.png "$(HOMEPAGE_BUILD_DIR)/apple-touch-icon.png"
 	@cp assets/logo.png "$(HOMEPAGE_BUILD_DIR)/assets/logo.png"
@@ -555,6 +567,7 @@ build-homepage:
 	@cp assets/fonts/Lato-Bold.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Bold.ttf"
 	@cp assets/main_menu/background.png "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.png"
 	@cp assets/homepage/platform-icons/*.svg "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons/"
+	@rg -F 'data-page="multiplayer-stats"' "$(HOMEPAGE_BUILD_DIR)/stats" >/dev/null || { echo "Stats page marker missing from $(HOMEPAGE_BUILD_DIR)/stats"; exit 1; }
 	@echo "Static homepage staged in $(HOMEPAGE_BUILD_DIR)/"
 
 deploy-homepage: build-homepage
@@ -570,8 +583,9 @@ deploy-homepage: build-homepage
 	  --exclude='download/***' \
 	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
 	  "$(HOMEPAGE_BUILD_DIR)/" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(HOMEPAGE_DEPLOY_DEST)/
-	@echo "deploy-homepage finished. Checking $(HOMEPAGE_HEALTH_URL) ..."
+	@echo "deploy-homepage finished. Checking homepage and statistics routes..."
 	@$(MAKE) --no-print-directory health-homepage
+	@$(MAKE) --no-print-directory health-stats
 
 download-artifacts: itch-prepare download-package
 	@echo "download artifacts ready."
@@ -1529,6 +1543,7 @@ deploy-all:
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage
+	@$(MAKE) --no-print-directory health-stats
 	@$(MAKE) --no-print-directory health-downloads
 	@echo "deploy-all finished."
 
@@ -1563,6 +1578,11 @@ migrate:
 
 up:
 	@$(COMPOSE) --profile "$(PROFILE)" up -d --remove-orphans
+	@case "$(PROFILE)" in \
+		staging|prod) \
+			$(COMPOSE) --profile "$(PROFILE)" up -d --force-recreate --no-deps caddy ;; \
+		*) : ;; \
+	esac
 
 health:
 	@echo "Checking $(HEALTH_URL)"
@@ -1590,6 +1610,22 @@ health-homepage:
 	@echo "Checking $(HOMEPAGE_HEALTH_URL)"
 	@curl -fsS --max-time 5 -o /dev/null -w "%{http_code}\n" "$(HOMEPAGE_HEALTH_URL)" \
 	  || { echo "Static homepage not reachable"; exit 1; }
+
+health-stats:
+	@command -v rg >/dev/null || { echo "rg is required for health-stats."; exit 1; }
+	@echo "Checking $(STATS_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(STATS_HEALTH_URL)" \
+	  | rg -F 'data-page="multiplayer-stats"' >/dev/null \
+	  || { echo "Multiplayer statistics page missing or invalid"; exit 1; }
+	@echo "Checking $(STATS_API_HEALTH_URL)"
+	@body=$$(curl -fsS --max-time 5 "$(STATS_API_HEALTH_URL)") \
+	  || { echo "Multiplayer statistics API not reachable"; exit 1; }; \
+	printf '%s' "$$body" | rg -F '"schemaVersion":1' >/dev/null \
+	  && printf '%s' "$$body" | rg -F '"totals":{' >/dev/null \
+	  && printf '%s' "$$body" | rg -F '"activity":[' >/dev/null \
+	  && printf '%s' "$$body" | rg -F '"outcomes":[' >/dev/null \
+	  && printf '%s' "$$body" | rg -F '"turns":{' >/dev/null \
+	  || { echo "Multiplayer statistics API payload is invalid"; exit 1; }
 
 health-downloads:
 	@set -e; \

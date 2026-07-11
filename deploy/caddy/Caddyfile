@@ -10,7 +10,7 @@
 		Referrer-Policy no-referrer
 	}
 
-	@serverpodWeb path /auth/*
+	@serverpodWeb path /auth/* /api/stats
 	reverse_proxy @serverpodWeb {$AONW_WEB_UPSTREAM}
 
 	reverse_proxy {$AONW_UPSTREAM}
@@ -33,14 +33,14 @@
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		?Cache-Control "public, max-age=86400"
 	}
 
 	@homepageHtml {
-		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html
+		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html /stats /stats/ /stats/index.html
 	}
 	header @homepageHtml {
 		Cache-Control "no-cache, must-revalidate"
+		Content-Type "text/html; charset=utf-8"
 	}
 
 	@homepageDownloads {
@@ -52,10 +52,21 @@
 	}
 
 	redir /privacy-policy/ /privacy-policy 308
+	redir /stats/ /stats 308
 
-	root * /srv/homepage
-	try_files {path} {path}/index.html /index.html
-	file_server
+	@homepageStatsApi path /api/stats
+	handle @homepageStatsApi {
+		reverse_proxy {$AONW_WEB_UPSTREAM}
+	}
+
+	handle {
+		header {
+			?Cache-Control "public, max-age=86400"
+		}
+		root * /srv/homepage
+		try_files {path} {path}/index.html
+		file_server
+	}
 }
 
 {$AONW_DEMO_HOST} {

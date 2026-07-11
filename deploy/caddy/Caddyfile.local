@@ -10,6 +10,14 @@
 http://localhost:8088 {
 	encode zstd gzip
 
+	@homepageHtml {
+		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html /stats /stats/ /stats/index.html
+	}
+	header @homepageHtml {
+		Cache-Control "no-cache, must-revalidate"
+		Content-Type "text/html; charset=utf-8"
+	}
+
 	@homepageDownloads {
 		path /download/*
 	}
@@ -18,9 +26,19 @@ http://localhost:8088 {
 		Cloudflare-CDN-Cache-Control "public, max-age=3600"
 	}
 
-	root * /srv/homepage
-	try_files {path} {path}/index.html /index.html
-	file_server
+	redir /privacy-policy/ /privacy-policy 308
+	redir /stats/ /stats 308
+
+	@homepageStatsApi path /api/stats
+	handle @homepageStatsApi {
+		reverse_proxy {$AONW_WEB_UPSTREAM:host.docker.internal:8082}
+	}
+
+	handle {
+		root * /srv/homepage
+		try_files {path} {path}/index.html
+		file_server
+	}
 }
 
 # Flutter web demo (populate build/demo with: flutter build web).
