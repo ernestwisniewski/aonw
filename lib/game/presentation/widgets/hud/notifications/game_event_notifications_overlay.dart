@@ -24,7 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const _minorNotificationHoldDuration = Duration(milliseconds: 2500);
 const _criticalNotificationHoldDuration = Duration(seconds: 4);
 const _notificationFadeDuration = GameMotion.scene;
-const _maxVisibleNotificationCards = 3;
+const _maxVisibleNotificationCards = 2;
 
 class GameEventNotificationsOverlay extends ConsumerStatefulWidget {
   final GameSave? gameSave;

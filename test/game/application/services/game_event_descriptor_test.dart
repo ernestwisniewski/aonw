@@ -72,6 +72,32 @@ void main() {
       expect(focusHint.col, 2);
       expect(focusHint.row, 1);
     });
+
+    test('keeps turn completion in activity without a top notification', () {
+      final descriptor = GameEventDescriptor.forEvent(
+        AllPlayersSubmittedEvent(
+          turn: 4,
+          playerIds: const ['player_1', 'player_2'],
+        ),
+      );
+
+      expect(descriptor.activityWorthy, isTrue);
+      expect(descriptor.showAsTopNotification, isFalse);
+      expect(descriptor.completedTurn, 4);
+      expect(descriptor.playerIdsFor(state: const GameState()), [
+        'player_1',
+        'player_2',
+      ]);
+    });
+
+    test('shows ordinary activity events as top notifications by default', () {
+      final descriptor = GameEventDescriptor.forEvent(
+        const CommandRejectedEvent(reason: 'stale_turn'),
+      );
+
+      expect(descriptor.activityWorthy, isTrue);
+      expect(descriptor.showAsTopNotification, isTrue);
+    });
   });
 }
 

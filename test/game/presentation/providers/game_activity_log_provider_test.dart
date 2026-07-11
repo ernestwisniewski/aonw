@@ -10,6 +10,46 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'turn completion stays in activity log without entering the top queue',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(gameEventNotificationsProvider.notifier).addAll([
+        AllPlayersSubmittedEvent(
+          turn: 7,
+          playerIds: const ['player_1', 'player_2'],
+        ),
+        const CommandRejectedEvent(reason: 'stale_turn'),
+      ], const GameState(activePlayerId: 'player_1'));
+
+      final queued = container.read(gameEventNotificationsProvider);
+      expect(queued, hasLength(1));
+      expect(queued.single.event, isA<CommandRejectedEvent>());
+
+      final activity = container.read(gameActivityLogProvider);
+      expect(activity, hasLength(2));
+      expect(activity.first.event, isA<AllPlayersSubmittedEvent>());
+      expect(activity.last.event, isA<CommandRejectedEvent>());
+    },
+  );
+
+  test('top notification queue keeps the newest forty entries', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(gameEventNotificationsProvider.notifier).addAll([
+      for (var index = 0; index < 45; index++)
+        CommandRejectedEvent(reason: 'reason_$index'),
+    ], const GameState(activePlayerId: 'player_1'));
+
+    final queued = container.read(gameEventNotificationsProvider);
+    expect(queued, hasLength(40));
+    expect((queued.first.event as CommandRejectedEvent).reason, 'reason_5');
+    expect((queued.last.event as CommandRejectedEvent).reason, 'reason_44');
+  });
+
   test('activity log keeps all toast-worthy notifications', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

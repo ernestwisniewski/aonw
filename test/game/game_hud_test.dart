@@ -28,6 +28,7 @@ import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.d
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck_slot.dart';
 import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/layout/hud_side_menu_metrics.dart';
+import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notification_card.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notifications_overlay.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/game_hud_overlay_panels_host.dart';
@@ -4725,8 +4726,9 @@ void main() {
 
       expect(find.text('City founded'), findsOneWidget);
       expect(find.text('Construction complete'), findsOneWidget);
-      expect(find.text('Unit trained'), findsOneWidget);
-      expect(find.text('+3 more ↓'), findsOneWidget);
+      expect(find.text('Unit trained'), findsNothing);
+      expect(find.text('+4 more ↓'), findsOneWidget);
+      expect(find.byType(GameEventNotificationCard), findsNWidgets(2));
       expect(find.text('City borders'), findsNothing);
       expect(find.text('Unit movement'), findsNothing);
       expect(find.text('Turn ended'), findsNothing);
@@ -4749,7 +4751,8 @@ void main() {
       expect(find.text('City borders'), findsOneWidget);
       expect(find.text('Work complete'), findsOneWidget);
       expect(find.text('Technology discovered'), findsWidgets);
-      expect(find.textContaining('more'), findsNothing);
+      expect(find.text('+1 more ↓'), findsOneWidget);
+      expect(find.byType(GameEventNotificationCard), findsNWidgets(2));
 
       container.read(gameEventNotificationsProvider.notifier).clear();
       await tester.pump();
@@ -4823,8 +4826,9 @@ void main() {
       expect(find.text('Attack: -3 HP'), findsNothing);
       expect(find.text('Retaliation: -1 HP'), findsNothing);
       expect(find.text('Unit defeated'), findsOneWidget);
-      expect(find.text('Retreat'), findsOneWidget);
-      expect(find.text('+1 more ↓'), findsOneWidget);
+      expect(find.text('Retreat'), findsNothing);
+      expect(find.text('+2 more ↓'), findsOneWidget);
+      expect(find.byType(GameEventNotificationCard), findsNWidgets(2));
       expect(find.text('City captured'), findsNothing);
 
       container.read(gameEventNotificationsProvider.notifier).clear();
@@ -4842,7 +4846,7 @@ void main() {
     },
   );
 
-  testWidgets('notification overflow opens the activity log panel', (
+  testWidgets('notification queue shows two cards and advances in order', (
     tester,
   ) async {
     const city = GameCity(
@@ -4873,6 +4877,21 @@ void main() {
     ], state);
     await tester.pump();
 
+    expect(find.byType(GameEventNotificationCard), findsNWidgets(2));
+    expect(find.text('City founded'), findsOneWidget);
+    expect(find.text('Construction complete'), findsOneWidget);
+    expect(find.text('Unit trained'), findsNothing);
+    expect(find.text('+2 more ↓'), findsOneWidget);
+    expect(find.text('City borders'), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(find.byType(GameEventNotificationCard), findsNWidgets(2));
+    expect(find.text('City founded'), findsNothing);
+    expect(find.text('Construction complete'), findsOneWidget);
+    expect(find.text('Unit trained'), findsOneWidget);
     expect(find.text('+1 more ↓'), findsOneWidget);
     expect(find.text('City borders'), findsNothing);
 

@@ -1,10 +1,11 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const int _maxGameEventNotifications = 10;
+const int _maxGameEventNotifications = 40;
 
 final gameEventNotificationsProvider =
     NotifierProvider<
@@ -85,13 +86,22 @@ class GameEventNotificationsNotifier
     ];
     if (added.isEmpty) return;
 
-    final next = [...state, ...added];
+    ref.read(gameActivityLogProvider.notifier).addAll(added);
+    final queued = [
+      for (final notification in added)
+        if (GameEventDescriptor.forEvent(
+          notification.event,
+        ).showAsTopNotification)
+          notification,
+    ];
+    if (queued.isEmpty) return;
+
+    final next = [...state, ...queued];
     state = next.length <= _maxGameEventNotifications
         ? List.unmodifiable(next)
         : List.unmodifiable(
             next.skip(next.length - _maxGameEventNotifications),
           );
-    ref.read(gameActivityLogProvider.notifier).addAll(added);
   }
 
   void dismiss(int id) {

@@ -21,6 +21,7 @@ final class GameEventDescriptor {
     this.completedTurn,
     this.completedWorkerUnitId,
     this.notificationMaxDetailCount,
+    this.showAsTopNotification = true,
     this.civilizationPlayerId,
     this.civilizationMetPlayerId,
     this.diplomaticMessageId,
@@ -53,6 +54,7 @@ final class GameEventDescriptor {
   final int? completedTurn;
   final String? completedWorkerUnitId;
   final int? notificationMaxDetailCount;
+  final bool showAsTopNotification;
   final String? civilizationPlayerId;
   final String? civilizationMetPlayerId;
   final String? diplomaticMessageId;
@@ -481,6 +483,7 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
         activityWorthy: true,
         messageGroup: GameEventMessageGroup.system,
         completedTurn: turn,
+        showAsTopNotification: false,
         playerIds: playerIds,
       ),
     PlayerTimedOutEvent(:final playerId) => GameEventDescriptor._(
