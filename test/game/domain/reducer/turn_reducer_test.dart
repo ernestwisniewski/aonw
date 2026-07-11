@@ -1,13 +1,21 @@
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -125,6 +133,48 @@ void main() {
       );
 
       expect(result.state.playerStabilityNet['player_1'], 21);
+    });
+
+    test('local end turn forwards victory rules and the save turn', () {
+      final victoryRules = VictoryRules.standard.copyWith(
+        culturalEnabled: false,
+      );
+      final save = GameSave(
+        id: 'save_1',
+        name: 'Custom rules',
+        mapName: 'verdantia',
+        turn: 7,
+        playerStates: const {'player_1': PlayerTurnState.active},
+        savedAt: DateTime.utc(2026, 7, 11),
+        camera: CameraState.zero,
+        matchRules: MatchRules.standard.copyWith(victory: victoryRules),
+      );
+      final diplomacy = DiplomacyState.empty.setStatus(
+        'player_1',
+        'player_2',
+        DiplomaticRelationStatus.truce,
+        turn: 7,
+        reason: DiplomaticRelationChangeReason.proposalAccepted,
+      );
+      final state = GameState(
+        playerWarWeariness: const {'player_1': 5},
+        culturalVictoryHoldTurnsByPlayerId: const {'player_1': 3},
+        diplomacy: diplomacy,
+        activePlayerId: 'player_1',
+      );
+      final resolver = LocalCommandResolver(
+        reducer: GameStateReducer(mapData: mapData),
+      );
+
+      final result = resolver.resolve(
+        baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+        currentState: state,
+        command: const EndTurnCommand('player_1'),
+        savedAt: DateTime.utc(2026, 7, 11, 12),
+      );
+
+      expect(result.state.playerWarWeariness['player_1'], 3);
+      expect(result.state.culturalVictoryHoldTurnsByPlayerId, {'player_1': 3});
     });
 
     test('advanceCitiesForPlayer adds units when a city produces one', () {

@@ -52,6 +52,7 @@ abstract class GameCommandContext
     @Default(0) int combatSeedTurn,
     @Default(0) int commandTick,
     @Default(PaceBalance.unlimited) PaceBalance paceBalance,
+    @Default(VictoryRules.standard) VictoryRules victoryRules,
     @Default(false) bool ignoreFogOfWar,
   }) = _GameCommandContext;
 

@@ -26,6 +26,8 @@ abstract final class EndTurnReducer {
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
+    VictoryRules victoryRules = VictoryRules.standard,
+    int? turn,
   }) {
     final ruleset = GameRuleset.standard().copyWith(
       city: cityRuleset,
@@ -40,6 +42,8 @@ abstract final class EndTurnReducer {
       mapData: mapData,
       ruleset: ruleset,
       fogOfWarService: fogOfWarService,
+      victoryRules: victoryRules,
+      turn: turn,
     );
     final refreshed = const SelectionRefreshPhase().apply(
       TurnContext(

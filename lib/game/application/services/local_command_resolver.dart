@@ -42,6 +42,7 @@ class LocalCommandResolver {
     final effectiveContext = context.copyWith(
       combatSeedTurn: baseSnapshot.save.turn,
       paceBalance: baseSnapshot.save.matchRules.paceBalance,
+      victoryRules: baseSnapshot.save.matchRules.victory,
     );
     final transition = reducer.reduce(
       currentState,

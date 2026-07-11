@@ -62,9 +62,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   GameStateTransition cancelMerchantMoveToCitySelection(
     GameState state,
     CancelMerchantMoveToCitySelectionCommand command,
-  ) {
-    return MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
-  }
+  ) => MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
 
   GameStateTransition moveMerchantToCity(
     GameState state,
@@ -268,6 +266,8 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
         stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
+        victoryRules: context.victoryRules,
+        turn: context.combatSeedTurn,
       );
 
   GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) =>

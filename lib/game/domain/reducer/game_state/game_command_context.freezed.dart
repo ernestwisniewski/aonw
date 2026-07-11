@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GameCommandContext {
 
- String? get actorPlayerId; bool get canAct; int get combatSeedTurn; int get commandTick; PaceBalance get paceBalance; bool get ignoreFogOfWar;
+ String? get actorPlayerId; bool get canAct; int get combatSeedTurn; int get commandTick; PaceBalance get paceBalance; VictoryRules get victoryRules; bool get ignoreFogOfWar;
 /// Create a copy of GameCommandContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $GameCommandContextCopyWith<GameCommandContext> get copyWith => _$GameCommandCon
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameCommandContext&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.canAct, canAct) || other.canAct == canAct)&&(identical(other.combatSeedTurn, combatSeedTurn) || other.combatSeedTurn == combatSeedTurn)&&(identical(other.commandTick, commandTick) || other.commandTick == commandTick)&&(identical(other.paceBalance, paceBalance) || other.paceBalance == paceBalance)&&(identical(other.ignoreFogOfWar, ignoreFogOfWar) || other.ignoreFogOfWar == ignoreFogOfWar));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameCommandContext&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.canAct, canAct) || other.canAct == canAct)&&(identical(other.combatSeedTurn, combatSeedTurn) || other.combatSeedTurn == combatSeedTurn)&&(identical(other.commandTick, commandTick) || other.commandTick == commandTick)&&(identical(other.paceBalance, paceBalance) || other.paceBalance == paceBalance)&&(identical(other.victoryRules, victoryRules) || other.victoryRules == victoryRules)&&(identical(other.ignoreFogOfWar, ignoreFogOfWar) || other.ignoreFogOfWar == ignoreFogOfWar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,actorPlayerId,canAct,combatSeedTurn,commandTick,paceBalance,ignoreFogOfWar);
+int get hashCode => Object.hash(runtimeType,actorPlayerId,canAct,combatSeedTurn,commandTick,paceBalance,victoryRules,ignoreFogOfWar);
 
 @override
 String toString() {
-  return 'GameCommandContext(actorPlayerId: $actorPlayerId, canAct: $canAct, combatSeedTurn: $combatSeedTurn, commandTick: $commandTick, paceBalance: $paceBalance, ignoreFogOfWar: $ignoreFogOfWar)';
+  return 'GameCommandContext(actorPlayerId: $actorPlayerId, canAct: $canAct, combatSeedTurn: $combatSeedTurn, commandTick: $commandTick, paceBalance: $paceBalance, victoryRules: $victoryRules, ignoreFogOfWar: $ignoreFogOfWar)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $GameCommandContextCopyWith<$Res>  {
   factory $GameCommandContextCopyWith(GameCommandContext value, $Res Function(GameCommandContext) _then) = _$GameCommandContextCopyWithImpl;
 @useResult
 $Res call({
- String? actorPlayerId, bool canAct, int combatSeedTurn, int commandTick, PaceBalance paceBalance, bool ignoreFogOfWar
+ String? actorPlayerId, bool canAct, int combatSeedTurn, int commandTick, PaceBalance paceBalance, VictoryRules victoryRules, bool ignoreFogOfWar
 });
 
 
-
+$VictoryRulesCopyWith<$Res> get victoryRules;
 
 }
 /// @nodoc
@@ -62,18 +62,28 @@ class _$GameCommandContextCopyWithImpl<$Res>
 
 /// Create a copy of GameCommandContext
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? actorPlayerId = freezed,Object? canAct = null,Object? combatSeedTurn = null,Object? commandTick = null,Object? paceBalance = null,Object? ignoreFogOfWar = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? actorPlayerId = freezed,Object? canAct = null,Object? combatSeedTurn = null,Object? commandTick = null,Object? paceBalance = null,Object? victoryRules = null,Object? ignoreFogOfWar = null,}) {
   return _then(_self.copyWith(
 actorPlayerId: freezed == actorPlayerId ? _self.actorPlayerId : actorPlayerId // ignore: cast_nullable_to_non_nullable
 as String?,canAct: null == canAct ? _self.canAct : canAct // ignore: cast_nullable_to_non_nullable
 as bool,combatSeedTurn: null == combatSeedTurn ? _self.combatSeedTurn : combatSeedTurn // ignore: cast_nullable_to_non_nullable
 as int,commandTick: null == commandTick ? _self.commandTick : commandTick // ignore: cast_nullable_to_non_nullable
 as int,paceBalance: null == paceBalance ? _self.paceBalance : paceBalance // ignore: cast_nullable_to_non_nullable
-as PaceBalance,ignoreFogOfWar: null == ignoreFogOfWar ? _self.ignoreFogOfWar : ignoreFogOfWar // ignore: cast_nullable_to_non_nullable
+as PaceBalance,victoryRules: null == victoryRules ? _self.victoryRules : victoryRules // ignore: cast_nullable_to_non_nullable
+as VictoryRules,ignoreFogOfWar: null == ignoreFogOfWar ? _self.ignoreFogOfWar : ignoreFogOfWar // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
+/// Create a copy of GameCommandContext
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VictoryRulesCopyWith<$Res> get victoryRules {
 
+  return $VictoryRulesCopyWith<$Res>(_self.victoryRules, (value) {
+    return _then(_self.copyWith(victoryRules: value));
+  });
+}
 }
 
 
@@ -155,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  bool ignoreFogOfWar)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  VictoryRules victoryRules,  bool ignoreFogOfWar)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GameCommandContext() when $default != null:
-return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.ignoreFogOfWar);case _:
+return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.victoryRules,_that.ignoreFogOfWar);case _:
   return orElse();
 
 }
@@ -176,10 +186,10 @@ return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.comm
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  bool ignoreFogOfWar)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  VictoryRules victoryRules,  bool ignoreFogOfWar)  $default,) {final _that = this;
 switch (_that) {
 case _GameCommandContext():
-return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.ignoreFogOfWar);case _:
+return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.victoryRules,_that.ignoreFogOfWar);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +206,10 @@ return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.comm
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  bool ignoreFogOfWar)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? actorPlayerId,  bool canAct,  int combatSeedTurn,  int commandTick,  PaceBalance paceBalance,  VictoryRules victoryRules,  bool ignoreFogOfWar)?  $default,) {final _that = this;
 switch (_that) {
 case _GameCommandContext() when $default != null:
-return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.ignoreFogOfWar);case _:
+return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.commandTick,_that.paceBalance,_that.victoryRules,_that.ignoreFogOfWar);case _:
   return null;
 
 }
@@ -211,7 +221,7 @@ return $default(_that.actorPlayerId,_that.canAct,_that.combatSeedTurn,_that.comm
 
 
 class _GameCommandContext extends GameCommandContext {
-  const _GameCommandContext({this.actorPlayerId, this.canAct = true, this.combatSeedTurn = 0, this.commandTick = 0, this.paceBalance = PaceBalance.unlimited, this.ignoreFogOfWar = false}): super._();
+  const _GameCommandContext({this.actorPlayerId, this.canAct = true, this.combatSeedTurn = 0, this.commandTick = 0, this.paceBalance = PaceBalance.unlimited, this.victoryRules = VictoryRules.standard, this.ignoreFogOfWar = false}): super._();
   
 
 @override final  String? actorPlayerId;
@@ -219,6 +229,7 @@ class _GameCommandContext extends GameCommandContext {
 @override@JsonKey() final  int combatSeedTurn;
 @override@JsonKey() final  int commandTick;
 @override@JsonKey() final  PaceBalance paceBalance;
+@override@JsonKey() final  VictoryRules victoryRules;
 @override@JsonKey() final  bool ignoreFogOfWar;
 
 /// Create a copy of GameCommandContext
@@ -231,16 +242,16 @@ _$GameCommandContextCopyWith<_GameCommandContext> get copyWith => __$GameCommand
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameCommandContext&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.canAct, canAct) || other.canAct == canAct)&&(identical(other.combatSeedTurn, combatSeedTurn) || other.combatSeedTurn == combatSeedTurn)&&(identical(other.commandTick, commandTick) || other.commandTick == commandTick)&&(identical(other.paceBalance, paceBalance) || other.paceBalance == paceBalance)&&(identical(other.ignoreFogOfWar, ignoreFogOfWar) || other.ignoreFogOfWar == ignoreFogOfWar));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameCommandContext&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.canAct, canAct) || other.canAct == canAct)&&(identical(other.combatSeedTurn, combatSeedTurn) || other.combatSeedTurn == combatSeedTurn)&&(identical(other.commandTick, commandTick) || other.commandTick == commandTick)&&(identical(other.paceBalance, paceBalance) || other.paceBalance == paceBalance)&&(identical(other.victoryRules, victoryRules) || other.victoryRules == victoryRules)&&(identical(other.ignoreFogOfWar, ignoreFogOfWar) || other.ignoreFogOfWar == ignoreFogOfWar));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,actorPlayerId,canAct,combatSeedTurn,commandTick,paceBalance,ignoreFogOfWar);
+int get hashCode => Object.hash(runtimeType,actorPlayerId,canAct,combatSeedTurn,commandTick,paceBalance,victoryRules,ignoreFogOfWar);
 
 @override
 String toString() {
-  return 'GameCommandContext(actorPlayerId: $actorPlayerId, canAct: $canAct, combatSeedTurn: $combatSeedTurn, commandTick: $commandTick, paceBalance: $paceBalance, ignoreFogOfWar: $ignoreFogOfWar)';
+  return 'GameCommandContext(actorPlayerId: $actorPlayerId, canAct: $canAct, combatSeedTurn: $combatSeedTurn, commandTick: $commandTick, paceBalance: $paceBalance, victoryRules: $victoryRules, ignoreFogOfWar: $ignoreFogOfWar)';
 }
 
 
@@ -251,11 +262,11 @@ abstract mixin class _$GameCommandContextCopyWith<$Res> implements $GameCommandC
   factory _$GameCommandContextCopyWith(_GameCommandContext value, $Res Function(_GameCommandContext) _then) = __$GameCommandContextCopyWithImpl;
 @override @useResult
 $Res call({
- String? actorPlayerId, bool canAct, int combatSeedTurn, int commandTick, PaceBalance paceBalance, bool ignoreFogOfWar
+ String? actorPlayerId, bool canAct, int combatSeedTurn, int commandTick, PaceBalance paceBalance, VictoryRules victoryRules, bool ignoreFogOfWar
 });
 
 
-
+@override $VictoryRulesCopyWith<$Res> get victoryRules;
 
 }
 /// @nodoc
@@ -268,19 +279,29 @@ class __$GameCommandContextCopyWithImpl<$Res>
 
 /// Create a copy of GameCommandContext
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? actorPlayerId = freezed,Object? canAct = null,Object? combatSeedTurn = null,Object? commandTick = null,Object? paceBalance = null,Object? ignoreFogOfWar = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? actorPlayerId = freezed,Object? canAct = null,Object? combatSeedTurn = null,Object? commandTick = null,Object? paceBalance = null,Object? victoryRules = null,Object? ignoreFogOfWar = null,}) {
   return _then(_GameCommandContext(
 actorPlayerId: freezed == actorPlayerId ? _self.actorPlayerId : actorPlayerId // ignore: cast_nullable_to_non_nullable
 as String?,canAct: null == canAct ? _self.canAct : canAct // ignore: cast_nullable_to_non_nullable
 as bool,combatSeedTurn: null == combatSeedTurn ? _self.combatSeedTurn : combatSeedTurn // ignore: cast_nullable_to_non_nullable
 as int,commandTick: null == commandTick ? _self.commandTick : commandTick // ignore: cast_nullable_to_non_nullable
 as int,paceBalance: null == paceBalance ? _self.paceBalance : paceBalance // ignore: cast_nullable_to_non_nullable
-as PaceBalance,ignoreFogOfWar: null == ignoreFogOfWar ? _self.ignoreFogOfWar : ignoreFogOfWar // ignore: cast_nullable_to_non_nullable
+as PaceBalance,victoryRules: null == victoryRules ? _self.victoryRules : victoryRules // ignore: cast_nullable_to_non_nullable
+as VictoryRules,ignoreFogOfWar: null == ignoreFogOfWar ? _self.ignoreFogOfWar : ignoreFogOfWar // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
 
+/// Create a copy of GameCommandContext
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VictoryRulesCopyWith<$Res> get victoryRules {
 
+  return $VictoryRulesCopyWith<$Res>(_self.victoryRules, (value) {
+    return _then(_self.copyWith(victoryRules: value));
+  });
+}
 }
 
 // dart format on
