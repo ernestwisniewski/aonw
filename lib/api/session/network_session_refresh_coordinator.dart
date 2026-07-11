@@ -312,35 +312,14 @@ final class NetworkSessionRefreshCoordinator {
 
     try {
       final refreshed = await refreshToken(refreshToken: refreshCredential);
-      if (_generation != refreshGeneration) {
-        throw const _RefreshSupersededException();
-      }
-      final latestCurrent = currentSession();
-      final latestStored = await sessionStore.load();
-      if (current != null) {
-        if (latestCurrent == null ||
-            latestCurrent.userId != current.userId ||
-            latestCurrent.refreshToken != refreshCredential) {
-          throw const _RefreshSupersededException();
-        }
-      } else {
-        if (latestCurrent != null &&
-            (latestCurrent.userId != storedForCurrent?.userId ||
-                latestCurrent.refreshToken != refreshCredential)) {
-          throw const _RefreshSupersededException();
-        }
-        if (latestCurrent == null &&
-            (latestStored?.userId != storedForCurrent?.userId ||
-                latestStored?.refreshToken != refreshCredential)) {
-          throw const _RefreshSupersededException();
-        }
-      }
+      final anchor = await _reanchorAfterRotation(
+        refreshGeneration: refreshGeneration,
+        current: current,
+        storedForCurrent: storedForCurrent,
+        refreshCredential: refreshCredential,
+      );
 
-      final baseSession = latestCurrent ?? current;
-      final userId = baseSession?.userId ?? storedForCurrent!.userId;
-      if (_generation != refreshGeneration) {
-        throw const _RefreshSupersededException();
-      }
+      final userId = anchor?.userId ?? storedForCurrent!.userId;
       var credentialsPersisted = false;
       try {
         await sessionStore.saveCredentials(
@@ -353,17 +332,8 @@ final class NetworkSessionRefreshCoordinator {
         // the replacement in memory and retry secure persistence later.
       }
 
-      final publishSession = currentSession();
-      if (baseSession == null) {
-        if (publishSession != null) {
-          throw const _RefreshSupersededException();
-        }
-      } else if (publishSession == null ||
-          publishSession.userId != baseSession.userId ||
-          publishSession.refreshToken != refreshCredential) {
-        throw const _RefreshSupersededException();
-      }
-      final metadataSession = publishSession ?? baseSession;
+      _requireNotSuperseded(refreshGeneration, anchor, refreshCredential);
+      final metadataSession = currentSession() ?? anchor;
       final nextSession = NetworkSession(
         userId: userId,
         playerId: metadataSession?.playerId,
@@ -377,18 +347,14 @@ final class NetworkSessionRefreshCoordinator {
               changedAt: now(),
             ),
       );
-      if (_generation != refreshGeneration) {
-        throw const _RefreshSupersededException();
-      }
+      _requireNotSuperseded(refreshGeneration, anchor, refreshCredential);
       setSession(nextSession);
-      if (credentialsPersisted) {
-        _pendingPersistence = null;
-      } else {
-        _pendingPersistence = _PendingSessionPersistence.credentials(
-          userId: userId,
-          refreshToken: refreshed.refreshToken,
-        );
-      }
+      _pendingPersistence = credentialsPersisted
+          ? null
+          : _PendingSessionPersistence.credentials(
+              userId: userId,
+              refreshToken: refreshed.refreshToken,
+            );
       return nextSession;
     } on _RefreshSupersededException catch (_, stackTrace) {
       await _restoreCurrentCredentials();
@@ -419,6 +385,67 @@ final class NetworkSessionRefreshCoordinator {
 
   bool _needsRefresh(AuthToken token) {
     return token.isExpiredAt(now(), skew: tokenRefreshSkew);
+  }
+
+  /// Re-anchors the refresh on the authoritative session after the rotation
+  /// round-trip.
+  ///
+  /// A refresh that started with a live session stays anchored to it. A
+  /// store-anchored refresh adopts a session that appeared for the same owner
+  /// and credential, and otherwise verifies the store still holds them.
+  /// Throws [_RefreshSupersededException] when a logout or another activation
+  /// took over while the rotation was in flight.
+  Future<NetworkSession?> _reanchorAfterRotation({
+    required int refreshGeneration,
+    required NetworkSession? current,
+    required StoredNetworkSession? storedForCurrent,
+    required String refreshCredential,
+  }) async {
+    if (current != null) {
+      _requireNotSuperseded(refreshGeneration, current, refreshCredential);
+      return current;
+    }
+    if (_generation != refreshGeneration) {
+      throw const _RefreshSupersededException();
+    }
+    final appeared = currentSession();
+    if (appeared != null) {
+      if (appeared.userId != storedForCurrent?.userId ||
+          appeared.refreshToken != refreshCredential) {
+        throw const _RefreshSupersededException();
+      }
+      return appeared;
+    }
+    final latestStored = await sessionStore.load();
+    if (latestStored?.userId != storedForCurrent?.userId ||
+        latestStored?.refreshToken != refreshCredential) {
+      throw const _RefreshSupersededException();
+    }
+    return null;
+  }
+
+  /// True when the session this refresh was rotated for is no longer the
+  /// authoritative one: a logout or activation bumped the generation, the
+  /// live session changed identity, or a session appeared for a refresh that
+  /// started without one.
+  bool _refreshSuperseded(
+    int refreshGeneration,
+    NetworkSession? anchor,
+    String refreshCredential,
+  ) {
+    if (_generation != refreshGeneration) return true;
+    if (anchor == null) return currentSession() != null;
+    return !_sessionStillMatches(anchor.userId, refreshCredential);
+  }
+
+  void _requireNotSuperseded(
+    int refreshGeneration,
+    NetworkSession? anchor,
+    String refreshCredential,
+  ) {
+    if (_refreshSuperseded(refreshGeneration, anchor, refreshCredential)) {
+      throw const _RefreshSupersededException();
+    }
   }
 
   Future<void> _endSession() async {
