@@ -35,6 +35,15 @@ void main() {
     expect(first, 'refresh-id:$id');
   });
 
+  test('malformed refresh-token ids cannot claim a credential bucket', () {
+    const malformed = 'sajrt:not-base64:fixed:rotating-secret';
+
+    expect(
+      DatabaseAuthRateLimiter.refreshTokenCredential(malformed),
+      'malformed-refresh:$malformed',
+    );
+  });
+
   test('policies bound both credential and IP attempts where applicable', () {
     final login = DatabaseAuthRateLimiter.policyFor(
       AuthRateLimitAction.emailLogin,

@@ -7,6 +7,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import '../generated/protocol.dart';
 import '../observability/server_operational_event_sink.dart';
 import 'auth_rate_limit_constants.dart';
+import 'refresh_token_parser.dart';
 
 enum AuthRateLimitAction {
   emailLogin,
@@ -157,10 +158,8 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
   }
 
   static String refreshTokenCredential(String refreshToken) {
-    final parts = refreshToken.split(':');
-    if (parts.length == 4 && parts.first == 'sajrt' && parts[1].isNotEmpty) {
-      return 'refresh-id:${parts[1]}';
-    }
+    final parsed = parseRefreshTokenId(refreshToken);
+    if (parsed != null) return 'refresh-id:${parsed.encoded}';
     return 'malformed-refresh:$refreshToken';
   }
 

@@ -1,8 +1,8 @@
-import 'dart:convert';
-
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
+
+import 'refresh_token_parser.dart' as refresh_token_parser;
 
 /// Serializes refresh-token rotation across requests and server instances.
 final class RefreshTokenRotationService {
@@ -53,13 +53,7 @@ final class RefreshTokenRotationService {
   }
 
   static UuidValue? parseRefreshTokenId(String refreshToken) {
-    try {
-      final parts = refreshToken.split(':');
-      if (parts.length != 4 || parts.first != 'sajrt') return null;
-      return UuidValue.fromByteList(base64Decode(parts[1]));
-    } catch (_) {
-      return null;
-    }
+    return refresh_token_parser.parseRefreshTokenId(refreshToken)?.value;
   }
 
   bool _changedWhileWaiting(
