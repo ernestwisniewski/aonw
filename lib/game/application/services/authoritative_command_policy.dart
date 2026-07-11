@@ -5,11 +5,11 @@ import 'package:aonw_core/game/domain/runtime.dart';
 
 abstract final class AuthoritativeCommandPolicy {
   static bool shouldSendToServer(GameCommand command) {
-    return !isClientOnly(command);
+    return !isClientOnly(command) && !isServerManaged(command);
   }
 
   static bool shouldLogForReplay(GameCommand command) {
-    return shouldSendToServer(command);
+    return !isClientOnly(command);
   }
 
   static bool isClientOnly(GameCommand command) {
@@ -40,8 +40,58 @@ abstract final class AuthoritativeCommandPolicy {
       SelectCityCommand() ||
       FocusNextPendingActionCommand() ||
       FocusTurnStartActionCommand() => true,
-      _ => false,
+      MoveUnitCommand() ||
+      CancelUnitActionCommand() ||
+      SkipUnitTurnCommand() ||
+      FortifyUnitCommand() ||
+      AutoExploreUnitCommand() ||
+      AssignMerchantTradeRouteCommand() ||
+      MoveMerchantToCityCommand() ||
+      StartArtifactExcavationCommand() ||
+      StoreArtifactInCityCommand() ||
+      TradeArtifactCommand() ||
+      OpenResourceTradeCommand() ||
+      OpenResourceExchangeCommand() ||
+      FoundCityCommand() ||
+      StartBuildingCommand() ||
+      StartUnitProductionCommand() ||
+      StartCityProjectCommand() ||
+      StartWonderCommand() ||
+      SetCitySpecializationCommand() ||
+      RushProductionCommand() ||
+      SelectTechnologyCommand() ||
+      DetachTroopCommand() ||
+      EndTurnCommand() ||
+      SubmitTurnCommand() ||
+      ResetUnitMovementCommand() ||
+      ToggleWorkedHexCommand() ||
+      SelectCityExpansionHexCommand() ||
+      SelectWorkerImprovementCommand() ||
+      ConfirmWorkerImprovementCommand() ||
+      CancelWorkerJobCommand() ||
+      AssignWorkerToHexCommand() ||
+      CancelWorkerAssignmentCommand() ||
+      AttackHexCommand() ||
+      SendDiplomaticProposalCommand() ||
+      RespondDiplomaticProposalCommand() ||
+      DeclareWarCommand() ||
+      SendGoldGiftCommand() ||
+      SendDiplomaticMessageCommand() ||
+      RespondDiplomaticMessageCommand() => false,
     };
+  }
+
+  static bool isServerManaged(GameCommand command) {
+    return command is ResetUnitMovementCommand;
+  }
+
+  static bool isClientOnlyForState(GameState state, GameCommand command) {
+    if (command case SelectWorkerImprovementCommand(:final unitId)) {
+      final pending = state.pendingAction;
+      return pending is PendingWorkerActionSelection &&
+          pending.unitId == unitId;
+    }
+    return isClientOnly(command);
   }
 
   static GameCommand? authoritativeCommandForClientIntent(
@@ -54,6 +104,20 @@ abstract final class AuthoritativeCommandPolicy {
     }
     if (command is CityTappedCommand) {
       return _authoritativeCommandForCityTap(state, command, context);
+    }
+    if (command case ConfirmWorkerImprovementCommand(
+      :final unitId,
+      improvementType: null,
+    )) {
+      final pending = state.pendingAction;
+      if (pending is PendingWorkerActionSelection &&
+          pending.unitId == unitId &&
+          pending.improvementType != null) {
+        return ConfirmWorkerImprovementCommand(
+          unitId,
+          improvementType: pending.improvementType,
+        );
+      }
     }
     return null;
   }

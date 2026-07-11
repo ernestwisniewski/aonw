@@ -87,6 +87,27 @@ void main() {
       expect(result.state.runtimeState.pendingAction, isNull);
     });
 
+    test('confirms a self-contained network worker improvement', () {
+      final state = _state(research: _researchWith(TechnologyId.agriculture));
+
+      final result = const PersistentWorkerCommandResolver()
+          .confirmWorkerImprovement(
+            state: state,
+            command: const ConfirmWorkerImprovementCommand(
+              'worker_1',
+              improvementType: FieldImprovementType.farm,
+            ),
+            actorPlayerId: 'player_1',
+            mapDefinition: _mapDefinition(),
+          );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.state.units.single.workerJob?.improvementType,
+        FieldImprovementType.farm,
+      );
+    });
+
     test('rejects a locked worker improvement', () {
       final state = _state();
 

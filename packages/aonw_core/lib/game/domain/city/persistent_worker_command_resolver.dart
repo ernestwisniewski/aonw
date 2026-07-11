@@ -54,19 +54,26 @@ class PersistentWorkerCommandResolver {
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final pending = state.runtimeState.pendingAction;
-    if (pending is! PendingWorkerActionSelection ||
-        pending.unitId != command.unitId ||
-        pending.improvementType == null) {
+    final commandImprovement = command.improvementType;
+    final pendingImprovement =
+        pending is PendingWorkerActionSelection &&
+            pending.unitId == command.unitId
+        ? pending.improvementType
+        : null;
+    final improvementType = commandImprovement ?? pendingImprovement;
+    if (improvementType == null) {
       return _reject(state, 'worker_improvement_not_selected');
     }
-    if (pending.ownerPlayerId != actorPlayerId) {
+    if (pending is PendingWorkerActionSelection &&
+        pending.unitId == command.unitId &&
+        pending.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'worker_action_not_controlled');
     }
 
     return _startImprovement(
       state,
       unitId: command.unitId,
-      improvementType: pending.improvementType!,
+      improvementType: improvementType,
       actorPlayerId: actorPlayerId,
       mapDefinition: mapDefinition,
       cityRuleset: cityRuleset,

@@ -23,6 +23,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -592,6 +593,102 @@ void main() {
       expect(server.sentCommands, isEmpty);
       expect(result.state.movePreview?.targetCol, 1);
       expect(result.state.movePreview?.targetRow, 0);
+    });
+
+    test(
+      'keeps worker draft local and sends a self-contained confirmation',
+      () async {
+        final worker = GameUnit.produced(
+          id: 'worker_1',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.worker,
+          col: 1,
+          row: 1,
+        );
+        const city = GameCity(
+          id: 'city_1',
+          ownerPlayerId: 'player_1',
+          name: 'City',
+          center: CityHex(col: 0, row: 0),
+          controlledHexes: [CityHex(col: 1, row: 1)],
+        );
+        final base = GameState(
+          units: [worker],
+          cities: const [city],
+          research: ResearchState(
+            players: {
+              'player_1': PlayerResearchState(
+                unlockedTechnologyIds: {TechnologyId.agriculture},
+              ),
+            },
+          ),
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(worker, tile: _map().tileAt(1, 1)),
+          ),
+        );
+        final server = _FakeCommandServer(save: _save(), state: base);
+        final transport = _transport(server);
+
+        final started = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: base,
+          command: const StartWorkerActionSelectionCommand('worker_1'),
+        );
+        final selected = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: started.state,
+          command: const SelectWorkerImprovementCommand(
+            'worker_1',
+            FieldImprovementType.farm,
+          ),
+        );
+
+        expect(server.sentCommands, isEmpty);
+        expect(
+          (selected.state.pendingAction as PendingWorkerActionSelection)
+              .improvementType,
+          FieldImprovementType.farm,
+        );
+
+        final confirmed = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: selected.state,
+          command: const ConfirmWorkerImprovementCommand('worker_1'),
+        );
+
+        expect(server.sentCommands, hasLength(1));
+        expect(server.sentCommands.single.wire.command, {
+          'type': 'ConfirmWorkerImprovement',
+          'unitId': 'worker_1',
+          'improvementType': 'farm',
+        });
+        expect(
+          confirmed.state.units.single.workerJob?.improvementType,
+          FieldImprovementType.farm,
+        );
+        expect(confirmed.state.pendingAction, isNull);
+      },
+    );
+
+    test('does not send server-managed movement resets', () async {
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final state = GameState(
+        units: [commander],
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+      );
+      final server = _FakeCommandServer(save: _save(), state: state);
+
+      final result = await _transport(server).dispatch(
+        saveId: 'save_1',
+        currentState: state,
+        command: const ResetUnitMovementCommand(playerId: 'player_1'),
+      );
+
+      expect(server.sentCommands, isEmpty);
+      expect(result.state, same(state));
     });
 
     test(

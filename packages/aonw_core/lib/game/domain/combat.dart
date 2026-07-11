@@ -13,5 +13,6 @@ export 'combat/combat_stats.dart';
 export 'combat/combat_step.dart';
 export 'combat/combatant.dart';
 export 'combat/intended_attack.dart';
+export 'combat/persistent_combat_command_resolver.dart';
 export 'combat/unit_combat_health.dart';
 export 'combat/unit_combat_stats.dart';

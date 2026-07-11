@@ -7,6 +7,7 @@ import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
+import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -257,7 +258,23 @@ class NetworkCommandTransport implements CommandTransport {
       );
     }
 
-    if (AuthoritativeCommandPolicy.isClientOnly(command)) {
+    if (AuthoritativeCommandPolicy.isServerManaged(command)) {
+      final offset = _lastKnownOffsetBySaveId[saveId] ?? -1;
+      return CommandTransportResult(
+        state: currentState,
+        snapshot: SaveSnapshot.fromGameState(
+          save: _clientOnlySave(saveId, currentState),
+          state: currentState,
+          eventLogOffset: offset < 0 ? 0 : offset,
+        ),
+        offset: offset,
+      );
+    }
+
+    if (AuthoritativeCommandPolicy.isClientOnlyForState(
+      currentState,
+      command,
+    )) {
       return _dispatchClientOnly(
         saveId: saveId,
         currentState: currentState,
@@ -297,9 +314,11 @@ class NetworkCommandTransport implements CommandTransport {
         _rememberSnapshot(saveId, snapshot);
         return _dispatch(
           saveId: saveId,
-          currentState: snapshot.toGameState(
-            activePlayerId: currentState.activePlayerId,
-            activePlayerCanAct: currentState.activePlayerCanAct,
+          currentState: _stateFromSnapshot(
+            snapshot: snapshot,
+            currentState: currentState,
+            command: command,
+            interactionSource: currentState,
           ),
           command: command,
           context: context,
@@ -330,13 +349,11 @@ class NetworkCommandTransport implements CommandTransport {
         );
       }
       _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
-      final nextState = snapshot.toGameState(
-        activePlayerId: currentState.activePlayerId,
-        activePlayerCanAct: _activePlayerCanActAfter(
-          currentState: currentState,
-          command: command,
-          snapshot: snapshot,
-        ),
+      final nextState = _stateFromSnapshot(
+        snapshot: snapshot,
+        currentState: currentState,
+        command: command,
+        interactionSource: currentState,
       );
       final hasRejectionEvent = ack.events.any(
         (event) => event['type'] == SystemEventWire.commandRejectedType,
@@ -362,18 +379,16 @@ class NetworkCommandTransport implements CommandTransport {
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
     final events = eventCodec.eventsFromJsonList(ack.events);
 
-    final nextState = snapshot.toGameState(
-      activePlayerId: currentState.activePlayerId,
-      activePlayerCanAct: _activePlayerCanActAfter(
-        currentState: currentState,
-        command: command,
-        snapshot: snapshot,
-      ),
-    );
     final localTransition = localReducer.reduce(
       currentState,
       command,
       context: context,
+    );
+    final nextState = _stateFromSnapshot(
+      snapshot: snapshot,
+      currentState: currentState,
+      command: command,
+      interactionSource: localTransition.state,
     );
 
     return CommandTransportResult(
@@ -476,13 +491,11 @@ class NetworkCommandTransport implements CommandTransport {
   }) async {
     final snapshot = await gameRepository.load(saveId);
     _rememberSnapshot(saveId, snapshot);
-    final nextState = snapshot.toGameState(
-      activePlayerId: currentState.activePlayerId,
-      activePlayerCanAct: _activePlayerCanActAfter(
-        currentState: currentState,
-        command: command,
-        snapshot: snapshot,
-      ),
+    final nextState = _stateFromSnapshot(
+      snapshot: snapshot,
+      currentState: currentState,
+      command: command,
+      interactionSource: currentState,
     );
     return CommandTransportResult(
       state: nextState,
@@ -500,13 +513,11 @@ class NetworkCommandTransport implements CommandTransport {
     required int offset,
   }) {
     _rememberSnapshot(saveId, snapshot, offset: offset);
-    final nextState = snapshot.toGameState(
-      activePlayerId: currentState.activePlayerId,
-      activePlayerCanAct: _activePlayerCanActAfter(
-        currentState: currentState,
-        command: command,
-        snapshot: snapshot,
-      ),
+    final nextState = _stateFromSnapshot(
+      snapshot: snapshot,
+      currentState: currentState,
+      command: command,
+      interactionSource: currentState,
     );
     return CommandTransportResult(
       state: nextState,
@@ -630,6 +641,26 @@ class NetworkCommandTransport implements CommandTransport {
       return !snapshot.runtimeState.hasSubmitted(playerId);
     }
     return currentState.activePlayerCanAct;
+  }
+
+  GameState _stateFromSnapshot({
+    required SaveSnapshot snapshot,
+    required GameState currentState,
+    required GameCommand command,
+    required GameState interactionSource,
+  }) {
+    final authoritative = snapshot.toGameState(
+      activePlayerId: currentState.activePlayerId,
+      activePlayerCanAct: _activePlayerCanActAfter(
+        currentState: currentState,
+        command: command,
+        snapshot: snapshot,
+      ),
+    );
+    return MultiplayerInteractionReconciler.reconcile(
+      authoritativeState: authoritative,
+      interactionSource: interactionSource,
+    );
   }
 }
 

@@ -65,6 +65,20 @@ void main() {
       );
     });
 
+    test('round-trips a self-contained worker confirmation', () {
+      const command = ConfirmWorkerImprovementCommand(
+        'worker_1',
+        improvementType: FieldImprovementType.mine,
+      );
+
+      expect(GameCommandSerializer.toJson(command), {
+        'type': 'ConfirmWorkerImprovement',
+        'unitId': 'worker_1',
+        'improvementType': 'mine',
+      });
+      expect(roundTrip(command), command);
+    });
+
     test('decodes SubmitTurn with transport-only fields ignored', () {
       expect(
         GameCommandSerializer.fromJson({
@@ -186,6 +200,7 @@ const _commandFixtures = <({GameCommand command, String type})>[
   (command: CancelUnitActionCommand('scout_1'), type: 'CancelUnitAction'),
   (command: SkipUnitTurnCommand('scout_1'), type: 'SkipUnitTurn'),
   (command: FortifyUnitCommand('scout_1'), type: 'FortifyUnit'),
+  (command: AutoExploreUnitCommand('scout_1'), type: 'AutoExploreUnit'),
   (
     command: StartMerchantTradeRouteSelectionCommand('merchant_1'),
     type: 'StartMerchantTradeRouteSelection',
@@ -209,6 +224,22 @@ const _commandFixtures = <({GameCommand command, String type})>[
   (
     command: MoveMerchantToCityCommand('merchant_1', 'city_2'),
     type: 'MoveMerchantToCity',
+  ),
+  (
+    command: StartArtifactExcavationCommand('scout_1'),
+    type: 'StartArtifactExcavation',
+  ),
+  (
+    command: StoreArtifactInCityCommand('scout_1', cityId: 'city_1'),
+    type: 'StoreArtifactInCity',
+  ),
+  (
+    command: TradeArtifactCommand(
+      playerId: 'player_1',
+      targetPlayerId: 'player_2',
+      offeredArtifactId: 'artifact_1',
+    ),
+    type: 'TradeArtifact',
   ),
   (
     command: FoundCityCommand(
@@ -422,12 +453,16 @@ const _expectedCommandTypes = {
   'CancelUnitAction',
   'SkipUnitTurn',
   'FortifyUnit',
+  'AutoExploreUnit',
   'StartMerchantTradeRouteSelection',
   'CancelMerchantTradeRouteSelection',
   'AssignMerchantTradeRoute',
   'StartMerchantMoveToCitySelection',
   'CancelMerchantMoveToCitySelection',
   'MoveMerchantToCity',
+  'StartArtifactExcavation',
+  'StoreArtifactInCity',
+  'TradeArtifact',
   'FoundCity',
   'StartBuilding',
   'StartUnitProduction',

@@ -409,6 +409,80 @@ void main() {
     });
   });
 
+  group('ServerCommandReducer combat commands', () {
+    test('resolves a unit attack instead of rejecting the command', () async {
+      final reduction =
+          await ServerCommandReducer(
+            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+          ).reduce(
+            match: _runningMatch(),
+            snapshot: _snapshot(
+              _combatState(
+                units: [
+                  _combatUnit('attacker', 'player_1', 0, 0),
+                  _combatUnit(
+                    'defender',
+                    'player_2',
+                    1,
+                    0,
+                    type: GameUnitType.settler,
+                  ),
+                ],
+              ),
+            ),
+            wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
+            actorPlayerId: 'player_1',
+            now: DateTime.utc(2026, 6, 30, 12),
+          );
+      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+      expect(reduction.accepted, isTrue);
+      expect(reduction.reason, isNull);
+      expect(reduction.events.whereType<UnitAttackedEvent>(), hasLength(1));
+      expect(reduction.events.whereType<CombatResolvedEvent>(), hasLength(1));
+      expect(state.units.byId('attacker')?.movementPoints, 0);
+    });
+
+    test('honors city destruction in an authoritative attack', () async {
+      final reduction =
+          await ServerCommandReducer(
+            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+          ).reduce(
+            match: _runningMatch(),
+            snapshot: _snapshot(
+              _combatState(
+                units: [_combatUnit('attacker', 'player_1', 0, 0)],
+                cities: const [
+                  GameCity(
+                    id: 'city_2',
+                    ownerPlayerId: 'player_2',
+                    name: 'City 2',
+                    center: CityHex(col: 1, row: 0),
+                    hitPoints: 1,
+                  ),
+                ],
+              ),
+            ),
+            wireCommand: _wireCommand(
+              const AttackHexCommand(
+                'attacker',
+                1,
+                0,
+                cityConquestAction: CityConquestAction.destroy,
+              ),
+            ),
+            actorPlayerId: 'player_1',
+            now: DateTime.utc(2026, 6, 30, 12),
+          );
+      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+      expect(reduction.accepted, isTrue);
+      expect(state.cities, isEmpty);
+      expect(reduction.events.whereType<CityAttackedEvent>(), hasLength(1));
+      expect(reduction.events.whereType<CityDestroyedEvent>(), hasLength(1));
+    });
+  });
+
   group('ServerCommandReducer turn timeouts', () {
     test(
       'finalizes when the remaining unsubmitted player is offline',
@@ -776,6 +850,45 @@ ResearchState _researchWithMany(Map<String, Set<TechnologyId>> technologies) {
       for (final entry in technologies.entries)
         entry.key: PlayerResearchState(unlockedTechnologyIds: entry.value),
     },
+  );
+}
+
+PersistentGameState _combatState({
+  required List<GameUnit> units,
+  List<GameCity> cities = const [],
+}) {
+  final visible = {
+    const HexCoordinate(col: 0, row: 0),
+    const HexCoordinate(col: 1, row: 0),
+    const HexCoordinate(col: 2, row: 0),
+  };
+  return PersistentGameState(
+    playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
+    units: units,
+    cities: cities,
+    fogOfWar: FogOfWarState(
+      players: {
+        'player_1': PlayerFogOfWar(playerId: 'player_1', visibleHexes: visible),
+        'player_2': PlayerFogOfWar(playerId: 'player_2', visibleHexes: visible),
+      },
+    ),
+  );
+}
+
+GameUnit _combatUnit(
+  String id,
+  String ownerPlayerId,
+  int col,
+  int row, {
+  GameUnitType type = GameUnitType.warrior,
+}) {
+  return GameUnit(
+    id: id,
+    ownerPlayerId: ownerPlayerId,
+    type: type,
+    name: id,
+    col: col,
+    row: row,
   );
 }
 

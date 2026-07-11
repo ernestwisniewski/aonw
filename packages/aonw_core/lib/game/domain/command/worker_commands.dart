@@ -34,16 +34,20 @@ final class SelectWorkerImprovementCommand extends GameCommand {
 
 /// Player confirms the selected worker improvement on the current tile.
 final class ConfirmWorkerImprovementCommand extends GameCommand {
-  const ConfirmWorkerImprovementCommand(this.unitId);
+  const ConfirmWorkerImprovementCommand(this.unitId, {this.improvementType});
 
   final String unitId;
+  final FieldImprovementType? improvementType;
 
   @override
   bool operator ==(Object other) =>
-      other is ConfirmWorkerImprovementCommand && other.unitId == unitId;
+      other is ConfirmWorkerImprovementCommand &&
+      other.unitId == unitId &&
+      other.improvementType == improvementType;
 
   @override
-  int get hashCode => Object.hash(ConfirmWorkerImprovementCommand, unitId);
+  int get hashCode =>
+      Object.hash(ConfirmWorkerImprovementCommand, unitId, improvementType);
 }
 
 /// Player cancels worker action selection for [unitId].

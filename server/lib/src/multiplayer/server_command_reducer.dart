@@ -102,6 +102,7 @@ class ServerCommandReducer {
       state: state,
       match: match,
       command: command,
+      commandTick: wireCommand.tick,
       actorPlayerId: actorPlayerId,
       now: now.toUtc(),
       mapData: mapData,
@@ -198,6 +199,7 @@ class ServerCommandReducer {
     required PersistentGameState state,
     required WireMatch match,
     required GameCommand command,
+    required int commandTick,
     required String actorPlayerId,
     required DateTime now,
     required MapData mapData,
@@ -235,6 +237,17 @@ class ServerCommandReducer {
           command: command,
           actorPlayerId: actorPlayerId,
           mapDefinition: mapDefinition,
+        );
+        return _fromPersistentResult(save, result);
+      case AttackHexCommand():
+        final result = const PersistentCombatCommandResolver().resolve(
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          turn: save.turn,
+          commandTick: commandTick,
+          mapDefinition: mapDefinition,
+          ruleset: ruleset,
         );
         return _fromPersistentResult(save, result);
       case CancelUnitActionCommand():
@@ -479,11 +492,42 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
         );
         return _fromPersistentResult(save, result);
-      default:
+      case ResetUnitMovementCommand():
         return _CommandApplication.reject(
           save: save,
           state: state,
-          reason: 'unsupported_server_command',
+          reason: 'server_managed_command',
+        );
+      case SetActivePlayerCommand() ||
+          TileTappedCommand() ||
+          CityTappedCommand() ||
+          ToggleMoveTargetingCommand() ||
+          StartCityFoundingCommand() ||
+          CancelCityFoundingCommand() ||
+          StartCityWorkedHexSelectionCommand() ||
+          CancelCityWorkedHexSelectionCommand() ||
+          StartCityExpansionSelectionCommand() ||
+          CancelCityExpansionSelectionCommand() ||
+          StartWorkerActionSelectionCommand() ||
+          CancelWorkerActionSelectionCommand() ||
+          StartMerchantTradeRouteSelectionCommand() ||
+          CancelMerchantTradeRouteSelectionCommand() ||
+          StartMerchantMoveToCitySelectionCommand() ||
+          CancelMerchantMoveToCitySelectionCommand() ||
+          CancelResearchSelectionCommand() ||
+          StartAttackTargetingCommand() ||
+          CancelAttackTargetingCommand() ||
+          StartCommanderMergeSelectionCommand() ||
+          CancelCommanderMergeSelectionCommand() ||
+          SelectTileCommand() ||
+          SelectUnitCommand() ||
+          SelectCityCommand() ||
+          FocusNextPendingActionCommand() ||
+          FocusTurnStartActionCommand():
+        return _CommandApplication.reject(
+          save: save,
+          state: state,
+          reason: 'client_only_command',
         );
     }
   }
@@ -491,6 +535,19 @@ class ServerCommandReducer {
   _CommandApplication _fromPersistentResult(GameSave save, Object result) {
     return switch (result) {
       PersistentMoveUnitResult(
+        :final accepted,
+        :final state,
+        :final events,
+        :final reason,
+      ) =>
+        _applicationFrom(
+          save: save,
+          accepted: accepted,
+          state: state,
+          events: events,
+          reason: reason,
+        ),
+      PersistentCombatCommandResult(
         :final accepted,
         :final state,
         :final events,

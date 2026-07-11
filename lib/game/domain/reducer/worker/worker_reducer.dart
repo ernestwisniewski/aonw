@@ -56,16 +56,20 @@ abstract final class WorkerReducer {
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final pending = state.pendingAction;
-    if (pending is! PendingWorkerActionSelection ||
-        pending.unitId != command.unitId ||
-        pending.improvementType == null) {
+    final pendingImprovement =
+        pending is PendingWorkerActionSelection &&
+            pending.unitId == command.unitId
+        ? pending.improvementType
+        : null;
+    final improvementType = command.improvementType ?? pendingImprovement;
+    if (improvementType == null) {
       return GameStateTransition(state: state);
     }
 
     return _startImprovement(
       state,
       unitId: command.unitId,
-      improvementType: pending.improvementType!,
+      improvementType: improvementType,
       mapData: mapData,
       context: context,
       cityRuleset: cityRuleset,

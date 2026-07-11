@@ -252,6 +252,7 @@ class _RuntimeSmoke {
     final ownerInitialMessage = Completer<sp.MultiplayerServerMessage>();
     final ackMessages = <sp.MultiplayerServerMessage>[];
     final firstAckSeen = Completer<sp.MultiplayerServerMessage>();
+    final combatRoutingAckSeen = Completer<sp.MultiplayerServerMessage>();
     final diplomacyAckSeen = Completer<sp.MultiplayerServerMessage>();
     final ackMessagesSeen = Completer<List<sp.MultiplayerServerMessage>>();
     final ownerSubscription = ownerClient.multiplayer
@@ -266,10 +267,14 @@ class _RuntimeSmoke {
               if (ackMessages.length == 1 && !firstAckSeen.isCompleted) {
                 firstAckSeen.complete(message);
               }
-              if (ackMessages.length == 2 && !diplomacyAckSeen.isCompleted) {
+              if (ackMessages.length == 2 &&
+                  !combatRoutingAckSeen.isCompleted) {
+                combatRoutingAckSeen.complete(message);
+              }
+              if (ackMessages.length == 3 && !diplomacyAckSeen.isCompleted) {
                 diplomacyAckSeen.complete(message);
               }
-              if (ackMessages.length == 4 && !ackMessagesSeen.isCompleted) {
+              if (ackMessages.length == 5 && !ackMessagesSeen.isCompleted) {
                 ackMessagesSeen.complete(List.unmodifiable(ackMessages));
               }
             }
@@ -280,6 +285,9 @@ class _RuntimeSmoke {
             }
             if (!firstAckSeen.isCompleted) {
               firstAckSeen.completeError(error, stackTrace);
+            }
+            if (!combatRoutingAckSeen.isCompleted) {
+              combatRoutingAckSeen.completeError(error, stackTrace);
             }
             if (!diplomacyAckSeen.isCompleted) {
               diplomacyAckSeen.completeError(error, stackTrace);
@@ -405,6 +413,55 @@ class _RuntimeSmoke {
     }
 
     final postMoveSnapshot = snapshotCodec.fromWire(moveAck.snapshot);
+    final movedAttacker = postMoveSnapshot.units.firstWhere(
+      (unit) => unit.id == move.command.unitId,
+      orElse: () => throw StateError(
+        'Movement ACK snapshot has no moved unit ${move.command.unitId}.',
+      ),
+    );
+    final combatRoutingCommand = AttackHexCommand(
+      movedAttacker.id,
+      movedAttacker.col,
+      movedAttacker.row,
+    );
+    ownerInput.add(
+      sp.MultiplayerClientMessage(
+        clientMessageId: 'route-combat-$seed',
+        lastSeenOffset: moveAck.offset,
+        requestSnapshot: false,
+        command: WireCommand(
+          matchId: started.id,
+          tick: 2,
+          turn: started.turn,
+          actorPlayerId: ownerPlayer.id,
+          command: GameCommandSerializer.toJson(combatRoutingCommand),
+        ),
+      ),
+    );
+
+    final combatRoutingAckMessage = await combatRoutingAckSeen.future.timeout(
+      config.streamTimeout,
+    );
+    final receivedCombatRoutingAck = combatRoutingAckMessage.ack;
+    _expect(
+      receivedCombatRoutingAck != null,
+      'Expected combat routing probe ACK.',
+    );
+    final combatRoutingAck = receivedCombatRoutingAck!;
+    _expect(
+      !combatRoutingAck.accepted &&
+          combatRoutingAck.reason == 'attack_target_not_enemy',
+      'Expected AttackHex to reach combat validation and reject the friendly '
+      'target, got accepted=${combatRoutingAck.accepted} '
+      'reason=${combatRoutingAck.reason}.',
+    );
+    _expect(
+      combatRoutingAck.offset == moveAck.offset &&
+          combatRoutingAck.events.isEmpty,
+      'Expected rejected combat routing probe to leave offset and events '
+      'unchanged.',
+    );
+
     final diplomacyCommand = SendDiplomaticMessageCommand(
       playerId: ownerPlayer.id,
       targetPlayerId: targetPlayer.id,
@@ -423,11 +480,11 @@ class _RuntimeSmoke {
     ownerInput.add(
       sp.MultiplayerClientMessage(
         clientMessageId: 'send-diplomacy-$seed',
-        lastSeenOffset: moveAck.offset,
+        lastSeenOffset: combatRoutingAck.offset,
         requestSnapshot: false,
         command: WireCommand(
           matchId: started.id,
-          tick: 2,
+          tick: 3,
           turn: started.turn,
           actorPlayerId: ownerPlayer.id,
           command: GameCommandSerializer.toJson(diplomacyCommand),
@@ -488,7 +545,7 @@ class _RuntimeSmoke {
       requestSnapshot: false,
       command: WireCommand(
         matchId: started.id,
-        tick: 3,
+        tick: 4,
         turn: started.turn,
         actorPlayerId: ownerPlayer.id,
         command: GameCommandSerializer.toJson(
@@ -505,8 +562,8 @@ class _RuntimeSmoke {
     );
     await ownerInput.close();
     await ownerSubscription.cancel();
-    final ack = ownerAckMessages[2].ack;
-    final retryAck = ownerAckMessages[3].ack;
+    final ack = ownerAckMessages[3].ack;
+    final retryAck = ownerAckMessages[4].ack;
     _expect(ack != null, 'Expected command ACK from Serverpod stream.');
     _expect(
       retryAck != null,
@@ -675,6 +732,9 @@ class _RuntimeSmoke {
       )
       ..writeln('  movement ack offset: ${moveAck.offset}')
       ..writeln('  guest live broadcast offset: ${guestLiveBroadcast.offset}')
+      ..writeln(
+        '  combat routing probe: rejected as ${combatRoutingAck.reason}',
+      )
       ..writeln(
         '  diplomacy ack offset: ${diplomacyAck.offset} '
         '(${diplomacyAck.accepted ? 'accepted' : 'rejected: ${diplomacyAck.reason}'})',

@@ -209,9 +209,10 @@ abstract final class GameCommandSerializer {
       'unitId': unitId,
       'improvementType': improvementType.name,
     },
-    ConfirmWorkerImprovementCommand(:final unitId) => {
+    ConfirmWorkerImprovementCommand(:final unitId, :final improvementType) => {
       'type': 'ConfirmWorkerImprovement',
       'unitId': unitId,
+      if (improvementType != null) 'improvementType': improvementType.name,
     },
     CancelWorkerActionSelectionCommand(:final unitId) => {
       'type': 'CancelWorkerActionSelection',
@@ -558,6 +559,12 @@ abstract final class GameCommandSerializer {
       ),
       'ConfirmWorkerImprovement' => ConfirmWorkerImprovementCommand(
         requiredStringField(json, type, 'unitId'),
+        improvementType: optionalEnumField(
+          json,
+          type,
+          'improvementType',
+          FieldImprovementType.values,
+        ),
       ),
       'CancelWorkerActionSelection' => CancelWorkerActionSelectionCommand(
         requiredStringField(json, type, 'unitId'),
