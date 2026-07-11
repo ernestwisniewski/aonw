@@ -19,9 +19,10 @@ typedef NetworkSessionRevoker =
 /// Owns refresh-token rotation for every multiplayer transport.
 ///
 /// Concurrent expiry checks and 401 recoveries share one refresh operation.
-/// A rotated refresh token is persisted before the new access token becomes
-/// visible to callers, so a process interruption cannot leave transports using
-/// credentials that were never saved.
+/// Rotated credentials are persisted before publication whenever secure
+/// storage is available. A transient secure-storage failure keeps the rotated
+/// session usable in memory and is retried by the next token read; refresh
+/// tokens are never downgraded to plain preferences.
 final class NetworkSessionRefreshCoordinator {
   static const tokenRefreshSkew = Duration(seconds: 30);
 
@@ -33,6 +34,8 @@ final class NetworkSessionRefreshCoordinator {
 
   Future<NetworkSession>? _refreshInFlight;
   Future<void>? _terminationInFlight;
+  Future<void>? _credentialPersistenceInFlight;
+  _PendingSessionPersistence? _pendingPersistence;
   var _generation = 0;
   var _terminating = false;
 
@@ -50,8 +53,94 @@ final class NetworkSessionRefreshCoordinator {
     return (await ensureValidSession()).token;
   }
 
+  /// Publishes a newly authenticated session without making availability of
+  /// the server-issued access token depend on a transient Keychain failure.
+  ///
+  /// Failed secure persistence remains memory-only and is retried before a
+  /// subsequent token is returned to a transport.
+  Future<void> activateAuthenticatedSession({
+    required NetworkSession session,
+    required String displayName,
+  }) async {
+    if (_terminating) throw const NetworkSessionUnavailableException();
+    final activationGeneration = ++_generation;
+    _pendingPersistence = null;
+    setSession(session);
+
+    final refreshToken = session.refreshToken;
+    if (refreshToken == null || refreshToken.isEmpty) {
+      // A token-only login must not inherit another account's refresh secret.
+      // NetworkSessionStore.clear preserves the standalone display-name
+      // preference while removing credentials and match metadata.
+      await sessionStore.clear();
+      if (!_activationCredentialsStillCurrent(session, activationGeneration)) {
+        await _restoreCurrentCredentials();
+        return;
+      }
+      await _persistNonSecretLoginMetadata(
+        session: session,
+        generation: activationGeneration,
+        displayName: displayName,
+        matchId: null,
+      );
+      return;
+    }
+
+    try {
+      await sessionStore.saveCredentials(
+        userId: session.userId,
+        refreshToken: refreshToken,
+      );
+    } on NetworkSessionCredentialPersistenceException {
+      // A newer activation may already have queued or persisted its own
+      // credentials while this secure write was in flight. Never let the
+      // stale activation clear that account.
+      if (!_activationCredentialsStillCurrent(session, activationGeneration)) {
+        return;
+      }
+      var staleCredentialsDetached = false;
+      try {
+        // The secure write failed before the store could associate the new
+        // user id with this refresh token. Remove the old user-id/match
+        // pairing before publishing metadata for the memory-only login; an
+        // undeletable Keychain secret is then inert because load() has no
+        // stored owner to attach it to.
+        await sessionStore.clear();
+        staleCredentialsDetached = true;
+      } catch (_) {
+        // Keep the authenticated session usable in memory, but do not write
+        // metadata that could be paired with another account after restart.
+      }
+      if (!_activationCredentialsStillCurrent(session, activationGeneration)) {
+        if (staleCredentialsDetached) await _restoreCurrentCredentials();
+        return;
+      }
+      _pendingPersistence = _PendingSessionPersistence.credentials(
+        userId: session.userId,
+        refreshToken: refreshToken,
+      );
+      if (staleCredentialsDetached) {
+        await _persistNonSecretLoginMetadata(
+          session: session,
+          generation: activationGeneration,
+          displayName: displayName,
+          matchId: session.matchId,
+        );
+      }
+      return;
+    }
+    await _persistNonSecretLoginMetadata(
+      session: session,
+      generation: activationGeneration,
+      displayName: displayName,
+      matchId: session.matchId,
+    );
+  }
+
   /// Returns a usable session and optionally forces refresh-token rotation.
   Future<NetworkSession> ensureValidSession({bool forceRefresh = false}) async {
+    if (_terminating) throw const NetworkSessionUnavailableException();
+    await _retryPendingCredentialPersistence();
     if (_terminating) throw const NetworkSessionUnavailableException();
     final current = currentSession();
     if (!forceRefresh && current != null && !_needsRefresh(current.token)) {
@@ -135,7 +224,13 @@ final class NetworkSessionRefreshCoordinator {
       var latestRefreshToken = latest?.refreshToken;
       if (latestRefreshToken == null || latestRefreshToken.isEmpty) {
         try {
-          latestRefreshToken = (await sessionStore.load())?.refreshToken;
+          final stored = await sessionStore.load();
+          final credentialOwner = latest ?? initial;
+          if (stored != null &&
+              (credentialOwner == null ||
+                  stored.userId == credentialOwner.userId)) {
+            latestRefreshToken = stored.refreshToken;
+          }
         } catch (_) {
           // Fall back to the in-memory credential captured at logout start.
         }
@@ -184,6 +279,13 @@ final class NetworkSessionRefreshCoordinator {
     try {
       stored = await sessionStore.load();
     } catch (error, stackTrace) {
+      if (_generation != refreshGeneration) {
+        await _restoreCurrentCredentials();
+        Error.throwWithStackTrace(
+          const NetworkSessionUnavailableException(),
+          stackTrace,
+        );
+      }
       await _endSession();
       Error.throwWithStackTrace(
         NetworkSessionRefreshFailedException(error),
@@ -200,6 +302,10 @@ final class NetworkSessionRefreshCoordinator {
         ? currentRefreshToken
         : storedForCurrent?.refreshToken;
     if (refreshCredential == null || refreshCredential.isEmpty) {
+      if (_generation != refreshGeneration) {
+        await _restoreCurrentCredentials();
+        throw const NetworkSessionUnavailableException();
+      }
       if (current != null || stored != null) await _endSession();
       throw const NetworkSessionUnavailableException();
     }
@@ -235,10 +341,17 @@ final class NetworkSessionRefreshCoordinator {
       if (_generation != refreshGeneration) {
         throw const _RefreshSupersededException();
       }
-      await sessionStore.saveCredentials(
-        userId: userId,
-        refreshToken: refreshed.refreshToken,
-      );
+      var credentialsPersisted = false;
+      try {
+        await sessionStore.saveCredentials(
+          userId: userId,
+          refreshToken: refreshed.refreshToken,
+        );
+        credentialsPersisted = true;
+      } on NetworkSessionCredentialPersistenceException {
+        // The server has already invalidated the previous refresh token. Keep
+        // the replacement in memory and retry secure persistence later.
+      }
 
       final publishSession = currentSession();
       if (baseSession == null) {
@@ -268,6 +381,14 @@ final class NetworkSessionRefreshCoordinator {
         throw const _RefreshSupersededException();
       }
       setSession(nextSession);
+      if (credentialsPersisted) {
+        _pendingPersistence = null;
+      } else {
+        _pendingPersistence = _PendingSessionPersistence.credentials(
+          userId: userId,
+          refreshToken: refreshed.refreshToken,
+        );
+      }
       return nextSession;
     } on _RefreshSupersededException catch (_, stackTrace) {
       await _restoreCurrentCredentials();
@@ -276,6 +397,13 @@ final class NetworkSessionRefreshCoordinator {
         stackTrace,
       );
     } catch (error, stackTrace) {
+      if (_generation != refreshGeneration) {
+        await _restoreCurrentCredentials();
+        Error.throwWithStackTrace(
+          const NetworkSessionUnavailableException(),
+          stackTrace,
+        );
+      }
       await _endSession();
       Error.throwWithStackTrace(
         NetworkSessionRefreshFailedException(
@@ -294,6 +422,7 @@ final class NetworkSessionRefreshCoordinator {
   }
 
   Future<void> _endSession() async {
+    _pendingPersistence = null;
     setSession(null);
     try {
       await sessionStore.clear();
@@ -336,6 +465,101 @@ final class NetworkSessionRefreshCoordinator {
     } catch (_) {
       // A newer session remains authoritative in memory.
     }
+  }
+
+  Future<void> _retryPendingCredentialPersistence() async {
+    final pending = _pendingPersistence;
+    if (pending == null) return;
+
+    final active = _credentialPersistenceInFlight;
+    if (active != null) {
+      await active;
+      final next = _pendingPersistence;
+      if (next != null && !identical(next, pending)) {
+        await _retryPendingCredentialPersistence();
+      }
+      return;
+    }
+
+    if (!_sessionStillMatches(pending.userId, pending.refreshToken)) {
+      if (identical(_pendingPersistence, pending)) {
+        _pendingPersistence = null;
+      }
+      return;
+    }
+
+    final generation = _generation;
+    final started = _persistPendingCredentials(pending, generation);
+    _credentialPersistenceInFlight = started;
+    try {
+      await started;
+    } finally {
+      if (identical(_credentialPersistenceInFlight, started)) {
+        _credentialPersistenceInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _persistPendingCredentials(
+    _PendingSessionPersistence pending,
+    int generation,
+  ) async {
+    try {
+      await sessionStore.saveCredentials(
+        userId: pending.userId,
+        refreshToken: pending.refreshToken,
+      );
+    } catch (_) {
+      // The active in-memory session remains authoritative. A later token read
+      // retries secure persistence without exposing the secret elsewhere.
+      return;
+    }
+
+    if (_generation == generation &&
+        _sessionStillMatches(pending.userId, pending.refreshToken)) {
+      if (identical(_pendingPersistence, pending)) {
+        _pendingPersistence = null;
+      }
+      return;
+    }
+    await _restoreCurrentCredentials();
+  }
+
+  bool _sessionStillMatches(String userId, String refreshToken) {
+    final current = currentSession();
+    return current != null &&
+        current.userId == userId &&
+        current.refreshToken == refreshToken;
+  }
+
+  bool _activationCredentialsStillCurrent(
+    NetworkSession session,
+    int generation,
+  ) {
+    if (_generation != generation) return false;
+    final current = currentSession();
+    return current != null &&
+        current.userId == session.userId &&
+        current.token.value == session.token.value &&
+        current.refreshToken == session.refreshToken;
+  }
+
+  bool _activationMetadataStillCurrent(NetworkSession session, int generation) {
+    final current = currentSession();
+    return _activationCredentialsStillCurrent(session, generation) &&
+        current?.matchId == session.matchId;
+  }
+
+  Future<void> _persistNonSecretLoginMetadata({
+    required NetworkSession session,
+    required int generation,
+    required String displayName,
+    required String? matchId,
+  }) async {
+    if (!_activationMetadataStillCurrent(session, generation)) return;
+    await sessionStore.saveDisplayName(displayName);
+    if (!_activationMetadataStillCurrent(session, generation)) return;
+    await sessionStore.saveMatchId(matchId);
   }
 
   static bool isRejectedRefreshError(Object error) {
@@ -412,4 +636,24 @@ final class NetworkSessionRefreshFailedException
 
 final class _RefreshSupersededException implements Exception {
   const _RefreshSupersededException();
+}
+
+final class _PendingSessionPersistence {
+  const _PendingSessionPersistence._({
+    required this.userId,
+    required this.refreshToken,
+  });
+
+  factory _PendingSessionPersistence.credentials({
+    required String userId,
+    required String refreshToken,
+  }) {
+    return _PendingSessionPersistence._(
+      userId: userId,
+      refreshToken: refreshToken,
+    );
+  }
+
+  final String userId;
+  final String refreshToken;
 }

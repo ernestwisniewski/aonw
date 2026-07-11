@@ -28,6 +28,11 @@ typedef LobbyConnectionSessionReader = NetworkSession? Function();
 typedef LobbyConnectionSessionSetter = void Function(NetworkSession? session);
 typedef LobbyConnectionSessionTerminator = Future<void> Function();
 typedef LobbyConnectionSessionSignOut = Future<void> Function();
+typedef LobbyAuthenticatedSessionActivator =
+    Future<void> Function({
+      required NetworkSession session,
+      required String displayName,
+    });
 typedef LobbyConnectionAuthenticator =
     Future<NetworkAuthResult?> Function({required String initialDisplayName});
 typedef LobbyConnectionDisplayNameReader = String Function();
@@ -53,6 +58,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionSessionSetter setSession;
   final LobbyConnectionSessionTerminator? terminateSession;
   final LobbyConnectionSessionSignOut? signOutSession;
+  final LobbyAuthenticatedSessionActivator? activateAuthenticatedSession;
   final LobbyConnectionAuthenticator authenticate;
   final LobbyConnectionDisplayNameReader displayName;
   final LobbyConnectionDisplayNameWriter setPrimaryDisplayName;
@@ -89,6 +95,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.setSession,
     this.terminateSession,
     this.signOutSession,
+    this.activateAuthenticatedSession,
     required this.authenticate,
     required this.displayName,
     required this.setPrimaryDisplayName,

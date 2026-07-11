@@ -64,6 +64,7 @@ class NetworkSessionStore {
 
   Future<void> save(StoredNetworkSession session) => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
+    await _detachCredentialOwner(prefs, nextUserId: session.userId);
     final savedSecurely = await _tryWriteSecureRefreshToken(
       session.refreshToken,
     );
@@ -91,6 +92,7 @@ class NetworkSessionStore {
     required String refreshToken,
   }) => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
+    await _detachCredentialOwner(prefs, nextUserId: userId);
     final savedSecurely = await _tryWriteSecureRefreshToken(refreshToken);
     // Never downgrade newly rotated credentials to plain preferences.
     await prefs.remove(_refreshTokenKey);
@@ -99,6 +101,22 @@ class NetworkSessionStore {
     }
     await prefs.setString(_userIdKey, userId);
   });
+
+  Future<void> _detachCredentialOwner(
+    SharedPreferences prefs, {
+    required String nextUserId,
+  }) async {
+    final previousUserId = prefs.getString(_userIdKey);
+    // The owner is removed before the global secure-token slot changes. A
+    // crash between the Keychain write and the following owner write can then
+    // only produce an unowned (and therefore unloadable) secret, never a
+    // user-A/token-B hybrid.
+    await prefs.remove(_userIdKey);
+    await prefs.remove(_refreshTokenKey);
+    if (previousUserId != null && previousUserId != nextUserId) {
+      await prefs.remove(_matchIdKey);
+    }
+  }
 
   Future<void> saveDisplayName(String displayName) => _serialize(() async {
     final normalized = displayName.trim().replaceAll(RegExp(r'\s+'), ' ');

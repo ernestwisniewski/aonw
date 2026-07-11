@@ -121,6 +121,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       ensureValidSession: () => ref
           .read(networkSessionRefreshCoordinatorProvider)
           .ensureValidSession(),
+      activateAuthenticatedSession:
+          ({required session, required displayName}) => ref
+              .read(networkSessionRefreshCoordinatorProvider)
+              .activateAuthenticatedSession(
+                session: session,
+                displayName: displayName,
+              ),
       terminateSession: () =>
           ref.read(networkSessionRefreshCoordinatorProvider).terminateSession(),
       signOutSession: _signOutNetworkSession,

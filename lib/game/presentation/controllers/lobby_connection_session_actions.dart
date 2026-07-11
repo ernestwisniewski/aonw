@@ -13,11 +13,16 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
             sessionRefreshToken == null || sessionRefreshToken.isEmpty
             ? await sessionStore.load()
             : null;
+        final storedRefreshToken =
+            stored != null &&
+                (session == null || stored.userId == session.userId)
+            ? stored.refreshToken
+            : null;
         await sessionClient.signOutCurrentSession(
           token: session?.token,
           refreshToken:
               sessionRefreshToken == null || sessionRefreshToken.isEmpty
-              ? stored?.refreshToken
+              ? storedRefreshToken
               : sessionRefreshToken,
         );
       } catch (error) {
@@ -60,15 +65,46 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
       final auth = await authenticate(initialDisplayName: displayName());
       if (auth == null) throw const _LobbyNetworkAuthCancelledException();
       final session = auth.toSession(changedAt: now());
-      final stored = auth.toStoredSession(displayName: auth.displayName);
-      if (stored == null) {
-        await sessionStore.saveDisplayName(auth.displayName);
+      final activate = activateAuthenticatedSession;
+      if (activate != null) {
+        await activate(session: session, displayName: auth.displayName);
       } else {
-        await sessionStore.save(stored);
+        setSession(session);
+        await _persistFallbackAuthenticatedSession(auth);
       }
-      setSession(session);
       setPrimaryDisplayName(auth.displayName);
       return session;
+    }
+  }
+
+  Future<void> _persistFallbackAuthenticatedSession(
+    NetworkAuthResult auth,
+  ) async {
+    final stored = auth.toStoredSession(displayName: auth.displayName);
+    if (stored == null) {
+      try {
+        // A token-only login must not inherit a previous account's refresh
+        // credential or match metadata.
+        await sessionStore.clear();
+        await sessionStore.saveDisplayName(auth.displayName);
+      } catch (_) {
+        // The authenticated session remains usable in memory. The owner check
+        // in signOut prevents any stale stored credential from being revoked.
+      }
+      return;
+    }
+
+    try {
+      await sessionStore.save(stored);
+    } on NetworkSessionCredentialPersistenceException {
+      try {
+        // Detach any previous account after a failed secure write. Production
+        // uses the refresh coordinator and retries the new credential.
+        await sessionStore.clear();
+        await sessionStore.saveDisplayName(auth.displayName);
+      } catch (_) {
+        // Keep the authenticated session memory-only when storage is broken.
+      }
     }
   }
 }

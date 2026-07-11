@@ -63,6 +63,305 @@ void main() {
     });
 
     test(
+      'keeps a rotated session in memory and retries secure persistence',
+      () async {
+        final store = _MemorySessionStore(
+          _storedSession(),
+          credentialSaveFailuresRemaining: 1,
+        );
+        NetworkSession? current = _activeSession();
+        final coordinator = _coordinator(
+          store: store,
+          currentSession: () => current,
+          setSession: (session) => current = session,
+          refreshToken: ({required refreshToken}) async {
+            expect(refreshToken, 'refresh-1');
+            return NetworkSessionRefreshResult(
+              token: AuthToken(
+                'jwt-2',
+                expiresAt: DateTime.utc(2026, 7, 10, 13),
+              ),
+              refreshToken: 'refresh-2',
+            );
+          },
+        );
+        final authKeys = NetworkSessionAuthKeyProvider(coordinator);
+        expect(await authKeys.authHeaderValue, 'Bearer jwt-1');
+
+        expect(
+          await authKeys.refreshAuthKey(),
+          sp_auth.RefreshAuthKeyResult.success,
+        );
+
+        expect(current?.token.value, 'jwt-2');
+        expect(current?.refreshToken, 'refresh-2');
+        expect(store.stored?.refreshToken, 'refresh-1');
+        expect(store.clearCount, 0);
+        expect(store.credentialSaveAttempts, 1);
+
+        expect(await authKeys.authHeaderValue, 'Bearer jwt-2');
+        expect(store.stored?.refreshToken, 'refresh-2');
+        expect(store.credentialSaveAttempts, 2);
+      },
+    );
+
+    test(
+      'retries login credentials without overwriting newer match metadata',
+      () async {
+        final store = _MemorySessionStore(
+          null,
+          credentialSaveFailuresRemaining: 1,
+        );
+        NetworkSession? current;
+        final coordinator = _coordinator(
+          store: store,
+          currentSession: () => current,
+          setSession: (session) => current = session,
+          refreshToken: ({required refreshToken}) async {
+            fail('unexpected refresh');
+          },
+        );
+        final authenticated = NetworkSession(
+          userId: 'user-2',
+          token: AuthToken(
+            'login-jwt',
+            expiresAt: DateTime.utc(2026, 7, 10, 13),
+          ),
+          refreshToken: 'login-refresh',
+        );
+
+        await coordinator.activateAuthenticatedSession(
+          session: authenticated,
+          displayName: 'Login Alice',
+        );
+
+        expect(current, same(authenticated));
+        expect(store.displayNameSaves, ['Login Alice']);
+        expect(store.matchIdSaves, [null]);
+        store.stored = const StoredNetworkSession(
+          userId: 'user-2',
+          refreshToken: 'stale-refresh',
+          displayName: 'Newer Alice',
+          matchId: 'match-new',
+        );
+        current = authenticated.copyWith(matchId: 'match-new');
+
+        expect(await coordinator.currentToken(), same(authenticated.token));
+        expect(store.stored?.refreshToken, 'login-refresh');
+        expect(store.stored?.displayName, 'Newer Alice');
+        expect(store.stored?.matchId, 'match-new');
+        expect(store.matchIdSaves, [null]);
+      },
+    );
+
+    test(
+      'failed account switch cannot restore old credentials with new metadata',
+      () async {
+        final store = _MemorySessionStore(
+          _storedSession(),
+          credentialSaveFailuresRemaining: 1,
+        );
+        NetworkSession? current = _activeSession();
+        final coordinator = _coordinator(
+          store: store,
+          currentSession: () => current,
+          setSession: (session) => current = session,
+          refreshToken: ({required refreshToken}) async {
+            fail('unexpected refresh');
+          },
+        );
+        final accountB = NetworkSession(
+          userId: 'user-2',
+          token: AuthToken('login-jwt-2'),
+          refreshToken: 'login-refresh-2',
+          matchId: 'match-b',
+        );
+
+        await coordinator.activateAuthenticatedSession(
+          session: accountB,
+          displayName: 'Bob',
+        );
+
+        expect(current, same(accountB));
+        expect(store.stored, isNull);
+        expect(store.clearCount, 1);
+        expect(store.displayNameSaves, ['Bob']);
+        expect(store.matchIdSaves, ['match-b']);
+
+        expect(await coordinator.currentToken(), same(accountB.token));
+        expect(store.stored?.userId, 'user-2');
+        expect(store.stored?.refreshToken, 'login-refresh-2');
+      },
+    );
+
+    test(
+      'token-only login clears another account credentials before logout',
+      () async {
+        final store = _MemorySessionStore(_storedSession());
+        NetworkSession? current = _activeSession();
+        final coordinator = _coordinator(
+          store: store,
+          currentSession: () => current,
+          setSession: (session) => current = session,
+          refreshToken: ({required refreshToken}) async {
+            fail('unexpected refresh');
+          },
+        );
+        final tokenOnly = NetworkSession(
+          userId: 'user-2',
+          token: AuthToken('token-only-jwt'),
+        );
+
+        await coordinator.activateAuthenticatedSession(
+          session: tokenOnly,
+          displayName: 'Bob',
+        );
+
+        expect(current, same(tokenOnly));
+        expect(store.stored, isNull);
+        expect(store.clearCount, 1);
+        expect(store.displayNameSaves, ['Bob']);
+        AuthToken? revokedToken;
+        String? revokedRefreshToken;
+
+        await coordinator.revokeAndTerminate(({token, refreshToken}) async {
+          revokedToken = token;
+          revokedRefreshToken = refreshToken;
+        });
+
+        expect(revokedToken, same(tokenOnly.token));
+        expect(revokedRefreshToken, isNull);
+      },
+    );
+
+    test(
+      'logout ignores stored credentials owned by another account',
+      () async {
+        final store = _MemorySessionStore(_storedSession());
+        NetworkSession? current = NetworkSession(
+          userId: 'user-2',
+          token: AuthToken('token-only-jwt'),
+        );
+        final coordinator = _coordinator(
+          store: store,
+          currentSession: () => current,
+          setSession: (session) => current = session,
+          refreshToken: ({required refreshToken}) async {
+            fail('unexpected refresh');
+          },
+        );
+        String? revokedRefreshToken;
+
+        await coordinator.revokeAndTerminate(({token, refreshToken}) async {
+          revokedRefreshToken = refreshToken;
+        });
+
+        expect(revokedRefreshToken, isNull);
+      },
+    );
+
+    test('newer parallel login is the only metadata publisher', () async {
+      final firstSaveStarted = Completer<void>();
+      final releaseCredentialSaves = Completer<void>();
+      final store = _MemorySessionStore(
+        null,
+        credentialsSaveStarted: firstSaveStarted,
+        credentialsSaveRelease: releaseCredentialSaves.future,
+      );
+      NetworkSession? current;
+      final coordinator = _coordinator(
+        store: store,
+        currentSession: () => current,
+        setSession: (session) => current = session,
+        refreshToken: ({required refreshToken}) async {
+          fail('unexpected refresh');
+        },
+      );
+      final first = NetworkSession(
+        userId: 'user-1',
+        token: AuthToken('login-jwt-1'),
+        refreshToken: 'login-refresh-1',
+        matchId: 'match-1',
+      );
+      final second = NetworkSession(
+        userId: 'user-2',
+        token: AuthToken('login-jwt-2'),
+        refreshToken: 'login-refresh-2',
+        matchId: 'match-2',
+      );
+
+      final firstActivation = coordinator.activateAuthenticatedSession(
+        session: first,
+        displayName: 'Alice',
+      );
+      await firstSaveStarted.future;
+      final secondActivation = coordinator.activateAuthenticatedSession(
+        session: second,
+        displayName: 'Bob',
+      );
+      releaseCredentialSaves.complete();
+
+      await Future.wait([firstActivation, secondActivation]);
+
+      expect(current, same(second));
+      expect(store.stored?.userId, 'user-2');
+      expect(store.stored?.refreshToken, 'login-refresh-2');
+      expect(store.displayNameSaves, ['Bob']);
+      expect(store.matchIdSaves, ['match-2']);
+    });
+
+    test('stale failed activation cannot clear newer credentials', () async {
+      final firstSaveStarted = Completer<void>();
+      final releaseCredentialSaves = Completer<void>();
+      final store = _MemorySessionStore(
+        _storedSession(),
+        credentialsSaveStarted: firstSaveStarted,
+        credentialsSaveRelease: releaseCredentialSaves.future,
+        credentialSaveFailuresRemaining: 1,
+      );
+      NetworkSession? current = _activeSession();
+      final coordinator = _coordinator(
+        store: store,
+        currentSession: () => current,
+        setSession: (session) => current = session,
+        refreshToken: ({required refreshToken}) async {
+          fail('unexpected refresh');
+        },
+      );
+      final first = NetworkSession(
+        userId: 'user-1',
+        token: AuthToken('login-jwt-1'),
+        refreshToken: 'login-refresh-1',
+        matchId: 'match-1',
+      );
+      final second = NetworkSession(
+        userId: 'user-2',
+        token: AuthToken('login-jwt-2'),
+        refreshToken: 'login-refresh-2',
+        matchId: 'match-2',
+      );
+
+      final firstActivation = coordinator.activateAuthenticatedSession(
+        session: first,
+        displayName: 'Alice',
+      );
+      await firstSaveStarted.future;
+      final secondActivation = coordinator.activateAuthenticatedSession(
+        session: second,
+        displayName: 'Bob',
+      );
+      releaseCredentialSaves.complete();
+
+      await Future.wait([firstActivation, secondActivation]);
+
+      expect(current, same(second));
+      expect(store.stored?.userId, 'user-2');
+      expect(store.stored?.refreshToken, 'login-refresh-2');
+      expect(store.displayNameSaves, ['Bob']);
+      expect(store.matchIdSaves, ['match-2']);
+    });
+
+    test(
       'refresh failure ends the session and is not retried in a loop',
       () async {
         final store = _MemorySessionStore(_storedSession());
@@ -318,6 +617,45 @@ void main() {
       expect(store.clearCount, 0);
     });
 
+    test('a failed old refresh cannot terminate a newer login', () async {
+      final refreshStarted = Completer<void>();
+      final releaseRefresh = Completer<void>();
+      final store = _MemorySessionStore(_storedSession());
+      NetworkSession? current = _activeSession();
+      final coordinator = _coordinator(
+        store: store,
+        currentSession: () => current,
+        setSession: (session) => current = session,
+        refreshToken: ({required refreshToken}) async {
+          refreshStarted.complete();
+          await releaseRefresh.future;
+          throw StateError('stale refresh failed');
+        },
+      );
+
+      final refresh = coordinator.ensureValidSession(forceRefresh: true);
+      await refreshStarted.future;
+      final accountB = NetworkSession(
+        userId: 'user-2',
+        token: AuthToken('new-login-jwt'),
+        refreshToken: 'new-login-refresh',
+      );
+      await coordinator.activateAuthenticatedSession(
+        session: accountB,
+        displayName: 'Bob',
+      );
+      releaseRefresh.complete();
+
+      await expectLater(
+        refresh,
+        throwsA(isA<NetworkSessionUnavailableException>()),
+      );
+      expect(current, same(accountB));
+      expect(store.stored?.userId, 'user-2');
+      expect(store.stored?.refreshToken, 'new-login-refresh');
+      expect(store.clearCount, 0);
+    });
+
     test(
       'new login credentials win when old refresh persistence finishes later',
       () async {
@@ -414,12 +752,17 @@ final class _MemorySessionStore extends NetworkSessionStore {
   final savedRefreshTokens = <String>[];
   final Completer<void>? credentialsSaveStarted;
   final Future<void>? credentialsSaveRelease;
+  final displayNameSaves = <String>[];
+  final matchIdSaves = <String?>[];
+  int credentialSaveFailuresRemaining;
+  var credentialSaveAttempts = 0;
   var clearCount = 0;
 
   _MemorySessionStore(
     this.stored, {
     this.credentialsSaveStarted,
     this.credentialsSaveRelease,
+    this.credentialSaveFailuresRemaining = 0,
   });
 
   @override
@@ -430,10 +773,15 @@ final class _MemorySessionStore extends NetworkSessionStore {
     required String userId,
     required String refreshToken,
   }) async {
+    credentialSaveAttempts += 1;
     final started = credentialsSaveStarted;
     if (started != null && !started.isCompleted) started.complete();
     final release = credentialsSaveRelease;
     if (release != null) await release;
+    if (credentialSaveFailuresRemaining > 0) {
+      credentialSaveFailuresRemaining -= 1;
+      throw const NetworkSessionCredentialPersistenceException();
+    }
     final current = stored;
     stored = StoredNetworkSession(
       userId: userId,
@@ -442,6 +790,27 @@ final class _MemorySessionStore extends NetworkSessionStore {
       matchId: current?.matchId,
     );
     savedRefreshTokens.add(refreshToken);
+  }
+
+  @override
+  Future<void> saveDisplayName(String displayName) async {
+    displayNameSaves.add(displayName);
+    final current = stored;
+    if (current == null) return;
+    stored = StoredNetworkSession(
+      userId: current.userId,
+      refreshToken: current.refreshToken,
+      displayName: displayName,
+      matchId: current.matchId,
+    );
+  }
+
+  @override
+  Future<void> saveMatchId(String? matchId) async {
+    matchIdSaves.add(matchId);
+    final current = stored;
+    if (current == null) return;
+    stored = current.copyWith(matchId: matchId);
   }
 
   @override

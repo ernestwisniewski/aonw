@@ -84,7 +84,7 @@ void main() {
     );
 
     test(
-      'authentication is not published when credentials cannot be persisted',
+      'authentication remains memory-only when credentials cannot persist',
       () async {
         final client = _FakeNetworkSessionClient(
           quickplayMatch: _match(state: 'open'),
@@ -130,13 +130,117 @@ void main() {
 
         await controller.startQuickplayQueue();
 
-        expect(currentSession, isNull);
-        expect(client.quickplayRequest, isNull);
-        expect(primaryDisplayNames, isEmpty);
-        expect(controller.activeMatch, isNull);
-        expect(presentedErrors.single, contains('CredentialPersistence'));
+        expect(currentSession?.userId, 'user_1');
+        expect(currentSession?.refreshToken, 'refresh-token');
+        expect(client.quickplayRequest, isNotNull);
+        expect(primaryDisplayNames, ['Authenticated Alice']);
+        expect(controller.activeMatch?.id, 'match_1');
+        expect(presentedErrors, isEmpty);
       },
     );
+
+    test('token-only authentication detaches a previous account', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Bob')
+        ..stored = const StoredNetworkSession(
+          userId: 'user_a',
+          refreshToken: 'refresh-a',
+          displayName: 'Alice',
+          matchId: 'match-a',
+        );
+      NetworkSession? currentSession;
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        streamConnector: _emptyStreamConnector,
+        serverpodHost: 'http://localhost:8080',
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async {
+          return NetworkAuthResult(
+            userId: 'user_b',
+            token: AuthToken('access-b'),
+            displayName: 'Bob',
+          );
+        },
+        displayName: () => 'Bob',
+        setPrimaryDisplayName: (_) {},
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: (_) {},
+        publishMatch: (_) {},
+        navigateTo: (_) {},
+      );
+      addTearDown(controller.dispose);
+
+      await controller.startQuickplayQueue();
+
+      expect(currentSession?.userId, 'user_b');
+      expect(currentSession?.refreshToken, isNull);
+      expect(store.cleared, isTrue);
+      expect(
+        store.clearCount,
+        2,
+        reason: 'fallback clears again at account bind',
+      );
+      expect(store.stored, isNull);
+      expect(store.displayName, 'Bob');
+    });
+
+    test('token-only sign out ignores another account credentials', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Alice')
+        ..stored = const StoredNetworkSession(
+          userId: 'user_a',
+          refreshToken: 'refresh-a',
+          displayName: 'Alice',
+        );
+      NetworkSession? currentSession = NetworkSession(
+        userId: 'user_b',
+        token: AuthToken('access-b'),
+      );
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        streamConnector: _emptyStreamConnector,
+        serverpodHost: 'http://localhost:8080',
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async => null,
+        displayName: () => 'Bob',
+        setPrimaryDisplayName: (_) {},
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: (_) {},
+        publishMatch: (_) {},
+        navigateTo: (_) {},
+      );
+      addTearDown(controller.dispose);
+
+      expect(await controller.signOut(), isTrue);
+
+      expect(client.signedOutToken?.value, 'access-b');
+      expect(client.signedOutRefreshToken, isNull);
+      expect(currentSession, isNull);
+    });
 
     test('sign out revokes the session before clearing local state', () async {
       final client = _FakeNetworkSessionClient(
@@ -374,6 +478,7 @@ final class _MemoryNetworkSessionStore extends NetworkSessionStore {
   StoredNetworkSession? stored;
   final savedMatchIds = <String?>[];
   var cleared = false;
+  var clearCount = 0;
 
   _MemoryNetworkSessionStore({required this.displayName, this.saveError});
 
@@ -405,6 +510,7 @@ final class _MemoryNetworkSessionStore extends NetworkSessionStore {
   @override
   Future<void> clear() async {
     cleared = true;
+    clearCount += 1;
     stored = null;
   }
 }

@@ -164,6 +164,40 @@ void main() {
     });
 
     test(
+      'account switch detaches the old owner before replacing the secret',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'network.session.userId': 'user_1',
+          'network.session.displayName': 'Alice',
+          'network.session.matchId': 'match_1',
+        });
+        final secureTokens = _WriteThenBlockSecureTokenStore(
+          values: {'network.session.refreshToken': 'refresh-a'},
+        );
+        final store = NetworkSessionStore(secureTokens: secureTokens);
+
+        final save = store.saveCredentials(
+          userId: 'user_2',
+          refreshToken: 'refresh-b',
+        );
+        await secureTokens.writeCompletedBeforeReturn.future;
+
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('network.session.userId'), isNull);
+        expect(prefs.getString('network.session.matchId'), isNull);
+        expect(
+          secureTokens.values['network.session.refreshToken'],
+          'refresh-b',
+        );
+
+        secureTokens.releaseWrite.complete();
+        await save;
+        expect((await store.load())?.userId, 'user_2');
+        expect((await store.load())?.refreshToken, 'refresh-b');
+      },
+    );
+
+    test(
       'clear queued during credential rotation wins the storage race',
       () async {
         SharedPreferences.setMockInitialValues({
@@ -337,6 +371,30 @@ final class _BlockingFirstWriteSecureTokenStore
       await releaseWrite.future;
     }
     values[key] = value;
+  }
+}
+
+final class _WriteThenBlockSecureTokenStore implements SecureSessionTokenStore {
+  _WriteThenBlockSecureTokenStore({Map<String, String> values = const {}})
+    : values = {...values};
+
+  final Map<String, String> values;
+  final writeCompletedBeforeReturn = Completer<void>();
+  final releaseWrite = Completer<void>();
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
+
+  @override
+  Future<String?> read(String key) async => values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    values[key] = value;
+    writeCompletedBeforeReturn.complete();
+    await releaseWrite.future;
   }
 }
 
