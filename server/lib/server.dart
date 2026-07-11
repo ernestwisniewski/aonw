@@ -11,6 +11,7 @@ import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/multiplayer/multiplayer_endpoint.dart';
 import 'src/multiplayer/multiplayer_turn_timeout_future_call.dart';
+import 'src/public_stats/public_multiplayer_stats_route.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
@@ -34,6 +35,7 @@ void run(List<String> args) async {
     SteamAuthCallbackRoute(),
     SteamAuthService.callbackPath,
   );
+  pod.webServer.addRoute(PublicMultiplayerStatsRoute(), '/api/stats');
 
   await pod.start();
   if (turnTimeoutSweepRegistered) {
