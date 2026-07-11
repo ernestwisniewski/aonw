@@ -11,11 +11,19 @@ final class MultiplayerInputValidator {
 
   static final RegExp _matchIdPattern = RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]*$');
 
+  static bool isValidMatchId(String value) {
+    return value.isNotEmpty &&
+        value.length <= maxMatchIdLength &&
+        _matchIdPattern.hasMatch(value);
+  }
+
+  static String logSafeMatchId(String value) {
+    return isValidMatchId(value) ? value : 'invalid';
+  }
+
   String matchId(String value) {
     final normalized = value.trim();
-    if (normalized.isEmpty ||
-        normalized.length > maxMatchIdLength ||
-        !_matchIdPattern.hasMatch(normalized)) {
+    if (!isValidMatchId(normalized)) {
       throw multiplayerException('invalid_match_id', 'Match ID is invalid.');
     }
     return normalized;

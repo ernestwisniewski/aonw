@@ -1,10 +1,9 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:serverpod/serverpod.dart';
 
+import '../scheduling/background_task_support.dart';
 import '../scheduling/reconciled_future_call_scheduler.dart';
 import 'multiplayer_endpoint.dart';
+import 'multiplayer_input_validator.dart';
 import 'multiplayer_match_store.dart';
 
 const multiplayerTurnTimeoutSweepCallName = 'multiplayerTurnTimeoutSweep';
@@ -21,14 +20,7 @@ const _turnTimeoutScheduler = ReconciledFutureCallScheduler(
   lockName: 'aonw_multiplayer_turn_timeout_schedule',
 );
 
-enum MultiplayerTimeoutSweepErrorKind {
-  database,
-  network,
-  timeout,
-  invalidState,
-  invalidArgument,
-  unexpected,
-}
+typedef MultiplayerTimeoutSweepErrorKind = BackgroundTaskErrorKind;
 
 final class MultiplayerTurnTimeoutSweepCall
     extends FutureCall<SerializableModel> {
@@ -77,52 +69,24 @@ final class MultiplayerTurnTimeoutSweepCall
 }
 
 final class MultiplayerTurnTimeoutScheduleReconciler {
-  MultiplayerTurnTimeoutScheduleReconciler(this._pod);
-
-  final Serverpod _pod;
-  Timer? _timer;
-  Future<void>? _activeReconciliation;
-
-  Future<void> start() async {
-    if (_timer != null) return;
-    await _reconcileOnce(delay: multiplayerTurnTimeoutSweepInterval);
-    _timer = Timer.periodic(
-      multiplayerTurnTimeoutScheduleReconcileInterval,
-      (_) => _triggerReconciliation(),
-    );
-  }
-
-  Future<void> close() async {
-    _timer?.cancel();
-    _timer = null;
-    await _activeReconciliation;
-  }
-
-  void _triggerReconciliation() {
-    if (_activeReconciliation != null) return;
-    final reconciliation = _reconcileOnce(
-      delay: multiplayerTurnTimeoutCrashRecoveryDelay,
-    );
-    _activeReconciliation = reconciliation;
-    unawaited(
-      reconciliation.whenComplete(() {
-        _activeReconciliation = null;
-      }),
-    );
-  }
-
-  Future<void> _reconcileOnce({required Duration delay}) async {
-    try {
-      await ensureMultiplayerTurnTimeoutSweepScheduled(
-        _pod,
-        delay: delay,
-        accelerateExisting: false,
+  MultiplayerTurnTimeoutScheduleReconciler(Serverpod pod)
+    : _delegate = FutureCallScheduleReconciler(
+        reconcileInterval: multiplayerTurnTimeoutScheduleReconcileInterval,
+        initialDelay: multiplayerTurnTimeoutSweepInterval,
+        recoveryDelay: multiplayerTurnTimeoutCrashRecoveryDelay,
+        ensureScheduled: ({required delay, required accelerateExisting}) =>
+            ensureMultiplayerTurnTimeoutSweepScheduled(
+              pod,
+              delay: delay,
+              accelerateExisting: accelerateExisting,
+            ),
       );
-    } catch (_) {
-      // Scheduling failures are logged by _trySchedule. A session lifecycle
-      // failure must not terminate the periodic recovery loop.
-    }
-  }
+
+  final FutureCallScheduleReconciler _delegate;
+
+  Future<void> start() => _delegate.start();
+
+  Future<void> close() => _delegate.close();
 }
 
 Future<bool> ensureMultiplayerTurnTimeoutSweepScheduled(
@@ -176,22 +140,10 @@ Future<bool> _trySchedule(
 
 MultiplayerTimeoutSweepErrorKind multiplayerTimeoutSweepErrorKind(
   Object error,
-) {
-  return switch (error) {
-    DatabaseException() => MultiplayerTimeoutSweepErrorKind.database,
-    SocketException() => MultiplayerTimeoutSweepErrorKind.network,
-    TimeoutException() => MultiplayerTimeoutSweepErrorKind.timeout,
-    StateError() => MultiplayerTimeoutSweepErrorKind.invalidState,
-    ArgumentError() => MultiplayerTimeoutSweepErrorKind.invalidArgument,
-    _ => MultiplayerTimeoutSweepErrorKind.unexpected,
-  };
-}
+) => backgroundTaskErrorKind(error);
 
 String multiplayerTimeoutLogMatchId(String matchId) {
-  // Keep the 64-character bound aligned with MultiplayerInputValidator.
-  return RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$').hasMatch(matchId)
-      ? matchId
-      : 'invalid';
+  return MultiplayerInputValidator.logSafeMatchId(matchId);
 }
 
 DateTime multiplayerTurnTimeoutCrashRecoveryDeadline(DateTime startedAt) {

@@ -1,12 +1,10 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:serverpod_auth_idp_server/core.dart' as auth_idp;
 
 import '../generated/protocol.dart';
+import '../scheduling/background_task_support.dart';
 import 'auth_rate_limit_constants.dart';
 
 export 'auth_rate_limit_constants.dart' show aonwAuthRateLimitDomain;
@@ -38,14 +36,7 @@ enum AuthMaintenanceTarget {
   rateLimitAttempts,
 }
 
-enum AuthMaintenanceErrorKind {
-  database,
-  network,
-  timeout,
-  invalidState,
-  invalidArgument,
-  unexpected,
-}
+typedef AuthMaintenanceErrorKind = BackgroundTaskErrorKind;
 
 final class AuthMaintenanceFailure {
   const AuthMaintenanceFailure({
@@ -56,7 +47,7 @@ final class AuthMaintenanceFailure {
   });
 
   final AuthMaintenanceTarget target;
-  final AuthMaintenanceErrorKind kind;
+  final BackgroundTaskErrorKind kind;
   final int deletedBeforeFailure;
   final StackTrace stackTrace;
 }
@@ -230,20 +221,12 @@ final class _BatchDeletionResult {
 
   final int deleted;
   final bool backlogRemaining;
-  final AuthMaintenanceErrorKind? failureKind;
+  final BackgroundTaskErrorKind? failureKind;
   final StackTrace? stackTrace;
 }
 
-AuthMaintenanceErrorKind authMaintenanceErrorKind(Object error) {
-  return switch (error) {
-    DatabaseException() => AuthMaintenanceErrorKind.database,
-    SocketException() => AuthMaintenanceErrorKind.network,
-    TimeoutException() => AuthMaintenanceErrorKind.timeout,
-    StateError() => AuthMaintenanceErrorKind.invalidState,
-    ArgumentError() => AuthMaintenanceErrorKind.invalidArgument,
-    _ => AuthMaintenanceErrorKind.unexpected,
-  };
-}
+BackgroundTaskErrorKind authMaintenanceErrorKind(Object error) =>
+    backgroundTaskErrorKind(error);
 
 /// Serverpod-backed maintenance store. Candidate IDs are selected first and
 /// the expiry predicate is checked again during deletion. This bounds returned

@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 
+import '../scheduling/background_task_support.dart';
 import '../scheduling/reconciled_future_call_scheduler.dart';
 import 'auth_maintenance_service.dart';
 
@@ -94,50 +93,24 @@ Duration authMaintenanceFollowUpDelay(AuthMaintenanceResult result) {
 }
 
 final class AuthMaintenanceScheduleReconciler {
-  AuthMaintenanceScheduleReconciler(this._pod);
-
-  final Serverpod _pod;
-  Timer? _timer;
-  Future<void>? _activeReconciliation;
-
-  Future<void> start() async {
-    if (_timer != null) return;
-    await _reconcileOnce();
-    _timer = Timer.periodic(
-      authMaintenanceScheduleReconcileInterval,
-      (_) => _triggerReconciliation(),
-    );
-  }
-
-  Future<void> close() async {
-    _timer?.cancel();
-    _timer = null;
-    await _activeReconciliation;
-  }
-
-  void _triggerReconciliation() {
-    if (_activeReconciliation != null) return;
-    final reconciliation = _reconcileOnce();
-    _activeReconciliation = reconciliation;
-    unawaited(
-      reconciliation.whenComplete(() {
-        _activeReconciliation = null;
-      }),
-    );
-  }
-
-  Future<void> _reconcileOnce() async {
-    try {
-      await ensureAuthMaintenanceScheduled(
-        _pod,
-        delay: authMaintenanceScheduleReconcileInterval,
-        accelerateExisting: false,
+  AuthMaintenanceScheduleReconciler(Serverpod pod)
+    : _delegate = FutureCallScheduleReconciler(
+        reconcileInterval: authMaintenanceScheduleReconcileInterval,
+        initialDelay: authMaintenanceScheduleReconcileInterval,
+        recoveryDelay: authMaintenanceScheduleReconcileInterval,
+        ensureScheduled: ({required delay, required accelerateExisting}) =>
+            ensureAuthMaintenanceScheduled(
+              pod,
+              delay: delay,
+              accelerateExisting: accelerateExisting,
+            ),
       );
-    } catch (_) {
-      // Scheduling failures are logged by _trySchedule. A session lifecycle
-      // failure must not terminate the periodic recovery loop.
-    }
-  }
+
+  final FutureCallScheduleReconciler _delegate;
+
+  Future<void> start() => _delegate.start();
+
+  Future<void> close() => _delegate.close();
 }
 
 Future<bool> ensureAuthMaintenanceScheduled(
