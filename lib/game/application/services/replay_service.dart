@@ -63,6 +63,7 @@ class ReplayStep {
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
+  final int? originatingTurn;
 
   const ReplayStep({
     required this.index,
@@ -72,11 +73,12 @@ class ReplayStep {
     required this.state,
     required this.events,
     required this.uiEffects,
+    this.originatingTurn,
   });
 
   int get offset => loggedCommand.offset;
 
-  int get turn => loggedCommand.turn;
+  int get turn => originatingTurn ?? loggedCommand.turn ?? save.turn;
 
   DateTime get timestamp => loggedCommand.timestamp;
 
@@ -94,12 +96,15 @@ class ReplayStep {
     required GameState state,
     GameState? previousState,
   }) {
-    return loggedCommand.actorPlayerId ??
-        _inferActorPlayerId(
-          command: loggedCommand.command,
-          state: state,
-          previousState: previousState ?? state,
-        );
+    final actorPlayerId = loggedCommand.actorPlayerId;
+    if (actorPlayerId != null) return actorPlayerId;
+    final command = loggedCommand.command;
+    if (command == null) return null;
+    return _inferActorPlayerId(
+      command: command,
+      state: state,
+      previousState: previousState ?? state,
+    );
   }
 
   static String? _inferActorPlayerId({
@@ -242,7 +247,20 @@ class ReplayService {
         }
 
         final previousState = currentState;
-        final commandContext = logged.toCommandContext();
+        final command = logged.command;
+        if (command == null) {
+          throw ReplayBuildException(
+            ReplayBuildFailureReason.corruptLog,
+            'Replay log entry ${logged.offset} has a redacted command; '
+            'deterministic replay is unavailable.',
+          );
+        }
+        final originatingTurn = logged.turn ?? currentSave.turn;
+        final commandContext = logged.toCommandContext(
+          victoryRules: currentSave.matchRules.victory,
+          paceBalance: currentSave.matchRules.paceBalance,
+          fallbackTurn: originatingTurn,
+        );
         final effectiveActorPlayerId = ReplayStep.inferEffectiveActorPlayerId(
           loggedCommand: logged,
           state: currentState,
@@ -255,7 +273,7 @@ class ReplayService {
         final resolved = commandResolver.resolve(
           baseSnapshot: baseSnapshot,
           currentState: currentState,
-          command: logged.command,
+          command: command,
           savedAt: logged.timestamp,
           context: commandContext.copyWith(
             actorPlayerId: effectiveActorPlayerId,
@@ -273,6 +291,7 @@ class ReplayService {
             state: currentState,
             events: logged.events,
             uiEffects: resolved.uiEffects,
+            originatingTurn: originatingTurn,
           ),
         );
       }

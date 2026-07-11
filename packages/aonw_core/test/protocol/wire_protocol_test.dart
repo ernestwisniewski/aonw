@@ -124,6 +124,7 @@ void main() {
         timestamp: DateTime.utc(2026, 4, 27, 12, 1),
         actorPlayerId: 'player_1',
         tick: 1,
+        turn: 7,
         command: const {'type': 'SmokeCommand'},
         events: const [
           {'type': 'CommandAcceptedEvent'},
@@ -140,6 +141,8 @@ void main() {
         WireEvent.fromJson(event.toJson()).command?['type'],
         'SmokeCommand',
       );
+      expect(WireEvent.fromJson(event.toJson()).turn, 7);
+      expect(event.toJson()['turn'], 7);
     });
 
     test('round-trips AI player metadata without exposing seed', () {

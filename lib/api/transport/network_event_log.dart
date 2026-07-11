@@ -2,26 +2,43 @@ import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
+import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/services/game_activity_event_projector.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/protocol.dart';
 
 class NetworkEventLog implements EventLog {
-  static const _eventPageSize = 256;
-
   final String serverpodHost;
   final AuthToken token;
   final EventCodec eventCodec;
+  final String? recipientPlayerId;
   final MultiplayerBackendClient? backendClient;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  late final MultiplayerBackendClient _backendClient;
+  late final bool _ownsBackend;
+  var _closed = false;
 
   NetworkEventLog({
     String? serverpodHost,
     required this.token,
+    this.recipientPlayerId,
     this.eventCodec = const EventCodec(),
     this.backendClient,
     this.authKeyProviderFactory,
-  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient);
+  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient) {
+    _ownsBackend = backendClient == null;
+    _backendClient =
+        backendClient ??
+        ServerpodMultiplayerBackendClient(
+          serverpodHost: this.serverpodHost,
+          token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
+        );
+  }
+
+  bool get isClosed => _closed;
 
   @override
   Future<void> append(String saveId, LoggedCommand command) {
@@ -47,16 +64,33 @@ class NetworkEventLog implements EventLog {
     final afterOffset = offset <= 0 ? 0 : offset - 1;
     await for (final wire in _wireEvents(saveId, afterOffset: afterOffset)) {
       final command = eventCodec.commandFromWire(wire);
-      if (command == null) continue;
+      final events = eventCodec.eventsFromWire(wire);
       yield LoggedCommand(
         offset: wire.offset,
         timestamp: wire.timestamp,
-        turn: wire.tick ?? 0,
+        turn: wire.turn,
         actorPlayerId: wire.actorPlayerId,
+        commandTick: wire.tick ?? 0,
         command: command,
-        events: eventCodec.eventsFromWire(wire),
+        events: events,
+        activity: _activityFor(events),
       );
     }
+  }
+
+  List<LoggedActivityEntry> _activityFor(List<GameEvent> events) {
+    final playerId = recipientPlayerId;
+    if (playerId == null || playerId.isEmpty) return const [];
+    return List.unmodifiable([
+      for (var index = 0; index < events.length; index++)
+        if (GameActivityEventProjector.isActivityWorthy(events[index]))
+          LoggedActivityEntry(
+            eventIndex: index,
+            playerId: playerId,
+            event: events[index],
+            context: GameActivityContext.empty,
+          ),
+    ]);
   }
 
   Stream<WireEvent> _wireEvents(
@@ -67,9 +101,9 @@ class NetworkEventLog implements EventLog {
     var cursor = afterOffset;
     while (true) {
       final page = await backend.listEvents(saveId, cursor);
-      if (page.length > _eventPageSize) {
+      if (page.length > multiplayerEventPageSize) {
         throw StateError(
-          'Multiplayer event page exceeded $_eventPageSize entries.',
+          'Multiplayer event page exceeded $multiplayerEventPageSize entries.',
         );
       }
       for (final wire in page) {
@@ -82,17 +116,19 @@ class NetworkEventLog implements EventLog {
         cursor = wire.offset;
         yield wire;
       }
-      if (page.length < _eventPageSize) return;
+      if (page.length < multiplayerEventPageSize) return;
     }
   }
 
   MultiplayerBackendClient _backend() {
-    return backendClient ??
-        ServerpodMultiplayerBackendClient(
-          serverpodHost: serverpodHost,
-          token: token,
-          authKeyProviderFactory: authKeyProviderFactory,
-        );
+    if (_closed) throw StateError('Network event log is closed.');
+    return _backendClient;
+  }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    if (_ownsBackend) _backendClient.close();
   }
 }
 

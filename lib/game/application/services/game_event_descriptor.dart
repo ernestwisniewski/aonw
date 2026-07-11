@@ -474,12 +474,15 @@ GameEventDescriptor _describeGameEvent(GameEvent event) {
     CommandRejectedEvent() => GameEventDescriptor._(
       activityWorthy: true,
       messageGroup: GameEventMessageGroup.system,
+      playerIdsResolver: _visiblePlayer(),
     ),
-    AllPlayersSubmittedEvent(:final turn) => GameEventDescriptor._(
-      activityWorthy: true,
-      messageGroup: GameEventMessageGroup.system,
-      completedTurn: turn,
-    ),
+    AllPlayersSubmittedEvent(:final turn, :final playerIds) =>
+      GameEventDescriptor._(
+        activityWorthy: true,
+        messageGroup: GameEventMessageGroup.system,
+        completedTurn: turn,
+        playerIds: playerIds,
+      ),
     PlayerTimedOutEvent(:final playerId) => GameEventDescriptor._(
       activityWorthy: true,
       messageGroup: GameEventMessageGroup.system,

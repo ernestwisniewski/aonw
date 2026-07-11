@@ -383,7 +383,7 @@ final class MultiplayerStreamConnectorProvider
 }
 
 String _$multiplayerStreamConnectorHash() =>
-    r'f5ddac93b95c5f12e4863ee7d5e5b162a55c223d';
+    r'be3240c4bc189e6fda5c788abafac8941e9db0ee';
 
 @ProviderFor(wireCommandDispatcher)
 final wireCommandDispatcherProvider = WireCommandDispatcherProvider._();
@@ -431,7 +431,7 @@ final class WireCommandDispatcherProvider
 }
 
 String _$wireCommandDispatcherHash() =>
-    r'51f311f20c68320e5b3169d46c68e33945452800';
+    r'b47c04ecb80f1facafb917e4b1fbd01b407acfe4';
 
 @ProviderFor(networkSessionClient)
 final networkSessionClientProvider = NetworkSessionClientProvider._();
@@ -479,7 +479,7 @@ final class NetworkSessionClientProvider
 }
 
 String _$networkSessionClientHash() =>
-    r'26d33743964c3b2c94418df64de585d0be4c792e';
+    r'f73dde97b5ad75b41ea532c8cf4fb6d6f970f92f';
 
 @ProviderFor(networkSessionStore)
 final networkSessionStoreProvider = NetworkSessionStoreProvider._();
@@ -527,7 +527,7 @@ final class NetworkSessionStoreProvider
 }
 
 String _$networkSessionStoreHash() =>
-    r'e6cec2edee2a4bc8fd8c7e1b6afe83aeba394fec';
+    r'f1551fa436a91a4a32d644b1952d85130ee0e906';
 
 @ProviderFor(NetworkSessionState)
 final networkSessionStateProvider = NetworkSessionStateProvider._();

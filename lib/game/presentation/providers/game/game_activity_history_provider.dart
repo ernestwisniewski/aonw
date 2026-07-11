@@ -13,14 +13,19 @@ final gameActivityHistoryProvider =
       if (saveId.isEmpty) return const [];
 
       final records = <GameActivityHistoryRecord>[];
-      await for (final command in ref.watch(eventLogProvider).readAll(saveId)) {
+      await for (final command in eventLogForSave(
+        ref,
+        saveId,
+      ).readAll(saveId)) {
+        final turn = command.turn;
+        if (turn == null) continue;
         for (final entry in command.activity) {
           records.add(
             GameActivityHistoryRecord(
               offset: command.offset,
               eventIndex: entry.eventIndex,
               timestamp: command.timestamp,
-              turn: command.turn,
+              turn: turn,
               playerId: entry.playerId,
               event: entry.event,
               context: entry.context,

@@ -94,13 +94,15 @@ final networkGameRepositoryProvider = fr.Provider<GameRepository>((ref) {
   if (session == null || !session.isConnected || session.matchId == null) {
     throw StateError('No active multiplayer session for network repository.');
   }
-  return NetworkGameRepository(
+  final repository = NetworkGameRepository(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
     userId: session.userId,
     token: session.token,
     snapshotCache: ref.watch(snapshotStoreProvider),
     authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
+  ref.onDispose(repository.close);
+  return repository;
 });
 
 final networkEventLogProvider = fr.Provider<EventLog>((ref) {
@@ -109,11 +111,14 @@ final networkEventLogProvider = fr.Provider<EventLog>((ref) {
   if (session == null || !session.isConnected || session.matchId == null) {
     throw StateError('No active multiplayer session for network event log.');
   }
-  return NetworkEventLog(
+  final eventLog = NetworkEventLog(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
     token: session.token,
+    recipientPlayerId: session.playerId,
     authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
+  ref.onDispose(eventLog.close);
+  return eventLog;
 });
 
 EventLog buildLocalEventLog() {
@@ -168,18 +173,22 @@ MultiplayerStreamConnector multiplayerStreamConnector(Ref ref) {
 @Riverpod(keepAlive: true)
 WireCommandDispatcher wireCommandDispatcher(Ref ref) {
   final host = ref.watch(apiConfigProvider).baseUrl.toString();
-  return ServerpodWireCommandDispatcher(
+  final dispatcher = ServerpodWireCommandDispatcher(
     serverpodHost: host,
     authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
+  ref.onDispose(dispatcher.close);
+  return dispatcher;
 }
 
 @Riverpod(keepAlive: true)
 NetworkSessionClient networkSessionClient(Ref ref) {
-  return NetworkSessionClient(
+  final client = NetworkSessionClient(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
     authKeyProviderFactory: _authKeyProviderFactory(ref),
   );
+  ref.onDispose(client.close);
+  return client;
 }
 
 @Riverpod(keepAlive: true)

@@ -270,6 +270,7 @@ Future<void> _pumpHud(
       renderer ??
       GameRenderer(mapData: activeSession.mapData, onCommand: (_) async {});
   final save = gameSave ?? _save;
+  final activeEventLog = eventLog ?? _FakeEventLog();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -277,7 +278,9 @@ Future<void> _pumpHud(
         activeGameRendererProvider.overrideWithValue(activeRenderer),
         gamePlayerControlSaveProvider.overrideWithValue(save),
         gameRepositoryProvider.overrideWithValue(repository),
-        eventLogProvider.overrideWithValue(eventLog ?? _FakeEventLog()),
+        networkGameRepositoryProvider.overrideWithValue(repository),
+        eventLogProvider.overrideWithValue(activeEventLog),
+        networkEventLogProvider.overrideWithValue(activeEventLog),
         snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
         if (logger != null) gameLoggerProvider.overrideWithValue(logger),
         if (autoActionFlowEnabled != null)

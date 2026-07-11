@@ -66,6 +66,68 @@ void main() {
       throwsA(isA<StateError>()),
     );
   });
+
+  test('fails closed when the next entry has no replayable command', () async {
+    final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+    final service = EventLogReplayService(
+      eventLog: _MemoryEventLog([
+        LoggedCommand(
+          offset: 2,
+          timestamp: DateTime.utc(2026, 4, 16, 12),
+          turn: 1,
+          actorPlayerId: 'player_2',
+          command: null,
+        ),
+      ]),
+      reducer: GameStateReducer(mapData: _map()),
+    );
+
+    await expectLater(
+      service.replaySinceSnapshot(
+        saveId: 'save_1',
+        state: GameState(units: [commander]),
+        offset: 1,
+      ),
+      throwsA(
+        isA<AuthoritativeSnapshotRequiredException>().having(
+          (error) => error.reason,
+          'reason',
+          AuthoritativeSnapshotRequiredReason.redactedCommand,
+        ),
+      ),
+    );
+  });
+
+  test('fails closed when a legacy entry has no game turn', () async {
+    final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+    final service = EventLogReplayService(
+      eventLog: _MemoryEventLog([
+        LoggedCommand(
+          offset: 2,
+          timestamp: DateTime.utc(2026, 4, 16, 12),
+          turn: null,
+          actorPlayerId: 'player_1',
+          command: MoveUnitCommand(commander.id, 1, 0),
+        ),
+      ]),
+      reducer: GameStateReducer(mapData: _map()),
+    );
+
+    await expectLater(
+      service.replaySinceSnapshot(
+        saveId: 'save_1',
+        state: GameState(units: [commander]),
+        offset: 1,
+      ),
+      throwsA(
+        isA<AuthoritativeSnapshotRequiredException>().having(
+          (error) => error.reason,
+          'reason',
+          AuthoritativeSnapshotRequiredReason.missingGameTurn,
+        ),
+      ),
+    );
+  });
 }
 
 class _MemoryEventLog implements EventLog {

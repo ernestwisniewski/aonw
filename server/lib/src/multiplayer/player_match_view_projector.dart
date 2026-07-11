@@ -2,6 +2,11 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import '../generated/protocol.dart';
+import 'player_match_event_audience.dart';
+
+typedef PlayerMatchSaveDecoder = GameSave Function(Map<String, dynamic> json);
+typedef PlayerMatchStateDecoder =
+    PersistentGameState Function(Map<String, dynamic> json);
 
 final class MatchRecipient {
   const MatchRecipient({required this.userIdentifier, required this.playerId});
@@ -10,14 +15,70 @@ final class MatchRecipient {
   final String playerId;
 }
 
+/// Canonical snapshot decoded once before recipient-specific projection.
+final class PreparedPlayerMatchSnapshot {
+  const PreparedPlayerMatchSnapshot._({
+    required this.canonical,
+    required this.publicSave,
+    required this.state,
+  });
+
+  final WireSnapshot canonical;
+  final Map<String, dynamic>? publicSave;
+  final PersistentGameState? state;
+}
+
+/// Canonical server message prepared once for any number of recipients.
+final class PreparedPlayerMatchMessage {
+  const PreparedPlayerMatchMessage._({
+    required this.canonical,
+    required this.snapshot,
+    required this.ackSnapshot,
+  });
+
+  final MultiplayerServerMessage canonical;
+  final PreparedPlayerMatchSnapshot? snapshot;
+  final PreparedPlayerMatchSnapshot? ackSnapshot;
+}
+
+/// Nominal proof that a server message passed recipient projection.
+final class ProjectedPlayerMatchMessage {
+  const ProjectedPlayerMatchMessage._(this.wire);
+
+  final MultiplayerServerMessage wire;
+}
+
 /// Builds a fail-closed, recipient-specific view of canonical match state.
 ///
 /// Canonical snapshots and events remain in the store. Every network boundary
 /// must call this projector before returning or publishing them to a client.
 final class PlayerMatchViewProjector {
-  const PlayerMatchViewProjector();
+  const PlayerMatchViewProjector({
+    PlayerMatchSaveDecoder decodeSave = GameSave.fromJson,
+    PlayerMatchStateDecoder decodeState = PersistentGameState.fromJson,
+  }) : _decodeSave = decodeSave,
+       _decodeState = decodeState;
+
+  final PlayerMatchSaveDecoder _decodeSave;
+  final PlayerMatchStateDecoder _decodeState;
 
   WireMatch matchFor(WireMatch canonical, {required String userIdentifier}) {
+    _requireKnownFields('match', canonical.toJson(), _knownMatchFields);
+    for (final player in canonical.players) {
+      _requireKnownFields(
+        'match player',
+        player.toJson(),
+        _knownWirePlayerFields,
+      );
+      final ai = player.ai;
+      if (ai != null) {
+        _requireKnownFields(
+          'match AI player',
+          ai.toJson(),
+          _knownWireAiPlayerFields,
+        );
+      }
+    }
     final isOwner = canonical.ownerUserId == userIdentifier;
     final owner = canonical.players.where(
       (player) => player.userId == canonical.ownerUserId,
@@ -37,51 +98,131 @@ final class PlayerMatchViewProjector {
     );
   }
 
-  WireSnapshot snapshotFor(WireSnapshot canonical, MatchRecipient recipient) {
+  PreparedPlayerMatchSnapshot prepareSnapshot(WireSnapshot canonical) {
+    _requireKnownSnapshotStateFields(canonical.state);
     if (canonical.save.isEmpty) {
+      return PreparedPlayerMatchSnapshot._(
+        canonical: canonical,
+        publicSave: null,
+        state: null,
+      );
+    }
+    _requireKnownFields('game save', canonical.save, _knownGameSaveFields);
+    final save = _prepareSave(canonical.save);
+    return PreparedPlayerMatchSnapshot._(
+      canonical: canonical,
+      publicSave: Map.unmodifiable(
+        save
+            .copyWith(
+              camera: CameraState.zero,
+              players: [
+                for (final player in save.players) _publicPlayer(player),
+              ],
+            )
+            .toJson(),
+      ),
+      state: _decodeState(canonical.state),
+    );
+  }
+
+  GameSave _prepareSave(Map<String, dynamic> canonical) {
+    final save = _decodeSave(canonical);
+    for (final player in save.players) {
+      _requireKnownFields(
+        'game save player',
+        player.toJson(),
+        _knownGameSavePlayerFields,
+      );
+    }
+    return save;
+  }
+
+  WireSnapshot snapshotFor(WireSnapshot canonical, MatchRecipient recipient) {
+    return projectSnapshot(prepareSnapshot(canonical), recipient);
+  }
+
+  WireSnapshot projectSnapshot(
+    PreparedPlayerMatchSnapshot prepared,
+    MatchRecipient recipient,
+  ) {
+    final canonical = prepared.canonical;
+    final publicSave = prepared.publicSave;
+    final state = prepared.state;
+    if (publicSave == null || state == null) {
       return canonical.copyWith(state: _lifecycleState(canonical.state));
     }
-
-    final save = GameSave.fromJson(canonical.save);
-    final state = PersistentGameState.fromJson(canonical.state);
     final projectedState = _stateFor(state, recipient.playerId);
     return WireSnapshot(
       v: canonical.v,
       matchId: canonical.matchId,
       offset: canonical.offset,
-      save: save
-          .copyWith(
-            camera: CameraState.zero,
-            players: [for (final player in save.players) _publicPlayer(player)],
-          )
-          .toJson(),
+      save: publicSave,
       state: {...projectedState.toJson(), ..._lifecycleState(canonical.state)},
     );
   }
 
   WireEvent eventFor(WireEvent canonical, MatchRecipient recipient) {
     final isActor = canonical.actorPlayerId == recipient.playerId;
+    final events = PlayerMatchEventAudience.projectForRecipient(
+      canonical.events,
+      recipientPlayerId: recipient.playerId,
+    );
+    final actorIsVisible = isActor || events.isNotEmpty;
     return WireEvent(
       v: canonical.v,
       matchId: canonical.matchId,
       offset: canonical.offset,
       timestamp: canonical.timestamp,
-      actorPlayerId: isActor ? canonical.actorPlayerId : null,
+      actorPlayerId: actorIsVisible ? canonical.actorPlayerId : null,
       tick: isActor ? canonical.tick : null,
+      turn: canonical.turn,
       command: isActor ? canonical.command : null,
-      events: const [],
+      events: events,
     );
   }
 
   WireCommandAck ackFor(WireCommandAck canonical, MatchRecipient recipient) {
+    return _ackForPrepared(
+      canonical,
+      prepareSnapshot(canonical.snapshot),
+      recipient,
+    );
+  }
+
+  WireCommandAck _ackForPrepared(
+    WireCommandAck canonical,
+    PreparedPlayerMatchSnapshot snapshot,
+    MatchRecipient recipient,
+  ) {
     return WireCommandAck(
       v: canonical.v,
       matchId: canonical.matchId,
       accepted: canonical.accepted,
       offset: canonical.offset,
-      snapshot: snapshotFor(canonical.snapshot, recipient),
-      events: const [],
+      snapshot: projectSnapshot(snapshot, recipient),
+      events: PlayerMatchEventAudience.projectForRecipient(
+        canonical.events,
+        recipientPlayerId: recipient.playerId,
+      ),
       reason: canonical.reason,
+    );
+  }
+
+  PreparedPlayerMatchMessage prepareMessage(
+    MultiplayerServerMessage canonical,
+  ) {
+    final snapshot = canonical.snapshot == null
+        ? null
+        : prepareSnapshot(canonical.snapshot!);
+    final ackSnapshot = canonical.ack == null
+        ? null
+        : canonical.ack!.snapshot == canonical.snapshot
+        ? snapshot
+        : prepareSnapshot(canonical.ack!.snapshot);
+    return PreparedPlayerMatchMessage._(
+      canonical: canonical,
+      snapshot: snapshot,
+      ackSnapshot: ackSnapshot,
     );
   }
 
@@ -89,25 +230,182 @@ final class PlayerMatchViewProjector {
     MultiplayerServerMessage canonical,
     MatchRecipient recipient,
   ) {
-    return MultiplayerServerMessage(
-      serverMessageId: canonical.serverMessageId,
-      matchId: canonical.matchId,
-      offset: canonical.offset,
-      match: canonical.match == null
-          ? null
-          : matchFor(
-              canonical.match!,
-              userIdentifier: recipient.userIdentifier,
-            ),
-      snapshot: canonical.snapshot == null
-          ? null
-          : snapshotFor(canonical.snapshot!, recipient),
-      event: canonical.event == null
-          ? null
-          : eventFor(canonical.event!, recipient),
-      ack: canonical.ack == null ? null : ackFor(canonical.ack!, recipient),
+    return projectMessage(prepareMessage(canonical), recipient).wire;
+  }
+
+  ProjectedPlayerMatchMessage projectMessage(
+    PreparedPlayerMatchMessage prepared,
+    MatchRecipient recipient,
+  ) {
+    final canonical = prepared.canonical;
+    return ProjectedPlayerMatchMessage._(
+      MultiplayerServerMessage(
+        serverMessageId: canonical.serverMessageId,
+        matchId: canonical.matchId,
+        offset: canonical.offset,
+        match: canonical.match == null
+            ? null
+            : matchFor(
+                canonical.match!,
+                userIdentifier: recipient.userIdentifier,
+              ),
+        snapshot: canonical.snapshot == null
+            ? null
+            : projectSnapshot(prepared.snapshot!, recipient),
+        event: canonical.event == null
+            ? null
+            : eventFor(canonical.event!, recipient),
+        ack: canonical.ack == null
+            ? null
+            : _ackForPrepared(canonical.ack!, prepared.ackSnapshot!, recipient),
+      ),
     );
   }
+
+  void _requireKnownSnapshotStateFields(Map<String, dynamic> state) {
+    final unknownStateFields = state.keys.toSet().difference(
+      _knownSnapshotStateFields,
+    );
+    if (unknownStateFields.isNotEmpty) {
+      final fields = unknownStateFields.toList()..sort();
+      throw FormatException(
+        'Unreviewed multiplayer snapshot fields: ${fields.join(', ')}.',
+      );
+    }
+
+    final rawRuntime = state['runtimeState'];
+    if (rawRuntime == null) return;
+    if (rawRuntime is! Map<Object?, Object?>) {
+      throw const FormatException(
+        'Multiplayer runtime state must be a JSON object.',
+      );
+    }
+    final runtimeFields = rawRuntime.keys.whereType<String>().toSet();
+    if (runtimeFields.length != rawRuntime.length) {
+      throw const FormatException(
+        'Multiplayer runtime state field names must be strings.',
+      );
+    }
+    final unknownRuntimeFields = runtimeFields.difference(
+      _knownRuntimeStateFields,
+    );
+    if (unknownRuntimeFields.isNotEmpty) {
+      final fields = unknownRuntimeFields.toList()..sort();
+      throw FormatException(
+        'Unreviewed multiplayer runtime fields: ${fields.join(', ')}.',
+      );
+    }
+  }
+
+  void _requireKnownFields(
+    String label,
+    Map<String, dynamic> value,
+    Set<String> knownFields,
+  ) {
+    final unknownFields = value.keys.toSet().difference(knownFields);
+    if (unknownFields.isEmpty) return;
+    final fields = unknownFields.toList()..sort();
+    throw FormatException(
+      'Unreviewed multiplayer $label fields: ${fields.join(', ')}.',
+    );
+  }
+
+  static const _knownMatchFields = {
+    'v',
+    'id',
+    'ownerUserId',
+    'name',
+    'mapName',
+    'players',
+    'maxPlayers',
+    'minPlayers',
+    'quickplay',
+    'turn',
+    'state',
+    'createdAt',
+    'autoStartAt',
+    'inviteCode',
+  };
+
+  static const _knownWirePlayerFields = {
+    'id',
+    'userId',
+    'name',
+    'colorValue',
+    'countryId',
+    'kind',
+    'connectionState',
+    'ready',
+    'ai',
+  };
+
+  static const _knownWireAiPlayerFields = {
+    'strategyId',
+    'difficulty',
+    'persona',
+  };
+
+  static const _knownGameSaveFields = {
+    'id',
+    'schemaVersion',
+    'name',
+    'mapName',
+    'mapSource',
+    'turn',
+    'playerStates',
+    'savedAt',
+    'camera',
+    'ruleset',
+    'players',
+    'gameMode',
+  };
+
+  static const _knownGameSavePlayerFields = {
+    'id',
+    'name',
+    'colorValue',
+    'country',
+    'kind',
+    'ai',
+  };
+
+  static const _knownSnapshotStateFields = {
+    'playerColors',
+    'playerCountries',
+    'playerGold',
+    'playerWarWeariness',
+    'playerStabilityNet',
+    'units',
+    'cities',
+    'artifacts',
+    'fieldImprovements',
+    'fogOfWar',
+    'research',
+    'runtimeState',
+    'wonderRegistry',
+    'phase',
+    'reason',
+    'mapName',
+    // Stored lifecycle audit fields are deliberately omitted from output.
+    'leftUserIdentifier',
+    'resignedUserIdentifier',
+  };
+
+  static const _knownRuntimeStateFields = {
+    'cityFoundingDraft',
+    'pendingAction',
+    'submittedPlayerIds',
+    'timeoutStreaksByPlayerId',
+    'afkPlayerIds',
+    'kickedPlayerIds',
+    'intendedAttacks',
+    'diplomacy',
+    'dominationHoldTurnsByPlayerId',
+    'culturalVictoryHoldTurnsByPlayerId',
+    'mapObjectiveHoldStates',
+    'resourceTradeAgreements',
+    'turnStartedAt',
+  };
 
   PersistentGameState _stateFor(
     PersistentGameState canonical,

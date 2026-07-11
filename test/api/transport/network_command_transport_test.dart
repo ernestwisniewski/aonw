@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
@@ -27,6 +28,47 @@ import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Serverpod dispatcher stays lazy and closes idempotently', () {
+    var clientFactoryCalls = 0;
+    final rawClient = createServerpodClient('http://localhost:8080');
+    final dispatcher = ServerpodWireCommandDispatcher(
+      serverpodHost: 'http://localhost:8080',
+      clientFactory: () {
+        clientFactoryCalls += 1;
+        return rawClient;
+      },
+    );
+
+    expect(clientFactoryCalls, 0);
+    expect(dispatcher.isClosed, isFalse);
+
+    dispatcher
+      ..close()
+      ..close();
+
+    expect(clientFactoryCalls, 0);
+    expect(dispatcher.isClosed, isTrue);
+  });
+
+  test('NetworkCommandTransport closes its convenience dispatcher', () {
+    final server = _FakeCommandServer(save: _save(), state: const GameState());
+    final transport = NetworkCommandTransport(
+      serverpodHost: 'http://localhost:8080',
+      token: AuthToken('jwt-token'),
+      actorPlayerId: 'player_1',
+      tickGenerator: ClientTickGenerator(),
+      localReducer: server.reducer,
+      gameRepository: _SnapshotRepository(server.snapshot),
+    );
+    final owned = transport.commandDispatcher as ServerpodWireCommandDispatcher;
+
+    transport
+      ..close()
+      ..close();
+
+    expect(owned.isClosed, isTrue);
+  });
+
   group('NetworkCommandTransport', () {
     test(
       'posts a WireCommand and applies the server snapshot response',

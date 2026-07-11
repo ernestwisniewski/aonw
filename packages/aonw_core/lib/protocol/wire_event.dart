@@ -15,6 +15,7 @@ abstract class WireEvent with _$WireEvent {
     required DateTime timestamp,
     String? actorPlayerId,
     int? tick,
+    int? turn,
     Map<String, dynamic>? command,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
   }) = _WireEvent;
@@ -32,6 +33,7 @@ abstract class WireEvent with _$WireEvent {
         'actorPlayerId',
       ),
       tick: WireJson.optionalInt(json, 'WireEvent', 'tick'),
+      turn: WireJson.optionalInt(json, 'WireEvent', 'turn'),
       command: switch (json['command']) {
         final Map<Object?, Object?> value => Map.unmodifiable(
           Map<String, dynamic>.from(value),
@@ -56,6 +58,7 @@ abstract class WireEvent with _$WireEvent {
     'timestamp': timestamp.toUtc().toIso8601String(),
     if (actorPlayerId != null) 'actorPlayerId': actorPlayerId,
     if (tick != null) 'tick': tick,
+    if (turn != null) 'turn': turn,
     if (command != null) 'command': Map<String, dynamic>.from(command!),
     'events': events.map(Map<String, dynamic>.from).toList(),
   };

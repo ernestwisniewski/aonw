@@ -28,6 +28,17 @@ typedef MultiplayerStreamConnector =
       required Stream<sp.MultiplayerClientMessage> input,
     });
 typedef MultiplayerAuthTokenReader = Future<AuthToken> Function();
+typedef ServerpodMultiplayerStreamConnection = ({
+  Stream<sp.MultiplayerServerMessage> messages,
+  void Function() close,
+});
+typedef ServerpodMultiplayerStreamConnectionFactory =
+    ServerpodMultiplayerStreamConnection Function({
+      required String matchId,
+      required AuthToken token,
+      required int afterOffset,
+      required Stream<sp.MultiplayerClientMessage> input,
+    });
 
 class LiveServerEvent {
   final WireEvent wire;
@@ -44,13 +55,42 @@ class LiveServerEvent {
 class ServerpodMultiplayerStreamConnector {
   final String serverpodHost;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  final ServerpodMultiplayerStreamConnectionFactory? connectionFactory;
 
   const ServerpodMultiplayerStreamConnector(
     this.serverpodHost, {
     this.authKeyProviderFactory,
+    this.connectionFactory,
   });
 
   Stream<sp.MultiplayerServerMessage> connect({
+    required String matchId,
+    required AuthToken token,
+    required int afterOffset,
+    required Stream<sp.MultiplayerClientMessage> input,
+  }) {
+    // Create the client lazily on listen. A subscription can be closed while
+    // awaiting a refreshed token, in which case _connectOnce deliberately
+    // never listens to this stream and no client should be allocated.
+    return _ownedConnectionStream(() {
+      final injectedFactory = connectionFactory;
+      return injectedFactory == null
+          ? _serverpodConnection(
+              matchId: matchId,
+              token: token,
+              afterOffset: afterOffset,
+              input: input,
+            )
+          : injectedFactory(
+              matchId: matchId,
+              token: token,
+              afterOffset: afterOffset,
+              input: input,
+            );
+    });
+  }
+
+  ServerpodMultiplayerStreamConnection _serverpodConnection({
     required String matchId,
     required AuthToken token,
     required int afterOffset,
@@ -62,8 +102,67 @@ class ServerpodMultiplayerStreamConnector {
       token: authKeyProvider == null ? token : null,
       authKeyProvider: authKeyProvider,
     );
-    return client.multiplayer.connect(matchId, afterOffset, input);
+    try {
+      return (
+        messages: client.multiplayer.connect(matchId, afterOffset, input),
+        close: client.close,
+      );
+    } catch (_) {
+      client.close();
+      rethrow;
+    }
   }
+}
+
+Stream<sp.MultiplayerServerMessage> _ownedConnectionStream(
+  ServerpodMultiplayerStreamConnection Function() createConnection,
+) {
+  StreamSubscription<sp.MultiplayerServerMessage>? upstream;
+  ServerpodMultiplayerStreamConnection? connection;
+  var connectionClosed = false;
+  late final StreamController<sp.MultiplayerServerMessage> controller;
+
+  void closeConnection() {
+    if (connectionClosed) return;
+    connectionClosed = true;
+    connection?.close();
+  }
+
+  Future<void> cancelUpstream() async {
+    final active = upstream;
+    upstream = null;
+    try {
+      await active?.cancel();
+    } finally {
+      closeConnection();
+    }
+  }
+
+  controller = StreamController<sp.MultiplayerServerMessage>(
+    onListen: () {
+      try {
+        final created = createConnection();
+        connection = created;
+        upstream = created.messages.listen(
+          controller.add,
+          onError: controller.addError,
+          onDone: () {
+            upstream = null;
+            closeConnection();
+            unawaited(controller.close());
+          },
+        );
+      } catch (error, stackTrace) {
+        closeConnection();
+        controller.addError(error, stackTrace);
+        unawaited(controller.close());
+      }
+    },
+    onPause: () => upstream?.pause(),
+    onResume: () => upstream?.resume(),
+    onCancel: cancelUpstream,
+  );
+  return controller.stream;
 }
 
 class LiveEventSubscription {

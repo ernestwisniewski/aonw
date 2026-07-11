@@ -52,6 +52,7 @@ class EventCodec {
     required List<GameEvent> events,
     String? actorPlayerId,
     int? tick,
+    int? turn,
     GameCommand? command,
   }) {
     return WireEvent(
@@ -60,6 +61,7 @@ class EventCodec {
       timestamp: timestamp,
       actorPlayerId: actorPlayerId,
       tick: tick,
+      turn: turn,
       command: command == null ? null : GameCommandSerializer.toJson(command),
       events: events.map(GameEventSerializer.toJson).toList(),
     );

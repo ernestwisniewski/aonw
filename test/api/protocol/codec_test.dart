@@ -84,6 +84,7 @@ void main() {
         timestamp: DateTime.utc(2026, 4, 26, 10, 30),
         actorPlayerId: 'player_1',
         tick: 7,
+        turn: 3,
         command: command,
         events: const [event],
       );
@@ -94,6 +95,7 @@ void main() {
 
       expect(wire.v, kProtocolVersion);
       expect(wire.offset, 9);
+      expect(WireEvent.fromJson(wire.toJson()).turn, 3);
       expect(codec.commandFromWire(WireEvent.fromJson(wire.toJson())), command);
       expect(restored.single, isA<UnitMovedEvent>());
       expect(fromJson, isA<UnitMovedEvent>());
@@ -110,17 +112,20 @@ void main() {
         timestamp: DateTime.utc(2026, 4, 26, 10, 30),
         actorPlayerId: 'player_1',
         tick: 7,
+        turn: 3,
         command: const {'type': 'MoveUnit'},
       );
 
       final cleared = wire.copyWith(
         actorPlayerId: null,
         tick: null,
+        turn: null,
         command: null,
       );
 
       expect(cleared.actorPlayerId, isNull);
       expect(cleared.tick, isNull);
+      expect(cleared.turn, isNull);
       expect(cleared.command, isNull);
     });
 

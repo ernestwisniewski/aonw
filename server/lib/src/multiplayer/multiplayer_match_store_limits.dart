@@ -1,10 +1,5 @@
 part of 'multiplayer_match_store.dart';
 
-/// Maximum number of authoritative events returned after a caller-provided
-/// offset. Callers continue with the last returned offset to read the next
-/// stable page.
-const multiplayerEventPageSize = 256;
-
 /// Maximum number of running matches inspected by one timeout sweep.
 const multiplayerRunningMatchPageSize = 64;
 

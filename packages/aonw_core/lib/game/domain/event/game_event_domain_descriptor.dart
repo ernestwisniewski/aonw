@@ -24,13 +24,18 @@ final class GameEventDomainDescriptor {
     Iterable<String> citiesLostPlayerIds = const [],
     Iterable<String> signedPeacePlayerIds = const [],
     this.actorHostilityVictimPlayerId,
+    Iterable<String>? visiblePlayerIds,
+    this.visibleToAllPlayers = false,
   }) : playerIds = Set.unmodifiable(playerIds),
        unitIds = Set.unmodifiable(unitIds),
        cityIds = Set.unmodifiable(cityIds),
        hostilities = List.unmodifiable(hostilities),
        attackingPlayerIds = List.unmodifiable(attackingPlayerIds),
        citiesLostPlayerIds = List.unmodifiable(citiesLostPlayerIds),
-       signedPeacePlayerIds = Set.unmodifiable(signedPeacePlayerIds);
+       signedPeacePlayerIds = Set.unmodifiable(signedPeacePlayerIds),
+       _visiblePlayerIds = visiblePlayerIds == null
+           ? null
+           : Set.unmodifiable(visiblePlayerIds);
 
   factory GameEventDomainDescriptor.forEvent(GameEvent event) {
     return switch (event) {
@@ -54,6 +59,9 @@ final class GameEventDomainDescriptor {
         cityIds: [cityId],
       ),
       TechnologyResearchedEvent(:final playerId) => GameEventDomainDescriptor._(
+        playerIds: [playerId],
+      ),
+      ResearchPointsGainedEvent(:final playerId) => GameEventDomainDescriptor._(
         playerIds: [playerId],
       ),
       StrategicResourceDiscoveredEvent(:final playerId) =>
@@ -101,6 +109,8 @@ final class GameEventDomainDescriptor {
           combat: true,
           playerIds: [ownerPlayerId],
           unitIds: [?attackerUnitId],
+          // City bombardment reuses attackerUnitId for the attacking city.
+          cityIds: [?attackerUnitId],
           actorHostilityVictimPlayerId: ownerPlayerId,
         ),
       UnitRetreatedEvent(:final ownerPlayerId) => GameEventDomainDescriptor._(
@@ -143,12 +153,20 @@ final class GameEventDomainDescriptor {
         unitIds: [unitId],
       ),
       DominationThresholdReachedEvent(:final playerId) =>
-        GameEventDomainDescriptor._(playerIds: [playerId]),
+        GameEventDomainDescriptor._(
+          playerIds: [playerId],
+          visibleToAllPlayers: true,
+        ),
       StabilityBandChangedEvent(:final playerId) => GameEventDomainDescriptor._(
         playerIds: [playerId],
       ),
       CivilizationMetEvent(:final playerId, :final metPlayerId) =>
-        GameEventDomainDescriptor._(playerIds: [playerId, metPlayerId]),
+        GameEventDomainDescriptor._(
+          playerIds: [playerId, metPlayerId],
+          // A CivilizationMet event is authored from one player's point of
+          // view. The counterpart receives its own event when appropriate.
+          visiblePlayerIds: [playerId],
+        ),
       DiplomaticProposalSentEvent(:final fromPlayerId, :final toPlayerId) =>
         GameEventDomainDescriptor._(playerIds: [fromPlayerId, toPlayerId]),
       DiplomaticProposalRespondedEvent(
@@ -199,7 +217,21 @@ final class GameEventDomainDescriptor {
         GameEventDomainDescriptor._(playerIds: [playerAId, playerBId]),
       DiplomaticPromiseBrokenEvent(:final playerAId, :final playerBId) =>
         GameEventDomainDescriptor._(playerIds: [playerAId, playerBId]),
-      _ => GameEventDomainDescriptor._(),
+      PlayerTimedOutEvent(:final playerId) => GameEventDomainDescriptor._(
+        playerIds: [playerId],
+      ),
+      TurnAutoResolvedEvent(:final playerId) => GameEventDomainDescriptor._(
+        playerIds: [playerId],
+      ),
+      PlayerKickedEvent(:final playerId) => GameEventDomainDescriptor._(
+        playerIds: [playerId],
+      ),
+      AllPlayersSubmittedEvent() => GameEventDomainDescriptor._(
+        visibleToAllPlayers: true,
+      ),
+      CommandRejectedEvent() => GameEventDomainDescriptor._(
+        visiblePlayerIds: const [],
+      ),
     };
   }
 
@@ -212,6 +244,29 @@ final class GameEventDomainDescriptor {
   final List<String> citiesLostPlayerIds;
   final Set<String> signedPeacePlayerIds;
   final String? actorHostilityVictimPlayerId;
+  final Set<String>? _visiblePlayerIds;
+  final bool visibleToAllPlayers;
+
+  /// Whether this domain event may cross a per-player network boundary.
+  ///
+  /// Explicit visibility overrides are used for asymmetric and system
+  /// events. All other known events inherit their domain ownership rules.
+  /// Unknown event types are fail-closed because their descriptor owns no
+  /// players.
+  bool isVisibleToPlayer({
+    required String playerId,
+    required PersistentGameState state,
+    PersistentGameState? previousState,
+  }) {
+    if (visibleToAllPlayers) return true;
+    final visiblePlayerIds = _visiblePlayerIds;
+    if (visiblePlayerIds != null) return visiblePlayerIds.contains(playerId);
+    return belongsToPlayer(
+      playerId: playerId,
+      state: state,
+      previousState: previousState,
+    );
+  }
 
   bool belongsToPlayer({
     required String playerId,

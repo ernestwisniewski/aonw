@@ -23,6 +23,9 @@ class NetworkGameRepository implements GameRepository {
   final int fallbackMaxPlayers;
   final MultiplayerBackendClient? backendClient;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  late final MultiplayerBackendClient _backendClient;
+  late final bool _ownsBackend;
+  var _closed = false;
 
   NetworkGameRepository({
     String? serverpodHost,
@@ -41,7 +44,17 @@ class NetworkGameRepository implements GameRepository {
         'Expected a non-empty multiplayer account id',
       );
     }
+    _ownsBackend = backendClient == null;
+    _backendClient =
+        backendClient ??
+        ServerpodMultiplayerBackendClient(
+          serverpodHost: this.serverpodHost,
+          token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
+        );
   }
+
+  bool get isClosed => _closed;
 
   @override
   String defaultSaveName(String mapDisplayName, DateTime now) {
@@ -161,12 +174,14 @@ class NetworkGameRepository implements GameRepository {
   }
 
   MultiplayerBackendClient _backend() {
-    return backendClient ??
-        ServerpodMultiplayerBackendClient(
-          serverpodHost: serverpodHost,
-          token: token,
-          authKeyProviderFactory: authKeyProviderFactory,
-        );
+    if (_closed) throw StateError('Network game repository is closed.');
+    return _backendClient;
+  }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    if (_ownsBackend) _backendClient.close();
   }
 }
 

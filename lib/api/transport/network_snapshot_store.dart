@@ -11,6 +11,9 @@ class NetworkSnapshotStore implements SnapshotStore {
   final SnapshotCodec snapshotCodec;
   final MultiplayerBackendClient? backendClient;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  late final MultiplayerBackendClient _backendClient;
+  late final bool _ownsBackend;
+  var _closed = false;
 
   NetworkSnapshotStore({
     String? serverpodHost,
@@ -18,7 +21,18 @@ class NetworkSnapshotStore implements SnapshotStore {
     this.snapshotCodec = const SnapshotCodec(),
     this.backendClient,
     this.authKeyProviderFactory,
-  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient);
+  }) : serverpodHost = _resolveServerpodHost(serverpodHost, backendClient) {
+    _ownsBackend = backendClient == null;
+    _backendClient =
+        backendClient ??
+        ServerpodMultiplayerBackendClient(
+          serverpodHost: this.serverpodHost,
+          token: token,
+          authKeyProviderFactory: authKeyProviderFactory,
+        );
+  }
+
+  bool get isClosed => _closed;
 
   @override
   Future<Snapshot?> latest(String saveId) async {
@@ -42,12 +56,14 @@ class NetworkSnapshotStore implements SnapshotStore {
   }
 
   MultiplayerBackendClient _backend() {
-    return backendClient ??
-        ServerpodMultiplayerBackendClient(
-          serverpodHost: serverpodHost,
-          token: token,
-          authKeyProviderFactory: authKeyProviderFactory,
-        );
+    if (_closed) throw StateError('Network snapshot store is closed.');
+    return _backendClient;
+  }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    if (_ownsBackend) _backendClient.close();
   }
 }
 

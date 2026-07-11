@@ -10,6 +10,7 @@ import 'multiplayer_match_store.dart';
 import 'player_match_view_projector.dart';
 
 part 'match_connection_registry_connect.dart';
+part 'match_connection_registry_projection.dart';
 
 typedef MatchServerMessageSink =
     void Function(MultiplayerServerMessage message);
@@ -183,38 +184,6 @@ final class MatchConnectionRegistry {
     controller.onCancel = () => disconnect();
 
     return controller.stream;
-  }
-
-  void broadcast(
-    MultiplayerServerMessage update, {
-    MatchMessageTarget? except,
-  }) {
-    for (final subscriber in List.of(
-      _subscribers[update.matchId] ?? const <MatchMessageTarget>[],
-    )) {
-      if (identical(subscriber, except)) continue;
-      sendTo(subscriber, update);
-    }
-  }
-
-  void sendTo(MatchMessageTarget target, MultiplayerServerMessage message) {
-    try {
-      target._sink(_viewProjector.messageFor(message, target.recipient));
-    } catch (error, stackTrace) {
-      target._operationalEvents.projectionFailed(
-        matchId: message.matchId,
-        surface: MultiplayerProjectionSurface.stream,
-        error: error,
-        stackTrace: stackTrace,
-      );
-      target._errorSink(
-        multiplayerException(
-          'snapshot_projection_failed',
-          'Unable to project multiplayer state.',
-        ),
-        stackTrace,
-      );
-    }
   }
 
   Future<void> _enqueueMatch(

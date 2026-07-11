@@ -502,6 +502,10 @@ class Protocol extends _i1.SerializationManagerServer {
             ),
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
+              definition: 'mapName',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
               definition: 'createdAt',
             ),
             _i2.IndexElementDefinition(

@@ -1,3 +1,4 @@
+export 'protocol/multiplayer_limits.dart';
 export 'protocol/protocol_version.dart';
 export 'protocol/system_event_wire.dart';
 export 'protocol/wire_command.dart';

@@ -237,6 +237,38 @@ void main() {
       expect(replayedArtifact.location.cityId, city.id);
     });
 
+    test('rejects redacted commands instead of creating stale steps', () async {
+      final service = _service(
+        replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
+        eventLog: _MemoryEventLog([
+          LoggedCommand(
+            offset: 1,
+            timestamp: DateTime.utc(2026, 4, 24, 12, 1),
+            turn: 1,
+            actorPlayerId: 'p2',
+            command: null,
+          ),
+        ]),
+      );
+
+      await expectLater(
+        service.buildTimeline('save_1'),
+        throwsA(
+          isA<ReplayBuildException>()
+              .having(
+                (error) => error.reason,
+                'reason',
+                ReplayBuildFailureReason.corruptLog,
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                contains('redacted command'),
+              ),
+        ),
+      );
+    });
+
     test('rejects logs with offset gaps', () async {
       final service = _service(
         replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
@@ -261,6 +293,29 @@ void main() {
         ),
       );
     });
+
+    test(
+      'replays legacy command entries using the current save turn',
+      () async {
+        final service = _service(
+          replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
+          eventLog: _MemoryEventLog([
+            LoggedCommand(
+              offset: 1,
+              timestamp: DateTime.utc(2026, 4, 24, 12, 1),
+              turn: null,
+              command: const SetActivePlayerCommand('p1', canAct: true),
+            ),
+          ]),
+        );
+
+        final timeline = await service.buildTimeline('save_1');
+
+        expect(timeline.steps, hasLength(1));
+        expect(timeline.steps.single.turn, 1);
+        expect(timeline.steps.single.state.activePlayerId, 'p1');
+      },
+    );
 
     test('rejects saves without replay seed snapshots', () async {
       final service = _service(

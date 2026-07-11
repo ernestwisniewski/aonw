@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WireEvent {
 
- int get v; String get matchId; int get offset; DateTime get timestamp; String? get actorPlayerId; int? get tick; Map<String, dynamic>? get command; List<Map<String, dynamic>> get events;
+ int get v; String get matchId; int get offset; DateTime get timestamp; String? get actorPlayerId; int? get tick; int? get turn; Map<String, dynamic>? get command; List<Map<String, dynamic>> get events;
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WireEventCopyWith<WireEvent> get copyWith => _$WireEventCopyWithImpl<WireEvent>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WireEvent&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.tick, tick) || other.tick == tick)&&const DeepCollectionEquality().equals(other.command, command)&&const DeepCollectionEquality().equals(other.events, events));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WireEvent&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other.command, command)&&const DeepCollectionEquality().equals(other.events, events));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,v,matchId,offset,timestamp,actorPlayerId,tick,const DeepCollectionEquality().hash(command),const DeepCollectionEquality().hash(events));
+int get hashCode => Object.hash(runtimeType,v,matchId,offset,timestamp,actorPlayerId,tick,turn,const DeepCollectionEquality().hash(command),const DeepCollectionEquality().hash(events));
 
 @override
 String toString() {
-  return 'WireEvent(v: $v, matchId: $matchId, offset: $offset, timestamp: $timestamp, actorPlayerId: $actorPlayerId, tick: $tick, command: $command, events: $events)';
+  return 'WireEvent(v: $v, matchId: $matchId, offset: $offset, timestamp: $timestamp, actorPlayerId: $actorPlayerId, tick: $tick, turn: $turn, command: $command, events: $events)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WireEventCopyWith<$Res>  {
   factory $WireEventCopyWith(WireEvent value, $Res Function(WireEvent) _then) = _$WireEventCopyWithImpl;
 @useResult
 $Res call({
- int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, Map<String, dynamic>? command, List<Map<String, dynamic>> events
+ int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events
 });
 
 
@@ -62,7 +62,7 @@ class _$WireEventCopyWithImpl<$Res>
 
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? command = freezed,Object? events = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,}) {
   return _then(_self.copyWith(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
@@ -70,6 +70,7 @@ as String,offset: null == offset ? _self.offset : offset // ignore: cast_nullabl
 as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,actorPlayerId: freezed == actorPlayerId ? _self.actorPlayerId : actorPlayerId // ignore: cast_nullable_to_non_nullable
 as String?,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to_non_nullable
+as int?,turn: freezed == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int?,command: freezed == command ? _self.command : command // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,events: null == events ? _self.events : events // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WireEvent() when $default != null:
-return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.command,_that.events);case _:
+return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)  $default,) {final _that = this;
 switch (_that) {
 case _WireEvent():
-return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.command,_that.events);case _:
+return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events)?  $default,) {final _that = this;
 switch (_that) {
 case _WireEvent() when $default != null:
-return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.command,_that.events);case _:
+return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 
 
 class _WireEvent extends WireEvent {
-  const _WireEvent({this.v = kProtocolVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[]}): _command = command,_events = events,super._();
+  const _WireEvent({this.v = kProtocolVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[]}): _command = command,_events = events,super._();
   
 
 @override@JsonKey() final  int v;
@@ -222,6 +223,7 @@ class _WireEvent extends WireEvent {
 @override final  DateTime timestamp;
 @override final  String? actorPlayerId;
 @override final  int? tick;
+@override final  int? turn;
  final  Map<String, dynamic>? _command;
 @override Map<String, dynamic>? get command {
   final value = _command;
@@ -249,16 +251,16 @@ _$WireEventCopyWith<_WireEvent> get copyWith => __$WireEventCopyWithImpl<_WireEv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WireEvent&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.tick, tick) || other.tick == tick)&&const DeepCollectionEquality().equals(other._command, _command)&&const DeepCollectionEquality().equals(other._events, _events));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WireEvent&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.actorPlayerId, actorPlayerId) || other.actorPlayerId == actorPlayerId)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other._command, _command)&&const DeepCollectionEquality().equals(other._events, _events));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,v,matchId,offset,timestamp,actorPlayerId,tick,const DeepCollectionEquality().hash(_command),const DeepCollectionEquality().hash(_events));
+int get hashCode => Object.hash(runtimeType,v,matchId,offset,timestamp,actorPlayerId,tick,turn,const DeepCollectionEquality().hash(_command),const DeepCollectionEquality().hash(_events));
 
 @override
 String toString() {
-  return 'WireEvent(v: $v, matchId: $matchId, offset: $offset, timestamp: $timestamp, actorPlayerId: $actorPlayerId, tick: $tick, command: $command, events: $events)';
+  return 'WireEvent(v: $v, matchId: $matchId, offset: $offset, timestamp: $timestamp, actorPlayerId: $actorPlayerId, tick: $tick, turn: $turn, command: $command, events: $events)';
 }
 
 
@@ -269,7 +271,7 @@ abstract mixin class _$WireEventCopyWith<$Res> implements $WireEventCopyWith<$Re
   factory _$WireEventCopyWith(_WireEvent value, $Res Function(_WireEvent) _then) = __$WireEventCopyWithImpl;
 @override @useResult
 $Res call({
- int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, Map<String, dynamic>? command, List<Map<String, dynamic>> events
+ int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events
 });
 
 
@@ -286,7 +288,7 @@ class __$WireEventCopyWithImpl<$Res>
 
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? command = freezed,Object? events = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,}) {
   return _then(_WireEvent(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
@@ -294,6 +296,7 @@ as String,offset: null == offset ? _self.offset : offset // ignore: cast_nullabl
 as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,actorPlayerId: freezed == actorPlayerId ? _self.actorPlayerId : actorPlayerId // ignore: cast_nullable_to_non_nullable
 as String?,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to_non_nullable
+as int?,turn: freezed == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int?,command: freezed == command ? _self._command : command // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,events: null == events ? _self._events : events // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,

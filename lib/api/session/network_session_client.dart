@@ -135,29 +135,54 @@ class JoinPrivateMatchRequest {
   });
 }
 
+typedef NetworkSessionServerpodClientFactory =
+    sp.Client Function(
+      String host, {
+      AuthToken? token,
+      sp.ClientAuthKeyProvider? authKeyProvider,
+      Duration? connectionTimeout,
+    });
+
+/// Owns the Serverpod clients used by authentication and lobby requests.
+///
+/// Call [close] when the client leaves its application scope. Authenticated
+/// calls share one refresh-aware client when [authKeyProviderFactory] is
+/// available. Explicit one-off credentials are isolated in short-lived clients
+/// that are always closed after the request settles.
 class NetworkSessionClient {
   final String serverpodHost;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  final NetworkSessionServerpodClientFactory _clientFactory;
+  sp.Client? _anonymousClient;
+  sp.Client? _authenticatedClient;
+  var _closed = false;
 
   NetworkSessionClient({
     required this.serverpodHost,
     this.authKeyProviderFactory,
-  });
+    NetworkSessionServerpodClientFactory? clientFactory,
+  }) : _clientFactory = clientFactory ?? createServerpodClient;
+
+  bool get isClosed => _closed;
 
   Future<String> versionStatus({
     required String platform,
     required int buildNumber,
   }) {
-    return _client(
+    return _withOwnedClient(
       connectionTimeout: const Duration(seconds: 3),
-    ).appStatus.versionStatus(platform: platform, buildNumber: buildNumber);
+      run: (client) => client.appStatus.versionStatus(
+        platform: platform,
+        buildNumber: buildNumber,
+      ),
+    );
   }
 
   Future<NetworkAuthResult> login({
     required String email,
     required String password,
   }) async {
-    final auth = await _client().emailIdp.login(
+    final auth = await _activeAnonymousClient.emailIdp.login(
       email: email,
       password: password,
     );
@@ -170,7 +195,7 @@ class NetworkSessionClient {
     required String displayName,
   }) async {
     final normalizedDisplayName = _normalizeDisplayName(displayName);
-    final auth = await _client().emailIdp.createAccount(
+    final auth = await _activeAnonymousClient.emailIdp.createAccount(
       email: email,
       password: password,
       displayName: normalizedDisplayName,
@@ -195,7 +220,7 @@ class NetworkSessionClient {
   Future<NetworkSessionRefreshResult> refresh({
     required String refreshToken,
   }) async {
-    final auth = await _client().jwtRefresh.refreshAccessToken(
+    final auth = await _activeAnonymousClient.jwtRefresh.refreshAccessToken(
       refreshToken: refreshToken,
     );
     final rotatedRefreshToken = auth.refreshToken;
@@ -218,7 +243,7 @@ class NetworkSessionClient {
     String? refreshToken,
   }) async {
     if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _client().authStatus.signOutRefreshToken(
+      await _activeAnonymousClient.authStatus.signOutRefreshToken(
         refreshToken: refreshToken,
       );
       return;
@@ -242,7 +267,7 @@ class NetworkSessionClient {
   }
 
   Future<NetworkAuthResult> loginWithSteam() async {
-    final client = _client();
+    final client = _activeAnonymousClient;
     final start = await client.steamAuth.start();
     final opened = await launchUrl(
       Uri.parse(start.authUrl),
@@ -402,30 +427,71 @@ class NetworkSessionClient {
     return _withToken(token, (client) => client.multiplayer.loadMatch(matchId));
   }
 
-  sp.Client _client({AuthToken? token, Duration? connectionTimeout}) {
-    final dynamicAuthKeyProvider = token == null
-        ? null
-        : authKeyProviderFactory?.call();
-    return createServerpodClient(
-      serverpodHost,
-      token: dynamicAuthKeyProvider == null ? token : null,
-      authKeyProvider: dynamicAuthKeyProvider,
-      connectionTimeout: connectionTimeout,
-    );
-  }
-
   Future<T> _withToken<T>(
     AuthToken token,
     Future<T> Function(sp.Client client) run,
   ) {
-    return run(_client(token: token));
+    if (authKeyProviderFactory != null) {
+      return run(_activeAuthenticatedClient);
+    }
+    return _withOwnedClient(token: token, run: run);
   }
 
   Future<T> _withExplicitToken<T>(
     AuthToken token,
     Future<T> Function(sp.Client client) run,
   ) {
-    return run(createServerpodClient(serverpodHost, token: token));
+    return _withOwnedClient(token: token, run: run);
+  }
+
+  Future<T> _withOwnedClient<T>({
+    AuthToken? token,
+    Duration? connectionTimeout,
+    required Future<T> Function(sp.Client client) run,
+  }) async {
+    _ensureOpen();
+    final client = _clientFactory(
+      serverpodHost,
+      token: token,
+      connectionTimeout: connectionTimeout,
+    );
+    try {
+      return await run(client);
+    } finally {
+      client.close();
+    }
+  }
+
+  sp.Client get _activeAnonymousClient {
+    _ensureOpen();
+    return _anonymousClient ??= _clientFactory(serverpodHost);
+  }
+
+  sp.Client get _activeAuthenticatedClient {
+    _ensureOpen();
+    final active = _authenticatedClient;
+    if (active != null) return active;
+    final providerFactory = authKeyProviderFactory;
+    if (providerFactory == null) {
+      throw StateError('No refresh-aware auth provider is configured.');
+    }
+    return _authenticatedClient = _clientFactory(
+      serverpodHost,
+      authKeyProvider: providerFactory(),
+    );
+  }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    _anonymousClient?.close();
+    _anonymousClient = null;
+    _authenticatedClient?.close();
+    _authenticatedClient = null;
+  }
+
+  void _ensureOpen() {
+    if (_closed) throw StateError('Network session client is closed.');
   }
 
   Future<NetworkAuthResult> _authResult(

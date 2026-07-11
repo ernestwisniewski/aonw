@@ -84,6 +84,9 @@ class _FakeMultiplayerBackend implements MultiplayerBackendClient {
   String? loadedSnapshotId;
 
   @override
+  void close() {}
+
+  @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) {
     throw UnimplementedError();
   }

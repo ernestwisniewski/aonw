@@ -19,6 +19,125 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('ServerpodMultiplayerStreamConnector', () {
+    test('creates lazily and closes exactly once when cancelled', () async {
+      final upstream = StreamController<sp.MultiplayerServerMessage>();
+      var connectionsCreated = 0;
+      var closeCalls = 0;
+      final connector = ServerpodMultiplayerStreamConnector(
+        'https://api.example.test',
+        connectionFactory:
+            ({
+              required matchId,
+              required token,
+              required afterOffset,
+              required input,
+            }) {
+              connectionsCreated += 1;
+              return (messages: upstream.stream, close: () => closeCalls += 1);
+            },
+      );
+
+      final messages = connector.connect(
+        matchId: 'match_1',
+        token: AuthToken('jwt-token'),
+        afterOffset: 0,
+        input: const Stream<sp.MultiplayerClientMessage>.empty(),
+      );
+      expect(connectionsCreated, 0, reason: 'connect must stay lazy');
+
+      final subscription = messages.listen((_) {});
+      await _waitFor(() => connectionsCreated == 1);
+      await subscription.cancel();
+      await subscription.cancel();
+
+      expect(closeCalls, 1);
+      await upstream.close();
+    });
+
+    test('closes exactly once when the server stream completes', () async {
+      final upstream = StreamController<sp.MultiplayerServerMessage>();
+      var closeCalls = 0;
+      final connector = ServerpodMultiplayerStreamConnector(
+        'https://api.example.test',
+        connectionFactory:
+            ({
+              required matchId,
+              required token,
+              required afterOffset,
+              required input,
+            }) {
+              return (messages: upstream.stream, close: () => closeCalls += 1);
+            },
+      );
+      final done = Completer<void>();
+      final subscription = connector
+          .connect(
+            matchId: 'match_1',
+            token: AuthToken('jwt-token'),
+            afterOffset: 0,
+            input: const Stream<sp.MultiplayerClientMessage>.empty(),
+          )
+          .listen((_) {}, onDone: done.complete);
+
+      await upstream.close();
+      await done.future;
+      await subscription.cancel();
+
+      expect(closeCalls, 1);
+    });
+
+    test('closes each superseded reconnect client exactly once', () async {
+      final upstreams = <StreamController<sp.MultiplayerServerMessage>>[];
+      final closeCalls = <int>[];
+      final connector = ServerpodMultiplayerStreamConnector(
+        'https://api.example.test',
+        connectionFactory:
+            ({
+              required matchId,
+              required token,
+              required afterOffset,
+              required input,
+            }) {
+              input.listen((_) {});
+              final index = upstreams.length;
+              upstreams.add(StreamController<sp.MultiplayerServerMessage>());
+              closeCalls.add(0);
+              return (
+                messages: upstreams[index].stream,
+                close: () => closeCalls[index] += 1,
+              );
+            },
+      );
+      final live = LiveEventSubscription(
+        serverpodHost: 'https://api.example.test',
+        connector: connector.connect,
+      );
+      final reconnecting = Completer<void>();
+      final handle = await live.subscribe(
+        matchId: 'match_1',
+        token: AuthToken('jwt-token'),
+        fromOffset: 0,
+        reconnectDelays: const [Duration.zero],
+        onEvent: (_) {},
+        onSnapshotResync: (_) {},
+        onReconnecting: reconnecting.complete,
+      );
+      await _waitFor(() => upstreams.length == 1);
+
+      upstreams.single.addError(StateError('connection lost'));
+      await reconnecting.future.timeout(const Duration(seconds: 1));
+      await _waitFor(() => upstreams.length == 2);
+      expect(closeCalls, [1, 0]);
+      await upstreams.first.close();
+
+      await handle.close();
+      await handle.close();
+      expect(closeCalls, [1, 1]);
+      await upstreams.last.close();
+    });
+  });
+
   group('LiveEventSubscription', () {
     test('subscribes from offset and forwards live events', () async {
       final connector = _FakeServerpodStreamConnector();

@@ -2,12 +2,23 @@ import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 
 class LoggedCommand {
   final int offset;
   final DateTime timestamp;
-  final int turn;
-  final GameCommand command;
+
+  /// Game turn used by deterministic reducers. It is independent from the
+  /// transport command tick and can be absent in legacy network history.
+  final int? turn;
+
+  /// The originating command, when it is visible to this log reader.
+  ///
+  /// Multiplayer projections can expose safe domain events while redacting
+  /// the command that produced them. Such event-only entries remain useful
+  /// for activity and hostility tracking, but cannot be reduced during state
+  /// replay.
+  final GameCommand? command;
   final List<GameEvent> events;
   final List<LoggedActivityEntry> activity;
   final String? actorPlayerId;
@@ -34,14 +45,21 @@ class LoggedCommand {
     return LoggedCommand(
       offset: json['offset'] as int,
       timestamp: DateTime.parse(json['timestamp'] as String).toUtc(),
-      turn: json['turn'] as int,
+      turn: json['turn'] as int?,
       actorPlayerId: json['actorPlayerId'] as String?,
       canAct: json['canAct'] as bool? ?? true,
       commandTick: json['commandTick'] as int? ?? 0,
       ignoreFogOfWar: json['ignoreFogOfWar'] as bool? ?? false,
-      command: GameCommandSerializer.fromJson(
-        json['command'] as Map<String, dynamic>,
-      ),
+      command: switch (json['command']) {
+        final Map<Object?, Object?> value => GameCommandSerializer.fromJson(
+          Map<String, dynamic>.from(value),
+        ),
+        null => null,
+        final value => throw FormatException(
+          'Expected command to be a JSON object or null, got '
+          '${value.runtimeType}.',
+        ),
+      },
       events: rawEvents
           .map(
             (event) => GameEventSerializer.fromJson(
@@ -63,22 +81,36 @@ class LoggedCommand {
     return {
       'offset': offset,
       'timestamp': timestamp.toUtc().toIso8601String(),
-      'turn': turn,
+      if (turn != null) 'turn': turn,
       'actorPlayerId': ?actorPlayerId,
       'canAct': canAct,
       'commandTick': commandTick,
       'ignoreFogOfWar': ignoreFogOfWar,
-      'command': GameCommandSerializer.toJson(command),
+      if (command case final command?)
+        'command': GameCommandSerializer.toJson(command),
       'events': events.map(GameEventSerializer.toJson).toList(),
       'activity': activity.map((entry) => entry.toJson()).toList(),
     };
   }
 
-  GameCommandContext toCommandContext() {
+  GameCommandContext toCommandContext({
+    VictoryRules victoryRules = VictoryRules.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+    int? fallbackTurn,
+  }) {
+    final replayTurn = turn ?? fallbackTurn;
+    if (replayTurn == null) {
+      throw StateError(
+        'Cannot build a command context without the originating game turn.',
+      );
+    }
     return GameCommandContext(
       actorPlayerId: actorPlayerId,
       canAct: canAct,
+      combatSeedTurn: replayTurn,
       commandTick: commandTick,
+      paceBalance: paceBalance,
+      victoryRules: victoryRules,
       ignoreFogOfWar: ignoreFogOfWar,
     );
   }

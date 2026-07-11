@@ -293,6 +293,9 @@ class _FakeMultiplayerBackend implements MultiplayerBackendClient {
   String? leftMatchId;
 
   @override
+  void close() {}
+
+  @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) async {
     createdRequest = request;
     return createdMatch ?? _match(id: 'created_match');

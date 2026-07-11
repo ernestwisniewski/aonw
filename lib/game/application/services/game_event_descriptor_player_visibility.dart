@@ -44,6 +44,11 @@ _GameEventPlayerIdsResolver _visiblePlayerAnd(String playerId) {
       _orderedPlayerIds([visiblePlayerId, playerId]);
 }
 
+_GameEventPlayerIdsResolver _visiblePlayer() {
+  return (state, previousState, visiblePlayerId) =>
+      _orderedPlayerIds([visiblePlayerId]);
+}
+
 List<String> _orderedPlayerIds(Iterable<String?> playerIds) {
   final ordered = <String>[];
   final seen = <String>{};

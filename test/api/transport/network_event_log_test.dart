@@ -18,6 +18,7 @@ void main() {
         timestamp: DateTime.utc(2026, 4, 26, 12),
         actorPlayerId: 'player_1',
         tick: 3,
+        turn: 7,
         command: const MoveUnitCommand('u1', 1, 0),
         events: const [
           UnitMovedEvent(
@@ -41,12 +42,14 @@ void main() {
       expect(backend.listEventsAfterOffset, 9);
       expect(entries.single.offset, 12);
       expect(entries.single.actorPlayerId, 'player_1');
+      expect(entries.single.turn, 7);
+      expect(entries.single.commandTick, 3);
       expect(entries.single.command, const MoveUnitCommand('u1', 1, 0));
       expect(entries.single.events.single, isA<UnitMovedEvent>());
     });
 
     test(
-      'skips redacted events while preserving their latest offset',
+      'preserves fully redacted entries as event-only log records',
       () async {
         final backend = _FakeMultiplayerBackend(
           events: [
@@ -62,42 +65,52 @@ void main() {
           token: AuthToken('jwt-token'),
         );
 
-        expect(await log.readSince('match_1').toList(), isEmpty);
+        final entries = await log.readSince('match_1').toList();
+
+        expect(entries.single.offset, 9);
+        expect(entries.single.command, isNull);
+        expect(entries.single.events, isEmpty);
         expect(await log.latestOffset('match_1'), 9);
         expect(backend.listEventsAfterOffset, 0);
       },
     );
 
-    test('reads a full 256-event page and the following page', () async {
-      final backend = _PagedMultiplayerBackend([
-        for (var offset = 1; offset <= 257; offset++) _wireCommand(offset),
-      ]);
+    test('preserves projected events when their command is redacted', () async {
+      const codec = EventCodec();
+      final wire = codec.toWire(
+        matchId: 'match_1',
+        offset: 10,
+        timestamp: DateTime.utc(2026, 5, 17, 12),
+        actorPlayerId: 'player_3',
+        tick: 4,
+        turn: 2,
+        events: const [
+          CityCapturedEvent(
+            cityId: 'city_2',
+            previousOwnerPlayerId: 'player_2',
+            newOwnerPlayerId: 'player_3',
+          ),
+        ],
+      );
       final log = NetworkEventLog(
-        backendClient: backend,
+        backendClient: _FakeMultiplayerBackend(events: [wire]),
         token: AuthToken('jwt-token'),
+        recipientPlayerId: 'player_2',
       );
 
-      final entries = await log.readSince('match_1').toList();
+      final entry = (await log.readSince('match_1').toList()).single;
 
-      expect(entries, hasLength(257));
-      expect(entries.first.offset, 1);
-      expect(entries.last.offset, 257);
-      expect(backend.requestedOffsets, [0, 256]);
-
-      backend.requestedOffsets.clear();
-      expect(await log.latestOffset('match_1'), 257);
-      expect(backend.requestedOffsets, [0, 256]);
+      expect(entry.command, isNull);
+      expect(entry.actorPlayerId, 'player_3');
+      expect(entry.events.single, isA<CityCapturedEvent>());
+      expect(entry.activity.single.playerId, 'player_2');
+      expect(entry.activity.single.event, isA<CityCapturedEvent>());
     });
 
-    test('redacted boundary event advances the next-page cursor', () async {
+    test('reads a full protocol page and the following page', () async {
       final backend = _PagedMultiplayerBackend([
-        for (var offset = 1; offset < 256; offset++) _wireCommand(offset),
-        WireEvent(
-          matchId: 'match_1',
-          offset: 256,
-          timestamp: DateTime.utc(2026),
-        ),
-        _wireCommand(257),
+        for (var offset = 1; offset <= multiplayerEventPageSize + 1; offset++)
+          _wireCommand(offset),
       ]);
       final log = NetworkEventLog(
         backendClient: backend,
@@ -106,13 +119,42 @@ void main() {
 
       final entries = await log.readSince('match_1').toList();
 
-      expect(entries, hasLength(256));
-      expect(entries.last.offset, 257);
-      expect(backend.requestedOffsets, [0, 256]);
+      expect(entries, hasLength(multiplayerEventPageSize + 1));
+      expect(entries.first.offset, 1);
+      expect(entries.last.offset, multiplayerEventPageSize + 1);
+      expect(backend.requestedOffsets, [0, multiplayerEventPageSize]);
 
       backend.requestedOffsets.clear();
-      expect(await log.latestOffset('match_1'), 257);
-      expect(backend.requestedOffsets, [0, 256]);
+      expect(await log.latestOffset('match_1'), multiplayerEventPageSize + 1);
+      expect(backend.requestedOffsets, [0, multiplayerEventPageSize]);
+    });
+
+    test('redacted boundary entry advances the next-page cursor', () async {
+      final backend = _PagedMultiplayerBackend([
+        for (var offset = 1; offset < multiplayerEventPageSize; offset++)
+          _wireCommand(offset),
+        WireEvent(
+          matchId: 'match_1',
+          offset: multiplayerEventPageSize,
+          timestamp: DateTime.utc(2026),
+        ),
+        _wireCommand(multiplayerEventPageSize + 1),
+      ]);
+      final log = NetworkEventLog(
+        backendClient: backend,
+        token: AuthToken('jwt-token'),
+      );
+
+      final entries = await log.readSince('match_1').toList();
+
+      expect(entries, hasLength(multiplayerEventPageSize + 1));
+      expect(entries[multiplayerEventPageSize - 1].command, isNull);
+      expect(entries.last.offset, multiplayerEventPageSize + 1);
+      expect(backend.requestedOffsets, [0, multiplayerEventPageSize]);
+
+      backend.requestedOffsets.clear();
+      expect(await log.latestOffset('match_1'), multiplayerEventPageSize + 1);
+      expect(backend.requestedOffsets, [0, multiplayerEventPageSize]);
     });
 
     test('rejects a backend page that does not advance its offset', () async {
@@ -126,7 +168,7 @@ void main() {
         log.readSince('match_1').toList(),
         throwsA(isA<StateError>()),
       );
-      expect(backend.requestedOffsets, [0, 256]);
+      expect(backend.requestedOffsets, [0, multiplayerEventPageSize]);
 
       final latestBackend = _NonMonotonicMultiplayerBackend();
       final latestLog = NetworkEventLog(
@@ -137,7 +179,7 @@ void main() {
         latestLog.latestOffset('match_1'),
         throwsA(isA<StateError>()),
       );
-      expect(latestBackend.requestedOffsets, [0, 256]);
+      expect(latestBackend.requestedOffsets, [0, multiplayerEventPageSize]);
     });
   });
 }
@@ -149,6 +191,7 @@ WireEvent _wireCommand(int offset) {
     timestamp: DateTime.utc(2026),
     actorPlayerId: 'player_1',
     tick: offset,
+    turn: 1,
     command: const MoveUnitCommand('u1', 1, 0),
     events: const [],
   );
@@ -161,6 +204,9 @@ class _FakeMultiplayerBackend implements MultiplayerBackendClient {
 
   String? listEventsMatchId;
   int? listEventsAfterOffset;
+
+  @override
+  void close() {}
 
   @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) {
@@ -201,7 +247,7 @@ class _PagedMultiplayerBackend extends _FakeMultiplayerBackend {
     requestedOffsets.add(afterOffset);
     return allEvents
         .where((event) => event.offset > afterOffset)
-        .take(256)
+        .take(multiplayerEventPageSize)
         .toList();
   }
 }
@@ -214,7 +260,8 @@ final class _NonMonotonicMultiplayerBackend extends _FakeMultiplayerBackend {
     requestedOffsets.add(afterOffset);
     if (afterOffset == 0) {
       return [
-        for (var offset = 1; offset <= 256; offset++) _wireCommand(offset),
+        for (var offset = 1; offset <= multiplayerEventPageSize; offset++)
+          _wireCommand(offset),
       ];
     }
     return [_wireCommand(afterOffset)];

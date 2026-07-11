@@ -72,17 +72,27 @@ abstract interface class WireCommandDispatcher {
 }
 
 typedef CommandAuthTokenReader = Future<AuthToken> Function();
+typedef ServerpodCommandClientFactory = sp.Client Function();
 
 class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
   final String serverpodHost;
   final Duration timeout;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  final ServerpodCommandClientFactory _clientFactory;
+  sp.Client? _client;
+  var _closed = false;
 
-  const ServerpodWireCommandDispatcher({
-    required this.serverpodHost,
+  ServerpodWireCommandDispatcher({
+    required String serverpodHost,
     this.timeout = const Duration(seconds: 10),
     this.authKeyProviderFactory,
-  });
+    ServerpodCommandClientFactory? clientFactory,
+  }) : serverpodHost = serverpodHost,
+       _clientFactory =
+           clientFactory ??
+           (() => _createCommandClient(serverpodHost, authKeyProviderFactory));
+
+  bool get isClosed => _closed;
 
   @override
   Future<WireCommandAck> send({
@@ -91,16 +101,14 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
     required int afterOffset,
     required WireCommand wire,
   }) async {
+    final client = _activeClient;
+    if (authKeyProviderFactory == null) {
+      client.authKeyProvider = ServerpodAuthTokenProvider(token);
+    }
     final input = StreamController<sp.MultiplayerClientMessage>();
     StreamSubscription<sp.MultiplayerServerMessage>? subscription;
     final ack = Completer<WireCommandAck>();
     try {
-      final authKeyProvider = authKeyProviderFactory?.call();
-      final client = createServerpodClient(
-        serverpodHost,
-        token: authKeyProvider == null ? token : null,
-        authKeyProvider: authKeyProvider,
-      );
       final output = client.multiplayer.connect(
         saveId,
         afterOffset,
@@ -140,6 +148,26 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
       await input.close();
     }
   }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    _client?.close();
+    _client = null;
+  }
+
+  sp.Client get _activeClient {
+    if (_closed) throw StateError('Serverpod command dispatcher is closed.');
+    return _client ??= _clientFactory();
+  }
+}
+
+sp.Client _createCommandClient(
+  String serverpodHost,
+  ServerpodAuthKeyProviderFactory? authKeyProviderFactory,
+) {
+  final authKeyProvider = authKeyProviderFactory?.call();
+  return createServerpodClient(serverpodHost, authKeyProvider: authKeyProvider);
 }
 
 class NetworkCommandTransport implements CommandTransport {
@@ -153,6 +181,7 @@ class NetworkCommandTransport implements CommandTransport {
   final ClientTickGenerator tickGenerator;
   final GameStateReducer localReducer;
   final GameRepository gameRepository;
+  final bool _ownsCommandDispatcher;
   _RetryableServerCommand? _retryableCommand;
   final Map<String, int> _lastKnownTurnBySaveId = {};
   final Map<String, int> _lastKnownOffsetBySaveId = {};
@@ -169,7 +198,8 @@ class NetworkCommandTransport implements CommandTransport {
     required this.tickGenerator,
     required this.localReducer,
     required this.gameRepository,
-  }) : commandDispatcher =
+  }) : _ownsCommandDispatcher = commandDispatcher == null,
+       commandDispatcher =
            commandDispatcher ??
            ServerpodWireCommandDispatcher(
              serverpodHost:
@@ -179,6 +209,15 @@ class NetworkCommandTransport implements CommandTransport {
                    'NetworkCommandTransport.',
                  )),
            );
+
+  /// Releases the dispatcher created by the convenience constructor.
+  ///
+  /// Injected dispatchers remain owned by their provider or caller.
+  void close() {
+    if (!_ownsCommandDispatcher) return;
+    final owned = commandDispatcher;
+    if (owned is ServerpodWireCommandDispatcher) owned.close();
+  }
 
   @override
   Future<CommandTransportResult> dispatch({

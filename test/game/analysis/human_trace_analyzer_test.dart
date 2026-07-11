@@ -93,6 +93,40 @@ void main() {
       expect(workerStall.completionCount, 0);
       expect(workerStall.improvementType, 'farm');
     });
+
+    test('event-only entries do not extend the command trace duration', () {
+      final commandTimestamp = DateTime.utc(2026, 5, 19, 12);
+      final report = const HumanTraceAnalyzer().analyze(
+        humanPlayerId: 'player_1',
+        log: [
+          LoggedCommand(
+            offset: 1,
+            timestamp: commandTimestamp.subtract(const Duration(hours: 1)),
+            turn: 1,
+            command: null,
+            events: const [
+              UnitKilledEvent(unitId: 'unit_1', ownerPlayerId: 'player_1'),
+            ],
+          ),
+          LoggedCommand(
+            offset: 2,
+            timestamp: commandTimestamp,
+            turn: 1,
+            command: const StartCityFoundingCommand(),
+          ),
+          LoggedCommand(
+            offset: 3,
+            timestamp: commandTimestamp.add(const Duration(hours: 1)),
+            turn: 1,
+            command: null,
+          ),
+        ],
+      );
+
+      expect(report.firstTimestamp, commandTimestamp);
+      expect(report.lastTimestamp, commandTimestamp);
+      expect(report.elapsedSeconds, 0);
+    });
   });
 }
 

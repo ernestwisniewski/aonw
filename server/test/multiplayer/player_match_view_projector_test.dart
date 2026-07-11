@@ -1,5 +1,7 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
 import 'package:test/test.dart';
 
@@ -121,18 +123,45 @@ void main() {
     expect(projected.state.toString(), isNot(contains('guest-secret')));
   });
 
-  test('redacts event payloads and projects command acknowledgements', () {
+  test('projects only recipient events and command acknowledgements', () {
     final snapshot = _snapshot();
+    final state = PersistentGameState.fromJson(snapshot.state);
+    final storedEvents = PlayerMatchEventAudience.annotateForStorage(
+      events: const [
+        TechnologyResearchedEvent(
+          playerId: 'player-owner',
+          technologyId: TechnologyId.agriculture,
+        ),
+        DiplomaticMessageSentEvent(
+          messageId: 'message-1',
+          fromPlayerId: 'player-guest',
+          toPlayerId: 'player-owner',
+          topic: DiplomaticMessageTopic.troopsNearCities,
+          category: DiplomaticMessageCategory.warning,
+          expiresOnTurn: 5,
+        ),
+        StrategicResourceDiscoveredEvent(
+          playerId: 'player-guest',
+          resourceType: ResourceType.uranium,
+          controlledCount: 1,
+          rivalControlledCount: 0,
+          unclaimedCount: 0,
+          pressure: StrategicResourceDiscoveryPressure.securedSupply,
+        ),
+      ],
+      participantPlayerIds: const ['player-owner', 'player-guest'],
+      previousState: state,
+      state: state,
+    );
     final ownEvent = WireEvent(
       matchId: snapshot.matchId,
       offset: 7,
       timestamp: DateTime.utc(2026, 7, 10),
       actorPlayerId: owner.playerId,
       tick: 3,
+      turn: 5,
       command: const {'type': 'own-command', 'secret': 'actor-secret'},
-      events: const [
-        {'type': 'global-resolution', 'secret': 'other-player-secret'},
-      ],
+      events: storedEvents,
     );
     final otherEvent = ownEvent.copyWith(
       actorPlayerId: 'player-guest',
@@ -153,15 +182,48 @@ void main() {
     );
 
     expect(projectedOwn.command?['type'], 'own-command');
-    expect(projectedOwn.events, isEmpty);
-    expect(projectedOther.actorPlayerId, isNull);
+    expect(projectedOwn.events, hasLength(2));
+    expect(projectedOwn.events.map((event) => event['type']), [
+      'TechnologyResearched',
+      'DiplomaticMessageSent',
+    ]);
+    expect(
+      projectedOwn.events.expand((event) => event.keys),
+      isNot(contains('_serverAudiencePlayerIds')),
+    );
+    expect(projectedOther.actorPlayerId, 'player-guest');
     expect(projectedOther.tick, isNull);
+    expect(projectedOther.turn, 5);
     expect(projectedOther.command, isNull);
-    expect(projectedOther.events, isEmpty);
-    expect(ack.events, isEmpty);
+    expect(projectedOther.events, hasLength(2));
+    expect(ack.events, hasLength(2));
     expect(PersistentGameState.fromJson(ack.snapshot.state).playerGold, {
       'player-owner': 111,
     });
+
+    final guestOnlyEvent = ownEvent.copyWith(
+      actorPlayerId: 'player-guest',
+      command: const {'type': 'guest-secret-command'},
+      events: PlayerMatchEventAudience.annotateForStorage(
+        events: const [
+          StrategicResourceDiscoveredEvent(
+            playerId: 'player-guest',
+            resourceType: ResourceType.uranium,
+            controlledCount: 1,
+            rivalControlledCount: 0,
+            unclaimedCount: 0,
+            pressure: StrategicResourceDiscoveryPressure.securedSupply,
+          ),
+        ],
+        participantPlayerIds: const ['player-owner', 'player-guest'],
+        previousState: state,
+        state: state,
+      ),
+    );
+    final redactedGuestOnly = projector.eventFor(guestOnlyEvent, owner);
+    expect(redactedGuestOnly.actorPlayerId, isNull);
+    expect(redactedGuestOnly.command, isNull);
+    expect(redactedGuestOnly.events, isEmpty);
   });
 
   test('allows only explicit lifecycle fields in lobby snapshots', () {
@@ -174,13 +236,81 @@ void main() {
           'phase': 'lobby',
           'mapName': 'test-map',
           'leftUserIdentifier': 'raw-auth-id',
-          'futureSecret': 'must-fail-closed',
         },
       ),
       owner,
     );
 
     expect(projected.state, {'phase': 'lobby', 'mapName': 'test-map'});
+  });
+
+  test('fails closed when snapshot schema gains an unreviewed field', () {
+    final canonical = _snapshot();
+    final withUnknownField = canonical.copyWith(
+      state: {...canonical.state, 'futureSecret': 'must-not-pass-through'},
+    );
+
+    expect(
+      () => projector.snapshotFor(withUnknownField, owner),
+      throwsFormatException,
+    );
+  });
+
+  test('fails closed when runtime schema gains an unreviewed field', () {
+    final canonical = _snapshot();
+    final runtime = Map<String, dynamic>.from(
+      canonical.state['runtimeState'] as Map,
+    );
+    final withUnknownField = canonical.copyWith(
+      state: {
+        ...canonical.state,
+        'runtimeState': {...runtime, 'futureRuntimeSecret': true},
+      },
+    );
+
+    expect(
+      () => projector.snapshotFor(withUnknownField, owner),
+      throwsFormatException,
+    );
+  });
+
+  test('prepares canonical snapshots once for multiple recipients', () {
+    var saveDecodes = 0;
+    var stateDecodes = 0;
+    final countingProjector = PlayerMatchViewProjector(
+      decodeSave: (json) {
+        saveDecodes += 1;
+        return GameSave.fromJson(json);
+      },
+      decodeState: (json) {
+        stateDecodes += 1;
+        return PersistentGameState.fromJson(json);
+      },
+    );
+    final snapshot = _snapshot();
+    final canonical = MultiplayerServerMessage(
+      serverMessageId: 'message-1',
+      matchId: snapshot.matchId,
+      offset: snapshot.offset,
+      snapshot: snapshot,
+    );
+
+    final prepared = countingProjector.prepareMessage(canonical);
+    final ownerView = countingProjector.projectMessage(prepared, owner).wire;
+    final guestView = countingProjector
+        .projectMessage(
+          prepared,
+          const MatchRecipient(
+            userIdentifier: 'guest-auth-id',
+            playerId: 'player-guest',
+          ),
+        )
+        .wire;
+
+    expect(saveDecodes, 1);
+    expect(stateDecodes, 1);
+    expect(ownerView.snapshot?.save, same(guestView.snapshot?.save));
+    expect(ownerView.snapshot?.state, isNot(same(guestView.snapshot?.state)));
   });
 
   test(
@@ -531,7 +661,6 @@ WireSnapshot _snapshot() {
       'phase': 'abandoned',
       'reason': 'owner_left',
       'leftUserIdentifier': 'owner-auth-id',
-      'futureSecret': 'guest-secret-future-field',
     },
   );
 }

@@ -18,8 +18,12 @@ class _ReplayEventSummary extends StatelessWidget {
       );
     }
     if (messages.isEmpty) {
+      final loggedCommand = step!.loggedCommand;
+      final command = loggedCommand.command;
       return Text(
-        _commandLabel(step!.loggedCommand.command),
+        command == null
+            ? l10n.replayEventCount(loggedCommand.events.length)
+            : _commandLabel(command),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: GameUiTheme.bodySmall.copyWith(color: GameUiTheme.textSecondary),

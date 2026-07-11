@@ -7,6 +7,7 @@ import 'match_connection_registry.dart';
 import 'match_mutation_outcome.dart';
 import 'match_state_access.dart';
 import 'multiplayer_match_store.dart';
+import 'player_match_event_audience.dart';
 import 'server_command_reducer.dart';
 
 part 'match_command_service_handling.dart';

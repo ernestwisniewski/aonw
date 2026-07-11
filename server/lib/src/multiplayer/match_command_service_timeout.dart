@@ -65,17 +65,16 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final now = _nowUtc();
+      final decodedSnapshot = _commandReducer.decodeSnapshot(state.snapshot);
       if (!_commandReducer.hasTurnTimedOut(
-        snapshot: state.snapshot,
+        decodedSnapshot: decodedSnapshot,
         now: now,
       )) {
         return const MatchMutationOutcome<bool>(false);
       }
 
-      final save = GameSave.fromJson(state.snapshot.save);
-      final persistentState = PersistentGameState.fromJson(
-        state.snapshot.state,
-      );
+      final save = decodedSnapshot.save;
+      final persistentState = decodedSnapshot.state;
       final actorPlayerId = _timeoutActorPlayerId(
         state.match,
         save,
@@ -89,6 +88,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       final reduction = await _commandReducer.reduceTimedOutTurn(
         match: state.match,
         snapshot: state.snapshot,
+        decodedSnapshot: decodedSnapshot,
         actorPlayerId: actorPlayerId,
         now: now,
       );
@@ -96,8 +96,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         return const MatchMutationOutcome<bool>(false);
       }
 
-      final nextSave = GameSave.fromJson(reduction.snapshot.save);
-      if (nextSave.turn == save.turn) {
+      if (reduction.turn == save.turn) {
         return const MatchMutationOutcome<bool>(false);
       }
 
@@ -109,11 +108,17 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         timestamp: now,
         actorPlayerId: actorPlayerId,
         tick: state.nextOffset(),
+        turn: state.match.turn,
         command: GameCommandSerializer.toJson(command),
-        events: reduction.events.map(GameEventSerializer.toJson).toList(),
+        events: PlayerMatchEventAudience.annotateForStorage(
+          events: reduction.events,
+          participantPlayerIds: state.match.players.map((player) => player.id),
+          previousState: reduction.previousState!,
+          state: reduction.state!,
+        ),
       );
       final updated = state.copyWith(
-        match: state.match.copyWith(turn: nextSave.turn),
+        match: state.match.copyWith(turn: reduction.turn!),
         snapshot: nextSnapshot,
       );
       await txStore.appendEvent(

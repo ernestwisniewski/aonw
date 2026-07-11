@@ -58,6 +58,21 @@ class _FakeGameRepository implements GameRepository {
   }
 }
 
+class _SequenceGameRepository extends _FakeGameRepository {
+  final List<SaveSnapshot> sequence;
+  var loadCount = 0;
+
+  _SequenceGameRepository(this.sequence) : super(snapshots: const {});
+
+  @override
+  Future<SaveSnapshot> load(String saveId) async {
+    if (sequence.isEmpty) throw StateError('missing save');
+    final index = loadCount < sequence.length ? loadCount : sequence.length - 1;
+    loadCount++;
+    return sequence[index];
+  }
+}
+
 class _FakeCommandTransport implements CommandTransport {
   GameCommand? command;
   final List<GameCommand> commands = [];
@@ -254,6 +269,85 @@ void main() {
     expect(result.state.units.single.col, 1);
     expect(transport.commands.first, isA<SetActivePlayerCommand>());
   });
+
+  test('reloads the authoritative snapshot after redacted history', () async {
+    final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+    final save = _save.copyWith(gameMode: GameMode.multiplayer);
+    final first = SaveSnapshot.fromGameState(
+      save: save,
+      state: GameState(units: [commander]),
+      eventLogOffset: 1,
+    );
+    final second = SaveSnapshot.fromGameState(
+      save: save,
+      state: GameState(units: [commander.copyWith(col: 1)]),
+      eventLogOffset: 2,
+    );
+    final repository = _SequenceGameRepository([first, second]);
+    final transport = _FakeCommandTransport();
+    final useCase = BootstrapGameStateUseCase(
+      repository: repository,
+      dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
+      eventReplay: EventLogReplayService(
+        eventLog: _FakeEventLog([
+          LoggedCommand(
+            offset: 2,
+            timestamp: DateTime.utc(2026, 4, 16, 12),
+            turn: 1,
+            actorPlayerId: 'player_2',
+            command: null,
+          ),
+        ]),
+        reducer: GameStateReducer(mapData: _map()),
+      ),
+    );
+
+    final result = await useCase.executeWithResult(saveId: save.id);
+
+    expect(repository.loadCount, 2);
+    expect(result.offset, 2);
+    expect(result.state.units.single.col, 1);
+    expect(transport.commands.first, isA<SetActivePlayerCommand>());
+  });
+
+  test(
+    'returns only the latest snapshot when both replay attempts redact',
+    () async {
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final save = _save.copyWith(gameMode: GameMode.multiplayer);
+      final snapshot = SaveSnapshot.fromGameState(
+        save: save,
+        state: GameState(units: [commander]),
+        eventLogOffset: 1,
+      );
+      final repository = _SequenceGameRepository([snapshot, snapshot]);
+      final transport = _FakeCommandTransport();
+      final useCase = BootstrapGameStateUseCase(
+        repository: repository,
+        dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
+        eventReplay: EventLogReplayService(
+          eventLog: _FakeEventLog([
+            LoggedCommand(
+              offset: 2,
+              timestamp: DateTime.utc(2026, 4, 16, 12),
+              turn: 1,
+              actorPlayerId: 'player_2',
+              command: null,
+            ),
+          ]),
+          reducer: GameStateReducer(mapData: _map()),
+        ),
+      );
+
+      final result = await useCase.executeWithResult(saveId: save.id);
+
+      expect(repository.loadCount, 2);
+      expect(result.offset, 1);
+      expect(result.state.units.single.col, 0);
+      expect(result.state.activePlayerId, 'player_1');
+      expect(transport.commands, isEmpty);
+    },
+  );
 
   test('surfaces repository load failures', () async {
     final transport = _FakeCommandTransport();

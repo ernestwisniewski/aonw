@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
@@ -14,6 +15,8 @@ class BootstrapGameStateResult {
 }
 
 class BootstrapGameStateUseCase {
+  static const _maxAuthoritativeSnapshotAttempts = 2;
+
   final GameRepository repository;
   final DispatchCommandUseCase dispatchCommand;
   final EventLogReplayService? eventReplay;
@@ -42,25 +45,46 @@ class BootstrapGameStateUseCase {
       return const BootstrapGameStateResult(state: GameState(), offset: 0);
     }
 
-    final snapshot = await repository.load(saveId);
-    final control = PlayerControlCoordinator.initialForPlayer(
-      save: snapshot.save,
-      preferredPlayerId: preferredPlayerId,
-    );
-    var offset = snapshot.eventLogOffset;
-    var initialState = snapshot.toGameState(
-      activePlayerId: control.activePlayerId,
-      activePlayerCanAct: control.canAct,
-    );
-    final replay = eventReplay;
-    if (snapshot.save.gameMode == GameMode.multiplayer && replay != null) {
-      final replayed = await replay.replaySinceSnapshot(
-        saveId: saveId,
-        state: initialState,
-        offset: offset,
+    late SaveSnapshot snapshot;
+    late PlayerControlState control;
+    late GameState initialState;
+    late int offset;
+    var requiresLiveCatchup = false;
+    for (
+      var attempt = 0;
+      attempt < _maxAuthoritativeSnapshotAttempts;
+      attempt++
+    ) {
+      snapshot = await repository.load(saveId);
+      control = PlayerControlCoordinator.initialForPlayer(
+        save: snapshot.save,
+        preferredPlayerId: preferredPlayerId,
       );
-      initialState = replayed.state;
-      offset = replayed.offset;
+      offset = snapshot.eventLogOffset;
+      initialState = snapshot.toGameState(
+        activePlayerId: control.activePlayerId,
+        activePlayerCanAct: control.canAct,
+      );
+      final replay = eventReplay;
+      if (snapshot.save.gameMode == GameMode.multiplayer && replay != null) {
+        try {
+          final replayed = await replay.replaySinceSnapshot(
+            saveId: saveId,
+            state: initialState,
+            offset: offset,
+            matchRules: snapshot.save.matchRules,
+          );
+          initialState = replayed.state;
+          offset = replayed.offset;
+        } on AuthoritativeSnapshotRequiredException {
+          if (attempt + 1 < _maxAuthoritativeSnapshotAttempts) continue;
+          // Never expose a state that was only partially reconstructed. The
+          // authoritative snapshot is safe to render while the live stream
+          // catches up with events committed after it.
+          requiresLiveCatchup = true;
+        }
+      }
+      break;
     }
     final canAct =
         control.canAct &&
@@ -70,6 +94,9 @@ class BootstrapGameStateUseCase {
       activePlayerCanAct: canAct,
     );
     if (control.activePlayerId.isEmpty) {
+      return BootstrapGameStateResult(state: initialState, offset: offset);
+    }
+    if (requiresLiveCatchup) {
       return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 

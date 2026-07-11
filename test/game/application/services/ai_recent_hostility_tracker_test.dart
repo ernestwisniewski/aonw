@@ -112,6 +112,33 @@ void main() {
 
       expect(hostile, {'player_4'});
     });
+
+    test('reads projected hostility from an event-only entry', () async {
+      final eventLog = _MemoryEventLog()
+        ..commands.add(
+          _logged(
+            offset: 1,
+            actorPlayerId: 'player_3',
+            command: null,
+            events: const [
+              UnitAttackedEvent(
+                attackerUnitId: 'warrior_3',
+                attackerOwnerPlayerId: 'player_3',
+                defenderUnitId: 'warrior_2',
+                defenderOwnerPlayerId: 'player_2',
+              ),
+            ],
+          ),
+        );
+      final tracker = AiRecentHostilityTracker(eventLog: eventLog);
+
+      final hostile = await tracker.hostilePlayerIds(
+        snapshot: _snapshot(eventLogOffset: 1),
+        playerId: 'player_2',
+      );
+
+      expect(hostile, {'player_3'});
+    });
   });
 }
 
@@ -119,13 +146,14 @@ LoggedCommand _logged({
   required int offset,
   required String actorPlayerId,
   required List<GameEvent> events,
+  GameCommand? command = const SkipUnitTurnCommand('unit'),
 }) {
   return LoggedCommand(
     offset: offset,
     timestamp: DateTime.utc(2026, 5, 17, 12, offset),
     turn: 1,
     actorPlayerId: actorPlayerId,
-    command: const SkipUnitTurnCommand('unit'),
+    command: command,
     events: events,
   );
 }

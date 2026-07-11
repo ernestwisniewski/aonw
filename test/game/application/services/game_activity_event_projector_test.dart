@@ -150,6 +150,25 @@ void main() {
       expect(hidden, isEmpty);
       expect(visible.single.playerId, 'player_1');
     });
+
+    test('projects global and local system activity to the visible player', () {
+      final activity = GameActivityEventProjector.project(
+        events: [
+          AllPlayersSubmittedEvent(
+            turn: 4,
+            playerIds: const ['player_1', 'player_2'],
+          ),
+          const CommandRejectedEvent(reason: 'stale_turn'),
+        ],
+        state: const GameState(),
+        visiblePlayerId: 'player_2',
+      );
+
+      expect(activity, hasLength(2));
+      expect(activity.map((entry) => entry.playerId), ['player_2', 'player_2']);
+      expect(activity.first.event, isA<AllPlayersSubmittedEvent>());
+      expect(activity.last.event, isA<CommandRejectedEvent>());
+    });
   });
 }
 

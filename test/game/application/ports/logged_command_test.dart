@@ -2,6 +2,7 @@ import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -52,7 +53,12 @@ void main() {
       expect(restored.commandTick, 42);
       expect(restored.ignoreFogOfWar, isTrue);
       expect(restored.toCommandContext().actorPlayerId, 'p1');
+      expect(restored.toCommandContext().combatSeedTurn, 4);
       expect(restored.toCommandContext().ignoreFogOfWar, isTrue);
+      expect(
+        restored.toCommandContext(paceBalance: PaceBalance.long120).paceBalance,
+        PaceBalance.long120,
+      );
       expect(restored.command, isA<MoveUnitCommand>());
       expect(restored.events.single, isA<UnitMovedEvent>());
       expect(restored.activity.single.event, isA<UnitMovedEvent>());
@@ -73,6 +79,33 @@ void main() {
       expect(restored.actorPlayerId, isNull);
       expect(restored.events, isEmpty);
       expect(restored.activity, isEmpty);
+    });
+
+    test('round-trips an event-only entry without inventing a command', () {
+      final logged = LoggedCommand(
+        offset: 2,
+        timestamp: DateTime.utc(2026),
+        turn: null,
+        actorPlayerId: 'p2',
+        command: null,
+        events: const [
+          UnitAttackedEvent(
+            attackerUnitId: 'attacker',
+            attackerOwnerPlayerId: 'p2',
+            defenderUnitId: 'defender',
+            defenderOwnerPlayerId: 'p1',
+          ),
+        ],
+      );
+
+      final json = logged.toJson();
+      final restored = LoggedCommand.fromJson(json);
+
+      expect(json.containsKey('command'), isFalse);
+      expect(json.containsKey('turn'), isFalse);
+      expect(restored.command, isNull);
+      expect(restored.turn, isNull);
+      expect(restored.events.single, isA<UnitAttackedEvent>());
     });
   });
 }

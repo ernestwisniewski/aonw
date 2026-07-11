@@ -73,15 +73,18 @@ class GameStateNotifier extends _$GameStateNotifier {
         stability: ref.watch(stabilityRulesetProvider),
       ),
     );
+    final liveCommandDispatcher = session.gameMode == GameMode.multiplayer
+        ? LiveWireCommandDispatcher(
+            liveHandle: _liveCommandHandle,
+            fallback: ref.watch(wireCommandDispatcherProvider),
+          )
+        : null;
     _dispatchCommand = buildDispatchCommandUseCase(
       ref,
       reducer,
       session.gameMode,
       saveId: saveId,
-      commandDispatcher: LiveWireCommandDispatcher(
-        liveHandle: _liveCommandHandle,
-        fallback: ref.watch(wireCommandDispatcherProvider),
-      ),
+      commandDispatcher: liveCommandDispatcher,
     );
     final repository = gameRepositoryForSave(ref, saveId);
 

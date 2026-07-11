@@ -93,6 +93,9 @@ void main() {
         );
 
         expect(reduction.accepted, isTrue);
+        expect(reduction.turn, 1);
+        expect(reduction.previousState, isNotNull);
+        expect(reduction.state, nextState);
         expect(
           nextState.runtimeState.diplomacy.pendingProposals,
           contains('proposal_1'),

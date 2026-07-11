@@ -30,9 +30,10 @@ class HumanTraceAnalyzer {
     var lastCompletedTurn = 0;
 
     for (final entry in log) {
+      final command = entry.command;
+      if (command == null) continue;
       firstTimestamp ??= entry.timestamp;
       lastTimestamp = entry.timestamp;
-      final command = entry.command;
       final owner = _commandOwner(command);
       final actorPlayerId = entry.actorPlayerId;
       final isHumanCommand =
@@ -282,16 +283,14 @@ class HumanTraceAnalyzer {
     };
   }
 
-  static bool _isRepeatedAiCandidate(GameCommand command) {
-    return switch (command) {
-      MoveUnitCommand() ||
-      SelectWorkerImprovementCommand() ||
-      AssignWorkerToHexCommand() ||
-      AttackHexCommand() ||
-      FoundCityCommand() => true,
-      _ => false,
-    };
-  }
+  static bool _isRepeatedAiCandidate(GameCommand command) => switch (command) {
+    MoveUnitCommand() ||
+    SelectWorkerImprovementCommand() ||
+    AssignWorkerToHexCommand() ||
+    AttackHexCommand() ||
+    FoundCityCommand() => true,
+    _ => false,
+  };
 
   static String? _commandOwner(GameCommand command) {
     return switch (command) {

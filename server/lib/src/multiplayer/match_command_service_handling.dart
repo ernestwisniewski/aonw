@@ -85,18 +85,23 @@ extension MatchCommandServiceHandling on MatchCommandService {
 
     final nextOffset = state.nextOffset();
     final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
-    final nextSave = GameSave.fromJson(nextSnapshot.save);
     final event = WireEvent(
       matchId: state.match.id,
       offset: nextOffset,
       timestamp: now,
       actorPlayerId: player.id,
       tick: command.tick,
+      turn: state.match.turn,
       command: command.command,
-      events: reduction.events.map(GameEventSerializer.toJson).toList(),
+      events: PlayerMatchEventAudience.annotateForStorage(
+        events: reduction.events,
+        participantPlayerIds: state.match.players.map((player) => player.id),
+        previousState: reduction.previousState!,
+        state: reduction.state!,
+      ),
     );
     final updated = state.copyWith(
-      match: state.match.copyWith(turn: nextSave.turn),
+      match: state.match.copyWith(turn: reduction.turn!),
       snapshot: nextSnapshot,
     );
     await store.appendEvent(

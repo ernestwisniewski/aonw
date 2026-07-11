@@ -12,13 +12,29 @@ class ServerCommandReduction {
     required this.accepted,
     required this.snapshot,
     this.events = const [],
+    this.turn,
+    this.previousState,
+    this.state,
     this.reason,
-  });
+  }) : assert(
+         !accepted || (turn != null && previousState != null && state != null),
+         'Accepted reductions must expose their decoded transition.',
+       );
 
   final bool accepted;
   final WireSnapshot snapshot;
   final List<GameEvent> events;
+  final int? turn;
+  final PersistentGameState? previousState;
+  final PersistentGameState? state;
   final String? reason;
+}
+
+final class DecodedMatchSnapshot {
+  const DecodedMatchSnapshot({required this.save, required this.state});
+
+  final GameSave save;
+  final PersistentGameState state;
 }
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
@@ -34,13 +50,18 @@ class ServerCommandReducer {
   final Duration _turnTimeout;
   final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
 
+  DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) {
+    return DecodedMatchSnapshot(
+      save: GameSave.fromJson(snapshot.save),
+      state: PersistentGameState.fromJson(snapshot.state),
+    );
+  }
+
   bool hasTurnTimedOut({
-    required WireSnapshot snapshot,
+    required DecodedMatchSnapshot decodedSnapshot,
     required DateTime now,
   }) {
-    final save = GameSave.fromJson(snapshot.save);
-    final state = PersistentGameState.fromJson(snapshot.state);
-    return _turnTimedOut(save, state, now);
+    return _turnTimedOut(decodedSnapshot.save, decodedSnapshot.state, now);
   }
 
   Future<ServerCommandReduction> reduce({
@@ -54,8 +75,9 @@ class ServerCommandReducer {
       return _reject(snapshot, 'match_not_running');
     }
 
-    final save = GameSave.fromJson(snapshot.save);
-    final state = PersistentGameState.fromJson(snapshot.state);
+    final decodedSnapshot = decodeSnapshot(snapshot);
+    final save = decodedSnapshot.save;
+    final state = decodedSnapshot.state;
     final command = GameCommandSerializer.fromJson(wireCommand.command);
     if (wireCommand.turn != null && wireCommand.turn != save.turn) {
       return _reject(snapshot, 'stale_turn');
@@ -101,12 +123,16 @@ class ServerCommandReducer {
       accepted: true,
       snapshot: nextSnapshot,
       events: result.events,
+      turn: nextSave.turn,
+      previousState: state,
+      state: result.state,
     );
   }
 
   Future<ServerCommandReduction> reduceTimedOutTurn({
     required WireMatch match,
     required WireSnapshot snapshot,
+    required DecodedMatchSnapshot decodedSnapshot,
     required String actorPlayerId,
     required DateTime now,
   }) async {
@@ -114,8 +140,8 @@ class ServerCommandReducer {
       return _reject(snapshot, 'match_not_running');
     }
 
-    final save = GameSave.fromJson(snapshot.save);
-    final state = PersistentGameState.fromJson(snapshot.state);
+    final save = decodedSnapshot.save;
+    final state = decodedSnapshot.state;
     final nowUtc = now.toUtc();
     if (!_turnTimedOut(save, state, nowUtc)) {
       return _reject(snapshot, 'turn_not_timed_out');
@@ -161,6 +187,9 @@ class ServerCommandReducer {
       accepted: true,
       snapshot: nextSnapshot,
       events: result.events,
+      turn: nextSave.turn,
+      previousState: state,
+      state: result.state,
     );
   }
 

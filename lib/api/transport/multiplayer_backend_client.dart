@@ -13,51 +13,78 @@ abstract interface class MultiplayerBackendClient {
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset);
 
   Future<void> leaveMatch(String matchId);
+
+  void close();
 }
+
+typedef MultiplayerServerpodClientFactory = sp.Client Function();
 
 class ServerpodMultiplayerBackendClient implements MultiplayerBackendClient {
   ServerpodMultiplayerBackendClient({
     required String serverpodHost,
     required AuthToken token,
-    this.authKeyProviderFactory,
-  }) : _serverpodHost = serverpodHost,
-       _token = token;
+    ServerpodAuthKeyProviderFactory? authKeyProviderFactory,
+    MultiplayerServerpodClientFactory? clientFactory,
+  }) : _client =
+           clientFactory?.call() ??
+           _createConfiguredClient(
+             serverpodHost: serverpodHost,
+             token: token,
+             authKeyProviderFactory: authKeyProviderFactory,
+           );
 
-  final String _serverpodHost;
-  final AuthToken _token;
-  final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
+  final sp.Client _client;
+  var _closed = false;
+
+  bool get isClosed => _closed;
 
   @override
   Future<List<WireMatch>> listMatches() {
-    return _client().multiplayer.listMatches();
+    return _activeClient.multiplayer.listMatches();
   }
 
   @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) {
-    return _client().multiplayer.createMatch(request);
+    return _activeClient.multiplayer.createMatch(request);
   }
 
   @override
   Future<WireSnapshot> loadSnapshot(String matchId) {
-    return _client().multiplayer.loadSnapshot(matchId);
+    return _activeClient.multiplayer.loadSnapshot(matchId);
   }
 
   @override
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset) {
-    return _client().multiplayer.listEvents(matchId, afterOffset);
+    return _activeClient.multiplayer.listEvents(matchId, afterOffset);
   }
 
   @override
   Future<void> leaveMatch(String matchId) {
-    return _client().multiplayer.leaveMatch(matchId);
+    return _activeClient.multiplayer.leaveMatch(matchId);
   }
 
-  sp.Client _client() {
-    final authKeyProvider = authKeyProviderFactory?.call();
-    return createServerpodClient(
-      _serverpodHost,
-      token: authKeyProvider == null ? _token : null,
-      authKeyProvider: authKeyProvider,
-    );
+  @override
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    _client.close();
   }
+
+  sp.Client get _activeClient {
+    if (_closed) throw StateError('Multiplayer backend client is closed.');
+    return _client;
+  }
+}
+
+sp.Client _createConfiguredClient({
+  required String serverpodHost,
+  required AuthToken token,
+  required ServerpodAuthKeyProviderFactory? authKeyProviderFactory,
+}) {
+  final authKeyProvider = authKeyProviderFactory?.call();
+  return createServerpodClient(
+    serverpodHost,
+    token: authKeyProvider == null ? token : null,
+    authKeyProvider: authKeyProvider,
+  );
 }
