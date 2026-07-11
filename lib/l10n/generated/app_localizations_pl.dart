@@ -1632,7 +1632,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Najpierw wybierz cywilizację, potem wejdź do szybkiej gry albo utwórz prywatny stół. Mapa zostanie dobrana automatycznie.';
+      'Wybierz cywilizację, a potem szybką grę, mecz publiczny albo prywatny stół. W quickplay mapa zostanie dobrana automatycznie.';
 
   @override
   String get multiplayerCountryPickTitle => 'Wybierz cywilizację';
@@ -1653,6 +1653,40 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get multiplayerQuickplaySubtitle =>
       'Automatycznie znajdzie graczy i wystartuje od 2 osób.';
+
+  @override
+  String get multiplayerBrowsePublicTitle => 'Mecze publiczne';
+
+  @override
+  String get multiplayerBrowsePublicSubtitle =>
+      'Przejrzyj otwarte stoły albo utwórz własny mecz.';
+
+  @override
+  String get multiplayerPublicLobbyTitle => 'Lobby publiczne';
+
+  @override
+  String get multiplayerPublicLobbySubtitle =>
+      'Dołącz do otwartego meczu albo utwórz publiczny stół.';
+
+  @override
+  String get multiplayerPublicMatchNameLabel => 'Nazwa meczu';
+
+  @override
+  String get multiplayerPublicCreateAction => 'Utwórz mecz publiczny';
+
+  @override
+  String get multiplayerPublicEmpty =>
+      'Brak otwartych meczów publicznych. Utwórz mecz albo odśwież lobby.';
+
+  @override
+  String get multiplayerPublicMatchTitle => 'Mecz publiczny';
+
+  @override
+  String get multiplayerPublicHostReady => 'Możesz rozpocząć mecz publiczny.';
+
+  @override
+  String get multiplayerPublicWaitingForHost =>
+      'Czekam, aż host rozpocznie mecz publiczny.';
 
   @override
   String get multiplayerCreatePrivateTitle => 'Utwórz kod';

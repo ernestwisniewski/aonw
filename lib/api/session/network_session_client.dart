@@ -63,6 +63,7 @@ class CreateMatchRequest {
   final String name;
   final String mapName;
   final int maxPlayers;
+  final int minPlayers;
   final String? displayName;
   final PlayerCountry? country;
   final MatchRules matchRules;
@@ -72,6 +73,7 @@ class CreateMatchRequest {
     required this.name,
     required this.mapName,
     required this.maxPlayers,
+    this.minPlayers = MapPlayerCapacityRules.minPlayers,
     this.displayName,
     this.country,
     this.matchRules = MatchRules.standard,
@@ -310,7 +312,7 @@ class NetworkSessionClient {
           name: request.name,
           mapName: request.mapName,
           maxPlayers: request.maxPlayers,
-          minPlayers: request.maxPlayers,
+          minPlayers: request.minPlayers,
           private: false,
           countryId: request.country?.name,
         ),

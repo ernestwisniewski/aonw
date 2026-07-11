@@ -7,6 +7,7 @@ import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.da
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -18,6 +19,23 @@ typedef LobbyQuickplayRequester =
     Future<WireMatch> Function({
       required AuthToken token,
       required QuickplayMatchRequest request,
+    });
+typedef LobbyPublicMatchLister =
+    Future<List<WireMatch>> Function({
+      required AuthToken token,
+      String? status,
+    });
+typedef LobbyPublicMatchCreator =
+    Future<WireMatch> Function({
+      required AuthToken token,
+      required CreateMatchRequest request,
+    });
+typedef LobbyPublicMatchJoiner =
+    Future<WireMatch> Function({
+      required AuthToken token,
+      required String matchId,
+      String? displayName,
+      PlayerCountry? country,
     });
 typedef LobbyPrivateMatchCreator =
     Future<WireMatch> Function({
@@ -69,6 +87,9 @@ final class LobbyMatchActionCoordinator {
   final LobbyMatchSessionEnsurer ensureSession;
   final LobbyMatchMapValidator validateMap;
   final LobbyQuickplayRequester quickplay;
+  final LobbyPublicMatchLister listMatches;
+  final LobbyPublicMatchCreator createMatch;
+  final LobbyPublicMatchJoiner joinMatch;
   final LobbyPrivateMatchCreator createPrivateMatch;
   final LobbyPrivateMatchJoiner joinPrivateMatch;
   final LobbyMatchStarter startMatch;
@@ -86,6 +107,9 @@ final class LobbyMatchActionCoordinator {
     required this.ensureSession,
     required this.validateMap,
     required this.quickplay,
+    required this.listMatches,
+    required this.createMatch,
+    required this.joinMatch,
     required this.createPrivateMatch,
     required this.joinPrivateMatch,
     required this.startMatch,
@@ -126,6 +150,57 @@ final class LobbyMatchActionCoordinator {
     clearMatch(session);
   }
 
+  Future<List<WireMatch>> listPublicMatches() async {
+    final session = await ensureSession();
+    final matches = await listMatches(token: session.token);
+    return List.unmodifiable(
+      matches.where(
+        (match) =>
+            match.state == 'open' &&
+            !match.quickplay &&
+            match.inviteCode == null &&
+            match.players.every((player) => player.userId != session.userId) &&
+            LobbyMatchStatusRules.humanPlayerCount(match) < match.maxPlayers,
+      ),
+    );
+  }
+
+  Future<void> createPublic({
+    required String name,
+    required LobbyMatchActionConfig config,
+  }) async {
+    await _validateMapOrThrow(config.mapNotReadyMessage);
+    final session = await ensureSession();
+    final normalizedName = name.trim();
+    final match = await createMatch(
+      token: session.token,
+      request: CreateMatchRequest(
+        name: normalizedName.isEmpty ? 'Public match' : normalizedName,
+        mapName: config.mapName,
+        maxPlayers: MapPlayerCapacityRules.maxPlayersForMapName(config.mapName),
+        minPlayers: MapPlayerCapacityRules.minPlayers,
+        displayName: config.displayName,
+        country: config.country,
+        matchRules: config.matchRules,
+      ),
+    );
+    _rememberAndWatch(session: session, match: match);
+  }
+
+  Future<void> joinPublic({
+    required String matchId,
+    required LobbyMatchActionConfig config,
+  }) async {
+    final session = await ensureSession();
+    final match = await joinMatch(
+      token: session.token,
+      matchId: matchId,
+      displayName: config.displayName,
+      country: config.country,
+    );
+    _rememberAndWatch(session: session, match: match);
+  }
+
   Future<void> createPrivate(LobbyMatchActionConfig config) async {
     await _validateMapOrThrow(config.mapNotReadyMessage);
     final session = await ensureSession();
@@ -160,7 +235,7 @@ final class LobbyMatchActionCoordinator {
     _rememberAndWatch(session: session, match: match);
   }
 
-  Future<void> startPrivate({required WireMatch? activeMatch}) async {
+  Future<void> startHostedMatch({required WireMatch? activeMatch}) async {
     final match = activeMatch;
     if (match == null || match.state != 'open') return;
     final session = await ensureSession();

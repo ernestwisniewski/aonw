@@ -117,6 +117,8 @@ class _RuntimeSmoke {
     );
     _expect(
       quickplayWaiting.quickplay &&
+          quickplayWaiting.mapName ==
+              MapPlayerCapacityRules.fullMultiplayerMapName &&
           quickplayWaiting.maxPlayers == 4 &&
           quickplayWaiting.minPlayers == 2 &&
           quickplayWaiting.state == 'open' &&
@@ -142,6 +144,7 @@ class _RuntimeSmoke {
     final quickplayCountdown = await _quickplay(
       guestClient,
       PlayerCountry.france,
+      mapName: config.mapName == 'myranth' ? 'terenos' : 'myranth',
     );
     _expect(
       quickplayCountdown.id == quickplayWaiting.id &&
@@ -205,6 +208,13 @@ class _RuntimeSmoke {
           ),
         )
         .timeout(config.requestTimeout);
+    final publicMatches = await guestClient.multiplayer.listMatches().timeout(
+      config.requestTimeout,
+    );
+    _expect(
+      publicMatches.any((match) => match.id == created.id),
+      'Expected newly created public match ${created.id} in lobby discovery.',
+    );
     await guestClient.multiplayer
         .joinMatch(created.id)
         .timeout(config.requestTimeout);
@@ -690,12 +700,16 @@ class _RuntimeSmoke {
         .timeout(config.requestTimeout);
   }
 
-  Future<WireMatch> _quickplay(sp.Client client, PlayerCountry country) {
+  Future<WireMatch> _quickplay(
+    sp.Client client,
+    PlayerCountry country, {
+    String? mapName,
+  }) {
     return client.multiplayer
         .quickplay(
           sp.CreateMatchRequest(
             name: 'Runtime quickplay smoke',
-            mapName: config.mapName,
+            mapName: mapName ?? config.mapName,
             maxPlayers: 2,
             minPlayers: 1,
             private: true,

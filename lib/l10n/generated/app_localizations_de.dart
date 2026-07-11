@@ -1638,7 +1638,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Wähle zuerst die Zivilisation und tritt dann dem Schnellspiel bei oder erstelle einen privaten Tisch. Die Karte wird automatisch ausgewählt.';
+      'Wähle eine Zivilisation und nutze dann Quickplay, öffentliche Spiele oder eine private Partie. Quickplay wählt die Karte automatisch.';
 
   @override
   String get multiplayerCountryPickTitle => 'Zivilisation wählen';
@@ -1659,6 +1659,41 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get multiplayerQuickplaySubtitle =>
       'Findet Spieler automatisch und startet ab 2 Spielern.';
+
+  @override
+  String get multiplayerBrowsePublicTitle => 'Öffentliche Spiele';
+
+  @override
+  String get multiplayerBrowsePublicSubtitle =>
+      'Durchsuche offene Partien oder erstelle eine neue.';
+
+  @override
+  String get multiplayerPublicLobbyTitle => 'Öffentliche Lobby';
+
+  @override
+  String get multiplayerPublicLobbySubtitle =>
+      'Tritt einer offenen Partie bei oder erstelle eine öffentliche Partie.';
+
+  @override
+  String get multiplayerPublicMatchNameLabel => 'Spielname';
+
+  @override
+  String get multiplayerPublicCreateAction => 'Öffentliches Spiel erstellen';
+
+  @override
+  String get multiplayerPublicEmpty =>
+      'Noch keine offenen öffentlichen Spiele. Erstelle eines oder aktualisiere die Lobby.';
+
+  @override
+  String get multiplayerPublicMatchTitle => 'Öffentliches Spiel';
+
+  @override
+  String get multiplayerPublicHostReady =>
+      'Du kannst das öffentliche Spiel jetzt starten.';
+
+  @override
+  String get multiplayerPublicWaitingForHost =>
+      'Warten darauf, dass der Host das öffentliche Spiel startet.';
 
   @override
   String get multiplayerCreatePrivateTitle => 'Code erstellen';

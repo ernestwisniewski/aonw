@@ -76,8 +76,9 @@ The local web app runs at `http://localhost:7357` and targets the Docker API at
 `test4@example.test`, all using `AonwTest123!`. Use separate browser profiles
 or a normal and private window to test two players concurrently.
 
-For an automated multiplayer round trip, including quickplay, create/join,
-realtime streams, commands, reconnect, and persisted event history, run:
+For an automated multiplayer round trip, including the global quickplay queue,
+public-lobby discovery and join, realtime streams, commands, reconnect, and
+persisted event history, run:
 
 ```sh
 make local-multiplayer-smoke

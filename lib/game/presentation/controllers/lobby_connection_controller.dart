@@ -19,8 +19,16 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 
 part 'lobby_connection_session_actions.dart';
+part 'lobby_connection_public_actions.dart';
 
-enum LobbyMultiplayerMode { home, quickplay, privateHost, privateJoin }
+enum LobbyMultiplayerMode {
+  home,
+  quickplay,
+  publicBrowse,
+  publicMatch,
+  privateHost,
+  privateJoin,
+}
 
 typedef LobbyConnectionClock = DateTime Function();
 typedef LobbyConnectionContinuation = bool Function();
@@ -80,6 +88,8 @@ final class LobbyConnectionController extends ChangeNotifier {
   bool _busy = false;
   String? _error;
   WireMatch? _activeMatch;
+  List<WireMatch> _publicMatches = const [];
+  bool _publicMatchesLoaded = false;
   bool _disposed = false;
 
   LobbyConnectionController({
@@ -156,6 +166,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   bool get showProfile {
     return _activeMatch == null &&
         (_mode == LobbyMultiplayerMode.home ||
+            _mode == LobbyMultiplayerMode.publicBrowse ||
             _mode == LobbyMultiplayerMode.privateJoin);
   }
 
@@ -220,7 +231,17 @@ final class LobbyConnectionController extends ChangeNotifier {
 
   Future<void> startPrivateMatch() async {
     await _runNetworkAction(() async {
-      await _matchActionCoordinator().startPrivate(activeMatch: _activeMatch);
+      await _matchActionCoordinator().startHostedMatch(
+        activeMatch: _activeMatch,
+      );
+    });
+  }
+
+  Future<void> startPublicMatch() async {
+    await _runNetworkAction(() async {
+      await _matchActionCoordinator().startHostedMatch(
+        activeMatch: _activeMatch,
+      );
     });
   }
 
@@ -241,6 +262,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   void returnHome() {
     stopLobbyUpdates();
     _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
+    _setPublicMatches(const [], loaded: false);
   }
 
   void stopLobbyUpdates() {
@@ -285,6 +307,9 @@ final class LobbyConnectionController extends ChangeNotifier {
       ensureSession: _ensureNetworkSession,
       validateMap: validateMap,
       quickplay: sessionClient.quickplay,
+      listMatches: sessionClient.listMatches,
+      createMatch: sessionClient.createMatch,
+      joinMatch: sessionClient.joinMatch,
       createPrivateMatch: sessionClient.createPrivateMatch,
       joinPrivateMatch: sessionClient.joinPrivateMatch,
       startMatch: sessionClient.startMatch,

@@ -2947,7 +2947,7 @@ abstract class AppLocalizations {
   /// No description provided for @multiplayerLobbyHeaderSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose civilization first, then enter quickplay or create a private table. The map is selected automatically.'**
+  /// **'Choose a civilization, then use quickplay, browse public games, or create a private table. Quickplay selects the map automatically.'**
   String get multiplayerLobbyHeaderSubtitle;
 
   /// No description provided for @multiplayerCountryPickTitle.
@@ -2985,6 +2985,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Finds players automatically and starts from 2 players.'**
   String get multiplayerQuickplaySubtitle;
+
+  /// No description provided for @multiplayerBrowsePublicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Public games'**
+  String get multiplayerBrowsePublicTitle;
+
+  /// No description provided for @multiplayerBrowsePublicSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse open tables or create one for other players.'**
+  String get multiplayerBrowsePublicSubtitle;
+
+  /// No description provided for @multiplayerPublicLobbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Public lobby'**
+  String get multiplayerPublicLobbyTitle;
+
+  /// No description provided for @multiplayerPublicLobbySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join an open match or create a public table.'**
+  String get multiplayerPublicLobbySubtitle;
+
+  /// No description provided for @multiplayerPublicMatchNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Match name'**
+  String get multiplayerPublicMatchNameLabel;
+
+  /// No description provided for @multiplayerPublicCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create public match'**
+  String get multiplayerPublicCreateAction;
+
+  /// No description provided for @multiplayerPublicEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No open public matches yet. Create one or refresh the lobby.'**
+  String get multiplayerPublicEmpty;
+
+  /// No description provided for @multiplayerPublicMatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Public match'**
+  String get multiplayerPublicMatchTitle;
+
+  /// No description provided for @multiplayerPublicHostReady.
+  ///
+  /// In en, this message translates to:
+  /// **'You can start the public match now.'**
+  String get multiplayerPublicHostReady;
+
+  /// No description provided for @multiplayerPublicWaitingForHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the host to start the public match.'**
+  String get multiplayerPublicWaitingForHost;
 
   /// No description provided for @multiplayerCreatePrivateTitle.
   ///

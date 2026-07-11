@@ -1,54 +1,10 @@
 part of 'lobby_screen.dart';
 
-class _MultiplayerActionSummary extends StatelessWidget {
-  const _MultiplayerActionSummary({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: GameUiTheme.gold),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                GameText.actionLabel(title),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GameUiTheme.bodyStrong.copyWith(
-                  color: GameUiTheme.goldLight,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GameUiTheme.cardMeta,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _MultiplayerHomePanel extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback onQuickplay;
+  final VoidCallback onBrowsePublic;
   final VoidCallback onCreatePrivate;
   final VoidCallback onJoinPrivate;
 
@@ -56,6 +12,7 @@ class _MultiplayerHomePanel extends StatelessWidget {
     required this.busy,
     required this.error,
     required this.onQuickplay,
+    required this.onBrowsePublic,
     required this.onCreatePrivate,
     required this.onJoinPrivate,
   });
@@ -94,6 +51,15 @@ class _MultiplayerHomePanel extends StatelessWidget {
               primary: true,
               busy: busy,
               onPressed: onQuickplay,
+            ),
+            const SizedBox(height: 10),
+            _MultiplayerActionTile(
+              icon: Icons.travel_explore_outlined,
+              title: l10n.multiplayerBrowsePublicTitle,
+              subtitle: l10n.multiplayerBrowsePublicSubtitle,
+              buttonKey: const Key('multiplayer.browsePublicAction'),
+              busy: busy,
+              onPressed: onBrowsePublic,
             ),
             const SizedBox(height: 10),
             _MultiplayerActionTile(

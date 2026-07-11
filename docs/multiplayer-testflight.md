@@ -60,9 +60,12 @@ port `8080` is busy, override `LOCAL_API_PORT` consistently and keep
 
 The seeded accounts are `test1@example.test` through `test4@example.test`, all
 using `AonwTest123!`. Open normal and private browser windows for a manual
-two-player check. Google Web requires the exact `http://localhost:7357` origin.
-Apple Web cannot use a localhost callback because Apple requires registered
-HTTPS; native Apple sign-in can still verify through the local API.
+two-player check. Quickplay uses one shared queue even when the two clients
+entered the lobby through different randomly selected maps. The Public games
+screen lists open matches and lets the second player join without an invite
+code. Google Web requires the exact `http://localhost:7357` origin. Apple Web
+cannot use a localhost callback because Apple requires registered HTTPS;
+native Apple sign-in can still verify through the local API.
 
 ## Cloudflare Quick Tunnel Smoke
 
@@ -151,12 +154,18 @@ After deploying, test from two devices or two fresh app installs:
 1. Build with `--dart-define=AONW_API_BASE_URL=https://api.aonw.net`.
 2. Open multiplayer from the new-game flow.
 3. Create an account or sign in on both devices.
-4. Create a match on device A.
-5. Join the match on device B.
+4. Create a public match on device A.
+5. Refresh Public games on device B, verify that the match is listed, and join
+   it without an invite code.
 6. Ready/start the match.
-7. Move/end turn on one device and confirm the other device receives the live
-   update without restarting the app.
-8. Background one device or switch away from the browser tab, return, and
+7. Move a visible unit on one device and confirm the other device renders the
+   movement animation instead of jumping directly to the destination.
+8. Bring two civilizations into contact and confirm each player sees the
+   first-contact popup once. Move out of visibility and back again; the popup
+   must not return for the same civilization pair.
+9. End the turn and confirm the other device receives the live update without
+   restarting the app.
+10. Background one device or switch away from the browser tab, return, and
    confirm the match state converges without manual refresh.
 
 If the lobby works but live updates do not, check Caddy and server logs for

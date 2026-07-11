@@ -62,6 +62,68 @@ void main() {
       expect(harness.clearedSessions, [harness.session]);
     });
 
+    test('public listing keeps only joinable stranger lobbies', () async {
+      final joinable = _match(
+        id: 'public_1',
+        players: const [
+          WirePlayer(
+            id: 'host_player',
+            userId: 'host_public_id',
+            name: 'Host',
+            colorValue: 0xFF2563EB,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+        ],
+      );
+      final harness = _Harness(
+        listedMatches: [
+          joinable,
+          _match(id: 'running', state: 'running', players: joinable.players),
+          _match(id: 'quickplay', quickplay: true, players: joinable.players),
+          _match(id: 'private', inviteCode: 'SECRET'),
+          _match(id: 'participant'),
+          _match(id: 'full', maxPlayers: 1, players: joinable.players),
+        ],
+      );
+
+      final matches = await harness.coordinator.listPublicMatches();
+
+      expect(matches.map((match) => match.id), ['public_1']);
+      expect(harness.listCount, 1);
+    });
+
+    test('public create and join remember and watch matches', () async {
+      final harness = _Harness(
+        createdPublicMatch: _match(id: 'public_created'),
+        joinedPublicMatch: _match(id: 'public_joined'),
+      );
+
+      await harness.coordinator.createPublic(
+        name: '  Open table  ',
+        config: _config(),
+      );
+      await harness.coordinator.joinPublic(
+        matchId: 'public_joined',
+        config: _config(),
+      );
+
+      expect(harness.createdPublicRequest?.name, 'Open table');
+      expect(harness.createdPublicRequest?.mapName, 'verdantia');
+      expect(harness.createdPublicRequest?.minPlayers, 2);
+      expect(harness.createdPublicRequest?.maxPlayers, 4);
+      expect(harness.joinedPublicMatchIds, ['public_joined']);
+      expect(harness.joinedPublicCountry, PlayerCountry.china);
+      expect(harness.remembered.map((entry) => entry.match.id), [
+        'public_created',
+        'public_joined',
+      ]);
+      expect(harness.watched.map((entry) => entry.match.id), [
+        'public_created',
+        'public_joined',
+      ]);
+    });
+
     test('private create and join remember and watch matches', () async {
       final harness = _Harness(
         createdPrivateMatch: _match(id: 'private_1'),
@@ -110,7 +172,7 @@ void main() {
         loadedMatch: _match(id: 'match_2', state: 'loading'),
       );
 
-      await harness.coordinator.startPrivate(
+      await harness.coordinator.startHostedMatch(
         activeMatch: _match(id: 'private_1', state: 'open'),
       );
       await harness.coordinator.refreshActiveMatch(matchId: 'match_2');
@@ -185,35 +247,46 @@ NetworkSession _session() {
   );
 }
 
-WireMatch _match({String id = 'match_1', String state = 'open'}) {
+WireMatch _match({
+  String id = 'match_1',
+  String state = 'open',
+  bool quickplay = false,
+  String? inviteCode,
+  int maxPlayers = 4,
+  List<WirePlayer>? players,
+}) {
   return WireMatch(
     id: id,
     ownerUserId: 'user_1',
     name: 'Quickplay',
     mapName: 'verdantia',
-    players: const [
-      WirePlayer(
-        id: 'player_1',
-        userId: 'user_1',
-        name: 'Alice',
-        colorValue: 0xFF2563EB,
-        kind: WirePlayerKind.human,
-        connectionState: WirePlayerConnectionState.connected,
-      ),
-      WirePlayer(
-        id: 'player_2',
-        userId: 'user_2',
-        name: 'Bob',
-        colorValue: 0xFFDC2626,
-        kind: WirePlayerKind.human,
-        connectionState: WirePlayerConnectionState.connected,
-      ),
-    ],
-    maxPlayers: 4,
+    players:
+        players ??
+        const [
+          WirePlayer(
+            id: 'player_1',
+            userId: 'user_1',
+            name: 'Alice',
+            colorValue: 0xFF2563EB,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+          WirePlayer(
+            id: 'player_2',
+            userId: 'user_2',
+            name: 'Bob',
+            colorValue: 0xFFDC2626,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+        ],
+    maxPlayers: maxPlayers,
     minPlayers: 2,
+    quickplay: quickplay,
     turn: 1,
     state: state,
     createdAt: DateTime.utc(2026, 6, 2),
+    inviteCode: inviteCode,
   );
 }
 
@@ -221,6 +294,9 @@ final class _Harness {
   final NetworkSession session;
   final MapValidationResult validation;
   final WireMatch quickplayMatch;
+  final List<WireMatch> listedMatches;
+  final WireMatch createdPublicMatch;
+  final WireMatch joinedPublicMatch;
   final WireMatch createdPrivateMatch;
   final WireMatch joinedPrivateMatch;
   final WireMatch startedMatch;
@@ -228,7 +304,11 @@ final class _Harness {
 
   var validationCount = 0;
   var stoppedCount = 0;
+  var listCount = 0;
   QuickplayMatchRequest? quickplayRequest;
+  CreateMatchRequest? createdPublicRequest;
+  final joinedPublicMatchIds = <String>[];
+  PlayerCountry? joinedPublicCountry;
   CreatePrivateMatchRequest? createdPrivateRequest;
   JoinPrivateMatchRequest? joinPrivateRequest;
   final leftMatchIds = <String>[];
@@ -244,6 +324,9 @@ final class _Harness {
     NetworkSession? session,
     MapValidationResult? validation,
     WireMatch? quickplayMatch,
+    this.listedMatches = const [],
+    WireMatch? createdPublicMatch,
+    WireMatch? joinedPublicMatch,
     WireMatch? createdPrivateMatch,
     WireMatch? joinedPrivateMatch,
     WireMatch? startedMatch,
@@ -251,6 +334,8 @@ final class _Harness {
   }) : session = session ?? _session(),
        validation = validation ?? _validValidation(),
        quickplayMatch = quickplayMatch ?? _match(),
+       createdPublicMatch = createdPublicMatch ?? _match(id: 'public_created'),
+       joinedPublicMatch = joinedPublicMatch ?? _match(id: 'public_joined'),
        createdPrivateMatch = createdPrivateMatch ?? _match(id: 'private_1'),
        joinedPrivateMatch = joinedPrivateMatch ?? _match(id: 'private_2'),
        startedMatch = startedMatch ?? _match(state: 'running'),
@@ -267,6 +352,20 @@ final class _Harness {
         quickplayRequest = request;
         return quickplayMatch;
       },
+      listMatches: ({required token, status}) async {
+        listCount += 1;
+        return listedMatches;
+      },
+      createMatch: ({required token, required request}) async {
+        createdPublicRequest = request;
+        return createdPublicMatch;
+      },
+      joinMatch:
+          ({required token, required matchId, displayName, country}) async {
+            joinedPublicMatchIds.add(matchId);
+            joinedPublicCountry = country;
+            return joinedPublicMatch;
+          },
       createPrivateMatch: ({required token, required request}) async {
         createdPrivateRequest = request;
         return createdPrivateMatch;

@@ -1638,7 +1638,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Elige civilización primero y luego entra en partida rápida o crea una mesa privada. El mapa se selecciona automáticamente.';
+      'Elige una civilización y después usa partida rápida, partidas públicas o una mesa privada. La partida rápida elige el mapa automáticamente.';
 
   @override
   String get multiplayerCountryPickTitle => 'Elige civilización';
@@ -1659,6 +1659,41 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get multiplayerQuickplaySubtitle =>
       'Encuentra jugadores automáticamente y empieza desde 2 jugadores.';
+
+  @override
+  String get multiplayerBrowsePublicTitle => 'Partidas públicas';
+
+  @override
+  String get multiplayerBrowsePublicSubtitle =>
+      'Explora mesas abiertas o crea una nueva.';
+
+  @override
+  String get multiplayerPublicLobbyTitle => 'Sala pública';
+
+  @override
+  String get multiplayerPublicLobbySubtitle =>
+      'Únete a una partida abierta o crea una mesa pública.';
+
+  @override
+  String get multiplayerPublicMatchNameLabel => 'Nombre de la partida';
+
+  @override
+  String get multiplayerPublicCreateAction => 'Crear partida pública';
+
+  @override
+  String get multiplayerPublicEmpty =>
+      'Aún no hay partidas públicas abiertas. Crea una o actualiza la sala.';
+
+  @override
+  String get multiplayerPublicMatchTitle => 'Partida pública';
+
+  @override
+  String get multiplayerPublicHostReady =>
+      'Ya puedes iniciar la partida pública.';
+
+  @override
+  String get multiplayerPublicWaitingForHost =>
+      'Esperando a que el anfitrión inicie la partida pública.';
 
   @override
   String get multiplayerCreatePrivateTitle => 'Crear código';

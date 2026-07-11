@@ -1,4 +1,5 @@
 import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
@@ -136,6 +137,100 @@ void main() {
         expect(primaryDisplayNames, ['Authenticated Alice']);
         expect(controller.activeMatch?.id, 'match_1');
         expect(presentedErrors, isEmpty);
+      },
+    );
+
+    test(
+      'public lobby lists, joins and creates through active match flow',
+      () async {
+        final listed = _match(
+          id: 'public_listed',
+          state: 'open',
+          quickplay: false,
+          ownerUserId: 'host_player',
+          players: const [
+            WirePlayer(
+              id: 'host_player',
+              userId: 'host_player',
+              name: 'Host',
+              colorValue: 0xFFDC2626,
+              kind: WirePlayerKind.human,
+              connectionState: WirePlayerConnectionState.connected,
+            ),
+          ],
+        );
+        final joined = _match(
+          id: 'public_joined',
+          state: 'open',
+          quickplay: false,
+          ownerUserId: 'host_player',
+        );
+        final created = _match(
+          id: 'public_created',
+          state: 'open',
+          quickplay: false,
+        );
+        final client = _FakeNetworkSessionClient(
+          quickplayMatch: _match(state: 'open'),
+          listedMatches: [listed],
+          joinedPublicMatch: joined,
+          createdPublicMatch: created,
+        );
+        final store = _MemoryNetworkSessionStore(displayName: 'Alice');
+        NetworkSession? currentSession = NetworkSession(
+          userId: 'user_1',
+          token: AuthToken('token'),
+          connectionState: const NetworkConnectionState(
+            status: NetworkConnectionStatus.connected,
+          ),
+        );
+        final controller = LobbyConnectionController(
+          mapName: 'verdantia',
+          mapSource: MapSource.asset,
+          sessionClient: client,
+          sessionStore: store,
+          streamConnector: _emptyStreamConnector,
+          serverpodHost: 'http://localhost:8080',
+          now: () => DateTime.utc(2026, 6, 2, 12),
+          canContinue: () => true,
+          currentSession: () => currentSession,
+          setSession: (session) => currentSession = session,
+          authenticate: ({required initialDisplayName}) async => null,
+          displayName: () => 'Alice',
+          setPrimaryDisplayName: (_) {},
+          country: () => PlayerCountry.china,
+          validateMap: () async => _validValidation(),
+          mapNotReadyMessage: () => 'Map is not ready',
+          inviteCodeRequiredMessage: () => 'Invite code required',
+          errorTextFor: (error) => 'mapped $error',
+          presentError: (_) {},
+          publishMatch: (_) {},
+          navigateTo: (_) {},
+        );
+        addTearDown(controller.dispose);
+
+        await controller.openPublicLobby();
+
+        expect(controller.mode, LobbyMultiplayerMode.publicBrowse);
+        expect(controller.publicMatchesLoaded, isTrue);
+        expect(controller.publicMatches.map((match) => match.id), [
+          'public_listed',
+        ]);
+
+        await controller.joinPublicMatch(matchId: listed.id);
+
+        expect(controller.mode, LobbyMultiplayerMode.publicMatch);
+        expect(controller.activeMatch?.id, 'public_joined');
+        expect(client.joinedPublicMatchIds, ['public_listed']);
+
+        controller.returnHome();
+        await controller.openPublicLobby();
+        await controller.createPublicMatch(name: 'Open table');
+
+        expect(controller.mode, LobbyMultiplayerMode.publicMatch);
+        expect(controller.activeMatch?.id, 'public_created');
+        expect(client.createdPublicRequest?.name, 'Open table');
+        expect(client.createdPublicRequest?.minPlayers, 2);
       },
     );
 
@@ -368,33 +463,42 @@ MapValidationResult _validValidation() {
   );
 }
 
-WireMatch _match({required String state}) {
+WireMatch _match({
+  required String state,
+  String id = 'match_1',
+  String ownerUserId = 'user_1',
+  String name = 'Quickplay',
+  bool quickplay = true,
+  List<WirePlayer>? players,
+}) {
   return WireMatch(
-    id: 'match_1',
-    ownerUserId: 'user_1',
-    name: 'Quickplay',
+    id: id,
+    ownerUserId: ownerUserId,
+    name: name,
     mapName: 'verdantia',
-    players: const [
-      WirePlayer(
-        id: 'player_1',
-        userId: 'user_1',
-        name: 'Alice',
-        colorValue: 0xFF2563EB,
-        kind: WirePlayerKind.human,
-        connectionState: WirePlayerConnectionState.connected,
-      ),
-      WirePlayer(
-        id: 'player_2',
-        userId: 'user_2',
-        name: 'Bob',
-        colorValue: 0xFFDC2626,
-        kind: WirePlayerKind.human,
-        connectionState: WirePlayerConnectionState.connected,
-      ),
-    ],
+    players:
+        players ??
+        const [
+          WirePlayer(
+            id: 'player_1',
+            userId: 'user_1',
+            name: 'Alice',
+            colorValue: 0xFF2563EB,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+          WirePlayer(
+            id: 'player_2',
+            userId: 'user_2',
+            name: 'Bob',
+            colorValue: 0xFFDC2626,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+        ],
     maxPlayers: 4,
     minPlayers: 2,
-    quickplay: true,
+    quickplay: quickplay,
     turn: 1,
     state: state,
     createdAt: DateTime.utc(2026, 6, 2),
@@ -403,13 +507,23 @@ WireMatch _match({required String state}) {
 
 final class _FakeNetworkSessionClient extends NetworkSessionClient {
   final WireMatch quickplayMatch;
+  final List<WireMatch> listedMatches;
+  final WireMatch? createdPublicMatch;
+  final WireMatch? joinedPublicMatch;
   final Object? signOutError;
   QuickplayMatchRequest? quickplayRequest;
+  CreateMatchRequest? createdPublicRequest;
+  final joinedPublicMatchIds = <String>[];
   AuthToken? signedOutToken;
   String? signedOutRefreshToken;
 
-  _FakeNetworkSessionClient({required this.quickplayMatch, this.signOutError})
-    : super(serverpodHost: 'http://localhost:8080');
+  _FakeNetworkSessionClient({
+    required this.quickplayMatch,
+    this.listedMatches = const [],
+    this.createdPublicMatch,
+    this.joinedPublicMatch,
+    this.signOutError,
+  }) : super(serverpodHost: 'http://localhost:8080');
 
   @override
   Future<void> signOutCurrentSession({
@@ -429,6 +543,34 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
   }) async {
     quickplayRequest = request;
     return quickplayMatch;
+  }
+
+  @override
+  Future<List<WireMatch>> listMatches({
+    required AuthToken token,
+    String? status,
+  }) async {
+    return listedMatches;
+  }
+
+  @override
+  Future<WireMatch> createMatch({
+    required AuthToken token,
+    required CreateMatchRequest request,
+  }) async {
+    createdPublicRequest = request;
+    return createdPublicMatch ?? fail('unexpected public match create');
+  }
+
+  @override
+  Future<WireMatch> joinMatch({
+    required AuthToken token,
+    required String matchId,
+    String? displayName,
+    PlayerCountry? country,
+  }) async {
+    joinedPublicMatchIds.add(matchId);
+    return joinedPublicMatch ?? fail('unexpected public match join');
   }
 
   @override

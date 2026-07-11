@@ -70,7 +70,7 @@ void main() {
     },
   );
 
-  test('quickplay matches only lobbies using the requested map', () async {
+  test('quickplay uses one global queue regardless of requested map', () async {
     final hub = RealtimeMatchHub();
     final store = _MemoryMatchStore();
 
@@ -97,79 +97,11 @@ void main() {
       ),
     );
 
-    expect(myranth.id, isNot(verdantia.id));
+    expect(myranth.id, verdantia.id);
     expect(verdantia.mapName, 'verdantia');
-    expect(myranth.mapName, 'myranth');
+    expect(myranth.mapName, MapPlayerCapacityRules.fullMultiplayerMapName);
     expect(verdantia.players, hasLength(1));
-    expect(myranth.players, hasLength(1));
-  });
-
-  test('quickplay is not starved by newer lobbies for other maps', () async {
-    final now = DateTime.utc(2026, 7, 11, 12);
-    final hub = RealtimeMatchHub(nowUtc: () => now);
-    final store = _MemoryMatchStore();
-
-    for (
-      var index = 0;
-      index <= multiplayerQuickplayCandidateScanLimit;
-      index += 1
-    ) {
-      final foreign = await hub.createMatch(
-        store: store,
-        userIdentifier: 'foreign-owner-$index',
-        request: CreateMatchRequest(
-          name: 'Foreign $index',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-        ),
-      );
-      final state = (await store.findState(foreign.id))!;
-      await store.saveState(
-        state.copyWith(
-          match: state.match.copyWith(
-            quickplay: true,
-            createdAt: now.add(Duration(seconds: index)),
-          ),
-        ),
-      );
-    }
-    final compatible = await hub.createMatch(
-      store: store,
-      userIdentifier: 'compatible-owner',
-      request: CreateMatchRequest(
-        name: 'Compatible',
-        mapName: 'myranth',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-    final compatibleState = (await store.findState(compatible.id))!;
-    await store.saveState(
-      compatibleState.copyWith(
-        match: compatibleState.match.copyWith(
-          quickplay: true,
-          createdAt: now.subtract(const Duration(seconds: 1)),
-        ),
-      ),
-    );
-
-    final matched = await hub.quickplay(
-      store: store,
-      userIdentifier: 'compatible-guest',
-      request: CreateMatchRequest(
-        name: 'Ignored',
-        mapName: 'myranth',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-
-    expect(matched.id, compatible.id);
-    expect(matched.players, hasLength(2));
+    expect(myranth.players, hasLength(2));
   });
 
   test(

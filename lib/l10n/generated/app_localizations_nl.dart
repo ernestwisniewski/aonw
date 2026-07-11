@@ -1635,7 +1635,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Kies eerst de beschaving en voer vervolgens quickplay in of maak een privétafel aan. De kaart wordt automatisch geselecteerd.';
+      'Kies een beschaving en daarna snel spelen, openbare wedstrijden of een privétafel. Snel spelen kiest de kaart automatisch.';
 
   @override
   String get multiplayerCountryPickTitle => 'Kies beschaving';
@@ -1656,6 +1656,41 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get multiplayerQuickplaySubtitle =>
       'Vindt spelers automatisch en begint vanaf 2 spelers.';
+
+  @override
+  String get multiplayerBrowsePublicTitle => 'Openbare wedstrijden';
+
+  @override
+  String get multiplayerBrowsePublicSubtitle =>
+      'Bekijk open tafels of maak er zelf een.';
+
+  @override
+  String get multiplayerPublicLobbyTitle => 'Openbare lobby';
+
+  @override
+  String get multiplayerPublicLobbySubtitle =>
+      'Doe mee aan een open wedstrijd of maak een openbare tafel.';
+
+  @override
+  String get multiplayerPublicMatchNameLabel => 'Wedstrijdnaam';
+
+  @override
+  String get multiplayerPublicCreateAction => 'Openbare wedstrijd maken';
+
+  @override
+  String get multiplayerPublicEmpty =>
+      'Er zijn nog geen open openbare wedstrijden. Maak er een of vernieuw de lobby.';
+
+  @override
+  String get multiplayerPublicMatchTitle => 'Openbare wedstrijd';
+
+  @override
+  String get multiplayerPublicHostReady =>
+      'Je kunt de openbare wedstrijd nu starten.';
+
+  @override
+  String get multiplayerPublicWaitingForHost =>
+      'Wachten tot de host de openbare wedstrijd start.';
 
   @override
   String get multiplayerCreatePrivateTitle => 'Code maken';

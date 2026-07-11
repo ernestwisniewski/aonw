@@ -18,6 +18,7 @@ final class _LobbyActionBarBuilder {
     required this.onCancelQuickplay,
     required this.onJoinPrivateMatch,
     required this.onStartPrivateMatch,
+    required this.onStartPublicMatch,
     required this.onBackToMultiplayerHome,
   });
 
@@ -37,6 +38,7 @@ final class _LobbyActionBarBuilder {
   final VoidCallback onCancelQuickplay;
   final VoidCallback onJoinPrivateMatch;
   final VoidCallback onStartPrivateMatch;
+  final VoidCallback onStartPublicMatch;
   final VoidCallback onBackToMultiplayerHome;
 
   Widget? build() {
@@ -44,6 +46,8 @@ final class _LobbyActionBarBuilder {
     return switch (multiplayerMode) {
       LobbyMultiplayerMode.home => null,
       LobbyMultiplayerMode.quickplay => _quickplayActionBar(),
+      LobbyMultiplayerMode.publicBrowse => null,
+      LobbyMultiplayerMode.publicMatch => _publicMatchActionBar(),
       LobbyMultiplayerMode.privateJoin when activeMatch == null =>
         _privateJoinActionBar(),
       LobbyMultiplayerMode.privateHost ||
@@ -120,11 +124,37 @@ final class _LobbyActionBarBuilder {
     );
   }
 
+  Widget _publicMatchActionBar() {
+    final isHost = LobbyMatchStatusRules.isOwner(activeMatch, currentUserId);
+    return MenuActionBar(
+      summary: _MultiplayerActionSummary(
+        icon: isHost
+            ? Icons.admin_panel_settings_outlined
+            : Icons.public_outlined,
+        title: isHost
+            ? l10n.multiplayerPublicHostReady
+            : l10n.multiplayerPublicWaitingForHost,
+        subtitle: _playersSubtitle(activeMatch),
+      ),
+      primaryKey: const Key('multiplayer.publicStartAction'),
+      primaryLabel: isHost ? GameText.actionLabel(l10n.startGameAction) : null,
+      primaryIcon: Icons.play_arrow_rounded,
+      onPrimary: _canStartHostedMatch ? onStartPublicMatch : null,
+      secondaryLabel: GameText.actionLabel(l10n.backAction),
+      secondaryIcon: Icons.arrow_back_rounded,
+      onSecondary: _enabledWhenIdle(onBackToMultiplayerHome),
+    );
+  }
+
   bool get _canStartLocalGame {
     return canStartLocalGame && !starting && !hasMapValidationErrors;
   }
 
   bool get _canStartPrivateMatch {
+    return _canStartHostedMatch;
+  }
+
+  bool get _canStartHostedMatch {
     return LobbyMatchStatusRules.canStartPrivateMatch(
       match: activeMatch,
       userId: currentUserId,

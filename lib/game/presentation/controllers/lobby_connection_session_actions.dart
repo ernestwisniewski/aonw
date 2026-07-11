@@ -48,6 +48,7 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
     setSession(null);
     if (!_canContinue()) return signOutError == null;
     _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
+    _setPublicMatches(const [], loaded: false);
     if (signOutError != null) {
       _showNetworkError(signOutError);
       return false;

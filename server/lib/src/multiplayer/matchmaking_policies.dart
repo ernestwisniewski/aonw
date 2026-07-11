@@ -1,3 +1,5 @@
+import 'package:aonw_core/map/domain/map_player_capacity.dart';
+
 import '../generated/protocol.dart';
 import 'multiplayer_errors.dart';
 import 'multiplayer_match_store.dart';
@@ -5,6 +7,7 @@ import 'multiplayer_match_store.dart';
 CreateMatchRequest quickplayMatchRequest(CreateMatchRequest request) {
   return request.copyWith(
     name: 'Quickplay',
+    mapName: MapPlayerCapacityRules.fullMultiplayerMapName,
     maxPlayers: 4,
     minPlayers: 2,
     private: false,

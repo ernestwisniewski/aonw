@@ -43,12 +43,15 @@ part 'lobby_screen_game_setup_widgets.dart';
 part 'lobby_screen_layout_widgets.dart';
 part 'lobby_screen_local_setup_panel.dart';
 part 'lobby_screen_multiplayer_panels.dart';
+part 'lobby_screen_multiplayer_action_summary.dart';
+part 'lobby_screen_multiplayer_panel_builder.dart';
 part 'lobby_screen_multiplayer_profile_panel.dart';
 part 'lobby_screen_multiplayer_status_widgets.dart';
 part 'lobby_screen_player_list_widgets.dart';
 part 'lobby_screen_player_row.dart';
 part 'lobby_screen_player_setup_widgets.dart';
 part 'lobby_screen_private_match_panel.dart';
+part 'lobby_screen_public_lobby_panel.dart';
 part 'lobby_screen_queue_countdown.dart';
 part 'lobby_screen_session_actions.dart';
 
@@ -284,6 +287,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   Future<void> _joinPrivateMatch() async {
     await _connection.joinPrivateMatch(inviteCode: _inviteCodeController.text);
+  }
+
+  Future<void> _createPublicMatch() async {
+    await _connection.createPublicMatch(name: _nameController.text);
   }
 
   Future<void> _shareInviteCode() async {
@@ -577,6 +584,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       onStartPrivateMatch: ref.withMenuClickAsync(
         _connection.startPrivateMatch,
       ),
+      onStartPublicMatch: ref.withMenuClickAsync(_connection.startPublicMatch),
       onBackToMultiplayerHome: ref.withMenuClick(_connection.returnHome),
     ).build();
   }
@@ -602,53 +610,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       onRemove: canRemove
           ? ref.withMenuClick(() => _removePlayer(index))
           : null,
-    );
-  }
-
-  Widget _buildMultiplayerPanel() {
-    final panel = switch (_connection.mode) {
-      LobbyMultiplayerMode.home => _MultiplayerHomePanel(
-        busy: _connection.busy,
-        error: _connection.error,
-        onQuickplay: ref.withMenuClickAsync(_connection.startQuickplayQueue),
-        onCreatePrivate: ref.withMenuClickAsync(_connection.createPrivateMatch),
-        onJoinPrivate: ref.withMenuClick(_connection.openJoinPrivateMatch),
-      ),
-      LobbyMultiplayerMode.quickplay => _MultiplayerQueuePanel(
-        busy: _connection.busy,
-        error: _connection.error,
-        match: _connection.activeMatch,
-        currentUserId: ref.watch(networkSessionProvider)?.userId,
-        nowUtc: ref.watch(gameClockProvider).nowUtc(),
-      ),
-      LobbyMultiplayerMode.privateHost ||
-      LobbyMultiplayerMode.privateJoin => _PrivateMatchPanel(
-        busy: _connection.busy,
-        error: _connection.error,
-        match: _connection.activeMatch,
-        currentUserId: ref.watch(networkSessionProvider)?.userId,
-        inviteCodeController: _inviteCodeController,
-        joining:
-            _connection.mode == LobbyMultiplayerMode.privateJoin &&
-            _connection.activeMatch == null,
-        onShare: ref.withMenuClickAsync(_shareInviteCode),
-        onCopy: ref.withMenuClickAsync(_copyInviteCode),
-        onBack: ref.withMenuClick(_connection.returnHome),
-      ),
-    };
-    return panel;
-  }
-
-  Widget _buildMultiplayerProfilePanel() {
-    return _MultiplayerProfilePanel(
-      nicknameController: _players.nameControllerAt(0),
-      countryControl: _playerCountryControl(
-        0,
-        key: const Key('multiplayer.countryDropdown'),
-      ),
-      onNicknameChanged: (_) => setState(() {}),
-      signedIn: ref.watch(networkSessionProvider) != null,
-      onSignOut: ref.withMenuClickAsync(_signOutMultiplayerAccount),
     );
   }
 

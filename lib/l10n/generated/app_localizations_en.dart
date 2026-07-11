@@ -1629,7 +1629,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get multiplayerLobbyHeaderSubtitle =>
-      'Choose civilization first, then enter quickplay or create a private table. The map is selected automatically.';
+      'Choose a civilization, then use quickplay, browse public games, or create a private table. Quickplay selects the map automatically.';
 
   @override
   String get multiplayerCountryPickTitle => 'Choose civilization';
@@ -1650,6 +1650,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get multiplayerQuickplaySubtitle =>
       'Finds players automatically and starts from 2 players.';
+
+  @override
+  String get multiplayerBrowsePublicTitle => 'Public games';
+
+  @override
+  String get multiplayerBrowsePublicSubtitle =>
+      'Browse open tables or create one for other players.';
+
+  @override
+  String get multiplayerPublicLobbyTitle => 'Public lobby';
+
+  @override
+  String get multiplayerPublicLobbySubtitle =>
+      'Join an open match or create a public table.';
+
+  @override
+  String get multiplayerPublicMatchNameLabel => 'Match name';
+
+  @override
+  String get multiplayerPublicCreateAction => 'Create public match';
+
+  @override
+  String get multiplayerPublicEmpty =>
+      'No open public matches yet. Create one or refresh the lobby.';
+
+  @override
+  String get multiplayerPublicMatchTitle => 'Public match';
+
+  @override
+  String get multiplayerPublicHostReady =>
+      'You can start the public match now.';
+
+  @override
+  String get multiplayerPublicWaitingForHost =>
+      'Waiting for the host to start the public match.';
 
   @override
   String get multiplayerCreatePrivateTitle => 'Create code';
