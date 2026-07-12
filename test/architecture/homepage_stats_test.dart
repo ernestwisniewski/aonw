@@ -13,9 +13,18 @@ void main() {
       matches(
         RegExp(
           r'<a class="nav-link" href="/stats">\s*'
-          r'<span class="platform-label">Statistics</span>',
+          r'<span class="platform-label">\s*'
+          r'<span class="platform-icon platform-icon-stats" '
+          r'aria-hidden="true"></span>\s*'
+          r'Statistics\s*'
+          r'</span>',
         ),
       ),
+    );
+    expect(homepage, contains('url("/assets/platform-icons/stats.svg")'));
+    expect(
+      homepage.indexOf('href="/stats"'),
+      lessThan(homepage.indexOf('href="https://ernest.dev/"')),
     );
 
     final stats = statsFile.readAsStringSync();

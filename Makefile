@@ -549,6 +549,7 @@ build-homepage:
 	@test -f assets/homepage/platform-icons/github.svg || { echo "assets/homepage/platform-icons/github.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/reddit.svg || { echo "assets/homepage/platform-icons/reddit.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/steam.svg || { echo "assets/homepage/platform-icons/steam.svg not found"; exit 1; }
+	@test -f assets/homepage/platform-icons/stats.svg || { echo "assets/homepage/platform-icons/stats.svg not found"; exit 1; }
 	@test -f assets/homepage/platform-icons/web.svg || { echo "assets/homepage/platform-icons/web.svg not found"; exit 1; }
 	@test -f web/favicon.png || { echo "web/favicon.png not found"; exit 1; }
 	@test -f web/icons/Icon-192.png || { echo "web/icons/Icon-192.png not found"; exit 1; }
