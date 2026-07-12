@@ -12,7 +12,6 @@ import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.da
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
@@ -331,10 +330,8 @@ final class LobbyConnectionController extends ChangeNotifier {
   LobbyMatchActionConfig _matchActionConfig() {
     return LobbyMatchActionConfig(
       mapName: mapName,
-      displayName: displayName(),
       country: country(),
       mapNotReadyMessage: mapNotReadyMessage(),
-      matchRules: MatchRules.standard,
     );
   }
 

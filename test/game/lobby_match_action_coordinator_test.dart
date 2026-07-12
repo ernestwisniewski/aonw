@@ -19,7 +19,6 @@ void main() {
 
         expect(harness.validationCount, 1);
         expect(harness.quickplayRequest?.mapName, 'verdantia');
-        expect(harness.quickplayRequest?.displayName, 'Alice');
         expect(harness.quickplayRequest?.country, PlayerCountry.china);
         expect(harness.remembered.map((entry) => entry.match.id), ['match_1']);
         expect(harness.watched.map((entry) => entry.match.id), ['match_1']);
@@ -137,7 +136,7 @@ void main() {
         config: _config(),
       );
 
-      expect(harness.createdPrivateRequest?.displayName, 'Alice');
+      expect(harness.createdPrivateRequest?.mapName, 'verdantia');
       expect(harness.createdPrivateRequest?.country, PlayerCountry.china);
       expect(harness.joinPrivateRequest?.inviteCode, 'ABC123');
       expect(harness.joinPrivateRequest?.country, PlayerCountry.china);
@@ -191,7 +190,6 @@ void main() {
 LobbyMatchActionConfig _config() {
   return const LobbyMatchActionConfig(
     mapName: 'verdantia',
-    displayName: 'Alice',
     country: PlayerCountry.china,
     mapNotReadyMessage: 'Map is not ready',
   );
@@ -360,12 +358,11 @@ final class _Harness {
         createdPublicRequest = request;
         return createdPublicMatch;
       },
-      joinMatch:
-          ({required token, required matchId, displayName, country}) async {
-            joinedPublicMatchIds.add(matchId);
-            joinedPublicCountry = country;
-            return joinedPublicMatch;
-          },
+      joinMatch: ({required token, required matchId, country}) async {
+        joinedPublicMatchIds.add(matchId);
+        joinedPublicCountry = country;
+        return joinedPublicMatch;
+      },
       createPrivateMatch: ({required token, required request}) async {
         createdPrivateRequest = request;
         return createdPrivateMatch;

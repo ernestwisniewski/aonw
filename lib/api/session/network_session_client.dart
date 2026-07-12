@@ -3,8 +3,6 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
-import 'package:aonw_core/ai.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
@@ -59,82 +57,45 @@ class NetworkSessionRefreshResult {
   });
 }
 
+/// Public-lobby metadata supported by the Serverpod create-match endpoint.
+///
+/// Online rules, account display names, and player kinds are server-owned and
+/// intentionally do not belong to this request.
 class CreateMatchRequest {
   final String name;
   final String mapName;
   final int maxPlayers;
   final int minPlayers;
-  final String? displayName;
   final PlayerCountry? country;
-  final MatchRules matchRules;
-  final List<CreateMatchAiPlayer> aiPlayers;
 
   const CreateMatchRequest({
     required this.name,
     required this.mapName,
     required this.maxPlayers,
     this.minPlayers = MapPlayerCapacityRules.minPlayers,
-    this.displayName,
     this.country,
-    this.matchRules = MatchRules.standard,
-    this.aiPlayers = const [],
-  });
-}
-
-class CreateMatchAiPlayer {
-  final String? name;
-  final PlayerCountry? country;
-  final AiStrategyId strategyId;
-  final AiDifficulty difficulty;
-  final AiPersona persona;
-
-  const CreateMatchAiPlayer({
-    this.name,
-    this.country,
-    this.strategyId = AiStrategyId.random,
-    this.difficulty = AiDifficulty.normal,
-    this.persona = AiPersona.balanced,
   });
 }
 
 class QuickplayMatchRequest {
   final String mapName;
-  final String? displayName;
   final PlayerCountry? country;
-  final MatchRules matchRules;
 
-  const QuickplayMatchRequest({
-    required this.mapName,
-    this.displayName,
-    this.country,
-    this.matchRules = MatchRules.standard,
-  });
+  const QuickplayMatchRequest({required this.mapName, this.country});
 }
 
 class CreatePrivateMatchRequest {
   final String mapName;
-  final String? displayName;
   final PlayerCountry? country;
-  final MatchRules matchRules;
 
-  const CreatePrivateMatchRequest({
-    required this.mapName,
-    this.displayName,
-    this.country,
-    this.matchRules = MatchRules.standard,
-  });
+  const CreatePrivateMatchRequest({required this.mapName, this.country});
 }
 
 class JoinPrivateMatchRequest {
   final String inviteCode;
-  final String? displayName;
   final PlayerCountry? country;
 
-  const JoinPrivateMatchRequest({
-    required this.inviteCode,
-    this.displayName,
-    this.country,
-  });
+  const JoinPrivateMatchRequest({required this.inviteCode, this.country});
 }
 
 typedef NetworkSessionServerpodClientFactory =
@@ -376,7 +337,6 @@ class NetworkSessionClient {
   Future<WireMatch> joinMatch({
     required AuthToken token,
     required String matchId,
-    String? displayName,
     PlayerCountry? country,
   }) {
     return _withToken(

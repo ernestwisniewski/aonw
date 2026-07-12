@@ -5,7 +5,6 @@ import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
@@ -34,7 +33,6 @@ typedef LobbyPublicMatchJoiner =
     Future<WireMatch> Function({
       required AuthToken token,
       required String matchId,
-      String? displayName,
       PlayerCountry? country,
     });
 typedef LobbyPrivateMatchCreator =
@@ -76,10 +74,8 @@ abstract class LobbyMatchActionConfig with _$LobbyMatchActionConfig {
 
   const factory LobbyMatchActionConfig({
     required String mapName,
-    required String displayName,
     required PlayerCountry country,
     required String mapNotReadyMessage,
-    @Default(MatchRules.standard) MatchRules matchRules,
   }) = _LobbyMatchActionConfig;
 }
 
@@ -131,9 +127,7 @@ final class LobbyMatchActionCoordinator {
       token: session.token,
       request: QuickplayMatchRequest(
         mapName: config.mapName,
-        displayName: config.displayName,
         country: config.country,
-        matchRules: config.matchRules,
       ),
     );
     _rememberAndWatch(session: session, match: match);
@@ -179,9 +173,7 @@ final class LobbyMatchActionCoordinator {
         mapName: config.mapName,
         maxPlayers: MapPlayerCapacityRules.maxPlayersForMapName(config.mapName),
         minPlayers: MapPlayerCapacityRules.minPlayers,
-        displayName: config.displayName,
         country: config.country,
-        matchRules: config.matchRules,
       ),
     );
     _rememberAndWatch(session: session, match: match);
@@ -195,7 +187,6 @@ final class LobbyMatchActionCoordinator {
     final match = await joinMatch(
       token: session.token,
       matchId: matchId,
-      displayName: config.displayName,
       country: config.country,
     );
     _rememberAndWatch(session: session, match: match);
@@ -208,9 +199,7 @@ final class LobbyMatchActionCoordinator {
       token: session.token,
       request: CreatePrivateMatchRequest(
         mapName: config.mapName,
-        displayName: config.displayName,
         country: config.country,
-        matchRules: config.matchRules,
       ),
     );
     _rememberAndWatch(session: session, match: match);
@@ -228,7 +217,6 @@ final class LobbyMatchActionCoordinator {
       token: session.token,
       request: JoinPrivateMatchRequest(
         inviteCode: code,
-        displayName: config.displayName,
         country: config.country,
       ),
     );

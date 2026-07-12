@@ -70,7 +70,6 @@ void main() {
         expect(controller.error, isNull);
         expect(controller.activeMatch?.id, 'match_1');
         expect(client.quickplayRequest?.mapName, 'verdantia');
-        expect(client.quickplayRequest?.displayName, 'Lobby Alice');
         expect(client.quickplayRequest?.country, PlayerCountry.china);
         expect(store.displayName, 'Authenticated Alice');
         expect(store.stored?.refreshToken, 'refresh-token');
@@ -566,7 +565,6 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
   Future<WireMatch> joinMatch({
     required AuthToken token,
     required String matchId,
-    String? displayName,
     PlayerCountry? country,
   }) async {
     joinedPublicMatchIds.add(matchId);

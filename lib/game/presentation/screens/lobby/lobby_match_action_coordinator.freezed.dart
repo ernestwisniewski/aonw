@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LobbyMatchActionConfig {
 
- String get mapName; String get displayName; PlayerCountry get country; String get mapNotReadyMessage; MatchRules get matchRules;
+ String get mapName; PlayerCountry get country; String get mapNotReadyMessage;
 /// Create a copy of LobbyMatchActionConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $LobbyMatchActionConfigCopyWith<LobbyMatchActionConfig> get copyWith => _$LobbyM
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyMatchActionConfig&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.country, country) || other.country == country)&&(identical(other.mapNotReadyMessage, mapNotReadyMessage) || other.mapNotReadyMessage == mapNotReadyMessage)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LobbyMatchActionConfig&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.country, country) || other.country == country)&&(identical(other.mapNotReadyMessage, mapNotReadyMessage) || other.mapNotReadyMessage == mapNotReadyMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mapName,displayName,country,mapNotReadyMessage,matchRules);
+int get hashCode => Object.hash(runtimeType,mapName,country,mapNotReadyMessage);
 
 @override
 String toString() {
-  return 'LobbyMatchActionConfig(mapName: $mapName, displayName: $displayName, country: $country, mapNotReadyMessage: $mapNotReadyMessage, matchRules: $matchRules)';
+  return 'LobbyMatchActionConfig(mapName: $mapName, country: $country, mapNotReadyMessage: $mapNotReadyMessage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $LobbyMatchActionConfigCopyWith<$Res>  {
   factory $LobbyMatchActionConfigCopyWith(LobbyMatchActionConfig value, $Res Function(LobbyMatchActionConfig) _then) = _$LobbyMatchActionConfigCopyWithImpl;
 @useResult
 $Res call({
- String mapName, String displayName, PlayerCountry country, String mapNotReadyMessage, MatchRules matchRules
+ String mapName, PlayerCountry country, String mapNotReadyMessage
 });
 
 
@@ -62,14 +62,12 @@ class _$LobbyMatchActionConfigCopyWithImpl<$Res>
 
 /// Create a copy of LobbyMatchActionConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? mapName = null,Object? displayName = null,Object? country = null,Object? mapNotReadyMessage = null,Object? matchRules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? mapName = null,Object? country = null,Object? mapNotReadyMessage = null,}) {
   return _then(_self.copyWith(
 mapName: null == mapName ? _self.mapName : mapName // ignore: cast_nullable_to_non_nullable
-as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
 as PlayerCountry,mapNotReadyMessage: null == mapNotReadyMessage ? _self.mapNotReadyMessage : mapNotReadyMessage // ignore: cast_nullable_to_non_nullable
-as String,matchRules: null == matchRules ? _self.matchRules : matchRules // ignore: cast_nullable_to_non_nullable
-as MatchRules,
+as String,
   ));
 }
 
@@ -154,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mapName,  String displayName,  PlayerCountry country,  String mapNotReadyMessage,  MatchRules matchRules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mapName,  PlayerCountry country,  String mapNotReadyMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LobbyMatchActionConfig() when $default != null:
-return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyMessage,_that.matchRules);case _:
+return $default(_that.mapName,_that.country,_that.mapNotReadyMessage);case _:
   return orElse();
 
 }
@@ -175,10 +173,10 @@ return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyM
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mapName,  String displayName,  PlayerCountry country,  String mapNotReadyMessage,  MatchRules matchRules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mapName,  PlayerCountry country,  String mapNotReadyMessage)  $default,) {final _that = this;
 switch (_that) {
 case _LobbyMatchActionConfig():
-return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyMessage,_that.matchRules);case _:
+return $default(_that.mapName,_that.country,_that.mapNotReadyMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +193,10 @@ return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyM
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mapName,  String displayName,  PlayerCountry country,  String mapNotReadyMessage,  MatchRules matchRules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mapName,  PlayerCountry country,  String mapNotReadyMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _LobbyMatchActionConfig() when $default != null:
-return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyMessage,_that.matchRules);case _:
+return $default(_that.mapName,_that.country,_that.mapNotReadyMessage);case _:
   return null;
 
 }
@@ -210,14 +208,12 @@ return $default(_that.mapName,_that.displayName,_that.country,_that.mapNotReadyM
 
 
 class _LobbyMatchActionConfig extends LobbyMatchActionConfig {
-  const _LobbyMatchActionConfig({required this.mapName, required this.displayName, required this.country, required this.mapNotReadyMessage, this.matchRules = MatchRules.standard}): super._();
+  const _LobbyMatchActionConfig({required this.mapName, required this.country, required this.mapNotReadyMessage}): super._();
   
 
 @override final  String mapName;
-@override final  String displayName;
 @override final  PlayerCountry country;
 @override final  String mapNotReadyMessage;
-@override@JsonKey() final  MatchRules matchRules;
 
 /// Create a copy of LobbyMatchActionConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +225,16 @@ _$LobbyMatchActionConfigCopyWith<_LobbyMatchActionConfig> get copyWith => __$Lob
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyMatchActionConfig&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.country, country) || other.country == country)&&(identical(other.mapNotReadyMessage, mapNotReadyMessage) || other.mapNotReadyMessage == mapNotReadyMessage)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LobbyMatchActionConfig&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.country, country) || other.country == country)&&(identical(other.mapNotReadyMessage, mapNotReadyMessage) || other.mapNotReadyMessage == mapNotReadyMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mapName,displayName,country,mapNotReadyMessage,matchRules);
+int get hashCode => Object.hash(runtimeType,mapName,country,mapNotReadyMessage);
 
 @override
 String toString() {
-  return 'LobbyMatchActionConfig(mapName: $mapName, displayName: $displayName, country: $country, mapNotReadyMessage: $mapNotReadyMessage, matchRules: $matchRules)';
+  return 'LobbyMatchActionConfig(mapName: $mapName, country: $country, mapNotReadyMessage: $mapNotReadyMessage)';
 }
 
 
@@ -249,7 +245,7 @@ abstract mixin class _$LobbyMatchActionConfigCopyWith<$Res> implements $LobbyMat
   factory _$LobbyMatchActionConfigCopyWith(_LobbyMatchActionConfig value, $Res Function(_LobbyMatchActionConfig) _then) = __$LobbyMatchActionConfigCopyWithImpl;
 @override @useResult
 $Res call({
- String mapName, String displayName, PlayerCountry country, String mapNotReadyMessage, MatchRules matchRules
+ String mapName, PlayerCountry country, String mapNotReadyMessage
 });
 
 
@@ -266,14 +262,12 @@ class __$LobbyMatchActionConfigCopyWithImpl<$Res>
 
 /// Create a copy of LobbyMatchActionConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? mapName = null,Object? displayName = null,Object? country = null,Object? mapNotReadyMessage = null,Object? matchRules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? mapName = null,Object? country = null,Object? mapNotReadyMessage = null,}) {
   return _then(_LobbyMatchActionConfig(
 mapName: null == mapName ? _self.mapName : mapName // ignore: cast_nullable_to_non_nullable
-as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,country: null == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
 as PlayerCountry,mapNotReadyMessage: null == mapNotReadyMessage ? _self.mapNotReadyMessage : mapNotReadyMessage // ignore: cast_nullable_to_non_nullable
-as String,matchRules: null == matchRules ? _self.matchRules : matchRules // ignore: cast_nullable_to_non_nullable
-as MatchRules,
+as String,
   ));
 }
 

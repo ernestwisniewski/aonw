@@ -69,12 +69,15 @@ preference for newly created queues; once they join an existing queue, the
 existing lobby's map preference and the final player count determine the start
 map through `MapPlayerCapacityRules.multiplayerStartMapName`.
 
-Network multiplayer matchmaking allocates human seats only. The shared wire
-model can serialize AI players for snapshot compatibility, but the Serverpod
-runtime does not run AI turns for multiplayer matches. If AI seats are enabled
-later, add a server-side AI turn runner before allowing those seats to block
-turn completion; current server timeout handling treats AI seats as
-non-blocking.
+Network multiplayer currently uses the server-owned `MatchRules.standard` and
+the display name stored in the authenticated account profile, while matchmaking
+allocates human seats only. Client lobby requests intentionally expose neither
+custom rules, arbitrary display names, nor AI seats. The shared wire model can
+serialize AI players for snapshot compatibility, but the Serverpod runtime does
+not run AI turns for multiplayer matches. If configurable rules or AI seats are
+enabled later, add them as complete vertical protocol features. AI seats require
+a server-side AI turn runner before they can block turn completion; current
+timeout handling treats AI seats as non-blocking.
 
 ## Protocol Versioning
 

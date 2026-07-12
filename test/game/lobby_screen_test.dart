@@ -317,6 +317,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('game-length-dropdown')), findsNothing);
     final countryDropdown = find.byKey(
       const Key('multiplayer.countryDropdown'),
     );
