@@ -419,8 +419,67 @@ void main() {
         (u) => u.id == 'a',
       );
       final resolved = result.events.whereType<CombatResolvedEvent>().single;
-      expect(updatedAttacker.hitPoints, 7);
+      expect(updatedAttacker.hitPoints, isNull);
+      expect(resolved.outcome.attackerHpAfter, 7);
       expect(resolved.outcome.steps.whereType<RetaliationStep>(), isEmpty);
+    });
+
+    test('elite promotion keeps an undamaged attacker at its new full HP', () {
+      const combatRuleset = CombatRuleset(varianceRange: 0);
+      final mapData = _map(4, 3);
+      final attacker = _unit(
+        id: 'a',
+        ownerPlayerId: 'p1',
+        type: GameUnitType.archer,
+        col: 0,
+        row: 0,
+      ).copyWith(experiencePoints: UnitVeterancyRules.eliteThreshold - 1);
+      final defender = _unit(id: 'd', ownerPlayerId: 'p2', col: 2, row: 0);
+      final state = GameState(
+        activePlayerId: 'p1',
+        units: [attacker, defender],
+        fogOfWar: _visible('p1', const [
+          HexCoordinate(col: 0, row: 0),
+          HexCoordinate(col: 2, row: 0),
+        ]),
+      );
+      final prePromotionStats = UnitCombatStats.derive(
+        attacker,
+        ruleset: combatRuleset,
+      ).add(UnitVeterancyRules.statsBonusFor(attacker));
+
+      final result = _reducer(
+        mapData,
+        combatRuleset: combatRuleset,
+      ).reduce(state, const AttackHexCommand('a', 2, 0));
+
+      final updatedAttacker = result.state.units.singleWhere(
+        (unit) => unit.id == attacker.id,
+      );
+      final postPromotionStats = UnitCombatStats.derive(
+        updatedAttacker,
+        ruleset: combatRuleset,
+      ).add(UnitVeterancyRules.statsBonusFor(updatedAttacker));
+      final resolved = result.events.whereType<CombatResolvedEvent>().single;
+
+      expect(resolved.outcome.attackerHpAfter, prePromotionStats.hp);
+      expect(
+        updatedAttacker.experiencePoints,
+        UnitVeterancyRules.eliteThreshold,
+      );
+      expect(
+        UnitVeterancyRules.rankFor(updatedAttacker),
+        UnitVeterancyRank.elite,
+      );
+      expect(updatedAttacker.hitPoints, isNull);
+      expect(postPromotionStats.hp, prePromotionStats.hp + 2);
+      expect(
+        UnitCombatHealth.currentHp(
+          updatedAttacker,
+          effectiveStats: postPromotionStats,
+        ),
+        postPromotionStats.hp,
+      );
     });
 
     test('kill on defended city center clears defender before city HP', () {

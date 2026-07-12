@@ -119,6 +119,9 @@ class SaveSnapshot {
       activePlayerId: activePlayerId,
       activePlayerCanAct: activePlayerCanAct,
       submittedPlayerIds: runtimeState.submittedPlayerIds,
+      timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
+      afkPlayerIds: runtimeState.afkPlayerIds,
+      kickedPlayerIds: runtimeState.kickedPlayerIds,
       intendedAttacks: runtimeState.intendedAttacks,
       resourceTradeAgreements: runtimeState.resourceTradeAgreements,
       dominationHoldTurnsByPlayerId: runtimeState.dominationHoldTurnsByPlayerId,
@@ -126,6 +129,7 @@ class SaveSnapshot {
           runtimeState.culturalVictoryHoldTurnsByPlayerId,
       mapObjectiveHoldStatesByObjectiveId:
           runtimeState.mapObjectiveHoldStatesByObjectiveId,
+      turnStartedAt: runtimeState.turnStartedAt,
       interaction: GameInteractionState(
         cityFoundingDraft: runtimeState.cityFoundingDraft,
         pendingAction: runtimeState.pendingAction,

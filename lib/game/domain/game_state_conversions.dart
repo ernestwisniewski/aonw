@@ -37,6 +37,9 @@ extension GameStatePersistence on GameState {
       wonderRegistry: persistent.wonderRegistry,
       diplomacy: runtime.diplomacy,
       submittedPlayerIds: runtime.submittedPlayerIds,
+      timeoutStreaksByPlayerId: runtime.timeoutStreaksByPlayerId,
+      afkPlayerIds: runtime.afkPlayerIds,
+      kickedPlayerIds: runtime.kickedPlayerIds,
       intendedAttacks: runtime.intendedAttacks,
       resourceTradeAgreements: runtime.resourceTradeAgreements,
       dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
@@ -44,6 +47,7 @@ extension GameStatePersistence on GameState {
           runtime.culturalVictoryHoldTurnsByPlayerId,
       mapObjectiveHoldStatesByObjectiveId:
           runtime.mapObjectiveHoldStatesByObjectiveId,
+      turnStartedAt: runtime.turnStartedAt,
     );
   }
 }

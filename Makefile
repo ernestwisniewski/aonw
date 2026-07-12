@@ -187,7 +187,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -204,6 +204,7 @@ help:
 	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
+	@echo "  make reducer-parity-test LOCAL: run local/server reducer fixtures against one oracle"
 	@echo "  make profile-check LOCAL: validate the selected Compose deployment profile"
 	@echo "  make deploy        Pull repo, rebuild Docker, restart staging, check health"
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
@@ -411,6 +412,10 @@ client-test:
 server-test:
 	@cd server && dart analyze --fatal-infos
 	@cd server && dart test
+
+reducer-parity-test:
+	@flutter test test/game/domain/reducer/local_reducer_parity_fixture_test.dart
+	@cd server && dart test test/multiplayer/server_reducer_parity_fixture_test.dart
 
 server-integration-test:
 	@cd server && \

@@ -28,13 +28,14 @@ abstract final class _CombatOutcomeApplier {
 
     GameUnit? updatedAttacker;
     if (!outcome.attackerKilled) {
-      final attackerWithCombatState = attacker.copyWith(
-        movementPoints: 0,
-        hitPoints: UnitCombatHealth.clampHp(
-          outcome.attackerHpAfter,
-          effectiveStats: attackerEffective,
-        ),
-      );
+      final attackerWithCombatState = attacker
+          .copyWith(movementPoints: 0)
+          .copyWithHitPoints(
+            UnitCombatHealth.storedHp(
+              outcome.attackerHpAfter,
+              effectiveStats: attackerEffective,
+            ),
+          );
       updatedAttacker = UnitVeterancyRules.addExperience(
         attackerWithCombatState,
         attackerExperience,
@@ -51,15 +52,18 @@ abstract final class _CombatOutcomeApplier {
       final defenderRetreatDestination = outcome.defenderRetreated
           ? retreatDestination
           : null;
-      final defenderWithCombatState = defender.copyWith(
-        col: defenderRetreatDestination?.col,
-        row: defenderRetreatDestination?.row,
-        movementPoints: defenderRetreatDestination == null ? null : 0,
-        hitPoints: UnitCombatHealth.clampHp(
-          outcome.defenderHpAfter,
-          effectiveStats: defenderEffective,
-        ),
-      );
+      final defenderWithCombatState = defender
+          .copyWith(
+            col: defenderRetreatDestination?.col,
+            row: defenderRetreatDestination?.row,
+            movementPoints: defenderRetreatDestination == null ? null : 0,
+          )
+          .copyWithHitPoints(
+            UnitCombatHealth.storedHp(
+              outcome.defenderHpAfter,
+              effectiveStats: defenderEffective,
+            ),
+          );
       updatedDefender = UnitVeterancyRules.addExperience(
         defenderWithCombatState,
         defenderExperience,
@@ -103,13 +107,14 @@ abstract final class _CombatOutcomeApplier {
 
     GameUnit? updatedAttacker;
     if (!outcome.attackerKilled) {
-      final attackerWithCombatState = attacker.copyWith(
-        movementPoints: 0,
-        hitPoints: UnitCombatHealth.clampHp(
-          outcome.attackerHpAfter,
-          effectiveStats: attackerEffective,
-        ),
-      );
+      final attackerWithCombatState = attacker
+          .copyWith(movementPoints: 0)
+          .copyWithHitPoints(
+            UnitCombatHealth.storedHp(
+              outcome.attackerHpAfter,
+              effectiveStats: attackerEffective,
+            ),
+          );
       updatedAttacker = UnitVeterancyRules.addExperience(
         attackerWithCombatState,
         attackerExperience,

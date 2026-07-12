@@ -14,4 +14,18 @@ abstract final class UnitCombatHealth {
     if (maxHp <= 0) return 0;
     return hp.clamp(0, maxHp).toInt();
   }
+
+  /// Returns the canonical persisted representation of combat HP.
+  ///
+  /// Full health is represented by `null`, matching newly created units and
+  /// avoiding two serialized forms for the same domain state.
+  static int? storedHp(int hp, {required CombatStats effectiveStats}) {
+    return storedHpForMax(hp, maxHp: effectiveStats.hp);
+  }
+
+  static int? storedHpForMax(int hp, {required int maxHp}) {
+    if (maxHp <= 0) return null;
+    final clamped = hp.clamp(0, maxHp).toInt();
+    return clamped >= maxHp ? null : clamped;
+  }
 }

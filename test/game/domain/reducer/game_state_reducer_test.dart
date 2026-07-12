@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
@@ -303,6 +304,19 @@ void main() {
       final result = reducer.reduce(state, const SubmitTurnCommand('p1'));
 
       expect(result.state, state);
+    });
+
+    test('rejects a submitted player forged by another actor', () {
+      const state = GameState(activePlayerId: 'p2');
+
+      final result = reducer.reduce(
+        state,
+        const SubmitTurnCommand('p1'),
+        context: const GameCommandContext(actorPlayerId: 'p2'),
+      );
+
+      expect(result.state, state);
+      expect(result.events, isEmpty);
     });
   });
   // SetActivePlayerCommand

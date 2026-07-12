@@ -19,7 +19,7 @@ void main() {
     });
 
     test(
-      'copyWithPersistentState drops persistent-only multiplayer fields',
+      'copyWithPersistentState preserves lifecycle but drops interaction fields',
       () {
         final turnStartedAt = DateTime.utc(2026, 7, 9, 12);
         final persistent = PersistentGameState(
@@ -46,10 +46,10 @@ void main() {
         expect(projected.pendingAction, isNull);
         expect(runtime.cityFoundingDraft, isNull);
         expect(runtime.pendingAction, isNull);
-        expect(runtime.timeoutStreaksByPlayerId, isEmpty);
-        expect(runtime.afkPlayerIds, isEmpty);
-        expect(runtime.kickedPlayerIds, isEmpty);
-        expect(runtime.turnStartedAt, isNull);
+        expect(runtime.timeoutStreaksByPlayerId, {'player_1': 2});
+        expect(runtime.afkPlayerIds, {'player_2'});
+        expect(runtime.kickedPlayerIds, {'player_3'});
+        expect(runtime.turnStartedAt, turnStartedAt);
       },
     );
   });
@@ -116,9 +116,12 @@ PersistentGameState _persistentProjection() {
     wonderRegistry: const WonderRegistry(
       completedBy: {WonderType.greatLibrary: 'player_1'},
     ),
-    runtimeState: const GameRuntimeState(
-      submittedPlayerIds: {'player_1'},
-      intendedAttacks: [
+    runtimeState: GameRuntimeState(
+      submittedPlayerIds: const {'player_1'},
+      timeoutStreaksByPlayerId: const {'player_2': 2},
+      afkPlayerIds: const {'player_2'},
+      kickedPlayerIds: const {'player_3'},
+      intendedAttacks: const [
         IntendedAttack(
           attackerUnitId: 'unit_1',
           defenderCol: 4,
@@ -127,7 +130,7 @@ PersistentGameState _persistentProjection() {
           declaringPlayerId: 'player_1',
         ),
       ],
-      diplomacy: DiplomacyState(
+      diplomacy: const DiplomacyState(
         relations: {
           'player_1|player_2': DiplomaticRelation(
             playerAId: 'player_1',
@@ -137,16 +140,16 @@ PersistentGameState _persistentProjection() {
           ),
         },
       ),
-      dominationHoldTurnsByPlayerId: {'player_1': 2},
-      culturalVictoryHoldTurnsByPlayerId: {'player_1': 1},
-      mapObjectiveHoldStatesByObjectiveId: {
+      dominationHoldTurnsByPlayerId: const {'player_1': 2},
+      culturalVictoryHoldTurnsByPlayerId: const {'player_1': 1},
+      mapObjectiveHoldStatesByObjectiveId: const {
         'objective_1': MapObjectiveHoldState(
           objectiveId: 'objective_1',
           playerId: 'player_1',
           holdTurns: 2,
         ),
       },
-      resourceTradeAgreements: [
+      resourceTradeAgreements: const [
         ResourceTradeAgreement(
           id: 'trade_1',
           exporterPlayerId: 'player_1',
@@ -156,6 +159,7 @@ PersistentGameState _persistentProjection() {
           remainingTurns: 4,
         ),
       ],
+      turnStartedAt: DateTime.utc(2026, 7, 9, 12),
     ),
   );
 }

@@ -44,6 +44,20 @@ class LocalCommandResolver {
       paceBalance: baseSnapshot.save.matchRules.paceBalance,
       victoryRules: baseSnapshot.save.matchRules.victory,
     );
+    if (command is SubmitTurnCommand &&
+        _rejectSubmitTurn(
+          baseSnapshot: baseSnapshot,
+          command: command,
+          actorPlayerId: effectiveContext.actorPlayerId,
+        )) {
+      return LocalCommandResolution(
+        save: baseSnapshot.save.copyWith(savedAt: savedAt.toUtc()),
+        state: currentState,
+        events: const [],
+        uiEffects: const [],
+        context: effectiveContext,
+      );
+    }
     final transition = reducer.reduce(
       currentState,
       command,
@@ -109,15 +123,6 @@ class LocalCommandResolver {
   }) {
     final save = baseSnapshot.save;
     final playerIds = _activePlayerIds(save);
-    if (playerIds.isEmpty ||
-        !playerIds.contains(command.playerId) ||
-        baseSnapshot.runtimeState.hasSubmitted(command.playerId)) {
-      return _ResolvedLocalCommand(
-        save: save.copyWith(savedAt: savedAt.toUtc()),
-        state: reducedState,
-      );
-    }
-
     if (!playerIds.every(reducedState.submittedPlayerIds.contains)) {
       return _ResolvedLocalCommand(
         save: save
@@ -184,6 +189,18 @@ class LocalCommandResolver {
     if (ids.isNotEmpty) return ids..sort();
 
     return save.playerStates.keys.where((id) => id.isNotEmpty).toList()..sort();
+  }
+
+  bool _rejectSubmitTurn({
+    required SaveSnapshot baseSnapshot,
+    required SubmitTurnCommand command,
+    required String? actorPlayerId,
+  }) {
+    return (actorPlayerId != null &&
+            actorPlayerId.isNotEmpty &&
+            actorPlayerId != command.playerId) ||
+        !_activePlayerIds(baseSnapshot.save).contains(command.playerId) ||
+        baseSnapshot.runtimeState.hasSubmitted(command.playerId);
   }
 
   MapDefinition _mapDefinition() {

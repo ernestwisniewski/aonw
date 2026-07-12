@@ -85,14 +85,17 @@ void main() {
           playerColors: const {'p1': 0xFF4a7fc4},
           playerCountries: const {'p1': PlayerCountry.unitedStates},
           playerGold: const {'p1': 7},
-          runtimeState: const GameRuntimeState(
-            pendingAction: PendingCityWorkedHexSelection(
+          runtimeState: GameRuntimeState(
+            pendingAction: const PendingCityWorkedHexSelection(
               ownerPlayerId: 'p1',
               cityId: 'city_1',
             ),
-            submittedPlayerIds: {'p1'},
-            dominationHoldTurnsByPlayerId: {'p1': 2},
-            intendedAttacks: [
+            submittedPlayerIds: const {'p1'},
+            timeoutStreaksByPlayerId: const {'p1': 2},
+            afkPlayerIds: const {'p2'},
+            kickedPlayerIds: const {'p3'},
+            dominationHoldTurnsByPlayerId: const {'p1': 2},
+            intendedAttacks: const [
               IntendedAttack(
                 attackerUnitId: 'warrior_1',
                 defenderCol: 4,
@@ -101,6 +104,7 @@ void main() {
                 declaringPlayerId: 'p1',
               ),
             ],
+            turnStartedAt: DateTime.utc(2026, 4, 27, 12),
           ),
         );
 
@@ -117,8 +121,12 @@ void main() {
         expect(state.activePlayerCanAct, isFalse);
         expect(state.pendingAction, snapshot.runtimeState.pendingAction);
         expect(state.submittedPlayerIds, {'p1'});
+        expect(state.timeoutStreaksByPlayerId, {'p1': 2});
+        expect(state.afkPlayerIds, {'p2'});
+        expect(state.kickedPlayerIds, {'p3'});
         expect(state.intendedAttacks, snapshot.runtimeState.intendedAttacks);
         expect(state.dominationHoldTurnsByPlayerId, {'p1': 2});
+        expect(state.turnStartedAt, DateTime.utc(2026, 4, 27, 12));
       },
     );
 

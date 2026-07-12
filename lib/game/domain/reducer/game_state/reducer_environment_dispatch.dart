@@ -12,7 +12,7 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
 import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
-import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
+import 'package:aonw/game/domain/reducer/turn/submit_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
 import 'package:aonw/game/domain/reducer/worker/worker_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -271,7 +271,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       );
 
   GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) =>
-      TurnReducer.submitTurn(state, command.playerId);
+      SubmitTurnReducer.submit(state, command, context.actorPlayerId);
 
   GameStateTransition startCityFounding(GameState state) {
     return GameStateTransition(

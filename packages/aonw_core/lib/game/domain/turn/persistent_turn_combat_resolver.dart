@@ -608,7 +608,7 @@ abstract final class PersistentTurnCombatResolver {
       movementPoints: retreatDestination == null ? movementPoints : 0,
     );
     final withHitPoints = updated.copyWithHitPoints(
-      hitPoints >= maxHitPoints ? null : hitPoints,
+      UnitCombatHealth.storedHpForMax(hitPoints, maxHp: maxHitPoints),
     );
     return UnitVeterancyRules.addExperience(withHitPoints, experienceAward);
   }

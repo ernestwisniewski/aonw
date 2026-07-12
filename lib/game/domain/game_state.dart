@@ -84,6 +84,10 @@ abstract class GameState with _$GameState {
     @Default('') String activePlayerId,
     @Default(true) bool activePlayerCanAct,
     @Default({}) Set<String> submittedPlayerIds,
+    @Default({}) Map<String, int> timeoutStreaksByPlayerId,
+    @Default({}) Set<String> afkPlayerIds,
+    @Default({}) Set<String> kickedPlayerIds,
+    DateTime? turnStartedAt,
     @Default(GameInteractionState.empty) GameInteractionState interaction,
   }) = _GameState;
 
@@ -194,11 +198,15 @@ abstract class GameState with _$GameState {
     cityFoundingDraft: cityFoundingDraft,
     pendingAction: pendingAction,
     submittedPlayerIds: submittedPlayerIds,
+    timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+    afkPlayerIds: afkPlayerIds,
+    kickedPlayerIds: kickedPlayerIds,
     intendedAttacks: intendedAttacks,
     diplomacy: diplomacy,
     resourceTradeAgreements: resourceTradeAgreements,
     dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
     culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
     mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
+    turnStartedAt: turnStartedAt,
   );
 }
