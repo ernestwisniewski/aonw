@@ -12,16 +12,16 @@ The game currently focuses on the core 4X loop: exploration, fog of war,
 movement, city growth, production, research, combat, save/load, AI opponents,
 and online multiplayer infrastructure.
 
-## Play
+## Public Links
 
-| Platform | Link |
+| Destination | Link |
 | --- | --- |
 | Website | [aonw.net](https://aonw.net/) |
-| Web demo | [demo.aonw.net](https://demo.aonw.net/) |
-| Steam | [Age of New Worlds](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/) |
-| itch.io | [ernest-dev.itch.io/aonw](https://ernest-dev.itch.io/aonw) |
-| App Store | [Age of New Worlds](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
-| Google Play | [Age of New Worlds](https://play.google.com/store/apps/details?id=aonw.net.game) |
+| Devlog | [ernest.dev](https://ernest.dev) |
+| GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
+| iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
+| Windows/Linux/macOS | [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw) |
 
 ## Repository
 

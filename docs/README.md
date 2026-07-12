@@ -14,17 +14,6 @@ behavior unless they explicitly call out historical context or future work.
 | Work on backend operations | [Data Retention](data-retention.md), [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
 | Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
 
-## Public Links
-
-| Destination | Link |
-| --- | --- |
-| Website | [aonw.net](https://aonw.net/) |
-| Devlog | [ernest.dev](https://ernest.dev) |
-| GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
-| iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |
-| Windows/Linux/macOS | [Steam](https://store.steampowered.com/app/4833240/Age_of_New_Worlds/), [itch.io](https://ernest-dev.itch.io/aonw) |
-| Android | [Google Play](https://play.google.com/store/apps/details?id=aonw.net.game), [itch.io](https://ernest-dev.itch.io/aonw) |
-
 ## Architecture
 
 | Area | Responsibility |
