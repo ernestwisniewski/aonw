@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 permissions:
   contents: read
@@ -93,7 +94,7 @@ jobs:
       - name: Validate Docker Compose configuration
         run: make compose-check
 
-      - name: Validate Caddy, Prometheus, and Dockerfile configuration
+      - name: Validate Caddy, Prometheus, Dockerfile, and build context
         run: make infra-config-check
 
   serverpod-drift:

@@ -19,6 +19,7 @@ control.
 | --- | --- |
 | Full local quality gate | `make ci` |
 | Backend/deploy config checks | `make serverpod-ops-check` |
+| Docker context secret guard | `make docker-context-check` |
 | Stage homepage and `/stats` | `make build-homepage` |
 | Deploy static homepage | `make deploy-homepage ...` |
 | Deploy web demo | `make deploy-web ...` |
@@ -41,8 +42,11 @@ For backend operations, also run:
 make serverpod-ops-check
 ```
 
-`serverpod-ops-check` validates generated Serverpod migrations and Docker
-Compose config. It requires Docker and the Serverpod CLI.
+`serverpod-ops-check` validates generated Serverpod migrations, Docker Compose
+config, and the server image context. The context guard uses BuildKit with
+synthetic secret, key, certificate, credential, and backup files to prove that
+the checked-in `.dockerignore` excludes them while preserving required source,
+map, and migration inputs. It requires Docker and the Serverpod CLI.
 
 Before any multi-platform release, run the mandatory aggregate gate:
 
@@ -137,6 +141,13 @@ make deploy-homepage \
 
 Production and staging deploys should use a private environment file on the
 host. Do not commit that file.
+
+The server image uses a default-deny build context. New compiler or runtime
+inputs must be added explicitly to `.dockerignore`; never broaden it back to an
+entire package or server tree. Run `make docker-context-check` after changing
+the Dockerfile, migrations, map layout, or context rules. Secrets excluded from
+the final runtime stage are still unsafe if they enter a remote builder or its
+cache, so multi-stage builds do not replace this guard.
 
 Minimum production-style values:
 
