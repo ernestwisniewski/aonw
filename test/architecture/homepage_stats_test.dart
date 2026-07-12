@@ -123,6 +123,10 @@ void main() {
 
     expect(production, contains('redir /privacy-policy/ /privacy-policy 308'));
     expect(production, contains('try_files {path} /index.html'));
+    expect(production, contains('@demoRuntime'));
+    expect(production, contains('Cloudflare-CDN-Cache-Control "no-cache"'));
+    expect(production, isNot(contains('max-age=31536000, immutable')));
+    expect(local, contains('@demoRuntime'));
   });
 }
 

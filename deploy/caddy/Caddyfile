@@ -75,14 +75,22 @@
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy no-referrer
-		?Cache-Control "public, max-age=31536000, immutable"
 	}
 
-	@demoHtml {
-		path / /index.html /flutter_service_worker.js
+	@demoRuntime {
+		path / /index.html /flutter_bootstrap.js /flutter.js /flutter_service_worker.js /main.dart.js /main.dart.mjs /main.dart.wasm /version.json /manifest.json
 	}
-	header @demoHtml {
+	header @demoRuntime {
 		Cache-Control "no-cache, must-revalidate"
+		Cloudflare-CDN-Cache-Control "no-cache"
+	}
+
+	@demoAssets {
+		path /assets/* /canvaskit/* /icons/*
+	}
+	header @demoAssets {
+		Cache-Control "public, max-age=3600, must-revalidate"
+		Cloudflare-CDN-Cache-Control "public, max-age=3600"
 	}
 
 	root * /srv/demo

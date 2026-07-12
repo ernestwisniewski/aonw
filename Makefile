@@ -505,7 +505,11 @@ build-web:
 	@command -v rg >/dev/null || { echo "rg is required for build-web."; exit 1; }
 	@test -n "$(WEB_API_BASE_URL)" || { echo "WEB_API_BASE_URL is required."; exit 1; }
 	@echo "Building Flutter web (wasm + js fallback) with API=$(WEB_API_BASE_URL)..."
-	@flutter build web --wasm --release --dart-define=AONW_API_BASE_URL=$(WEB_API_BASE_URL)
+	@flutter build web --wasm --release --pwa-strategy=none --dart-define=AONW_API_BASE_URL=$(WEB_API_BASE_URL)
+	@build_id="$$(date -u +%Y%m%d%H%M%S)"; \
+	  printf '%s\n' "$$build_id" > build/web/.last_build_id; \
+	  perl -0pi -e 's/"mainWasmPath":"main\.dart\.wasm"/"mainWasmPath":"main.dart.wasm?v='"$$build_id"'"/g; s/"jsSupportRuntimePath":"main\.dart\.mjs"/"jsSupportRuntimePath":"main.dart.mjs?v='"$$build_id"'"/g; s/"mainJsPath":"main\.dart\.js"/"mainJsPath":"main.dart.js?v='"$$build_id"'"/g' build/web/flutter_bootstrap.js; \
+	  perl -0pi -e 's/src="flutter_bootstrap\.js(?:\?v=[^"]*)?"/src="flutter_bootstrap.js?v='"$$build_id"'"/g' build/web/index.html
 	@rg -a -F "$(WEB_API_BASE_URL)" build/web >/dev/null
 	@echo "Verified web build API: $(WEB_API_BASE_URL)"
 
