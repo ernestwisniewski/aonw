@@ -99,6 +99,62 @@ void main() {
         );
       }
     });
+
+    test('proxy identity headers cross only the private ingress boundary', () {
+      final compose =
+          loadYaml(File('../compose.yml').readAsStringSync()) as YamlMap;
+      final services = compose['services'] as YamlMap;
+      final server = services['server'] as YamlMap;
+      final cloudflared = services['cloudflared'] as YamlMap;
+      final ports = (server['ports'] as YamlList).cast<String>();
+
+      expect(
+        ports,
+        containsAll(const [
+          r'${AONW_SERVER_BIND:-127.0.0.1}:${AONW_SERVER_PUBLIC_PORT:-8080}:${SERVERPOD_API_SERVER_PORT:-8080}',
+          r'${AONW_INSIGHTS_BIND:-127.0.0.1}:${AONW_INSIGHTS_PUBLIC_PORT:-8081}:${SERVERPOD_INSIGHTS_SERVER_PORT:-8081}',
+          r'${AONW_WEB_BIND:-127.0.0.1}:${AONW_WEB_PUBLIC_PORT:-8082}:${SERVERPOD_WEB_SERVER_PORT:-8082}',
+        ]),
+      );
+
+      final caddyfile = File('../deploy/caddy/Caddyfile').readAsStringSync();
+      final proxyBlocks = _reverseProxyBlocks(caddyfile);
+
+      expect(caddyfile, contains('client_ip_headers CF-Connecting-IP'));
+      expect(caddyfile, contains('trusted_proxies_strict'));
+      final trustedProxyTokens = caddyfile
+          .split('\n')
+          .singleWhere(
+            (line) => line.trimLeft().startsWith('trusted_proxies static '),
+          )
+          .trim()
+          .split(RegExp(r'\s+'));
+      expect(trustedProxyTokens.take(2), ['trusted_proxies', 'static']);
+      expect(
+        trustedProxyTokens.skip(2),
+        unorderedEquals(_cloudflareProxyRanges),
+      );
+      expect(proxyBlocks, hasLength(4));
+      for (final block in proxyBlocks) {
+        expect(_hasLine(block, 'header_up -Forwarded'), isTrue, reason: block);
+        expect(
+          _hasLine(block, 'header_up -CF-Connecting-IP'),
+          isTrue,
+          reason: block,
+        );
+        expect(
+          _hasLine(block, 'header_up X-Forwarded-For {client_ip}'),
+          isTrue,
+          reason: block,
+        );
+      }
+      expect(
+        cloudflared['command'],
+        'tunnel --no-autoupdate --url '
+        r'http://server:${SERVERPOD_API_SERVER_PORT:-8080}',
+      );
+      expect(cloudflared.containsKey('ports'), isFalse);
+    });
   });
 }
 
@@ -124,3 +180,52 @@ ServerpodConfig _loadConfig(
 bool _hasLine(String source, String expected) {
   return source.split('\n').any((line) => line.trim() == expected);
 }
+
+List<String> _reverseProxyBlocks(String source) {
+  final lines = source.split('\n');
+  final blocks = <String>[];
+
+  for (var index = 0; index < lines.length; index++) {
+    if (!lines[index].trimLeft().startsWith('reverse_proxy ')) continue;
+
+    final block = <String>[lines[index]];
+    var depth = _braceDelta(lines[index]);
+    while (depth > 0 && index + 1 < lines.length) {
+      index++;
+      block.add(lines[index]);
+      depth += _braceDelta(lines[index]);
+    }
+    blocks.add(block.join('\n'));
+  }
+
+  return blocks;
+}
+
+int _braceDelta(String line) {
+  return '{'.allMatches(line).length - '}'.allMatches(line).length;
+}
+
+const _cloudflareProxyRanges = <String>{
+  '173.245.48.0/20',
+  '103.21.244.0/22',
+  '103.22.200.0/22',
+  '103.31.4.0/22',
+  '141.101.64.0/18',
+  '108.162.192.0/18',
+  '190.93.240.0/20',
+  '188.114.96.0/20',
+  '197.234.240.0/22',
+  '198.41.128.0/17',
+  '162.158.0.0/15',
+  '104.16.0.0/13',
+  '104.24.0.0/14',
+  '172.64.0.0/13',
+  '131.0.72.0/22',
+  '2400:cb00::/32',
+  '2606:4700::/32',
+  '2803:f800::/32',
+  '2405:b500::/32',
+  '2405:8100::/32',
+  '2a06:98c0::/29',
+  '2c0f:f248::/32',
+};

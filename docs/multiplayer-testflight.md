@@ -116,6 +116,19 @@ The staging profile runs PostgreSQL, the game server, and Caddy. Caddy
 terminates HTTPS, stores certificates in Docker volumes, and proxies Serverpod
 API traffic to `server:8080` plus Insights traffic to `server:8081`.
 
+Authentication rate limits treat client-IP headers as trusted ingress data.
+Keep all Serverpod ports private. The bundled Caddy proxy accepts
+`CF-Connecting-IP` only from the allowlisted Cloudflare networks, removes raw
+client identity headers, and sends Serverpod one canonical `X-Forwarded-For`
+value. Direct clients are identified by their socket address. The tunnel
+profile receives Cloudflare's canonical `CF-Connecting-IP` over the private
+Docker network. A custom reverse proxy must provide the same trust boundary:
+verify its immediate peer, overwrite `X-Forwarded-For` with one validated
+address, and remove client-supplied identity headers. Do not expose the backend
+with `AONW_SERVER_BIND=0.0.0.0` on a public host. Keep the Cloudflare ranges in
+`deploy/caddy/Caddyfile` synchronized with
+[Cloudflare's published ranges](https://www.cloudflare.com/ips/).
+
 ## Production-Like External Database
 
 The checked-in Compose profiles are intentionally self-contained. The `prod`

@@ -6,6 +6,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 
 import '../generated/protocol.dart';
 import '../observability/server_operational_event_sink.dart';
+import 'auth_rate_limit_client_identity.dart';
 import 'auth_rate_limit_constants.dart';
 import 'refresh_token_parser.dart';
 
@@ -43,12 +44,16 @@ abstract interface class AuthRequestLimiter {
 final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
   DatabaseAuthRateLimiter({
     ServerOperationalEventSink Function(Session session)? operationalEventsFor,
+    AuthRateLimitClientIdentityResolver clientIdentityResolver =
+        const AuthRateLimitClientIdentityResolver(),
   }) : _operationalEventsFor =
-           operationalEventsFor ?? ServerpodOperationalEventSink.new;
+           operationalEventsFor ?? ServerpodOperationalEventSink.new,
+       _clientIdentityResolver = clientIdentityResolver;
 
   final Map<String, DatabaseRateLimitedRequestAttemptUtil<String>> _limits = {};
   final ServerOperationalEventSink Function(Session session)
   _operationalEventsFor;
+  final AuthRateLimitClientIdentityResolver _clientIdentityResolver;
 
   @override
   Future<void> enforce(
@@ -58,12 +63,10 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
   }) async {
     final policy = policyFor(action);
     final pepper = _pepper();
-    final remoteIp =
-        session.request?.connectionInfo.remote.address.toString() ?? 'unknown';
     final ipLimited = await _hasTooManyAttempts(
       session,
       source: '${action.name}_ip',
-      nonce: fingerprint('ip:$remoteIp', pepper: pepper),
+      nonce: ipNonceFor(session.request, pepper: pepper),
       maxAttempts: policy.maxIpAttempts,
       timeframe: policy.timeframe,
     );
@@ -161,6 +164,11 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
     final parsed = parseRefreshTokenId(refreshToken);
     if (parsed != null) return 'refresh-id:${parsed.encoded}';
     return 'malformed-refresh:$refreshToken';
+  }
+
+  String ipNonceFor(Request? request, {required String pepper}) {
+    final clientIdentity = _clientIdentityResolver.resolve(request);
+    return fingerprint('ip:$clientIdentity', pepper: pepper);
   }
 
   static String fingerprint(String value, {required String pepper}) {
