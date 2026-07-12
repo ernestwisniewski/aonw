@@ -1,7 +1,7 @@
 # sign_in_with_apple local patch
 
 This directory vendors `sign_in_with_apple` 7.0.1 because
-`serverpod_auth_idp_flutter` 3.4.10 constrains the package to 7.x.
+the pinned `serverpod_auth_idp_flutter` release constrains the package to 7.x.
 
 Local change:
 - Add the Swift 6.2 `ASAuthorizationError.Code` cases already present

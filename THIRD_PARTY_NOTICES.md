@@ -37,4 +37,4 @@ subject to their owners' trademark guidelines.
 - `third_party/sign_in_with_apple/` vendors `sign_in_with_apple` 7.0.1 under
   its upstream MIT license. The local patch adds current Swift SDK authorization
   error cases while preserving the 7.x Dart API required by
-  `serverpod_auth_idp_flutter` 3.4.10.
+  the pinned `serverpod_auth_idp_flutter` release.

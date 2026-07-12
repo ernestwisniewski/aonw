@@ -55,7 +55,7 @@ dev_dependencies:
   json_serializable: ^6.13.0
 
 dependency_overrides:
-  # Serverpod 3.4.11 still constrains sign_in_with_apple to 7.x.
+  # The pinned Serverpod Auth IDP release still constrains sign_in_with_apple to 7.x.
   # This local patch keeps the 7.x Dart API and adds current SDK Swift cases.
   sign_in_with_apple:
     path: third_party/sign_in_with_apple

@@ -15,7 +15,8 @@ PRUNE ?= 1
 CACHE_FLAGS ?=
 CLEAN_BUILD_CACHE ?= 0
 CHECK_MIGRATIONS ?= 0
-SERVERPOD_CLI ?= $(HOME)/.pub-cache/bin/serverpod
+PUB_CACHE ?= $(HOME)/.pub-cache
+SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
 SERVERPOD_TEST_DATABASE_PASSWORD ?= aonw_dev
 SERVERPOD_SMOKE_HOST ?= http://127.0.0.1:8080/
 SERVERPOD_SMOKE_MAP ?= myranth
@@ -182,7 +183,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -233,6 +234,9 @@ help:
 	@echo "  make docker-context-check LOCAL: prove secrets stay out of the server build context"
 	@echo "  make infra-config-check LOCAL: validate Caddy, Prometheus, Dockerfile, and build context"
 	@echo "  make serverpod-ops-check LOCAL: validate Serverpod drift and deployment configs"
+	@echo "  make serverpod-version LOCAL: print the runtime pin required by the Serverpod CLI"
+	@echo "  make serverpod-cli-install LOCAL: install the CLI version required by the runtime"
+	@echo "  make serverpod-cli-check LOCAL: verify the installed Serverpod CLI matches the runtime"
 	@echo "  make check-migrations LOCAL: regenerate Serverpod code/migrations and fail if repo changed"
 	@echo "  make migrate       Explain Serverpod startup migration flow"
 	@echo "  make health        Check deployed Serverpod health endpoint"
@@ -248,6 +252,8 @@ help:
 	@echo "  PROFILE=staging|prod|dev       Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
 	@echo "  CHECK_MIGRATIONS=1             Run local Serverpod migration drift check after build"
+	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
+	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
 	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... server-integration-test only. Default: $(SERVERPOD_TEST_DATABASE_PASSWORD)"
 	@echo "  SERVERPOD_SMOKE_HOST=http://... serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_HOST)"
 	@echo "  SERVERPOD_SMOKE_MAP=myranth      serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_MAP)"
@@ -1564,8 +1570,33 @@ preflight-release:
 		exit 1; \
 	fi
 
-check-migrations:
-	@test -x "$(SERVERPOD_CLI)" || { echo "Serverpod CLI not found: $(SERVERPOD_CLI)"; exit 1; }
+serverpod-version:
+	@version=$$(awk '/^dependencies:[[:space:]]*$$/ { in_dependencies = 1; next } in_dependencies && /^[^[:space:]#]/ { exit } in_dependencies && $$1 == "serverpod:" && NF == 2 { print $$2; exit }' server/pubspec.yaml); \
+		test -n "$$version" || { echo "Could not parse the exact Serverpod runtime version from server/pubspec.yaml." >&2; exit 1; }; \
+		printf '%s\n' "$$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$$' || { echo "Invalid exact Serverpod runtime version in server/pubspec.yaml: $$version" >&2; exit 1; }; \
+		printf '%s\n' "$$version"
+
+serverpod-cli-install:
+	@set -e; \
+		version=$$($(MAKE) --no-print-directory serverpod-version); \
+		PUB_CACHE="$(PUB_CACHE)" dart pub global activate serverpod_cli "$$version"; \
+		$(MAKE) --no-print-directory serverpod-cli-check
+
+serverpod-cli-check:
+	@command -v "$(SERVERPOD_CLI)" >/dev/null 2>&1 || { echo "Serverpod CLI not found: $(SERVERPOD_CLI)"; exit 1; }
+	@set -e; \
+		expected=$$($(MAKE) --no-print-directory serverpod-version); \
+		output=$$("$(SERVERPOD_CLI)" --version 2>&1) || { echo "Could not read Serverpod CLI version from $(SERVERPOD_CLI)."; printf '%s\n' "$$output"; exit 1; }; \
+		actual=$$(printf '%s\n' "$$output" | sed -n 's/^Serverpod version:[[:space:]]*//p' | head -n 1); \
+		test -n "$$actual" || { echo "Could not parse Serverpod CLI version from $(SERVERPOD_CLI)."; printf '%s\n' "$$output"; exit 1; }; \
+		if [ "$$actual" != "$$expected" ]; then \
+			echo "Serverpod CLI version mismatch: expected $$expected from server/pubspec.yaml, found $$actual."; \
+			echo "Install the matching CLI with: make serverpod-cli-install"; \
+			echo "If SERVERPOD_CLI is overridden, update that binary or remove the override."; \
+			exit 1; \
+		fi
+
+check-migrations: serverpod-cli-check
 	@if [ -n "$$(git status --porcelain -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations)" ]; then \
 		echo "Serverpod drift check requires clean generated and migration paths."; \
 		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations; \

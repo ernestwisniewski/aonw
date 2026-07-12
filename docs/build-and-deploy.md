@@ -47,6 +47,12 @@ config, and the server image context. The context guard uses BuildKit with
 synthetic secret, key, certificate, credential, and backup files to prove that
 the checked-in `.dockerignore` excludes them while preserving required source,
 map, and migration inputs. It requires Docker and the Serverpod CLI.
+The CLI must exactly match the runtime pin in `server/pubspec.yaml`. Install the
+required version without duplicating it in documentation or CI:
+
+```sh
+make serverpod-cli-install
+```
 
 Before any multi-platform release, run the mandatory aggregate gate:
 
@@ -398,8 +404,8 @@ ignored by `.gitignore`.
 ## Troubleshooting
 
 - If Compose fails validation, run `make compose-check` with the same profile.
-- If Serverpod migrations drift, run `make check-migrations` and review the
-  generated diff.
+- `make check-migrations` verifies that the Serverpod CLI matches the runtime
+  before generation. If migrations drift, review the generated diff.
 - If the web app points to the wrong API, inspect the built artifact for the
   `AONW_API_BASE_URL` value used at build time.
 - If remote deploy targets fail immediately, confirm the required
