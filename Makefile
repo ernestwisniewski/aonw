@@ -161,8 +161,8 @@ DOWNLOAD_WINDOWS_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_WINDOWS_FILE)
 DOWNLOAD_LINUX_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_LINUX_FILE)
 DOWNLOAD_ANDROID_APK ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_ANDROID_FILE)
 DOWNLOAD_INCLUDE_LINUX ?= $(ITCH_INCLUDE_LINUX)
-DEPLOY_ALL_STEAMWORKS ?= 1
-DEPLOY_ALL_GOOGLE_PLAY ?= 1
+DEPLOY_ALL_STEAMWORKS ?= 0
+DEPLOY_ALL_GOOGLE_PLAY ?= 0
 DEPLOY_ALL_GOOGLE_PLAY_MODE ?= closed
 
 # bump-version: updates the marketing version and build number in pubspec.yaml,
@@ -222,7 +222,7 @@ help:
 	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
 	@echo "  make gamejolt     LOCAL: prepare Game Jolt ZIP/APK artifacts from itch.io-style builds"
 	@echo "  make deploy-gamejolt LOCAL: prepare and upload Game Jolt artifacts with gjpush"
-	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=0 DEPLOY_ALL_GOOGLE_PLAY=0  Skip Steamworks/Google Play uploads"
+	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=1 DEPLOY_ALL_GOOGLE_PLAY=1  Explicitly enable Steamworks/Google Play uploads"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
@@ -1485,8 +1485,8 @@ bump-version:
 
 # Local + remote orchestration. Pushes main to origin, prepares Steam desktop
 # ZIPs, itch.io desktop folders, Android artifacts, and public download files.
-# Uploads to Steamworks and Google Play by default, optionally uploads to
-# itch.io when ITCH_TARGET is set, asks the staging server to make deploy
+# Uploads to Steamworks and Google Play only when explicitly enabled, optionally
+# uploads to itch.io when ITCH_TARGET is set, asks the staging server to make deploy
 # (server image rebuild + restart + health), then deploys the static homepage,
 # public downloads, and demo web app locally.
 # Aborts on any step failure.
@@ -1501,6 +1501,8 @@ deploy-all:
 	@test -f "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(REMOTE_DEPLOY_SSH_KEY)"; exit 1; }
 	@echo "[1/12] Bumping build version..."
 	@$(MAKE) --no-print-directory bump-version NEW_VERSION="$(NEW_VERSION)" NEW_BUILD="$(NEW_BUILD)"
+	@echo "Re-running mandatory release quality gate for the release commit..."
+	@$(MAKE) --no-print-directory release-check
 	@echo "[2/12] Archiving iOS build for Xcode Organizer if possible..."
 	@$(MAKE) --no-print-directory archive-ios-if-possible
 	@echo "[3/12] Pushing local main to origin..."

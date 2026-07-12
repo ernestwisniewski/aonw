@@ -52,7 +52,8 @@ make release-check
 
 `release-check` runs the full local CI suite, Serverpod migration and Compose
 validation, and the PostgreSQL-backed endpoint smoke. `make deploy-all` invokes
-this gate before changing the version, pushing `main`, or uploading artifacts.
+this gate before changing the version, then invokes it again on the committed
+release version before pushing `main` or uploading any artifacts.
 
 ## Local Backend Stack
 
@@ -206,15 +207,15 @@ make deploy-all \
 ```
 
 The helper expects a clean `main` checkout and pushes `main` before release
-work starts. By default it uploads the prepared desktop build to Steamworks and
-an Android App Bundle to the Google Play closed-test track.
+work starts. Steamworks and Google Play uploads are disabled by default; enable
+each destination explicitly after reviewing the release inputs.
 
 ### Release Options
 
 | Variable | Purpose |
 | --- | --- |
-| `DEPLOY_ALL_STEAMWORKS=0` | Skip Steamworks upload. |
-| `DEPLOY_ALL_GOOGLE_PLAY=0` | Skip Google Play upload. |
+| `DEPLOY_ALL_STEAMWORKS=1` | Upload the prepared desktop build to Steamworks. Default: `0`. |
+| `DEPLOY_ALL_GOOGLE_PLAY=1` | Upload the Android App Bundle to Google Play. Default: `0`. |
 | `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed` | Upload to the configured closed-test track. |
 | `DEPLOY_ALL_GOOGLE_PLAY_MODE=internal` | Upload to a named Play track instead. |
 | `ITCH_TARGET=user/game` | Upload prepared macOS, Windows, and Android builds to itch.io. |
