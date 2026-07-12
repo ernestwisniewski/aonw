@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.1.5 - 2026-07-12
+
+- Added a public multiplayer statistics page with aggregate match activity,
+  outcomes, turn counts, and recent online-session trends.
+- Improved multiplayer result handling so victories, resignations, timeouts,
+  and abandoned matches are recorded from the authoritative server state.
+- Improved end-of-match summaries in multiplayer games so the HUD shows clearer
+  synchronized outcomes for all players.
 - Improved online session recovery so reconnects and multiplayer actions use
   the latest credentials after an access token expires.
 - Made multiplayer sign-out more reliable when a session refresh or network
