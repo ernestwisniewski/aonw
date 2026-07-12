@@ -100,6 +100,67 @@ void main() {
       }
     });
 
+    test('Insights stays on loopback and outside the public proxy', () {
+      const retiredInsightsHost =
+          'insights.'
+          'aonw.net';
+      final compose =
+          loadYaml(File('../compose.yml').readAsStringSync()) as YamlMap;
+      final services = compose['services'] as YamlMap;
+      final server = services['server'] as YamlMap;
+      final caddy = services['caddy'] as YamlMap;
+      final ports = (server['ports'] as YamlList).cast<String>();
+      final serverEnvironment = (server['environment'] as YamlList)
+          .cast<String>();
+      final caddyEnvironment = caddy['environment'] as YamlMap;
+
+      expect(
+        ports,
+        equals(const [
+          r'${AONW_SERVER_BIND:-127.0.0.1}:${AONW_SERVER_PUBLIC_PORT:-8080}:${SERVERPOD_API_SERVER_PORT:-8080}',
+          r'127.0.0.1:${AONW_INSIGHTS_PUBLIC_PORT:-8081}:${SERVERPOD_INSIGHTS_SERVER_PORT:-8081}',
+          r'${AONW_WEB_BIND:-127.0.0.1}:${AONW_WEB_PUBLIC_PORT:-8082}:${SERVERPOD_WEB_SERVER_PORT:-8082}',
+        ]),
+      );
+      expect(ports.join('\n'), isNot(contains('AONW_INSIGHTS_BIND')));
+      expect(
+        serverEnvironment,
+        containsAll(const [
+          'SERVERPOD_INSIGHTS_SERVER_PUBLIC_HOST=127.0.0.1',
+          r'SERVERPOD_INSIGHTS_SERVER_PUBLIC_PORT=${AONW_INSIGHTS_PUBLIC_PORT:-8081}',
+          'SERVERPOD_INSIGHTS_SERVER_PUBLIC_SCHEME=http',
+        ]),
+      );
+      expect(
+        serverEnvironment.join('\n'),
+        isNot(contains(r'${SERVERPOD_INSIGHTS_SERVER_PUBLIC_')),
+      );
+      expect(caddyEnvironment.containsKey('AONW_INSIGHTS_HOST'), isFalse);
+      expect(caddyEnvironment.containsKey('AONW_INSIGHTS_UPSTREAM'), isFalse);
+
+      final caddyfile = File('../deploy/caddy/Caddyfile').readAsStringSync();
+      expect(caddyfile, isNot(contains('AONW_INSIGHTS')));
+      expect(caddyfile, isNot(contains('server:8081')));
+      expect(caddyfile, isNot(contains(retiredInsightsHost)));
+
+      for (final mode in const ['staging', 'production']) {
+        final config =
+            loadYaml(File('config/$mode.yaml').readAsStringSync()) as YamlMap;
+        final insights = config['insightsServer'] as YamlMap;
+        expect(insights['publicHost'], '127.0.0.1', reason: mode);
+        expect(insights['publicPort'], 8081, reason: mode);
+        expect(insights['publicScheme'], 'http', reason: mode);
+      }
+
+      final runbook = File(
+        '../docs/serverpod-insights-runbook.md',
+      ).readAsStringSync();
+      expect(runbook, contains('-L 127.0.0.1:8081:127.0.0.1:8081'));
+      expect(runbook, contains('ExitOnForwardFailure=yes'));
+      expect(runbook, contains('http://127.0.0.1:8081'));
+      expect(runbook, isNot(contains(retiredInsightsHost)));
+    });
+
     test('proxy identity headers cross only the private ingress boundary', () {
       final compose =
           loadYaml(File('../compose.yml').readAsStringSync()) as YamlMap;
@@ -112,7 +173,7 @@ void main() {
         ports,
         containsAll(const [
           r'${AONW_SERVER_BIND:-127.0.0.1}:${AONW_SERVER_PUBLIC_PORT:-8080}:${SERVERPOD_API_SERVER_PORT:-8080}',
-          r'${AONW_INSIGHTS_BIND:-127.0.0.1}:${AONW_INSIGHTS_PUBLIC_PORT:-8081}:${SERVERPOD_INSIGHTS_SERVER_PORT:-8081}',
+          r'127.0.0.1:${AONW_INSIGHTS_PUBLIC_PORT:-8081}:${SERVERPOD_INSIGHTS_SERVER_PORT:-8081}',
           r'${AONW_WEB_BIND:-127.0.0.1}:${AONW_WEB_PUBLIC_PORT:-8082}:${SERVERPOD_WEB_SERVER_PORT:-8082}',
         ]),
       );
@@ -134,7 +195,7 @@ void main() {
         trustedProxyTokens.skip(2),
         unorderedEquals(_cloudflareProxyRanges),
       );
-      expect(proxyBlocks, hasLength(4));
+      expect(proxyBlocks, hasLength(3));
       for (final block in proxyBlocks) {
         expect(_hasLine(block, 'header_up -Forwarded'), isTrue, reason: block);
         expect(

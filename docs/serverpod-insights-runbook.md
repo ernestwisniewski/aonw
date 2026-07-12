@@ -26,14 +26,13 @@ make serverpod-runtime-smoke SERVERPOD_SMOKE_HOST=http://127.0.0.1:8080/
 Connect Insights to:
 
 ```text
-http://localhost:8081
+http://127.0.0.1:8081
 ```
 
 Local `.env` values that matter:
 
 ```env
 SERVERPOD_SERVICE_SECRET=replace-with-long-random-secret
-AONW_INSIGHTS_BIND=127.0.0.1
 AONW_INSIGHTS_PUBLIC_PORT=8081
 SERVERPOD_INSIGHTS_SERVER_PORT=8081
 SERVERPOD_LOGGING_MODE=normal
@@ -42,18 +41,11 @@ SERVERPOD_LOGGING_MODE=normal
 `SERVERPOD_SERVICE_SECRET` must be non-empty and longer than 20 characters.
 Serverpod disables Insights when that secret is missing or too short.
 
-## Staging
+## Remote Environments
 
-Staging exposes Insights through Caddy on `AONW_INSIGHTS_HOST`:
-
-```env
-SERVERPOD_SERVICE_SECRET=replace-with-long-random-secret
-AONW_INSIGHTS_HOST=insights.aonw.net
-AONW_INSIGHTS_UPSTREAM=server:8081
-SERVERPOD_INSIGHTS_SERVER_PUBLIC_HOST=insights.aonw.net
-SERVERPOD_INSIGHTS_SERVER_PUBLIC_PORT=443
-SERVERPOD_INSIGHTS_SERVER_PUBLIC_SCHEME=https
-```
+Staging and production do not expose Insights through Caddy or a public DNS
+name. Compose hardcodes the host-side Insights listener to `127.0.0.1`; the
+bind cannot be widened with an environment variable.
 
 After deploy:
 
@@ -63,17 +55,27 @@ curl -fsS https://api.aonw.net/readyz
 curl -fsS https://api.aonw.net/startupz
 ```
 
-Connect Insights to:
+Open an SSH local-forward from the operator workstation:
 
-```text
-https://insights.aonw.net
+```sh
+ssh -o ExitOnForwardFailure=yes \
+  -N \
+  -L 127.0.0.1:8081:127.0.0.1:8081 \
+  deploy@server.example.com
 ```
 
-The bundled Caddy route terminates TLS and proxies Insights; it does not enforce
-user access control. DNS alone is not an access boundary. Before production,
-restrict the host with a firewall/VPN or add an authenticated reverse-proxy
-policy such as an identity-aware access gateway, mTLS, or separately managed
-basic auth. Keep port `8081` private in every case.
+Then connect Insights to:
+
+```text
+http://127.0.0.1:8081
+```
+
+If local port `8081` is occupied, forward another local port, for example
+`ssh -N -L 127.0.0.1:18081:127.0.0.1:8081 ...`, and connect to
+`http://127.0.0.1:18081`. Authenticate the Insights app with the deployment's
+`SERVERPOD_SERVICE_SECRET`; do not copy the secret into shell history or the
+repository. Keep port `8081` loopback-only and do not add a public Caddy route,
+DNS record, or load-balancer listener for it.
 
 ## Multiplayer Verification
 

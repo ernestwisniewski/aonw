@@ -43,7 +43,8 @@ Before release, verify the Serverpod quickplay lobby contract:
 4. Verify `/readyz` stops receiving new traffic while `/livez` remains healthy.
 5. Verify both clients reconnect and converge to the latest snapshot and event
    offset after resuming from background or a hidden browser tab.
-6. Verify Serverpod Insights shows expected auth sessions, stream reconnects,
+6. Open the private SSH tunnel from `docs/serverpod-insights-runbook.md`, then
+   verify Serverpod Insights shows expected auth sessions, stream reconnects,
    and no repeated command rejects.
 
 ## Alert Rules
@@ -53,7 +54,7 @@ Prometheus starter rules live in
 
 - API liveness probe failure;
 - API readiness probe failure;
-- Serverpod Insights probe failure.
+- private Serverpod Insights probe failure.
 
 The rule file is configuration, not a running monitoring stack. It only becomes
 effective after an operator deploys Prometheus, configures blackbox probe jobs
@@ -64,3 +65,7 @@ to a tested notification route. Until those pieces exist, `/livez` and
 Tune thresholds after the first TestFlight sessions produce baseline traffic,
 and record a successful synthetic alert before treating monitoring as a
 production control.
+
+The `aonw-insights` blackbox job must run on the host or a private monitoring
+network that can reach the loopback-forwarded/private Insights endpoint. Do not
+point it at a public DNS name or add an Internet-facing route just for probing.

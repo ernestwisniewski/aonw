@@ -36,8 +36,8 @@ If a special build needs to hide multiplayer, pass
 - `SERVERPOD_PASSWORD_emailSecretHashPepper`,
   `SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey`, and
   `SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper` set to strong random values.
-- Reverse proxy that supports Serverpod API, Insights, and realtime stream
-  traffic.
+- Reverse proxy that supports Serverpod API, web routes, and realtime stream
+  traffic. Insights must remain outside public ingress.
 - Port 80 and 443 open on the VPS if Caddy manages TLS.
 
 ## Local Docker Smoke
@@ -86,8 +86,7 @@ TestFlight build should use a stable domain if testers need more than one run.
 
 ## VPS Staging
 
-1. Point DNS `A` records for `api.aonw.net` and `insights.aonw.net` at the VPS
-   IP.
+1. Point the DNS `A` record for `api.aonw.net` at the VPS IP.
 2. Copy the repo to the VPS.
 3. Create `.env` from `.env.example` and change at least:
 
@@ -100,7 +99,6 @@ SERVERPOD_PASSWORD_emailSecretHashPepper=replace-with-strong-random-secret
 SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey=replace-with-strong-random-secret
 SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper=replace-with-strong-random-secret
 AONW_API_HOST=api.aonw.net
-AONW_INSIGHTS_HOST=insights.aonw.net
 ```
 
 4. Start the staging stack:
@@ -114,7 +112,9 @@ curl -fsS https://api.aonw.net/readyz
 
 The staging profile runs PostgreSQL, the game server, and Caddy. Caddy
 terminates HTTPS, stores certificates in Docker volumes, and proxies Serverpod
-API traffic to `server:8080` plus Insights traffic to `server:8081`.
+API traffic to `server:8080`. Insights stays on host loopback and is available
+to operators only through the SSH tunnel documented in
+`docs/serverpod-insights-runbook.md`.
 
 Authentication rate limits treat client-IP headers as trusted ingress data.
 Keep all Serverpod ports private. The bundled Caddy proxy accepts

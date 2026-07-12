@@ -6,9 +6,9 @@ apiServer:
 
 insightsServer:
   port: 8081
-  publicHost: insights.aonw.net
-  publicPort: 443
-  publicScheme: https
+  publicHost: 127.0.0.1
+  publicPort: 8081
+  publicScheme: http
 
 webServer:
   port: 8082

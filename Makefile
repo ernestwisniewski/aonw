@@ -423,9 +423,6 @@ local-up:
 		SERVERPOD_API_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
 		SERVERPOD_API_SERVER_PUBLIC_PORT="$(LOCAL_API_PORT)" \
 		SERVERPOD_API_SERVER_PUBLIC_SCHEME=http \
-		SERVERPOD_INSIGHTS_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
-		SERVERPOD_INSIGHTS_SERVER_PUBLIC_PORT="$(LOCAL_INSIGHTS_PORT)" \
-		SERVERPOD_INSIGHTS_SERVER_PUBLIC_SCHEME=http \
 		SERVERPOD_WEB_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
 		SERVERPOD_WEB_SERVER_PUBLIC_PORT="$(LOCAL_SERVER_WEB_PORT)" \
 		SERVERPOD_WEB_SERVER_PUBLIC_SCHEME=http \
@@ -485,12 +482,10 @@ infra-config-check: docker-context-check
 	@command -v docker >/dev/null || { echo "docker is required."; exit 1; }
 	@docker run --rm --entrypoint /usr/bin/caddy \
 		-e AONW_API_HOST=api.example.test \
-		-e AONW_INSIGHTS_HOST=insights.example.test \
 		-e AONW_HOMEPAGE_HOST=example.test \
 		-e AONW_DEMO_HOST=demo.example.test \
 		-e AONW_UPSTREAM=server:8080 \
 		-e AONW_WEB_UPSTREAM=server:8082 \
-		-e AONW_INSIGHTS_UPSTREAM=server:8081 \
 		-v "$(CURDIR)/deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
 		"$(CADDY_VALIDATE_IMAGE)" validate --config /etc/caddy/Caddyfile --adapter caddyfile
 	@docker run --rm --entrypoint /usr/bin/caddy \

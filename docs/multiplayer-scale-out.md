@@ -23,14 +23,15 @@ and mutation for a match reaches the same process.
 - Keep `/livez` for liveness and `/startupz` for startup checks. Liveness may
   stay `200` while `/readyz` returns
   `503` during deploy drain.
-- Preserve HTTP upgrade headers for Serverpod realtime streams and Insights.
+- Preserve HTTP upgrade headers for Serverpod realtime streams.
 - Keep all players in the same live match pinned to the same API instance unless
   a shared match event bus has been deployed.
 - Preserve request-id headers such as `X-Request-Id` at the reverse-proxy layer
   if your deployment adds them. The current Serverpod app does not implement
   custom request-id echoing or JSON-log enrichment itself.
-- Block direct public access to the Serverpod API and Insights ports; public
-  ingress should go through the reverse proxy.
+- Block direct public access to the Serverpod API; public API ingress should go
+  through the reverse proxy. Keep Insights outside public ingress entirely and
+  reach its loopback listener only through the operator SSH tunnel.
 
 ## Deploy Drain
 
@@ -70,8 +71,8 @@ SERVERPOD_SERVICE_SECRET=<strong-secret>
 ```
 
 Readiness polling should be fast enough to remove draining instances before new
-match streams are opened. Keep API and Insights ports private unless the reverse
-proxy terminates TLS and applies the public host policy.
+match streams are opened. Keep the API port private behind the reverse proxy and
+the Insights port bound to host loopback without a public proxy route.
 
 These environment values do not enable application match fan-out. The shared
 event bus described below is a future mode and must be implemented and tested

@@ -30,21 +30,6 @@
 	}
 }
 
-{$AONW_INSIGHTS_HOST} {
-	encode zstd gzip
-
-	header {
-		X-Content-Type-Options nosniff
-		Referrer-Policy no-referrer
-	}
-
-	reverse_proxy {$AONW_INSIGHTS_UPSTREAM} {
-		header_up -Forwarded
-		header_up -CF-Connecting-IP
-		header_up X-Forwarded-For {client_ip}
-	}
-}
-
 {$AONW_HOMEPAGE_HOST} {
 	encode zstd gzip
 
