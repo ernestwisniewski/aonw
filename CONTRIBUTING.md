@@ -72,4 +72,7 @@ by `test/.../localization_hardcode_guard_test.dart`.
   benchmark artifacts.
 - Keep architecture boundaries intact. If a dependency crosses layers, update
   the architecture test and docs in the same change.
+- Follow accepted [Architecture Decision Records](docs/adr/README.md). A change
+  to a binding decision requires a new superseding ADR, index/docs updates, and
+  the corresponding architecture guards in the same pull request.
 - Prefer small comments that explain intent or invariants.

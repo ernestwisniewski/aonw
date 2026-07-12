@@ -9,6 +9,7 @@ behavior unless they explicitly call out historical context or future work.
 | Need | Read |
 | --- | --- |
 | Understand the codebase | [Architecture](#architecture), then [Multiplayer Protocol](multiplayer-protocol.md) if networking is involved. |
+| Change an architectural contract | [Architecture Decision Records](adr/README.md) before changing ownership, determinism, commands, compatibility, or deployment policy. |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
 | Work on backend operations | [Data Retention](data-retention.md), [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
@@ -53,7 +54,29 @@ Architecture boundaries are enforced by
 `test/architecture/layer_boundaries_test.dart`. When a cross-layer dependency is
 intentional, update this document and the architecture test in the same change.
 
+## Architecture Decisions
+
+The architecture table above describes the current repository. The accepted
+target boundaries and their migration constraints are recorded in the
+[ADR index](adr/README.md):
+
+- [map and state ownership](adr/0001-map-and-state-ownership.md);
+- [the deterministic game engine](adr/0002-deterministic-game-engine.md);
+- [command boundaries](adr/0003-command-boundaries.md);
+- [multiplayer protocol versioning](adr/0004-versioned-multiplayer-protocol.md);
+- [immutable deployment promotion](adr/0005-immutable-deployment.md).
+
+An accepted ADR is binding for new code even when its implementation is still
+in progress. Do not edit history to change a decision; add a superseding ADR.
+
 ## Document Index
+
+### Architecture
+
+| Document | Use It For |
+| --- | --- |
+| [Architecture Decision Records](adr/README.md) | Durable ownership, determinism, command, compatibility, and deployment decisions. |
+| [Multiplayer Protocol](multiplayer-protocol.md) | Current client/server protocol surface and rollout procedure. |
 
 ### Release And Operations
 

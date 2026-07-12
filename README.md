@@ -125,6 +125,8 @@ Recommended entry points:
   server deploys, store uploads, and public download packaging.
 - [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) before changing
   Serverpod protocol surfaces, multiplayer sessions, or realtime streams.
+- [docs/adr/README.md](docs/adr/README.md) before changing architecture
+  ownership, command semantics, compatibility policy, or deployment identity.
 - `docs/game-design/` for gameplay systems, balance, UX, and
   rendering behavior.
 

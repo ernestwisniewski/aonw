@@ -5,6 +5,10 @@ Worlds. It uses placeholders for private infrastructure; keep real hosts, SSH
 keys, service accounts, signing material, and `.env` files out of source
 control.
 
+[ADR 0005](adr/0005-immutable-deployment.md) records the accepted build-once,
+digest-promotion, migration, and rollback target. This runbook describes the
+currently implemented workflow while that migration remains in progress.
+
 ## Release Principles
 
 - Build from a clean `main` checkout.

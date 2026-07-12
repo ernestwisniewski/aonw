@@ -10,6 +10,10 @@ app. One-shot lobby and recovery operations use generated Serverpod endpoint
 methods. Live matches use Serverpod bidirectional streams with generated
 protocol envelopes and shared `aonw_core` wire DTOs.
 
+The accepted target compatibility and generated-code boundaries are recorded
+in [ADR 0004](adr/0004-versioned-multiplayer-protocol.md). This runbook remains
+the source for currently implemented version-3 behavior and rollout steps.
+
 ## Architecture
 
 - Auth: custom Serverpod `emailIdp` endpoint backed by
@@ -81,7 +85,8 @@ timeout handling treats AI seats as non-blocking.
 
 ## Protocol Versioning
 
-All wire payloads carry `v: 3` and are validated by `kProtocolVersion`.
+Every authoritative top-level wire envelope carries `v: 3` and is validated by
+`kProtocolVersion`; nested command/event bodies inherit the envelope version.
 Persisted snapshots/events from earlier wire versions must be cleared or
 migrated before replaying them with the current client and server.
 

@@ -21,3 +21,7 @@ Server-side persistence is owned by Serverpod ORM tables for matches, players,
 snapshots, and events. Client-side adapters should stay behind application
 ports and use the generated Serverpod endpoint and stream contracts for
 multiplayer runtime state.
+
+See [ADR 0003](../../../docs/adr/0003-command-boundaries.md) and
+[ADR 0004](../../../docs/adr/0004-versioned-multiplayer-protocol.md) for the
+accepted command and wire boundaries that this adapter is migrating toward.

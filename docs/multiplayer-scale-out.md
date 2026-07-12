@@ -1,5 +1,17 @@
 # Multiplayer Scale-Out Contract
 
+This current runtime contract complements
+[ADR 0004](adr/0004-versioned-multiplayer-protocol.md) and
+[ADR 0005](adr/0005-immutable-deployment.md). Those ADRs define the accepted
+compatibility and deployment targets; this document states today's safe
+single-instance/per-match-affinity operating mode.
+
+The drain sequence below is a required automation contract, not a currently
+implemented signal handler. Today's Compose recreate can disconnect calls and
+streams without first switching readiness to `503`; clients recover through
+reconnect and the authoritative snapshot. Do not assume graceful drain until a
+deployment test proves that sequence end to end.
+
 PostgreSQL is the durable source of truth. Clients reconnect with their last
 event offset, but recovery is snapshot-authoritative: the server sends the
 latest recipient-scoped snapshot before any newer event markers.
@@ -35,13 +47,16 @@ and mutation for a match reaches the same process.
 
 ## Deploy Drain
 
-On `SIGTERM` or `SIGINT`, deploy automation should:
+Deploy automation should:
 
-1. Stop routing new traffic when `/readyz` fails or the instance is removed
-   from the load balancer.
-2. Let in-flight Serverpod endpoint calls and stream reconnects settle.
-3. Start the replacement instance and wait for `/startupz`, `/livez`, and
-   `/readyz`.
+1. Start the replacement in isolation, keep it out of live match mutation
+   traffic, and wait for `/startupz`, `/livez`, `/readyz`, and synthetic smoke.
+2. Signal the old instance, make its `/readyz` return `503`, stop accepting new
+   mutations on endpoints and existing streams, and let already accepted
+   Serverpod calls settle.
+3. Atomically close/force-reconnect old streams and activate the replacement as
+   the single mutation target (or preserve strict per-match affinity), then
+   terminate the old process. There is no interval where both accept commands.
 4. Rely on client reconnect plus last-seen event offset for match convergence.
 
 Clients reconnect with their last event offset, so a drained stream should
