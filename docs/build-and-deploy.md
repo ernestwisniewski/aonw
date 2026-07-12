@@ -47,6 +47,8 @@ config, and the server image context. The context guard uses BuildKit with
 synthetic secret, key, certificate, credential, and backup files to prove that
 the checked-in `.dockerignore` excludes them while preserving required source,
 map, and migration inputs. It requires Docker and the Serverpod CLI.
+Root deployment profiles require Docker Compose 2.24.4 or newer because their
+overlays use `!override` to replace, rather than merge, service profile lists.
 The CLI must exactly match the runtime pin in `server/pubspec.yaml`. Install the
 required version without duplicating it in documentation or CI:
 
@@ -100,7 +102,7 @@ make local-down
 Reset local database volumes:
 
 ```sh
-docker compose --profile dev down -v
+docker compose -f compose.yml --profile dev down -v
 ```
 
 ## Static Sites
@@ -158,7 +160,6 @@ cache, so multi-stage builds do not replace this guard.
 Minimum production-style values:
 
 ```env
-SERVERPOD_RUN_MODE=production
 SERVERPOD_SERVER_ID=default
 SERVERPOD_LOGGING_MODE=normal
 SERVERPOD_SERVER_ROLE=monolith
@@ -180,13 +181,27 @@ SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper=<long-random-secret>
 AONW_SERVER_IMAGE=ghcr.io/<owner>/<image>:<tag>
 ```
 
+Do not set `SERVERPOD_RUN_MODE` in this file. The required Compose overlay owns
+that value: `compose.staging.yml` selects `staging`, while `compose.prod.yml`
+selects `production`. This prevents a stale `.env` file or shell export from
+silently starting a production stack in development mode.
+For a direct image deployment outside the root Compose stack,
+`SERVERPOD_RUN_MODE` remains the supported explicit override and defaults to
+`production` when absent.
+
 Deploy with:
 
 ```sh
-docker compose --env-file .env.prod --profile prod pull
-docker compose --env-file .env.prod --profile prod up -d
+docker compose --env-file .env.prod -f compose.yml -f compose.prod.yml --profile prod pull
+docker compose --env-file .env.prod -f compose.yml -f compose.prod.yml --profile prod up -d
 curl -fsS https://api.aonw.net/readyz
 ```
+
+The production overlay is mandatory. Omitting it, or using the staging overlay
+with the `prod` profile, leaves the application service inactive and the
+Compose command fails instead of falling back to another run mode. The
+canonical `make deploy PROFILE=prod` command selects the correct files
+automatically.
 
 Use `/livez` for process liveness and `/readyz` as the deploy gate. Readiness
 also verifies the configured PostgreSQL and Redis dependencies, so a deploy

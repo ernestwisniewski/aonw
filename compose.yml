@@ -3,7 +3,7 @@ name: aonw
 services:
   postgres:
     image: pgvector/pgvector:pg16@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
-    profiles: ["dev", "staging", "prod", "tunnel"]
+    profiles: ["dev", "tunnel"]
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aonw}
@@ -25,7 +25,7 @@ services:
 
   redis:
     image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
-    profiles: ["dev", "staging", "prod", "tunnel"]
+    profiles: ["dev", "tunnel"]
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --requirepass \"$${SERVERPOD_PASSWORD_redis}\""]
     environment:
@@ -40,7 +40,7 @@ services:
 
   server:
     image: ${AONW_SERVER_IMAGE:-aonw-server:local}
-    profiles: ["dev", "staging", "prod", "tunnel"]
+    profiles: ["dev", "tunnel"]
     build:
       context: .
       dockerfile: server/Dockerfile
@@ -49,7 +49,9 @@ services:
         AONW_RELEASE_CHANNEL: ${AONW_RELEASE_CHANNEL:-ALPHA}
     restart: unless-stopped
     environment:
-      - SERVERPOD_RUN_MODE=${SERVERPOD_RUN_MODE:-staging}
+      # Staging and production override this internal value in their required
+      # Compose overlays. Ambient SERVERPOD_RUN_MODE values are never imported.
+      - AONW_COMPOSE_RUN_MODE=development
       - SERVERPOD_SERVER_ID=${SERVERPOD_SERVER_ID:-default}
       - SERVERPOD_LOGGING_MODE=${SERVERPOD_LOGGING_MODE:-normal}
       - SERVERPOD_SERVER_ROLE=${SERVERPOD_SERVER_ROLE:-monolith}

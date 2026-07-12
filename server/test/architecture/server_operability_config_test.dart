@@ -63,6 +63,153 @@ void main() {
       expect(tls.redis!.requireSsl, isTrue);
     });
 
+    test('Compose profiles select immutable Serverpod run modes', () {
+      final base =
+          loadYaml(File('../compose.yml').readAsStringSync()) as YamlMap;
+      final staging = File('../compose.staging.yml').readAsStringSync();
+      final production = File('../compose.prod.yml').readAsStringSync();
+      final baseServices = base['services'] as YamlMap;
+      final baseServer = baseServices['server'] as YamlMap;
+      final baseEnvironment = (baseServer['environment'] as YamlList)
+          .cast<String>();
+
+      for (final serviceName in const ['postgres', 'redis', 'server']) {
+        final service = baseServices[serviceName] as YamlMap;
+        expect(
+          (service['profiles'] as YamlList).cast<String>(),
+          equals(const ['dev', 'tunnel']),
+          reason: serviceName,
+        );
+      }
+      expect(baseEnvironment, contains('AONW_COMPOSE_RUN_MODE=development'));
+      expect(baseEnvironment.join('\n'), isNot(contains('SERVERPOD_RUN_MODE')));
+
+      _expectRunModeOverlay(
+        staging,
+        profile: 'staging',
+        mode: 'staging',
+        marker: 'AONW_STAGING_OVERLAY',
+      );
+      _expectRunModeOverlay(
+        production,
+        profile: 'prod',
+        mode: 'production',
+        marker: 'AONW_PROD_OVERLAY',
+      );
+
+      final caddy = baseServices['caddy'] as YamlMap;
+      expect(
+        (caddy['profiles'] as YamlList).cast<String>(),
+        equals(const ['staging', 'prod']),
+      );
+
+      final makefile = File('../Makefile').readAsStringSync();
+      expect(
+        makefile,
+        contains(
+          r'COMPOSE_STAGING_FILES = $(COMPOSE_BASE_FILES) -f compose.staging.yml',
+        ),
+      );
+      expect(
+        makefile,
+        contains(
+          r'COMPOSE_PROD_FILES = $(COMPOSE_BASE_FILES) -f compose.prod.yml',
+        ),
+      );
+      expect(
+        makefile,
+        contains(
+          r'COMPOSE_PROFILE = $(COMPOSE) $(COMPOSE_PROFILE_FILES) --profile "$(PROFILE)"',
+        ),
+      );
+      expect(makefile, contains('dev|tunnel|staging|prod)'));
+      expect(makefile, isNot(contains(r'$(COMPOSE) --profile "$(PROFILE)"')));
+      expect(
+        makefile,
+        contains(r'COMPOSE="$(COMPOSE)" tool/check_compose_run_modes.sh'),
+      );
+      expect(makefile, contains(r'$(COMPOSE) -f compose.yml config'));
+
+      final composeCheck = File(
+        '../tool/check_compose_run_modes.sh',
+      ).readAsStringSync();
+      expect(composeCheck, contains('AONW_COMPOSE_RUN_MODE=test'));
+      expect(composeCheck, contains('production with both overlays'));
+      expect(composeCheck, contains('staging with both overlays'));
+
+      final postgresSmoke = File(
+        '../tool/run_postgres_smoke.sh',
+      ).readAsStringSync();
+      expect(postgresSmoke, contains('--project-name aonw'));
+      expect(postgresSmoke, contains(r'-f "${repo_root}/compose.yml"'));
+
+      final rootEnvironment = File('../.env.example').readAsStringSync();
+      expect(
+        _hasLine(rootEnvironment, 'SERVERPOD_RUN_MODE=development'),
+        isFalse,
+      );
+      expect(
+        File('.env.example').readAsStringSync(),
+        contains('SERVERPOD_RUN_MODE=development'),
+      );
+
+      final deploymentDocs = [
+        File('../docs/build-and-deploy.md').readAsStringSync(),
+        File('../docs/multiplayer-testflight.md').readAsStringSync(),
+      ].join('\n');
+      final stagingRunbook = File(
+        '../docs/multiplayer-testflight.md',
+      ).readAsStringSync();
+      _expectProfileCommandsUseOverlay(
+        deploymentDocs,
+        profile: 'staging',
+        overlay: 'compose.staging.yml',
+      );
+      _expectProfileCommandsUseOverlay(
+        deploymentDocs,
+        profile: 'prod',
+        overlay: 'compose.prod.yml',
+      );
+      expect(
+        _hasLine(deploymentDocs, 'SERVERPOD_RUN_MODE=production'),
+        isFalse,
+      );
+      for (final value in const [
+        'SERVERPOD_SERVER_ID=staging',
+        'SERVERPOD_API_SERVER_PUBLIC_HOST=api.aonw.net',
+        'SERVERPOD_API_SERVER_PUBLIC_PORT=443',
+        'SERVERPOD_API_SERVER_PUBLIC_SCHEME=https',
+        'SERVERPOD_WEB_SERVER_PUBLIC_HOST=api.aonw.net',
+        'SERVERPOD_WEB_SERVER_PUBLIC_PORT=443',
+        'SERVERPOD_WEB_SERVER_PUBLIC_SCHEME=https',
+      ]) {
+        expect(_hasLine(stagingRunbook, value), isTrue, reason: value);
+      }
+
+      final entrypoint = File('docker-entrypoint.sh').readAsStringSync();
+      expect(
+        entrypoint,
+        contains(
+          r'mode="${AONW_COMPOSE_RUN_MODE:-${SERVERPOD_RUN_MODE:-production}}"',
+        ),
+      );
+      expect(entrypoint, contains(r'case "$staging_overlay:$prod_overlay" in'));
+      expect(entrypoint, contains('Invalid Compose overlay combination.'));
+      expect(entrypoint, contains('development|test|staging|production)'));
+      expect(entrypoint, contains(r'if [ "$#" -ne 0 ]; then'));
+      expect(entrypoint, contains('export SERVERPOD_RUN_MODE'));
+      final managedArguments = entrypoint.substring(
+        entrypoint.indexOf('set --'),
+        entrypoint.indexOf(
+          r'if [ "${SERVERPOD_APPLY_MIGRATIONS:-false}" = "true" ]',
+        ),
+      );
+      expect(managedArguments, isNot(contains(r'"$@"')));
+
+      final dockerfile = File('Dockerfile').readAsStringSync();
+      expect(dockerfile, contains('ENV SERVERPOD_RUN_MODE=production'));
+    });
+
     test('Compose and env examples expose backend TLS switches', () {
       final compose =
           loadYaml(File('../compose.yml').readAsStringSync()) as YamlMap;
@@ -217,6 +364,40 @@ void main() {
       expect(cloudflared.containsKey('ports'), isFalse);
     });
   });
+}
+
+void _expectProfileCommandsUseOverlay(
+  String source, {
+  required String profile,
+  required String overlay,
+}) {
+  final commands = source
+      .split('\n')
+      .where(
+        (line) =>
+            line.contains('docker compose') &&
+            line.contains('--profile $profile'),
+      );
+  expect(commands, isNotEmpty, reason: profile);
+  for (final command in commands) {
+    expect(command, contains('-f compose.yml'), reason: command);
+    expect(command, contains('-f $overlay'), reason: command);
+  }
+}
+
+void _expectRunModeOverlay(
+  String overlay, {
+  required String profile,
+  required String mode,
+  required String marker,
+}) {
+  expect(
+    RegExp('profiles: !override \\["$profile"\\]').allMatches(overlay),
+    hasLength(3),
+  );
+  expect(overlay, contains('AONW_COMPOSE_RUN_MODE: $mode'));
+  expect(overlay, contains('$marker: "1"'));
+  expect(overlay, isNot(contains('SERVERPOD_RUN_MODE')));
 }
 
 ServerpodConfig _loadConfig(

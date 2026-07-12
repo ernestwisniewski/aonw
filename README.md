@@ -96,7 +96,7 @@ Serverpod on the host:
 
 ```sh
 cd server
-docker compose up -d postgres redis
+docker compose -f compose.yml up -d postgres redis
 dart run bin/main.dart \
   --mode=development \
   --server-id=local \

@@ -16,7 +16,7 @@ Start the local Serverpod stack:
 
 ```sh
 cp .env.example .env
-docker compose --profile dev up --build
+docker compose -f compose.yml --profile dev up --build
 curl -fsS http://localhost:8080/livez
 curl -fsS http://localhost:8080/readyz
 curl -fsS http://localhost:8080/startupz

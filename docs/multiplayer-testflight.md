@@ -74,7 +74,7 @@ infrastructure:
 
 ```sh
 cp .env.example .env
-docker compose --profile tunnel up --build
+docker compose -f compose.yml --profile tunnel up --build
 ```
 
 Read the generated `https://*.trycloudflare.com` URL from the `cloudflared`
@@ -98,19 +98,29 @@ SERVERPOD_PASSWORD_redis=replace-with-strong-random-secret
 SERVERPOD_PASSWORD_emailSecretHashPepper=replace-with-strong-random-secret
 SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey=replace-with-strong-random-secret
 SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper=replace-with-strong-random-secret
+SERVERPOD_SERVER_ID=staging
+SERVERPOD_API_SERVER_PUBLIC_HOST=api.aonw.net
+SERVERPOD_API_SERVER_PUBLIC_PORT=443
+SERVERPOD_API_SERVER_PUBLIC_SCHEME=https
+SERVERPOD_WEB_SERVER_PUBLIC_HOST=api.aonw.net
+SERVERPOD_WEB_SERVER_PUBLIC_PORT=443
+SERVERPOD_WEB_SERVER_PUBLIC_SCHEME=https
 AONW_API_HOST=api.aonw.net
 ```
 
 4. Start the staging stack:
 
 ```sh
-docker compose --profile staging up -d --build
-docker compose --profile staging ps
+docker compose -f compose.yml -f compose.staging.yml --profile staging up -d --build
+docker compose -f compose.yml -f compose.staging.yml --profile staging ps
 curl -fsS https://api.aonw.net/livez
 curl -fsS https://api.aonw.net/readyz
 ```
 
-The staging profile runs PostgreSQL, the game server, and Caddy. Caddy
+The staging overlay fixes Serverpod's run mode to `staging`; do not set
+`SERVERPOD_RUN_MODE` in `.env`. The stack fails closed if the overlay is
+missing or replaced with the production overlay. The staging profile runs
+PostgreSQL, the game server, and Caddy. Caddy
 terminates HTTPS, stores certificates in Docker volumes, and proxies Serverpod
 API traffic to `server:8080`. Insights stays on host loopback and is available
 to operators only through the SSH tunnel documented in
@@ -136,7 +146,7 @@ profile starts PostgreSQL, Redis, the Serverpod server, and Caddy unless you
 override the service set:
 
 ```sh
-docker compose --profile prod up -d --build
+docker compose -f compose.yml -f compose.prod.yml --profile prod up -d --build
 ```
 
 That is the right shape for a small single-host production-like staging box.
@@ -147,13 +157,10 @@ set `SERVERPOD_DATABASE_HOST`, `SERVERPOD_DATABASE_PORT`,
 `SERVERPOD_DATABASE_PASSWORD` for the external database. Also set
 `SERVERPOD_DATABASE_REQUIRE_SSL=true` when the provider requires TLS. For an
 external TLS-enabled Redis service, set `SERVERPOD_REDIS_REQUIRE_SSL=true`.
-Then either remove the `postgres` service from the deployed Compose file, use a
-deployment-specific override file, or start the explicit services that should
-run on the host:
-
-```sh
-docker compose --profile prod up -d --build redis server caddy
-```
+Then use a deployment-specific override that removes the bundled `postgres`
+service and the server's `depends_on.postgres` relationship. Naming only
+`redis`, `server`, and `caddy` on the command line is not sufficient: Compose
+also starts declared dependencies.
 
 Those `SERVERPOD_DATABASE_*` values must point at the managed database in that
 mode.

@@ -1,6 +1,11 @@
 SHELL := /bin/sh
 
 COMPOSE ?= docker compose
+COMPOSE_BASE_FILES = -f compose.yml
+COMPOSE_STAGING_FILES = $(COMPOSE_BASE_FILES) -f compose.staging.yml
+COMPOSE_PROD_FILES = $(COMPOSE_BASE_FILES) -f compose.prod.yml
+COMPOSE_PROFILE_FILES = $(if $(filter prod,$(PROFILE)),$(COMPOSE_PROD_FILES),$(if $(filter staging,$(PROFILE)),$(COMPOSE_STAGING_FILES),$(COMPOSE_BASE_FILES)))
+COMPOSE_PROFILE = $(COMPOSE) $(COMPOSE_PROFILE_FILES) --profile "$(PROFILE)"
 PROFILE ?= staging
 SERVER_SERVICE ?= server
 BRANCH ?=
@@ -32,7 +37,6 @@ LOCAL_WEB_HOST ?= localhost
 LOCAL_WEB_PORT ?= 7357
 LOCAL_WEB_DEVICE ?= chrome
 LOCAL_HEALTH_URL ?= $(LOCAL_API_BASE_URL)/readyz
-COMPOSE_CHECK_PROFILES ?= dev staging prod
 CADDY_VALIDATE_IMAGE ?= caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
 PROMTOOL_IMAGE ?= prom/prometheus:latest@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
 PULL ?= 1
@@ -183,7 +187,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -200,6 +204,7 @@ help:
 	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
+	@echo "  make profile-check LOCAL: validate the selected Compose deployment profile"
 	@echo "  make deploy        Pull repo, rebuild Docker, restart staging, check health"
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
 	@echo "  make build-web     LOCAL: build Flutter web bundle without deploying"
@@ -249,7 +254,7 @@ help:
 	@echo "Options:"
 	@echo "  LOCAL_API_BASE_URL=http://... Local Flutter/Serverpod API. Default: $(LOCAL_API_BASE_URL)"
 	@echo "  LOCAL_WEB_PORT=7357            Stable Google OAuth web origin port. Default: $(LOCAL_WEB_PORT)"
-	@echo "  PROFILE=staging|prod|dev       Default: $(PROFILE)"
+	@echo "  PROFILE=dev|tunnel|staging|prod Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
 	@echo "  CHECK_MIGRATIONS=1             Run local Serverpod migration drift check after build"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
@@ -261,7 +266,6 @@ help:
 	@echo "  SERVERPOD_SEED_PASSWORD=...     serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_PASSWORD)"
 	@echo "  SERVERPOD_SEED_EMAIL_DOMAIN=... serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_EMAIL_DOMAIN)"
 	@echo "  SERVERPOD_PASSWORD_redis=...     Required by Compose when Redis is enabled"
-	@echo "  COMPOSE_CHECK_PROFILES=\"dev staging prod\" compose-check profiles. Default: $(COMPOSE_CHECK_PROFILES)"
 	@echo "  PULL=0                         Build from cached base images"
 	@echo "  AONW_APP_VERSION=x.y.z+n      Server image app version. Default: $(AONW_APP_VERSION)"
 	@echo "  HEALTH_URL=https://.../readyz Default: $(HEALTH_URL)"
@@ -329,6 +333,12 @@ help:
 	@echo "  NEW_VERSION=x.y.z             bump-version/deploy-all only. Overrides VERSION_BUMP"
 	@echo "  NEW_BUILD=N                   bump-version/deploy-all only. Default: current+1"
 
+profile-check:
+	@case "$(PROFILE)" in \
+		dev|tunnel|staging|prod) ;; \
+		*) echo "Unsupported PROFILE=$(PROFILE). Expected dev, tunnel, staging, or prod."; exit 1 ;; \
+	esac
+
 ifneq ($(filter steam,$(MAKECMDGOALS)),)
 deploy: steam
 	@echo "deploy steam finished."
@@ -344,7 +354,7 @@ deploy-clean: CACHE_FLAGS := --no-cache
 deploy-clean: CLEAN_BUILD_CACHE := 1
 deploy-clean: deploy
 
-preflight:
+preflight: profile-check
 	@test -f compose.yml || { echo "compose.yml not found. Run make from repo root."; exit 1; }
 	@test -f .env || { echo ".env not found. Create it from .env.example on the server."; exit 1; }
 	@command -v git >/dev/null || { echo "git is required."; exit 1; }
@@ -361,10 +371,10 @@ pull:
 	@git fetch --prune
 	@git pull --ff-only
 
-build:
+build: profile-check
 	@test -n "$(AONW_APP_VERSION)" || { echo "Could not parse AONW_APP_VERSION from $(PUBSPEC)."; exit 1; }
 	@echo "Building server image with AONW_APP_VERSION=$(AONW_APP_VERSION), AONW_RELEASE_CHANNEL=$(AONW_RELEASE_CHANNEL)"
-	@AONW_APP_VERSION="$(AONW_APP_VERSION)" AONW_RELEASE_CHANNEL="$(AONW_RELEASE_CHANNEL)" $(COMPOSE) --profile "$(PROFILE)" build $(PULL_FLAGS) $(CACHE_FLAGS) "$(SERVER_SERVICE)"
+	@AONW_APP_VERSION="$(AONW_APP_VERSION)" AONW_RELEASE_CHANNEL="$(AONW_RELEASE_CHANNEL)" $(COMPOSE_PROFILE) build $(PULL_FLAGS) $(CACHE_FLAGS) "$(SERVER_SERVICE)"
 	@if [ "$(CHECK_MIGRATIONS)" = "1" ]; then \
 		$(MAKE) --no-print-directory check-migrations PROFILE="$(PROFILE)" SERVER_SERVICE="$(SERVER_SERVICE)" COMPOSE="$(COMPOSE)"; \
 	fi
@@ -424,8 +434,7 @@ local-start: local-seed
 
 local-up:
 	@test -f .env || { echo "Missing .env. Run: cp .env.example .env, then replace placeholder secrets."; exit 1; }
-	@SERVERPOD_RUN_MODE=development \
-		SERVERPOD_SERVER_ID=local \
+	@SERVERPOD_SERVER_ID=local \
 		SERVERPOD_API_SERVER_PUBLIC_HOST="$(LOCAL_API_HOST)" \
 		SERVERPOD_API_SERVER_PUBLIC_PORT="$(LOCAL_API_PORT)" \
 		SERVERPOD_API_SERVER_PUBLIC_SCHEME=http \
@@ -437,7 +446,7 @@ local-up:
 		AONW_WEB_PUBLIC_PORT="$(LOCAL_SERVER_WEB_PORT)" \
 		AONW_APP_VERSION="$(AONW_APP_VERSION)" \
 		AONW_RELEASE_CHANNEL="$(AONW_RELEASE_CHANNEL)" \
-		$(COMPOSE) --profile dev up -d --build --remove-orphans
+		$(COMPOSE) $(COMPOSE_BASE_FILES) --profile dev up -d --build --remove-orphans
 	@$(MAKE) --no-print-directory local-health
 
 local-health:
@@ -457,27 +466,18 @@ local-web: local-start
 		"--dart-define=AONW_API_BASE_URL=$(LOCAL_API_BASE_URL)"
 
 local-down:
-	@$(COMPOSE) --profile dev down --remove-orphans
+	@$(COMPOSE) $(COMPOSE_BASE_FILES) --profile dev down --remove-orphans
 
 compose-check:
 	@command -v docker >/dev/null || { echo "docker is required."; exit 1; }
+	@command -v bash >/dev/null || { echo "bash is required."; exit 1; }
 	@$(COMPOSE) version >/dev/null || { echo "docker compose is required."; exit 1; }
-		@for profile in $(COMPOSE_CHECK_PROFILES); do \
-			echo "Checking root compose.yml for profile $$profile..."; \
-			POSTGRES_PASSWORD="$${POSTGRES_PASSWORD:-compose-config-postgres-password}" \
-			SERVERPOD_DATABASE_PASSWORD="$${SERVERPOD_DATABASE_PASSWORD:-compose-config-postgres-password}" \
-			SERVERPOD_SERVICE_SECRET="$${SERVERPOD_SERVICE_SECRET:-compose-config-service-secret}" \
-			SERVERPOD_PASSWORD_emailSecretHashPepper="$${SERVERPOD_PASSWORD_emailSecretHashPepper:-compose-config-email-pepper}" \
-			SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-compose-config-jwt-key}" \
-			SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-compose-config-refresh-pepper}" \
-			SERVERPOD_PASSWORD_redis="$${SERVERPOD_PASSWORD_redis:-compose-config-redis-password}" \
-			$(COMPOSE) --profile "$$profile" config >/dev/null; \
-		done
-		@echo "Checking server/compose.yml..."
-		@cd server && \
+	@COMPOSE="$(COMPOSE)" tool/check_compose_run_modes.sh
+	@echo "Checking server/compose.yml..."
+	@cd server && \
 			POSTGRES_PASSWORD="$${POSTGRES_PASSWORD:-compose-config-postgres-password}" \
 			SERVERPOD_PASSWORD_redis="$${SERVERPOD_PASSWORD_redis:-compose-config-redis-password}" \
-			$(COMPOSE) config >/dev/null
+			$(COMPOSE) -f compose.yml config >/dev/null
 	@echo "Docker Compose config OK."
 
 docker-context-check:
@@ -1614,15 +1614,15 @@ migrate:
 	@echo "Serverpod migrations are applied by the server at startup."
 	@echo "Set SERVERPOD_APPLY_MIGRATIONS=true in .env and run: make up"
 
-up:
-	@$(COMPOSE) --profile "$(PROFILE)" up -d --remove-orphans
+up: profile-check
+	@$(COMPOSE_PROFILE) up -d --remove-orphans
 	@case "$(PROFILE)" in \
 		staging|prod) \
-			$(COMPOSE) --profile "$(PROFILE)" up -d --force-recreate --no-deps caddy ;; \
+			$(COMPOSE_PROFILE) up -d --force-recreate --no-deps caddy ;; \
 		*) : ;; \
 	esac
 
-health:
+health: profile-check
 	@echo "Checking $(HEALTH_URL)"
 	@i=1; \
 	while [ "$$i" -le "$(HEALTH_ATTEMPTS)" ]; do \
@@ -1636,7 +1636,7 @@ health:
 	done; \
 	echo "Healthcheck failed:"; \
 	cat /tmp/aonw-health.err 2>/dev/null || true; \
-	$(COMPOSE) --profile "$(PROFILE)" logs --tail=120 "$(SERVER_SERVICE)"; \
+	$(COMPOSE_PROFILE) logs --tail=120 "$(SERVER_SERVICE)"; \
 	exit 1
 
 health-web:
@@ -1683,8 +1683,8 @@ prune:
 		docker builder prune -f --filter until=168h; \
 	fi
 
-status:
-	@$(COMPOSE) --profile "$(PROFILE)" ps
+status: profile-check
+	@$(COMPOSE_PROFILE) ps
 
-logs:
-	@$(COMPOSE) --profile "$(PROFILE)" logs -f --tail=120 "$(SERVER_SERVICE)"
+logs: profile-check
+	@$(COMPOSE_PROFILE) logs -f --tail=120 "$(SERVER_SERVICE)"

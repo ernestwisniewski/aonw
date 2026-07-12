@@ -27,7 +27,12 @@ void main() {
       ),
     );
 
-    expect(environment['SERVERPOD_RUN_MODE'], 'development');
+    expect(environment.containsKey('SERVERPOD_RUN_MODE'), isFalse);
+    expect(compose, contains('AONW_COMPOSE_RUN_MODE=development'));
+    expect(
+      makefile,
+      contains(r'$(COMPOSE) $(COMPOSE_BASE_FILES) --profile dev up'),
+    );
     expect(environment['SERVERPOD_SERVER_ID'], 'local');
     expect(environment['SERVERPOD_API_SERVER_PUBLIC_HOST'], 'localhost');
     expect(environment['SERVERPOD_API_SERVER_PUBLIC_PORT'], '8080');
