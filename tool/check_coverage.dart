@@ -143,7 +143,7 @@ final class _CoverageGate {
       final scope = policy.scopes[scopeName]!;
       final actual = _measureScope(scopeName, scope);
       final expected = baseline.scopes[scopeName]!;
-      failures.addAll(actual.exactDifferences(expected, scopeName));
+      failures.addAll(actual.baselineDifferences(expected, scopeName));
 
       final diffs = <String, ({String base, _DiffSnapshot snapshot})>{
         'diff': (
@@ -1077,13 +1077,13 @@ final class _ScopeSnapshot {
   final Map<String, _LayerSnapshot> layers;
   final Set<String> missingFiles;
 
-  List<String> exactDifferences(_ScopeSnapshot expected, String scopeName) {
+  List<String> baselineDifferences(_ScopeSnapshot expected, String scopeName) {
     final failures = <String>[];
     for (final layerName in layers.keys) {
       final actual = layers[layerName]!;
       final baseline = expected.layers[layerName]!;
       failures.addAll(
-        actual.exactDifferences(baseline, '$scopeName/$layerName'),
+        actual.baselineDifferences(baseline, '$scopeName/$layerName'),
       );
     }
     final newlyMissing = missingFiles.difference(expected.missingFiles);
@@ -1153,22 +1153,10 @@ final class _LayerSnapshot {
   final _Counts files;
   final _Counts lines;
 
-  List<String> exactDifferences(_LayerSnapshot expected, String name) {
-    final failures = <String>[];
-    if (files != expected.files) {
-      failures.add(
-        '$name file coverage changed: ${expected.files} -> $files. Review '
-        'the change and refresh the baseline.',
-      );
-    }
-    if (lines != expected.lines) {
-      failures.add(
-        '$name line coverage changed: ${expected.lines} -> $lines. Review '
-        'the change and refresh the baseline.',
-      );
-    }
-    return failures;
-  }
+  List<String> baselineDifferences(_LayerSnapshot expected, String name) => [
+    ...files.baselineFailures(expected.files, '$name files'),
+    ...lines.baselineFailures(expected.lines, '$name lines'),
+  ];
 
   List<String> ratchetDifferences(_LayerSnapshot old, String name) => [
     ...files.ratchetFailures(old.files, '$name files'),
@@ -1206,6 +1194,20 @@ final class _Counts {
 
   _Counts operator +(_Counts other) =>
       _Counts(hit: hit + other.hit, found: found + other.found);
+
+  List<String> baselineFailures(_Counts expected, String name) {
+    final failures = <String>[];
+    if (found != expected.found) {
+      failures.add(
+        '$name total changed: ${expected.found} -> $found. Review the '
+        'instrumentation change and refresh the baseline.',
+      );
+    }
+    if (hit < expected.hit) {
+      failures.add('$name covered count regressed: ${expected.hit} -> $hit.');
+    }
+    return failures;
+  }
 
   List<String> ratchetFailures(_Counts old, String name) {
     final failures = <String>[];

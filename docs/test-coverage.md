@@ -64,11 +64,18 @@ state; do not point it at an intermediate commit from the change under review.
 
 ## Baseline And Ratchet
 
-The committed baseline stores exact covered and total counts for every layer,
-plus the exact set of eligible source files absent from LCOV. A freshly
-collected report must match that snapshot. Updating the baseline is therefore
-an explicit, reviewable source change rather than an automatic percentage
-rounding adjustment.
+The committed baseline stores exact instrumented totals and minimum covered
+counts for every layer, plus the exact set of eligible source files absent from
+LCOV. A freshly collected report must keep the same totals and missing-file
+set, while meeting or exceeding every covered-count floor. Updating structural
+totals or floors is therefore an explicit, reviewable source change rather
+than an automatic percentage rounding adjustment.
+
+Supported platforms may cover more than the committed floor when framework or
+runtime internals take a different deterministic path. Such gains pass without
+rewriting the baseline. Raise a floor only after every supported environment
+reliably meets it; a snapshot from one platform alone is not evidence that a
+higher floor is portable.
 
 The historical ratchet then prevents a baseline update from concealing a
 regression. Per layer:
@@ -124,9 +131,11 @@ diff -u tool/coverage_baseline.json /tmp/aonw-coverage-baseline.json
 ```
 
 Override `COVERAGE_SNAPSHOT_PATH` when another temporary destination is more
-convenient. Update the committed snapshot only when the historical ratchet
-still passes. New tests should accompany production changes that would
-otherwise lower the ratio, add uncovered lines, or add a missing source file.
+convenient. The candidate reflects the platform that generated it, so do not
+raise a covered-count floor solely because that platform reports an additional
+hit. Update the committed snapshot only when the historical ratchet still
+passes. New tests should accompany production changes that would otherwise
+lower the ratio, add uncovered lines, or add a missing source file.
 
 Run `make coverage-check` again after updating the snapshot. Do not accept a
 baseline change whose only purpose is to make a regression green.

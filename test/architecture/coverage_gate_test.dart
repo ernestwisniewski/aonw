@@ -14,7 +14,7 @@ void main() {
     expect(policy, _expectedRepositoryPolicy);
   });
 
-  test('accepts an exact baseline and fully covered changed lines', () {
+  test('accepts baseline floors and fully covered changed lines', () {
     final fixture = _CoverageFixture.create();
     addTearDown(fixture.dispose);
     fixture.writePrimarySource(answer: 43);
@@ -218,7 +218,20 @@ end_of_record
     );
   });
 
-  test('rejects coverage that differs from the reviewed exact baseline', () {
+  test('allows file and line coverage above the reviewed baseline floors', () {
+    final fixture = _CoverageFixture.create(
+      firstLineHits: 0,
+      baselineFilesHit: 0,
+    );
+    addTearDown(fixture.dispose);
+    fixture.writeLcov();
+
+    final result = fixture.check();
+
+    expect(result.exitCode, 0, reason: fixture.output(result));
+  });
+
+  test('rejects coverage below the reviewed baseline floor', () {
     final fixture = _CoverageFixture.create();
     addTearDown(fixture.dispose);
     fixture.writeLcov(firstLineHits: 0);
@@ -226,7 +239,27 @@ end_of_record
     final result = fixture.check();
 
     expect(result.exitCode, isNot(0), reason: fixture.output(result));
-    expect(result.stderr, contains('root/domain line coverage changed'));
+    expect(
+      result.stderr,
+      contains('root/domain lines covered count regressed: 2 -> 1'),
+    );
+  });
+
+  test('rejects a changed instrumentation total', () {
+    final fixture = _CoverageFixture.create();
+    addTearDown(fixture.dispose);
+    fixture.writeRawLcov('''
+SF:lib/domain/logic.dart
+DA:1,1
+LF:1
+LH:1
+end_of_record
+''');
+
+    final result = fixture.check();
+
+    expect(result.exitCode, isNot(0), reason: fixture.output(result));
+    expect(result.stderr, contains('root/domain lines total changed: 2 -> 1'));
   });
 
   test('rejects changed-line coverage below ninety percent', () {
@@ -453,6 +486,7 @@ final class _CoverageFixture {
 
   factory _CoverageFixture.create({
     int firstLineHits = 1,
+    int baselineFilesHit = 1,
     bool includeMissingSource = false,
     String? manualMainContents,
   }) {
@@ -481,7 +515,7 @@ final class _CoverageFixture {
             : const ['lib/main.dart'],
       )
       ..writeBaseline(
-        filesHit: 1,
+        filesHit: baselineFilesHit,
         filesFound: includeMissingSource ? 2 : 1,
         linesHit: firstLineHits > 0 ? 2 : 1,
         missingFiles: includeMissingSource
