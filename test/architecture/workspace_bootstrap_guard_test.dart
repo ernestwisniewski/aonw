@@ -76,7 +76,33 @@ void main() {
     expect(source, isNot(contains("tr -d '[:space:]'")));
     expect(source, isNot(contains('FLUTTER_BIN')));
     expect(source, isNot(contains('DART_BIN')));
-    expect(source, contains('Flutter and Dart must both come directly from'));
+    expect(source, contains('/bin/cache/dart-sdk/bin'));
+    expect(source, contains('Pinned Flutter/Dart commands must come from'));
+  });
+
+  test('toolchain checker accepts Flutter Actions bundled Dart layout', () {
+    if (Platform.isWindows) return;
+    final flutterMachine =
+        jsonDecode(
+              Process.runSync('flutter', ['--version', '--machine']).stdout
+                  as String,
+            )
+            as Map<String, dynamic>;
+    final flutterRoot = flutterMachine['flutterRoot'] as String;
+
+    final result = Process.runSync(
+      'bash',
+      [_toolchainPath],
+      environment: {
+        ...Platform.environment,
+        'PATH':
+            '$flutterRoot/bin/cache/dart-sdk/bin:$flutterRoot/bin:'
+            '${Platform.environment['PATH']}',
+      },
+    );
+
+    expect(result.exitCode, 0, reason: '${result.stderr}\n${result.stdout}');
+    expect(result.stdout, contains('Toolchain OK'));
   });
 
   test('toolchain checker fails closed when Flutter is unavailable', () {
@@ -174,7 +200,10 @@ exec "\$AONW_REAL_FLUTTER" "\$@"
     );
 
     expect(result.exitCode, isNot(0));
-    expect(result.stderr, contains('Flutter and Dart must both come directly'));
+    expect(
+      result.stderr,
+      contains('Pinned Flutter/Dart commands must come from'),
+    );
   });
 
   test('bootstrap resolves all four lockfiles without generating code', () {

@@ -84,10 +84,11 @@ canonical_directory() {
 }
 
 sdk_bin_directory="$(canonical_directory "${flutter_root}/bin")"
+dart_sdk_bin_directory="$(canonical_directory "${flutter_root}/bin/cache/dart-sdk/bin")"
 active_flutter_directory="$(canonical_directory "$(dirname "$(command -v flutter)")")"
 active_dart_directory="$(canonical_directory "$(dirname "$(command -v dart)")")"
-if [[ "${active_flutter_directory}" != "${sdk_bin_directory}" || "${active_dart_directory}" != "${sdk_bin_directory}" ]]; then
-  echo "Flutter and Dart must both come directly from ${sdk_bin_directory}: found ${active_flutter_directory} and ${active_dart_directory}." >&2
+if [[ "${active_flutter_directory}" != "${sdk_bin_directory}" || ( "${active_dart_directory}" != "${sdk_bin_directory}" && "${active_dart_directory}" != "${dart_sdk_bin_directory}" ) ]]; then
+  echo "Pinned Flutter/Dart commands must come from ${sdk_bin_directory} or its bundled ${dart_sdk_bin_directory}: found ${active_flutter_directory} and ${active_dart_directory}." >&2
   exit 1
 fi
 
