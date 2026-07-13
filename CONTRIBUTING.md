@@ -69,6 +69,33 @@ Integration tests that require PostgreSQL are intentionally separate:
 make server-integration-test
 ```
 
+### Test Coverage
+
+Run the complete line-coverage gate with:
+
+```sh
+make coverage-check
+```
+
+It measures the Flutter app, `aonw_core`, and server unit-test scopes. The root
+Flutter suite runs serially, and the generated Serverpod client remains a smoke
+test without a percentage target. PostgreSQL integration tests stay outside
+coverage collection and must still be run separately when relevant.
+
+Use `make coverage` to collect all reports, or `make flutter-coverage`,
+`make core-coverage`, and `make server-coverage` for a focused scope. Diff
+coverage uses `origin/main` unless `COVERAGE_BASE_REF=<git-ref>` is supplied.
+The baseline ratchet and incremental diff independently use the trusted
+previous revision (the branch upstream locally and the PR base or pre-push SHA
+in CI).
+
+The committed snapshot is exact and protected by a historical ratchet: per
+layer, the ratio cannot decrease, uncovered counts cannot increase, and the
+missing-file set may only shrink. Changed eligible lines require at least 90%
+coverage. Do not add inline ignore annotations or relax the centralized
+generated-code exclusions to make the gate pass. See
+[Test Coverage](docs/test-coverage.md) before updating the baseline or policy.
+
 ## Generated Code
 
 The drift gate only verifies generated artifacts. When their sources change,

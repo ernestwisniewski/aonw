@@ -18,6 +18,33 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('CityMarker', () {
+    test('records a loaded city render path deterministically', () async {
+      HexIconCache.clearForTesting();
+      addTearDown(HexIconCache.clearForTesting);
+      final marker = CityMarker(
+        position: Vector2.zero(),
+        colorValue: 0xFF3366CC,
+        name: 'Aurelian',
+        population: 8,
+        healthFraction: 0.5,
+        isCapital: true,
+        selected: true,
+        hasStoredArtifact: true,
+      );
+      await marker.onLoad();
+      final recorder = PictureRecorder();
+
+      marker.render(Canvas(recorder));
+
+      final picture = recorder.endRecording();
+      addTearDown(picture.dispose);
+      expect(picture.approximateBytesUsed, greaterThan(0));
+      expect(marker.paintsCityHealthBarForTesting, isTrue);
+      expect(marker.paintsCapitalStarForTesting, isTrue);
+      expect(marker.paintsSelectedCityLabelBorderForTesting, isTrue);
+      expect(marker.paintsStoredArtifactBadgeForTesting, isTrue);
+    });
+
     test('uses the city sprite without a duplicated type icon badge', () async {
       await HexIconCache.load(CitySpriteCatalog.assetPath);
       const capStyle = BoardAssetCapStyles.city;

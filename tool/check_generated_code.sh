@@ -66,6 +66,7 @@ echo "Checking aonw_core generated code..."
 (
   cd "${snapshot_root}/packages/aonw_core"
   dart pub get --enforce-lockfile
+  find lib -type f \( -name '*.g.dart' -o -name '*.freezed.dart' \) -delete
   dart run build_runner build
 )
 
@@ -73,14 +74,20 @@ echo "Checking Flutter generated code and localizations..."
 (
   cd "${snapshot_root}"
   flutter pub get --enforce-lockfile
-  flutter pub run build_runner build
+  find lib -type f \( -name '*.g.dart' -o -name '*.freezed.dart' \) -delete
+  rm -rf lib/l10n/generated
   flutter gen-l10n
+  flutter pub run build_runner build
 )
 
 echo "Checking Serverpod protocol, client, test tools, and migrations..."
 (
   cd "${snapshot_root}/server"
   dart pub get --enforce-lockfile
+  rm -rf \
+    lib/src/generated \
+    ../packages/aonw_server_client/lib/src/protocol \
+    test/integration/test_tools/serverpod_test_tools.dart
   "${serverpod_cli}" generate
   "${serverpod_cli}" create-migration
 )

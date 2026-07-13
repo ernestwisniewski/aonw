@@ -375,11 +375,32 @@ void main() {
 
     expect(find.text('1.05x, 1.05x'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 1));
     final preview = find.byKey(
       const Key('assetsEditor.preview.assets/sprites/dice.png:frame-0'),
     );
+    for (var attempt = 0; attempt < 100; attempt++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+      final loadingIndicator = find.descendant(
+        of: preview,
+        matching: find.byType(CircularProgressIndicator),
+      );
+      if (loadingIndicator.evaluate().isEmpty) break;
+    }
     expect(preview, findsOneWidget);
+    expect(
+      find.descendant(
+        of: preview,
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: preview, matching: find.byType(CustomPaint)),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

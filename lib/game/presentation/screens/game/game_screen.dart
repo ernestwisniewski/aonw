@@ -4,6 +4,7 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
+import 'package:aonw/game/presentation/controllers/server_map_loaded_notification_policy.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -676,14 +677,15 @@ class _GameStartupLoadingOverlayState
   }
 
   void _notifyServerMapLoadedIfNeeded() {
-    if (!widget.multiplayer || widget.saveId.isEmpty) return;
-    if (_mapLoadedSentFor == widget.saveId) return;
     final session = ref.read(networkSessionProvider);
-    if (session == null ||
-        !session.isConnected ||
-        session.matchId != widget.saveId) {
-      return;
-    }
+    final shouldNotify = ServerMapLoadedNotificationPolicy.shouldNotify(
+      multiplayer: widget.multiplayer,
+      saveId: widget.saveId,
+      sentFor: _mapLoadedSentFor,
+      sessionConnected: session?.isConnected ?? false,
+      sessionMatchId: session?.matchId,
+    );
+    if (!shouldNotify || session == null) return;
     _mapLoadedSentFor = widget.saveId;
     unawaited(
       ref

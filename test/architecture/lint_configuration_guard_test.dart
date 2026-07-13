@@ -282,6 +282,40 @@ void main() {
       ),
       'server-test': ('server-analyze', 'cd server && dart test'),
     };
+    const coverageReportTargets = {
+      'flutter-coverage-report': (
+        ['root-dependencies', 'coverage-directory'],
+        "@flutter test --no-pub --concurrency=1 --coverage --coverage-package='^aonw\$\$' --coverage-path=\"\$(CURDIR)/coverage/root.lcov.info\" --reporter=failures-only",
+      ),
+      'core-coverage-report': (
+        ['core-dependencies', 'coverage-directory'],
+        "@cd packages/aonw_core && dart test --concurrency=1 --coverage-package='^aonw_core\$\$' --coverage-path=\"\$(CURDIR)/coverage/core.lcov.info\" --reporter=failures-only",
+      ),
+      'server-coverage-report': (
+        ['server-dependencies', 'coverage-directory'],
+        "@cd server && dart test --concurrency=1 --coverage-package='^aonw_server\$\$' --coverage-path=\"\$(CURDIR)/coverage/server.lcov.info\" --reporter=failures-only",
+      ),
+    };
+    const focusedCoverageTargets = {
+      'flutter-coverage': (
+        'flutter-coverage-report',
+        '@dart run tool/check_coverage.dart check --scope root --base-ref '
+            '"\$(COVERAGE_BASE_REF)" --ratchet-ref '
+            '"\$(COVERAGE_RATCHET_REF)"',
+      ),
+      'core-coverage': (
+        'core-coverage-report',
+        '@dart run tool/check_coverage.dart check --scope core --base-ref '
+            '"\$(COVERAGE_BASE_REF)" --ratchet-ref '
+            '"\$(COVERAGE_RATCHET_REF)"',
+      ),
+      'server-coverage': (
+        'server-coverage-report',
+        '@dart run tool/check_coverage.dart check --scope server --base-ref '
+            '"\$(COVERAGE_BASE_REF)" --ratchet-ref '
+            '"\$(COVERAGE_RATCHET_REF)"',
+      ),
+    };
 
     for (final entry in dependencyTargets.entries) {
       final target = _makeTarget(makefile, entry.key);
@@ -297,6 +331,20 @@ void main() {
       final target = _makeTarget(makefile, entry.key);
       expect(target.prerequisites, [entry.value.$1], reason: entry.key);
       expect(target.recipes, ['@${entry.value.$2}'], reason: entry.key);
+    }
+    for (final entry in coverageReportTargets.entries) {
+      final target = _makeTarget(makefile, entry.key);
+      expect(target.prerequisites, entry.value.$1, reason: entry.key);
+      expect(target.recipes, [
+        if (entry.key == 'flutter-coverage-report')
+          '@rm -rf "\$(CURDIR)/build/test_cache"',
+        entry.value.$2,
+      ], reason: entry.key);
+    }
+    for (final entry in focusedCoverageTargets.entries) {
+      final target = _makeTarget(makefile, entry.key);
+      expect(target.prerequisites, [entry.value.$1], reason: entry.key);
+      expect(target.recipes, [entry.value.$2], reason: entry.key);
     }
     expect(
       _makeTarget(makefile, 'dependencies'),
@@ -323,6 +371,53 @@ void main() {
     expect(_makeTarget(makefile, 'format-check').prerequisites, [
       'dependencies',
     ]);
+    expect(_makeTarget(makefile, 'ci').prerequisites, [
+      'generated-code-check',
+      'format-check',
+      'analyze',
+      'coverage-check',
+      'client-test',
+    ]);
+    expect(
+      _makeTarget(makefile, 'coverage'),
+      const _MakeTarget(prerequisites: ['coverage-check']),
+    );
+    expect(_makeTarget(makefile, 'coverage-directory').recipes, [
+      '@mkdir -p coverage',
+    ]);
+    expect(
+      _makeTarget(makefile, 'coverage-reports'),
+      const _MakeTarget(
+        prerequisites: [
+          'flutter-coverage-report',
+          'core-coverage-report',
+          'server-coverage-report',
+        ],
+      ),
+    );
+    expect(
+      _makeTarget(makefile, 'coverage-check'),
+      const _MakeTarget(
+        prerequisites: ['coverage-reports'],
+        recipes: [
+          '@dart run tool/check_coverage.dart check --base-ref '
+              '"\$(COVERAGE_BASE_REF)" --ratchet-ref '
+              '"\$(COVERAGE_RATCHET_REF)"',
+        ],
+      ),
+    );
+    expect(
+      _makeTarget(makefile, 'coverage-snapshot'),
+      const _MakeTarget(
+        prerequisites: ['coverage-reports'],
+        recipes: [
+          '@dart run tool/check_coverage.dart snapshot > '
+              '"\$(COVERAGE_SNAPSHOT_PATH)"',
+          '@echo "Wrote coverage baseline candidate to '
+              '\$(COVERAGE_SNAPSHOT_PATH)"',
+        ],
+      ),
+    );
     final phonyTargets = _makeTarget(makefile, '.PHONY').prerequisites.toSet();
     expect(
       phonyTargets,
@@ -332,7 +427,35 @@ void main() {
         ...dependencyTargets.keys,
         ...analyzerTargets.keys,
         ...testTargets.keys,
+        ...coverageReportTargets.keys,
+        ...focusedCoverageTargets.keys,
+        'coverage',
+        'coverage-directory',
+        'coverage-reports',
+        'coverage-check',
+        'coverage-snapshot',
       }),
+    );
+    expect(
+      makefile
+          .split('\n')
+          .where((line) => line.startsWith('COVERAGE_BASE_REF'))
+          .toList(),
+      ['COVERAGE_BASE_REF ?= origin/main'],
+    );
+    expect(
+      makefile
+          .split('\n')
+          .where((line) => line.startsWith('COVERAGE_RATCHET_REF'))
+          .toList(),
+      ['COVERAGE_RATCHET_REF ?= @{upstream}'],
+    );
+    expect(
+      makefile
+          .split('\n')
+          .where((line) => line.startsWith('COVERAGE_SNAPSHOT_PATH'))
+          .toList(),
+      ['COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-coverage-baseline.json'],
     );
     expect(
       RegExp(r'^\s*\.IGNORE\s*:', multiLine: true).hasMatch(makefile),
@@ -353,6 +476,28 @@ void main() {
     expect(workflow.containsKey('defaults'), isFalse);
     expect(qualityGate.containsKey('defaults'), isFalse);
     expect(qualityGate.containsKey('continue-on-error'), isFalse);
+    final qualityEnvironment = _asMap(
+      qualityGate['env'],
+      'CI quality-gate.env',
+    );
+    expect(_keys(qualityEnvironment), {
+      'COVERAGE_BASE_REF',
+      'COVERAGE_RATCHET_REF',
+    });
+    expect(
+      qualityEnvironment,
+      containsPair(
+        'COVERAGE_BASE_REF',
+        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}",
+      ),
+    );
+    expect(
+      qualityEnvironment,
+      containsPair(
+        'COVERAGE_RATCHET_REF',
+        r"${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
+      ),
+    );
     final strategy = _asMap(qualityGate['strategy'], 'CI strategy');
     final matrix = _asMap(strategy['matrix'], 'CI matrix');
     expect(_keys(matrix), {'include'});
@@ -367,38 +512,48 @@ void main() {
     expect(normalizedRows, const [
       {
         'package': 'root',
-        'working-directory': '.',
         'analyze': 'make --no-print-directory flutter-analyze',
-        'test': 'flutter test --no-pub',
-        'format': 'make format-check',
+        'test': 'make --no-print-directory flutter-coverage',
+        'format': 'make --no-print-directory format-check',
       },
       {
         'package': 'core',
-        'working-directory': 'packages/aonw_core',
         'analyze': 'make --no-print-directory core-analyze',
-        'test': 'dart test',
+        'test': 'make --no-print-directory core-coverage',
         'format': '',
       },
       {
         'package': 'server_client',
-        'working-directory': 'packages/aonw_server_client',
         'analyze': 'make --no-print-directory client-analyze',
-        'test': 'dart test',
+        'test': 'make --no-print-directory client-test',
         'format': '',
       },
       {
         'package': 'server',
-        'working-directory': 'server',
         'analyze': 'make --no-print-directory server-analyze',
-        'test': 'dart test',
+        'test': 'make --no-print-directory server-coverage',
         'format': '',
       },
     ]);
 
     final steps = _mapList(qualityGate['steps'], 'CI quality-gate.steps');
+    expect(
+      steps.where((step) => step.containsKey('working-directory')),
+      isEmpty,
+    );
+    final checkoutStep = steps.singleWhere(
+      (step) => step['name'] == 'Checkout repository',
+    );
+    expect(
+      _asMap(checkoutStep['with'], 'CI checkout.with'),
+      containsPair('fetch-depth', 0),
+    );
     final analyzeStep = steps.singleWhere((step) => step['name'] == 'Analyze');
     expect(_keys(analyzeStep), {'name', 'run'});
     expect(analyzeStep, containsPair('run', r'${{ matrix.analyze }}'));
+    final testStep = steps.singleWhere((step) => step['name'] == 'Test');
+    expect(_keys(testStep), {'name', 'run'});
+    expect(testStep, containsPair('run', r'${{ matrix.test }}'));
     expect(steps.any((step) => step['name'] == 'Get dependencies'), isFalse);
   });
 

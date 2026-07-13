@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
@@ -40,6 +41,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -251,16 +253,26 @@ ProviderContainer _makeContainer({
   );
 }
 
-ProviderContainer _makeMultiplayerGameContainer(GameSave save) {
+ProviderContainer _makeMultiplayerGameContainer(
+  GameSave save, {
+  bool connected = false,
+  NetworkSessionClient? sessionClient,
+}) {
+  final gameRepository = _FakeGameRepository(
+    snapshots: {save.id: _makeSnapshot(save: save)},
+  );
+  final eventLog = _FakeEventLog();
   return ProviderContainer(
     overrides: [
       activeMapProvider(_selection).overrideWithValue(AsyncData(_makeMap())),
       mapImagePathProvider(_selection).overrideWithValue(const AsyncData(null)),
-      gameRepositoryProvider.overrideWithValue(
-        _FakeGameRepository(snapshots: {save.id: _makeSnapshot(save: save)}),
-      ),
-      eventLogProvider.overrideWithValue(_FakeEventLog()),
+      gameRepositoryProvider.overrideWithValue(gameRepository),
+      networkGameRepositoryProvider.overrideWithValue(gameRepository),
+      eventLogProvider.overrideWithValue(eventLog),
+      networkEventLogProvider.overrideWithValue(eventLog),
       snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+      if (sessionClient != null)
+        networkSessionClientProvider.overrideWithValue(sessionClient),
       networkSessionProvider.overrideWithValue(
         NetworkSession(
           userId: 'user_1',
@@ -268,11 +280,38 @@ ProviderContainer _makeMultiplayerGameContainer(GameSave save) {
           token: AuthToken('jwt-token'),
           refreshToken: 'refresh-token',
           matchId: save.id,
-          connectionState: NetworkConnectionState.offline,
+          connectionState: connected
+              ? const NetworkConnectionState(
+                  status: NetworkConnectionStatus.connected,
+                )
+              : NetworkConnectionState.offline,
         ),
       ),
     ],
   );
+}
+
+final class _RecordingMapLoadedClient extends NetworkSessionClient {
+  _RecordingMapLoadedClient()
+    : super(serverpodHost: 'https://api.example.test');
+
+  final Completer<WireMatch> _pendingResponse = Completer<WireMatch>();
+  var markMapLoadedCalls = 0;
+  String? markedMatchId;
+
+  void complete(WireMatch match) {
+    _pendingResponse.complete(match);
+  }
+
+  @override
+  Future<WireMatch> markMapLoaded({
+    required AuthToken token,
+    required String matchId,
+  }) {
+    markMapLoadedCalls++;
+    markedMatchId = matchId;
+    return _pendingResponse.future;
+  }
 }
 
 Future<void> _pumpGameScreen(
@@ -382,6 +421,51 @@ void main() {
       tester.widget<GameHud>(find.byType(GameHud)).aiAutopilotEnabled,
       isTrue,
     );
+  });
+
+  testWidgets('notifies the server once when a multiplayer map is ready', (
+    tester,
+  ) async {
+    final save = _makeSave(id: 'match_ready', gameMode: GameMode.multiplayer);
+    final client = _RecordingMapLoadedClient();
+    final container = _makeMultiplayerGameContainer(
+      save,
+      connected: true,
+      sessionClient: client,
+    );
+    addTearDown(container.dispose);
+
+    await _pumpGameScreen(tester, container, saveId: save.id);
+    for (var attempt = 0; attempt < 80; attempt++) {
+      if (client.markMapLoadedCalls > 0) break;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(client.markMapLoadedCalls, 1);
+    expect(client.markedMatchId, save.id);
+
+    final match = WireMatch(
+      id: save.id,
+      ownerUserId: 'user_1',
+      name: 'Game',
+      mapName: 'test',
+      players: const [],
+      turn: save.turn,
+      state: 'running',
+      createdAt: DateTime.utc(2026, 4, 25),
+    );
+    client.complete(match);
+    await tester.pump();
+
+    expect(container.read(multiplayerMatchProvider)[save.id], same(match));
+    expect(client.markMapLoadedCalls, 1);
+
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(client.markMapLoadedCalls, 1);
   });
 
   testWidgets('returning to menu from multiplayer stores resume match', (

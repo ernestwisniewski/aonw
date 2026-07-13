@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "enforcedSince": "ee7ecf961f2d27b0ac9ea0f3ba0d1d4768fa7189",
+  "diffLineMinimumBasisPoints": 9000,
+  "excludeSuffixes": [
+    ".freezed.dart",
+    ".g.dart"
+  ],
+  "scopes": {
+    "root": {
+      "packageRoot": ".",
+      "sourceRoot": "lib",
+      "lcov": "coverage/root.lcov.info",
+      "excludePrefixes": [
+        "lib/l10n/generated/"
+      ],
+      "excludeFiles": [
+        "lib/main.dart"
+      ],
+      "layers": {
+        "api": [
+          "lib/api/"
+        ],
+        "app": [
+          "lib/app/"
+        ],
+        "developer": [
+          "lib/developer/"
+        ],
+        "editor": [
+          "lib/editor/"
+        ],
+        "game_analysis": [
+          "lib/game/analysis/"
+        ],
+        "game_application": [
+          "lib/game/application/"
+        ],
+        "game_domain": [
+          "lib/game/domain/"
+        ],
+        "game_infrastructure": [
+          "lib/game/infrastructure/"
+        ],
+        "game_presentation_engine": [
+          "lib/game/presentation/engine.dart",
+          "lib/game/presentation/engine/"
+        ],
+        "game_presentation_screens": [
+          "lib/game/presentation/screens.dart",
+          "lib/game/presentation/screens/"
+        ],
+        "game_presentation_widgets": [
+          "lib/game/presentation/widgets.dart",
+          "lib/game/presentation/widgets/"
+        ],
+        "game_presentation_support": [
+          "lib/game/presentation/providers.dart",
+          "lib/game/presentation/audio/",
+          "lib/game/presentation/controllers/",
+          "lib/game/presentation/formatters/",
+          "lib/game/presentation/input/",
+          "lib/game/presentation/providers/",
+          "lib/game/presentation/replay/",
+          "lib/game/presentation/services/"
+        ],
+        "l10n": [
+          "lib/l10n/"
+        ],
+        "map": [
+          "lib/map/"
+        ],
+        "menu": [
+          "lib/menu/"
+        ],
+        "shared": [
+          "lib/shared/"
+        ]
+      }
+    },
+    "core": {
+      "packageRoot": "packages/aonw_core",
+      "sourceRoot": "packages/aonw_core/lib",
+      "lcov": "coverage/core.lcov.info",
+      "excludePrefixes": [],
+      "excludeFiles": [],
+      "layers": {
+        "ai": [
+          "packages/aonw_core/lib/ai.dart",
+          "packages/aonw_core/lib/ai/"
+        ],
+        "domain": [
+          "packages/aonw_core/lib/domain.dart",
+          "packages/aonw_core/lib/domain/",
+          "packages/aonw_core/lib/game/"
+        ],
+        "map": [
+          "packages/aonw_core/lib/map/"
+        ],
+        "protocol": [
+          "packages/aonw_core/lib/protocol.dart",
+          "packages/aonw_core/lib/protocol/"
+        ],
+        "util": [
+          "packages/aonw_core/lib/util/"
+        ]
+      }
+    },
+    "server": {
+      "packageRoot": "server",
+      "sourceRoot": "server/lib",
+      "lcov": "coverage/server.lcov.info",
+      "excludePrefixes": [
+        "server/lib/src/generated/"
+      ],
+      "excludeFiles": [],
+      "layers": {
+        "bootstrap_and_status": [
+          "server/lib/server.dart",
+          "server/lib/src/app_status/"
+        ],
+        "auth": [
+          "server/lib/src/auth/"
+        ],
+        "multiplayer": [
+          "server/lib/src/multiplayer/"
+        ],
+        "public_stats": [
+          "server/lib/src/public_stats/"
+        ],
+        "scheduling": [
+          "server/lib/src/scheduling/"
+        ],
+        "observability": [
+          "server/lib/src/observability/"
+        ]
+      }
+    }
+  }
+}

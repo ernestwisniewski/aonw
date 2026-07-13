@@ -69,6 +69,11 @@ Run `make analyze` for the focused, fatal static-analysis gate across all four
 packages. Its shared rules, generated-code exceptions, and extension procedure
 are documented in [the static-analysis policy](docs/static-analysis.md).
 
+Run `make coverage-check` for the line-coverage gate across the Flutter app,
+shared core, and server. It enforces exact per-layer baselines, a
+non-regressing historical ratchet, and 90% changed-line coverage; see the
+[test coverage policy](docs/test-coverage.md).
+
 When generator inputs change, regenerate the affected output deliberately in
 the real checkout, review the diff, and commit it:
 
@@ -153,6 +158,8 @@ Recommended entry points:
   server deploys, store uploads, and public download packaging.
 - [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) before changing
   Serverpod protocol surfaces, multiplayer sessions, or realtime streams.
+- [docs/test-coverage.md](docs/test-coverage.md) for measured scopes, baseline
+  updates, exclusions, and changed-line coverage.
 - [docs/adr/README.md](docs/adr/README.md) before changing architecture
   ownership, command semantics, compatibility policy, or deployment identity.
 - `docs/game-design/` for gameplay systems, balance, UX, and

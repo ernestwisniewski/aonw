@@ -15,35 +15,38 @@ jobs:
     name: ${{ matrix.package }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      COVERAGE_BASE_REF: >-
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.ref_name == 'dev' && 'origin/main' || github.event.before }}
+      COVERAGE_RATCHET_REF: >-
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
 
     strategy:
       fail-fast: false
       matrix:
         include:
           - package: root
-            working-directory: .
             analyze: make --no-print-directory flutter-analyze
-            test: flutter test --no-pub
-            format: make format-check
+            test: make --no-print-directory flutter-coverage
+            format: make --no-print-directory format-check
           - package: core
-            working-directory: packages/aonw_core
             analyze: make --no-print-directory core-analyze
-            test: dart test
+            test: make --no-print-directory core-coverage
             format: ""
           - package: server_client
-            working-directory: packages/aonw_server_client
             analyze: make --no-print-directory client-analyze
-            test: dart test
+            test: make --no-print-directory client-test
             format: ""
           - package: server
-            working-directory: server
             analyze: make --no-print-directory server-analyze
-            test: dart test
+            test: make --no-print-directory server-coverage
             format: ""
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -63,14 +66,12 @@ jobs:
 
       - name: Check formatting
         if: matrix.format != ''
-        working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.format }}
 
       - name: Analyze
         run: ${{ matrix.analyze }}
 
       - name: Test
-        working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.test }}
 
   compose-config:

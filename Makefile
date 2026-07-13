@@ -25,6 +25,9 @@ PRUNE ?= 1
 CACHE_FLAGS ?=
 CLEAN_BUILD_CACHE ?= 0
 CHECK_MIGRATIONS ?= 0
+COVERAGE_BASE_REF ?= origin/main
+COVERAGE_RATCHET_REF ?= @{upstream}
+COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-coverage-baseline.json
 PUB_CACHE ?= $(HOME)/.pub-cache
 SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
 SERVERPOD_TEST_DATABASE_PASSWORD ?= aonw_dev
@@ -192,7 +195,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -210,6 +213,9 @@ help:
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
 	@echo "  make ci           LOCAL: generated drift, format, analyze, and tests expected before PRs"
+	@echo "  make coverage     LOCAL: deterministic line coverage, exact ratchet, and 90% diff gate"
+	@echo "  make coverage-snapshot LOCAL: write a reviewed candidate baseline to /tmp"
+	@echo "  make flutter-coverage/core-coverage/server-coverage LOCAL: run one coverage scope"
 	@echo "  make generated-code-check LOCAL: verify every committed generator in an isolated snapshot"
 	@echo "  make analyze      LOCAL: run the fatal shared analysis policy in all four packages"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
@@ -268,6 +274,9 @@ help:
 	@echo "  PROFILE=dev|tunnel|staging|prod Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
 	@echo "  CHECK_MIGRATIONS=1             Run the complete generated-code drift gate after build"
+	@echo "  COVERAGE_BASE_REF=origin/main  Git ref used for changed-line coverage. Default: $(COVERAGE_BASE_REF)"
+	@echo "  COVERAGE_RATCHET_REF=@{upstream} Trusted previous baseline and incremental-diff ref. Default: $(COVERAGE_RATCHET_REF)"
+	@echo "  COVERAGE_SNAPSHOT_PATH=/tmp/... Candidate baseline output. Default: $(COVERAGE_SNAPSHOT_PATH)"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
 	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... server-integration-test only. Default: $(SERVERPOD_TEST_DATABASE_PASSWORD)"
@@ -411,7 +420,7 @@ client-dependencies: toolchain-check
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: generated-code-check format-check check
+ci: generated-code-check format-check analyze coverage-check client-test
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
@@ -453,6 +462,39 @@ client-test: client-analyze
 
 server-test: server-analyze
 	@cd server && dart test
+
+coverage: coverage-check
+
+coverage-directory:
+	@mkdir -p coverage
+
+coverage-reports: flutter-coverage-report core-coverage-report server-coverage-report
+
+coverage-check: coverage-reports
+	@dart run tool/check_coverage.dart check --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
+
+coverage-snapshot: coverage-reports
+	@dart run tool/check_coverage.dart snapshot > "$(COVERAGE_SNAPSHOT_PATH)"
+	@echo "Wrote coverage baseline candidate to $(COVERAGE_SNAPSHOT_PATH)"
+
+flutter-coverage-report: root-dependencies coverage-directory
+	@rm -rf "$(CURDIR)/build/test_cache"
+	@flutter test --no-pub --concurrency=1 --coverage --coverage-package='^aonw$$' --coverage-path="$(CURDIR)/coverage/root.lcov.info" --reporter=failures-only
+
+core-coverage-report: core-dependencies coverage-directory
+	@cd packages/aonw_core && dart test --concurrency=1 --coverage-package='^aonw_core$$' --coverage-path="$(CURDIR)/coverage/core.lcov.info" --reporter=failures-only
+
+server-coverage-report: server-dependencies coverage-directory
+	@cd server && dart test --concurrency=1 --coverage-package='^aonw_server$$' --coverage-path="$(CURDIR)/coverage/server.lcov.info" --reporter=failures-only
+
+flutter-coverage: flutter-coverage-report
+	@dart run tool/check_coverage.dart check --scope root --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
+
+core-coverage: core-coverage-report
+	@dart run tool/check_coverage.dart check --scope core --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
+
+server-coverage: server-coverage-report
+	@dart run tool/check_coverage.dart check --scope server --base-ref "$(COVERAGE_BASE_REF)" --ratchet-ref "$(COVERAGE_RATCHET_REF)"
 
 reducer-parity-test:
 	@flutter test test/game/domain/reducer/local_reducer_parity_fixture_test.dart

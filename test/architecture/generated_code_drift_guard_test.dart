@@ -102,6 +102,34 @@ void main() {
     expect(source, contains('create-migration'));
   });
 
+  test('checker recreates every generated exclusion from source', () {
+    final source = _shellSource();
+
+    expect(
+      RegExp(
+        r"find lib -type f \\\( -name '\*\.g\.dart' -o -name "
+        r"'\*\.freezed\.dart' \\\) -delete",
+      ).allMatches(source),
+      hasLength(2),
+    );
+    for (final path in const [
+      'lib/l10n/generated',
+      'lib/src/generated',
+      '../packages/aonw_server_client/lib/src/protocol',
+      'test/integration/test_tools/serverpod_test_tools.dart',
+    ]) {
+      expect(source, contains(path), reason: path);
+    }
+    expect(
+      source.indexOf('rm -rf lib/l10n/generated'),
+      lessThan(source.indexOf('flutter gen-l10n')),
+    );
+    expect(
+      source.indexOf('lib/src/generated'),
+      lessThan(source.indexOf(r'"${serverpod_cli}" generate')),
+    );
+  });
+
   test('checker ends with a complete tracked and untracked status check', () {
     final source = _shellSource();
     final statuses = RegExp(

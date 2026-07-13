@@ -15,54 +15,59 @@ abstract final class AppDataDirectory {
     }
   }
 
-  static Directory fallbackDirectory() {
-    if (Platform.isMacOS) {
-      final home = _homeDirectory;
+  static Directory fallbackDirectory() => Directory(
+    resolveFallbackPath(
+      operatingSystem: Platform.operatingSystem,
+      environment: Platform.environment,
+      currentDirectory: Directory.current.path,
+      pathSeparator: Platform.pathSeparator,
+    ),
+  );
+
+  static String resolveFallbackPath({
+    required String operatingSystem,
+    required Map<String, String> environment,
+    required String currentDirectory,
+    required String pathSeparator,
+  }) {
+    final home = _homeDirectory(environment);
+
+    if (operatingSystem == 'macos') {
       if (home != null) {
-        return Directory(
-          [
-            home,
-            'Library',
-            'Application Support',
-            appFolderName,
-          ].join(Platform.pathSeparator),
-        );
+        return [
+          home,
+          'Library',
+          'Application Support',
+          appFolderName,
+        ].join(pathSeparator);
       }
     }
 
-    if (Platform.isWindows) {
-      final appData = Platform.environment['APPDATA'];
-      if (appData != null && appData.trim().isNotEmpty) {
-        return Directory([appData, appFolderName].join(Platform.pathSeparator));
+    if (operatingSystem == 'windows') {
+      final appData = _nonBlankValue(environment, 'APPDATA');
+      if (appData != null) {
+        return [appData, appFolderName].join(pathSeparator);
       }
     }
 
-    final xdgDataHome = Platform.environment['XDG_DATA_HOME'];
-    if (xdgDataHome != null && xdgDataHome.trim().isNotEmpty) {
-      return Directory(
-        [xdgDataHome, appFolderName].join(Platform.pathSeparator),
-      );
+    final xdgDataHome = _nonBlankValue(environment, 'XDG_DATA_HOME');
+    if (xdgDataHome != null) {
+      return [xdgDataHome, appFolderName].join(pathSeparator);
     }
 
-    final home = _homeDirectory;
     if (home != null) {
-      return Directory(
-        [home, '.local', 'share', appFolderName].join(Platform.pathSeparator),
-      );
+      return [home, '.local', 'share', appFolderName].join(pathSeparator);
     }
 
-    return Directory(
-      [Directory.current.path, appFolderName].join(Platform.pathSeparator),
-    );
+    return [currentDirectory, appFolderName].join(pathSeparator);
   }
 
-  static String? get _homeDirectory {
-    final home = Platform.environment['HOME'];
-    if (home != null && home.trim().isNotEmpty) return home;
-    final userProfile = Platform.environment['USERPROFILE'];
-    if (userProfile != null && userProfile.trim().isNotEmpty) {
-      return userProfile;
-    }
-    return null;
+  static String? _homeDirectory(Map<String, String> environment) =>
+      _nonBlankValue(environment, 'HOME') ??
+      _nonBlankValue(environment, 'USERPROFILE');
+
+  static String? _nonBlankValue(Map<String, String> environment, String key) {
+    final value = environment[key];
+    return value == null || value.trim().isEmpty ? null : value;
   }
 }

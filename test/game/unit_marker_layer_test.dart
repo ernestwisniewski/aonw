@@ -11,6 +11,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
@@ -51,6 +52,32 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('UnitMarkerLayer', () {
+    test(
+      'records a loaded selected unit render path deterministically',
+      () async {
+        HexIconCache.clearForTesting();
+        addTearDown(HexIconCache.clearForTesting);
+        final marker = UnitMarker(
+          position: Vector2.zero(),
+          colorValue: 0xFF3366CC,
+          unitType: GameUnitType.commander,
+          selected: true,
+          healthFraction: 0.5,
+        );
+        await marker.onLoad();
+        final recorder = PictureRecorder();
+
+        marker.render(Canvas(recorder));
+
+        final picture = recorder.endRecording();
+        addTearDown(picture.dispose);
+        expect(picture.approximateBytesUsed, greaterThan(0));
+        expect(marker.spriteRenderSizeForTesting, isNotNull);
+        expect(marker.paintsIdentityBadgeForTesting, isTrue);
+        expect(marker.paintsHealthBarForTesting, isTrue);
+      },
+    );
+
     test('commander walk sprite uses the sequence row for every direction', () {
       final marker = UnitMarker(
         position: Vector2.zero(),
