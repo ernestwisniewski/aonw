@@ -28,6 +28,8 @@ CHECK_MIGRATIONS ?= 0
 COVERAGE_BASE_REF ?= origin/main
 COVERAGE_RATCHET_REF ?= @{upstream}
 COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-coverage-baseline.json
+ARCHITECTURE_RATCHET_REF ?= @{upstream}
+ARCHITECTURE_SNAPSHOT_PATH ?= /tmp/aonw-architecture-baseline.json
 PUB_CACHE ?= $(HOME)/.pub-cache
 SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
 SERVERPOD_TEST_DATABASE_PASSWORD ?= aonw_dev
@@ -195,7 +197,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -213,6 +215,8 @@ help:
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
 	@echo "  make ci           LOCAL: generated drift, format, analyze, and tests expected before PRs"
+	@echo "  make architecture LOCAL: full Dart census, AST targets, and legacy-debt ratchet"
+	@echo "  make architecture-snapshot LOCAL: write a reviewed architecture baseline candidate to /tmp"
 	@echo "  make coverage     LOCAL: deterministic line coverage, exact ratchet, and 90% diff gate"
 	@echo "  make coverage-snapshot LOCAL: write a reviewed candidate baseline to /tmp"
 	@echo "  make flutter-coverage/core-coverage/server-coverage LOCAL: run one coverage scope"
@@ -277,6 +281,8 @@ help:
 	@echo "  COVERAGE_BASE_REF=origin/main  Git ref used for changed-line coverage. Default: $(COVERAGE_BASE_REF)"
 	@echo "  COVERAGE_RATCHET_REF=@{upstream} Trusted previous baseline and incremental-diff ref. Default: $(COVERAGE_RATCHET_REF)"
 	@echo "  COVERAGE_SNAPSHOT_PATH=/tmp/... Candidate baseline output. Default: $(COVERAGE_SNAPSHOT_PATH)"
+	@echo "  ARCHITECTURE_RATCHET_REF=@{upstream} Trusted architecture baseline ref. Default: $(ARCHITECTURE_RATCHET_REF)"
+	@echo "  ARCHITECTURE_SNAPSHOT_PATH=/tmp/... Candidate architecture baseline output. Default: $(ARCHITECTURE_SNAPSHOT_PATH)"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
 	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... server-integration-test only. Default: $(SERVERPOD_TEST_DATABASE_PASSWORD)"
@@ -420,7 +426,7 @@ client-dependencies: toolchain-check
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: generated-code-check format-check analyze coverage-check client-test
+ci: generated-code-check format-check analyze architecture-check coverage-check client-test
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
@@ -445,6 +451,15 @@ client-analyze: client-dependencies
 
 server-analyze: server-dependencies
 	@cd server && dart analyze --fatal-infos --fatal-warnings
+
+architecture: architecture-check
+
+architecture-check: root-dependencies
+	@dart run tool/check_architecture.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
+
+architecture-snapshot: root-dependencies
+	@dart run tool/check_architecture.dart snapshot > "$(ARCHITECTURE_SNAPSHOT_PATH)"
+	@echo "Wrote architecture baseline candidate to $(ARCHITECTURE_SNAPSHOT_PATH)"
 
 release-check:
 	@$(MAKE) --no-print-directory ci

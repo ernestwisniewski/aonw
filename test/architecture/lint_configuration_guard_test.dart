@@ -196,8 +196,8 @@ void main() {
       );
       expect(dependencies.containsKey('analyzer'), isFalse, reason: entry.key);
       expect(
-        devDependencies.containsKey('analyzer'),
-        isFalse,
+        devDependencies['analyzer'],
+        entry.key == 'pubspec.yaml' ? '12.1.0' : isNull,
         reason: entry.key,
       );
     }
@@ -316,7 +316,6 @@ void main() {
             '"\$(COVERAGE_RATCHET_REF)"',
       ),
     };
-
     for (final entry in dependencyTargets.entries) {
       final target = _makeTarget(makefile, entry.key);
       expect(target.prerequisites, [entry.value.$1], reason: entry.key);
@@ -375,6 +374,7 @@ void main() {
       'generated-code-check',
       'format-check',
       'analyze',
+      'architecture-check',
       'coverage-check',
       'client-test',
     ]);
@@ -481,6 +481,7 @@ void main() {
       'CI quality-gate.env',
     );
     expect(_keys(qualityEnvironment), {
+      'ARCHITECTURE_RATCHET_REF',
       'COVERAGE_BASE_REF',
       'COVERAGE_RATCHET_REF',
     });

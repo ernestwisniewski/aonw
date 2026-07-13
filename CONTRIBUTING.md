@@ -89,12 +89,19 @@ The baseline ratchet and incremental diff independently use the trusted
 previous revision (the branch upstream locally and the PR base or pre-push SHA
 in CI).
 
-The committed snapshot is exact and protected by a historical ratchet: per
-layer, the ratio cannot decrease, uncovered counts cannot increase, and the
-missing-file set may only shrink. Changed eligible lines require at least 90%
-coverage. Do not add inline ignore annotations or relax the centralized
-generated-code exclusions to make the gate pass. See
+The committed snapshot keeps exact instrumented totals and portable minimum
+covered counts. It is protected by a historical ratchet: per layer, the ratio
+cannot decrease, uncovered counts cannot increase, and the missing-file set may
+only shrink. Changed eligible lines require at least 90% coverage. Do not add
+inline ignore annotations or relax the centralized generated-code exclusions
+to make the gate pass. See
 [Test Coverage](docs/test-coverage.md) before updating the baseline or policy.
+
+Run `make architecture` for the repository-wide Dart census and AST size
+budget. New files must meet their role-specific target; existing above-target
+files and type declarations may only shrink. Read
+[Architecture Budgets](docs/architecture-budgets.md) before changing the
+policy or baseline.
 
 ## Generated Code
 

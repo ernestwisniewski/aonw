@@ -1,0 +1,156 @@
+{
+  "schema": 1,
+  "enforcedSince": "77689f27ecb045c8c179c287b808534ad032bf45",
+  "generatedSuffixes": [
+    ".freezed.dart",
+    ".g.dart"
+  ],
+  "buildRunnerScopes": [
+    "core_lib",
+    "root_lib"
+  ],
+  "fileLineTargets": {
+    "default": 500,
+    "flutter_frontend": 350,
+    "use_case": 180
+  },
+  "declarationLineTarget": 350,
+  "scopes": {
+    "client_lib": {
+      "sourceRoot": "packages/aonw_server_client/lib",
+      "generatedPrefixes": [
+        "packages/aonw_server_client/lib/src/protocol/"
+      ],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "client_test": {
+      "sourceRoot": "packages/aonw_server_client/test",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "core_lib": {
+      "sourceRoot": "packages/aonw_core/lib",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "core_test": {
+      "sourceRoot": "packages/aonw_core/test",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "core_tool": {
+      "sourceRoot": "packages/aonw_core/tool",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "root_lib": {
+      "sourceRoot": "lib",
+      "generatedPrefixes": [
+        "lib/l10n/generated/"
+      ],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        },
+        "flutter_frontend": {
+          "paths": [
+            "lib/app/",
+            "lib/developer/",
+            "lib/editor/",
+            "lib/game/presentation/input/gamepad/",
+            "lib/game/presentation/providers/hud/",
+            "lib/game/presentation/screens/",
+            "lib/game/presentation/widgets/",
+            "lib/map/widgets/",
+            "lib/menu/",
+            "lib/shared/performance/",
+            "lib/shared/widgets/"
+          ]
+        },
+        "use_case": {
+          "paths": [
+            "lib/game/application/use_cases/"
+          ]
+        }
+      }
+    },
+    "root_test": {
+      "sourceRoot": "test",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "root_tool": {
+      "sourceRoot": "tool",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "server_bin": {
+      "sourceRoot": "server/bin",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "server_lib": {
+      "sourceRoot": "server/lib",
+      "generatedPrefixes": [
+        "server/lib/src/generated/"
+      ],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "server_test": {
+      "sourceRoot": "server/test",
+      "generatedPrefixes": [
+        "server/test/integration/test_tools/"
+      ],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    },
+    "vendor_sign_in_with_apple": {
+      "sourceRoot": "third_party/sign_in_with_apple/lib",
+      "generatedPrefixes": [],
+      "fileProfiles": {
+        "default": {
+          "fallback": true
+        }
+      }
+    }
+  }
+}

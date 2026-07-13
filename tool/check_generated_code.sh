@@ -87,7 +87,7 @@ echo "Checking Serverpod protocol, client, test tools, and migrations..."
   rm -rf \
     lib/src/generated \
     ../packages/aonw_server_client/lib/src/protocol \
-    test/integration/test_tools/serverpod_test_tools.dart
+    test/integration/test_tools
   "${serverpod_cli}" generate
   "${serverpod_cli}" create-migration
 )

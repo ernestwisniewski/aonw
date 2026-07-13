@@ -116,10 +116,15 @@ void main() {
       'lib/l10n/generated',
       'lib/src/generated',
       '../packages/aonw_server_client/lib/src/protocol',
-      'test/integration/test_tools/serverpod_test_tools.dart',
+      'test/integration/test_tools',
     ]) {
       expect(source, contains(path), reason: path);
     }
+    expect(
+      source,
+      isNot(contains('test/integration/test_tools/serverpod_test_tools.dart')),
+      reason: 'The entire generated test-tools directory must be recreated.',
+    );
     expect(
       source.indexOf('rm -rf lib/l10n/generated'),
       lessThan(source.indexOf('flutter gen-l10n')),

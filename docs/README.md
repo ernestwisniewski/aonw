@@ -10,6 +10,7 @@ behavior unless they explicitly call out historical context or future work.
 | --- | --- |
 | Understand the codebase | [Architecture](#architecture), then [Multiplayer Protocol](multiplayer-protocol.md) if networking is involved. |
 | Change an architectural contract | [Architecture Decision Records](adr/README.md) before changing ownership, determinism, commands, compatibility, or deployment policy. |
+| Refactor or split Dart code | [Architecture Budgets](architecture-budgets.md) for the complete census, role-specific targets, and legacy-debt ratchet. |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
 | Work on tests or coverage | [Test Coverage](test-coverage.md) for scopes, ratchets, exclusions, and local commands. |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
@@ -79,7 +80,8 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Architecture Decision Records](adr/README.md) | Durable ownership, determinism, command, compatibility, and deployment decisions. |
 | [Multiplayer Protocol](multiplayer-protocol.md) | Current client/server protocol surface and rollout procedure. |
 | [Static Analysis](static-analysis.md) | Shared strict analyzer policy, generated-code boundaries, and canonical commands. |
-| [Test Coverage](test-coverage.md) | Line-coverage scopes, exact baseline, historical ratchet, and changed-line gate. |
+| [Architecture Budgets](architecture-budgets.md) | Repository-wide Dart census, role-specific line targets, AST type-declaration measurement, and legacy-debt ratchet. |
+| [Test Coverage](test-coverage.md) | Line-coverage scopes, exact totals, portable coverage floors, historical ratchet, and changed-line gate. |
 
 ### Release And Operations
 
