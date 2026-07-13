@@ -1,5 +1,5 @@
-import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_input_validator.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';

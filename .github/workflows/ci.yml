@@ -22,26 +22,22 @@ jobs:
         include:
           - package: root
             working-directory: .
-            get: flutter pub get --enforce-lockfile
-            analyze: flutter analyze --no-pub
+            analyze: make --no-print-directory flutter-analyze
             test: flutter test --no-pub
             format: make format-check
           - package: core
             working-directory: packages/aonw_core
-            get: dart pub get --enforce-lockfile
-            analyze: dart analyze --fatal-infos
+            analyze: make --no-print-directory core-analyze
             test: dart test
             format: ""
           - package: server_client
             working-directory: packages/aonw_server_client
-            get: dart pub get --enforce-lockfile
-            analyze: dart analyze --fatal-infos
+            analyze: make --no-print-directory client-analyze
             test: dart test
             format: ""
           - package: server
             working-directory: server
-            get: dart pub get --enforce-lockfile
-            analyze: dart analyze --fatal-infos
+            analyze: make --no-print-directory server-analyze
             test: dart test
             format: ""
 
@@ -65,17 +61,12 @@ jobs:
             ${{ runner.os }}-pub-${{ matrix.package }}-
             ${{ runner.os }}-pub-
 
-      - name: Get dependencies
-        working-directory: ${{ matrix.working-directory }}
-        run: ${{ matrix.get }}
-
       - name: Check formatting
         if: matrix.format != ''
         working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.format }}
 
       - name: Analyze
-        working-directory: ${{ matrix.working-directory }}
         run: ${{ matrix.analyze }}
 
       - name: Test

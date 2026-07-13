@@ -1,13 +1,13 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
-import 'initial_multiplayer_snapshot_factory.dart';
-import 'match_broadcaster.dart';
-import 'match_mutation_outcome.dart';
-import 'match_state_access.dart';
-import 'multiplayer_errors.dart';
-import 'multiplayer_match_store.dart';
-import 'quickplay_lobby_policy.dart';
+import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
+import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
 
 part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';

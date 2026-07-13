@@ -370,7 +370,7 @@ void main() {
     final hub = RealtimeMatchHub(nowUtc: () => now);
     final store = _MemoryMatchStore();
     final staleIds = <String>[];
-    final staleCount = multiplayerQuickplayCandidateRetirementLimit + 2;
+    const staleCount = multiplayerQuickplayCandidateRetirementLimit + 2;
     for (var index = 0; index < staleCount; index += 1) {
       final created = await hub.createMatch(
         store: store,
@@ -628,7 +628,7 @@ void main() {
       final fixture = await _startRunningMatch('bounded-event-pages');
       final owner = fixture.match.players.first;
       var state = (await fixture.store.findState(fixture.match.id))!;
-      final eventCount = multiplayerEventPageSize + 2;
+      const eventCount = multiplayerEventPageSize + 2;
       for (var offset = 1; offset <= eventCount; offset += 1) {
         state = state.copyWith(
           snapshot: state.snapshot.copyWith(offset: offset),
@@ -831,7 +831,7 @@ void main() {
       await store.saveState(privateState);
 
       final publicMatches = <WireMatch>[];
-      final publicCount = multiplayerVisiblePublicLobbyLimit + 4;
+      const publicCount = multiplayerVisiblePublicLobbyLimit + 4;
       for (var index = 0; index < publicCount; index += 1) {
         final viewerOwnsMatch = index == 0 || index == publicCount - 1;
         final created = await hub.createMatch(
@@ -1532,7 +1532,7 @@ void main() {
     final hub = RealtimeMatchHub();
     final store = _MemoryMatchStore();
     final createdAt = DateTime.utc(2026, 7, 11, 8);
-    final matchCount = multiplayerRunningMatchPageSize + 2;
+    const matchCount = multiplayerRunningMatchPageSize + 2;
     for (var index = 0; index < matchCount; index += 1) {
       final id = 'rotation-${index.toString().padLeft(3, '0')}';
       store._states[id] = StoredMatchState(
@@ -2958,8 +2958,9 @@ void main() {
         command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
       ),
     );
-    ownerInput.add(retryMessage);
-    ownerInput.add(retryMessage);
+    ownerInput
+      ..add(retryMessage)
+      ..add(retryMessage);
 
     final ackMessages = await acks;
 
@@ -3000,34 +3001,35 @@ void main() {
         .take(2)
         .toList();
     const clientMessageId = 'owner-reused-command-id';
-    ownerInput.add(
-      MultiplayerClientMessage(
-        clientMessageId: clientMessageId,
-        lastSeenOffset: 0,
-        requestSnapshot: false,
-        command: WireCommand(
-          matchId: fixture.match.id,
-          tick: 1,
-          turn: 1,
-          actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+    ownerInput
+      ..add(
+        MultiplayerClientMessage(
+          clientMessageId: clientMessageId,
+          lastSeenOffset: 0,
+          requestSnapshot: false,
+          command: WireCommand(
+            matchId: fixture.match.id,
+            tick: 1,
+            turn: 1,
+            actorPlayerId: owner.id,
+            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          ),
         ),
-      ),
-    );
-    ownerInput.add(
-      MultiplayerClientMessage(
-        clientMessageId: clientMessageId,
-        lastSeenOffset: 0,
-        requestSnapshot: false,
-        command: WireCommand(
-          matchId: fixture.match.id,
-          tick: 1,
-          turn: 1,
-          actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(EndTurnCommand(owner.id)),
+      )
+      ..add(
+        MultiplayerClientMessage(
+          clientMessageId: clientMessageId,
+          lastSeenOffset: 0,
+          requestSnapshot: false,
+          command: WireCommand(
+            matchId: fixture.match.id,
+            tick: 1,
+            turn: 1,
+            actorPlayerId: owner.id,
+            command: GameCommandSerializer.toJson(EndTurnCommand(owner.id)),
+          ),
         ),
-      ),
-    );
+      );
 
     final ackMessages = await acks;
 
@@ -3693,17 +3695,17 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
     ]) {
       matchesById.putIfAbsent(match.id, () => match);
     }
-    final matches = matchesById.values.toList();
-    matches.sort((first, second) {
-      final createdAtOrder = second.createdAt.compareTo(first.createdAt);
-      if (createdAtOrder != 0) return createdAtOrder;
-      final firstIsParticipant = participantIds.contains(first.id);
-      final secondIsParticipant = participantIds.contains(second.id);
-      if (firstIsParticipant != secondIsParticipant) {
-        return firstIsParticipant ? -1 : 1;
-      }
-      return second.id.compareTo(first.id);
-    });
+    final matches = matchesById.values.toList()
+      ..sort((first, second) {
+        final createdAtOrder = second.createdAt.compareTo(first.createdAt);
+        if (createdAtOrder != 0) return createdAtOrder;
+        final firstIsParticipant = participantIds.contains(first.id);
+        final secondIsParticipant = participantIds.contains(second.id);
+        if (firstIsParticipant != secondIsParticipant) {
+          return firstIsParticipant ? -1 : 1;
+        }
+        return second.id.compareTo(first.id);
+      });
     return matches;
   }
 

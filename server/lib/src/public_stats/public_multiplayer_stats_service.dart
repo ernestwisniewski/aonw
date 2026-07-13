@@ -1,5 +1,5 @@
-import 'public_multiplayer_stats.dart';
-import 'public_multiplayer_stats_store.dart';
+import 'package:aonw_server/src/public_stats/public_multiplayer_stats.dart';
+import 'package:aonw_server/src/public_stats/public_multiplayer_stats_store.dart';
 
 const publicMultiplayerStatsWindowDays = 30;
 const publicMultiplayerStatsCacheTtl = Duration(seconds: 30);

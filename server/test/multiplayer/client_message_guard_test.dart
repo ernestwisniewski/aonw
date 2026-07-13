@@ -5,10 +5,9 @@ import 'package:test/test.dart';
 
 void main() {
   test('accepts and releases a well-formed command', () {
-    final guard = ClientMessageGuard(expectedMatchId: 'match-1');
-
-    guard.admit(_message());
-    guard.release();
+    ClientMessageGuard(expectedMatchId: 'match-1')
+      ..admit(_message())
+      ..release();
   });
 
   test('rejects malformed message metadata', () {
@@ -79,35 +78,33 @@ void main() {
   });
 
   test('bounds the number of messages waiting for processing', () {
-    final guard = ClientMessageGuard(
-      expectedMatchId: 'match-1',
-      maxPendingMessages: 2,
-    );
-
-    guard.admit(_message(clientMessageId: 'message-1'));
-    guard.admit(_message(clientMessageId: 'message-2'));
+    final guard =
+        ClientMessageGuard(expectedMatchId: 'match-1', maxPendingMessages: 2)
+          ..admit(_message(clientMessageId: 'message-1'))
+          ..admit(_message(clientMessageId: 'message-2'));
     expect(
       () => guard.admit(_message(clientMessageId: 'message-3')),
       throwsA(_error('connection_backpressure')),
     );
 
-    guard.release();
-    guard.admit(_message(clientMessageId: 'message-3'));
+    guard
+      ..release()
+      ..admit(_message(clientMessageId: 'message-3'));
   });
 
   test('refills the per-connection burst limit over time', () {
     var now = DateTime.utc(2026, 7, 10, 12);
-    final guard = ClientMessageGuard(
-      expectedMatchId: 'match-1',
-      nowUtc: () => now,
-      maxBurstMessages: 2,
-      messagesPerSecond: 1,
-    );
-
-    guard.admit(_message(clientMessageId: 'message-1'));
-    guard.release();
-    guard.admit(_message(clientMessageId: 'message-2'));
-    guard.release();
+    final guard =
+        ClientMessageGuard(
+            expectedMatchId: 'match-1',
+            nowUtc: () => now,
+            maxBurstMessages: 2,
+            messagesPerSecond: 1,
+          )
+          ..admit(_message(clientMessageId: 'message-1'))
+          ..release()
+          ..admit(_message(clientMessageId: 'message-2'))
+          ..release();
     expect(
       () => guard.admit(_message(clientMessageId: 'message-3')),
       throwsA(_error('rate_limit_exceeded')),

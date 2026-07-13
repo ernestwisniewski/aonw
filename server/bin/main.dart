@@ -1,5 +1,5 @@
 import 'package:aonw_server/server.dart';
 
-void main(List<String> args) {
-  run(args);
+Future<void> main(List<String> args) async {
+  await run(args);
 }

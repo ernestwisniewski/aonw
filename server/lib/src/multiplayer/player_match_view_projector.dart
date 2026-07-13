@@ -1,8 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
-import '../generated/protocol.dart';
-import 'player_match_event_audience.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 
 typedef PlayerMatchSaveDecoder = GameSave Function(Map<String, dynamic> json);
 typedef PlayerMatchStateDecoder =

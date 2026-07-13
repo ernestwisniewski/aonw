@@ -1,10 +1,9 @@
+import 'package:aonw_server/src/auth/auth_maintenance_service.dart';
+import 'package:aonw_server/src/scheduling/background_task_support.dart';
+import 'package:aonw_server/src/scheduling/reconciled_future_call_scheduler.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
-
-import '../scheduling/background_task_support.dart';
-import '../scheduling/reconciled_future_call_scheduler.dart';
-import 'auth_maintenance_service.dart';
 
 const authMaintenanceFutureCallName = 'authMaintenance';
 const authMaintenanceFutureCallIdentifier = 'auth-maintenance';

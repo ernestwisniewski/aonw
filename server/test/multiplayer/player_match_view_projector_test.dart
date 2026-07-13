@@ -228,11 +228,11 @@ void main() {
 
   test('allows only explicit lifecycle fields in lobby snapshots', () {
     final projected = projector.snapshotFor(
-      WireSnapshot(
+      const WireSnapshot(
         matchId: 'match-1',
         offset: 0,
-        save: const {},
-        state: const {
+        save: {},
+        state: {
           'phase': 'lobby',
           'mapName': 'test-map',
           'leftUserIdentifier': 'raw-auth-id',
@@ -316,11 +316,11 @@ void main() {
   test(
     'malformed running snapshots fail instead of returning canonical data',
     () {
-      final malformed = WireSnapshot(
+      const malformed = WireSnapshot(
         matchId: 'match-1',
         offset: 1,
-        save: const {'id': 'incomplete'},
-        state: const {'secret': 'must-not-pass-through'},
+        save: {'id': 'incomplete'},
+        state: {'secret': 'must-not-pass-through'},
       );
 
       expect(() => projector.snapshotFor(malformed, owner), throwsA(anything));
@@ -389,16 +389,16 @@ WireSnapshot _snapshot() {
   final viewerFog = PlayerFogOfWar(
     playerId: 'player-owner',
     discoveredHexes: {
-      HexCoordinate(col: 1, row: 1),
-      HexCoordinate(col: 2, row: 2),
-      HexCoordinate(col: 2, row: 3),
-      HexCoordinate(col: 4, row: 4),
+      const HexCoordinate(col: 1, row: 1),
+      const HexCoordinate(col: 2, row: 2),
+      const HexCoordinate(col: 2, row: 3),
+      const HexCoordinate(col: 4, row: 4),
     },
     visibleHexes: {
-      HexCoordinate(col: 1, row: 1),
-      HexCoordinate(col: 2, row: 2),
-      HexCoordinate(col: 2, row: 3),
-      HexCoordinate(col: 4, row: 4),
+      const HexCoordinate(col: 1, row: 1),
+      const HexCoordinate(col: 2, row: 2),
+      const HexCoordinate(col: 2, row: 3),
+      const HexCoordinate(col: 4, row: 4),
     },
   );
   final state = PersistentGameState(
@@ -440,11 +440,11 @@ WireSnapshot _snapshot() {
       ),
     ],
     cities: [
-      GameCity(
+      const GameCity(
         id: 'own-city',
         ownerPlayerId: 'player-owner',
         name: 'Own City',
-        center: const CityHex(col: 9, row: 8),
+        center: CityHex(col: 9, row: 8),
       ),
       GameCity(
         id: 'visible-enemy-city',
@@ -463,11 +463,11 @@ WireSnapshot _snapshot() {
         ),
         productionOverflow: 456,
       ),
-      GameCity(
+      const GameCity(
         id: 'hidden-enemy-city',
         ownerPlayerId: 'player-guest',
         name: 'guest-secret-city',
-        center: const CityHex(col: 8, row: 7),
+        center: CityHex(col: 8, row: 7),
       ),
     ],
     artifacts: const [

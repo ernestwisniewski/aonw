@@ -192,7 +192,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -204,12 +204,14 @@ help:
 	@echo "Individual targets:"
 	@echo "  make bootstrap    LOCAL: verify pinned Flutter/Dart, install all lockfiles, and ensure Serverpod CLI"
 	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
+	@echo "  make dependencies LOCAL: install all four package graphs from committed lockfiles"
 	@echo "  make local        LOCAL: start Docker API, seed users, and run Flutter Web on OAuth origin localhost:7357"
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
 	@echo "  make ci           LOCAL: generated drift, format, analyze, and tests expected before PRs"
 	@echo "  make generated-code-check LOCAL: verify every committed generator in an isolated snapshot"
+	@echo "  make analyze      LOCAL: run the fatal shared analysis policy in all four packages"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
 	@echo "  make reducer-parity-test LOCAL: run local/server reducer fixtures against one oracle"
@@ -395,9 +397,23 @@ bootstrap:
 toolchain-check:
 	@tool/check_toolchain.sh
 
+dependencies: root-dependencies core-dependencies client-dependencies server-dependencies
+
+root-dependencies: toolchain-check
+	@flutter pub get --enforce-lockfile
+
+core-dependencies: toolchain-check
+	@cd packages/aonw_core && dart pub get --enforce-lockfile
+
+client-dependencies: toolchain-check
+	@cd packages/aonw_server_client && dart pub get --enforce-lockfile
+
+server-dependencies: toolchain-check
+	@cd server && dart pub get --enforce-lockfile
+
 ci: generated-code-check format-check check
 
-format-check:
+format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
 		':(exclude)server/lib/src/generated/**' \
 		':(exclude)server/test/integration/test_tools/**' \
@@ -407,25 +423,35 @@ format-check:
 
 check: toolchain-check flutter-test core-test client-test server-test
 
+analyze: flutter-analyze core-analyze client-analyze server-analyze
+
+flutter-analyze: root-dependencies
+	@flutter analyze --no-pub --fatal-infos --fatal-warnings
+
+core-analyze: core-dependencies
+	@cd packages/aonw_core && dart analyze --fatal-infos --fatal-warnings
+
+client-analyze: client-dependencies
+	@cd packages/aonw_server_client && dart analyze --fatal-infos --fatal-warnings
+
+server-analyze: server-dependencies
+	@cd server && dart analyze --fatal-infos --fatal-warnings
+
 release-check:
 	@$(MAKE) --no-print-directory ci
 	@$(MAKE) --no-print-directory serverpod-config-check
 	@tool/run_postgres_smoke.sh
 
-flutter-test:
-	@flutter analyze --no-pub
-	@flutter test
+flutter-test: flutter-analyze
+	@flutter test --no-pub
 
-core-test:
-	@cd packages/aonw_core && dart analyze --fatal-infos
+core-test: core-analyze
 	@cd packages/aonw_core && dart test
 
-client-test:
-	@cd packages/aonw_server_client && dart analyze --fatal-infos
+client-test: client-analyze
 	@cd packages/aonw_server_client && dart test
 
-server-test:
-	@cd server && dart analyze --fatal-infos
+server-test: server-analyze
 	@cd server && dart test
 
 reducer-parity-test:

@@ -294,22 +294,22 @@ FROM outcomes
   }
 
   int _asInt(Object? value) => switch (value) {
-    int value => value,
-    num value => value.toInt(),
-    String value => int.parse(value),
+    final int value => value,
+    final num value => value.toInt(),
+    final String value => int.parse(value),
     _ => throw StateError('Expected an integer database value, got $value.'),
   };
 
   double _asDouble(Object? value) => switch (value) {
-    double value => value,
-    num value => value.toDouble(),
-    String value => double.parse(value),
+    final double value => value,
+    final num value => value.toDouble(),
+    final String value => double.parse(value),
     _ => throw StateError('Expected a numeric database value, got $value.'),
   };
 
   DateTime _asDate(Object? value) => switch (value) {
-    DateTime value => value.toUtc(),
-    String value => DateTime.parse(value).toUtc(),
+    final DateTime value => value.toUtc(),
+    final String value => DateTime.parse(value).toUtc(),
     _ => throw StateError('Expected a date database value, got $value.'),
   };
 }

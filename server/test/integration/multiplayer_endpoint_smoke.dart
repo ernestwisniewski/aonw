@@ -260,7 +260,7 @@ WHERE "matchId" = @matchId
       test('pages running matches with included latest snapshots', () async {
         final session = sessionBuilder.build();
         final createdAt = DateTime.utc(2026, 7, 11, 8);
-        final matchCount = multiplayerRunningMatchPageSize + 2;
+        const matchCount = multiplayerRunningMatchPageSize + 2;
         final rows = await GameMatch.db.insert(session, [
           for (var index = 0; index < matchCount; index += 1)
             GameMatch(

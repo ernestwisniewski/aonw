@@ -65,6 +65,10 @@ localizations, Serverpod output, and migrations never rewrites the active
 checkout. It requires the Serverpod CLI version pinned by the backend;
 `make bootstrap` installs or verifies that CLI as part of workspace setup.
 
+Run `make analyze` for the focused, fatal static-analysis gate across all four
+packages. Its shared rules, generated-code exceptions, and extension procedure
+are documented in [the static-analysis policy](docs/static-analysis.md).
+
 When generator inputs change, regenerate the affected output deliberately in
 the real checkout, review the diff, and commit it:
 

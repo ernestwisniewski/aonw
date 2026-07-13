@@ -1,6 +1,6 @@
 import 'package:aonw_core/protocol.dart';
 
-import '../generated/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
 
 GameMatch gameMatchRowForState(
   GameMatch row,

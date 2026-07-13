@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:aonw_core/protocol.dart';
-
-import '../generated/protocol.dart';
-import '../observability/server_operational_event_sink.dart';
-import 'client_message_guard.dart';
-import 'multiplayer_errors.dart';
-import 'multiplayer_match_store.dart';
-import 'player_match_view_projector.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/client_message_guard.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
+import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 
 part 'match_connection_registry_connect.dart';
 part 'match_connection_registry_projection.dart';
@@ -181,9 +180,7 @@ final class MatchConnectionRegistry {
       );
     };
 
-    controller.onCancel = () => disconnect();
-
-    return controller.stream;
+    return (controller..onCancel = () => disconnect()).stream;
   }
 
   Future<void> _enqueueMatch(
@@ -196,7 +193,7 @@ final class MatchConnectionRegistry {
     late final Future<void> tracked;
     void clearQueue() {
       if (identical(_matchQueues[matchId], tracked)) {
-        _matchQueues.remove(matchId);
+        unawaited(_matchQueues.remove(matchId));
       }
     }
 

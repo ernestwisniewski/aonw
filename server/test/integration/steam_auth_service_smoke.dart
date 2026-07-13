@@ -132,7 +132,7 @@ Uri _callbackUri(SteamAuthStart start) {
   final authUri = Uri.parse(start.authUrl);
   final returnTo = authUri.queryParameters['openid.return_to']!;
   final callback = Uri.parse(returnTo);
-  final identity = 'https://steamcommunity.com/openid/id/$_steamId';
+  const identity = 'https://steamcommunity.com/openid/id/$_steamId';
   return callback.replace(
     queryParameters: {
       ...callback.queryParameters,

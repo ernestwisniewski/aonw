@@ -14,7 +14,7 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
     late final Future<_LoadedServerMap> loading;
     loading = source.onError((Object error, StackTrace stackTrace) {
       if (identical(_loadedMaps[mapName], loading)) {
-        _loadedMaps.remove(mapName);
+        unawaited(_loadedMaps.remove(mapName));
       }
       Error.throwWithStackTrace(error, stackTrace);
     });

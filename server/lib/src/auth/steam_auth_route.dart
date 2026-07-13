@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:aonw_server/src/auth/steam_auth_service.dart';
 import 'package:serverpod/serverpod.dart';
-
-import 'steam_auth_service.dart';
 
 class SteamAuthCallbackRoute extends Route {
   SteamAuthCallbackRoute() : super(methods: {Method.get});

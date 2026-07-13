@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:aonw_server/src/public_stats/public_multiplayer_stats_service.dart';
+import 'package:aonw_server/src/public_stats/public_multiplayer_stats_store.dart';
 import 'package:serverpod/serverpod.dart';
-
-import 'public_multiplayer_stats_service.dart';
-import 'public_multiplayer_stats_store.dart';
 
 final class PublicMultiplayerStatsRoute extends Route {
   PublicMultiplayerStatsRoute({PublicMultiplayerStatsService? service})

@@ -1,8 +1,8 @@
-import '../observability/server_operational_event_sink.dart';
-import 'match_state_access.dart';
-import 'multiplayer_errors.dart';
-import 'multiplayer_match_store.dart';
-import 'player_match_view_projector.dart';
+import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
+import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 
 part 'match_query_service_views.dart';
 

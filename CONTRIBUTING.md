@@ -39,6 +39,11 @@ the Flutter app, `aonw_core`, the generated Serverpod client package, and the
 Serverpod backend unit tests that do not require external services. CI uses the
 same generated-code gate.
 
+For a focused analysis pass, run `make analyze`. The four packages compose one
+strict base with ecosystem-specific upstream profiles; see the
+[static-analysis policy](docs/static-analysis.md) before changing a rule or an
+exclusion.
+
 Run the generated-code gate on its own while changing generator inputs:
 
 ```sh

@@ -1,7 +1,7 @@
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 
-import '../generated/protocol.dart';
-import 'multiplayer_errors.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 
 final class MatchRequestValidator {
   const MatchRequestValidator();

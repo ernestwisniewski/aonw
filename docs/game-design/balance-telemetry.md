@@ -277,8 +277,7 @@ test runs the CLI into a temporary directory and checks that the report still
 contains presets `standard60`, `normal90`, `long120`, `Final pace` / `End
 targets`, the `Score Chaser Objective Action` section, the `Score Comeback
 Telemetry` section, and the required CSV files. The test is explicitly part of
-the README core dev-check:
-`(cd packages/aonw_core && dart analyze --fatal-infos && dart test)`.
+the canonical core gate: `make core-test`.
 
 ## Ad Hoc Balance Smokes
 

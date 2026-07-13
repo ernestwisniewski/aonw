@@ -1,4 +1,4 @@
-import '../generated/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
 
 final class AuthInputValidator {
   const AuthInputValidator();

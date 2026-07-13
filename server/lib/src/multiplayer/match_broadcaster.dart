@@ -1,9 +1,8 @@
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:serverpod/serverpod.dart';
-
-import '../generated/protocol.dart';
-import 'match_connection_registry.dart';
-import 'multiplayer_match_store.dart';
 
 final class MatchBroadcaster {
   MatchBroadcaster(this._connectionRegistry);

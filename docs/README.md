@@ -77,6 +77,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | --- | --- |
 | [Architecture Decision Records](adr/README.md) | Durable ownership, determinism, command, compatibility, and deployment decisions. |
 | [Multiplayer Protocol](multiplayer-protocol.md) | Current client/server protocol surface and rollout procedure. |
+| [Static Analysis](static-analysis.md) | Shared strict analyzer policy, generated-code boundaries, and canonical commands. |
 
 ### Release And Operations
 

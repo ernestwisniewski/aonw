@@ -5,12 +5,11 @@ import 'package:test/test.dart';
 void main() {
   test('emits the supported operational events with deliberate fields', () {
     final records = <_LogRecord>[];
-    final sink = _recordingSink(records);
-
-    sink.authRateLimited(action: _AuthAction.emailLogin);
-    sink.commandRejected(matchId: 'match-123', reasonCode: 'stale_turn');
-    sink.streamConnected(matchId: 'match-123', reconnect: true);
-    sink.streamDisconnected(matchId: 'match-123');
+    _recordingSink(records)
+      ..authRateLimited(action: _AuthAction.emailLogin)
+      ..commandRejected(matchId: 'match-123', reasonCode: 'stale_turn')
+      ..streamConnected(matchId: 'match-123', reconnect: true)
+      ..streamDisconnected(matchId: 'match-123');
 
     expect(records.map((record) => record.message), [
       'event=auth_rate_limited action=emailLogin',
@@ -33,16 +32,17 @@ void main() {
     final error = _SensitiveError();
     final stackTrace = StackTrace.current;
 
-    sink.commandRejected(
-      matchId: 'user@example.test\nsecret-token',
-      reasonCode: 'user@example.test',
-    );
-    sink.projectionFailed(
-      matchId: 'match-123',
-      surface: MultiplayerProjectionSurface.snapshot,
-      error: error,
-      stackTrace: stackTrace,
-    );
+    sink
+      ..commandRejected(
+        matchId: 'user@example.test\nsecret-token',
+        reasonCode: 'user@example.test',
+      )
+      ..projectionFailed(
+        matchId: 'match-123',
+        surface: MultiplayerProjectionSurface.snapshot,
+        error: error,
+        stackTrace: stackTrace,
+      );
 
     expect(
       records.first.message,

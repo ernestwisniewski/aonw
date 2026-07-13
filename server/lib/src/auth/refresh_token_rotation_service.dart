@@ -1,8 +1,8 @@
+import 'package:aonw_server/src/auth/refresh_token_parser.dart'
+    as refresh_token_parser;
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
-
-import 'refresh_token_parser.dart' as refresh_token_parser;
 
 /// Serializes refresh-token rotation across requests and server instances.
 final class RefreshTokenRotationService {

@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/game_match_row_mapper.dart';
+import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:serverpod/serverpod.dart';
-
-import '../generated/protocol.dart';
-import '../observability/server_operational_event_sink.dart';
-import 'game_match_row_mapper.dart';
 
 part 'multiplayer_match_store_creation.dart';
 part 'multiplayer_match_store_limits.dart';

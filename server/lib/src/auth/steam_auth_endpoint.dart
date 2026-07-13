@@ -1,7 +1,6 @@
+import 'package:aonw_server/src/auth/steam_auth_service.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
-
-import '../generated/protocol.dart';
-import 'steam_auth_service.dart';
 
 class SteamAuthEndpoint extends Endpoint {
   final _service = SteamAuthService();

@@ -1,8 +1,7 @@
+import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
-
-import '../generated/protocol.dart';
 
 /// Keeps the game account table in sync with Serverpod Auth users.
 class AccountProfileEndpoint extends Endpoint {

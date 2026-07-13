@@ -1,19 +1,18 @@
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_lifecycle_service.dart';
+import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
+import 'package:aonw_server/src/multiplayer/match_request_validator.dart';
+import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/matchmaking_policies.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/player_seat_allocator.dart';
 import 'package:serverpod/serverpod.dart';
-
-import '../generated/protocol.dart';
-import 'initial_multiplayer_snapshot_factory.dart';
-import 'invite_code_generator.dart';
-import 'match_broadcaster.dart';
-import 'match_lifecycle_service.dart';
-import 'match_mutation_outcome.dart';
-import 'match_request_validator.dart';
-import 'match_state_access.dart';
-import 'matchmaking_policies.dart';
-import 'multiplayer_errors.dart';
-import 'multiplayer_match_store.dart';
-import 'player_seat_allocator.dart';
 
 export 'invite_code_generator.dart' show InviteCodeGenerator;
 

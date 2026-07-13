@@ -1,5 +1,5 @@
-import 'invite_code_generator.dart';
-import 'multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 
 /// Bounds opaque multiplayer identifiers before they reach persistence or
 /// realtime coordination code.

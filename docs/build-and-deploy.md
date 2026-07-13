@@ -22,6 +22,7 @@ currently implemented workflow while that migration remains in progress.
 | Task | Command |
 | --- | --- |
 | Bootstrap pinned workspace | `make bootstrap` |
+| Static analysis for every package | `make analyze` |
 | Full local quality gate | `make ci` |
 | Generated-code drift gate | `make generated-code-check` |
 | Backend/deploy config checks | `make serverpod-ops-check` |

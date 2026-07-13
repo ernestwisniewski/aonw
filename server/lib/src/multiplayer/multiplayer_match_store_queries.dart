@@ -37,11 +37,11 @@ Future<List<WireMatch>> _listVisibleMatches(
   for (final row in [...participantRows, ...publicRows]) {
     matchesById.putIfAbsent(row.publicId, () => _wireMatch(row, row.players!));
   }
-  final matches = matchesById.values.toList();
-  matches.sort(
-    (first, second) =>
-        _compareVisibleMatches(first, second, participantIds: participantIds),
-  );
+  final matches = matchesById.values.toList()
+    ..sort(
+      (first, second) =>
+          _compareVisibleMatches(first, second, participantIds: participantIds),
+    );
   return matches;
 }
 

@@ -1,7 +1,7 @@
 import 'package:aonw_core/protocol.dart';
 
-import 'multiplayer_errors.dart';
-import 'multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 
 part 'match_state_access_protocol.dart';
 part 'match_state_access_lifecycle.dart';

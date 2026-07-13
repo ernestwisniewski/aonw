@@ -1,19 +1,18 @@
+import 'package:aonw_server/src/auth/auth_maintenance_future_call.dart';
+import 'package:aonw_server/src/auth/steam_auth_route.dart';
+import 'package:aonw_server/src/auth/steam_auth_service.dart';
+import 'package:aonw_server/src/generated/endpoints.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_turn_timeout_future_call.dart';
+import 'package:aonw_server/src/public_stats/public_multiplayer_stats_route.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:serverpod_auth_idp_server/providers/apple.dart' as apple;
 import 'package:serverpod_auth_idp_server/providers/google.dart' as google;
 
-import 'src/auth/auth_maintenance_future_call.dart';
-import 'src/auth/steam_auth_route.dart';
-import 'src/auth/steam_auth_service.dart';
-import 'src/generated/endpoints.dart';
-import 'src/generated/protocol.dart';
-import 'src/multiplayer/multiplayer_endpoint.dart';
-import 'src/multiplayer/multiplayer_turn_timeout_future_call.dart';
-import 'src/public_stats/public_multiplayer_stats_route.dart';
-
-void run(List<String> args) async {
+Future<void> run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
   final turnTimeoutSweepRegistered = _registerTurnTimeoutSweep(pod);
   final authMaintenanceRegistered = _registerAuthMaintenance(pod);

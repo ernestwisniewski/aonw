@@ -1,11 +1,10 @@
+import 'package:aonw_server/src/auth/auth_rate_limit_constants.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/scheduling/background_task_support.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:serverpod_auth_idp_server/core.dart' as auth_idp;
-
-import '../generated/protocol.dart';
-import '../scheduling/background_task_support.dart';
-import 'auth_rate_limit_constants.dart';
 
 export 'auth_rate_limit_constants.dart' show aonwAuthRateLimitDomain;
 

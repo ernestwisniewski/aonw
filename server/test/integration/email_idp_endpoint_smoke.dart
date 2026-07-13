@@ -1,10 +1,10 @@
+import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
-import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:test/test.dart';
 
-import 'test_tools/serverpod_test_tools.dart';
 import 'integration_database_cleanup.dart';
+import 'test_tools/serverpod_test_tools.dart';
 
 void main() {
   withServerpod(
