@@ -79,7 +79,7 @@ as bool,
 @override
 @pragma('vm:prefer-inline')
 $VictoryRulesCopyWith<$Res> get victoryRules {
-
+  
   return $VictoryRulesCopyWith<$Res>(_self.victoryRules, (value) {
     return _then(_self.copyWith(victoryRules: value));
   });
@@ -297,7 +297,7 @@ as bool,
 @override
 @pragma('vm:prefer-inline')
 $VictoryRulesCopyWith<$Res> get victoryRules {
-
+  
   return $VictoryRulesCopyWith<$Res>(_self.victoryRules, (value) {
     return _then(_self.copyWith(victoryRules: value));
   });

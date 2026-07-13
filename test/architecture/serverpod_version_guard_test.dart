@@ -75,7 +75,7 @@ void main() {
     final cliCheckTarget = _targetBody(
       makefile,
       target: 'serverpod-cli-check',
-      nextTarget: 'check-migrations',
+      nextTarget: 'generated-code-check',
     );
 
     expect(versionTarget, contains('server/pubspec.yaml'));
@@ -107,7 +107,8 @@ void main() {
       contains(r'if [ "$$actual" != "$$expected" ]; then'),
     );
     expect(cliCheckTarget, contains('Serverpod CLI version mismatch'));
-    expect(makefile, contains('check-migrations: serverpod-cli-check'));
+    expect(makefile, contains('generated-code-check: serverpod-cli-check'));
+    expect(makefile, contains('check-migrations: generated-code-check'));
   });
 
   test('CI installs the CLI version declared by the server runtime', () {
@@ -117,7 +118,7 @@ void main() {
       multiLine: true,
     ).allMatches(workflow).toList();
     final install = workflow.indexOf('run: make serverpod-cli-install');
-    final driftCheck = workflow.indexOf('run: make check-migrations');
+    final driftCheck = workflow.indexOf('run: make generated-code-check');
 
     expect(installCommands, hasLength(1));
     expect(install, greaterThanOrEqualTo(0));

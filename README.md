@@ -35,11 +35,14 @@ and online multiplayer infrastructure.
 
 ## Quick Start
 
-Install Flutter 3.44 or newer, then run:
+Use the exact Flutter SDK selected by `.github/workflows/ci.yml` and its bundled
+Dart SDK; the generated-code gate rejects a different local toolchain. Then
+run:
 
 ```sh
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+make serverpod-cli-install
+make generated-code-check
 flutter test
 ```
 
@@ -49,9 +52,26 @@ For the full local quality gate:
 make ci
 ```
 
-`make ci` checks formatting, then analyzes and tests the Flutter app, the
-shared core package, the generated Serverpod client package, and the Serverpod
-backend tests that do not require external services.
+`make ci` includes `make generated-code-check`, checks formatting, then
+analyzes and tests the Flutter app, the shared core package, the generated
+Serverpod client package, and the Serverpod backend tests that do not require
+external services. The generated-code gate uses an isolated snapshot of the
+current workspace, so checking root and `aonw_core` build-runner output,
+localizations, Serverpod output, and migrations never rewrites the active
+checkout. It requires the Serverpod CLI version pinned by the backend; install
+or update it with `make serverpod-cli-install`.
+
+When generator inputs change, regenerate the affected output deliberately in
+the real checkout, review the diff, and commit it:
+
+```sh
+flutter pub run build_runner build
+(cd packages/aonw_core && dart run build_runner build)
+flutter gen-l10n
+(cd server && dart pub global run serverpod_cli:serverpod_cli generate)
+(cd server && dart pub global run serverpod_cli:serverpod_cli create-migration)
+make generated-code-check
+```
 
 ## Local Backend
 

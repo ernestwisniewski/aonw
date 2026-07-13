@@ -22,6 +22,7 @@ currently implemented workflow while that migration remains in progress.
 | Task | Command |
 | --- | --- |
 | Full local quality gate | `make ci` |
+| Generated-code drift gate | `make generated-code-check` |
 | Backend/deploy config checks | `make serverpod-ops-check` |
 | Docker context secret guard | `make docker-context-check` |
 | Stage homepage and `/stats` | `make build-homepage` |
@@ -36,8 +37,27 @@ From the repository root:
 
 ```sh
 flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
-make check
+make serverpod-cli-install
+make ci
+```
+
+`make ci` and repository CI both run `make generated-code-check`. The gate
+recreates root and `aonw_core` build-runner output, Flutter localizations,
+Serverpod protocol/client/test output, and migrations in an isolated snapshot
+of the current workspace. It reports drift without rewriting the active
+checkout and requires the Serverpod CLI version pinned in
+`server/pubspec.yaml`.
+
+When generator inputs change, regenerate only the affected artifacts in the
+real checkout, then review and commit the diff:
+
+```sh
+flutter pub run build_runner build
+(cd packages/aonw_core && dart run build_runner build)
+flutter gen-l10n
+(cd server && dart pub global run serverpod_cli:serverpod_cli generate)
+(cd server && dart pub global run serverpod_cli:serverpod_cli create-migration)
+make generated-code-check
 ```
 
 For backend operations, also run:
@@ -46,15 +66,16 @@ For backend operations, also run:
 make serverpod-ops-check
 ```
 
-`serverpod-ops-check` validates generated Serverpod migrations, Docker Compose
-config, and the server image context. The context guard uses BuildKit with
+`serverpod-ops-check` validates all committed generated code and migrations,
+Docker Compose config, and the server image context. The context guard uses
+BuildKit with
 synthetic secret, key, certificate, credential, and backup files to prove that
 the checked-in `.dockerignore` excludes them while preserving required source,
 map, and migration inputs. It requires Docker and the Serverpod CLI.
 Root deployment profiles require Docker Compose 2.24.4 or newer because their
 overlays use `!override` to replace, rather than merge, service profile lists.
-The CLI must exactly match the runtime pin in `server/pubspec.yaml`. Install the
-required version without duplicating it in documentation or CI:
+The CLI must exactly match the runtime pin in `server/pubspec.yaml`. Install or
+refresh the required version without duplicating it in documentation or CI:
 
 ```sh
 make serverpod-cli-install
@@ -66,8 +87,9 @@ Before any multi-platform release, run the mandatory aggregate gate:
 make release-check
 ```
 
-`release-check` runs the full local CI suite, Serverpod migration and Compose
-validation, and the PostgreSQL-backed endpoint smoke. `make deploy-all` invokes
+`release-check` runs the full local CI suite (including generated-code and
+migration drift), Compose validation, and the PostgreSQL-backed endpoint smoke.
+`make deploy-all` invokes
 this gate before changing the version, then invokes it again on the committed
 release version before pushing `main` or uploading any artifacts.
 
@@ -423,8 +445,10 @@ ignored by `.gitignore`.
 ## Troubleshooting
 
 - If Compose fails validation, run `make compose-check` with the same profile.
-- `make check-migrations` verifies that the Serverpod CLI matches the runtime
-  before generation. If migrations drift, review the generated diff.
+- `make check-migrations` is a compatibility alias for the complete generated
+  gate and verifies the Serverpod CLI before generation. If it reports drift,
+  regenerate the affected output in the real checkout with the commands above
+  and review that diff; the gate itself never rewrites the checkout.
 - If the web app points to the wrong API, inspect the built artifact for the
   `AONW_API_BASE_URL` value used at build time.
 - If remote deploy targets fail immediately, confirm the required

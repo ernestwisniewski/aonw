@@ -8,8 +8,8 @@
 
 ## Checklist
 
-- [ ] `make ci` passes (format, Flutter app, `aonw_core`, generated client, server unit tests).
-- [ ] Generated files (`*.g.dart`, `*.freezed.dart`, localization, Serverpod protocol) are in sync with their sources.
+- [ ] `make ci` passes (generated-code drift, format, Flutter app, `aonw_core`, generated client, server unit tests).
+- [ ] Generator input changes were regenerated deliberately and the resulting build-runner, localization, Serverpod, and migration diffs were reviewed (`make generated-code-check`).
 - [ ] Docs updated when behavior, persistence, APIs, game rules, or build/deploy flows changed.
 - [ ] Architecture boundaries and accepted ADRs respected (see `test/architecture/layer_boundaries_test.dart` and `docs/adr/README.md`).
 

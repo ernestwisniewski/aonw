@@ -187,7 +187,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -201,7 +201,8 @@ help:
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
-	@echo "  make ci           LOCAL: format, analyze, and test the same local gate expected before PRs"
+	@echo "  make ci           LOCAL: generated drift, format, analyze, and tests expected before PRs"
+	@echo "  make generated-code-check LOCAL: verify every committed generator in an isolated snapshot"
 	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
 	@echo "  make reducer-parity-test LOCAL: run local/server reducer fixtures against one oracle"
@@ -239,11 +240,11 @@ help:
 	@echo "  make compose-check LOCAL: validate Docker Compose files without starting services"
 	@echo "  make docker-context-check LOCAL: prove secrets stay out of the server build context"
 	@echo "  make infra-config-check LOCAL: validate Caddy, Prometheus, Dockerfile, and build context"
-	@echo "  make serverpod-ops-check LOCAL: validate Serverpod drift and deployment configs"
+	@echo "  make serverpod-ops-check LOCAL: validate generated code and deployment configs"
 	@echo "  make serverpod-version LOCAL: print the runtime pin required by the Serverpod CLI"
 	@echo "  make serverpod-cli-install LOCAL: install the CLI version required by the runtime"
 	@echo "  make serverpod-cli-check LOCAL: verify the installed Serverpod CLI matches the runtime"
-	@echo "  make check-migrations LOCAL: regenerate Serverpod code/migrations and fail if repo changed"
+	@echo "  make check-migrations LOCAL: alias for the complete generated-code drift gate"
 	@echo "  make migrate       Explain Serverpod startup migration flow"
 	@echo "  make health        Check deployed Serverpod health endpoint"
 	@echo "  make health-web    Check deployed demo web frontend"
@@ -257,7 +258,7 @@ help:
 	@echo "  LOCAL_WEB_PORT=7357            Stable Google OAuth web origin port. Default: $(LOCAL_WEB_PORT)"
 	@echo "  PROFILE=dev|tunnel|staging|prod Default: $(PROFILE)"
 	@echo "  BRANCH=main                    Optional branch checkout before pull"
-	@echo "  CHECK_MIGRATIONS=1             Run local Serverpod migration drift check after build"
+	@echo "  CHECK_MIGRATIONS=1             Run the complete generated-code drift gate after build"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
 	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... server-integration-test only. Default: $(SERVERPOD_TEST_DATABASE_PASSWORD)"
@@ -380,7 +381,7 @@ build: profile-check
 		$(MAKE) --no-print-directory check-migrations PROFILE="$(PROFILE)" SERVER_SERVICE="$(SERVER_SERVICE)" COMPOSE="$(COMPOSE)"; \
 	fi
 
-ci: format-check check
+ci: generated-code-check format-check check
 
 format-check:
 	@files=$$(git ls-files -- '*.dart' \
@@ -394,7 +395,7 @@ check: flutter-test core-test client-test server-test
 
 release-check:
 	@$(MAKE) --no-print-directory ci
-	@$(MAKE) --no-print-directory serverpod-ops-check
+	@$(MAKE) --no-print-directory serverpod-config-check
 	@tool/run_postgres_smoke.sh
 
 flutter-test:
@@ -509,7 +510,9 @@ infra-config-check: docker-context-check
 	@docker buildx build --check --file server/Dockerfile .
 	@echo "Infrastructure config OK."
 
-serverpod-ops-check: check-migrations compose-check infra-config-check
+serverpod-config-check: compose-check infra-config-check
+
+serverpod-ops-check: generated-code-check serverpod-config-check
 
 build-web:
 	@command -v flutter >/dev/null || { echo "flutter SDK is required for build-web."; exit 1; }
@@ -1601,19 +1604,10 @@ serverpod-cli-check:
 			exit 1; \
 		fi
 
-check-migrations: serverpod-cli-check
-	@if [ -n "$$(git status --porcelain -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations)" ]; then \
-		echo "Serverpod drift check requires clean generated and migration paths."; \
-		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations; \
-		exit 1; \
-	fi
-	@cd server && "$(SERVERPOD_CLI)" generate
-	@cd server && "$(SERVERPOD_CLI)" create-migration
-	@if [ -n "$$(git status --porcelain -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations)" ]; then \
-		echo "Serverpod generated files or migrations changed. Review and commit them before deploy."; \
-		git status --short -- server/lib/src/generated packages/aonw_server_client/lib/src server/test/integration/test_tools server/migrations; \
-		exit 1; \
-	fi
+generated-code-check: serverpod-cli-check
+	@SERVERPOD_CLI="$(SERVERPOD_CLI)" tool/check_generated_code.sh
+
+check-migrations: generated-code-check
 
 migrate:
 	@echo "Serverpod migrations are applied by the server at startup."

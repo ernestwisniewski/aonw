@@ -129,7 +129,13 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 ## Maintenance Notes
 
 - Keep generated files such as `*.g.dart`, `*.freezed.dart`, localization
-  output, and Serverpod protocol output in sync with their sources.
+  output, Serverpod protocol output, and migrations in sync with their sources.
+  `make generated-code-check` verifies root and `aonw_core` build-runner output,
+  l10n, Serverpod output, and migrations in an isolated snapshot without
+  rewriting the active checkout. It runs as part of `make ci` and CI and
+  requires the matching Serverpod CLI from `make serverpod-cli-install`. When
+  it reports drift, use the relevant deliberate regeneration command in
+  [CONTRIBUTING.md](../CONTRIBUTING.md), review the diff, and commit it.
 - Keep generated build artifacts, editor state, local environment files, and
   machine-specific output out of the repository.
 - Avoid committing operating-system files, asset-export sidecars, local
@@ -137,5 +143,5 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 - Update docs when behavior, persistence, APIs, game rules, or release flows
   change.
 
-Run `make check` before handoff. Run `make serverpod-ops-check` before backend
+Run `make ci` before handoff. Run `make serverpod-ops-check` before backend
 deployments when Docker and the Serverpod CLI are available.

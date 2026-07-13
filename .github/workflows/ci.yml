@@ -97,10 +97,10 @@ jobs:
       - name: Validate Caddy, Prometheus, Dockerfile, and build context
         run: make infra-config-check
 
-  serverpod-drift:
-    name: serverpod generated and migration drift
+  generated-code-drift:
+    name: generated code and migration drift
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -113,15 +113,20 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Get server dependencies
-        working-directory: server
-        run: dart pub get
+      - name: Cache pub packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-generated-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'server/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-generated-
+            ${{ runner.os }}-pub-
 
       - name: Install matching Serverpod CLI
         run: make serverpod-cli-install
 
-      - name: Check generated code and migration drift
-        run: make check-migrations
+      - name: Check all generated code and migration drift
+        run: make generated-code-check
 
   server-integration:
     name: server integration
