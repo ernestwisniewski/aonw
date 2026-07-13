@@ -7,36 +7,7 @@ export TZ=UTC
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 serverpod_cli="${SERVERPOD_CLI:-${HOME}/.pub-cache/bin/serverpod}"
 
-required_flutter_versions="$(
-  awk '$1 == "flutter-version:" { gsub(/"/, "", $2); print $2 }' \
-    "${repo_root}/.github/workflows/ci.yml" | sort -u
-)"
-if [[ -z "${required_flutter_versions}" || "${required_flutter_versions}" == *$'\n'* ]]; then
-  echo "CI must declare exactly one Flutter version for generated code." >&2
-  exit 1
-fi
-
-flutter_machine="$(flutter --version --machine)"
-actual_flutter_version="$(
-  printf '%s\n' "${flutter_machine}" |
-    sed -n 's/^[[:space:]]*"frameworkVersion":[[:space:]]*"\([^"]*\)".*/\1/p'
-)"
-flutter_dart_version="$(
-  printf '%s\n' "${flutter_machine}" |
-    sed -n 's/^[[:space:]]*"dartSdkVersion":[[:space:]]*"\([^"]*\)".*/\1/p'
-)"
-active_dart_version="$(
-  dart --version 2>&1 |
-    sed -n 's/^Dart SDK version:[[:space:]]*\([^[:space:]]*\).*/\1/p'
-)"
-if [[ "${actual_flutter_version}" != "${required_flutter_versions}" ]]; then
-  echo "Flutter version mismatch: CI requires ${required_flutter_versions}, found ${actual_flutter_version:-unknown}." >&2
-  exit 1
-fi
-if [[ -z "${flutter_dart_version}" || "${active_dart_version}" != "${flutter_dart_version}" ]]; then
-  echo "Dart must match Flutter ${required_flutter_versions}: expected ${flutter_dart_version:-unknown}, found ${active_dart_version:-unknown}." >&2
-  exit 1
-fi
+"${repo_root}/tool/check_toolchain.sh"
 
 if [[ "${serverpod_cli}" != /* ]]; then
   serverpod_cli="$(command -v "${serverpod_cli}" || true)"

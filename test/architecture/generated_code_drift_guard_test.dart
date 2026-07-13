@@ -77,10 +77,9 @@ void main() {
     );
     expect(source, contains('packages/aonw_core'));
     expect(source, contains('server'));
-    expect(source, contains('.github/workflows/ci.yml'));
-    expect(source, contains('flutter --version --machine'));
-    expect(source, contains('dart --version'));
-    expect(source, contains('Flutter version mismatch'));
+    expect(source, contains('tool/check_toolchain.sh'));
+    expect(source, isNot(contains('.github/workflows/ci.yml')));
+    expect(source, isNot(contains('flutter --version --machine')));
 
     expect(
       source,
@@ -153,9 +152,9 @@ void main() {
     expect(job.name, isNot('quality-gate'));
     expect(job.body, contains('actions/checkout@'));
     expect(job.body, contains('subosito/flutter-action@'));
-    expect(job.body, contains('make serverpod-cli-install'));
+    expect(job.body, contains('make bootstrap'));
     expect(
-      job.body.indexOf('make serverpod-cli-install'),
+      job.body.indexOf('make bootstrap'),
       lessThan(job.body.indexOf('make generated-code-check')),
     );
   });

@@ -107,22 +107,26 @@ void main() {
       contains(r'if [ "$$actual" != "$$expected" ]; then'),
     );
     expect(cliCheckTarget, contains('Serverpod CLI version mismatch'));
-    expect(makefile, contains('generated-code-check: serverpod-cli-check'));
+    expect(
+      makefile,
+      contains('generated-code-check: toolchain-check serverpod-cli-check'),
+    );
     expect(makefile, contains('check-migrations: generated-code-check'));
   });
 
-  test('CI installs the CLI version declared by the server runtime', () {
+  test('CI bootstraps the CLI version declared by the server runtime', () {
     final workflow = File('.github/workflows/ci.yml').readAsStringSync();
-    final installCommands = RegExp(
-      r'^\s*run: make serverpod-cli-install\s*$',
+    final bootstrapCommands = RegExp(
+      r'^\s*run: make bootstrap\s*$',
       multiLine: true,
     ).allMatches(workflow).toList();
-    final install = workflow.indexOf('run: make serverpod-cli-install');
+    final bootstrap = workflow.indexOf('run: make bootstrap');
     final driftCheck = workflow.indexOf('run: make generated-code-check');
 
-    expect(installCommands, hasLength(1));
-    expect(install, greaterThanOrEqualTo(0));
-    expect(driftCheck, greaterThan(install));
+    expect(bootstrapCommands, hasLength(1));
+    expect(bootstrap, greaterThanOrEqualTo(0));
+    expect(driftCheck, greaterThan(bootstrap));
+    expect(workflow, isNot(contains('run: make serverpod-cli-install')));
     expect(workflow, isNot(contains('dart pub global activate serverpod_cli')));
     expect(
       workflow,

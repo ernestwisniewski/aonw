@@ -21,6 +21,7 @@ currently implemented workflow while that migration remains in progress.
 
 | Task | Command |
 | --- | --- |
+| Bootstrap pinned workspace | `make bootstrap` |
 | Full local quality gate | `make ci` |
 | Generated-code drift gate | `make generated-code-check` |
 | Backend/deploy config checks | `make serverpod-ops-check` |
@@ -36,10 +37,15 @@ currently implemented workflow while that migration remains in progress.
 From the repository root:
 
 ```sh
-flutter pub get
-make serverpod-cli-install
+make bootstrap
 make ci
 ```
+
+`.fvmrc` is the single Flutter SDK pin used locally and by every GitHub build;
+Dart comes from that Flutter release. FVM is optional, and Make prefers its
+ignored `.fvm/flutter_sdk` when present. Bootstrap checks the toolchain before
+resolving the four committed lockfiles and ensuring the exact Serverpod CLI.
+It does not generate code or start infrastructure.
 
 `make ci` and repository CI both run `make generated-code-check`. The gate
 recreates root and `aonw_core` build-runner output, Flutter localizations,
@@ -74,10 +80,13 @@ the checked-in `.dockerignore` excludes them while preserving required source,
 map, and migration inputs. It requires Docker and the Serverpod CLI.
 Root deployment profiles require Docker Compose 2.24.4 or newer because their
 overlays use `!override` to replace, rather than merge, service profile lists.
-The CLI must exactly match the runtime pin in `server/pubspec.yaml`. Install or
-refresh the required version without duplicating it in documentation or CI:
+The CLI must exactly match the runtime pin in `server/pubspec.yaml`. A normal
+workspace bootstrap ensures it; the dedicated install remains available for
+CLI-only repair:
 
 ```sh
+make bootstrap
+# or, for CLI-only repair:
 make serverpod-cli-install
 ```
 

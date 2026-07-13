@@ -1,5 +1,10 @@
 SHELL := /bin/sh
 
+LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
+ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
+export PATH := $(LOCAL_FLUTTER_BIN):$(PATH)
+endif
+
 COMPOSE ?= docker compose
 COMPOSE_BASE_FILES = -f compose.yml
 COMPOSE_STAGING_FILES = $(COMPOSE_BASE_FILES) -f compose.staging.yml
@@ -187,7 +192,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check check flutter-test core-test client-test reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -197,6 +202,8 @@ help:
 	@echo "  make deploy steam  Build Steam macOS + Windows ZIPs into dist/"
 	@echo ""
 	@echo "Individual targets:"
+	@echo "  make bootstrap    LOCAL: verify pinned Flutter/Dart, install all lockfiles, and ensure Serverpod CLI"
+	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
 	@echo "  make local        LOCAL: start Docker API, seed users, and run Flutter Web on OAuth origin localhost:7357"
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
@@ -381,6 +388,13 @@ build: profile-check
 		$(MAKE) --no-print-directory check-migrations PROFILE="$(PROFILE)" SERVER_SERVICE="$(SERVER_SERVICE)" COMPOSE="$(COMPOSE)"; \
 	fi
 
+bootstrap:
+	@tool/bootstrap_workspace.sh
+	@$(MAKE) --no-print-directory serverpod-cli-ensure
+
+toolchain-check:
+	@tool/check_toolchain.sh
+
 ci: generated-code-check format-check check
 
 format-check:
@@ -391,7 +405,7 @@ format-check:
 		test -n "$$files" || { echo "No tracked Dart files found."; exit 1; }; \
 		dart format --output=none --set-exit-if-changed $$files
 
-check: flutter-test core-test client-test server-test
+check: toolchain-check flutter-test core-test client-test server-test
 
 release-check:
 	@$(MAKE) --no-print-directory ci
@@ -1590,6 +1604,13 @@ serverpod-cli-install:
 		PUB_CACHE="$(PUB_CACHE)" dart pub global activate serverpod_cli "$$version"; \
 		$(MAKE) --no-print-directory serverpod-cli-check
 
+serverpod-cli-ensure:
+	@if $(MAKE) --no-print-directory serverpod-cli-check >/dev/null 2>&1; then \
+		echo "Serverpod CLI already matches $$($(MAKE) --no-print-directory serverpod-version)."; \
+	else \
+		$(MAKE) --no-print-directory serverpod-cli-install; \
+	fi
+
 serverpod-cli-check:
 	@command -v "$(SERVERPOD_CLI)" >/dev/null 2>&1 || { echo "Serverpod CLI not found: $(SERVERPOD_CLI)"; exit 1; }
 	@set -e; \
@@ -1604,7 +1625,7 @@ serverpod-cli-check:
 			exit 1; \
 		fi
 
-generated-code-check: serverpod-cli-check
+generated-code-check: toolchain-check serverpod-cli-check
 	@SERVERPOD_CLI="$(SERVERPOD_CLI)" tool/check_generated_code.sh
 
 check-migrations: generated-code-check

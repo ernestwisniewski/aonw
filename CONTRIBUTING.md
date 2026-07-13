@@ -7,17 +7,21 @@ participating in issues, pull requests, discussions, and reviews.
 
 ## Setup
 
-Use the exact Flutter SDK selected by `.github/workflows/ci.yml` and its bundled
-Dart SDK. The manifest constraints describe runtime compatibility; generated
-code must use the same toolchain as CI, and the drift gate verifies it.
+Use the exact Flutter SDK selected by `.fvmrc` and its bundled Dart SDK. The
+manifest constraints describe package compatibility; `.fvmrc` is the local and
+CI toolchain pin. FVM is optional:
+`fvm install --setup --skip-pub-get` provisions the project SDK without an
+unlocked dependency resolution, and Make automatically prefers
+`.fvm/flutter_sdk` when it exists.
 
 ```sh
-flutter pub get
-make serverpod-cli-install
+make bootstrap
 ```
 
-The install target selects the Serverpod CLI version pinned in
-`server/pubspec.yaml`. Run it again when that pin changes.
+Bootstrap verifies the active toolchain, resolves the root, `aonw_core`,
+generated client, and server lockfiles with `--enforce-lockfile`, and ensures
+the Serverpod CLI version pinned in `server/pubspec.yaml`. It does not run
+generators or tests.
 
 For backend work, copy `.env.example` to `.env`, replace placeholder secrets,
 and use Docker Compose for PostgreSQL and Redis.
@@ -44,8 +48,8 @@ make generated-code-check
 It recreates root and `aonw_core` build-runner output, Flutter localizations,
 Serverpod protocol/client/test output, and Serverpod migrations in an isolated
 snapshot of the current workspace. It reports drift without modifying the
-active checkout. A matching Serverpod CLI is required; install it with
-`make serverpod-cli-install`.
+active checkout. A matching Serverpod CLI is required; `make bootstrap`
+installs or verifies it.
 
 When touching Serverpod schemas, generated protocol files, migrations, Compose
 files, or deployment behavior, also run:

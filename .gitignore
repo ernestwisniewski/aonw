@@ -46,6 +46,7 @@ server/config/passwords.yaml
 
 # Flutter/Dart/Pub related
 **/doc/api/
+.fvm/
 .dart_tool/
 .packages
 .flutter-plugins

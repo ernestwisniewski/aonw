@@ -22,25 +22,25 @@ jobs:
         include:
           - package: root
             working-directory: .
-            get: flutter pub get
+            get: flutter pub get --enforce-lockfile
             analyze: flutter analyze --no-pub
             test: flutter test --no-pub
             format: make format-check
           - package: core
             working-directory: packages/aonw_core
-            get: dart pub get
+            get: dart pub get --enforce-lockfile
             analyze: dart analyze --fatal-infos
             test: dart test
             format: ""
           - package: server_client
             working-directory: packages/aonw_server_client
-            get: dart pub get
+            get: dart pub get --enforce-lockfile
             analyze: dart analyze --fatal-infos
             test: dart test
             format: ""
           - package: server
             working-directory: server
-            get: dart pub get
+            get: dart pub get --enforce-lockfile
             analyze: dart analyze --fatal-infos
             test: dart test
             format: ""
@@ -52,7 +52,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: "3.44.2"
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
 
@@ -109,7 +109,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: "3.44.2"
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
 
@@ -117,13 +117,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-generated-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'server/pubspec.lock') }}
+          key: ${{ runner.os }}-generated-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-generated-
             ${{ runner.os }}-pub-
 
-      - name: Install matching Serverpod CLI
-        run: make serverpod-cli-install
+      - name: Bootstrap pinned workspace
+        run: make bootstrap
 
       - name: Check all generated code and migration drift
         run: make generated-code-check
@@ -155,13 +155,13 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: "3.44.2"
+          flutter-version-file: .fvmrc
           channel: stable
           cache: true
 
       - name: Get server dependencies
         working-directory: server
-        run: dart pub get
+        run: dart pub get --enforce-lockfile
 
       - name: Run every Serverpod PostgreSQL integration smoke
         env:

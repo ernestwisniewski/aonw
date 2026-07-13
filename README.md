@@ -35,16 +35,20 @@ and online multiplayer infrastructure.
 
 ## Quick Start
 
-Use the exact Flutter SDK selected by `.github/workflows/ci.yml` and its bundled
-Dart SDK; the generated-code gate rejects a different local toolchain. Then
-run:
+The canonical local and CI SDK pin is [`.fvmrc`](.fvmrc). Install that exact
+Flutter release and use its bundled Dart SDK. FVM is optional; if used,
+`fvm install --setup --skip-pub-get` creates `.fvm/flutter_sdk` without
+resolving dependencies outside the locked bootstrap; Make automatically places
+that SDK first on `PATH`. Bootstrap all four locked packages and the matching
+Serverpod CLI with one command:
 
 ```sh
-flutter pub get
-make serverpod-cli-install
-make generated-code-check
-flutter test
+make bootstrap
 ```
+
+Bootstrap fails before dependency resolution when the active Flutter/Dart pair
+differs from `.fvmrc`. It does not generate code, start services, or alter
+tracked lockfiles.
 
 For the full local quality gate:
 
@@ -58,8 +62,8 @@ Serverpod client package, and the Serverpod backend tests that do not require
 external services. The generated-code gate uses an isolated snapshot of the
 current workspace, so checking root and `aonw_core` build-runner output,
 localizations, Serverpod output, and migrations never rewrites the active
-checkout. It requires the Serverpod CLI version pinned by the backend; install
-or update it with `make serverpod-cli-install`.
+checkout. It requires the Serverpod CLI version pinned by the backend;
+`make bootstrap` installs or verifies that CLI as part of workspace setup.
 
 When generator inputs change, regenerate the affected output deliberately in
 the real checkout, review the diff, and commit it:

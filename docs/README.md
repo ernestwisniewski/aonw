@@ -128,12 +128,16 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 
 ## Maintenance Notes
 
+- `.fvmrc` is the single Flutter SDK pin for local Make commands and GitHub
+  builds; Dart must be the SDK bundled by that Flutter release. Start from
+  `make bootstrap`, which resolves every committed workspace lockfile and
+  ensures the matching Serverpod CLI without generating tracked code.
 - Keep generated files such as `*.g.dart`, `*.freezed.dart`, localization
   output, Serverpod protocol output, and migrations in sync with their sources.
   `make generated-code-check` verifies root and `aonw_core` build-runner output,
   l10n, Serverpod output, and migrations in an isolated snapshot without
   rewriting the active checkout. It runs as part of `make ci` and CI and
-  requires the matching Serverpod CLI from `make serverpod-cli-install`. When
+  requires the matching Serverpod CLI from `make bootstrap`. When
   it reports drift, use the relevant deliberate regeneration command in
   [CONTRIBUTING.md](../CONTRIBUTING.md), review the diff, and commit it.
 - Keep generated build artifacts, editor state, local environment files, and

@@ -8,6 +8,7 @@
 
 ## Checklist
 
+- [ ] `make bootstrap` succeeds without changing committed lockfiles.
 - [ ] `make ci` passes (generated-code drift, format, Flutter app, `aonw_core`, generated client, server unit tests).
 - [ ] Generator input changes were regenerated deliberately and the resulting build-runner, localization, Serverpod, and migration diffs were reviewed (`make generated-code-check`).
 - [ ] Docs updated when behavior, persistence, APIs, game rules, or build/deploy flows changed.
