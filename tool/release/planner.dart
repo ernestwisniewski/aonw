@@ -21,6 +21,12 @@ final class ReleasePlan {
 
   String get canonicalJson => encodeCanonicalJson(toJson());
 
+  /// Environment-neutral build intent suitable for a content-addressed
+  /// manifest. Promotion environment, host, and mutable execution steps are
+  /// deliberately excluded so the same artifact set can move unchanged.
+  String get artifactPlanCanonicalJson =>
+      encodeCanonicalJson(toArtifactPlanJson());
+
   String get human {
     final buffer = StringBuffer()
       ..writeln('Release plan (read-only)')
@@ -70,35 +76,16 @@ final class ReleasePlan {
     return buffer.toString().trimRight();
   }
 
+  Map<String, Object?> toArtifactPlanJson() => {
+    'artifactSources': _artifactSourcesJson,
+    'channels': _channelsJson,
+    'release': {'build': targetBuild, 'version': targetVersion.toString()},
+    'schemaVersion': 1,
+  };
+
   Map<String, Object?> toJson() => {
-    'artifactSources': {
-      'linux': {
-        'requested': input.linuxArtifactSource.wireValue,
-        'resolved': linuxArtifactSource.wireValue,
-      },
-      'windows': {
-        'requested': input.windowsArtifactSource.wireValue,
-        'resolved': windowsArtifactSource.wireValue,
-      },
-    },
-    'channels': {
-      'downloads': {'enabled': true, 'linux': input.downloadLinuxEnabled},
-      'googlePlay': {
-        'action': _googleAction(input),
-        'enabled': input.googlePlayEnabled,
-        'track': input.googlePlayTrack.wireValue,
-      },
-      'ios': {'mode': input.iosMode.wireValue},
-      'itch': {
-        'enabled': input.itchEnabled,
-        'linux': input.itchLinuxEnabled,
-        'target': input.itchEnabled ? input.itchTarget : null,
-      },
-      'steam': {
-        'enabled': input.steamEnabled,
-        'linux': input.steamLinuxEnabled,
-      },
-    },
+    'artifactSources': _artifactSourcesJson,
+    'channels': _channelsJson,
     'environment': input.environment.wireValue,
     'host': input.host.wireValue,
     'release': {
@@ -111,6 +98,36 @@ final class ReleasePlan {
     },
     'schemaVersion': 1,
     'steps': steps.map((step) => step.toJson()).toList(growable: false),
+  };
+
+  Map<String, Object?> get _artifactSourcesJson => {
+    'linux': {
+      'requested': input.linuxArtifactSource.wireValue,
+      'resolved': linuxArtifactSource.wireValue,
+    },
+    'windows': {
+      'requested': input.windowsArtifactSource.wireValue,
+      'resolved': windowsArtifactSource.wireValue,
+    },
+  };
+
+  Map<String, Object?> get _channelsJson => {
+    'downloads': {'enabled': true, 'linux': input.downloadLinuxEnabled},
+    'googlePlay': {
+      'action': _googleAction(input),
+      'enabled': input.googlePlayEnabled,
+      'track': input.googlePlayTrack.wireValue,
+    },
+    'homepage': {'enabled': true},
+    'ios': {'mode': input.iosMode.wireValue},
+    'itch': {
+      'enabled': input.itchEnabled,
+      'linux': input.itchLinuxEnabled,
+      'target': input.itchEnabled ? input.itchTarget : null,
+    },
+    'server': {'enabled': true},
+    'steam': {'enabled': input.steamEnabled, 'linux': input.steamLinuxEnabled},
+    'web': {'enabled': true},
   };
 }
 

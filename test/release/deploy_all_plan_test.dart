@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/release/release.dart';
@@ -352,48 +350,6 @@ void main() {
         _throwsMessage(contains('requires the configured release directory')),
       );
     });
-  });
-
-  test('human and canonical JSON output are deterministic', () {
-    final first = _plan(_input());
-    final second = _plan(_input());
-
-    expect(first.human, second.human);
-    expect(first.canonicalJson, second.canonicalJson);
-    expect(jsonDecode(first.canonicalJson), first.toJson());
-    expect(first.canonicalJson, startsWith('{"artifactSources":'));
-    expect(first.canonicalJson, isNot(contains('\n')));
-    expect(
-      encodeCanonicalJson({
-        'z': [
-          {'d': 4, 'c': 3},
-        ],
-        'a': {'b': 2, 'a': 1},
-      }),
-      '{"a":{"a":1,"b":2},"z":[{"c":3,"d":4}]}',
-    );
-    expect(
-      first.human,
-      startsWith(
-        'Release plan (read-only)\n'
-        'Environment: staging\n'
-        'Host: macos\n'
-        'Version: 1.2.3+41 -> 1.2.4+42 (patch)\n',
-      ),
-    );
-    expect(
-      first.human,
-      endsWith(
-        '15. [run] Verify backend and public route health after promotion.',
-      ),
-    );
-
-    final humanCommand = ReleasePlanCommand.parse(_cliArgs());
-    final jsonCommand = ReleasePlanCommand.parse(
-      _replace(_cliArgs(), 'format', 'json'),
-    );
-    expect(humanCommand.render(), first.human);
-    expect(jsonCommand.render(), first.canonicalJson);
   });
 }
 

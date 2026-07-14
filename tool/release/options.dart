@@ -114,7 +114,7 @@ const releaseOptions = <ReleaseOption>[
   ReleaseOption(
     name: 'DEPLOY_ALL_PLAN_FORMAT',
     defaultValue: 'human',
-    allowedValues: 'human|json',
+    allowedValues: 'human|json|artifact-json',
     description: 'Planner output format.',
   ),
 ];

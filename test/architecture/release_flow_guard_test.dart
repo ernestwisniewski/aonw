@@ -178,6 +178,49 @@ void main() {
     expect(makefile, contains('DOWNLOAD_INCLUDE_LINUX ?= 0'));
     expect(makefile, isNot(contains(r'DOWNLOAD_INCLUDE_LINUX ?= $(ITCH')));
   });
+
+  test('static publication consumes prepared bytes without rebuilding', () {
+    final webWrapper = _targetBody(
+      makefile,
+      target: 'deploy-web',
+      nextTarget: 'deploy-web-files',
+    );
+    final webUpload = _targetBody(
+      makefile,
+      target: 'deploy-web-files',
+      nextTarget: 'build-homepage',
+    );
+    final homepageWrapper = _targetBody(
+      makefile,
+      target: 'deploy-homepage',
+      nextTarget: 'deploy-homepage-files',
+    );
+    final homepageUpload = _targetBody(
+      makefile,
+      target: 'deploy-homepage-files',
+      nextTarget: 'download-artifacts',
+    );
+
+    expect(webWrapper, contains(r'$(MAKE) --no-print-directory build-web'));
+    expect(
+      webWrapper,
+      contains(r'$(MAKE) --no-print-directory deploy-web-files'),
+    );
+    expect(
+      homepageWrapper,
+      contains(r'$(MAKE) --no-print-directory build-homepage'),
+    );
+    expect(
+      homepageWrapper,
+      contains(r'$(MAKE) --no-print-directory deploy-homepage-files'),
+    );
+    for (final upload in [webUpload, homepageUpload]) {
+      expect(upload, contains('rsync -avz --delete'));
+      expect(upload, isNot(contains('flutter build')));
+      expect(upload, isNot(contains('build-web')));
+      expect(upload, isNot(contains('build-homepage')));
+    }
+  });
 }
 
 String _deployAllBody(String makefile) => _targetBody(

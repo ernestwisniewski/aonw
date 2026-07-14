@@ -100,11 +100,12 @@ Rejected alternatives:
 ## Migration And Verification
 
 Implemented foundations are the gated release flow, pinned inputs, protected
-Docker context, explicit Compose run-mode overlays, config validation, and
-readiness deployment gate. Build-once publication, digest promotion, release
-manifests, separate migration jobs, canary/automatic rollback, and provenance
-are not yet implemented. Current host-side source pull/build is a transitional
-path, not the accepted end state.
+Docker context, explicit Compose run-mode overlays, config validation,
+readiness deployment gate, the strict environment-neutral manifest schema, and
+separate static build/upload seams. Build-once image publication, manifest
+materialization and promotion, separate migration jobs, journaled resume,
+canary/automatic rollback, and provenance are not yet implemented. Current
+host-side source pull/build is a transitional path, not the accepted end state.
 
 Migrate by first publishing a digest and minimal manifest without changing the
 host topology. Next make staging pull that digest with `build` disabled, split

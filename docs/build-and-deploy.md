@@ -264,13 +264,17 @@ Start every release by reviewing the side-effect-free plan:
 ```sh
 make deploy-all-plan
 make deploy-all-plan DEPLOY_ALL_PLAN_FORMAT=json
+make deploy-all-plan DEPLOY_ALL_PLAN_FORMAT=artifact-json
 ```
 
 The planner reads the current version, validates every public option, resolves
 the requested next version/build, and prints the exact channel and step
-selection. It does not require `main` or deployment credentials and does not
-run Git mutations, quality gates, builds, SSH, or uploads. Unknown booleans and
-enum values fail instead of behaving like a disabled option.
+selection. `artifact-json` omits the host, promotion environment, and mutable
+execution steps so its canonical bytes can identify one artifact set promoted
+unchanged between environments. The planner does not require `main` or
+deployment credentials and does not run Git mutations, quality gates, builds,
+SSH, or uploads. Unknown booleans and enum values fail instead of behaving like
+a disabled option.
 
 `make deploy-all` is the aggregate release command. The current artifact flow
 always builds the macOS app locally, so its supported host is macOS. Windows and
@@ -340,17 +344,49 @@ Empty version/build overrides mean “use the documented default”.
 | `VERSION_BUMP` | `patch`, `none` | `patch` | Marketing-version policy. |
 | `NEW_VERSION` | `x.y.z`, empty | empty | Optional semantic-version override. |
 | `NEW_BUILD` | integer greater than current, empty | empty | Optional build override; empty means current + 1. |
-| `DEPLOY_ALL_PLAN_FORMAT` | `human`, `json` | `human` | Planner output format. |
+| `DEPLOY_ALL_PLAN_FORMAT` | `human`, `json`, `artifact-json` | `human` | Planner output format. |
 
 The three Linux flags are independent consumer decisions. Their logical OR
 causes one Linux artifact/folder to be prepared; each destination still receives
 Linux only when its own flag is `1`. In particular, public Linux downloads no
 longer depend on enabling itch.io Linux.
 
-The current slice makes planning and preflight strict and moves the backend
-before client publication. A content-addressed release manifest, immutable
-server image promotion, resumable partial releases, and automated rollback are
-the next delivery stage; this command does not yet claim those guarantees.
+### Immutable Manifest Foundation
+
+`tool/release/manifest/` defines the environment-neutral manifest boundary for
+the next release stage. Schema v1 is canonical JSON and binds the exact source
+SHA, semantic version/build, the complete canonical artifact plan and its
+SHA-256, passing quality gate evidence, an OCI server reference in mandatory
+`repository@sha256:<digest>` form, selected channels, regular-file artifacts,
+and complete configuration and migration trees.
+
+Artifact IDs and relative POSIX paths are unique, every array is strictly
+sorted, symlinks and traversal are rejected, and every file is rehashed before
+verification. The manifest SHA-256 is external to its content and becomes its
+filename. Storage is atomic and idempotent for identical canonical bytes;
+writers cooperating through the store lock never overwrite different bytes.
+Hashing detects ordinary workspace drift, but publication must consume a
+private content-addressed snapshot created during manifest materialization;
+re-reading mutable build paths is not an immutable-release guarantee.
+Every selected channel requires a bound artifact except iOS in
+`best-effort` mode. That exception is valid only for a recognized missing iOS
+environment; the later promotion journal must record the omission reason.
+Promotion environment, timestamps, secrets, rollback target,
+and mutable step status deliberately do not belong in this manifest; they will
+live in a separate promotion journal.
+
+Static building and publication now also have explicit seams:
+`build-web`/`deploy-web-files` and
+`build-homepage`/`deploy-homepage-files`. The compatibility wrappers
+`deploy-web` and `deploy-homepage` still perform both operations for one-off
+deployments.
+
+This is a contract foundation, not yet a production guarantee. The current
+`deploy-all` still rebuilds the server remotely and does not create or consume
+the manifest. The next slice must publish the server once to a registry, obtain
+its immutable OCI digest, package all static artifacts before publication, and
+only then wire `prepare/publish/verify`. Resume and rollback remain blocked
+until publication is manifest-driven and journaled.
 
 ### Public Downloads
 

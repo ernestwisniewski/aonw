@@ -3,13 +3,15 @@ import 'planner.dart';
 
 enum PlanOutputFormat {
   human('human'),
-  json('json');
+  json('json'),
+  artifactJson('artifact-json');
 
   const PlanOutputFormat(this.wireValue);
 
   static PlanOutputFormat parse(String value) => switch (value) {
     'human' => human,
     'json' => json,
+    'artifact-json' => artifactJson,
     _ => throw ReleasePlanException.invalidEnum(
       name: 'format',
       value: value,
@@ -110,6 +112,7 @@ final class ReleasePlanCommand {
     return switch (format) {
       PlanOutputFormat.human => plan.human,
       PlanOutputFormat.json => plan.canonicalJson,
+      PlanOutputFormat.artifactJson => plan.artifactPlanCanonicalJson,
     };
   }
 }
@@ -138,7 +141,7 @@ Usage: dart tool/release/deploy_all_plan.dart
   --current-build N
   --new-version x.y.z|""
   --new-build N|""
-  --format human|json
+  --format human|json|artifact-json
 
 Every option is required and must use the explicit `--key value` form.
 The command only validates and prints a plan; it performs no release actions.

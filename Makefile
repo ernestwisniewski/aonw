@@ -190,7 +190,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -226,7 +226,9 @@ help:
 	@echo "  make deploy-clean  Same, but build server without cache and prune build cache"
 	@echo "  make build-web     LOCAL: build Flutter web bundle without deploying"
 	@echo "  make deploy-web    LOCAL: build Flutter web bundle and rsync to demo host dir"
+	@echo "  make deploy-web-files LOCAL: upload the existing web bundle without rebuilding"
 	@echo "  make deploy-homepage LOCAL: stage static aonw.net homepage and rsync to staging"
+	@echo "  make deploy-homepage-files LOCAL: upload the staged homepage without rebuilding"
 	@echo "  make deploy-downloads LOCAL: publish latest downloadable builds under aonw.net/download/"
 	@echo "  make archive-ios   LOCAL: create an Xcode Organizer archive for current build"
 	@echo "  make android-keystore Create an Android upload keystore"
@@ -350,7 +352,7 @@ help:
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY_MODE=closed|internal|alpha|beta|production Google Play mode. Default: $(DEPLOY_ALL_GOOGLE_PLAY_MODE)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY=0|1 validate without publishing. Default: $(DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY)"
 	@echo "  DEPLOY_ALL_ITCH=0|1          deploy-all itch.io upload; requires ITCH_TARGET. Default: $(DEPLOY_ALL_ITCH)"
-	@echo "  DEPLOY_ALL_PLAN_FORMAT=human|json deploy-all-plan output. Default: $(DEPLOY_ALL_PLAN_FORMAT)"
+	@echo "  DEPLOY_ALL_PLAN_FORMAT=human|json|artifact-json deploy-all-plan output. Default: $(DEPLOY_ALL_PLAN_FORMAT)"
 	@echo "  VERSION_BUMP=patch|none       bump-version/deploy-all default: $(VERSION_BUMP)"
 	@echo "  NEW_VERSION=x.y.z|empty       optional override; empty follows VERSION_BUMP"
 	@echo "  NEW_BUILD=integer>current|empty optional override; empty means current+1"
@@ -661,18 +663,21 @@ build-web:
 	@rg -a -F "$(WEB_API_BASE_URL)" build/web >/dev/null
 	@echo "Verified web build API: $(WEB_API_BASE_URL)"
 
-# Local-only target. Runs on the developer machine: builds the Flutter web
-# bundle and rsyncs build/web/ to the staging server. Caddy on the server
-# bind-mounts build/demo read-only and serves it as static files, so no
-# container restart is needed — overwriting files is enough.
+# Compatibility wrapper for one-off deployments. The aggregate immutable
+# release flow can build once and call deploy-web-files separately.
 deploy-web:
+	@$(MAKE) --no-print-directory build-web WEB_API_BASE_URL="$(WEB_API_BASE_URL)"
+	@$(MAKE) --no-print-directory deploy-web-files
+
+# Upload-only target. It must consume the already prepared build/web tree and
+# never rebuild bytes between manifest verification and publication.
+deploy-web-files:
 	@command -v rsync >/dev/null || { echo "rsync is required for deploy-web."; exit 1; }
 	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
 	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
 	@test -n "$(WEB_DEPLOY_HOST)" || { echo "WEB_DEPLOY_HOST is required."; exit 1; }
 	@test -n "$(WEB_DEPLOY_DEST)" || { echo "WEB_DEPLOY_DEST is required."; exit 1; }
 	@test -f "$(WEB_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(WEB_DEPLOY_SSH_KEY)"; exit 1; }
-	@$(MAKE) --no-print-directory build-web WEB_API_BASE_URL="$(WEB_API_BASE_URL)"
 	@echo "Uploading build/web/ -> $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(WEB_DEPLOY_DEST)/..."
 	@ssh -i "$(WEB_DEPLOY_SSH_KEY)" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST) 'mkdir -p "$(WEB_DEPLOY_DEST)"'
 	@rsync -avz --delete \
@@ -723,7 +728,14 @@ build-homepage:
 	@rg -F 'data-page="multiplayer-stats"' "$(HOMEPAGE_BUILD_DIR)/stats" >/dev/null || { echo "Stats page marker missing from $(HOMEPAGE_BUILD_DIR)/stats"; exit 1; }
 	@echo "Static homepage staged in $(HOMEPAGE_BUILD_DIR)/"
 
-deploy-homepage: build-homepage
+# Compatibility wrapper for one-off deployments. Release orchestration uses
+# build-homepage and deploy-homepage-files as separate stages.
+deploy-homepage:
+	@$(MAKE) --no-print-directory build-homepage
+	@$(MAKE) --no-print-directory deploy-homepage-files
+
+# Upload-only target for a previously staged homepage tree.
+deploy-homepage-files:
 	@command -v rsync >/dev/null || { echo "rsync is required for deploy-homepage."; exit 1; }
 	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
 	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
