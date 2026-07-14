@@ -165,6 +165,7 @@ void main() {
       'format-check',
       'analyze',
       'architecture-check',
+      'mutation-check',
       'coverage-check',
       'client-test',
     ]);

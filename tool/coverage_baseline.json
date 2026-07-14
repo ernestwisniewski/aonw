@@ -19,7 +19,7 @@
             "found": 299
           },
           "lines": {
-            "hit": 9916,
+            "hit": 9928,
             "found": 12398
           }
         },
@@ -49,7 +49,7 @@
             "found": 2
           },
           "lines": {
-            "hit": 99,
+            "hit": 100,
             "found": 125
           }
         }
@@ -330,8 +330,8 @@
             "found": 19
           },
           "lines": {
-            "hit": 219,
-            "found": 367
+            "hit": 220,
+            "found": 368
           }
         },
         "bootstrap_and_status": {

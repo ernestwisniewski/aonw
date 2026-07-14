@@ -80,6 +80,39 @@ jobs:
       - name: Test
         run: ${{ matrix.test }}
 
+  mutation-gate:
+    name: mutation gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MUTATION_RATCHET_REF: >-
+        ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-mutation-${{ hashFiles('pubspec.lock', 'packages/aonw_core/pubspec.lock', 'packages/aonw_server_client/pubspec.lock', 'server/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mutation-
+            ${{ runner.os }}-pub-
+
+      - name: Check critical mutation gates
+        run: make --no-print-directory mutation-check
+
   compose-config:
     name: deployment config
     runs-on: ubuntu-latest

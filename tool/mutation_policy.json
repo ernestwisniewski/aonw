@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "enforcedSince": "27f179953a62186739d263ca34c331f12b5d7767",
+  "perMutantTimeoutSeconds": 90,
+  "operators": [
+    "boolean_literal_flip",
+    "equality_negation",
+    "logical_connector",
+    "logical_negation",
+    "relational_boundary",
+    "type_test_negation",
+    "wire_string_replacement"
+  ],
+  "scopes": {
+    "core_combat_serializer": {
+      "architectureScope": "core_lib",
+      "packageRoot": "packages/aonw_core",
+      "runner": "dart",
+      "targetFiles": [
+        "packages/aonw_core/lib/game/domain/combat/combat_serialization.dart"
+      ],
+      "testFiles": [
+        "packages/aonw_core/test/game/combat_serialization_test.dart"
+      ]
+    },
+    "root_unit_validator": {
+      "architectureScope": "root_lib",
+      "packageRoot": ".",
+      "runner": "flutter",
+      "targetFiles": [
+        "lib/game/domain/reducer/unit/unit_command_validator.dart"
+      ],
+      "testFiles": [
+        "test/game/domain/reducer/unit_command_validator_test.dart"
+      ]
+    },
+    "server_auth_input": {
+      "architectureScope": "server_lib",
+      "packageRoot": "server",
+      "runner": "dart",
+      "targetFiles": [
+        "server/lib/src/auth/auth_input_validator.dart"
+      ],
+      "testFiles": [
+        "server/test/auth/auth_input_validator_test.dart"
+      ]
+    }
+  }
+}

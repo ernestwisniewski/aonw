@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "scopes": {
+    "core_combat_serializer": {
+      "targets": {
+        "packages/aonw_core/lib/game/domain/combat/combat_serialization.dart": 62
+      },
+      "operatorTotals": {
+        "boolean_literal_flip": 0,
+        "equality_negation": 0,
+        "logical_connector": 0,
+        "logical_negation": 0,
+        "relational_boundary": 0,
+        "type_test_negation": 0,
+        "wire_string_replacement": 62
+      },
+      "survivors": {}
+    },
+    "root_unit_validator": {
+      "targets": {
+        "lib/game/domain/reducer/unit/unit_command_validator.dart": 7
+      },
+      "operatorTotals": {
+        "boolean_literal_flip": 0,
+        "equality_negation": 2,
+        "logical_connector": 0,
+        "logical_negation": 4,
+        "relational_boundary": 1,
+        "type_test_negation": 0,
+        "wire_string_replacement": 0
+      },
+      "survivors": {}
+    },
+    "server_auth_input": {
+      "targets": {
+        "server/lib/src/auth/auth_input_validator.dart": 29
+      },
+      "operatorTotals": {
+        "boolean_literal_flip": 1,
+        "equality_negation": 2,
+        "logical_connector": 12,
+        "logical_negation": 4,
+        "relational_boundary": 10,
+        "type_test_negation": 0,
+        "wire_string_replacement": 0
+      },
+      "survivors": {}
+    }
+  }
+}

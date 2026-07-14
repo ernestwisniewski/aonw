@@ -34,15 +34,20 @@ Before opening a pull request, run:
 make ci
 ```
 
-`make ci` runs `make generated-code-check`, formatting, analysis, and tests for
-the Flutter app, `aonw_core`, the generated Serverpod client package, and the
-Serverpod backend unit tests that do not require external services. CI uses the
-same generated-code gate.
+`make ci` runs generated-code drift, formatting, analysis, architecture,
+mutation, and coverage gates plus the generated-client smoke test. CI delegates
+to the same Make targets.
 
 For a focused analysis pass, run `make analyze`. The four packages compose one
 strict base with ecosystem-specific upstream profiles; see the
 [static-analysis policy](docs/static-analysis.md) before changing a rule or an
 exclusion.
+
+Run `make mutation` after changing the combat serializer, unit-command
+validator, authentication input validator, or their focused tests. Any mutation
+baseline change must be explained by reviewed source or assertion changes and
+must preserve the historical ratchet; see the
+[mutation-testing policy](docs/mutation-testing.md).
 
 Run the generated-code gate on its own while changing generator inputs:
 
@@ -102,6 +107,32 @@ budget. New files must meet their role-specific target; existing above-target
 files and type declarations may only shrink. Read
 [Architecture Budgets](docs/architecture-budgets.md) before changing the
 policy or baseline.
+
+### Mutation Testing
+
+Run the deterministic critical-code gate with:
+
+```sh
+make mutation
+```
+
+It mutates the combat wire serializer, unit-command validator, and server auth
+input validator one site at a time in an isolated workspace. Only a focused
+user-test failure kills a mutant; analysis errors, crashes, timeouts, and suite
+load failures fail the gate itself.
+
+After an intentional target or assertion change, generate and review a
+candidate rather than editing the baseline manually:
+
+```sh
+make mutation-snapshot
+diff -u tool/mutation_baseline.json /tmp/aonw-mutation-baseline.json
+```
+
+Every census change must follow from the reviewed source or tests, introduce no
+surviving mutant, and preserve the historical ratchet. Read
+[Mutation Testing](docs/mutation-testing.md) before updating the baseline or
+policy.
 
 ## Generated Code
 

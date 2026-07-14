@@ -375,6 +375,7 @@ void main() {
       'format-check',
       'analyze',
       'architecture-check',
+      'mutation-check',
       'coverage-check',
       'client-test',
     ]);
@@ -469,7 +470,6 @@ void main() {
       RegExp(r'\b(?:flutter|dart) analyze\b').allMatches(makefile),
       hasLength(4),
     );
-
     final workflow = _loadMap('.github/workflows/ci.yml');
     final jobs = _asMap(workflow['jobs'], 'CI jobs');
     final qualityGate = _asMap(jobs['quality-gate'], 'CI quality-gate');

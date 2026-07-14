@@ -56,14 +56,13 @@ For the full local quality gate:
 make ci
 ```
 
-`make ci` includes `make generated-code-check`, checks formatting, then
-analyzes and tests the Flutter app, the shared core package, the generated
-Serverpod client package, and the Serverpod backend tests that do not require
-external services. The generated-code gate uses an isolated snapshot of the
-current workspace, so checking root and `aonw_core` build-runner output,
-localizations, Serverpod output, and migrations never rewrites the active
-checkout. It requires the Serverpod CLI version pinned by the backend;
-`make bootstrap` installs or verifies that CLI as part of workspace setup.
+`make ci` includes generated-code drift, formatting, analysis, architecture,
+mutation, and coverage gates, plus the generated-client smoke test. The
+generated-code gate uses an isolated snapshot of the current workspace, so
+checking root and `aonw_core` build-runner output, localizations, Serverpod
+output, and migrations never rewrites the active checkout. It requires the
+Serverpod CLI version pinned by the backend; `make bootstrap` installs or
+verifies that CLI as part of workspace setup.
 
 Run `make analyze` for the focused, fatal static-analysis gate across all four
 packages. Its shared rules, generated-code exceptions, and extension procedure
@@ -77,6 +76,12 @@ changed-line coverage; see the [test coverage policy](docs/test-coverage.md).
 Run `make architecture` for the repository-wide Dart census, role-specific
 file targets, AST type-declaration target, and exact legacy-debt ratchet; see
 [the architecture-budget policy](docs/architecture-budgets.md).
+
+Run `make mutation` for deterministic mutation testing of the critical combat
+wire format, unit-command decisions, and authentication input validation. The
+gate accepts only real behavioral test failures as kills and keeps an exact
+target/operator census with a historical survivor ratchet; see the
+[mutation-testing policy](docs/mutation-testing.md).
 
 When generator inputs change, regenerate the affected output deliberately in
 the real checkout, review the diff, and commit it:
@@ -166,6 +171,8 @@ Recommended entry points:
   updates, exclusions, and changed-line coverage.
 - [docs/architecture-budgets.md](docs/architecture-budgets.md) for the complete
   Dart-source census, role-specific targets, and exact legacy-debt ratchet.
+- [docs/mutation-testing.md](docs/mutation-testing.md) for critical mutation
+  scopes, deterministic execution, and the survivor ratchet.
 - [docs/adr/README.md](docs/adr/README.md) before changing architecture
   ownership, command semantics, compatibility policy, or deployment identity.
 - `docs/game-design/` for gameplay systems, balance, UX, and

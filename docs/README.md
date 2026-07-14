@@ -12,7 +12,7 @@ behavior unless they explicitly call out historical context or future work.
 | Change an architectural contract | [Architecture Decision Records](adr/README.md) before changing ownership, determinism, commands, compatibility, or deployment policy. |
 | Refactor or split Dart code | [Architecture Budgets](architecture-budgets.md) for the complete census, role-specific targets, and legacy-debt ratchet. |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
-| Work on tests or coverage | [Test Coverage](test-coverage.md) for scopes, ratchets, exclusions, and local commands. |
+| Work on tests or coverage | [Test Coverage](test-coverage.md) for line coverage and [Mutation Testing](mutation-testing.md) for critical behavioral assertions. |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
 | Work on backend operations | [Data Retention](data-retention.md), [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
 | Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
@@ -82,6 +82,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Static Analysis](static-analysis.md) | Shared strict analyzer policy, generated-code boundaries, and canonical commands. |
 | [Architecture Budgets](architecture-budgets.md) | Repository-wide Dart census, role-specific line targets, AST type-declaration measurement, and legacy-debt ratchet. |
 | [Test Coverage](test-coverage.md) | Line-coverage scopes, exact totals, portable coverage floors, historical ratchet, and changed-line gate. |
+| [Mutation Testing](mutation-testing.md) | Critical scopes, AST mutation operators, deterministic execution, exact baseline, and survivor ratchet. |
 
 ### Release And Operations
 

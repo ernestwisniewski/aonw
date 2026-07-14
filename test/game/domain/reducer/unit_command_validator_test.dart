@@ -41,6 +41,76 @@ void main() {
       );
     });
 
+    test('reports a missing unit through every validation layer', () {
+      const state = GameState(activePlayerId: 'player_1');
+      const context = GameCommandContext();
+      final validations = <UnitCommandValidationResult Function()>[
+        () => UnitCommandValidator.controllableUnit(
+          state,
+          unitId: 'missing',
+          context: context,
+        ),
+        () => UnitCommandValidator.movableUnit(
+          state,
+          unitId: 'missing',
+          context: context,
+        ),
+        () => UnitCommandValidator.fortifiableUnit(
+          state,
+          unitId: 'missing',
+          context: context,
+        ),
+        () => UnitCommandValidator.autoExplorableScout(
+          state,
+          unitId: 'missing',
+          context: context,
+        ),
+      ];
+
+      for (final validate in validations) {
+        expect(
+          validate(),
+          _invalidBecause(UnitCommandValidationFailureReason.missingUnit),
+        );
+      }
+    });
+
+    test('preserves control failures through specialized validators', () {
+      final unit = GameUnit.produced(
+        id: 'scout_1',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.scout,
+        col: 0,
+        row: 0,
+      );
+      final state = GameState(activePlayerId: 'player_1', units: [unit]);
+      const context = GameCommandContext();
+      final validations = <UnitCommandValidationResult Function()>[
+        () => UnitCommandValidator.movableUnit(
+          state,
+          unitId: unit.id,
+          context: context,
+        ),
+        () => UnitCommandValidator.fortifiableUnit(
+          state,
+          unitId: unit.id,
+          context: context,
+        ),
+        () => UnitCommandValidator.autoExplorableScout(
+          state,
+          unitId: unit.id,
+          context: context,
+        ),
+      ];
+
+      for (final validate in validations) {
+        expect(
+          validate(),
+          _invalidBecause(UnitCommandValidationFailureReason.notControllable),
+        );
+      }
+    });
+
     test('rejects working or fortified units for movement', () {
       final working =
           GameUnit.produced(
@@ -88,6 +158,66 @@ void main() {
           'reason',
           UnitCommandValidationFailureReason.fortified,
         ),
+      );
+    });
+
+    test('rejects merchants for ordinary movement', () {
+      final merchant = GameUnit.produced(
+        id: 'merchant_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.merchant,
+        col: 0,
+        row: 0,
+      );
+      final state = GameState(activePlayerId: 'player_1', units: [merchant]);
+
+      expect(
+        UnitCommandValidator.movableUnit(
+          state,
+          unitId: merchant.id,
+          context: const GameCommandContext(),
+        ),
+        _invalidBecause(UnitCommandValidationFailureReason.unsupportedUnitType),
+      );
+    });
+
+    test('accepts ready units and rejects working units for fortification', () {
+      final ready = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
+      final working =
+          GameUnit.produced(
+            id: 'worker_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.worker,
+            col: 0,
+            row: 0,
+          ).copyWithWorkerJob(
+            const WorkerJob(
+              targetHex: CityHex(col: 0, row: 0),
+              improvementType: FieldImprovementType.farm,
+              remainingTurns: 1,
+              totalTurns: 1,
+            ),
+          );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [ready, working],
+      );
+
+      expect(
+        UnitCommandValidator.fortifiableUnit(
+          state,
+          unitId: ready.id,
+          context: const GameCommandContext(),
+        ),
+        isA<ValidUnit>().having((it) => it.unit, 'unit', ready),
+      );
+      expect(
+        UnitCommandValidator.fortifiableUnit(
+          state,
+          unitId: working.id,
+          context: const GameCommandContext(),
+        ),
+        _invalidBecause(UnitCommandValidationFailureReason.working),
       );
     });
 
@@ -159,5 +289,47 @@ void main() {
         ),
       );
     });
+
+    test('requires positive movement to start auto-explore', () {
+      final stoppedScout = GameUnit.produced(
+        id: 'scout_0',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.scout,
+        col: 0,
+        row: 0,
+      ).copyWith(movementPoints: 0);
+      final movingScout = GameUnit.produced(
+        id: 'scout_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.scout,
+        col: 0,
+        row: 0,
+      ).copyWith(movementPoints: 1);
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [stoppedScout, movingScout],
+      );
+
+      expect(
+        UnitCommandValidator.autoExplorableScout(
+          state,
+          unitId: stoppedScout.id,
+          context: const GameCommandContext(),
+        ),
+        _invalidBecause(UnitCommandValidationFailureReason.noMovement),
+      );
+      expect(
+        UnitCommandValidator.autoExplorableScout(
+          state,
+          unitId: movingScout.id,
+          context: const GameCommandContext(),
+        ),
+        isA<ValidUnit>().having((it) => it.unit, 'unit', movingScout),
+      );
+    });
   });
+}
+
+Matcher _invalidBecause(UnitCommandValidationFailureReason reason) {
+  return isA<InvalidUnit>().having((it) => it.reason, 'reason', reason);
 }

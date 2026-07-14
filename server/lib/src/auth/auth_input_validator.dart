@@ -13,12 +13,10 @@ final class AuthInputValidator {
   static const int steamRequestIdLength = 43;
 
   static final RegExp _emailLocalPartPattern = RegExp(
-    r"^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$",
-    caseSensitive: false,
+    r"^[a-z0-9.!#$%&'*+/=?^_`{|}~-]*$",
   );
   static final RegExp _emailDomainLabelPattern = RegExp(
     r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
-    caseSensitive: false,
   );
   static final RegExp _displayNamePattern = RegExp(
     r'^[\p{L}\p{N} _-]+$',
@@ -85,13 +83,14 @@ final class AuthInputValidator {
   String? _normalizeEmail(String input) {
     if (input.isEmpty || input.length > maxEmailLength) return null;
     final email = input.trim().toLowerCase();
-    if (email.isEmpty || email.length > maxEmailLength) return null;
+    if (email.isEmpty) return null;
 
     final separator = email.indexOf('@');
-    if (separator <= 0 || separator != email.lastIndexOf('@')) return null;
+    if (separator == -1 || separator != email.lastIndexOf('@')) return null;
     final localPart = email.substring(0, separator);
     final domain = email.substring(separator + 1);
-    if (localPart.length > 64 ||
+    if (localPart.isEmpty ||
+        localPart.length > 64 ||
         localPart.startsWith('.') ||
         localPart.endsWith('.') ||
         localPart.contains('..') ||
