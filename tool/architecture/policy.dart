@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'failure.dart';
+import 'migration.dart';
 import 'strict_json.dart';
+
+export 'migration.dart';
 
 final class ArchitecturePolicy {
   ArchitecturePolicy._({
     required this.enforcedSince,
+    required this.migration,
     required this.generatedSuffixes,
     required this.buildRunnerScopes,
-    required this.fileLineTargets,
-    required this.declarationLineTarget,
+    required this.roles,
     required this.scopes,
   });
 
@@ -26,21 +29,25 @@ final class ArchitecturePolicy {
     expectKeys(root, const {
       'schema',
       'enforcedSince',
+      'migration',
       'generatedSuffixes',
       'buildRunnerScopes',
-      'fileLineTargets',
-      'declarationLineTarget',
+      'roles',
       'scopes',
     }, description);
-    if (readInt(root, 'schema', description) != 1) {
+    if (readInt(root, 'schema', description) != schema) {
       throw ArchitectureFailure('$description has an unsupported schema.');
     }
     final enforcedSince = readString(root, 'enforcedSince', description);
-    if (!RegExp(r'^[0-9a-f]{40}$').hasMatch(enforcedSince)) {
+    if (!_isSha(enforcedSince)) {
       throw ArchitectureFailure(
         '$description.enforcedSince must be a full lowercase Git SHA.',
       );
     }
+    final migration = ArchitectureMigration.parse(
+      root['migration'],
+      '$description.migration',
+    );
     final generatedSuffixes = readStringList(
       root,
       'generatedSuffixes',
@@ -60,37 +67,22 @@ final class ArchitecturePolicy {
       'buildRunnerScopes',
       description,
     );
-    final rawFileLineTargets = readObject(root, 'fileLineTargets', description);
-    if (rawFileLineTargets.isEmpty) {
-      throw ArchitectureFailure(
-        '$description.fileLineTargets must not be empty.',
+    final rawRoles = readObject(root, 'roles', description);
+    if (rawRoles.isEmpty) {
+      throw ArchitectureFailure('$description.roles must not be empty.');
+    }
+    final roles = <String, ArchitectureRole>{};
+    for (final entry in rawRoles.entries) {
+      _validateName(entry.key, '$description role');
+      roles[entry.key] = ArchitectureRole.parse(
+        entry.key,
+        entry.value,
+        '$description.roles.${entry.key}',
       );
     }
-    final fileLineTargets = <String, int>{};
-    for (final entry in rawFileLineTargets.entries) {
-      final value = entry.value;
-      if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(entry.key) ||
-          value is! int ||
-          value < 1) {
-        throw ArchitectureFailure(
-          '$description has an invalid file line target: ${entry.key}',
-        );
-      }
-      fileLineTargets[entry.key] = value;
-    }
-    if (!fileLineTargets.containsKey('default')) {
+    if (!_sameSet(roles.keys.toSet(), canonicalRoleNames)) {
       throw ArchitectureFailure(
-        '$description.fileLineTargets must define default.',
-      );
-    }
-    final declarationLineTarget = readInt(
-      root,
-      'declarationLineTarget',
-      description,
-    );
-    if (declarationLineTarget < 1) {
-      throw ArchitectureFailure(
-        '$description.declarationLineTarget must be positive.',
+        '$description.roles must define exactly $canonicalRoleNames.',
       );
     }
 
@@ -100,16 +92,11 @@ final class ArchitecturePolicy {
     }
     final scopes = <String, ScopePolicy>{};
     for (final entry in rawScopes.entries) {
-      if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(entry.key)) {
-        throw ArchitectureFailure(
-          '$description has an invalid scope name: ${entry.key}',
-        );
-      }
+      _validateName(entry.key, '$description scope');
       scopes[entry.key] = ScopePolicy.parse(
         entry.value,
         '$description.scopes.${entry.key}',
-        fileLineTargets,
-        declarationLineTarget,
+        roles,
       );
     }
     final unknownBuildRunnerScopes =
@@ -121,44 +108,55 @@ final class ArchitecturePolicy {
         '$unknownBuildRunnerScopes',
       );
     }
-    final usedProfiles = scopes.values
-        .expand((scope) => scope.fileProfiles.keys)
-        .toSet();
-    final unusedTargets =
-        fileLineTargets.keys.toSet().difference(usedProfiles).toList()..sort();
-    if (unusedTargets.isNotEmpty) {
+    final usedRoles = <String>{
+      for (final scope in scopes.values) scope.defaultRole,
+      for (final scope in scopes.values) ...scope.roleAssignments.keys,
+    };
+    final unusedRoles = roles.keys.toSet().difference(usedRoles).toList()
+      ..sort();
+    if (unusedRoles.isNotEmpty) {
       throw ArchitectureFailure(
-        '$description.fileLineTargets contains unused profiles: '
-        '$unusedTargets',
+        '$description.roles contains unused roles: $unusedRoles',
       );
     }
     final policy = ArchitecturePolicy._(
       enforcedSince: enforcedSince,
+      migration: migration,
       generatedSuffixes: generatedSuffixes,
       buildRunnerScopes: buildRunnerScopes,
-      fileLineTargets: Map.unmodifiable(sortedMap(fileLineTargets)),
-      declarationLineTarget: declarationLineTarget,
+      roles: Map.unmodifiable(sortedMap(roles)),
       scopes: Map.unmodifiable(sortedMap(scopes)),
     );
     _validateDisjointScopeRoots(policy.scopes, description);
+    _validateMigrationTargets(policy, description);
     requireCanonicalJson(contents, policy.toJson(), description);
     return policy;
   }
 
+  static const schema = 2;
+  static const canonicalRoleNames = {
+    'production',
+    'test',
+    'tool',
+    'flame_rendering',
+  };
+
   final String enforcedSince;
+  final ArchitectureMigration migration;
   final List<String> generatedSuffixes;
   final List<String> buildRunnerScopes;
-  final Map<String, int> fileLineTargets;
-  final int declarationLineTarget;
+  final Map<String, ArchitectureRole> roles;
   final Map<String, ScopePolicy> scopes;
 
   Map<String, Object?> toJson() => {
-    'schema': 1,
+    'schema': schema,
     'enforcedSince': enforcedSince,
+    'migration': migration.toJson(),
     'generatedSuffixes': generatedSuffixes,
     'buildRunnerScopes': buildRunnerScopes,
-    'fileLineTargets': fileLineTargets,
-    'declarationLineTarget': declarationLineTarget,
+    'roles': {
+      for (final entry in roles.entries) entry.key: entry.value.toJson(),
+    },
     'scopes': {
       for (final entry in scopes.entries) entry.key: entry.value.toJson(),
     },
@@ -172,25 +170,88 @@ final class ArchitecturePolicy {
       scope.generatedPrefixes.any(path.startsWith);
 }
 
+final class ArchitectureRole {
+  const ArchitectureRole._({
+    required this.name,
+    required this.fileLines,
+    required this.declarationLines,
+    required this.callableLines,
+    required this.nesting,
+    required this.cyclomaticComplexity,
+    required this.cognitiveComplexity,
+  });
+
+  factory ArchitectureRole.parse(
+    String name,
+    Object? value,
+    String description,
+  ) {
+    final object = asObject(value, description);
+    expectKeys(object, const {
+      'fileLines',
+      'declarationLines',
+      'callableLines',
+      'nesting',
+      'cyclomaticComplexity',
+      'cognitiveComplexity',
+    }, description);
+    int target(String key) {
+      final result = readInt(object, key, description);
+      if (result < 1) {
+        throw ArchitectureFailure('$description.$key must be positive.');
+      }
+      return result;
+    }
+
+    return ArchitectureRole._(
+      name: name,
+      fileLines: target('fileLines'),
+      declarationLines: target('declarationLines'),
+      callableLines: target('callableLines'),
+      nesting: target('nesting'),
+      cyclomaticComplexity: target('cyclomaticComplexity'),
+      cognitiveComplexity: target('cognitiveComplexity'),
+    );
+  }
+
+  final String name;
+  final int fileLines;
+  final int declarationLines;
+  final int callableLines;
+  final int nesting;
+  final int cyclomaticComplexity;
+  final int cognitiveComplexity;
+
+  Map<String, Object?> toJson() => {
+    'fileLines': fileLines,
+    'declarationLines': declarationLines,
+    'callableLines': callableLines,
+    'nesting': nesting,
+    'cyclomaticComplexity': cyclomaticComplexity,
+    'cognitiveComplexity': cognitiveComplexity,
+  };
+}
+
 final class ScopePolicy {
   ScopePolicy._({
     required this.sourceRoot,
     required this.generatedPrefixes,
-    required this.fileProfiles,
-    required this.declarationLineTarget,
+    required this.defaultRole,
+    required this.roleAssignments,
+    required this.roles,
   });
 
   factory ScopePolicy.parse(
     Object? value,
     String description,
-    Map<String, int> fileLineTargets,
-    int declarationLineTarget,
+    Map<String, ArchitectureRole> roles,
   ) {
     final object = asObject(value, description);
     expectKeys(object, const {
       'sourceRoot',
       'generatedPrefixes',
-      'fileProfiles',
+      'defaultRole',
+      'roleAssignments',
     }, description);
     final sourceRoot = readString(object, 'sourceRoot', description);
     validateRepositoryPath(sourceRoot, '$description.sourceRoot');
@@ -211,60 +272,68 @@ final class ScopePolicy {
         );
       }
     }
-    final rawProfiles = readObject(object, 'fileProfiles', description);
-    if (rawProfiles.isEmpty) {
-      throw ArchitectureFailure('$description.fileProfiles must not be empty.');
-    }
-    final profiles = <String, FileProfile>{};
-    for (final entry in rawProfiles.entries) {
-      if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(entry.key)) {
-        throw ArchitectureFailure(
-          '$description has an invalid profile name: ${entry.key}',
-        );
-      }
-      final lineTarget = fileLineTargets[entry.key];
-      if (lineTarget == null) {
-        throw ArchitectureFailure(
-          '$description references an unknown file profile: ${entry.key}',
-        );
-      }
-      profiles[entry.key] = FileProfile.parse(
-        entry.key,
-        entry.value,
-        '$description.fileProfiles.${entry.key}',
-        sourceRoot,
-        lineTarget,
-      );
-    }
-    final fallbackCount = profiles.values
-        .where((value) => value.isFallback)
-        .length;
-    if (fallbackCount != 1 || profiles['default']?.isFallback != true) {
+    final defaultRole = readString(object, 'defaultRole', description);
+    if (!roles.containsKey(defaultRole)) {
       throw ArchitectureFailure(
-        '$description must define default as its only fallback file profile.',
+        '$description references unknown default role: $defaultRole',
       );
     }
-    final explicitProfiles = profiles.values
-        .where((profile) => !profile.isFallback)
-        .toList();
-    for (
-      var firstIndex = 0;
-      firstIndex < explicitProfiles.length;
-      firstIndex++
-    ) {
-      final first = explicitProfiles[firstIndex];
+    final rawAssignments = readObject(object, 'roleAssignments', description);
+    final roleAssignments = <String, List<String>>{};
+    for (final entry in rawAssignments.entries) {
+      if (!roles.containsKey(entry.key)) {
+        throw ArchitectureFailure(
+          '$description references unknown assigned role: ${entry.key}',
+        );
+      }
+      if (entry.key == defaultRole) {
+        throw ArchitectureFailure(
+          '$description cannot assign its default role explicitly.',
+        );
+      }
+      final assignment = asObject(
+        entry.value,
+        '$description.roleAssignments.${entry.key}',
+      );
+      expectKeys(assignment, const {
+        'paths',
+      }, '$description.roleAssignments.${entry.key}');
+      final paths = readStringList(
+        assignment,
+        'paths',
+        '$description.roleAssignments.${entry.key}',
+      );
+      if (paths.isEmpty) {
+        throw ArchitectureFailure(
+          '$description.roleAssignments.${entry.key}.paths must not be empty.',
+        );
+      }
+      for (final path in paths) {
+        validateRepositoryPath(
+          path,
+          '$description.roleAssignments.${entry.key}.paths entry',
+          requirePrefix: path.endsWith('/'),
+        );
+        if (path != sourceRoot && !path.startsWith('$sourceRoot/')) {
+          throw ArchitectureFailure(
+            '$description role path is outside $sourceRoot: $path',
+          );
+        }
+      }
+      roleAssignments[entry.key] = List.unmodifiable(paths);
+    }
+    final assignments = roleAssignments.entries.toList();
+    for (var firstIndex = 0; firstIndex < assignments.length; firstIndex++) {
       for (
         var secondIndex = firstIndex + 1;
-        secondIndex < explicitProfiles.length;
+        secondIndex < assignments.length;
         secondIndex++
       ) {
-        final second = explicitProfiles[secondIndex];
-        for (final firstPattern in first.paths) {
-          for (final secondPattern in second.paths) {
-            if (patternsOverlap(firstPattern, secondPattern)) {
+        for (final first in assignments[firstIndex].value) {
+          for (final second in assignments[secondIndex].value) {
+            if (patternsOverlap(first, second)) {
               throw ArchitectureFailure(
-                '$description profiles ${first.name} and ${second.name} '
-                'overlap: $firstPattern / $secondPattern',
+                '$description role assignments overlap: $first / $second',
               );
             }
           }
@@ -274,107 +343,42 @@ final class ScopePolicy {
     return ScopePolicy._(
       sourceRoot: sourceRoot,
       generatedPrefixes: generatedPrefixes,
-      fileProfiles: Map.unmodifiable(sortedMap(profiles)),
-      declarationLineTarget: declarationLineTarget,
+      defaultRole: defaultRole,
+      roleAssignments: Map.unmodifiable(sortedMap(roleAssignments)),
+      roles: roles,
     );
   }
 
   final String sourceRoot;
   final List<String> generatedPrefixes;
-  final Map<String, FileProfile> fileProfiles;
-  final int declarationLineTarget;
+  final String defaultRole;
+  final Map<String, List<String>> roleAssignments;
+  final Map<String, ArchitectureRole> roles;
 
-  FileProfile profileFor(String path) {
-    final matches = fileProfiles.values
+  ArchitectureRole roleFor(String path) {
+    final matches = roleAssignments.entries
         .where(
-          (profile) =>
-              !profile.isFallback &&
-              profile.paths.any((p) => pathMatches(path, p)),
+          (entry) => entry.value.any((pattern) => pathMatches(path, pattern)),
         )
+        .map((entry) => entry.key)
         .toList();
     if (matches.length > 1) {
       throw ArchitectureFailure(
-        '$path matches multiple file profiles: '
-        '${matches.map((profile) => profile.name).join(', ')}',
+        '$path matches multiple architecture roles: ${matches.join(', ')}',
       );
     }
-    if (matches.length == 1) return matches.single;
-    return fileProfiles.values.singleWhere((profile) => profile.isFallback);
+    return roles[matches.isEmpty ? defaultRole : matches.single]!;
   }
 
   Map<String, Object?> toJson() => {
     'sourceRoot': sourceRoot,
     'generatedPrefixes': generatedPrefixes,
-    'fileProfiles': {
-      for (final entry in fileProfiles.entries) entry.key: entry.value.toJson(),
+    'defaultRole': defaultRole,
+    'roleAssignments': {
+      for (final entry in roleAssignments.entries)
+        entry.key: {'paths': entry.value},
     },
   };
-}
-
-final class FileProfile {
-  const FileProfile._({
-    required this.name,
-    required this.paths,
-    required this.lineTarget,
-    required this.isFallback,
-  });
-
-  factory FileProfile.parse(
-    String name,
-    Object? value,
-    String description,
-    String sourceRoot,
-    int lineTarget,
-  ) {
-    final object = asObject(value, description);
-    final isFallback = object.containsKey('fallback');
-    expectKeys(
-      object,
-      isFallback ? const {'fallback'} : const {'paths'},
-      description,
-    );
-    if (isFallback) {
-      if (!readBool(object, 'fallback', description)) {
-        throw ArchitectureFailure('$description.fallback must be true.');
-      }
-      return FileProfile._(
-        name: name,
-        paths: const [],
-        lineTarget: lineTarget,
-        isFallback: true,
-      );
-    }
-    final paths = readStringList(object, 'paths', description);
-    if (paths.isEmpty) {
-      throw ArchitectureFailure('$description.paths must not be empty.');
-    }
-    for (final path in paths) {
-      validateRepositoryPath(
-        path,
-        '$description.paths entry',
-        requirePrefix: path.endsWith('/'),
-      );
-      if (path != sourceRoot && !path.startsWith('$sourceRoot/')) {
-        throw ArchitectureFailure(
-          '$description path is outside $sourceRoot: $path',
-        );
-      }
-    }
-    return FileProfile._(
-      name: name,
-      paths: paths,
-      lineTarget: lineTarget,
-      isFallback: false,
-    );
-  }
-
-  final String name;
-  final List<String> paths;
-  final int lineTarget;
-  final bool isFallback;
-
-  Map<String, Object?> toJson() =>
-      isFallback ? {'fallback': true} : {'paths': paths};
 }
 
 void _validateDisjointScopeRoots(
@@ -400,6 +404,37 @@ void _validateDisjointScopeRoots(
   }
 }
 
+void _validateMigrationTargets(ArchitecturePolicy policy, String description) {
+  for (final entry in policy.migration.legacyFileTargets.entries) {
+    final matchingScopes = policy.scopes.values
+        .where(
+          (scope) =>
+              entry.key.startsWith('${scope.sourceRoot}/') &&
+              entry.key.endsWith('.dart'),
+        )
+        .toList();
+    if (matchingScopes.length != 1) {
+      throw ArchitectureFailure(
+        '$description migration target is outside one source scope: '
+        '${entry.key}',
+      );
+    }
+    final roleTarget = matchingScopes.single.roleFor(entry.key).fileLines;
+    if (entry.value >= roleTarget) {
+      throw ArchitectureFailure(
+        '$description migration target must be stricter than the current '
+        '$roleTarget line target: ${entry.key}=${entry.value}',
+      );
+    }
+  }
+}
+
+void _validateName(String value, String description) {
+  if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(value)) {
+    throw ArchitectureFailure('$description has an invalid name: $value');
+  }
+}
+
 bool _rootsOverlap(String first, String second) =>
     first == second ||
     first.startsWith('$second/') ||
@@ -407,3 +442,5 @@ bool _rootsOverlap(String first, String second) =>
 
 bool _sameSet<T>(Set<T> first, Set<T> second) =>
     first.length == second.length && first.containsAll(second);
+
+bool _isSha(String value) => RegExp(r'^[0-9a-f]{40}$').hasMatch(value);

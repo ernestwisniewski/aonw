@@ -74,7 +74,8 @@ portable coverage floors, a non-regressing historical ratchet, and 90%
 changed-line coverage; see the [test coverage policy](docs/test-coverage.md).
 
 Run `make architecture` for the repository-wide Dart census, role-specific
-file targets, AST type-declaration target, and exact legacy-debt ratchet; see
+file/type targets, callable length, nesting, cyclomatic and cognitive
+complexity, and the exact legacy-debt ratchet; see
 [the architecture-budget policy](docs/architecture-budgets.md).
 
 Run `make mutation` for deterministic mutation testing of the critical combat

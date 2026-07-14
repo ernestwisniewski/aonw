@@ -150,19 +150,23 @@ part of 'model.dart';
     );
   });
 
-  test('reserved profile prefixes survive deletion of their last source', () {
-    final fixture = _fixture('aonw-architecture-reserved-profile-');
+  test('reserved role prefixes survive deletion of their last source', () {
+    final fixture = _fixture('aonw-architecture-reserved-role-');
     Directory('${fixture.path}/lib').createSync(recursive: true);
     File(
       '${fixture.path}/lib/model.dart',
     ).writeAsStringSync('class Model {}\n');
     final policy = ArchitecturePolicy.parse(
       _policyJson(
-        fileLineTargets: const {'default': 500, 'reserved_ui': 350},
-        fileProfiles: const {
-          'default': {'fallback': true},
-          'reserved_ui': {
-            'paths': ['lib/deleted_ui/'],
+        roleAssignments: const {
+          'flame_rendering': {
+            'paths': ['lib/deleted_rendering/'],
+          },
+          'test': {
+            'paths': ['lib/test_support/'],
+          },
+          'tool': {
+            'paths': ['lib/tooling/'],
           },
         },
       ),
@@ -176,27 +180,79 @@ part of 'model.dart';
       ).handwrittenFiles('root'),
       ['lib/model.dart'],
     );
+    expect(
+      policy.scopes['root']!.roleFor('lib/deleted_rendering/scene.dart').name,
+      'flame_rendering',
+    );
   });
 }
 
 String _policyJson({
   List<String> buildRunnerScopes = const ['root'],
-  Map<String, int> fileLineTargets = const {'default': 500},
-  Map<String, Object?> fileProfiles = const {
-    'default': {'fallback': true},
+  Map<String, Object?> roleAssignments = const {
+    'flame_rendering': {
+      'paths': ['lib/flame/'],
+    },
+    'test': {
+      'paths': ['lib/test_support/'],
+    },
+    'tool': {
+      'paths': ['lib/tooling/'],
+    },
   },
 }) => canonicalJson({
-  'schema': 1,
+  'schema': 2,
   'enforcedSince': '0123456789abcdef0123456789abcdef01234567',
+  'migration': {
+    'fromSchema': 1,
+    'policySha256':
+        '0000000000000000000000000000000000000000000000000000000000000000',
+    'baselineSha256':
+        '1111111111111111111111111111111111111111111111111111111111111111',
+    'legacyFileTargets': <String, int>{},
+  },
   'generatedSuffixes': ['.freezed.dart', '.g.dart'],
   'buildRunnerScopes': buildRunnerScopes,
-  'fileLineTargets': fileLineTargets,
-  'declarationLineTarget': 350,
+  'roles': {
+    'flame_rendering': {
+      'fileLines': 500,
+      'declarationLines': 350,
+      'callableLines': 80,
+      'nesting': 4,
+      'cyclomaticComplexity': 12,
+      'cognitiveComplexity': 18,
+    },
+    'production': {
+      'fileLines': 500,
+      'declarationLines': 350,
+      'callableLines': 60,
+      'nesting': 3,
+      'cyclomaticComplexity': 10,
+      'cognitiveComplexity': 15,
+    },
+    'test': {
+      'fileLines': 500,
+      'declarationLines': 350,
+      'callableLines': 120,
+      'nesting': 4,
+      'cyclomaticComplexity': 15,
+      'cognitiveComplexity': 20,
+    },
+    'tool': {
+      'fileLines': 500,
+      'declarationLines': 350,
+      'callableLines': 100,
+      'nesting': 4,
+      'cyclomaticComplexity': 15,
+      'cognitiveComplexity': 20,
+    },
+  },
   'scopes': {
     'root': {
       'sourceRoot': 'lib',
       'generatedPrefixes': <String>[],
-      'fileProfiles': fileProfiles,
+      'defaultRole': 'production',
+      'roleAssignments': roleAssignments,
     },
   },
 });

@@ -1,6 +1,64 @@
 {
-  "schema": 1,
-  "enforcedSince": "77689f27ecb045c8c179c287b808534ad032bf45",
+  "schema": 2,
+  "enforcedSince": "601d2e9cfb523dd367443662a4f298bd065a77ef",
+  "migration": {
+    "fromSchema": 1,
+    "policySha256": "50dff92489debbc785a6d93b0fd2e576c5f2d4a27737961edc9d92a3f1292dcf",
+    "baselineSha256": "75d210a1c52e3da6b800adc3d096cd775087dc4a5f86ce2b89e72e9d855e87b1",
+    "legacyFileTargets": {
+      "lib/developer/assets_editor_frame_edit_panel.dart": 350,
+      "lib/developer/assets_editor_preview_widgets.dart": 350,
+      "lib/developer/assets_editor_screen.dart": 350,
+      "lib/editor/dialogs/editor_dialogs.dart": 350,
+      "lib/editor/engine/editor_grid.dart": 350,
+      "lib/editor/map_editor_screen.dart": 350,
+      "lib/editor/widgets/editor_toolbar_sections.dart": 350,
+      "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 350,
+      "lib/game/presentation/screens/game/game_screen.dart": 350,
+      "lib/game/presentation/screens/lobby/lobby_screen.dart": 350,
+      "lib/game/presentation/screens/new_game/new_game_screen.dart": 350,
+      "lib/game/presentation/widgets/activity_log/turn_timeline_popup.dart": 350,
+      "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 350,
+      "lib/game/presentation/widgets/bottom_toolbar/end_turn_button_content.dart": 350,
+      "lib/game/presentation/widgets/city/city_production_dialog.dart": 350,
+      "lib/game/presentation/widgets/city/city_production_dialog_view_model.dart": 350,
+      "lib/game/presentation/widgets/city/city_yield_breakdown_panel.dart": 350,
+      "lib/game/presentation/widgets/city/city_yield_breakdown_view_model.dart": 350,
+      "lib/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart": 350,
+      "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 350,
+      "lib/game/presentation/widgets/empire/empire_overview_statistics.dart": 350,
+      "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 350,
+      "lib/game/presentation/widgets/hud/combat/hud_combat_preview.dart": 350,
+      "lib/game/presentation/widgets/hud/game_hud.dart": 350,
+      "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 350,
+      "lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart": 350,
+      "lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart": 350,
+      "lib/game/presentation/widgets/hud/objective/game_objectives_overlay.dart": 350,
+      "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart": 350,
+      "lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart": 350,
+      "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 350,
+      "lib/game/presentation/widgets/hud/turn/turn_action_hint.dart": 350,
+      "lib/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart": 350,
+      "lib/game/presentation/widgets/multiplayer/multiplayer_status_sheet.dart": 350,
+      "lib/game/presentation/widgets/options/game_options_overlay.dart": 350,
+      "lib/game/presentation/widgets/resources/top_resource_pill.dart": 350,
+      "lib/game/presentation/widgets/screen/game_screen_state_views.dart": 350,
+      "lib/game/presentation/widgets/selection/selection_command_chip.dart": 350,
+      "lib/game/presentation/widgets/selection/view_models/city_selection_view_model_factory.dart": 350,
+      "lib/game/presentation/widgets/selection/view_models/selection_resource_value_card_factory.dart": 350,
+      "lib/game/presentation/widgets/selection_info/contents/buildings_detail_content.dart": 350,
+      "lib/game/presentation/widgets/selection_info/contents/resources_detail_content.dart": 350,
+      "lib/game/presentation/widgets/selection_info/contents/worker_action_selection_detail_content.dart": 350,
+      "lib/game/presentation/widgets/technology/technology_tree_dialog.dart": 350,
+      "lib/game/presentation/widgets/visual/game_insight_widgets.dart": 350,
+      "lib/map/widgets/dice_roll_test_overlay.dart": 350,
+      "lib/menu/main_menu_screen.dart": 350,
+      "lib/menu/manual_screen.dart": 350,
+      "lib/menu/menu_route_shell.dart": 350,
+      "lib/menu/options_screen.dart": 350,
+      "lib/shared/widgets/game_ui/game_ui_options_panel.dart": 350
+    }
+  },
   "generatedSuffixes": [
     ".freezed.dart",
     ".g.dart"
@@ -9,87 +67,85 @@
     "core_lib",
     "root_lib"
   ],
-  "fileLineTargets": {
-    "default": 500,
-    "flutter_frontend": 350,
-    "use_case": 180
+  "roles": {
+    "flame_rendering": {
+      "fileLines": 500,
+      "declarationLines": 350,
+      "callableLines": 80,
+      "nesting": 4,
+      "cyclomaticComplexity": 12,
+      "cognitiveComplexity": 18
+    },
+    "production": {
+      "fileLines": 500,
+      "declarationLines": 350,
+      "callableLines": 60,
+      "nesting": 3,
+      "cyclomaticComplexity": 10,
+      "cognitiveComplexity": 15
+    },
+    "test": {
+      "fileLines": 500,
+      "declarationLines": 350,
+      "callableLines": 120,
+      "nesting": 4,
+      "cyclomaticComplexity": 15,
+      "cognitiveComplexity": 20
+    },
+    "tool": {
+      "fileLines": 500,
+      "declarationLines": 350,
+      "callableLines": 100,
+      "nesting": 4,
+      "cyclomaticComplexity": 15,
+      "cognitiveComplexity": 20
+    }
   },
-  "declarationLineTarget": 350,
   "scopes": {
     "client_lib": {
       "sourceRoot": "packages/aonw_server_client/lib",
       "generatedPrefixes": [
         "packages/aonw_server_client/lib/src/protocol/"
       ],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "production",
+      "roleAssignments": {}
     },
     "client_test": {
       "sourceRoot": "packages/aonw_server_client/test",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "test",
+      "roleAssignments": {}
     },
     "core_lib": {
       "sourceRoot": "packages/aonw_core/lib",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "production",
+      "roleAssignments": {}
     },
     "core_test": {
       "sourceRoot": "packages/aonw_core/test",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "test",
+      "roleAssignments": {}
     },
     "core_tool": {
       "sourceRoot": "packages/aonw_core/tool",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "tool",
+      "roleAssignments": {}
     },
     "root_lib": {
       "sourceRoot": "lib",
       "generatedPrefixes": [
         "lib/l10n/generated/"
       ],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        },
-        "flutter_frontend": {
+      "defaultRole": "production",
+      "roleAssignments": {
+        "flame_rendering": {
           "paths": [
-            "lib/app/",
-            "lib/developer/",
-            "lib/editor/",
-            "lib/game/presentation/input/gamepad/",
-            "lib/game/presentation/providers/hud/",
-            "lib/game/presentation/screens/",
-            "lib/game/presentation/widgets/",
-            "lib/map/widgets/",
-            "lib/menu/",
-            "lib/shared/performance/",
-            "lib/shared/widgets/"
-          ]
-        },
-        "use_case": {
-          "paths": [
-            "lib/game/application/use_cases/"
+            "lib/editor/engine/",
+            "lib/game/presentation/engine/",
+            "lib/map/rendering/"
           ]
         }
       }
@@ -97,60 +153,42 @@
     "root_test": {
       "sourceRoot": "test",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "test",
+      "roleAssignments": {}
     },
     "root_tool": {
       "sourceRoot": "tool",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "tool",
+      "roleAssignments": {}
     },
     "server_bin": {
       "sourceRoot": "server/bin",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "production",
+      "roleAssignments": {}
     },
     "server_lib": {
       "sourceRoot": "server/lib",
       "generatedPrefixes": [
         "server/lib/src/generated/"
       ],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "production",
+      "roleAssignments": {}
     },
     "server_test": {
       "sourceRoot": "server/test",
       "generatedPrefixes": [
         "server/test/integration/test_tools/"
       ],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "test",
+      "roleAssignments": {}
     },
     "vendor_sign_in_with_apple": {
       "sourceRoot": "third_party/sign_in_with_apple/lib",
       "generatedPrefixes": [],
-      "fileProfiles": {
-        "default": {
-          "fallback": true
-        }
-      }
+      "defaultRole": "production",
+      "roleAssignments": {}
     }
   }
 }

@@ -28,47 +28,122 @@ void main() {
       'server_test': 'server/test',
       'vendor_sign_in_with_apple': 'third_party/sign_in_with_apple/lib',
     };
+    const expectedDefaultRoles = {
+      'client_lib': 'production',
+      'client_test': 'test',
+      'core_lib': 'production',
+      'core_test': 'test',
+      'core_tool': 'tool',
+      'root_lib': 'production',
+      'root_test': 'test',
+      'root_tool': 'tool',
+      'server_bin': 'production',
+      'server_lib': 'production',
+      'server_test': 'test',
+      'vendor_sign_in_with_apple': 'production',
+    };
+    const expectedRoles = {
+      'flame_rendering': {
+        'fileLines': 500,
+        'declarationLines': 350,
+        'callableLines': 80,
+        'nesting': 4,
+        'cyclomaticComplexity': 12,
+        'cognitiveComplexity': 18,
+      },
+      'production': {
+        'fileLines': 500,
+        'declarationLines': 350,
+        'callableLines': 60,
+        'nesting': 3,
+        'cyclomaticComplexity': 10,
+        'cognitiveComplexity': 15,
+      },
+      'test': {
+        'fileLines': 500,
+        'declarationLines': 350,
+        'callableLines': 120,
+        'nesting': 4,
+        'cyclomaticComplexity': 15,
+        'cognitiveComplexity': 20,
+      },
+      'tool': {
+        'fileLines': 500,
+        'declarationLines': 350,
+        'callableLines': 100,
+        'nesting': 4,
+        'cyclomaticComplexity': 15,
+        'cognitiveComplexity': 20,
+      },
+    };
 
+    expect(ArchitecturePolicy.schema, 2);
+    expect(policy.enforcedSince, '601d2e9cfb523dd367443662a4f298bd065a77ef');
+    expect(policy.migration.fromSchema, 1);
+    expect(
+      policy.migration.policySha256,
+      '50dff92489debbc785a6d93b0fd2e576c5f2d4a27737961edc9d92a3f1292dcf',
+    );
+    expect(
+      policy.migration.baselineSha256,
+      '75d210a1c52e3da6b800adc3d096cd775087dc4a5f86ce2b89e72e9d855e87b1',
+    );
+    expect(policy.migration.legacyFileTargets, hasLength(51));
+    expect(policy.migration.legacyFileTargets.values.toSet(), {350});
+    expect(
+      policy.migration.legacyFileTargets.keys,
+      containsAll([
+        'lib/developer/assets_editor_screen.dart',
+        'lib/editor/engine/editor_grid.dart',
+        'lib/game/presentation/widgets/hud/combat/hud_combat_preview.dart',
+        'lib/menu/menu_route_shell.dart',
+      ]),
+    );
     expect(policy.scopes.keys.toSet(), expectedRoots.keys.toSet());
-    expect(policy.fileLineTargets, {
-      'default': 500,
-      'flutter_frontend': 350,
-      'use_case': 180,
-    });
-    expect(policy.declarationLineTarget, 350);
+    expect({
+      for (final entry in policy.roles.entries) entry.key: entry.value.toJson(),
+    }, expectedRoles);
+    expect({
+      for (final entry in policy.scopes.entries)
+        entry.key: entry.value.defaultRole,
+    }, expectedDefaultRoles);
+    expect(
+      {
+        for (final entry in policy.scopes.entries)
+          if (entry.value.roleAssignments.isNotEmpty)
+            entry.key: entry.value.roleAssignments,
+      },
+      {
+        'root_lib': {
+          'flame_rendering': [
+            'lib/editor/engine/',
+            'lib/game/presentation/engine/',
+            'lib/map/rendering/',
+          ],
+        },
+      },
+    );
     expect(policy.buildRunnerScopes, ['core_lib', 'root_lib']);
     for (final entry in expectedRoots.entries) {
       final scope = policy.scopes[entry.key]!;
       expect(scope.sourceRoot, entry.value, reason: entry.key);
-      expect(scope.declarationLineTarget, 350, reason: entry.key);
-      expect(scope.fileProfiles['default']!.isFallback, isTrue);
-      expect(scope.fileProfiles['default']!.lineTarget, 500);
     }
 
     final root = policy.scopes['root_lib']!;
-    expect(root.fileProfiles.keys.toSet(), {
-      'default',
-      'flutter_frontend',
-      'use_case',
-    });
-    expect(root.fileProfiles['flutter_frontend']!.lineTarget, 350);
-    expect(root.fileProfiles['flutter_frontend']!.paths, [
-      'lib/app/',
-      'lib/developer/',
-      'lib/editor/',
-      'lib/game/presentation/input/gamepad/',
-      'lib/game/presentation/providers/hud/',
-      'lib/game/presentation/screens/',
-      'lib/game/presentation/widgets/',
-      'lib/map/widgets/',
-      'lib/menu/',
-      'lib/shared/performance/',
-      'lib/shared/widgets/',
-    ]);
-    expect(root.fileProfiles['use_case']!.lineTarget, 180);
-    expect(root.fileProfiles['use_case']!.paths, [
-      'lib/game/application/use_cases/',
-    ]);
+    for (final path in [
+      'lib/editor/engine/world_editor.dart',
+      'lib/game/presentation/engine/game_world.dart',
+      'lib/map/rendering/map_renderer.dart',
+    ]) {
+      expect(root.roleFor(path).name, 'flame_rendering', reason: path);
+    }
+    for (final path in [
+      'lib/editor/editor_screen.dart',
+      'lib/game/application/use_cases/start_game.dart',
+      'lib/map/widgets/map_widget.dart',
+    ]) {
+      expect(root.roleFor(path).name, 'production', reason: path);
+    }
 
     expect(policy.scopes['client_lib']!.generatedPrefixes, [
       'packages/aonw_server_client/lib/src/protocol/',
@@ -212,12 +287,26 @@ void main() {
     'architecture budget contract is documented at contributor surfaces',
     () {
       final policy = File('docs/architecture-budgets.md').readAsStringSync();
+      final normalizedPolicy = policy.toLowerCase();
       expect(policy, contains('make architecture'));
       expect(policy, contains('make architecture-snapshot'));
-      expect(policy, contains('180 lines'));
-      expect(policy, contains('350 lines'));
-      expect(policy, contains('500 lines'));
-      expect(policy, contains('There are no inline'));
+      expect(normalizedPolicy, contains('per-file overrides'));
+      expect(normalizedPolicy, contains('inline suppressions'));
+      for (final term in [
+        'schema 2',
+        'production',
+        'test',
+        'tool',
+        'flame',
+        'rendering',
+        'callable',
+        'nesting',
+        'cyclomatic',
+        'cognitive',
+      ]) {
+        expect(normalizedPolicy, contains(term), reason: term);
+      }
+      expect(normalizedPolicy, isNot(contains('remain future policy work')));
 
       expect(
         File('README.md').readAsStringSync(),

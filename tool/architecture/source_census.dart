@@ -72,7 +72,7 @@ final class SourceCensus {
       throw ArchitectureFailure('$scopeName has no handwritten Dart sources.');
     }
     for (final path in handwritten) {
-      scope.profileFor(path);
+      scope.roleFor(path);
     }
     return handwritten;
   }

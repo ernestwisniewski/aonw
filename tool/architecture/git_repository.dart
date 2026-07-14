@@ -70,6 +70,51 @@ final class GitRepository {
     }
   }
 
+  String resolveCommit(String ref) {
+    final result = run(['rev-parse', '--verify', '$ref^{commit}']);
+    final sha = result.stdout.trim();
+    if (!RegExp(r'^[0-9a-f]{40}$').hasMatch(sha)) {
+      throw ArchitectureFailure('git rev-parse returned an invalid SHA: $sha');
+    }
+    return sha;
+  }
+
+  Map<String, String> renamesFrom(String ref) {
+    final fields = _nulPaths([
+      'diff',
+      '--no-ext-diff',
+      '--no-textconv',
+      '--find-renames=1%',
+      '--diff-filter=R',
+      '--name-status',
+      '-z',
+      ref,
+      '--',
+    ]);
+    if (fields.length % 3 != 0) {
+      throw ArchitectureFailure(
+        'git diff returned malformed rename records for $ref.',
+      );
+    }
+    final renames = <String, String>{};
+    for (var index = 0; index < fields.length; index += 3) {
+      final status = fields[index];
+      if (!RegExp(r'^R[0-9]{1,3}$').hasMatch(status)) {
+        throw ArchitectureFailure(
+          'git diff returned an invalid rename status: $status',
+        );
+      }
+      final source = normalizeGitPath(fields[index + 1]);
+      final destination = normalizeGitPath(fields[index + 2]);
+      if (renames.putIfAbsent(source, () => destination) != destination) {
+        throw ArchitectureFailure(
+          'git diff returned multiple rename destinations for $source.',
+        );
+      }
+    }
+    return Map.unmodifiable(renames);
+  }
+
   bool isAncestor(String ancestor, String descendant) {
     final result = _processText([
       'merge-base',

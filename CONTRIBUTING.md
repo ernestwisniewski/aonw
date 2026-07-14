@@ -121,8 +121,9 @@ to make the gate pass. See
 [Test Coverage](docs/test-coverage.md) before updating the baseline or policy.
 
 Run `make architecture` for the repository-wide Dart census and AST size
-budget. New files must meet their role-specific target; existing above-target
-files and type declarations may only shrink. Read
+and complexity budget. New files, types, and callables must meet their
+role-specific targets; existing debt in file/type size, callable length,
+nesting, cyclomatic complexity, and cognitive complexity may only shrink. Read
 [Architecture Budgets](docs/architecture-budgets.md) before changing the
 policy or baseline.
 

@@ -20,7 +20,11 @@ void main(List<String> arguments) {
         final result = gate.check(options.ratchetRef!);
         stdout.writeln(
           'Architecture budgets pass: ${result.fileDebt} legacy files, '
-          '${result.declarationDebt} legacy declarations.',
+          '${result.declarationDebt} legacy declarations, '
+          '${result.callableLineDebt} long callables, '
+          '${result.nestingDebt} deeply nested callables, '
+          '${result.cyclomaticDebt} cyclomatic-complexity debts, and '
+          '${result.cognitiveDebt} cognitive-complexity debts.',
         );
     }
   } on ArchitectureFailure catch (error) {

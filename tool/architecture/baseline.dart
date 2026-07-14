@@ -11,36 +11,48 @@ final class ArchitectureBaseline {
   factory ArchitectureBaseline.empty(ArchitecturePolicy policy) =>
       ArchitectureBaseline(
         scopes: {
-          for (final name in policy.scopes.keys)
-            name: const ScopeBaseline(files: {}, declarations: {}),
+          for (final name in policy.scopes.keys) name: ScopeBaseline.empty,
         },
       );
 
-  factory ArchitectureBaseline.load(String path, ArchitecturePolicy policy) {
+  factory ArchitectureBaseline.load(
+    String path,
+    ArchitecturePolicy policy, {
+    Map<String, int>? legacyFileTargets,
+  }) {
     final file = File(path);
     if (!file.existsSync()) {
       throw ArchitectureFailure('Architecture baseline does not exist: $path');
     }
-    return ArchitectureBaseline.parse(file.readAsStringSync(), policy, path);
+    return ArchitectureBaseline.parse(
+      file.readAsStringSync(),
+      policy,
+      path,
+      legacyFileTargets: legacyFileTargets,
+    );
   }
 
   factory ArchitectureBaseline.parse(
     String contents,
     ArchitecturePolicy policy,
-    String description,
-  ) {
+    String description, {
+    Map<String, int>? legacyFileTargets,
+  }) {
     final root = decodeObject(contents, description);
     expectKeys(root, const {'schema', 'scopes'}, description);
-    if (readInt(root, 'schema', description) != 1) {
+    if (readInt(root, 'schema', description) != ArchitecturePolicy.schema) {
       throw ArchitectureFailure('$description has an unsupported schema.');
     }
     final rawScopes = readObject(root, 'scopes', description);
     expectKeys(rawScopes, policy.scopes.keys.toSet(), '$description.scopes');
     final scopes = <String, ScopeBaseline>{};
+    final effectiveLegacyTargets =
+        legacyFileTargets ?? policy.migration.legacyFileTargets;
     for (final entry in rawScopes.entries) {
       scopes[entry.key] = ScopeBaseline.parse(
         entry.value,
         policy.scopes[entry.key]!,
+        effectiveLegacyTargets,
         '$description.scopes.${entry.key}',
       );
     }
@@ -52,7 +64,7 @@ final class ArchitectureBaseline {
   final Map<String, ScopeBaseline> scopes;
 
   Map<String, Object?> toJson() => {
-    'schema': 1,
+    'schema': ArchitecturePolicy.schema,
     'scopes': {
       for (final entry in scopes.entries) entry.key: entry.value.toJson(),
     },
@@ -80,88 +92,159 @@ final class ArchitectureBaseline {
     return failures;
   }
 
-  int get fileDebtCount =>
-      scopes.values.fold(0, (sum, scope) => sum + scope.files.length);
+  int get fileDebtCount => _uniqueFileDebt.length;
+  int get declarationDebtCount => _sum((scope) => scope.declarations.length);
+  int get callableLineDebtCount => _sum((scope) => scope.callableLines.length);
+  int get nestingDebtCount => _sum((scope) => scope.nesting.length);
+  int get cyclomaticDebtCount =>
+      _sum((scope) => scope.cyclomaticComplexity.length);
+  int get cognitiveDebtCount =>
+      _sum((scope) => scope.cognitiveComplexity.length);
 
-  int get declarationDebtCount =>
-      scopes.values.fold(0, (sum, scope) => sum + scope.declarations.length);
+  int _sum(int Function(ScopeBaseline scope) select) =>
+      scopes.values.fold(0, (sum, scope) => sum + select(scope));
+
+  Set<String> get _uniqueFileDebt => {
+    for (final scope in scopes.values) ...scope.files.keys,
+    for (final scope in scopes.values) ...scope.legacyFiles.keys,
+  };
 }
 
 final class ScopeBaseline {
-  const ScopeBaseline({required this.files, required this.declarations});
+  const ScopeBaseline({
+    required this.files,
+    required this.legacyFiles,
+    required this.declarations,
+    required this.callableLines,
+    required this.nesting,
+    required this.cyclomaticComplexity,
+    required this.cognitiveComplexity,
+  });
+
+  static const empty = ScopeBaseline(
+    files: {},
+    legacyFiles: {},
+    declarations: {},
+    callableLines: {},
+    nesting: {},
+    cyclomaticComplexity: {},
+    cognitiveComplexity: {},
+  );
 
   factory ScopeBaseline.parse(
     Object? value,
     ScopePolicy policy,
+    Map<String, int> legacyFileTargets,
     String description,
   ) {
     final object = asObject(value, description);
-    expectKeys(object, const {'files', 'declarations'}, description);
-    final files = _readMetricMap(
-      object,
+    expectKeys(object, const {
       'files',
-      description,
-      validate: (path, lines) {
-        validateRepositoryPath(path, '$description.files key');
-        if (!path.startsWith('${policy.sourceRoot}/') ||
-            !path.endsWith('.dart')) {
-          throw ArchitectureFailure(
-            '$description has an invalid file debt path: $path',
-          );
-        }
-        final target = policy.profileFor(path).lineTarget;
-        if (lines <= target) {
-          throw ArchitectureFailure(
-            '$description file debt is not above its $target line target: '
-            '$path=$lines',
-          );
-        }
-      },
-    );
-    final declarations = _readMetricMap(
-      object,
+      'legacyFiles',
       'declarations',
-      description,
-      validate: (key, lines) {
-        final separator = key.indexOf('::');
-        if (separator <= 0 || separator == key.length - 2) {
-          throw ArchitectureFailure(
-            '$description has an invalid declaration debt key: $key',
-          );
-        }
-        final path = key.substring(0, separator);
-        validateRepositoryPath(path, '$description.declarations path');
-        if (!path.startsWith('${policy.sourceRoot}/') ||
-            !path.endsWith('.dart')) {
-          throw ArchitectureFailure(
-            '$description declaration is outside ${policy.sourceRoot}: $key',
-          );
-        }
-        if (lines <= policy.declarationLineTarget) {
-          throw ArchitectureFailure(
-            '$description declaration debt is not above its '
-            '${policy.declarationLineTarget} line target: $key=$lines',
-          );
-        }
-      },
+      'callableLines',
+      'nesting',
+      'cyclomaticComplexity',
+      'cognitiveComplexity',
+    }, description);
+    return ScopeBaseline(
+      files: _readMetricMap(
+        object,
+        'files',
+        description,
+        policy,
+        isFileKey: true,
+        target: (role) => role.fileLines,
+      ),
+      legacyFiles: _readLegacyFileMap(
+        object,
+        description,
+        policy,
+        legacyFileTargets,
+      ),
+      declarations: _readMetricMap(
+        object,
+        'declarations',
+        description,
+        policy,
+        target: (role) => role.declarationLines,
+      ),
+      callableLines: _readMetricMap(
+        object,
+        'callableLines',
+        description,
+        policy,
+        target: (role) => role.callableLines,
+      ),
+      nesting: _readMetricMap(
+        object,
+        'nesting',
+        description,
+        policy,
+        target: (role) => role.nesting,
+      ),
+      cyclomaticComplexity: _readMetricMap(
+        object,
+        'cyclomaticComplexity',
+        description,
+        policy,
+        target: (role) => role.cyclomaticComplexity,
+      ),
+      cognitiveComplexity: _readMetricMap(
+        object,
+        'cognitiveComplexity',
+        description,
+        policy,
+        target: (role) => role.cognitiveComplexity,
+      ),
     );
-    return ScopeBaseline(files: files, declarations: declarations);
   }
 
   final Map<String, int> files;
+  final Map<String, int> legacyFiles;
   final Map<String, int> declarations;
+  final Map<String, int> callableLines;
+  final Map<String, int> nesting;
+  final Map<String, int> cyclomaticComplexity;
+  final Map<String, int> cognitiveComplexity;
 
   Map<String, Object?> toJson() => {
     'files': sortedMap(files),
+    'legacyFiles': sortedMap(legacyFiles),
     'declarations': sortedMap(declarations),
+    'callableLines': sortedMap(callableLines),
+    'nesting': sortedMap(nesting),
+    'cyclomaticComplexity': sortedMap(cyclomaticComplexity),
+    'cognitiveComplexity': sortedMap(cognitiveComplexity),
   };
 
   List<String> exactDifferences(ScopeBaseline expected, String scopeName) => [
     ..._exactMapDifferences(files, expected.files, '$scopeName file'),
     ..._exactMapDifferences(
+      legacyFiles,
+      expected.legacyFiles,
+      '$scopeName migrated file',
+    ),
+    ..._exactMapDifferences(
       declarations,
       expected.declarations,
       '$scopeName declaration',
+    ),
+    ..._exactMapDifferences(
+      callableLines,
+      expected.callableLines,
+      '$scopeName callable line',
+    ),
+    ..._exactMapDifferences(nesting, expected.nesting, '$scopeName nesting'),
+    ..._exactMapDifferences(
+      cyclomaticComplexity,
+      expected.cyclomaticComplexity,
+      '$scopeName cyclomatic complexity',
+    ),
+    ..._exactMapDifferences(
+      cognitiveComplexity,
+      expected.cognitiveComplexity,
+      '$scopeName cognitive complexity',
     ),
   ];
 
@@ -169,18 +252,86 @@ final class ScopeBaseline {
       [
         ..._ratchetMapDifferences(files, historical.files, '$scopeName file'),
         ..._ratchetMapDifferences(
+          legacyFiles,
+          historical.legacyFiles,
+          '$scopeName migrated file',
+        ),
+        ..._ratchetMapDifferences(
           declarations,
           historical.declarations,
           '$scopeName declaration',
         ),
+        ..._ratchetMapDifferences(
+          callableLines,
+          historical.callableLines,
+          '$scopeName callable line',
+        ),
+        ..._ratchetMapDifferences(
+          nesting,
+          historical.nesting,
+          '$scopeName nesting',
+        ),
+        ..._ratchetMapDifferences(
+          cyclomaticComplexity,
+          historical.cyclomaticComplexity,
+          '$scopeName cyclomatic complexity',
+        ),
+        ..._ratchetMapDifferences(
+          cognitiveComplexity,
+          historical.cognitiveComplexity,
+          '$scopeName cognitive complexity',
+        ),
       ];
+}
+
+Map<String, int> _readLegacyFileMap(
+  Map<String, Object?> object,
+  String description,
+  ScopePolicy policy,
+  Map<String, int> legacyFileTargets,
+) {
+  final raw = readObject(object, 'legacyFiles', description);
+  final result = <String, int>{};
+  for (final entry in raw.entries) {
+    validateRepositoryPath(entry.key, '$description.legacyFiles key');
+    if (!entry.key.startsWith('${policy.sourceRoot}/') ||
+        !entry.key.endsWith('.dart')) {
+      throw ArchitectureFailure(
+        '$description.legacyFiles entry is outside ${policy.sourceRoot}: '
+        '${entry.key}',
+      );
+    }
+    final value = entry.value;
+    if (value is! int || value < 1) {
+      throw ArchitectureFailure(
+        '$description.legacyFiles.${entry.key} must be a positive integer.',
+      );
+    }
+    final target = legacyFileTargets[entry.key];
+    if (target == null) {
+      throw ArchitectureFailure(
+        '$description.legacyFiles has no immutable migration target: '
+        '${entry.key}',
+      );
+    }
+    if (value <= target) {
+      throw ArchitectureFailure(
+        '$description.legacyFiles debt is not above its $target target: '
+        '${entry.key}=$value',
+      );
+    }
+    result[entry.key] = value;
+  }
+  return Map.unmodifiable(sortedMap(result));
 }
 
 Map<String, int> _readMetricMap(
   Map<String, Object?> object,
   String key,
-  String description, {
-  required void Function(String key, int lines) validate,
+  String description,
+  ScopePolicy policy, {
+  bool isFileKey = false,
+  required int Function(ArchitectureRole role) target,
 }) {
   final raw = readObject(object, key, description);
   final result = <String, int>{};
@@ -190,11 +341,36 @@ Map<String, int> _readMetricMap(
         '$description.$key.${entry.key} must be a positive integer.',
       );
     }
-    final lines = entry.value! as int;
-    validate(entry.key, lines);
-    result[entry.key] = lines;
+    final path = isFileKey
+        ? entry.key
+        : _entityPath(entry.key, description, key);
+    validateRepositoryPath(path, '$description.$key path');
+    if (!path.startsWith('${policy.sourceRoot}/') || !path.endsWith('.dart')) {
+      throw ArchitectureFailure(
+        '$description.$key entry is outside ${policy.sourceRoot}: ${entry.key}',
+      );
+    }
+    final value = entry.value! as int;
+    final limit = target(policy.roleFor(path));
+    if (value <= limit) {
+      throw ArchitectureFailure(
+        '$description.$key debt is not above its $limit target: '
+        '${entry.key}=$value',
+      );
+    }
+    result[entry.key] = value;
   }
   return Map.unmodifiable(sortedMap(result));
+}
+
+String _entityPath(String key, String description, String metric) {
+  final separator = key.indexOf('::');
+  if (separator <= 0 || separator == key.length - 2 || key.contains('\n')) {
+    throw ArchitectureFailure(
+      '$description has an invalid $metric debt key: $key',
+    );
+  }
+  return key.substring(0, separator);
 }
 
 List<String> _exactMapDifferences(
@@ -219,6 +395,12 @@ List<String> _exactMapDifferences(
   failures.sort();
   return failures;
 }
+
+List<String> ratchetMetricDifferences(
+  Map<String, int> current,
+  Map<String, int> historical,
+  String label,
+) => _ratchetMapDifferences(current, historical, label);
 
 List<String> _ratchetMapDifferences(
   Map<String, int> current,
