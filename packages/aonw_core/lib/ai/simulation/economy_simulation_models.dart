@@ -1,5 +1,6 @@
 import 'package:aonw_core/ai/ai_difficulty.dart';
 import 'package:aonw_core/ai/ai_player.dart';
+import 'package:aonw_core/ai/ai_strategy.dart';
 import 'package:aonw_core/ai/ai_strategy_id.dart';
 import 'package:aonw_core/ai/mcts/mcts_config.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategy.dart';
@@ -39,6 +40,7 @@ class EconomySimulationConfig {
     this.telemetryTargets = BalanceTelemetryTuningTargets.standard,
     this.mctsConfig,
     this.mctsProfileMode = EconomySimulationMctsProfileMode.simulation,
+    this.strategyOverride,
     this.mapData,
   });
 
@@ -61,6 +63,7 @@ class EconomySimulationConfig {
     MctsConfig? mctsConfig,
     EconomySimulationMctsProfileMode mctsProfileMode =
         EconomySimulationMctsProfileMode.simulation,
+    AiStrategy? strategyOverride,
     MapData? mapData,
   }) {
     final matchRules = MatchRules.forGameLength(gameLength);
@@ -75,6 +78,7 @@ class EconomySimulationConfig {
       ),
       mctsConfig: mctsConfig,
       mctsProfileMode: mctsProfileMode,
+      strategyOverride: strategyOverride,
       mapData: mapData,
     );
   }
@@ -87,6 +91,7 @@ class EconomySimulationConfig {
   final BalanceTelemetryTuningTargets telemetryTargets;
   final MctsConfig? mctsConfig;
   final EconomySimulationMctsProfileMode mctsProfileMode;
+  final AiStrategy? strategyOverride;
   final MapData? mapData;
 }
 

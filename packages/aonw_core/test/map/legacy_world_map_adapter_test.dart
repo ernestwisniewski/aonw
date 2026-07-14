@@ -130,6 +130,42 @@ void main() {
       ]);
     });
 
+    test('projects MapDefinition to legacy MapData without aliases', () {
+      final definition = MapDefinition(
+        cols: 2,
+        rows: 1,
+        mapName: 'definition',
+        defaultZoom: 1.25,
+        tiles: [
+          MapTileDefinition(
+            col: 1,
+            row: 0,
+            terrains: const [TerrainType.plains],
+            resources: const [ResourceType.wheat],
+            height: 2,
+          ),
+        ],
+      );
+
+      final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(definition);
+
+      expect(mapData.cols, 2);
+      expect(mapData.rows, 1);
+      expect(mapData.mapName, 'definition');
+      expect(mapData.defaultZoom, 1.25);
+      expect(mapData.objectives, isEmpty);
+      expect(mapData.tiles.single.terrains, [TerrainType.plains]);
+      expect(mapData.tiles.single.resources, [ResourceType.wheat]);
+
+      mapData.tiles.single.terrains.add(TerrainType.river);
+      mapData.tiles.single.resources.clear();
+      mapData.tiles.clear();
+
+      expect(definition.tiles, hasLength(1));
+      expect(definition.tiles.single.terrains, [TerrainType.plains]);
+      expect(definition.tiles.single.resources, [ResourceType.wheat]);
+    });
+
     test('makes the legacy codec enforce canonical invariants', () {
       final invalidObjectiveJson = jsonEncode({
         'cols': 1,

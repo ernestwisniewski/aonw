@@ -4,6 +4,24 @@ import 'package:test/test.dart';
 
 void main() {
   group('EconomySimulation', () {
+    test('dispatches merchant commands from an overridden strategy', () {
+      final result = EconomySimulation.run(
+        config: const EconomySimulationConfig(
+          turns: 1,
+          strategyOverride: _FixedPlanStrategy([
+            AssignMerchantTradeRouteCommand('missing_merchant', 'missing_city'),
+            MoveMerchantToCityCommand('missing_merchant', 'missing_city'),
+          ]),
+        ),
+      );
+
+      expect(result.appliedCommands, isEmpty);
+      expect(
+        result.rejectedCommandRecords.map((record) => record.reason),
+        orderedEquals(['unit_not_found', 'unit_not_found']),
+      );
+    });
+
     test(
       'keeps unit count bounded and moves production into infrastructure',
       () {
@@ -416,6 +434,16 @@ const _testMctsConfig = MctsConfig(
   maxPlanningDepth: 3,
   candidateLimit: 6,
 );
+
+final class _FixedPlanStrategy implements AiStrategy {
+  const _FixedPlanStrategy(this.commands);
+
+  final List<GameCommand> commands;
+
+  @override
+  AiTurnPlan plan(GameView view, AiContext context) =>
+      AiTurnPlan(commands: commands);
+}
 
 String _commandSummary(GameCommand command) {
   return switch (command) {

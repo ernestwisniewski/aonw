@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentWorkerCommandResult {
   const PersistentWorkerCommandResult({
@@ -123,7 +123,7 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     final legality = WorkerAssignmentRules.evaluate(
       unit: worker,
       cities: state.cities,
@@ -198,7 +198,7 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     final legality = WorkerImprovementRules.evaluate(
       unit: worker,
       improvementType: improvementType,
@@ -266,25 +266,6 @@ class PersistentWorkerCommandResolver {
       return runtimeState.copyWith(pendingAction: null);
     }
     return runtimeState;
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 
   static int? _unitIndexById(List<GameUnit> units, String unitId) {

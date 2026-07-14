@@ -41,25 +41,6 @@ abstract final class _EconomySimulationSetup {
     );
   }
 
-  static MapData mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
-  }
-
   static MapDefinition mapDefinitionFrom(MapData mapData) {
     return MapDefinition(
       cols: mapData.cols,

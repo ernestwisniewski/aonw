@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentUnitDetachmentResult {
   const PersistentUnitDetachmentResult({
@@ -44,7 +45,7 @@ class PersistentUnitDetachmentResolver {
       return _reject(state, 'troop_not_available');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     if (mapData.tileAt(source.col, source.row) == null) {
       return _reject(state, 'detachment_source_out_of_bounds');
     }
@@ -137,25 +138,6 @@ class PersistentUnitDetachmentResolver {
       index++;
     }
     return '${prefix}_$index';
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 
   static int? _unitIndexById(List<GameUnit> units, String unitId) {

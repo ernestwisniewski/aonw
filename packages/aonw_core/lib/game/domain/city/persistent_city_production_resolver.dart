@@ -20,7 +20,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentCityProductionResult {
   const PersistentCityProductionResult({
@@ -65,7 +65,7 @@ class PersistentCityProductionResolver {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapData: _mapDataFromDefinition(mapDefinition),
+      mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -125,7 +125,7 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_not_available');
     }
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
@@ -227,7 +227,7 @@ class PersistentCityProductionResolver {
     final availability = WonderAvailabilityPolicy.availabilityFor(
       city: city,
       cities: state.cities,
-      mapData: _mapDataFromDefinition(mapDefinition),
+      mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
       research: state.research,
       registry: state.wonderRegistry,
       ruleset: wonderRuleset,
@@ -316,7 +316,7 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,
@@ -507,25 +507,6 @@ class PersistentCityProductionResolver {
       productionOverflow: activeInvestment == null
           ? 0
           : city.productionOverflow,
-    );
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
     );
   }
 

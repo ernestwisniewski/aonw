@@ -9,8 +9,8 @@
             "found": 193
           },
           "lines": {
-            "hit": 12113,
-            "found": 13224
+            "hit": 12135,
+            "found": 13212
           }
         },
         "domain": {
@@ -19,8 +19,8 @@
             "found": 303
           },
           "lines": {
-            "hit": 10031,
-            "found": 12485
+            "hit": 9960,
+            "found": 12361
           }
         },
         "map": {
@@ -29,8 +29,8 @@
             "found": 11
           },
           "lines": {
-            "hit": 166,
-            "found": 214
+            "hit": 180,
+            "found": 228
           }
         },
         "protocol": {

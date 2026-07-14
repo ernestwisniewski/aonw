@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentCityFoundingResult {
   const PersistentCityFoundingResult({
@@ -47,7 +48,7 @@ class PersistentCityFoundingResolver {
       return _reject(state, 'city_founder_busy');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     final centerTile = mapData.tileAt(founder.col, founder.row);
     final startFailure = CityFoundingRules.startFailure(
       unit: founder,
@@ -153,25 +154,6 @@ class PersistentCityFoundingResolver {
     final clearDraft = runtimeState.cityFoundingDraft?.unitId == founderId;
     if (!clearDraft) return runtimeState;
     return runtimeState.copyWith(cityFoundingDraft: null);
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 
   static int? _unitIndexById(List<GameUnit> units, String unitId) {

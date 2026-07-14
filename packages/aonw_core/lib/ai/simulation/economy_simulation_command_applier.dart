@@ -80,7 +80,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: _EconomySimulationSetup.mapDataFromDefinition(mapDefinition),
+          mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -92,7 +92,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: _EconomySimulationSetup.mapDataFromDefinition(mapDefinition),
+          mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
         );
         return _ApplyCommandResult(
           accepted: result.accepted,

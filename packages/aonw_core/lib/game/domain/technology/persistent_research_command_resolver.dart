@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/technology/research_overflow_rules.dart';
 import 'package:aonw_core/game/domain/technology/technology_availability_service.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentResearchCommandResult {
   const PersistentResearchCommandResult({
@@ -54,7 +54,7 @@ class PersistentResearchCommandResolver {
       fieldImprovements: state.fieldImprovements,
       mapData: mapDefinition == null
           ? null
-          : _mapDataFromDefinition(mapDefinition),
+          : LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
       ruleset: ruleset,
       paceBalance: paceBalance,
     );
@@ -96,24 +96,5 @@ class PersistentResearchCommandResolver {
       return runtimeState;
     }
     return runtimeState.copyWith(pendingAction: null);
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 }

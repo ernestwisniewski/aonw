@@ -34,6 +34,21 @@ abstract final class LegacyWorldMapAdapter {
     );
   }
 
+  /// Projects the spatial subset represented by [MapDefinition] to [MapData].
+  ///
+  /// Keep this direct rather than routing high-frequency legacy simulation
+  /// paths through [WorldMap]. [MapDefinition] has no objectives, so the
+  /// returned [MapData] intentionally has none.
+  static MapData mapDataFromDefinition(MapDefinition definition) {
+    return MapData(
+      cols: definition.cols,
+      rows: definition.rows,
+      tiles: definition.tiles.map(_tileDataFromDefinition).toList(),
+      mapName: definition.mapName,
+      defaultZoom: definition.defaultZoom,
+    );
+  }
+
   static MapData toMapData(WorldMap worldMap) {
     return MapData(
       cols: worldMap.cols,
@@ -67,6 +82,16 @@ abstract final class LegacyWorldMapAdapter {
     return TileData(
       col: tile.coordinate.col,
       row: tile.coordinate.row,
+      terrains: List.of(tile.terrains),
+      resources: List.of(tile.resources),
+      height: tile.height,
+    );
+  }
+
+  static TileData _tileDataFromDefinition(MapTileDefinition tile) {
+    return TileData(
+      col: tile.col,
+      row: tile.row,
       terrains: List.of(tile.terrains),
       resources: List.of(tile.resources),
       height: tile.height,

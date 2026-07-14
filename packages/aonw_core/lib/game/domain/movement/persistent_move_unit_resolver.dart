@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentMoveUnitResult {
   const PersistentMoveUnitResult({
@@ -52,7 +53,7 @@ class PersistentMoveUnitResolver {
       return _reject(state, 'unit_uses_trade_routes');
     }
 
-    final mapData = _mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _reject(state, 'unit_out_of_bounds');
     }
@@ -202,25 +203,6 @@ class PersistentMoveUnitResolver {
       accepted: false,
       state: state,
       reason: reason,
-    );
-  }
-
-  static MapData _mapDataFromDefinition(MapDefinition mapDefinition) {
-    return MapData(
-      cols: mapDefinition.cols,
-      rows: mapDefinition.rows,
-      mapName: mapDefinition.mapName,
-      defaultZoom: mapDefinition.defaultZoom,
-      tiles: [
-        for (final tile in mapDefinition.tiles)
-          TileData(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
     );
   }
 

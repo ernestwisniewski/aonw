@@ -8,6 +8,9 @@ abstract final class _EconomySimulationStrategySelector {
     required PersistentGameState state,
     required List<Player> players,
   }) {
+    if (config.strategyOverride case final strategy?) {
+      return _StrategyChoice(strategy: strategy);
+    }
     return switch (player.strategyId) {
       AiStrategyId.random => const _StrategyChoice(strategy: RandomStrategy()),
       AiStrategyId.basic ||
