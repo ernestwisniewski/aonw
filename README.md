@@ -147,12 +147,16 @@ dart run bin/main.dart \
   --apply-migrations
 ```
 
-Serverpod integration smoke tests require PostgreSQL:
+Run the hermetic PostgreSQL gate, including every Serverpod integration smoke
+and the public critical E2E journey, with:
 
 ```sh
 tool/run_postgres_smoke.sh
-make server-integration-test
 ```
+
+Focused Serverpod targets require an already provisioned `aonw_test` database;
+the local persistence journey does not require PostgreSQL and runs with
+`make local-game-e2e-test`.
 
 ## Documentation
 
@@ -169,6 +173,8 @@ Recommended entry points:
   Serverpod protocol surfaces, multiplayer sessions, or realtime streams.
 - [docs/test-coverage.md](docs/test-coverage.md) for measured scopes, baseline
   updates, exclusions, and changed-line coverage.
+- [docs/critical-e2e.md](docs/critical-e2e.md) for the local save/reload and
+  public Serverpod auth/match/command/reconnect release journeys.
 - [docs/architecture-budgets.md](docs/architecture-budgets.md) for the complete
   Dart-source census, role-specific targets, and exact legacy-debt ratchet.
 - [docs/mutation-testing.md](docs/mutation-testing.md) for critical mutation

@@ -162,12 +162,12 @@
         },
         "game_application": {
           "files": {
-            "hit": 45,
-            "found": 51
+            "hit": 46,
+            "found": 52
           },
           "lines": {
-            "hit": 1793,
-            "found": 2132
+            "hit": 1811,
+            "found": 2150
           }
         },
         "game_domain": {
@@ -186,7 +186,7 @@
             "found": 21
           },
           "lines": {
-            "hit": 535,
+            "hit": 537,
             "found": 579
           }
         },
@@ -206,8 +206,8 @@
             "found": 56
           },
           "lines": {
-            "hit": 2885,
-            "found": 4489
+            "hit": 2919,
+            "found": 4483
           }
         },
         "game_presentation_support": {

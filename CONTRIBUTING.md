@@ -74,6 +74,24 @@ Integration tests that require PostgreSQL are intentionally separate:
 make server-integration-test
 ```
 
+Changes to local game creation or persistence, multiplayer authentication,
+match lifecycle, command dispatch, or reconnect behavior must also run the
+real-boundary journeys:
+
+```sh
+make critical-e2e-test
+```
+
+The live journey requires local PostgreSQL. The release-safe wrapper starts
+and resets the dedicated test database before running both Serverpod layers:
+
+```sh
+tool/run_postgres_smoke.sh
+```
+
+See [Critical End-to-End Journeys](docs/critical-e2e.md) for the covered
+contracts, isolated ports, and failure ownership.
+
 ### Test Coverage
 
 Run the complete line-coverage gate with:

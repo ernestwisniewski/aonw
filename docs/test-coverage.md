@@ -17,7 +17,15 @@ The gate measures three independent source scopes and their configured layers:
 `packages/aonw_server_client/` is generated code. Its smoke test remains part
 of the quality gate, but the package has no percentage target. PostgreSQL-backed
 server integration tests are also deliberately separate; run
-`make server-integration-test` when a change touches their surface.
+`make server-integration-test` when a change touches their surface. Stateful
+local persistence and public multiplayer boundaries additionally use the
+[Critical End-to-End Journeys](critical-e2e.md).
+
+Server coverage uses Dart's canonical `*_test.dart` discovery. This keeps
+process entry points and PostgreSQL `*_smoke.dart` support code out of the
+unit-test compilation graph; passing an explicit positional list here would
+manufacture unexecuted LCOV records and silently change the measured source
+census.
 
 ## Local Commands
 

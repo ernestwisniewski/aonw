@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/use_cases/create_local_game_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
@@ -95,10 +95,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       name: widget.mapName,
       source: widget.mapSource,
     );
-    final saveRepository = ref.read(gameRepositoryProvider);
-    final now = ref.read(gameClockProvider).now();
     _nameController = TextEditingController(
-      text: saveRepository.defaultSaveName(selection.displayName, now),
+      text: CreateLocalGameUseCase(
+        repository: ref.read(gameRepositoryProvider),
+        clock: ref.read(gameClockProvider),
+      ).defaultNameFor(selection),
     );
     _inviteCodeController = TextEditingController();
     _players = LobbyPlayerSetupController(
@@ -249,21 +250,18 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       final players = _players.buildPlayers(_defaultPlayerName);
       final validation = _validateMapSetup(mapData);
       if (validation.errors.isNotEmpty) return;
-      final saveRepository = ref.read(gameRepositoryProvider);
-      final now = ref.read(gameClockProvider).now();
-      final saveId = await saveRepository.create(
-        NewGameRequest(
-          name: gameName.isEmpty
-              ? saveRepository.defaultSaveName(selection.displayName, now)
-              : gameName,
-          mapName: widget.mapName,
-          mapSource: widget.mapSource,
-          gameMode: _gameMode,
-          matchRules: _selectedMatchRules,
-          players: players,
-          mapData: mapData,
-        ),
-      );
+      final saveId =
+          await CreateLocalGameUseCase(
+            repository: ref.read(gameRepositoryProvider),
+            clock: ref.read(gameClockProvider),
+          ).execute(
+            name: gameName,
+            selection: selection,
+            mapData: mapData,
+            gameMode: _gameMode,
+            matchRules: _selectedMatchRules,
+            players: players,
+          );
       if (!mounted) return;
       context.go(
         '/game?saveId=$saveId'

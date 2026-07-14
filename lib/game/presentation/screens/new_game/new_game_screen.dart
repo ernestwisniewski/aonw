@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/use_cases/create_local_game_use_case.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -438,25 +438,23 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
         return;
       }
 
-      final saveRepository = ref.read(gameRepositoryProvider);
-      final now = ref.read(gameClockProvider).now();
-      final saveId = await saveRepository.create(
-        NewGameRequest(
-          name: saveRepository.defaultSaveName(map.displayName, now),
-          mapName: map.name,
-          mapSource: map.source,
-          gameMode: NewGameFlow.singlePlayer.gameMode,
-          matchRules: MatchRules.forGameLength(gameLength),
-          players: NewGameSinglePlayerSetup.players(
-            selectedPlayerCountry: _selectedPlayerCountry,
-            aiDifficulty: aiDifficulty,
-            leaderNameFor: (country) =>
-                GameDisplayNames.playerCountryLeader(l10n, country),
-            playerCount: playerCount,
-          ),
-          mapData: mapData,
-        ),
-      );
+      final saveId =
+          await CreateLocalGameUseCase(
+            repository: ref.read(gameRepositoryProvider),
+            clock: ref.read(gameClockProvider),
+          ).execute(
+            selection: map,
+            mapData: mapData,
+            gameMode: NewGameFlow.singlePlayer.gameMode,
+            matchRules: MatchRules.forGameLength(gameLength),
+            players: NewGameSinglePlayerSetup.players(
+              selectedPlayerCountry: _selectedPlayerCountry,
+              aiDifficulty: aiDifficulty,
+              leaderNameFor: (country) =>
+                  GameDisplayNames.playerCountryLeader(l10n, country),
+              playerCount: playerCount,
+            ),
+          );
       if (!mounted) return;
       context.go(
         '/game?saveId=$saveId'

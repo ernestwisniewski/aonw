@@ -137,12 +137,6 @@ void main() {
       expect(composeCheck, contains('production with both overlays'));
       expect(composeCheck, contains('staging with both overlays'));
 
-      final postgresSmoke = File(
-        '../tool/run_postgres_smoke.sh',
-      ).readAsStringSync();
-      expect(postgresSmoke, contains('--project-name aonw'));
-      expect(postgresSmoke, contains(r'-f "${repo_root}/compose.yml"'));
-
       final rootEnvironment = File('../.env.example').readAsStringSync();
       expect(
         _hasLine(rootEnvironment, 'SERVERPOD_RUN_MODE=development'),

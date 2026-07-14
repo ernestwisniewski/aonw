@@ -98,7 +98,8 @@ make release-check
 ```
 
 `release-check` runs the full local CI suite (including generated-code and
-migration drift), Compose validation, and the PostgreSQL-backed endpoint smoke.
+migration drift), Compose validation, the PostgreSQL-backed endpoint smokes,
+and the public auth/match/command/reconnect E2E journey.
 `make deploy-all` invokes
 this gate before changing the version, then invokes it again on the committed
 release version before pushing `main` or uploading any artifacts.

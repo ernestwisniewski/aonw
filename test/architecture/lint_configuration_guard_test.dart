@@ -291,10 +291,6 @@ void main() {
         ['core-dependencies', 'coverage-directory'],
         "@cd packages/aonw_core && dart test --concurrency=1 --coverage-package='^aonw_core\$\$' --coverage-path=\"\$(CURDIR)/coverage/core.lcov.info\" --reporter=failures-only",
       ),
-      'server-coverage-report': (
-        ['server-dependencies', 'coverage-directory'],
-        "@cd server && dart test --concurrency=1 --coverage-package='^aonw_server\$\$' --coverage-path=\"\$(CURDIR)/coverage/server.lcov.info\" --reporter=failures-only",
-      ),
     };
     const focusedCoverageTargets = {
       'flutter-coverage': (

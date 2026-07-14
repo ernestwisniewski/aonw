@@ -11,13 +11,22 @@ Run the local Serverpod integration smoke:
 tool/run_postgres_smoke.sh
 ```
 
-The script starts the Compose PostgreSQL service, creates `aonw_test` when it
-is missing, resets that test database when it still points at a removed clean
-migration, and runs `make server-integration-test`. The smoke applies Serverpod
-migrations in test mode, verifies auth-required endpoint dispatch, creates and
-starts a persisted match, opens the Serverpod realtime stream, sends a command
-through the input stream, receives an ACK, retries the same `clientMessageId`
-without creating a second event, and verifies the persisted event.
+The script starts PostgreSQL in a uniquely named Compose project with a fresh
+volume, random password, and random loopback-only host port. It creates
+`aonw_test`, runs every `make server-integration-test` smoke, and then delegates
+to `make serverpod-critical-e2e-test`. Its exit trap removes the isolated
+containers and volume. The integration layer applies Serverpod migrations in
+test mode and verifies endpoint dispatch and persistence inside the test
+harness.
+
+The critical E2E layer starts a separate test-mode server and uses only its
+public HTTP and WebSocket surfaces. It signs in real accounts, creates and
+starts a persisted match, retries the same `clientMessageId` without creating a
+second event, rotates authentication, and catches up from an old event offset
+with a fresh client. All three test-server listeners are forced onto IPv4
+loopback and probed from non-loopback interfaces. See
+[Critical End-to-End Journeys](critical-e2e.md) for the complete contract and
+focused commands.
 
 ## Quickplay Lobby Smoke
 

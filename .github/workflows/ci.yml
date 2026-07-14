@@ -160,9 +160,9 @@ jobs:
         run: make generated-code-check
 
   server-integration:
-    name: server integration
+    name: server integration and critical E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -198,3 +198,8 @@ jobs:
         env:
           SERVERPOD_TEST_DATABASE_PASSWORD: aonw_dev
         run: make server-integration-test
+
+      - name: Run public auth-match-command-reconnect E2E
+        env:
+          SERVERPOD_TEST_DATABASE_PASSWORD: aonw_dev
+        run: make serverpod-critical-e2e-test

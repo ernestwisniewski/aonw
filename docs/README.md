@@ -12,7 +12,7 @@ behavior unless they explicitly call out historical context or future work.
 | Change an architectural contract | [Architecture Decision Records](adr/README.md) before changing ownership, determinism, commands, compatibility, or deployment policy. |
 | Refactor or split Dart code | [Architecture Budgets](architecture-budgets.md) for the complete census, role-specific targets, and legacy-debt ratchet. |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
-| Work on tests or coverage | [Test Coverage](test-coverage.md) for line coverage and [Mutation Testing](mutation-testing.md) for critical behavioral assertions. |
+| Work on tests or coverage | [Test Coverage](test-coverage.md) for line coverage, [Mutation Testing](mutation-testing.md) for critical behavioral assertions, and [Critical End-to-End Journeys](critical-e2e.md) for real persistence and network boundaries. |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
 | Work on backend operations | [Data Retention](data-retention.md), [Serverpod Insights Runbook](serverpod-insights-runbook.md), [PostgreSQL Backup And Restore](postgres-backup.md), and [Serverpod Social Auth Setup](serverpod-social-auth-setup.md). |
 | Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
@@ -83,6 +83,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Architecture Budgets](architecture-budgets.md) | Repository-wide Dart census, role-specific line targets, AST type-declaration measurement, and legacy-debt ratchet. |
 | [Test Coverage](test-coverage.md) | Line-coverage scopes, exact totals, portable coverage floors, historical ratchet, and changed-line gate. |
 | [Mutation Testing](mutation-testing.md) | Critical scopes, AST mutation operators, deterministic execution, exact baseline, and survivor ratchet. |
+| [Critical End-to-End Journeys](critical-e2e.md) | Local create/save/reload and public Serverpod auth/match/command/reconnect gates. |
 
 ### Release And Operations
 
@@ -101,6 +102,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Multiplayer TestFlight Readiness](multiplayer-testflight.md) | Staging setup and mobile multiplayer readiness checks. |
 | [Multiplayer Scale-Out Contract](multiplayer-scale-out.md) | Constraints for scaling multiplayer services. |
 | [Multiplayer Serverpod Smoke And Alerts](multiplayer-chaos-alerts.md) | Smoke-test coverage, failure modes, and alerting expectations. |
+| [Critical End-to-End Journeys](critical-e2e.md) | Canonical real-boundary persistence and multiplayer release journeys. |
 | [Serverpod Social Auth Setup](serverpod-social-auth-setup.md) | Google, Apple, and Steam auth configuration. |
 
 ### Game Design

@@ -34,7 +34,7 @@ MUTATION_RATCHET_REF ?= @{upstream}
 MUTATION_SNAPSHOT_PATH ?= /tmp/aonw-mutation-baseline.json
 PUB_CACHE ?= $(HOME)/.pub-cache
 SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
-SERVERPOD_TEST_DATABASE_PASSWORD ?= aonw_dev
+AONW_SERVERPOD_CRITICAL_E2E_PORT ?=
 SERVERPOD_SMOKE_HOST ?= http://127.0.0.1:8080/
 SERVERPOD_SMOKE_MAP ?= myranth
 SERVERPOD_SEED_HOST ?= http://127.0.0.1:8080/
@@ -199,7 +199,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload deploy-gamejolt gamejolt gamejolt-prepare gamejolt-package gamejolt-preflight gamejolt-upload gamejolt-upload-command bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -226,7 +226,7 @@ help:
 	@echo "  make flutter-coverage/core-coverage/server-coverage LOCAL: run one coverage scope"
 	@echo "  make generated-code-check LOCAL: verify every committed generator in an isolated snapshot"
 	@echo "  make analyze      LOCAL: run the fatal shared analysis policy in all four packages"
-	@echo "  make release-check LOCAL: run CI, migration/Compose checks, and PostgreSQL integration smoke"
+	@echo "  make release-check LOCAL: run CI, configuration checks, and PostgreSQL-backed critical E2E"
 	@echo "  make check        LOCAL: analyze/test Flutter app, core package, client package, and server"
 	@echo "  make reducer-parity-test LOCAL: run local/server reducer fixtures against one oracle"
 	@echo "  make profile-check LOCAL: validate the selected Compose deployment profile"
@@ -258,6 +258,9 @@ help:
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
 	@echo "  make server-integration-test LOCAL: run Serverpod integration tests"
+	@echo "  make critical-e2e-test LOCAL: run local persistence and live Serverpod critical journeys"
+	@echo "  make local-game-e2e-test LOCAL: run create, command, save, and fresh-runtime reload journey"
+	@echo "  make serverpod-critical-e2e-test LOCAL: run public auth, match, command, and reconnect journey"
 	@echo "  make serverpod-runtime-smoke LOCAL: run two-account stream/reconnect smoke against a running Serverpod host"
 	@echo "  make serverpod-seed-test-users LOCAL: create/update four local Serverpod test users"
 	@echo "  make compose-check LOCAL: validate Docker Compose files without starting services"
@@ -291,7 +294,10 @@ help:
 	@echo "  MUTATION_SNAPSHOT_PATH=/tmp/... Candidate mutation baseline output. Default: $(MUTATION_SNAPSHOT_PATH)"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
-	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... server-integration-test only. Default: $(SERVERPOD_TEST_DATABASE_PASSWORD)"
+	@echo "  AONW_TEST_DATABASE_PASSWORD=... PostgreSQL test password; falls back to SERVERPOD_TEST_DATABASE_PASSWORD, then aonw_dev"
+	@echo "  AONW_TEST_DATABASE_PORT=... PostgreSQL test port. Default: 5432"
+	@echo "  SERVERPOD_TEST_DATABASE_PASSWORD=... Legacy PostgreSQL test password fallback"
+	@echo "  AONW_SERVERPOD_CRITICAL_E2E_PORT=... optional critical E2E API port; default allocates and locks a free triplet"
 	@echo "  SERVERPOD_SMOKE_HOST=http://... serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_HOST)"
 	@echo "  SERVERPOD_SMOKE_MAP=myranth      serverpod-runtime-smoke only. Default: $(SERVERPOD_SMOKE_MAP)"
 	@echo "  SERVERPOD_SEED_HOST=http://...  serverpod-seed-test-users only. Default: $(SERVERPOD_SEED_HOST)"
@@ -538,14 +544,38 @@ reducer-parity-test:
 	@flutter test test/game/domain/reducer/local_reducer_parity_fixture_test.dart
 	@cd server && dart test test/multiplayer/server_reducer_parity_fixture_test.dart
 
+critical-e2e-test: local-game-e2e-test serverpod-critical-e2e-test
+
+local-game-e2e-test: root-dependencies
+	@flutter test --no-pub test/game/local_game_persistence_flow_test.dart
+
+serverpod-critical-e2e-test: root-dependencies client-dependencies server-dependencies
+	@AONW_SERVERPOD_CRITICAL_E2E_PORT="$(AONW_SERVERPOD_CRITICAL_E2E_PORT)" \
+		tool/run_serverpod_critical_e2e.sh
+
 server-integration-test:
 	@cd server && \
 		tests=$$(find test/integration -type f -name '*_smoke.dart' | sort); \
 		test -n "$$tests" || { echo "No Serverpod integration smokes found."; exit 1; }; \
-		SERVERPOD_PASSWORD_database="$(SERVERPOD_TEST_DATABASE_PASSWORD)" \
-		SERVERPOD_PASSWORD_emailSecretHashPepper="$${SERVERPOD_PASSWORD_emailSecretHashPepper:-test-email-secret-hash-pepper}" \
-		SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="$${SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey:-test-jwt-hmac-sha512-private-key}" \
-		SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="$${SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper:-test-jwt-refresh-token-hash-pepper}" \
+		test_database_password="$${AONW_TEST_DATABASE_PASSWORD:-$${SERVERPOD_TEST_DATABASE_PASSWORD:-aonw_dev}}"; \
+		test -n "$$test_database_password" || { echo "PostgreSQL test password must not be empty."; exit 1; }; \
+		test_database_port="$${AONW_TEST_DATABASE_PORT:-5432}"; \
+		case "$$test_database_port" in \
+			''|*[!0-9]*|??????*) echo "AONW_TEST_DATABASE_PORT must be an integer from 1 to 65535." >&2; exit 64 ;; \
+		esac; \
+		if [ "$$test_database_port" -lt 1 ] || [ "$$test_database_port" -gt 65535 ]; then \
+			echo "AONW_TEST_DATABASE_PORT must be an integer from 1 to 65535." >&2; \
+			exit 64; \
+		fi; \
+		env -i \
+			PATH="$$PATH" \
+			HOME="$${HOME:?HOME is required}" \
+			TMPDIR="$${TMPDIR:-/tmp}" \
+			SERVERPOD_DATABASE_PORT="$$test_database_port" \
+			SERVERPOD_PASSWORD_database="$$test_database_password" \
+			SERVERPOD_PASSWORD_emailSecretHashPepper="test-email-secret-hash-pepper" \
+			SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey="test-jwt-hmac-sha512-private-key" \
+			SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper="test-jwt-refresh-token-hash-pepper" \
 			dart test $$tests -P integration --chain-stack-traces --concurrency=1
 
 serverpod-runtime-smoke:
