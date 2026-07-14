@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_exporter.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,7 +73,7 @@ void main() {
       ).writeAsBytes([0xFF, 0xD8, 0xFF]);
       await File('${sourceDir.path}/map.json').writeAsString('stale json');
 
-      final mapData = MapData(
+      final draft = MapDraft(
         cols: 1,
         rows: 1,
         mapName: 'original_map',
@@ -94,7 +96,7 @@ void main() {
         ],
       );
 
-      final result = await MapExporter.buildArchive(mapData, 'renamed map');
+      final result = await MapExporter.buildArchive(draft, 'renamed map');
       final archive = ZipDecoder().decodeBytes(result.bytes);
       final names = archive.files.map((file) => file.name).toSet();
       final jsonFile = archive.files.singleWhere(
@@ -112,7 +114,22 @@ void main() {
       final objective = objectives.single as Map<String, dynamic>;
       expect(objectives, hasLength(1));
       expect(objective['id'], 'pass_1');
-      expect(mapData.mapName, 'original_map');
+      expect(draft.mapName, 'original_map');
+    });
+
+    test('rejects an invalid draft at the export boundary', () async {
+      final draft = MapDraft(
+        cols: 1,
+        rows: 1,
+        tiles: const [
+          TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+        ],
+      );
+
+      await expectLater(
+        MapExporter.buildArchive(draft, 'invalid'),
+        throwsA(isA<WorldMapException>()),
+      );
     });
   });
 }

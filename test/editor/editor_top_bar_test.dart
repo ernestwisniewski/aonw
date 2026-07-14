@@ -11,7 +11,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: EditorTopBar(
-            mapData: null,
+            draft: null,
             onAddColumn: () {},
             onRemoveColumn: () {},
             onAddRow: () {},

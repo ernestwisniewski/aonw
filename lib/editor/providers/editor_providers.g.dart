@@ -66,7 +66,7 @@ abstract class _$EditorStateNotifier extends $Notifier<EditorState> {
 final editorMapProvider = EditorMapNotifierProvider._();
 
 final class EditorMapNotifierProvider
-    extends $NotifierProvider<EditorMapNotifier, MapData?> {
+    extends $NotifierProvider<EditorMapNotifier, MapDraft?> {
   EditorMapNotifierProvider._()
     : super(
         from: null,
@@ -86,27 +86,27 @@ final class EditorMapNotifierProvider
   EditorMapNotifier create() => EditorMapNotifier();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(MapData? value) {
+  Override overrideWithValue(MapDraft? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<MapData?>(value),
+      providerOverride: $SyncValueProvider<MapDraft?>(value),
     );
   }
 }
 
-String _$editorMapNotifierHash() => r'b2f9004f51083c98cff2ed11bb593af6a38af787';
+String _$editorMapNotifierHash() => r'04bb55d9e8efa85846d637b41145a1fbcf8a702f';
 
-abstract class _$EditorMapNotifier extends $Notifier<MapData?> {
-  MapData? build();
+abstract class _$EditorMapNotifier extends $Notifier<MapDraft?> {
+  MapDraft? build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<MapData?, MapData?>;
+    final ref = this.ref as $Ref<MapDraft?, MapDraft?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<MapData?, MapData?>,
-              MapData?,
+              AnyNotifier<MapDraft?, MapDraft?>,
+              MapDraft?,
               Object?,
               Object?
             >;

@@ -1,10 +1,10 @@
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/widgets/editor_action_button.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:flutter/material.dart';
 
 class EditorTopBar extends StatelessWidget {
-  final MapData? mapData;
+  final MapDraft? draft;
   final VoidCallback onAddColumn;
   final VoidCallback onRemoveColumn;
   final VoidCallback onAddRow;
@@ -15,7 +15,7 @@ class EditorTopBar extends StatelessWidget {
   final VoidCallback onClose;
 
   const EditorTopBar({
-    required this.mapData,
+    required this.draft,
     required this.onAddColumn,
     required this.onRemoveColumn,
     required this.onAddRow,
@@ -29,8 +29,8 @@ class EditorTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cols = mapData?.cols ?? 0;
-    final rows = mapData?.rows ?? 0;
+    final cols = draft?.cols ?? 0;
+    final rows = draft?.rows ?? 0;
 
     return SafeArea(
       child: Container(

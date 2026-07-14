@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
 import 'package:archive/archive_io.dart';
@@ -9,7 +9,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:share_plus/share_plus.dart';
 
 abstract final class MapExporter {
-  /// Builds the export archive for [mapData] under `<safeName>/`:
+  /// Builds the export archive for [draft] under `<safeName>/`:
   ///   `map.json`              — map data (with `mapName = safeName`)
   ///   `image.jpg`             — cover image (if present)
   ///   `1x1.jpg`, `1x2.jpg`… — tile slices (if sliced)
@@ -17,14 +17,14 @@ abstract final class MapExporter {
   /// The archive folder name matches `<safeName>`. Returns the encoded bytes
   /// along with the resolved safe name.
   static Future<({Uint8List bytes, String safeName})> buildArchive(
-    MapData mapData,
+    MapDraft draft,
     String filename,
   ) async {
     final safeName = MapStorage.sanitizeMapName(
-      filename.trim().isNotEmpty ? filename : mapData.mapName ?? 'map',
+      filename.trim().isNotEmpty ? filename : draft.mapName ?? 'map',
     );
     final sourceName = MapStorage.sanitizeMapName(
-      mapData.mapName?.trim().isNotEmpty == true ? mapData.mapName! : safeName,
+      draft.mapName?.trim().isNotEmpty == true ? draft.mapName! : safeName,
     );
 
     final archive = Archive();
@@ -44,14 +44,8 @@ abstract final class MapExporter {
       }
     }
 
-    final exportMapData = MapData(
-      cols: mapData.cols,
-      rows: mapData.rows,
-      tiles: mapData.tiles,
-      objectives: mapData.objectives,
-      mapName: safeName,
-      defaultZoom: mapData.defaultZoom,
-    );
+    draft.freeze(mapName: safeName);
+    final exportMapData = draft.toMapData(mapName: safeName);
     final jsonBytes = MapLoader.toJson(exportMapData).codeUnits;
     archive.addFile(
       ArchiveFile('$safeName/map.json', jsonBytes.length, jsonBytes),
@@ -62,8 +56,8 @@ abstract final class MapExporter {
   }
 
   /// Exports the map as `<safeName>.zip` via the OS share sheet.
-  static Future<void> share(MapData mapData, String filename) async {
-    final result = await buildArchive(mapData, filename);
+  static Future<void> share(MapDraft draft, String filename) async {
+    final result = await buildArchive(draft, filename);
     final zipFile = File('${Directory.systemTemp.path}/${result.safeName}.zip');
     await zipFile.writeAsBytes(result.bytes, flush: true);
 
@@ -77,8 +71,8 @@ abstract final class MapExporter {
 
   /// Exports the map as `<safeName>.zip` via a native "Save As…" dialog.
   /// Returns the chosen path, or null if the user cancelled.
-  static Future<String?> saveToDisk(MapData mapData, String filename) async {
-    final result = await buildArchive(mapData, filename);
+  static Future<String?> saveToDisk(MapDraft draft, String filename) async {
+    final result = await buildArchive(draft, filename);
     final location = await getSaveLocation(
       suggestedName: '${result.safeName}.zip',
       acceptedTypeGroups: const [

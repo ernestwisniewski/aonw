@@ -17,11 +17,11 @@ import 'package:flutter/material.dart' show Color;
 
 typedef HexTileMarkerBuilder = HexTileMarkers Function(TileData tileData);
 
-/// Grid of [HexTile]s laid out from [MapData].
+/// Grid of [HexTile]s laid out from a read-only [MapTileSource].
 ///
 /// Applies Y-scale for isometric perspective.
-class HexGrid extends PositionComponent {
-  final MapData mapData;
+class HexGrid<T extends MapTileSource> extends PositionComponent {
+  final T mapData;
   final MapConfig config;
   MapViewMode _viewMode;
   HexDisplaySettings _displaySettings;
@@ -349,3 +349,6 @@ class HexGrid extends PositionComponent {
     unawaited(Future<void>.value(add(overlay)));
   }
 }
+
+/// Runtime grid backed by the legacy map DTO while migration is in progress.
+typedef LegacyMapGrid = HexGrid<MapData>;

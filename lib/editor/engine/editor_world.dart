@@ -1,7 +1,7 @@
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
@@ -14,7 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
-  final MapData mapData;
+  final MapDraft draft;
   final String? imagePath;
   EditorState _editorState;
   MapViewMode _viewMode;
@@ -27,7 +27,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
   final void Function(double zoom)? onDefaultZoomChanged;
 
   EditorWorld({
-    required this.mapData,
+    required this.draft,
     required EditorState editorState,
     this.imagePath,
     this.onTileSelected,
@@ -49,7 +49,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
   bool get hasReferenceImage => _hasReferenceImage;
   MapViewMode get viewMode => _viewMode;
 
-  double get defaultZoom => mapData.defaultZoom;
+  double get defaultZoom => draft.defaultZoom;
 
   set editorState(EditorState value) {
     _editorState = value;
@@ -59,7 +59,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
   }
 
   set defaultZoom(double value) {
-    mapData.defaultZoom = value;
+    draft.defaultZoom = value;
     onDefaultZoomChanged?.call(value);
   }
 
@@ -84,8 +84,8 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
 
     _imageLayer = MapImageLayer(
       config: MapConfig.defaultConfig,
-      cols: mapData.cols,
-      rows: mapData.rows,
+      cols: draft.cols,
+      rows: draft.rows,
     );
     await world.add(_imageLayer);
     if (overlayImagePath != null) {
@@ -93,7 +93,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
     }
 
     _grid = EditorGrid(
-      mapData: mapData,
+      draft: draft,
       config: MapConfig.defaultConfig,
       editorState: _editorState,
       viewMode: _viewMode,
@@ -120,7 +120,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
     _objectiveMarkerLayer.sync(
       parent: world,
       objectives: [
-        for (final objective in mapData.objectives)
+        for (final objective in draft.objectives)
           MapObjectiveProgress(
             definition: objective,
             controllingPlayerId: null,

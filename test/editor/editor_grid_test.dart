@@ -1,15 +1,16 @@
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/editor/engine/editor_world.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/map_data.dart' show TileData;
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -17,11 +18,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
   group('EditorGrid paint stroke', () {
     test('reuses the same tile while dragging over one hex', () {
       final grid = EditorGrid(
-        mapData: MapData(
+        draft: MapDraft(
           cols: 1,
           rows: 1,
           tiles: [
@@ -72,7 +72,7 @@ void main() {
     test(
       'clearSelectedTerrains removes terrain from the selected hex only',
       () {
-        final mapData = MapData(
+        final mapData = MapDraft(
           cols: 2,
           rows: 1,
           tiles: [
@@ -93,7 +93,7 @@ void main() {
           ],
         );
         final grid = EditorGrid(
-          mapData: mapData,
+          draft: mapData,
           config: MapConfig.defaultConfig,
           editorState: const EditorState(
             selectedTerrains: {TerrainType.desert},
@@ -116,7 +116,7 @@ void main() {
     test('addColumn uses the latest editor selection', () {
       final grid =
           EditorGrid(
-              mapData: MapData(
+              draft: MapDraft(
                 cols: 1,
                 rows: 2,
                 tiles: [
@@ -171,7 +171,7 @@ void main() {
         terrain: TerrainType.grassland,
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.desert},
@@ -201,7 +201,7 @@ void main() {
         terrain: TerrainType.grassland,
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.grassland},
@@ -229,7 +229,7 @@ void main() {
     });
 
     test('erase mode removes an objective from the selected hex', () {
-      final mapData = MapData(
+      final mapData = MapDraft(
         cols: 1,
         rows: 1,
         tiles: [
@@ -251,7 +251,7 @@ void main() {
         ],
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.grassland},
@@ -272,7 +272,7 @@ void main() {
       'removing the outer column drops objectives outside the new bounds',
       () {
         const removedCol = MapConstraints.minCols;
-        final mapData = MapData(
+        final mapData = MapDraft(
           cols: MapConstraints.minCols + 1,
           rows: 1,
           tiles: [
@@ -295,7 +295,7 @@ void main() {
           ],
         );
         EditorGrid(
-            mapData: mapData,
+            draft: mapData,
             config: MapConfig.defaultConfig,
             editorState: const EditorState(
               selectedTerrains: {TerrainType.grassland},
@@ -316,7 +316,7 @@ void main() {
   group('EditorWorld keyboard shortcuts', () {
     test('T clears all terrain from the selected hex', () async {
       final selectedTiles = <String>[];
-      final mapData = MapData(
+      final mapData = MapDraft(
         cols: 1,
         rows: 1,
         tiles: [
@@ -330,7 +330,7 @@ void main() {
         ],
       );
       final world = EditorWorld(
-        mapData: mapData,
+        draft: mapData,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.grassland},
           selectedResources: {},
@@ -361,7 +361,7 @@ void main() {
 
   group('EditorGrid city planning markers', () {
     test('marks terrain that can host or grow a city', () {
-      final mapData = MapData(
+      final mapData = MapDraft(
         cols: 3,
         rows: 1,
         tiles: [
@@ -389,7 +389,7 @@ void main() {
         ],
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.desert},
@@ -414,7 +414,7 @@ void main() {
 
   group('EditorGrid movement blockers', () {
     test('marks land-impassable and warrior over-budget tiles', () {
-      final mapData = MapData(
+      final mapData = MapDraft(
         cols: 7,
         rows: 1,
         tiles: [
@@ -479,7 +479,7 @@ void main() {
         ],
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {TerrainType.desert},
@@ -499,7 +499,7 @@ void main() {
     });
 
     test('refreshes the blocker overlay when terrain is repainted', () {
-      final mapData = MapData(
+      final mapData = MapDraft(
         cols: 1,
         rows: 1,
         tiles: [
@@ -513,7 +513,7 @@ void main() {
         ],
       );
       final grid = EditorGrid(
-        mapData: mapData,
+        draft: mapData,
         config: MapConfig.defaultConfig,
         editorState: const EditorState(
           selectedTerrains: {
@@ -571,11 +571,11 @@ HexTile _tileByCoordinate(EditorGrid grid, int col, int row) {
   return _tileAt(grid, tileCenter);
 }
 
-MapData _filledMapData({
+MapDraft _filledMapData({
   required int cols,
   required int rows,
   required TerrainType terrain,
-}) => MapData(
+}) => MapDraft(
   cols: cols,
   rows: rows,
   tiles: [

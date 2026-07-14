@@ -17,7 +17,7 @@ class GamePlanningMarkerCoordinator {
   }) : _recommendedCitySitePlanner =
            recommendedCitySitePlanner ?? RecommendedCitySitePlanner();
 
-  final HexGrid grid;
+  final LegacyMapGrid grid;
   final RecommendedCitySitePlanner _recommendedCitySitePlanner;
 
   void sync(GameState state) {

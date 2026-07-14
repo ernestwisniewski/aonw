@@ -10,11 +10,11 @@ import 'package:flutter/foundation.dart';
 typedef GameTileTapCallback = void Function(TileData tileData);
 
 class GameSceneBuilder {
-  HexGrid? _grid;
+  LegacyMapGrid? _grid;
   MapImageLayer? _imageLayer;
   bool _hasReferenceImage = false;
 
-  HexGrid get grid {
+  LegacyMapGrid get grid {
     assert(_grid != null, 'Call build() before accessing grid');
     return _grid!;
   }

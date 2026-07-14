@@ -26,9 +26,11 @@ void main() {
         ],
       );
 
-      expect(map.tileAt(0, 0)?.primaryTerrain, TerrainType.plains);
-      expect(map.tileAt(1, 0)?.primaryTerrain, TerrainType.ocean);
-      expect(map.tileAt(2, 0), isNull);
+      final MapTileSource source = map;
+
+      expect(source.tileAt(0, 0)?.primaryTerrain, TerrainType.plains);
+      expect(source.tileAt(1, 0)?.primaryTerrain, TerrainType.ocean);
+      expect(source.tileAt(2, 0), isNull);
     });
 
     test('uses odd-q hex topology', () {

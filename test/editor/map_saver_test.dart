@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_saver.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -71,7 +73,7 @@ void main() {
 
   group('MapSaver.save', () {
     test('writes JSON using a sanitized filename stem', () async {
-      final mapData = MapData(
+      final draft = MapDraft(
         cols: 1,
         rows: 1,
         tiles: [
@@ -86,13 +88,33 @@ void main() {
         mapName: '../bad map',
       );
 
-      await MapSaver.save(mapData);
+      await MapSaver.save(draft);
 
       // New structure: maps/<name>/map.json
       final file = File('${tempDir.path}/maps/bad_map/map.json');
       expect(await file.exists(), isTrue);
-      expect(mapData.mapName, 'bad_map');
+      expect(draft.mapName, 'bad_map');
       expect(await file.readAsString(), contains('"mapName": "bad_map"'));
+    });
+
+    test('rejects an invalid draft before writing JSON', () async {
+      final draft = MapDraft(
+        cols: 1,
+        rows: 1,
+        mapName: 'invalid',
+        tiles: const [
+          TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+        ],
+      );
+
+      await expectLater(
+        MapSaver.save(draft),
+        throwsA(isA<WorldMapException>()),
+      );
+      expect(
+        await File('${tempDir.path}/maps/invalid/map.json').exists(),
+        isFalse,
+      );
     });
   });
 

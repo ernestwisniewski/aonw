@@ -73,6 +73,54 @@ void main() {
       );
     });
 
+    test('editor crosses the legacy map boundary only through MapDraft', () {
+      const allowedPaths = {'lib/editor/domain/map_draft.dart'};
+      const legacyIdentifiers = {'MapData', 'LegacyWorldMapAdapter'};
+      final violations = <String>[];
+
+      for (final file in _dartFiles('lib/editor')) {
+        final path = _relativePath(file.path);
+        if (allowedPaths.contains(path)) continue;
+        final unit = parseString(
+          content: file.readAsStringSync(),
+          path: path,
+        ).unit;
+        final identifiers = <String>{};
+        unit.accept(_IdentifierCollector(identifiers));
+        for (final identifier in legacyIdentifiers) {
+          if (identifiers.contains(identifier)) {
+            violations.add('$path: $identifier');
+          }
+        }
+      }
+
+      expect(violations, isEmpty);
+    });
+
+    test('MapDraft remains owned by the editor in production', () {
+      final violations = <String>[];
+
+      for (final root in const [
+        'packages/aonw_core/lib',
+        'lib',
+        'server/lib',
+      ]) {
+        for (final file in _dartFiles(root)) {
+          final path = _relativePath(file.path);
+          if (path.startsWith('lib/editor/')) continue;
+          final unit = parseString(
+            content: file.readAsStringSync(),
+            path: path,
+          ).unit;
+          final identifiers = <String>{};
+          unit.accept(_IdentifierCollector(identifiers));
+          if (identifiers.contains('MapDraft')) violations.add(path);
+        }
+      }
+
+      expect(violations, isEmpty);
+    });
+
     test('guard rejects signature and inline point converters', () {
       final violations = _converterViolations({
         'lib/city_converter.dart': '''
@@ -197,6 +245,18 @@ final class _DeclaredTypeCollector extends RecursiveAstVisitor<void> {
       if (type != null) types[node.name.lexeme] = type;
     }
     super.visitVariableDeclaration(node);
+  }
+}
+
+final class _IdentifierCollector extends RecursiveAstVisitor<void> {
+  _IdentifierCollector(this.names);
+
+  final Set<String> names;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    names.add(node.name);
+    super.visitSimpleIdentifier(node);
   }
 }
 

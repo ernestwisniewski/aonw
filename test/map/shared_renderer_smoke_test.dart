@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/map/domain/map_config.dart';
@@ -72,7 +73,7 @@ void main() {
 
   test('editor EditorGrid paint and resize paths keep renderer valid', () {
     final grid = EditorGrid(
-      mapData: _makeMap(),
+      draft: MapDraft.fromMapData(_makeMap()),
       config: MapConfig.defaultConfig,
       editorState: const EditorState(
         selectedTerrains: {TerrainType.desert},

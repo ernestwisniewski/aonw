@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:aonw/editor/domain/editor_map_objective_factory.dart';
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/map/domain/hex_grid_topology.dart';
-import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
@@ -14,10 +13,12 @@ import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_data.dart' show TileData;
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
-class EditorGrid extends HexGrid {
+class EditorGrid extends HexGrid<MapDraft> {
+  final MapDraft draft;
   EditorState editorState;
 
   /// Called when a tile is tapped with its coordinates.
@@ -85,34 +86,22 @@ class EditorGrid extends HexGrid {
 
   /// O(1) lookup from (col, row) to the live HexTile component.
   final Map<(int, int), HexTile> _tileComponents = {};
-  final Map<(int, int), int> _tileIndices = {};
   final Map<(int, int), int> _heightMap = {};
 
   EditorGrid({
-    required super.mapData,
+    required this.draft,
     required super.config,
     required this.editorState,
     this.onTileSelected,
     this.onObjectivesChanged,
     super.viewMode = MapViewMode.tile,
     super.displaySettings,
-  });
-
-  void _ensureTileIndex() {
-    if (_tileIndices.length == mapData.tiles.length &&
-        _heightMap.length == mapData.tiles.length) {
-      return;
-    }
-    _reindexTiles();
-  }
+  }) : super(mapData: draft);
 
   void _reindexTiles() {
-    _tileIndices.clear();
     _heightMap.clear();
-    for (int i = 0; i < mapData.tiles.length; i++) {
-      final tile = mapData.tiles[i];
+    for (final tile in draft.tiles) {
       final key = (tile.col, tile.row);
-      _tileIndices[key] = i;
       _heightMap[key] = tile.height;
     }
   }
@@ -138,8 +127,8 @@ class EditorGrid extends HexGrid {
     final hit = HexGeometry.tileAt(
       point: localPos,
       hexRadius: config.hexRadius,
-      cols: mapData.cols,
-      rows: mapData.rows,
+      cols: draft.cols,
+      rows: draft.rows,
     );
     if (hit == null) return;
     if (_lastPainted != null &&
@@ -176,32 +165,27 @@ class EditorGrid extends HexGrid {
   bool clearSelectedTerrains() {
     final coords = _selectedTileCoords;
     if (coords == null) return false;
-    _ensureTileIndex();
-    final key = (coords.col, coords.row);
-    final index = _tileIndices[key];
-    if (index == null) return false;
-
-    final tile = mapData.tiles[index];
+    final tile = draft.tileAt(coords.col, coords.row);
+    if (tile == null) return false;
     if (tile.terrains.isEmpty) return true;
 
-    mapData.tiles[index] = tile.copyWith(terrains: const []);
+    draft.clearTerrainsAt(coords.col, coords.row);
     _rebuildTileComponent(coords.col, coords.row);
     return true;
   }
 
   void _applyState(int col, int row) {
-    _ensureTileIndex();
     final key = (col, row);
-    final index = _tileIndices[key];
-    if (index == null) return;
-
-    final newTile = mapData.tiles[index].copyWith(
+    if (!draft.updateTile(
+      col: col,
+      row: row,
       terrains: editorState.selectedTerrains.toList(),
       resources: editorState.selectedResources.toList(),
       height: editorState.selectedHeight,
-    );
-    mapData.tiles[index] = newTile;
-    _heightMap[key] = newTile.height;
+    )) {
+      return;
+    }
+    _heightMap[key] = editorState.selectedHeight;
 
     _applyObjective(col, row);
     _rebuildTileComponent(col, row);
@@ -228,30 +212,18 @@ class EditorGrid extends HexGrid {
   }
 
   bool _removeObjectiveAt(int col, int row) {
-    final retained = [
-      for (final objective in mapData.objectives)
-        if (objective.hex.col != col || objective.hex.row != row) objective,
-    ];
-    if (retained.length == mapData.objectives.length) return false;
-    mapData.objectives = retained;
-    return true;
+    return draft.removeObjectiveAt(col, row);
   }
 
   void _placeObjective(int col, int row, MapObjectiveType type) {
-    final next = [
-      for (final objective in mapData.objectives)
-        if (objective.hex.col != col || objective.hex.row != row) objective,
+    draft.placeObjective(
       EditorMapObjectiveFactory.build(type: type, col: col, row: row),
-    ]..sort((a, b) => a.id.compareTo(b.id));
-    mapData.objectives = next;
+    );
   }
 
   void _rebuildTileComponent(int col, int row) {
-    _ensureTileIndex();
-    final index = _tileIndices[(col, row)];
-    if (index == null) return;
-
-    final tileData = mapData.tiles[index];
+    final tileData = draft.tileAt(col, row);
+    if (tileData == null) return;
     final tilePos = HexGeometry.tilePosition(
       col: col,
       row: row,
@@ -285,34 +257,15 @@ class EditorGrid extends HexGrid {
 
   /// Adds a column to the right filled with the currently selected terrain.
   void addColumn() {
-    if (mapData.cols >= MapConstraints.maxCols) return;
-    final newCol = mapData.cols;
-    for (int row = 0; row < mapData.rows; row++) {
-      mapData.tiles.add(
-        TileData(
-          col: newCol,
-          row: row,
-          terrains: editorState.selectedTerrains.toList(),
-          resources: [],
-          height: 0,
-        ),
-      );
-    }
-    mapData.cols++;
+    if (!draft.addColumn(terrains: editorState.selectedTerrains)) return;
     rebuild();
   }
 
   /// Removes the rightmost column.
   void removeColumn() {
-    if (mapData.cols <= MapConstraints.minCols) return;
-    mapData.tiles.removeWhere((t) => t.col == mapData.cols - 1);
-    final nextObjectives = _objectivesInsideBounds(
-      maxColExclusive: mapData.cols - 1,
-      maxRowExclusive: mapData.rows,
-    );
-    mapData.cols--;
-    if (nextObjectives.length != mapData.objectives.length) {
-      mapData.objectives = nextObjectives;
+    final objectiveCount = draft.objectives.length;
+    if (!draft.removeColumn()) return;
+    if (draft.objectives.length != objectiveCount) {
       onObjectivesChanged?.call();
     }
     rebuild();
@@ -320,54 +273,21 @@ class EditorGrid extends HexGrid {
 
   /// Adds a row at the bottom filled with the currently selected terrain.
   void addRow() {
-    if (mapData.rows >= MapConstraints.maxRows) return;
-    final newRow = mapData.rows;
-    for (int col = 0; col < mapData.cols; col++) {
-      mapData.tiles.add(
-        TileData(
-          col: col,
-          row: newRow,
-          terrains: editorState.selectedTerrains.toList(),
-          resources: [],
-          height: 0,
-        ),
-      );
-    }
-    mapData.rows++;
+    if (!draft.addRow(terrains: editorState.selectedTerrains)) return;
     rebuild();
   }
 
   /// Removes the bottom row.
   void removeRow() {
-    if (mapData.rows <= MapConstraints.minRows) return;
-    mapData.tiles.removeWhere((t) => t.row == mapData.rows - 1);
-    final nextObjectives = _objectivesInsideBounds(
-      maxColExclusive: mapData.cols,
-      maxRowExclusive: mapData.rows - 1,
-    );
-    mapData.rows--;
-    if (nextObjectives.length != mapData.objectives.length) {
-      mapData.objectives = nextObjectives;
+    final objectiveCount = draft.objectives.length;
+    if (!draft.removeRow()) return;
+    if (draft.objectives.length != objectiveCount) {
       onObjectivesChanged?.call();
     }
     rebuild();
   }
 
-  List<MapObjectiveDefinition> _objectivesInsideBounds({
-    required int maxColExclusive,
-    required int maxRowExclusive,
-  }) {
-    return [
-      for (final objective in mapData.objectives)
-        if (objective.hex.col >= 0 &&
-            objective.hex.col < maxColExclusive &&
-            objective.hex.row >= 0 &&
-            objective.hex.row < maxRowExclusive)
-          objective,
-    ];
-  }
-
-  /// Clears all HexTile components and re-adds them from current mapData.
+  /// Clears all HexTile components and re-adds them from the current draft.
   @override
   void rebuild() {
     _lastPainted = null;
@@ -376,7 +296,7 @@ class EditorGrid extends HexGrid {
     _reindexTiles();
     removeWhere((c) => c is HexTile);
     final tiles = <HexTile>[];
-    for (final tileData in mapData.tiles) {
+    for (final tileData in draft.tiles) {
       final pos = HexGeometry.tilePosition(
         col: tileData.col,
         row: tileData.row,

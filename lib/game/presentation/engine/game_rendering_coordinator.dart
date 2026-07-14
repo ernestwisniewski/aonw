@@ -43,7 +43,7 @@ class GameRenderingCoordinator {
   final FogOfWarOverlayLayer fogOfWar;
   final ThreatOverlayLayer threatOverlay;
   final ActionPaletteLayer actionPalette;
-  final HexGrid grid;
+  final LegacyMapGrid grid;
   final GamePlanningMarkerCoordinator _planningMarkers;
 
   GameRenderingCoordinator({
@@ -118,13 +118,13 @@ class GameRenderingCoordinator {
     viewModelNotifier.value = viewModel;
   }
 
-  void _syncGridSelection(HexGrid hexGrid, GameRenderViewModel viewModel) {
+  void _syncGridSelection(LegacyMapGrid grid, GameRenderViewModel viewModel) {
     final selection = viewModel.selection;
     final tile = selection?.tile;
     if (selection?.type == GameSelectionType.tile && tile != null) {
-      hexGrid.selectTile(tile.col, tile.row);
+      grid.selectTile(tile.col, tile.row);
     } else {
-      hexGrid.clearSelection();
+      grid.clearSelection();
     }
   }
 

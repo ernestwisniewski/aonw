@@ -175,47 +175,47 @@ void main() {
       expect(container.read(editorMapProvider), null);
     });
 
-    test('create populates mapData', () {
+    test('create populates a map draft', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
       container
           .read(editorMapProvider.notifier)
           .create(6, 5, TerrainType.ocean);
-      final mapData = container.read(editorMapProvider);
-      expect(mapData, isNotNull);
-      expect(mapData!.cols, 6);
-      expect(mapData.rows, 5);
-      expect(mapData.tiles.length, 30);
-      expect(mapData.tiles.first.terrains, [TerrainType.ocean]);
+      final draft = container.read(editorMapProvider);
+      expect(draft, isNotNull);
+      expect(draft!.cols, 6);
+      expect(draft.rows, 5);
+      expect(draft.tiles.length, 30);
+      expect(draft.tiles.first.terrains, [TerrainType.ocean]);
     });
 
-    test('create clamps mapData to editor dimension limits', () {
+    test('create clamps a map draft to editor dimension limits', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       container
           .read(editorMapProvider.notifier)
           .create(99, 99, TerrainType.grassland);
-      final maxMapData = container.read(editorMapProvider);
+      final maxDraft = container.read(editorMapProvider);
 
-      expect(maxMapData, isNotNull);
-      expect(maxMapData!.cols, MapConstraints.maxCols);
-      expect(maxMapData.rows, MapConstraints.maxRows);
+      expect(maxDraft, isNotNull);
+      expect(maxDraft!.cols, MapConstraints.maxCols);
+      expect(maxDraft.rows, MapConstraints.maxRows);
       expect(
-        maxMapData.tiles.length,
+        maxDraft.tiles.length,
         MapConstraints.maxCols * MapConstraints.maxRows,
       );
 
       container
           .read(editorMapProvider.notifier)
           .create(1, 1, TerrainType.ocean);
-      final minMapData = container.read(editorMapProvider);
+      final minDraft = container.read(editorMapProvider);
 
-      expect(minMapData, isNotNull);
-      expect(minMapData!.cols, MapConstraints.minCols);
-      expect(minMapData.rows, MapConstraints.minRows);
+      expect(minDraft, isNotNull);
+      expect(minDraft!.cols, MapConstraints.minCols);
+      expect(minDraft.rows, MapConstraints.minRows);
       expect(
-        minMapData.tiles.length,
+        minDraft.tiles.length,
         MapConstraints.minCols * MapConstraints.minRows,
       );
     });

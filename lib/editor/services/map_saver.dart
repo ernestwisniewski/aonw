@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
 import 'package:image/image.dart' as img;
@@ -15,19 +15,21 @@ abstract final class MapSaver {
   static String sanitizeMapName(String rawName) =>
       MapStorage.sanitizeMapName(rawName);
 
-  /// Saves [mapData] to `<documents>/maps/<mapData.mapName>/map.json`.
+  /// Saves [draft] to `<documents>/maps/<draft.mapName>/map.json`.
   /// Creates the directory if needed.
-  /// Throws [ArgumentError] if `mapData.mapName` is null or empty.
-  static Future<void> save(MapData mapData) async {
-    final rawName = mapData.mapName;
+  /// Throws [ArgumentError] if `draft.mapName` is null or empty.
+  static Future<void> save(MapDraft draft) async {
+    final rawName = draft.mapName;
     if (rawName == null || rawName.trim().isEmpty) {
-      throw ArgumentError('mapData.mapName must be set before saving');
+      throw ArgumentError('draft.mapName must be set before saving');
     }
     final safeName = MapStorage.sanitizeMapName(rawName);
-    mapData.mapName = safeName;
+    draft
+      ..mapName = safeName
+      ..freeze();
     final file = await MapStorage.jsonFile(safeName);
     await file.parent.create(recursive: true);
-    await file.writeAsString(MapLoader.toJson(mapData));
+    await file.writeAsString(MapLoader.toJson(draft.toMapData()));
   }
 
   /// Opens the gallery picker and returns the picked image path.

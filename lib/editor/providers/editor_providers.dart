@@ -1,6 +1,6 @@
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -78,10 +78,10 @@ class EditorStateNotifier extends _$EditorStateNotifier {
 @riverpod
 class EditorMapNotifier extends _$EditorMapNotifier {
   @override
-  MapData? build() => null;
+  MapDraft? build() => null;
 
-  void load(MapData mapData) {
-    state = mapData;
+  void load(MapDraft draft) {
+    state = draft;
   }
 
   void create(int cols, int rows, TerrainType defaultTerrain) {
@@ -92,20 +92,10 @@ class EditorMapNotifier extends _$EditorMapNotifier {
         .clamp(MapConstraints.minRows, MapConstraints.maxRows)
         .toInt();
 
-    state = MapData(
+    state = MapDraft.filled(
       cols: constrainedCols,
       rows: constrainedRows,
-      tiles: [
-        for (int r = 0; r < constrainedRows; r++)
-          for (int c = 0; c < constrainedCols; c++)
-            TileData(
-              col: c,
-              row: r,
-              terrains: [defaultTerrain],
-              resources: [],
-              height: 0,
-            ),
-      ],
+      defaultTerrain: defaultTerrain,
     );
   }
 

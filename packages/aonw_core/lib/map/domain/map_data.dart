@@ -1,6 +1,19 @@
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
+/// Read-only spatial data consumed by map renderers.
+///
+/// [MapData] remains the legacy persistence model. Editor-only mutable state
+/// can implement this narrow contract without becoming a second persistence
+/// representation.
+abstract interface class MapTileSource {
+  int get cols;
+  int get rows;
+  Iterable<TileData> get tiles;
+
+  TileData? tileAt(int col, int row);
+}
+
 /// Data for a single hex tile.
 class TileData {
   final int col;
@@ -45,10 +58,18 @@ class TileData {
   };
 }
 
-/// Map data — mutable so the editor can modify tiles in-place.
-class MapData {
+/// Legacy persistence and compatibility DTO.
+///
+/// It remains structurally mutable for legacy consumers; editor mutation is
+/// owned by the editor's draft model.
+class MapData implements MapTileSource {
+  @override
   int cols;
+
+  @override
   int rows;
+
+  @override
   final List<TileData> tiles;
   List<MapObjectiveDefinition> _objectives;
 
@@ -74,6 +95,7 @@ class MapData {
   }
 
   /// Returns the tile at [col], [row], or null if not found.
+  @override
   TileData? tileAt(int col, int row) {
     for (final tile in tiles) {
       if (tile.col == col && tile.row == row) return tile;
