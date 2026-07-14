@@ -1,7 +1,53 @@
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/domain/hex/legacy_hex_coord_adapter.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('HexCoord', () {
+    test('is a const value and stable map key', () {
+      final coordinate = _coordinate(2, 3);
+      final equalCoordinate = _coordinate(2, 3);
+      final values = <HexCoord, String>{coordinate: 'first'};
+      values[equalCoordinate] = 'second';
+
+      expect(coordinate, equalCoordinate);
+      expect(coordinate, isNot(_coordinate(3, 3)));
+      expect(coordinate, isNot(_coordinate(2, 4)));
+      expect(values, {coordinate: 'second'});
+      expect(coordinate.toString(), 'HexCoord(col: 2, row: 3)');
+    });
+
+    test('allows negative values for callers to validate in context', () {
+      expect(const HexCoord(col: -1, row: -2).col, -1);
+      expect(const HexCoord(col: -1, row: -2).row, -2);
+    });
+
+    test('converts at the named legacy boundary', () {
+      const coordinate = HexCoord(col: 2, row: 3);
+
+      expect(
+        LegacyHexCoordAdapter.fromHexCoordinate(
+          LegacyHexCoordAdapter.toHexCoordinate(coordinate),
+        ),
+        coordinate,
+      );
+      expect(
+        LegacyHexCoordAdapter.fromCityHex(
+          LegacyHexCoordAdapter.toCityHex(coordinate),
+        ),
+        coordinate,
+      );
+      expect(LegacyHexCoordAdapter.toHexCoordinate(coordinate).toJson(), {
+        'col': 2,
+        'row': 3,
+      });
+      expect(LegacyHexCoordAdapter.toCityHex(coordinate).toJson(), {
+        'col': 2,
+        'row': 3,
+      });
+    });
+  });
+
   group('HexCoordinate', () {
     test('round-trips through JSON', () {
       const hex = HexCoordinate(col: 2, row: 3);
@@ -55,3 +101,5 @@ void main() {
     });
   });
 }
+
+HexCoord _coordinate(int col, int row) => HexCoord(col: col, row: row);

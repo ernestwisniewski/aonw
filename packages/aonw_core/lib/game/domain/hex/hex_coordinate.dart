@@ -1,5 +1,7 @@
 import 'package:aonw_core/map/domain/map_data.dart';
 
+export 'package:aonw_core/domain/hex_coord.dart';
+
 class HexCoordinate {
   final int col;
   final int row;
