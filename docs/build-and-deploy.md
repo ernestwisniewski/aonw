@@ -259,12 +259,28 @@ force a Caddy recreation so bind-mounted route changes take effect reliably.
 
 ## Full Release Flow
 
-`make deploy-all` is the main release command. It coordinates version bumping,
-store packaging, server deploy, homepage deploy, public downloads, web deploy,
-and health checks. Provide remote values explicitly:
+Start every release by reviewing the side-effect-free plan:
+
+```sh
+make deploy-all-plan
+make deploy-all-plan DEPLOY_ALL_PLAN_FORMAT=json
+```
+
+The planner reads the current version, validates every public option, resolves
+the requested next version/build, and prints the exact channel and step
+selection. It does not require `main` or deployment credentials and does not
+run Git mutations, quality gates, builds, SSH, or uploads. Unknown booleans and
+enum values fail instead of behaving like a disabled option.
+
+`make deploy-all` is the aggregate release command. The current artifact flow
+always builds the macOS app locally, so its supported host is macOS. Windows and
+Linux artifacts can come from a native workflow, GitHub Actions, or an existing
+release directory according to the selected source. Provide remote values
+explicitly:
 
 ```sh
 make deploy-all \
+  DEPLOY_ENV=staging \
   REMOTE_DEPLOY_SSH_KEY=/path/to/private-key \
   REMOTE_DEPLOY_USER=deploy \
   REMOTE_DEPLOY_HOST=example.com \
@@ -276,22 +292,65 @@ make deploy-all \
   WEB_DEPLOY_DEST=/srv/aonw/demo
 ```
 
-The helper expects a clean `main` checkout and pushes `main` before release
-work starts. Steamworks and Google Play uploads are disabled by default; enable
-each destination explicitly after reviewing the release inputs.
+Before the first quality gate or version commit, preflight requires a clean
+`main`, validates the complete plan, host, credentials, destinations,
+toolchains, Android signing setup, and selected artifact sources. The flow then:
+
+1. runs the full quality gate on the current revision;
+2. creates one version/build commit and runs the gate again;
+3. applies the `off`, `best-effort`, or `required` iOS archive policy;
+4. pushes the reviewed release commit to `origin/main`;
+5. prepares desktop, Android, and public-download artifacts;
+6. deploys the explicitly selected backend environment and verifies readiness;
+7. performs only the explicitly enabled store actions;
+8. promotes downloads, the homepage, and the web client, then runs final health
+   checks.
+
+Backend deployment therefore precedes client publication. `best-effort` skips
+iOS only for a recognized missing environment (non-macOS host, no Flutter or
+Xcode, or no workspace); once the environment is available, a build/signing
+failure is fatal. Steam preparation and upload are fail-fast in one shell, so a
+failed prepare cannot fall through to an upload using stale SteamPipe content.
+
+Steamworks, Google Play, and itch.io are all disabled by default. Setting
+`ITCH_TARGET` alone does not publish anything; `DEPLOY_ALL_ITCH=1` is required.
+Google Play validate-only runs are reported as validation and never as a
+published release.
 
 ### Release Options
 
-| Variable | Purpose |
-| --- | --- |
-| `DEPLOY_ALL_STEAMWORKS=1` | Upload the prepared desktop build to Steamworks. Default: `0`. |
-| `DEPLOY_ALL_GOOGLE_PLAY=1` | Upload the Android App Bundle to Google Play. Default: `0`. |
-| `DEPLOY_ALL_GOOGLE_PLAY_MODE=closed` | Upload to the configured closed-test track. |
-| `DEPLOY_ALL_GOOGLE_PLAY_MODE=internal` | Upload to a named Play track instead. |
-| `ITCH_TARGET=user/game` | Upload prepared macOS, Windows, and Android builds to itch.io. |
-| `ITCH_INCLUDE_LINUX=1` | Include Linux after the itch Linux channel exists. |
-| `STEAM_INCLUDE_LINUX=1` | Include Linux after the Steam Linux depot exists. |
-| `DOWNLOAD_INCLUDE_LINUX=1` | Publish `aonw-linux.zip` under public downloads. |
+This table mirrors the canonical registry in `tool/release/options.dart`.
+Empty version/build overrides mean “use the documented default”.
+
+| Variable | Allowed values | Default | Purpose |
+| --- | --- | --- | --- |
+| `DEPLOY_ENV` | `staging`, `prod` | `staging` | Backend deployment environment. |
+| `DEPLOY_ALL_IOS_MODE` | `off`, `best-effort`, `required` | `best-effort` | iOS archive policy. |
+| `DEPLOY_ALL_STEAMWORKS` | `0`, `1` | `0` | Enable Steamworks upload. |
+| `DEPLOY_ALL_GOOGLE_PLAY` | `0`, `1` | `0` | Enable the Google Play action. |
+| `DEPLOY_ALL_GOOGLE_PLAY_MODE` | `closed`, `internal`, `alpha`, `beta`, `production` | `closed` | Google Play destination track. |
+| `DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY` | `0`, `1` | `0` | Validate the Play upload without publishing. |
+| `DEPLOY_ALL_ITCH` | `0`, `1` | `0` | Enable itch.io uploads. |
+| `ITCH_TARGET` | `user/game`, empty | empty | Required only when itch.io is enabled. |
+| `STEAM_INCLUDE_LINUX` | `0`, `1` | `0` | Include Linux in the Steam depot. |
+| `ITCH_INCLUDE_LINUX` | `0`, `1` | `0` | Include Linux in itch.io uploads. |
+| `DOWNLOAD_INCLUDE_LINUX` | `0`, `1` | `0` | Include Linux in public downloads. |
+| `STEAM_WINDOWS_SOURCE` | `auto`, `local`, `github`, `existing` | `auto` | Windows artifact source. |
+| `STEAM_LINUX_SOURCE` | `auto`, `local`, `github`, `existing` | `auto` | Linux artifact source. |
+| `VERSION_BUMP` | `patch`, `none` | `patch` | Marketing-version policy. |
+| `NEW_VERSION` | `x.y.z`, empty | empty | Optional semantic-version override. |
+| `NEW_BUILD` | integer greater than current, empty | empty | Optional build override; empty means current + 1. |
+| `DEPLOY_ALL_PLAN_FORMAT` | `human`, `json` | `human` | Planner output format. |
+
+The three Linux flags are independent consumer decisions. Their logical OR
+causes one Linux artifact/folder to be prepared; each destination still receives
+Linux only when its own flag is `1`. In particular, public Linux downloads no
+longer depend on enabling itch.io Linux.
+
+The current slice makes planning and preflight strict and moves the backend
+before client publication. A content-addressed release manifest, immutable
+server image promotion, resumable partial releases, and automated rollback are
+the next delivery stage; this command does not yet claim those guarantees.
 
 ### Public Downloads
 

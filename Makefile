@@ -74,7 +74,10 @@ REMOTE_DEPLOY_PATH ?=
 HOMEPAGE_SOURCE_DIR ?= deploy/homepage
 HOMEPAGE_BUILD_DIR ?= build/homepage
 IOS_API_BASE_URL ?= https://api.aonw.net
-IOS_ARCHIVE_ON_DEPLOY ?= auto
+DEPLOY_ALL_IOS_MODE ?= best-effort
+# Removed aggregate-release option. A non-empty legacy value is rejected by
+# deploy-all-plan so an old invocation cannot silently change behavior.
+IOS_ARCHIVE_ON_DEPLOY ?=
 IOS_ARCHIVE_WORKSPACE ?= ios/Runner.xcworkspace
 IOS_ARCHIVE_SCHEME ?= Runner
 IOS_ARCHIVE_CONFIGURATION ?= Release
@@ -158,10 +161,15 @@ DOWNLOAD_MACOS_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_MACOS_FILE)
 DOWNLOAD_WINDOWS_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_WINDOWS_FILE)
 DOWNLOAD_LINUX_ZIP ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_LINUX_FILE)
 DOWNLOAD_ANDROID_APK ?= $(DOWNLOAD_BUILD_DIR)/$(DOWNLOAD_ANDROID_FILE)
-DOWNLOAD_INCLUDE_LINUX ?= $(ITCH_INCLUDE_LINUX)
+DOWNLOAD_INCLUDE_LINUX ?= 0
+DEPLOY_ENV ?= staging
 DEPLOY_ALL_STEAMWORKS ?= 0
 DEPLOY_ALL_GOOGLE_PLAY ?= 0
 DEPLOY_ALL_GOOGLE_PLAY_MODE ?= closed
+DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY ?= 0
+DEPLOY_ALL_ITCH ?= 0
+DEPLOY_ALL_PLAN_FORMAT ?= human
+DEPLOY_ALL_INCLUDE_LINUX = $(if $(filter 1,$(STEAM_INCLUDE_LINUX) $(ITCH_INCLUDE_LINUX) $(DOWNLOAD_INCLUDE_LINUX)),1,0)
 
 # bump-version: updates the marketing version and build number in pubspec.yaml,
 # iOS Runner MARKETING_VERSION/CURRENT_PROJECT_VERSION, and the Windows fallback
@@ -173,6 +181,8 @@ PUBSPEC ?= pubspec.yaml
 PBXPROJ ?= ios/Runner.xcodeproj/project.pbxproj
 WINDOWS_RC ?= windows/runner/Runner.rc
 VERSION_BUMP ?= patch
+NEW_VERSION ?=
+NEW_BUILD ?=
 RELEASE_VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' "$(PUBSPEC)" 2>/dev/null | head -n 1)
 ENV_RELEASE_CHANNEL ?= $(shell awk -F= '/^AONW_RELEASE_CHANNEL=/{print $$2; exit}' .env 2>/dev/null)
 AONW_APP_VERSION ?= $(RELEASE_VERSION)
@@ -180,13 +190,14 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-homepage build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
 	@echo ""
 	@echo "Quick release flow:"
-	@echo "  make deploy-all    Bump build, archive iOS if possible, push, then deploy all"
+	@echo "  make deploy-all-plan Validate inputs and print the release plan without mutations"
+	@echo "  make deploy-all    Preflight, bump, prepare, deploy backend, publish, and verify"
 	@echo "  make deploy steam  Build Steam macOS + Windows ZIPs into dist/"
 	@echo ""
 	@echo "Individual targets:"
@@ -232,7 +243,7 @@ help:
 	@echo "  make steam-upload LOCAL: upload prepared SteamPipe content with steamcmd"
 	@echo "  make deploy-steam LOCAL: build macOS, use Windows ZIP from dist/, upload Steam build"
 	@echo "  make itch         LOCAL: build/download Windows/macOS/Android artifacts and upload to itch.io"
-	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=1 DEPLOY_ALL_GOOGLE_PLAY=1  Explicitly enable Steamworks/Google Play uploads"
+	@echo "  make deploy-all DEPLOY_ALL_STEAMWORKS=1 DEPLOY_ALL_GOOGLE_PLAY=1 DEPLOY_ALL_ITCH=1  Explicitly enable store uploads"
 	@echo "  make bump-version  Bump marketing/build version in pubspec.yaml + platform files"
 	@echo "  make build         Build server image"
 	@echo "  make server-test   LOCAL: analyze server and run non-integration Dart tests"
@@ -297,10 +308,11 @@ help:
 	@echo "  WEB_DEPLOY_DEST=/path         deploy-web only. Required"
 	@echo "  HOMEPAGE_DEPLOY_DEST=/path    deploy-homepage only. Required"
 	@echo "  DOWNLOAD_DEPLOY_DEST=/path    deploy-downloads only. Default: HOMEPAGE_DEPLOY_DEST/download"
-	@echo "  DOWNLOAD_INCLUDE_LINUX=1      publish aonw-linux.zip too. Default: $(DOWNLOAD_INCLUDE_LINUX)"
+	@echo "  DOWNLOAD_INCLUDE_LINUX=0|1    publish aonw-linux.zip too. Default: $(DOWNLOAD_INCLUDE_LINUX)"
 	@echo "  DOWNLOAD_BASE_URL=https://... public download URL. Default: $(DOWNLOAD_BASE_URL)"
 	@echo "  REMOTE_DEPLOY_PATH=/path      deploy-all remote repo path. Required"
-	@echo "  IOS_ARCHIVE_ON_DEPLOY=auto|1|0 deploy-all archive behavior. Default: $(IOS_ARCHIVE_ON_DEPLOY)"
+	@echo "  DEPLOY_ENV=staging|prod       deploy-all backend environment. Default: $(DEPLOY_ENV)"
+	@echo "  DEPLOY_ALL_IOS_MODE=off|best-effort|required Default: $(DEPLOY_ALL_IOS_MODE)"
 	@echo "  IOS_API_BASE_URL=https://...  archive-ios only. Default: $(IOS_API_BASE_URL)"
 	@echo "  ANDROID_API_BASE_URL=https://... android-release only. Default: $(ANDROID_API_BASE_URL)"
 	@echo "  ANDROID_JAVA_HOME=/path/to/jdk android-release only. Default: $(ANDROID_JAVA_HOME)"
@@ -319,26 +331,29 @@ help:
 	@echo "  STEAM_API_BASE_URL=https://... Steam builds only. Default: $(STEAM_API_BASE_URL)"
 	@echo "  STEAM_WINDOWS_SOURCE=auto|local|github|existing Steam Windows source. Default: $(STEAM_WINDOWS_SOURCE)"
 	@echo "  STEAM_LINUX_SOURCE=auto|local|github|existing Steam Linux source. Default: $(STEAM_LINUX_SOURCE)"
-	@echo "  STEAM_INCLUDE_LINUX=1       include Linux ZIP/depot in Steam prepare/upload. Default: $(STEAM_INCLUDE_LINUX)"
+	@echo "  STEAM_INCLUDE_LINUX=0|1     include Linux ZIP/depot in Steam prepare/upload. Default: $(STEAM_INCLUDE_LINUX)"
 	@echo "  STEAM_LINUX_DEPOT_ID=...    Linux depot for STEAM_INCLUDE_LINUX=1. Default: $(STEAM_LINUX_DEPOT_ID)"
 	@echo "  STEAM_DEPLOY_DIR=/path        SteamPipe working dir. Default: $(STEAM_DEPLOY_DIR)"
 	@echo "  STEAM_WINDOWS_DIST_ZIP=path   Windows ZIP/artifact for steam-prepare-from-dist. Default: $(STEAM_WINDOWS_DIST_ZIP)"
 	@echo "  STEAM_LINUX_DIST_ZIP=path     Linux ZIP/artifact for steam-prepare-from-dist. Default: $(STEAM_LINUX_DIST_ZIP)"
 	@echo "  STEAM_USER=user               SteamCMD username. Default: $(STEAM_USER)"
 	@echo "  STEAM_BUILD_DESC=text         Steam build description. Default: Build N - x.y.z release"
-	@echo "  ITCH_TARGET=user/game         itch/deploy-all only. Required for itch upload"
+	@echo "  ITCH_TARGET=user/game|empty   required only with DEPLOY_ALL_ITCH=1"
 	@echo "  ITCH_MACOS_CHANNEL=macos      itch macOS channel. Default: $(ITCH_MACOS_CHANNEL)"
 	@echo "  ITCH_WINDOWS_CHANNEL=windows  itch Windows channel. Default: $(ITCH_WINDOWS_CHANNEL)"
-	@echo "  ITCH_INCLUDE_LINUX=1          include Linux folder in itch prepare/upload. Default: $(ITCH_INCLUDE_LINUX)"
+	@echo "  ITCH_INCLUDE_LINUX=0|1        include Linux folder in itch prepare/upload. Default: $(ITCH_INCLUDE_LINUX)"
 	@echo "  ITCH_LINUX_CHANNEL=linux      itch Linux channel. Default: $(ITCH_LINUX_CHANNEL)"
 	@echo "  ITCH_ANDROID_CHANNEL=android  itch Android channel. Default: $(ITCH_ANDROID_CHANNEL)"
 	@echo "  ITCH_USER_VERSION=x.y.z+n     itch build version. Default: $(ITCH_USER_VERSION)"
-	@echo "  DEPLOY_ALL_STEAMWORKS=1       deploy-all uploads prepared build to Steamworks. Default: $(DEPLOY_ALL_STEAMWORKS)"
-	@echo "  DEPLOY_ALL_GOOGLE_PLAY=1      deploy-all uploads Android .aab to Google Play. Default: $(DEPLOY_ALL_GOOGLE_PLAY)"
+	@echo "  DEPLOY_ALL_STEAMWORKS=0|1     deploy-all Steamworks upload. Default: $(DEPLOY_ALL_STEAMWORKS)"
+	@echo "  DEPLOY_ALL_GOOGLE_PLAY=0|1    deploy-all Google Play action. Default: $(DEPLOY_ALL_GOOGLE_PLAY)"
 	@echo "  DEPLOY_ALL_GOOGLE_PLAY_MODE=closed|internal|alpha|beta|production Google Play mode. Default: $(DEPLOY_ALL_GOOGLE_PLAY_MODE)"
+	@echo "  DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY=0|1 validate without publishing. Default: $(DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY)"
+	@echo "  DEPLOY_ALL_ITCH=0|1          deploy-all itch.io upload; requires ITCH_TARGET. Default: $(DEPLOY_ALL_ITCH)"
+	@echo "  DEPLOY_ALL_PLAN_FORMAT=human|json deploy-all-plan output. Default: $(DEPLOY_ALL_PLAN_FORMAT)"
 	@echo "  VERSION_BUMP=patch|none       bump-version/deploy-all default: $(VERSION_BUMP)"
-	@echo "  NEW_VERSION=x.y.z             bump-version/deploy-all only. Overrides VERSION_BUMP"
-	@echo "  NEW_BUILD=N                   bump-version/deploy-all only. Default: current+1"
+	@echo "  NEW_VERSION=x.y.z|empty       optional override; empty follows VERSION_BUMP"
+	@echo "  NEW_BUILD=integer>current|empty optional override; empty means current+1"
 
 profile-check:
 	@case "$(PROFILE)" in \
@@ -838,21 +853,25 @@ archive-ios:
 	open -a Xcode "$$archive_path"
 
 archive-ios-if-possible:
-	@if [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "0" ]; then \
-		echo "Skipping iOS archive because IOS_ARCHIVE_ON_DEPLOY=0."; \
-	elif [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "auto" ] && [ "$$(uname -s)" != "Darwin" ]; then \
-		echo "Skipping iOS archive: Xcode archives are only available on macOS."; \
-	elif [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "auto" ] && ! command -v xcodebuild >/dev/null; then \
-		echo "Skipping iOS archive: xcodebuild is not available."; \
-	elif [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "auto" ] && ! command -v flutter >/dev/null; then \
-		echo "Skipping iOS archive: flutter SDK is not available."; \
-	elif [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "auto" ] && [ ! -d "$(IOS_ARCHIVE_WORKSPACE)" ]; then \
-		echo "Skipping iOS archive: $(IOS_ARCHIVE_WORKSPACE) not found."; \
-	elif [ "$(IOS_ARCHIVE_ON_DEPLOY)" = "auto" ]; then \
-		$(MAKE) --no-print-directory archive-ios || echo "Skipping iOS archive: archive-ios failed in auto mode."; \
-	else \
-		$(MAKE) --no-print-directory archive-ios; \
-	fi
+	@set -e; \
+	mode="$(DEPLOY_ALL_IOS_MODE)"; \
+	case "$$mode" in \
+		off) echo "Skipping iOS archive because DEPLOY_ALL_IOS_MODE=off." ;; \
+		best-effort) \
+			if [ "$$(uname -s)" != "Darwin" ]; then \
+				echo "Skipping iOS archive: Xcode archives are only available on macOS."; \
+			elif ! command -v xcodebuild >/dev/null; then \
+				echo "Skipping iOS archive: xcodebuild is not available."; \
+			elif ! command -v flutter >/dev/null; then \
+				echo "Skipping iOS archive: flutter SDK is not available."; \
+			elif [ ! -d "$(IOS_ARCHIVE_WORKSPACE)" ]; then \
+				echo "Skipping iOS archive: $(IOS_ARCHIVE_WORKSPACE) not found."; \
+			else \
+				$(MAKE) --no-print-directory archive-ios; \
+			fi ;; \
+		required) $(MAKE) --no-print-directory archive-ios ;; \
+		*) echo "Invalid DEPLOY_ALL_IOS_MODE=$$mode. Use off, best-effort, or required."; exit 1 ;; \
+	esac
 
 android-keystore:
 	@test -n "$(ANDROID_UPLOAD_KEYSTORE)" || { echo "ANDROID_UPLOAD_KEYSTORE is required."; exit 1; }
@@ -954,6 +973,7 @@ android-upload-aab: android-play-preflight
 	@unzip -p "$(ANDROID_RELEASE_BUNDLE)" 'base/lib/*/libapp.so' | strings | rg -F "$(ANDROID_API_BASE_URL)" >/dev/null
 	@echo "Uploading $(ANDROID_RELEASE_BUNDLE) to Google Play track $(ANDROID_PLAY_TRACK)..."
 	@set -e; \
+	case "$(ANDROID_PLAY_VALIDATE_ONLY)" in 0|1) ;; *) echo "ANDROID_PLAY_VALIDATE_ONLY must be 0 or 1."; exit 1 ;; esac; \
 	supply_args="$(ANDROID_PLAY_SUPPLY_ARGS)"; \
 	if [ "$(ANDROID_PLAY_VALIDATE_ONLY)" = "1" ]; then supply_args="$$supply_args --validate_only true"; fi; \
 	JAVA_HOME="$(ANDROID_JAVA_HOME)" $(ANDROID_PLAY_FASTLANE) supply \
@@ -967,7 +987,11 @@ android-upload-aab: android-play-preflight
 	  --skip_upload_images true \
 	  --skip_upload_screenshots true \
 	  $$supply_args
-	@echo "Google Play upload finished: package=$(ANDROID_PACKAGE_NAME), track=$(ANDROID_PLAY_TRACK)"
+	@if [ "$(ANDROID_PLAY_VALIDATE_ONLY)" = "1" ]; then \
+		echo "Google Play validation finished; no release was published: package=$(ANDROID_PACKAGE_NAME), track=$(ANDROID_PLAY_TRACK)"; \
+	else \
+		echo "Google Play upload finished: package=$(ANDROID_PACKAGE_NAME), track=$(ANDROID_PLAY_TRACK)"; \
+	fi
 
 android-upload-closed:
 	@$(MAKE) --no-print-directory android-upload-aab ANDROID_PLAY_TRACK="$(ANDROID_PLAY_CLOSED_TRACK)"
@@ -1468,6 +1492,8 @@ bump-version:
 	test "$$expected_marketing_count" -gt 0 || { echo "No MARKETING_VERSION = $$current_name lines found in $(PBXPROJ)"; exit 1; }; \
 	new_build="$(NEW_BUILD)"; \
 	if [ -z "$$new_build" ]; then new_build=$$((current_build + 1)); fi; \
+	printf '%s\n' "$$new_build" | grep -Eq '^[1-9][0-9]*$$' || { echo "NEW_BUILD must be a positive integer without leading zeroes: $$new_build"; exit 1; }; \
+	test "$$new_build" -gt "$$current_build" || { echo "NEW_BUILD ($$new_build) must be greater than current build ($$current_build)."; exit 1; }; \
 	new_name="$(NEW_VERSION)"; \
 	if [ -z "$$new_name" ]; then \
 		case "$(VERSION_BUMP)" in \
@@ -1482,11 +1508,7 @@ bump-version:
 			*) echo "Invalid VERSION_BUMP=$(VERSION_BUMP). Use patch or none."; exit 1 ;; \
 		esac; \
 	fi; \
-	case "$$new_name" in *+*) echo "NEW_VERSION must not contain +build metadata: $$new_name"; exit 1;; esac; \
-	if [ "$$new_name" = "$$current_name" ] && [ "$$new_build" = "$$current_build" ]; then \
-		echo "Version already set to $$new_name+$$new_build; skipping version commit."; \
-		exit 0; \
-	fi; \
+	printf '%s\n' "$$new_name" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$$' || { echo "NEW_VERSION must be semantic x.y.z without leading zeroes or metadata: $$new_name"; exit 1; }; \
 	echo "Bumping version $$current_name+$$current_build -> $$new_name+$$new_build..."; \
 	sed -i.bak "s/^version:.*$$/version: $$new_name+$$new_build/" "$(PUBSPEC)" && rm "$(PUBSPEC).bak"; \
 	sed -i.bak "s/CURRENT_PROJECT_VERSION = $$current_build;/CURRENT_PROJECT_VERSION = $$new_build;/g; s/MARKETING_VERSION = $$current_name;/MARKETING_VERSION = $$new_name;/g" "$(PBXPROJ)" && rm "$(PBXPROJ).bak"; \
@@ -1513,70 +1535,157 @@ bump-version:
 	fi; \
 	echo "bump-version finished. Commit ready to push."
 
-# Local + remote orchestration. Pushes main to origin, prepares Steam desktop
-# ZIPs, itch.io desktop folders, Android artifacts, and public download files.
-# Uploads to Steamworks and Google Play only when explicitly enabled, optionally
-# uploads to itch.io when ITCH_TARGET is set, asks the staging server to make deploy
-# (server image rebuild + restart + health), then deploys the static homepage,
-# public downloads, and demo web app locally.
-# Aborts on any step failure.
-deploy-all:
+# Pure planner: validates the complete public option contract and prints the
+# selected release without checking credentials, changing Git, or running a
+# build/upload command. It is intentionally usable from feature branches.
+deploy-all-plan:
+	@command -v dart >/dev/null || { echo "dart is required for deploy-all-plan."; exit 1; }
+	@test -z "$(IOS_ARCHIVE_ON_DEPLOY)" || { echo "IOS_ARCHIVE_ON_DEPLOY was removed. Use DEPLOY_ALL_IOS_MODE=off|best-effort|required."; exit 1; }
+	@set -e; \
+	current_version=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
+	current_build=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
+	test -n "$$current_version" || { echo "Could not parse current version from $(PUBSPEC)."; exit 1; }; \
+	test -n "$$current_build" || { echo "Could not parse current build from $(PUBSPEC)."; exit 1; }; \
+	case "$$(uname -s 2>/dev/null || echo unknown)" in \
+		Darwin) host=macos ;; \
+		Linux*) host=linux ;; \
+		MINGW*|MSYS*|CYGWIN*) host=windows ;; \
+		*) echo "Unsupported deploy-all host."; exit 1 ;; \
+	esac; \
+	gh_available=0; if command -v gh >/dev/null; then gh_available=1; fi; \
+	windows_artifact_available=0; if [ -d "$(STEAM_WINDOWS_RELEASE_DIR)" ]; then windows_artifact_available=1; fi; \
+	linux_artifact_available=0; if [ -d "$(STEAM_LINUX_RELEASE_DIR)" ]; then linux_artifact_available=1; fi; \
+	dart tool/release/deploy_all_plan.dart \
+	  --environment "$(DEPLOY_ENV)" \
+	  --host "$$host" \
+	  --steam "$(DEPLOY_ALL_STEAMWORKS)" \
+	  --google "$(DEPLOY_ALL_GOOGLE_PLAY)" \
+	  --google-validate-only "$(DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY)" \
+	  --itch "$(DEPLOY_ALL_ITCH)" \
+	  --itch-target "$(ITCH_TARGET)" \
+	  --steam-linux "$(STEAM_INCLUDE_LINUX)" \
+	  --itch-linux "$(ITCH_INCLUDE_LINUX)" \
+	  --download-linux "$(DOWNLOAD_INCLUDE_LINUX)" \
+	  --ios "$(DEPLOY_ALL_IOS_MODE)" \
+	  --google-track "$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" \
+	  --windows-source "$(STEAM_WINDOWS_SOURCE)" \
+	  --linux-source "$(STEAM_LINUX_SOURCE)" \
+	  --github-cli-available "$$gh_available" \
+	  --windows-artifact-available "$$windows_artifact_available" \
+	  --linux-artifact-available "$$linux_artifact_available" \
+	  --version-bump "$(VERSION_BUMP)" \
+	  --current-version "$$current_version" \
+	  --current-build "$$current_build" \
+	  --new-version "$(NEW_VERSION)" \
+	  --new-build "$(NEW_BUILD)" \
+	  --format "$(DEPLOY_ALL_PLAN_FORMAT)"
+
+# Environment and credential checks that must pass before release-check or the
+# version commit. It deliberately performs no publication or remote mutation.
+deploy-all-preflight:
+	@$(MAKE) --no-print-directory deploy-all-plan
 	@$(MAKE) --no-print-directory preflight-release
-	@echo "Running mandatory release quality gate..."
-	@$(MAKE) --no-print-directory release-check
+	@for command in flutter ssh rsync rg zip unzip ditto butler; do \
+		command -v "$$command" >/dev/null || { echo "$$command is required for deploy-all."; exit 1; }; \
+	done
 	@test -n "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "REMOTE_DEPLOY_SSH_KEY is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_USER)" || { echo "REMOTE_DEPLOY_USER is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_HOST)" || { echo "REMOTE_DEPLOY_HOST is required."; exit 1; }
 	@test -n "$(REMOTE_DEPLOY_PATH)" || { echo "REMOTE_DEPLOY_PATH is required."; exit 1; }
 	@test -f "$(REMOTE_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(REMOTE_DEPLOY_SSH_KEY)"; exit 1; }
-	@echo "[1/12] Bumping build version..."
+	@test -n "$(WEB_DEPLOY_SSH_KEY)" || { echo "WEB_DEPLOY_SSH_KEY is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_USER)" || { echo "WEB_DEPLOY_USER is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_HOST)" || { echo "WEB_DEPLOY_HOST is required."; exit 1; }
+	@test -n "$(WEB_DEPLOY_DEST)" || { echo "WEB_DEPLOY_DEST is required."; exit 1; }
+	@test -n "$(HOMEPAGE_DEPLOY_DEST)" || { echo "HOMEPAGE_DEPLOY_DEST is required."; exit 1; }
+	@test -n "$(DOWNLOAD_DEPLOY_DEST)" || { echo "DOWNLOAD_DEPLOY_DEST is required."; exit 1; }
+	@test -f "$(WEB_DEPLOY_SSH_KEY)" || { echo "SSH key not found: $(WEB_DEPLOY_SSH_KEY)"; exit 1; }
+	@$(MAKE) --no-print-directory android-preflight
+	@if [ "$(DEPLOY_ALL_IOS_MODE)" = "required" ]; then \
+		command -v xcodebuild >/dev/null || { echo "xcodebuild is required for DEPLOY_ALL_IOS_MODE=required."; exit 1; }; \
+		test -d "$(IOS_ARCHIVE_WORKSPACE)" || { echo "Xcode workspace not found: $(IOS_ARCHIVE_WORKSPACE)"; exit 1; }; \
+	fi
+	@if [ "$(DEPLOY_ALL_STEAMWORKS)" = "1" ]; then \
+		command -v "$(STEAMCMD)" >/dev/null || { echo "$(STEAMCMD) is required for Steamworks upload."; exit 1; }; \
+	fi
+	@if [ "$(DEPLOY_ALL_GOOGLE_PLAY)" = "1" ]; then \
+		case "$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" in closed) track="$(ANDROID_PLAY_CLOSED_TRACK)" ;; *) track="$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" ;; esac; \
+		$(MAKE) --no-print-directory android-play-preflight ANDROID_PLAY_TRACK="$$track"; \
+	fi
+	@set -e; \
+	case "$(STEAM_WINDOWS_SOURCE)" in \
+		github) command -v gh >/dev/null || { echo "gh is required for STEAM_WINDOWS_SOURCE=github."; exit 1; } ;; \
+		existing) test -d "$(STEAM_WINDOWS_RELEASE_DIR)" || { echo "Missing Windows release directory: $(STEAM_WINDOWS_RELEASE_DIR)"; exit 1; } ;; \
+		auto) command -v gh >/dev/null || test -d "$(STEAM_WINDOWS_RELEASE_DIR)" || { echo "Windows source auto needs gh or $(STEAM_WINDOWS_RELEASE_DIR)."; exit 1; } ;; \
+	esac; \
+	if [ "$(DEPLOY_ALL_INCLUDE_LINUX)" = "1" ]; then \
+		case "$(STEAM_LINUX_SOURCE)" in \
+			github) command -v gh >/dev/null || { echo "gh is required for STEAM_LINUX_SOURCE=github."; exit 1; } ;; \
+			existing) test -d "$(STEAM_LINUX_RELEASE_DIR)" || { echo "Missing Linux release directory: $(STEAM_LINUX_RELEASE_DIR)"; exit 1; } ;; \
+			auto) command -v gh >/dev/null || test -d "$(STEAM_LINUX_RELEASE_DIR)" || { echo "Linux source auto needs gh or $(STEAM_LINUX_RELEASE_DIR)."; exit 1; } ;; \
+		esac; \
+	fi
+
+# Local + remote orchestration. Every public option and required capability is
+# validated before the quality gate or version commit. Artifacts are prepared,
+# the backend is deployed and checked, then explicitly enabled stores and the
+# static clients are published. Aborts on any step failure.
+deploy-all:
+	@$(MAKE) --no-print-directory deploy-all-preflight
+	@echo "Running mandatory release quality gate..."
+	@$(MAKE) --no-print-directory release-check
+	@echo "[1/13] Bumping build version..."
 	@$(MAKE) --no-print-directory bump-version NEW_VERSION="$(NEW_VERSION)" NEW_BUILD="$(NEW_BUILD)"
 	@echo "Re-running mandatory release quality gate for the release commit..."
 	@$(MAKE) --no-print-directory release-check
-	@echo "[2/12] Archiving iOS build for Xcode Organizer if possible..."
+	@echo "[2/13] Applying the selected iOS archive policy..."
 	@$(MAKE) --no-print-directory archive-ios-if-possible
-	@echo "[3/12] Pushing local main to origin..."
+	@echo "[3/13] Pushing local main to origin..."
 	@git push origin main
-	@echo "[4/12] Preparing Steam desktop ZIPs, itch desktop folders, itch Android APK, and public downloads..."
-	@$(MAKE) --no-print-directory steam
-	@$(MAKE) --no-print-directory itch-desktop
+	@echo "[4/13] Preparing desktop, Android, and public-download artifacts..."
+	@$(MAKE) --no-print-directory steam STEAM_INCLUDE_LINUX="$(DEPLOY_ALL_INCLUDE_LINUX)"
+	@$(MAKE) --no-print-directory itch-desktop ITCH_INCLUDE_LINUX="$(DEPLOY_ALL_INCLUDE_LINUX)"
 	@$(MAKE) --no-print-directory android-build-itch
 	@$(MAKE) --no-print-directory download-package
-	@echo "[5/12] Uploading Steamworks build if enabled..."
-	@if [ "$(DEPLOY_ALL_STEAMWORKS)" = "1" ]; then \
+	@if [ "$(DEPLOY_ALL_GOOGLE_PLAY)" = "1" ]; then $(MAKE) --no-print-directory android-build-aab; fi
+	@echo "[5/13] Triggering the $(DEPLOY_ENV) backend deploy via SSH..."
+	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
+	  'cd "$(REMOTE_DEPLOY_PATH)" && make deploy PROFILE="$(DEPLOY_ENV)" BRANCH=main'
+	@echo "[6/13] Verifying backend readiness before client publication..."
+	@$(MAKE) --no-print-directory health
+	@echo "[7/13] Uploading Steamworks build if enabled..."
+	@set -e; \
+	if [ "$(DEPLOY_ALL_STEAMWORKS)" = "1" ]; then \
 		$(MAKE) --no-print-directory steam-prepare-from-dist; \
 		$(MAKE) --no-print-directory steam-upload; \
 	else \
-		echo "DEPLOY_ALL_STEAMWORKS=$(DEPLOY_ALL_STEAMWORKS); skipping Steamworks upload."; \
+		echo "DEPLOY_ALL_STEAMWORKS=0; skipping Steamworks upload."; \
 	fi
-	@echo "[6/12] Uploading Google Play build if enabled..."
+	@echo "[8/13] Running the selected Google Play action if enabled..."
 	@if [ "$(DEPLOY_ALL_GOOGLE_PLAY)" = "1" ]; then \
 		case "$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" in \
 			closed) \
-				$(MAKE) --no-print-directory android-deploy-closed ;; \
+				$(MAKE) --no-print-directory android-upload-closed ANDROID_PLAY_VALIDATE_ONLY="$(DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY)" ;; \
 			*) \
-				$(MAKE) --no-print-directory android-deploy ANDROID_PLAY_TRACK="$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" ;; \
+				$(MAKE) --no-print-directory android-upload-aab ANDROID_PLAY_TRACK="$(DEPLOY_ALL_GOOGLE_PLAY_MODE)" ANDROID_PLAY_VALIDATE_ONLY="$(DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY)" ;; \
 		esac; \
 	else \
-		echo "DEPLOY_ALL_GOOGLE_PLAY=$(DEPLOY_ALL_GOOGLE_PLAY); skipping Google Play upload."; \
+		echo "DEPLOY_ALL_GOOGLE_PLAY=0; skipping Google Play."; \
 	fi
-	@echo "[7/12] Uploading itch.io artifacts if configured..."
-	@if [ -n "$(ITCH_TARGET)" ]; then \
+	@echo "[9/13] Uploading itch.io artifacts if explicitly enabled..."
+	@if [ "$(DEPLOY_ALL_ITCH)" = "1" ]; then \
 		echo "Uploading itch.io artifacts to target $(ITCH_TARGET)..."; \
 		$(MAKE) --no-print-directory itch-upload; \
 	else \
-		echo "ITCH_TARGET not set; leaving itch.io desktop folders in $(ITCH_BUILD_DIR)/ and Android APK in $(ITCH_DIST_DIR)/."; \
+		echo "DEPLOY_ALL_ITCH=0; skipping itch.io upload."; \
 	fi
-	@echo "[8/12] Triggering server deploy via SSH..."
-	@ssh -i "$(REMOTE_DEPLOY_SSH_KEY)" $(REMOTE_DEPLOY_USER)@$(REMOTE_DEPLOY_HOST) \
-	  'cd "$(REMOTE_DEPLOY_PATH)" && make deploy'
-	@echo "[9/12] Building and uploading static root homepage..."
+	@echo "[10/13] Building and uploading static root homepage..."
 	@$(MAKE) --no-print-directory deploy-homepage
-	@echo "[10/12] Uploading public download artifacts..."
+	@echo "[11/13] Uploading public download artifacts..."
 	@$(MAKE) --no-print-directory deploy-download-files
-	@echo "[11/12] Building and uploading demo web bundle..."
+	@echo "[12/13] Building and uploading demo web bundle..."
 	@$(MAKE) --no-print-directory deploy-web
-	@echo "[12/12] Final health checks..."
+	@echo "[13/13] Final health checks..."
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage
