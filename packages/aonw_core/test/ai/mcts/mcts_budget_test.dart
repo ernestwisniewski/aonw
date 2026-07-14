@@ -3,6 +3,20 @@ import 'package:test/test.dart';
 
 void main() {
   group('MctsBudget', () {
+    test('iteration-only budget ignores elapsed time', () {
+      final budget = MctsBudget.iterations(3);
+
+      expect(budget.exhausted(0, const Duration(days: 1)), isFalse);
+      expect(budget.exhausted(2, const Duration(days: 1)), isFalse);
+      expect(budget.exhausted(3, Duration.zero), isTrue);
+      expect(budget.exhausted(4, Duration.zero), isTrue);
+    });
+
+    test('iteration-only budget requires a positive iteration count', () {
+      expect(() => MctsBudget.iterations(0), throwsArgumentError);
+      expect(() => MctsBudget.iterations(-1), throwsArgumentError);
+    });
+
     test('keeps running until minimum iterations are reached', () {
       const budget = MctsBudget(wallClock: Duration.zero, minIterations: 3);
 

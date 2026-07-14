@@ -35,8 +35,8 @@ make ci
 ```
 
 `make ci` runs generated-code drift, formatting, analysis, architecture,
-mutation, and coverage gates plus the generated-client smoke test. CI delegates
-to the same Make targets.
+mutation, deterministic performance, and coverage gates plus the
+generated-client smoke test. CI delegates to the same Make targets.
 
 For a focused analysis pass, run `make analyze`. The four packages compose one
 strict base with ecosystem-specific upstream profiles; see the
@@ -126,6 +126,23 @@ role-specific targets; existing debt in file/type size, callable length,
 nesting, cyclomatic complexity, and cognitive complexity may only shrink. Read
 [Architecture Budgets](docs/architecture-budgets.md) before changing the
 policy or baseline.
+
+### Performance Benchmarks
+
+Run the portable performance gate with:
+
+```sh
+make performance
+```
+
+The harness covers map lookup, event/snapshot persistence, replay, exact-budget
+MCTS, and headless renderer-tree work. CI compares deterministic work metrics
+and output digests; median and p95 timings are observations, not shared-runner
+thresholds. Use `make performance-report` for the full report and
+`make performance-snapshot` only to create a candidate for review. Validate a
+real pinned-device profile report with `make performance-frame-check`. Read
+[Performance Benchmarks](docs/performance-benchmarks.md) before changing a
+workload, policy, baseline, or frame budget.
 
 ### Mutation Testing
 

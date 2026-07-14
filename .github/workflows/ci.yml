@@ -77,6 +77,19 @@ jobs:
         if: matrix.package == 'root'
         run: make --no-print-directory architecture-check
 
+      - name: Check deterministic performance baseline
+        if: matrix.package == 'root'
+        run: make --no-print-directory performance-check
+
+      - name: Upload performance diagnostics
+        if: matrix.package == 'root' && always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: performance-report-${{ github.sha }}
+          path: /tmp/aonw-performance-report.json
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Test
         run: ${{ matrix.test }}
 

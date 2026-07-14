@@ -32,6 +32,12 @@ ARCHITECTURE_RATCHET_REF ?= @{upstream}
 ARCHITECTURE_SNAPSHOT_PATH ?= /tmp/aonw-architecture-baseline.json
 MUTATION_RATCHET_REF ?= @{upstream}
 MUTATION_SNAPSHOT_PATH ?= /tmp/aonw-mutation-baseline.json
+PERFORMANCE_REPORT_PATH ?= /tmp/aonw-performance-report.json
+PERFORMANCE_SNAPSHOT_PATH ?= /tmp/aonw-performance-baseline.json
+PERFORMANCE_FRAME_REPORT_PATH ?= /tmp/aonw-reference-frame-report.json
+PERFORMANCE_FRAME_DEVICE_ID ?=
+PERFORMANCE_BASELINE ?= tool/performance_baseline.json
+PERFORMANCE_POLICY ?= tool/performance_policy.json
 PUB_CACHE ?= $(HOME)/.pub-cache
 SERVERPOD_CLI ?= $(PUB_CACHE)/bin/serverpod
 AONW_SERVERPOD_CRITICAL_E2E_PORT ?=
@@ -190,7 +196,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -208,11 +214,15 @@ help:
 	@echo "  make local-start  LOCAL: start Docker API and seed four reusable multiplayer users"
 	@echo "  make local-multiplayer-smoke LOCAL: verify quickplay, streams, commands, reconnect, and event history"
 	@echo "  make local-down   LOCAL: stop the Docker development stack without deleting data"
-	@echo "  make ci           LOCAL: generated drift, format, analyze, architecture, mutation, and coverage gates"
+	@echo "  make ci           LOCAL: generated drift, static, architecture, mutation, performance, and coverage gates"
 	@echo "  make architecture LOCAL: full Dart census, AST targets, and legacy-debt ratchet"
 	@echo "  make architecture-snapshot LOCAL: write a reviewed architecture baseline candidate to /tmp"
 	@echo "  make mutation     LOCAL: deterministic mutation gate for critical domain and auth code"
 	@echo "  make mutation-snapshot LOCAL: write a reviewed mutation baseline candidate to /tmp"
+	@echo "  make performance  LOCAL: deterministic map, persistence, replay, AI, and renderer performance gate"
+	@echo "  make performance-report LOCAL: write stable metrics and diagnostic timings to /tmp"
+	@echo "  make performance-snapshot LOCAL: write a reviewed stable baseline candidate to /tmp"
+	@echo "  make performance-frame-check LOCAL: validate timings captured on the pinned profile device"
 	@echo "  make coverage     LOCAL: deterministic line coverage, exact ratchet, and 90% diff gate"
 	@echo "  make coverage-snapshot LOCAL: write a reviewed candidate baseline to /tmp"
 	@echo "  make flutter-coverage/core-coverage/server-coverage LOCAL: run one coverage scope"
@@ -284,6 +294,10 @@ help:
 	@echo "  ARCHITECTURE_SNAPSHOT_PATH=/tmp/... Candidate architecture baseline output. Default: $(ARCHITECTURE_SNAPSHOT_PATH)"
 	@echo "  MUTATION_RATCHET_REF=@{upstream} Trusted mutation survivor baseline ref. Default: $(MUTATION_RATCHET_REF)"
 	@echo "  MUTATION_SNAPSHOT_PATH=/tmp/... Candidate mutation baseline output. Default: $(MUTATION_SNAPSHOT_PATH)"
+	@echo "  PERFORMANCE_REPORT_PATH=/tmp/... Full benchmark report output. Default: $(PERFORMANCE_REPORT_PATH)"
+	@echo "  PERFORMANCE_SNAPSHOT_PATH=/tmp/... Candidate stable benchmark baseline. Default: $(PERFORMANCE_SNAPSHOT_PATH)"
+	@echo "  PERFORMANCE_FRAME_REPORT_PATH=/tmp/... Pinned-device frame report input. Default: $(PERFORMANCE_FRAME_REPORT_PATH)"
+	@echo "  PERFORMANCE_FRAME_DEVICE_ID=... Required pinned-device identifier for the frame gate"
 	@echo "  PUB_CACHE=/path/to/cache      Dart global package cache. Default: $(PUB_CACHE)"
 	@echo "  SERVERPOD_CLI=/path/to/serverpod Override the CLI binary. Default: $(SERVERPOD_CLI)"
 	@echo "  AONW_TEST_DATABASE_PASSWORD=... PostgreSQL test password; falls back to SERVERPOD_TEST_DATABASE_PASSWORD, then aonw_dev"
@@ -424,7 +438,7 @@ client-dependencies: toolchain-check
 server-dependencies: toolchain-check
 	@cd server && dart pub get --enforce-lockfile
 
-ci: generated-code-check format-check analyze architecture-check mutation-check coverage-check client-test
+ci: generated-code-check format-check analyze architecture-check mutation-check performance-check coverage-check client-test
 
 format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
@@ -475,6 +489,33 @@ mutation-snapshot: root-dependencies core-dependencies server-dependencies
 		exec dart run tool/check_mutations.dart snapshot > "$(MUTATION_SNAPSHOT_PATH)"; \
 	fi
 	@echo "Wrote mutation baseline candidate to $(MUTATION_SNAPSHOT_PATH)"
+
+performance: performance-check
+
+performance-check: performance-report
+	@dart run tool/check_performance.dart check \
+		--report "$(PERFORMANCE_REPORT_PATH)" \
+		--baseline "$(PERFORMANCE_BASELINE)" \
+		--policy "$(PERFORMANCE_POLICY)"
+
+performance-report: root-dependencies
+	@flutter test --no-pub --reporter=failures-only \
+		--dart-define=AONW_RUN_PERFORMANCE=true \
+		--dart-define=AONW_PERFORMANCE_REPORT="$(PERFORMANCE_REPORT_PATH)" \
+		test/performance/performance_suite_test.dart
+	@test -f "$(PERFORMANCE_REPORT_PATH)"
+	@echo "Wrote performance report to $(PERFORMANCE_REPORT_PATH)"
+
+performance-snapshot: performance-report
+	@dart run tool/check_performance.dart snapshot \
+		--report "$(PERFORMANCE_REPORT_PATH)" > "$(PERFORMANCE_SNAPSHOT_PATH)"
+	@echo "Wrote performance baseline candidate to $(PERFORMANCE_SNAPSHOT_PATH)"
+
+performance-frame-check: root-dependencies
+	@test -n "$(PERFORMANCE_FRAME_DEVICE_ID)" || { echo "PERFORMANCE_FRAME_DEVICE_ID is required."; exit 1; }
+	@dart run tool/check_frame_budget.dart \
+		--report "$(PERFORMANCE_FRAME_REPORT_PATH)" \
+		--device-id "$(PERFORMANCE_FRAME_DEVICE_ID)"
 
 release-check:
 	@$(MAKE) --no-print-directory ci

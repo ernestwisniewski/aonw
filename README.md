@@ -57,7 +57,8 @@ make ci
 ```
 
 `make ci` includes generated-code drift, formatting, analysis, architecture,
-mutation, and coverage gates, plus the generated-client smoke test. The
+mutation, deterministic performance, and coverage gates, plus the
+generated-client smoke test. The
 generated-code gate uses an isolated snapshot of the current workspace, so
 checking root and `aonw_core` build-runner output, localizations, Serverpod
 output, and migrations never rewrites the active checkout. It requires the
@@ -83,6 +84,13 @@ wire format, unit-command decisions, and authentication input validation. The
 gate accepts only real behavioral test failures as kills and keeps an exact
 target/operator census with a historical survivor ratchet; see the
 [mutation-testing policy](docs/mutation-testing.md).
+
+Run `make performance` for deterministic map, persistence, replay, AI, and
+headless renderer workloads. Portable CI gates work counters and output
+fingerprints; headless wall-clock percentiles remain diagnostic. A report from
+the pinned profile device can be enforced with `make performance-frame-check`.
+See the
+[performance benchmark policy](docs/performance-benchmarks.md).
 
 When generator inputs change, regenerate the affected output deliberately in
 the real checkout, review the diff, and commit it:
@@ -180,6 +188,8 @@ Recommended entry points:
   Dart-source census, role-specific targets, and exact legacy-debt ratchet.
 - [docs/mutation-testing.md](docs/mutation-testing.md) for critical mutation
   scopes, deterministic execution, and the survivor ratchet.
+- [docs/performance-benchmarks.md](docs/performance-benchmarks.md) for workload
+  scales, the stable baseline, timing diagnostics, and renderer frame budgets.
 - [docs/adr/README.md](docs/adr/README.md) before changing architecture
   ownership, command semantics, compatibility policy, or deployment identity.
 - `docs/game-design/` for gameplay systems, balance, UX, and

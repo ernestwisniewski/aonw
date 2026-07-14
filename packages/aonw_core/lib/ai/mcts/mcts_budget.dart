@@ -4,12 +4,30 @@ class MctsBudget {
   final Duration wallClock;
   final int? iterationBudget;
   final int minIterations;
+  final bool isIterationOnly;
 
   const MctsBudget({
     required this.wallClock,
     this.iterationBudget,
     this.minIterations = 0,
-  });
+  }) : isIterationOnly = false;
+
+  factory MctsBudget.iterations(int iterations) {
+    if (iterations <= 0) {
+      throw ArgumentError.value(
+        iterations,
+        'iterations',
+        'Must be greater than zero.',
+      );
+    }
+    return MctsBudget._iterationOnly(iterations);
+  }
+
+  const MctsBudget._iterationOnly(int iterations)
+    : wallClock = Duration.zero,
+      iterationBudget = iterations,
+      minIterations = iterations,
+      isIterationOnly = true;
 
   factory MctsBudget.fromConfig({
     required MctsConfig config,
@@ -33,6 +51,7 @@ class MctsBudget {
   }
 
   bool exhausted(int iterations, Duration elapsed) {
+    if (isIterationOnly) return iterations >= this.iterationBudget!;
     if (iterations < minIterations) return false;
     if (wallClock <= Duration.zero || elapsed >= wallClock) return true;
     final iterationBudget = this.iterationBudget;

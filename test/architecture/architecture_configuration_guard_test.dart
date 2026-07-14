@@ -241,6 +241,7 @@ void main() {
       'analyze',
       'architecture-check',
       'mutation-check',
+      'performance-check',
       'coverage-check',
       'client-test',
     ]);

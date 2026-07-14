@@ -14,12 +14,29 @@ void main() {
       final result = search.search(
         rootState: SimulatedState.fromView(_view(), maxPlanningDepth: 1),
         context: _context(),
-        budget: const MctsBudget(wallClock: Duration.zero, minIterations: 12),
+        budget: MctsBudget.iterations(12),
       );
 
       expect(result.iterations, 12);
       expect(result.elapsed, greaterThanOrEqualTo(Duration.zero));
       expect(result.bestActions.single, _FixedGenerator.researchAction);
+    });
+
+    test('preserves minimum iterations for a wall-clock budget', () {
+      final search = MctsSearch(
+        actionGenerator: _FixedGenerator(),
+        simulator: const TracingMctsSimulator(),
+        evaluator: const CommandSequenceEvaluator(),
+        explorationConstant: 1.4,
+      );
+
+      final result = search.search(
+        rootState: SimulatedState.fromView(_view(), maxPlanningDepth: 1),
+        context: _context(),
+        budget: const MctsBudget(wallClock: Duration.zero, minIterations: 7),
+      );
+
+      expect(result.iterations, 7);
     });
   });
 }

@@ -67,7 +67,7 @@ class MctsSearch {
     var evaluationElapsed = Duration.zero;
     var backpropagationElapsed = Duration.zero;
 
-    while (!budget.exhausted(iterations, stopwatch.elapsed)) {
+    while (!budget.exhausted(iterations, _budgetElapsed(budget, stopwatch))) {
       final selectionStopwatch = Stopwatch()..start();
       var node = _select(root, context);
       selectionStopwatch.stop();
@@ -161,3 +161,6 @@ class MctsSearch {
     return List.unmodifiable(actions);
   }
 }
+
+Duration _budgetElapsed(MctsBudget budget, Stopwatch stopwatch) =>
+    budget.isIterationOnly ? Duration.zero : stopwatch.elapsed;

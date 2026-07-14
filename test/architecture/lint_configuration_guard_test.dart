@@ -372,13 +372,13 @@ void main() {
       'analyze',
       'architecture-check',
       'mutation-check',
+      'performance-check',
       'coverage-check',
       'client-test',
     ]);
-    expect(
-      _makeTarget(makefile, 'coverage'),
-      const _MakeTarget(prerequisites: ['coverage-check']),
-    );
+    expect(makefile, contains('performance-check: performance-report'));
+    expect(_makeTarget(makefile, 'coverage').prerequisites, ['coverage-check']);
+    expect(_makeTarget(makefile, 'coverage').recipes, isEmpty);
     expect(_makeTarget(makefile, 'coverage-directory').recipes, [
       '@mkdir -p coverage',
     ]);
