@@ -332,31 +332,6 @@ make itch ITCH_TARGET=your-itch-user/age-of-new-worlds
 Uploading requires `butler` to be installed and authenticated with
 `butler login` or `BUTLER_API_KEY`.
 
-### Game Jolt
-
-Game Jolt uses uploadable build files in packages/releases rather than the
-`butler` folder push flow. `make gamejolt` writes neutral artifacts to `dist/`:
-
-```sh
-make gamejolt GAMEJOLT_INCLUDE_LINUX=1
-```
-
-Upload the generated `aonw-macos.zip`, `aonw-windows.zip`,
-`aonw-linux.zip`, and `aonw-android.apk` manually in the Game Jolt
-package/release dashboard, or upload them locally with GJPush:
-
-```sh
-make deploy-gamejolt \
-  GAMEJOLT_TOKEN="$GJPUSH_TOKEN" \
-  GAMEJOLT_PACKAGE_MACOS=... \
-  GAMEJOLT_PACKAGE_WINDOWS=... \
-  GAMEJOLT_PACKAGE_LINUX=... \
-  GAMEJOLT_PACKAGE_ANDROID=... \
-  GAMEJOLT_INCLUDE_LINUX=1
-```
-
-Package IDs are visible in the Game Jolt manage-package URLs.
-
 ## Platform Builds
 
 Web:
