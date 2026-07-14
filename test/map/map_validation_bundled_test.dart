@@ -116,7 +116,7 @@ void main() {
       for (final mapName in expectedMaxPlayers.keys) {
         final mapData = await _loadBundledMap(mapName);
         final ids = <String>{};
-        final hexes = <CityHex>{};
+        final hexes = <HexCoord>{};
 
         expect(mapData.objectives, isNotEmpty, reason: '$mapName objectives');
         for (final objective in mapData.objectives) {

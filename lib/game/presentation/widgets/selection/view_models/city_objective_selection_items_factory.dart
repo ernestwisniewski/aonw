@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ abstract final class CityObjectiveSelectionItemsFactory {
     ];
   }
 
-  static bool _cityControlsHex(GameCity city, CityHex hex) {
+  static bool _cityControlsHex(GameCity city, HexCoord hex) {
     if (city.occupiesCenter(hex.col, hex.row)) return true;
     return city.controlledHexes.any(
       (controlled) => controlled.col == hex.col && controlled.row == hex.row,

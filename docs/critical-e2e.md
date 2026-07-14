@@ -54,7 +54,7 @@ make critical-e2e-test
 
 The focused live harness uses `aonw_test` on local PostgreSQL and automatically
 selects a free contiguous IPv4-loopback port triplet immediately before it
-starts the server. API, Insights, and web use the base, base + 1, and base + 2.
+starts the server. Its three listeners use the base, base + 1, and base + 2.
 An explicit base-port override is available when a caller already owns a safe
 triplet. The database port defaults to `5432`, but is explicit so the release
 smoke can use an ephemeral Compose port:
@@ -76,8 +76,8 @@ server is launched immediately after allocation. An explicit override is
 validated and passed through the wrapper's sanitized nested Make environment;
 the caller is then responsible for reserving that triplet.
 
-The API, Insights, and web listeners occupy the selected port and the next two
-ports. A dedicated `IOOverrides` adapter validates Serverpod's expected socket
+All three listeners occupy the selected port and the next two ports. A dedicated
+`IOOverrides` adapter validates Serverpod's expected socket
 calls and maps all three wildcard binds to IPv4 loopback. The live scenario
 then probes every non-loopback IPv4 interface and fails if any listener is
 reachable through it. On a host without such an interface the runtime probe is

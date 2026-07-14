@@ -75,7 +75,7 @@ The binding invariants are:
   target before the canary becomes live.
 - Runtime secrets remain outside images and manifests. Root Compose plus the
   required staging/production overlay remains the runtime topology contract;
-  Caddy remains the public ingress contract and Insights remains loopback-only.
+  Caddy remains the public ingress contract.
 
 ## Consequences
 
@@ -124,4 +124,3 @@ integration, and release-SHA guards remain mandatory.
 
 - [Build and deploy runbook](../build-and-deploy.md)
 - [Multiplayer scale-out contract](../multiplayer-scale-out.md)
-- [Serverpod Insights runbook](../serverpod-insights-runbook.md)

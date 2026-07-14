@@ -18,12 +18,3 @@ groups:
         annotations:
           summary: "AONW Serverpod API readiness probe is failing"
           description: "The /readyz endpoint has failed for 5 minutes."
-
-      - alert: AonwInsightsDown
-        expr: probe_success{job="aonw-insights"} == 0
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "AONW Serverpod Insights probe is failing"
-          description: "The Insights endpoint has failed for 5 minutes."

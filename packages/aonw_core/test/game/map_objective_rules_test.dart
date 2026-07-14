@@ -134,7 +134,7 @@ MapObjectiveDefinition _objective({int requiredHoldTurns = 3}) {
   return MapObjectiveDefinition(
     id: 'pass_1',
     type: MapObjectiveType.strategicPass,
-    hex: const CityHex(col: 2, row: 1),
+    hex: const HexCoord(col: 2, row: 1),
     requiredHoldTurns: requiredHoldTurns,
     victoryPoints: 3,
     goldPerTurn: 2,

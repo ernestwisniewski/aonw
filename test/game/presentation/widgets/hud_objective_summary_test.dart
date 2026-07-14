@@ -170,7 +170,7 @@ void main() {
             MapObjectiveDefinition(
               id: 'pass_1',
               type: MapObjectiveType.strategicPass,
-              hex: CityHex(col: 2, row: 1),
+              hex: HexCoord(col: 2, row: 1),
               requiredHoldTurns: 3,
               victoryPoints: 3,
             ),

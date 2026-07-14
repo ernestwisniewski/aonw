@@ -78,6 +78,30 @@ void main() {
       expect(commands, isEmpty);
     });
 
+    test('ignores objectives already controlled by an own city', () {
+      final warrior = _unit('warrior_1');
+      final view = _view(
+        units: [warrior],
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Capital',
+            center: CityHex(col: 3, row: 1),
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyMapObjectivePlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands, isEmpty);
+    });
+
     test('is wired into BasicStrategy planning', () {
       final warrior = _unit('warrior_1');
       final view = _view(units: [warrior]);
@@ -113,10 +137,15 @@ AiContext _context(GameView view) {
 
 GameView _view({
   List<GameUnit> units = const [],
+  List<GameCity> cities = const [],
   GameRuntimeState runtimeState = GameRuntimeState.empty,
 }) {
   return GameView.fromPersistentState(
-    PersistentGameState(units: units, runtimeState: runtimeState),
+    PersistentGameState(
+      units: units,
+      cities: cities,
+      runtimeState: runtimeState,
+    ),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: _mapData,
@@ -148,7 +177,7 @@ final _mapData = MapData(
     MapObjectiveDefinition(
       id: 'pass_1',
       type: MapObjectiveType.strategicPass,
-      hex: CityHex(col: 3, row: 1),
+      hex: HexCoord(col: 3, row: 1),
       requiredHoldTurns: 2,
       victoryPoints: 3,
       goldPerTurn: 2,

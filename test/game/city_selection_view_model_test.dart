@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -233,7 +234,7 @@ MapData _mapWithObjective() {
       MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 2, row: 2),
+        hex: HexCoord(col: 2, row: 2),
         requiredHoldTurns: 3,
         victoryPoints: 2,
         goldPerTurn: 1,

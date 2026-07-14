@@ -321,7 +321,7 @@ void main() {
       const objective = MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 1, row: 0),
+        hex: HexCoord(col: 1, row: 0),
         requiredHoldTurns: 2,
         victoryPoints: 3,
         goldPerTurn: 4,
@@ -374,7 +374,7 @@ void main() {
       const objective = MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 1, row: 0),
+        hex: HexCoord(col: 1, row: 0),
         requiredHoldTurns: 2,
         victoryPoints: 3,
         goldPerTurn: 4,
@@ -410,7 +410,7 @@ void main() {
       const objective = MapObjectiveDefinition(
         id: 'holy_1',
         type: MapObjectiveType.holySite,
-        hex: CityHex(col: 1, row: 0),
+        hex: HexCoord(col: 1, row: 0),
         requiredHoldTurns: 2,
         goldPerTurn: 4,
       );

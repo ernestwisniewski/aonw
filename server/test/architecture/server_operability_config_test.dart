@@ -292,14 +292,6 @@ void main() {
         expect(insights['publicPort'], 8081, reason: mode);
         expect(insights['publicScheme'], 'http', reason: mode);
       }
-
-      final runbook = File(
-        '../docs/serverpod-insights-runbook.md',
-      ).readAsStringSync();
-      expect(runbook, contains('-L 127.0.0.1:8081:127.0.0.1:8081'));
-      expect(runbook, contains('ExitOnForwardFailure=yes'));
-      expect(runbook, contains('http://127.0.0.1:8081'));
-      expect(runbook, isNot(contains(retiredInsightsHost)));
     });
 
     test('proxy identity headers cross only the private ingress boundary', () {

@@ -81,7 +81,7 @@ void main() {
       const objective = MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 0, row: 0),
+        hex: HexCoord(col: 0, row: 0),
         requiredHoldTurns: 2,
         victoryPoints: 7,
       );

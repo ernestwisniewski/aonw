@@ -532,7 +532,7 @@ MapObjectiveProgress _mapObjectiveProgress({
     definition: MapObjectiveDefinition(
       id: id,
       type: MapObjectiveType.strategicPass,
-      hex: const CityHex(col: 2, row: 1),
+      hex: const HexCoord(col: 2, row: 1),
       requiredHoldTurns: requiredHoldTurns,
       victoryPoints: victoryPoints,
     ),

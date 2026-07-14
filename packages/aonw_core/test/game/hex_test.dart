@@ -100,6 +100,19 @@ void main() {
       );
     });
   });
+
+  test('HexDistance supports canonical coordinates', () {
+    expect(
+      HexDistance.betweenCoords(
+        const HexCoord(col: 0, row: 0),
+        const HexCoord(col: 2, row: 1),
+      ),
+      HexDistance.between(
+        const HexCoordinate(col: 0, row: 0),
+        const HexCoordinate(col: 2, row: 1),
+      ),
+    );
+  });
 }
 
 HexCoord _coordinate(int col, int row) => HexCoord(col: col, row: row);

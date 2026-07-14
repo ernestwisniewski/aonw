@@ -2,7 +2,7 @@ import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dar
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_chip_id.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,7 +48,7 @@ void main() {
       definition: MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 2, row: 1),
+        hex: HexCoord(col: 2, row: 1),
         requiredHoldTurns: 3,
       ),
       controllingPlayerId: 'player_1',
@@ -74,7 +74,7 @@ void main() {
       definition: MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 2, row: 1),
+        hex: HexCoord(col: 2, row: 1),
         requiredHoldTurns: 3,
       ),
       controllingPlayerId: 'player_1',

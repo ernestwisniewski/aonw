@@ -49,6 +49,6 @@ The restore script refuses to write to `DATABASE_URL` unless
 2. Create or choose the target database.
 3. Run `deploy/postgres/restore.sh <backup.dump>` with
    `AONW_RESTORE_DATABASE_URL` pointing at the target.
-4. Start the server and check `/livez`, `/readyz`, `/startupz`, Insights, and
-   a known match load.
+4. Start the server and check `/livez`, `/readyz`, `/startupz`, and a known
+   match load.
 5. Keep the backup file and restore logs until the incident is closed.

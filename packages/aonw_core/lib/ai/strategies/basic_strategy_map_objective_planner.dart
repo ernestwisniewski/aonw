@@ -148,9 +148,9 @@ final class BasicStrategyMapObjectivePlanner {
     UnitMovementPlan plan,
   ) {
     final reward = _objectiveReward(objective);
-    final distance = HexDistance.between(
-      HexCoordinate(col: unit.col, row: unit.row),
-      objective.hex.toCoordinate(),
+    final distance = HexDistance.betweenCoords(
+      HexCoord(col: unit.col, row: unit.row),
+      objective.hex,
     );
     return (reward * 100 - distance * 6 - plan.totalCost).toDouble();
   }
@@ -167,7 +167,7 @@ final class BasicStrategyMapObjectivePlanner {
     GameView view,
   ) {
     for (final city in view.ownCities) {
-      if (city.controlsHex(objective.hex)) return true;
+      if (city.controlsTile(objective.hex.col, objective.hex.row)) return true;
     }
     return false;
   }

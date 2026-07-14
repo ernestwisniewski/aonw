@@ -1,8 +1,10 @@
 import 'dart:convert';
 
-import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/domain/map_objective_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class MapDataLoadException implements Exception {
   const MapDataLoadException(this.message);
@@ -83,20 +85,22 @@ abstract final class MapDataCodec {
       }
 
       final defaultZoom = (map['defaultZoom'] as num?)?.toDouble() ?? 1.0;
-      return MapData(
-        cols: cols,
-        rows: rows,
-        tiles: tiles,
-        objectives: objectivesJson.map((entry) {
-          if (entry is! Map<String, dynamic>) {
-            throw const MapDataLoadException(
-              'Map objective entries must be JSON objects',
-            );
-          }
-          return MapObjectiveDefinition.fromJson(entry);
-        }),
-        mapName: mapName,
-        defaultZoom: defaultZoom,
+      return _validateCanonicalMap(
+        MapData(
+          cols: cols,
+          rows: rows,
+          tiles: tiles,
+          objectives: objectivesJson.map((entry) {
+            if (entry is! Map<String, dynamic>) {
+              throw const MapDataLoadException(
+                'Map objective entries must be JSON objects',
+              );
+            }
+            return MapObjectiveDefinition.fromJson(entry);
+          }),
+          mapName: mapName,
+          defaultZoom: defaultZoom,
+        ),
       );
     } on MapDataLoadException {
       rethrow;
@@ -106,6 +110,7 @@ abstract final class MapDataCodec {
   }
 
   static String toJson(MapData mapData) {
+    _validateCanonicalMap(mapData);
     final map = <String, dynamic>{
       'cols': mapData.cols,
       'rows': mapData.rows,
@@ -118,5 +123,14 @@ abstract final class MapDataCodec {
       'tiles': mapData.tiles.map((tile) => tile.toJson()).toList(),
     };
     return const JsonEncoder.withIndent('  ').convert(map);
+  }
+}
+
+MapData _validateCanonicalMap(MapData mapData) {
+  try {
+    LegacyWorldMapAdapter.fromMapData(mapData);
+    return mapData;
+  } on WorldMapException catch (error) {
+    throw MapDataLoadException(error.message);
   }
 }

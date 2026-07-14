@@ -1,52 +1,10 @@
+import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
-enum MapObjectiveType {
-  ruins,
-  strategicPass,
-  holySite,
-  legendaryResource;
-
-  static MapObjectiveType fromName(String name) => values.byName(name);
-}
-
-class MapObjectiveDefinition {
-  final String id;
-  final MapObjectiveType type;
-  final CityHex hex;
-  final int requiredHoldTurns;
-  final int victoryPoints;
-  final int goldPerTurn;
-
-  const MapObjectiveDefinition({
-    required this.id,
-    required this.type,
-    required this.hex,
-    this.requiredHoldTurns = 3,
-    this.victoryPoints = 0,
-    this.goldPerTurn = 0,
-  });
-
-  factory MapObjectiveDefinition.fromJson(Map<String, dynamic> json) {
-    return MapObjectiveDefinition(
-      id: json['id'] as String,
-      type: MapObjectiveType.fromName(json['type'] as String),
-      hex: CityHex.fromJson(json['hex'] as Map<String, dynamic>),
-      requiredHoldTurns: (json['requiredHoldTurns'] as num?)?.toInt() ?? 3,
-      victoryPoints: (json['victoryPoints'] as num?)?.toInt() ?? 0,
-      goldPerTurn: (json['goldPerTurn'] as num?)?.toInt() ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type.name,
-    'hex': hex.toJson(),
-    if (requiredHoldTurns != 3) 'requiredHoldTurns': requiredHoldTurns,
-    if (victoryPoints != 0) 'victoryPoints': victoryPoints,
-    if (goldPerTurn != 0) 'goldPerTurn': goldPerTurn,
-  };
-}
+export 'package:aonw_core/domain/map_objective_definition.dart'
+    show MapObjectiveDefinition, MapObjectiveType;
 
 class MapObjectiveHoldState {
   final String objectiveId;
@@ -214,7 +172,7 @@ abstract final class MapObjectiveRules {
   }
 
   static String? _controllerFor(
-    CityHex hex, {
+    HexCoord hex, {
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
   }) {
@@ -223,13 +181,15 @@ abstract final class MapObjectiveRules {
   }
 
   static Set<String> _contestingPlayersFor(
-    CityHex hex, {
+    HexCoord hex, {
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
   }) {
     final players = <String>{};
     for (final city in cities) {
-      if (city.controlsHex(hex)) players.add(city.ownerPlayerId);
+      if (city.controlsTile(hex.col, hex.row)) {
+        players.add(city.ownerPlayerId);
+      }
     }
     for (final unit in units) {
       if (unit.occupies(hex.col, hex.row)) players.add(unit.ownerPlayerId);

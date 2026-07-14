@@ -9,28 +9,28 @@
             "found": 193
           },
           "lines": {
-          "hit": 12113,
-          "found": 13226
+            "hit": 12113,
+            "found": 13224
           }
         },
         "domain": {
           "files": {
-            "hit": 253,
-            "found": 301
+            "hit": 255,
+            "found": 303
           },
           "lines": {
-            "hit": 9943,
-            "found": 12413
+            "hit": 10031,
+            "found": 12485
           }
         },
         "map": {
           "files": {
-            "hit": 6,
-            "found": 10
+            "hit": 7,
+            "found": 11
           },
           "lines": {
-            "hit": 66,
-            "found": 166
+            "hit": 166,
+            "found": 214
           }
         },
         "protocol": {
@@ -246,8 +246,8 @@
             "found": 40
           },
           "lines": {
-            "hit": 1954,
-            "found": 2342
+            "hit": 1955,
+            "found": 2343
           }
         },
         "menu": {

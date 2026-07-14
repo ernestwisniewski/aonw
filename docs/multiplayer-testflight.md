@@ -37,7 +37,7 @@ If a special build needs to hide multiplayer, pass
   `SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey`, and
   `SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper` set to strong random values.
 - Reverse proxy that supports Serverpod API, web routes, and realtime stream
-  traffic. Insights must remain outside public ingress.
+  traffic.
 - Port 80 and 443 open on the VPS if Caddy manages TLS.
 
 ## Local Docker Smoke
@@ -52,7 +52,7 @@ make local
 This starts PostgreSQL, Redis, and Serverpod, waits for API readiness, seeds
 four reusable users, runs the multiplayer runtime smoke, and launches Flutter
 Web at the stable Google OAuth origin `http://localhost:7357`. The client uses
-the Docker API at `http://localhost:8080`. API and Insights ports are bound to
+the Docker API at `http://localhost:8080`. Local services are bound to
 `127.0.0.1` by default. PostgreSQL and Redis are also bound to `127.0.0.1`.
 Set `AONW_SERVER_BIND=0.0.0.0` only if you explicitly need LAN access. If local
 port `8080` is busy, override `LOCAL_API_PORT` consistently and keep
@@ -122,9 +122,7 @@ The staging overlay fixes Serverpod's run mode to `staging`; do not set
 missing or replaced with the production overlay. The staging profile runs
 PostgreSQL, the game server, and Caddy. Caddy
 terminates HTTPS, stores certificates in Docker volumes, and proxies Serverpod
-API traffic to `server:8080`. Insights stays on host loopback and is available
-to operators only through the SSH tunnel documented in
-`docs/serverpod-insights-runbook.md`.
+API traffic to `server:8080`.
 
 Authentication rate limits treat client-IP headers as trusted ingress data.
 Keep all Serverpod ports private. The bundled Caddy proxy accepts

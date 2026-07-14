@@ -1,10 +1,14 @@
 import 'dart:collection';
 
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 import 'measurement.dart';
+
+part 'world_map_workload.dart';
 
 const mapLookupScales = [100, 1000, 10000];
 
@@ -13,13 +17,7 @@ PerformanceCaseResult runMapLookupWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
 }) {
-  if (timingSamples <= 0) {
-    throw ArgumentError.value(
-      timingSamples,
-      'timingSamples',
-      'Must be positive.',
-    );
-  }
+  _validateTimingSamples(timingSamples);
 
   final stable = <String, Object?>{};
   final observations = <String, Object?>{};
@@ -41,13 +39,7 @@ PerformanceCaseResult runMapDefinitionLookupWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
 }) {
-  if (timingSamples <= 0) {
-    throw ArgumentError.value(
-      timingSamples,
-      'timingSamples',
-      'Must be positive.',
-    );
-  }
+  _validateTimingSamples(timingSamples);
 
   final stable = <String, Object?>{};
   final observations = <String, Object?>{};
@@ -62,6 +54,16 @@ PerformanceCaseResult runMapDefinitionLookupWorkload({
     {'sizes': stable},
     {'sizes': observations},
   );
+}
+
+void _validateTimingSamples(int timingSamples) {
+  if (timingSamples <= 0) {
+    throw ArgumentError.value(
+      timingSamples,
+      'timingSamples',
+      'Must be positive.',
+    );
+  }
 }
 
 _ScaleResult _runScale(int scale, int timingSamples) {

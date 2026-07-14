@@ -1,4 +1,4 @@
-import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Data for a single hex tile.

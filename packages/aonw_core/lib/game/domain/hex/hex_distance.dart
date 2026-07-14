@@ -2,15 +2,23 @@ import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
 
 abstract final class HexDistance {
   static int between(HexCoordinate a, HexCoordinate b) {
-    final ac = _oddQToCube(a);
-    final bc = _oddQToCube(b);
+    return _betweenValues(a.col, a.row, b.col, b.row);
+  }
+
+  static int betweenCoords(HexCoord a, HexCoord b) {
+    return _betweenValues(a.col, a.row, b.col, b.row);
+  }
+
+  static int _betweenValues(int aCol, int aRow, int bCol, int bRow) {
+    final ac = _oddQToCube(aCol, aRow);
+    final bc = _oddQToCube(bCol, bRow);
     return ((ac.x - bc.x).abs() + (ac.y - bc.y).abs() + (ac.z - bc.z).abs()) ~/
         2;
   }
 
-  static _Cube _oddQToCube(HexCoordinate hex) {
-    final x = hex.col;
-    final z = hex.row - ((hex.col - (hex.col & 1)) ~/ 2);
+  static _Cube _oddQToCube(int col, int row) {
+    final x = col;
+    final z = row - ((col - (col & 1)) ~/ 2);
     final y = -x - z;
     return _Cube(x: x, y: y, z: z);
   }

@@ -782,7 +782,7 @@ void main() {
         const objective = MapObjectiveDefinition(
           id: 'pass_1',
           type: MapObjectiveType.strategicPass,
-          hex: CityHex(col: 1, row: 0),
+          hex: HexCoord(col: 1, row: 0),
           requiredHoldTurns: 2,
         );
         final map = _mapWithObjectives([objective]);
@@ -837,7 +837,7 @@ void main() {
       const objective = MapObjectiveDefinition(
         id: 'ruins_1',
         type: MapObjectiveType.ruins,
-        hex: CityHex(col: 1, row: 0),
+        hex: HexCoord(col: 1, row: 0),
       );
       final map = _mapWithObjectives([objective]);
       final objectiveMarkers = _RecordingMapObjectiveMarkerLayer();

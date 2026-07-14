@@ -28,10 +28,9 @@ the source for currently implemented version-3 behavior and rollout steps.
 - Recovery: PostgreSQL is authoritative for match metadata, snapshots, events,
   and offsets; reconnecting clients first receive a recipient-projected current
   snapshot and then any newer visible events or redacted offset markers.
-- Operations: Serverpod health endpoints (`/livez`, `/readyz`, `/startupz`) and
-  Serverpod Insights are the built-in operational surface. The repository does
-  not itself provision request correlation, a metrics backend, or alert
-  delivery.
+- Operations: Serverpod health endpoints (`/livez`, `/readyz`, `/startupz`)
+  are the built-in operational surface. The repository does not itself provision
+  request correlation, a metrics backend, or alert delivery.
 
 ## Protocol Surface
 
@@ -119,5 +118,3 @@ dual-version reader, replay migration, or forced client update policy.
 - Keep `packages/aonw_core/lib/protocol/**`, `server/lib/src/generated/**`, and
   `packages/aonw_server_client/lib/src/protocol/**` in sync whenever wire models
   or endpoint YAML changes.
-- Keep running the Serverpod Insights runbook for local and staging checks
-  before multiplayer rollout decisions.

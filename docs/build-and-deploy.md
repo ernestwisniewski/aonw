@@ -252,10 +252,8 @@ TLS.
 TLS and public routing should terminate in Caddy, a reverse proxy, or a cloud
 load balancer. The included `deploy/caddy/Caddyfile` can serve the API,
 homepage, multiplayer statistics dashboard, and web demo when the corresponding
-environment variables are set. Insights is deliberately excluded from every
-public route and bound to host loopback; use the SSH local-forward described in
-`docs/serverpod-insights-runbook.md`. Production and staging `make up` runs
-force a Caddy recreation so bind-mounted route changes take effect reliably.
+environment variables are set. Production and staging `make up` runs force a
+Caddy recreation so bind-mounted route changes take effect reliably.
 
 ## Full Release Flow
 

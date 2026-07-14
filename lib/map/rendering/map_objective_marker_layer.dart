@@ -9,6 +9,7 @@ import 'package:aonw/map/rendering/map_objective_marker.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/math/scale_clamp.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/components.dart';
 
@@ -42,6 +43,9 @@ class MapObjectiveMarkerLayer extends Component with LayerAttachment {
     ensureAttachedTo(parent);
     final owner = attachedOwner;
     final visibleObjectives = objectives.toList(growable: false);
+    final occupiedCoordinates = {
+      for (final hex in occupiedHexes) (col: hex.col, row: hex.row),
+    };
     final objectiveIds = {
       for (final objective in visibleObjectives) objective.definition.id,
     };
@@ -59,7 +63,7 @@ class MapObjectiveMarkerLayer extends Component with LayerAttachment {
       final position = worldPositionFor(
         hex.col,
         hex.row,
-        occupied: occupiedHexes.contains(hex),
+        occupied: occupiedCoordinates.contains((col: hex.col, row: hex.row)),
       );
       final marker = _markers[definition.id];
       if (marker == null) {
@@ -124,7 +128,7 @@ class MapObjectiveMarkerLayer extends Component with LayerAttachment {
     return occupied ? position + Vector2(22, -18) : position;
   }
 
-  static int _priorityFor(CityHex hex) {
+  static int _priorityFor(HexCoord hex) {
     return MapPriority.perTile(
       MapPriority.mapObjective,
       col: hex.col,

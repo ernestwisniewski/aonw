@@ -8,7 +8,7 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
@@ -245,7 +245,7 @@ void main() {
           MapObjectiveDefinition(
             id: 'pass_0_0',
             type: MapObjectiveType.strategicPass,
-            hex: CityHex(col: 0, row: 0),
+            hex: HexCoord(col: 0, row: 0),
             victoryPoints: 2,
           ),
         ],
@@ -289,7 +289,7 @@ void main() {
             MapObjectiveDefinition(
               id: 'pass_removed',
               type: MapObjectiveType.strategicPass,
-              hex: CityHex(col: removedCol, row: 0),
+              hex: HexCoord(col: removedCol, row: 0),
               victoryPoints: 2,
             ),
           ],

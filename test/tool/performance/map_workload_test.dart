@@ -65,6 +65,47 @@ void main() {
       expect(result.observations.toString(), contains('p95Micros'));
     });
 
+    test('covers the canonical indexed WorldMap lookup path', () {
+      final result = runWorldMapLookupWorkload(
+        scales: const [100],
+        timingSamples: 2,
+      );
+      final sizes = result.stable['sizes']! as Map<String, Object?>;
+      final stable = sizes['100']! as Map<String, Object?>;
+
+      expect(result.name, 'map.world-lookup');
+      expect(stable['scale'], 100);
+      expect(stable['dimensions'], {'cols': 10, 'rows': 10});
+      expect(stable['probeCount'], 4);
+      expect(stable['indexedTiles'], 100);
+      expect(stable['lookupCalls'], 4);
+      expect(stable['lookupCallsByProbe'], {
+        'first': 1,
+        'middle': 1,
+        'last': 1,
+        'miss': 1,
+      });
+      expect(
+        stable['outputDigest'],
+        'ca5f766ce3cb02db3c2168c7dff0278f9d6000baa538d37503192091edc835ac',
+      );
+      expect(result.observations.toString(), contains('p95Micros'));
+    });
+
+    test('repeats the WorldMap stable result', () {
+      final first = runWorldMapLookupWorkload(
+        scales: const [100],
+        timingSamples: 1,
+      );
+      final second = runWorldMapLookupWorkload(
+        scales: const [100],
+        timingSamples: 3,
+      );
+
+      expect(second.stable, first.stable);
+      expect(second.observations, isNot(first.observations));
+    });
+
     test('rejects unsupported scales', () {
       expect(
         () => runMapLookupWorkload(scales: const [999]),
@@ -72,6 +113,14 @@ void main() {
       );
       expect(
         () => runMapDefinitionLookupWorkload(scales: const [999]),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runWorldMapLookupWorkload(scales: const [999]),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runWorldMapLookupWorkload(timingSamples: 0),
         throwsA(isA<ArgumentError>()),
       );
     });

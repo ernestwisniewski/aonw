@@ -2,7 +2,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/map_objective_progress_for_tile.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +12,7 @@ void main() {
     const objective = MapObjectiveDefinition(
       id: 'holy_1',
       type: MapObjectiveType.holySite,
-      hex: CityHex(col: 1, row: 0),
+      hex: HexCoord(col: 1, row: 0),
       requiredHoldTurns: 3,
       victoryPoints: 2,
       goldPerTurn: 1,
@@ -53,7 +53,7 @@ void main() {
           const MapObjectiveDefinition(
             id: 'pass_1',
             type: MapObjectiveType.strategicPass,
-            hex: CityHex(col: 1, row: 0),
+            hex: HexCoord(col: 1, row: 0),
           ),
         ),
         tileData: _tile(0),

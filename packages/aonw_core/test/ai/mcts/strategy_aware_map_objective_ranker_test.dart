@@ -63,6 +63,26 @@ void main() {
 
       expect(ranking, isNull);
     });
+
+    test('ignores objectives already controlled by an own city', () {
+      final ranking = rankMapObjectiveCommand(
+        const MoveUnitCommand('warrior_1', 1, 0),
+        _view(
+          units: [_unit('warrior_1')],
+          cities: const [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: 'player_1',
+              name: 'Capital',
+              center: CityHex(col: 2, row: 0),
+            ),
+          ],
+        ),
+        _context(),
+      );
+
+      expect(ranking, isNull);
+    });
   });
 }
 
@@ -77,10 +97,15 @@ AiContext _context() {
 
 GameView _view({
   List<GameUnit> units = const [],
+  List<GameCity> cities = const [],
   GameRuntimeState runtimeState = GameRuntimeState.empty,
 }) {
   return GameView.fromPersistentState(
-    PersistentGameState(units: units, runtimeState: runtimeState),
+    PersistentGameState(
+      units: units,
+      cities: cities,
+      runtimeState: runtimeState,
+    ),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: _mapData(),
@@ -114,7 +139,7 @@ MapData _mapData() {
       MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 2, row: 0),
+        hex: HexCoord(col: 2, row: 0),
         requiredHoldTurns: 2,
         victoryPoints: 3,
         goldPerTurn: 2,

@@ -21,9 +21,9 @@ CommandRanking? rankMapObjectiveCommand(
 
   final objective = target.objective;
   final reward = _objectiveReward(objective);
-  final afterDistance = HexDistance.between(
-    HexCoordinate(col: command.targetCol, row: command.targetRow),
-    objective.hex.toCoordinate(),
+  final afterDistance = HexDistance.betweenCoords(
+    HexCoord(col: command.targetCol, row: command.targetRow),
+    objective.hex,
   );
   final directClaimBonus = afterDistance == 0 ? 135.0 : 0.0;
   final coreDistance = nearestOwnCityDistance(
@@ -57,17 +57,15 @@ CommandRanking? rankMapObjectiveCommand(
     if (_isAlreadyControlledByOwnCity(objective, view)) continue;
     if (!_isRememberedObjective(objective, view)) continue;
 
-    final improvement = distanceImprovement(
-      fromCol: unit.col,
-      fromRow: unit.row,
-      toCol: command.targetCol,
-      toRow: command.targetRow,
-      target: objective.hex.toCoordinate(),
+    final beforeDistance = HexDistance.betweenCoords(
+      HexCoord(col: unit.col, row: unit.row),
+      objective.hex,
     );
-    final afterDistance = HexDistance.between(
-      HexCoordinate(col: command.targetCol, row: command.targetRow),
-      objective.hex.toCoordinate(),
+    final afterDistance = HexDistance.betweenCoords(
+      HexCoord(col: command.targetCol, row: command.targetRow),
+      objective.hex,
     );
+    final improvement = beforeDistance - afterDistance;
     if (improvement <= 0 && afterDistance != 0) continue;
 
     final score =
@@ -109,7 +107,7 @@ bool _isAlreadyControlledByOwnCity(
   GameView view,
 ) {
   for (final city in view.ownCities) {
-    if (city.controlsHex(objective.hex)) return true;
+    if (city.controlsTile(objective.hex.col, objective.hex.row)) return true;
   }
   return false;
 }

@@ -1956,7 +1956,7 @@ void main() {
       definition: MapObjectiveDefinition(
         id: 'pass_1',
         type: MapObjectiveType.strategicPass,
-        hex: CityHex(col: 1, row: 1),
+        hex: HexCoord(col: 1, row: 1),
         requiredHoldTurns: 3,
         victoryPoints: 2,
         goldPerTurn: 1,
@@ -2009,7 +2009,7 @@ void main() {
         definition: MapObjectiveDefinition(
           id: 'pass_1',
           type: MapObjectiveType.strategicPass,
-          hex: CityHex(col: 1, row: 1),
+          hex: HexCoord(col: 1, row: 1),
           requiredHoldTurns: 3,
           victoryPoints: 2,
         ),

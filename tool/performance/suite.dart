@@ -15,6 +15,7 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
     runAiStrategyWorkload(),
     runMapDefinitionLookupWorkload(),
     runMapLookupWorkload(),
+    runWorldMapLookupWorkload(),
     persistence,
     ...runRendererFrameWorkloads(),
     replay,

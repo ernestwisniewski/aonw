@@ -42,8 +42,7 @@ and mutation for a match reaches the same process.
   if your deployment adds them. The current Serverpod app does not implement
   custom request-id echoing or JSON-log enrichment itself.
 - Block direct public access to the Serverpod API; public API ingress should go
-  through the reverse proxy. Keep Insights outside public ingress entirely and
-  reach its loopback listener only through the operator SSH tunnel.
+  through the reverse proxy.
 
 ## Deploy Drain
 
@@ -86,8 +85,7 @@ SERVERPOD_SERVICE_SECRET=<strong-secret>
 ```
 
 Readiness polling should be fast enough to remove draining instances before new
-match streams are opened. Keep the API port private behind the reverse proxy and
-the Insights port bound to host loopback without a public proxy route.
+match streams are opened. Keep the API port private behind the reverse proxy.
 
 These environment values do not enable application match fan-out. The shared
 event bus described below is a future mode and must be implemented and tested

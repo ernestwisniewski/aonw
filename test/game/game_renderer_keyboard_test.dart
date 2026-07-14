@@ -69,7 +69,7 @@ MapData _mapWithObjective() => MapData(
     MapObjectiveDefinition(
       id: 'pass_1',
       type: MapObjectiveType.strategicPass,
-      hex: CityHex(col: 1, row: 1),
+      hex: HexCoord(col: 1, row: 1),
       requiredHoldTurns: 2,
     ),
   ],

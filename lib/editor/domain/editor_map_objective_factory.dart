@@ -1,4 +1,4 @@
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 
 abstract final class EditorMapObjectiveFactory {
@@ -10,7 +10,7 @@ abstract final class EditorMapObjectiveFactory {
     return MapObjectiveDefinition(
       id: idFor(type: type, col: col, row: row),
       type: type,
-      hex: CityHex(col: col, row: row),
+      hex: HexCoord(col: col, row: row),
       victoryPoints: defaultVictoryPoints(type),
       goldPerTurn: defaultGoldPerTurn(type),
     );

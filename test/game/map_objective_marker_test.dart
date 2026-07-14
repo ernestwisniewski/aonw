@@ -9,8 +9,8 @@ import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -174,7 +174,7 @@ MapObjectiveDefinition _objective() {
   return const MapObjectiveDefinition(
     id: 'pass_1',
     type: MapObjectiveType.strategicPass,
-    hex: CityHex(col: 2, row: 1),
+    hex: HexCoord(col: 2, row: 1),
     requiredHoldTurns: 2,
   );
 }
