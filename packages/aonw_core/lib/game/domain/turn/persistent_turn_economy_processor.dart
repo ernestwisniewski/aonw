@@ -30,7 +30,7 @@ abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult advanceForPlayers({
     required PersistentGameState state,
     required Iterable<String> playerIds,
-    required MapData mapData,
+    required MapReadView mapData,
     GameRuleset ruleset = GameRuleset.defaults,
     FogOfWarService fogOfWarService = const FogOfWarService(),
     Iterable<GameEvent> priorEvents = const [],
@@ -45,7 +45,7 @@ abstract final class PersistentTurnEconomyProcessor {
       final afterCities = _advanceCities(
         state: current,
         playerId: playerId,
-        mapData: mapData,
+        mapData: mapData.mapTiles,
         ruleset: ruleset,
         priorEvents: priorEvents,
       );
@@ -66,7 +66,7 @@ abstract final class PersistentTurnEconomyProcessor {
       final afterWorkers = _advanceWorkers(
         state: current,
         playerId: playerId,
-        mapData: mapData,
+        mapData: mapData.mapTiles,
         ruleset: ruleset,
       );
       current = afterWorkers.state;
@@ -75,7 +75,7 @@ abstract final class PersistentTurnEconomyProcessor {
       final afterCityFoundingJobs = _advanceCityFoundingJobs(
         state: current,
         playerId: playerId,
-        mapData: mapData,
+        mapData: mapData.mapTiles,
         ruleset: ruleset,
       );
       current = afterCityFoundingJobs.state;
@@ -132,7 +132,7 @@ abstract final class PersistentTurnEconomyProcessor {
 
     final fogOfWar = fogOfWarService.recompute(
       current: current.fogOfWar,
-      mapData: mapData,
+      mapData: mapData.mapTiles,
       playerIds: current.knownPlayerIds,
       units: current.units,
       cities: current.cities,
@@ -270,7 +270,7 @@ abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult _advanceCities({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required GameRuleset ruleset,
     required Iterable<GameEvent> priorEvents,
   }) {
@@ -347,7 +347,7 @@ abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult _advanceResearch({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapData,
     required GameRuleset ruleset,
     ScienceYieldBreakdown bonusScience = ScienceYieldBreakdown.empty,
   }) {
@@ -356,7 +356,7 @@ abstract final class PersistentTurnEconomyProcessor {
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
       research: state.research,
-      mapData: mapData,
+      mapData: mapData.mapTiles,
       ruleset: ruleset.technology,
       cityRuleset: ruleset.city,
       wonderRegistry: state.wonderRegistry,
@@ -392,7 +392,7 @@ abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult _advanceWorkers({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required GameRuleset ruleset,
   }) {
     final result = WorkerTurnProcessor.advanceForPlayer(
@@ -431,7 +431,7 @@ abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult _advanceCityFoundingJobs({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required GameRuleset ruleset,
   }) {
     final result = CityFoundingJobProcessor.advanceForPlayer(

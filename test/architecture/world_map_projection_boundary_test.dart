@@ -6,48 +6,44 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _coreLib = 'packages/aonw_core/lib';
+const _gameDomain = '$_coreLib/game/domain';
 const _mapDataFreeMigrationPaths = {
-  'packages/aonw_core/lib/game/domain/city/'
-      'persistent_city_expansion_resolver.dart',
-  'packages/aonw_core/lib/game/domain/city/'
-      'persistent_city_founding_resolver.dart',
-  'packages/aonw_core/lib/game/domain/city/'
-      'persistent_worker_command_resolver.dart',
-  'packages/aonw_core/lib/game/domain/combat/'
-      'persistent_combat_command_resolver.dart',
-  'packages/aonw_core/lib/game/domain/fog/fog_of_war_service.dart',
-  'packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'persistent_move_unit_resolver.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'persistent_merchant_trade_route_resolver.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'persistent_unit_action_resolver.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'merchant_trade_route_rules.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'scout_auto_explore_planner.dart',
-  'packages/aonw_core/lib/game/domain/movement/'
-      'unit_movement_pathfinder.dart',
-  'packages/aonw_core/lib/game/domain/technology/'
-      'persistent_research_command_resolver.dart',
-  'packages/aonw_core/lib/game/domain/unit/'
-      'persistent_unit_detachment_resolver.dart',
-  'packages/aonw_core/lib/ai/simulation/'
-      'economy_simulation_command_applier.dart',
+  '$_gameDomain/city/persistent_city_expansion_resolver.dart',
+  '$_gameDomain/city/persistent_city_founding_resolver.dart',
+  '$_gameDomain/city/city_turn_processor.dart',
+  '$_gameDomain/city/persistent_worker_command_resolver.dart',
+  '$_gameDomain/combat/persistent_combat_command_resolver.dart',
+  '$_gameDomain/fog/fog_of_war_service.dart',
+  '$_gameDomain/fog/fog_reveal_calculator.dart',
+  '$_gameDomain/movement/unit_movement_cost_rules.dart',
+  '$_gameDomain/movement/persistent_move_unit_resolver.dart',
+  '$_gameDomain/movement/persistent_merchant_trade_route_resolver.dart',
+  '$_gameDomain/movement/persistent_unit_action_resolver.dart',
+  '$_gameDomain/movement/merchant_trade_route_rules.dart',
+  '$_gameDomain/movement/scout_auto_explore_planner.dart',
+  '$_gameDomain/movement/unit_movement_pathfinder.dart',
+  '$_gameDomain/outcome/domination_progress_calculator.dart',
+  '$_gameDomain/stability/persistent_stability_processor.dart',
+  '$_gameDomain/stability/stability_input_builder.dart',
+  '$_gameDomain/technology/research_turn_processor.dart',
+  '$_gameDomain/technology/strategic_resource_discovery_rules.dart',
+  '$_gameDomain/technology/persistent_research_command_resolver.dart',
+  '$_gameDomain/terrain/tile_terrain_profile_rules.dart',
+  '$_gameDomain/turn/persistent_turn_economy_processor.dart',
+  '$_gameDomain/turn/persistent_turn_movement_processor.dart',
+  '$_gameDomain/turn/persistent_turn_pipeline.dart',
+  '$_gameDomain/unit/unit_fortification_rules.dart',
+  '$_gameDomain/unit/worker_turn_processor.dart',
+  '$_gameDomain/unit/persistent_unit_detachment_resolver.dart',
+  '$_coreLib/ai/simulation/economy_simulation_command_applier.dart',
 };
 const _legacyWorldMapAdapterPath =
-    'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart';
+    '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _persistentCityProductionResolverPath =
-    'packages/aonw_core/lib/game/domain/city/'
-    'persistent_city_production_resolver.dart';
+    '$_gameDomain/city/persistent_city_production_resolver.dart';
 const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
-const _allowedProductionProjectionSites = <String, int>{
-  'packages/aonw_core/lib/game/domain/turn/'
-          'persistent_turn_pipeline.dart::'
-          'class:PersistentTurnPipeline/method:simultaneousFinalize::call':
-      1,
-};
+const _allowedProductionProjectionSites = <String, int>{};
 
 void main() {
   test('production full-map projections match the shrinking allowlist', () {

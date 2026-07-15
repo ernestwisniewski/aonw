@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology/resource_visibility_rules.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 class StrategicResourceDiscovery {
@@ -50,7 +50,7 @@ abstract final class StrategicResourceDiscoveryRules {
     required String playerId,
     required TechnologyId technologyId,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
   }) {
     final resources = [
       for (final resource in ResourceType.values)
@@ -75,7 +75,7 @@ abstract final class StrategicResourceDiscoveryRules {
     required String playerId,
     required TechnologyId technologyId,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
   }) {
     return [
       for (final discovery in discoveriesForTechnology(
@@ -92,13 +92,13 @@ abstract final class StrategicResourceDiscoveryRules {
     required String playerId,
     required ResourceType resourceType,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
   }) {
     var controlledCount = 0;
     var rivalControlledCount = 0;
     final unclaimed = <CityHex>[];
 
-    for (final tile in mapData.tiles) {
+    for (final tile in mapData.tileViews) {
       if (!tile.resources.contains(resourceType)) continue;
       final owner = _ownerOfTile(tile.col, tile.row, state.cities);
       if (owner == playerId) {
@@ -150,11 +150,19 @@ abstract final class StrategicResourceDiscoveryRules {
             (center) => HexDistance.between(center, candidate.toCoordinate()),
           )
           .reduce((a, b) => a < b ? a : b);
-      if (best == null || distance < bestDistance) {
+      if (best == null ||
+          distance < bestDistance ||
+          (distance == bestDistance && _compareHexes(candidate, best) < 0)) {
         best = candidate;
         bestDistance = distance;
       }
     }
     return best;
+  }
+
+  static int _compareHexes(CityHex left, CityHex right) {
+    final col = left.col.compareTo(right.col);
+    if (col != 0) return col;
+    return left.row.compareTo(right.row);
   }
 }

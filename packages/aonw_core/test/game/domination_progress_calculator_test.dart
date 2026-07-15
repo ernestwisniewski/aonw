@@ -173,6 +173,88 @@ void main() {
       expect(repeated, isEmpty);
     });
 
+    test(
+      'matches a WorldMap read view for sparse tiles regardless of order',
+      () {
+        const state = PersistentGameState(
+          cities: [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: 'player_1',
+              name: 'Roma',
+              center: CityHex(col: 6, row: 4),
+              controlledHexes: [CityHex(col: 1, row: 2)],
+            ),
+            GameCity(
+              id: 'city_2',
+              ownerPlayerId: 'player_2',
+              name: 'Antium',
+              center: CityHex(col: 2, row: 3),
+              controlledHexes: [CityHex(col: 7, row: 5)],
+            ),
+          ],
+        );
+        final mapData = MapData(
+          cols: 8,
+          rows: 6,
+          tiles: const [
+            TileData(
+              col: 6,
+              row: 4,
+              terrains: [TerrainType.grassland],
+              resources: [],
+              height: 0,
+            ),
+            TileData(
+              col: 1,
+              row: 2,
+              terrains: [TerrainType.mountain],
+              resources: [],
+              height: 5,
+            ),
+            TileData(
+              col: 2,
+              row: 3,
+              terrains: [TerrainType.plains],
+              resources: [],
+              height: 0,
+            ),
+            TileData(
+              col: 7,
+              row: 5,
+              terrains: [TerrainType.ocean],
+              resources: [],
+              height: 0,
+            ),
+          ],
+        );
+        final worldMap = _worldMapFromDataInReverse(mapData);
+        final legacy = calculator.snapshot(
+          playerIds: const ['player_2', 'player_1', 'player_2', ''],
+          state: state,
+          mapData: mapData,
+          victoryRules: VictoryRules.standard,
+        );
+        final canonical = calculator.snapshot(
+          playerIds: const ['player_2', 'player_1', 'player_2', ''],
+          state: state,
+          mapData: LegacyWorldMapAdapter.asReadView(worldMap),
+          victoryRules: VictoryRules.standard,
+        );
+
+        expect(_snapshotShape(canonical), _snapshotShape(legacy));
+        expect(canonical.validTileCount, 2);
+        expect(canonical.entries.map((entry) => entry.playerId), [
+          'player_1',
+          'player_2',
+        ]);
+        expect(canonical.entries.map((entry) => entry.controlledTileCount), [
+          1,
+          1,
+        ]);
+      },
+    );
+
     test('classifies pace-aware domination warning levels', () {
       expect(
         DominationWarningPolicy.levelFor(
@@ -216,6 +298,35 @@ void main() {
       );
     });
   });
+}
+
+List<Map<String, Object>> _snapshotShape(DominationProgressSnapshot snapshot) {
+  return [
+    for (final entry in snapshot.entries)
+      {
+        'validTileCount': snapshot.validTileCount,
+        'playerId': entry.playerId,
+        'controlledTileCount': entry.controlledTileCount,
+        'controlPercent': entry.controlPercent,
+        'holdTurns': entry.holdTurns,
+      },
+  ];
+}
+
+WorldMap _worldMapFromDataInReverse(MapData mapData) {
+  return WorldMap(
+    cols: mapData.cols,
+    rows: mapData.rows,
+    tiles: [
+      for (final tile in mapData.tiles.reversed)
+        WorldTile(
+          coordinate: HexCoord(col: tile.col, row: tile.row),
+          terrains: tile.terrains,
+          resources: tile.resources,
+          height: tile.height,
+        ),
+    ],
+  );
 }
 
 DominationProgressEntry _entry({

@@ -20,7 +20,7 @@ abstract final class PersistentTurnMovementProcessor {
   static PersistentTurnMovementResult resetForPlayers({
     required PersistentGameState state,
     required Iterable<String> playerIds,
-    required MapData mapData,
+    required MapTraversalView mapData,
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
     final playerSet = _playerSet(playerIds);
@@ -111,7 +111,7 @@ abstract final class PersistentTurnMovementProcessor {
 
   static GameUnit _resetForNewTurn(
     GameUnit unit, {
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<GameUnit> allUnits,
   }) {
     if (unit.isFortified) {
@@ -137,7 +137,7 @@ abstract final class PersistentTurnMovementProcessor {
 
   static GameUnit _advanceQueuedPath({
     required GameUnit unit,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required List<GameUnit> allUnits,
     required List<GameCity> cities,
   }) {
@@ -195,7 +195,7 @@ abstract final class PersistentTurnMovementProcessor {
     required FogOfWarState fogOfWar,
     required List<GameCity> cities,
     required Set<String> playerSet,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required FogOfWarService fogOfWarService,
   }) {
     var currentUnits = List<GameUnit>.of(units);
@@ -255,7 +255,7 @@ abstract final class PersistentTurnMovementProcessor {
     required GameUnit unit,
     required MoveUnitCommand command,
     required List<GameUnit> units,
-    required MapData mapData,
+    required MapTraversalView mapData,
   }) {
     final targetTile = mapData.tileAt(command.targetCol, command.targetRow);
     if (targetTile == null) return unit;

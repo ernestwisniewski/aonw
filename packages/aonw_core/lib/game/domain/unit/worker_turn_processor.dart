@@ -25,7 +25,7 @@ abstract final class WorkerTurnProcessor {
     required List<GameUnit> units,
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapTileLookup mapData,
   }) {
     final updatedCities = List<GameCity>.of(cities);
     final updatedUnits = List<GameUnit>.of(units);

@@ -404,37 +404,22 @@ abstract final class ReducerParityCorpus {
             worker?.movementPoints != 0) {
           _fail(fixture, 'must commit the reviewed worker job');
         }
-      case SubmitTurnCommand(:final playerId):
-        final expectedTurn = fixture.expectedSave['turn'];
-        final expectedPlayerStates = _asMap(
-          fixture.expectedSave['playerStates'],
-          '${fixture.id}.expected.save.playerStates',
+      case final SubmitTurnCommand command:
+        requireAcceptedTurnSubmission(
+          fixtureId: fixture.id,
+          command: command,
+          inputTurn: fixture.save.turn,
+          playerIds: fixture.save.players.map((player) => player.id),
+          expectedTurn: fixture.expectedSave['turn'],
+          expectedPlayerStates: _asMap(
+            fixture.expectedSave['playerStates'],
+            '${fixture.id}.expected.save.playerStates',
+          ),
+          before: fixture.state,
+          after: state,
+          now: fixture.now,
+          events: events,
         );
-        if (expectedTurn == fixture.save.turn) {
-          if (!state.runtimeState.hasSubmitted(playerId) ||
-              expectedPlayerStates[playerId] != 'finished' ||
-              events.isNotEmpty) {
-            _fail(fixture, 'must commit the reviewed waiting submission');
-          }
-          break;
-        }
-        final allSubmitted = events.whereType<AllPlayersSubmittedEvent>();
-        final turnEnded = events.whereType<TurnEndedEvent>();
-        final playerIds =
-            fixture.save.players.map((player) => player.id).toList()..sort();
-        if (expectedTurn != fixture.save.turn + 1 ||
-            state.runtimeState.submittedPlayerIds.isNotEmpty ||
-            state.runtimeState.turnStartedAt != fixture.now ||
-            expectedPlayerStates.values.any((value) => value != 'active') ||
-            allSubmitted.length != 1 ||
-            !_jsonDeepEquals(allSubmitted.single.playerIds, playerIds) ||
-            turnEnded.length != playerIds.length ||
-            !_jsonDeepEquals(
-              turnEnded.map((event) => event.playerId).toList(),
-              playerIds,
-            )) {
-          _fail(fixture, 'must commit the reviewed simultaneous turn');
-        }
       default:
         _fail(fixture, 'uses a command outside the reviewed parity corpus');
     }

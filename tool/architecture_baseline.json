@@ -1331,11 +1331,11 @@
         "test/game/unit_marker_layer_test.dart": 1291,
         "test/game/unit_move_preview_layer_test.dart": 563,
         "test/menu/main_menu_screen_test.dart": 649,
-        "test/support/reducer_parity_fixture.dart": 549
+        "test/support/reducer_parity_fixture.dart": 534
       },
       "legacyFiles": {},
       "declarations": {
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 400
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 385
       },
       "callableLines": {
         "test/architecture/architecture_callable_metrics_test.dart::function:main/closure:test[control-flow_complexity_has_deterministic_golden_values]#1": 131,
@@ -1368,12 +1368,11 @@
       "cyclomaticComplexity": {
         "test/architecture/layer_boundaries_test.dart::enum:_ImportRule/method:matches": 16,
         "test/game/domain/command/game_command_test.dart::function:main/closure:group[GameCommand]#1/closure:group[exhaustiveness___all_subtypes_are_GameCommand]#1/closure:test[switch_over_sealed_class_is_exhaustive__compile-time_check_]#1": 65,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 29,
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 17,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateFixture": 30
       },
       "cognitiveComplexity": {
         "test/game/presentation/widgets/theme/game_hud_theme_test.dart::function:main/closure:test[keeps_game_HUD_presentation_on_GameIcons_instead_of_Material_icons]#1": 21,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 29,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateCorpus": 26,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateFixture": 30
       }

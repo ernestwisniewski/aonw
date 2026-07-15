@@ -2,11 +2,14 @@ import 'package:aonw_core/game/domain/movement/movement_cost.dart';
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile.dart';
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class UnitMovementCostRules {
-  static MovementCost costToEnterTile(TileData tile, {GameUnitType? unitType}) {
+  static MovementCost costToEnterTile(
+    MapTileView tile, {
+    GameUnitType? unitType,
+  }) {
     return costToEnter(
       TileTerrainProfileRules.fromTile(tile),
       unitType: unitType,

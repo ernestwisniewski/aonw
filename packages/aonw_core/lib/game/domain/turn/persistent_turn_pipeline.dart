@@ -84,7 +84,7 @@ abstract final class PersistentTurnPipeline {
   static PersistentPlayerTurnResult advancePlayer({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapData,
     GameRuleset ruleset = GameRuleset.defaults,
     FogOfWarService fogOfWarService = const FogOfWarService(),
     VictoryRules victoryRules = VictoryRules.standard,
@@ -96,6 +96,7 @@ abstract final class PersistentTurnPipeline {
       mapData: mapData,
       ruleset: ruleset,
       fogOfWarService: fogOfWarService,
+      mapObjectives: mapData.objectives,
       turn: turn,
     );
     final previousCulturalHoldTurns =
@@ -125,7 +126,7 @@ abstract final class PersistentTurnPipeline {
   static PersistentTurnPipelineResult simultaneousFinalize(
     PersistentTurnPipelineRequest request,
   ) {
-    final mapData = LegacyWorldMapAdapter.toMapData(request.worldMap);
+    final mapView = LegacyWorldMapAdapter.asReadView(request.worldMap);
     final playerIds = request.playerIds;
     final skippedPlayerIds = _skippedPlayerIdsFor(request);
     final savedAt = request.savedAt.toUtc();
@@ -139,17 +140,17 @@ abstract final class PersistentTurnPipeline {
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
       state: combat.state,
       playerIds: playerIds,
-      mapData: mapData,
+      mapData: mapView,
       ruleset: ruleset,
       fogOfWarService: request.fogOfWarService,
       priorEvents: combat.events,
-      mapObjectives: mapData.objectives,
+      mapObjectives: mapView.objectives,
       turn: request.save.turn,
     );
     final movement = PersistentTurnMovementProcessor.resetForPlayers(
       state: economy.state,
       playerIds: playerIds,
-      mapData: mapData,
+      mapData: mapView,
       fogOfWarService: request.fogOfWarService,
     );
     final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
@@ -171,7 +172,7 @@ abstract final class PersistentTurnPipeline {
     final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
       playerIds: playerIds,
       state: movement.state,
-      mapData: mapData,
+      mapData: mapView,
       victoryRules: request.save.matchRules.victory,
       previousHoldTurnsByPlayerId: previousDominationHoldTurns,
     );
@@ -179,7 +180,7 @@ abstract final class PersistentTurnPipeline {
         .thresholdReachedEvents(
           playerIds: playerIds,
           state: movement.state,
-          mapData: mapData,
+          mapData: mapView,
           victoryRules: request.save.matchRules.victory,
           previousHoldTurnsByPlayerId: previousDominationHoldTurns,
           nextHoldTurnsByPlayerId: dominationHoldTurns,

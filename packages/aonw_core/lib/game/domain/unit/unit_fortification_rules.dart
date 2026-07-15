@@ -25,7 +25,7 @@ abstract final class UnitFortificationRules {
 
   static GameUnit recoverForNewTurn({
     required GameUnit unit,
-    MapData? mapData,
+    MapTileLookup? mapData,
     Iterable<GameUnit>? units,
     FogRevealCalculator revealCalculator = const FogRevealCalculator(),
   }) {
@@ -76,7 +76,7 @@ abstract final class UnitFortificationRules {
 
   static bool hasVisibleEnemy({
     required GameUnit unit,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<GameUnit> units,
     FogRevealCalculator revealCalculator = const FogRevealCalculator(),
   }) {

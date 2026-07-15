@@ -16,7 +16,7 @@ abstract final class StabilityInputBuilder {
   static Map<String, StabilityInputs> forPlayers({
     required PersistentGameState state,
     required Iterable<String> playerIds,
-    required MapData mapData,
+    required MapReadView mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
     Map<String, int>? warWearinessByPlayerId,
   }) {
@@ -50,7 +50,7 @@ abstract final class StabilityInputBuilder {
   static ({double controlPercent, int playerCount}) hegemonyContextFor({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapData,
   }) {
     final orderedPlayerIds = orderedKnownPlayerIds(state, [playerId]);
     if (orderedPlayerIds.isEmpty) {
@@ -71,7 +71,7 @@ abstract final class StabilityInputBuilder {
   static StabilityInputs forPlayer({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
     int? warWeariness,
     double controlPercent = 0.0,

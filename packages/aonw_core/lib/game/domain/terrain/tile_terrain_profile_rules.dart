@@ -1,9 +1,9 @@
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class TileTerrainProfileRules {
-  static TileTerrainProfile fromTile(TileData tile) =>
+  static TileTerrainProfile fromTile(MapTileView tile) =>
       fromTerrains(tile.terrains);
 
   static TileTerrainProfile fromTerrains(Iterable<TerrainType> terrains) {

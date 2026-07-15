@@ -36,7 +36,7 @@ abstract final class ResearchTurnProcessor {
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
     required ResearchState research,
-    required MapData mapData,
+    required MapTileLookup mapData,
     TechnologyRuleset ruleset = TechnologyRulesets.standard,
     CityRuleset cityRuleset = CityRulesets.standard,
     WonderRegistry wonderRegistry = WonderRegistry.empty,

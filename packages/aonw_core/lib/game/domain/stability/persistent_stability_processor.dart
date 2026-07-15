@@ -29,7 +29,7 @@ abstract final class PersistentStabilityProcessor {
   static PersistentStabilityTurnResult advanceForPlayers({
     required PersistentGameState state,
     required Iterable<String> playerIds,
-    required MapData mapData,
+    required MapReadView mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
     Iterable<GameEvent> turnEvents = const [],
     int? turn,

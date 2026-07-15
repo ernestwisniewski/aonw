@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class DominationProgressEntry {
   final String playerId;
@@ -147,7 +147,7 @@ class DominationProgressCalculator {
   DominationProgressSnapshot snapshot({
     required Iterable<String> playerIds,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     Map<String, int>? holdTurnsByPlayerId,
   }) {
@@ -186,7 +186,7 @@ class DominationProgressCalculator {
   Map<String, int> advanceHoldTurns({
     required Iterable<String> playerIds,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     Map<String, int>? previousHoldTurnsByPlayerId,
   }) {
@@ -212,7 +212,7 @@ class DominationProgressCalculator {
   List<DominationThresholdReachedEvent> thresholdReachedEvents({
     required Iterable<String> playerIds,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     required Map<String, int> previousHoldTurnsByPlayerId,
     required Map<String, int> nextHoldTurnsByPlayerId,
@@ -272,9 +272,9 @@ class DominationProgressCalculator {
     }.toList()..sort();
   }
 
-  Set<CityHex> _validDominationHexes(MapData mapData) {
+  Set<CityHex> _validDominationHexes(MapTileCatalog mapData) {
     return {
-      for (final tile in mapData.tiles)
+      for (final tile in mapData.tileViews)
         if (UnitMovementCostRules.costToEnterTile(tile).passable)
           CityHex(col: tile.col, row: tile.row),
     };
