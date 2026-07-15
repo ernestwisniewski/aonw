@@ -51,7 +51,7 @@ abstract final class EconomySimulation {
       opponents: config.opponents,
       mapData: mapData,
     );
-    const commandApplier = _EconomySimulationCommandApplier();
+    final commandApplier = _EconomySimulationCommandApplier(worldMap);
     const rowFactory = _EconomySimulationTurnRowFactory();
     final hostilityMemory = _EconomySimulationHostilityMemory();
     final rows = <EconomySimulationTurnRow>[];
@@ -182,7 +182,6 @@ abstract final class EconomySimulation {
             state: state,
             command: command,
             actorPlayerId: actingPlayer.id,
-            worldMap: worldMap,
             ruleset: config.ruleset,
           );
           commandTick += 1;

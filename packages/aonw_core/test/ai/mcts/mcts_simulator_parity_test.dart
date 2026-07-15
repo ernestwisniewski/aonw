@@ -964,7 +964,7 @@ PersistentTurnCombatResult _resolvePersistentCombat(
   return PersistentTurnCombatResolver.resolve(
     turn: 1,
     state: withIntent,
-    worldMap: _worldMap(),
+    mapTiles: LegacyWorldMapAdapter.asTileLookup(_worldMap()),
     ruleset: GameRuleset.defaults,
   );
 }

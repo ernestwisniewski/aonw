@@ -38,7 +38,6 @@ import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 part 'run_save_ai_benchmark/report_models.dart';
 part 'run_save_ai_benchmark/synthetic_suite.dart';

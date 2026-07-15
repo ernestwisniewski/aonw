@@ -5,12 +5,23 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/legacy_world_map_adapter_guard.dart';
+
+part 'support/world_map_combat_boundary_fixtures.dart';
+
 const _targets = [
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart',
     owner: 'PersistentTurnCombatResolver',
-    boundaries: [_Boundary.method('resolve', nullable: true)],
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+        nullable: true,
+      ),
+    ],
   ),
   _Target(
     path:
@@ -22,7 +33,13 @@ const _targets = [
     path:
         'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart',
     owner: 'PersistentTurnPipelineRequest',
-    boundaries: [_Boundary.constructor('simultaneousFinalize')],
+    boundaries: [
+      _Boundary.constructor(
+        'simultaneousFinalize',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+    ],
   ),
   _Target(
     path:
@@ -94,102 +111,29 @@ const _targets = [
 ];
 
 void main() {
-  test('migrated persistent boundaries declare canonical WorldMap APIs', () {
+  test('migrated persistent boundaries declare canonical map APIs', () {
+    final mapDataTypeNames = mapDataBackedTypeNames(productionDartSources());
     for (final target in _targets) {
       expect(
-        _violations(File(target.path).readAsStringSync(), target),
+        _violations(
+          File(target.path).readAsStringSync(),
+          target,
+          mapDataTypeNames: mapDataTypeNames,
+        ),
         isEmpty,
         reason: target.path,
       );
     }
   });
 
-  test(
-    'guard rejects MapData at a method boundary despite an unrelated WorldMap',
-    () {
-      const target = _Target(
-        path: 'lib/persistent_combat_command_resolver.dart',
-        owner: 'PersistentCombatCommandResolver',
-        boundaries: [_Boundary.method('resolve')],
-      );
-
-      final violations = _violations('''
-class PersistentCombatCommandResolver {
-  final WorldMap cachedWorldMap;
-
-  void resolve({required MapData worldMap}) {}
-}
-''', target);
-
-      expect(
-        violations,
-        containsAll([
-          'PersistentCombatCommandResolver.resolve.worldMap must have type '
-              'WorldMap; found MapData',
-          'PersistentCombatCommandResolver.resolve must not expose MapData '
-              'through parameter worldMap',
-        ]),
-      );
-    },
-  );
-
-  test('guard rejects MapData in a public request field', () {
-    const target = _Target(
-      path: 'lib/persistent_turn_pipeline.dart',
-      owner: 'PersistentTurnPipelineRequest',
-      boundaries: [_Boundary.constructor('simultaneousFinalize')],
-    );
-
-    final violations = _violations('''
-final class PersistentTurnPipelineRequest {
-  PersistentTurnPipelineRequest.simultaneousFinalize({
-    required this.worldMap,
-  });
-
-  final MapData worldMap;
-  final WorldMap cachedWorldMap;
-}
-''', target);
-
-    expect(
-      violations,
-      containsAll([
-        'PersistentTurnPipelineRequest.simultaneousFinalize.worldMap must '
-            'have type WorldMap; found MapData',
-        'PersistentTurnPipelineRequest.worldMap field must have type '
-            'WorldMap; found MapData',
-        'PersistentTurnPipelineRequest.worldMap field must not expose MapData',
-      ]),
-    );
-  });
-
-  test('guard rejects a legacy MapDefinition signature', () {
-    const target = _Target(
-      path: 'lib/persistent_turn_combat_resolver.dart',
-      owner: 'PersistentTurnCombatResolver',
-      boundaries: [_Boundary.method('resolve', nullable: true)],
-    );
-    final violations = _violations('''
-import 'package:aonw_core/domain/map_definition.dart';
-
-abstract final class PersistentTurnCombatResolver {
-  static void resolve({required MapDefinition mapDefinition}) {}
-}
-''', target);
-
-    expect(
-      violations,
-      containsAll([
-        'PersistentTurnCombatResolver.resolve must declare a worldMap '
-            'parameter',
-        'must not reference MapDefinition',
-        'must not import map_definition.dart',
-      ]),
-    );
-  });
+  _registerWorldMapCombatBoundaryFixtures();
 }
 
-List<String> _violations(String source, _Target target) {
+List<String> _violations(
+  String source,
+  _Target target, {
+  Set<String> mapDataTypeNames = const {'MapData'},
+}) {
   final unit = parseString(content: source, path: target.path).unit;
   final owner = unit.declarations.whereType<ClassDeclaration>().where(
     (declaration) => declaration.namePart.typeName.lexeme == target.owner,
@@ -200,7 +144,12 @@ List<String> _violations(String source, _Target target) {
   }
 
   for (final boundary in target.boundaries) {
-    _checkBoundary(owner.single, boundary, violations);
+    _checkBoundary(
+      owner.single,
+      boundary,
+      violations,
+      mapDataTypeNames: mapDataTypeNames,
+    );
   }
   if (_namedTypes(unit).contains('MapDefinition')) {
     violations.add('must not reference MapDefinition');
@@ -218,8 +167,9 @@ List<String> _violations(String source, _Target target) {
 void _checkBoundary(
   ClassDeclaration owner,
   _Boundary boundary,
-  List<String> violations,
-) {
+  List<String> violations, {
+  required Set<String> mapDataTypeNames,
+}) {
   final member = _memberFor(owner, boundary);
   final memberLabel = '${owner.namePart.typeName.lexeme}.${boundary.name}';
   if (member == null) {
@@ -239,9 +189,10 @@ void _checkBoundary(
     );
   } else {
     final parameterType = _parameterType(parameter, owner);
-    _checkWorldMapType(
+    _checkBoundaryType(
       label: '$memberLabel.${boundary.parameter}',
       type: parameterType,
+      expectedType: boundary.type,
       nullable: boundary.nullable,
       violations: violations,
     );
@@ -249,7 +200,10 @@ void _checkBoundary(
 
   for (final parameter in parameters.parameters) {
     final normalized = _unwrap(parameter);
-    if (_isNamedType(_parameterType(normalized, owner), 'MapData')) {
+    if (_containsAnyNamedType(
+      _parameterType(normalized, owner),
+      mapDataTypeNames,
+    )) {
       violations.add(
         '$memberLabel must not expose MapData through parameter '
         '${normalized.name?.lexeme ?? '<unnamed>'}',
@@ -266,13 +220,14 @@ void _checkBoundary(
       return;
     }
     final fieldType = _fieldType(owner, boundary.parameter);
-    _checkWorldMapType(
+    _checkBoundaryType(
       label: fieldLabel,
       type: fieldType,
+      expectedType: boundary.type,
       nullable: boundary.nullable,
       violations: violations,
     );
-    if (_isNamedType(fieldType, 'MapData')) {
+    if (_containsAnyNamedType(fieldType, mapDataTypeNames)) {
       violations.add('$fieldLabel must not expose MapData');
     }
   }
@@ -342,26 +297,32 @@ TypeAnnotation? _fieldType(ClassDeclaration owner, String name) {
   return parent is VariableDeclarationList ? parent.type : null;
 }
 
-void _checkWorldMapType({
+void _checkBoundaryType({
   required String label,
   required TypeAnnotation? type,
+  required String expectedType,
   required bool nullable,
   required List<String> violations,
 }) {
-  final expected = nullable ? 'WorldMap?' : 'WorldMap';
-  if (!_isExpectedWorldMap(type, nullable)) {
+  final expected = nullable ? '$expectedType?' : expectedType;
+  if (!_isExpectedType(type, expectedType, nullable)) {
     violations.add('$label must have type $expected; found ${_typeName(type)}');
   }
 }
 
-bool _isExpectedWorldMap(TypeAnnotation? type, bool nullable) {
-  return _isNamedType(type, 'WorldMap') && (type?.question != null) == nullable;
+bool _isExpectedType(TypeAnnotation? type, String expectedType, bool nullable) {
+  return _isNamedType(type, expectedType) &&
+      (type?.question != null) == nullable;
 }
 
 bool _isNamedType(TypeAnnotation? type, String name) {
   return type is NamedType &&
       type.name.lexeme == name &&
       type.typeArguments == null;
+}
+
+bool _containsAnyNamedType(TypeAnnotation? type, Set<String> names) {
+  return type != null && _namedTypes(type).any(names.contains);
 }
 
 String _typeName(TypeAnnotation? type) => type?.toSource() ?? '<inferred>';
@@ -394,17 +355,25 @@ enum _BoundaryKind {
 }
 
 final class _Boundary {
-  const _Boundary.method(this.name, {this.nullable = false})
-    : kind = _BoundaryKind.method;
+  const _Boundary.method(
+    this.name, {
+    this.parameter = 'worldMap',
+    this.type = 'WorldMap',
+    this.nullable = false,
+  }) : kind = _BoundaryKind.method;
 
-  const _Boundary.constructor(this.name)
-    : kind = _BoundaryKind.constructor,
-      nullable = false;
+  const _Boundary.constructor(
+    this.name, {
+    this.parameter = 'worldMap',
+    this.type = 'WorldMap',
+  }) : kind = _BoundaryKind.constructor,
+       nullable = false;
 
   final _BoundaryKind kind;
   final String name;
+  final String parameter;
+  final String type;
   final bool nullable;
-  String get parameter => 'worldMap';
 }
 
 final class _Target {

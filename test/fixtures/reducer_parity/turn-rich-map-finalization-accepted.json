@@ -38,7 +38,8 @@
           "col": 1,
           "row": 0,
           "terrains": [
-            "plains"
+            "plains",
+            "hills"
           ],
           "resources": [
             "horses"
@@ -255,6 +256,55 @@
           "row": 1,
           "movementPoints": 0,
           "army": []
+        },
+        {
+          "id": "attacker_1",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 0,
+          "movementPoints": 0,
+          "army": []
+        },
+        {
+          "id": "defender_2",
+          "ownerPlayerId": "player_2",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 0,
+          "movementPoints": 0,
+          "army": [],
+          "hitPoints": 3
+        },
+        {
+          "id": "queued_scout_2",
+          "ownerPlayerId": "player_2",
+          "type": "scout",
+          "name": "scout",
+          "col": 2,
+          "row": 2,
+          "movementPoints": 0,
+          "army": [],
+          "queuedPath": {
+            "targetCol": 1,
+            "targetRow": 2,
+            "steps": [
+              {
+                "col": 2,
+                "row": 2,
+                "enterCost": 0,
+                "cumulativeCost": 0
+              },
+              {
+                "col": 1,
+                "row": 2,
+                "enterCost": 1,
+                "cumulativeCost": 1
+              }
+            ]
+          }
         }
       ],
       "cities": [
@@ -326,6 +376,15 @@
       "runtimeState": {
         "submittedPlayerIds": [
           "player_1"
+        ],
+        "intendedAttacks": [
+          {
+            "attackerUnitId": "attacker_1",
+            "defenderCol": 1,
+            "defenderRow": 0,
+            "declaredAtTick": 30,
+            "declaringPlayerId": "player_1"
+          }
         ],
         "mapObjectiveHoldStates": [
           {
@@ -429,6 +488,39 @@
           "col": 2,
           "row": 1,
           "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "attacker_1",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 0,
+          "movementPoints": 3,
+          "army": [],
+          "experiencePoints": 1
+        },
+        {
+          "id": "defender_2",
+          "ownerPlayerId": "player_2",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 1,
+          "movementPoints": 3,
+          "army": [],
+          "hitPoints": 2,
+          "experiencePoints": 1
+        },
+        {
+          "id": "queued_scout_2",
+          "ownerPlayerId": "player_2",
+          "type": "scout",
+          "name": "scout",
+          "col": 1,
+          "row": 2,
+          "movementPoints": 2,
           "army": []
         }
       ],
@@ -578,7 +670,19 @@
           "discoveredHexes": [
             {
               "col": 0,
+              "row": 0
+            },
+            {
+              "col": 0,
+              "row": 1
+            },
+            {
+              "col": 0,
               "row": 2
+            },
+            {
+              "col": 1,
+              "row": 0
             },
             {
               "col": 1,
@@ -600,7 +704,19 @@
           "visibleHexes": [
             {
               "col": 0,
+              "row": 0
+            },
+            {
+              "col": 0,
+              "row": 1
+            },
+            {
+              "col": 0,
               "row": 2
+            },
+            {
+              "col": 1,
+              "row": 0
             },
             {
               "col": 1,
@@ -637,6 +753,26 @@
         "diplomacy": {
           "contacts": [
             "player_1|player_2"
+          ],
+          "relations": [
+            {
+              "playerAId": "player_1",
+              "playerBId": "player_2",
+              "status": "hostile",
+              "relationScore": -10,
+              "lastChangedTurn": 7,
+              "lastChangeReason": "unitAttack"
+            }
+          ],
+          "scoreHistory": [
+            {
+              "playerAId": "player_1",
+              "playerBId": "player_2",
+              "turn": 7,
+              "delta": -10,
+              "scoreAfter": -10,
+              "reason": "unitAttack"
+            }
           ]
         },
         "mapObjectiveHoldStates": [
@@ -657,6 +793,75 @@
           "player_1",
           "player_2"
         ]
+      },
+      {
+        "type": "UnitAttacked",
+        "attackerUnitId": "attacker_1",
+        "attackerOwnerPlayerId": "player_1",
+        "defenderUnitId": "defender_2",
+        "defenderOwnerPlayerId": "player_2"
+      },
+      {
+        "type": "CombatResolved",
+        "attackerUnitId": "attacker_1",
+        "defenderUnitId": "defender_2",
+        "outcome": {
+          "attackerUnitId": "attacker_1",
+          "defenderUnitId": "defender_2",
+          "attackerHpAfter": 10,
+          "defenderHpAfter": 2,
+          "attackerKilled": false,
+          "defenderKilled": false,
+          "defenderRetreated": true,
+          "steps": [
+            {
+              "type": "ModifierApplied",
+              "modifier": {
+                "type": "Terrain",
+                "label": "terrain.hills.defense",
+                "target": "defense",
+                "delta": 1
+              }
+            },
+            {
+              "type": "Roll",
+              "seed": 971199497,
+              "value": 0
+            },
+            {
+              "type": "Attack",
+              "damage": 1,
+              "active": []
+            }
+          ]
+        }
+      },
+      {
+        "type": "UnitRetreated",
+        "unitId": "defender_2",
+        "ownerPlayerId": "player_2",
+        "fromCol": 1,
+        "fromRow": 0,
+        "toCol": 1,
+        "toRow": 1
+      },
+      {
+        "type": "UnitGainedExperience",
+        "unitId": "attacker_1",
+        "ownerPlayerId": "player_1",
+        "amount": 1,
+        "totalExperience": 1,
+        "rank": "recruit",
+        "promoted": false
+      },
+      {
+        "type": "UnitGainedExperience",
+        "unitId": "defender_2",
+        "ownerPlayerId": "player_2",
+        "amount": 1,
+        "totalExperience": 1,
+        "rank": "recruit",
+        "promoted": false
       },
       {
         "type": "ResearchPointsGained",

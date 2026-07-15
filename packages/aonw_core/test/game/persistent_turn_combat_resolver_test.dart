@@ -45,7 +45,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        worldMap: _worldMap(),
+        mapTiles: _mapTiles(),
       );
 
       expect(result.state.units.map((unit) => unit.id), ['warrior_1']);
@@ -113,7 +113,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        worldMap: _worldMap(),
+        mapTiles: _mapTiles(),
       );
 
       expect(result.state.units.single.movementPoints, 0);
@@ -171,7 +171,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        worldMap: _worldMap(),
+        mapTiles: _mapTiles(),
       );
 
       expect(result.state.units.single.movementPoints, 0);
@@ -230,7 +230,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        worldMap: _worldMap(),
+        mapTiles: _mapTiles(),
       );
       final scoreEvent = result.events
           .whereType<DiplomaticScoreChangedEvent>()
@@ -285,7 +285,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 1,
         state: state,
-        worldMap: _worldMap(cols: 3, rows: 3),
+        mapTiles: _mapTiles(cols: 3, rows: 3),
         ruleset: _retreatRuleset,
       );
 
@@ -399,22 +399,20 @@ const _retreatRuleset = GameRuleset(
   technology: TechnologyRulesets.standard,
 );
 
-WorldMap _worldMap({int cols = 2, int rows = 1}) {
-  return WorldMap(
+MapData _mapTiles({int cols = 2, int rows = 1}) {
+  return MapData(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
-        for (var row = 0; row < rows; row++) _tile(col, row),
+        for (var row = 0; row < rows; row++)
+          TileData(
+            col: col,
+            row: row,
+            terrains: const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
     ],
-  );
-}
-
-WorldTile _tile(int col, int row) {
-  return WorldTile(
-    coordinate: HexCoord(col: col, row: row),
-    terrains: const [TerrainType.grassland],
-    resources: const [],
-    height: 0,
   );
 }

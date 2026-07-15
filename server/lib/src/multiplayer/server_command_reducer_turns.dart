@@ -82,7 +82,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,
-        worldMap: worldMap,
+        mapView: LegacyWorldMapAdapter.asReadView(worldMap),
         ruleset: ruleset,
         preserveNonParticipantPlayerStates: true,
         trackTimeoutStreaks: true,

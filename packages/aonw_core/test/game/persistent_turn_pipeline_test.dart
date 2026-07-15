@@ -72,7 +72,7 @@ void main() {
             state: state,
             playerIds: const ['player_2', 'player_1', 'player_1'],
             savedAt: _savedAt,
-            worldMap: _worldMap(),
+            mapView: _mapData(),
           ),
         );
 
@@ -113,7 +113,7 @@ void main() {
           playerIds: const ['player_1', 'player_2'],
           skippedPlayerIds: const ['player_2'],
           savedAt: _savedAt,
-          worldMap: _worldMap(),
+          mapView: _mapData(),
           preserveNonParticipantPlayerStates: true,
           trackTimeoutStreaks: true,
         ),
@@ -164,7 +164,7 @@ void main() {
           ),
           playerIds: const ['player_1', 'player_2'],
           savedAt: _savedAt,
-          worldMap: _worldMap(),
+          mapView: _mapData(),
         ),
       );
 
@@ -217,5 +217,3 @@ MapData _mapData() {
     ],
   );
 }
-
-WorldMap _worldMap() => LegacyWorldMapAdapter.fromMapData(_mapData());

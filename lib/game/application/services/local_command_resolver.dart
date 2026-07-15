@@ -9,7 +9,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class LocalCommandResolution {
   final GameSave save;
@@ -146,13 +145,14 @@ class LocalCommandResolver {
     required List<String> playerIds,
     required DateTime savedAt,
   }) {
+    final mapView = reducer.mapData.indexedReadView();
     final result = PersistentTurnPipeline.simultaneousFinalize(
       PersistentTurnPipelineRequest.simultaneousFinalize(
         save: save,
         state: state.toPersistentState(),
         playerIds: playerIds,
         savedAt: savedAt,
-        worldMap: LegacyWorldMapAdapter.fromMapData(reducer.mapData),
+        mapView: mapView,
         ruleset: reducer.ruleset,
       ),
     );

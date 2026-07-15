@@ -196,7 +196,7 @@ class TracingMctsSimulator implements MctsSimulator {
         actorPlayerId: actorPlayerId,
         turn: turn,
         tick: tick,
-        worldMap: maps.canonicalMap,
+        mapTiles: maps.mapTiles,
         ruleset: ruleset,
       ),
       SkipUnitTurnCommand() =>
@@ -338,7 +338,7 @@ class TracingMctsSimulator implements MctsSimulator {
     required String actorPlayerId,
     required int turn,
     required int tick,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required GameRuleset ruleset,
   }) {
     final withIntent = state.copyWith(
@@ -358,7 +358,7 @@ class TracingMctsSimulator implements MctsSimulator {
     final result = PersistentTurnCombatResolver.resolve(
       turn: turn,
       state: withIntent,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       ruleset: ruleset,
     );
     return result.state.copyWith(
@@ -374,11 +374,16 @@ class TracingMctsSimulator implements MctsSimulator {
 }
 
 final class _MctsSimulationMaps {
-  const _MctsSimulationMaps(this.canonicalMap);
+  const _MctsSimulationMaps(this.canonicalMap, this.mapTiles);
 
   factory _MctsSimulationMaps.fromMapData({required MapData mapData}) {
-    return _MctsSimulationMaps(LegacyWorldMapAdapter.fromMapData(mapData));
+    final canonicalMap = LegacyWorldMapAdapter.fromMapData(mapData);
+    return _MctsSimulationMaps(
+      canonicalMap,
+      LegacyWorldMapAdapter.asTileLookup(canonicalMap),
+    );
   }
 
   final WorldMap canonicalMap;
+  final MapTileLookup mapTiles;
 }

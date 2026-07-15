@@ -1,4 +1,7 @@
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/domain/world_map_invariants.dart';
 import 'package:aonw_core/map/domain/map_survey.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -149,6 +152,13 @@ class MapData implements MapTileSource, MapReadView {
     _objectives = List.unmodifiable(value);
   }
 
+  /// Builds a request-scoped read view with constant-time coordinate lookup.
+  ///
+  /// The view snapshots tile membership and metadata, but borrows the existing
+  /// [TileData] values. Building it is therefore linear in the tile count
+  /// without converting the map to another tile representation.
+  MapReadView indexedReadView() => _IndexedMapDataReadView(this);
+
   /// Returns the tile at [col], [row], or null if not found.
   @override
   TileData? tileAt(int col, int row) {
@@ -157,4 +167,58 @@ class MapData implements MapTileSource, MapReadView {
     }
     return null;
   }
+}
+
+final class _IndexedMapDataReadView implements MapReadView {
+  _IndexedMapDataReadView(MapData source)
+    : cols = source.cols,
+      rows = source.rows,
+      mapName = source.mapName,
+      objectives = source.objectives,
+      _tiles = List.unmodifiable(source.tiles) {
+    _tilesByCoordinate = buildValidatedWorldMapIndex(
+      cols: cols,
+      rows: rows,
+      defaultZoom: source.defaultZoom,
+      tiles: _tiles,
+      objectives: objectives,
+      reject: _rejectWorldMapInvariant,
+    );
+  }
+
+  @override
+  final int cols;
+
+  @override
+  final int rows;
+
+  @override
+  final String? mapName;
+
+  @override
+  final List<MapObjectiveDefinition> objectives;
+
+  final List<TileData> _tiles;
+  late final Map<HexCoord, TileData> _tilesByCoordinate;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  int get tileCount => _tiles.length;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains =>
+      _tiles.map((tile) => tile.terrains);
+
+  @override
+  Iterable<MapTileView> get tileViews => _tiles;
+
+  @override
+  TileData? tileAt(int col, int row) =>
+      _tilesByCoordinate[HexCoord(col: col, row: row)];
+}
+
+Never _rejectWorldMapInvariant(String message) {
+  throw WorldMapException(message);
 }

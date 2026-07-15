@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -14,7 +13,6 @@ import 'package:aonw_core/game/domain/turn/persistent_turn_economy_processor.dar
 import 'package:aonw_core/game/domain/turn/persistent_turn_movement_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 final class PersistentTurnMovementDelta {
   PersistentTurnMovementDelta({
@@ -33,7 +31,7 @@ final class PersistentTurnPipelineRequest {
     required this.state,
     required Iterable<String> playerIds,
     required this.savedAt,
-    required this.worldMap,
+    required this.mapView,
     this.ruleset = GameRuleset.defaults,
     this.fogOfWarService = const FogOfWarService(),
     Iterable<String> skippedPlayerIds = const [],
@@ -48,7 +46,7 @@ final class PersistentTurnPipelineRequest {
   final PersistentGameState state;
   final List<String> playerIds;
   final DateTime savedAt;
-  final WorldMap worldMap;
+  final MapReadView mapView;
   final GameRuleset ruleset;
   final FogOfWarService fogOfWarService;
   final List<String> skippedPlayerIds;
@@ -126,7 +124,7 @@ abstract final class PersistentTurnPipeline {
   static PersistentTurnPipelineResult simultaneousFinalize(
     PersistentTurnPipelineRequest request,
   ) {
-    final mapView = LegacyWorldMapAdapter.asReadView(request.worldMap);
+    final mapView = request.mapView;
     final playerIds = request.playerIds;
     final skippedPlayerIds = _skippedPlayerIdsFor(request);
     final savedAt = request.savedAt.toUtc();
@@ -134,7 +132,7 @@ abstract final class PersistentTurnPipeline {
     final combat = PersistentTurnCombatResolver.resolve(
       turn: request.save.turn,
       state: request.state,
-      worldMap: request.worldMap,
+      mapTiles: mapView.mapTiles,
       ruleset: ruleset,
     );
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(

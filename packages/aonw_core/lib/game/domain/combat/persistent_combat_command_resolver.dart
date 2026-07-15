@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentCombatCommandResult {
@@ -61,16 +62,12 @@ class PersistentCombatCommandResolver {
       return _reject(state, 'attacker_exhausted');
     }
 
-    final attackerTile = LegacyWorldMapAdapter.tileDataAt(
-      worldMap,
-      attacker.col,
-      attacker.row,
-    );
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final attackerTile = mapTiles.tileAt(attacker.col, attacker.row);
     if (attackerTile == null) {
       return _reject(state, 'attacker_out_of_bounds');
     }
-    final targetTile = LegacyWorldMapAdapter.tileDataAt(
-      worldMap,
+    final targetTile = mapTiles.tileAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -140,7 +137,7 @@ class PersistentCombatCommandResolver {
     final resolved = PersistentTurnCombatResolver.resolve(
       turn: turn,
       state: isolated,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       ruleset: ruleset,
     );
     if (resolved.events.whereType<CombatResolvedEvent>().isEmpty) {
@@ -151,7 +148,7 @@ class PersistentCombatCommandResolver {
       originalState: state,
       combatState: resolved.state,
       previousIntents: previousIntents,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
     );
     return PersistentCombatCommandResult(
       accepted: true,
@@ -175,9 +172,8 @@ class PersistentCombatCommandResolver {
     required PersistentGameState originalState,
     required PersistentGameState combatState,
     required List<IntendedAttack> previousIntents,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
   }) {
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     final updatedFog = fogOfWarService.recompute(
       current: originalState.fogOfWar,
       mapData: mapTiles,

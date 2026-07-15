@@ -7,6 +7,22 @@ import 'package:aonw_core/map/domain/map_data.dart';
 typedef CombatRetreatTileLookup = TileData? Function(int col, int row);
 
 abstract final class CombatRetreatResolver {
+  static HexCoordinate? destinationIfAvailable({
+    required bool canCounter,
+    required GameUnit attacker,
+    required GameUnit defender,
+    required Iterable<GameUnit> units,
+    required CombatRetreatTileLookup? tileAt,
+  }) {
+    if (!canCounter || tileAt == null) return null;
+    return destination(
+      attacker: attacker,
+      defender: defender,
+      units: units,
+      tileAt: tileAt,
+    );
+  }
+
   static HexCoordinate? destination({
     required GameUnit attacker,
     required GameUnit defender,

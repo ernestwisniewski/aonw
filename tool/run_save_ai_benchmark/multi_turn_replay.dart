@@ -304,6 +304,7 @@ class _MultiTurnReplayRunner {
     final ruleset = GameRuleset.defaults.copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
+    final mapView = mapData.indexedReadView();
     final persistent = PersistentGameState(
       playerColors: state.playerColors,
       playerCountries: state.playerCountries,
@@ -318,20 +319,20 @@ class _MultiTurnReplayRunner {
     final combat = PersistentTurnCombatResolver.resolve(
       turn: save.turn,
       state: persistent,
-      worldMap: LegacyWorldMapAdapter.fromMapData(mapData),
+      mapTiles: mapView.mapTiles,
       ruleset: ruleset,
     );
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
       state: combat.state,
       playerIds: playerIds,
-      mapData: mapData,
+      mapData: mapView,
       ruleset: ruleset,
-      mapObjectives: mapData.objectives,
+      mapObjectives: mapView.objectives,
     );
     final movement = PersistentTurnMovementProcessor.resetForPlayers(
       state: economy.state,
       playerIds: playerIds,
-      mapData: mapData,
+      mapData: mapView,
     );
     const dominationProgressCalculator = DominationProgressCalculator();
     final previousDominationHoldTurns =
@@ -339,7 +340,7 @@ class _MultiTurnReplayRunner {
     final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
       playerIds: playerIds,
       state: movement.state,
-      mapData: mapData,
+      mapData: mapView,
       victoryRules: save.matchRules.victory,
       previousHoldTurnsByPlayerId: previousDominationHoldTurns,
     );
@@ -347,7 +348,7 @@ class _MultiTurnReplayRunner {
         .thresholdReachedEvents(
           playerIds: playerIds,
           state: movement.state,
-          mapData: mapData,
+          mapData: mapView,
           victoryRules: save.matchRules.victory,
           previousHoldTurnsByPlayerId: previousDominationHoldTurns,
           nextHoldTurnsByPlayerId: dominationHoldTurns,
@@ -359,10 +360,9 @@ class _MultiTurnReplayRunner {
       turnStartedAt: savedAt,
     );
     final nextSave = save.withNewTurn().copyWith(savedAt: savedAt);
-    final nextPersistent = movement.state.copyWith(runtimeState: runtimeState);
     final nextState = SaveSnapshot.fromPersistentState(
       save: nextSave,
-      state: nextPersistent,
+      state: movement.state.copyWith(runtimeState: runtimeState),
     ).toGameState(activePlayerId: '', activePlayerCanAct: true);
 
     return _ResolvedReplayTurn(

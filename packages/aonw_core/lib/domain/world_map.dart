@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
+import 'package:aonw_core/domain/world_map_invariants.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -21,12 +22,11 @@ final class WorldTile implements MapTileView {
     required this.height,
   }) : terrains = List.unmodifiable(terrains),
        resources = List.unmodifiable(resources) {
-    if (this.terrains.isEmpty) {
-      throw const WorldMapException('Tile terrains must not be empty');
-    }
-    if (height < 0 || height > 5) {
-      throw WorldMapException('Tile height $height out of range [0, 5]');
-    }
+    validateWorldMapTile(
+      terrains: this.terrains,
+      height: height,
+      reject: _rejectWorldMapInvariant,
+    );
   }
 
   final HexCoord coordinate;
@@ -60,13 +60,13 @@ final class WorldMap {
     this.defaultZoom = 1.0,
   }) : tiles = List.unmodifiable(tiles),
        objectives = List.unmodifiable(objectives) {
-    _validateMapMetadata(cols: cols, rows: rows, defaultZoom: defaultZoom);
-    _tilesByCoordinate = _buildIndex(cols: cols, rows: rows, tiles: this.tiles);
-    _validateObjectives(
+    _tilesByCoordinate = buildValidatedWorldMapIndex(
       cols: cols,
       rows: rows,
+      defaultZoom: defaultZoom,
+      tiles: this.tiles,
       objectives: this.objectives,
-      tilesByCoordinate: _tilesByCoordinate,
+      reject: _rejectWorldMapInvariant,
     );
   }
 
@@ -83,101 +83,6 @@ final class WorldMap {
   WorldTile? tileAt(HexCoord coordinate) => _tilesByCoordinate[coordinate];
 }
 
-void _validateMapMetadata({
-  required int cols,
-  required int rows,
-  required double defaultZoom,
-}) {
-  if (cols <= 0) {
-    throw WorldMapException('Map cols must be positive, got $cols');
-  }
-  if (rows <= 0) {
-    throw WorldMapException('Map rows must be positive, got $rows');
-  }
-  if (!defaultZoom.isFinite || defaultZoom <= 0) {
-    throw WorldMapException(
-      'Map default zoom must be finite and positive, got $defaultZoom',
-    );
-  }
-}
-
-Map<HexCoord, WorldTile> _buildIndex({
-  required int cols,
-  required int rows,
-  required List<WorldTile> tiles,
-}) {
-  final index = <HexCoord, WorldTile>{};
-  for (final tile in tiles) {
-    _validateCoordinate(
-      tile.coordinate,
-      cols: cols,
-      rows: rows,
-      subject: 'Tile',
-    );
-    if (index.containsKey(tile.coordinate)) {
-      throw WorldMapException('Duplicate tile at ${tile.coordinate}');
-    }
-    index[tile.coordinate] = tile;
-  }
-  return Map.unmodifiable(index);
-}
-
-void _validateCoordinate(
-  HexCoord coordinate, {
-  required int cols,
-  required int rows,
-  required String subject,
-}) {
-  if (coordinate.col < 0 || coordinate.col >= cols) {
-    throw WorldMapException(
-      '$subject col ${coordinate.col} out of range [0, $cols)',
-    );
-  }
-  if (coordinate.row < 0 || coordinate.row >= rows) {
-    throw WorldMapException(
-      '$subject row ${coordinate.row} out of range [0, $rows)',
-    );
-  }
-}
-
-void _validateObjectives({
-  required int cols,
-  required int rows,
-  required List<MapObjectiveDefinition> objectives,
-  required Map<HexCoord, WorldTile> tilesByCoordinate,
-}) {
-  final ids = <String>{};
-  final coordinates = <HexCoord>{};
-  for (final objective in objectives) {
-    if (objective.id.trim().isEmpty) {
-      throw const WorldMapException('Objective id must not be empty');
-    }
-    if (!ids.add(objective.id)) {
-      throw WorldMapException('Duplicate objective id: ${objective.id}');
-    }
-    _validateCoordinate(
-      objective.hex,
-      cols: cols,
-      rows: rows,
-      subject: 'Objective ${objective.id}',
-    );
-    if (!tilesByCoordinate.containsKey(objective.hex)) {
-      throw WorldMapException(
-        'Objective ${objective.id} has no tile at ${objective.hex}',
-      );
-    }
-    if (!coordinates.add(objective.hex)) {
-      throw WorldMapException('Duplicate objective at ${objective.hex}');
-    }
-    if (objective.requiredHoldTurns <= 0) {
-      throw WorldMapException(
-        'Objective ${objective.id} hold turns must be positive',
-      );
-    }
-    if (objective.victoryPoints < 0 || objective.goldPerTurn < 0) {
-      throw WorldMapException(
-        'Objective ${objective.id} rewards must be non-negative',
-      );
-    }
-  }
+Never _rejectWorldMapInvariant(String message) {
+  throw WorldMapException(message);
 }

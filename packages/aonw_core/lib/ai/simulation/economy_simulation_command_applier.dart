@@ -1,7 +1,11 @@
 part of 'economy_simulation.dart';
 
 final class _EconomySimulationCommandApplier {
-  const _EconomySimulationCommandApplier();
+  _EconomySimulationCommandApplier(this.worldMap)
+    : mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+
+  final WorldMap worldMap;
+  final MapTileLookup mapTiles;
 
   _ApplyCommandResult apply({
     required int turn,
@@ -9,7 +13,6 @@ final class _EconomySimulationCommandApplier {
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     switch (command) {
@@ -206,7 +209,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapTiles: mapTiles,
           ruleset: ruleset,
         );
       case TileTappedCommand() ||
@@ -267,7 +270,7 @@ final class _EconomySimulationCommandApplier {
     required PersistentGameState state,
     required AttackHexCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required GameRuleset ruleset,
   }) {
     final withIntent = state.copyWith(
@@ -286,7 +289,7 @@ final class _EconomySimulationCommandApplier {
     final result = PersistentTurnCombatResolver.resolve(
       turn: turn,
       state: withIntent,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       ruleset: ruleset,
     );
     final nextState = result.state.copyWith(

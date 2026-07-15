@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -11,7 +10,6 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentTurnCombatResult {
   final PersistentGameState state;
@@ -27,7 +25,7 @@ abstract final class PersistentTurnCombatResolver {
   static PersistentTurnCombatResult resolve({
     required int turn,
     required PersistentGameState state,
-    WorldMap? worldMap,
+    MapTileLookup? mapTiles,
     GameRuleset ruleset = GameRuleset.defaults,
   }) {
     if (state.runtimeState.intendedAttacks.isEmpty || state.units.isEmpty) {
@@ -68,7 +66,7 @@ abstract final class PersistentTurnCombatResolver {
           updateDiplomacy: (next) => diplomacy = next,
           updateResourceTradeAgreements: (next) =>
               resourceTradeAgreements = next,
-          worldMap: worldMap,
+          mapTiles: mapTiles,
           ruleset: ruleset,
         );
         if (resolved) continue;
@@ -89,7 +87,7 @@ abstract final class PersistentTurnCombatResolver {
         defender: defender,
         cities: cities,
         state: state,
-        worldMap: worldMap,
+        mapTiles: mapTiles,
         ruleset: ruleset,
       );
       if (attack == null) continue;
@@ -103,15 +101,13 @@ abstract final class PersistentTurnCombatResolver {
         defenderPlayerId: defender.ownerPlayerId,
         turn: turn,
       );
-      final retreatDestination =
-          attack.defender.effective.attack > 0 && worldMap != null
-          ? CombatRetreatResolver.destination(
-              attacker: attacker,
-              defender: defender,
-              units: units,
-              tileAt: (col, row) => _tileDataAt(worldMap, col, row),
-            )
-          : null;
+      final retreatDestination = CombatRetreatResolver.destinationIfAvailable(
+        canCounter: attack.defender.effective.attack > 0,
+        attacker: attacker,
+        defender: defender,
+        units: units,
+        tileAt: mapTiles?.tileAt,
+      );
 
       final outcome = CombatResolver.resolve(
         attacker: attack.attacker,
@@ -249,11 +245,11 @@ abstract final class PersistentTurnCombatResolver {
     required GameUnit defender,
     required List<GameCity> cities,
     required PersistentGameState state,
-    required WorldMap? worldMap,
+    required MapTileLookup? mapTiles,
     required GameRuleset ruleset,
   }) {
-    final attackerTile = _tileDataAt(worldMap, attacker.col, attacker.row);
-    final defenderTile = _tileDataAt(worldMap, defender.col, defender.row);
+    final attackerTile = mapTiles?.tileAt(attacker.col, attacker.row);
+    final defenderTile = mapTiles?.tileAt(defender.col, defender.row);
     final attackerResearch = state.research.forPlayer(attacker.ownerPlayerId);
     final defenderResearch = state.research.forPlayer(defender.ownerPlayerId);
     final defendedCity = cities.cityAt(defender.col, defender.row);
@@ -315,10 +311,6 @@ abstract final class PersistentTurnCombatResolver {
     );
   }
 
-  static TileData? _tileDataAt(WorldMap? worldMap, int col, int row) {
-    return LegacyWorldMapAdapter.tileDataAt(worldMap, col, row);
-  }
-
   static int? _unitIndexById(List<GameUnit> units, String unitId) {
     for (var i = 0; i < units.length; i++) {
       if (units[i].id == unitId) return i;
@@ -355,7 +347,7 @@ abstract final class PersistentTurnCombatResolver {
     required void Function(DiplomacyState) updateDiplomacy,
     required void Function(List<ResourceTradeAgreement>)
     updateResourceTradeAgreements,
-    required WorldMap? worldMap,
+    required MapTileLookup? mapTiles,
     required GameRuleset ruleset,
   }) {
     final cityIndex = _cityIndexAt(
@@ -374,9 +366,9 @@ abstract final class PersistentTurnCombatResolver {
       return false;
     }
 
-    final attackerTile = _tileDataAt(worldMap, attacker.col, attacker.row);
+    final attackerTile = mapTiles?.tileAt(attacker.col, attacker.row);
     if (attackerTile == null ||
-        _tileDataAt(worldMap, city.center.col, city.center.row) == null) {
+        mapTiles?.tileAt(city.center.col, city.center.row) == null) {
       return false;
     }
 
