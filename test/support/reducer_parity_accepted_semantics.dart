@@ -1,5 +1,55 @@
 import 'package:aonw_core/domain.dart';
 
+void requireAcceptedUnitMovementAction({
+  required String fixtureId,
+  required GameCommand command,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+}) {
+  final failure = switch (command) {
+    final AutoExploreUnitCommand command => validateAcceptedAutoExplore(
+      command: command,
+      before: before,
+      after: after,
+      events: events,
+    ),
+    final MoveUnitCommand command => validateAcceptedMovement(
+      command: command,
+      after: after,
+      events: events,
+    ),
+    _ => throw StateError('Expected a unit movement command.'),
+  };
+  if (failure != null) throw FormatException('$fixtureId $failure.');
+}
+
+String? validateAcceptedAutoExplore({
+  required AutoExploreUnitCommand command,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+}) {
+  final unitBefore = before.units.byId(command.unitId);
+  final unitAfter = after.units.byId(command.unitId);
+  final movements = events.whereType<UnitMovedEvent>().toList(growable: false);
+  if (unitBefore == null ||
+      unitAfter == null ||
+      unitAfter.posture != UnitPosture.autoExploring ||
+      unitAfter.coordinate == unitBefore.coordinate ||
+      unitAfter.movementPoints >= unitBefore.movementPoints ||
+      movements.length != 1) {
+    return 'must move the reviewed scout and retain auto-explore posture';
+  }
+  final movement = movements.single;
+  if ((movement.unitId, movement.fromCol, movement.fromRow) !=
+          (unitBefore.id, unitBefore.col, unitBefore.row) ||
+      (movement.toCol, movement.toRow) != (unitAfter.col, unitAfter.row)) {
+    return 'must commit one movement event matching the explored scout';
+  }
+  return null;
+}
+
 String? validateAcceptedMovement({
   required MoveUnitCommand command,
   required PersistentGameState after,

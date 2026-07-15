@@ -575,17 +575,13 @@ class ServerCommandReducer {
           events: events,
           reason: reason,
         ),
-      PersistentUnitActionResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          reason: reason,
-        ),
+      final PersistentUnitActionResult action => _applicationFrom(
+        save: save,
+        accepted: action.accepted,
+        state: action.state,
+        events: action.events,
+        reason: action.reason,
+      ),
       PersistentMerchantTradeRouteResult(
         :final accepted,
         :final state,

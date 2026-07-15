@@ -21,7 +21,7 @@ class ScoutAutoExplorePlanner {
 
   MoveUnitCommand? commandFor({
     required GameUnit unit,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required FogOfWarState fogOfWar,
     bool Function(TileData tile)? canEnterTile,
@@ -47,11 +47,11 @@ class ScoutAutoExplorePlanner {
     final origin = HexCoordinate(col: unit.col, row: unit.row);
 
     _AutoExploreCandidate? best;
-    for (final tile in mapData.tiles) {
-      if (unit.occupies(tile.col, tile.row)) continue;
-
-      final movementCost = movementCosts[(col: tile.col, row: tile.row)];
-      if (movementCost == null) continue;
+    for (final movement in movementCosts.entries) {
+      final coordinate = movement.key;
+      final tile = pathfinder.tileAt(coordinate.col, coordinate.row);
+      if (tile == null) continue;
+      final movementCost = movement.value;
 
       final targetHex = HexCoordinate.fromTile(tile);
       if (reservedHexes.contains(targetHex)) continue;

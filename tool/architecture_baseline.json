@@ -356,7 +356,7 @@
         "packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart::class:PersistentMoveUnitResolver/method:resolve": 27,
         "packages/aonw_core/lib/game/domain/movement/persistent_unit_action_resolver.dart::class:PersistentUnitActionResolver/method:autoExploreUnit": 11,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 11,
-        "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:commandFor": 12,
+        "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:commandFor": 11,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_balance.dart::class:UnitMovementBalance/method:maxMovementPointsForType": 18,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_baseCost": 16,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_navalCost": 16,
@@ -476,7 +476,6 @@
         "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 22,
         "packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart::class:PersistentMoveUnitResolver/method:resolve": 31,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 21,
-        "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:commandFor": 16,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 37,
         "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 35,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 24,
@@ -1332,11 +1331,11 @@
         "test/game/unit_marker_layer_test.dart": 1291,
         "test/game/unit_move_preview_layer_test.dart": 563,
         "test/menu/main_menu_screen_test.dart": 649,
-        "test/support/reducer_parity_fixture.dart": 588
+        "test/support/reducer_parity_fixture.dart": 551
       },
       "legacyFiles": {},
       "declarations": {
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 440
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 402
       },
       "callableLines": {
         "test/architecture/architecture_callable_metrics_test.dart::function:main/closure:test[control-flow_complexity_has_deterministic_golden_values]#1": 131,
@@ -1374,7 +1373,7 @@
       },
       "cognitiveComplexity": {
         "test/game/presentation/widgets/theme/game_hud_theme_test.dart::function:main/closure:test[keeps_game_HUD_presentation_on_GameIcons_instead_of_Material_icons]#1": 21,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 32,
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 31,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateCorpus": 26,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateFixture": 30
       }
@@ -1476,13 +1475,13 @@
     "server_lib": {
       "files": {
         "server/lib/src/multiplayer/player_match_view_projector.dart": 706,
-        "server/lib/src/multiplayer/server_command_reducer.dart": 760
+        "server/lib/src/multiplayer/server_command_reducer.dart": 756
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector": 632,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 697
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 693
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1496,7 +1495,7 @@
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 79,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 335,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 169,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 165,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 71,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 67,
         "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,

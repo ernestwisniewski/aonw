@@ -123,6 +123,99 @@ void main() {
       expect(second.observations, isNot(first.observations));
     });
 
+    test('keeps fixed-distance movement work bounded at every scale', () {
+      final result = runMovementPathWorkload(timingSamples: 1);
+      final sizes = result.stable['sizes']! as Map<String, Object?>;
+      final observationSizes =
+          result.observations['sizes']! as Map<String, Object?>;
+      final structuralDigests = <Object?>{};
+      final lookupCalls = <Object?>{};
+      final projectionRequests = <Object?>{};
+
+      expect(result.name, 'map.movement-path');
+      expect(sizes.keys, ['100', '1000', '10000']);
+      for (final entry in sizes.entries) {
+        final scale = int.parse(entry.key);
+        final stable = entry.value! as Map<String, Object?>;
+        expect(stable['indexedTiles'], scale);
+        expect(stable['targetDistance'], 3);
+        expect(stable['pathSteps'], 4);
+        expect(stable['totalCost'], 3);
+        expect(stable['tileProjectionRequests'], stable['tileProjections']);
+        expect(stable['tileProjections'], lessThan(100));
+        expect(stable['outputDigest'], hasLength(64));
+        expect(stable, isNot(contains('movementPathTiming')));
+        expect(observationSizes[entry.key], contains('movementPathTiming'));
+        structuralDigests.add(stable['outputDigest']);
+        lookupCalls.add(stable['tileLookupCalls']);
+        projectionRequests.add(stable['tileProjectionRequests']);
+      }
+      expect(structuralDigests, hasLength(1));
+      expect(lookupCalls, hasLength(1));
+      expect(projectionRequests, hasLength(1));
+    });
+
+    test('repeats the movement path stable result', () {
+      final first = runMovementPathWorkload(
+        scales: const [100],
+        timingSamples: 1,
+      );
+      final second = runMovementPathWorkload(
+        scales: const [100],
+        timingSamples: 2,
+      );
+
+      expect(second.stable, first.stable);
+      expect(second.observations, isNot(first.observations));
+    });
+
+    test('makes the full-map auto-explore growth explicit', () {
+      final result = runAutoExploreWorkload(timingSamples: 1);
+      final sizes = result.stable['sizes']! as Map<String, Object?>;
+      final observationSizes =
+          result.observations['sizes']! as Map<String, Object?>;
+      final digests = <Object?>{};
+      var previousLookupCalls = 0;
+      var previousProjectionRequests = 0;
+
+      expect(result.name, 'map.auto-explore');
+      expect(sizes.keys, ['100', '1000', '10000']);
+      for (final entry in sizes.entries) {
+        final scale = int.parse(entry.key);
+        final stable = entry.value! as Map<String, Object?>;
+        final lookupCalls = stable['tileLookupCalls']! as int;
+        final projectionRequests = stable['tileProjectionRequests']! as int;
+        expect(stable['indexedTiles'], scale);
+        expect(stable['growthModel'], 'full-reachable-map');
+        expect(stable['candidateEvaluations'], scale - 1);
+        expect(stable['tileProjections'], scale);
+        expect(projectionRequests, greaterThanOrEqualTo(scale));
+        expect(lookupCalls, greaterThan(previousLookupCalls));
+        expect(projectionRequests, greaterThan(previousProjectionRequests));
+        expect(stable['outputDigest'], hasLength(64));
+        expect(stable, isNot(contains('autoExploreTiming')));
+        expect(observationSizes[entry.key], contains('autoExploreTiming'));
+        digests.add(stable['outputDigest']);
+        previousLookupCalls = lookupCalls;
+        previousProjectionRequests = projectionRequests;
+      }
+      expect(digests, hasLength(1));
+    });
+
+    test('repeats the auto-explore stable result', () {
+      final first = runAutoExploreWorkload(
+        scales: const [100],
+        timingSamples: 1,
+      );
+      final second = runAutoExploreWorkload(
+        scales: const [100],
+        timingSamples: 2,
+      );
+
+      expect(second.stable, first.stable);
+      expect(second.observations, isNot(first.observations));
+    });
+
     test('rejects unsupported scales', () {
       expect(
         () => runMapLookupWorkload(scales: const [999]),
@@ -142,6 +235,22 @@ void main() {
       );
       expect(
         () => runFogRevealWorkload(timingSamples: 0),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runMovementPathWorkload(scales: const [999]),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runMovementPathWorkload(timingSamples: 0),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runAutoExploreWorkload(scales: const [999]),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runAutoExploreWorkload(timingSamples: 0),
         throwsA(isA<ArgumentError>()),
       );
     });

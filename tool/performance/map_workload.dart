@@ -1,16 +1,24 @@
 import 'dart:collection';
 
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/fog/fog_reveal_calculator.dart';
 import 'package:aonw_core/game/domain/fog/fog_reveal_source.dart';
 import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
+import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 import 'measurement.dart';
 
+part 'auto_explore_workload.dart';
 part 'fog_reveal_workload.dart';
+part 'movement_path_workload.dart';
 part 'world_map_workload.dart';
 
 const mapLookupScales = [100, 1000, 10000];

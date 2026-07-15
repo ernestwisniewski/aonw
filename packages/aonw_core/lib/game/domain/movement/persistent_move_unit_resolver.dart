@@ -53,7 +53,7 @@ class PersistentMoveUnitResolver {
       return _reject(state, 'unit_uses_trade_routes');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapData = LegacyWorldMapAdapter.asTraversalView(worldMap);
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _reject(state, 'unit_out_of_bounds');
     }
@@ -263,7 +263,7 @@ class PersistentMoveUnitResolver {
     required String actorPlayerId,
     required GameUnit unit,
     required TileData targetTile,
-    required MapData mapData,
+    required MapTraversalView mapData,
   }) {
     if (!state.fogOfWar.players.containsKey(actorPlayerId)) return false;
 

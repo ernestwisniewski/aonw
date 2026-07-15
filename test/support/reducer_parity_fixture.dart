@@ -5,6 +5,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'reducer_parity_accepted_semantics.dart';
+import 'reducer_parity_contract.dart';
 
 final class ReducerParityFixture {
   const ReducerParityFixture({
@@ -43,35 +44,6 @@ final class ReducerParityFixture {
 }
 
 abstract final class ReducerParityCorpus {
-  static const requiredFamilies = <String>{
-    'movement',
-    'combat',
-    'city-production',
-    'detachment',
-    'research',
-    'worker',
-    'turn-finalization',
-  };
-  static const requiredRejectionReasonsByFamily = <String, Set<String>>{
-    'movement': {'unit_not_controlled', 'move_target_out_of_bounds'},
-    'combat': {'attacker_not_controlled', 'attack_target_not_found'},
-    'city-production': {
-      'city_not_controlled',
-      'building_not_available',
-      'unit_supply_limit_reached',
-    },
-    'detachment': {'unit_not_controlled', 'detachment_destination_unavailable'},
-    'research': {
-      'technology_player_not_controlled',
-      'technology_not_available',
-    },
-    'worker': {'worker_not_controlled', 'worker_improvement_unavailable'},
-    'turn-finalization': {
-      'turn_player_not_controlled',
-      'turn_player_not_active',
-    },
-  };
-
   static List<ReducerParityFixture> load(
     Directory repositoryRoot, {
     bool reverseInputMapEntries = false,
@@ -272,14 +244,19 @@ abstract final class ReducerParityCorpus {
             .add(fixture.expectedReason!);
       }
     }
-    if (coverage.keys.toSet().difference(requiredFamilies).isNotEmpty ||
-        requiredFamilies.difference(coverage.keys.toSet()).isNotEmpty) {
+    if (coverage.keys
+            .toSet()
+            .difference(reducerParityRequiredFamilies)
+            .isNotEmpty ||
+        reducerParityRequiredFamilies
+            .difference(coverage.keys.toSet())
+            .isNotEmpty) {
       throw StateError(
         'Reducer parity families must be exactly: '
-        '${requiredFamilies.toList()..sort()}.',
+        '${reducerParityRequiredFamilies.toList()..sort()}.',
       );
     }
-    for (final family in requiredFamilies) {
+    for (final family in reducerParityRequiredFamilies) {
       if (coverage[family]?.containsAll(const {true, false}) != true) {
         throw StateError(
           '$family needs accepted and rejected parity fixtures.',
@@ -293,7 +270,7 @@ abstract final class ReducerParityCorpus {
           );
         }
       }
-      final requiredReasons = requiredRejectionReasonsByFamily[family]!;
+      final requiredReasons = reducerParityRequiredRejectionReasons[family]!;
       if (rejectionReasonsByFamily[family]?.containsAll(requiredReasons) !=
           true) {
         throw StateError(
@@ -337,7 +314,7 @@ abstract final class ReducerParityCorpus {
         fixture.state.playerStabilityNet.isEmpty) {
       _fail(fixture, 'must retain sentinel values in unchanged state slices');
     }
-    if (!_commandMatchesFamily(fixture.family, fixture.command)) {
+    if (!reducerParityCommandMatchesFamily(fixture.family, fixture.command)) {
       _fail(fixture, 'command does not match family ${fixture.family}');
     }
 
@@ -383,13 +360,14 @@ abstract final class ReducerParityCorpus {
         .map(GameEventSerializer.fromJson)
         .toList(growable: false);
     switch (fixture.command) {
-      case final MoveUnitCommand command:
-        final failure = validateAcceptedMovement(
-          command: command,
+      case AutoExploreUnitCommand() || MoveUnitCommand():
+        requireAcceptedUnitMovementAction(
+          fixtureId: fixture.id,
+          command: fixture.command,
+          before: fixture.state,
           after: state,
           events: events,
         );
-        if (failure != null) _fail(fixture, failure);
       case AttackHexCommand(:final attackerUnitId):
         final attacker = state.units.byId(attackerUnitId);
         if (attacker?.movementPoints != 0 ||
@@ -462,21 +440,6 @@ abstract final class ReducerParityCorpus {
       default:
         _fail(fixture, 'uses a command outside the reviewed parity corpus');
     }
-  }
-
-  static bool _commandMatchesFamily(String family, GameCommand command) {
-    return switch (family) {
-      'movement' => command is MoveUnitCommand,
-      'combat' => command is AttackHexCommand,
-      'city-production' =>
-        command is StartBuildingCommand ||
-            command is StartUnitProductionCommand,
-      'detachment' => command is DetachTroopCommand,
-      'research' => command is SelectTechnologyCommand,
-      'worker' => command is ConfirmWorkerImprovementCommand,
-      'turn-finalization' => command is SubmitTurnCommand,
-      _ => false,
-    };
   }
 
   static Never _fail(ReducerParityFixture fixture, String message) =>

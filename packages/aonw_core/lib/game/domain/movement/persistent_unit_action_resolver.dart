@@ -2,6 +2,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -12,11 +13,13 @@ class PersistentUnitActionResult {
   const PersistentUnitActionResult({
     required this.accepted,
     required this.state,
+    this.events = const [],
     this.reason,
   });
 
   final bool accepted;
   final PersistentGameState state;
+  final List<GameEvent> events;
   final String? reason;
 }
 
@@ -122,7 +125,7 @@ class PersistentUnitActionResolver {
     if (unit.movementPoints <= 0) return _reject(state, 'unit_exhausted');
     if (unit.queuedPath != null) return _reject(state, 'unit_has_path');
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapData = LegacyWorldMapAdapter.asTraversalView(worldMap);
     final move = const ScoutAutoExplorePlanner().commandFor(
       unit: unit,
       mapData: mapData,
@@ -153,6 +156,7 @@ class PersistentUnitActionResolver {
           movedUnit.copyWith(posture: UnitPosture.autoExploring),
         ),
       ),
+      events: moved.events,
     );
   }
 

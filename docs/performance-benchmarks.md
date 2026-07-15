@@ -14,6 +14,8 @@ where the workload permits it.
 | Area | Scales | Scenario |
 | --- | --- | --- |
 | Map lookup | 100, 1,000, and 10,000 tiles | resolve the first, middle, and last tile plus a missing coordinate through legacy `MapData` and indexed `WorldMap`; record actual list reads for the legacy model, the canonical index size and public lookup calls, plus matching output digests |
+| Movement path | 100, 1,000, and 10,000 tiles | plan the same three-hex path through `WorldMap` and `LegacyWorldMapAdapter.asTraversalView`; record logical lookups and unique tile projections, which must remain constant as the surrounding map grows |
+| Auto-explore | 100, 1,000, and 10,000 tiles | plan a scout destination across a fully reachable `WorldMap`; record every evaluated destination and bounded tile projection so the intentional full-map growth remains visible |
 | Persistence | 100, 1,000, and 10,000 records | run `JsonEventLog.latestOffset`, `readSince`, and `append`, then exercise snapshot codec round trips at the same scales |
 | Replay | 100, 1,000, and 10,000 events | replay a deterministic four-command mix through the real reducer and record yielded commands, offsets, steps, and the resulting state digest |
 | AI | 100, 1,000, and 10,000 iterations | run both the isolated MCTS search and production `MctsStrategy` planning path with an exact iteration budget; record work structure and selected-command fingerprints |
@@ -47,6 +49,15 @@ measurement. Its stable counters describe the indexed tile count and the four
 public `tileAt(HexCoord)` calls; they do not pretend to instrument private hash
 table reads. The legacy `MapData` case remains until that model is removed, so
 the gate makes the linear-to-indexed migration visible without timing-based CI.
+
+`map.movement-path` holds the source and destination coordinates fixed while
+the surrounding map grows. Its lookup and projection counters are therefore a
+bounded-work invariant: a larger unrelated map must not trigger a complete
+legacy projection. `map.auto-explore` has a different contract. It deliberately
+evaluates every reachable destination, so `candidateEvaluations` grows from
+`scale - 1` and `tileProjections` grows with the map. The stable
+`growthModel: full-reachable-map` marker documents that proportional scan and
+prevents it from being mistaken for the fixed-distance movement budget.
 
 The report, baseline, and policy are schema-versioned canonical JSON documents:
 

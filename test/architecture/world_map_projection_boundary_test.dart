@@ -6,7 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _boundedTileQueryPaths = {
+const _mapDataFreeMigrationPaths = {
   'packages/aonw_core/lib/game/domain/city/'
       'persistent_city_expansion_resolver.dart',
   'packages/aonw_core/lib/game/domain/city/'
@@ -17,6 +17,14 @@ const _boundedTileQueryPaths = {
       'persistent_combat_command_resolver.dart',
   'packages/aonw_core/lib/game/domain/fog/fog_of_war_service.dart',
   'packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
+      'persistent_move_unit_resolver.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
+      'persistent_unit_action_resolver.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
+      'scout_auto_explore_planner.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
+      'unit_movement_pathfinder.dart',
   'packages/aonw_core/lib/game/domain/technology/'
       'persistent_research_command_resolver.dart',
   'packages/aonw_core/lib/game/domain/unit/'
@@ -33,14 +41,6 @@ const _allowedProductionProjectionSites = <String, int>{
           'economy_simulation_command_applier.dart::'
           'class:_EconomySimulationCommandApplier/method:apply::call':
       2,
-  'packages/aonw_core/lib/game/domain/movement/'
-          'persistent_move_unit_resolver.dart::'
-          'class:PersistentMoveUnitResolver/method:resolve::call':
-      1,
-  'packages/aonw_core/lib/game/domain/movement/'
-          'persistent_unit_action_resolver.dart::'
-          'class:PersistentUnitActionResolver/method:autoExploreUnit::call':
-      1,
   'packages/aonw_core/lib/game/domain/turn/'
           'persistent_turn_pipeline.dart::'
           'class:PersistentTurnPipeline/method:simultaneousFinalize::call':
@@ -58,8 +58,8 @@ void main() {
     );
   });
 
-  test('bounded tile-query paths do not materialize legacy maps', () {
-    for (final path in _boundedTileQueryPaths) {
+  test('migrated map paths do not materialize legacy maps', () {
+    for (final path in _mapDataFreeMigrationPaths) {
       expect(
         _legacyProjectionViolations(File(path).readAsStringSync(), path),
         isEmpty,

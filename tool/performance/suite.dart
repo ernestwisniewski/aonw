@@ -13,8 +13,10 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
   return buildPerformanceReport([
     runAiMctsWorkload(),
     runAiStrategyWorkload(),
+    runAutoExploreWorkload(),
     runFogRevealWorkload(),
     runMapLookupWorkload(),
+    runMovementPathWorkload(),
     runWorldMapLookupWorkload(),
     persistence,
     ...runRendererFrameWorkloads(),

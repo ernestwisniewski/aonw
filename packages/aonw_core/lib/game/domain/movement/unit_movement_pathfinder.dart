@@ -5,7 +5,7 @@ import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 
 class UnitMovementPathfinder {
-  final MapData mapData;
+  final MapTraversalView mapData;
   final List<GameUnit> units;
   final bool Function(TileData tile)? canEnterTile;
   final bool Function({
@@ -16,6 +16,8 @@ class UnitMovementPathfinder {
   })?
   canEnterOccupiedTile;
   final Map<String, TileData> _tilesByKey;
+  final bool _hasCompleteTileIndex;
+  final Set<String> _missingTileKeys = {};
   final Map<String, GameUnit> _unitsByKey;
   final Map<String, Set<({int col, int row})>> _reachableMemo = {};
 
@@ -25,7 +27,8 @@ class UnitMovementPathfinder {
     this.canEnterTile,
     this.canEnterOccupiedTile,
   }) : units = List.unmodifiable(units),
-       _tilesByKey = _indexTiles(mapData.tiles),
+       _tilesByKey = _initialTileIndex(mapData),
+       _hasCompleteTileIndex = mapData is MapTileSource,
        _unitsByKey = _indexUnits(units);
 
   /// Returns whether [unit] can plan a move ending on [col]/[row] using the
@@ -109,7 +112,7 @@ class UnitMovementPathfinder {
       col: targetTile.col,
       row: targetTile.row,
     )) {
-      final tile = mapData.tileAt(neighbor.col, neighbor.row);
+      final tile = tileAt(neighbor.col, neighbor.row);
       if (tile == null) continue;
       final candidate = plan(unit: unit, targetTile: tile);
       if (candidate == null) continue;
@@ -173,7 +176,7 @@ class UnitMovementPathfinder {
           continue;
         }
 
-        final tile = _tilesByKey[nextKey];
+        final tile = tileAt(next.col, next.row);
         if (tile == null) continue;
         if (canEnterTile != null && !canEnterTile!(tile)) continue;
         final enterCost = UnitMovementCostRules.costToEnterTile(
@@ -241,6 +244,24 @@ class UnitMovementPathfinder {
     return _unitsByKey[_coordKey(col, row)];
   }
 
+  /// Returns a tile through the pathfinder's request-scoped spatial index.
+  ///
+  /// Complete legacy sources keep their eager O(1) index. Narrow traversal
+  /// views project and cache only coordinates reached by the search.
+  TileData? tileAt(int col, int row) {
+    final key = _coordKey(col, row);
+    final indexed = _tilesByKey[key];
+    if (indexed != null) return indexed;
+    if (_hasCompleteTileIndex || _missingTileKeys.contains(key)) return null;
+
+    final tile = mapData.tileAt(col, row);
+    if (tile == null) {
+      _missingTileKeys.add(key);
+      return null;
+    }
+    return _tilesByKey[key] = tile;
+  }
+
   bool canEnterOccupied(
     GameUnit movingUnit,
     GameUnit blockingUnit,
@@ -269,6 +290,12 @@ class UnitMovementPathfinder {
       byKey.putIfAbsent(_coordKey(tile.col, tile.row), () => tile);
     }
     return byKey;
+  }
+
+  static Map<String, TileData> _initialTileIndex(MapTraversalView mapData) {
+    return mapData is MapTileSource
+        ? _indexTiles(mapData.tiles)
+        : <String, TileData>{};
   }
 
   static Map<String, GameUnit> _indexUnits(Iterable<GameUnit> units) {

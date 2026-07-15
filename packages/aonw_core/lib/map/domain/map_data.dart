@@ -10,6 +10,16 @@ abstract interface class MapTileLookup {
   TileData? tileAt(int col, int row);
 }
 
+/// Read-only dimensions and bounded tile reads for spatial algorithms.
+///
+/// Unlike [MapTileSource], this contract intentionally does not expose every
+/// tile. Traversal code can therefore operate on canonical maps without first
+/// materializing a complete legacy [MapData] graph.
+abstract interface class MapTraversalView implements MapTileLookup {
+  int get cols;
+  int get rows;
+}
+
 /// Composite gameplay view for bounded tile reads and aggregate map rules.
 ///
 /// This access contract does not make legacy [TileData] deeply immutable.
@@ -22,9 +32,7 @@ abstract interface class MapReadView implements MapSurvey {
 /// [MapData] remains the legacy persistence model. Editor-only mutable state
 /// can implement this narrow contract without becoming a second persistence
 /// representation.
-abstract interface class MapTileSource implements MapTileLookup {
-  int get cols;
-  int get rows;
+abstract interface class MapTileSource implements MapTraversalView {
   Iterable<TileData> get tiles;
 
   @override

@@ -5,10 +5,11 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Temporary boundary from pre-WorldMap map models to the canonical model.
 ///
-/// Removal condition: production has no [fromMapData] or [toMapData] calls and
-/// gameplay, AI, renderer, server, save/replay, fixtures, and editor
-/// persistence use [WorldMap] or narrow read views. Add conversions here
-/// instead of creating another point-to-point map adapter.
+/// Removal condition: production has no [fromMapData], [toMapData], or bounded
+/// [TileData] projection calls, and gameplay, AI, renderer, server,
+/// save/replay, fixtures, and editor persistence use canonical models or
+/// canonical read views. Add conversions here instead of creating another
+/// point-to-point map adapter.
 abstract final class LegacyWorldMapAdapter {
   static WorldMap fromMapData(MapData mapData) {
     return WorldMap(
@@ -42,6 +43,12 @@ abstract final class LegacyWorldMapAdapter {
   /// a full [MapData] graph.
   static MapReadView asReadView(WorldMap worldMap) {
     return _WorldMapReadView(worldMap);
+  }
+
+  /// Exposes map bounds and request-scoped, cached tile projections for
+  /// traversal algorithms without materializing every legacy tile.
+  static MapTraversalView asTraversalView(WorldMap worldMap) {
+    return _WorldMapTraversalView(worldMap);
   }
 
   /// Projects a canonical tile to the legacy tile shape expected by older
@@ -96,5 +103,35 @@ final class _WorldMapReadView implements MapReadView, MapTileLookup {
   @override
   TileData? tileAt(int col, int row) {
     return LegacyWorldMapAdapter.tileDataAt(_worldMap, col, row);
+  }
+}
+
+final class _WorldMapTraversalView implements MapTraversalView {
+  _WorldMapTraversalView(this._worldMap);
+
+  final WorldMap _worldMap;
+  final Map<HexCoord, TileData> _projectedTiles = {};
+  final Set<HexCoord> _missingTiles = {};
+
+  @override
+  int get cols => _worldMap.cols;
+
+  @override
+  int get rows => _worldMap.rows;
+
+  @override
+  TileData? tileAt(int col, int row) {
+    final coordinate = HexCoord(col: col, row: row);
+    final cached = _projectedTiles[coordinate];
+    if (cached != null) return cached;
+    if (_missingTiles.contains(coordinate)) return null;
+
+    final tile = _worldMap.tileAt(coordinate);
+    if (tile == null) {
+      _missingTiles.add(coordinate);
+      return null;
+    }
+    return _projectedTiles[coordinate] =
+        LegacyWorldMapAdapter._tileDataFromWorld(tile);
   }
 }
