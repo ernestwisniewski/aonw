@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -32,7 +32,7 @@ class PersistentUnitDetachmentResolver {
     required PersistentGameState state,
     required DetachTroopCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
   }) {
     final sourceIndex = _unitIndexById(state.units, command.unitId);
     if (sourceIndex == null) return _reject(state, 'unit_not_found');
@@ -45,7 +45,7 @@ class PersistentUnitDetachmentResolver {
       return _reject(state, 'troop_not_available');
     }
 
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     if (mapData.tileAt(source.col, source.row) == null) {
       return _reject(state, 'detachment_source_out_of_bounds');
     }

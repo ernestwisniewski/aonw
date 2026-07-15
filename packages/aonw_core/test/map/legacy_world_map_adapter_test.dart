@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -103,43 +102,13 @@ void main() {
       expect(world.objectives, hasLength(1));
     });
 
-    test('imports the spatial subset of MapDefinition', () {
-      final world = LegacyWorldMapAdapter.fromMapDefinition(
-        MapDefinition(
-          cols: 2,
-          rows: 1,
-          mapName: 'definition',
-          defaultZoom: 1.25,
-          tiles: [
-            MapTileDefinition(
-              col: 1,
-              row: 0,
-              terrains: const [TerrainType.plains],
-              resources: const [ResourceType.wheat],
-              height: 2,
-            ),
-          ],
-        ),
-      );
-
-      expect(world.mapName, 'definition');
-      expect(world.defaultZoom, 1.25);
-      expect(world.objectives, isEmpty);
-      expect(world.tileAt(const HexCoord(col: 1, row: 0))?.resources, [
-        ResourceType.wheat,
-      ]);
-    });
-
-    test('projects MapDefinition to legacy MapData without aliases', () {
-      final definition = MapDefinition(
+    test('projects an individual WorldMap tile without aliases', () {
+      final world = WorldMap(
         cols: 2,
         rows: 1,
-        mapName: 'definition',
-        defaultZoom: 1.25,
         tiles: [
-          MapTileDefinition(
-            col: 1,
-            row: 0,
+          WorldTile(
+            coordinate: const HexCoord(col: 1, row: 0),
             terrains: const [TerrainType.plains],
             resources: const [ResourceType.wheat],
             height: 2,
@@ -147,23 +116,23 @@ void main() {
         ],
       );
 
-      final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(definition);
+      final tile = LegacyWorldMapAdapter.tileDataAt(world, 1, 0);
 
-      expect(mapData.cols, 2);
-      expect(mapData.rows, 1);
-      expect(mapData.mapName, 'definition');
-      expect(mapData.defaultZoom, 1.25);
-      expect(mapData.objectives, isEmpty);
-      expect(mapData.tiles.single.terrains, [TerrainType.plains]);
-      expect(mapData.tiles.single.resources, [ResourceType.wheat]);
+      expect(tile?.col, 1);
+      expect(tile?.row, 0);
+      expect(tile?.terrains, [TerrainType.plains]);
+      expect(tile?.resources, [ResourceType.wheat]);
+      expect(LegacyWorldMapAdapter.tileDataAt(world, 0, 0), isNull);
+      expect(LegacyWorldMapAdapter.tileDataAt(null, 1, 0), isNull);
 
-      mapData.tiles.single.terrains.add(TerrainType.river);
-      mapData.tiles.single.resources.clear();
-      mapData.tiles.clear();
-
-      expect(definition.tiles, hasLength(1));
-      expect(definition.tiles.single.terrains, [TerrainType.plains]);
-      expect(definition.tiles.single.resources, [ResourceType.wheat]);
+      tile!.terrains.add(TerrainType.river);
+      tile.resources.clear();
+      expect(world.tileAt(const HexCoord(col: 1, row: 0))?.terrains, [
+        TerrainType.plains,
+      ]);
+      expect(world.tileAt(const HexCoord(col: 1, row: 0))?.resources, [
+        ResourceType.wheat,
+      ]);
     });
 
     test('makes the legacy codec enforce canonical invariants', () {

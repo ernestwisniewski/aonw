@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/domain/world_map.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/reducer_parity_fixture.dart';

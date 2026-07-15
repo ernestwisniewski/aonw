@@ -21,7 +21,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai.dart';
-import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -39,6 +38,7 @@ import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 part 'run_save_ai_benchmark/report_models.dart';
 part 'run_save_ai_benchmark/synthetic_suite.dart';

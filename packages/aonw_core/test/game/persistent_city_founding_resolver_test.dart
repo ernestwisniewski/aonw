@@ -29,7 +29,7 @@ void main() {
           controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -79,7 +79,7 @@ void main() {
           controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -108,7 +108,7 @@ void main() {
           controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -126,7 +126,7 @@ void main() {
           controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 1, row: 0)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -154,7 +154,7 @@ void main() {
           controlledHexes: [CityHex(col: 2, row: 1), CityHex(col: 1, row: 2)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -182,7 +182,7 @@ void main() {
           controlledHexes: [CityHex(col: 1, row: 1), CityHex(col: 0, row: 2)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -210,7 +210,7 @@ void main() {
           controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 2)],
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -219,22 +219,7 @@ void main() {
 }
 
 MapData _mapData() {
-  final definition = _mapDefinition();
-  return MapData(
-    cols: definition.cols,
-    rows: definition.rows,
-    mapName: definition.mapName,
-    tiles: [
-      for (final tile in definition.tiles)
-        TileData(
-          col: tile.col,
-          row: tile.row,
-          terrains: tile.terrains,
-          resources: tile.resources,
-          height: tile.height,
-        ),
-    ],
-  );
+  return LegacyWorldMapAdapter.toMapData(_worldMap());
 }
 
 GameUnit _settler({String owner = 'player_1', int col = 0, int row = 0}) {
@@ -248,17 +233,16 @@ GameUnit _settler({String owner = 'player_1', int col = 0, int row = 0}) {
   );
 }
 
-MapDefinition _mapDefinition() {
-  return MapDefinition(
+WorldMap _worldMap() {
+  return WorldMap(
     cols: 4,
     rows: 4,
     mapName: 'duel',
     tiles: [
       for (var row = 0; row < 4; row++)
         for (var col = 0; col < 4; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.grassland],
             resources: const [],
             height: 0,

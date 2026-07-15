@@ -7,9 +7,9 @@ import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
-import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class LocalCommandResolution {
   final GameSave save;
@@ -152,8 +152,7 @@ class LocalCommandResolver {
         state: state.toPersistentState(),
         playerIds: playerIds,
         savedAt: savedAt,
-        mapData: reducer.mapData,
-        mapDefinition: _mapDefinition(),
+        worldMap: LegacyWorldMapAdapter.fromMapData(reducer.mapData),
         ruleset: reducer.ruleset,
       ),
     );
@@ -201,26 +200,6 @@ class LocalCommandResolver {
             actorPlayerId != command.playerId) ||
         !_activePlayerIds(baseSnapshot.save).contains(command.playerId) ||
         baseSnapshot.runtimeState.hasSubmitted(command.playerId);
-  }
-
-  MapDefinition _mapDefinition() {
-    final mapData = reducer.mapData;
-    return MapDefinition(
-      cols: mapData.cols,
-      rows: mapData.rows,
-      mapName: mapData.mapName,
-      defaultZoom: mapData.defaultZoom,
-      tiles: [
-        for (final tile in mapData.tiles)
-          MapTileDefinition(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 }
 

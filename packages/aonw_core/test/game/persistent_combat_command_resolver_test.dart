@@ -28,7 +28,7 @@ void main() {
         actorPlayerId: 'player_1',
         turn: 3,
         commandTick: 7,
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -68,7 +68,7 @@ void main() {
           actorPlayerId: 'player_1',
           turn: 3,
           commandTick: 7,
-          mapDefinition: _mapDefinition(),
+          worldMap: _worldMap(),
         );
 
         expect(result.accepted, isTrue, reason: action.name);
@@ -101,7 +101,7 @@ void main() {
               actorPlayerId: 'player_2',
               turn: 3,
               commandTick: 7,
-              mapDefinition: _mapDefinition(),
+              worldMap: _worldMap(),
             )
             .reason,
         'attacker_not_controlled',
@@ -114,7 +114,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              mapDefinition: _mapDefinition(),
+              worldMap: _worldMap(),
             )
             .reason,
         'attack_target_not_visible',
@@ -134,7 +134,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              mapDefinition: _mapDefinition(),
+              worldMap: _worldMap(),
             )
             .reason,
         'attack_target_out_of_range',
@@ -158,7 +158,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              mapDefinition: _mapDefinition(),
+              worldMap: _worldMap(),
             )
             .reason,
         'attack_target_protected_by_treaty',
@@ -208,15 +208,14 @@ GameUnit _unit(
   );
 }
 
-MapDefinition _mapDefinition() {
-  return MapDefinition(
+WorldMap _worldMap() {
+  return WorldMap(
     cols: 3,
     rows: 1,
     tiles: [
       for (var col = 0; col < 3; col++)
-        MapTileDefinition(
-          col: col,
-          row: 0,
+        WorldTile(
+          coordinate: HexCoord(col: col, row: 0),
           terrains: const [TerrainType.plains],
           resources: const [],
           height: 0,

@@ -43,28 +43,6 @@ void main() {
       expect(second.observations, isNot(first.observations));
     });
 
-    test('covers the duplicate MapDefinition lookup path', () {
-      final result = runMapDefinitionLookupWorkload(
-        scales: const [100],
-        timingSamples: 2,
-      );
-      final sizes = result.stable['sizes']! as Map<String, Object?>;
-      final stable = sizes['100']! as Map<String, Object?>;
-
-      expect(result.name, 'map.definition-lookup');
-      expect(stable['scale'], 100);
-      expect(stable['probeCount'], 4);
-      expect(stable['tileInspectionsByProbe'], {
-        'first': 1,
-        'middle': 51,
-        'last': 100,
-        'miss': 100,
-      });
-      expect(stable['tileInspections'], 252);
-      expect(stable['outputDigest'], hasLength(64));
-      expect(result.observations.toString(), contains('p95Micros'));
-    });
-
     test('covers the canonical indexed WorldMap lookup path', () {
       final result = runWorldMapLookupWorkload(
         scales: const [100],
@@ -109,10 +87,6 @@ void main() {
     test('rejects unsupported scales', () {
       expect(
         () => runMapLookupWorkload(scales: const [999]),
-        throwsA(isA<ArgumentError>()),
-      );
-      expect(
-        () => runMapDefinitionLookupWorkload(scales: const [999]),
         throwsA(isA<ArgumentError>()),
       );
       expect(

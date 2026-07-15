@@ -1,5 +1,4 @@
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -9,6 +9,7 @@ import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:archive/archive_io.dart';
+import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -50,17 +51,34 @@ class _MockPathProvider
   Future<String?> getApplicationCachePath() async => tempPath;
 }
 
+final class _FakeFileSelector extends FileSelectorPlatform {
+  FileSaveLocation? location;
+  SaveDialogOptions? saveOptions;
+
+  @override
+  Future<FileSaveLocation?> getSaveLocation({
+    List<XTypeGroup>? acceptedTypeGroups,
+    SaveDialogOptions options = const SaveDialogOptions(),
+  }) async {
+    saveOptions = options;
+    return location;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
+  late FileSelectorPlatform originalFileSelector;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('map_exporter_test_');
     PathProviderPlatform.instance = _MockPathProvider(tempDir.path);
+    originalFileSelector = FileSelectorPlatform.instance;
   });
 
   tearDown(() async {
+    FileSelectorPlatform.instance = originalFileSelector;
     await tempDir.delete(recursive: true);
   });
 
@@ -130,6 +148,31 @@ void main() {
         MapExporter.buildArchive(draft, 'invalid'),
         throwsA(isA<WorldMapException>()),
       );
+    });
+
+    test('writes the archive to the selected ZIP destination', () async {
+      final selector = _FakeFileSelector()
+        ..location = FileSaveLocation('${tempDir.path}/exported-map');
+      FileSelectorPlatform.instance = selector;
+      final draft = MapDraft(
+        cols: 1,
+        rows: 1,
+        tiles: const [
+          TileData(
+            col: 0,
+            row: 0,
+            terrains: [TerrainType.plains],
+            resources: [],
+            height: 0,
+          ),
+        ],
+      );
+
+      final savedPath = await MapExporter.saveToDisk(draft, 'exported map');
+
+      expect(savedPath, '${tempDir.path}/exported-map.zip');
+      expect(await File(savedPath!).exists(), isTrue);
+      expect(selector.saveOptions?.suggestedName, 'exported_map.zip');
     });
   });
 }

@@ -13,7 +13,6 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
   return buildPerformanceReport([
     runAiMctsWorkload(),
     runAiStrategyWorkload(),
-    runMapDefinitionLookupWorkload(),
     runMapLookupWorkload(),
     runWorldMapLookupWorkload(),
     persistence,

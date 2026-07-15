@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -28,7 +28,7 @@ class PersistentResearchCommandResolver {
     required PersistentGameState state,
     required SelectTechnologyCommand command,
     required String actorPlayerId,
-    MapDefinition? mapDefinition,
+    WorldMap? worldMap,
     TechnologyRuleset ruleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -52,9 +52,9 @@ class PersistentResearchCommandResolver {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapDefinition == null
+      mapData: worldMap == null
           ? null
-          : LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
+          : LegacyWorldMapAdapter.toMapData(worldMap),
       ruleset: ruleset,
       paceBalance: paceBalance,
     );

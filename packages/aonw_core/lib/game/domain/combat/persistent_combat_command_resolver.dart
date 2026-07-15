@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat/combat_distance.dart';
 import 'package:aonw_core/game/domain/combat/combat_modifier_collector.dart';
@@ -14,7 +14,6 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentCombatCommandResult {
@@ -49,7 +48,7 @@ class PersistentCombatCommandResolver {
     required String actorPlayerId,
     required int turn,
     required int commandTick,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     GameRuleset ruleset = GameRuleset.defaults,
   }) {
     final attacker = state.units.byId(command.attackerUnitId);
@@ -62,12 +61,16 @@ class PersistentCombatCommandResolver {
       return _reject(state, 'attacker_exhausted');
     }
 
-    final attackerTile = _tileDataAt(mapDefinition, attacker.col, attacker.row);
+    final attackerTile = LegacyWorldMapAdapter.tileDataAt(
+      worldMap,
+      attacker.col,
+      attacker.row,
+    );
     if (attackerTile == null) {
       return _reject(state, 'attacker_out_of_bounds');
     }
-    final targetTile = _tileDataAt(
-      mapDefinition,
+    final targetTile = LegacyWorldMapAdapter.tileDataAt(
+      worldMap,
       command.defenderCol,
       command.defenderRow,
     );
@@ -137,34 +140,18 @@ class PersistentCombatCommandResolver {
     final resolved = PersistentTurnCombatResolver.resolve(
       turn: turn,
       state: isolated,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       ruleset: ruleset,
     );
     if (resolved.events.whereType<CombatResolvedEvent>().isEmpty) {
       return _reject(state, 'attack_not_resolved');
     }
 
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
-    final updatedFog = fogOfWarService.recompute(
-      current: state.fogOfWar,
-      mapData: mapData,
-      playerIds: state.knownPlayerIds,
-      units: resolved.state.units,
-      cities: resolved.state.cities,
-    );
-    final diplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: resolved.state.runtimeState.diplomacy,
-      fogOfWar: updatedFog,
-      units: resolved.state.units,
-      cities: resolved.state.cities,
-      playerIds: state.knownPlayerIds,
-    );
-    final next = resolved.state.copyWith(
-      fogOfWar: updatedFog,
-      runtimeState: resolved.state.runtimeState.copyWith(
-        intendedAttacks: previousIntents,
-        diplomacy: diplomacy,
-      ),
+    final next = _stateWithUpdatedVisibility(
+      originalState: state,
+      combatState: resolved.state,
+      previousIntents: previousIntents,
+      worldMap: worldMap,
     );
     return PersistentCombatCommandResult(
       accepted: true,
@@ -181,6 +168,36 @@ class PersistentCombatCommandResolver {
       accepted: false,
       state: state,
       reason: reason,
+    );
+  }
+
+  PersistentGameState _stateWithUpdatedVisibility({
+    required PersistentGameState originalState,
+    required PersistentGameState combatState,
+    required List<IntendedAttack> previousIntents,
+    required WorldMap worldMap,
+  }) {
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final updatedFog = fogOfWarService.recompute(
+      current: originalState.fogOfWar,
+      mapData: mapData,
+      playerIds: originalState.knownPlayerIds,
+      units: combatState.units,
+      cities: combatState.cities,
+    );
+    final diplomacy = DiplomaticContact.mergeDiscoveredContacts(
+      diplomacy: combatState.runtimeState.diplomacy,
+      fogOfWar: updatedFog,
+      units: combatState.units,
+      cities: combatState.cities,
+      playerIds: originalState.knownPlayerIds,
+    );
+    return combatState.copyWith(
+      fogOfWar: updatedFog,
+      runtimeState: combatState.runtimeState.copyWith(
+        intendedAttacks: previousIntents,
+        diplomacy: diplomacy,
+      ),
     );
   }
 
@@ -205,17 +222,5 @@ class PersistentCombatCommandResolver {
     final status = diplomacy.statusBetween(attackerPlayerId, defenderPlayerId);
     return status == DiplomaticRelationStatus.friendly ||
         status == DiplomaticRelationStatus.truce;
-  }
-
-  static TileData? _tileDataAt(MapDefinition mapDefinition, int col, int row) {
-    final tile = mapDefinition.tileAt(col, row);
-    if (tile == null) return null;
-    return TileData(
-      col: tile.col,
-      row: tile.row,
-      terrains: tile.terrains,
-      resources: tile.resources,
-      height: tile.height,
-    );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/turn/persistent_turn_economy_processor.dar
 import 'package:aonw_core/game/domain/turn/persistent_turn_movement_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 final class PersistentTurnMovementDelta {
   PersistentTurnMovementDelta({
@@ -32,8 +33,7 @@ final class PersistentTurnPipelineRequest {
     required this.state,
     required Iterable<String> playerIds,
     required this.savedAt,
-    required this.mapData,
-    this.mapDefinition,
+    required this.worldMap,
     this.ruleset = GameRuleset.defaults,
     this.fogOfWarService = const FogOfWarService(),
     Iterable<String> skippedPlayerIds = const [],
@@ -48,8 +48,7 @@ final class PersistentTurnPipelineRequest {
   final PersistentGameState state;
   final List<String> playerIds;
   final DateTime savedAt;
-  final MapData mapData;
-  final MapDefinition? mapDefinition;
+  final WorldMap worldMap;
   final GameRuleset ruleset;
   final FogOfWarService fogOfWarService;
   final List<String> skippedPlayerIds;
@@ -126,32 +125,31 @@ abstract final class PersistentTurnPipeline {
   static PersistentTurnPipelineResult simultaneousFinalize(
     PersistentTurnPipelineRequest request,
   ) {
+    final mapData = LegacyWorldMapAdapter.toMapData(request.worldMap);
     final playerIds = request.playerIds;
     final skippedPlayerIds = _skippedPlayerIdsFor(request);
     final savedAt = request.savedAt.toUtc();
-    final ruleset = request.ruleset.copyWith(
-      paceBalance: request.save.matchRules.paceBalance,
-    );
+    final ruleset = _rulesetFor(request);
     final combat = PersistentTurnCombatResolver.resolve(
       turn: request.save.turn,
       state: request.state,
-      mapDefinition: request.mapDefinition,
+      worldMap: request.worldMap,
       ruleset: ruleset,
     );
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
       state: combat.state,
       playerIds: playerIds,
-      mapData: request.mapData,
+      mapData: mapData,
       ruleset: ruleset,
       fogOfWarService: request.fogOfWarService,
       priorEvents: combat.events,
-      mapObjectives: request.mapData.objectives,
+      mapObjectives: mapData.objectives,
       turn: request.save.turn,
     );
     final movement = PersistentTurnMovementProcessor.resetForPlayers(
       state: economy.state,
       playerIds: playerIds,
-      mapData: request.mapData,
+      mapData: mapData,
       fogOfWarService: request.fogOfWarService,
     );
     final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
@@ -173,7 +171,7 @@ abstract final class PersistentTurnPipeline {
     final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
       playerIds: playerIds,
       state: movement.state,
-      mapData: request.mapData,
+      mapData: mapData,
       victoryRules: request.save.matchRules.victory,
       previousHoldTurnsByPlayerId: previousDominationHoldTurns,
     );
@@ -181,7 +179,7 @@ abstract final class PersistentTurnPipeline {
         .thresholdReachedEvents(
           playerIds: playerIds,
           state: movement.state,
-          mapData: request.mapData,
+          mapData: mapData,
           victoryRules: request.save.matchRules.victory,
           previousHoldTurnsByPlayerId: previousDominationHoldTurns,
           nextHoldTurnsByPlayerId: dominationHoldTurns,
@@ -249,6 +247,12 @@ abstract final class PersistentTurnPipeline {
       for (final playerId in request.skippedPlayerIds)
         if (playerSet.contains(playerId)) playerId,
     ];
+  }
+
+  static GameRuleset _rulesetFor(PersistentTurnPipelineRequest request) {
+    return request.ruleset.copyWith(
+      paceBalance: request.save.matchRules.paceBalance,
+    );
   }
 
   static Map<String, int> _timeoutStreaksAfterTurn({

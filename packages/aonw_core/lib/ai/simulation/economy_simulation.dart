@@ -2,7 +2,7 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_staleness.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_stats.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -45,7 +45,7 @@ abstract final class EconomySimulation {
     final players = [player, ...config.opponents];
     final playerIds = [for (final player in players) player.id];
     final mapData = config.mapData ?? _EconomySimulationSetup.simulationMap();
-    final mapDefinition = _EconomySimulationSetup.mapDefinitionFrom(mapData);
+    final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
     var state = _EconomySimulationSetup.initialState(
       player: player,
       opponents: config.opponents,
@@ -171,7 +171,7 @@ abstract final class EconomySimulation {
             state: state,
             actorPlayerId: actingPlayer.id,
             ruleset: config.ruleset,
-            mapDefinition: mapDefinition,
+            worldMap: worldMap,
           )) {
             commandTick += 1;
             continue;
@@ -182,7 +182,7 @@ abstract final class EconomySimulation {
             state: state,
             command: command,
             actorPlayerId: actingPlayer.id,
-            mapDefinition: mapDefinition,
+            worldMap: worldMap,
             ruleset: config.ruleset,
           );
           commandTick += 1;

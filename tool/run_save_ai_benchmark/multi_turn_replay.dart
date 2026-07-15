@@ -318,7 +318,7 @@ class _MultiTurnReplayRunner {
     final combat = PersistentTurnCombatResolver.resolve(
       turn: save.turn,
       state: persistent,
-      mapDefinition: _mapDefinition(mapData),
+      worldMap: LegacyWorldMapAdapter.fromMapData(mapData),
       ruleset: ruleset,
     );
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(

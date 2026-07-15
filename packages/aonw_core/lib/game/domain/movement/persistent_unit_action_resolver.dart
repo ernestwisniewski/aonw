@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -108,7 +108,7 @@ class PersistentUnitActionResolver {
     required PersistentGameState state,
     required AutoExploreUnitCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
   }) {
     final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
@@ -122,7 +122,7 @@ class PersistentUnitActionResolver {
     if (unit.movementPoints <= 0) return _reject(state, 'unit_exhausted');
     if (unit.queuedPath != null) return _reject(state, 'unit_has_path');
 
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     final move = const ScoutAutoExplorePlanner().commandFor(
       unit: unit,
       mapData: mapData,
@@ -139,7 +139,7 @@ class PersistentUnitActionResolver {
       state: primed,
       command: move,
       actorPlayerId: actorPlayerId,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
     );
     if (!moved.accepted) return _reject(state, moved.reason ?? 'move_failed');
 

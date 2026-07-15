@@ -10,7 +10,7 @@ void main() {
         state: state,
         command: const StartBuildingCommand('city_1', CityBuildingType.granary),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -33,7 +33,7 @@ void main() {
           CityBuildingType.workshop,
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -60,7 +60,7 @@ void main() {
           CityBuildingType.workshop,
         ),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -85,7 +85,7 @@ void main() {
             CityBuildingType.factory,
           ),
           actorPlayerId: 'player_1',
-          mapDefinition: _resourceMapDefinition(ResourceType.oil),
+          worldMap: _worldMap(resource: ResourceType.oil),
         );
 
         expect(result.accepted, isFalse);
@@ -107,7 +107,7 @@ void main() {
         state: state,
         command: const StartBuildingCommand('city_1', CityBuildingType.factory),
         actorPlayerId: 'player_1',
-        mapDefinition: _resourceMapDefinition(ResourceType.oil),
+        worldMap: _worldMap(resource: ResourceType.oil),
       );
 
       expect(result.accepted, isTrue);
@@ -128,7 +128,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isTrue);
@@ -163,14 +163,14 @@ void main() {
             state: lockedState,
             command: command,
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
       final unlockedResult = const PersistentCityProductionResolver()
           .startUnitProduction(
             state: unlockedState,
             command: command,
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(lockedResult.accepted, isFalse);
@@ -195,7 +195,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -220,7 +220,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _resourceMapDefinition(ResourceType.horses),
+            worldMap: _worldMap(resource: ResourceType.horses),
           );
 
       expect(result.accepted, isTrue);
@@ -259,7 +259,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isTrue);
@@ -289,7 +289,7 @@ void main() {
               GameUnitType.tank,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -314,7 +314,7 @@ void main() {
               GameUnitType.tank,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _resourceMapDefinition(ResourceType.oil),
+            worldMap: _worldMap(resource: ResourceType.oil),
           );
 
       expect(result.accepted, isTrue);
@@ -347,7 +347,7 @@ void main() {
               GameUnitType.scoutShip,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -377,7 +377,7 @@ void main() {
                 GameUnitType.scoutShip,
               ),
               actorPlayerId: 'player_1',
-              mapDefinition: _coastalMapDefinition(),
+              worldMap: _worldMap(coastal: true),
             );
 
         expect(result.accepted, isTrue);
@@ -414,7 +414,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -445,7 +445,7 @@ void main() {
               GameUnitType.settler,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isTrue);
@@ -566,7 +566,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -592,7 +592,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       final updatedCity = result.state.cities.single;
@@ -618,7 +618,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -636,7 +636,7 @@ void main() {
         state: state,
         command: const StartWonderCommand('city_1', WonderType.greatLibrary),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -656,7 +656,7 @@ void main() {
         state: state,
         command: const StartWonderCommand('city_1', WonderType.greatLibrary),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -683,7 +683,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -726,58 +726,23 @@ ResearchState _researchWithAll(Set<TechnologyId> technologyIds) {
   );
 }
 
-MapDefinition _mapDefinition() {
-  return MapDefinition(
+WorldMap _worldMap({ResourceType? resource, bool coastal = false}) {
+  return WorldMap(
     cols: 7,
     rows: 7,
     tiles: [
       for (var row = 0; row < 7; row++)
         for (var col = 0; col < 7; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
-  );
-}
-
-MapDefinition _resourceMapDefinition(ResourceType resource) {
-  return MapDefinition(
-    cols: 7,
-    rows: 7,
-    tiles: [
-      for (var row = 0; row < 7; row++)
-        for (var col = 0; col < 7; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.grassland],
-            resources: col == 1 && row == 1 ? [resource] : const [],
-            height: 0,
-          ),
-    ],
-  );
-}
-
-MapDefinition _coastalMapDefinition() {
-  return MapDefinition(
-    cols: 7,
-    rows: 7,
-    tiles: [
-      for (var row = 0; row < 7; row++)
-        for (var col = 0; col < 7; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
-            terrains: col == 2 && row == 1
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: coastal && col == 2 && row == 1
                 ? const [TerrainType.coast]
-                : col == 3 && row == 1
+                : coastal && col == 3 && row == 1
                 ? const [TerrainType.ocean]
                 : const [TerrainType.grassland],
-            resources: const [],
+            resources: col == 1 && row == 1 && resource != null
+                ? [resource]
+                : const [],
             height: 0,
           ),
     ],

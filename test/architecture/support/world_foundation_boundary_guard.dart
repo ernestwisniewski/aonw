@@ -218,31 +218,12 @@ bool _crossesBoundary(
       ) ||
       _crossesTypePair(
         canonical: 'WorldMap',
-        legacy: const {'MapData', 'MapDefinition'},
+        legacy: const {'MapData'},
         returnType: returnType,
         parameterTypes: parameterTypes,
         createdTypes: createdTypes,
         referencedTypes: referencedTypes,
-      ) ||
-      _constructsMapDataFromDefinition(
-        parameterTypes: parameterTypes,
-        createdTypes: createdTypes,
-        referencedTypes: referencedTypes,
       );
-}
-
-bool _constructsMapDataFromDefinition({
-  required String parameterTypes,
-  required Set<String> createdTypes,
-  required Set<String> referencedTypes,
-}) {
-  final hasDefinitionInput =
-      _containsType(parameterTypes, 'MapDefinition') ||
-      referencedTypes.any((type) => _containsType(type, 'MapDefinition'));
-  final createsMapData = createdTypes.any(
-    (type) => _containsType(type, 'MapData'),
-  );
-  return hasDefinitionInput && createsMapData;
 }
 
 bool _crossesTypePair({

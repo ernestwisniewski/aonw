@@ -191,55 +191,6 @@ extension CityBridge on CityHex {
       expect(violations.join('\n'), contains('extension_converter.dart'));
     });
 
-    test('guard requires MapDefinition to MapData projections in adapter', () {
-      final violations = _converterViolations({
-        'lib/map_definition_converter.dart': '''
-MapData materialize(MapDefinition definition) => MapData(
-  cols: definition.cols,
-  rows: definition.rows,
-  tiles: const [],
-);
-''',
-      }, allowedPaths: const {});
-
-      expect(violations, hasLength(1));
-      expect(violations.single, contains('map_definition_converter.dart'));
-
-      final capturedViolations = _converterViolations({
-        'lib/captured_map_definition_converter.dart': '''
-final class Projection {
-  const Projection(this.definition);
-  final MapDefinition definition;
-  MapData get data => MapData(
-    cols: definition.cols,
-    rows: definition.rows,
-    tiles: const [],
-  );
-}
-''',
-      }, allowedPaths: const {});
-
-      expect(capturedViolations, hasLength(1));
-      expect(
-        capturedViolations.single,
-        contains('captured_map_definition_converter.dart'),
-      );
-
-      expect(
-        _converterViolations({
-          'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart':
-              '''
-MapData materialize(MapDefinition definition) => MapData(
-  cols: definition.cols,
-  rows: definition.rows,
-  tiles: const [],
-);
-''',
-        }, allowedPaths: _allowedAdapterPaths),
-        isEmpty,
-      );
-    });
-
     test('guard allows raw construction and named adapters', () {
       final violations = _converterViolations({
         'lib/raw_coordinate.dart': '''

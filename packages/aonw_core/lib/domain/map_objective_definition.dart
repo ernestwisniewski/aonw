@@ -10,7 +10,7 @@ enum MapObjectiveType {
 }
 
 /// Immutable objective definition owned by the canonical world model.
-class MapObjectiveDefinition {
+final class MapObjectiveDefinition {
   const MapObjectiveDefinition({
     required this.id,
     required this.type,

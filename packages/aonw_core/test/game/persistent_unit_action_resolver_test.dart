@@ -289,7 +289,7 @@ void main() {
         state: state,
         command: const AutoExploreUnitCommand('scout_1'),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(cols: 6, rows: 1),
+        worldMap: _worldMap(cols: 6, rows: 1),
       );
       final moved = result.state.units.single;
 
@@ -328,7 +328,7 @@ void main() {
         state: state,
         command: const AutoExploreUnitCommand('scout_1'),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(cols: 8, rows: 1),
+        worldMap: _worldMap(cols: 8, rows: 1),
       );
       final moved = result.state.units.single;
 
@@ -366,16 +366,15 @@ void main() {
   });
 }
 
-MapDefinition _mapDefinition({required int cols, required int rows}) {
-  return MapDefinition(
+WorldMap _worldMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: const <ResourceType>[],
             height: 0,

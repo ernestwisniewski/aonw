@@ -8,7 +8,6 @@ import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/map/persistence.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -143,6 +142,52 @@ void main() {
         isFalse,
       );
       expect(maxRowsDraft.addRow(terrains: const [TerrainType.ocean]), isFalse);
+    });
+
+    test('rejects invalid dimensions, coordinates, and duplicate tiles', () {
+      expect(
+        () => MapDraft(cols: 0, rows: 1, tiles: const []),
+        throwsArgumentError,
+      );
+      expect(
+        () => MapDraft(
+          cols: 1,
+          rows: 1,
+          tiles: const [
+            TileData(
+              col: 1,
+              row: 0,
+              terrains: [TerrainType.ocean],
+              resources: [],
+              height: 0,
+            ),
+          ],
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => MapDraft(
+          cols: 1,
+          rows: 1,
+          tiles: const [
+            TileData(
+              col: 0,
+              row: 0,
+              terrains: [TerrainType.ocean],
+              resources: [],
+              height: 0,
+            ),
+            TileData(
+              col: 0,
+              row: 0,
+              terrains: [TerrainType.plains],
+              resources: [],
+              height: 0,
+            ),
+          ],
+        ),
+        throwsArgumentError,
+      );
     });
   });
 }

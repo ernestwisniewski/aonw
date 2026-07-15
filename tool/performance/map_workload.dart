@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:aonw_core/domain/hex_coord.dart';
-import 'package:aonw_core/domain/map_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -29,28 +28,6 @@ PerformanceCaseResult runMapLookupWorkload({
 
   return PerformanceCaseResult(
     'map.lookup',
-    {'sizes': stable},
-    {'sizes': observations},
-  );
-}
-
-/// Runs the same lookup probes through the second pre-refactor map model.
-PerformanceCaseResult runMapDefinitionLookupWorkload({
-  Iterable<int> scales = mapLookupScales,
-  int timingSamples = 21,
-}) {
-  _validateTimingSamples(timingSamples);
-
-  final stable = <String, Object?>{};
-  final observations = <String, Object?>{};
-  for (final scale in scales) {
-    final result = _runDefinitionScale(scale, timingSamples);
-    stable['$scale'] = result.stable;
-    observations['$scale'] = result.observations;
-  }
-
-  return PerformanceCaseResult(
-    'map.definition-lookup',
     {'sizes': stable},
     {'sizes': observations},
   );
@@ -92,32 +69,6 @@ _ScaleResult _runScale(int scale, int timingSamples) {
   );
 }
 
-_ScaleResult _runDefinitionScale(int scale, int timingSamples) {
-  final fixture = _MapDefinitionFixture.forScale(scale);
-  _executeDefinitionProbeBatch(fixture);
-
-  final samples = <Duration>[];
-  _ProbeBatchResult? stableResult;
-  for (var run = 0; run < timingSamples; run++) {
-    final measured = measureSync(() => _executeDefinitionProbeBatch(fixture));
-    samples.add(measured.elapsed);
-    stableResult ??= measured.value;
-    _verifyStableResult(stableResult, measured.value);
-  }
-
-  return _ScaleResult(
-    stable: {
-      'scale': scale,
-      'dimensions': {'cols': fixture.map.cols, 'rows': fixture.map.rows},
-      'probeCount': stableResult!.readsByProbe.length,
-      'tileInspections': stableResult.elementReads,
-      'tileInspectionsByProbe': stableResult.readsByProbe,
-      'outputDigest': stableDigest(stableResult.output),
-    },
-    observations: {'lookupBatchTiming': timingObservation(samples)},
-  );
-}
-
 _ProbeBatchResult _executeProbeBatch(_MapFixture fixture) {
   final readsByProbe = <String, int>{};
   final output = <String, Object?>{};
@@ -139,25 +90,6 @@ _ProbeBatchResult _executeProbeBatch(_MapFixture fixture) {
   );
 }
 
-_ProbeBatchResult _executeDefinitionProbeBatch(_MapDefinitionFixture fixture) {
-  final readsByProbe = <String, int>{};
-  final output = <String, Object?>{};
-  fixture.inspections.reset();
-  for (final probe in fixture.probes) {
-    final readsBefore = fixture.inspections.value;
-    final tile = fixture.map.tileAt(probe.col, probe.row);
-    readsByProbe[probe.name] = fixture.inspections.value - readsBefore;
-    output[probe.name] = tile == null
-        ? null
-        : {'col': tile.col, 'row': tile.row};
-  }
-  return _ProbeBatchResult(
-    elementReads: readsByProbe.values.fold(0, (sum, reads) => sum + reads),
-    readsByProbe: Map.unmodifiable(readsByProbe),
-    output: Map.unmodifiable(output),
-  );
-}
-
 void _verifyStableResult(_ProbeBatchResult expected, _ProbeBatchResult actual) {
   final readsMatch = _mapsEqual(expected.readsByProbe, actual.readsByProbe);
   if (expected.elementReads != actual.elementReads ||
@@ -167,74 +99,6 @@ void _verifyStableResult(_ProbeBatchResult expected, _ProbeBatchResult actual) {
       'Map lookup workload produced a non-deterministic result.',
     );
   }
-}
-
-final class _MapDefinitionFixture {
-  const _MapDefinitionFixture({
-    required this.map,
-    required this.probes,
-    required this.inspections,
-  });
-
-  factory _MapDefinitionFixture.forScale(int scale) {
-    final dimensions = _dimensionsFor(scale);
-    final inspections = _InspectionCounter();
-    final tiles = [
-      for (var index = 0; index < scale; index++)
-        _CountingMapTileDefinition(
-          inspections: inspections,
-          col: index % dimensions.cols,
-          row: index ~/ dimensions.cols,
-          terrains: const [TerrainType.ocean],
-          resources: const [],
-          height: 0,
-        ),
-    ];
-    final middle = tiles[scale ~/ 2];
-    return _MapDefinitionFixture(
-      map: MapDefinition(
-        cols: dimensions.cols,
-        rows: dimensions.rows,
-        tiles: tiles,
-      ),
-      probes: [
-        const _Probe('first', 0, 0),
-        _Probe('middle', middle.col, middle.row),
-        _Probe('last', dimensions.cols - 1, dimensions.rows - 1),
-        _Probe('miss', dimensions.cols, dimensions.rows),
-      ],
-      inspections: inspections,
-    );
-  }
-
-  final MapDefinition map;
-  final List<_Probe> probes;
-  final _InspectionCounter inspections;
-}
-
-final class _CountingMapTileDefinition extends MapTileDefinition {
-  _CountingMapTileDefinition({
-    required this.inspections,
-    required super.col,
-    required super.row,
-    required super.terrains,
-    required super.resources,
-    required super.height,
-  });
-
-  final _InspectionCounter inspections;
-
-  @override
-  int get col {
-    inspections.value++;
-    return super.col;
-  }
-}
-
-final class _InspectionCounter {
-  int value = 0;
-
-  void reset() => value = 0;
 }
 
 bool _mapsEqual(Map<String, int> left, Map<String, int> right) {

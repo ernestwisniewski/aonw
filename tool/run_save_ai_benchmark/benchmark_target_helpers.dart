@@ -222,25 +222,6 @@ String? _unitLabel(GameUnit? unit) {
   return '${unit.id}/${unit.ownerPlayerId}@${unit.col},${unit.row}';
 }
 
-MapDefinition _mapDefinition(MapData mapData) {
-  return MapDefinition(
-    cols: mapData.cols,
-    rows: mapData.rows,
-    mapName: mapData.mapName,
-    defaultZoom: mapData.defaultZoom,
-    tiles: [
-      for (final tile in mapData.tiles)
-        MapTileDefinition(
-          col: tile.col,
-          row: tile.row,
-          terrains: tile.terrains,
-          resources: tile.resources,
-          height: tile.height,
-        ),
-    ],
-  );
-}
-
 Set<String> _pendingHostilePlayerIds({
   required SaveSnapshot snapshot,
   required String playerId,

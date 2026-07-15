@@ -9,7 +9,7 @@ final class _EconomySimulationCommandApplier {
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     switch (command) {
@@ -18,7 +18,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           cityRuleset: ruleset.city,
         );
         return _ApplyCommandResult(
@@ -32,7 +32,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               ruleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
             );
@@ -49,7 +49,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
       case SetCitySpecializationCommand():
@@ -68,7 +68,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -80,7 +80,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
+          mapData: LegacyWorldMapAdapter.toMapData(worldMap),
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -92,7 +92,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
+          mapData: LegacyWorldMapAdapter.toMapData(worldMap),
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -105,7 +105,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -120,7 +120,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
             );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -172,7 +172,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -193,7 +193,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -206,7 +206,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
       case TileTappedCommand() ||
@@ -267,7 +267,7 @@ final class _EconomySimulationCommandApplier {
     required PersistentGameState state,
     required AttackHexCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     final withIntent = state.copyWith(
@@ -286,7 +286,7 @@ final class _EconomySimulationCommandApplier {
     final result = PersistentTurnCombatResolver.resolve(
       turn: turn,
       state: withIntent,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       ruleset: ruleset,
     );
     final nextState = result.state.copyWith(

@@ -6,11 +6,12 @@
 
 ## Context
 
-The game currently has parallel representations of the same concepts.
-`MapData` is mutable for the editor and is also consumed by gameplay, while
-`MapDefinition` is an immutable rules-oriented representation used by shared
-pipelines and the server. Both perform linear tile lookup and conversion code
-exists at application boundaries.
+Before this migration, the game had parallel representations of the same map
+concepts. `MapData` is mutable for the editor and is also consumed by gameplay,
+while `MapDefinition` was an immutable rules-oriented representation used by
+shared pipelines and the server. Both performed linear tile lookup and
+conversion code existed at application boundaries. `MapDefinition` has since
+been retired; `MapData` remains the transitional persistence and editor DTO.
 Coordinates also appear as `HexCoordinate`, `CityHex`, records, and repeated
 `col`/`row` pairs.
 
@@ -109,10 +110,12 @@ Rejected alternatives:
 
 ## Migration And Verification
 
-The repository does not yet fully conform. `MapData`, `MapDefinition`,
-`GameState`, `PersistentGameState`, and conversions between them are explicit
-transitional exceptions. `SaveSnapshot`/`Snapshot` offset duplication and the
-mixed domain/interaction content of `GameRuntimeState` are also transitional.
+The repository does not yet fully conform. `MapData`, `GameState`,
+`PersistentGameState`, and conversions between them are explicit transitional
+exceptions. Legacy map JSON enters through `MapDataCodec` and is validated by
+constructing `WorldMap`; `MapDefinition` has been removed. `SaveSnapshot`/
+`Snapshot` offset duplication and the mixed domain/interaction content of
+`GameRuntimeState` are also transitional.
 
 Migrate in this order:
 

@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city/city_building_requirement_rules.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
@@ -43,7 +43,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartBuildingCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
@@ -65,7 +65,7 @@ class PersistentCityProductionResolver {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
+      mapData: LegacyWorldMapAdapter.toMapData(worldMap),
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -100,7 +100,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartUnitProductionCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -125,7 +125,7 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_not_available');
     }
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
@@ -213,7 +213,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartWonderCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -227,7 +227,7 @@ class PersistentCityProductionResolver {
     final availability = WonderAvailabilityPolicy.availabilityFor(
       city: city,
       cities: state.cities,
-      mapData: LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition),
+      mapData: LegacyWorldMapAdapter.toMapData(worldMap),
       research: state.research,
       registry: state.wonderRegistry,
       ruleset: wonderRuleset,
@@ -297,7 +297,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required RushProductionCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
@@ -316,7 +316,7 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,

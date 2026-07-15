@@ -1,22 +1,23 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 final class MctsSimulatedEconomyCommandApplier {
-  const MctsSimulatedEconomyCommandApplier({
+  MctsSimulatedEconomyCommandApplier({
     required this.view,
     required this.ownUnits,
     required this.visibleEnemyUnits,
     required this.ownCities,
     required this.rememberedEnemyCities,
     required this.ownResearch,
-  });
+  }) : _worldMap = LegacyWorldMapAdapter.fromMapData(view.mapData);
 
   final GameView view;
   final List<GameUnit> ownUnits;
@@ -24,13 +25,14 @@ final class MctsSimulatedEconomyCommandApplier {
   final List<GameCity> ownCities;
   final List<GameCity> rememberedEnemyCities;
   final PlayerResearchState ownResearch;
+  final WorldMap _worldMap;
 
   MctsSimulatedCommandApplication applyFoundCity(FoundCityCommand command) {
     final result = const PersistentCityFoundingResolver().foundCity(
       state: _persistentState(),
       command: command,
       actorPlayerId: view.forPlayerId,
-      mapDefinition: _mapDefinition(),
+      worldMap: _worldMap,
       cityRuleset: view.ruleset.city,
     );
     if (!result.accepted) return unchangedCommandApplication;
@@ -66,7 +68,7 @@ final class MctsSimulatedEconomyCommandApplier {
           state: _persistentState(),
           command: command,
           actorPlayerId: view.forPlayerId,
-          mapDefinition: _mapDefinition(),
+          worldMap: _worldMap,
           cityRuleset: view.ruleset.city,
           technologyRuleset: view.ruleset.technology,
           paceBalance: view.ruleset.paceBalance,
@@ -82,7 +84,7 @@ final class MctsSimulatedEconomyCommandApplier {
       state: _persistentState(),
       command: command,
       actorPlayerId: view.forPlayerId,
-      mapDefinition: _mapDefinition(),
+      worldMap: _worldMap,
     );
     if (!result.accepted) return unchangedCommandApplication;
     return _applicationFromPersistent(result.state);
@@ -293,9 +295,5 @@ final class MctsSimulatedEconomyCommandApplier {
       nextRememberedEnemyCities: nextView.rememberedEnemyCities,
       nextOwnResearch: nextView.ownResearch,
     );
-  }
-
-  MapDefinition _mapDefinition() {
-    return MctsSimulationProjection.mapDefinitionFrom(view.mapData);
   }
 }

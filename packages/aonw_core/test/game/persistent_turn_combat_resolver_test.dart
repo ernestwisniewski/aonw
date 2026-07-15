@@ -45,7 +45,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.state.units.map((unit) => unit.id), ['warrior_1']);
@@ -113,7 +113,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.state.units.single.movementPoints, 0);
@@ -171,7 +171,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.state.units.single.movementPoints, 0);
@@ -230,7 +230,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 4,
         state: state,
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
       final scoreEvent = result.events
           .whereType<DiplomaticScoreChangedEvent>()
@@ -285,7 +285,7 @@ void main() {
       final result = PersistentTurnCombatResolver.resolve(
         turn: 1,
         state: state,
-        mapDefinition: _mapDefinition(cols: 3, rows: 3),
+        worldMap: _worldMap(cols: 3, rows: 3),
         ruleset: _retreatRuleset,
       );
 
@@ -399,8 +399,8 @@ const _retreatRuleset = GameRuleset(
   technology: TechnologyRulesets.standard,
 );
 
-MapDefinition _mapDefinition({int cols = 2, int rows = 1}) {
-  return MapDefinition(
+WorldMap _worldMap({int cols = 2, int rows = 1}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
@@ -410,10 +410,9 @@ MapDefinition _mapDefinition({int cols = 2, int rows = 1}) {
   );
 }
 
-MapTileDefinition _tile(int col, int row) {
-  return MapTileDefinition(
-    col: col,
-    row: row,
+WorldTile _tile(int col, int row) {
+  return WorldTile(
+    coordinate: HexCoord(col: col, row: row),
     terrains: const [TerrainType.grassland],
     resources: const [],
     height: 0,

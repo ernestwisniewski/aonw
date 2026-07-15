@@ -72,8 +72,8 @@ class ServerCommandReducer {
     }
 
     final loadedMap = await _loadServerMap(save.mapName);
-    final mapData = loadedMap.data;
-    final mapDefinition = loadedMap.definition;
+    final mapData = loadedMap.legacyMapData;
+    final worldMap = loadedMap.canonicalWorldMap;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
@@ -86,7 +86,7 @@ class ServerCommandReducer {
       actorPlayerId: actorPlayerId,
       now: now.toUtc(),
       mapData: mapData,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       ruleset: ruleset,
     );
     if (!result.accepted) {
@@ -143,8 +143,8 @@ class ServerCommandReducer {
     }
 
     final loadedMap = await _loadServerMap(save.mapName);
-    final mapData = loadedMap.data;
-    final mapDefinition = loadedMap.definition;
+    final mapData = loadedMap.legacyMapData;
+    final worldMap = loadedMap.canonicalWorldMap;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
@@ -158,8 +158,7 @@ class ServerCommandReducer {
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: nowUtc,
-      mapData: mapData,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       ruleset: ruleset,
     );
 
@@ -195,7 +194,7 @@ class ServerCommandReducer {
     required String actorPlayerId,
     required DateTime now,
     required MapData mapData,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     switch (command) {
@@ -207,8 +206,7 @@ class ServerCommandReducer {
           command: command,
           actorPlayerId: actorPlayerId,
           now: now,
-          mapData: mapData,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
       case EndTurnCommand(:final playerId):
@@ -219,8 +217,7 @@ class ServerCommandReducer {
           command: SubmitTurnCommand(playerId),
           actorPlayerId: actorPlayerId,
           now: now,
-          mapData: mapData,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
       case MoveUnitCommand():
@@ -228,7 +225,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _fromPersistentResult(save, result);
       case AttackHexCommand():
@@ -238,7 +235,7 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
           turn: save.turn,
           commandTick: commandTick,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
         return _fromPersistentResult(save, result);
@@ -268,7 +265,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _fromPersistentResult(save, result);
       case AssignMerchantTradeRouteCommand():
@@ -340,7 +337,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           cityRuleset: ruleset.city,
         );
         return _fromPersistentResult(save, result);
@@ -353,7 +350,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           ruleset: ruleset,
         );
       case SetCitySpecializationCommand():
@@ -369,7 +366,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
           wonderRuleset: ruleset.wonders,
@@ -382,7 +379,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               ruleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
             );
@@ -392,7 +389,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapDefinition: mapDefinition,
+          worldMap: worldMap,
         );
         return _fromPersistentResult(save, result);
       case ToggleWorkedHexCommand():
@@ -409,7 +406,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
             );
@@ -420,7 +417,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -432,7 +429,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -451,7 +448,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              mapDefinition: mapDefinition,
+              worldMap: worldMap,
             );
         return _fromPersistentResult(save, result);
       case CancelWorkerAssignmentCommand():
@@ -709,25 +706,6 @@ class ServerCommandReducer {
       );
     }
     return _CommandApplication.accept(save: save, state: state, events: events);
-  }
-
-  MapDefinition _mapDefinitionFrom(MapData mapData) {
-    return MapDefinition(
-      cols: mapData.cols,
-      rows: mapData.rows,
-      mapName: mapData.mapName,
-      defaultZoom: mapData.defaultZoom,
-      tiles: [
-        for (final tile in mapData.tiles)
-          MapTileDefinition(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
   }
 
   ServerCommandReduction _reject(WireSnapshot snapshot, String reason) {

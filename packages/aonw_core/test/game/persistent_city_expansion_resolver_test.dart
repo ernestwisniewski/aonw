@@ -10,7 +10,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 1, 2),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -29,7 +29,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 1, 2),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -44,7 +44,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 0, 0),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
 
       expect(result.accepted, isFalse);
@@ -64,16 +64,15 @@ GameCity _city({String ownerPlayerId = 'player_1'}) {
   );
 }
 
-MapDefinition _mapDefinition() {
-  return MapDefinition(
+WorldMap _worldMap() {
+  return WorldMap(
     cols: 4,
     rows: 4,
     tiles: [
       for (var row = 0; row < 4; row++)
         for (var col = 0; col < 4; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.grassland],
             resources: const [],
             height: 0,

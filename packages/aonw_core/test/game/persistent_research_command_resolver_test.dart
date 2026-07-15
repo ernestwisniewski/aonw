@@ -42,6 +42,38 @@ void main() {
       _expectPersistentRuntimeSlices(result.state.runtimeState);
     });
 
+    test('uses WorldMap resources when applying overflow to a technology', () {
+      final state = PersistentGameState(
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'City',
+            center: CityHex(col: 1, row: 1),
+          ),
+        ],
+        research: ResearchState(
+          players: {'player_1': PlayerResearchState(scienceOverflow: 4)},
+        ),
+      );
+
+      final result = const PersistentResearchCommandResolver().selectTechnology(
+        state: state,
+        command: const SelectTechnologyCommand(
+          'player_1',
+          TechnologyId.agriculture,
+        ),
+        actorPlayerId: 'player_1',
+        worldMap: _worldMapWithWheat(),
+      );
+
+      final research = result.state.research.forPlayer('player_1');
+      expect(result.accepted, isTrue);
+      expect(research.activeTechnologyId, TechnologyId.agriculture);
+      expect(research.progressFor(TechnologyId.agriculture), 2);
+      expect(research.scienceOverflow, 0);
+    });
+
     test('rejects missing prerequisites', () {
       const state = PersistentGameState();
 
@@ -154,3 +186,22 @@ const _resourceTradeAgreements = <ResourceTradeAgreement>[
     remainingTurns: 3,
   ),
 ];
+
+WorldMap _worldMapWithWheat() {
+  return WorldMap(
+    cols: 3,
+    rows: 3,
+    tiles: [
+      for (var row = 0; row < 3; row++)
+        for (var col = 0; col < 3; col++)
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.grassland],
+            resources: col == 1 && row == 1
+                ? const [ResourceType.wheat]
+                : const [],
+            height: 0,
+          ),
+    ],
+  );
+}

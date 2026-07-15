@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 void main() {
   group('TracingMctsSimulator movement parity', () {
     test('applies reachable movement like PersistentMoveUnitResolver', () {
@@ -56,13 +58,12 @@ void main() {
       );
       final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
       const command = MoveUnitCommand('warrior_1', 2, 0);
-      final mapDefinition = _highCostMapDefinition();
       final mapData = _highCostMapData();
 
       final persistent = _resolvePersistent(
         state,
         command,
-        mapDefinition: mapDefinition,
+        worldMap: LegacyWorldMapAdapter.fromMapData(mapData),
       );
       final simulated = _simulate(state, command, mapData: mapData);
 
@@ -511,7 +512,7 @@ void main() {
               state: state,
               command: command,
               actorPlayerId: 'player_1',
-              mapDefinition: _mapDefinition(),
+              worldMap: _worldMap(),
             );
         final simulated = _simulate(state, command);
 
@@ -531,7 +532,7 @@ void main() {
         state: state,
         command: command,
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
       final simulated = _simulate(state, command);
 
@@ -551,7 +552,7 @@ void main() {
             state: state,
             command: command,
             actorPlayerId: 'player_1',
-            mapDefinition: _mapDefinition(),
+            worldMap: _worldMap(),
           );
       final simulated = _simulate(state, command);
 
@@ -593,7 +594,7 @@ void main() {
         state: state,
         command: command,
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(),
+        worldMap: _worldMap(),
       );
       final simulated = _simulate(state, command);
 
@@ -908,13 +909,13 @@ void main() {
 PersistentMoveUnitResult _resolvePersistent(
   PersistentGameState state,
   MoveUnitCommand command, {
-  MapDefinition? mapDefinition,
+  WorldMap? worldMap,
 }) {
   return const PersistentMoveUnitResolver().resolve(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    mapDefinition: mapDefinition ?? _mapDefinition(),
+    worldMap: worldMap ?? _worldMap(),
   );
 }
 
@@ -937,7 +938,7 @@ PersistentCityFoundingResult _resolvePersistentFounding(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    mapDefinition: _mapDefinition(),
+    worldMap: _worldMap(),
     cityRuleset: GameRuleset.defaults.city,
   );
 }
@@ -963,7 +964,7 @@ PersistentTurnCombatResult _resolvePersistentCombat(
   return PersistentTurnCombatResolver.resolve(
     turn: 1,
     state: withIntent,
-    mapDefinition: _mapDefinition(),
+    worldMap: _worldMap(),
     ruleset: GameRuleset.defaults,
   );
 }
@@ -976,7 +977,7 @@ PersistentResearchCommandResult _resolvePersistentResearch(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    mapDefinition: _mapDefinition(),
+    worldMap: _worldMap(),
     ruleset: GameRuleset.defaults.technology,
   );
 }
@@ -989,7 +990,7 @@ PersistentWorkerCommandResult _resolvePersistentWorkerImprovement(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    mapDefinition: _mapDefinition(),
+    worldMap: _worldMap(),
     cityRuleset: GameRuleset.defaults.city,
     technologyRuleset: GameRuleset.defaults.technology,
   );
@@ -1003,7 +1004,7 @@ PersistentWorkerCommandResult _resolvePersistentWorkerAssignment(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    mapDefinition: _mapDefinition(),
+    worldMap: _worldMap(),
   );
 }
 
@@ -1040,18 +1041,14 @@ SimulatedState _simulate(
 SimulatedState _advanceSimulatedTurn(
   PersistentGameState state, {
   TracingMctsSimulator simulator = const TracingMctsSimulator(),
-}) {
-  final view = GameView.fromPersistentState(
-    state,
-    forPlayerId: 'player_1',
-    turn: 1,
-    mapData: _mapData(),
-    ruleset: GameRuleset.defaults,
-  );
-  return simulator.advanceTurn(
-    SimulatedState.fromView(view, maxPlanningDepth: 4),
-  );
-}
+  MapData? mapData,
+  bool ignoreFogOfWar = false,
+}) => MctsSimulatorParityFixtures.advanceSimulatedTurn(
+  state,
+  simulator: simulator,
+  mapData: mapData,
+  ignoreFogOfWar: ignoreFogOfWar,
+);
 
 GameUnit? _maybeUnitById(List<GameUnit> units, String id) {
   for (final unit in units) {
@@ -1060,9 +1057,8 @@ GameUnit? _maybeUnitById(List<GameUnit> units, String id) {
   return null;
 }
 
-GameUnit _unitById(List<GameUnit> units, String id) {
-  return units.singleWhere((unit) => unit.id == id);
-}
+GameUnit _unitById(List<GameUnit> units, String id) =>
+    MctsSimulatorParityFixtures.unitById(units, id);
 
 GameCity _cityById(List<GameCity> cities, String id) {
   return cities.singleWhere((city) => city.id == id);
@@ -1138,86 +1134,9 @@ FogOfWarState _visibleFog() {
   );
 }
 
-MapDefinition _mapDefinition() {
-  return MapDefinition(
-    cols: 3,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < 3; col++)
-        MapTileDefinition(
-          col: col,
-          row: 0,
-          terrains: const [TerrainType.plains],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  );
-}
+MapData _mapData() => MctsSimulatorParityFixtures.mapData();
 
-MapData _mapData() {
-  return MapData(
-    cols: 3,
-    rows: 1,
-    tiles: const [
-      TileData(
-        col: 0,
-        row: 0,
-        terrains: [TerrainType.plains],
-        resources: [],
-        height: 0,
-      ),
-      TileData(
-        col: 1,
-        row: 0,
-        terrains: [TerrainType.plains],
-        resources: [],
-        height: 0,
-      ),
-      TileData(
-        col: 2,
-        row: 0,
-        terrains: [TerrainType.plains],
-        resources: [],
-        height: 0,
-      ),
-    ],
-  );
-}
-
-MapDefinition _highCostMapDefinition() {
-  return MapDefinition(
-    cols: 3,
-    rows: 1,
-    tiles: [
-      MapTileDefinition(
-        col: 0,
-        row: 0,
-        terrains: const [TerrainType.plains],
-        resources: const [],
-        height: 0,
-      ),
-      MapTileDefinition(
-        col: 1,
-        row: 0,
-        terrains: const [
-          TerrainType.snow,
-          TerrainType.forest,
-          TerrainType.tundra,
-        ],
-        resources: const [],
-        height: 0,
-      ),
-      MapTileDefinition(
-        col: 2,
-        row: 0,
-        terrains: const [TerrainType.plains],
-        resources: const [],
-        height: 0,
-      ),
-    ],
-  );
-}
+WorldMap _worldMap() => MctsSimulatorParityFixtures.worldMap();
 
 MapData _highCostMapData() {
   return MapData(

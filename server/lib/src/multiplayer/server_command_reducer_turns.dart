@@ -8,8 +8,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required SubmitTurnCommand command,
     required String actorPlayerId,
     required DateTime now,
-    required MapData mapData,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     if (command.playerId != actorPlayerId) {
@@ -62,8 +61,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: now,
-      mapData: mapData,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       ruleset: ruleset,
     );
   }
@@ -74,8 +72,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required List<String> playerIds,
     required List<String> skippedPlayerIds,
     required DateTime now,
-    required MapData mapData,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     final result = PersistentTurnPipeline.simultaneousFinalize(
@@ -85,8 +82,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,
-        mapData: mapData,
-        mapDefinition: mapDefinition,
+        worldMap: worldMap,
         ruleset: ruleset,
         preserveNonParticipantPlayerStates: true,
         trackTimeoutStreaks: true,

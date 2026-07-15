@@ -9,28 +9,28 @@
             "found": 193
           },
           "lines": {
-            "hit": 12135,
-            "found": 13212
+            "hit": 12126,
+            "found": 13185
           }
         },
         "domain": {
           "files": {
             "hit": 255,
-            "found": 303
+            "found": 302
           },
           "lines": {
-            "hit": 9960,
-            "found": 12361
+            "hit": 9896,
+            "found": 12264
           }
         },
         "map": {
           "files": {
-            "hit": 7,
+            "hit": 9,
             "found": 11
           },
           "lines": {
-            "hit": 180,
-            "found": 228
+            "hit": 172,
+            "found": 204
           }
         },
         "protocol": {
@@ -142,12 +142,12 @@
         },
         "editor": {
           "files": {
-            "hit": 13,
-            "found": 18
+            "hit": 19,
+            "found": 19
           },
           "lines": {
-            "hit": 540,
-            "found": 1389
+            "hit": 1060,
+            "found": 1450
           }
         },
         "game_analysis": {
@@ -166,8 +166,8 @@
             "found": 52
           },
           "lines": {
-            "hit": 1811,
-            "found": 2150
+            "hit": 1798,
+            "found": 2134
           }
         },
         "game_domain": {
@@ -246,7 +246,7 @@
             "found": 40
           },
           "lines": {
-            "hit": 1955,
+            "hit": 1976,
             "found": 2343
           }
         },
@@ -262,11 +262,11 @@
         },
         "shared": {
           "files": {
-            "hit": 41,
+            "hit": 42,
             "found": 43
           },
           "lines": {
-            "hit": 1465,
+            "hit": 1490,
             "found": 1784
           }
         }
@@ -350,8 +350,8 @@
             "found": 44
           },
           "lines": {
-            "hit": 1675,
-            "found": 2382
+            "hit": 1667,
+            "found": 2369
           }
         },
         "observability": {

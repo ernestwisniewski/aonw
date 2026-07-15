@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -39,7 +39,7 @@ class PersistentMoveUnitResolver {
     required PersistentGameState state,
     required MoveUnitCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
   }) {
     final unitIndex = _unitIndexById(state.units, command.unitId);
     if (unitIndex == null) return _reject(state, 'unit_not_found');
@@ -53,7 +53,7 @@ class PersistentMoveUnitResolver {
       return _reject(state, 'unit_uses_trade_routes');
     }
 
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _reject(state, 'unit_out_of_bounds');
     }

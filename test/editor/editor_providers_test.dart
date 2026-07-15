@@ -1,3 +1,4 @@
+import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/editor/providers/editor_providers.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
@@ -187,6 +188,25 @@ void main() {
       expect(draft.rows, 5);
       expect(draft.tiles.length, 30);
       expect(draft.tiles.first.terrains, [TerrainType.ocean]);
+    });
+
+    test('loads and clears an existing draft identity', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final draft = MapDraft.filled(
+        cols: MapConstraints.minCols,
+        rows: MapConstraints.minRows,
+        defaultTerrain: TerrainType.desert,
+      );
+
+      container.read(editorMapProvider.notifier)
+        ..load(draft)
+        ..clear();
+
+      expect(container.read(editorMapProvider), isNull);
+
+      container.read(editorMapProvider.notifier).load(draft);
+      expect(container.read(editorMapProvider), same(draft));
     });
 
     test('create clamps a map draft to editor dimension limits', () {

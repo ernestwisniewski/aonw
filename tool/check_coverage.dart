@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'coverage_gate/diff_measurement.dart';
+
 const _defaultPolicyPath = 'tool/coverage_policy.json';
 const _defaultBaselinePath = 'tool/coverage_baseline.json';
 const _coverageIgnoreMarker = 'coverage:ignore';
@@ -148,7 +150,13 @@ final class _CoverageGate {
       final diffs = <String, ({String base, _DiffSnapshot snapshot})>{
         'diff': (
           base: cumulativeBase,
-          snapshot: _measureDiff(scopeName, scope, cumulativeBase, 'diff'),
+          snapshot: _measureDiff(
+            scopeName,
+            scope,
+            cumulativeBase,
+            'diff',
+            acknowledgedMissingFiles: expected.missingFiles,
+          ),
         ),
       };
       if (incrementalBase != cumulativeBase) {
@@ -159,6 +167,7 @@ final class _CoverageGate {
             scope,
             incrementalBase,
             'incremental diff',
+            acknowledgedMissingFiles: expected.missingFiles,
           ),
         );
       }
@@ -438,52 +447,31 @@ void main() {
     String scopeName,
     _ScopePolicy scope,
     String baseRef,
-    String label,
-  ) {
-    final changedLines = _changedLines(scope, baseRef);
+    String label, {
+    required Set<String> acknowledgedMissingFiles,
+  }) {
     final sources = _sourceFiles(scope);
     final records = _loadLcov(scope, sources);
-    final byLayer = <String, _Counts>{};
-    final uncoveredByLayer = <String, Set<String>>{};
-    final failures = <String>[];
-
-    for (final entry in changedLines.entries) {
-      final path = entry.key;
-      if (!sources.contains(path) || scope.isExcluded(path)) continue;
-      final layer = scope.layerFor(path);
-      final record = records[path];
-      if (record == null) {
-        failures.add(
-          '$scopeName $label: changed source is absent from LCOV: $path',
-        );
-        continue;
-      }
-      final coverable = entry.value.intersection(record.lineHits.keys.toSet());
-      if (coverable.isEmpty) continue;
-      final hit = coverable
-          .where((line) => (record.lineHits[line] ?? 0) > 0)
-          .length;
-      for (final line in coverable) {
-        if ((record.lineHits[line] ?? 0) == 0) {
-          uncoveredByLayer
-              .putIfAbsent(layer, () => <String>{})
-              .add('$path:$line');
-        }
-      }
-      byLayer.update(
-        layer,
-        (counts) => counts + _Counts(hit: hit, found: coverable.length),
-        ifAbsent: () => _Counts(hit: hit, found: coverable.length),
-      );
-    }
-
-    return _DiffSnapshot(
-      byLayer: byLayer,
-      uncoveredByLayer: {
-        for (final entry in uncoveredByLayer.entries)
-          entry.key: entry.value.toList()..sort(),
+    final measurement = measureCoverageDiff(
+      repository: options.repository,
+      scopeName: scopeName,
+      label: label,
+      changedLines: _changedLines(scope, baseRef),
+      sources: sources,
+      lineHitsByPath: {
+        for (final entry in records.entries) entry.key: entry.value.lineHits,
       },
-      structuralFailures: failures,
+      isExcluded: scope.isExcluded,
+      layerFor: scope.layerFor,
+      acknowledgedMissingFiles: acknowledgedMissingFiles,
+    );
+    return _DiffSnapshot(
+      byLayer: {
+        for (final entry in measurement.byLayer.entries)
+          entry.key: _Counts(hit: entry.value.hit, found: entry.value.found),
+      },
+      uncoveredByLayer: measurement.uncoveredByLayer,
+      structuralFailures: measurement.structuralFailures,
     );
   }
 

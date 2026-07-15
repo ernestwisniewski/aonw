@@ -1,6 +1,8 @@
 export 'ai.dart';
+export 'domain/hex_coord.dart';
 export 'domain/intended_attack.dart';
-export 'domain/map_definition.dart';
+export 'domain/map_objective_definition.dart';
+export 'domain/world_map.dart';
 export 'game/domain/artifact.dart';
 export 'game/domain/city.dart';
 export 'game/domain/combat.dart';

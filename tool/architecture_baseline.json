@@ -34,7 +34,7 @@
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart": 694,
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart": 746,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 751,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart": 665,
+        "packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart": 658,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart": 592
       },
       "legacyFiles": {},
@@ -61,7 +61,7 @@
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator": 463,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker": 564,
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart::class:TechnologyCatalog": 734,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart::class:PersistentTurnCombatResolver": 641,
+        "packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart::class:PersistentTurnCombatResolver": 633,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor": 564,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
       },
@@ -144,7 +144,7 @@
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_counterModifiers": 80,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_technologyModifiers": 61,
         "packages/aonw_core/lib/game/domain/combat/combat_resolver.dart::class:CombatResolver/method:resolve": 78,
-        "packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart::class:PersistentCombatCommandResolver/method:resolve": 129,
+        "packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart::class:PersistentCombatCommandResolver/method:resolve": 117,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:fromJson": 312,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:toJson": 372,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_turn_resolver.dart::class:DiplomacyTurnResolver/method:resolve": 89,
@@ -178,7 +178,7 @@
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceCities": 76,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:advanceForPlayers": 117,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:resetForPlayers": 91,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart::class:PersistentTurnPipeline/method:simultaneousFinalize": 117,
+        "packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart::class:PersistentTurnPipeline/method:simultaneousFinalize": 116,
         "packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart::class:PersistentUnitDetachmentResolver/method:detachTroop": 67,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 80,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 62,
@@ -498,7 +498,7 @@
         "packages/aonw_core/test/ai/game_view_test.dart": 596,
         "packages/aonw_core/test/ai/mcts/mcts_action_generator_test.dart": 5245,
         "packages/aonw_core/test/ai/mcts/mcts_evaluator_test.dart": 2127,
-        "packages/aonw_core/test/ai/mcts/mcts_simulator_parity_test.dart": 1250,
+        "packages/aonw_core/test/ai/mcts/mcts_simulator_parity_test.dart": 1169,
         "packages/aonw_core/test/ai/mcts/mcts_strategy_test.dart": 1728,
         "packages/aonw_core/test/ai/strategic/city_site_planner_test.dart": 561,
         "packages/aonw_core/test/ai/strategic/defensive_stance_planner_test.dart": 835,
@@ -508,8 +508,8 @@
         "packages/aonw_core/test/game/city_primitives_test.dart": 629,
         "packages/aonw_core/test/game/game_command_serialization_test.dart": 514,
         "packages/aonw_core/test/game/objective_tracker_test.dart": 574,
-        "packages/aonw_core/test/game/persistent_city_production_resolver_test.dart": 785,
-        "packages/aonw_core/test/game/persistent_move_unit_resolver_test.dart": 653,
+        "packages/aonw_core/test/game/persistent_city_production_resolver_test.dart": 750,
+        "packages/aonw_core/test/game/persistent_move_unit_resolver_test.dart": 652,
         "packages/aonw_core/test/game/persistent_turn_economy_processor_test.dart": 599,
         "packages/aonw_core/test/game/persistent_turn_movement_processor_test.dart": 518
       },
@@ -1383,7 +1383,7 @@
     },
     "root_tool": {
       "files": {
-        "tool/check_coverage.dart": 1674,
+        "tool/check_coverage.dart": 1662,
         "tool/run_save_ai_benchmark/execution_models.dart": 736,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart": 719,
         "tool/run_save_ai_benchmark/report_models.dart": 505,
@@ -1391,7 +1391,7 @@
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/check_coverage.dart::class:_CoverageGate": 590,
+        "tool/check_coverage.dart::class:_CoverageGate": 576,
         "tool/run_save_ai_benchmark/multi_turn_replay.dart::class:_MultiTurnReplayRunner": 378,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
@@ -1478,13 +1478,13 @@
     "server_lib": {
       "files": {
         "server/lib/src/multiplayer/player_match_view_projector.dart": 706,
-        "server/lib/src/multiplayer/server_command_reducer.dart": 782
+        "server/lib/src/multiplayer/server_command_reducer.dart": 760
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector": 632,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 719
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 697
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1497,11 +1497,11 @@
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 79,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 337,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 335,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 169,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 71,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 68,
-        "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 65,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 67,
+        "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65

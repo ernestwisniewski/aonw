@@ -6,7 +6,7 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     return switch (command) {
@@ -14,14 +14,14 @@ extension _EconomySimulationProductionCommandApplier
         state: state,
         command: command,
         actorPlayerId: actorPlayerId,
-        mapDefinition: mapDefinition,
+        worldMap: worldMap,
         ruleset: ruleset,
       ),
       StartUnitProductionCommand() => _startUnit(
         state: state,
         command: command,
         actorPlayerId: actorPlayerId,
-        mapDefinition: mapDefinition,
+        worldMap: worldMap,
         ruleset: ruleset,
       ),
       StartCityProjectCommand() => _startProject(
@@ -34,7 +34,7 @@ extension _EconomySimulationProductionCommandApplier
         state: state,
         command: command,
         actorPlayerId: actorPlayerId,
-        mapDefinition: mapDefinition,
+        worldMap: worldMap,
         ruleset: ruleset,
       ),
       _ => throw ArgumentError.value(
@@ -49,14 +49,14 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required StartBuildingCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     final result = const PersistentCityProductionResolver().startBuilding(
       state: state,
       command: command,
       actorPlayerId: actorPlayerId,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       cityRuleset: ruleset.city,
       technologyRuleset: ruleset.technology,
       paceBalance: ruleset.paceBalance,
@@ -68,14 +68,14 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required StartUnitProductionCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     final result = const PersistentCityProductionResolver().startUnitProduction(
       state: state,
       command: command,
       actorPlayerId: actorPlayerId,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       cityRuleset: ruleset.city,
       technologyRuleset: ruleset.technology,
       paceBalance: ruleset.paceBalance,
@@ -103,14 +103,14 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required StartWonderCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     final result = const PersistentCityProductionResolver().startWonder(
       state: state,
       command: command,
       actorPlayerId: actorPlayerId,
-      mapDefinition: mapDefinition,
+      worldMap: worldMap,
       wonderRuleset: ruleset.wonders,
       paceBalance: ruleset.paceBalance,
     );

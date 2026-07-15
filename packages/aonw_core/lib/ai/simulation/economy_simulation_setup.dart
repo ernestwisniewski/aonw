@@ -41,25 +41,6 @@ abstract final class _EconomySimulationSetup {
     );
   }
 
-  static MapDefinition mapDefinitionFrom(MapData mapData) {
-    return MapDefinition(
-      cols: mapData.cols,
-      rows: mapData.rows,
-      mapName: mapData.mapName,
-      defaultZoom: mapData.defaultZoom,
-      tiles: [
-        for (final tile in mapData.tiles)
-          MapTileDefinition(
-            col: tile.col,
-            row: tile.row,
-            terrains: tile.terrains,
-            resources: tile.resources,
-            height: tile.height,
-          ),
-      ],
-    );
-  }
-
   static TileData _tile(int col, int row) {
     final resource = switch ((col, row)) {
       (3, 2) || (7, 7) => ResourceType.wheat,

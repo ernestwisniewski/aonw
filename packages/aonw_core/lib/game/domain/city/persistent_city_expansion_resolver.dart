@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain/map_definition.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city/city_expansion_selector.dart';
 import 'package:aonw_core/game/domain/city/city_hex.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
@@ -29,7 +29,7 @@ class PersistentCityExpansionResolver {
     required PersistentGameState state,
     required SelectCityExpansionHexCommand command,
     required String actorPlayerId,
-    required MapDefinition mapDefinition,
+    required WorldMap worldMap,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
@@ -42,7 +42,7 @@ class PersistentCityExpansionResolver {
     }
 
     final target = CityHex(col: command.col, row: command.row);
-    final mapData = LegacyWorldMapAdapter.mapDataFromDefinition(mapDefinition);
+    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
     if (!_isCandidate(
       city: city,
       target: target,

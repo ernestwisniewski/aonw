@@ -13,7 +13,7 @@ where the workload permits it.
 
 | Area | Scales | Scenario |
 | --- | --- | --- |
-| Map lookup | 100, 1,000, and 10,000 tiles | resolve the first, middle, and last tile plus a missing coordinate through `MapData`, `MapDefinition`, and indexed `WorldMap`; record actual list reads/tile inspections for both legacy models, the canonical index size and public lookup calls, plus matching output digests |
+| Map lookup | 100, 1,000, and 10,000 tiles | resolve the first, middle, and last tile plus a missing coordinate through legacy `MapData` and indexed `WorldMap`; record actual list reads for the legacy model, the canonical index size and public lookup calls, plus matching output digests |
 | Persistence | 100, 1,000, and 10,000 records | run `JsonEventLog.latestOffset`, `readSince`, and `append`, then exercise snapshot codec round trips at the same scales |
 | Replay | 100, 1,000, and 10,000 events | replay a deterministic four-command mix through the real reducer and record yielded commands, offsets, steps, and the resulting state digest |
 | AI | 100, 1,000, and 10,000 iterations | run both the isolated MCTS search and production `MctsStrategy` planning path with an exact iteration budget; record work structure and selected-command fingerprints |
@@ -45,8 +45,8 @@ complexity, or an intentional workload-contract change.
 `map.world-lookup` constructs and warms the immutable coordinate index before
 measurement. Its stable counters describe the indexed tile count and the four
 public `tileAt(HexCoord)` calls; they do not pretend to instrument private hash
-table reads. The two legacy cases remain until their models are removed, so the
-gate makes the linear-to-indexed migration visible without timing-based CI.
+table reads. The legacy `MapData` case remains until that model is removed, so
+the gate makes the linear-to-indexed migration visible without timing-based CI.
 
 The report, baseline, and policy are schema-versioned canonical JSON documents:
 

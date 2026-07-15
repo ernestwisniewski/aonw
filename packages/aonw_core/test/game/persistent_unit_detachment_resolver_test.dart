@@ -30,7 +30,7 @@ void main() {
           state: state,
           command: const DetachTroopCommand('commander_1', TroopType.warrior),
           actorPlayerId: 'player_1',
-          mapDefinition: _mapDefinition(cols: 4, rows: 4),
+          worldMap: _worldMap(cols: 4, rows: 4),
         );
 
         expect(result.accepted, isTrue);
@@ -95,7 +95,7 @@ void main() {
           state: state,
           command: const DetachTroopCommand('commander_1', TroopType.archer),
           actorPlayerId: 'player_1',
-          mapDefinition: _mapDefinition(cols: 4, rows: 4),
+          worldMap: _worldMap(cols: 4, rows: 4),
         );
 
         final detached = result.state.units.firstWhere(
@@ -122,7 +122,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(cols: 4, rows: 4),
+        worldMap: _worldMap(cols: 4, rows: 4),
       );
 
       expect(result.accepted, isFalse);
@@ -143,7 +143,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.archer),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(cols: 4, rows: 4),
+        worldMap: _worldMap(cols: 4, rows: 4),
       );
 
       expect(result.accepted, isFalse);
@@ -172,7 +172,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
         actorPlayerId: 'player_1',
-        mapDefinition: _mapDefinition(cols: 4, rows: 4),
+        worldMap: _worldMap(cols: 4, rows: 4),
       );
 
       expect(result.accepted, isFalse);
@@ -197,17 +197,16 @@ GameUnit _commander({
   );
 }
 
-MapDefinition _mapDefinition({required int cols, required int rows}) {
-  return MapDefinition(
+WorldMap _worldMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     mapName: 'duel',
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          MapTileDefinition(
-            col: col,
-            row: row,
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.grassland],
             resources: const [],
             height: 0,
