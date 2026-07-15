@@ -20,7 +20,11 @@ const _mapDataFreeMigrationPaths = {
   'packages/aonw_core/lib/game/domain/movement/'
       'persistent_move_unit_resolver.dart',
   'packages/aonw_core/lib/game/domain/movement/'
+      'persistent_merchant_trade_route_resolver.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
       'persistent_unit_action_resolver.dart',
+  'packages/aonw_core/lib/game/domain/movement/'
+      'merchant_trade_route_rules.dart',
   'packages/aonw_core/lib/game/domain/movement/'
       'scout_auto_explore_planner.dart',
   'packages/aonw_core/lib/game/domain/movement/'
@@ -29,6 +33,8 @@ const _mapDataFreeMigrationPaths = {
       'persistent_research_command_resolver.dart',
   'packages/aonw_core/lib/game/domain/unit/'
       'persistent_unit_detachment_resolver.dart',
+  'packages/aonw_core/lib/ai/simulation/'
+      'economy_simulation_command_applier.dart',
 };
 const _legacyWorldMapAdapterPath =
     'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart';
@@ -37,10 +43,6 @@ const _persistentCityProductionResolverPath =
     'persistent_city_production_resolver.dart';
 const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
 const _allowedProductionProjectionSites = <String, int>{
-  'packages/aonw_core/lib/ai/simulation/'
-          'economy_simulation_command_applier.dart::'
-          'class:_EconomySimulationCommandApplier/method:apply::call':
-      2,
   'packages/aonw_core/lib/game/domain/turn/'
           'persistent_turn_pipeline.dart::'
           'class:PersistentTurnPipeline/method:simultaneousFinalize::call':

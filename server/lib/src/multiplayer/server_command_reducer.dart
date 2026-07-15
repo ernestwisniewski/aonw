@@ -273,7 +273,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: mapData,
+          worldMap: worldMap,
         );
         return _fromPersistentResult(save, result);
       case MoveMerchantToCityCommand():
@@ -281,7 +281,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: mapData,
+          worldMap: worldMap,
         );
         return _fromPersistentResult(save, result);
       case OpenResourceTradeCommand(:final playerId):

@@ -65,7 +65,7 @@ abstract final class MerchantTradeRouteRules {
     required GameUnit merchant,
     required GameCity originCity,
     required GameCity destinationCity,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
   }) {
@@ -111,7 +111,7 @@ abstract final class MerchantTradeRouteRules {
   static UnitMovementPlan? planMoveToCity({
     required GameUnit merchant,
     required GameCity destinationCity,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
   }) {
@@ -149,7 +149,7 @@ abstract final class MerchantTradeRouteRules {
     required GameUnit unit,
     required List<GameUnit> units,
     required List<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapData,
   }) {
     final route = unit.merchantTradeRoute;
     if (route == null) {
@@ -256,7 +256,7 @@ abstract final class MerchantTradeRouteRules {
 
   static MerchantTradeRoute? _reversedRoute(
     MerchantTradeRoute route, {
-    required MapData mapData,
+    required MapTileLookup mapData,
     required GameUnitType unitType,
   }) {
     final reversed = route.steps.reversed.toList(growable: false);

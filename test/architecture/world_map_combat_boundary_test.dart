@@ -32,6 +32,16 @@ const _targets = [
   ),
   _Target(
     path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'persistent_merchant_trade_route_resolver.dart',
+    owner: 'PersistentMerchantTradeRouteResolver',
+    boundaries: [
+      _Boundary.method('assignRoute'),
+      _Boundary.method('moveToCity'),
+    ],
+  ),
+  _Target(
+    path:
         'packages/aonw_core/lib/game/domain/movement/persistent_unit_action_resolver.dart',
     owner: 'PersistentUnitActionResolver',
     boundaries: [_Boundary.method('autoExploreUnit')],

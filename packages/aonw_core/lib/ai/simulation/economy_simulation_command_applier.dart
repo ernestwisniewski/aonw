@@ -80,7 +80,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: LegacyWorldMapAdapter.toMapData(worldMap),
+          worldMap: worldMap,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -92,7 +92,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: LegacyWorldMapAdapter.toMapData(worldMap),
+          worldMap: worldMap,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,

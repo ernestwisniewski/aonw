@@ -360,8 +360,11 @@ abstract final class ReducerParityCorpus {
         .map(GameEventSerializer.fromJson)
         .toList(growable: false);
     switch (fixture.command) {
-      case AutoExploreUnitCommand() || MoveUnitCommand():
-        requireAcceptedUnitMovementAction(
+      case AutoExploreUnitCommand() ||
+          MoveUnitCommand() ||
+          AssignMerchantTradeRouteCommand() ||
+          MoveMerchantToCityCommand():
+        requireAcceptedUnitAction(
           fixtureId: fixture.id,
           command: fixture.command,
           before: fixture.state,
@@ -369,12 +372,7 @@ abstract final class ReducerParityCorpus {
           events: events,
         );
       case AttackHexCommand(:final attackerUnitId):
-        final attacker = state.units.byId(attackerUnitId);
-        if (attacker?.movementPoints != 0 ||
-            events.whereType<UnitAttackedEvent>().length != 1 ||
-            events.whereType<CombatResolvedEvent>().length != 1) {
-          _fail(fixture, 'must commit deterministic instant combat');
-        }
+        requireAcceptedCombat(fixture.id, attackerUnitId, state, events);
       case StartBuildingCommand() || StartUnitProductionCommand():
         requireAcceptedProductionQueue(
           fixtureId: fixture.id,

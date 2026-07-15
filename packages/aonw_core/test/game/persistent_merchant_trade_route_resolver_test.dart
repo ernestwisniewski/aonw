@@ -10,7 +10,7 @@ void main() {
         state: _state(merchantCol: 0),
         command: const AssignMerchantTradeRouteCommand('merchant_1', 'city_2'),
         actorPlayerId: 'player_1',
-        mapData: _lineMap(),
+        worldMap: _lineMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -25,7 +25,7 @@ void main() {
         state: _state(merchantCol: 1),
         command: const MoveMerchantToCityCommand('merchant_1', 'city_2'),
         actorPlayerId: 'player_1',
-        mapData: _lineMap(),
+        worldMap: _lineMap(),
       );
 
       expect(result.accepted, isTrue);
@@ -68,15 +68,14 @@ PersistentGameState _state({required int merchantCol}) {
   );
 }
 
-MapData _lineMap() {
-  return MapData(
+WorldMap _lineMap() {
+  return WorldMap(
     cols: 4,
     rows: 1,
     tiles: [
       for (var col = 0; col < 4; col++)
-        TileData(
-          col: col,
-          row: 0,
+        WorldTile(
+          coordinate: HexCoord(col: col, row: 0),
           terrains: const [TerrainType.plains],
           resources: const [],
           height: 0,

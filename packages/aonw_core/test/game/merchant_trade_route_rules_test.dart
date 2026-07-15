@@ -94,6 +94,72 @@ void main() {
       },
     );
 
+    test('preserves exact plans through the WorldMap traversal view', () {
+      final mapData = _mixedLineMap();
+      final worldMap = _worldMapFrom(mapData, reverseTiles: true);
+      final cities = [_city(id: 'origin', col: 0), _city(id: 'target', col: 3)];
+      final blocker = _warrior(id: 'guard_1', col: 3, row: 0);
+      final routeMerchant = _merchant(col: 0, row: 0);
+
+      final legacyRoute = MerchantTradeRouteRules.planRoute(
+        merchant: routeMerchant,
+        originCity: cities.first,
+        destinationCity: cities.last,
+        mapData: mapData,
+        units: [routeMerchant, blocker],
+        cities: cities,
+      );
+      final canonicalRoute = MerchantTradeRouteRules.planRoute(
+        merchant: routeMerchant,
+        originCity: cities.first,
+        destinationCity: cities.last,
+        mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+        units: [routeMerchant, blocker],
+        cities: cities,
+      );
+
+      final expectedRoute = MerchantTradeRoute(
+        originCityId: 'origin',
+        destinationCityId: 'target',
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+          UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 3),
+          UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 5),
+        ],
+      );
+      expect(legacyRoute, expectedRoute);
+      expect(canonicalRoute, expectedRoute);
+
+      final cityMerchant = _merchant(col: 1, row: 0);
+      final legacyMove = MerchantTradeRouteRules.planMoveToCity(
+        merchant: cityMerchant,
+        destinationCity: cities.last,
+        mapData: mapData,
+        units: [cityMerchant, blocker],
+        cities: cities,
+      );
+      final canonicalMove = MerchantTradeRouteRules.planMoveToCity(
+        merchant: cityMerchant,
+        destinationCity: cities.last,
+        mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+        units: [cityMerchant, blocker],
+        cities: cities,
+      );
+
+      const expectedMoveSteps = [
+        UnitMovementStep(col: 1, row: 0, enterCost: 0, cumulativeCost: 0),
+        UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 1),
+        UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 3),
+      ];
+      expect(legacyMove?.steps, expectedMoveSteps);
+      expect(canonicalMove?.steps, expectedMoveSteps);
+      expect(legacyMove?.totalCost, 3);
+      expect(canonicalMove?.totalCost, 3);
+      expect(legacyMove?.targetCol, 3);
+      expect(canonicalMove?.targetCol, 3);
+    });
+
     test('advances into occupied owned city centers', () {
       final merchant = _merchant(col: 0, row: 0).copyWithMerchantTradeRoute(
         _route(originCityId: 'origin', destinationCityId: 'target', toCol: 3),
@@ -203,5 +269,59 @@ MapData _lineMap(int cols) {
           height: 0,
         ),
     ],
+  );
+}
+
+MapData _mixedLineMap() {
+  return MapData(
+    cols: 4,
+    rows: 1,
+    tiles: const [
+      TileData(
+        col: 0,
+        row: 0,
+        terrains: [TerrainType.plains],
+        resources: [],
+        height: 0,
+      ),
+      TileData(
+        col: 1,
+        row: 0,
+        terrains: [TerrainType.plains, TerrainType.forest],
+        resources: [],
+        height: 1,
+      ),
+      TileData(
+        col: 2,
+        row: 0,
+        terrains: [TerrainType.plains],
+        resources: [],
+        height: 0,
+      ),
+      TileData(
+        col: 3,
+        row: 0,
+        terrains: [TerrainType.plains, TerrainType.hills],
+        resources: [],
+        height: 2,
+      ),
+    ],
+  );
+}
+
+WorldMap _worldMapFrom(MapData mapData, {required bool reverseTiles}) {
+  final tiles = [
+    for (final tile in mapData.tiles)
+      WorldTile(
+        coordinate: HexCoord(col: tile.col, row: tile.row),
+        terrains: tile.terrains,
+        resources: tile.resources,
+        height: tile.height,
+      ),
+  ];
+  return WorldMap(
+    cols: mapData.cols,
+    rows: mapData.rows,
+    tiles: reverseTiles ? tiles.reversed : tiles,
   );
 }

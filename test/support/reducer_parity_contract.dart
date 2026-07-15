@@ -3,6 +3,7 @@ import 'package:aonw_core/domain.dart';
 const reducerParityRequiredFamilies = <String>{
   'auto-explore',
   'movement',
+  'merchant-routing',
   'combat',
   'city-production',
   'detachment',
@@ -14,6 +15,7 @@ const reducerParityRequiredFamilies = <String>{
 const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   'auto-explore': {'unit_not_controlled', 'auto_explore_no_target'},
   'movement': {'unit_not_controlled', 'move_target_out_of_bounds'},
+  'merchant-routing': {'unit_not_controlled', 'merchant_route_not_found'},
   'combat': {'attacker_not_controlled', 'attack_target_not_found'},
   'city-production': {
     'city_not_controlled',
@@ -30,6 +32,9 @@ bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
   return switch (family) {
     'auto-explore' => command is AutoExploreUnitCommand,
     'movement' => command is MoveUnitCommand,
+    'merchant-routing' =>
+      command is AssignMerchantTradeRouteCommand ||
+          command is MoveMerchantToCityCommand,
     'combat' => command is AttackHexCommand,
     'city-production' =>
       command is StartBuildingCommand || command is StartUnitProductionCommand,

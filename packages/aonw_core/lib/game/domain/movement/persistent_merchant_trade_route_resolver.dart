@@ -1,3 +1,4 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
@@ -5,7 +6,7 @@ import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 class PersistentMerchantTradeRouteResult {
   const PersistentMerchantTradeRouteResult({
@@ -26,7 +27,7 @@ class PersistentMerchantTradeRouteResolver {
     required PersistentGameState state,
     required AssignMerchantTradeRouteCommand command,
     required String actorPlayerId,
-    required MapData mapData,
+    required WorldMap worldMap,
   }) {
     final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
@@ -61,7 +62,7 @@ class PersistentMerchantTradeRouteResolver {
       merchant: unit,
       originCity: origin,
       destinationCity: destination,
-      mapData: mapData,
+      mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
       units: state.units,
       cities: state.cities,
     );
@@ -81,7 +82,7 @@ class PersistentMerchantTradeRouteResolver {
     required PersistentGameState state,
     required MoveMerchantToCityCommand command,
     required String actorPlayerId,
-    required MapData mapData,
+    required WorldMap worldMap,
   }) {
     final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
@@ -109,7 +110,7 @@ class PersistentMerchantTradeRouteResolver {
     final plan = MerchantTradeRouteRules.planMoveToCity(
       merchant: unit,
       destinationCity: destination,
-      mapData: mapData,
+      mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
       units: state.units,
       cities: state.cities,
     );
