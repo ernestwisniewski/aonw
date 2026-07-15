@@ -190,10 +190,17 @@ void main() {
     );
 
     final steps = (job['steps'] as YamlList).cast<YamlMap>();
-    expect(steps, hasLength(4));
+    expect(steps, hasLength(5));
     final checkout = _step(steps, 'Checkout repository');
     expect(checkout.keys.toSet(), {'name', 'uses', 'with'});
     expect((checkout['with'] as YamlMap)['fetch-depth'], 0);
+    final fetchRatchet = _step(steps, 'Fetch mutation ratchet commit');
+    expect(fetchRatchet.keys.toSet(), {'name', 'run'});
+    expect(
+      fetchRatchet['run'],
+      contains(r'git fetch --no-tags origin "$MUTATION_RATCHET_REF"'),
+    );
+    expect(steps.indexOf(fetchRatchet), greaterThan(steps.indexOf(checkout)));
     final flutter = _step(steps, 'Set up Flutter');
     expect((flutter['with'] as YamlMap)['flutter-version-file'], '.fvmrc');
     final check = _step(steps, 'Check critical mutation gates');

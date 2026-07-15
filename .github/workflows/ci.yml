@@ -50,6 +50,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch CI ratchet commits
+        run: |
+          for ref in "$COVERAGE_BASE_REF" "$COVERAGE_RATCHET_REF" "$ARCHITECTURE_RATCHET_REF"; do
+            if git cat-file -e "${ref}^{commit}" 2>/dev/null; then
+              continue
+            fi
+            case "$ref" in
+              origin/*)
+                branch="${ref#origin/}"
+                git fetch --no-tags origin "refs/heads/$branch:refs/remotes/origin/$branch"
+                ;;
+              *)
+                git fetch --no-tags origin "$ref"
+                ;;
+            esac
+            git cat-file -e "${ref}^{commit}"
+          done
+
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -106,6 +124,13 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
+
+      - name: Fetch mutation ratchet commit
+        run: |
+          if ! git cat-file -e "${MUTATION_RATCHET_REF}^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "$MUTATION_RATCHET_REF"
+          fi
+          git cat-file -e "${MUTATION_RATCHET_REF}^{commit}"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2

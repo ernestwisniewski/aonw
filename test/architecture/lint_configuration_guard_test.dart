@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
+import 'support/lint_configuration_ci_guard.dart';
+
 const _basePath = 'analysis_options_base.yaml';
 
 const _sharedRules = <String>{
@@ -538,20 +540,7 @@ void main() {
       steps.where((step) => step.containsKey('working-directory')),
       isEmpty,
     );
-    final checkoutStep = steps.singleWhere(
-      (step) => step['name'] == 'Checkout repository',
-    );
-    expect(
-      _asMap(checkoutStep['with'], 'CI checkout.with'),
-      containsPair('fetch-depth', 0),
-    );
-    final analyzeStep = steps.singleWhere((step) => step['name'] == 'Analyze');
-    expect(_keys(analyzeStep), {'name', 'run'});
-    expect(analyzeStep, containsPair('run', r'${{ matrix.analyze }}'));
-    final testStep = steps.singleWhere((step) => step['name'] == 'Test');
-    expect(_keys(testStep), {'name', 'run'});
-    expect(testStep, containsPair('run', r'${{ matrix.test }}'));
-    expect(steps.any((step) => step['name'] == 'Get dependencies'), isFalse);
+    expectQualityGateSteps(steps);
   });
 
   test('Make propagates recipe failures instead of masking them globally', () {
