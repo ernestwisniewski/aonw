@@ -53,13 +53,7 @@ class EconomyHealth {
     required EconomyExpectations expectations,
     EconomyHealth? previous,
   }) {
-    final sciencePerTurn = ScienceYieldCalculator.totalForPlayer(
-      playerId: view.forPlayerId,
-      cities: view.ownCities,
-      research: ResearchState(players: {view.forPlayerId: view.ownResearch}),
-      ruleset: view.ruleset.technology,
-      cityRuleset: view.ruleset.city,
-    ).total;
+    final sciencePerTurn = _sciencePerTurn(view);
     final cityRatio = _ratio(
       assessment.cityCount,
       expectations.expectedCityCount,
@@ -115,6 +109,17 @@ class EconomyHealth {
       goldBehind: goldBehind,
       scienceBehind: scienceBehind,
     );
+  }
+
+  static int _sciencePerTurn(GameView view) {
+    return ScienceYieldCalculator.totalForPlayer(
+      playerId: view.forPlayerId,
+      cities: view.ownCities,
+      research: ResearchState(players: {view.forPlayerId: view.ownResearch}),
+      ruleset: view.ruleset.technology,
+      artifacts: view.artifacts,
+      cityRuleset: view.ruleset.city,
+    ).total;
   }
 
   bool get isBehind =>

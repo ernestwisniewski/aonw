@@ -139,6 +139,7 @@ class AiEmpireAssessment {
         view.mapData,
         fieldImprovements: view.ownImprovements,
         units: view.ownUnits,
+        artifacts: view.artifacts,
         ruleset: view.ruleset.city,
       );
       final economy = CityEconomyBreakdown.from(

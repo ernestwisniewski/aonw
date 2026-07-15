@@ -61,6 +61,7 @@ class MctsStrategicStateScorer {
         view.mapData,
         fieldImprovements: view.ownImprovements,
         units: state.ownUnits,
+        artifacts: view.artifacts,
         ruleset: view.ruleset.city,
       );
       final economy = CityEconomyBreakdown.from(

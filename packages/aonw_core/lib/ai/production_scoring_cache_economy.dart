@@ -10,6 +10,7 @@ CityEconomyBreakdown _economyFor(
       cache.view.mapData,
       fieldImprovements: cache.view.ownImprovements,
       units: cache.view.ownUnits,
+      artifacts: cache.view.artifacts,
       ruleset: cache.view.ruleset.city,
     );
     return CityEconomyBreakdown.from(

@@ -44,13 +44,7 @@ final class _EconomySimulationTurnRowFactory {
       mapData: mapData,
       ruleset: ruleset,
     );
-    final baseScience = ScienceYieldCalculator.totalForPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      research: state.research,
-      ruleset: ruleset.technology,
-      cityRuleset: ruleset.city,
-    ).total;
+    final baseScience = _baseScienceForPlayer(state, playerId, ruleset);
     return EconomySimulationTurnRow(
       turn: turn,
       cityCount: ownCities.length,
@@ -114,6 +108,21 @@ final class _EconomySimulationTurnRowFactory {
           domination?.requiredHoldTurns ??
           MatchRules.standard.victory.dominationHoldTurns,
     );
+  }
+
+  int _baseScienceForPlayer(
+    PersistentGameState state,
+    String playerId,
+    GameRuleset ruleset,
+  ) {
+    return ScienceYieldCalculator.totalForPlayer(
+      playerId: playerId,
+      cities: state.cities,
+      research: state.research,
+      ruleset: ruleset.technology,
+      artifacts: state.artifacts,
+      cityRuleset: ruleset.city,
+    ).total;
   }
 
   _GoldBreakdown _goldBreakdownForPlayer({
@@ -209,6 +218,7 @@ final class _EconomySimulationTurnRowFactory {
       mapData,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
+      artifacts: state.artifacts,
       ruleset: ruleset.city,
     );
     return CityEconomyBreakdown.from(

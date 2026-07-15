@@ -318,3 +318,25 @@ abstract final class EconomySimulation {
     );
   }
 }
+
+/// Projects an existing state into a telemetry row without command diagnostics.
+abstract final class EconomySimulationTurnRowProjector {
+  static EconomySimulationTurnRow project({
+    required int turn,
+    required PersistentGameState state,
+    required String playerId,
+    required MapData mapData,
+    required GameRuleset ruleset,
+  }) {
+    return const _EconomySimulationTurnRowFactory().rowFor(
+      turn: turn,
+      state: state,
+      playerId: playerId,
+      mapData: mapData,
+      ruleset: ruleset,
+      commandStats: EconomySimulationCommandStats(),
+      domination: null,
+      objectiveAction: null,
+    );
+  }
+}

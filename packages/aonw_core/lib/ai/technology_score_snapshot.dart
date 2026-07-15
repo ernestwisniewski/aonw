@@ -161,6 +161,7 @@ final class _EmpireYieldSnapshot {
         view.mapData,
         fieldImprovements: view.ownImprovements,
         units: view.ownUnits,
+        artifacts: view.artifacts,
         ruleset: view.ruleset.city,
       );
       final economy = CityEconomyBreakdown.from(
@@ -181,6 +182,7 @@ final class _EmpireYieldSnapshot {
       cities: view.ownCities,
       research: research,
       ruleset: view.ruleset.technology,
+      artifacts: view.artifacts,
       cityRuleset: view.ruleset.city,
     ).total;
 

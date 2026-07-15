@@ -205,7 +205,7 @@ class AiProductionScorer {
     required AiProductionScoringCache cache,
   }) {
     final definition = view.ruleset.city.buildingDefinitionFor(buildingType);
-    final economy = _economyFor(view, city, cache: cache);
+    final economy = cache.economyFor(city);
     return _BuildingProductionScorecard(
       buildingType: buildingType,
       city: city,
@@ -243,7 +243,7 @@ class AiProductionScorer {
     required AiProductionPlanState planState,
     required AiProductionScoringCache cache,
   }) {
-    final economy = _economyFor(view, city, cache: cache);
+    final economy = cache.economyFor(city);
     return _ProjectProductionScorecard(
       projectType: projectType,
       context: context,
@@ -355,37 +355,6 @@ class AiProductionScorer {
       ruleset: view.ruleset.city,
       technologyUnlocked: technologyUnlocked,
       requirementsMet: requirementsMet,
-    );
-  }
-
-  CityEconomyBreakdown _economyFor(
-    GameView view,
-    GameCity city, {
-    AiProductionScoringCache? cache,
-  }) {
-    if (cache != null) return cache.economyFor(city);
-    final technologyEffects = TechnologyEffectSummary.forPlayer(
-      playerId: view.forPlayerId,
-      research: _researchFor(view),
-      ruleset: view.ruleset.technology,
-    );
-    final cityYield = CityYieldCalculator.totalFor(
-      city,
-      view.mapData,
-      fieldImprovements: view.ownImprovements,
-      units: view.ownUnits,
-      ruleset: view.ruleset.city,
-    );
-    return CityEconomyBreakdown.from(
-      city: city,
-      tileYield: cityYield,
-      mapTiles: view.mapData,
-      ruleset: view.ruleset.city,
-      paceBalance: view.ruleset.paceBalance,
-      technologyEffects: technologyEffects,
-      cities: view.ownCities,
-      wonderRegistry: view.wonderRegistry,
-      wonderRuleset: view.ruleset.wonders,
     );
   }
 
