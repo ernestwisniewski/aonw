@@ -29,6 +29,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
     );
@@ -44,6 +45,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
   }
@@ -59,6 +61,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
     );
@@ -74,6 +77,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
       preferredObjectiveAdvice: command.preferredObjectiveAdvice,
       actionIndex: command.actionIndex,
@@ -91,6 +95,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
   }

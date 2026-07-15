@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -7,9 +8,9 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 abstract final class SelectionReducer {
   /// Selects a tile by coordinates. Clears move/founding state.
@@ -67,6 +68,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final city = state.cityById(command.cityId);
@@ -78,6 +80,7 @@ abstract final class SelectionReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
   }
@@ -89,6 +92,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final tileData = mapData.tileAt(command.col, command.row);
@@ -114,6 +118,7 @@ abstract final class SelectionReducer {
       return GameStateTransition(state: state);
     }
 
+    var selectionState = state;
     if (state.moveCommandActive) {
       final selected = state.selectedUnit;
       if (selected != null && state.canControlUnit(selected)) {
@@ -133,31 +138,21 @@ abstract final class SelectionReducer {
 
         return GameStateTransition(state: state);
       }
-      final next = state.copyWithInteraction(
+      selectionState = state.copyWithInteraction(
         moveCommandActive: false,
         movePreview: null,
-      );
-      return GameStateTransition(
-        state: _handleStandardSelection(
-          next,
-          tileData,
-          visibility,
-          mapData,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          paceBalance: paceBalance,
-        ),
       );
     }
 
     return GameStateTransition(
       state: _handleStandardSelection(
-        state,
+        selectionState,
         tileData,
         visibility,
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
     );
@@ -170,6 +165,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final tappedUnit = visibility.canSeeDynamicAt(tileData.col, tileData.row)
@@ -189,6 +185,7 @@ abstract final class SelectionReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       );
     }
@@ -221,6 +218,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (state.cityFoundingDraft != null) return state;
@@ -251,10 +249,6 @@ abstract final class SelectionReducer {
     final current = state.selection;
     final onThisCity =
         current?.type == GameSelectionType.city && current?.city?.id == city.id;
-    final onThisTile =
-        current?.type == GameSelectionType.tile &&
-        current?.tile?.col == city.center.col &&
-        current?.tile?.row == city.center.row;
     final onUnitHere =
         current?.type == GameSelectionType.unit &&
         current?.unit?.col == city.center.col &&
@@ -263,41 +257,23 @@ abstract final class SelectionReducer {
     if (unitOnCity != null) {
       if (onThisCity) {
         return _selectUnitDirect(state, unitOnCity, mapData);
-      } else if (onUnitHere) {
-        return _selectCityCenterTile(state, city, mapData);
-      } else {
-        return _selectCityDirect(
-          state,
-          city,
-          mapData,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          paceBalance: paceBalance,
-        );
       }
-    } else {
-      if (onThisCity) {
+      if (onUnitHere) {
         return _selectCityCenterTile(state, city, mapData);
-      } else if (onThisTile) {
-        return _selectCityDirect(
-          state,
-          city,
-          mapData,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          paceBalance: paceBalance,
-        );
-      } else {
-        return _selectCityDirect(
-          state,
-          city,
-          mapData,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          paceBalance: paceBalance,
-        );
       }
+    } else if (onThisCity) {
+      return _selectCityCenterTile(state, city, mapData);
     }
+
+    return _selectCityDirect(
+      state,
+      city,
+      mapData,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
+    );
   }
 
   static GameState _handleFieldImprovementTapped(
@@ -394,37 +370,19 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final cityYield = CityYieldCalculator.totalFor(
-      city,
-      mapData,
-      fieldImprovements: state.fieldImprovements,
-      units: state.units,
-      artifacts: state.artifacts,
-      ruleset: cityRuleset,
-    );
-    final cityEconomy = CityEconomyBreakdown.from(
-      city: city,
-      tileYield: cityYield,
-      mapTiles: mapData,
-      ruleset: cityRuleset,
-      paceBalance: paceBalance,
-      technologyEffects: TechnologyEffectSummary.forPlayer(
-        playerId: city.ownerPlayerId,
-        research: state.research,
-        ruleset: technologyRuleset,
-      ),
-    );
-
     return _withFreshInteractionSelection(
       state,
-      GameSelection.city(
-        city,
-        cityYield: cityYield,
-        cityEconomy: cityEconomy,
-        playerColor:
-            state.colorForPlayer(city.ownerPlayerId) ?? Player.palette.first,
+      CitySelectionProjector.project(
+        state: state,
+        city: city,
+        mapTiles: mapData,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        wonderRuleset: wonderRuleset,
+        paceBalance: paceBalance,
       ),
     );
   }

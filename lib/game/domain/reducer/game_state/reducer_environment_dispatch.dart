@@ -351,16 +351,11 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   GameStateTransition selectCityExpansionHex(
     GameState state,
     SelectCityExpansionHexCommand command,
-  ) {
-    return CityExpansionReducer.selectExpansionHex(
-      state,
-      command,
-      mapData,
-      context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-    );
-  }
+  ) => CityExpansionReducer.selectExpansionHexWithEnvironment(
+    state,
+    command,
+    this,
+  );
 
   GameStateTransition startWorkerActionSelection(
     GameState state,

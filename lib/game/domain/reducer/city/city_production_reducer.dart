@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
@@ -7,7 +8,6 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
@@ -314,56 +314,15 @@ abstract final class CityProductionReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
-  }) => _citySelection(
-    state,
-    city,
-    mapData,
+  }) => CitySelectionProjector.project(
+    state: state,
+    city: city,
+    mapTiles: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: paceBalance,
   );
-
-  static GameSelection _citySelection(
-    GameState state,
-    GameCity city,
-    MapData mapData, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
-    PaceBalance paceBalance = PaceBalance.unlimited,
-  }) {
-    final cityYield = CityYieldCalculator.totalFor(
-      city,
-      mapData,
-      fieldImprovements: state.fieldImprovements,
-      units: state.units,
-      artifacts: state.artifacts,
-      ruleset: cityRuleset,
-    );
-    final cityEconomy = CityEconomyBreakdown.from(
-      city: city,
-      tileYield: cityYield,
-      mapTiles: mapData,
-      ruleset: cityRuleset,
-      paceBalance: paceBalance,
-      technologyEffects: TechnologyEffectSummary.forPlayer(
-        playerId: city.ownerPlayerId,
-        research: state.research,
-        ruleset: technologyRuleset,
-      ),
-      cities: state.cities,
-      wonderRegistry: state.wonderRegistry,
-      wonderRuleset: wonderRuleset,
-    );
-    return GameSelection.city(
-      city,
-      cityYield: cityYield,
-      cityEconomy: cityEconomy,
-      playerColor:
-          state.colorForPlayer(city.ownerPlayerId) ?? Player.palette.first,
-    );
-  }
 
   static GameCity _queueProduction(
     GameCity city,
@@ -484,10 +443,10 @@ abstract final class CityProductionReducer {
     }
 
     return state.copyWithInteraction(
-      selection: _citySelection(
-        state,
-        city,
-        mapData,
+      selection: CitySelectionProjector.project(
+        state: state,
+        city: city,
+        mapTiles: mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         wonderRuleset: wonderRuleset,

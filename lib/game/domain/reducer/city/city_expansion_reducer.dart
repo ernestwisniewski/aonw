@@ -1,13 +1,32 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 abstract final class CityExpansionReducer {
+  static GameStateTransition selectExpansionHexWithEnvironment(
+    GameState state,
+    SelectCityExpansionHexCommand command,
+    ReducerEnvironment environment,
+  ) => selectExpansionHex(
+    state,
+    command,
+    environment.mapData,
+    context: environment.context,
+    cityRuleset: environment.cityRuleset,
+    technologyRuleset: environment.technologyRuleset,
+    wonderRuleset: environment.wonderRuleset,
+    paceBalance: environment.paceBalance,
+  );
+
   static GameStateTransition selectExpansionHex(
     GameState state,
     SelectCityExpansionHexCommand command,
@@ -15,6 +34,8 @@ abstract final class CityExpansionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final cityIndex = state.cities.indexWhere(
       (city) => city.id == command.cityId,
@@ -43,31 +64,15 @@ abstract final class CityExpansionReducer {
     var next = state.copyWith(cities: updatedCities);
     if (next.selection?.type == GameSelectionType.city &&
         next.selection?.city?.id == updatedCity.id) {
-      final cityYield = CityYieldCalculator.totalFor(
-        updatedCity,
-        mapData,
-        fieldImprovements: next.fieldImprovements,
-        units: next.units,
-        artifacts: next.artifacts,
-        ruleset: cityRuleset,
-      );
-      final technologyEffects = TechnologyEffectSummary.forPlayer(
-        playerId: updatedCity.ownerPlayerId,
-        research: next.research,
-        ruleset: technologyRuleset,
-      );
       next = next.copyWithInteraction(
-        selection: GameSelection.city(
-          updatedCity,
-          cityYield: cityYield,
-          cityEconomy: CityEconomyBreakdown.from(
-            city: updatedCity,
-            tileYield: cityYield,
-            mapTiles: mapData,
-            ruleset: cityRuleset,
-            technologyEffects: technologyEffects,
-          ),
-          playerColor: next.colorForPlayer(updatedCity.ownerPlayerId) ?? 0,
+        selection: CitySelectionProjector.project(
+          state: next,
+          city: updatedCity,
+          mapTiles: mapData,
+          cityRuleset: cityRuleset,
+          technologyRuleset: technologyRuleset,
+          wonderRuleset: wonderRuleset,
+          paceBalance: paceBalance,
         ),
       );
     }
