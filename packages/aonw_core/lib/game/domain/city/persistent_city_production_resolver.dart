@@ -309,7 +309,6 @@ class PersistentCityProductionResolver {
     if (city.ownerPlayerId != actorPlayerId) {
       return _reject(state, 'city_not_controlled');
     }
-
     final queue = city.productionQueue;
     if (queue == null) return _reject(state, 'production_queue_empty');
     if (!CityProductionRules.canRush(queue.target)) {
@@ -327,6 +326,7 @@ class PersistentCityProductionResolver {
       mapTiles,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
+      artifacts: state.artifacts,
       ruleset: cityRuleset,
     );
     final cityEconomy = CityEconomyBreakdown.from(
