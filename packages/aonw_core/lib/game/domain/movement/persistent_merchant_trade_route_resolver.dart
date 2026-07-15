@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentMerchantTradeRouteResult {
   const PersistentMerchantTradeRouteResult({
@@ -62,7 +62,7 @@ class PersistentMerchantTradeRouteResolver {
       merchant: unit,
       originCity: origin,
       destinationCity: destination,
-      mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+      mapData: WorldMapReadView(worldMap),
       units: state.units,
       cities: state.cities,
     );
@@ -110,7 +110,7 @@ class PersistentMerchantTradeRouteResolver {
     final plan = MerchantTradeRouteRules.planMoveToCity(
       merchant: unit,
       destinationCity: destination,
-      mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+      mapData: WorldMapReadView(worldMap),
       units: state.units,
       cities: state.cities,
     );

@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/turn/persistent_city_hit_point_recovery_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentTurnEconomyResult {
   final PersistentGameState state;

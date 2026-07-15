@@ -7,8 +7,8 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityExpansionResult {
   const PersistentCityExpansionResult({
@@ -42,7 +42,7 @@ class PersistentCityExpansionResolver {
     }
 
     final target = CityHex(col: command.col, row: command.row);
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     if (!_isCandidate(
       city: city,
       target: target,

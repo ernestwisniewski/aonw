@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/fog/fog_reveal_source.dart';
 import 'package:aonw_core/game/domain/fog/fog_visibility_rules.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class FogRevealCalculator {
   const FogRevealCalculator();

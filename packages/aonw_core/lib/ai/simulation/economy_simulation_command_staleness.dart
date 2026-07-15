@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -6,18 +5,17 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 bool isStaleEconomySimulationCommand({
   required GameCommand command,
   required PersistentGameState state,
   required String actorPlayerId,
   required GameRuleset ruleset,
-  required WorldMap worldMap,
+  required MapTileLookup mapTiles,
 }) {
   return _isStaleMoveCommand(command, state) ||
-      _isStaleAttackCommand(command, state, actorPlayerId, ruleset, worldMap);
+      _isStaleAttackCommand(command, state, actorPlayerId, ruleset, mapTiles);
 }
 
 bool _isStaleMoveCommand(GameCommand command, PersistentGameState state) {
@@ -40,7 +38,7 @@ bool _isStaleAttackCommand(
   PersistentGameState state,
   String actorPlayerId,
   GameRuleset ruleset,
-  WorldMap worldMap,
+  MapTileLookup mapTiles,
 ) {
   if (command is! AttackHexCommand) return false;
 
@@ -56,7 +54,7 @@ bool _isStaleAttackCommand(
   }
   if (attacker.isWorking) return true;
 
-  final attackerTile = _tileDataAt(worldMap, attacker.col, attacker.row);
+  final attackerTile = mapTiles.tileAt(attacker.col, attacker.row);
   if (attackerTile == null) return true;
   final attackerResearch = state.research.forPlayer(actorPlayerId);
   final attackerBaseStats = UnitCombatStats.derive(
@@ -75,7 +73,7 @@ bool _isStaleAttackCommand(
     }
     if (unit.ownerPlayerId == actorPlayerId) return true;
 
-    final defenderTile = _tileDataAt(worldMap, unit.col, unit.row);
+    final defenderTile = mapTiles.tileAt(unit.col, unit.row);
     final attackerEffective = attackerBaseStats.applyAll(
       CombatModifierCollector.forAttacker(
         unit: attacker,
@@ -130,6 +128,3 @@ bool _isProtectedAttack(
   return status == DiplomaticRelationStatus.friendly ||
       status == DiplomaticRelationStatus.truce;
 }
-
-TileData? _tileDataAt(WorldMap worldMap, int col, int row) =>
-    LegacyWorldMapAdapter.tileDataAt(worldMap, col, row);

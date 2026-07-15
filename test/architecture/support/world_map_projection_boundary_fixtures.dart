@@ -22,15 +22,19 @@ void direct(WorldMap worldMap) {
     expect(violations, contains(contains('must not reference MapData')));
   });
 
-  test('guard allows single-tile adapters and unrelated toMapData methods', () {
-    final violations = _legacyProjectionViolations('''
+  test(
+    'guard rejects removed bounded adapters but allows unrelated methods',
+    () {
+      final violations = _legacyProjectionViolations('''
 TileData? projectOne(WorldMap worldMap) =>
     LegacyWorldMapAdapter.tileDataAt(worldMap, 0, 0);
 Object saveDraft(MapDraft draft) => draft.toMapData();
 ''', 'fixture.dart');
 
-    expect(violations, isEmpty);
-  });
+      expect(violations, hasLength(1));
+      expect(violations, contains(contains('tileDataAt')));
+    },
+  );
 
   test('adapter guard rejects full projections hidden behind helpers', () {
     final violations = _classProjectionViolations(
@@ -49,6 +53,130 @@ abstract final class LegacyWorldMapAdapter {
     );
 
     expect(violations, contains(contains('toMapData')));
+  });
+
+  test('adapter API guard rejects every unexpected public method', () {
+    final violations = _adapterApiDeclarationViolations('''
+abstract final class LegacyWorldMapAdapter {
+  static WorldMap fromMapData(MapData mapData) => throw UnimplementedError();
+  static MapData toMapData(WorldMap worldMap) => throw UnimplementedError();
+
+  static WorldTile? lookup(WorldMap worldMap, int col, int row) =>
+      _lookup(worldMap, col, row);
+  static final lookupCache = <HexCoord, WorldTile>{};
+  factory LegacyWorldMapAdapter.named() => throw UnimplementedError();
+
+  static WorldTile? _lookup(WorldMap worldMap, int col, int row) => null;
+}
+''', 'fixture.dart');
+
+    expect(violations, hasLength(3));
+    expect(violations, contains(contains('unexpected public method lookup')));
+    expect(
+      violations,
+      contains(contains('unexpected public field lookupCache')),
+    );
+    expect(violations, contains(contains('unexpected public constructor')));
+  });
+
+  test('adapter API guard requires both exact converter signatures', () {
+    final missingConverter = _adapterApiDeclarationViolations('''
+abstract final class LegacyWorldMapAdapter {
+  static WorldMap fromMapData(MapData mapData) => throw UnimplementedError();
+}
+''', 'missing_converter.dart');
+    final getterInsteadOfMethod = _adapterApiDeclarationViolations('''
+abstract final class LegacyWorldMapAdapter {
+  static WorldMap fromMapData(MapData mapData) => throw UnimplementedError();
+  static MapData get toMapData => throw UnimplementedError();
+}
+''', 'getter_converter.dart');
+    final genericConverter = _adapterApiDeclarationViolations('''
+abstract final class LegacyWorldMapAdapter {
+  static WorldMap fromMapData<T>(MapData mapData) => throw UnimplementedError();
+  static MapData toMapData(WorldMap worldMap) => throw UnimplementedError();
+}
+''', 'generic_converter.dart');
+    final implicitPublicConstructor = _adapterApiDeclarationViolations('''
+final class LegacyWorldMapAdapter {
+  static WorldMap fromMapData(MapData mapData) => throw UnimplementedError();
+  static MapData toMapData(WorldMap worldMap) => throw UnimplementedError();
+}
+''', 'implicit_constructor.dart');
+
+    expect(
+      missingConverter,
+      contains(contains('exactly one toMapData converter')),
+    );
+    expect(
+      getterInsteadOfMethod,
+      contains(contains('toMapData must be static MapData')),
+    );
+    expect(
+      genericConverter,
+      contains(contains('fromMapData must be static WorldMap')),
+    );
+    expect(
+      implicitPublicConstructor,
+      contains(contains('abstract final utility class')),
+    );
+  });
+
+  test('read-view guard rejects every zero-copy invariant mutation', () {
+    final nonFinal = _worldMapReadViewViolations('''
+class WorldMapReadView {
+  final WorldMap _worldMap;
+  WorldTile? tileAt(int col, int row) => null;
+}
+''', 'non_final.dart');
+    final wrongReturn = _worldMapReadViewViolations('''
+final class WorldMapReadView {
+  final WorldMap _worldMap;
+  MapTileView? tileAt(int col, int row) => null;
+}
+''', 'wrong_return.dart');
+    final tileData = _worldMapReadViewViolations('''
+final class WorldMapReadView {
+  final WorldMap _worldMap;
+  WorldTile? tileAt(int col, int row) => null;
+  TileData? project(int col, int row) => null;
+}
+''', 'tile_data.dart');
+    final explicitCache = _worldMapReadViewViolations('''
+final class WorldMapReadView {
+  final WorldMap _worldMap;
+  final Map<HexCoord, WorldTile> _cache = {};
+  WorldTile? tileAt(int col, int row) => null;
+}
+''', 'explicit_cache.dart');
+    final inferredCache = _worldMapReadViewViolations('''
+final class WorldMapReadView {
+  final WorldMap _worldMap;
+  final _cache = <HexCoord, WorldTile>{};
+  WorldTile? tileAt(int col, int row) => null;
+}
+''', 'inferred_cache.dart');
+    final globalCache = _worldMapReadViewViolations('''
+final _cache = <HexCoord, WorldTile>{};
+
+final class WorldMapReadView {
+  final WorldMap _worldMap;
+  WorldTile? tileAt(int col, int row) => _cache[HexCoord(col: col, row: row)];
+}
+''', 'global_cache.dart');
+    final missingField = _worldMapReadViewViolations('''
+final class WorldMapReadView {
+  WorldTile? tileAt(int col, int row) => null;
+}
+''', 'missing_field.dart');
+
+    expect(nonFinal, contains(contains('must remain final')));
+    expect(wrongReturn, contains(contains('must return WorldTile?')));
+    expect(tileData, contains(contains('must not reference TileData')));
+    expect(explicitCache, contains(contains('must declare exactly')));
+    expect(inferredCache, contains(contains('must declare exactly')));
+    expect(globalCache, contains(contains('must not declare top-level')));
+    expect(missingField, contains(contains('must declare exactly')));
   });
 
   test(

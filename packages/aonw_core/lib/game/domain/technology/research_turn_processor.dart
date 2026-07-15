@@ -14,7 +14,7 @@ import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class ResearchTurnResult {
   final ResearchState research;

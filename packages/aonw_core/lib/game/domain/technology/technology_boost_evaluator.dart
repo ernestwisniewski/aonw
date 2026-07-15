@@ -2,7 +2,8 @@ import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/technology_boost.dart';
 import 'package:aonw_core/game/domain/technology/technology_definition.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class TechnologyBoostEvaluator {
   static double bestDiscountFor({
@@ -87,7 +88,7 @@ abstract final class TechnologyBoostEvaluator {
     }
   }
 
-  static Iterable<TileData> _controlledTiles({
+  static Iterable<MapTileView> _controlledTiles({
     required String playerId,
     required Iterable<GameCity> cities,
     required MapTileLookup mapTiles,

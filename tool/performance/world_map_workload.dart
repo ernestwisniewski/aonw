@@ -1,6 +1,6 @@
 part of 'map_workload.dart';
 
-/// Runs the same probes through the canonical constant-time coordinate index.
+/// Runs the same probes through the public zero-copy canonical read view.
 PerformanceCaseResult runWorldMapLookupWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
@@ -43,6 +43,7 @@ _ScaleResult _runWorldScale(int scale, int timingSamples) {
       'indexedTiles': fixture.map.indexedTileCount,
       'lookupCalls': stableResult.lookupCalls,
       'lookupCallsByProbe': stableResult.lookupCallsByProbe,
+      'worldTileHits': stableResult.worldTileHits,
       'outputDigest': stableDigest(stableResult.output),
     },
     observations: {'lookupBatchTiming': timingObservation(samples)},
@@ -53,9 +54,11 @@ _WorldProbeBatchResult _executeWorldProbeBatch(_WorldMapFixture fixture) {
   final lookupCallsByProbe = <String, int>{};
   final output = <String, Object?>{};
   var lookupCalls = 0;
+  var worldTileHits = 0;
   for (final probe in fixture.probes) {
-    final tile = fixture.map.tileAt(HexCoord(col: probe.col, row: probe.row));
+    final tile = fixture.view.tileAt(probe.col, probe.row);
     lookupCalls++;
+    if (tile != null) worldTileHits++;
     lookupCallsByProbe[probe.name] = 1;
     output[probe.name] = tile == null
         ? null
@@ -65,6 +68,7 @@ _WorldProbeBatchResult _executeWorldProbeBatch(_WorldMapFixture fixture) {
     lookupCalls: lookupCalls,
     lookupCallsByProbe: Map.unmodifiable(lookupCallsByProbe),
     output: Map.unmodifiable(output),
+    worldTileHits: worldTileHits,
   );
 }
 
@@ -78,6 +82,7 @@ void _verifyWorldStableResult(
   );
   if (expected.lookupCalls != actual.lookupCalls ||
       stableDigest(expected.output) != stableDigest(actual.output) ||
+      expected.worldTileHits != actual.worldTileHits ||
       !callsMatch) {
     throw StateError(
       'World map lookup workload produced a non-deterministic result.',
@@ -86,7 +91,11 @@ void _verifyWorldStableResult(
 }
 
 final class _WorldMapFixture {
-  const _WorldMapFixture({required this.map, required this.probes});
+  const _WorldMapFixture({
+    required this.map,
+    required this.view,
+    required this.probes,
+  });
 
   factory _WorldMapFixture.forScale(int scale) {
     final dimensions = _dimensionsFor(scale);
@@ -103,8 +112,14 @@ final class _WorldMapFixture {
         ),
     ];
     final middle = tiles[scale ~/ 2].coordinate;
+    final map = WorldMap(
+      cols: dimensions.cols,
+      rows: dimensions.rows,
+      tiles: tiles,
+    );
     return _WorldMapFixture(
-      map: WorldMap(cols: dimensions.cols, rows: dimensions.rows, tiles: tiles),
+      map: map,
+      view: WorldMapReadView(map),
       probes: [
         const _Probe('first', 0, 0),
         _Probe('middle', middle.col, middle.row),
@@ -115,6 +130,7 @@ final class _WorldMapFixture {
   }
 
   final WorldMap map;
+  final WorldMapReadView view;
   final List<_Probe> probes;
 }
 
@@ -123,9 +139,11 @@ final class _WorldProbeBatchResult {
     required this.lookupCalls,
     required this.lookupCallsByProbe,
     required this.output,
+    required this.worldTileHits,
   });
 
   final int lookupCalls;
   final Map<String, int> lookupCallsByProbe;
   final Map<String, Object?> output;
+  final int worldTileHits;
 }

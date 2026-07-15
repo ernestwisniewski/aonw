@@ -6,8 +6,8 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityFoundingResult {
   const PersistentCityFoundingResult({
@@ -48,7 +48,7 @@ class PersistentCityFoundingResolver {
       return _reject(state, 'city_founder_busy');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     final centerTile = mapTiles.tileAt(founder.col, founder.row);
     final startFailure = CityFoundingRules.startFailure(
       unit: founder,

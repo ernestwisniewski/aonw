@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentUnitActionResult {
   const PersistentUnitActionResult({
@@ -125,7 +125,7 @@ class PersistentUnitActionResolver {
     if (unit.movementPoints <= 0) return _reject(state, 'unit_exhausted');
     if (unit.queuedPath != null) return _reject(state, 'unit_has_path');
 
-    final mapData = LegacyWorldMapAdapter.asTraversalView(worldMap);
+    final mapData = WorldMapReadView(worldMap);
     final move = const ScoutAutoExplorePlanner().commandFor(
       unit: unit,
       mapData: mapData,

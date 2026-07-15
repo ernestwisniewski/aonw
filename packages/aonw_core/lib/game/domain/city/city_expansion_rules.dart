@@ -3,13 +3,13 @@ import 'package:aonw_core/game/domain/city/city_territory_rules.dart';
 import 'package:aonw_core/game/domain/city/city_tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class CityExpansionRules {
   static bool canClaim({
     required GameCity city,
     required CityHex target,
-    required TileData? tile,
+    required MapTileView? tile,
     required Iterable<GameCity> cities,
     int? radius,
     bool allowCoast = false,

@@ -6,7 +6,7 @@ const _movementTarget = (col: 7, row: 4);
 /// Plans the same fixed-distance path through growing canonical maps.
 ///
 /// The stable counters come from an instrumented traversal cache. Raw timing
-/// samples use the production WorldMap adapter without instrumentation.
+/// samples use the production zero-copy WorldMap view without instrumentation.
 PerformanceCaseResult runMovementPathWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
@@ -111,7 +111,7 @@ final class _MovementPathFixture {
   final GameUnit unit;
 
   MapTraversalView traversalView() {
-    return LegacyWorldMapAdapter.asTraversalView(worldMap);
+    return WorldMapReadView(worldMap);
   }
 }
 
@@ -155,11 +155,11 @@ final class _InstrumentedTraversalView implements MapTraversalView {
   _InstrumentedTraversalView(this._delegate);
 
   final MapTraversalView _delegate;
-  final Map<String, TileData?> _projectedByCoordinate = {};
+  final Map<String, MapTileView?> _tilesByCoordinate = {};
   int _lookupCalls = 0;
   int _lookupHits = 0;
-  int _projectionRequests = 0;
-  int _tileProjections = 0;
+  int _uniqueLookupCoordinates = 0;
+  int _uniqueTileHits = 0;
 
   @override
   int get cols => _delegate.cols;
@@ -168,21 +168,21 @@ final class _InstrumentedTraversalView implements MapTraversalView {
   int get rows => _delegate.rows;
 
   @override
-  TileData? tileAt(int col, int row) {
+  MapTileView? tileAt(int col, int row) {
     _lookupCalls++;
     final key = '$col:$row';
-    if (_projectedByCoordinate.containsKey(key)) {
-      final cached = _projectedByCoordinate[key];
+    if (_tilesByCoordinate.containsKey(key)) {
+      final cached = _tilesByCoordinate[key];
       if (cached != null) _lookupHits++;
       return cached;
     }
 
-    _projectionRequests++;
+    _uniqueLookupCoordinates++;
     final tile = _delegate.tileAt(col, row);
-    _projectedByCoordinate[key] = tile;
+    _tilesByCoordinate[key] = tile;
     if (tile != null) {
       _lookupHits++;
-      _tileProjections++;
+      _uniqueTileHits++;
     }
     return tile;
   }
@@ -190,8 +190,8 @@ final class _InstrumentedTraversalView implements MapTraversalView {
   _TraversalSnapshot get snapshot => _TraversalSnapshot(
     lookupCalls: _lookupCalls,
     lookupHits: _lookupHits,
-    projectionRequests: _projectionRequests,
-    tileProjections: _tileProjections,
+    uniqueLookupCoordinates: _uniqueLookupCoordinates,
+    uniqueTileHits: _uniqueTileHits,
   );
 }
 
@@ -199,20 +199,20 @@ final class _TraversalSnapshot {
   const _TraversalSnapshot({
     required this.lookupCalls,
     required this.lookupHits,
-    required this.projectionRequests,
-    required this.tileProjections,
+    required this.uniqueLookupCoordinates,
+    required this.uniqueTileHits,
   });
 
   final int lookupCalls;
   final int lookupHits;
-  final int projectionRequests;
-  final int tileProjections;
+  final int uniqueLookupCoordinates;
+  final int uniqueTileHits;
 
   Map<String, Object?> toJson() => {
     'tileLookupCalls': lookupCalls,
     'tileLookupHits': lookupHits,
-    'tileProjectionRequests': projectionRequests,
-    'tileProjections': tileProjections,
+    'uniqueTileHits': uniqueTileHits,
+    'uniqueTileLookupCoordinates': uniqueLookupCoordinates,
   };
 }
 

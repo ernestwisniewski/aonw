@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentTurnMovementResult {
   final PersistentGameState state;

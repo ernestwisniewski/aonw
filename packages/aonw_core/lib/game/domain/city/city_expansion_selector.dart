@@ -8,7 +8,8 @@ import 'package:aonw_core/game/domain/city/city_tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class CityExpansionCandidate {
   final CityHex hex;
@@ -129,7 +130,7 @@ abstract final class CityExpansionSelector {
   }
 
   static int score(
-    TileData tile, {
+    MapTileView tile, {
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     final yield = CityTileYieldRules.forTile(tile, ruleset: ruleset);

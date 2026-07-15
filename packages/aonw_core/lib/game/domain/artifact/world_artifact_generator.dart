@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class WorldArtifactGenerator {
@@ -227,7 +228,7 @@ abstract final class WorldArtifactGenerator {
     return reachable;
   }
 
-  static bool _canUnitEventuallyEnter(GameUnit unit, TileData tile) {
+  static bool _canUnitEventuallyEnter(GameUnit unit, MapTileView tile) {
     final cost = UnitMovementCostRules.costToEnterTile(
       tile,
       unitType: unit.type,

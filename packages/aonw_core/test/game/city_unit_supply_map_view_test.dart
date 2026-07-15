@@ -5,10 +5,7 @@ void main() {
   test('MapData and WorldMap read views produce identical unit supply', () {
     final mapData = _mapData();
     final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
-    final views = <MapReadView>[
-      mapData,
-      LegacyWorldMapAdapter.asReadView(worldMap),
-    ];
+    final views = <MapReadView>[mapData, WorldMapReadView(worldMap)];
     final city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -61,10 +58,7 @@ void main() {
   test('sparse terrain survey binds the same non-minimum map capacity', () {
     final mapData = _largeSparseMapData();
     final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
-    final views = <MapReadView>[
-      mapData,
-      LegacyWorldMapAdapter.asReadView(worldMap),
-    ];
+    final views = <MapReadView>[mapData, WorldMapReadView(worldMap)];
     final cities = [
       for (var index = 0; index < 4; index++)
         GameCity(

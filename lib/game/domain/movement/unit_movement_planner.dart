@@ -1,11 +1,12 @@
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class UnitMovementPlanner {
   final MapData mapData;
   final List<GameUnit> units;
-  final bool Function(TileData tile)? canEnterTile;
+  final bool Function(MapTileView tile)? canEnterTile;
 
   UnitMovementPlanner({
     required this.mapData,

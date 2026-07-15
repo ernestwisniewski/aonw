@@ -18,6 +18,7 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 abstract interface class MctsSimulator {
@@ -378,10 +379,7 @@ final class _MctsSimulationMaps {
 
   factory _MctsSimulationMaps.fromMapData({required MapData mapData}) {
     final canonicalMap = LegacyWorldMapAdapter.fromMapData(mapData);
-    return _MctsSimulationMaps(
-      canonicalMap,
-      LegacyWorldMapAdapter.asTileLookup(canonicalMap),
-    );
+    return _MctsSimulationMaps(canonicalMap, WorldMapReadView(canonicalMap));
   }
 
   final WorldMap canonicalMap;

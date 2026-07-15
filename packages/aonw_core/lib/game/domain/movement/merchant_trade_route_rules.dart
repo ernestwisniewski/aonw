@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class MerchantTradeRouteAdvanceResult {
   const MerchantTradeRouteAdvanceResult({

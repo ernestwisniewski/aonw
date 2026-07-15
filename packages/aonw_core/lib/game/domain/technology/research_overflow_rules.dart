@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/technology/research_cost_calculator.dart';
 import 'package:aonw_core/game/domain/technology/technology_boost_evaluator.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class ResearchOverflowRules {
   static const int maxOverflowCostNumerator = 1;

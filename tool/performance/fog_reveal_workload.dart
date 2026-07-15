@@ -2,12 +2,12 @@ part of 'map_workload.dart';
 
 const _fogRevealRange = 3;
 
-/// Measures bounded fog traversal through the transitional WorldMap read view.
+/// Measures bounded fog traversal through the canonical WorldMap read view.
 ///
 /// Every canonical scale uses one source with the same range away from map
 /// edges. Stable lookup metrics must therefore stay constant as the total map
 /// grows. Structural instrumentation runs outside the stopwatch; wall-clock
-/// samples cover the raw adapter and calculator and remain diagnostic only.
+/// samples cover the raw view and calculator and remain diagnostic only.
 PerformanceCaseResult runFogRevealWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
@@ -149,7 +149,7 @@ final class _FogRevealFixture {
       range: _fogRevealRange,
       observerHeight: 0,
     );
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     return _FogRevealFixture(
       worldMap: worldMap,
       mapTiles: mapTiles,
@@ -172,7 +172,7 @@ final class _CountingTileLookup implements MapTileLookup {
   int lookupHits = 0;
 
   @override
-  TileData? tileAt(int col, int row) {
+  MapTileView? tileAt(int col, int row) {
     lookupCalls++;
     final tile = _delegate.tileAt(col, row);
     if (tile != null) lookupHits++;

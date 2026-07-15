@@ -9,7 +9,7 @@ import 'package:aonw_core/game/domain/stability/stability_policy.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/stability/war_weariness_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentStabilityTurnResult {
   const PersistentStabilityTurnResult({

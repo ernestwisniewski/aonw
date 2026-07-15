@@ -10,6 +10,7 @@ abstract interface class MapTileView {
   Iterable<TerrainType> get terrains;
   Iterable<ResourceType> get resources;
   int get height;
+  TerrainType get primaryTerrain;
 }
 
 /// Read-only catalog preserving the canonical tile iteration order.

@@ -46,6 +46,7 @@ final class WorldTile implements MapTileView {
   @override
   final int height;
 
+  @override
   TerrainType get primaryTerrain => terrains.first;
 }
 

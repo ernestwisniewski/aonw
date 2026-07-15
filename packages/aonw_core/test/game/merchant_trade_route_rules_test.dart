@@ -113,7 +113,7 @@ void main() {
         merchant: routeMerchant,
         originCity: cities.first,
         destinationCity: cities.last,
-        mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+        mapData: WorldMapReadView(worldMap),
         units: [routeMerchant, blocker],
         cities: cities,
       );
@@ -142,7 +142,7 @@ void main() {
       final canonicalMove = MerchantTradeRouteRules.planMoveToCity(
         merchant: cityMerchant,
         destinationCity: cities.last,
-        mapData: LegacyWorldMapAdapter.asTraversalView(worldMap),
+        mapData: WorldMapReadView(worldMap),
         units: [cityMerchant, blocker],
         cities: cities,
       );

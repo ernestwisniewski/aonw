@@ -21,6 +21,7 @@ import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
@@ -171,7 +172,7 @@ abstract final class EconomySimulation {
             state: state,
             actorPlayerId: actingPlayer.id,
             ruleset: config.ruleset,
-            worldMap: worldMap,
+            mapTiles: commandApplier.mapTiles,
           )) {
             commandTick += 1;
             continue;

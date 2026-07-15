@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityTechnologyEffectRules {
   static int effectiveMaxHexes(

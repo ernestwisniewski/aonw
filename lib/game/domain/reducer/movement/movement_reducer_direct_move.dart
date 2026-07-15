@@ -7,7 +7,7 @@ abstract final class _DirectMoveProcessor {
     MapData mapData, {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
-    required bool Function(TileData tile)? canEnterTile,
+    required bool Function(MapTileView tile)? canEnterTile,
   }) {
     final validation = UnitCommandValidator.movableUnit(
       state,
@@ -169,7 +169,7 @@ final class _DirectMovePlanFinder {
   final TileData targetTile;
   final MapData mapData;
   final GameCommandContext context;
-  final bool Function(TileData tile)? canEnterTileOverride;
+  final bool Function(MapTileView tile)? canEnterTileOverride;
 
   UnitMovementPlan? plan() {
     final pathfinder = UnitMovementPathfinder(
@@ -182,7 +182,7 @@ final class _DirectMovePlanFinder {
         _approachBlockedTarget(pathfinder);
   }
 
-  bool _canEnterTile(TileData tile) {
+  bool _canEnterTile(MapTileView tile) {
     final override = canEnterTileOverride;
     if (override != null) return override(tile);
     return UnitMovementVisibilityRules.canPlanThroughTile(

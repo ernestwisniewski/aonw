@@ -6,9 +6,7 @@ void main() {
     'matches MapData with reversed WorldMap tiles and a reserved high ground route',
     () {
       final mapData = _explorationMap();
-      final worldView = LegacyWorldMapAdapter.asTraversalView(
-        _reversedWorldMap(mapData),
-      );
+      final worldView = WorldMapReadView(_reversedWorldMap(mapData));
       final scout = _scout(id: 'explorer', col: 1, row: 1);
       final reservingScout = _reservingScout();
       final fog = _knownWesternFog();

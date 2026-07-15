@@ -20,7 +20,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityProductionResult {
   const PersistentCityProductionResult({
@@ -65,7 +65,7 @@ class PersistentCityProductionResolver {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapTiles: LegacyWorldMapAdapter.asTileLookup(worldMap),
+      mapTiles: WorldMapReadView(worldMap),
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -125,7 +125,7 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_not_available');
     }
-    final mapView = LegacyWorldMapAdapter.asReadView(worldMap);
+    final mapView = WorldMapReadView(worldMap);
     final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
@@ -227,7 +227,7 @@ class PersistentCityProductionResolver {
     final availability = WonderAvailabilityPolicy.availabilityFor(
       city: city,
       cities: state.cities,
-      mapTiles: LegacyWorldMapAdapter.asTileLookup(worldMap),
+      mapTiles: WorldMapReadView(worldMap),
       research: state.research,
       registry: state.wonderRegistry,
       ruleset: wonderRuleset,
@@ -315,7 +315,7 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,

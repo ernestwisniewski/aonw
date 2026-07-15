@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/city/city_tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_rules.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class WorkerImprovementScoreBalance {
   static const foodWeight = 1000;
@@ -19,7 +19,7 @@ abstract final class WorkerImprovementScoreBalance {
 abstract final class WorkerImprovementScoring {
   static int scoreFor({
     required FieldImprovementType type,
-    TileData? tile,
+    MapTileView? tile,
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     final baseYield = tile == null

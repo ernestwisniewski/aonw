@@ -2,38 +2,11 @@ import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/domain/world_map_invariants.dart';
-import 'package:aonw_core/map/domain/map_survey.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
-/// Read-only lookup for legacy tile data at a single coordinate.
-///
-/// Returned [TileData] can be a borrowed legacy value. Consumers must treat it
-/// as read-only even when its collections are structurally mutable.
-abstract interface class MapTileLookup {
-  TileData? tileAt(int col, int row);
-}
-
-/// Read-only dimensions and bounded tile reads for spatial algorithms.
-///
-/// Unlike [MapTileSource], this contract intentionally does not expose every
-/// tile. Traversal code can therefore operate on canonical maps without first
-/// materializing a complete legacy [MapData] graph.
-abstract interface class MapTraversalView implements MapTileLookup {
-  int get cols;
-  int get rows;
-}
-
-/// Composite read-only view for gameplay rules that need bounded reads,
-/// traversal, aggregate metadata, objectives, or a zero-copy tile catalog.
-///
-/// This access contract does not make legacy [TileData] deeply immutable.
-abstract interface class MapReadView
-    implements MapSurvey, MapTraversalView, MapTileCatalog {
-  MapTileLookup get mapTiles;
-
-  Iterable<MapObjectiveDefinition> get objectives;
-}
+export 'package:aonw_core/map/domain/map_read_view.dart';
 
 /// Read-only spatial data consumed by map renderers.
 ///
@@ -74,6 +47,7 @@ class TileData implements MapTileView {
   });
 
   /// Primary terrain: first in list, or ocean if empty.
+  @override
   TerrainType get primaryTerrain =>
       terrains.isNotEmpty ? terrains.first : TerrainType.ocean;
 

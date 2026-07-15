@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/technology/research_overflow_rules.dart';
 import 'package:aonw_core/game/domain/technology/technology_availability_service.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentResearchCommandResult {
   const PersistentResearchCommandResult({
@@ -52,9 +52,7 @@ class PersistentResearchCommandResolver {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapTiles: worldMap == null
-          ? null
-          : LegacyWorldMapAdapter.asTileLookup(worldMap),
+      mapTiles: worldMap == null ? null : WorldMapReadView(worldMap),
       ruleset: ruleset,
       paceBalance: paceBalance,
     );

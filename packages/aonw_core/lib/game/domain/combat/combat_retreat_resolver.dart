@@ -2,9 +2,9 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
-typedef CombatRetreatTileLookup = TileData? Function(int col, int row);
+typedef CombatRetreatTileLookup = MapTileView? Function(int col, int row);
 
 abstract final class CombatRetreatResolver {
   static HexCoordinate? destinationIfAvailable({

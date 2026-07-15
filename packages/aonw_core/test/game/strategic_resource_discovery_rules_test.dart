@@ -127,7 +127,7 @@ void main() {
               playerId: 'player_1',
               technologyId: TechnologyId.combustion,
               state: state,
-              mapData: LegacyWorldMapAdapter.asReadView(worldMap),
+              mapData: WorldMapReadView(worldMap),
             );
 
         expect(_discoveryShape(canonical), _discoveryShape(legacy));

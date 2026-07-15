@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/tile_yield/tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_requirement.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class WonderRequirementRules {

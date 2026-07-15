@@ -11,8 +11,9 @@ import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentMoveUnitResult {
   const PersistentMoveUnitResult({
@@ -53,7 +54,7 @@ class PersistentMoveUnitResolver {
       return _reject(state, 'unit_uses_trade_routes');
     }
 
-    final mapData = LegacyWorldMapAdapter.asTraversalView(worldMap);
+    final mapData = WorldMapReadView(worldMap);
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _reject(state, 'unit_out_of_bounds');
     }
@@ -231,7 +232,7 @@ class PersistentMoveUnitResolver {
   static bool _canCarryArtifactIntoTargetCity({
     required PersistentGameState state,
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required UnitMovementStep step,
   }) {
     if (unit.carriedArtifactId == null) return false;
@@ -262,7 +263,7 @@ class PersistentMoveUnitResolver {
     required PersistentGameState state,
     required String actorPlayerId,
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required MapTraversalView mapData,
   }) {
     if (!state.fogOfWar.players.containsKey(actorPlayerId)) return false;

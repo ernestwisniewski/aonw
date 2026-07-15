@@ -3,7 +3,8 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class ScoutAutoExploreBalance {
   static const minimumNewlyDiscoveredHexes = 1;
@@ -24,14 +25,14 @@ class ScoutAutoExplorePlanner {
     required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required FogOfWarState fogOfWar,
-    bool Function(TileData tile)? canEnterTile,
+    bool Function(MapTileView tile)? canEnterTile,
   }) {
     if (!_canAutoExplore(unit)) return null;
 
     final reservedHexes = _reservedExplorationHexes(unit: unit, units: units);
     final pathCanEnterTile = reservedHexes.isEmpty && canEnterTile == null
         ? null
-        : (TileData tile) {
+        : (MapTileView tile) {
             if (reservedHexes.contains(HexCoordinate.fromTile(tile))) {
               return false;
             }

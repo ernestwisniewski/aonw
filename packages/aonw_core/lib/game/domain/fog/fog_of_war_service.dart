@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/fog/fog_reveal_source.dart';
 import 'package:aonw_core/game/domain/fog/player_fog_of_war.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class FogOfWarService {
   final FogRevealCalculator revealCalculator;

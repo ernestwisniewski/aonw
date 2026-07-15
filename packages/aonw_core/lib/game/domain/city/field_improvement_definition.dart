@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/domain/city/field_improvement_requirement.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class FieldImprovementDefinition {
   final FieldImprovementType type;
@@ -18,11 +18,11 @@ class FieldImprovementDefinition {
     this.requirements = const [],
   });
 
-  bool canImprove(TileData tile) {
+  bool canImprove(MapTileView tile) {
     return requirements.every((requirement) => requirement.matches(tile));
   }
 
-  FieldImprovementRequirementFailure? failureFor(TileData tile) {
+  FieldImprovementRequirementFailure? failureFor(MapTileView tile) {
     for (final requirement in requirements) {
       final failure = requirement.failureFor(tile);
       if (failure != null) return failure;

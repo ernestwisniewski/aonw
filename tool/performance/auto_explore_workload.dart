@@ -3,8 +3,8 @@ part of 'map_workload.dart';
 /// Plans automatic exploration across the complete reachable map.
 ///
 /// Candidate evaluations intentionally grow with tile count. The workload
-/// makes that linear scan explicit while separately tracking unique legacy
-/// tile projections through the bounded WorldMap traversal view.
+/// makes that linear scan explicit while separately tracking unique tile
+/// coordinates read through the bounded WorldMap traversal view.
 PerformanceCaseResult runAutoExploreWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
@@ -119,7 +119,7 @@ final class _AutoExploreFixture {
   final GameUnit unit;
 
   MapTraversalView traversalView() {
-    return LegacyWorldMapAdapter.asTraversalView(worldMap);
+    return WorldMapReadView(worldMap);
   }
 }
 

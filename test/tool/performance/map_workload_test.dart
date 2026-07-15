@@ -57,6 +57,7 @@ void main() {
       expect(stable['probeCount'], 4);
       expect(stable['indexedTiles'], 100);
       expect(stable['lookupCalls'], 4);
+      expect(stable['worldTileHits'], 3);
       expect(stable['lookupCallsByProbe'], {
         'first': 1,
         'middle': 1,
@@ -130,7 +131,7 @@ void main() {
           result.observations['sizes']! as Map<String, Object?>;
       final structuralDigests = <Object?>{};
       final lookupCalls = <Object?>{};
-      final projectionRequests = <Object?>{};
+      final uniqueLookupCoordinates = <Object?>{};
 
       expect(result.name, 'map.movement-path');
       expect(sizes.keys, ['100', '1000', '10000']);
@@ -141,18 +142,18 @@ void main() {
         expect(stable['targetDistance'], 3);
         expect(stable['pathSteps'], 4);
         expect(stable['totalCost'], 3);
-        expect(stable['tileProjectionRequests'], stable['tileProjections']);
-        expect(stable['tileProjections'], lessThan(100));
+        expect(stable['uniqueTileLookupCoordinates'], stable['uniqueTileHits']);
+        expect(stable['uniqueTileHits'], lessThan(100));
         expect(stable['outputDigest'], hasLength(64));
         expect(stable, isNot(contains('movementPathTiming')));
         expect(observationSizes[entry.key], contains('movementPathTiming'));
         structuralDigests.add(stable['outputDigest']);
         lookupCalls.add(stable['tileLookupCalls']);
-        projectionRequests.add(stable['tileProjectionRequests']);
+        uniqueLookupCoordinates.add(stable['uniqueTileLookupCoordinates']);
       }
       expect(structuralDigests, hasLength(1));
       expect(lookupCalls, hasLength(1));
-      expect(projectionRequests, hasLength(1));
+      expect(uniqueLookupCoordinates, hasLength(1));
     });
 
     test('repeats the movement path stable result', () {
@@ -176,7 +177,7 @@ void main() {
           result.observations['sizes']! as Map<String, Object?>;
       final digests = <Object?>{};
       var previousLookupCalls = 0;
-      var previousProjectionRequests = 0;
+      var previousUniqueLookupCoordinates = 0;
 
       expect(result.name, 'map.auto-explore');
       expect(sizes.keys, ['100', '1000', '10000']);
@@ -184,20 +185,24 @@ void main() {
         final scale = int.parse(entry.key);
         final stable = entry.value! as Map<String, Object?>;
         final lookupCalls = stable['tileLookupCalls']! as int;
-        final projectionRequests = stable['tileProjectionRequests']! as int;
+        final uniqueLookupCoordinates =
+            stable['uniqueTileLookupCoordinates']! as int;
         expect(stable['indexedTiles'], scale);
         expect(stable['growthModel'], 'full-reachable-map');
         expect(stable['candidateEvaluations'], scale - 1);
-        expect(stable['tileProjections'], scale);
-        expect(projectionRequests, greaterThanOrEqualTo(scale));
+        expect(stable['uniqueTileHits'], scale);
+        expect(uniqueLookupCoordinates, greaterThanOrEqualTo(scale));
         expect(lookupCalls, greaterThan(previousLookupCalls));
-        expect(projectionRequests, greaterThan(previousProjectionRequests));
+        expect(
+          uniqueLookupCoordinates,
+          greaterThan(previousUniqueLookupCoordinates),
+        );
         expect(stable['outputDigest'], hasLength(64));
         expect(stable, isNot(contains('autoExploreTiming')));
         expect(observationSizes[entry.key], contains('autoExploreTiming'));
         digests.add(stable['outputDigest']);
         previousLookupCalls = lookupCalls;
-        previousProjectionRequests = projectionRequests;
+        previousUniqueLookupCoordinates = uniqueLookupCoordinates;
       }
       expect(digests, hasLength(1));
     });

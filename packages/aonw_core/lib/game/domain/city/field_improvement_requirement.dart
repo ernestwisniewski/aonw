@@ -1,5 +1,5 @@
 import 'package:aonw_core/game/domain/tile_yield/tile_yield_rules.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 enum FieldImprovementRequirementFailureType {
@@ -24,9 +24,9 @@ class FieldImprovementRequirementFailure {
 sealed class FieldImprovementRequirement {
   const FieldImprovementRequirement();
 
-  FieldImprovementRequirementFailure? failureFor(TileData tile);
+  FieldImprovementRequirementFailure? failureFor(MapTileView tile);
 
-  bool matches(TileData tile) => failureFor(tile) == null;
+  bool matches(MapTileView tile) => failureFor(tile) == null;
 }
 
 class RequiresAnyResource extends FieldImprovementRequirement {
@@ -35,7 +35,7 @@ class RequiresAnyResource extends FieldImprovementRequirement {
   const RequiresAnyResource(this.resources);
 
   @override
-  FieldImprovementRequirementFailure? failureFor(TileData tile) {
+  FieldImprovementRequirementFailure? failureFor(MapTileView tile) {
     if (tile.resources.any(resources.contains)) return null;
     return const FieldImprovementRequirementFailure(
       FieldImprovementRequirementFailureType.missingResource,
@@ -49,7 +49,7 @@ class RequiresAnyBaseTerrain extends FieldImprovementRequirement {
   const RequiresAnyBaseTerrain(this.terrains);
 
   @override
-  FieldImprovementRequirementFailure? failureFor(TileData tile) {
+  FieldImprovementRequirementFailure? failureFor(MapTileView tile) {
     final terrain = TileYieldRules.baseTerrainOrNull(tile);
     if (terrain != null && terrains.contains(terrain)) return null;
     return const FieldImprovementRequirementFailure(
@@ -62,7 +62,7 @@ class RequiresRiver extends FieldImprovementRequirement {
   const RequiresRiver();
 
   @override
-  FieldImprovementRequirementFailure? failureFor(TileData tile) {
+  FieldImprovementRequirementFailure? failureFor(MapTileView tile) {
     if (TileYieldRules.hasRiver(tile)) return null;
     return const FieldImprovementRequirementFailure(
       FieldImprovementRequirementFailureType.missingRiver,

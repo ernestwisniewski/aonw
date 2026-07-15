@@ -17,6 +17,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'movement_reducer_auto_explore.dart';
 part 'movement_reducer_direct_move.dart';
@@ -50,7 +51,7 @@ abstract final class MovementReducer {
     GameState state,
     MoveUnitCommand command,
     ReducerEnvironment environment, {
-    bool Function(TileData tile)? canEnterTile,
+    bool Function(MapTileView tile)? canEnterTile,
   }) {
     return moveUnit(
       state,
@@ -213,7 +214,7 @@ abstract final class MovementReducer {
     MapData mapData, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
-    bool Function(TileData tile)? canEnterTile,
+    bool Function(MapTileView tile)? canEnterTile,
   }) {
     return _DirectMoveProcessor.run(
       state,

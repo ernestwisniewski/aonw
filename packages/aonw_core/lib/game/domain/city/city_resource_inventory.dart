@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/technology/resource_visibility_rules.dart'
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 class CityResourceSource {

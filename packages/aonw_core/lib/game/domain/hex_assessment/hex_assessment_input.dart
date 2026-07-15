@@ -1,4 +1,4 @@
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 class HexAssessmentInput {
@@ -21,7 +21,7 @@ class HexAssessmentInput {
   });
 
   factory HexAssessmentInput.fromTile(
-    TileData tile, {
+    MapTileView tile, {
     bool hasAdjacentMountain = false,
     bool hasAdjacentCity = false,
     bool isChokePoint = false,

@@ -7,8 +7,8 @@ import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentUnitDetachmentResult {
   const PersistentUnitDetachmentResult({
@@ -46,7 +46,7 @@ class PersistentUnitDetachmentResolver {
       return _reject(state, 'troop_not_available');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     if (mapTiles.tileAt(source.col, source.row) == null) {
       return _reject(state, 'detachment_source_out_of_bounds');
     }

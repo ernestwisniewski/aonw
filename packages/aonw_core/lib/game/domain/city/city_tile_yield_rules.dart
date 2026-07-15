@@ -6,14 +6,14 @@ import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield_rules.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CityTileYieldRules {
   static TileYield forCityHex({
     required GameCity city,
     required CityHex hex,
-    required TileData? tile,
+    required MapTileView? tile,
     Iterable<FieldImprovement> fieldImprovements = const [],
     CityRuleset ruleset = CityRulesets.standard,
   }) {
@@ -24,7 +24,7 @@ abstract final class CityTileYieldRules {
   }
 
   static TileYield forTile(
-    TileData tile, {
+    MapTileView tile, {
     FieldImprovementType? improvement,
     CityRuleset ruleset = CityRulesets.standard,
   }) {
@@ -45,16 +45,16 @@ abstract final class CityTileYieldRules {
     return null;
   }
 
-  static TerrainType? baseTerrainOrNull(TileData tile) {
+  static TerrainType? baseTerrainOrNull(MapTileView tile) {
     return TileYieldRules.baseTerrainOrNull(tile);
   }
 
-  static bool hasRiver(TileData tile) => TileYieldRules.hasRiver(tile);
+  static bool hasRiver(MapTileView tile) => TileYieldRules.hasRiver(tile);
 
   /// Terrain does not restrict city territory; callers enforce map presence,
   /// ownership, adjacency, and radius before a tile becomes controlled.
   static bool canCityControlTile(
-    TileData tile, {
+    MapTileView tile, {
     bool allowCoast = false,
     bool allowLake = false,
     bool allowOcean = false,

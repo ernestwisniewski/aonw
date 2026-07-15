@@ -3,11 +3,12 @@ import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class UnitMovementPathfinder {
   final MapTraversalView mapData;
   final List<GameUnit> units;
-  final bool Function(TileData tile)? canEnterTile;
+  final bool Function(MapTileView tile)? canEnterTile;
   final bool Function({
     required GameUnit movingUnit,
     required GameUnit blockingUnit,
@@ -15,7 +16,7 @@ class UnitMovementPathfinder {
     required int row,
   })?
   canEnterOccupiedTile;
-  final Map<String, TileData> _tilesByKey;
+  final Map<String, MapTileView> _tilesByKey;
   final bool _hasCompleteTileIndex;
   final Set<String> _missingTileKeys = {};
   final Map<String, GameUnit> _unitsByKey;
@@ -60,7 +61,7 @@ class UnitMovementPathfinder {
 
   UnitMovementPlan? plan({
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
   }) {
     if (!_isInBounds(targetTile.col, targetTile.row)) return null;
     if (unit.occupies(targetTile.col, targetTile.row)) return null;
@@ -102,7 +103,7 @@ class UnitMovementPathfinder {
 
   UnitMovementPlan? planTowardBlockedTarget({
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
   }) {
     final blocker = _indexedUnitAt(targetTile.col, targetTile.row);
     if (blocker == null || blocker.id == unit.id) return null;
@@ -247,8 +248,8 @@ class UnitMovementPathfinder {
   /// Returns a tile through the pathfinder's request-scoped spatial index.
   ///
   /// Complete legacy sources keep their eager O(1) index. Narrow traversal
-  /// views project and cache only coordinates reached by the search.
-  TileData? tileAt(int col, int row) {
+  /// views cache only borrowed tile references reached by the search.
+  MapTileView? tileAt(int col, int row) {
     final key = _coordKey(col, row);
     final indexed = _tilesByKey[key];
     if (indexed != null) return indexed;
@@ -284,18 +285,18 @@ class UnitMovementPathfinder {
 
   static String _coordKey(int col, int row) => '$col:$row';
 
-  static Map<String, TileData> _indexTiles(Iterable<TileData> tiles) {
-    final byKey = <String, TileData>{};
+  static Map<String, MapTileView> _indexTiles(Iterable<MapTileView> tiles) {
+    final byKey = <String, MapTileView>{};
     for (final tile in tiles) {
       byKey.putIfAbsent(_coordKey(tile.col, tile.row), () => tile);
     }
     return byKey;
   }
 
-  static Map<String, TileData> _initialTileIndex(MapTraversalView mapData) {
+  static Map<String, MapTileView> _initialTileIndex(MapTraversalView mapData) {
     return mapData is MapTileSource
         ? _indexTiles(mapData.tiles)
-        : <String, TileData>{};
+        : <String, MapTileView>{};
   }
 
   static Map<String, GameUnit> _indexUnits(Iterable<GameUnit> units) {

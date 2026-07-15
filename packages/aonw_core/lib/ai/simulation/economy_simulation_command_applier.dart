@@ -2,7 +2,7 @@ part of 'economy_simulation.dart';
 
 final class _EconomySimulationCommandApplier {
   _EconomySimulationCommandApplier(this.worldMap)
-    : mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    : mapTiles = WorldMapReadView(worldMap);
 
   final WorldMap worldMap;
   final MapTileLookup mapTiles;

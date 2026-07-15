@@ -238,7 +238,7 @@ void main() {
         final canonical = calculator.snapshot(
           playerIds: const ['player_2', 'player_1', 'player_2', ''],
           state: state,
-          mapData: LegacyWorldMapAdapter.asReadView(worldMap),
+          mapData: WorldMapReadView(worldMap),
           victoryRules: VictoryRules.standard,
         );
 

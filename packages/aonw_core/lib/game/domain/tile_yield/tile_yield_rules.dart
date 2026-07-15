@@ -4,14 +4,14 @@ import 'package:aonw_core/game/domain/hex_assessment/hex_assessment_input.dart';
 import 'package:aonw_core/game/domain/tile_yield/resource_yield_rules.dart';
 import 'package:aonw_core/game/domain/tile_yield/terrain_yield_rules.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class TileYieldRules {
   static TileYield get riverModifier => CityRulesets.standard.riverYield;
 
   static TileYield forTile(
-    TileData tile, {
+    MapTileView tile, {
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     return forInput(HexAssessmentInput.fromTile(tile), ruleset: ruleset);
@@ -32,15 +32,15 @@ abstract final class TileYieldRules {
     return terrain + river + resources;
   }
 
-  static TerrainType baseTerrainFor(TileData tile) {
+  static TerrainType baseTerrainFor(MapTileView tile) {
     return baseTerrainOrNull(tile) ?? TerrainType.ocean;
   }
 
-  static TerrainType? baseTerrainOrNull(TileData tile) {
+  static TerrainType? baseTerrainOrNull(MapTileView tile) {
     return HexAssessmentInput.baseTerrainFrom(tile.terrains);
   }
 
-  static bool hasRiver(TileData tile) {
+  static bool hasRiver(MapTileView tile) {
     return HexAssessmentInput.hasRiverIn(tile.terrains);
   }
 

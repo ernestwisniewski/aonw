@@ -5,16 +5,16 @@ import 'package:aonw_core/game/domain/combat/combat_stats.dart';
 import 'package:aonw_core/game/domain/combat/unit_combat_stats.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CombatModifierCollector {
   static List<CombatModifier> forAttacker({
     required GameUnit unit,
-    required TileData tile,
+    required MapTileView tile,
     required PlayerResearchState research,
     GameUnit? defender,
-    TileData? defenderTile,
+    MapTileView? defenderTile,
     CombatRuleset ruleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
@@ -41,7 +41,7 @@ abstract final class CombatModifierCollector {
 
   static List<CombatModifier> forDefender({
     required GameUnit unit,
-    required TileData tile,
+    required MapTileView tile,
     required GameCity? defendedCity,
     required PlayerResearchState research,
     GameUnit? attacker,
@@ -70,7 +70,7 @@ abstract final class CombatModifierCollector {
   }
 
   static List<CombatModifier> _terrainModifiers({
-    required TileData tile,
+    required MapTileView tile,
     required CombatRuleset ruleset,
   }) {
     final modifiers = <CombatModifier>[];
@@ -90,8 +90,8 @@ abstract final class CombatModifierCollector {
   static List<CombatModifier> _counterModifiers({
     required GameUnit unit,
     required GameUnit? opponent,
-    required TileData unitTile,
-    TileData? opponentTile,
+    required MapTileView unitTile,
+    MapTileView? opponentTile,
     required bool isAttacker,
   }) {
     if (opponent == null) return const [];
@@ -168,15 +168,15 @@ abstract final class CombatModifierCollector {
     return modifiers;
   }
 
-  static bool _hasDefensiveTerrain(TileData tile) {
+  static bool _hasDefensiveTerrain(MapTileView tile) {
     return tile.terrains.any(_defensiveTerrain.contains);
   }
 
-  static bool _hasRoughTerrain(TileData tile) {
+  static bool _hasRoughTerrain(MapTileView tile) {
     return tile.terrains.any(_roughTerrain.contains);
   }
 
-  static bool _hasOpenTerrain(TileData tile) {
+  static bool _hasOpenTerrain(MapTileView tile) {
     return tile.terrains.any(_openTerrain.contains) && !_hasRoughTerrain(tile);
   }
 

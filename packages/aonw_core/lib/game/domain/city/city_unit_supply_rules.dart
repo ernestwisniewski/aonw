@@ -13,8 +13,8 @@ import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_survey.dart';
 
 class CityUnitSupplyBreakdown {

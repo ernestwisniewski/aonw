@@ -1,6 +1,6 @@
 import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class HexNeighbors {
   static List<HexCoordinate> around(HexCoordinate coordinate) {

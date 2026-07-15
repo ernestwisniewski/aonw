@@ -5,9 +5,7 @@ void main() {
   group('UnitMovementPathfinder traversal view', () {
     test('matches MapData on sparse mixed terrain with occupied hexes', () {
       final mapData = _sparseMixedMap();
-      final worldView = LegacyWorldMapAdapter.asTraversalView(
-        _reversedWorldMap(mapData),
-      );
+      final worldView = WorldMapReadView(_reversedWorldMap(mapData));
       final movingUnit = _unit(id: 'scout', col: 0, row: 1);
       final units = [
         movingUnit,
@@ -67,7 +65,7 @@ void main() {
       expect(canonical.isReachable(unit: movingUnit, col: 5, row: 3), isFalse);
     });
 
-    test('projects traversal hits and misses lazily once per coordinate', () {
+    test('caches borrowed traversal hits and misses once per coordinate', () {
       final mapData = MapData(
         cols: 100,
         rows: 100,
@@ -82,7 +80,7 @@ void main() {
         ],
       );
       final counted = _CountingTraversalView(
-        LegacyWorldMapAdapter.asTraversalView(_reversedWorldMap(mapData)),
+        WorldMapReadView(_reversedWorldMap(mapData)),
       );
 
       final pathfinder = UnitMovementPathfinder(
@@ -259,7 +257,7 @@ final class _CountingTraversalView implements MapTraversalView {
   int get rows => _delegate.rows;
 
   @override
-  TileData? tileAt(int col, int row) {
+  MapTileView? tileAt(int col, int row) {
     final coordinate = (col: col, row: row);
     reads.update(coordinate, (count) => count + 1, ifAbsent: () => 1);
     return _delegate.tileAt(col, row);

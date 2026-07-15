@@ -9,7 +9,7 @@ import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/stability/stability_source_catalog.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class StabilityInputBuilder {

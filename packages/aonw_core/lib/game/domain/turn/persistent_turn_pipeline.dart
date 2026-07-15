@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart'
 import 'package:aonw_core/game/domain/turn/persistent_turn_economy_processor.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_movement_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class PersistentTurnMovementDelta {
   PersistentTurnMovementDelta({

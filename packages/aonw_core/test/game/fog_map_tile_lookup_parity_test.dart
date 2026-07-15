@@ -147,7 +147,7 @@ Set<HexCoordinate> _visibleHexes(MapTileLookup mapData) {
 
 MapTileLookup _worldMapLookup(MapData mapData) {
   final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
-  return LegacyWorldMapAdapter.asTileLookup(worldMap);
+  return WorldMapReadView(worldMap);
 }
 
 MapData _sparseFogMap() => MapData(

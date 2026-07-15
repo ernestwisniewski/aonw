@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/city/worker_improvement_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/worker_improvement_charge_rules.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class WorkerTurnBatchResult {
   final List<GameCity> cities;

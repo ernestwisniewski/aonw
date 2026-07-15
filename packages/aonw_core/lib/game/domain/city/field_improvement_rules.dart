@@ -4,11 +4,11 @@ import 'package:aonw_core/game/domain/city/field_improvement_requirement.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class FieldImprovementRules {
   static FieldImprovementType? preferredFor(
-    TileData tile, {
+    MapTileView tile, {
     CityRuleset ruleset = CityRulesets.standard,
     Iterable<FieldImprovementType>? allowedTypes,
   }) {
@@ -21,7 +21,7 @@ abstract final class FieldImprovementRules {
   }
 
   static bool canImprove(
-    TileData tile, {
+    MapTileView tile, {
     CityRuleset ruleset = CityRulesets.standard,
     FieldImprovementType? type,
   }) {
@@ -33,7 +33,7 @@ abstract final class FieldImprovementRules {
 
   static FieldImprovementRequirementFailure? requirementFailureFor(
     FieldImprovementType type,
-    TileData tile, {
+    MapTileView tile, {
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     return ruleset.improvementDefinitionFor(type).failureFor(tile);

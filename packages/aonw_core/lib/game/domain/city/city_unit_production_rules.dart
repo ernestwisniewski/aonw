@@ -3,7 +3,8 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CityUnitProductionRules {
@@ -76,17 +77,17 @@ abstract final class CityUnitProductionRules {
     return unitType == GameUnitType.merchant && candidate == city.center;
   }
 
-  static bool _isCoast(TileData tile) {
+  static bool _isCoast(MapTileView tile) {
     return tile.terrains.contains(TerrainType.coast);
   }
 
-  static bool _isOcean(TileData tile) {
+  static bool _isOcean(MapTileView tile) {
     return tile.terrains.contains(TerrainType.ocean);
   }
 
   static bool _isOceanAdjacentCoast(
     CityHex hex,
-    TileData tile,
+    MapTileView tile,
     MapTileLookup mapTiles,
   ) {
     if (!_isCoast(tile)) return false;

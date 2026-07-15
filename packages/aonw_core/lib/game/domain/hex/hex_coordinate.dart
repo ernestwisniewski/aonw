@@ -1,4 +1,4 @@
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 export 'package:aonw_core/domain/hex_coord.dart';
 
@@ -8,7 +8,7 @@ class HexCoordinate {
 
   const HexCoordinate({required this.col, required this.row});
 
-  factory HexCoordinate.fromTile(TileData tile) {
+  factory HexCoordinate.fromTile(MapTileView tile) {
     return HexCoordinate(col: tile.col, row: tile.row);
   }
 

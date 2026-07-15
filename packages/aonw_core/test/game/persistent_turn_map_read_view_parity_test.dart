@@ -48,7 +48,7 @@ void main() {
     'legacy and canonical read views advance economy and movement equally',
     () {
       final mapData = _mapData();
-      final mapView = LegacyWorldMapAdapter.asReadView(
+      final mapView = WorldMapReadView(
         LegacyWorldMapAdapter.fromMapData(mapData),
       );
       final state = _turnState();

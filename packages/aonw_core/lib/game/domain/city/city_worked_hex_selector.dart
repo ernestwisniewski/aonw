@@ -5,7 +5,7 @@ import 'package:aonw_core/game/domain/city/city_tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/tile_yield/tile_yield.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class CityWorkedHexCandidate {
   final CityHex hex;

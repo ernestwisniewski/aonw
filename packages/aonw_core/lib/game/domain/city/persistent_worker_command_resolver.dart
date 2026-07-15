@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentWorkerCommandResult {
   const PersistentWorkerCommandResult({
@@ -123,7 +123,7 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     final legality = WorkerAssignmentRules.evaluate(
       unit: worker,
       cities: state.cities,
@@ -198,7 +198,7 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     final legality = WorkerImprovementRules.evaluate(
       unit: worker,
       improvementType: improvementType,

@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class CityFoundingJobBatchResult {
   const CityFoundingJobBatchResult({

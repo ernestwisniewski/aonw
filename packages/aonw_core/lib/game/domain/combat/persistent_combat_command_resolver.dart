@@ -14,8 +14,8 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCombatCommandResult {
   const PersistentCombatCommandResult({
@@ -62,7 +62,7 @@ class PersistentCombatCommandResolver {
       return _reject(state, 'attacker_exhausted');
     }
 
-    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final mapTiles = WorldMapReadView(worldMap);
     final attackerTile = mapTiles.tileAt(attacker.col, attacker.row);
     if (attackerTile == null) {
       return _reject(state, 'attacker_out_of_bounds');

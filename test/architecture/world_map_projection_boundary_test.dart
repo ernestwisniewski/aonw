@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/legacy_world_map_adapter_guard.dart';
 
 part 'support/world_map_projection_boundary_fixtures.dart';
+part 'support/world_map_read_view_boundary_guard.dart';
 
 const _coreLib = 'packages/aonw_core/lib';
 const _gameDomain = '$_coreLib/game/domain';
@@ -94,6 +95,20 @@ void main() {
     );
   });
 
+  test('production has no bounded legacy adapter calls', () {
+    for (final methodName in _removedBoundedAdapterMethods) {
+      expect(
+        _adapterMethodRatchetViolations(
+          productionDartSources(containing: methodName),
+          methodName: methodName,
+          allowedSites: const {},
+        ),
+        isEmpty,
+        reason: methodName,
+      );
+    }
+  });
+
   test('migrated map paths do not materialize legacy maps', () {
     for (final path in _mapDataFreeMigrationPaths) {
       expect(
@@ -104,13 +119,49 @@ void main() {
     }
   });
 
-  test('bounded adapter helpers do not materialize legacy maps', () {
+  test('migrated bounded rules do not depend on legacy tile DTOs', () {
+    for (final path in _mapTileViewMigrationPaths) {
+      expect(
+        _namedTypeViolations(
+          File(path).readAsStringSync(),
+          path,
+          forbiddenType: 'TileData',
+        ),
+        isEmpty,
+        reason: path,
+      );
+    }
+  });
+
+  test('legacy adapter exposes only full-map conversion methods', () {
+    final source = File(_legacyWorldMapAdapterPath).readAsStringSync();
     expect(
       _classProjectionViolations(
-        File(_legacyWorldMapAdapterPath).readAsStringSync(),
+        source,
         _legacyWorldMapAdapterPath,
         className: 'LegacyWorldMapAdapter',
         allowedProjectionMethods: _allowedFullMapConverterMethods,
+      ),
+      isEmpty,
+    );
+    expect(
+      _adapterApiDeclarationViolations(source, _legacyWorldMapAdapterPath),
+      isEmpty,
+    );
+  });
+
+  test('read contracts and WorldMap view remain zero-copy', () {
+    expect(
+      _mapTileLookupContractViolations(
+        File(_mapReadViewPath).readAsStringSync(),
+        _mapReadViewPath,
+      ),
+      isEmpty,
+    );
+    expect(
+      _worldMapReadViewViolations(
+        File(_worldMapReadViewPath).readAsStringSync(),
+        _worldMapReadViewPath,
       ),
       isEmpty,
     );
@@ -237,7 +288,13 @@ final class _LegacyProjectionVisitor extends RecursiveAstVisitor<void> {
     required this.lineInfo,
     required this.violations,
     required this.legacyAdapterTypeNames,
-    this.blockedAdapterMethods = const {'toMapData'},
+    this.blockedAdapterMethods = const {
+      'toMapData',
+      'tileDataAt',
+      'asTileLookup',
+      'asReadView',
+      'asTraversalView',
+    },
     this.rejectUnqualifiedAdapterMethods = false,
   });
 

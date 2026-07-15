@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/fog/fog_visibility.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class FogVisibilityQuery {
   final String playerId;
@@ -16,11 +16,11 @@ class FogVisibilityQuery {
     return state.visibilityFor(playerId, hex);
   }
 
-  FogVisibility visibilityForTile(TileData tile) {
+  FogVisibility visibilityForTile(MapTileView tile) {
     return visibilityForHex(HexCoordinate.fromTile(tile));
   }
 
-  bool canInspectTile(TileData tile) => visibilityForTile(tile).isKnown;
+  bool canInspectTile(MapTileView tile) => visibilityForTile(tile).isKnown;
 
   bool canRememberStaticAt(int col, int row) {
     return visibilityForHex(HexCoordinate(col: col, row: row)).isKnown;

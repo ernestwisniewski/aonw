@@ -5,25 +5,33 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Economy simulation command staleness', () {
     test('accepts a valid attack using WorldMap tiles', () {
-      expect(_isStale(worldMap: _worldMap()), isFalse);
+      final mapTiles = _CountingMapTiles(WorldMapReadView(_worldMap()));
+
+      expect(_isStale(mapTiles: mapTiles), isFalse);
+      expect(mapTiles.reads, {(col: 0, row: 0): 1, (col: 1, row: 0): 1});
     });
 
     test(
       'rejects an attack when its attacker tile is absent from WorldMap',
       () {
-        expect(_isStale(worldMap: _worldMap(includeAttacker: false)), isTrue);
+        final mapTiles = WorldMapReadView(_worldMap(includeAttacker: false));
+
+        expect(_isStale(mapTiles: mapTiles), isTrue);
       },
     );
   });
 }
 
-bool _isStale({required WorldMap worldMap}) {
+bool _isStale({required MapTileLookup mapTiles}) {
   return isStaleEconomySimulationCommand(
     command: const AttackHexCommand('attacker', 1, 0),
     state: PersistentGameState(
@@ -34,8 +42,22 @@ bool _isStale({required WorldMap worldMap}) {
     ),
     actorPlayerId: 'player_1',
     ruleset: GameRuleset.defaults,
-    worldMap: worldMap,
+    mapTiles: mapTiles,
   );
+}
+
+final class _CountingMapTiles implements MapTileLookup {
+  _CountingMapTiles(this._delegate);
+
+  final MapTileLookup _delegate;
+  final Map<({int col, int row}), int> reads = {};
+
+  @override
+  MapTileView? tileAt(int col, int row) {
+    final coordinate = (col: col, row: row);
+    reads.update(coordinate, (count) => count + 1, ifAbsent: () => 1);
+    return _delegate.tileAt(col, row);
+  }
 }
 
 GameUnit _unit(String id, String ownerPlayerId, int col, int row) {
