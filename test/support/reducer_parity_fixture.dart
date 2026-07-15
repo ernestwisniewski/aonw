@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
+import 'reducer_parity_accepted_semantics.dart';
+
 final class ReducerParityFixture {
   const ReducerParityFixture({
     required this.id,
@@ -45,6 +47,7 @@ abstract final class ReducerParityCorpus {
     'movement',
     'combat',
     'city-production',
+    'detachment',
     'research',
     'worker',
     'turn-finalization',
@@ -57,6 +60,7 @@ abstract final class ReducerParityCorpus {
       'building_not_available',
       'unit_supply_limit_reached',
     },
+    'detachment': {'unit_not_controlled', 'detachment_destination_unavailable'},
     'research': {
       'technology_player_not_controlled',
       'technology_not_available',
@@ -379,15 +383,13 @@ abstract final class ReducerParityCorpus {
         .map(GameEventSerializer.fromJson)
         .toList(growable: false);
     switch (fixture.command) {
-      case MoveUnitCommand(:final unitId, :final targetCol, :final targetRow):
-        final unit = state.units.byId(unitId);
-        final moved = events.whereType<UnitMovedEvent>();
-        if (unit?.col != targetCol || unit?.row != targetRow) {
-          _fail(fixture, 'must commit the reviewed movement and event');
-        }
-        if (moved.length != 1) {
-          _fail(fixture, 'must commit the reviewed movement and event');
-        }
+      case final MoveUnitCommand command:
+        final failure = validateAcceptedMovement(
+          command: command,
+          after: state,
+          events: events,
+        );
+        if (failure != null) _fail(fixture, failure);
       case AttackHexCommand(:final attackerUnitId):
         final attacker = state.units.byId(attackerUnitId);
         if (attacker?.movementPoints != 0 ||
@@ -396,7 +398,21 @@ abstract final class ReducerParityCorpus {
           _fail(fixture, 'must commit deterministic instant combat');
         }
       case StartBuildingCommand() || StartUnitProductionCommand():
-        _validateProductionQueue(fixture, state, events);
+        requireAcceptedProductionQueue(
+          fixtureId: fixture.id,
+          command: fixture.command,
+          after: state,
+          events: events,
+        );
+      case final DetachTroopCommand command:
+        final failure = validateAcceptedDetachment(
+          command: command,
+          before: fixture.state,
+          after: state,
+          actorPlayerId: fixture.actorPlayerId,
+          events: events,
+        );
+        if (failure != null) _fail(fixture, failure);
       case SelectTechnologyCommand(:final playerId, :final technologyId):
         if (state.research.forPlayer(playerId).activeTechnologyId !=
             technologyId) {
@@ -455,36 +471,12 @@ abstract final class ReducerParityCorpus {
       'city-production' =>
         command is StartBuildingCommand ||
             command is StartUnitProductionCommand,
+      'detachment' => command is DetachTroopCommand,
       'research' => command is SelectTechnologyCommand,
       'worker' => command is ConfirmWorkerImprovementCommand,
       'turn-finalization' => command is SubmitTurnCommand,
       _ => false,
     };
-  }
-
-  static void _validateProductionQueue(
-    ReducerParityFixture fixture,
-    PersistentGameState state,
-    List<GameEvent> events,
-  ) {
-    final command = fixture.command;
-    final (cityId, target, failure) = switch (command) {
-      StartBuildingCommand(:final cityId, :final buildingType) => (
-        cityId,
-        BuildingProductionTarget(buildingType),
-        'must commit the reviewed building queue',
-      ),
-      StartUnitProductionCommand(:final cityId, :final unitType) => (
-        cityId,
-        UnitProductionTarget(unitType),
-        'must commit the reviewed unit queue without events',
-      ),
-      _ => throw StateError('Expected a production command.'),
-    };
-    if (state.cities.byId(cityId)?.productionQueue?.target != target ||
-        command is StartUnitProductionCommand && events.isNotEmpty) {
-      _fail(fixture, failure);
-    }
   }
 
   static Never _fail(ReducerParityFixture fixture, String message) =>

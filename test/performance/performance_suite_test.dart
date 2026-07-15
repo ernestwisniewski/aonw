@@ -20,7 +20,7 @@ void main() {
       final file = File(_reportPath);
       await file.parent.create(recursive: true);
       await file.writeAsString(report.canonicalJson, flush: true);
-      expect(report.stable.keys, hasLength(9));
+      expect(report.stable.keys, hasLength(10));
       expect(await file.readAsString(), report.canonicalJson);
     },
     skip: !_enabled,

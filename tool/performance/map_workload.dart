@@ -1,12 +1,16 @@
 import 'dart:collection';
 
-import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/fog/fog_reveal_calculator.dart';
+import 'package:aonw_core/game/domain/fog/fog_reveal_source.dart';
+import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 import 'measurement.dart';
 
+part 'fog_reveal_workload.dart';
 part 'world_map_workload.dart';
 
 const mapLookupScales = [100, 1000, 10000];

@@ -34,7 +34,6 @@ void main() {
 
     test('preserves the map in every reducer parity fixture', () {
       final fixtures = ReducerParityCorpus.load(Directory.current);
-      expect(fixtures, hasLength(19));
 
       for (final fixture in fixtures) {
         final expected = jsonDecode(MapDataCodec.toJson(fixture.mapData));

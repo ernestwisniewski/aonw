@@ -5,9 +5,10 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Temporary boundary from pre-WorldMap map models to the canonical model.
 ///
-/// Removal condition: gameplay, AI, renderer, server, and editor persistence
-/// no longer expose [MapData]. Add conversions here instead of creating another
-/// point-to-point map adapter.
+/// Removal condition: production has no [fromMapData] or [toMapData] calls and
+/// gameplay, AI, renderer, server, save/replay, fixtures, and editor
+/// persistence use [WorldMap] or narrow read views. Add conversions here
+/// instead of creating another point-to-point map adapter.
 abstract final class LegacyWorldMapAdapter {
   static WorldMap fromMapData(MapData mapData) {
     return WorldMap(

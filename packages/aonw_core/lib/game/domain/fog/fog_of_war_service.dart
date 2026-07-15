@@ -19,7 +19,7 @@ class FogOfWarService {
 
   FogOfWarState recompute({
     required FogOfWarState current,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<String> playerIds,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
@@ -42,7 +42,7 @@ class FogOfWarService {
 
   FogOfWarState recomputePlayer({
     required FogOfWarState current,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required String playerId,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
@@ -62,7 +62,7 @@ class FogOfWarService {
 
   FogOfWarState recomputeAfterUnitMove({
     required FogOfWarState current,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required GameUnit previousUnit,
     required GameUnit movedUnit,
     required Iterable<GameUnit> units,
@@ -123,7 +123,7 @@ class FogOfWarService {
   PlayerFogOfWar _recomputedFogForPlayer({
     required FogOfWarState current,
     required String playerId,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
   }) {
@@ -142,7 +142,7 @@ class FogOfWarService {
 
   List<FogRevealSource> _sourcesForPlayer({
     required String playerId,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
   }) {
@@ -172,7 +172,7 @@ class FogOfWarService {
   static FogRevealSource unitRevealSource({
     required String playerId,
     required GameUnit unit,
-    required MapData mapData,
+    required MapTileLookup mapData,
   }) {
     final tile = mapData.tileAt(unit.col, unit.row);
     final observerHeight = tile?.height ?? 0;

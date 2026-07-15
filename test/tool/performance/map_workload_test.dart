@@ -84,6 +84,45 @@ void main() {
       expect(second.observations, isNot(first.observations));
     });
 
+    test('covers bounded WorldMap-backed fog reveal at every scale', () {
+      final result = runFogRevealWorkload(timingSamples: 2);
+      final sizes = result.stable['sizes']! as Map<String, Object?>;
+      final observationSizes =
+          result.observations['sizes']! as Map<String, Object?>;
+      final digests = <Object?>{};
+
+      expect(result.name, 'map.fog-reveal');
+      expect(sizes.keys, ['100', '1000', '10000']);
+      for (final entry in sizes.entries) {
+        final scale = int.parse(entry.key);
+        final stable = entry.value! as Map<String, Object?>;
+        expect(stable['indexedTiles'], scale);
+        expect(stable['sourceCount'], 1);
+        expect(stable['visionRange'], 3);
+        expect(stable['visibleHexes'], 37);
+        expect(stable['tileLookupCalls'], 223);
+        expect(stable['tileLookupHits'], 223);
+        expect(stable['outputDigest'], hasLength(64));
+        expect(stable, isNot(contains('fogRevealTiming')));
+        expect(observationSizes[entry.key], contains('fogRevealTiming'));
+        digests.add(stable['outputDigest']);
+      }
+      expect(digests, {
+        '15068531a02338cd87d989ed252edc11b218c549fec7dafaf3f94f18c59d0bb2',
+      });
+    });
+
+    test('repeats the fog reveal stable result', () {
+      final first = runFogRevealWorkload(scales: const [100], timingSamples: 1);
+      final second = runFogRevealWorkload(
+        scales: const [100],
+        timingSamples: 3,
+      );
+
+      expect(second.stable, first.stable);
+      expect(second.observations, isNot(first.observations));
+    });
+
     test('rejects unsupported scales', () {
       expect(
         () => runMapLookupWorkload(scales: const [999]),
@@ -95,6 +134,14 @@ void main() {
       );
       expect(
         () => runWorldMapLookupWorkload(timingSamples: 0),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runFogRevealWorkload(scales: const [999]),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => runFogRevealWorkload(timingSamples: 0),
         throwsA(isA<ArgumentError>()),
       );
     });

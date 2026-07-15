@@ -155,7 +155,7 @@
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:toJson": 430,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:tryFromJson": 345,
         "packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart::class:GameEventDomainDescriptor/constructor:forEvent": 197,
-        "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 64,
+        "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 61,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:validate": 86,
         "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 96,
         "packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart::class:PersistentMoveUnitResolver/method:resolve": 156,
@@ -179,7 +179,6 @@
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:advanceForPlayers": 117,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:resetForPlayers": 91,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart::class:PersistentTurnPipeline/method:simultaneousFinalize": 116,
-        "packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart::class:PersistentUnitDetachmentResolver/method:detachTroop": 67,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 80,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 62,
         "packages/aonw_core/lib/game/domain/wonder/wonder_completion_resolver.dart::class:WonderCompletionResolver/method:_claimWonder": 77,
@@ -1333,11 +1332,11 @@
         "test/game/unit_marker_layer_test.dart": 1291,
         "test/game/unit_move_preview_layer_test.dart": 563,
         "test/menu/main_menu_screen_test.dart": 649,
-        "test/support/reducer_parity_fixture.dart": 596
+        "test/support/reducer_parity_fixture.dart": 588
       },
       "legacyFiles": {},
       "declarations": {
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 450
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 440
       },
       "callableLines": {
         "test/architecture/architecture_callable_metrics_test.dart::function:main/closure:test[control-flow_complexity_has_deterministic_golden_values]#1": 131,
@@ -1375,7 +1374,7 @@
       },
       "cognitiveComplexity": {
         "test/game/presentation/widgets/theme/game_hud_theme_test.dart::function:main/closure:test[keeps_game_HUD_presentation_on_GameIcons_instead_of_Material_icons]#1": 21,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 33,
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 32,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateCorpus": 26,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateFixture": 30
       }

@@ -9,7 +9,7 @@ class FogRevealCalculator {
   const FogRevealCalculator();
 
   Set<HexCoordinate> visibleHexesFor({
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<FogRevealSource> sources,
   }) {
     final visible = <HexCoordinate>{};
@@ -20,7 +20,7 @@ class FogRevealCalculator {
   }
 
   Set<HexCoordinate> _visibleFromSource({
-    required MapData mapData,
+    required MapTileLookup mapData,
     required FogRevealSource source,
   }) {
     if (mapData.tileAt(source.origin.col, source.origin.row) == null) {
@@ -38,10 +38,7 @@ class FogRevealCalculator {
 
       final isOrigin = current.hex == source.origin;
 
-      for (final neighbor in HexNeighbors.existingAround(
-        current.hex,
-        mapData,
-      )) {
+      for (final neighbor in HexNeighbors.around(current.hex)) {
         final tile = mapData.tileAt(neighbor.col, neighbor.row);
         if (tile == null) continue;
 

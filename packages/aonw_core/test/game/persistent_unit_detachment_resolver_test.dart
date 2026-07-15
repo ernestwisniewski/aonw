@@ -23,6 +23,14 @@ void main() {
             _commander(
               army: const [ArmyTroop(type: TroopType.warrior, count: 2)],
             ),
+            GameUnit(
+              id: 'hidden_opponent',
+              ownerPlayerId: 'player_2',
+              type: GameUnitType.warrior,
+              name: 'Hidden opponent',
+              col: 4,
+              row: 1,
+            ),
           ],
         );
 
@@ -30,12 +38,12 @@ void main() {
           state: state,
           command: const DetachTroopCommand('commander_1', TroopType.warrior),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(cols: 4, rows: 4),
+          worldMap: _worldMap(cols: 5, rows: 4),
         );
 
         expect(result.accepted, isTrue);
         expect(result.reason, isNull);
-        expect(result.state.units, hasLength(2));
+        expect(result.state.units, hasLength(3));
 
         final source = result.state.units.firstWhere(
           (unit) => unit.id == 'commander_1',
@@ -50,10 +58,21 @@ void main() {
         expect(detached.col, 2);
         expect(detached.row, 1);
         expect(detached.movementPoints, 3);
+        const newlyRevealed = HexCoordinate(col: 4, row: 1);
+        expect(state.fogOfWar.isVisible('player_1', newlyRevealed), isFalse);
         expect(
-          result.state.fogOfWar.isVisible(
+          state.runtimeState.diplomacy.hasContact('player_1', 'player_2'),
+          isFalse,
+        );
+        expect(
+          result.state.fogOfWar.isVisible('player_1', newlyRevealed),
+          isTrue,
+          reason: 'the detached unit must extend visibility beyond its source',
+        );
+        expect(
+          result.state.runtimeState.diplomacy.hasContact(
             'player_1',
-            const HexCoordinate(col: 2, row: 1),
+            'player_2',
           ),
           isTrue,
         );

@@ -6,15 +6,21 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _boundedTileQueryResolvers = {
+const _boundedTileQueryPaths = {
   'packages/aonw_core/lib/game/domain/city/'
       'persistent_city_expansion_resolver.dart',
   'packages/aonw_core/lib/game/domain/city/'
       'persistent_city_founding_resolver.dart',
   'packages/aonw_core/lib/game/domain/city/'
       'persistent_worker_command_resolver.dart',
+  'packages/aonw_core/lib/game/domain/combat/'
+      'persistent_combat_command_resolver.dart',
+  'packages/aonw_core/lib/game/domain/fog/fog_of_war_service.dart',
+  'packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart',
   'packages/aonw_core/lib/game/domain/technology/'
       'persistent_research_command_resolver.dart',
+  'packages/aonw_core/lib/game/domain/unit/'
+      'persistent_unit_detachment_resolver.dart',
 };
 const _legacyWorldMapAdapterPath =
     'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart';
@@ -27,11 +33,6 @@ const _allowedProductionProjectionSites = <String, int>{
           'economy_simulation_command_applier.dart::'
           'class:_EconomySimulationCommandApplier/method:apply::call':
       2,
-  'packages/aonw_core/lib/game/domain/combat/'
-          'persistent_combat_command_resolver.dart::'
-          'class:PersistentCombatCommandResolver/'
-          'method:_stateWithUpdatedVisibility::call':
-      1,
   'packages/aonw_core/lib/game/domain/movement/'
           'persistent_move_unit_resolver.dart::'
           'class:PersistentMoveUnitResolver/method:resolve::call':
@@ -43,10 +44,6 @@ const _allowedProductionProjectionSites = <String, int>{
   'packages/aonw_core/lib/game/domain/turn/'
           'persistent_turn_pipeline.dart::'
           'class:PersistentTurnPipeline/method:simultaneousFinalize::call':
-      1,
-  'packages/aonw_core/lib/game/domain/unit/'
-          'persistent_unit_detachment_resolver.dart::'
-          'class:PersistentUnitDetachmentResolver/method:detachTroop::call':
       1,
 };
 
@@ -61,8 +58,8 @@ void main() {
     );
   });
 
-  test('bounded tile-query resolvers do not materialize legacy maps', () {
-    for (final path in _boundedTileQueryResolvers) {
+  test('bounded tile-query paths do not materialize legacy maps', () {
+    for (final path in _boundedTileQueryPaths) {
       expect(
         _legacyProjectionViolations(File(path).readAsStringSync(), path),
         isEmpty,

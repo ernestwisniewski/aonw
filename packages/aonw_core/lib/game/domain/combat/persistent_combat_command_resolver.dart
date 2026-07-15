@@ -177,10 +177,10 @@ class PersistentCombatCommandResolver {
     required List<IntendedAttack> previousIntents,
     required WorldMap worldMap,
   }) {
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     final updatedFog = fogOfWarService.recompute(
       current: originalState.fogOfWar,
-      mapData: mapData,
+      mapData: mapTiles,
       playerIds: originalState.knownPlayerIds,
       units: combatState.units,
       cities: combatState.cities,

@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
@@ -45,15 +46,15 @@ class PersistentUnitDetachmentResolver {
       return _reject(state, 'troop_not_available');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
-    if (mapData.tileAt(source.col, source.row) == null) {
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    if (mapTiles.tileAt(source.col, source.row) == null) {
       return _reject(state, 'detachment_source_out_of_bounds');
     }
 
     final destination = _detachmentDestinationFor(
       source,
       state,
-      mapData,
+      mapTiles,
       visibility: FogVisibilityQuery(
         playerId: actorPlayerId,
         state: state.fogOfWar,
@@ -77,6 +78,23 @@ class PersistentUnitDetachmentResolver {
     );
     if (detachment == null) return _reject(state, 'troop_not_available');
 
+    return PersistentUnitDetachmentResult(
+      accepted: true,
+      state: _stateAfterDetachment(
+        state: state,
+        source: source,
+        detachment: detachment,
+        mapTiles: mapTiles,
+      ),
+    );
+  }
+
+  PersistentGameState _stateAfterDetachment({
+    required PersistentGameState state,
+    required GameUnit source,
+    required UnitDetachmentResult detachment,
+    required MapTileLookup mapTiles,
+  }) {
     final updatedUnits = [
       for (final unit in state.units)
         if (unit.id == source.id) detachment.updatedSource else unit,
@@ -84,15 +102,22 @@ class PersistentUnitDetachmentResolver {
     ];
     final updatedFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapData: mapTiles,
       playerId: source.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );
-
-    return PersistentUnitDetachmentResult(
-      accepted: true,
-      state: state.copyWith(units: updatedUnits, fogOfWar: updatedFog),
+    final updatedDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
+      diplomacy: state.runtimeState.diplomacy,
+      fogOfWar: updatedFog,
+      units: updatedUnits,
+      cities: state.cities,
+      playerIds: state.knownPlayerIds,
+    );
+    return state.copyWith(
+      units: updatedUnits,
+      fogOfWar: updatedFog,
+      runtimeState: state.runtimeState.copyWith(diplomacy: updatedDiplomacy),
     );
   }
 
@@ -110,14 +135,14 @@ class PersistentUnitDetachmentResolver {
   static ({int col, int row})? _detachmentDestinationFor(
     GameUnit source,
     PersistentGameState state,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     required FogVisibilityQuery visibility,
   }) {
     for (final neighbor in HexGridTopology.neighbors(
       col: source.col,
       row: source.row,
     )) {
-      final tile = mapData.tileAt(neighbor.col, neighbor.row);
+      final tile = mapTiles.tileAt(neighbor.col, neighbor.row);
       if (tile == null) continue;
       if (!visibility.canInspectTile(tile)) continue;
       if (state.units.unitAt(neighbor.col, neighbor.row) != null) continue;

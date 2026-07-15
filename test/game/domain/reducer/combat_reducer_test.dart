@@ -1048,7 +1048,7 @@ final class _RecordingFogOfWarService extends FogOfWarService {
   @override
   FogOfWarState recompute({
     required FogOfWarState current,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required Iterable<String> playerIds,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
