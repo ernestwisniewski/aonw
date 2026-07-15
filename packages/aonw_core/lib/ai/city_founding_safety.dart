@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class AiCityFoundingSafety {
   static bool hasKnownCenterExclusionZone({
@@ -13,15 +13,15 @@ abstract final class AiCityFoundingSafety {
     return unknownCenterExclusionTiles(view: view, center: center).isEmpty;
   }
 
-  static List<TileData> unknownCenterExclusionTiles({
+  static List<MapTileView> unknownCenterExclusionTiles({
     required GameView view,
     required CityHex center,
   }) {
     if (view.ownCities.isEmpty) return const [];
 
     final origin = HexCoordinate(col: center.col, row: center.row);
-    final unknown = <TileData>[];
-    for (final tile in view.mapData.tiles) {
+    final unknown = <MapTileView>[];
+    for (final tile in view.mapData.tileViews) {
       final hex = HexCoordinate.fromTile(tile);
       if (HexDistance.between(origin, hex) >=
           CityFoundingRules.minimumCenterDistance) {

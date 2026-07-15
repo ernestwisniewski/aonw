@@ -242,11 +242,12 @@ class _PreparedPlayer {
       snapshot: snapshot,
       playerId: player.id,
     );
+    final mapView = mapData.indexedReadView();
     final view = GameView.fromPersistentState(
       snapshot.persistentState,
       forPlayerId: player.id,
       turn: snapshot.save.turn,
-      mapData: mapData,
+      mapData: mapView,
       ruleset: ruleset,
       activeHostilePlayerIds: _pendingHostilePlayerIds(
         snapshot: snapshot,
@@ -265,7 +266,7 @@ class _PreparedPlayer {
     );
     var context = AiContext(
       ruleset: ruleset,
-      mapData: mapData,
+      mapData: mapView,
       turn: snapshot.save.turn,
       rng: AiRng.fromTurn(
         turn: snapshot.save.turn,

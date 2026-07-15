@@ -7,6 +7,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     required GameCommand command,
     required String actorPlayerId,
     required WorldMap worldMap,
+    required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
     final result = switch (command) {
@@ -15,7 +16,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapTiles: mapView,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
           paceBalance: ruleset.paceBalance,
@@ -25,7 +26,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapView: mapView,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
           paceBalance: ruleset.paceBalance,

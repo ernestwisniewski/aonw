@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class MctsOpponentViewIndex {
   final Map<String, List<GameUnit>> _unitsByOwner;
@@ -58,7 +58,7 @@ final class MctsOpponentViewIndex {
     required PersistentGameState state,
     required String opponentId,
     required int turn,
-    required MapData mapData,
+    required MapReadView mapData,
     required GameRuleset ruleset,
   }) {
     return GameView(

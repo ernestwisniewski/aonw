@@ -62,8 +62,12 @@ class SimulatedState {
       ownGold: _baseView.ownGold,
       ownWarWeariness: _baseView.ownWarWeariness,
       ownStabilityNet: _baseView.ownStabilityNet,
+      research: researchState,
       ownResearch: ownResearch,
       ownImprovements: _baseView.ownImprovements,
+      resourceTradeAgreements: _baseView.resourceTradeAgreements,
+      mapObjectiveHoldStatesByObjectiveId:
+          _baseView.mapObjectiveHoldStatesByObjectiveId,
       diplomacy: _baseView.diplomacy,
       visibleEnemyUnits: visibleEnemyUnits,
       movementBlockingUnits: _currentMovementBlockingUnits(),
@@ -76,6 +80,7 @@ class SimulatedState {
       visibility: _baseView.visibility,
       mapData: _baseView.mapData,
       ruleset: _baseView.ruleset,
+      wonderRegistry: _baseView.wonderRegistry,
     );
   }
 
@@ -278,7 +283,7 @@ class SimulatedState {
   }
 
   ResearchState get researchState {
-    return ResearchState(players: {_baseView.forPlayerId: ownResearch});
+    return _baseView.research.updatePlayer(_baseView.forPlayerId, ownResearch);
   }
 
   MctsSimulatedCommandApplication get _unchangedCommandApplication => (

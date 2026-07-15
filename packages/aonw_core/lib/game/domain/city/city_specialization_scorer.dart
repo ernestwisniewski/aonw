@@ -3,13 +3,13 @@ import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/resource_visibility_rules.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CitySpecializationScorer {
   static Map<CitySpecializationType, double> localScores({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required ResearchState research,
   }) {
     final scores = <CitySpecializationType, double>{};
@@ -29,7 +29,7 @@ abstract final class CitySpecializationScorer {
 
   static CitySpecializationType? bestLocalFit({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapData,
     required ResearchState research,
   }) {
     final scores = localScores(
@@ -50,7 +50,7 @@ abstract final class CitySpecializationScorer {
 
   static void _scoreTerrains(
     Map<CitySpecializationType, double> scores,
-    List<TerrainType> terrains,
+    Iterable<TerrainType> terrains,
   ) {
     for (final terrain in terrains) {
       switch (terrain) {
@@ -84,7 +84,7 @@ abstract final class CitySpecializationScorer {
 
   static void _scoreResources(
     Map<CitySpecializationType, double> scores, {
-    required List<ResourceType> resources,
+    required Iterable<ResourceType> resources,
     required GameCity city,
     required ResearchState research,
   }) {

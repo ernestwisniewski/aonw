@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 class CitySitePlan {
@@ -84,7 +84,7 @@ class CitySitePlanner {
     required Set<CityHex> reservedHexes,
   }) {
     final candidates = <CitySiteCandidate>[];
-    for (final tile in view.mapData.tiles) {
+    for (final tile in view.mapData.tileViews) {
       if (!useStrategicMapKnowledge && !view.visibility.canInspectTile(tile)) {
         continue;
       }
@@ -453,7 +453,7 @@ class CitySitePlanner {
 }
 
 int _visibleResourceCount(
-  TileData tile,
+  MapTileView tile,
   Set<ResourceType> visibleResourceTypes,
 ) {
   return tile.resources.where(visibleResourceTypes.contains).length;

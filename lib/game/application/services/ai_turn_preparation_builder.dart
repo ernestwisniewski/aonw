@@ -97,7 +97,7 @@ final class AiTurnPreparationBuilder {
       planningPersistentState,
       forPlayerId: playerId,
       turn: resolvedSnapshot.save.turn,
-      mapData: mapData,
+      mapData: mapData.indexedReadView(),
       ruleset: effectiveRuleset,
       activeHostilePlayerIds: cityThreats.activeHostilePlayerIds,
       recentHostilePlayerIds: loggedHostilePlayerIds,
@@ -115,11 +115,11 @@ final class AiTurnPreparationBuilder {
     final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
       state: planningPersistentState,
       playerId: playerId,
-      mapData: mapData,
+      mapData: view.mapData,
     );
     var context = AiContext(
       ruleset: effectiveRuleset,
-      mapData: mapData,
+      mapData: view.mapData,
       turn: resolvedSnapshot.save.turn,
       rng: AiRng.fromTurn(
         turn: resolvedSnapshot.save.turn,

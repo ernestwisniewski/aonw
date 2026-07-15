@@ -10,7 +10,7 @@ void main() {
         state: state,
         command: const StartBuildingCommand('city_1', CityBuildingType.granary),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -33,7 +33,7 @@ void main() {
           CityBuildingType.workshop,
         ),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isFalse);
@@ -60,7 +60,7 @@ void main() {
           CityBuildingType.workshop,
         ),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -85,7 +85,7 @@ void main() {
             CityBuildingType.factory,
           ),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(resource: ResourceType.oil),
+          mapTiles: WorldMapReadView(_worldMap(resource: ResourceType.oil)),
         );
 
         expect(result.accepted, isFalse);
@@ -107,7 +107,7 @@ void main() {
         state: state,
         command: const StartBuildingCommand('city_1', CityBuildingType.factory),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(resource: ResourceType.oil),
+        mapTiles: WorldMapReadView(_worldMap(resource: ResourceType.oil)),
       );
 
       expect(result.accepted, isTrue);
@@ -128,7 +128,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isTrue);
@@ -163,14 +163,14 @@ void main() {
             state: lockedState,
             command: command,
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
       final unlockedResult = const PersistentCityProductionResolver()
           .startUnitProduction(
             state: unlockedState,
             command: command,
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(lockedResult.accepted, isFalse);
@@ -195,7 +195,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isFalse);
@@ -220,7 +220,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(resource: ResourceType.horses),
+            mapView: WorldMapReadView(_worldMap(resource: ResourceType.horses)),
           );
 
       expect(result.accepted, isTrue);
@@ -259,7 +259,7 @@ void main() {
               GameUnitType.cavalry,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isTrue);
@@ -289,7 +289,7 @@ void main() {
               GameUnitType.tank,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isFalse);
@@ -314,7 +314,7 @@ void main() {
               GameUnitType.tank,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(resource: ResourceType.oil),
+            mapView: WorldMapReadView(_worldMap(resource: ResourceType.oil)),
           );
 
       expect(result.accepted, isTrue);
@@ -347,7 +347,7 @@ void main() {
               GameUnitType.scoutShip,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isFalse);
@@ -377,7 +377,7 @@ void main() {
                 GameUnitType.scoutShip,
               ),
               actorPlayerId: 'player_1',
-              worldMap: _worldMap(coastal: true),
+              mapView: WorldMapReadView(_worldMap(coastal: true)),
             );
 
         expect(result.accepted, isTrue);
@@ -414,7 +414,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isFalse);
@@ -445,7 +445,7 @@ void main() {
               GameUnitType.settler,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isTrue);
@@ -566,7 +566,7 @@ void main() {
               GameUnitType.warrior,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
 
       expect(result.accepted, isFalse);

@@ -54,7 +54,7 @@ extension _BasicStrategyWorkerMovement on BasicStrategyWorkerPlanner {
       maxCost: worker.movementPoints,
     );
     final candidates =
-        view.mapData.tiles
+        view.mapData.tileViews
             .where((tile) => _canConsiderImprovementTile(worker, view, tile))
             .map(
               (tile) => _workerMoveCandidateFor(
@@ -82,7 +82,7 @@ extension _BasicStrategyWorkerMovement on BasicStrategyWorkerPlanner {
   bool _canConsiderImprovementTile(
     GameUnit worker,
     GameView view,
-    TileData tile,
+    MapTileView tile,
   ) {
     return !worker.occupies(tile.col, tile.row) &&
         view.visibility.canInspectTile(tile);
@@ -90,7 +90,7 @@ extension _BasicStrategyWorkerMovement on BasicStrategyWorkerPlanner {
 
   _WorkerMoveCandidate? _workerMoveCandidateFor({
     required GameUnit worker,
-    required TileData tile,
+    required MapTileView tile,
     required GameView view,
     required UnitMovementPathfinder pathfinder,
     required Set<String> occupied,
@@ -226,7 +226,7 @@ final class _WorkerMoveCandidate {
     required this.movementCost,
   });
 
-  final TileData targetTile;
+  final MapTileView targetTile;
   final int destinationCol;
   final int destinationRow;
   final _WorkerImprovementOption improvement;

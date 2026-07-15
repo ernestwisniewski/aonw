@@ -99,7 +99,7 @@ abstract final class EconomySimulation {
           state,
           forPlayerId: actingPlayer.id,
           turn: turn,
-          mapData: mapData,
+          mapData: commandApplier.mapView,
           ruleset: config.ruleset,
           recentHostilePlayerIds: hostilityMemory.recentFor(
             playerId: actingPlayer.id,
@@ -115,11 +115,11 @@ abstract final class EconomySimulation {
         final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
           state: state,
           playerId: actingPlayer.id,
-          mapData: mapData,
+          mapData: commandApplier.mapView,
         );
         var context = AiContext(
           ruleset: config.ruleset,
-          mapData: mapData,
+          mapData: commandApplier.mapView,
           turn: turn,
           rng: AiRng.fromTurn(
             turn: turn,

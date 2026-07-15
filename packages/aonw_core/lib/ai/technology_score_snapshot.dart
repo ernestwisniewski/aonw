@@ -1,11 +1,11 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 final class AiTechnologyScoreSnapshot {
-  final List<TileData> visibleTiles;
+  final List<MapTileView> visibleTiles;
   final Set<ResourceType> visibleResources;
   final Set<ResourceType> controlledResources;
   final double productionPressure;
@@ -34,7 +34,7 @@ final class AiTechnologyScoreSnapshot {
       players: {view.forPlayerId: view.ownResearch},
     );
     final visibleTiles = [
-      for (final tile in view.mapData.tiles)
+      for (final tile in view.mapData.tileViews)
         if (view.visibility.canInspectTile(tile)) tile,
     ];
     final visibleResources = {
@@ -123,7 +123,7 @@ final class AiTechnologyScoreSnapshot {
     return best;
   }
 
-  static bool _isCoastalTile(TileData tile) {
+  static bool _isCoastalTile(MapTileView tile) {
     return tile.terrains.contains(TerrainType.coast) ||
         tile.terrains.contains(TerrainType.ocean);
   }

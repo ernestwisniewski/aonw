@@ -13,7 +13,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 export 'package:aonw_core/ai/production_models.dart';
 
@@ -487,7 +487,7 @@ bool _hasInfrastructureWindow(
   return weights.expansion < 1.2 || assessment.cityCount >= 3;
 }
 
-int _riverHexCount(GameCity city, MapData mapData) {
+int _riverHexCount(GameCity city, MapTileLookup mapData) {
   var count = 0;
   for (final hex in city.territoryHexes) {
     final tile = mapData.tileAt(hex.col, hex.row);

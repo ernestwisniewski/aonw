@@ -24,7 +24,13 @@ final class MctsSimulationProjection {
       fieldImprovements: view.ownImprovements,
       fogOfWar: view.visibility.state,
       research: research,
-      runtimeState: GameRuntimeState(diplomacy: view.diplomacy),
+      runtimeState: GameRuntimeState(
+        diplomacy: view.diplomacy,
+        mapObjectiveHoldStatesByObjectiveId:
+            view.mapObjectiveHoldStatesByObjectiveId,
+        resourceTradeAgreements: view.resourceTradeAgreements,
+      ),
+      wonderRegistry: view.wonderRegistry,
     );
   }
 }

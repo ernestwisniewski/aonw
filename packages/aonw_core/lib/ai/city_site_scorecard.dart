@@ -11,7 +11,7 @@ final class _CitySiteScorecard {
     required this.distanceFromFounder,
   });
 
-  final TileData centerTile;
+  final MapTileView centerTile;
   final List<CityHex> controlledHexes;
   final GameView view;
   final AiContext context;
@@ -30,7 +30,7 @@ final class _CitySiteScorecard {
         travelPenalty;
   }
 
-  Iterable<TileData> get controlledTiles {
+  Iterable<MapTileView> get controlledTiles {
     return [
       for (final hex in controlledHexes) ?view.mapData.tileAt(hex.col, hex.row),
     ];
@@ -116,7 +116,7 @@ final class _CitySiteScorecard {
   }
 
   double _resourceScore(
-    TileData tile,
+    MapTileView tile,
     Set<ResourceType> visibleResourceTypes,
     Set<ResourceType> missingStrategicResourceTypes,
   ) {
@@ -162,8 +162,8 @@ final class _CitySiteScorecard {
   }
 
   double _terrainScore(
-    TileData centerTile,
-    Iterable<TileData> controlledTiles,
+    MapTileView centerTile,
+    Iterable<MapTileView> controlledTiles,
   ) {
     var score = 0.0;
     if (CityTileYieldRules.hasRiver(centerTile)) score += 1.4;
@@ -216,7 +216,7 @@ final class _CitySiteScorecard {
     return score;
   }
 
-  double _dangerPenalty(TileData tile) {
+  double _dangerPenalty(MapTileView tile) {
     final origin = HexCoordinate(col: tile.col, row: tile.row);
     var penalty = 0.0;
     for (final enemy in view.visibleTargetableEnemyUnits) {

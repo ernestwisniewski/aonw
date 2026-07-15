@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 final class BasicStrategyCombatReactionsPlanner {
   const BasicStrategyCombatReactionsPlanner({
@@ -400,7 +400,7 @@ final class BasicStrategyCombatReactionsPlanner {
     return MoveUnitCommand(unit.id, target.col, target.row);
   }
 
-  int _nearestEnemyDistance(TileData tile, GameView view) {
+  int _nearestEnemyDistance(MapTileView tile, GameView view) {
     final origin = HexCoordinate(col: tile.col, row: tile.row);
     var nearest = 1 << 30;
     for (final enemy in view.visibleTargetableEnemyUnits) {
@@ -437,6 +437,6 @@ final class _RetreatCandidate {
     required this.nearestEnemyDistance,
   });
 
-  final TileData tile;
+  final MapTileView tile;
   final int nearestEnemyDistance;
 }

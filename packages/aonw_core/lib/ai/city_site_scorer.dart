@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'city_site_scorecard.dart';
@@ -72,7 +72,7 @@ class AiCitySiteScorer {
     bool useStrategicMapKnowledge = false,
   }) {
     final scores = <AiCitySiteScore>[];
-    for (final tile in view.mapData.tiles) {
+    for (final tile in view.mapData.tileViews) {
       if (!_canUseStaticTile(
         view: view,
         tile: tile,
@@ -258,7 +258,7 @@ class AiCitySiteScorer {
 
   bool _canUseStaticTile({
     required GameView view,
-    required TileData tile,
+    required MapTileView tile,
     required bool useStrategicMapKnowledge,
   }) {
     return useStrategicMapKnowledge || view.visibility.canInspectTile(tile);
@@ -307,7 +307,7 @@ Set<ResourceType> _missingStrategicResourceTypes(GameView view) {
 }
 
 double _tileDevelopmentScore(
-  TileData tile,
+  MapTileView tile,
   Set<ResourceType> visibleResourceTypes,
 ) {
   final yield = CityTileYieldRules.forTile(tile);
@@ -318,7 +318,7 @@ double _tileDevelopmentScore(
 }
 
 int _visibleResourceCount(
-  TileData tile,
+  MapTileView tile,
   Set<ResourceType> visibleResourceTypes,
 ) {
   return tile.resources.where(visibleResourceTypes.contains).length;

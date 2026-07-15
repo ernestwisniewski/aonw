@@ -63,7 +63,7 @@ void main() {
       final persistent = _resolvePersistent(
         state,
         command,
-        worldMap: LegacyWorldMapAdapter.fromMapData(mapData),
+        mapView: WorldMapReadView(LegacyWorldMapAdapter.fromMapData(mapData)),
       );
       final simulated = _simulate(state, command, mapData: mapData);
 
@@ -512,7 +512,7 @@ void main() {
               state: state,
               command: command,
               actorPlayerId: 'player_1',
-              worldMap: _worldMap(),
+              mapTiles: WorldMapReadView(_worldMap()),
             );
         final simulated = _simulate(state, command);
 
@@ -532,7 +532,7 @@ void main() {
         state: state,
         command: command,
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
       final simulated = _simulate(state, command);
 
@@ -552,7 +552,7 @@ void main() {
             state: state,
             command: command,
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapView: WorldMapReadView(_worldMap()),
           );
       final simulated = _simulate(state, command);
 
@@ -594,7 +594,7 @@ void main() {
         state: state,
         command: command,
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
       final simulated = _simulate(state, command);
 
@@ -909,13 +909,13 @@ void main() {
 PersistentMoveUnitResult _resolvePersistent(
   PersistentGameState state,
   MoveUnitCommand command, {
-  WorldMap? worldMap,
+  WorldMapReadView? mapView,
 }) {
   return const PersistentMoveUnitResolver().resolve(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    worldMap: worldMap ?? _worldMap(),
+    mapData: mapView ?? WorldMapReadView(_worldMap()),
   );
 }
 
@@ -938,7 +938,7 @@ PersistentCityFoundingResult _resolvePersistentFounding(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    worldMap: _worldMap(),
+    mapTiles: WorldMapReadView(_worldMap()),
     cityRuleset: GameRuleset.defaults.city,
   );
 }
@@ -977,7 +977,7 @@ PersistentResearchCommandResult _resolvePersistentResearch(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    worldMap: _worldMap(),
+    mapTiles: WorldMapReadView(_worldMap()),
     ruleset: GameRuleset.defaults.technology,
   );
 }
@@ -990,7 +990,7 @@ PersistentWorkerCommandResult _resolvePersistentWorkerImprovement(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    worldMap: _worldMap(),
+    mapTiles: WorldMapReadView(_worldMap()),
     cityRuleset: GameRuleset.defaults.city,
     technologyRuleset: GameRuleset.defaults.technology,
   );
@@ -1004,7 +1004,7 @@ PersistentWorkerCommandResult _resolvePersistentWorkerAssignment(
     state: state,
     command: command,
     actorPlayerId: 'player_1',
-    worldMap: _worldMap(),
+    mapTiles: WorldMapReadView(_worldMap()),
   );
 }
 

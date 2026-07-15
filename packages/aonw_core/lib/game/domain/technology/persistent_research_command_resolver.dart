@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -7,7 +6,7 @@ import 'package:aonw_core/game/domain/technology/research_overflow_rules.dart';
 import 'package:aonw_core/game/domain/technology/technology_availability_service.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentResearchCommandResult {
   const PersistentResearchCommandResult({
@@ -28,7 +27,7 @@ class PersistentResearchCommandResolver {
     required PersistentGameState state,
     required SelectTechnologyCommand command,
     required String actorPlayerId,
-    WorldMap? worldMap,
+    MapTileLookup? mapTiles,
     TechnologyRuleset ruleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -52,7 +51,7 @@ class PersistentResearchCommandResolver {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapTiles: worldMap == null ? null : WorldMapReadView(worldMap),
+      mapTiles: mapTiles,
       ruleset: ruleset,
       paceBalance: paceBalance,
     );

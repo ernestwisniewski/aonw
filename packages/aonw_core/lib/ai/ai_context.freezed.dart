@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AiContext {
 
- GameRuleset get ruleset; MapData get mapData; int get turn; AiRng get rng; AiPersona get persona; AiDifficulty get difficulty; CivilizationProfile get civProfile; StrategicPlan? get strategicPlan; ScoreRaceAnalysis? get scoreRace; DateTime? get deadline; double get ownControlPercent; int get knownPlayerCount;
+ GameRuleset get ruleset; MapReadView get mapData; int get turn; AiRng get rng; AiPersona get persona; AiDifficulty get difficulty; CivilizationProfile get civProfile; StrategicPlan? get strategicPlan; ScoreRaceAnalysis? get scoreRace; DateTime? get deadline; double get ownControlPercent; int get knownPlayerCount;
 /// Create a copy of AiContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $AiContextCopyWith<$Res>  {
   factory $AiContextCopyWith(AiContext value, $Res Function(AiContext) _then) = _$AiContextCopyWithImpl;
 @useResult
 $Res call({
- GameRuleset ruleset, MapData mapData, int turn, AiRng rng, AiPersona persona, AiDifficulty difficulty, CivilizationProfile civProfile, StrategicPlan? strategicPlan, ScoreRaceAnalysis? scoreRace, DateTime? deadline, double ownControlPercent, int knownPlayerCount
+ GameRuleset ruleset, MapReadView mapData, int turn, AiRng rng, AiPersona persona, AiDifficulty difficulty, CivilizationProfile civProfile, StrategicPlan? strategicPlan, ScoreRaceAnalysis? scoreRace, DateTime? deadline, double ownControlPercent, int knownPlayerCount
 });
 
 
@@ -66,7 +66,7 @@ class _$AiContextCopyWithImpl<$Res>
   return _then(_self.copyWith(
 ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,mapData: null == mapData ? _self.mapData : mapData // ignore: cast_nullable_to_non_nullable
-as MapData,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
+as MapReadView,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int,rng: null == rng ? _self.rng : rng // ignore: cast_nullable_to_non_nullable
 as AiRng,persona: null == persona ? _self.persona : persona // ignore: cast_nullable_to_non_nullable
 as AiPersona,difficulty: null == difficulty ? _self.difficulty : difficulty // ignore: cast_nullable_to_non_nullable
@@ -173,7 +173,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameRuleset ruleset,  MapData mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameRuleset ruleset,  MapReadView mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AiContext() when $default != null:
 return $default(_that.ruleset,_that.mapData,_that.turn,_that.rng,_that.persona,_that.difficulty,_that.civProfile,_that.strategicPlan,_that.scoreRace,_that.deadline,_that.ownControlPercent,_that.knownPlayerCount);case _:
@@ -194,7 +194,7 @@ return $default(_that.ruleset,_that.mapData,_that.turn,_that.rng,_that.persona,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameRuleset ruleset,  MapData mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameRuleset ruleset,  MapReadView mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)  $default,) {final _that = this;
 switch (_that) {
 case _AiContext():
 return $default(_that.ruleset,_that.mapData,_that.turn,_that.rng,_that.persona,_that.difficulty,_that.civProfile,_that.strategicPlan,_that.scoreRace,_that.deadline,_that.ownControlPercent,_that.knownPlayerCount);case _:
@@ -214,7 +214,7 @@ return $default(_that.ruleset,_that.mapData,_that.turn,_that.rng,_that.persona,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameRuleset ruleset,  MapData mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameRuleset ruleset,  MapReadView mapData,  int turn,  AiRng rng,  AiPersona persona,  AiDifficulty difficulty,  CivilizationProfile civProfile,  StrategicPlan? strategicPlan,  ScoreRaceAnalysis? scoreRace,  DateTime? deadline,  double ownControlPercent,  int knownPlayerCount)?  $default,) {final _that = this;
 switch (_that) {
 case _AiContext() when $default != null:
 return $default(_that.ruleset,_that.mapData,_that.turn,_that.rng,_that.persona,_that.difficulty,_that.civProfile,_that.strategicPlan,_that.scoreRace,_that.deadline,_that.ownControlPercent,_that.knownPlayerCount);case _:
@@ -233,7 +233,7 @@ class _AiContext extends AiContext {
   
 
 @override final  GameRuleset ruleset;
-@override final  MapData mapData;
+@override final  MapReadView mapData;
 @override final  int turn;
 @override final  AiRng rng;
 @override@JsonKey() final  AiPersona persona;
@@ -275,7 +275,7 @@ abstract mixin class _$AiContextCopyWith<$Res> implements $AiContextCopyWith<$Re
   factory _$AiContextCopyWith(_AiContext value, $Res Function(_AiContext) _then) = __$AiContextCopyWithImpl;
 @override @useResult
 $Res call({
- GameRuleset ruleset, MapData mapData, int turn, AiRng rng, AiPersona persona, AiDifficulty difficulty, CivilizationProfile civProfile, StrategicPlan? strategicPlan, ScoreRaceAnalysis? scoreRace, DateTime? deadline, double ownControlPercent, int knownPlayerCount
+ GameRuleset ruleset, MapReadView mapData, int turn, AiRng rng, AiPersona persona, AiDifficulty difficulty, CivilizationProfile civProfile, StrategicPlan? strategicPlan, ScoreRaceAnalysis? scoreRace, DateTime? deadline, double ownControlPercent, int knownPlayerCount
 });
 
 
@@ -296,7 +296,7 @@ class __$AiContextCopyWithImpl<$Res>
   return _then(_AiContext(
 ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,mapData: null == mapData ? _self.mapData : mapData // ignore: cast_nullable_to_non_nullable
-as MapData,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
+as MapReadView,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int,rng: null == rng ? _self.rng : rng // ignore: cast_nullable_to_non_nullable
 as AiRng,persona: null == persona ? _self.persona : persona // ignore: cast_nullable_to_non_nullable
 as AiPersona,difficulty: null == difficulty ? _self.difficulty : difficulty // ignore: cast_nullable_to_non_nullable

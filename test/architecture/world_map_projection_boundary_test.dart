@@ -52,12 +52,6 @@ const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
 const _allowedProductionProjectionSites = <String, int>{};
 const _allowedProductionImportSites = <String, int>{
   'lib/editor/domain/map_draft.dart::class:MapDraft/method:freeze::call': 1,
-  'packages/aonw_core/lib/ai/mcts/mcts_simulated_economy_command_applier.dart::'
-          'class:MctsSimulatedEconomyCommandApplier/constructor:<unnamed>::call':
-      1,
-  'packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::'
-          'class:_MctsSimulationMaps/constructor:fromMapData::call':
-      1,
   'packages/aonw_core/lib/ai/simulation/economy_simulation.dart::'
           'class:EconomySimulation/method:run::call':
       1,
@@ -105,6 +99,29 @@ void main() {
         ),
         isEmpty,
         reason: methodName,
+      );
+    }
+  });
+
+  test('MCTS production depends only on canonical map read contracts', () {
+    final mctsSources = productionDartSources().entries.where(
+      (entry) => entry.key.startsWith('$_coreLib/ai/mcts/'),
+    );
+    for (final entry in mctsSources) {
+      expect(
+        _namedTypeViolations(entry.value, entry.key, forbiddenType: 'MapData'),
+        isEmpty,
+        reason: entry.key,
+      );
+      expect(
+        _namedTypeViolations(entry.value, entry.key, forbiddenType: 'WorldMap'),
+        isEmpty,
+        reason: entry.key,
+      );
+      expect(
+        entry.value,
+        isNot(contains('LegacyWorldMapAdapter')),
+        reason: entry.key,
       );
     }
   });

@@ -10,7 +10,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 const _militaryAssessment = AiMilitaryAssessment();
 
@@ -78,7 +78,7 @@ final class MctsCommandReconciliationRules {
 
   Set<String> reservedReachableApproachTargets({
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required UnitMovementPathfinder pathfinder,
   }) {
     final origin = HexCoordinate(col: unit.col, row: unit.row);

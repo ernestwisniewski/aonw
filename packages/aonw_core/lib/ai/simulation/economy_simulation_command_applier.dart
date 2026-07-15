@@ -2,10 +2,11 @@ part of 'economy_simulation.dart';
 
 final class _EconomySimulationCommandApplier {
   _EconomySimulationCommandApplier(this.worldMap)
-    : mapTiles = WorldMapReadView(worldMap);
+    : mapView = WorldMapReadView(worldMap);
 
   final WorldMap worldMap;
-  final MapTileLookup mapTiles;
+  final WorldMapReadView mapView;
+  MapTileLookup get mapTiles => mapView;
 
   _ApplyCommandResult apply({
     required int turn,
@@ -21,7 +22,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapTiles: mapView,
           cityRuleset: ruleset.city,
         );
         return _ApplyCommandResult(
@@ -35,7 +36,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: worldMap,
+              mapTiles: mapView,
               ruleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
             );
@@ -71,7 +72,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapData: mapView,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -108,7 +109,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: worldMap,
+              mapTiles: mapView,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -123,7 +124,7 @@ final class _EconomySimulationCommandApplier {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: worldMap,
+              mapTiles: mapView,
             );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -175,7 +176,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapData: mapView,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,

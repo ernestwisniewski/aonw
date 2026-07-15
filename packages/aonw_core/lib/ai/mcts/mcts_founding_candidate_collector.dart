@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 final class MctsFoundingCandidateCollector {
@@ -202,7 +202,7 @@ Set<ResourceType> _visibleResourceTypes(GameView view) {
 }
 
 double _foundingControlledHexScore(
-  TileData tile,
+  MapTileView tile,
   Set<ResourceType> visibleResourceTypes,
 ) {
   final yield = CityTileYieldRules.forTile(tile);

@@ -10,7 +10,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'basic_strategy_founding_move_candidates.dart';
 part 'basic_strategy_founding_safety_policy.dart';
@@ -300,7 +300,7 @@ final class BasicStrategyFoundingMovePlanner {
     required UnitMovementPathfinder pathfinder,
     bool requireVisibleDestination = false,
   }) sync* {
-    for (final tile in view.mapData.tiles) {
+    for (final tile in view.mapData.tileViews) {
       if (unit.occupies(tile.col, tile.row)) continue;
       if (occupied.contains(_key(tile.col, tile.row))) continue;
       if (requireVisibleDestination &&

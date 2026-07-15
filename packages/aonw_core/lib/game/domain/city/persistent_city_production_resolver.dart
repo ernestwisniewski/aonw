@@ -20,6 +20,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityProductionResult {
@@ -43,7 +44,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartBuildingCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
@@ -65,7 +66,7 @@ class PersistentCityProductionResolver {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapTiles: WorldMapReadView(worldMap),
+      mapTiles: mapTiles,
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -100,7 +101,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartUnitProductionCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapReadView mapView,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -125,7 +126,6 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_not_available');
     }
-    final mapView = WorldMapReadView(worldMap);
     final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
       playerId: city.ownerPlayerId,
       unitType: command.unitType,

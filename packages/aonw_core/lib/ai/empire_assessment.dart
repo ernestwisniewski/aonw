@@ -94,7 +94,7 @@ class AiEmpireAssessment {
   static int _desiredCityCount(GameView view, AiContext context) {
     final weights = context.effectiveWeights;
     final personaTarget = weights.expansion >= 1.2 ? 3 : 2;
-    final terrainRoom = _mapExpansionRoom(view.mapData.tiles.length);
+    final terrainRoom = _mapExpansionRoom(view.mapData.tileCount);
     final civRoomBonus = weights.expansion >= 1.45 && terrainRoom > 0 ? 1 : 0;
     return personaTarget + terrainRoom + civRoomBonus;
   }

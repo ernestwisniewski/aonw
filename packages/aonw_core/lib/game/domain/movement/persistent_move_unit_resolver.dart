@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -13,7 +12,6 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentMoveUnitResult {
   const PersistentMoveUnitResult({
@@ -40,7 +38,7 @@ class PersistentMoveUnitResolver {
     required PersistentGameState state,
     required MoveUnitCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTraversalView mapData,
   }) {
     final unitIndex = _unitIndexById(state.units, command.unitId);
     if (unitIndex == null) return _reject(state, 'unit_not_found');
@@ -54,7 +52,6 @@ class PersistentMoveUnitResolver {
       return _reject(state, 'unit_uses_trade_routes');
     }
 
-    final mapData = WorldMapReadView(worldMap);
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _reject(state, 'unit_out_of_bounds');
     }

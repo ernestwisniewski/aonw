@@ -264,7 +264,7 @@ final class BasicStrategyFounderEscortPlanner {
   ) {
     final targets =
         [
-          for (final tile in view.mapData.tiles)
+          for (final tile in view.mapData.tileViews)
             if (HexDistance.between(HexCoordinate.fromTile(tile), focus) <= 2)
               HexCoordinate.fromTile(tile),
         ]..sort((a, b) {

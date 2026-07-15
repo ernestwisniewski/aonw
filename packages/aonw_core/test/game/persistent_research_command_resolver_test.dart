@@ -64,7 +64,7 @@ void main() {
           TechnologyId.agriculture,
         ),
         actorPlayerId: 'player_1',
-        worldMap: _worldMapWithWheat(),
+        mapTiles: _mapTilesWithWheat(),
       );
 
       final research = result.state.research.forPlayer('player_1');
@@ -187,8 +187,8 @@ const _resourceTradeAgreements = <ResourceTradeAgreement>[
   ),
 ];
 
-WorldMap _worldMapWithWheat() {
-  return WorldMap(
+MapTileLookup _mapTilesWithWheat() => WorldMapReadView(
+  WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
@@ -203,5 +203,5 @@ WorldMap _worldMapWithWheat() {
             height: 0,
           ),
     ],
-  );
-}
+  ),
+);

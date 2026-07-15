@@ -7,7 +7,7 @@ import 'package:aonw_core/ai/civilization/persona_weights.dart';
 import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'ai_context.freezed.dart';
@@ -18,7 +18,7 @@ abstract class AiContext with _$AiContext {
 
   const factory AiContext({
     required GameRuleset ruleset,
-    required MapData mapData,
+    required MapReadView mapData,
     required int turn,
     required AiRng rng,
     @Default(AiPersona.balanced) AiPersona persona,

@@ -11,7 +11,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PendingCityAttackThreat {
   final String attackerPlayerId;
@@ -74,7 +74,7 @@ class GameView {
   final Set<String> defaultNeutralPlayerIds;
   final List<PendingCityAttackThreat> pendingCityAttackThreats;
   final FogVisibilityQuery visibility;
-  final MapData mapData;
+  final MapReadView mapData;
   final GameRuleset ruleset;
   final WonderRegistry wonderRegistry;
 
@@ -203,7 +203,7 @@ class GameView {
     PersistentGameState state, {
     required String forPlayerId,
     required int turn,
-    required MapData mapData,
+    required MapReadView mapData,
     required GameRuleset ruleset,
     Iterable<String> recentHostilePlayerIds = const [],
     Iterable<String> activeHostilePlayerIds = const [],

@@ -10,7 +10,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'combat_tactics_evaluation_builders.dart';
 part 'combat_tactics_evaluations.dart';

@@ -25,7 +25,7 @@ void main() {
               FieldImprovementType.farm,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
           );
 
       final worker = result.state.units.single;
@@ -50,7 +50,7 @@ void main() {
               FieldImprovementType.farm,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
             paceBalance: PaceBalance.standard60,
           );
 
@@ -76,7 +76,7 @@ void main() {
             state: state,
             command: const ConfirmWorkerImprovementCommand('worker_1'),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
           );
 
       expect(result.accepted, isTrue);
@@ -98,7 +98,7 @@ void main() {
               improvementType: FieldImprovementType.farm,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
           );
 
       expect(result.accepted, isTrue);
@@ -119,7 +119,7 @@ void main() {
               FieldImprovementType.farm,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
           );
 
       expect(result.accepted, isFalse);
@@ -138,7 +138,7 @@ void main() {
               FieldImprovementType.farm,
             ),
             actorPlayerId: 'player_1',
-            worldMap: _worldMap(),
+            mapTiles: _mapTiles(),
           );
 
       expect(result.accepted, isFalse);
@@ -182,7 +182,7 @@ void main() {
         state: state,
         command: const AssignWorkerToHexCommand('worker_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: _mapTiles(),
       );
 
       final worker = result.state.units.single;
@@ -257,8 +257,8 @@ ResearchState _researchWith(TechnologyId technologyId) {
   );
 }
 
-WorldMap _worldMap() {
-  return WorldMap(
+MapTileLookup _mapTiles() => WorldMapReadView(
+  WorldMap(
     cols: 4,
     rows: 4,
     mapName: 'duel',
@@ -272,8 +272,8 @@ WorldMap _worldMap() {
             height: 0,
           ),
     ],
-  );
-}
+  ),
+);
 
 void _expectPersistentRuntimeSlices(GameRuntimeState runtimeState) {
   expect(

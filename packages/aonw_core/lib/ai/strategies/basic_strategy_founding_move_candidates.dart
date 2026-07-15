@@ -7,7 +7,7 @@ final class _ReachableFounderMove {
     required this.plan,
   });
 
-  final TileData tile;
+  final MapTileView tile;
   final HexCoordinate target;
   final UnitMovementPlan plan;
 

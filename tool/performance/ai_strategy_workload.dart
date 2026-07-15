@@ -132,11 +132,12 @@ final class _StrategyFixture {
 
   factory _StrategyFixture.create() {
     final mapData = _mapData();
+    final mapView = mapData.indexedReadView();
     return _StrategyFixture(
-      view: _view(mapData),
+      view: _view(mapView),
       context: AiContext(
         ruleset: GameRuleset.defaults,
-        mapData: mapData,
+        mapData: mapView,
         turn: 5,
         rng: AiRng.fromTurn(turn: 5, playerId: _playerId, baseSeed: 77),
       ),
@@ -147,7 +148,7 @@ final class _StrategyFixture {
   final AiContext context;
 }
 
-GameView _view(MapData mapData) => GameView.fromPersistentState(
+GameView _view(MapReadView mapView) => GameView.fromPersistentState(
   PersistentGameState(
     playerGold: const {_playerId: 12, _enemyId: 8},
     units: [
@@ -210,20 +211,21 @@ GameView _view(MapData mapData) => GameView.fromPersistentState(
         ),
       },
     ),
-    fogOfWar: _visibleFog(mapData),
+    fogOfWar: _visibleFog(mapView),
   ),
   forPlayerId: _playerId,
   turn: 5,
-  mapData: mapData,
+  mapData: mapView,
   ruleset: GameRuleset.defaults,
 );
 
-FogOfWarState _visibleFog(MapData mapData) => FogOfWarState(
+FogOfWarState _visibleFog(MapReadView mapView) => FogOfWarState(
   players: {
     _playerId: PlayerFogOfWar(
       playerId: _playerId,
       visibleHexes: {
-        for (final tile in mapData.tiles) HexCoordinate.fromTile(tile),
+        for (final tile in mapView.tileViews)
+          HexCoordinate(col: tile.col, row: tile.row),
       },
     ),
   },

@@ -289,7 +289,7 @@ void main() {
         state: state,
         command: const AutoExploreUnitCommand('scout_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 6, rows: 1),
+        mapData: WorldMapReadView(_worldMap(cols: 6, rows: 1)),
       );
       final moved = result.state.units.single;
 
@@ -328,7 +328,7 @@ void main() {
         state: state,
         command: const AutoExploreUnitCommand('scout_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 8, rows: 1),
+        mapData: WorldMapReadView(_worldMap(cols: 8, rows: 1)),
       );
       final moved = result.state.units.single;
 

@@ -46,7 +46,7 @@ abstract final class _CombatTacticsQueries {
     return view.rememberedEnemyCities.cityAt(col, row);
   }
 
-  static ({TileData attacker, TileData defender})? unitAttackTiles({
+  static ({MapTileView attacker, MapTileView defender})? unitAttackTiles({
     required GameView view,
     required GameUnit attacker,
     required GameUnit defender,
@@ -57,7 +57,7 @@ abstract final class _CombatTacticsQueries {
     return (attacker: attackerTile, defender: defenderTile);
   }
 
-  static ({TileData attacker, TileData defender})? cityAttackTiles({
+  static ({MapTileView attacker, MapTileView defender})? cityAttackTiles({
     required GameView view,
     required GameUnit attacker,
     required GameCity city,
@@ -72,8 +72,8 @@ abstract final class _CombatTacticsQueries {
     required GameView view,
     required GameUnit attacker,
     required GameUnit defender,
-    required TileData attackerTile,
-    required TileData defenderTile,
+    required MapTileView attackerTile,
+    required MapTileView defenderTile,
   }) {
     final attackerModifiers = CombatModifierCollector.forAttacker(
       unit: attacker,
@@ -130,7 +130,7 @@ abstract final class _CombatTacticsQueries {
   static Combatant attackerCombatantForCity({
     required GameView view,
     required GameUnit attacker,
-    required TileData attackerTile,
+    required MapTileView attackerTile,
     required AiContext context,
   }) {
     final attackerModifiers = CombatModifierCollector.forAttacker(

@@ -6,7 +6,8 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class RandomStrategy implements AiStrategy {
   const RandomStrategy({
@@ -72,14 +73,14 @@ class RandomStrategy implements AiStrategy {
     );
   }
 
-  List<TileData> _candidateMoves({
+  List<MapTileView> _candidateMoves({
     required GameUnit unit,
     required GameView view,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required Set<String> occupied,
     required UnitMovementPathfinder pathfinder,
   }) {
-    final candidates = <TileData>[];
+    final candidates = <MapTileView>[];
     for (final hex in HexNeighbors.existingAround(
       HexCoordinate(col: unit.col, row: unit.row),
       mapData,

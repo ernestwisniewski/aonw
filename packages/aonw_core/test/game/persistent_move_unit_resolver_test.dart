@@ -25,7 +25,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 3, rows: 1),
+        mapData: _mapView(cols: 3, rows: 1),
       );
 
       expect(result.accepted, isTrue);
@@ -83,7 +83,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 4, rows: 1),
+        mapData: _mapView(cols: 4, rows: 1),
       );
 
       expect(result.accepted, isTrue);
@@ -124,7 +124,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 3, rows: 1),
+        mapData: _mapView(cols: 3, rows: 1),
       );
 
       expect(result.accepted, isFalse);
@@ -151,7 +151,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 4, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 5, rows: 1),
+        mapData: _mapView(cols: 5, rows: 1),
       );
 
       final moved = result.state.units.single;
@@ -188,7 +188,7 @@ void main() {
           state: state,
           command: const MoveUnitCommand('carrier_1', 1, 0),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(
+          mapData: _mapView(
             cols: 2,
             rows: 1,
             terrainOverrides: {
@@ -227,7 +227,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('warrior_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(
+        mapData: _mapView(
           cols: 2,
           rows: 1,
           terrainOverrides: {
@@ -265,7 +265,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('cavalry_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(
+        mapData: _mapView(
           cols: 2,
           rows: 1,
           terrainOverrides: {
@@ -306,7 +306,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 2, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 3, rows: 1),
+        mapData: _mapView(cols: 3, rows: 1),
       );
 
       final queued = result.state.units.single;
@@ -336,7 +336,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_2', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 2, rows: 1),
+        mapData: _mapView(cols: 2, rows: 1),
       );
 
       expect(result.accepted, isFalse);
@@ -370,7 +370,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 2, rows: 1),
+        mapData: _mapView(cols: 2, rows: 1),
       );
 
       expect(result.accepted, isFalse);
@@ -410,7 +410,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 1, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 2, rows: 1),
+        mapData: _mapView(cols: 2, rows: 1),
       );
 
       expect(result.accepted, isTrue);
@@ -454,7 +454,7 @@ void main() {
           state: state,
           command: const MoveUnitCommand('commander_1', 2, 0),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(cols: 3, rows: 2),
+          mapData: _mapView(cols: 3, rows: 2),
         );
         final moved = result.state.units.firstWhere(
           (unit) => unit.id == 'commander_1',
@@ -514,7 +514,7 @@ void main() {
           state: state,
           command: const MoveUnitCommand('commander_1', 2, 0),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(cols: 3, rows: 2),
+          mapData: _mapView(cols: 3, rows: 2),
         );
         final moved = result.state.units.firstWhere(
           (unit) => unit.id == 'commander_1',
@@ -564,7 +564,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 2, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 3, rows: 1),
+        mapData: _mapView(cols: 3, rows: 1),
       );
 
       expect(result.accepted, isTrue);
@@ -600,7 +600,7 @@ void main() {
         state: state,
         command: const MoveUnitCommand('commander_1', 4, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 5, rows: 1),
+        mapData: _mapView(cols: 5, rows: 1),
       );
 
       final moved = result.state.units.firstWhere(
@@ -616,12 +616,12 @@ void main() {
   });
 }
 
-WorldMap _worldMap({
+MapTraversalView _mapView({
   required int cols,
   required int rows,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
-}) {
-  return WorldMap(
+}) => WorldMapReadView(
+  WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
@@ -635,8 +635,8 @@ WorldMap _worldMap({
                 const [TerrainType.grassland],
           ),
     ],
-  );
-}
+  ),
+);
 
 WorldTile _tile(
   int col,

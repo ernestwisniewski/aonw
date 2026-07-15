@@ -59,6 +59,7 @@ void _validateInputs(List<int> counts, int samplesPerCase) {
 Measured<_AiSearchSample> _measureSearch(int iterations) {
   final generator = _CountingActionGenerator();
   final mapData = MapData(cols: 1, rows: 1, tiles: const []);
+  final mapView = mapData.indexedReadView();
   final search = MctsSearch(
     actionGenerator: generator,
     simulator: const TracingMctsSimulator(
@@ -69,10 +70,10 @@ Measured<_AiSearchSample> _measureSearch(int iterations) {
     explorationConstant: 1.4,
   );
   final rootState = SimulatedState.fromView(
-    _view(mapData),
+    _view(mapView),
     maxPlanningDepth: 3,
   );
-  final context = _context(mapData);
+  final context = _context(mapView);
   final measured = measureSync(
     () => search.search(
       rootState: rootState,
@@ -176,21 +177,21 @@ Object _actionJson(MctsAction action) {
       : GameCommandSerializer.toJson(command);
 }
 
-AiContext _context(MapData mapData) {
+AiContext _context(MapReadView mapView) {
   return AiContext(
     ruleset: GameRuleset.defaults,
-    mapData: mapData,
+    mapData: mapView,
     turn: 1,
     rng: AiRng.fromTurn(turn: 1, playerId: 'player_1', baseSeed: 7),
   );
 }
 
-GameView _view(MapData mapData) {
+GameView _view(MapReadView mapView) {
   return GameView.fromPersistentState(
     const PersistentGameState(),
     forPlayerId: 'player_1',
     turn: 1,
-    mapData: mapData,
+    mapData: mapView,
     ruleset: GameRuleset.defaults,
   );
 }

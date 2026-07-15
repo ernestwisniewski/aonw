@@ -8,7 +8,6 @@ import 'package:aonw_core/ai/mcts/mcts_opponent_view_index.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -17,9 +16,7 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/turn.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract interface class MctsSimulator {
   SimulatedState applyAction(SimulatedState state, MctsAction action);
@@ -63,7 +60,6 @@ class TracingMctsSimulator implements MctsSimulator {
     final view = state.view;
     final mapData = view.mapData;
     final ruleset = view.ruleset;
-    final maps = _MctsSimulationMaps.fromMapData(mapData: mapData);
     final persistent = MctsSimulationProjection.persistentStateFromView(
       view,
       units: view.movementBlockingUnits,
@@ -76,7 +72,6 @@ class TracingMctsSimulator implements MctsSimulator {
             forPlayerId: view.forPlayerId,
             turn: view.turn,
             mapData: mapData,
-            maps: maps,
             ruleset: ruleset,
           )
         : persistent;
@@ -115,8 +110,7 @@ class TracingMctsSimulator implements MctsSimulator {
     required PersistentGameState state,
     required String forPlayerId,
     required int turn,
-    required MapData mapData,
-    required _MctsSimulationMaps maps,
+    required MapReadView mapData,
     required GameRuleset ruleset,
   }) {
     var current = state;
@@ -160,7 +154,7 @@ class TracingMctsSimulator implements MctsSimulator {
           actorPlayerId: opponentId,
           turn: turn,
           tick: tick,
-          maps: maps,
+          mapData: mapData,
           ruleset: ruleset,
         );
         tick += 1;
@@ -178,7 +172,7 @@ class TracingMctsSimulator implements MctsSimulator {
     required String actorPlayerId,
     required int turn,
     required int tick,
-    required _MctsSimulationMaps maps,
+    required MapReadView mapData,
     required GameRuleset ruleset,
   }) {
     return switch (command) {
@@ -188,7 +182,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapData: mapData,
             )
             .state,
       AttackHexCommand() => _applyOpponentAttack(
@@ -197,7 +191,7 @@ class TracingMctsSimulator implements MctsSimulator {
         actorPlayerId: actorPlayerId,
         turn: turn,
         tick: tick,
-        mapTiles: maps.mapTiles,
+        mapTiles: mapData,
         ruleset: ruleset,
       ),
       SkipUnitTurnCommand() =>
@@ -230,7 +224,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapData: mapData,
             )
             .state,
       FoundCityCommand() =>
@@ -239,7 +233,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
               cityRuleset: ruleset.city,
             )
             .state,
@@ -249,7 +243,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
               ruleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
             )
@@ -260,7 +254,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -272,7 +266,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapView: mapData,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -302,7 +296,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -314,7 +308,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
@@ -326,7 +320,7 @@ class TracingMctsSimulator implements MctsSimulator {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: maps.canonicalMap,
+              mapTiles: mapData,
             )
             .state,
       _ => state,
@@ -372,16 +366,4 @@ class TracingMctsSimulator implements MctsSimulator {
   bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
-}
-
-final class _MctsSimulationMaps {
-  const _MctsSimulationMaps(this.canonicalMap, this.mapTiles);
-
-  factory _MctsSimulationMaps.fromMapData({required MapData mapData}) {
-    final canonicalMap = LegacyWorldMapAdapter.fromMapData(mapData);
-    return _MctsSimulationMaps(canonicalMap, WorldMapReadView(canonicalMap));
-  }
-
-  final WorldMap canonicalMap;
-  final MapTileLookup mapTiles;
 }

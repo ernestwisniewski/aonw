@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -6,7 +5,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentWorkerCommandResult {
   const PersistentWorkerCommandResult({
@@ -27,7 +26,7 @@ class PersistentWorkerCommandResolver {
     required PersistentGameState state,
     required SelectWorkerImprovementCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -37,7 +36,7 @@ class PersistentWorkerCommandResolver {
       unitId: command.unitId,
       improvementType: command.improvementType,
       actorPlayerId: actorPlayerId,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
@@ -48,7 +47,7 @@ class PersistentWorkerCommandResolver {
     required PersistentGameState state,
     required ConfirmWorkerImprovementCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -75,7 +74,7 @@ class PersistentWorkerCommandResolver {
       unitId: command.unitId,
       improvementType: improvementType,
       actorPlayerId: actorPlayerId,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
@@ -113,7 +112,7 @@ class PersistentWorkerCommandResolver {
     required PersistentGameState state,
     required AssignWorkerToHexCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
   }) {
     final unitIndex = _unitIndexById(state.units, command.unitId);
     if (unitIndex == null) return _reject(state, 'worker_not_found');
@@ -123,7 +122,6 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     final legality = WorkerAssignmentRules.evaluate(
       unit: worker,
       cities: state.cities,
@@ -185,7 +183,7 @@ class PersistentWorkerCommandResolver {
     required String unitId,
     required FieldImprovementType improvementType,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
@@ -198,7 +196,6 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     final legality = WorkerImprovementRules.evaluate(
       unit: worker,
       improvementType: improvementType,

@@ -35,7 +35,9 @@ void main() {
         state: state,
         command: command,
         actorPlayerId: 'player_2',
-        worldMap: MctsSimulatorParityFixtures.worldMap(mapData: mapData),
+        mapData: WorldMapReadView(
+          MctsSimulatorParityFixtures.worldMap(mapData: mapData),
+        ),
       );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
@@ -78,7 +80,7 @@ void main() {
             state: state,
             command: command,
             actorPlayerId: 'player_2',
-            worldMap: MctsSimulatorParityFixtures.worldMap(),
+            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
             cityRuleset: GameRuleset.defaults.city,
             technologyRuleset: GameRuleset.defaults.technology,
             paceBalance: GameRuleset.defaults.paceBalance,
@@ -122,7 +124,7 @@ void main() {
             state: state,
             command: command,
             actorPlayerId: 'player_2',
-            worldMap: MctsSimulatorParityFixtures.worldMap(),
+            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
             cityRuleset: GameRuleset.defaults.city,
             technologyRuleset: GameRuleset.defaults.technology,
             paceBalance: GameRuleset.defaults.paceBalance,
@@ -163,7 +165,7 @@ void main() {
             state: state,
             command: command,
             actorPlayerId: 'player_2',
-            worldMap: MctsSimulatorParityFixtures.worldMap(),
+            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
           );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(

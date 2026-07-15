@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 final class MctsSimulatedCombatCommandApplier {
   const MctsSimulatedCombatCommandApplier({
@@ -163,7 +163,7 @@ final class MctsSimulatedCombatCommandApplier {
     AttackHexCommand command, {
     required GameUnit attacker,
     required int attackerIndex,
-    required TileData attackerTile,
+    required MapTileView attackerTile,
   }) {
     final cityIndex = _rememberedEnemyCityIndexAt(
       command.defenderCol,
@@ -285,8 +285,8 @@ final class MctsSimulatedCombatCommandApplier {
   ({Combatant attacker, Combatant defender}) _combatantsFor({
     required GameUnit attacker,
     required GameUnit defender,
-    required TileData attackerTile,
-    required TileData defenderTile,
+    required MapTileView attackerTile,
+    required MapTileView defenderTile,
   }) {
     final attackerModifiers = CombatModifierCollector.forAttacker(
       unit: attacker,

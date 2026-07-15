@@ -46,10 +46,15 @@ void main() {
       expect(prepared?.view.forPlayerId, 'player_2');
       expect(prepared?.context.persona, AiPersona.aggressive);
       expect(prepared?.view.pressureTargetPlayerIds, {'player_1'});
+      final preparedTurn = prepared!;
+      expect(preparedTurn.view.mapData, same(preparedTurn.context.mapData));
 
-      final plan = prepared!.strategy.plan(prepared.view, prepared.context);
+      final plan = preparedTurn.strategy.plan(
+        preparedTurn.view,
+        preparedTurn.context,
+      );
 
-      expect(strategy.lastView, same(prepared.view));
+      expect(strategy.lastView, same(preparedTurn.view));
       expect(plan.commands, [
         const ResetUnitMovementCommand(playerId: 'player_2'),
         const SkipUnitTurnCommand('commander_player_2'),

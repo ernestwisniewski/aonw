@@ -11,7 +11,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 final class BasicStrategyExplorationPlanner {
   const BasicStrategyExplorationPlanner({
@@ -254,7 +254,7 @@ final class _ExplorationMoveCandidate {
     required this.nearestOwnCityDistance,
   });
 
-  final TileData tile;
+  final MapTileView tile;
   final double score;
   final int movementCost;
   final int nearestOwnCityDistance;

@@ -46,16 +46,16 @@ void main(List<String> args) {
     );
     final result = EconomySimulation.run(config: config);
     final row = result.rowsByPlayerId[playerId]!.last;
-    final mapData = _simulationMap();
+    final mapView = _simulationMap().indexedReadView();
     final state =
         PersistentTurnMovementProcessor.resetForPlayers(
           state: result.state,
           playerIds: const ['player_1', 'player_2', 'player_3', 'player_4'],
-          mapData: mapData,
+          mapData: mapView,
         ).state.copyWith(
           fogOfWar: const FogOfWarService().recompute(
             current: result.state.fogOfWar,
-            mapData: mapData,
+            mapData: mapView,
             playerIds: const ['player_1', 'player_2', 'player_3', 'player_4'],
             units: result.state.units,
             cities: result.state.cities,
@@ -72,7 +72,7 @@ void main(List<String> args) {
     final civProfile = registry.profileFor(player.country);
     var context = AiContext(
       ruleset: GameRuleset.defaults,
-      mapData: mapData,
+      mapData: mapView,
       turn: turn + 1,
       rng: AiRng.fromTurn(
         turn: turn + 1,
@@ -87,7 +87,7 @@ void main(List<String> args) {
       state,
       forPlayerId: playerId,
       turn: turn + 1,
-      mapData: mapData,
+      mapData: mapView,
       ruleset: GameRuleset.defaults,
     );
     final assessment = AiEmpireAssessment.fromView(view, context);
@@ -205,7 +205,7 @@ void _printCitySiteDiagnostics(
   final samples = <String, List<String>>{};
   final viable = <String>[];
 
-  for (final tile in view.mapData.tiles) {
+  for (final tile in view.mapData.tileViews) {
     final center = CityHex(col: tile.col, row: tile.row);
     final founder = _nearestFounder(founders, center);
     if (founder == null) continue;

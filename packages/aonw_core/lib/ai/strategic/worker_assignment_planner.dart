@@ -9,7 +9,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'worker_assignment_scoring.dart';
 
@@ -178,7 +178,7 @@ class WorkerAssignmentPlanner {
   StrategicWorkerTarget? _bestBuildTargetForHex({
     required GameCity city,
     required CityHex hex,
-    required TileData tile,
+    required MapTileView tile,
     required GameView view,
     required AiContext context,
     required AiEmpireAssessment assessment,
@@ -250,7 +250,7 @@ class WorkerAssignmentPlanner {
   int _existingImprovementScore({
     required GameCity city,
     required CityHex hex,
-    required TileData tile,
+    required MapTileView tile,
     required Iterable<FieldImprovement> fieldImprovements,
     required Set<CityHex> workedHexes,
     required AiContext context,

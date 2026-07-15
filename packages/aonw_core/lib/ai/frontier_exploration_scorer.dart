@@ -3,7 +3,7 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class AiFrontierExplorationScorer {
   static const int observerRevealRadius = 2;
@@ -28,7 +28,7 @@ class AiFrontierExplorationScorer {
   }) {
     var hidden = 0;
     var discovered = 0;
-    for (final tile in view.mapData.tiles) {
+    for (final tile in view.mapData.tileViews) {
       final hex = HexCoordinate.fromTile(tile);
       if (HexDistance.between(origin, hex) > observerRevealRadius) continue;
       if (!view.visibility.canInspectTile(tile)) {
@@ -54,7 +54,7 @@ class AiFrontierExplorationScorer {
     var staleCenters = 0.0;
     var approachScore = 0.0;
     var ringReveal = 0;
-    for (final tile in view.mapData.tiles) {
+    for (final tile in view.mapData.tileViews) {
       final center = HexCoordinate.fromTile(tile);
       final distanceFromOrigin = HexDistance.between(origin, center);
       if (distanceFromOrigin > citySiteApproachRadius) continue;
@@ -119,7 +119,7 @@ class AiFrontierExplorationScorer {
 
   bool _couldBecomeKnownLegalCenter({
     required GameView view,
-    required TileData tile,
+    required MapTileView tile,
     required List<GameCity> knownCities,
   }) {
     if (!CitySiteRules.canFoundCityOn(tile)) return false;

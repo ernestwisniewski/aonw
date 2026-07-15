@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -7,7 +6,6 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityFoundingResult {
   const PersistentCityFoundingResult({
@@ -34,7 +32,7 @@ class PersistentCityFoundingResolver {
     required PersistentGameState state,
     required FoundCityCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
   }) {
     final founderIndex = _unitIndexById(state.units, command.founderId);
@@ -48,7 +46,6 @@ class PersistentCityFoundingResolver {
       return _reject(state, 'city_founder_busy');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     final centerTile = mapTiles.tileAt(founder.col, founder.row);
     final startFailure = CityFoundingRules.startFailure(
       unit: founder,

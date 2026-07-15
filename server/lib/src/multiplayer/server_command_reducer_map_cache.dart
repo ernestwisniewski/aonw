@@ -27,10 +27,12 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
 }
 
 final class _LoadedServerMap {
-  const _LoadedServerMap(this.legacyMapData, this.canonicalWorldMap);
+  _LoadedServerMap(this.legacyMapData, this.canonicalWorldMap)
+    : mapView = WorldMapReadView(canonicalWorldMap);
 
   // Asset maps are read-only in the reducer. Keeping this cache reducer-owned
   // avoids changing the mutable map catalog contract used by editor tooling.
   final MapData legacyMapData;
   final WorldMap canonicalWorldMap;
+  final WorldMapReadView mapView;
 }
