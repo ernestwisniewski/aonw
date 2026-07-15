@@ -22,7 +22,7 @@ class CityWorkedHexCandidate {
 abstract final class CityWorkedHexSelector {
   static List<CityHex> effectiveWorkedHexes({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     Iterable<FieldImprovement> fieldImprovements = const [],
     CityRuleset ruleset = CityRulesets.standard,
   }) {
@@ -36,7 +36,7 @@ abstract final class CityWorkedHexSelector {
 
     final fill = bestForCity(
       city: city,
-      mapData: mapData,
+      mapTiles: mapTiles,
       fieldImprovements: fieldImprovements,
       ruleset: ruleset,
       excludedHexes: selected,
@@ -47,7 +47,7 @@ abstract final class CityWorkedHexSelector {
 
   static List<CityHex> bestForCity({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     Iterable<FieldImprovement> fieldImprovements = const [],
     CityRuleset ruleset = CityRulesets.standard,
     Iterable<CityHex> excludedHexes = const [],
@@ -57,7 +57,7 @@ abstract final class CityWorkedHexSelector {
     final candidates =
         candidatesFor(
             city: city,
-            mapData: mapData,
+            mapTiles: mapTiles,
             fieldImprovements: fieldImprovements,
             ruleset: ruleset,
           ).where((candidate) => !excluded.contains(candidate.hex)).toList()
@@ -72,13 +72,13 @@ abstract final class CityWorkedHexSelector {
 
   static List<CityWorkedHexCandidate> candidatesFor({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     Iterable<FieldImprovement> fieldImprovements = const [],
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     final candidates = <CityWorkedHexCandidate>[];
     for (final hex in city.controlledHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       final tileYield = CityTileYieldRules.forCityHex(
         city: city,
         hex: hex,

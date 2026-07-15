@@ -62,7 +62,7 @@ final class MctsProductionCandidateCollector {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: unitType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
     )) {
       return false;
     }

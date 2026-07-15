@@ -16,7 +16,7 @@ void main() {
       final economy = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(
@@ -40,7 +40,7 @@ void main() {
       final economy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(economy.specializationYield.gold, 3);
@@ -76,24 +76,24 @@ void main() {
       final stable = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: _map(),
+        mapTiles: _map(),
       );
       final content = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: _map(),
+        mapTiles: _map(),
         stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.content),
       );
       final strained = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: _map(),
+        mapTiles: _map(),
         stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.strained),
       );
       final unrest = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: _map(),
+        mapTiles: _map(),
         stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.unrest),
       );
 

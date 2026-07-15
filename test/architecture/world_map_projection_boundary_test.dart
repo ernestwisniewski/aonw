@@ -22,10 +22,7 @@ const _persistentCityProductionResolverPath =
     'packages/aonw_core/lib/game/domain/city/'
     'persistent_city_production_resolver.dart';
 const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
-const _productionMethodsPendingMigration = {
-  'startUnitProduction',
-  'rushProduction',
-};
+const _productionMethodsPendingMigration = {'startUnitProduction'};
 
 void main() {
   test('bounded tile-query resolvers do not materialize legacy maps', () {

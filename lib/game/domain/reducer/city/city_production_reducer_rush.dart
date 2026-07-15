@@ -153,7 +153,7 @@ int _productionPerTurnForTarget({
   final cityEconomy = CityEconomyBreakdown.from(
     city: city,
     tileYield: cityYield,
-    mapData: mapData,
+    mapTiles: mapData,
     ruleset: cityRuleset,
     paceBalance: paceBalance,
     technologyEffects: technologyEffects,
@@ -221,7 +221,7 @@ _RushProductionApplication _applyRushedProduction({
         city: updatedCity,
         unitType: unitType,
         units: updatedUnits,
-        mapData: mapData,
+        mapTiles: mapData,
       );
       if (producedUnit != null) {
         updatedUnits = [...updatedUnits, producedUnit];

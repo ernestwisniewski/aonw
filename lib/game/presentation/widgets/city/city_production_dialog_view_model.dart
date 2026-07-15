@@ -247,7 +247,7 @@ class CityProductionDialogViewModel {
           !CityUnitProductionRules.canProduceInCity(
             city: city,
             unitType: type,
-            mapData: mapData,
+            mapTiles: mapData,
           );
       final cost = CityProductionRules.unitProductionCost(
         type,

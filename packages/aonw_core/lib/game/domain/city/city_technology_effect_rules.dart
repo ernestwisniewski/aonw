@@ -18,12 +18,12 @@ abstract final class CityTechnologyEffectRules {
 
   static TileYield yieldForCity(
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     TechnologyEffectSummary effects = TechnologyEffectSummary.empty,
   }) {
     var production = 0;
     for (final hex in city.territoryHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) continue;
 
       for (final resource in tile.resources) {

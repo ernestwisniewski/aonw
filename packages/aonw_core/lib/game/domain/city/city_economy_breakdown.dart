@@ -50,7 +50,7 @@ class CityEconomyBreakdown {
   factory CityEconomyBreakdown.from({
     required GameCity city,
     required TileYield tileYield,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     CityRuleset ruleset = CityRulesets.standard,
     TechnologyEffectSummary technologyEffects = TechnologyEffectSummary.empty,
     Iterable<GameCity> cities = const [],
@@ -61,7 +61,7 @@ class CityEconomyBreakdown {
   }) {
     final buildingYield = CityBuildingRules.yieldForCity(
       city,
-      mapData,
+      mapTiles,
       ruleset: ruleset,
     );
     final wonderCities = cities.isEmpty ? [city] : cities;
@@ -89,7 +89,7 @@ class CityEconomyBreakdown {
     );
     final technologyYield = CityTechnologyEffectRules.yieldForCity(
       city,
-      mapData,
+      mapTiles,
       effects: technologyEffects,
     );
     final populationUpkeep = CityGrowthRules.populationUpkeep(

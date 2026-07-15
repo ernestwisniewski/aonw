@@ -214,7 +214,7 @@ final class _EconomySimulationTurnRowFactory {
     return CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: ruleset.city,
       paceBalance: ruleset.paceBalance,
       technologyEffects: technologyEffects,

@@ -105,7 +105,7 @@ abstract final class CityUnitSupplyRules {
       final economy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapData: mapData,
+        mapTiles: mapData,
         ruleset: cityRuleset,
         technologyEffects: technologyEffects,
       );

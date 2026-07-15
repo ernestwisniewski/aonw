@@ -171,7 +171,7 @@ class CityYieldBreakdownViewModel {
     final economy = CityEconomyBreakdown.from(
       city: city,
       tileYield: tileBreakdown.total,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       paceBalance: paceBalance,
       technologyEffects: technologyEffects,

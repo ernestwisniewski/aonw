@@ -404,7 +404,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     final manualWorked = _manualWorkedHexes(city, cityRuleset).toSet();
     final effectiveWorked = CityWorkedHexSelector.effectiveWorkedHexes(
       city: city,
-      mapData: mapData,
+      mapTiles: mapData,
       fieldImprovements: state.fieldImprovements,
       ruleset: cityRuleset,
     ).toSet();
@@ -412,7 +412,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     final candidates =
         CityWorkedHexSelector.candidatesFor(
             city: city,
-            mapData: mapData,
+            mapTiles: mapData,
             fieldImprovements: state.fieldImprovements,
             ruleset: cityRuleset,
           ).where((candidate) {

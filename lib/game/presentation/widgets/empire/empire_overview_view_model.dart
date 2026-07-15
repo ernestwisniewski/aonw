@@ -137,7 +137,7 @@ class EmpireOverviewViewModel {
     final economy = CityEconomyBreakdown.from(
       city: city,
       tileYield: tileYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
       paceBalance: paceBalance,

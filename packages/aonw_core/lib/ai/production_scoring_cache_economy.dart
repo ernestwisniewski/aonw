@@ -15,7 +15,7 @@ CityEconomyBreakdown _economyFor(
     return CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: cache.view.mapData,
+      mapTiles: cache.view.mapData,
       ruleset: cache.view.ruleset.city,
       paceBalance: cache.view.ruleset.paceBalance,
       technologyEffects: cache.technologyEffects,

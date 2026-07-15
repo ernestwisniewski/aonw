@@ -133,7 +133,7 @@ abstract final class CityTurnProcessor {
     final economy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: ruleset,
       paceBalance: paceBalance,
       technologyEffects: technologyEffects,
@@ -355,7 +355,7 @@ abstract final class CityTurnProcessor {
             city: nextCity,
             unitType: unitType,
             units: units,
-            mapData: mapData,
+            mapTiles: mapData,
           );
           if (producedUnit != null) {
             final unitWithArtifactExperience = UnitVeterancyRules.addExperience(

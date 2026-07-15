@@ -123,7 +123,7 @@ abstract final class CityProductionReducer {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: command.unitType,
-      mapData: mapData,
+      mapTiles: mapData,
     )) {
       return GameStateTransition(state: state);
     }
@@ -344,7 +344,7 @@ abstract final class CityProductionReducer {
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       paceBalance: paceBalance,
       technologyEffects: TechnologyEffectSummary.forPlayer(

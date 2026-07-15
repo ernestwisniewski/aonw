@@ -11,13 +11,13 @@ abstract final class CityUnitProductionRules {
     required GameCity city,
     required GameUnitType unitType,
     required List<GameUnit> units,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
-    if (!canProduceInCity(city: city, unitType: unitType, mapData: mapData)) {
+    if (!canProduceInCity(city: city, unitType: unitType, mapTiles: mapTiles)) {
       return null;
     }
 
-    for (final candidate in _spawnCandidates(city, mapData)) {
+    for (final candidate in _spawnCandidates(city, mapTiles)) {
       final occupied = units.any(
         (unit) => unit.occupies(candidate.col, candidate.row),
       );
@@ -25,7 +25,7 @@ abstract final class CityUnitProductionRules {
         continue;
       }
 
-      if (!_canSpawnUnitOnCandidate(unitType, candidate, mapData)) continue;
+      if (!_canSpawnUnitOnCandidate(unitType, candidate, mapTiles)) continue;
 
       return GameUnit.produced(
         id: _nextProducedUnitId(city, unitType, units),
@@ -42,24 +42,24 @@ abstract final class CityUnitProductionRules {
   static bool canProduceInCity({
     required GameCity city,
     required GameUnitType unitType,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
     if (!unitType.canBeProducedByCities) return false;
     if (!unitType.isNaval) return true;
 
-    return _spawnCandidates(city, mapData).any(
-      (candidate) => _canSpawnUnitOnCandidate(unitType, candidate, mapData),
+    return _spawnCandidates(city, mapTiles).any(
+      (candidate) => _canSpawnUnitOnCandidate(unitType, candidate, mapTiles),
     );
   }
 
   static bool _canSpawnUnitOnCandidate(
     GameUnitType unitType,
     CityHex candidate,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tile = mapData.tileAt(candidate.col, candidate.row);
+    final tile = mapTiles.tileAt(candidate.col, candidate.row);
     if (tile == null) return false;
-    if (unitType.isNaval && !_isOceanAdjacentCoast(candidate, tile, mapData)) {
+    if (unitType.isNaval && !_isOceanAdjacentCoast(candidate, tile, mapTiles)) {
       return false;
     }
     return UnitMovementCostRules.costToEnterTile(
@@ -87,14 +87,14 @@ abstract final class CityUnitProductionRules {
   static bool _isOceanAdjacentCoast(
     CityHex hex,
     TileData tile,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     if (!_isCoast(tile)) return false;
     for (final neighbor in HexNeighbors.existingAround(
       hex.toCoordinate(),
-      mapData,
+      mapTiles,
     )) {
-      final neighborTile = mapData.tileAt(neighbor.col, neighbor.row);
+      final neighborTile = mapTiles.tileAt(neighbor.col, neighbor.row);
       if (neighborTile != null && _isOcean(neighborTile)) return true;
     }
     return false;
@@ -102,7 +102,7 @@ abstract final class CityUnitProductionRules {
 
   static Iterable<CityHex> _spawnCandidates(
     GameCity city,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) sync* {
     final seen = <CityHex>{};
 
@@ -112,7 +112,7 @@ abstract final class CityUnitProductionRules {
 
     for (final neighbor in HexNeighbors.existingAround(
       city.center.toCoordinate(),
-      mapData,
+      mapTiles,
     )) {
       final hex = CityHex.fromCoordinate(neighbor);
       if (seen.add(hex)) {

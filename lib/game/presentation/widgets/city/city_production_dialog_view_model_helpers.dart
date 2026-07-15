@@ -24,7 +24,7 @@ TileYield _currentCityYieldFor({
   final economy = CityEconomyBreakdown.from(
     city: city,
     tileYield: tileYield,
-    mapData: mapData,
+    mapTiles: mapData,
     ruleset: cityRuleset,
     technologyEffects: technologyEffects,
     cities: cities,

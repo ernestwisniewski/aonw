@@ -154,7 +154,7 @@ final class MctsSimulatedEconomyCommandApplier {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: command.unitType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
     )) {
       return ownCities;
     }

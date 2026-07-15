@@ -24,7 +24,7 @@ abstract final class HudCityEconomyCalculator {
     return CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
       stabilityModifier: stabilityModifier,

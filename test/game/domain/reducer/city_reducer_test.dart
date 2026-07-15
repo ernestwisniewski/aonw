@@ -654,7 +654,7 @@ void main() {
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapData: mapData,
+        mapTiles: mapData,
       );
       final state = GameState(
         cities: [city],
@@ -692,7 +692,7 @@ void main() {
       final cityEconomy = CityEconomyBreakdown.from(
         city: city2,
         tileYield: cityYield,
-        mapData: mapData,
+        mapTiles: mapData,
       );
       final state = GameState(
         cities: [city1, city2],
@@ -977,7 +977,7 @@ void main() {
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapData: mapData,
+        mapTiles: mapData,
       );
       final state = GameState(
         cities: [city],
@@ -1322,7 +1322,7 @@ void main() {
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapData: mapData,
+        mapTiles: mapData,
       );
       final state = GameState(
         cities: [city],

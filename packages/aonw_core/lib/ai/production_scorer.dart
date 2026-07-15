@@ -310,7 +310,7 @@ class AiProductionScorer {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: unitType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
     )) {
       return false;
     }
@@ -379,7 +379,7 @@ class AiProductionScorer {
     return CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       paceBalance: view.ruleset.paceBalance,
       technologyEffects: technologyEffects,

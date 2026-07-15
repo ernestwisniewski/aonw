@@ -18,7 +18,7 @@ abstract final class CityYieldCalculator {
 
   static TileYield totalFor(
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     Iterable<FieldImprovement> fieldImprovements = const [],
     Iterable<GameUnit> units = const [],
     Iterable<WorldArtifact> artifacts = const [],
@@ -26,7 +26,7 @@ abstract final class CityYieldCalculator {
   }) {
     return breakdownFor(
       city,
-      mapData,
+      mapTiles,
       fieldImprovements: fieldImprovements,
       units: units,
       artifacts: artifacts,
@@ -36,7 +36,7 @@ abstract final class CityYieldCalculator {
 
   static CityTileYieldBreakdown breakdownFor(
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     Iterable<FieldImprovement> fieldImprovements = const [],
     Iterable<GameUnit> units = const [],
     Iterable<WorldArtifact> artifacts = const [],
@@ -49,7 +49,7 @@ abstract final class CityYieldCalculator {
     );
     final workedHexes = CityWorkedHexSelector.effectiveWorkedHexes(
       city: city,
-      mapData: mapData,
+      mapTiles: mapTiles,
       fieldImprovements: fieldImprovements,
       ruleset: ruleset,
     ).toSet();
@@ -60,7 +60,7 @@ abstract final class CityYieldCalculator {
       fullYieldHexes: fullYieldHexes,
     );
 
-    final centerTile = mapData.tileAt(city.center.col, city.center.row);
+    final centerTile = mapTiles.tileAt(city.center.col, city.center.row);
     final centerYield = CityTileYieldRules.forCityHex(
       city: city,
       hex: city.center,
@@ -70,7 +70,7 @@ abstract final class CityYieldCalculator {
     );
     final populationContributions = <CityTileYieldContribution>[];
     for (final hex in workedHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       final tileYield = CityTileYieldRules.forCityHex(
         city: city,
         hex: hex,
@@ -89,7 +89,7 @@ abstract final class CityYieldCalculator {
 
     final workerContributions = <CityTileYieldContribution>[];
     for (final hex in assignedWorkerHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       final tileYield = CityTileYieldRules.forCityHex(
         city: city,
         hex: hex,

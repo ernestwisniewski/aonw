@@ -141,7 +141,7 @@ class PersistentCityProductionResolver {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: command.unitType,
-      mapData: mapData,
+      mapTiles: mapData,
     )) {
       return _reject(state, 'unit_production_requires_coast');
     }
@@ -316,7 +316,7 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,
@@ -324,7 +324,7 @@ class PersistentCityProductionResolver {
     );
     final cityYield = CityYieldCalculator.totalFor(
       city,
-      mapData,
+      mapTiles,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
       ruleset: cityRuleset,
@@ -332,7 +332,7 @@ class PersistentCityProductionResolver {
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapTiles,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
       paceBalance: paceBalance,
@@ -416,7 +416,7 @@ class PersistentCityProductionResolver {
             city: updatedCity,
             unitType: unitType,
             units: updatedUnits,
-            mapData: mapData,
+            mapTiles: mapTiles,
           );
           if (producedUnit != null) {
             updatedUnits = [...updatedUnits, producedUnit];

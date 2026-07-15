@@ -166,7 +166,7 @@ final class _EmpireYieldSnapshot {
       final economy = CityEconomyBreakdown.from(
         city: city,
         tileYield: tileYield,
-        mapData: view.mapData,
+        mapTiles: view.mapData,
         ruleset: view.ruleset.city,
         paceBalance: view.ruleset.paceBalance,
         technologyEffects: technologyEffects,

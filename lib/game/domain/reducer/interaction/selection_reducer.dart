@@ -407,7 +407,7 @@ abstract final class SelectionReducer {
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       paceBalance: paceBalance,
       technologyEffects: TechnologyEffectSummary.forPlayer(

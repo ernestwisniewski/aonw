@@ -63,7 +63,7 @@ abstract final class CityExpansionReducer {
           cityEconomy: CityEconomyBreakdown.from(
             city: updatedCity,
             tileYield: cityYield,
-            mapData: mapData,
+            mapTiles: mapData,
             ruleset: cityRuleset,
             technologyEffects: technologyEffects,
           ),

@@ -113,7 +113,7 @@ class WorkerAssignmentPlanner {
     );
     final workedHexes = CityWorkedHexSelector.effectiveWorkedHexes(
       city: city,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       fieldImprovements: view.ownImprovements,
       ruleset: view.ruleset.city,
     ).toSet();

@@ -18,13 +18,13 @@ void main() {
         city: city,
         unitType: GameUnitType.warrior,
         units: [garrison],
-        mapData: mapData,
+        mapTiles: mapData,
       );
       final merchant = CityUnitProductionRules.produce(
         city: city,
         unitType: GameUnitType.merchant,
         units: [garrison],
-        mapData: mapData,
+        mapTiles: mapData,
       );
 
       expect(warrior, isNull);
@@ -45,7 +45,7 @@ void main() {
         CityUnitProductionRules.canProduceInCity(
           city: city,
           unitType: GameUnitType.scoutShip,
-          mapData: mapData,
+          mapTiles: mapData,
         ),
         isFalse,
       );
@@ -54,7 +54,7 @@ void main() {
           city: city,
           unitType: GameUnitType.scoutShip,
           units: const [],
-          mapData: mapData,
+          mapTiles: mapData,
         ),
         isNull,
       );
@@ -73,14 +73,14 @@ void main() {
         city: city,
         unitType: GameUnitType.scoutShip,
         units: const [],
-        mapData: mapData,
+        mapTiles: mapData,
       );
 
       expect(
         CityUnitProductionRules.canProduceInCity(
           city: city,
           unitType: GameUnitType.scoutShip,
-          mapData: mapData,
+          mapTiles: mapData,
         ),
         isTrue,
       );

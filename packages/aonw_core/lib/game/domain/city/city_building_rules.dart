@@ -9,7 +9,7 @@ import 'package:aonw_core/map/domain/map_data.dart';
 abstract final class CityBuildingRules {
   static TileYield yieldForCity(
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset ruleset = CityRulesets.standard,
   }) {
     var total = TileYield.zero;
@@ -25,7 +25,7 @@ abstract final class CityBuildingRules {
               _scaleYield(
                 yieldPerRiverHex,
                 _effectiveApplicationCount(
-                  _riverHexCount(city, mapData),
+                  _riverHexCount(city, mapTiles),
                   maxApplications,
                 ),
               ),
@@ -88,10 +88,10 @@ abstract final class CityBuildingRules {
     );
   }
 
-  static int _riverHexCount(GameCity city, MapData mapData) {
+  static int _riverHexCount(GameCity city, MapTileLookup mapTiles) {
     var count = 0;
     for (final hex in city.territoryHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile != null && TileYieldRules.hasRiver(tile)) {
         count++;
       }

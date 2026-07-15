@@ -56,7 +56,7 @@ void main() {
       () {
         final selected = CityWorkedHexSelector.effectiveWorkedHexes(
           city: _city(population: 2),
-          mapData: _map(),
+          mapTiles: _map(),
         );
 
         expect(selected, const [
@@ -72,7 +72,7 @@ void main() {
           population: 2,
           workedHexes: const [CityHex(col: 1, row: 2)],
         ),
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(selected, const [
@@ -102,7 +102,7 @@ void main() {
 
       final selected = CityWorkedHexSelector.effectiveWorkedHexes(
         city: _city(population: 3),
-        mapData: _map(),
+        mapTiles: _map(),
         ruleset: ruleset,
       );
 
