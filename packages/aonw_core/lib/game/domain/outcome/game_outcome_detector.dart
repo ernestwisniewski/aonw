@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/outcome/domination_progress_calculator.dar
 import 'package:aonw_core/game/domain/outcome/empire_score_calculator.dart';
 import 'package:aonw_core/game/domain/outcome/game_outcome.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class GameOutcomeDetector {
   final EmpireScoreCalculator scoreCalculator;
@@ -17,7 +17,7 @@ class GameOutcomeDetector {
     required Iterable<String> playerIds,
     required PersistentGameState state,
     MatchRules matchRules = MatchRules.standard,
-    MapData? mapData,
+    MapReadView? mapData,
     int? turn,
   }) {
     final players = {
@@ -96,7 +96,7 @@ class GameOutcomeDetector {
     required Set<String> players,
     required PersistentGameState state,
     required MatchRules matchRules,
-    required MapData? mapData,
+    required MapReadView? mapData,
   }) {
     final rules = matchRules.victory;
     if (!rules.dominationEnabled) return null;
@@ -147,7 +147,7 @@ class GameOutcomeDetector {
     required Set<String> players,
     required PersistentGameState state,
     required MatchRules matchRules,
-    required MapData? mapData,
+    required MapReadView? mapData,
     required int? turn,
   }) {
     final rules = matchRules.victory;

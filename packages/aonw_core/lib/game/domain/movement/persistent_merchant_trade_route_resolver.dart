@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
@@ -6,7 +5,7 @@ import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentMerchantTradeRouteResult {
   const PersistentMerchantTradeRouteResult({
@@ -27,7 +26,7 @@ class PersistentMerchantTradeRouteResolver {
     required PersistentGameState state,
     required AssignMerchantTradeRouteCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTraversalView mapData,
   }) {
     final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
@@ -62,7 +61,7 @@ class PersistentMerchantTradeRouteResolver {
       merchant: unit,
       originCity: origin,
       destinationCity: destination,
-      mapData: WorldMapReadView(worldMap),
+      mapData: mapData,
       units: state.units,
       cities: state.cities,
     );
@@ -82,7 +81,7 @@ class PersistentMerchantTradeRouteResolver {
     required PersistentGameState state,
     required MoveMerchantToCityCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTraversalView mapData,
   }) {
     final unit = state.units.byId(command.unitId);
     if (unit == null) return _reject(state, 'unit_not_found');
@@ -110,7 +109,7 @@ class PersistentMerchantTradeRouteResolver {
     final plan = MerchantTradeRouteRules.planMoveToCity(
       merchant: unit,
       destinationCity: destination,
-      mapData: WorldMapReadView(worldMap),
+      mapData: mapData,
       units: state.units,
       cities: state.cities,
     );

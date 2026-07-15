@@ -213,7 +213,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required StartWonderCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -227,7 +227,7 @@ class PersistentCityProductionResolver {
     final availability = WonderAvailabilityPolicy.availabilityFor(
       city: city,
       cities: state.cities,
-      mapTiles: WorldMapReadView(worldMap),
+      mapTiles: mapTiles,
       research: state.research,
       registry: state.wonderRegistry,
       ruleset: wonderRuleset,

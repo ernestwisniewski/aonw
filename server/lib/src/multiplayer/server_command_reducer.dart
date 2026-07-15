@@ -270,7 +270,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapData: loadedMap.mapView,
         );
         return _fromPersistentResult(save, result);
       case MoveMerchantToCityCommand():
@@ -278,7 +278,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapData: loadedMap.mapView,
         );
         return _fromPersistentResult(save, result);
       case OpenResourceTradeCommand(:final playerId):
@@ -347,7 +347,6 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: loadedMap.canonicalWorldMap,
           mapView: loadedMap.mapView,
           ruleset: ruleset,
         );
@@ -387,7 +386,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapTiles: loadedMap.mapView,
         );
         return _fromPersistentResult(save, result);
       case ToggleWorkedHexCommand():

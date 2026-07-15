@@ -6,7 +6,6 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
     required GameRuleset ruleset,
   }) {
     return switch (command) {
@@ -34,7 +33,7 @@ extension _EconomySimulationProductionCommandApplier
         state: state,
         command: command,
         actorPlayerId: actorPlayerId,
-        worldMap: worldMap,
+        mapTiles: mapView,
         ruleset: ruleset,
       ),
       _ => throw ArgumentError.value(
@@ -103,14 +102,14 @@ extension _EconomySimulationProductionCommandApplier
     required PersistentGameState state,
     required StartWonderCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required GameRuleset ruleset,
   }) {
     final result = const PersistentCityProductionResolver().startWonder(
       state: state,
       command: command,
       actorPlayerId: actorPlayerId,
-      worldMap: worldMap,
+      mapTiles: mapTiles,
       wonderRuleset: ruleset.wonders,
       paceBalance: ruleset.paceBalance,
     );

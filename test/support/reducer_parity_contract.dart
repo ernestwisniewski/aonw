@@ -37,7 +37,9 @@ bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
           command is MoveMerchantToCityCommand,
     'combat' => command is AttackHexCommand,
     'city-production' =>
-      command is StartBuildingCommand || command is StartUnitProductionCommand,
+      command is StartBuildingCommand ||
+          command is StartUnitProductionCommand ||
+          command is StartWonderCommand,
     'detachment' => command is DetachTroopCommand,
     'research' => command is SelectTechnologyCommand,
     'worker' => command is ConfirmWorkerImprovementCommand,

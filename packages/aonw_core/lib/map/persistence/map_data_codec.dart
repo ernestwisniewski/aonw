@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
-import 'package:aonw_core/domain/world_map_invariants.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -129,22 +128,12 @@ abstract final class MapDataCodec {
 MapData _validateCanonicalMap(MapData mapData) {
   try {
     // WorldMap construction validates each tile before map-wide metadata.
-    // Preserve that public error ordering while using the shared invariants
-    // directly instead of materializing a throwaway canonical map.
-    for (final tile in mapData.tiles) {
-      validateWorldMapTile(
-        terrains: tile.terrains,
-        height: tile.height,
-        reject: _rejectWorldMapInvariant,
-      );
-    }
+    // Preserve that public error ordering without materializing a throwaway
+    // canonical map.
+    validateMapDataTileInvariants(mapData);
     mapData.indexedReadView();
     return mapData;
   } on WorldMapException catch (error) {
     throw MapDataLoadException(error.message);
   }
-}
-
-Never _rejectWorldMapInvariant(String message) {
-  throw WorldMapException(message);
 }

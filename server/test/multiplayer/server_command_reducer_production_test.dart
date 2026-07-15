@@ -29,6 +29,77 @@ void main() {
       const UnitProductionTarget(GameUnitType.warrior),
     );
   });
+
+  test(
+    'routes the end-turn alias through authoritative turn handling',
+    () async {
+      final reduction = await _reduceCommand(
+        const EndTurnCommand('player_1'),
+        state: const PersistentGameState(),
+      );
+      final save = GameSave.fromJson(reduction.snapshot.save);
+
+      expect(reduction.accepted, isTrue);
+      expect(save.turn, 2);
+    },
+  );
+
+  test('routes map-backed commands through the loaded server map', () async {
+    final scenarios = <({GameCommand command, String reason})>[
+      (
+        command: const FoundCityCommand('missing_settler'),
+        reason: 'city_founder_not_found',
+      ),
+      (
+        command: const RushProductionCommand('missing_city'),
+        reason: 'city_not_found',
+      ),
+      (
+        command: const SelectCityExpansionHexCommand('missing_city', 1, 1),
+        reason: 'city_not_found',
+      ),
+      (
+        command: const SelectWorkerImprovementCommand(
+          'missing_worker',
+          FieldImprovementType.farm,
+        ),
+        reason: 'worker_not_found',
+      ),
+      (
+        command: const AssignWorkerToHexCommand('missing_worker'),
+        reason: 'worker_not_found',
+      ),
+    ];
+
+    for (final scenario in scenarios) {
+      final reduction = await _reduceCommand(
+        scenario.command,
+        state: const PersistentGameState(),
+      );
+
+      expect(
+        reduction.accepted,
+        isFalse,
+        reason: '${scenario.command.runtimeType} must be rejected',
+      );
+      expect(reduction.reason, scenario.reason);
+    }
+  });
+}
+
+Future<ServerCommandReduction> _reduceCommand(
+  GameCommand command, {
+  required PersistentGameState state,
+}) {
+  return ServerCommandReducer(
+    mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
+  ).reduce(
+    match: _runningMatch(),
+    snapshot: _snapshot(state),
+    wireCommand: _wireCommand(command),
+    actorPlayerId: 'player_1',
+    now: DateTime.utc(2026, 6, 30, 12),
+  );
 }
 
 WireMatch _runningMatch() => WireMatch(

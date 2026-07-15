@@ -39,11 +39,18 @@ Map<String, String> productionDartSources({String? containing}) {
 }
 
 Set<String> mapDataBackedTypeNames(Map<String, String> sources) {
+  return typeNamesBackedBy(sources, const {'MapData'});
+}
+
+Set<String> typeNamesBackedBy(
+  Map<String, String> sources,
+  Set<String> rootNames,
+) {
   final units = [
     for (final entry in sources.entries)
       parseString(content: entry.value, path: entry.key).unit,
   ];
-  final names = <String>{'MapData'};
+  final names = <String>{...rootNames};
   var changed = true;
   while (changed) {
     changed = false;

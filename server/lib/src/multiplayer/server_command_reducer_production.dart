@@ -6,7 +6,6 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
@@ -44,7 +43,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapTiles: mapView,
           wonderRuleset: ruleset.wonders,
           paceBalance: ruleset.paceBalance,
         ),

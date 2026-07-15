@@ -2,7 +2,6 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_staleness.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_stats.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -21,8 +20,6 @@ import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 
@@ -38,6 +35,10 @@ abstract final class EconomySimulation {
   static const adaptiveLateGameTurnThreshold = 55;
   static const adaptiveLateGameUnitThreshold = 36;
   static const adaptiveLateGameCityThreshold = 8;
+  static const _defaultAiPlayer = AiPlayer(
+    strategyId: AiStrategyId.basic,
+    seed: 1001,
+  );
 
   static EconomySimulationResult run({
     EconomySimulationConfig config = const EconomySimulationConfig(),
@@ -46,13 +47,14 @@ abstract final class EconomySimulation {
     final players = [player, ...config.opponents];
     final playerIds = [for (final player in players) player.id];
     final mapData = config.mapData ?? _EconomySimulationSetup.simulationMap();
-    final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
+    validateMapDataTileInvariants(mapData);
+    final mapView = mapData.indexedReadView();
     var state = _EconomySimulationSetup.initialState(
       player: player,
       opponents: config.opponents,
-      mapData: mapData,
+      mapView: mapView,
     );
-    final commandApplier = _EconomySimulationCommandApplier(worldMap);
+    final commandApplier = _EconomySimulationCommandApplier(mapView);
     const rowFactory = _EconomySimulationTurnRowFactory();
     final hostilityMemory = _EconomySimulationHostilityMemory();
     final rows = <EconomySimulationTurnRow>[];
@@ -66,7 +68,7 @@ abstract final class EconomySimulation {
     final rejectedCommandRecords = <EconomySimulationRejectedCommand>[];
     final aiTurnRuntimes = <EconomySimulationAiTurnRuntime>[];
     final strategicPlansByPlayerId = <String, StrategicPlan>{};
-    final telemetrySamples = <BalanceTelemetryTurnSample>[
+    final telemetrySamples = [
       BalanceTelemetryTurnSample(turn: 0, state: state),
     ];
 
@@ -74,7 +76,7 @@ abstract final class EconomySimulation {
       state = PersistentTurnMovementProcessor.resetForPlayers(
         state: state,
         playerIds: playerIds,
-        mapData: mapData,
+        mapData: mapView,
       ).state;
 
       final commandStatsByPlayerId = {
@@ -88,7 +90,7 @@ abstract final class EconomySimulation {
         state = state.copyWith(
           fogOfWar: const FogOfWarService().recompute(
             current: state.fogOfWar,
-            mapData: mapData,
+            mapData: mapView,
             playerIds: playerIds,
             units: state.units,
             cities: state.cities,
@@ -99,7 +101,7 @@ abstract final class EconomySimulation {
           state,
           forPlayerId: actingPlayer.id,
           turn: turn,
-          mapData: commandApplier.mapView,
+          mapData: mapView,
           ruleset: config.ruleset,
           recentHostilePlayerIds: hostilityMemory.recentFor(
             playerId: actingPlayer.id,
@@ -107,19 +109,17 @@ abstract final class EconomySimulation {
           ),
           ignoreFogOfWar: true,
         );
-        final ai =
-            actingPlayer.ai ??
-            const AiPlayer(strategyId: AiStrategyId.basic, seed: 1001);
+        final ai = actingPlayer.ai ?? _defaultAiPlayer;
         const civRegistry = CivilizationProfileRegistry();
         final civProfile = civRegistry.profileFor(actingPlayer.country);
         final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
           state: state,
           playerId: actingPlayer.id,
-          mapData: commandApplier.mapView,
+          mapData: mapView,
         );
         var context = AiContext(
           ruleset: config.ruleset,
-          mapData: commandApplier.mapView,
+          mapData: mapView,
           turn: turn,
           rng: AiRng.fromTurn(
             turn: turn,
@@ -219,9 +219,9 @@ abstract final class EconomySimulation {
       final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
         state: state,
         playerIds: playerIds,
-        mapData: mapData,
+        mapData: mapView,
         ruleset: config.ruleset,
-        mapObjectives: mapData.objectives,
+        mapObjectives: mapView.objectives,
       );
       state = economy.state;
       turnEvents.addAll(economy.events);
@@ -229,7 +229,7 @@ abstract final class EconomySimulation {
           .advanceHoldTurns(
             playerIds: playerIds,
             state: state,
-            mapData: mapData,
+            mapData: mapView,
             victoryRules: config.matchRules.victory,
             previousHoldTurnsByPlayerId:
                 state.runtimeState.dominationHoldTurnsByPlayerId,
@@ -242,7 +242,7 @@ abstract final class EconomySimulation {
       final dominationProgress = const DominationProgressCalculator().snapshot(
         playerIds: playerIds,
         state: state,
-        mapData: mapData,
+        mapData: mapView,
         victoryRules: config.matchRules.victory,
       );
       final objectiveActionByPlayerId =
@@ -260,7 +260,7 @@ abstract final class EconomySimulation {
           turn: turn,
           state: state,
           playerId: playerId,
-          mapData: mapData,
+          mapView: mapView,
           ruleset: config.ruleset,
           commandStats: commandStatsByPlayerId[playerId]!,
           domination: dominationProgress.entryFor(playerId),
@@ -293,7 +293,7 @@ abstract final class EconomySimulation {
             playerIds: playerIds,
             state: state,
             matchRules: config.matchRules,
-            mapData: mapData,
+            mapData: mapView,
             turn: turn,
           ),
         ),
@@ -325,14 +325,14 @@ abstract final class EconomySimulationTurnRowProjector {
     required int turn,
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapData,
     required GameRuleset ruleset,
   }) {
     return const _EconomySimulationTurnRowFactory().rowFor(
       turn: turn,
       state: state,
       playerId: playerId,
-      mapData: mapData,
+      mapView: mapData,
       ruleset: ruleset,
       commandStats: EconomySimulationCommandStats(),
       domination: null,

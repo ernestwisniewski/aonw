@@ -6,37 +6,37 @@
         "ai": {
           "files": {
             "hit": 186,
-            "found": 193
+            "found": 190
           },
           "lines": {
-            "hit": 12126,
-            "found": 13185
+            "hit": 12184,
+            "found": 13188
           }
         },
         "domain": {
           "files": {
-            "hit": 255,
-            "found": 302
+            "hit": 257,
+            "found": 276
           },
           "lines": {
-            "hit": 9896,
-            "found": 12264
+            "hit": 9989,
+            "found": 12299
           }
         },
         "map": {
           "files": {
-            "hit": 9,
+            "hit": 10,
             "found": 11
           },
           "lines": {
-            "hit": 177,
-            "found": 209
+            "hit": 239,
+            "found": 265
           }
         },
         "protocol": {
           "files": {
             "hit": 7,
-            "found": 11
+            "found": 10
           },
           "lines": {
             "hit": 227,
@@ -55,55 +55,23 @@
         }
       },
       "missingFiles": [
-        "packages/aonw_core/lib/ai.dart",
-        "packages/aonw_core/lib/ai/ai_strategy.dart",
         "packages/aonw_core/lib/ai/ai_strategy_id.dart",
         "packages/aonw_core/lib/ai/civilization/civilization_profiles.dart",
-        "packages/aonw_core/lib/ai/mcts/mcts_simulated_command_application.dart",
         "packages/aonw_core/lib/ai/strategic/strategic_mode.dart",
-        "packages/aonw_core/lib/domain.dart",
-        "packages/aonw_core/lib/game/domain/artifact.dart",
-        "packages/aonw_core/lib/game/domain/city.dart",
         "packages/aonw_core/lib/game/domain/city/city_building_catalog.dart",
         "packages/aonw_core/lib/game/domain/city/city_progression_catalog.dart",
         "packages/aonw_core/lib/game/domain/city/city_yield_catalog.dart",
         "packages/aonw_core/lib/game/domain/city/field_improvement_catalog.dart",
-        "packages/aonw_core/lib/game/domain/combat.dart",
         "packages/aonw_core/lib/game/domain/combat/city_conquest_action.dart",
-        "packages/aonw_core/lib/game/domain/combat/intended_attack.dart",
-        "packages/aonw_core/lib/game/domain/command.dart",
-        "packages/aonw_core/lib/game/domain/diplomacy.dart",
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_score_reason.dart",
-        "packages/aonw_core/lib/game/domain/event.dart",
-        "packages/aonw_core/lib/game/domain/fog.dart",
         "packages/aonw_core/lib/game/domain/fog/fog_balance.dart",
-        "packages/aonw_core/lib/game/domain/hex.dart",
-        "packages/aonw_core/lib/game/domain/match_rules.dart",
-        "packages/aonw_core/lib/game/domain/movement.dart",
         "packages/aonw_core/lib/game/domain/movement/unit_movement_result.dart",
-        "packages/aonw_core/lib/game/domain/objective.dart",
-        "packages/aonw_core/lib/game/domain/outcome.dart",
-        "packages/aonw_core/lib/game/domain/ruleset.dart",
-        "packages/aonw_core/lib/game/domain/runtime.dart",
-        "packages/aonw_core/lib/game/domain/save.dart",
-        "packages/aonw_core/lib/game/domain/stability.dart",
         "packages/aonw_core/lib/game/domain/stability/stability_band.dart",
         "packages/aonw_core/lib/game/domain/stability/stability_source_catalog.dart",
-        "packages/aonw_core/lib/game/domain/state.dart",
-        "packages/aonw_core/lib/game/domain/technology.dart",
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart",
         "packages/aonw_core/lib/game/domain/technology/technology_rulesets.dart",
-        "packages/aonw_core/lib/game/domain/telemetry.dart",
-        "packages/aonw_core/lib/game/domain/terrain.dart",
-        "packages/aonw_core/lib/game/domain/tile_yield.dart",
-        "packages/aonw_core/lib/game/domain/trade.dart",
-        "packages/aonw_core/lib/game/domain/turn.dart",
-        "packages/aonw_core/lib/game/domain/unit.dart",
-        "packages/aonw_core/lib/game/domain/wonder.dart",
         "packages/aonw_core/lib/game/domain/wonder/wonder_catalog.dart",
         "packages/aonw_core/lib/map/domain/map_constraints.dart",
-        "packages/aonw_core/lib/map/persistence.dart",
-        "packages/aonw_core/lib/protocol.dart",
         "packages/aonw_core/lib/protocol/multiplayer_limits.dart",
         "packages/aonw_core/lib/protocol/protocol_version.dart"
       ]
@@ -133,7 +101,7 @@
         "developer": {
           "files": {
             "hit": 7,
-            "found": 9
+            "found": 8
           },
           "lines": {
             "hit": 623,
@@ -163,7 +131,7 @@
         "game_application": {
           "files": {
             "hit": 46,
-            "found": 52
+            "found": 47
           },
           "lines": {
             "hit": 1798,
@@ -172,12 +140,12 @@
         },
         "game_domain": {
           "files": {
-            "hit": 64,
-            "found": 75
+            "hit": 66,
+            "found": 69
           },
           "lines": {
-            "hit": 3152,
-            "found": 3654
+            "hit": 3190,
+            "found": 3619
           }
         },
         "game_infrastructure": {
@@ -193,7 +161,7 @@
         "game_presentation_engine": {
           "files": {
             "hit": 83,
-            "found": 88
+            "found": 86
           },
           "lines": {
             "hit": 6866,
@@ -203,7 +171,7 @@
         "game_presentation_screens": {
           "files": {
             "hit": 41,
-            "found": 56
+            "found": 55
           },
           "lines": {
             "hit": 2919,
@@ -213,7 +181,7 @@
         "game_presentation_support": {
           "files": {
             "hit": 84,
-            "found": 90
+            "found": 88
           },
           "lines": {
             "hit": 4089,
@@ -223,7 +191,7 @@
         "game_presentation_widgets": {
           "files": {
             "hit": 300,
-            "found": 315
+            "found": 308
           },
           "lines": {
             "hit": 19256,
@@ -243,7 +211,7 @@
         "map": {
           "files": {
             "hit": 31,
-            "found": 40
+            "found": 32
           },
           "lines": {
             "hit": 1976,
@@ -253,7 +221,7 @@
         "menu": {
           "files": {
             "hit": 10,
-            "found": 12
+            "found": 11
           },
           "lines": {
             "hit": 1585,
@@ -272,52 +240,18 @@
         }
       },
       "missingFiles": [
-        "lib/developer/asset_adjustment_file_store.dart",
         "lib/developer/asset_adjustment_file_store_stub.dart",
-        "lib/game/application/ports/game_logger.dart",
-        "lib/game/application/ports/game_repository.dart",
-        "lib/game/application/ports/id_generator.dart",
-        "lib/game/application/ports/replay_store.dart",
-        "lib/game/application/use_cases/game_command_dispatcher.dart",
-        "lib/game/domain/city.dart",
-        "lib/game/domain/game_command_context.dart",
-        "lib/game/domain/game_save.dart",
-        "lib/game/domain/game_state_transition.dart",
-        "lib/game/domain/hex_assessment.dart",
         "lib/game/domain/hex_assessment/hex_kind_groups.dart",
-        "lib/game/domain/movement.dart",
         "lib/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart",
-        "lib/game/domain/turn.dart",
         "lib/game/infrastructure/persistence/web/platform_persistence_adapters_web.dart",
         "lib/game/presentation/audio/game_sound_cue.dart",
-        "lib/game/presentation/engine.dart",
-        "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader.dart",
         "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader_stub.dart",
         "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_paths.dart",
-        "lib/game/presentation/input/gamepad/gamepad_input.dart",
-        "lib/game/presentation/providers.dart",
-        "lib/game/presentation/screens.dart",
         "lib/game/presentation/services/isolated_ai_plan_executor_compute.dart",
-        "lib/game/presentation/widgets.dart",
-        "lib/game/presentation/widgets/bottom_toolbar/view_models.dart",
-        "lib/game/presentation/widgets/hud/overlay/hud_overlay_stack_slots.dart",
-        "lib/game/presentation/widgets/selection/selection.dart",
-        "lib/game/presentation/widgets/selection/view_models.dart",
         "lib/game/presentation/widgets/selection/view_models/selection_info_chip_id.dart",
-        "lib/game/presentation/widgets/selection_info/providers.dart",
-        "lib/game/presentation/widgets/selection_info/selection_info.dart",
         "lib/game/presentation/widgets/theme/game_hud_theme.dart",
         "lib/game/presentation/widgets/theme/game_icon.dart",
-        "lib/map/application/map_repository.dart",
-        "lib/map/domain/hex_grid_topology.dart",
-        "lib/map/domain/map_config.dart",
-        "lib/map/domain/map_constraints.dart",
-        "lib/map/domain/map_data.dart",
-        "lib/map/domain/map_selection.dart",
-        "lib/map/domain/map_view_mode.dart",
-        "lib/map/domain/terrain_type.dart",
         "lib/map/rendering/map_alpha.dart",
-        "lib/menu/app_exit.dart",
         "lib/menu/app_exit_stub.dart",
         "lib/shared/theme/hud_palette.dart"
       ]
@@ -327,7 +261,7 @@
         "auth": {
           "files": {
             "hit": 9,
-            "found": 19
+            "found": 17
           },
           "lines": {
             "hit": 220,
@@ -350,8 +284,8 @@
             "found": 44
           },
           "lines": {
-            "hit": 1667,
-            "found": 2369
+            "hit": 1705,
+            "found": 2388
           }
         },
         "observability": {
@@ -389,11 +323,9 @@
         "server/lib/server.dart",
         "server/lib/src/app_status/app_status_endpoint.dart",
         "server/lib/src/auth/account_profile_endpoint.dart",
-        "server/lib/src/auth/apple_idp_endpoint.dart",
         "server/lib/src/auth/auth_rate_limit_constants.dart",
         "server/lib/src/auth/auth_status_endpoint.dart",
         "server/lib/src/auth/email_idp_endpoint.dart",
-        "server/lib/src/auth/google_idp_endpoint.dart",
         "server/lib/src/auth/jwt_refresh_endpoint.dart",
         "server/lib/src/auth/steam_auth_endpoint.dart",
         "server/lib/src/auth/steam_auth_route.dart",

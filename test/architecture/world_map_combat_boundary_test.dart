@@ -45,7 +45,13 @@ const _targets = [
     path:
         'packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart',
     owner: 'PersistentMoveUnitResolver',
-    boundaries: [_Boundary.method('resolve')],
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
   ),
   _Target(
     path:
@@ -53,27 +59,53 @@ const _targets = [
         'persistent_merchant_trade_route_resolver.dart',
     owner: 'PersistentMerchantTradeRouteResolver',
     boundaries: [
-      _Boundary.method('assignRoute'),
-      _Boundary.method('moveToCity'),
+      _Boundary.method(
+        'assignRoute',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'moveToCity',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
     ],
   ),
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/movement/persistent_unit_action_resolver.dart',
     owner: 'PersistentUnitActionResolver',
-    boundaries: [_Boundary.method('autoExploreUnit')],
+    boundaries: [
+      _Boundary.method(
+        'autoExploreUnit',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
   ),
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart',
     owner: 'PersistentUnitDetachmentResolver',
-    boundaries: [_Boundary.method('detachTroop')],
+    boundaries: [
+      _Boundary.method(
+        'detachTroop',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
   ),
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/city/persistent_city_founding_resolver.dart',
     owner: 'PersistentCityFoundingResolver',
-    boundaries: [_Boundary.method('foundCity')],
+    boundaries: [
+      _Boundary.method(
+        'foundCity',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
   ),
   _Target(
     path:
@@ -86,9 +118,21 @@ const _targets = [
         'packages/aonw_core/lib/game/domain/city/persistent_worker_command_resolver.dart',
     owner: 'PersistentWorkerCommandResolver',
     boundaries: [
-      _Boundary.method('selectWorkerImprovement'),
-      _Boundary.method('confirmWorkerImprovement'),
-      _Boundary.method('assignWorkerToHex'),
+      _Boundary.method(
+        'selectWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'confirmWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'assignWorkerToHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
     ],
   ),
   _Target(
@@ -96,9 +140,21 @@ const _targets = [
         'packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart',
     owner: 'PersistentCityProductionResolver',
     boundaries: [
-      _Boundary.method('startBuilding'),
-      _Boundary.method('startUnitProduction'),
-      _Boundary.method('startWonder'),
+      _Boundary.method(
+        'startBuilding',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'startUnitProduction',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+      _Boundary.method(
+        'startWonder',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
       _Boundary.method('rushProduction'),
     ],
   ),
@@ -106,19 +162,32 @@ const _targets = [
     path:
         'packages/aonw_core/lib/game/domain/technology/persistent_research_command_resolver.dart',
     owner: 'PersistentResearchCommandResolver',
-    boundaries: [_Boundary.method('selectTechnology', nullable: true)],
+    boundaries: [
+      _Boundary.method(
+        'selectTechnology',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+        nullable: true,
+      ),
+    ],
   ),
 ];
 
 void main() {
   test('migrated persistent boundaries declare canonical map APIs', () {
-    final mapDataTypeNames = mapDataBackedTypeNames(productionDartSources());
+    final sources = productionDartSources();
+    final mapDataTypeNames = mapDataBackedTypeNames(sources);
+    final mapBoundaryTypeNames = typeNamesBackedBy(
+      sources,
+      _mapBoundaryRootTypeNames,
+    );
     for (final target in _targets) {
       expect(
         _violations(
           File(target.path).readAsStringSync(),
           target,
           mapDataTypeNames: mapDataTypeNames,
+          mapBoundaryTypeNames: mapBoundaryTypeNames,
         ),
         isEmpty,
         reason: target.path,
@@ -133,6 +202,7 @@ List<String> _violations(
   String source,
   _Target target, {
   Set<String> mapDataTypeNames = const {'MapData'},
+  Set<String> mapBoundaryTypeNames = _mapBoundaryRootTypeNames,
 }) {
   final unit = parseString(content: source, path: target.path).unit;
   final owner = unit.declarations.whereType<ClassDeclaration>().where(
@@ -149,6 +219,7 @@ List<String> _violations(
       boundary,
       violations,
       mapDataTypeNames: mapDataTypeNames,
+      mapBoundaryTypeNames: mapBoundaryTypeNames,
     );
   }
   if (_namedTypes(unit).contains('MapDefinition')) {
@@ -169,6 +240,7 @@ void _checkBoundary(
   _Boundary boundary,
   List<String> violations, {
   required Set<String> mapDataTypeNames,
+  required Set<String> mapBoundaryTypeNames,
 }) {
   final member = _memberFor(owner, boundary);
   final memberLabel = '${owner.namePart.typeName.lexeme}.${boundary.name}';
@@ -200,13 +272,24 @@ void _checkBoundary(
 
   for (final parameter in parameters.parameters) {
     final normalized = _unwrap(parameter);
+    final parameterName = normalized.name?.lexeme ?? '<unnamed>';
     if (_containsAnyNamedType(
       _parameterType(normalized, owner),
       mapDataTypeNames,
     )) {
       violations.add(
         '$memberLabel must not expose MapData through parameter '
-        '${normalized.name?.lexeme ?? '<unnamed>'}',
+        '$parameterName',
+      );
+    }
+    if (parameterName != boundary.parameter &&
+        _containsAnyNamedType(
+          _parameterType(normalized, owner),
+          mapBoundaryTypeNames,
+        )) {
+      violations.add(
+        '$memberLabel must not expose an additional map dependency through '
+        'parameter $parameterName',
       );
     }
   }
@@ -232,6 +315,19 @@ void _checkBoundary(
     }
   }
 }
+
+const _mapBoundaryRootTypeNames = {
+  'MapData',
+  'MapDefinition',
+  'MapSurvey',
+  'MapTileCatalog',
+  'MapTileLookup',
+  'MapTileSource',
+  'MapTraversalView',
+  'MapReadView',
+  'WorldMap',
+  'WorldMapReadView',
+};
 
 AstNode? _memberFor(ClassDeclaration owner, _Boundary boundary) {
   for (final member in owner.body.members) {

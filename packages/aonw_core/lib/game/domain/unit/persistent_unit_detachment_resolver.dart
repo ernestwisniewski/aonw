@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -8,7 +7,6 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentUnitDetachmentResult {
   const PersistentUnitDetachmentResult({
@@ -33,7 +31,7 @@ class PersistentUnitDetachmentResolver {
     required PersistentGameState state,
     required DetachTroopCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
   }) {
     final sourceIndex = _unitIndexById(state.units, command.unitId);
     if (sourceIndex == null) return _reject(state, 'unit_not_found');
@@ -46,7 +44,6 @@ class PersistentUnitDetachmentResolver {
       return _reject(state, 'troop_not_available');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     if (mapTiles.tileAt(source.col, source.row) == null) {
       return _reject(state, 'detachment_source_out_of_bounds');
     }

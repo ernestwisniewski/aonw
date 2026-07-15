@@ -94,8 +94,8 @@
         "packages/aonw_core/lib/ai/mcts/strategy_aware_war_ranker.dart::function:_rankWarAttack": 81,
         "packages/aonw_core/lib/ai/mcts/strategy_aware_war_ranker.dart::function:rankTacticalAttack": 95,
         "packages/aonw_core/lib/ai/production_unit_policies.dart::class:_SettlerProductionPolicy/method:applyExpansionPlan": 86,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 278,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 256,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 277,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 255,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 82,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 79,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_turn_row_factory.dart::class:_EconomySimulationTurnRowFactory/method:rowFor": 100,
@@ -1331,11 +1331,11 @@
         "test/game/unit_marker_layer_test.dart": 1291,
         "test/game/unit_move_preview_layer_test.dart": 563,
         "test/menu/main_menu_screen_test.dart": 649,
-        "test/support/reducer_parity_fixture.dart": 534
+        "test/support/reducer_parity_fixture.dart": 531
       },
       "legacyFiles": {},
       "declarations": {
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 385
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus": 381
       },
       "callableLines": {
         "test/architecture/architecture_callable_metrics_test.dart::function:main/closure:test[control-flow_complexity_has_deterministic_golden_values]#1": 131,
@@ -1368,7 +1368,7 @@
       "cyclomaticComplexity": {
         "test/architecture/layer_boundaries_test.dart::enum:_ImportRule/method:matches": 16,
         "test/game/domain/command/game_command_test.dart::function:main/closure:group[GameCommand]#1/closure:group[exhaustiveness___all_subtypes_are_GameCommand]#1/closure:test[switch_over_sealed_class_is_exhaustive__compile-time_check_]#1": 65,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 17,
+        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateAcceptedSemantics": 16,
         "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_validateFixture": 30
       },
       "cognitiveComplexity": {
@@ -1379,7 +1379,7 @@
     },
     "root_tool": {
       "files": {
-        "tool/check_coverage.dart": 1662,
+        "tool/check_coverage.dart": 1657,
         "tool/run_save_ai_benchmark/execution_models.dart": 736,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart": 719,
         "tool/run_save_ai_benchmark/report_models.dart": 505,
@@ -1387,7 +1387,7 @@
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/check_coverage.dart::class:_CoverageGate": 576,
+        "tool/check_coverage.dart::class:_CoverageGate": 566,
         "tool/run_save_ai_benchmark/multi_turn_replay.dart::class:_MultiTurnReplayRunner": 378,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
@@ -1399,8 +1399,8 @@
         "tool/architecture/gate.dart::class:ArchitectureGate/method:_historicalRatchetFailures": 118,
         "tool/architecture/policy.dart::class:ArchitecturePolicy/constructor:parse": 108,
         "tool/architecture/policy.dart::class:ScopePolicy/constructor:parse": 107,
-        "tool/check_coverage.dart::class:_LcovParser/method:parse": 110,
-        "tool/check_coverage.dart::class:_ScopePolicy/constructor:parse": 107,
+        "tool/check_coverage.dart::class:_LcovParser/method:parse": 108,
+        "tool/check_coverage.dart::class:_ScopePolicy/constructor:parse": 105,
         "tool/mutation/test_process.dart::function:_classify": 139,
         "tool/run_save_ai_benchmark/benchmark_synthetic_helpers.dart::function:_syntheticDiplomacySnapshot": 178,
         "tool/run_save_ai_benchmark/execution_models.dart::class:_CommandStats/constructor:fromCommands": 172,
@@ -1474,13 +1474,13 @@
     "server_lib": {
       "files": {
         "server/lib/src/multiplayer/player_match_view_projector.dart": 706,
-        "server/lib/src/multiplayer/server_command_reducer.dart": 754
+        "server/lib/src/multiplayer/server_command_reducer.dart": 753
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector": 632,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 691
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 690
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1493,7 +1493,7 @@
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 79,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 335,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 334,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 165,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 69,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 67,

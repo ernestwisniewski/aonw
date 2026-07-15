@@ -23,6 +23,8 @@ void main() {
         'packages/aonw_core/lib/domain/world_map.dart': {
           'package:aonw_core/domain/hex_coord.dart',
           'package:aonw_core/domain/map_objective_definition.dart',
+          'package:aonw_core/domain/world_map_invariants.dart',
+          'package:aonw_core/map/domain/map_tile_view.dart',
           'package:aonw_core/map/domain/terrain_type.dart',
         },
       };

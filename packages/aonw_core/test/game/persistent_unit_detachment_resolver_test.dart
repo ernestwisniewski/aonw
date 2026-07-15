@@ -38,7 +38,7 @@ void main() {
           state: state,
           command: const DetachTroopCommand('commander_1', TroopType.warrior),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(cols: 5, rows: 4),
+          mapTiles: WorldMapReadView(_worldMap(cols: 5, rows: 4)),
         );
 
         expect(result.accepted, isTrue);
@@ -114,7 +114,7 @@ void main() {
           state: state,
           command: const DetachTroopCommand('commander_1', TroopType.archer),
           actorPlayerId: 'player_1',
-          worldMap: _worldMap(cols: 4, rows: 4),
+          mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
         );
 
         final detached = result.state.units.firstWhere(
@@ -141,7 +141,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 4, rows: 4),
+        mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
       );
 
       expect(result.accepted, isFalse);
@@ -162,7 +162,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.archer),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 4, rows: 4),
+        mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
       );
 
       expect(result.accepted, isFalse);
@@ -191,7 +191,7 @@ void main() {
         state: state,
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(cols: 4, rows: 4),
+        mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
       );
 
       expect(result.accepted, isFalse);

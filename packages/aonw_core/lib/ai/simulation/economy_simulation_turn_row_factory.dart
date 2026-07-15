@@ -7,7 +7,7 @@ final class _EconomySimulationTurnRowFactory {
     required int turn,
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapView,
     required GameRuleset ruleset,
     required EconomySimulationCommandStats commandStats,
     required DominationProgressEntry? domination,
@@ -27,7 +27,7 @@ final class _EconomySimulationTurnRowFactory {
       cities: state.cities,
       units: state.units,
       fieldImprovements: state.fieldImprovements,
-      mapView: mapData,
+      mapView: mapView,
       cityRuleset: ruleset.city,
       research: state.research,
       technologyRuleset: ruleset.technology,
@@ -35,13 +35,13 @@ final class _EconomySimulationTurnRowFactory {
     final goldBreakdown = _goldBreakdownForPlayer(
       state: state,
       playerId: playerId,
-      mapData: mapData,
+      mapView: mapView,
       ruleset: ruleset,
     );
     final researchProjectScience = _researchProjectScienceForPlayer(
       state: state,
       playerId: playerId,
-      mapData: mapData,
+      mapView: mapView,
       ruleset: ruleset,
     );
     final baseScience = _baseScienceForPlayer(state, playerId, ruleset);
@@ -128,7 +128,7 @@ final class _EconomySimulationTurnRowFactory {
   _GoldBreakdown _goldBreakdownForPlayer({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
@@ -143,7 +143,7 @@ final class _EconomySimulationTurnRowFactory {
       final economy = _economyFor(
         city: city,
         state: state,
-        mapData: mapData,
+        mapView: mapView,
         ruleset: ruleset,
         technologyEffects: technologyEffects,
       );
@@ -174,7 +174,7 @@ final class _EconomySimulationTurnRowFactory {
   int _researchProjectScienceForPlayer({
     required PersistentGameState state,
     required String playerId,
-    required MapData mapData,
+    required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
     var total = 0;
@@ -191,7 +191,7 @@ final class _EconomySimulationTurnRowFactory {
         final economy = _economyFor(
           city: city,
           state: state,
-          mapData: mapData,
+          mapView: mapView,
           ruleset: ruleset,
           technologyEffects: technologyEffects,
         );
@@ -209,13 +209,13 @@ final class _EconomySimulationTurnRowFactory {
   CityEconomyBreakdown _economyFor({
     required GameCity city,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapReadView mapView,
     required GameRuleset ruleset,
     required TechnologyEffectSummary technologyEffects,
   }) {
     final cityYield = CityYieldCalculator.totalFor(
       city,
-      mapData,
+      mapView,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
       artifacts: state.artifacts,
@@ -224,7 +224,7 @@ final class _EconomySimulationTurnRowFactory {
     return CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapTiles: mapData,
+      mapTiles: mapView,
       ruleset: ruleset.city,
       paceBalance: ruleset.paceBalance,
       technologyEffects: technologyEffects,

@@ -4,10 +4,10 @@ abstract final class _EconomySimulationSetup {
   static PersistentGameState initialState({
     required Player player,
     required List<Player> opponents,
-    required MapData mapData,
+    required MapReadView mapView,
   }) {
     final players = [player, ...opponents];
-    final units = StartingUnits.unitsForPlayers(players, mapData: mapData);
+    final units = StartingUnits.unitsForPlayers(players, mapData: mapView);
     final state = PersistentGameState(
       playerColors: {
         for (final simulationPlayer in players)
@@ -20,7 +20,7 @@ abstract final class _EconomySimulationSetup {
     );
     final fogOfWar = const FogOfWarService().recompute(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapData: mapView,
       playerIds: [for (final simulationPlayer in players) simulationPlayer.id],
       units: state.units,
       cities: state.cities,

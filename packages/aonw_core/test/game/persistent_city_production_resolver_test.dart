@@ -636,7 +636,7 @@ void main() {
         state: state,
         command: const StartWonderCommand('city_1', WonderType.greatLibrary),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -656,7 +656,7 @@ void main() {
         state: state,
         command: const StartWonderCommand('city_1', WonderType.greatLibrary),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isFalse);

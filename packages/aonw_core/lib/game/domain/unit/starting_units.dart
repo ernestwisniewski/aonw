@@ -3,12 +3,13 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class StartingUnits {
   static List<GameUnit> warriorsForPlayers(
     List<Player> players, {
-    MapData? mapData,
+    MapReadView? mapData,
     int? startPositionSeed,
   }) {
     if (players.isEmpty) return const [];
@@ -30,7 +31,7 @@ abstract final class StartingUnits {
 
   static List<GameUnit> unitsForPlayers(
     List<Player> players, {
-    MapData? mapData,
+    MapReadView? mapData,
     int? startPositionSeed,
   }) {
     if (players.isEmpty) return const [];
@@ -75,10 +76,10 @@ abstract final class StartingUnits {
 
   static List<({int col, int row})> _startingPositions(
     int count,
-    MapData? mapData, {
+    MapReadView? mapData, {
     int? startPositionSeed,
   }) {
-    if (mapData == null || mapData.tiles.isEmpty) {
+    if (mapData == null || mapData.tileCount == 0) {
       return _shuffledPositions([
         for (var i = 0; i < count; i++) _fallbackPosition(i),
       ], startPositionSeed);
@@ -103,7 +104,7 @@ abstract final class StartingUnits {
     return _shuffledPositions(positions, startPositionSeed);
   }
 
-  static List<({int col, int row})> _anchors(MapData mapData, int count) {
+  static List<({int col, int row})> _anchors(MapReadView mapData, int count) {
     final cols = mapData.cols > 0 ? mapData.cols : 1;
     final rows = mapData.rows > 0 ? mapData.rows : 1;
     final base = <({int col, int row})>[
@@ -118,7 +119,7 @@ abstract final class StartingUnits {
   }
 
   static ({int col, int row})? _nearestFreeTile(
-    MapData mapData,
+    MapReadView mapData,
     ({int col, int row}) anchor,
     Set<String> used, {
     required bool preferLand,
@@ -134,10 +135,10 @@ abstract final class StartingUnits {
 
   static ({int col, int row}) _settlerPosition(
     ({int col, int row}) escortPosition,
-    MapData? mapData,
+    MapReadView? mapData,
     Set<String> used,
   ) {
-    if (mapData == null || mapData.tiles.isEmpty) {
+    if (mapData == null || mapData.tileCount == 0) {
       const offsets = [
         (col: 2, row: 0),
         (col: 0, row: 2),
@@ -166,7 +167,7 @@ abstract final class StartingUnits {
   }
 
   static ({int col, int row})? _nearestTile(
-    MapData mapData,
+    MapReadView mapData,
     ({int col, int row}) anchor, {
     required bool preferLand,
   }) {
@@ -178,16 +179,16 @@ abstract final class StartingUnits {
     return null;
   }
 
-  static bool _canStartingUnitEnter(TileData tile) {
+  static bool _canStartingUnitEnter(MapTileView tile) {
     return !UnitMovementCostRules.costToEnter(
       TileTerrainProfileRules.fromTile(tile),
     ).blocked;
   }
 
-  static List<TileData> _tilesByDistance(
-    MapData mapData,
+  static List<MapTileView> _tilesByDistance(
+    MapReadView mapData,
     ({int col, int row}) anchor,
-  ) => List<TileData>.of(mapData.tiles)
+  ) => List<MapTileView>.of(mapData.tileViews)
     ..sort((a, b) {
       final distance = _distanceFrom(
         a,
@@ -200,7 +201,7 @@ abstract final class StartingUnits {
       return a.col.compareTo(b.col);
     });
 
-  static int _distanceFrom(TileData tile, ({int col, int row}) anchor) {
+  static int _distanceFrom(MapTileView tile, ({int col, int row}) anchor) {
     final dc = tile.col - anchor.col;
     final dr = tile.row - anchor.row;
     return dc * dc + dr * dr;

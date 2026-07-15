@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'coverage_gate/coverable_source.dart';
+import 'coverage_gate/coverage_failure.dart';
 import 'coverage_gate/diff_measurement.dart';
 
 const _defaultPolicyPath = 'tool/coverage_policy.json';
@@ -19,7 +21,7 @@ void main(List<String> arguments) {
         stdout.writeln(gate.snapshotJson());
         return;
     }
-  } on _CoverageFailure catch (error) {
+  } on CoverageFailure catch (error) {
     stderr.writeln('Coverage gate failed:\n${error.message}');
     exitCode = 1;
   } on FormatException catch (error) {
@@ -32,6 +34,24 @@ void main(List<String> arguments) {
 }
 
 enum _Command { check, snapshot }
+
+List<String> _scopeNames(_CoveragePolicy policy, Set<String> requested) {
+  final selected = requested.isEmpty ? policy.scopes.keys.toSet() : requested;
+  final unknown = selected.difference(policy.scopes.keys.toSet());
+  if (unknown.isEmpty) return selected.toList()..sort();
+  throw CoverageFailure('Unknown coverage scopes: ${_sorted(unknown)}');
+}
+
+Set<String> _coverableFiles(
+  Set<String> sources,
+  Map<String, _LcovRecord> records,
+  _CliOptions options, [
+  _ScopePolicy? scope,
+]) => retainCoverable(
+  sources.where((path) => !(scope?.isExcluded(path) ?? false)),
+  recorded: records.keys.toSet(),
+  resolve: (path) => _resolvePath(options.repository, path),
+);
 
 final class _CliOptions {
   const _CliOptions({
@@ -46,7 +66,7 @@ final class _CliOptions {
 
   factory _CliOptions.parse(List<String> arguments) {
     if (arguments.isEmpty) {
-      throw const _CoverageFailure(
+      throw const CoverageFailure(
         'Usage: dart run tool/check_coverage.dart <check|snapshot> '
         '[--scope NAME] [--base-ref REF] [--ratchet-ref REF]',
       );
@@ -55,13 +75,12 @@ final class _CliOptions {
     final command = switch (arguments.first) {
       'check' => _Command.check,
       'snapshot' => _Command.snapshot,
-      final value => throw _CoverageFailure('Unknown command: $value'),
+      final value => throw CoverageFailure('Unknown command: $value'),
     };
     var repository = Directory.current.absolute.path;
     var policyPath = _defaultPolicyPath;
     var baselinePath = _defaultBaselinePath;
-    String? baseRef;
-    String? ratchetRef;
+    String? baseRef, ratchetRef;
     final scopes = <String>{};
 
     for (var index = 1; index < arguments.length; index++) {
@@ -74,7 +93,7 @@ final class _CliOptions {
           index++;
           return arguments[index];
         }
-        throw _CoverageFailure('Missing value for $name.');
+        throw CoverageFailure('Missing value for $name.');
       }
 
       if (argument == '--scope' || argument.startsWith('--scope=')) {
@@ -94,7 +113,7 @@ final class _CliOptions {
           argument.startsWith('--baseline=')) {
         baselinePath = readValue('--baseline');
       } else {
-        throw _CoverageFailure('Unknown argument: $argument');
+        throw CoverageFailure('Unknown argument: $argument');
       }
     }
 
@@ -132,7 +151,7 @@ final class _CoverageGate {
       _resolvePath(options.repository, options.baselinePath),
       policy,
     );
-    final scopeNames = _selectedScopeNames();
+    final scopeNames = _scopeNames(policy, options.scopes);
     final requestedBase = _requiredRef(options.baseRef, '--base-ref');
     final ratchetRef = _requiredRef(options.ratchetRef, '--ratchet-ref');
     final cumulativeBase = _effectiveDiffBase(requestedBase);
@@ -183,7 +202,7 @@ final class _CoverageGate {
     }
 
     if (failures.isNotEmpty) {
-      throw _CoverageFailure(failures.join('\n'));
+      throw CoverageFailure(failures.join('\n'));
     }
     for (final summary in summaries) {
       stdout.writeln(summary);
@@ -192,7 +211,7 @@ final class _CoverageGate {
 
   String snapshotJson() {
     final scopes = <String, Object?>{};
-    for (final scopeName in _selectedScopeNames()) {
+    for (final scopeName in _scopeNames(policy, options.scopes)) {
       scopes[scopeName] = _measureScope(
         scopeName,
         policy.scopes[scopeName]!,
@@ -203,21 +222,11 @@ final class _CoverageGate {
     ).convert({'schema': 1, 'scopes': scopes});
   }
 
-  List<String> _selectedScopeNames() {
-    final selected = options.scopes.isEmpty
-        ? policy.scopes.keys.toSet()
-        : options.scopes;
-    final unknown = selected.difference(policy.scopes.keys.toSet());
-    if (unknown.isNotEmpty) {
-      throw _CoverageFailure('Unknown coverage scopes: ${_sorted(unknown)}');
-    }
-    return selected.toList()..sort();
-  }
-
   _ScopeSnapshot _measureScope(String name, _ScopePolicy scope) {
     final sources = _sourceFiles(scope);
     _validateExclusions(name, scope, sources);
-    final scorable = sources.where((path) => !scope.isExcluded(path)).toSet();
+    final records = _loadLcov(scope, sources);
+    final scorable = _coverableFiles(sources, records, options, scope);
     final layersByFile = <String, String>{};
     for (final path in scorable) {
       final layer = scope.layerFor(path);
@@ -226,13 +235,12 @@ final class _CoverageGate {
         _resolvePath(options.repository, path),
       ).readAsStringSync();
       if (contents.contains(_coverageIgnoreMarker)) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '$name: handwritten source uses a coverage ignore marker: $path',
         );
       }
     }
 
-    final records = _loadLcov(scope, sources);
     final missingFiles = scorable.difference(records.keys.toSet());
     final layers = <String, _LayerSnapshot>{};
     for (final layerName in scope.layers.keys) {
@@ -241,7 +249,7 @@ final class _CoverageGate {
           .map((entry) => entry.key)
           .toSet();
       if (files.isEmpty) {
-        throw _CoverageFailure('$name/$layerName: layer has no source files.');
+        throw CoverageFailure('$name/$layerName: layer has no source files.');
       }
       var filesHit = 0;
       var linesFound = 0;
@@ -287,7 +295,7 @@ final class _CoverageGate {
         .toSet();
     files.removeAll(deleted);
     if (files.isEmpty) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '${scope.sourceRoot}: no non-ignored Dart source files found.',
       );
     }
@@ -301,13 +309,13 @@ final class _CoverageGate {
   ) {
     for (final path in scope.excludeFiles) {
       if (!sources.contains(path)) {
-        throw _CoverageFailure('$scopeName: stale excluded file: $path');
+        throw CoverageFailure('$scopeName: stale excluded file: $path');
       }
       _validateManualExclusion(scopeName, path);
     }
     for (final prefix in scope.excludePrefixes) {
       if (!sources.any((path) => path.startsWith(prefix))) {
-        throw _CoverageFailure('$scopeName: stale excluded prefix: $prefix');
+        throw CoverageFailure('$scopeName: stale excluded prefix: $prefix');
       }
     }
     for (final path in sources.where(scope.isGenerated)) {
@@ -317,7 +325,7 @@ final class _CoverageGate {
 
   void _validateManualExclusion(String scopeName, String path) {
     if (path != 'lib/main.dart') {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$scopeName: unsupported handwritten coverage exclusion: $path',
       );
     }
@@ -333,7 +341,7 @@ void main() {
       _resolvePath(options.repository, path),
     ).readAsStringSync().replaceAll('\r\n', '\n');
     if (contents != expected) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$scopeName: lib/main.dart is excluded only while it remains the '
         'canonical thin composition root.',
       );
@@ -359,7 +367,7 @@ void main() {
           File(_resolvePath(options.repository, input)).existsSync()) {
         return;
       }
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$scopeName: generated suffix requires the canonical build_runner '
         'header and sibling input: $path',
       );
@@ -368,7 +376,7 @@ void main() {
       if (header == '/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */') {
         return;
       }
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$scopeName: Serverpod generated path has no canonical header: $path',
       );
     }
@@ -384,11 +392,11 @@ void main() {
           return;
         }
       }
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$scopeName: localization output has no matching ARB input: $path',
       );
     }
-    throw _CoverageFailure(
+    throw CoverageFailure(
       '$scopeName: unsupported generated-code exclusion: $path',
     );
   }
@@ -403,13 +411,13 @@ void main() {
         options.repository,
       );
       if (!normalized.startsWith('${scope.sourceRoot}/')) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${scope.lcovPath}: LCOV record is outside ${scope.sourceRoot}: '
           '$normalized',
         );
       }
       if (!sources.contains(normalized)) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${scope.lcovPath}: LCOV references a non-source or stale file: '
           '$normalized',
         );
@@ -423,20 +431,20 @@ void main() {
               .toList()
             ..sort();
       if (outOfRangeLines.isNotEmpty) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${scope.lcovPath}: LCOV references lines outside $normalized '
           '($sourceLineCount lines): ${outOfRangeLines.join(', ')}',
         );
       }
       if (records.containsKey(normalized)) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${scope.lcovPath}: duplicate normalized SF record: $normalized',
         );
       }
       records[normalized] = rawRecord.withSource(normalized);
     }
     if (records.isEmpty) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '${scope.lcovPath}: no records belong to ${scope.sourceRoot}.',
       );
     }
@@ -452,12 +460,13 @@ void main() {
   }) {
     final sources = _sourceFiles(scope);
     final records = _loadLcov(scope, sources);
+    final coverable = _coverableFiles(sources, records, options);
     final measurement = measureCoverageDiff(
       repository: options.repository,
       scopeName: scopeName,
       label: label,
       changedLines: _changedLines(scope, baseRef),
-      sources: sources,
+      sources: coverable,
       lineHitsByPath: {
         for (final entry in records.entries) entry.key: entry.value.lineHits,
       },
@@ -500,7 +509,7 @@ void main() {
         continue;
       }
       if (line.startsWith('+++ ') && line != '+++ /dev/null') {
-        throw _CoverageFailure('Unsupported quoted Git diff path: $line');
+        throw CoverageFailure('Unsupported quoted Git diff path: $line');
       }
       final match = hunkPattern.firstMatch(line);
       if (match == null || currentPath == null) continue;
@@ -535,7 +544,7 @@ void main() {
     _requireCommit(anchor, 'coverage rollout anchor');
     _requireCommit(requested, 'coverage diff base');
     if (!_isAncestor(anchor, 'HEAD')) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Coverage rollout anchor $anchor is not an ancestor of HEAD.',
       );
     }
@@ -546,7 +555,7 @@ void main() {
       'HEAD',
     ]).stdout.split('\n').where((value) => value.isNotEmpty).toList();
     if (mergeBases.length != 1) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Expected exactly one merge base for $requested and HEAD, found '
         '${mergeBases.length}.',
       );
@@ -554,7 +563,7 @@ void main() {
     final mergeBase = mergeBases.single;
     if (_isAncestor(mergeBase, anchor)) return anchor;
     if (_isAncestor(anchor, mergeBase)) return mergeBase;
-    throw _CoverageFailure(
+    throw CoverageFailure(
       'Coverage diff base $mergeBase and rollout anchor $anchor are '
       'incomparable ancestors of HEAD.',
     );
@@ -572,13 +581,13 @@ void main() {
     final oldPolicyText = _gitShow(ratchetRef, policyPath);
     if (oldBaselineText == null && oldPolicyText == null) {
       if (_isAncestor(ratchetRef, policy.enforcedSince)) return;
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Trusted ratchet ref $ratchetRef is newer than the rollout boundary '
         'but has no coverage policy or baseline.',
       );
     }
     if (oldBaselineText == null || oldPolicyText == null) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Trusted ratchet ref $ratchetRef must contain both $baselinePath and '
         '$policyPath.',
       );
@@ -586,19 +595,19 @@ void main() {
 
     final oldPolicy = _CoveragePolicy.parse(oldPolicyText, 'historical policy');
     if (oldPolicy.enforcedSince != policy.enforcedSince) {
-      throw const _CoverageFailure(
+      throw const CoverageFailure(
         'coverage_policy.json enforcedSince is immutable.',
       );
     }
     if (oldPolicy.structuralSignature != policy.structuralSignature) {
-      throw const _CoverageFailure(
+      throw const CoverageFailure(
         'Coverage scope, layer, and exclusion policy is immutable after the '
         'rollout anchor.',
       );
     }
     if (policy.diffLineMinimumBasisPoints <
         oldPolicy.diffLineMinimumBasisPoints) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Diff coverage minimum cannot decrease: '
         '${oldPolicy.diffLineMinimumPercent}% -> '
         '${policy.diffLineMinimumPercent}%.',
@@ -618,7 +627,7 @@ void main() {
       failures.addAll(currentScope.ratchetDifferences(oldScope, scopeName));
     }
     if (failures.isNotEmpty) {
-      throw _CoverageFailure(failures.join('\n'));
+      throw CoverageFailure(failures.join('\n'));
     }
   }
 
@@ -654,7 +663,7 @@ void main() {
     );
     if (result.exitCode == 0) return true;
     if (result.exitCode == 1) return false;
-    throw _CoverageFailure(
+    throw CoverageFailure(
       'git merge-base failed: ${(result.stderr as String).trim()}',
     );
   }
@@ -671,7 +680,7 @@ void main() {
 
   void _requireCommit(String ref, String description) {
     if (!_commitExists(ref)) {
-      throw _CoverageFailure('Unknown $description: $ref');
+      throw CoverageFailure('Unknown $description: $ref');
     }
   }
 
@@ -683,7 +692,7 @@ void main() {
       stderrEncoding: utf8,
     );
     if (result.exitCode != 0) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'git ${arguments.join(' ')} failed:\n'
         '${(result.stderr as String).trim()}',
       );
@@ -707,7 +716,7 @@ final class _CoveragePolicy {
   factory _CoveragePolicy.load(String path) {
     final file = File(path);
     if (!file.existsSync()) {
-      throw _CoverageFailure('Coverage policy does not exist: $path');
+      throw CoverageFailure('Coverage policy does not exist: $path');
     }
     return _CoveragePolicy.parse(file.readAsStringSync(), path);
   }
@@ -723,11 +732,11 @@ final class _CoveragePolicy {
     }, description);
     final schema = _readInt(root, 'schema', description);
     if (schema != 1) {
-      throw _CoverageFailure('$description: unsupported schema $schema.');
+      throw CoverageFailure('$description: unsupported schema $schema.');
     }
     final enforcedSince = _readString(root, 'enforcedSince', description);
     if (!RegExp(r'^[0-9a-f]{40}$').hasMatch(enforcedSince)) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$description: enforcedSince must be a full lowercase commit SHA.',
       );
     }
@@ -737,7 +746,7 @@ final class _CoveragePolicy {
       description,
     );
     if (diffMinimum < 0 || diffMinimum > 10000) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$description: diffLineMinimumBasisPoints must be in 0..10000.',
       );
     }
@@ -749,22 +758,18 @@ final class _CoveragePolicy {
     _requireUnique(excludeSuffixes, '$description excludeSuffixes');
     for (final suffix in excludeSuffixes) {
       if (!suffix.startsWith('.') || suffix.contains('/')) {
-        throw _CoverageFailure(
-          '$description: invalid excluded suffix: $suffix',
-        );
+        throw CoverageFailure('$description: invalid excluded suffix: $suffix');
       }
     }
 
     final rawScopes = _readObject(root, 'scopes', description);
     if (rawScopes.isEmpty) {
-      throw _CoverageFailure('$description: scopes cannot be empty.');
+      throw CoverageFailure('$description: scopes cannot be empty.');
     }
     final scopes = <String, _ScopePolicy>{};
     for (final entry in rawScopes.entries) {
       if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(entry.key)) {
-        throw _CoverageFailure(
-          '$description: invalid scope name: ${entry.key}',
-        );
+        throw CoverageFailure('$description: invalid scope name: ${entry.key}');
       }
       scopes[entry.key] = _ScopePolicy.parse(
         entry.value,
@@ -839,7 +844,7 @@ final class _ScopePolicy {
     if (packageRoot != '.' &&
         sourceRoot != packageRoot &&
         !sourceRoot.startsWith('$packageRoot/')) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$description: sourceRoot must be inside packageRoot.',
       );
     }
@@ -855,7 +860,7 @@ final class _ScopePolicy {
     for (final prefix in excludePrefixes) {
       _validatePolicyPath(prefix, '$description excluded prefix');
       if (!prefix.endsWith('/') || !prefix.startsWith('$sourceRoot/')) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '$description: excluded prefix must be inside sourceRoot and end '
           'with /: $prefix',
         );
@@ -864,7 +869,7 @@ final class _ScopePolicy {
     for (final file in excludeFiles) {
       _validatePolicyPath(file, '$description excluded file');
       if (!file.endsWith('.dart') || !file.startsWith('$sourceRoot/')) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '$description: excluded file must be a Dart file inside sourceRoot: '
           '$file',
         );
@@ -873,22 +878,20 @@ final class _ScopePolicy {
 
     final rawLayers = _readObject(object, 'layers', description);
     if (rawLayers.isEmpty) {
-      throw _CoverageFailure('$description: layers cannot be empty.');
+      throw CoverageFailure('$description: layers cannot be empty.');
     }
     final layers = <String, List<String>>{};
     final allPatterns = <String>[];
     for (final entry in rawLayers.entries) {
       if (!RegExp(r'^[a-z][a-z0-9_]*$').hasMatch(entry.key)) {
-        throw _CoverageFailure(
-          '$description: invalid layer name: ${entry.key}',
-        );
+        throw CoverageFailure('$description: invalid layer name: ${entry.key}');
       }
       final patterns = _asStringList(
         entry.value,
         '$description layer ${entry.key}',
       );
       if (patterns.isEmpty) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '$description: layer ${entry.key} has no path patterns.',
         );
       }
@@ -898,7 +901,7 @@ final class _ScopePolicy {
         final isDirectory = pattern.endsWith('/');
         final isFile = pattern.endsWith('.dart');
         if ((!isDirectory && !isFile) || !pattern.startsWith('$sourceRoot/')) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '$description: layer pattern must be a Dart file or directory '
             'inside sourceRoot: $pattern',
           );
@@ -943,7 +946,7 @@ final class _ScopePolicy {
       }
     }
     if (matches.length != 1) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$path must match exactly one coverage layer; matched '
         '${matches.isEmpty ? 'none' : matches.join(', ')}.',
       );
@@ -985,7 +988,7 @@ final class _CoverageBaseline {
   factory _CoverageBaseline.load(String path, _CoveragePolicy policy) {
     final file = File(path);
     if (!file.existsSync()) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         'Coverage baseline does not exist: $path. Generate a reviewed '
         'snapshot first.',
       );
@@ -1002,7 +1005,7 @@ final class _CoverageBaseline {
     _expectKeys(root, const {'schema', 'scopes'}, description);
     final schema = _readInt(root, 'schema', description);
     if (schema != 1) {
-      throw _CoverageFailure('$description: unsupported schema $schema.');
+      throw CoverageFailure('$description: unsupported schema $schema.');
     }
     final rawScopes = _readObject(root, 'scopes', description);
     _expectKeys(rawScopes, policy.scopes.keys.toSet(), '$description scopes');
@@ -1043,14 +1046,14 @@ final class _ScopeSnapshot {
     _requireUnique(missing, '$description missingFiles');
     final sorted = [...missing]..sort();
     if (!_sameList(missing, sorted)) {
-      throw _CoverageFailure('$description: missingFiles must be sorted.');
+      throw CoverageFailure('$description: missingFiles must be sorted.');
     }
     for (final path in missing) {
       _validatePolicyPath(path, '$description missing file');
       if (!path.startsWith('${policy.sourceRoot}/') ||
           !path.endsWith('.dart') ||
           policy.isExcluded(path)) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '$description: invalid missing source file: $path',
         );
       }
@@ -1168,7 +1171,7 @@ final class _Counts {
     final hit = _readInt(object, 'hit', description);
     final found = _readInt(object, 'found', description);
     if (hit < 0 || found < 0 || hit > found) {
-      throw _CoverageFailure(
+      throw CoverageFailure(
         '$description: expected 0 <= hit <= found, got $hit/$found.',
       );
     }
@@ -1278,11 +1281,11 @@ final class _LcovRecord {
 abstract final class _LcovParser {
   static List<_LcovRecord> parse(File file) {
     if (!file.existsSync()) {
-      throw _CoverageFailure('LCOV report does not exist: ${file.path}');
+      throw CoverageFailure('LCOV report does not exist: ${file.path}');
     }
     final contents = file.readAsStringSync();
     if (contents.trim().isEmpty) {
-      throw _CoverageFailure('LCOV report is empty: ${file.path}');
+      throw CoverageFailure('LCOV report is empty: ${file.path}');
     }
 
     final records = <_LcovRecord>[];
@@ -1294,19 +1297,19 @@ abstract final class _LcovParser {
 
     void finishRecord(int lineNumber) {
       if (source == null || lineHits == null) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${file.path}:$lineNumber: end_of_record without SF.',
         );
       }
       if (declaredFound == null || declaredHit == null) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${file.path}:$lineNumber: record is missing LF or LH.',
         );
       }
       final computedFound = lineHits!.length;
       final computedHit = lineHits!.values.where((hits) => hits > 0).length;
       if (declaredFound != computedFound || declaredHit != computedHit) {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${file.path}:$lineNumber: LF/LH do not match DA entries for '
           '$source (declared $declaredHit/$declaredFound, computed '
           '$computedHit/$computedFound).',
@@ -1328,13 +1331,13 @@ abstract final class _LcovParser {
       if (line.isEmpty) continue;
       if (line.startsWith('SF:')) {
         if (source != null) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: SF before end_of_record.',
           );
         }
         final value = line.substring(3);
         if (value.isEmpty || !rawSources.add(value)) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: empty or duplicate SF: $value',
           );
         }
@@ -1342,13 +1345,13 @@ abstract final class _LcovParser {
         lineHits = <int, int>{};
       } else if (line.startsWith('DA:')) {
         if (lineHits == null || declaredFound != null || declaredHit != null) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: DA appears outside the DA section.',
           );
         }
         final fields = line.substring(3).split(',');
         if (fields.length != 2) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: malformed DA record.',
           );
         }
@@ -1359,7 +1362,7 @@ abstract final class _LcovParser {
             hits == null ||
             hits < 0 ||
             lineHits!.containsKey(sourceLine)) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: invalid or duplicate DA record.',
           );
         }
@@ -1369,7 +1372,7 @@ abstract final class _LcovParser {
             lineHits == null ||
             declaredFound != null ||
             declaredHit != null) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: LF appears outside its record order.',
           );
         }
@@ -1385,7 +1388,7 @@ abstract final class _LcovParser {
             lineHits == null ||
             declaredFound == null ||
             declaredHit != null) {
-          throw _CoverageFailure(
+          throw CoverageFailure(
             '${file.path}:$lineNumber: LH appears outside its record order.',
           );
         }
@@ -1399,18 +1402,16 @@ abstract final class _LcovParser {
       } else if (line == 'end_of_record') {
         finishRecord(lineNumber);
       } else {
-        throw _CoverageFailure(
+        throw CoverageFailure(
           '${file.path}:$lineNumber: unsupported LCOV directive: $line',
         );
       }
     }
     if (source != null) {
-      throw _CoverageFailure(
-        '${file.path}: missing end_of_record for $source.',
-      );
+      throw CoverageFailure('${file.path}: missing end_of_record for $source.');
     }
     if (records.isEmpty) {
-      throw _CoverageFailure('${file.path}: contains no LCOV records.');
+      throw CoverageFailure('${file.path}: contains no LCOV records.');
     }
     return records;
   }
@@ -1421,12 +1422,6 @@ final class _GitOutput {
 
   final String stdout;
   final String stderr;
-}
-
-final class _CoverageFailure implements Exception {
-  const _CoverageFailure(this.message);
-
-  final String message;
 }
 
 String _formatSummary(
@@ -1466,7 +1461,7 @@ String _formatLocations(List<String> locations) {
 String _requiredRef(String? raw, String option) {
   final value = raw?.trim();
   if (value == null || value.isEmpty || RegExp(r'^0+$').hasMatch(value)) {
-    throw _CoverageFailure(
+    throw CoverageFailure(
       'Coverage checks require $option. Use the Make targets, which choose '
       'local and CI refs explicitly.',
     );
@@ -1483,7 +1478,7 @@ int _parseLcovCount(
 ) {
   final value = int.tryParse(raw);
   if (previous != null || value == null || value < 0) {
-    throw _CoverageFailure(
+    throw CoverageFailure(
       '$path:$lineNumber: invalid or duplicate $directive record.',
     );
   }
@@ -1494,19 +1489,19 @@ Map<String, Object?> _decodeObject(String contents, String description) {
   try {
     return _asObject(jsonDecode(contents), description);
   } on FormatException catch (error) {
-    throw _CoverageFailure('$description: invalid JSON: ${error.message}');
+    throw CoverageFailure('$description: invalid JSON: ${error.message}');
   }
 }
 
 Map<String, Object?> _asObject(Object? value, String description) {
   if (value is! Map<Object?, Object?>) {
-    throw _CoverageFailure('$description must be a JSON object.');
+    throw CoverageFailure('$description must be a JSON object.');
   }
   final result = <String, Object?>{};
   for (final entry in value.entries) {
     final key = entry.key;
     if (key is! String) {
-      throw _CoverageFailure('$description contains a non-string key.');
+      throw CoverageFailure('$description contains a non-string key.');
     }
     result[key] = entry.value;
   }
@@ -1526,7 +1521,7 @@ String _readString(
 ) {
   final value = object[key];
   if (value is! String || value.isEmpty) {
-    throw _CoverageFailure('$description.$key must be a non-empty string.');
+    throw CoverageFailure('$description.$key must be a non-empty string.');
   }
   return value;
 }
@@ -1534,7 +1529,7 @@ String _readString(
 int _readInt(Map<String, Object?> object, String key, String description) {
   final value = object[key];
   if (value is! int) {
-    throw _CoverageFailure('$description.$key must be an integer.');
+    throw CoverageFailure('$description.$key must be an integer.');
   }
   return value;
 }
@@ -1547,12 +1542,12 @@ List<String> _readStringList(
 
 List<String> _asStringList(Object? value, String description) {
   if (value is! List<Object?>) {
-    throw _CoverageFailure('$description must be a JSON array.');
+    throw CoverageFailure('$description must be a JSON array.');
   }
   final result = <String>[];
   for (final entry in value) {
     if (entry is! String || entry.isEmpty) {
-      throw _CoverageFailure('$description entries must be non-empty strings.');
+      throw CoverageFailure('$description entries must be non-empty strings.');
     }
     result.add(entry);
   }
@@ -1568,7 +1563,7 @@ void _expectKeys(
   final missing = expected.difference(actual);
   final extra = actual.difference(expected);
   if (missing.isNotEmpty || extra.isNotEmpty) {
-    throw _CoverageFailure(
+    throw CoverageFailure(
       '$description has invalid keys; missing [${_sorted(missing)}], extra '
       '[${_sorted(extra)}].',
     );
@@ -1582,7 +1577,7 @@ void _requireUnique(Iterable<String> values, String description) {
     if (!seen.add(value)) duplicates.add(value);
   }
   if (duplicates.isNotEmpty) {
-    throw _CoverageFailure(
+    throw CoverageFailure(
       '$description contains duplicates: ${_sorted(duplicates)}',
     );
   }
@@ -1598,7 +1593,7 @@ void _validatePolicyPath(
       path.contains('\\') ||
       path.startsWith('./') ||
       path.contains('//')) {
-    throw _CoverageFailure('$description is not a canonical relative path.');
+    throw CoverageFailure('$description is not a canonical relative path.');
   }
   final withoutTrailingSlash = path.endsWith('/')
       ? path.substring(0, path.length - 1)
@@ -1617,7 +1612,7 @@ String _relativeToRepository(String repository, String absolutePath) {
   if (candidate == root) return '.';
   final prefix = '$root${Platform.pathSeparator}';
   if (!candidate.startsWith(prefix)) {
-    throw _CoverageFailure('Path is outside the repository: $absolutePath');
+    throw CoverageFailure('Path is outside the repository: $absolutePath');
   }
   return _normalizeRelativePath(
     candidate.substring(prefix.length).replaceAll(Platform.pathSeparator, '/'),
@@ -1626,18 +1621,18 @@ String _relativeToRepository(String repository, String absolutePath) {
 
 String _normalizeRelativePath(String path) {
   if (path.isEmpty || _isAbsolutePath(path) || path.contains('\\')) {
-    throw _CoverageFailure('Invalid relative path: $path');
+    throw CoverageFailure('Invalid relative path: $path');
   }
   final result = <String>[];
   for (final segment in path.split('/')) {
     if (segment.isEmpty || segment == '.') continue;
     if (segment == '..') {
-      throw _CoverageFailure('Relative path escapes its root: $path');
+      throw CoverageFailure('Relative path escapes its root: $path');
     }
     result.add(segment);
   }
   if (result.isEmpty) {
-    throw _CoverageFailure('Invalid relative path: $path');
+    throw CoverageFailure('Invalid relative path: $path');
   }
   return result.join('/');
 }

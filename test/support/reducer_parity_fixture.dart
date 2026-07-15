@@ -6,6 +6,7 @@ import 'package:aonw_core/protocol.dart';
 
 import 'reducer_parity_accepted_semantics.dart';
 import 'reducer_parity_contract.dart';
+import 'reducer_parity_production_semantics.dart';
 
 final class ReducerParityFixture {
   const ReducerParityFixture({
@@ -359,6 +360,9 @@ abstract final class ReducerParityCorpus {
     final events = fixture.expectedEvents
         .map(GameEventSerializer.fromJson)
         .toList(growable: false);
+    if (tryRequireProduction(fixture.id, fixture.command, state, events)) {
+      return;
+    }
     switch (fixture.command) {
       case AutoExploreUnitCommand() ||
           MoveUnitCommand() ||
@@ -373,13 +377,6 @@ abstract final class ReducerParityCorpus {
         );
       case AttackHexCommand(:final attackerUnitId):
         requireAcceptedCombat(fixture.id, attackerUnitId, state, events);
-      case StartBuildingCommand() || StartUnitProductionCommand():
-        requireAcceptedProductionQueue(
-          fixtureId: fixture.id,
-          command: fixture.command,
-          after: state,
-          events: events,
-        );
       case final DetachTroopCommand command:
         final failure = validateAcceptedDetachment(
           command: command,

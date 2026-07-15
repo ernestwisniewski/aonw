@@ -331,31 +331,6 @@ void requireAcceptedCombat(
   }
 }
 
-void requireAcceptedProductionQueue({
-  required String fixtureId,
-  required GameCommand command,
-  required PersistentGameState after,
-  required List<GameEvent> events,
-}) {
-  final (cityId, target, failure) = switch (command) {
-    StartBuildingCommand(:final cityId, :final buildingType) => (
-      cityId,
-      BuildingProductionTarget(buildingType),
-      'must commit the reviewed building queue',
-    ),
-    StartUnitProductionCommand(:final cityId, :final unitType) => (
-      cityId,
-      UnitProductionTarget(unitType),
-      'must commit the reviewed unit queue without events',
-    ),
-    _ => throw StateError('Expected a production command.'),
-  };
-  if (after.cities.byId(cityId)?.productionQueue?.target != target ||
-      command is StartUnitProductionCommand && events.isNotEmpty) {
-    throw FormatException('$fixtureId $failure.');
-  }
-}
-
 String? validateAcceptedDetachment({
   required DetachTroopCommand command,
   required PersistentGameState before,

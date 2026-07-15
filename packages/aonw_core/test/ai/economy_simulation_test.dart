@@ -22,6 +22,29 @@ void main() {
       );
     });
 
+    test('dispatches map-backed detachment and wonder commands', () {
+      final result = EconomySimulation.run(
+        config: const EconomySimulationConfig(
+          turns: 1,
+          strategyOverride: _FixedPlanStrategy([
+            DetachTroopCommand('missing_unit', TroopType.warrior),
+            StartWonderCommand('missing_city', WonderType.greatLibrary),
+          ]),
+        ),
+      );
+
+      expect(result.appliedCommands, isEmpty);
+      expect(
+        result.rejectedCommands.whereType<DetachTroopCommand>(),
+        hasLength(1),
+      );
+      expect(
+        result.rejectedCommands.whereType<StartWonderCommand>(),
+        hasLength(1),
+      );
+      expect(result.rejectedCommandRecords.last.reason, 'city_not_found');
+    });
+
     test(
       'keeps unit count bounded and moves production into infrastructure',
       () {

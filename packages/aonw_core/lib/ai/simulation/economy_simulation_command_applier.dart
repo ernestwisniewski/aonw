@@ -1,11 +1,9 @@
 part of 'economy_simulation.dart';
 
 final class _EconomySimulationCommandApplier {
-  _EconomySimulationCommandApplier(this.worldMap)
-    : mapView = WorldMapReadView(worldMap);
+  const _EconomySimulationCommandApplier(this.mapView);
 
-  final WorldMap worldMap;
-  final WorldMapReadView mapView;
+  final MapReadView mapView;
   MapTileLookup get mapTiles => mapView;
 
   _ApplyCommandResult apply({
@@ -53,7 +51,6 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
           ruleset: ruleset,
         );
       case SetCitySpecializationCommand():
@@ -84,7 +81,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapData: mapView,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -96,7 +93,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapData: mapView,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,
@@ -197,7 +194,7 @@ final class _EconomySimulationCommandApplier {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: worldMap,
+          mapTiles: mapView,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,

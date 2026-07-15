@@ -195,4 +195,108 @@ class PersistentCombatCommandResolver {
       ),
     );
   });
+
+  test('guard rejects a wider WorldMap at a bounded lookup boundary', () {
+    const target = _Target(
+      path: 'lib/persistent_unit_detachment_resolver.dart',
+      owner: 'PersistentUnitDetachmentResolver',
+      boundaries: [
+        _Boundary.method(
+          'detachTroop',
+          parameter: 'mapTiles',
+          type: 'MapTileLookup',
+        ),
+      ],
+    );
+
+    final violations = _violations('''
+class PersistentUnitDetachmentResolver {
+  void detachTroop({required WorldMap mapTiles}) {}
+}
+''', target);
+
+    expect(
+      violations,
+      contains(
+        'PersistentUnitDetachmentResolver.detachTroop.mapTiles must have '
+        'type MapTileLookup; found WorldMap',
+      ),
+    );
+  });
+
+  test('guard rejects a second map dependency beside a bounded lookup', () {
+    const target = _Target(
+      path: 'lib/persistent_unit_detachment_resolver.dart',
+      owner: 'PersistentUnitDetachmentResolver',
+      boundaries: [
+        _Boundary.method(
+          'detachTroop',
+          parameter: 'mapTiles',
+          type: 'MapTileLookup',
+        ),
+      ],
+    );
+
+    final violations = _violations('''
+class PersistentUnitDetachmentResolver {
+  void detachTroop({
+    required MapTileLookup mapTiles,
+    required WorldMap worldMap,
+    required MapSurvey survey,
+  }) {}
+}
+''', target);
+
+    expect(
+      violations,
+      containsAll([
+        'PersistentUnitDetachmentResolver.detachTroop must not expose an '
+            'additional map dependency through parameter worldMap',
+        'PersistentUnitDetachmentResolver.detachTroop must not expose an '
+            'additional map dependency through parameter survey',
+      ]),
+    );
+  });
+
+  test('guard rejects an aliased second map dependency', () {
+    const target = _Target(
+      path: 'lib/persistent_unit_detachment_resolver.dart',
+      owner: 'PersistentUnitDetachmentResolver',
+      boundaries: [
+        _Boundary.method(
+          'detachTroop',
+          parameter: 'mapTiles',
+          type: 'MapTileLookup',
+        ),
+      ],
+    );
+    final sources = <String, String>{
+      'lib/canonical_map.dart': 'typedef CanonicalMap = WorldMap;',
+      target.path: '''
+class PersistentUnitDetachmentResolver {
+  void detachTroop({
+    required MapTileLookup mapTiles,
+    required CanonicalMap worldMap,
+  }) {}
+}
+''',
+    };
+
+    final violations = _violations(
+      sources[target.path]!,
+      target,
+      mapBoundaryTypeNames: typeNamesBackedBy(
+        sources,
+        _mapBoundaryRootTypeNames,
+      ),
+    );
+
+    expect(
+      violations,
+      contains(
+        'PersistentUnitDetachmentResolver.detachTroop must not expose an '
+        'additional map dependency through parameter worldMap',
+      ),
+    );
+  });
 }

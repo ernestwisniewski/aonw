@@ -10,7 +10,7 @@ void main() {
         state: _state(merchantCol: 0),
         command: const AssignMerchantTradeRouteCommand('merchant_1', 'city_2'),
         actorPlayerId: 'player_1',
-        worldMap: _lineMap(),
+        mapData: WorldMapReadView(_lineMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -25,7 +25,7 @@ void main() {
         state: _state(merchantCol: 1),
         command: const MoveMerchantToCityCommand('merchant_1', 'city_2'),
         actorPlayerId: 'player_1',
-        worldMap: _lineMap(),
+        mapData: WorldMapReadView(_lineMap()),
       );
 
       expect(result.accepted, isTrue);

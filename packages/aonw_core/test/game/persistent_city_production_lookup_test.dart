@@ -4,14 +4,16 @@ import 'package:test/test.dart';
 void main() {
   group('PersistentCityProductionResolver bounded map lookup', () {
     test('rejects a terrain-gated wonder without the required neighbor', () {
-      final result = _startHangingGardens(_worldMap());
+      final result = _startHangingGardens(WorldMapReadView(_worldMap()));
 
       expect(result.accepted, isFalse);
       expect(result.reason, 'wonder_not_available');
     });
 
     test('starts a terrain-gated wonder through WorldMap lookup', () {
-      final result = _startHangingGardens(_worldMap(withAdjacentRiver: true));
+      final result = _startHangingGardens(
+        WorldMapReadView(_worldMap(withAdjacentRiver: true)),
+      );
 
       expect(result.accepted, isTrue);
       expect(
@@ -60,7 +62,7 @@ void main() {
   });
 }
 
-PersistentCityProductionResult _startHangingGardens(WorldMap worldMap) {
+PersistentCityProductionResult _startHangingGardens(MapTileLookup mapTiles) {
   const city = GameCity(
     id: 'city_1',
     ownerPlayerId: 'player_1',
@@ -82,7 +84,7 @@ PersistentCityProductionResult _startHangingGardens(WorldMap worldMap) {
     state: state,
     command: const StartWonderCommand('city_1', WonderType.hangingGardens),
     actorPlayerId: 'player_1',
-    worldMap: worldMap,
+    mapTiles: mapTiles,
   );
 }
 

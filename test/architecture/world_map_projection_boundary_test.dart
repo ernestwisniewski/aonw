@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/legacy_world_map_adapter_guard.dart';
 
+part 'support/economy_simulation_map_view_guard.dart';
+part 'support/economy_simulation_map_view_fixtures.dart';
 part 'support/world_map_projection_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_guard.dart';
 
@@ -29,6 +31,7 @@ const _mapDataFreeMigrationPaths = {
   '$_gameDomain/movement/scout_auto_explore_planner.dart',
   '$_gameDomain/movement/unit_movement_pathfinder.dart',
   '$_gameDomain/outcome/domination_progress_calculator.dart',
+  '$_gameDomain/outcome/game_outcome_detector.dart',
   '$_gameDomain/stability/persistent_stability_processor.dart',
   '$_gameDomain/stability/stability_input_builder.dart',
   '$_gameDomain/technology/research_turn_processor.dart',
@@ -42,7 +45,10 @@ const _mapDataFreeMigrationPaths = {
   '$_gameDomain/unit/unit_fortification_rules.dart',
   '$_gameDomain/unit/worker_turn_processor.dart',
   '$_gameDomain/unit/persistent_unit_detachment_resolver.dart',
+  '$_gameDomain/unit/starting_units.dart',
   '$_coreLib/ai/simulation/economy_simulation_command_applier.dart',
+  '$_coreLib/ai/simulation/economy_simulation_command_applier_production.dart',
+  '$_coreLib/ai/simulation/economy_simulation_turn_row_factory.dart',
 };
 const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
@@ -52,9 +58,6 @@ const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
 const _allowedProductionProjectionSites = <String, int>{};
 const _allowedProductionImportSites = <String, int>{
   'lib/editor/domain/map_draft.dart::class:MapDraft/method:freeze::call': 1,
-  'packages/aonw_core/lib/ai/simulation/economy_simulation.dart::'
-          'class:EconomySimulation/method:run::call':
-      1,
   'server/lib/src/multiplayer/server_command_reducer_map_cache.dart::'
           'method:_loadServerMap::call':
       1,
@@ -121,6 +124,10 @@ void main() {
         reason: entry.key,
       );
     }
+  });
+
+  test('economy simulation owns one shared indexed map view', () {
+    expect(_economySimulationMapViewViolations(), isEmpty);
   });
 
   test('migrated map paths do not materialize legacy maps', () {
@@ -194,6 +201,7 @@ void main() {
   });
 
   _registerWorldMapProjectionBoundaryFixtures();
+  _registerEconomySimulationMapViewFixtures();
 }
 
 List<String> _adapterTypedefViolations(Map<String, String> sources) {

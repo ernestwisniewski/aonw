@@ -31,7 +31,8 @@ arrays remain ordered, including the exact order of domain events. Both input
 orders must produce the same committed oracle on every run.
 
 Version 1 covers movement, scout auto-exploration, merchant routing, instant
-combat, city production, research, worker improvements, waiting turn
+combat, city building, unit, and map-dependent wonder production, research,
+worker improvements, waiting turn
 submissions, and simultaneous turn finalization.
 Turn rejections cover both a forged player id and a player outside the active
 match roster. The corpus intentionally excludes client-only commands,
