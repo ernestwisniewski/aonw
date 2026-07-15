@@ -55,7 +55,7 @@ void main() {
         improvementType: FieldImprovementType.farm,
         cities: [_city()],
         fieldImprovements: const [],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _research({TechnologyId.agriculture}),
       );
 
@@ -69,7 +69,7 @@ void main() {
         improvementType: FieldImprovementType.mine,
         cities: [_city()],
         fieldImprovements: const [],
-        mapData: _map(),
+        mapTiles: _map(),
         research: ResearchState.empty,
       );
 
@@ -84,7 +84,7 @@ void main() {
         improvementType: FieldImprovementType.farm,
         cities: [_city()],
         fieldImprovements: const [],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _research({TechnologyId.agriculture}),
       );
 
@@ -125,7 +125,7 @@ void main() {
           ),
         ],
         fieldImprovements: const [],
-        mapData: coastalMap,
+        mapTiles: coastalMap,
         research: _research({TechnologyId.fishing}),
       );
 
@@ -166,7 +166,7 @@ void main() {
           ),
         ],
         fieldImprovements: const [],
-        mapData: coastalMap,
+        mapTiles: coastalMap,
         research: _research({TechnologyId.navigation}),
       );
 
@@ -180,7 +180,7 @@ void main() {
         improvementType: FieldImprovementType.farm,
         cities: [_city()],
         fieldImprovements: const [],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _research({TechnologyId.agriculture}),
       );
 
@@ -199,7 +199,7 @@ void main() {
             type: FieldImprovementType.farm,
           ),
         ],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _research({TechnologyId.agriculture}),
       );
 

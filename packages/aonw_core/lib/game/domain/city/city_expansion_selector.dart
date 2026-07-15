@@ -25,7 +25,7 @@ class CityExpansionCandidate {
 abstract final class CityExpansionSelector {
   static CityHex? bestHex({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required Iterable<GameCity> cities,
     bool allowCoast = false,
     bool allowOcean = false,
@@ -34,7 +34,7 @@ abstract final class CityExpansionSelector {
   }) {
     final candidates = candidatesFor(
       city: city,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cities: cities,
       allowCoast: allowCoast,
       allowOcean: allowOcean,
@@ -48,7 +48,7 @@ abstract final class CityExpansionSelector {
 
   static CityHex? preferredOrBestHex({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required Iterable<GameCity> cities,
     bool allowCoast = false,
     bool allowOcean = false,
@@ -58,7 +58,7 @@ abstract final class CityExpansionSelector {
     final preferred = city.preferredExpansionHex;
     final candidates = candidatesFor(
       city: city,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cities: cities,
       allowCoast: allowCoast,
       allowOcean: allowOcean,
@@ -77,7 +77,7 @@ abstract final class CityExpansionSelector {
 
   static List<CityExpansionCandidate> candidatesFor({
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required Iterable<GameCity> cities,
     bool allowCoast = false,
     bool allowOcean = false,
@@ -100,7 +100,7 @@ abstract final class CityExpansionSelector {
       )) {
         final hex = CityHex(col: neighbor.col, row: neighbor.row);
         if (!seen.add(hex)) continue;
-        final tile = mapData.tileAt(hex.col, hex.row);
+        final tile = mapTiles.tileAt(hex.col, hex.row);
         if (!CityExpansionRules.canClaim(
           city: city,
           target: hex,

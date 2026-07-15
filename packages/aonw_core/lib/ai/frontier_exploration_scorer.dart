@@ -158,7 +158,7 @@ class AiFrontierExplorationScorer {
           !CityFoundingRules.isControlledHexCandidate(
             draft: draft,
             tile: candidateTile,
-            mapData: view.mapData,
+            mapTiles: view.mapData,
             cities: knownCities,
           )) {
         continue;

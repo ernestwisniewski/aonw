@@ -52,9 +52,9 @@ class PersistentResearchCommandResolver {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapData: worldMap == null
+      mapTiles: worldMap == null
           ? null
-          : LegacyWorldMapAdapter.toMapData(worldMap),
+          : LegacyWorldMapAdapter.asTileLookup(worldMap),
       ruleset: ruleset,
       paceBalance: paceBalance,
     );

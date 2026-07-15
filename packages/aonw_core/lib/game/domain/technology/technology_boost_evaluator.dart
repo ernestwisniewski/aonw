@@ -10,7 +10,7 @@ abstract final class TechnologyBoostEvaluator {
     required TechnologyDefinition technology,
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
     var bestDiscount = 0.0;
     for (final boost in technology.boosts) {
@@ -19,7 +19,7 @@ abstract final class TechnologyBoostEvaluator {
         playerId: playerId,
         cities: cities,
         fieldImprovements: fieldImprovements,
-        mapData: mapData,
+        mapTiles: mapTiles,
       )) {
         bestDiscount = bestDiscount < boost.discount
             ? boost.discount
@@ -34,7 +34,7 @@ abstract final class TechnologyBoostEvaluator {
     required String playerId,
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
     return switch (condition) {
       HasImprovementCount(:final improvementType, :final count) =>
@@ -54,12 +54,12 @@ abstract final class TechnologyBoostEvaluator {
       ControlsResource(:final resourceType) => _controlledTiles(
         playerId: playerId,
         cities: cities,
-        mapData: mapData,
+        mapTiles: mapTiles,
       ).any((tile) => tile.resources.contains(resourceType)),
       ControlsAnyResource(:final resourceTypes) => _controlledTiles(
         playerId: playerId,
         cities: cities,
-        mapData: mapData,
+        mapTiles: mapTiles,
       ).any((tile) => tile.resources.any(resourceTypes.contains)),
     };
   }
@@ -90,12 +90,12 @@ abstract final class TechnologyBoostEvaluator {
   static Iterable<TileData> _controlledTiles({
     required String playerId,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) sync* {
     for (final city in cities) {
       if (city.ownerPlayerId != playerId) continue;
       for (final hex in city.territoryHexes) {
-        final tile = mapData.tileAt(hex.col, hex.row);
+        final tile = mapTiles.tileAt(hex.col, hex.row);
         if (tile != null) yield tile;
       }
     }

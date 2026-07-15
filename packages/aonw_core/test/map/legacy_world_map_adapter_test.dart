@@ -135,6 +135,45 @@ void main() {
       ]);
     });
 
+    test('exposes sparse tiles through bounded lookup without aliases', () {
+      final world = WorldMap(
+        cols: 8,
+        rows: 6,
+        tiles: [
+          WorldTile(
+            coordinate: const HexCoord(col: 6, row: 4),
+            terrains: const [TerrainType.hills],
+            resources: const [ResourceType.iron],
+            height: 3,
+          ),
+        ],
+      );
+      final MapTileLookup lookup = LegacyWorldMapAdapter.asTileLookup(world);
+
+      final first = lookup.tileAt(6, 4);
+
+      expect(first?.col, 6);
+      expect(first?.row, 4);
+      expect(first?.terrains, [TerrainType.hills]);
+      expect(first?.resources, [ResourceType.iron]);
+      expect(first?.height, 3);
+      expect(lookup.tileAt(0, 0), isNull);
+
+      first!.terrains.add(TerrainType.river);
+      first.resources.clear();
+      final second = lookup.tileAt(6, 4);
+
+      expect(identical(first, second), isFalse);
+      expect(second?.terrains, [TerrainType.hills]);
+      expect(second?.resources, [ResourceType.iron]);
+      expect(world.tileAt(const HexCoord(col: 6, row: 4))?.terrains, [
+        TerrainType.hills,
+      ]);
+      expect(world.tileAt(const HexCoord(col: 6, row: 4))?.resources, [
+        ResourceType.iron,
+      ]);
+    });
+
     test('makes the legacy codec enforce canonical invariants', () {
       final invalidObjectiveJson = jsonEncode({
         'cols': 1,

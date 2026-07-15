@@ -474,7 +474,7 @@ abstract final class MapValidator {
       if (CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapData: mapData,
+        mapTiles: mapData,
       )) {
         controlledCandidates++;
       }

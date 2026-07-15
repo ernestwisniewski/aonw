@@ -132,7 +132,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     );
     final recommended = CityExpansionSelector.preferredOrBestHex(
       city: city,
-      mapData: mapData,
+      mapTiles: mapData,
       cities: state.cities,
       allowCoast: true,
       allowOcean: true,
@@ -142,7 +142,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     final candidates =
         CityExpansionSelector.candidatesFor(
             city: city,
-            mapData: mapData,
+            mapTiles: mapData,
             cities: state.cities,
             allowCoast: true,
             allowOcean: true,
@@ -351,7 +351,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
         improvementType: type,
         cities: state.cities,
         fieldImprovements: state.fieldImprovements,
-        mapData: mapData,
+        mapTiles: mapData,
         research: state.research,
         targetHex: hex,
         requireReadyWorker: false,

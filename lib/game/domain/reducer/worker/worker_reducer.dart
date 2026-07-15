@@ -101,7 +101,7 @@ abstract final class WorkerReducer {
       improvementType: improvementType,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapTiles: mapData,
       research: state.research,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -194,7 +194,7 @@ abstract final class WorkerReducer {
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
-      mapData: mapData,
+      mapTiles: mapData,
     );
     if (!legality.allowed) return GameStateTransition(state: state);
 

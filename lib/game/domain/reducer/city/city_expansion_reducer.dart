@@ -90,7 +90,7 @@ abstract final class CityExpansionReducer {
     );
     final candidates = CityExpansionSelector.candidatesFor(
       city: city,
-      mapData: mapData,
+      mapTiles: mapData,
       cities: state.cities,
       allowCoast: true,
       allowOcean: true,

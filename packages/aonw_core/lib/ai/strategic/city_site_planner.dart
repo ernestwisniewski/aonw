@@ -268,7 +268,7 @@ class CitySitePlanner {
       final candidates =
           CityExpansionSelector.candidatesFor(
             city: projectedCity,
-            mapData: view.mapData,
+            mapTiles: view.mapData,
             cities: cities,
             ruleset: view.ruleset.city,
           ).where((candidate) {

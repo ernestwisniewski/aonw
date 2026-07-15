@@ -55,7 +55,7 @@ final class MctsSimulatedEconomyCommandApplier {
       technologyId: command.technologyId,
       cities: ownCities,
       fieldImprovements: view.ownImprovements,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.technology,
     );
   }

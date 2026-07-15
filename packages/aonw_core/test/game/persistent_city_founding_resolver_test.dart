@@ -134,6 +134,42 @@ void main() {
       expect(result.state, state);
     });
 
+    test('rejects a controlled hex missing from a sparse WorldMap', () {
+      final state = PersistentGameState(units: [_settler()]);
+      final sparseWorldMap = WorldMap(
+        cols: 4,
+        rows: 4,
+        tiles: [
+          WorldTile(
+            coordinate: const HexCoord(col: 0, row: 0),
+            terrains: [TerrainType.grassland],
+            resources: [],
+            height: 0,
+          ),
+          WorldTile(
+            coordinate: const HexCoord(col: 1, row: 0),
+            terrains: [TerrainType.grassland],
+            resources: [],
+            height: 0,
+          ),
+        ],
+      );
+
+      final result = const PersistentCityFoundingResolver().foundCity(
+        state: state,
+        command: const FoundCityCommand(
+          'settler_1',
+          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+        ),
+        actorPlayerId: 'player_1',
+        worldMap: sparseWorldMap,
+      );
+
+      expect(result.accepted, isFalse);
+      expect(result.reason, 'city_controlled_hexes_invalid');
+      expect(result.state, same(state));
+    });
+
     test('rejects founding next to an existing city center', () {
       final state = PersistentGameState(
         units: [_settler(col: 2, row: 2)],

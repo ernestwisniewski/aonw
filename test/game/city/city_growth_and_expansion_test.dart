@@ -171,7 +171,7 @@ void main() {
 
       final candidates = CityExpansionSelector.candidatesFor(
         city: city,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: [city, otherCity],
       ).map((candidate) => candidate.hex).toSet();
 
@@ -188,7 +188,7 @@ void main() {
 
       final selected = CityExpansionSelector.bestHex(
         city: city,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: [city, otherCity],
       );
 
@@ -213,7 +213,7 @@ void main() {
 
       final selected = CityExpansionSelector.preferredOrBestHex(
         city: city,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: const [city],
       );
 
@@ -238,7 +238,7 @@ void main() {
 
       final selected = CityExpansionSelector.preferredOrBestHex(
         city: city,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: const [city],
       );
 
@@ -264,7 +264,7 @@ void main() {
 
         final unsupportedCandidates = CityExpansionSelector.candidatesFor(
           city: city,
-          mapData: mapData,
+          mapTiles: mapData,
           cities: const [city],
         ).map((candidate) => candidate.hex).toSet();
 
@@ -283,7 +283,7 @@ void main() {
 
         final supportedCandidates = CityExpansionSelector.candidatesFor(
           city: supportedCity,
-          mapData: mapData,
+          mapTiles: mapData,
           cities: const [supportedCity],
         ).map((candidate) => candidate.hex).toSet();
 

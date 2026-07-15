@@ -19,7 +19,7 @@ abstract final class ResearchOverflowRules {
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
     required TechnologyRuleset ruleset,
-    MapData? mapData,
+    MapTileLookup? mapTiles,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     var updated = playerResearch.withActiveTechnology(technologyId);
@@ -32,7 +32,7 @@ abstract final class ResearchOverflowRules {
       cities: cities,
       fieldImprovements: fieldImprovements,
       ruleset: ruleset,
-      mapData: mapData,
+      mapTiles: mapTiles,
       paceBalance: paceBalance,
     );
     final cap = cost * maxOverflowCostNumerator ~/ maxOverflowCostDenominator;
@@ -52,18 +52,18 @@ abstract final class ResearchOverflowRules {
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
     required TechnologyRuleset ruleset,
-    MapData? mapData,
+    MapTileLookup? mapTiles,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final technology = ruleset.definitionFor(technologyId);
-    final boostDiscount = mapData == null
+    final boostDiscount = mapTiles == null
         ? 0.0
         : TechnologyBoostEvaluator.bestDiscountFor(
             playerId: playerId,
             technology: technology,
             cities: cities,
             fieldImprovements: fieldImprovements,
-            mapData: mapData,
+            mapTiles: mapTiles,
           );
     final cityCount = cities
         .where((city) => city.ownerPlayerId == playerId)

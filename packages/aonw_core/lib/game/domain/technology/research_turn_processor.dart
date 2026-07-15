@@ -89,7 +89,7 @@ abstract final class ResearchTurnProcessor {
       technology: technology,
       cities: cities,
       fieldImprovements: fieldImprovements,
-      mapData: mapData,
+      mapTiles: mapData,
     );
     final cityCount = cities
         .where((city) => city.ownerPlayerId == playerId)

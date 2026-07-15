@@ -201,7 +201,7 @@ class WorkerAssignmentPlanner {
         improvementType: type,
         cities: view.ownCities,
         fieldImprovements: view.ownImprovements,
-        mapData: view.mapData,
+        mapTiles: view.mapData,
         research: research,
         targetHex: hex,
         requireReadyWorker: false,

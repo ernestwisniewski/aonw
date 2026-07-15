@@ -48,8 +48,8 @@ class PersistentCityFoundingResolver {
       return _reject(state, 'city_founder_busy');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
-    final centerTile = mapData.tileAt(founder.col, founder.row);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
+    final centerTile = mapTiles.tileAt(founder.col, founder.row);
     final startFailure = CityFoundingRules.startFailure(
       unit: founder,
       centerTile: centerTile,
@@ -68,7 +68,7 @@ class PersistentCityFoundingResolver {
     if (CityFoundingRules.confirmFailure(draft) != null) {
       return _reject(state, 'city_controlled_hexes_invalid');
     }
-    if (!_controlledHexesAreValid(draft, mapData, state.cities)) {
+    if (!_controlledHexesAreValid(draft, mapTiles, state.cities)) {
       return _reject(state, 'city_controlled_hexes_invalid');
     }
 
@@ -114,18 +114,18 @@ class PersistentCityFoundingResolver {
 
   static bool _controlledHexesAreValid(
     CityFoundingDraft draft,
-    MapData mapData,
+    MapTileLookup mapTiles,
     Iterable<GameCity> cities,
   ) {
     final unique = draft.controlledHexes.toSet();
     if (unique.length != draft.controlledHexes.length) return false;
     for (final hex in draft.controlledHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) return false;
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapData: mapData,
+        mapTiles: mapTiles,
         cities: cities,
       )) {
         return false;

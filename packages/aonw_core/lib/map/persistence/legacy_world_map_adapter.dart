@@ -30,6 +30,12 @@ abstract final class LegacyWorldMapAdapter {
     );
   }
 
+  /// Exposes bounded legacy tile projections without materializing a full
+  /// [MapData] graph.
+  static MapTileLookup asTileLookup(WorldMap worldMap) {
+    return _WorldMapTileLookup(worldMap);
+  }
+
   /// Projects a canonical tile to the legacy tile shape expected by older
   /// gameplay services.
   ///
@@ -58,5 +64,16 @@ abstract final class LegacyWorldMapAdapter {
       resources: List.of(tile.resources),
       height: tile.height,
     );
+  }
+}
+
+final class _WorldMapTileLookup implements MapTileLookup {
+  const _WorldMapTileLookup(this._worldMap);
+
+  final WorldMap _worldMap;
+
+  @override
+  TileData? tileAt(int col, int row) {
+    return LegacyWorldMapAdapter.tileDataAt(_worldMap, col, row);
   }
 }

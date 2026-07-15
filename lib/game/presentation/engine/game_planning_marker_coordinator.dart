@@ -63,7 +63,7 @@ class GamePlanningMarkerCoordinator {
               targetHex: workerHex,
               cities: state.cities,
               fieldImprovements: state.fieldImprovements,
-              mapData: grid.mapData,
+              mapTiles: grid.mapData,
               research: state.research,
             );
       final canImproveNow =

@@ -78,11 +78,11 @@ abstract final class CityFoundingRules {
   static bool isControlledHexCandidate({
     required CityFoundingDraft draft,
     required TileData tile,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     Iterable<GameCity> cities = const [],
   }) {
     if (draft.center.occupies(tile.col, tile.row)) return false;
-    if (mapData.tileAt(tile.col, tile.row) == null) return false;
+    if (mapTiles.tileAt(tile.col, tile.row) == null) return false;
     if (!CityTileYieldRules.canCityControlTile(tile)) return false;
     final target = CityHex(col: tile.col, row: tile.row);
     final distance = CityTerritoryRules.distance(

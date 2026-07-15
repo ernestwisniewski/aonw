@@ -42,12 +42,12 @@ class PersistentCityExpansionResolver {
     }
 
     final target = CityHex(col: command.col, row: command.row);
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     if (!_isCandidate(
       city: city,
       target: target,
       state: state,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
     )) {
@@ -78,7 +78,7 @@ class PersistentCityExpansionResolver {
     required GameCity city,
     required CityHex target,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {
@@ -89,7 +89,7 @@ class PersistentCityExpansionResolver {
     );
     final candidates = CityExpansionSelector.candidatesFor(
       city: city,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cities: state.cities,
       allowCoast: true,
       allowOcean: true,

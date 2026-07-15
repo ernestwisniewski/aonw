@@ -436,7 +436,7 @@ abstract final class CityTurnProcessor {
     final citiesWithCurrentCity = _replaceCity(cities, city);
     final hex = CityExpansionSelector.preferredOrBestHex(
       city: city,
-      mapData: mapData,
+      mapTiles: mapData,
       cities: citiesWithCurrentCity,
       allowCoast: true,
       allowOcean: true,

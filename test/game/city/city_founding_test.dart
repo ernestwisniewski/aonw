@@ -108,7 +108,7 @@ void main() {
           CityFoundingRules.isControlledHexCandidate(
             draft: draft,
             tile: _tile(map, 2, 2),
-            mapData: map,
+            mapTiles: map,
             cities: const [],
           ),
           isFalse,
@@ -117,7 +117,7 @@ void main() {
           CityFoundingRules.isControlledHexCandidate(
             draft: draft,
             tile: _tile(map, 3, 2),
-            mapData: map,
+            mapTiles: map,
             cities: const [],
           ),
           isTrue,
@@ -126,7 +126,7 @@ void main() {
           CityFoundingRules.isControlledHexCandidate(
             draft: draft,
             tile: _tile(map, 4, 4),
-            mapData: map,
+            mapTiles: map,
             cities: const [],
           ),
           isFalse,
@@ -164,7 +164,7 @@ void main() {
         CityFoundingRules.isControlledHexCandidate(
           draft: draft,
           tile: _tile(map, 3, 2),
-          mapData: map,
+          mapTiles: map,
           cities: const [],
         ),
         isTrue,
@@ -173,7 +173,7 @@ void main() {
         CityFoundingRules.isControlledHexCandidate(
           draft: draft,
           tile: _tile(map, 2, 3),
-          mapData: map,
+          mapTiles: map,
           cities: const [],
         ),
         isTrue,
@@ -199,7 +199,7 @@ void main() {
           CityFoundingRules.isControlledHexCandidate(
             draft: draft,
             tile: _tile(map, 3, 2),
-            mapData: map,
+            mapTiles: map,
             cities: [existingCity],
           ),
           isFalse,
@@ -220,7 +220,7 @@ void main() {
         CityFoundingRules.isControlledHexCandidate(
           draft: draft,
           tile: _tile(map, 3, 2),
-          mapData: map,
+          mapTiles: map,
           cities: [existingCity],
         ),
         isFalse,
@@ -327,7 +327,7 @@ void main() {
         CityFoundingRules.isControlledHexCandidate(
           draft: draft,
           tile: _tile(map, 3, 2),
-          mapData: map,
+          mapTiles: map,
           cities: [unrelatedCity],
         ),
         isTrue,

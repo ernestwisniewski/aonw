@@ -150,7 +150,7 @@ bool _canApplyFoundCityCandidate(FoundCityCommand command, GameView view) {
     if (!CityFoundingRules.isControlledHexCandidate(
       draft: draft,
       tile: tile,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       cities: cities,
     )) {
       return false;

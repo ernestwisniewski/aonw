@@ -34,7 +34,7 @@ abstract final class ResearchReducer {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: ruleset,
       paceBalance: context.paceBalance,
     );

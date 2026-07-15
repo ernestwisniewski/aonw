@@ -288,7 +288,7 @@ final class BasicStrategyWorkerPlanner {
       improvementType: improvementType,
       cities: view.ownCities,
       fieldImprovements: view.ownImprovements,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       research: research ?? _researchFor(view),
       targetHex: targetHex,
       requireReadyWorker: requireReadyWorker,
@@ -316,7 +316,7 @@ final class BasicStrategyWorkerPlanner {
       cities: view.ownCities,
       fieldImprovements: view.ownImprovements,
       units: view.ownUnits,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       targetHex: targetHex,
       requireReadyWorker: requireReadyWorker,
     ).allowed;

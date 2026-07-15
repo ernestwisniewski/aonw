@@ -37,7 +37,7 @@ class CityFoundingPreviewLayer extends Component with LayerAttachment {
             if (CityFoundingRules.isControlledHexCandidate(
                   draft: draft,
                   tile: tile,
-                  mapData: mapData,
+                  mapTiles: mapData,
                   cities: cities,
                 ) &&
                 !controlled.contains(CityHex(col: tile.col, row: tile.row)) &&

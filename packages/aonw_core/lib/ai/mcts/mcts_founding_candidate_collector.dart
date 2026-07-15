@@ -67,7 +67,7 @@ final class MctsFoundingCandidateCollector {
         if (!CityFoundingRules.isControlledHexCandidate(
           draft: draft,
           tile: tile,
-          mapData: view.mapData,
+          mapTiles: view.mapData,
           cities: cities,
         )) {
           continue;

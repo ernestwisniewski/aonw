@@ -123,13 +123,13 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     final legality = WorkerAssignmentRules.evaluate(
       unit: worker,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
-      mapData: mapData,
+      mapTiles: mapTiles,
     );
     if (!legality.allowed) {
       return _reject(state, 'worker_assignment_unavailable');
@@ -198,13 +198,13 @@ class PersistentWorkerCommandResolver {
       return _reject(state, 'worker_not_controlled');
     }
 
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapTiles = LegacyWorldMapAdapter.asTileLookup(worldMap);
     final legality = WorkerImprovementRules.evaluate(
       unit: worker,
       improvementType: improvementType,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapTiles: mapTiles,
       research: state.research,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,

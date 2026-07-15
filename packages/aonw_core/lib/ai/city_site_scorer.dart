@@ -227,7 +227,7 @@ class AiCitySiteScorer {
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapData: view.mapData,
+        mapTiles: view.mapData,
         cities: knownCities,
       )) {
         continue;

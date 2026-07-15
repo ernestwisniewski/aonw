@@ -89,7 +89,7 @@ abstract final class CityFoundingReducer {
     if (!CityFoundingRules.isControlledHexCandidate(
       draft: draft,
       tile: tile,
-      mapData: mapData,
+      mapTiles: mapData,
       cities: state.cities,
     )) {
       return state;
@@ -202,7 +202,7 @@ abstract final class CityFoundingReducer {
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: cities,
       )) {
         return false;

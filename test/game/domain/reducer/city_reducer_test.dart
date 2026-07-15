@@ -390,7 +390,7 @@ void main() {
           playerId: 'player_1',
           units: scheduled.state.units,
           cities: scheduled.state.cities,
-          mapData: mapData,
+          mapTiles: mapData,
           countryForPlayer: scheduled.state.countryForPlayer,
           cityRuleset: ruleset,
         );

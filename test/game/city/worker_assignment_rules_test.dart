@@ -52,7 +52,7 @@ void main() {
           ),
         ],
         units: [assignedWorker, nextWorker],
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(WorkerAssignmentRules.maxAssignmentsForCity(city), 1);

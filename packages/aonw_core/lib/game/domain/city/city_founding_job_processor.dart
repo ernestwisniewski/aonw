@@ -29,7 +29,7 @@ abstract final class CityFoundingJobProcessor {
     required String playerId,
     required List<GameUnit> units,
     required List<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required PlayerCountry Function(String playerId) countryForPlayer,
     CityRuleset cityRuleset = CityRulesets.standard,
   }) {
@@ -50,7 +50,7 @@ abstract final class CityFoundingJobProcessor {
       if (!_jobStillValid(
         unit: unit,
         cities: updatedCities,
-        mapData: mapData,
+        mapTiles: mapTiles,
       )) {
         updatedUnits[index] = unit
             .copyWithCityFoundingJob(null)
@@ -65,7 +65,7 @@ abstract final class CityFoundingJobProcessor {
         controlledHexes: job.controlledHexes,
       );
       if (CityFoundingRules.confirmFailure(draft) != null ||
-          !_controlledHexesAreValid(draft, mapData, updatedCities)) {
+          !_controlledHexesAreValid(draft, mapTiles, updatedCities)) {
         updatedUnits[index] = unit
             .copyWithCityFoundingJob(null)
             .copyWithQueuedPath(null);
@@ -123,14 +123,14 @@ abstract final class CityFoundingJobProcessor {
   static bool _jobStillValid({
     required GameUnit unit,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
     final job = unit.cityFoundingJob;
     if (job == null) return false;
     if (!unit.occupies(job.center.col, job.center.row)) return false;
     return CityFoundingRules.startFailure(
           unit: unit,
-          centerTile: mapData.tileAt(job.center.col, job.center.row),
+          centerTile: mapTiles.tileAt(job.center.col, job.center.row),
           cities: cities,
         ) ==
         null;
@@ -138,18 +138,18 @@ abstract final class CityFoundingJobProcessor {
 
   static bool _controlledHexesAreValid(
     CityFoundingDraft draft,
-    MapData mapData,
+    MapTileLookup mapTiles,
     Iterable<GameCity> cities,
   ) {
     final unique = draft.controlledHexes.toSet();
     if (unique.length != draft.controlledHexes.length) return false;
     for (final hex in draft.controlledHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) return false;
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapData: mapData,
+        mapTiles: mapTiles,
         cities: cities,
       )) {
         return false;

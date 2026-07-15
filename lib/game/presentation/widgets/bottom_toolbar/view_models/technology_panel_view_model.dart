@@ -207,7 +207,7 @@ abstract final class TechnologyPanelViewModelFactory {
             technology: technology,
             cities: state.cities,
             fieldImprovements: state.fieldImprovements,
-            mapData: mapData,
+            mapTiles: mapData,
           )
         : 0.0;
     final totalCost = ResearchCostCalculator.effectiveCost(

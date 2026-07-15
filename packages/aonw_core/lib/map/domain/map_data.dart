@@ -1,16 +1,22 @@
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
+/// Read-only lookup for legacy tile data at a single coordinate.
+abstract interface class MapTileLookup {
+  TileData? tileAt(int col, int row);
+}
+
 /// Read-only spatial data consumed by map renderers.
 ///
 /// [MapData] remains the legacy persistence model. Editor-only mutable state
 /// can implement this narrow contract without becoming a second persistence
 /// representation.
-abstract interface class MapTileSource {
+abstract interface class MapTileSource implements MapTileLookup {
   int get cols;
   int get rows;
   Iterable<TileData> get tiles;
 
+  @override
   TileData? tileAt(int col, int row);
 }
 

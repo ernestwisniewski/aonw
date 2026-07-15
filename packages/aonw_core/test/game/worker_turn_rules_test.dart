@@ -9,7 +9,7 @@ void main() {
         improvementType: FieldImprovementType.mine,
         cities: [_city()],
         fieldImprovements: const [],
-        mapData: _map(),
+        mapTiles: _map(),
         research: ResearchState.empty,
       );
 

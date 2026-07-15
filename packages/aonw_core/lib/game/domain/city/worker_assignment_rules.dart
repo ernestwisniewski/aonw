@@ -55,7 +55,7 @@ abstract final class WorkerAssignmentRules {
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
     required Iterable<GameUnit> units,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     CityHex? targetHex,
     bool requireReadyWorker = true,
   }) {
@@ -82,7 +82,7 @@ abstract final class WorkerAssignmentRules {
     }
 
     final hex = targetHex ?? CityHex(col: unit.col, row: unit.row);
-    final tile = mapData.tileAt(hex.col, hex.row);
+    final tile = mapTiles.tileAt(hex.col, hex.row);
     if (tile == null) {
       return const WorkerAssignmentLegality.blocked(
         WorkerAssignmentBlocker.missingTile,

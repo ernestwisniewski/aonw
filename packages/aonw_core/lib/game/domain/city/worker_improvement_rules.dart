@@ -63,7 +63,7 @@ abstract final class WorkerImprovementRules {
     required FieldImprovementType improvementType,
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
     CityHex? targetHex,
     bool requireReadyWorker = true,
@@ -92,7 +92,7 @@ abstract final class WorkerImprovementRules {
     }
 
     final currentHex = targetHex ?? CityHex(col: unit.col, row: unit.row);
-    final tile = mapData.tileAt(currentHex.col, currentHex.row);
+    final tile = mapTiles.tileAt(currentHex.col, currentHex.row);
     if (tile == null) {
       return const WorkerImprovementLegality.blocked(
         WorkerImprovementBlocker.missingTile,
@@ -160,7 +160,7 @@ abstract final class WorkerImprovementRules {
     required CityHex targetHex,
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -172,7 +172,7 @@ abstract final class WorkerImprovementRules {
         improvementType: type,
         cities: cities,
         fieldImprovements: fieldImprovements,
-        mapData: mapData,
+        mapTiles: mapTiles,
         research: research,
         targetHex: targetHex,
         requireReadyWorker: false,

@@ -176,7 +176,7 @@ class RecommendedCitySitePlanner {
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: candidate,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: state.cities,
       )) {
         continue;

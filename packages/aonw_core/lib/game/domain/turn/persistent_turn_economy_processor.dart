@@ -438,7 +438,7 @@ abstract final class PersistentTurnEconomyProcessor {
       playerId: playerId,
       units: state.units,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       countryForPlayer: state.countryForPlayer,
       cityRuleset: ruleset.city,
     );

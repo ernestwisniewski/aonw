@@ -24,7 +24,7 @@ final class MctsWorkerCandidateCollector {
         cities: view.ownCities,
         fieldImprovements: view.ownImprovements,
         units: view.ownUnits,
-        mapData: view.mapData,
+        mapTiles: view.mapData,
       );
       if (assignment.allowed) {
         commands.add(AssignWorkerToHexCommand(worker.id));
@@ -36,7 +36,7 @@ final class MctsWorkerCandidateCollector {
           improvementType: improvementType,
           cities: view.ownCities,
           fieldImprovements: view.ownImprovements,
-          mapData: view.mapData,
+          mapTiles: view.mapData,
           research: research,
           cityRuleset: view.ruleset.city,
           technologyRuleset: view.ruleset.technology,

@@ -73,7 +73,7 @@ final class AiTechnologyStateScorer {
       technology: definition,
       cities: view.ownCities,
       fieldImprovements: view.ownImprovements,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
     );
     score += satisfiedDiscount * 0.8;
 
