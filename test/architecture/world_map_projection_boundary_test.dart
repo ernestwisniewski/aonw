@@ -55,9 +55,6 @@ const _allowedProductionImportSites = <String, int>{
   'packages/aonw_core/lib/ai/simulation/economy_simulation.dart::'
           'class:EconomySimulation/method:run::call':
       1,
-  'packages/aonw_core/lib/map/persistence/map_data_codec.dart::'
-          'function:_validateCanonicalMap::call':
-      1,
   'server/lib/src/multiplayer/server_command_reducer_map_cache.dart::'
           'method:_loadServerMap::call':
       1,

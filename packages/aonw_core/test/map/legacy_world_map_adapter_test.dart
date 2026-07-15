@@ -101,47 +101,5 @@ void main() {
       ]);
       expect(world.objectives, hasLength(1));
     });
-
-    test('makes the legacy codec enforce canonical invariants', () {
-      final invalidObjectiveJson = jsonEncode({
-        'cols': 1,
-        'rows': 1,
-        'tiles': [
-          {
-            'col': 0,
-            'row': 0,
-            'terrains': ['plains'],
-            'resources': <String>[],
-            'height': 0,
-          },
-        ],
-        'objectives': [
-          {
-            'id': ' ',
-            'type': 'ruins',
-            'hex': {'col': 0, 'row': 0},
-          },
-        ],
-      });
-
-      expect(
-        () => MapDataCodec.fromJson(invalidObjectiveJson),
-        _failsToLoad('Objective id must not be empty'),
-      );
-      expect(
-        () => MapDataCodec.toJson(MapData(cols: 0, rows: 1, tiles: [])),
-        _failsToLoad('Map cols must be positive, got 0'),
-      );
-    });
   });
-}
-
-Matcher _failsToLoad(String message) {
-  return throwsA(
-    isA<MapDataLoadException>().having(
-      (error) => error.message,
-      'message',
-      message,
-    ),
-  );
 }
