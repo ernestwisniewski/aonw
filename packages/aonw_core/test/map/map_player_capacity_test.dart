@@ -15,6 +15,61 @@ void main() {
       expect(MapPlayerCapacityRules.maxPlayersForTileCount(120), 2);
     });
 
+    test('uses map metadata primitives without requiring MapData', () {
+      expect(
+        MapPlayerCapacityRules.maxPlayersForMap(
+          mapName: 'verdantia',
+          tileCount: 1,
+        ),
+        4,
+      );
+      expect(
+        MapPlayerCapacityRules.singlePlayerPlayersForMap(
+          mapName: 'myranth',
+          tileCount: 1,
+        ),
+        3,
+      );
+      expect(
+        MapPlayerCapacityRules.maxPlayersForMap(
+          mapName: 'custom',
+          tileCount: 300,
+        ),
+        3,
+      );
+      expect(
+        MapPlayerCapacityRules.singlePlayerPlayersForMap(
+          mapName: null,
+          tileCount: 600,
+        ),
+        4,
+      );
+    });
+
+    test('legacy MapData helpers delegate to metadata primitives', () {
+      final map = MapData(
+        cols: 1,
+        rows: 1,
+        mapName: 'terenos',
+        tiles: const [],
+      );
+
+      expect(
+        MapPlayerCapacityRules.maxPlayersForMapData(map),
+        MapPlayerCapacityRules.maxPlayersForMap(
+          mapName: map.mapName,
+          tileCount: map.tileCount,
+        ),
+      );
+      expect(
+        MapPlayerCapacityRules.singlePlayerPlayersForMapData(map),
+        MapPlayerCapacityRules.singlePlayerPlayersForMap(
+          mapName: map.mapName,
+          tileCount: map.tileCount,
+        ),
+      );
+    });
+
     test('uses Verdantia for full multiplayer starts', () {
       final mapName = MapPlayerCapacityRules.multiplayerStartMapName(
         requestedMapName: 'terenos',

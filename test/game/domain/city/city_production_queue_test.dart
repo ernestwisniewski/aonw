@@ -157,7 +157,7 @@ void main() {
         cities: [city],
         units: const [],
         fieldImprovements: const [],
-        mapData: grassMap(),
+        mapView: grassMap(),
       );
 
       expect(supply.capacity, 6);
@@ -199,7 +199,7 @@ void main() {
         cities: [city],
         units: units,
         fieldImprovements: const [],
-        mapData: grassMap(),
+        mapView: grassMap(),
       );
 
       expect(supply.capacity, 3);
@@ -235,7 +235,7 @@ void main() {
           cities: [city],
           units: units,
           fieldImprovements: const [],
-          mapData: grassMap(),
+          mapView: grassMap(),
         ),
         isFalse,
       );
@@ -263,7 +263,7 @@ void main() {
         cities: cities,
         units: const [],
         fieldImprovements: const [],
-        mapData: mapData,
+        mapView: mapData,
       );
 
       expect(supply.rawCapacity, 30);
@@ -285,7 +285,7 @@ void main() {
               ),
           ],
           fieldImprovements: const [],
-          mapData: mapData,
+          mapView: mapData,
         ),
         isFalse,
       );

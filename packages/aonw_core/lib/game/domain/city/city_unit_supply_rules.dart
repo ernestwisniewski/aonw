@@ -15,6 +15,7 @@ import 'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
+import 'package:aonw_core/map/domain/map_survey.dart';
 
 class CityUnitSupplyBreakdown {
   const CityUnitSupplyBreakdown({
@@ -58,11 +59,12 @@ abstract final class CityUnitSupplyRules {
     return UnitCatalog.supplyCostFor(type);
   }
 
-  static int maxCapacityForMap(MapData mapData) {
-    final playerSlots = MapPlayerCapacityRules.maxPlayersForMapData(
-      mapData,
+  static int maxCapacityForMap(MapSurvey mapSurvey) {
+    final playerSlots = MapPlayerCapacityRules.maxPlayersForMap(
+      mapName: mapSurvey.mapName,
+      tileCount: mapSurvey.tileCount,
     ).clamp(1, MapPlayerCapacityRules.absoluteMaxPlayers).toInt();
-    final playableLandTiles = _playableLandTileCount(mapData);
+    final playableLandTiles = _playableLandTileCount(mapSurvey);
     if (playableLandTiles <= 0) return minimumMapCapacity;
 
     final playableLandPerPlayer = playableLandTiles / playerSlots;
@@ -76,7 +78,7 @@ abstract final class CityUnitSupplyRules {
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapReadView mapView,
     CityRuleset cityRuleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -93,11 +95,11 @@ abstract final class CityUnitSupplyRules {
     );
     final citySupplyById = <String, int>{};
     var rawCapacity = 0;
-
+    final mapTiles = mapView.mapTiles;
     for (final city in ownCities) {
       final cityYield = CityYieldCalculator.totalFor(
         city,
-        mapData,
+        mapTiles,
         fieldImprovements: fieldImprovements,
         units: units,
         ruleset: cityRuleset,
@@ -105,7 +107,7 @@ abstract final class CityUnitSupplyRules {
       final economy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
         ruleset: cityRuleset,
         technologyEffects: technologyEffects,
       );
@@ -114,7 +116,7 @@ abstract final class CityUnitSupplyRules {
       citySupplyById[city.id] = normalized;
       rawCapacity += normalized;
     }
-    final mapCapacity = maxCapacityForMap(mapData);
+    final mapCapacity = maxCapacityForMap(mapView);
     final capacity = rawCapacity < mapCapacity ? rawCapacity : mapCapacity;
 
     var unitSupplyUsed = 0;
@@ -153,7 +155,7 @@ abstract final class CityUnitSupplyRules {
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required MapReadView mapView,
     CityRuleset cityRuleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -165,7 +167,7 @@ abstract final class CityUnitSupplyRules {
       cities: cities,
       units: units,
       fieldImprovements: fieldImprovements,
-      mapData: mapData,
+      mapView: mapView,
       cityRuleset: cityRuleset,
       research: research,
       technologyRuleset: technologyRuleset,
@@ -182,10 +184,10 @@ abstract final class CityUnitSupplyRules {
     };
   }
 
-  static int _playableLandTileCount(MapData mapData) {
+  static int _playableLandTileCount(MapSurvey mapSurvey) {
     var count = 0;
-    for (final tile in mapData.tiles) {
-      final profile = TileTerrainProfileRules.fromTile(tile);
+    for (final terrains in mapSurvey.tileTerrains) {
+      final profile = TileTerrainProfileRules.fromTerrains(terrains);
       final movement = UnitMovementCostRules.costToEnter(profile);
       if (!movement.blocked) count++;
     }

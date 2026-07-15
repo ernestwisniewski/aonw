@@ -125,12 +125,12 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_not_available');
     }
-    final mapData = LegacyWorldMapAdapter.toMapData(worldMap);
+    final mapView = LegacyWorldMapAdapter.asReadView(worldMap);
     final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
       cities: state.cities,
-      mapTiles: mapData,
+      mapTiles: mapView.mapTiles,
       ruleset: cityRuleset,
       research: state.research,
       resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
@@ -141,7 +141,7 @@ class PersistentCityProductionResolver {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: command.unitType,
-      mapTiles: mapData,
+      mapTiles: mapView.mapTiles,
     )) {
       return _reject(state, 'unit_production_requires_coast');
     }
@@ -151,7 +151,7 @@ class PersistentCityProductionResolver {
       cities: state.cities,
       units: state.units,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapView: mapView,
       cityRuleset: cityRuleset,
       research: state.research,
       technologyRuleset: technologyRuleset,

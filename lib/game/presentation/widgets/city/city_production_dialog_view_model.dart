@@ -202,7 +202,7 @@ class CityProductionDialogViewModel {
             cities: playerCities,
             units: units,
             fieldImprovements: fieldImprovements,
-            mapData: mapData,
+            mapView: mapData,
             cityRuleset: cityRuleset,
             research: research,
             technologyRuleset: technologyRuleset,

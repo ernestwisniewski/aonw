@@ -1,9 +1,20 @@
 import 'package:aonw_core/domain/map_objective_definition.dart';
+import 'package:aonw_core/map/domain/map_survey.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Read-only lookup for legacy tile data at a single coordinate.
+///
+/// Returned [TileData] can be a borrowed legacy value. Consumers must treat it
+/// as read-only even when its collections are structurally mutable.
 abstract interface class MapTileLookup {
   TileData? tileAt(int col, int row);
+}
+
+/// Composite gameplay view for bounded tile reads and aggregate map rules.
+///
+/// This access contract does not make legacy [TileData] deeply immutable.
+abstract interface class MapReadView implements MapSurvey {
+  MapTileLookup get mapTiles;
 }
 
 /// Read-only spatial data consumed by map renderers.
@@ -67,8 +78,10 @@ class TileData {
 /// Legacy persistence and compatibility DTO.
 ///
 /// It remains structurally mutable for legacy consumers; editor mutation is
-/// owned by the editor's draft model.
-class MapData implements MapTileSource {
+/// owned by the editor's draft model. Its [MapReadView] implementation is a
+/// zero-copy borrowed view: [mapTiles] and [tileTerrains] can expose aliases,
+/// which read-view consumers must not mutate.
+class MapData implements MapTileSource, MapReadView {
   @override
   int cols;
 
@@ -80,6 +93,7 @@ class MapData implements MapTileSource {
   List<MapObjectiveDefinition> _objectives;
 
   /// Filename stem (no extension) — e.g. "map23" links to "map23.json" + "map23.png".
+  @override
   String? mapName;
 
   /// Default zoom level restored on long-tap in the editor and game.
@@ -95,6 +109,16 @@ class MapData implements MapTileSource {
   }) : _objectives = List.unmodifiable(objectives);
 
   List<MapObjectiveDefinition> get objectives => _objectives;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  int get tileCount => tiles.length;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains =>
+      tiles.map((tile) => tile.terrains);
 
   set objectives(Iterable<MapObjectiveDefinition> value) {
     _objectives = List.unmodifiable(value);

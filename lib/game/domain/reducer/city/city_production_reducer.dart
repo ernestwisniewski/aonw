@@ -133,7 +133,7 @@ abstract final class CityProductionReducer {
       cities: state.cities,
       units: state.units,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapView: mapData,
       cityRuleset: cityRuleset,
       research: state.research,
       technologyRuleset: technologyRuleset,

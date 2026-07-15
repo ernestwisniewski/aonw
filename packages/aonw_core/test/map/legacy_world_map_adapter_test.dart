@@ -174,6 +174,51 @@ void main() {
       ]);
     });
 
+    test('exposes a sparse, zero-copy terrain survey through a read view', () {
+      final world = WorldMap(
+        cols: 8,
+        rows: 6,
+        mapName: 'sparse',
+        tiles: [
+          WorldTile(
+            coordinate: const HexCoord(col: 6, row: 4),
+            terrains: const [TerrainType.hills, TerrainType.forest],
+            resources: const [ResourceType.iron],
+            height: 3,
+          ),
+        ],
+      );
+
+      final view = LegacyWorldMapAdapter.asReadView(world);
+      final terrainSurvey = view.tileTerrains;
+
+      expect(view.mapName, 'sparse');
+      expect(view.tileCount, 1);
+      expect(identical(view.mapTiles, view), isTrue);
+      expect(
+        identical(terrainSurvey.single, world.tiles.single.terrains),
+        isTrue,
+      );
+      expect(terrainSurvey.map((terrains) => terrains.toList()).toList(), [
+        [TerrainType.hills, TerrainType.forest],
+      ]);
+      expect(terrainSurvey.map((terrains) => terrains.toList()).toList(), [
+        [TerrainType.hills, TerrainType.forest],
+      ]);
+
+      final projectedTile = view.mapTiles.tileAt(6, 4)!;
+      expect(
+        identical(projectedTile.terrains, world.tiles.single.terrains),
+        false,
+      );
+      projectedTile.terrains.add(TerrainType.river);
+      expect(world.tiles.single.terrains, [
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
+      expect(view.mapTiles.tileAt(0, 0), isNull);
+    });
+
     test('makes the legacy codec enforce canonical invariants', () {
       final invalidObjectiveJson = jsonEncode({
         'cols': 1,

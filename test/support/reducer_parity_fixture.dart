@@ -52,7 +52,11 @@ abstract final class ReducerParityCorpus {
   static const requiredRejectionReasonsByFamily = <String, Set<String>>{
     'movement': {'unit_not_controlled', 'move_target_out_of_bounds'},
     'combat': {'attacker_not_controlled', 'attack_target_not_found'},
-    'city-production': {'city_not_controlled', 'building_not_available'},
+    'city-production': {
+      'city_not_controlled',
+      'building_not_available',
+      'unit_supply_limit_reached',
+    },
     'research': {
       'technology_player_not_controlled',
       'technology_not_available',
@@ -300,9 +304,7 @@ abstract final class ReducerParityCorpus {
         fixture.match.mapName != fixture.save.mapName ||
         fixture.match.turn != fixture.save.turn ||
         fixture.mapData.mapName != fixture.save.mapName) {
-      throw FormatException(
-        '${fixture.id} has inconsistent match/save/map ids.',
-      );
+      _fail(fixture, 'has inconsistent match/save/map ids');
     }
     if (fixture.match.state != 'running') {
       throw FormatException('${fixture.id} must describe a running match.');
@@ -324,30 +326,21 @@ abstract final class ReducerParityCorpus {
             !playerIds.contains(fixture.actorPlayerId)) ||
         !fixture.state.playerColors.keys.toSet().containsAll(playerIds) ||
         !fixture.state.playerCountries.keys.toSet().containsAll(playerIds)) {
-      throw FormatException(
-        '${fixture.id} must define its actor and full player identity maps.',
-      );
+      _fail(fixture, 'must define its actor and full player identity maps');
     }
     if (fixture.state.playerGold.isEmpty ||
         fixture.state.playerWarWeariness.isEmpty ||
         fixture.state.playerStabilityNet.isEmpty) {
-      throw FormatException(
-        '${fixture.id} must retain sentinel values in unchanged state slices.',
-      );
+      _fail(fixture, 'must retain sentinel values in unchanged state slices');
     }
     if (!_commandMatchesFamily(fixture.family, fixture.command)) {
-      throw FormatException(
-        '${fixture.id} command does not match family ${fixture.family}.',
-      );
+      _fail(fixture, 'command does not match family ${fixture.family}');
     }
 
     final runtime = fixture.state.runtimeState;
     if (runtime.cityFoundingDraft != null || runtime.pendingAction != null) {
-      throw FormatException(
-        '${fixture.id} uses client interaction fields outside parity scope.',
-      );
+      _fail(fixture, 'uses client interaction fields outside parity scope');
     }
-
     final expectedSave = GameSave.fromJson({
       ...fixture.expectedSave,
       'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
@@ -365,9 +358,7 @@ abstract final class ReducerParityCorpus {
           !_jsonDeepEquals(fixture.expectedState, inputState) ||
           fixture.expectedEvents.isNotEmpty ||
           fixture.expectedReason == null) {
-        throw FormatException(
-          '${fixture.id} rejected result must preserve canonical input.',
-        );
+        _fail(fixture, 'rejected result must preserve canonical input');
       }
       return;
     }
@@ -377,9 +368,7 @@ abstract final class ReducerParityCorpus {
         !_jsonDeepEquals(fixture.expectedState, inputState) ||
         fixture.expectedEvents.isNotEmpty;
     if (!changed) {
-      throw FormatException(
-        '${fixture.id} accepted fixture must have an observable domain change.',
-      );
+      _fail(fixture, 'accepted fixture must have an observable domain change');
     }
     _validateAcceptedSemantics(fixture);
   }
@@ -393,36 +382,25 @@ abstract final class ReducerParityCorpus {
       case MoveUnitCommand(:final unitId, :final targetCol, :final targetRow):
         final unit = state.units.byId(unitId);
         final moved = events.whereType<UnitMovedEvent>();
-        if (unit?.col != targetCol ||
-            unit?.row != targetRow ||
-            moved.length != 1) {
-          throw FormatException(
-            '${fixture.id} must commit the reviewed movement and event.',
-          );
+        if (unit?.col != targetCol || unit?.row != targetRow) {
+          _fail(fixture, 'must commit the reviewed movement and event');
+        }
+        if (moved.length != 1) {
+          _fail(fixture, 'must commit the reviewed movement and event');
         }
       case AttackHexCommand(:final attackerUnitId):
         final attacker = state.units.byId(attackerUnitId);
         if (attacker?.movementPoints != 0 ||
             events.whereType<UnitAttackedEvent>().length != 1 ||
             events.whereType<CombatResolvedEvent>().length != 1) {
-          throw FormatException(
-            '${fixture.id} must commit deterministic instant combat.',
-          );
+          _fail(fixture, 'must commit deterministic instant combat');
         }
-      case StartBuildingCommand(:final cityId, :final buildingType):
-        final city = state.cities.byId(cityId);
-        if (city?.productionQueue?.target !=
-            BuildingProductionTarget(buildingType)) {
-          throw FormatException(
-            '${fixture.id} must commit the reviewed building queue.',
-          );
-        }
+      case StartBuildingCommand() || StartUnitProductionCommand():
+        _validateProductionQueue(fixture, state, events);
       case SelectTechnologyCommand(:final playerId, :final technologyId):
         if (state.research.forPlayer(playerId).activeTechnologyId !=
             technologyId) {
-          throw FormatException(
-            '${fixture.id} must commit the reviewed research selection.',
-          );
+          _fail(fixture, 'must commit the reviewed research selection');
         }
       case ConfirmWorkerImprovementCommand(
         :final unitId,
@@ -432,9 +410,7 @@ abstract final class ReducerParityCorpus {
         if (improvementType == null ||
             worker?.workerJob?.improvementType != improvementType ||
             worker?.movementPoints != 0) {
-          throw FormatException(
-            '${fixture.id} must commit the reviewed worker job.',
-          );
+          _fail(fixture, 'must commit the reviewed worker job');
         }
       case SubmitTurnCommand(:final playerId):
         final expectedTurn = fixture.expectedSave['turn'];
@@ -446,9 +422,7 @@ abstract final class ReducerParityCorpus {
           if (!state.runtimeState.hasSubmitted(playerId) ||
               expectedPlayerStates[playerId] != 'finished' ||
               events.isNotEmpty) {
-            throw FormatException(
-              '${fixture.id} must commit the reviewed waiting submission.',
-            );
+            _fail(fixture, 'must commit the reviewed waiting submission');
           }
           break;
         }
@@ -467,14 +441,10 @@ abstract final class ReducerParityCorpus {
               turnEnded.map((event) => event.playerId).toList(),
               playerIds,
             )) {
-          throw FormatException(
-            '${fixture.id} must commit the reviewed simultaneous turn.',
-          );
+          _fail(fixture, 'must commit the reviewed simultaneous turn');
         }
       default:
-        throw FormatException(
-          '${fixture.id} uses a command outside the reviewed parity corpus.',
-        );
+        _fail(fixture, 'uses a command outside the reviewed parity corpus');
     }
   }
 
@@ -482,13 +452,43 @@ abstract final class ReducerParityCorpus {
     return switch (family) {
       'movement' => command is MoveUnitCommand,
       'combat' => command is AttackHexCommand,
-      'city-production' => command is StartBuildingCommand,
+      'city-production' =>
+        command is StartBuildingCommand ||
+            command is StartUnitProductionCommand,
       'research' => command is SelectTechnologyCommand,
       'worker' => command is ConfirmWorkerImprovementCommand,
       'turn-finalization' => command is SubmitTurnCommand,
       _ => false,
     };
   }
+
+  static void _validateProductionQueue(
+    ReducerParityFixture fixture,
+    PersistentGameState state,
+    List<GameEvent> events,
+  ) {
+    final command = fixture.command;
+    final (cityId, target, failure) = switch (command) {
+      StartBuildingCommand(:final cityId, :final buildingType) => (
+        cityId,
+        BuildingProductionTarget(buildingType),
+        'must commit the reviewed building queue',
+      ),
+      StartUnitProductionCommand(:final cityId, :final unitType) => (
+        cityId,
+        UnitProductionTarget(unitType),
+        'must commit the reviewed unit queue without events',
+      ),
+      _ => throw StateError('Expected a production command.'),
+    };
+    if (state.cities.byId(cityId)?.productionQueue?.target != target ||
+        command is StartUnitProductionCommand && events.isNotEmpty) {
+      _fail(fixture, failure);
+    }
+  }
+
+  static Never _fail(ReducerParityFixture fixture, String message) =>
+      throw FormatException('${fixture.id} $message.');
 }
 
 Map<String, dynamic> reducerParitySave(GameSave save) {

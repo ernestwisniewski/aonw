@@ -33,6 +33,37 @@ void main() {
       expect(source.tileAt(2, 0), isNull);
     });
 
+    test('exposes MapData metadata and terrain survey without copies', () {
+      final terrains = <TerrainType>[TerrainType.plains, TerrainType.river];
+      final map = MapData(
+        cols: 3,
+        rows: 2,
+        mapName: 'survey',
+        tiles: [
+          TileData(
+            col: 2,
+            row: 1,
+            terrains: terrains,
+            resources: const [],
+            height: 1,
+          ),
+        ],
+      );
+      final MapReadView view = map;
+      final terrainSurvey = view.tileTerrains;
+
+      expect(view.mapName, 'survey');
+      expect(view.tileCount, 1);
+      expect(identical(view.mapTiles, map), isTrue);
+      expect(identical(terrainSurvey.single, terrains), isTrue);
+      expect(terrainSurvey.map((entry) => entry.toList()).toList(), [
+        [TerrainType.plains, TerrainType.river],
+      ]);
+      expect(terrainSurvey.map((entry) => entry.toList()).toList(), [
+        [TerrainType.plains, TerrainType.river],
+      ]);
+    });
+
     test('uses odd-q hex topology', () {
       expect(
         HexGridTopology.neighbors(col: 0, row: 0),

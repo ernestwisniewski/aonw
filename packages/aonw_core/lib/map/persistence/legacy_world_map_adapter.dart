@@ -1,6 +1,7 @@
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Temporary boundary from pre-WorldMap map models to the canonical model.
 ///
@@ -33,7 +34,13 @@ abstract final class LegacyWorldMapAdapter {
   /// Exposes bounded legacy tile projections without materializing a full
   /// [MapData] graph.
   static MapTileLookup asTileLookup(WorldMap worldMap) {
-    return _WorldMapTileLookup(worldMap);
+    return _WorldMapReadView(worldMap);
+  }
+
+  /// Exposes bounded tile reads and aggregate metadata without materializing
+  /// a full [MapData] graph.
+  static MapReadView asReadView(WorldMap worldMap) {
+    return _WorldMapReadView(worldMap);
   }
 
   /// Projects a canonical tile to the legacy tile shape expected by older
@@ -67,10 +74,23 @@ abstract final class LegacyWorldMapAdapter {
   }
 }
 
-final class _WorldMapTileLookup implements MapTileLookup {
-  const _WorldMapTileLookup(this._worldMap);
+final class _WorldMapReadView implements MapReadView, MapTileLookup {
+  const _WorldMapReadView(this._worldMap);
 
   final WorldMap _worldMap;
+
+  @override
+  String? get mapName => _worldMap.mapName;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  int get tileCount => _worldMap.indexedTileCount;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains =>
+      _worldMap.tiles.map((tile) => tile.terrains);
 
   @override
   TileData? tileAt(int col, int row) {

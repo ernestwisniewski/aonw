@@ -27,7 +27,7 @@ final class _EconomySimulationTurnRowFactory {
       cities: state.cities,
       units: state.units,
       fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
+      mapView: mapData,
       cityRuleset: ruleset.city,
       research: state.research,
       technologyRuleset: ruleset.technology,

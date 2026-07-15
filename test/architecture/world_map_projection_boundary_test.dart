@@ -22,9 +22,45 @@ const _persistentCityProductionResolverPath =
     'packages/aonw_core/lib/game/domain/city/'
     'persistent_city_production_resolver.dart';
 const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
-const _productionMethodsPendingMigration = {'startUnitProduction'};
+const _allowedProductionProjectionSites = <String, int>{
+  'packages/aonw_core/lib/ai/simulation/'
+          'economy_simulation_command_applier.dart::'
+          'class:_EconomySimulationCommandApplier/method:apply::call':
+      2,
+  'packages/aonw_core/lib/game/domain/combat/'
+          'persistent_combat_command_resolver.dart::'
+          'class:PersistentCombatCommandResolver/'
+          'method:_stateWithUpdatedVisibility::call':
+      1,
+  'packages/aonw_core/lib/game/domain/movement/'
+          'persistent_move_unit_resolver.dart::'
+          'class:PersistentMoveUnitResolver/method:resolve::call':
+      1,
+  'packages/aonw_core/lib/game/domain/movement/'
+          'persistent_unit_action_resolver.dart::'
+          'class:PersistentUnitActionResolver/method:autoExploreUnit::call':
+      1,
+  'packages/aonw_core/lib/game/domain/turn/'
+          'persistent_turn_pipeline.dart::'
+          'class:PersistentTurnPipeline/method:simultaneousFinalize::call':
+      1,
+  'packages/aonw_core/lib/game/domain/unit/'
+          'persistent_unit_detachment_resolver.dart::'
+          'class:PersistentUnitDetachmentResolver/method:detachTroop::call':
+      1,
+};
 
 void main() {
+  test('production full-map projections match the shrinking allowlist', () {
+    expect(
+      _projectionRatchetViolations(
+        _productionSources(),
+        allowedSites: _allowedProductionProjectionSites,
+      ),
+      isEmpty,
+    );
+  });
+
   test('bounded tile-query resolvers do not materialize legacy maps', () {
     for (final path in _boundedTileQueryResolvers) {
       expect(
@@ -53,7 +89,7 @@ void main() {
         File(_persistentCityProductionResolverPath).readAsStringSync(),
         _persistentCityProductionResolverPath,
         className: 'PersistentCityProductionResolver',
-        allowedProjectionMethods: _productionMethodsPendingMigration,
+        allowedProjectionMethods: const {},
       ),
       isEmpty,
     );
@@ -133,6 +169,104 @@ class PersistentCityProductionResolver {
     expect(violations, contains(contains('toMapData')));
     expect(violations, hasLength(2));
   });
+
+  test('ratchet binds projections to path, owner, and reference kind', () {
+    const allowedKey = 'lib/allowed.dart::class:Allowed/method:pending::call';
+    final violations = _projectionRatchetViolations(
+      {
+        'lib/allowed.dart': '''
+class Allowed {
+  Object pending(WorldMap worldMap) =>
+      LegacyWorldMapAdapter.toMapData(worldMap);
+}
+''',
+        'lib/helper.dart': '''
+class Helper {
+  Object hidden(WorldMap worldMap) =>
+      LegacyWorldMapAdapter.toMapData(worldMap);
+}
+''',
+        'lib/tear_off.dart': '''
+final projection = LegacyWorldMapAdapter.toMapData;
+''',
+      },
+      allowedSites: const {allowedKey: 1},
+    );
+
+    expect(violations, hasLength(2));
+    expect(violations, contains(contains('lib/helper.dart')));
+    expect(violations, contains(contains('lib/tear_off.dart')));
+    expect(violations, contains(contains('tearOff')));
+  });
+
+  test('ratchet rejects another projection in an allowed member', () {
+    const key = 'lib/allowed.dart::class:Allowed/method:pending::call';
+    final violations = _projectionRatchetViolations(
+      {
+        'lib/allowed.dart': '''
+class Allowed {
+  void pending(WorldMap worldMap) {
+    LegacyWorldMapAdapter.toMapData(worldMap);
+    LegacyWorldMapAdapter.toMapData(worldMap);
+  }
+}
+''',
+      },
+      allowedSites: const {key: 1},
+    );
+
+    expect(violations, contains(contains('expected 1, found 2')));
+  });
+}
+
+Map<String, String> _productionSources() {
+  final sources = <String, String>{};
+  for (final root in const ['packages/aonw_core/lib', 'lib', 'server/lib']) {
+    for (final entry in Directory(root).listSync(recursive: true)) {
+      if (entry is! File ||
+          !entry.path.endsWith('.dart') ||
+          entry.path.endsWith('.g.dart') ||
+          entry.path.endsWith('.freezed.dart')) {
+        continue;
+      }
+      final path = _relativePath(entry.path);
+      if (path == _legacyWorldMapAdapterPath) continue;
+      final source = entry.readAsStringSync();
+      if (source.contains('toMapData')) sources[path] = source;
+    }
+  }
+  return sources;
+}
+
+String _relativePath(String path) {
+  final prefix = '${Directory.current.path}${Platform.pathSeparator}';
+  return path.startsWith(prefix) ? path.substring(prefix.length) : path;
+}
+
+List<String> _projectionRatchetViolations(
+  Map<String, String> sources, {
+  required Map<String, int> allowedSites,
+}) {
+  final sites = <String, List<int>>{};
+  for (final entry in sources.entries) {
+    final unit = parseString(content: entry.value, path: entry.key).unit;
+    unit.accept(
+      _ProjectionSiteVisitor(
+        path: entry.key,
+        lineInfo: unit.lineInfo,
+        sites: sites,
+        legacyAdapterTypeNames: _legacyAdapterTypeNames(unit),
+      ),
+    );
+  }
+  final keys = {...allowedSites.keys, ...sites.keys}.toList()..sort();
+  return [
+    for (final key in keys)
+      if ((sites[key]?.length ?? 0) != (allowedSites[key] ?? 0))
+        '$key expected ${allowedSites[key] ?? 0}, '
+            'found ${sites[key]?.length ?? 0} '
+            'at lines ${sites[key] ?? const <int>[]}',
+  ];
 }
 
 List<String> _legacyProjectionViolations(String source, String path) {
@@ -196,6 +330,65 @@ Set<String> _legacyAdapterTypeNames(CompilationUnit unit) {
     }
   }
   return names;
+}
+
+final class _ProjectionSiteVisitor extends RecursiveAstVisitor<void> {
+  _ProjectionSiteVisitor({
+    required this.path,
+    required this.lineInfo,
+    required this.sites,
+    required this.legacyAdapterTypeNames,
+  });
+
+  final String path;
+  final LineInfo lineInfo;
+  final Map<String, List<int>> sites;
+  final Set<String> legacyAdapterTypeNames;
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (_isLegacyToMapDataReference(
+      node,
+      legacyAdapterTypeNames: legacyAdapterTypeNames,
+      rejectAnyTarget: false,
+    )) {
+      final kind = node.parent is MethodInvocation ? 'call' : 'tearOff';
+      final key = '$path::${_declarationOwner(node)}::$kind';
+      sites
+          .putIfAbsent(key, () => [])
+          .add(lineInfo.getLocation(node.offset).lineNumber);
+    }
+    super.visitSimpleIdentifier(node);
+  }
+}
+
+String _declarationOwner(AstNode node) {
+  String? className;
+  String? member;
+  for (var parent = node.parent; parent != null; parent = parent.parent) {
+    member ??= switch (parent) {
+      MethodDeclaration(:final name) => 'method:${name.lexeme}',
+      ConstructorDeclaration(:final name) =>
+        'constructor:${name?.lexeme ?? '<unnamed>'}',
+      FunctionDeclaration(:final name) => 'function:${name.lexeme}',
+      VariableDeclaration(:final name) when _isOwnerVariable(parent) =>
+        'field:${name.lexeme}',
+      _ => null,
+    };
+    if (parent is ClassDeclaration) {
+      className = parent.namePart.typeName.lexeme;
+      break;
+    }
+  }
+  return '${className == null ? '' : 'class:$className/'}'
+      '${member ?? '<unit>'}';
+}
+
+bool _isOwnerVariable(VariableDeclaration node) {
+  final declaration = node.parent;
+  if (declaration is! VariableDeclarationList) return false;
+  return declaration.parent is FieldDeclaration ||
+      declaration.parent is TopLevelVariableDeclaration;
 }
 
 final class _LegacyProjectionVisitor extends RecursiveAstVisitor<void> {

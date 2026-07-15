@@ -24,15 +24,35 @@ abstract final class MapPlayerCapacityRules {
   ];
 
   static int maxPlayersForMapData(MapData mapData) {
-    final profile = profileForMapName(mapData.mapName);
-    if (profile != null) return profile.maxPlayers;
-    return maxPlayersForTileCount(mapData.tiles.length);
+    return maxPlayersForMap(
+      mapName: mapData.mapName,
+      tileCount: mapData.tileCount,
+    );
   }
 
   static int singlePlayerPlayersForMapData(MapData mapData) {
-    final profile = profileForMapName(mapData.mapName);
+    return singlePlayerPlayersForMap(
+      mapName: mapData.mapName,
+      tileCount: mapData.tileCount,
+    );
+  }
+
+  static int maxPlayersForMap({
+    required String? mapName,
+    required int tileCount,
+  }) {
+    final profile = profileForMapName(mapName);
+    if (profile != null) return profile.maxPlayers;
+    return maxPlayersForTileCount(tileCount);
+  }
+
+  static int singlePlayerPlayersForMap({
+    required String? mapName,
+    required int tileCount,
+  }) {
+    final profile = profileForMapName(mapName);
     if (profile != null) return profile.singlePlayerPlayers;
-    return maxPlayersForTileCount(mapData.tiles.length);
+    return maxPlayersForTileCount(tileCount);
   }
 
   static int maxPlayersForMapName(String? mapName) {
