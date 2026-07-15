@@ -26,7 +26,7 @@ void main() {
             center: CityHex(col: 0, row: 0),
           ),
         ],
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(inventory.totalCount, 2);
@@ -51,7 +51,7 @@ void main() {
         CityBuildingRequirementRules.meetsRequirements(
           city: city,
           buildingType: CityBuildingType.forge,
-          mapData: _map(),
+          mapTiles: _map(),
         ),
         true,
       );
@@ -59,7 +59,7 @@ void main() {
         CityBuildingRequirementRules.meetsRequirements(
           city: city,
           buildingType: CityBuildingType.stable,
-          mapData: _map(),
+          mapTiles: _map(),
         ),
         false,
       );
@@ -83,7 +83,7 @@ void main() {
             controlledHexes: [CityHex(col: 1, row: 1)],
           ),
         ],
-        mapData: _map(),
+        mapTiles: _map(),
       );
 
       expect(inventory.countFor(ResourceType.iron), 1);
@@ -100,12 +100,12 @@ void main() {
       final hiddenInventory = CityResourceInventoryRules.forPlayer(
         playerId: 'player_1',
         cities: const [city],
-        mapData: _map(),
+        mapTiles: _map(),
       );
       final revealedInventory = CityResourceInventoryRules.forPlayer(
         playerId: 'player_1',
         cities: const [city],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _researchWith({TechnologyId.animalHusbandry}),
       );
 
@@ -138,7 +138,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.cavalry,
           cities: const [capital, horseCity],
-          mapData: _map(),
+          mapTiles: _map(),
           research: _researchWith({TechnologyId.animalHusbandry}),
         ),
         isTrue,
@@ -148,7 +148,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.cavalry,
           cities: const [capital, rivalHorseCity],
-          mapData: _map(),
+          mapTiles: _map(),
           research: _researchWith({TechnologyId.animalHusbandry}),
         ),
         isFalse,
@@ -167,13 +167,13 @@ void main() {
       final hiddenNetwork = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [city],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _researchWith({TechnologyId.animalHusbandry}),
       );
       final revealedNetwork = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [city],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _researchWith({
           TechnologyId.animalHusbandry,
           TechnologyId.combustion,
@@ -207,18 +207,18 @@ void main() {
       final hiddenOilNetwork = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [oilCity],
-        mapData: _map(),
+        mapTiles: _map(),
       );
       final oilNetwork = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [oilCity],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _researchWith({TechnologyId.combustion}),
       );
       final aluminiumNetwork = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [aluminiumCity],
-        mapData: _map(),
+        mapTiles: _map(),
         research: _researchWith({TechnologyId.flight}),
       );
 
@@ -265,7 +265,7 @@ void main() {
       final network = EmpireResourceNetworkRules.forPlayer(
         playerId: 'player_1',
         cities: const [capital],
-        mapData: _map(),
+        mapTiles: _map(),
         resourceTradeAgreements: const [horseImport],
       );
 
@@ -294,7 +294,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.tank,
           cities: const [oilCity],
-          mapData: _map(),
+          mapTiles: _map(),
         ),
         isFalse,
       );
@@ -303,7 +303,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.tank,
           cities: const [oilCity],
-          mapData: _map(),
+          mapTiles: _map(),
           research: _researchWith({TechnologyId.combustion}),
         ),
         isTrue,
@@ -323,7 +323,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.cavalry,
           cities: const [capital],
-          mapData: _map(),
+          mapTiles: _map(),
         ),
         isFalse,
       );
@@ -332,7 +332,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.cavalry,
           cities: const [capital],
-          mapData: _map(),
+          mapTiles: _map(),
           resourceTradeAgreements: const [
             ResourceTradeAgreement(
               id: 'trade_1',
@@ -367,7 +367,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.reconPlane,
           cities: const [aluminiumCity],
-          mapData: _map(),
+          mapTiles: _map(),
           research: _researchWith({TechnologyId.flight}),
         ),
         isTrue,
@@ -377,7 +377,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.reconPlane,
           cities: const [oilCity],
-          mapData: _map(),
+          mapTiles: _map(),
           research: _researchWith({TechnologyId.combustion}),
         ),
         isTrue,
@@ -387,7 +387,7 @@ void main() {
           playerId: 'player_1',
           unitType: GameUnitType.reconPlane,
           cities: const [aluminiumCity],
-          mapData: _map(),
+          mapTiles: _map(),
         ),
         {ResourceType.aluminium, ResourceType.oil},
       );

@@ -65,7 +65,7 @@ class PersistentCityProductionResolver {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapData: LegacyWorldMapAdapter.toMapData(worldMap),
+      mapTiles: LegacyWorldMapAdapter.asTileLookup(worldMap),
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -130,7 +130,7 @@ class PersistentCityProductionResolver {
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       research: state.research,
       resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
@@ -227,7 +227,7 @@ class PersistentCityProductionResolver {
     final availability = WonderAvailabilityPolicy.availabilityFor(
       city: city,
       cities: state.cities,
-      mapData: LegacyWorldMapAdapter.toMapData(worldMap),
+      mapTiles: LegacyWorldMapAdapter.asTileLookup(worldMap),
       research: state.research,
       registry: state.wonderRegistry,
       ruleset: wonderRuleset,

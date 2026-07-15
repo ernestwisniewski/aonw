@@ -38,7 +38,7 @@ abstract final class WonderAvailabilityPolicy {
     required Iterable<GameCity> cities,
     required WonderRegistry registry,
     required ResearchState research,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     WonderRuleset ruleset = WonderRuleset.standard,
   }) {
     final completedBy = registry.ownerOf(wonderType);
@@ -61,7 +61,7 @@ abstract final class WonderAvailabilityPolicy {
     final missingRequirements = WonderRequirementRules.missingRequirements(
       city: city,
       wonderType: wonderType,
-      mapData: mapData,
+      mapTiles: mapTiles,
       ruleset: ruleset,
       research: research,
     );

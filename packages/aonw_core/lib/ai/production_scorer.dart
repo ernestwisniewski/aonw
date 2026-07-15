@@ -294,7 +294,7 @@ class AiProductionScorer {
       playerId: view.forPlayerId,
       unitType: unitType,
       cities: view.ownCities,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: research,
       resourceTradeAgreements: view.resourceTradeAgreements,
@@ -345,7 +345,7 @@ class AiProductionScorer {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: buildingType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: research,
     );

@@ -23,7 +23,7 @@ GameStateTransition _startWonderProduction(
     cities: state.cities,
     registry: state.wonderRegistry,
     research: state.research,
-    mapData: mapData,
+    mapTiles: mapData,
     ruleset: wonderRuleset,
   );
   if (!availability.isAvailable) return GameStateTransition(state: state);

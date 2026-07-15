@@ -72,7 +72,7 @@ class HudResourceSummary {
     final resourceNetwork = EmpireResourceNetworkRules.forPlayer(
       playerId: playerId,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       research: state.research,
       ruleset: cityRuleset,
       resourceTradeAgreements: state.resourceTradeAgreements,

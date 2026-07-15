@@ -90,7 +90,7 @@ final class BasicStrategyResourceTradePlanner {
           playerId: view.forPlayerId,
           unitType: unitType,
           cities: view.ownCities,
-          mapData: view.mapData,
+          mapTiles: view.mapData,
           ruleset: view.ruleset.city,
           research: view.research,
           resourceTradeAgreements: view.resourceTradeAgreements,
@@ -188,7 +188,7 @@ final class BasicStrategyResourceTradePlanner {
     final inventory = CityResourceInventoryRules.forPlayer(
       playerId: playerId,
       cities: cities,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       research: view.research,
     );
     return inventory.controls(resource);
@@ -203,7 +203,7 @@ final class BasicStrategyResourceTradePlanner {
     final inventory = CityResourceInventoryRules.forPlayer(
       playerId: playerId,
       cities: cities,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       research: view.research,
     );
     return inventory.countFor(resource) -

@@ -122,7 +122,7 @@ CityProductionItem _wonderItem({
           cities: cities,
           registry: registry,
           research: research,
-          mapData: mapData,
+          mapTiles: mapData,
           ruleset: ruleset,
         );
   final definition = ruleset.definitionFor(wonderType);

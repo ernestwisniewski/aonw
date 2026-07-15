@@ -138,26 +138,26 @@ abstract final class CityResourceInventoryRules {
   static CityResourceInventory forPlayer({
     required String playerId,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     ResearchState research = ResearchState.empty,
   }) {
     return _fromCities(
       playerId: playerId,
       cities: cities.where((city) => city.ownerPlayerId == playerId),
-      mapData: mapData,
+      mapTiles: mapTiles,
       research: research,
     );
   }
 
   static CityResourceInventory forCity(
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     ResearchState research = ResearchState.empty,
   }) {
     return _fromCities(
       playerId: city.ownerPlayerId,
       cities: [city],
-      mapData: mapData,
+      mapTiles: mapTiles,
       research: research,
     );
   }
@@ -165,7 +165,7 @@ abstract final class CityResourceInventoryRules {
   static CityResourceInventory _fromCities({
     required String playerId,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
   }) {
     if (playerId.isEmpty) return CityResourceInventory.empty;
@@ -179,7 +179,7 @@ abstract final class CityResourceInventoryRules {
         final tileKey = '${hex.col}:${hex.row}';
         if (!visitedHexes.add(tileKey)) continue;
 
-        final tile = mapData.tileAt(hex.col, hex.row);
+        final tile = mapTiles.tileAt(hex.col, hex.row);
         if (tile == null || tile.resources.isEmpty) continue;
 
         for (final resource in ResourceVisibilityRules.visibleResources(
@@ -210,7 +210,7 @@ abstract final class EmpireResourceNetworkRules {
   static EmpireResourceNetwork forPlayer({
     required String playerId,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     ResearchState research = ResearchState.empty,
     CityRuleset ruleset = CityRulesets.standard,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
@@ -224,13 +224,13 @@ abstract final class EmpireResourceNetworkRules {
     final visibleInventory = CityResourceInventoryRules.forPlayer(
       playerId: playerId,
       cities: playerCities,
-      mapData: mapData,
+      mapTiles: mapTiles,
       research: research,
     );
     final hiddenSources = _hiddenSourcesFor(
       playerId: playerId,
       cities: playerCities,
-      mapData: mapData,
+      mapTiles: mapTiles,
       research: research,
     );
     final hiddenCounts = _countsFor(hiddenSources);
@@ -257,7 +257,7 @@ abstract final class EmpireResourceNetworkRules {
   static List<CityResourceSource> _hiddenSourcesFor({
     required String playerId,
     required Iterable<GameCity> cities,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
   }) {
     final sources = <CityResourceSource>[];
@@ -268,7 +268,7 @@ abstract final class EmpireResourceNetworkRules {
         final tileKey = '${hex.col}:${hex.row}';
         if (!visitedHexes.add(tileKey)) continue;
 
-        final tile = mapData.tileAt(hex.col, hex.row);
+        final tile = mapTiles.tileAt(hex.col, hex.row);
         if (tile == null || tile.resources.isEmpty) continue;
 
         for (final resource in tile.resources) {

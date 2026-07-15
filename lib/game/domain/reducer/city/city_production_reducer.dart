@@ -48,7 +48,7 @@ abstract final class CityProductionReducer {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -107,7 +107,7 @@ abstract final class CityProductionReducer {
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: cityRuleset,
       research: state.research,
       resourceTradeAgreements: state.resourceTradeAgreements,

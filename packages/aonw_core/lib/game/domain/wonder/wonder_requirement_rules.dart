@@ -13,14 +13,14 @@ abstract final class WonderRequirementRules {
   static bool meetsRequirements({
     required GameCity city,
     required WonderType wonderType,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     WonderRuleset ruleset = WonderRuleset.standard,
     ResearchState research = ResearchState.empty,
   }) {
     return missingRequirements(
       city: city,
       wonderType: wonderType,
-      mapData: mapData,
+      mapTiles: mapTiles,
       ruleset: ruleset,
       research: research,
     ).isEmpty;
@@ -29,7 +29,7 @@ abstract final class WonderRequirementRules {
   static List<WonderRequirement> missingRequirements({
     required GameCity city,
     required WonderType wonderType,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     WonderRuleset ruleset = WonderRuleset.standard,
     ResearchState research = ResearchState.empty,
   }) {
@@ -39,7 +39,7 @@ abstract final class WonderRequirementRules {
         if (!_meetsRequirement(
           requirement,
           city: city,
-          mapData: mapData,
+          mapTiles: mapTiles,
           research: research,
         ))
           requirement,
@@ -49,49 +49,49 @@ abstract final class WonderRequirementRules {
   static bool _meetsRequirement(
     WonderRequirement requirement, {
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
   }) {
     return switch (requirement) {
       WonderCoastalAccessRequirement() =>
-        CityBuildingRequirementRules.hasCoastalAccess(city, mapData),
+        CityBuildingRequirementRules.hasCoastalAccess(city, mapTiles),
       WonderResourceRequirement(:final resources) =>
         CityBuildingRequirementRules.controlsRequiredResource(
           city: city,
           resources: resources,
-          mapData: mapData,
+          mapTiles: mapTiles,
           research: research,
         ),
-      WonderAdjacentRiverRequirement() => _hasAdjacentRiver(city, mapData),
+      WonderAdjacentRiverRequirement() => _hasAdjacentRiver(city, mapTiles),
       WonderAdjacentMountainRequirement() => _hasAdjacentMountain(
         city,
-        mapData,
+        mapTiles,
       ),
       WonderHostTerrainRequirement(:final allowedTerrains) => _hasHostTerrain(
         city,
-        mapData,
+        mapTiles,
         allowedTerrains,
       ),
     };
   }
 
-  static bool _hasAdjacentRiver(GameCity city, MapData mapData) {
+  static bool _hasAdjacentRiver(GameCity city, MapTileLookup mapTiles) {
     for (final neighbor in HexNeighbors.existingAround(
       city.center.coordinate,
-      mapData,
+      mapTiles,
     )) {
-      final tile = mapData.tileAt(neighbor.col, neighbor.row);
+      final tile = mapTiles.tileAt(neighbor.col, neighbor.row);
       if (tile != null && TileYieldRules.hasRiver(tile)) return true;
     }
     return false;
   }
 
-  static bool _hasAdjacentMountain(GameCity city, MapData mapData) {
+  static bool _hasAdjacentMountain(GameCity city, MapTileLookup mapTiles) {
     for (final neighbor in HexNeighbors.existingAround(
       city.center.coordinate,
-      mapData,
+      mapTiles,
     )) {
-      final tile = mapData.tileAt(neighbor.col, neighbor.row);
+      final tile = mapTiles.tileAt(neighbor.col, neighbor.row);
       if (tile != null &&
           TileYieldRules.baseTerrainFor(tile) == TerrainType.mountain) {
         return true;
@@ -102,10 +102,10 @@ abstract final class WonderRequirementRules {
 
   static bool _hasHostTerrain(
     GameCity city,
-    MapData mapData,
+    MapTileLookup mapTiles,
     Set<TerrainType> allowedTerrains,
   ) {
-    final tile = mapData.tileAt(city.center.col, city.center.row);
+    final tile = mapTiles.tileAt(city.center.col, city.center.row);
     if (tile == null) return false;
     return allowedTerrains.contains(TileYieldRules.baseTerrainFor(tile));
   }

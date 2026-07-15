@@ -25,13 +25,13 @@ List<_ResourceTradeOffer> _resourceTradeOffers({
   final activeInventory = CityResourceInventoryRules.forPlayer(
     playerId: activePlayerId,
     cities: gameState.cities,
-    mapData: mapData,
+    mapTiles: mapData,
     research: gameState.research,
   );
   final targetInventory = CityResourceInventoryRules.forPlayer(
     playerId: targetPlayerId,
     cities: gameState.cities,
-    mapData: mapData,
+    mapTiles: mapData,
     research: gameState.research,
   );
 
@@ -70,13 +70,13 @@ List<_ResourceExchangeOffer> _resourceExchangeOffers({
   final activeInventory = CityResourceInventoryRules.forPlayer(
     playerId: activePlayerId,
     cities: gameState.cities,
-    mapData: mapData,
+    mapTiles: mapData,
     research: gameState.research,
   );
   final targetInventory = CityResourceInventoryRules.forPlayer(
     playerId: targetPlayerId,
     cities: gameState.cities,
-    mapData: mapData,
+    mapTiles: mapData,
     research: gameState.research,
   );
 

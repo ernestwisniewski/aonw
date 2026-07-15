@@ -295,7 +295,7 @@ Set<ResourceType> _missingStrategicResourceTypes(GameView view) {
   final network = EmpireResourceNetworkRules.forPlayer(
     playerId: view.forPlayerId,
     cities: view.ownCities,
-    mapData: view.mapData,
+    mapTiles: view.mapData,
     research: view.research,
     ruleset: view.ruleset.city,
     resourceTradeAgreements: view.resourceTradeAgreements,

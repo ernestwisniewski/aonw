@@ -183,7 +183,7 @@ abstract final class CityBuildingsPanelViewModelFactory {
           : CityBuildingRequirementRules.meetsRequirements(
               city: city,
               buildingType: type,
-              mapData: mapData,
+              mapTiles: mapData,
               ruleset: cityRuleset,
               research: research,
             );

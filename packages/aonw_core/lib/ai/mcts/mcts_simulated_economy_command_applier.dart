@@ -104,7 +104,7 @@ final class MctsSimulatedEconomyCommandApplier {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: _researchState,
     );
@@ -139,7 +139,7 @@ final class MctsSimulatedEconomyCommandApplier {
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
       cities: ownCities,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: _researchState,
     );

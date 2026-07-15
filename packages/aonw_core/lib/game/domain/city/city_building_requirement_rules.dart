@@ -14,7 +14,7 @@ abstract final class CityBuildingRequirementRules {
   static bool meetsRequirements({
     required GameCity city,
     required CityBuildingType buildingType,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     CityRuleset ruleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
   }) {
@@ -23,15 +23,15 @@ abstract final class CityBuildingRequirementRules {
       (requirement) => _meetsRequirement(
         requirement,
         city: city,
-        mapData: mapData,
+        mapTiles: mapTiles,
         research: research,
       ),
     );
   }
 
-  static bool hasCoastalAccess(GameCity city, MapData mapData) {
+  static bool hasCoastalAccess(GameCity city, MapTileLookup mapTiles) {
     for (final hex in city.territoryHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) continue;
       if (tile.terrains.any(_coastalTerrains.contains)) {
         return true;
@@ -43,12 +43,12 @@ abstract final class CityBuildingRequirementRules {
   static bool controlsRequiredResource({
     required GameCity city,
     required Set<ResourceType> resources,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     ResearchState research = ResearchState.empty,
   }) {
     return CityResourceInventoryRules.forCity(
       city,
-      mapData,
+      mapTiles,
       research: research,
     ).controlsAny(resources);
   }
@@ -56,15 +56,15 @@ abstract final class CityBuildingRequirementRules {
   static bool _meetsRequirement(
     CityBuildingRequirement requirement, {
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required ResearchState research,
   }) {
     return switch (requirement) {
-      CoastalAccessRequirement() => hasCoastalAccess(city, mapData),
+      CoastalAccessRequirement() => hasCoastalAccess(city, mapTiles),
       CityResourceRequirement(:final resources) => controlsRequiredResource(
         city: city,
         resources: resources,
-        mapData: mapData,
+        mapTiles: mapTiles,
         research: research,
       ),
     };

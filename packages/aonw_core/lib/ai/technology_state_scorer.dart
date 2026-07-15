@@ -230,7 +230,7 @@ final class AiTechnologyStateScorer {
           (city) => CityBuildingRequirementRules.meetsRequirements(
             city: city,
             buildingType: buildingType,
-            mapData: view.mapData,
+            mapTiles: view.mapData,
             ruleset: view.ruleset.city,
             research: ResearchState(
               players: {view.forPlayerId: view.ownResearch},

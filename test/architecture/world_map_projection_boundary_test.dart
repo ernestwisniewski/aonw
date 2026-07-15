@@ -18,7 +18,14 @@ const _boundedTileQueryResolvers = {
 };
 const _legacyWorldMapAdapterPath =
     'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart';
+const _persistentCityProductionResolverPath =
+    'packages/aonw_core/lib/game/domain/city/'
+    'persistent_city_production_resolver.dart';
 const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
+const _productionMethodsPendingMigration = {
+  'startUnitProduction',
+  'rushProduction',
+};
 
 void main() {
   test('bounded tile-query resolvers do not materialize legacy maps', () {
@@ -33,9 +40,23 @@ void main() {
 
   test('bounded adapter helpers do not materialize legacy maps', () {
     expect(
-      _adapterProjectionViolations(
+      _classProjectionViolations(
         File(_legacyWorldMapAdapterPath).readAsStringSync(),
         _legacyWorldMapAdapterPath,
+        className: 'LegacyWorldMapAdapter',
+        allowedProjectionMethods: _allowedFullMapConverterMethods,
+      ),
+      isEmpty,
+    );
+  });
+
+  test('bounded city production paths do not materialize legacy maps', () {
+    expect(
+      _classProjectionViolations(
+        File(_persistentCityProductionResolverPath).readAsStringSync(),
+        _persistentCityProductionResolverPath,
+        className: 'PersistentCityProductionResolver',
+        allowedProjectionMethods: _productionMethodsPendingMigration,
       ),
       isEmpty,
     );
@@ -73,7 +94,8 @@ Object saveDraft(MapDraft draft) => draft.toMapData();
   });
 
   test('adapter guard rejects full projections hidden behind helpers', () {
-    final violations = _adapterProjectionViolations('''
+    final violations = _classProjectionViolations(
+      '''
 abstract final class LegacyWorldMapAdapter {
   static MapData toMapData(WorldMap worldMap) => throw UnimplementedError();
 
@@ -81,9 +103,38 @@ abstract final class LegacyWorldMapAdapter {
 
   static Object _hidden(WorldMap worldMap) => toMapData(worldMap);
 }
-''', 'fixture.dart');
+''',
+      'fixture.dart',
+      className: 'LegacyWorldMapAdapter',
+      allowedProjectionMethods: _allowedFullMapConverterMethods,
+    );
 
     expect(violations, contains(contains('toMapData')));
+  });
+
+  test('class guard permits projections only in named migration methods', () {
+    final violations = _classProjectionViolations(
+      '''
+class PersistentCityProductionResolver {
+  Object pending(WorldMap worldMap) =>
+      LegacyWorldMapAdapter.toMapData(worldMap);
+
+  Object migratedDirectly(WorldMap worldMap) =>
+      LegacyWorldMapAdapter.toMapData(worldMap);
+
+  Object migratedViaHelper(WorldMap worldMap) => _hidden(worldMap);
+
+  Object _hidden(WorldMap worldMap) =>
+      LegacyWorldMapAdapter.toMapData(worldMap);
+}
+''',
+      'fixture.dart',
+      className: 'PersistentCityProductionResolver',
+      allowedProjectionMethods: const {'pending'},
+    );
+
+    expect(violations, contains(contains('toMapData')));
+    expect(violations, hasLength(2));
   });
 }
 
@@ -101,7 +152,12 @@ List<String> _legacyProjectionViolations(String source, String path) {
   return violations.toSet().toList();
 }
 
-List<String> _adapterProjectionViolations(String source, String path) {
+List<String> _classProjectionViolations(
+  String source,
+  String path, {
+  required String className,
+  required Set<String> allowedProjectionMethods,
+}) {
   final unit = parseString(content: source, path: path).unit;
   final violations = <String>[];
   final visitor = _LegacyProjectionVisitor(
@@ -116,12 +172,12 @@ List<String> _adapterProjectionViolations(String source, String path) {
       declaration.accept(visitor);
       continue;
     }
-    final className = declaration.namePart.typeName.lexeme;
+    final declarationClassName = declaration.namePart.typeName.lexeme;
     for (final member in declaration.body.members) {
       final isAllowedConverter =
-          className == 'LegacyWorldMapAdapter' &&
+          declarationClassName == className &&
           member is MethodDeclaration &&
-          _allowedFullMapConverterMethods.contains(member.name.lexeme);
+          allowedProjectionMethods.contains(member.name.lexeme);
       if (!isAllowedConverter) member.accept(visitor);
     }
   }

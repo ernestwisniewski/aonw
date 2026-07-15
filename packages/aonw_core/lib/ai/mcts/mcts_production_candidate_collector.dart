@@ -47,7 +47,7 @@ final class MctsProductionCandidateCollector {
       playerId: view.forPlayerId,
       unitType: unitType,
       cities: view.ownCities,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: research,
     );
@@ -95,7 +95,7 @@ final class MctsProductionCandidateCollector {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: buildingType,
-      mapData: view.mapData,
+      mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: research,
     );

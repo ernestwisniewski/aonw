@@ -235,7 +235,7 @@ class CityProductionDialogViewModel {
               playerId: city.ownerPlayerId,
               unitType: type,
               cities: playerCities,
-              mapData: mapData,
+              mapTiles: mapData,
               ruleset: cityRuleset,
               research: research,
               resourceTradeAgreements: resourceTradeAgreements,

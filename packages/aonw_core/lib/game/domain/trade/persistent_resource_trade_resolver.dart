@@ -61,7 +61,7 @@ class PersistentResourceTradeResolver {
     final exporterInventory = CityResourceInventoryRules.forPlayer(
       playerId: exporterPlayerId,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       research: state.research,
     );
     final availableExports =
@@ -257,7 +257,7 @@ class PersistentResourceTradeResolver {
     final inventory = CityResourceInventoryRules.forPlayer(
       playerId: exporterPlayerId,
       cities: state.cities,
-      mapData: mapData,
+      mapTiles: mapData,
       research: state.research,
     );
     return inventory.countFor(resource) -

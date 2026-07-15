@@ -45,7 +45,7 @@ void main() {
             cities: [city],
             registry: WonderRegistry.empty,
             research: research,
-            mapData: _mapData(),
+            mapTiles: _mapData(),
           ).status,
           WonderAvailabilityStatus.available,
         );
@@ -56,7 +56,7 @@ void main() {
             cities: [city],
             registry: WonderRegistry.empty,
             research: research,
-            mapData: _mapData(),
+            mapTiles: _mapData(),
           ).status,
           WonderAvailabilityStatus.technologyLocked,
         );
@@ -67,7 +67,7 @@ void main() {
             cities: [city],
             registry: WonderRegistry.empty,
             research: research,
-            mapData: _mapData(),
+            mapTiles: _mapData(),
           ).status,
           WonderAvailabilityStatus.requirementsMissing,
         );
@@ -78,7 +78,7 @@ void main() {
             cities: [city],
             registry: WonderRegistry.empty,
             research: research,
-            mapData: _mapData(withAdjacentRiver: true),
+            mapTiles: _mapData(withAdjacentRiver: true),
           ).status,
           WonderAvailabilityStatus.available,
         );
@@ -92,7 +92,7 @@ void main() {
               playerId: 'rival',
             ),
             research: research,
-            mapData: _mapData(),
+            mapTiles: _mapData(),
           ).status,
           WonderAvailabilityStatus.completed,
         );
@@ -113,7 +113,7 @@ void main() {
             ],
             registry: WonderRegistry.empty,
             research: research,
-            mapData: _mapData(withAdjacentRiver: true),
+            mapTiles: _mapData(withAdjacentRiver: true),
           ).status,
           WonderAvailabilityStatus.playerAlreadyBuildingWonder,
         );

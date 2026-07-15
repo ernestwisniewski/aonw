@@ -19,7 +19,7 @@ class _WonderProductionScorer {
         cities: view.ownCities,
         registry: view.wonderRegistry,
         research: cache.research,
-        mapData: view.mapData,
+        mapTiles: view.mapData,
         ruleset: view.ruleset.wonders,
       );
       if (!availability.isAvailable) continue;

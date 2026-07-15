@@ -15,10 +15,10 @@ abstract final class HexNeighbors {
 
   static Iterable<HexCoordinate> existingAround(
     HexCoordinate coordinate,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) sync* {
     for (final neighbor in around(coordinate)) {
-      if (mapData.tileAt(neighbor.col, neighbor.row) == null) continue;
+      if (mapTiles.tileAt(neighbor.col, neighbor.row) == null) continue;
       yield neighbor;
     }
   }
