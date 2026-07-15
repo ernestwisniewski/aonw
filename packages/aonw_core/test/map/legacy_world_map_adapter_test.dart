@@ -135,7 +135,7 @@ void main() {
       ]);
     });
 
-    test('exposes sparse tiles through bounded lookup without aliases', () {
+    test('caches sparse bounded lookup hits and misses without aliases', () {
       final world = WorldMap(
         cols: 8,
         rows: 6,
@@ -151,27 +151,58 @@ void main() {
       final MapTileLookup lookup = LegacyWorldMapAdapter.asTileLookup(world);
 
       final first = lookup.tileAt(6, 4);
+      final second = lookup.tileAt(6, 4);
 
       expect(first?.col, 6);
       expect(first?.row, 4);
       expect(first?.terrains, [TerrainType.hills]);
       expect(first?.resources, [ResourceType.iron]);
       expect(first?.height, 3);
+      expect(identical(first, second), isTrue);
       expect(lookup.tileAt(0, 0), isNull);
-
-      first!.terrains.add(TerrainType.river);
-      first.resources.clear();
-      final second = lookup.tileAt(6, 4);
-
-      expect(identical(first, second), isFalse);
-      expect(second?.terrains, [TerrainType.hills]);
-      expect(second?.resources, [ResourceType.iron]);
+      expect(lookup.tileAt(0, 0), isNull);
+      expect(identical(first?.terrains, world.tiles.single.terrains), isFalse);
+      expect(
+        identical(first?.resources, world.tiles.single.resources),
+        isFalse,
+      );
       expect(world.tileAt(const HexCoord(col: 6, row: 4))?.terrains, [
         TerrainType.hills,
       ]);
       expect(world.tileAt(const HexCoord(col: 6, row: 4))?.resources, [
         ResourceType.iron,
       ]);
+    });
+
+    test('exposes sparse tiles in canonical order without copying them', () {
+      final world = WorldMap(
+        cols: 8,
+        rows: 6,
+        tiles: [
+          WorldTile(
+            coordinate: const HexCoord(col: 6, row: 4),
+            terrains: const [TerrainType.hills],
+            resources: const [ResourceType.iron],
+            height: 3,
+          ),
+          WorldTile(
+            coordinate: const HexCoord(col: 1, row: 0),
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: 1,
+          ),
+        ],
+      );
+
+      final view = LegacyWorldMapAdapter.asReadView(world);
+      final tiles = view.tileViews.toList();
+
+      expect(view.cols, 8);
+      expect(view.rows, 6);
+      expect(identical(view.objectives, world.objectives), isTrue);
+      expect(tiles.map((tile) => (tile.col, tile.row)), [(6, 4), (1, 0)]);
+      expect(identical(tiles.first, world.tiles.first), isTrue);
+      expect(identical(tiles.last, world.tiles.last), isTrue);
     });
 
     test('exposes a sparse, zero-copy terrain survey through a read view', () {

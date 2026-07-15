@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/map/domain/map_survey.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Read-only lookup for legacy tile data at a single coordinate.
@@ -20,11 +21,15 @@ abstract interface class MapTraversalView implements MapTileLookup {
   int get rows;
 }
 
-/// Composite gameplay view for bounded tile reads and aggregate map rules.
+/// Composite read-only view for gameplay rules that need bounded reads,
+/// traversal, aggregate metadata, objectives, or a zero-copy tile catalog.
 ///
 /// This access contract does not make legacy [TileData] deeply immutable.
-abstract interface class MapReadView implements MapSurvey {
+abstract interface class MapReadView
+    implements MapSurvey, MapTraversalView, MapTileCatalog {
   MapTileLookup get mapTiles;
+
+  Iterable<MapObjectiveDefinition> get objectives;
 }
 
 /// Read-only spatial data consumed by map renderers.
@@ -40,13 +45,21 @@ abstract interface class MapTileSource implements MapTraversalView {
 }
 
 /// Data for a single hex tile.
-class TileData {
+class TileData implements MapTileView {
+  @override
   final int col;
+
+  @override
   final int row;
+
+  @override
   final List<TerrainType> terrains;
+
+  @override
   final List<ResourceType> resources;
 
   /// Integer height 0–5; drives depth effect scaling at render sites.
+  @override
   final int height;
 
   const TileData({
@@ -116,10 +129,14 @@ class MapData implements MapTileSource, MapReadView {
     this.defaultZoom = 1.0,
   }) : _objectives = List.unmodifiable(objectives);
 
+  @override
   List<MapObjectiveDefinition> get objectives => _objectives;
 
   @override
   MapTileLookup get mapTiles => this;
+
+  @override
+  Iterable<MapTileView> get tileViews => tiles;
 
   @override
   int get tileCount => tiles.length;

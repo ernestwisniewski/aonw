@@ -51,10 +51,15 @@ void main() {
       );
       final MapReadView view = map;
       final terrainSurvey = view.tileTerrains;
+      final tileViews = view.tileViews;
 
       expect(view.mapName, 'survey');
+      expect(view.cols, 3);
+      expect(view.rows, 2);
       expect(view.tileCount, 1);
       expect(identical(view.mapTiles, map), isTrue);
+      expect(identical(view.objectives, map.objectives), isTrue);
+      expect(identical(tileViews.first, map.tiles.first), isTrue);
       expect(identical(terrainSurvey.single, terrains), isTrue);
       expect(terrainSurvey.map((entry) => entry.toList()).toList(), [
         [TerrainType.plains, TerrainType.river],

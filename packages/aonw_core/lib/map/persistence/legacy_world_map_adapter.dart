@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Temporary boundary from pre-WorldMap map models to the canonical model.
@@ -48,7 +50,7 @@ abstract final class LegacyWorldMapAdapter {
   /// Exposes map bounds and request-scoped, cached tile projections for
   /// traversal algorithms without materializing every legacy tile.
   static MapTraversalView asTraversalView(WorldMap worldMap) {
-    return _WorldMapTraversalView(worldMap);
+    return _WorldMapReadView(worldMap);
   }
 
   /// Projects a canonical tile to the legacy tile shape expected by older
@@ -82,32 +84,8 @@ abstract final class LegacyWorldMapAdapter {
   }
 }
 
-final class _WorldMapReadView implements MapReadView, MapTileLookup {
-  const _WorldMapReadView(this._worldMap);
-
-  final WorldMap _worldMap;
-
-  @override
-  String? get mapName => _worldMap.mapName;
-
-  @override
-  MapTileLookup get mapTiles => this;
-
-  @override
-  int get tileCount => _worldMap.indexedTileCount;
-
-  @override
-  Iterable<Iterable<TerrainType>> get tileTerrains =>
-      _worldMap.tiles.map((tile) => tile.terrains);
-
-  @override
-  TileData? tileAt(int col, int row) {
-    return LegacyWorldMapAdapter.tileDataAt(_worldMap, col, row);
-  }
-}
-
-final class _WorldMapTraversalView implements MapTraversalView {
-  _WorldMapTraversalView(this._worldMap);
+final class _WorldMapReadView implements MapReadView {
+  _WorldMapReadView(this._worldMap);
 
   final WorldMap _worldMap;
   final Map<HexCoord, TileData> _projectedTiles = {};
@@ -118,6 +96,25 @@ final class _WorldMapTraversalView implements MapTraversalView {
 
   @override
   int get rows => _worldMap.rows;
+
+  @override
+  String? get mapName => _worldMap.mapName;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  Iterable<MapObjectiveDefinition> get objectives => _worldMap.objectives;
+
+  @override
+  Iterable<MapTileView> get tileViews => _worldMap.tiles;
+
+  @override
+  int get tileCount => _worldMap.indexedTileCount;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains =>
+      _worldMap.tiles.map((tile) => tile.terrains);
 
   @override
   TileData? tileAt(int col, int row) {

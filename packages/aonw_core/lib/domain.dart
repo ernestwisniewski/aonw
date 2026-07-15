@@ -39,6 +39,7 @@ export 'map/domain/map_data.dart';
 export 'map/domain/map_player_capacity.dart';
 export 'map/domain/map_selection.dart';
 export 'map/domain/map_survey.dart';
+export 'map/domain/map_tile_view.dart';
 export 'map/domain/map_view_mode.dart';
 export 'map/domain/terrain_type.dart';
 export 'map/persistence.dart';

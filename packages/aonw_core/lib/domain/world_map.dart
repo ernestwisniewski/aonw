@@ -1,5 +1,6 @@
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 final class WorldMapException implements Exception {
@@ -12,7 +13,7 @@ final class WorldMapException implements Exception {
 }
 
 /// Immutable terrain and resource data for one world coordinate.
-final class WorldTile {
+final class WorldTile implements MapTileView {
   WorldTile({
     required this.coordinate,
     required Iterable<TerrainType> terrains,
@@ -29,8 +30,20 @@ final class WorldTile {
   }
 
   final HexCoord coordinate;
+
+  @override
+  int get col => coordinate.col;
+
+  @override
+  int get row => coordinate.row;
+
+  @override
   final List<TerrainType> terrains;
+
+  @override
   final List<ResourceType> resources;
+
+  @override
   final int height;
 
   TerrainType get primaryTerrain => terrains.first;
