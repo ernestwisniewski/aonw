@@ -3,7 +3,7 @@ part of 'movement_reducer.dart';
 abstract final class _MovementTurnResetProcessor {
   static GameStateTransition run(
     GameState state,
-    MapData mapData, {
+    MapTraversalView mapView, {
     required String? playerId,
     required FogOfWarService fogOfWarService,
   }) {
@@ -14,7 +14,7 @@ abstract final class _MovementTurnResetProcessor {
         (playerId == null || unit.ownerPlayerId == playerId)
             ? UnitMovementTurnRules.resetForNewTurn(
                 unit,
-                mapData: mapData,
+                mapData: mapView,
                 allUnits: currentUnits,
               )
             : unit,
@@ -47,7 +47,7 @@ abstract final class _MovementTurnResetProcessor {
         unit: unit,
         units: currentAllUnits,
         cities: state.cities,
-        mapData: mapData,
+        mapData: mapView,
       );
       if (routed.routeInvalidated) pathsInvalidated = true;
       if (routed.unit.type == GameUnitType.merchant &&
@@ -68,7 +68,7 @@ abstract final class _MovementTurnResetProcessor {
 
       final validated = UnitMovementTurnRules.validateQueuedPath(
         unit: routed.unit,
-        mapData: mapData,
+        mapData: mapView,
         allUnits: currentAllUnits,
         cities: state.cities,
       );
@@ -79,14 +79,14 @@ abstract final class _MovementTurnResetProcessor {
       }
 
       final path = validated.queuedPath!;
-      final targetTile = mapData.tileAt(path.targetCol, path.targetRow);
+      final targetTile = mapView.tileAt(path.targetCol, path.targetRow);
       if (targetTile == null) {
         finalUnits.add(validated.copyWithQueuedPath(null));
         continue;
       }
 
       final plan = UnitMovementPathfinder(
-        mapData: mapData,
+        mapData: mapView,
         units: currentAllUnits,
         canEnterOccupiedTile:
             ({
@@ -156,7 +156,7 @@ abstract final class _MovementTurnResetProcessor {
     if (mpChanged || animationEffects.isNotEmpty || pathsInvalidated) {
       workingFog = fogOfWarService.recompute(
         current: state.fogOfWar,
-        mapData: mapData,
+        mapData: mapView,
         playerIds: knownPlayerIds(state),
         units: workingUnits,
         cities: state.cities,
@@ -167,7 +167,7 @@ abstract final class _MovementTurnResetProcessor {
       state: withDiscoveredDiplomaticContacts(
         state.copyWith(units: workingUnits, fogOfWar: workingFog),
       ),
-      mapData: mapData,
+      mapView: mapView,
       resetPlayerId: playerId,
       fogOfWarService: fogOfWarService,
     );
@@ -187,7 +187,7 @@ abstract final class _MovementTurnResetProcessor {
         state: _refreshSelectedUnit(
           state,
           currentUnits,
-          mapData,
+          mapView,
           resetPlayerId: playerId,
         ),
       );
@@ -200,7 +200,7 @@ abstract final class _MovementTurnResetProcessor {
         ),
       ),
       workingUnits,
-      mapData,
+      mapView,
       resetPlayerId: playerId,
     );
 
@@ -210,7 +210,7 @@ abstract final class _MovementTurnResetProcessor {
   static GameState _refreshSelectedUnit(
     GameState state,
     List<GameUnit> units,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     String? resetPlayerId,
   }) {
     var next = state;
@@ -218,10 +218,7 @@ abstract final class _MovementTurnResetProcessor {
     if (selectedId != null) {
       for (final unit in units) {
         if (unit.id == selectedId) {
-          final tile = mapData.tileAt(unit.col, unit.row);
-          next = next.copyWithInteraction(
-            selection: GameSelection.unit(unit, tile: tile),
-          );
+          next = MovementReducer._selectUpdatedUnit(next, unit, mapTiles);
           final unitWasReset =
               resetPlayerId == null || unit.ownerPlayerId == resetPlayerId;
           if (unitWasReset &&

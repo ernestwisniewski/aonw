@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -366,6 +367,121 @@ void main() {
     expect(confirmed.state.moveCommandActive, isTrue);
     expect(confirmed.events, isEmpty);
   });
+
+  test('auto-explores through a canonical traversal view', () {
+    final world = _canonicalWorld(cols: 8, rows: 3);
+    final MapTraversalView mapView = WorldMapReadView(world);
+    final scout = GameUnit.produced(
+      id: 'scout_1',
+      ownerPlayerId: 'player_1',
+      type: GameUnitType.scout,
+      col: 1,
+      row: 1,
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [scout],
+      interaction: GameInteractionState(selection: GameSelection.unit(scout)),
+    );
+
+    final result = MovementReducer.autoExploreUnit(
+      state,
+      AutoExploreUnitCommand(scout.id),
+      mapView,
+    );
+    final movedScout = result.state.units.single;
+    final animation = result.uiEffects
+        .whereType<AnimateUnitMoveEffect>()
+        .single;
+
+    expect(movedScout.posture, UnitPosture.autoExploring);
+    expect(movedScout.occupies(scout.col, scout.row), isFalse);
+    expect(result.state.selection?.unit, same(movedScout));
+    expect(result.state.selection?.tile?.resources, const [ResourceType.wheat]);
+    expect(animation.steps.last.coord, (
+      col: movedScout.col,
+      row: movedScout.row,
+    ));
+    expect(
+      result.state.fogOfWar.isVisible(
+        'player_1',
+        HexCoordinate(col: movedScout.col, row: movedScout.row),
+      ),
+      isTrue,
+    );
+    expect(
+      world
+          .tileAt(HexCoord(col: movedScout.col, row: movedScout.row))
+          ?.resources,
+      const [ResourceType.oil, ResourceType.wheat],
+    );
+  });
+
+  test(
+    'resets and executes a queued path through a canonical traversal view',
+    () {
+      final world = _canonicalWorld(cols: 4);
+      final MapTraversalView mapView = WorldMapReadView(world);
+      final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1')
+          .copyWith(movementPoints: 0)
+          .copyWithQueuedPath(
+            QueuedMovePath(
+              targetCol: 2,
+              targetRow: 0,
+              steps: const [
+                UnitMovementStep(
+                  col: 0,
+                  row: 0,
+                  enterCost: 0,
+                  cumulativeCost: 0,
+                ),
+                UnitMovementStep(
+                  col: 1,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+                UnitMovementStep(
+                  col: 2,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 2,
+                ),
+              ],
+            ),
+          );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [unit],
+        fogOfWar: _originFog(),
+        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+      );
+
+      final result = MovementReducer.resetUnitMovementForNewTurn(
+        state,
+        mapView,
+        playerId: 'player_1',
+      );
+      final movedUnit = result.state.units.single;
+      final animation = result.uiEffects
+          .whereType<AnimateUnitMoveEffect>()
+          .single;
+
+      expect((movedUnit.col, movedUnit.row), (2, 0));
+      expect(movedUnit.movementPoints, 3);
+      expect(movedUnit.queuedPath, isNull);
+      expect(result.state.selection?.unit, same(movedUnit));
+      expect(result.state.selection?.tile?.resources, const [
+        ResourceType.wheat,
+      ]);
+      expect(animation.steps.last.coord, (col: 2, row: 0));
+      expect(result.state.moveCommandActive, isTrue);
+      expect(world.tiles[2].resources, const [
+        ResourceType.oil,
+        ResourceType.wheat,
+      ]);
+    },
+  );
 
   test(
     'selection keeps the updated unit when its canonical tile is absent',

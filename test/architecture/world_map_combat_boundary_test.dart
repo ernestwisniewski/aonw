@@ -552,6 +552,16 @@ const _targets = [
         type: 'MapTraversalView',
       ),
       _Boundary.method(
+        'autoExploreUnit',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'resetUnitMovementForNewTurn',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
         'cancelUnitAction',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
@@ -607,6 +617,44 @@ const _targets = [
       ),
       _Boundary.method(
         '_applyExecutedMove',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_auto_explore.dart',
+    owner: '_AutoExploreProcessor',
+    boundaries: [
+      _Boundary.method('run', parameter: 'mapView', type: 'MapTraversalView'),
+      _Boundary.method(
+        'advanceForNewTurn',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        '_commandFor',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'keepPosture',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_turn_reset.dart',
+    owner: '_MovementTurnResetProcessor',
+    boundaries: [
+      _Boundary.method('run', parameter: 'mapView', type: 'MapTraversalView'),
+      _Boundary.method(
+        '_refreshSelectedUnit',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),

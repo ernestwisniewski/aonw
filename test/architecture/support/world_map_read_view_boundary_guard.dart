@@ -2,7 +2,6 @@ part of '../world_map_projection_boundary_test.dart';
 
 const _mapTileViewMigrationPaths = {
   ..._mapDataBarrelFreeMigrationPaths,
-  'lib/game/domain/reducer/movement/movement_reducer.dart',
   'lib/game/presentation/widgets/hud/selection/'
       'hud_selection_action_rules.dart',
   '$_coreLib/ai/simulation/economy_simulation_command_staleness.dart',

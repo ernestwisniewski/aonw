@@ -7,7 +7,6 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
-import 'package:aonw/map/domain/map_data.dart' show MapData;
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -354,14 +353,14 @@ abstract final class MovementReducer {
   static GameStateTransition autoExploreUnit(
     GameState state,
     AutoExploreUnitCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
     return _AutoExploreProcessor.run(
       state,
       command,
-      mapData,
+      mapView,
       context: context,
       fogOfWarService: fogOfWarService,
     );
@@ -370,13 +369,13 @@ abstract final class MovementReducer {
   /// Resets MP for a player's units and processes queued paths.
   static GameStateTransition resetUnitMovementForNewTurn(
     GameState state,
-    MapData mapData, {
+    MapTraversalView mapView, {
     String? playerId,
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
     return _MovementTurnResetProcessor.run(
       state,
-      mapData,
+      mapView,
       playerId: playerId,
       fogOfWarService: fogOfWarService,
     );

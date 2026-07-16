@@ -4,7 +4,7 @@ abstract final class _AutoExploreProcessor {
   static GameStateTransition run(
     GameState state,
     AutoExploreUnitCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
   }) {
@@ -18,7 +18,7 @@ abstract final class _AutoExploreProcessor {
     }
     final unit = validation.unit;
 
-    final move = _commandFor(state: state, unit: unit, mapData: mapData);
+    final move = _commandFor(state: state, unit: unit, mapView: mapView);
     if (move == null) return GameStateTransition(state: state);
 
     final exploring = unit
@@ -29,23 +29,23 @@ abstract final class _AutoExploreProcessor {
         .copyWithInteraction(pendingAction: null, cityFoundingDraft: null);
     primed = MovementReducer._clearMoveTargeting(primed);
     if (primed.selectedUnitId == unit.id) {
-      primed = MovementReducer._selectUpdatedUnit(primed, exploring, mapData);
+      primed = MovementReducer._selectUpdatedUnit(primed, exploring, mapView);
     }
 
     final moved = MovementReducer.moveUnit(
       primed,
       move,
-      mapData,
+      mapView,
       context: context,
       fogOfWarService: fogOfWarService,
       canEnterTile: (_) => true,
     );
-    return keepPosture(moved, unit.id, mapData);
+    return keepPosture(moved, unit.id, mapView);
   }
 
   static _AutoExploreTurnResult advanceForNewTurn({
     required GameState state,
-    required MapData mapData,
+    required MapTraversalView mapView,
     required String? resetPlayerId,
     required FogOfWarService fogOfWarService,
   }) {
@@ -67,18 +67,18 @@ abstract final class _AutoExploreProcessor {
       }
 
       final context = GameCommandContext(actorPlayerId: unit.ownerPlayerId);
-      final command = _commandFor(state: current, unit: unit, mapData: mapData);
+      final command = _commandFor(state: current, unit: unit, mapView: mapView);
       if (command == null) continue;
 
       final moved = MovementReducer.moveUnit(
         current,
         command,
-        mapData,
+        mapView,
         context: context,
         fogOfWarService: fogOfWarService,
         canEnterTile: (_) => true,
       );
-      final kept = keepPosture(moved, unit.id, mapData);
+      final kept = keepPosture(moved, unit.id, mapView);
       current = kept.state;
       effects.addAll(kept.uiEffects.whereType<AnimateUnitMoveEffect>());
       changed = true;
@@ -95,11 +95,11 @@ abstract final class _AutoExploreProcessor {
   static MoveUnitCommand? _commandFor({
     required GameState state,
     required GameUnit unit,
-    required MapData mapData,
+    required MapTraversalView mapView,
   }) {
     return const ScoutAutoExplorePlanner().commandFor(
       unit: unit,
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       fogOfWar: state.fogOfWar,
     );
@@ -108,7 +108,7 @@ abstract final class _AutoExploreProcessor {
   static GameStateTransition keepPosture(
     GameStateTransition transition,
     String unitId,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final moved = transition.state.unitById(unitId);
     if (moved == null) return transition;
@@ -118,7 +118,7 @@ abstract final class _AutoExploreProcessor {
       units: replaceUnit(transition.state.units, exploring),
     );
     if (next.selectedUnitId == unitId) {
-      next = MovementReducer._selectUpdatedUnit(next, exploring, mapData);
+      next = MovementReducer._selectUpdatedUnit(next, exploring, mapTiles);
     }
     return GameStateTransition(
       state: next,
