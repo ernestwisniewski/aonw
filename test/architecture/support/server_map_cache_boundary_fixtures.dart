@@ -27,6 +27,7 @@ void _registerServerMapCacheBoundaryFixtures() {
       ),
       path: 'fixture.dart',
       forbiddenTypeNames: const {
+        'MapData',
         'WorldMap',
         'WorldMapReadView',
         'LegacyWorldMapAdapter',
@@ -126,6 +127,163 @@ void _registerServerMapCacheBoundaryFixtures() {
     );
   });
 
+  test('server cache guard rejects retaining the mutable source map', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture
+          .replaceFirst(
+            'return _LoadedServerMap(mapView);',
+            'return _LoadedServerMap(sourceMapData, mapView);',
+          )
+          .replaceFirst(
+            'const _LoadedServerMap(this.mapView);',
+            'const _LoadedServerMap(this.legacyMapData, this.mapView);',
+          )
+          .replaceFirst(
+            'final MapReadView mapView;',
+            'final MapData legacyMapData;\n  final MapReadView mapView;',
+          ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      containsAll([
+        'fixture.dart _loadServerMap must cache only the same mapView',
+        'fixture.dart _LoadedServerMap must cache only one mapView field; '
+            'found [legacyMapData, mapView]',
+      ]),
+    );
+  });
+
+  test('server cache guard rejects legacy source-map reads', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source:
+          '$_validServerMapCacheFixture\n'
+          'void leak(_LoadedServerMap loaded) {\n'
+          '  consume(loaded.legacyMapData);\n'
+          '}',
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations.where(
+        (violation) => violation.contains('must not reference legacyMapData'),
+      ),
+      isNotEmpty,
+    );
+  });
+
+  test('server cache guard rejects a static raw-map cache', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture.replaceFirst(
+        'final MapReadView mapView;',
+        'static MapData? rawMap;\n  final MapReadView mapView;',
+      ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'MapData',
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      containsAll([
+        'fixture.dart must not reference MapData',
+        'fixture.dart _LoadedServerMap must cache only one mapView field; '
+            'found [rawMap, mapView]',
+      ]),
+    );
+  });
+
+  test('server cache guard rejects aliasing the mutable source map', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture.replaceFirst(
+        'validateMapDataTileInvariants(sourceMapData);',
+        'final rawAlias = sourceMapData;\n'
+            '    validateMapDataTileInvariants(sourceMapData);',
+      ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'MapData',
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      contains(
+        'fixture.dart _loadServerMap must not retain or alias sourceMapData',
+      ),
+    );
+  });
+
+  test('server cache guard rejects a second load hidden in a helper', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source:
+          '$_validServerMapCacheFixture\n'
+          'Future<Object> loadAndHide() async {\n'
+          '  final dynamic hidden = await catalog.loadAssetMap("other");\n'
+          '  return hidden;\n'
+          '}',
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'MapData',
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      contains(
+        'fixture.dart server reducer library must call loadAssetMap exactly '
+        'once; found 2',
+      ),
+    );
+  });
+
+  test('server cache guard rejects retaining a map loader tear-off', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source:
+          '$_validServerMapCacheFixture\n'
+          'void retainLoader() {\n'
+          '  final loader = catalog.loadAssetMap;\n'
+          '  consume(loader);\n'
+          '}',
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'MapData',
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      contains(
+        'fixture.dart server reducer library must reference loadAssetMap '
+        'exactly once; found 2',
+      ),
+    );
+  });
+
   test('server reducer guard rejects wide map contracts outside cache', () {
     const turnsSource = '''
 extension Turns on ServerReducer {
@@ -170,14 +328,13 @@ extension ServerMapCache on ServerReducer {
     final sourceMapData = await catalog.loadAssetMap(mapName);
     validateMapDataTileInvariants(sourceMapData);
     final mapView = sourceMapData.indexedReadView();
-    return _LoadedServerMap(sourceMapData, mapView);
+    return _LoadedServerMap(mapView);
   }
 }
 
 final class _LoadedServerMap {
-  const _LoadedServerMap(this.legacyMapData, this.mapView);
+  const _LoadedServerMap(this.mapView);
 
-  final MapData legacyMapData;
   final MapReadView mapView;
 }
 ''';

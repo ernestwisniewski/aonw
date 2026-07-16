@@ -218,6 +218,7 @@ abstract final class ReducerParityCorpus {
     final coverage = <String, Set<bool>>{};
     final acceptedCountByFamily = <String, int>{};
     final rejectionReasonsByFamily = <String, Set<String>>{};
+    final resourceTradeAcceptanceModes = <String>{};
     final turnAcceptanceModes = <String>{};
     for (final fixture in fixtures) {
       if (!ids.add(fixture.id)) {
@@ -238,6 +239,13 @@ abstract final class ReducerParityCorpus {
                 ? 'waiting'
                 : 'finalizing',
           );
+        }
+        if (fixture.family == 'resource-trade') {
+          resourceTradeAcceptanceModes.add(switch (fixture.command) {
+            OpenResourceTradeCommand() => 'gold',
+            OpenResourceExchangeCommand() => 'exchange',
+            _ => 'unexpected',
+          });
         }
       } else {
         rejectionReasonsByFamily
@@ -270,6 +278,15 @@ abstract final class ReducerParityCorpus {
             '$family needs waiting/finalizing accepts and actor/semantic rejects.',
           );
         }
+      }
+      if (family == 'resource-trade' &&
+          !resourceTradeAcceptanceModes.containsAll(const {
+            'gold',
+            'exchange',
+          })) {
+        throw StateError(
+          '$family needs accepted gold and exchange parity fixtures.',
+        );
       }
       final requiredReasons = reducerParityRequiredRejectionReasons[family]!;
       if (rejectionReasonsByFamily[family]?.containsAll(requiredReasons) !=
@@ -397,6 +414,20 @@ abstract final class ReducerParityCorpus {
             technologyId) {
           _fail(fixture, 'must commit the reviewed research selection');
         }
+      case OpenResourceTradeCommand() || OpenResourceExchangeCommand():
+        if (!_jsonDeepEquals(
+          fixture.expectedSave,
+          reducerParitySave(fixture.save),
+        )) {
+          _fail(fixture, 'must preserve save metadata for resource trade');
+        }
+        requireAcceptedResourceTrade(
+          fixtureId: fixture.id,
+          command: fixture.command,
+          before: fixture.state,
+          after: state,
+          events: events,
+        );
       case ConfirmWorkerImprovementCommand(
         :final unitId,
         :final improvementType,

@@ -18,13 +18,15 @@ const _coreLib = 'packages/aonw_core/lib';
 const _gameDomain = '$_coreLib/game/domain';
 const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
-const _rootMapViewMigrationPaths = {
+const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/game_selection.dart',
+  'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
   'lib/game/domain/reducer/worker/worker_reducer.dart',
+  '$_gameDomain/trade/persistent_resource_trade_resolver.dart',
 };
 const _mapDataFreeMigrationPaths = {
-  ..._rootMapViewMigrationPaths,
+  ..._mapDataBarrelFreeMigrationPaths,
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
   '$_gameDomain/city/persistent_city_production_resolver.dart',
@@ -122,8 +124,8 @@ void main() {
     }
   });
 
-  test('migrated root map views do not import the legacy map DTO barrel', () {
-    for (final path in _rootMapViewMigrationPaths) {
+  test('migrated map views do not import the legacy map DTO barrel', () {
+    for (final path in _mapDataBarrelFreeMigrationPaths) {
       expect(
         removedProductionSymbolViolations(
           {path: File(path).readAsStringSync()},

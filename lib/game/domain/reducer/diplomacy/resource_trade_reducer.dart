@@ -5,13 +5,13 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/trade.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class ResourceTradeReducer {
   static GameStateTransition openTrade(
     GameState state,
     OpenResourceTradeCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final actorPlayerId = context.actorPlayerId ?? state.activePlayerId;
@@ -27,7 +27,7 @@ abstract final class ResourceTradeReducer {
           resource: command.resource,
           goldPerTurn: command.goldPerTurn,
           durationTurns: command.durationTurns,
-          mapData: mapData,
+          mapTiles: mapTiles,
           agreementId: command.agreementId,
         );
     if (!result.accepted) return GameStateTransition(state: state);
@@ -37,7 +37,7 @@ abstract final class ResourceTradeReducer {
   static GameStateTransition openExchange(
     GameState state,
     OpenResourceExchangeCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final actorPlayerId = context.actorPlayerId ?? state.activePlayerId;
@@ -53,7 +53,7 @@ abstract final class ResourceTradeReducer {
           offeredResource: command.offeredResource,
           requestedResource: command.requestedResource,
           durationTurns: command.durationTurns,
-          mapData: mapData,
+          mapTiles: mapTiles,
           agreementId: command.agreementId,
         );
     if (!result.accepted) return GameStateTransition(state: state);

@@ -8,6 +8,7 @@ const reducerParityRequiredFamilies = <String>{
   'city-production',
   'detachment',
   'research',
+  'resource-trade',
   'worker',
   'turn-finalization',
 };
@@ -24,6 +25,10 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   },
   'detachment': {'unit_not_controlled', 'detachment_destination_unavailable'},
   'research': {'technology_player_not_controlled', 'technology_not_available'},
+  'resource-trade': {
+    'resource_trade_player_not_controlled',
+    'resource_trade_export_unavailable',
+  },
   'worker': {'worker_not_controlled', 'worker_improvement_unavailable'},
   'turn-finalization': {'turn_player_not_controlled', 'turn_player_not_active'},
 };
@@ -43,6 +48,9 @@ bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
           command is RushProductionCommand,
     'detachment' => command is DetachTroopCommand,
     'research' => command is SelectTechnologyCommand,
+    'resource-trade' =>
+      command is OpenResourceTradeCommand ||
+          command is OpenResourceExchangeCommand,
     'worker' => command is ConfirmWorkerImprovementCommand,
     'turn-finalization' => command is SubmitTurnCommand,
     _ => false,

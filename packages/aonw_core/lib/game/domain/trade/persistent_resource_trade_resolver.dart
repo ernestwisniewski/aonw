@@ -2,7 +2,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 class PersistentResourceTradeResult {
@@ -27,7 +27,7 @@ class PersistentResourceTradeResolver {
     required ResourceType resource,
     required int goldPerTurn,
     required int durationTurns,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     String? agreementId,
   }) {
     if (importerPlayerId.isEmpty || exporterPlayerId.isEmpty) {
@@ -61,7 +61,7 @@ class PersistentResourceTradeResolver {
     final exporterInventory = CityResourceInventoryRules.forPlayer(
       playerId: exporterPlayerId,
       cities: state.cities,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       research: state.research,
     );
     final availableExports =
@@ -110,7 +110,7 @@ class PersistentResourceTradeResolver {
     required ResourceType offeredResource,
     required ResourceType requestedResource,
     required int durationTurns,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     String? agreementId,
   }) {
     if (playerId.isEmpty || targetPlayerId.isEmpty) {
@@ -150,7 +150,7 @@ class PersistentResourceTradeResolver {
           state: state,
           exporterPlayerId: playerId,
           resource: offeredResource,
-          mapData: mapData,
+          mapTiles: mapTiles,
         ) <=
         0) {
       return _reject(state, 'resource_trade_offer_unavailable');
@@ -159,7 +159,7 @@ class PersistentResourceTradeResolver {
           state: state,
           exporterPlayerId: targetPlayerId,
           resource: requestedResource,
-          mapData: mapData,
+          mapTiles: mapTiles,
         ) <=
         0) {
       return _reject(state, 'resource_trade_request_unavailable');
@@ -252,12 +252,12 @@ class PersistentResourceTradeResolver {
     required PersistentGameState state,
     required String exporterPlayerId,
     required ResourceType resource,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
   }) {
     final inventory = CityResourceInventoryRules.forPlayer(
       playerId: exporterPlayerId,
       cities: state.cities,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       research: state.research,
     );
     return inventory.countFor(resource) -

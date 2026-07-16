@@ -11,7 +11,7 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
       sourceMapData.mapName ??= mapName;
       validateMapDataTileInvariants(sourceMapData);
       final mapView = sourceMapData.indexedReadView();
-      return _LoadedServerMap(sourceMapData, mapView);
+      return _LoadedServerMap(mapView);
     });
     late final Future<_LoadedServerMap> loading;
     loading = source.onError((Object error, StackTrace stackTrace) {
@@ -26,10 +26,9 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
 }
 
 final class _LoadedServerMap {
-  const _LoadedServerMap(this.legacyMapData, this.mapView);
+  const _LoadedServerMap(this.mapView);
 
-  // Asset maps are read-only in the reducer. Keeping this cache reducer-owned
-  // avoids changing the mutable map catalog contract used by editor tooling.
-  final MapData legacyMapData;
+  // The mutable MapData container ends at load/index time; only its view is
+  // retained by the reducer cache.
   final MapReadView mapView;
 }

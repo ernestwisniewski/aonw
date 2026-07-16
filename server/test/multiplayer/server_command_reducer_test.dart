@@ -209,7 +209,9 @@ void main() {
   group('ServerCommandReducer resource trade', () {
     test('opens gold-for-resource trade authoritatively', () async {
       final reducer = ServerCommandReducer(
-        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        mapCatalog: _FakeMapCatalog(
+          _RawTileLookupRejectingMapData(_resourceTradeMap()),
+        ),
       );
 
       final reduction = await reducer.reduce(
@@ -254,7 +256,9 @@ void main() {
 
     test('opens resource exchange authoritatively', () async {
       final reducer = ServerCommandReducer(
-        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        mapCatalog: _FakeMapCatalog(
+          _RawTileLookupRejectingMapData(_resourceTradeMap()),
+        ),
       );
 
       final reduction = await reducer.reduce(

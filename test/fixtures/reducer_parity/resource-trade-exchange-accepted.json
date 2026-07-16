@@ -1,0 +1,121 @@
+{
+  "fixtureVersion": 1,
+  "id": "resource-trade-exchange-accepted",
+  "family": "resource-trade",
+  "input": {
+    "now": "2026-01-02T03:04:05.000Z",
+    "actorPlayerId": "player_1",
+    "tick": 51,
+    "rulesetId": "standard",
+    "map": {
+      "cols": 3,
+      "rows": 1,
+      "mapName": "reducer_parity",
+      "tiles": [
+        {"col": 0, "row": 0, "terrains": ["plains"], "resources": ["iron"], "height": 0},
+        {"col": 2, "row": 0, "terrains": ["plains"], "resources": ["horses"], "height": 0}
+      ]
+    },
+    "match": {
+      "v": 3,
+      "id": "reducer-parity-match",
+      "ownerUserId": "user_1",
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "players": [
+        {"id": "player_1", "userId": "user_1", "name": "Player 1", "colorValue": 4282212264, "countryId": "poland", "kind": "human", "connectionState": "connected", "ready": true},
+        {"id": "player_2", "userId": "user_2", "name": "Player 2", "colorValue": 4290263610, "countryId": "japan", "kind": "human", "connectionState": "connected", "ready": true}
+      ],
+      "maxPlayers": 2,
+      "minPlayers": 2,
+      "quickplay": false,
+      "turn": 7,
+      "state": "running",
+      "createdAt": "2026-01-02T00:00:00.000Z"
+    },
+    "save": {
+      "id": "reducer-parity-match",
+      "schemaVersion": 3,
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "mapSource": "asset",
+      "turn": 7,
+      "playerStates": {"player_1": "active", "player_2": "active"},
+      "savedAt": "2026-01-02T02:30:00.000Z",
+      "camera": {"x": 0.0, "y": 0.0, "zoom": 1.0},
+      "ruleset": {
+        "gameLength": {"kind": "targetMinutes", "targetMinutes": 60, "turnLimit": 120, "paceProfile": "standard60", "scoreFallbackEnabled": true},
+        "victory": {"conquestEnabled": true, "dominationEnabled": true, "dominationControlPercent": 45.0, "dominationHoldTurns": 10, "scoreFallbackEnabled": true, "turnLimit": 120, "culturalEnabled": true, "culturalRequiredArtifacts": 6, "culturalHoldTurns": 5},
+        "balance": {}
+      },
+      "players": [
+        {"id": "player_1", "name": "Player 1", "colorValue": 4282212264, "country": "poland", "kind": "human"},
+        {"id": "player_2", "name": "Player 2", "colorValue": 4290263610, "country": "japan", "kind": "human"}
+      ],
+      "gameMode": "multiplayer"
+    },
+    "state": {
+      "playerColors": {"player_1": 4282212264, "player_2": 4290263610},
+      "playerCountries": {"player_1": "poland", "player_2": "japan"},
+      "playerGold": {"player_1": 17, "player_2": 23},
+      "playerWarWeariness": {"player_1": 2, "player_2": 3},
+      "playerStabilityNet": {"player_1": 4, "player_2": 5},
+      "units": [],
+      "cities": [
+        {"id": "city_p1", "ownerPlayerId": "player_1", "name": "Iron City", "population": 1, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 0, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0},
+        {"id": "city_p2", "ownerPlayerId": "player_2", "name": "Horse City", "population": 1, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 2, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0}
+      ],
+      "artifacts": [],
+      "fieldImprovements": [],
+      "fogOfWar": [],
+      "research": {"players": {"player_1": {"unlockedTechnologyIds": ["ironWorking"], "progressByTechnologyId": {}}, "player_2": {"unlockedTechnologyIds": ["animalHusbandry"], "progressByTechnologyId": {}}}},
+      "runtimeState": {}
+    },
+    "command": {"type": "OpenResourceExchange", "playerId": "player_1", "targetPlayerId": "player_2", "offeredResource": "iron", "requestedResource": "horses", "durationTurns": 6, "agreementId": "resource_exchange_1"}
+  },
+  "expected": {
+    "accepted": true,
+    "reason": null,
+    "save": {
+      "id": "reducer-parity-match",
+      "schemaVersion": 3,
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "mapSource": "asset",
+      "turn": 7,
+      "playerStates": {"player_1": "active", "player_2": "active"},
+      "camera": {"x": 0.0, "y": 0.0, "zoom": 1.0},
+      "ruleset": {
+        "gameLength": {"kind": "targetMinutes", "targetMinutes": 60, "turnLimit": 120, "paceProfile": "standard60", "scoreFallbackEnabled": true},
+        "victory": {"conquestEnabled": true, "dominationEnabled": true, "dominationControlPercent": 45.0, "dominationHoldTurns": 10, "scoreFallbackEnabled": true, "turnLimit": 120, "culturalEnabled": true, "culturalRequiredArtifacts": 6, "culturalHoldTurns": 5},
+        "balance": {}
+      },
+      "players": [
+        {"id": "player_1", "name": "Player 1", "colorValue": 4282212264, "country": "poland", "kind": "human"},
+        {"id": "player_2", "name": "Player 2", "colorValue": 4290263610, "country": "japan", "kind": "human"}
+      ],
+      "gameMode": "multiplayer"
+    },
+    "state": {
+      "playerColors": {"player_1": 4282212264, "player_2": 4290263610},
+      "playerCountries": {"player_1": "poland", "player_2": "japan"},
+      "playerGold": {"player_1": 17, "player_2": 23},
+      "playerWarWeariness": {"player_1": 2, "player_2": 3},
+      "playerStabilityNet": {"player_1": 4, "player_2": 5},
+      "units": [],
+      "cities": [
+        {"id": "city_p1", "ownerPlayerId": "player_1", "name": "Iron City", "population": 1, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 0, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0},
+        {"id": "city_p2", "ownerPlayerId": "player_2", "name": "Horse City", "population": 1, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 2, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0}
+      ],
+      "artifacts": [],
+      "fieldImprovements": [],
+      "fogOfWar": [],
+      "research": {"players": {"player_1": {"unlockedTechnologyIds": ["ironWorking"], "progressByTechnologyId": {}}, "player_2": {"unlockedTechnologyIds": ["animalHusbandry"], "progressByTechnologyId": {}}}},
+      "runtimeState": {"resourceTradeAgreements": [
+        {"id": "resource_exchange_1_offered", "exporterPlayerId": "player_1", "importerPlayerId": "player_2", "resource": "iron", "remainingTurns": 6},
+        {"id": "resource_exchange_1_requested", "exporterPlayerId": "player_2", "importerPlayerId": "player_1", "resource": "horses", "remainingTurns": 6}
+      ]}
+    },
+    "events": []
+  }
+}

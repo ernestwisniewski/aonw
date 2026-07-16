@@ -11,6 +11,40 @@ part 'support/world_map_combat_boundary_fixtures.dart';
 
 const _targets = [
   _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/trade/'
+        'persistent_resource_trade_resolver.dart',
+    owner: 'PersistentResourceTradeResolver',
+    boundaries: [
+      _Boundary.method(
+        'openGoldForResourceTrade',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'openResourceForResourceTrade',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
+    owner: 'ResourceTradeReducer',
+    boundaries: [
+      _Boundary.method(
+        'openTrade',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'openExchange',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/worker/worker_reducer.dart',
     owner: 'WorkerReducer',
     boundaries: [

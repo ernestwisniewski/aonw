@@ -25,7 +25,7 @@ void main() {
             resource: ResourceType.horses,
             goldPerTurn: 3,
             durationTurns: 5,
-            mapData: _resourceMap(ResourceType.horses),
+            mapTiles: _resourceMap(ResourceType.horses),
             agreementId: 'trade_1',
           );
 
@@ -63,7 +63,7 @@ void main() {
             resource: ResourceType.horses,
             goldPerTurn: 3,
             durationTurns: 5,
-            mapData: _resourceMap(ResourceType.horses),
+            mapTiles: _resourceMap(ResourceType.horses),
           );
 
       expect(result.accepted, isFalse);
@@ -105,7 +105,7 @@ void main() {
             resource: ResourceType.horses,
             goldPerTurn: 3,
             durationTurns: 5,
-            mapData: _resourceMap(ResourceType.horses),
+            mapTiles: _resourceMap(ResourceType.horses),
           );
 
       expect(result.accepted, isFalse);
@@ -132,7 +132,7 @@ void main() {
             resource: ResourceType.iron,
             goldPerTurn: 3,
             durationTurns: 5,
-            mapData: _resourceMap(ResourceType.iron),
+            mapTiles: _resourceMap(ResourceType.iron),
           );
 
       expect(result.accepted, isFalse);
@@ -171,7 +171,7 @@ void main() {
               offeredResource: ResourceType.iron,
               requestedResource: ResourceType.horses,
               durationTurns: 6,
-              mapData: _exchangeResourceMap(),
+              mapTiles: _exchangeResourceMap(),
               agreementId: 'exchange_1',
             );
 
@@ -226,7 +226,7 @@ void main() {
             offeredResource: ResourceType.iron,
             requestedResource: ResourceType.horses,
             durationTurns: 6,
-            mapData: _exchangeResourceMap(),
+            mapTiles: _exchangeResourceMap(),
           );
 
       expect(result.accepted, isFalse);
@@ -251,42 +251,44 @@ ResearchState _researchWithMany(Map<String, Set<TechnologyId>> technologies) {
   );
 }
 
-MapData _resourceMap(ResourceType resource) {
-  return MapData(
-    cols: 3,
-    rows: 3,
-    tiles: [
-      for (var row = 0; row < 3; row++)
-        for (var col = 0; col < 3; col++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.plains],
-            resources: col == 1 && row == 1 ? [resource] : const [],
-            height: 0,
-          ),
-    ],
+MapTileLookup _resourceMap(ResourceType resource) {
+  return WorldMapReadView(
+    WorldMap(
+      cols: 3,
+      rows: 3,
+      tiles: [
+        for (var row = 0; row < 3; row++)
+          for (var col = 0; col < 3; col++)
+            WorldTile(
+              coordinate: HexCoord(col: col, row: row),
+              terrains: const [TerrainType.plains],
+              resources: col == 1 && row == 1 ? [resource] : const [],
+              height: 0,
+            ),
+      ],
+    ),
   );
 }
 
-MapData _exchangeResourceMap() {
-  return MapData(
-    cols: 3,
-    rows: 3,
-    tiles: [
-      for (var row = 0; row < 3; row++)
-        for (var col = 0; col < 3; col++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.plains],
-            resources: switch ((col, row)) {
-              (0, 0) => const [ResourceType.iron],
-              (2, 2) => const [ResourceType.horses],
-              _ => const [],
-            },
-            height: 0,
-          ),
-    ],
+MapTileLookup _exchangeResourceMap() {
+  return WorldMapReadView(
+    WorldMap(
+      cols: 3,
+      rows: 3,
+      tiles: [
+        for (var row = 0; row < 3; row++)
+          for (var col = 0; col < 3; col++)
+            WorldTile(
+              coordinate: HexCoord(col: col, row: row),
+              terrains: const [TerrainType.plains],
+              resources: switch ((col, row)) {
+                (0, 0) => const [ResourceType.iron],
+                (2, 2) => const [ResourceType.horses],
+                _ => const [],
+              },
+              height: 0,
+            ),
+      ],
+    ),
   );
 }

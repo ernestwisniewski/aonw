@@ -1,5 +1,77 @@
 import 'package:aonw_core/domain.dart';
 
+void requireAcceptedResourceTrade({
+  required String fixtureId,
+  required GameCommand command,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+}) {
+  final beforeAgreements = before.runtimeState.resourceTradeAgreements;
+  final afterAgreements = after.runtimeState.resourceTradeAgreements;
+  final expected = switch (command) {
+    OpenResourceTradeCommand(
+      :final playerId,
+      :final targetPlayerId,
+      :final resource,
+      :final goldPerTurn,
+      :final durationTurns,
+      :final agreementId,
+    ) =>
+      [
+        ResourceTradeAgreement(
+          id: agreementId!,
+          exporterPlayerId: targetPlayerId,
+          importerPlayerId: playerId,
+          resource: resource,
+          goldPerTurn: goldPerTurn,
+          remainingTurns: durationTurns,
+        ),
+      ],
+    OpenResourceExchangeCommand(
+      :final playerId,
+      :final targetPlayerId,
+      :final offeredResource,
+      :final requestedResource,
+      :final durationTurns,
+      :final agreementId,
+    ) =>
+      [
+        ResourceTradeAgreement(
+          id: '${agreementId!}_requested',
+          exporterPlayerId: targetPlayerId,
+          importerPlayerId: playerId,
+          resource: requestedResource,
+          goldPerTurn: 0,
+          remainingTurns: durationTurns,
+        ),
+        ResourceTradeAgreement(
+          id: '${agreementId}_offered',
+          exporterPlayerId: playerId,
+          importerPlayerId: targetPlayerId,
+          resource: offeredResource,
+          goldPerTurn: 0,
+          remainingTurns: durationTurns,
+        ),
+      ],
+    _ => throw StateError('Expected a resource trade command.'),
+  };
+  final expectedAgreements = [...beforeAgreements, ...expected]
+    ..sort((left, right) => left.id.compareTo(right.id));
+  final expectedState = before.copyWith(
+    runtimeState: before.runtimeState.copyWith(
+      resourceTradeAgreements: expectedAgreements,
+    ),
+  );
+  if (events.isNotEmpty ||
+      afterAgreements.length != beforeAgreements.length + expected.length ||
+      after != expectedState) {
+    throw FormatException(
+      '$fixtureId must commit only the reviewed resource trade agreements.',
+    );
+  }
+}
+
 void requireAcceptedRichTurnFinalization(
   String fixtureId,
   PersistentGameState before,

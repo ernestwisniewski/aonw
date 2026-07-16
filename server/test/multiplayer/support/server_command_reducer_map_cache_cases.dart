@@ -154,6 +154,23 @@ final class _CountingMapData extends MapData {
   }
 }
 
+final class _RawTileLookupRejectingMapData extends MapData {
+  _RawTileLookupRejectingMapData(MapData source)
+    : super(
+        cols: source.cols,
+        rows: source.rows,
+        tiles: source.tiles,
+        objectives: source.objectives,
+        mapName: source.mapName,
+        defaultZoom: source.defaultZoom,
+      );
+
+  @override
+  TileData? tileAt(int col, int row) {
+    throw StateError('Resource trade must use the cached map view.');
+  }
+}
+
 class _CountingMapCatalog implements MultiplayerMapCatalog {
   _CountingMapCatalog(
     this._maps, {

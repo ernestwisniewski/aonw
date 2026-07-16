@@ -294,7 +294,7 @@ class ServerCommandReducer {
               resource: command.resource,
               goldPerTurn: command.goldPerTurn,
               durationTurns: command.durationTurns,
-              mapData: loadedMap.legacyMapData,
+              mapTiles: loadedMap.mapView,
               agreementId: command.agreementId,
             );
         return _fromPersistentResult(save, result);
@@ -314,7 +314,7 @@ class ServerCommandReducer {
               offeredResource: command.offeredResource,
               requestedResource: command.requestedResource,
               durationTurns: command.durationTurns,
-              mapData: loadedMap.legacyMapData,
+              mapTiles: loadedMap.mapView,
               agreementId: command.agreementId,
             );
         return _fromPersistentResult(save, result);
