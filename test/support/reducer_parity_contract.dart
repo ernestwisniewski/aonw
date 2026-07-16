@@ -33,26 +33,66 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   'turn-finalization': {'turn_player_not_controlled', 'turn_player_not_active'},
 };
 
+typedef _ReducerParityCommandMatcher = bool Function(GameCommand command);
+
+final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
+  'auto-explore': _matchesAutoExploreCommand,
+  'movement': _matchesMovementCommand,
+  'merchant-routing': _matchesMerchantRoutingCommand,
+  'combat': _matchesCombatCommand,
+  'city-production': _matchesCityProductionCommand,
+  'detachment': _matchesDetachmentCommand,
+  'research': _matchesResearchCommand,
+  'resource-trade': _matchesResourceTradeCommand,
+  'worker': _matchesWorkerCommand,
+  'turn-finalization': _matchesTurnFinalizationCommand,
+};
+
 bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
-  return switch (family) {
-    'auto-explore' => command is AutoExploreUnitCommand,
-    'movement' => command is MoveUnitCommand,
-    'merchant-routing' =>
-      command is AssignMerchantTradeRouteCommand ||
-          command is MoveMerchantToCityCommand,
-    'combat' => command is AttackHexCommand,
-    'city-production' =>
-      command is StartBuildingCommand ||
-          command is StartUnitProductionCommand ||
-          command is StartWonderCommand ||
-          command is RushProductionCommand,
-    'detachment' => command is DetachTroopCommand,
-    'research' => command is SelectTechnologyCommand,
-    'resource-trade' =>
-      command is OpenResourceTradeCommand ||
-          command is OpenResourceExchangeCommand,
-    'worker' => command is ConfirmWorkerImprovementCommand,
-    'turn-finalization' => command is SubmitTurnCommand,
-    _ => false,
-  };
+  return _reducerParityCommandMatchers[family]?.call(command) ?? false;
+}
+
+bool _matchesAutoExploreCommand(GameCommand command) {
+  return command is AutoExploreUnitCommand;
+}
+
+bool _matchesMovementCommand(GameCommand command) {
+  return command is MoveUnitCommand;
+}
+
+bool _matchesMerchantRoutingCommand(GameCommand command) {
+  return command is AssignMerchantTradeRouteCommand ||
+      command is MoveMerchantToCityCommand;
+}
+
+bool _matchesCombatCommand(GameCommand command) {
+  return command is AttackHexCommand;
+}
+
+bool _matchesCityProductionCommand(GameCommand command) {
+  return command is StartBuildingCommand ||
+      command is StartUnitProductionCommand ||
+      command is StartWonderCommand ||
+      command is RushProductionCommand;
+}
+
+bool _matchesDetachmentCommand(GameCommand command) {
+  return command is DetachTroopCommand;
+}
+
+bool _matchesResearchCommand(GameCommand command) {
+  return command is SelectTechnologyCommand;
+}
+
+bool _matchesResourceTradeCommand(GameCommand command) {
+  return command is OpenResourceTradeCommand ||
+      command is OpenResourceExchangeCommand;
+}
+
+bool _matchesWorkerCommand(GameCommand command) {
+  return command is ConfirmWorkerImprovementCommand;
+}
+
+bool _matchesTurnFinalizationCommand(GameCommand command) {
+  return command is SubmitTurnCommand;
 }

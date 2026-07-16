@@ -8,6 +8,8 @@ import 'reducer_parity_accepted_semantics.dart';
 import 'reducer_parity_contract.dart';
 import 'reducer_parity_production_semantics.dart';
 
+part 'reducer_parity_fixture_validation.dart';
+
 final class ReducerParityFixture {
   const ReducerParityFixture({
     required this.id,
@@ -214,88 +216,7 @@ abstract final class ReducerParityCorpus {
   }
 
   static void _validateCorpus(List<ReducerParityFixture> fixtures) {
-    final ids = <String>{};
-    final coverage = <String, Set<bool>>{};
-    final acceptedCountByFamily = <String, int>{};
-    final rejectionReasonsByFamily = <String, Set<String>>{};
-    final resourceTradeAcceptanceModes = <String>{};
-    final turnAcceptanceModes = <String>{};
-    for (final fixture in fixtures) {
-      if (!ids.add(fixture.id)) {
-        throw StateError('Duplicate reducer parity fixture id: ${fixture.id}.');
-      }
-      coverage
-          .putIfAbsent(fixture.family, () => <bool>{})
-          .add(fixture.expectedAccepted);
-      if (fixture.expectedAccepted) {
-        acceptedCountByFamily.update(
-          fixture.family,
-          (count) => count + 1,
-          ifAbsent: () => 1,
-        );
-        if (fixture.family == 'turn-finalization') {
-          turnAcceptanceModes.add(
-            fixture.expectedSave['turn'] == fixture.save.turn
-                ? 'waiting'
-                : 'finalizing',
-          );
-        }
-        if (fixture.family == 'resource-trade') {
-          resourceTradeAcceptanceModes.add(switch (fixture.command) {
-            OpenResourceTradeCommand() => 'gold',
-            OpenResourceExchangeCommand() => 'exchange',
-            _ => 'unexpected',
-          });
-        }
-      } else {
-        rejectionReasonsByFamily
-            .putIfAbsent(fixture.family, () => <String>{})
-            .add(fixture.expectedReason!);
-      }
-    }
-    if (coverage.keys
-            .toSet()
-            .difference(reducerParityRequiredFamilies)
-            .isNotEmpty ||
-        reducerParityRequiredFamilies
-            .difference(coverage.keys.toSet())
-            .isNotEmpty) {
-      throw StateError(
-        'Reducer parity families must be exactly: '
-        '${reducerParityRequiredFamilies.toList()..sort()}.',
-      );
-    }
-    for (final family in reducerParityRequiredFamilies) {
-      if (coverage[family]?.containsAll(const {true, false}) != true) {
-        throw StateError(
-          '$family needs accepted and rejected parity fixtures.',
-        );
-      }
-      if (family == 'turn-finalization') {
-        if ((acceptedCountByFamily[family] ?? 0) < 2 ||
-            !turnAcceptanceModes.containsAll(const {'waiting', 'finalizing'})) {
-          throw StateError(
-            '$family needs waiting/finalizing accepts and actor/semantic rejects.',
-          );
-        }
-      }
-      if (family == 'resource-trade' &&
-          !resourceTradeAcceptanceModes.containsAll(const {
-            'gold',
-            'exchange',
-          })) {
-        throw StateError(
-          '$family needs accepted gold and exchange parity fixtures.',
-        );
-      }
-      final requiredReasons = reducerParityRequiredRejectionReasons[family]!;
-      if (rejectionReasonsByFamily[family]?.containsAll(requiredReasons) !=
-          true) {
-        throw StateError(
-          '$family needs rejection reasons: ${requiredReasons.toList()..sort()}.',
-        );
-      }
-    }
+    _validateReducerParityCorpus(fixtures);
   }
 
   static void _validateFixture(ReducerParityFixture fixture) {
@@ -373,90 +294,7 @@ abstract final class ReducerParityCorpus {
   }
 
   static void _validateAcceptedSemantics(ReducerParityFixture fixture) {
-    final state = PersistentGameState.fromJson(fixture.expectedState);
-    final events = fixture.expectedEvents
-        .map(GameEventSerializer.fromJson)
-        .toList(growable: false);
-    if (tryRequireProduction(
-      fixture.id,
-      fixture.command,
-      fixture.state,
-      state,
-      events,
-    )) {
-      return;
-    }
-    switch (fixture.command) {
-      case AutoExploreUnitCommand() ||
-          MoveUnitCommand() ||
-          AssignMerchantTradeRouteCommand() ||
-          MoveMerchantToCityCommand():
-        requireAcceptedUnitAction(
-          fixtureId: fixture.id,
-          command: fixture.command,
-          before: fixture.state,
-          after: state,
-          events: events,
-        );
-      case AttackHexCommand(:final attackerUnitId):
-        requireAcceptedCombat(fixture.id, attackerUnitId, state, events);
-      case final DetachTroopCommand command:
-        final failure = validateAcceptedDetachment(
-          command: command,
-          before: fixture.state,
-          after: state,
-          actorPlayerId: fixture.actorPlayerId,
-          events: events,
-        );
-        if (failure != null) _fail(fixture, failure);
-      case SelectTechnologyCommand(:final playerId, :final technologyId):
-        if (state.research.forPlayer(playerId).activeTechnologyId !=
-            technologyId) {
-          _fail(fixture, 'must commit the reviewed research selection');
-        }
-      case OpenResourceTradeCommand() || OpenResourceExchangeCommand():
-        if (!_jsonDeepEquals(
-          fixture.expectedSave,
-          reducerParitySave(fixture.save),
-        )) {
-          _fail(fixture, 'must preserve save metadata for resource trade');
-        }
-        requireAcceptedResourceTrade(
-          fixtureId: fixture.id,
-          command: fixture.command,
-          before: fixture.state,
-          after: state,
-          events: events,
-        );
-      case ConfirmWorkerImprovementCommand(
-        :final unitId,
-        :final improvementType,
-      ):
-        final worker = state.units.byId(unitId);
-        if (improvementType == null ||
-            worker?.workerJob?.improvementType != improvementType ||
-            worker?.movementPoints != 0) {
-          _fail(fixture, 'must commit the reviewed worker job');
-        }
-      case final SubmitTurnCommand command:
-        requireAcceptedTurnSubmission(
-          fixtureId: fixture.id,
-          command: command,
-          inputTurn: fixture.save.turn,
-          playerIds: fixture.save.players.map((player) => player.id),
-          expectedTurn: fixture.expectedSave['turn'],
-          expectedPlayerStates: _asMap(
-            fixture.expectedSave['playerStates'],
-            '${fixture.id}.expected.save.playerStates',
-          ),
-          before: fixture.state,
-          after: state,
-          now: fixture.now,
-          events: events,
-        );
-      default:
-        _fail(fixture, 'uses a command outside the reviewed parity corpus');
-    }
+    _validateReducerParityAcceptedSemantics(fixture);
   }
 
   static Never _fail(ReducerParityFixture fixture, String message) =>
