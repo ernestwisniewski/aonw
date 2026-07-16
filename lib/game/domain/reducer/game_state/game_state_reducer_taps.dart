@@ -241,7 +241,7 @@ abstract final class _GameStateTapReducer {
     );
     if (_shouldSelectTappedOwnUnitAfterMoveMiss(
       state: state,
-      tileData: tileData,
+      tile: tileData,
       moveResult: moveResult,
       context: environment.context,
     )) {
@@ -253,7 +253,7 @@ abstract final class _GameStateTapReducer {
 
   static bool _shouldSelectTappedOwnUnitAfterMoveMiss({
     required GameState state,
-    required TileData tileData,
+    required MapTileView tile,
     required GameStateTransition moveResult,
     required GameCommandContext context,
   }) {
@@ -261,14 +261,11 @@ abstract final class _GameStateTapReducer {
 
     final selectedUnitId = state.selectedUnitId;
     if (selectedUnitId == null) return false;
-    if (!state.activePlayerVisibility.canSeeDynamicAt(
-      tileData.col,
-      tileData.row,
-    )) {
+    if (!state.activePlayerVisibility.canSeeDynamicAt(tile.col, tile.row)) {
       return false;
     }
 
-    final tappedUnit = state.unitAt(tileData.col, tileData.row);
+    final tappedUnit = state.unitAt(tile.col, tile.row);
     if (tappedUnit == null || tappedUnit.id == selectedUnitId) return false;
 
     return context.canControlUnit(state, tappedUnit);
@@ -285,10 +282,10 @@ abstract final class _GameStateTapReducer {
 
   static GameStateTransition _selectTappedOwnUnit(
     GameState state,
-    TileData tileData,
+    MapTileView tile,
     ReducerEnvironment environment,
   ) {
-    final tappedUnit = state.unitAt(tileData.col, tileData.row)!;
+    final tappedUnit = state.unitAt(tile.col, tile.row)!;
     return environment.selectUnit(state, SelectUnitCommand(tappedUnit.id));
   }
 

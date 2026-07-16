@@ -172,7 +172,7 @@ String _describeCommand(GameCommand command) {
 String _describeRejectedCommand(
   GameCommand command,
   GameState state,
-  MapData mapData,
+  MapTraversalView mapData,
   GameCommandContext context,
 ) {
   final description = _describeCommand(command);

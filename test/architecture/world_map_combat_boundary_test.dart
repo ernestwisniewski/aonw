@@ -11,6 +11,55 @@ part 'support/world_map_combat_boundary_fixtures.dart';
 
 const _targets = [
   _Target(
+    path:
+        'lib/game/application/services/'
+        'ai_turn_preparation_builder.dart',
+    owner: 'AiTurnPreparationBuilder',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/application/use_cases/run_ai_turn_use_case.dart',
+    owner: 'RunAiTurnUseCase',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
+    path: 'tool/run_save_ai_benchmark.dart',
+    owner: '_PreparedPlayer',
+    boundaries: [
+      _Boundary.constructor(
+        'fromSnapshot',
+        parameter: 'mapView',
+        type: 'MapReadView',
+        requireField: false,
+      ),
+    ],
+  ),
+  _Target(
+    path: 'tool/run_save_ai_benchmark/multi_turn_replay.dart',
+    owner: '_MultiTurnReplayRunner',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapView', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
+    path: 'tool/run_save_ai_benchmark/runtime_smoke.dart',
+    owner: '_RuntimeUseCaseSmokeRunner',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapView', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
+    path: 'tool/run_save_ai_benchmark/runtime_smoke.dart',
+    owner: '_RuntimeSmokeCommandTransport',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapView', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/ai/pressure_target_resolver.dart',
     owner: 'PressureTargetResolver',
     boundaries: [
@@ -46,6 +95,30 @@ const _targets = [
         '_breakdownByPlayerId',
         parameter: 'mapObjectives',
         type: 'Iterable<MapObjectiveDefinition>',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/game_state/'
+        'game_state_reducer.dart',
+    owner: 'GameStateReducer',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/game_state/'
+        'reducer_environment.dart',
+    owner: 'ReducerEnvironment',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+      _Boundary.method(
+        'copyWith',
+        parameter: 'mapData',
+        type: 'MapReadView',
+        nullable: true,
       ),
     ],
   ),
@@ -242,6 +315,16 @@ const _targets = [
         '_selectInspectionTileDuringResearch',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_shouldSelectTappedOwnUnitAfterMoveMiss',
+        parameter: 'tile',
+        type: 'MapTileView',
+      ),
+      _Boundary.method(
+        '_selectTappedOwnUnit',
+        parameter: 'tile',
+        type: 'MapTileView',
       ),
     ],
   ),

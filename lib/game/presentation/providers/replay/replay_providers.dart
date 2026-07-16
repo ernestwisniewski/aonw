@@ -39,7 +39,7 @@ final replayTimelineProvider = FutureProvider.autoDispose
         stability: ref.watch(stabilityRulesetProvider),
       );
       final reducer = GameStateReducer(
-        mapData: session.mapData,
+        mapData: session.mapData.indexedReadView(),
         ruleset: ruleset,
       );
       final service = ReplayService(

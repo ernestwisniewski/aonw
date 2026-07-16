@@ -145,14 +145,13 @@ class LocalCommandResolver {
     required List<String> playerIds,
     required DateTime savedAt,
   }) {
-    final mapView = reducer.mapData.indexedReadView();
     final result = PersistentTurnPipeline.simultaneousFinalize(
       PersistentTurnPipelineRequest.simultaneousFinalize(
         save: save,
         state: state.toPersistentState(),
         playerIds: playerIds,
         savedAt: savedAt,
-        mapView: mapView,
+        mapView: reducer.mapData,
         ruleset: reducer.ruleset,
       ),
     );

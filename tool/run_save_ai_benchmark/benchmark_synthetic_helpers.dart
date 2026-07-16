@@ -47,7 +47,7 @@ bool _shouldPressureHumanPlayer({
 
 _PreparedPlayer _prepareSyntheticPlayer({
   required SaveSnapshot snapshot,
-  required MapData mapData,
+  required MapReadView mapView,
   required String playerId,
   required Set<String> humanPlayerIds,
   required bool includeDeadline,
@@ -59,7 +59,7 @@ _PreparedPlayer _prepareSyntheticPlayer({
     snapshot: snapshot,
     player: player,
     humanPlayerIds: humanPlayerIds,
-    mapData: mapData,
+    mapView: mapView,
     includeDeadline: includeDeadline,
   );
 }
@@ -415,7 +415,7 @@ GameStateTransition _reduceSyntheticCommand(
   GameCommand command,
 ) {
   final reducer = GameStateReducer(
-    mapData: prepared.mapData,
+    mapData: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );
   return reducer.reduce(
@@ -434,7 +434,7 @@ bool _syntheticCommandChangesState(
 ) {
   final state = prepared._executionInitialState();
   final reducer = GameStateReducer(
-    mapData: prepared.mapData,
+    mapData: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );
   final transition = reducer.reduce(

@@ -9,6 +9,8 @@ import 'support/map_boundary_source_guard.dart';
 
 part 'support/economy_simulation_map_view_guard.dart';
 part 'support/economy_simulation_map_view_fixtures.dart';
+part 'support/local_reducer_map_view_guard.dart';
+part 'support/local_reducer_map_view_fixtures.dart';
 part 'support/server_map_cache_boundary_guard.dart';
 part 'support/server_map_cache_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_fixtures.dart';
@@ -20,6 +22,8 @@ const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/hex_assessment/hex_assessment_rules.dart',
+  'lib/game/application/services/ai_turn_preparation_builder.dart',
+  'lib/game/application/use_cases/run_ai_turn_use_case.dart',
   'lib/game/domain/ai/pressure_target_resolver.dart',
   'lib/game/domain/city_selection_projector.dart',
   'lib/game/domain/game_selection.dart',
@@ -38,6 +42,15 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/city/city_production_reducer_supply.dart',
   'lib/game/domain/reducer/city/city_production_reducer_wonder.dart',
   'lib/game/domain/reducer/city/city_worked_hex_reducer.dart',
+  'lib/game/domain/reducer/game_state/game_state_reducer.dart',
+  'lib/game/domain/reducer/game_state/game_state_reducer_active_player.dart',
+  'lib/game/domain/reducer/game_state/'
+      'game_state_reducer_interaction_state.dart',
+  'lib/game/domain/reducer/game_state/game_state_reducer_taps.dart',
+  'lib/game/domain/reducer/game_state/reducer_environment.dart',
+  'lib/game/domain/reducer/game_state/reducer_environment_dispatch.dart',
+  'lib/game/domain/reducer/game_state/'
+      'reducer_environment_interaction_dispatch.dart',
   'lib/game/domain/reducer/combat/combat_reducer.dart',
   'lib/game/domain/reducer/combat/combat_reducer_fog.dart',
   'lib/game/domain/reducer/combat/combat_reducer_setup.dart',
@@ -52,6 +65,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/turn/phases/selection_refresh_phase.dart',
   'lib/game/domain/turn/turn_context.dart',
   'lib/game/presentation/engine/game_hover_intent_resolver.dart',
+  'lib/game/presentation/services/ai_turn_process_preparer.dart',
   'lib/game/presentation/widgets/hud/city/'
       'hud_city_founding_availability.dart',
   'lib/game/presentation/widgets/hud/turn/turn_action_hint.dart',
@@ -67,7 +81,6 @@ const _mapDataBarrelFreeMigrationPaths = {
 };
 const _mapDataFreeMigrationPaths = {
   ..._mapDataBarrelFreeMigrationPaths,
-  'lib/game/domain/reducer/game_state/game_state_reducer_taps.dart',
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
   '$_gameDomain/city/persistent_city_production_resolver.dart',
@@ -149,6 +162,10 @@ void main() {
 
   test('server map cache owns one validated indexed map view', () {
     expect(_serverMapCacheBoundaryViolations(), isEmpty);
+  });
+
+  test('local reducer composition roots own one indexed map view', () {
+    expect(_localReducerMapViewViolations(), isEmpty);
   });
 
   test('migrated map paths do not reference MapData', () {
@@ -242,4 +259,5 @@ void buildTiles() {
   _registerEconomySimulationMapViewFixtures();
   _registerServerMapCacheBoundaryFixtures();
   _registerWorldMapReadViewBoundaryFixtures();
+  _registerLocalReducerMapViewFixtures();
 }

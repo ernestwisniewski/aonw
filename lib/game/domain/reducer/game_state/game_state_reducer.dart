@@ -10,18 +10,19 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment_dispatch
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment_interaction_dispatch.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'game_state_reducer_active_player.dart';
 part 'game_state_reducer_interaction_state.dart';
 part 'game_state_reducer_taps.dart';
 
 class GameStateReducer {
-  final MapData mapData;
+  final MapReadView mapData;
   final GameRuleset ruleset;
 
   const GameStateReducer({

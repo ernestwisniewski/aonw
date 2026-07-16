@@ -4,13 +4,13 @@ class _RuntimeUseCaseSmokeRunner {
   const _RuntimeUseCaseSmokeRunner({
     required this.snapshot,
     required this.savePath,
-    required this.mapData,
+    required this.mapView,
     required this.runtime,
   });
 
   final SaveSnapshot snapshot;
   final String savePath;
-  final MapData mapData;
+  final MapReadView mapView;
   final _BenchmarkRuntimeReport runtime;
 
   Future<_RuntimeUseCaseSmokeReport> run() async {
@@ -28,7 +28,7 @@ class _RuntimeUseCaseSmokeRunner {
     );
     final transport = _RuntimeSmokeCommandTransport(
       repository: repository,
-      mapData: mapData,
+      mapView: mapView,
       ruleset: smokeRuleset,
     );
     final runner = AiTurnRunner(
@@ -42,7 +42,7 @@ class _RuntimeUseCaseSmokeRunner {
       ),
       runner: runner,
       ruleset: smokeRuleset,
-      mapData: mapData,
+      mapData: mapView,
       strategicPlanProvider: AiStrategicPlanProvider(),
     );
     final playerReports = <_RuntimeUseCaseSmokePlayerReport>[];
@@ -55,7 +55,7 @@ class _RuntimeUseCaseSmokeRunner {
         snapshot: playerSnapshot,
         player: player,
         humanPlayerIds: humanPlayerIds,
-        mapData: mapData,
+        mapView: mapView,
         includeDeadline: false,
       );
       final report = await useCase.execute(
@@ -355,12 +355,12 @@ class _RuntimeSmokeRepository implements GameRepository {
 class _RuntimeSmokeCommandTransport implements CommandTransport {
   _RuntimeSmokeCommandTransport({
     required this.repository,
-    required this.mapData,
+    required this.mapView,
     required this.ruleset,
   });
 
   final _RuntimeSmokeRepository repository;
-  final MapData mapData;
+  final MapReadView mapView;
   final GameRuleset ruleset;
   int _offset = 0;
 
@@ -371,7 +371,7 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
     required GameCommand command,
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    final reducer = GameStateReducer(mapData: mapData, ruleset: ruleset);
+    final reducer = GameStateReducer(mapData: mapView, ruleset: ruleset);
     final transition = reducer.reduce(currentState, command, context: context);
     _offset += 1;
     final nextSnapshot = SaveSnapshot.fromGameState(

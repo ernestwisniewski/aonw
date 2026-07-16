@@ -4,7 +4,7 @@ class _MultiTurnReplayRunner {
   const _MultiTurnReplayRunner({
     required this.snapshot,
     required this.savePath,
-    required this.mapData,
+    required this.mapView,
     required this.cycles,
     required this.profiles,
     required this.includeDeadline,
@@ -13,7 +13,7 @@ class _MultiTurnReplayRunner {
 
   final SaveSnapshot snapshot;
   final String savePath;
-  final MapData mapData;
+  final MapReadView mapView;
   final int cycles;
   final List<_ProfileSelection> profiles;
   final bool includeDeadline;
@@ -64,7 +64,7 @@ class _MultiTurnReplayRunner {
           snapshot: turnSnapshot,
           player: player,
           humanPlayerIds: humanPlayerIds,
-          mapData: mapData,
+          mapView: mapView,
           includeDeadline: includeDeadline,
         );
         final strategyId = strategyOverride ?? player.ai!.strategyId;
@@ -162,7 +162,7 @@ class _MultiTurnReplayRunner {
     required Set<String> humanPlayerIds,
   }) {
     final reducer = GameStateReducer(
-      mapData: mapData,
+      mapData: context.mapData,
       ruleset: context.ruleset,
     );
     var currentSave = save;
@@ -238,7 +238,7 @@ class _MultiTurnReplayRunner {
             _describeRejectedCommand(
               command,
               currentState,
-              mapData,
+              context.mapData,
               commandContext,
             ),
           );
@@ -268,6 +268,7 @@ class _MultiTurnReplayRunner {
           state: currentState,
           playerIds: playerIds,
           savedAt: _syntheticSavedAt(currentSave, cycles: 1),
+          mapView: context.mapData,
         );
         currentSave = finalized.save;
         currentState = finalized.state;
@@ -300,11 +301,11 @@ class _MultiTurnReplayRunner {
     required GameState state,
     required List<String> playerIds,
     required DateTime savedAt,
+    required MapReadView mapView,
   }) {
     final ruleset = GameRuleset.defaults.copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
-    final mapView = mapData.indexedReadView();
     final persistent = PersistentGameState(
       playerColors: state.playerColors,
       playerCountries: state.playerCountries,

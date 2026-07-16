@@ -29,7 +29,7 @@ class _SyntheticBenchmarkSuite {
     final snapshot = _syntheticDiplomacySnapshot(mapData);
     final prepared = _prepareSyntheticPlayer(
       snapshot: snapshot,
-      mapData: mapData,
+      mapView: mapData.indexedReadView(),
       playerId: aiId,
       humanPlayerIds: const {
         warHumanId,
@@ -212,7 +212,7 @@ class _SyntheticBenchmarkSuite {
     final snapshot = _syntheticFortifiedWakeUpSnapshot(mapData);
     final prepared = _prepareSyntheticPlayer(
       snapshot: snapshot,
-      mapData: mapData,
+      mapView: mapData.indexedReadView(),
       playerId: aiId,
       humanPlayerIds: const {humanId},
       includeDeadline: includeDeadline,

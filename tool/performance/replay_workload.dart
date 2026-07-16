@@ -47,11 +47,12 @@ Future<_ReplayScaleResult> _runScale(int events, int timingSamples) async {
   final snapshot = _initialSnapshot(events);
   final commands = _commands(events);
   final eventLog = _MemoryEventLog(commands);
+  final mapView = _map().indexedReadView();
   final service = ReplayService(
     replayStore: _MemoryReplayStore(snapshot),
     eventLog: eventLog,
     commandResolver: LocalCommandResolver(
-      reducer: GameStateReducer(mapData: _map()),
+      reducer: GameStateReducer(mapData: mapView),
     ),
   );
   eventLog.resetYieldedCommands();

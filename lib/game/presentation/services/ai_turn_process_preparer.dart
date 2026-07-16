@@ -177,7 +177,7 @@ final class AiTurnProcessPreparer {
           planExecutor: planExecutor,
         ),
         ruleset: rulesetReader(),
-        mapData: currentSession.mapData,
+        mapData: currentSession.mapData.indexedReadView(),
         precomputeCache: precomputeCache,
         strategicPlanProvider: strategicPlanProvider,
         recentHostilityTracker: AiRecentHostilityTracker(

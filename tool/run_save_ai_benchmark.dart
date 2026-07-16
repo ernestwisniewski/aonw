@@ -136,6 +136,7 @@ class _SaveAiBenchmark {
   final int multiTurnCycles;
 
   Future<_BenchmarkReport> run() async {
+    final mapView = mapData.indexedReadView();
     final runtime = _BenchmarkRuntimeReport.fromSnapshot(snapshot);
     final playerResults = <_PlayerBenchmarkResult>[];
     final humanPlayerIds = {
@@ -148,7 +149,7 @@ class _SaveAiBenchmark {
         snapshot: snapshot,
         player: player,
         humanPlayerIds: humanPlayerIds,
-        mapData: mapData,
+        mapView: mapView,
         includeDeadline: includeDeadline,
       );
       playerResults.add(
@@ -164,7 +165,7 @@ class _SaveAiBenchmark {
         : _MultiTurnReplayRunner(
             snapshot: snapshot,
             savePath: savePath,
-            mapData: mapData,
+            mapView: mapView,
             cycles: multiTurnCycles,
             profiles: profiles,
             includeDeadline: includeDeadline,
@@ -177,7 +178,7 @@ class _SaveAiBenchmark {
     final runtimeSmoke = await _RuntimeUseCaseSmokeRunner(
       snapshot: snapshot,
       savePath: savePath,
-      mapData: mapData,
+      mapView: mapView,
       runtime: runtime,
     ).run();
     return _BenchmarkReport(
@@ -207,7 +208,6 @@ class _PreparedPlayer {
     required this.context,
     required this.assessment,
     required this.strategicPlan,
-    required this.mapData,
   });
 
   final SaveSnapshot snapshot;
@@ -218,13 +218,12 @@ class _PreparedPlayer {
   final AiContext context;
   final AiEmpireAssessment assessment;
   final StrategicPlan strategicPlan;
-  final MapData mapData;
 
   factory _PreparedPlayer.fromSnapshot({
     required SaveSnapshot snapshot,
     required Player player,
     required Set<String> humanPlayerIds,
-    required MapData mapData,
+    required MapReadView mapView,
     required bool includeDeadline,
   }) {
     final ai = player.ai!;
@@ -242,7 +241,6 @@ class _PreparedPlayer {
       snapshot: snapshot,
       playerId: player.id,
     );
-    final mapView = mapData.indexedReadView();
     final view = GameView.fromPersistentState(
       snapshot.persistentState,
       forPlayerId: player.id,
@@ -297,7 +295,6 @@ class _PreparedPlayer {
       context: context,
       assessment: assessment,
       strategicPlan: strategicPlan,
-      mapData: mapData,
     );
   }
 
@@ -347,7 +344,7 @@ class _PreparedPlayer {
 
   _ExecutionRun _executePlan(AiTurnPlan plan) {
     final reducer = GameStateReducer(
-      mapData: mapData,
+      mapData: context.mapData,
       ruleset: context.ruleset,
     );
     var state = _executionInitialState();

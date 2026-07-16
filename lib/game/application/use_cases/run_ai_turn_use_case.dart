@@ -6,16 +6,16 @@ import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_preparation_builder.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class RunAiTurnUseCase {
   final GameRepository repository;
   final AiStrategyRegistry strategyRegistry;
   final AiTurnRunner runner;
   final GameRuleset ruleset;
-  final MapData mapData;
+  final MapReadView mapData;
   final AiTurnPlanPrecomputeCache? precomputeCache;
   final AiStrategicPlanProvider? strategicPlanProvider;
   final AiRecentHostilityTracker? recentHostilityTracker;

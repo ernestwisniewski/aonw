@@ -8,19 +8,19 @@ import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class AiTurnPreparationBuilder {
   final GameRepository repository;
   final AiStrategyRegistry strategyRegistry;
   final GameRuleset ruleset;
-  final MapData mapData;
+  final MapReadView mapData;
   final AiStrategicPlanProvider? strategicPlanProvider;
   final AiRecentHostilityTracker? recentHostilityTracker;
   final PressureTargetResolver pressureTargetResolver;
@@ -97,7 +97,7 @@ final class AiTurnPreparationBuilder {
       planningPersistentState,
       forPlayerId: playerId,
       turn: resolvedSnapshot.save.turn,
-      mapData: mapData.indexedReadView(),
+      mapData: mapData,
       ruleset: effectiveRuleset,
       activeHostilePlayerIds: cityThreats.activeHostilePlayerIds,
       recentHostilePlayerIds: loggedHostilePlayerIds,
