@@ -3,23 +3,25 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/source/line_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/legacy_world_map_adapter_guard.dart';
+import 'support/map_boundary_source_guard.dart';
 
 part 'support/economy_simulation_map_view_guard.dart';
 part 'support/economy_simulation_map_view_fixtures.dart';
 part 'support/server_map_cache_boundary_guard.dart';
 part 'support/server_map_cache_boundary_fixtures.dart';
-part 'support/world_map_projection_boundary_fixtures.dart';
+part 'support/world_map_read_view_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_guard.dart';
 
 const _coreLib = 'packages/aonw_core/lib';
 const _gameDomain = '$_coreLib/game/domain';
+const _legacyWorldMapAdapterPath =
+    '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _mapDataFreeMigrationPaths = {
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
+  '$_gameDomain/city/persistent_city_production_resolver.dart',
   '$_gameDomain/city/city_turn_processor.dart',
   '$_gameDomain/city/persistent_worker_command_resolver.dart',
   '$_gameDomain/combat/persistent_combat_command_resolver.dart',
@@ -52,54 +54,18 @@ const _mapDataFreeMigrationPaths = {
   '$_coreLib/ai/simulation/economy_simulation_command_applier_production.dart',
   '$_coreLib/ai/simulation/economy_simulation_turn_row_factory.dart',
 };
-const _legacyWorldMapAdapterPath =
-    '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
-const _persistentCityProductionResolverPath =
-    '$_gameDomain/city/persistent_city_production_resolver.dart';
-const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
-const _allowedProductionProjectionSites = <String, int>{};
-const _allowedProductionImportSites = <String, int>{
-  'lib/editor/domain/map_draft.dart::class:MapDraft/method:freeze::call': 1,
-};
 
 void main() {
-  test('production does not alias the legacy world-map adapter', () {
-    expect(_adapterTypedefViolations(productionDartSources()), isEmpty);
-  });
-
-  test('production full-map projections match the shrinking allowlist', () {
+  test('legacy world-map adapter remains removed from production', () {
+    expect(File(_legacyWorldMapAdapterPath).existsSync(), isFalse);
     expect(
-      _projectionRatchetViolations(
-        productionDartSources(containing: 'toMapData'),
-        allowedSites: _allowedProductionProjectionSites,
+      removedProductionSymbolViolations(
+        productionDartSources(),
+        symbol: 'LegacyWorldMapAdapter',
+        uriSuffix: '/legacy_world_map_adapter.dart',
       ),
       isEmpty,
     );
-  });
-
-  test('production full-map imports match the shrinking allowlist', () {
-    expect(
-      _adapterMethodRatchetViolations(
-        productionDartSources(containing: 'fromMapData'),
-        methodName: 'fromMapData',
-        allowedSites: _allowedProductionImportSites,
-      ),
-      isEmpty,
-    );
-  });
-
-  test('production has no bounded legacy adapter calls', () {
-    for (final methodName in _removedBoundedAdapterMethods) {
-      expect(
-        _adapterMethodRatchetViolations(
-          productionDartSources(containing: methodName),
-          methodName: methodName,
-          allowedSites: const {},
-        ),
-        isEmpty,
-        reason: methodName,
-      );
-    }
   });
 
   test('MCTS production depends only on canonical map read contracts', () {
@@ -108,18 +74,21 @@ void main() {
     );
     for (final entry in mctsSources) {
       expect(
-        _namedTypeViolations(entry.value, entry.key, forbiddenType: 'MapData'),
+        sourceSymbolReferenceViolations(
+          entry.value,
+          entry.key,
+          symbol: 'MapData',
+        ),
         isEmpty,
         reason: entry.key,
       );
       expect(
-        _namedTypeViolations(entry.value, entry.key, forbiddenType: 'WorldMap'),
+        sourceSymbolReferenceViolations(
+          entry.value,
+          entry.key,
+          symbol: 'WorldMap',
+        ),
         isEmpty,
-        reason: entry.key,
-      );
-      expect(
-        entry.value,
-        isNot(contains('LegacyWorldMapAdapter')),
         reason: entry.key,
       );
     }
@@ -133,23 +102,13 @@ void main() {
     expect(_serverMapCacheBoundaryViolations(), isEmpty);
   });
 
-  test('migrated map paths do not materialize legacy maps', () {
+  test('migrated map paths do not reference MapData', () {
     for (final path in _mapDataFreeMigrationPaths) {
       expect(
-        _legacyProjectionViolations(File(path).readAsStringSync(), path),
-        isEmpty,
-        reason: path,
-      );
-    }
-  });
-
-  test('migrated bounded rules do not depend on legacy tile DTOs', () {
-    for (final path in _mapTileViewMigrationPaths) {
-      expect(
-        _namedTypeViolations(
+        sourceSymbolReferenceViolations(
           File(path).readAsStringSync(),
           path,
-          forbiddenType: 'TileData',
+          symbol: 'MapData',
         ),
         isEmpty,
         reason: path,
@@ -157,21 +116,18 @@ void main() {
     }
   });
 
-  test('legacy adapter exposes only full-map conversion methods', () {
-    final source = File(_legacyWorldMapAdapterPath).readAsStringSync();
-    expect(
-      _classProjectionViolations(
-        source,
-        _legacyWorldMapAdapterPath,
-        className: 'LegacyWorldMapAdapter',
-        allowedProjectionMethods: _allowedFullMapConverterMethods,
-      ),
-      isEmpty,
-    );
-    expect(
-      _adapterApiDeclarationViolations(source, _legacyWorldMapAdapterPath),
-      isEmpty,
-    );
+  test('migrated bounded rules do not depend on persistence tile DTOs', () {
+    for (final path in _mapTileViewMigrationPaths) {
+      expect(
+        sourceSymbolReferenceViolations(
+          File(path).readAsStringSync(),
+          path,
+          symbol: 'TileData',
+        ),
+        isEmpty,
+        reason: path,
+      );
+    }
   });
 
   test('read contracts and WorldMap view remain zero-copy', () {
@@ -191,193 +147,7 @@ void main() {
     );
   });
 
-  test('bounded city production paths do not materialize legacy maps', () {
-    expect(
-      _classProjectionViolations(
-        File(_persistentCityProductionResolverPath).readAsStringSync(),
-        _persistentCityProductionResolverPath,
-        className: 'PersistentCityProductionResolver',
-        allowedProjectionMethods: const {},
-      ),
-      isEmpty,
-    );
-  });
-
-  _registerWorldMapProjectionBoundaryFixtures();
   _registerEconomySimulationMapViewFixtures();
   _registerServerMapCacheBoundaryFixtures();
-}
-
-List<String> _adapterTypedefViolations(Map<String, String> sources) {
-  final sites = legacyWorldMapAdapterTypedefSites(sources);
-  final keys = sites.keys.toList()..sort();
-  return [
-    for (final key in keys)
-      '$key must not alias LegacyWorldMapAdapter '
-          'at lines ${sites[key] ?? const <int>[]}',
-  ];
-}
-
-List<String> _projectionRatchetViolations(
-  Map<String, String> sources, {
-  required Map<String, int> allowedSites,
-}) {
-  return _adapterMethodRatchetViolations(
-    sources,
-    methodName: 'toMapData',
-    allowedSites: allowedSites,
-  );
-}
-
-List<String> _adapterMethodRatchetViolations(
-  Map<String, String> sources, {
-  required String methodName,
-  required Map<String, int> allowedSites,
-}) {
-  final sites = legacyWorldMapAdapterMethodSites(
-    sources,
-    methodName: methodName,
-  );
-  final keys = {...allowedSites.keys, ...sites.keys}.toList()..sort();
-  return [
-    for (final key in keys)
-      if ((sites[key]?.length ?? 0) != (allowedSites[key] ?? 0))
-        '$key expected ${allowedSites[key] ?? 0}, '
-            'found ${sites[key]?.length ?? 0} '
-            'at lines ${sites[key] ?? const <int>[]}',
-  ];
-}
-
-List<String> _legacyProjectionViolations(String source, String path) {
-  final unit = parseString(content: source, path: path).unit;
-  final violations = <String>[];
-  unit.accept(
-    _LegacyProjectionVisitor(
-      path: path,
-      lineInfo: unit.lineInfo,
-      violations: violations,
-      legacyAdapterTypeNames: legacyWorldMapAdapterTypeNames(unit),
-    ),
-  );
-  return violations.toSet().toList();
-}
-
-List<String> _classProjectionViolations(
-  String source,
-  String path, {
-  required String className,
-  required Set<String> allowedProjectionMethods,
-}) {
-  final unit = parseString(content: source, path: path).unit;
-  final violations = <String>[];
-  final qualifiedVisitor = _LegacyProjectionVisitor(
-    path: path,
-    lineInfo: unit.lineInfo,
-    violations: violations,
-    legacyAdapterTypeNames: legacyWorldMapAdapterTypeNames(unit),
-    blockedAdapterMethods: _allowedFullMapConverterMethods,
-  );
-  final selfCallVisitor = _LegacyProjectionVisitor(
-    path: path,
-    lineInfo: unit.lineInfo,
-    violations: violations,
-    legacyAdapterTypeNames: legacyWorldMapAdapterTypeNames(unit),
-    blockedAdapterMethods: _allowedFullMapConverterMethods,
-    rejectUnqualifiedAdapterMethods: true,
-  );
-  for (final declaration in unit.declarations) {
-    if (declaration is! ClassDeclaration) {
-      declaration.accept(qualifiedVisitor);
-      continue;
-    }
-    final declarationClassName = declaration.namePart.typeName.lexeme;
-    for (final member in declaration.body.members) {
-      final isAllowedConverter =
-          declarationClassName == className &&
-          member is MethodDeclaration &&
-          allowedProjectionMethods.contains(member.name.lexeme);
-      if (isAllowedConverter) continue;
-      final visitor =
-          declarationClassName == className &&
-              className == 'LegacyWorldMapAdapter'
-          ? selfCallVisitor
-          : qualifiedVisitor;
-      member.accept(visitor);
-    }
-  }
-  return violations.toSet().toList();
-}
-
-final class _LegacyProjectionVisitor extends RecursiveAstVisitor<void> {
-  _LegacyProjectionVisitor({
-    required this.path,
-    required this.lineInfo,
-    required this.violations,
-    required this.legacyAdapterTypeNames,
-    this.blockedAdapterMethods = const {
-      'toMapData',
-      'tileDataAt',
-      'asTileLookup',
-      'asReadView',
-      'asTraversalView',
-    },
-    this.rejectUnqualifiedAdapterMethods = false,
-  });
-
-  final String path;
-  final LineInfo lineInfo;
-  final List<String> violations;
-  final Set<String> legacyAdapterTypeNames;
-  final Set<String> blockedAdapterMethods;
-  final bool rejectUnqualifiedAdapterMethods;
-
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (node.constructorName.type.name.lexeme == 'MapData') {
-      _recordMapDataReference(node.offset);
-    }
-    super.visitInstanceCreationExpression(node);
-  }
-
-  @override
-  void visitNamedType(NamedType node) {
-    if (node.name.lexeme == 'MapData') {
-      _recordMapDataReference(node.offset);
-    }
-    super.visitNamedType(node);
-  }
-
-  @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (node.parent is CommentReference) {
-      super.visitSimpleIdentifier(node);
-      return;
-    }
-    if (node.name == 'MapData') {
-      _recordMapDataReference(node.offset);
-    }
-    final isBlockedAdapterReference =
-        blockedAdapterMethods.contains(node.name) &&
-        (isLegacyWorldMapAdapterMethodReference(
-              node,
-              methodName: node.name,
-              adapterTypeNames: legacyAdapterTypeNames,
-            ) ||
-            (rejectUnqualifiedAdapterMethods &&
-                isUnqualifiedMethodReference(node)));
-    if (isBlockedAdapterReference) {
-      violations.add(
-        '$path:${lineInfo.getLocation(node.offset).lineNumber} '
-        'must not call or capture LegacyWorldMapAdapter.${node.name}',
-      );
-    }
-    super.visitSimpleIdentifier(node);
-  }
-
-  void _recordMapDataReference(int offset) {
-    violations.add(
-      '$path:${lineInfo.getLocation(offset).lineNumber} '
-      'must not reference MapData',
-    );
-  }
+  _registerWorldMapReadViewBoundaryFixtures();
 }

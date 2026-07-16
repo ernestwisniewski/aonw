@@ -63,7 +63,7 @@ void main() {
       final persistent = _resolvePersistent(
         state,
         command,
-        mapView: WorldMapReadView(LegacyWorldMapAdapter.fromMapData(mapData)),
+        mapView: mapData.indexedReadView(),
       );
       final simulated = _simulate(state, command, mapData: mapData);
 
@@ -909,7 +909,7 @@ void main() {
 PersistentMoveUnitResult _resolvePersistent(
   PersistentGameState state,
   MoveUnitCommand command, {
-  WorldMapReadView? mapView,
+  MapTraversalView? mapView,
 }) {
   return const PersistentMoveUnitResolver().resolve(
     state: state,

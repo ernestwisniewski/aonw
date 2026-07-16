@@ -5,13 +5,12 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_constraints.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/persistence/legacy_world_map_adapter.dart';
 
 /// Mutable map state owned exclusively by the map editor.
 ///
 /// It deliberately permits incomplete tile data while a user is painting. Call
 /// [freeze] at a persistence boundary to validate it as an immutable
-/// [WorldMap]. [toMapData] is the single legacy JSON/persistence projection.
+/// [WorldMap]. [toMapData] is the single editor JSON/persistence projection.
 final class MapDraft implements MapTileSource {
   MapDraft({
     required int cols,
@@ -205,7 +204,14 @@ final class MapDraft implements MapTileSource {
   }
 
   WorldMap freeze({String? mapName}) {
-    return LegacyWorldMapAdapter.fromMapData(toMapData(mapName: mapName));
+    return WorldMap.fromTileViews(
+      cols: _cols,
+      rows: _rows,
+      tiles: _tiles,
+      objectives: _objectives,
+      mapName: mapName ?? this.mapName,
+      defaultZoom: defaultZoom,
+    );
   }
 
   void _validateDimensions() {

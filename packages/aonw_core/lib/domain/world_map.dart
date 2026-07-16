@@ -71,6 +71,29 @@ final class WorldMap {
     );
   }
 
+  /// Freezes representation-neutral tile views into canonical immutable tiles.
+  ///
+  /// Tile values are copied before map metadata is validated, preserving the
+  /// tile-first error order while preventing later source mutations from
+  /// changing this world.
+  factory WorldMap.fromTileViews({
+    required int cols,
+    required int rows,
+    required Iterable<MapTileView> tiles,
+    Iterable<MapObjectiveDefinition> objectives = const [],
+    String? mapName,
+    double defaultZoom = 1.0,
+  }) {
+    return WorldMap(
+      cols: cols,
+      rows: rows,
+      tiles: tiles.map(_worldTileFromView),
+      objectives: objectives,
+      mapName: mapName,
+      defaultZoom: defaultZoom,
+    );
+  }
+
   final int cols;
   final int rows;
   final List<WorldTile> tiles;
@@ -82,6 +105,15 @@ final class WorldMap {
   int get indexedTileCount => _tilesByCoordinate.length;
 
   WorldTile? tileAt(HexCoord coordinate) => _tilesByCoordinate[coordinate];
+}
+
+WorldTile _worldTileFromView(MapTileView tile) {
+  return WorldTile(
+    coordinate: HexCoord(col: tile.col, row: tile.row),
+    terrains: tile.terrains,
+    resources: tile.resources,
+    height: tile.height,
+  );
 }
 
 Never _rejectWorldMapInvariant(String message) {

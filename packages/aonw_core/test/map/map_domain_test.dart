@@ -256,7 +256,7 @@ void main() {
           validationCase.map.indexedReadView,
         );
         final canonicalMessage = _worldMapFailureMessage(
-          () => LegacyWorldMapAdapter.fromMapData(validationCase.map),
+          () => _worldMapFromData(validationCase.map),
         );
 
         expect(indexedMessage, canonicalMessage, reason: validationCase.name);
@@ -279,6 +279,17 @@ void main() {
       );
     });
   });
+}
+
+WorldMap _worldMapFromData(MapData source) {
+  return WorldMap.fromTileViews(
+    cols: source.cols,
+    rows: source.rows,
+    tiles: source.tiles,
+    objectives: source.objectives,
+    mapName: source.mapName,
+    defaultZoom: source.defaultZoom,
+  );
 }
 
 MapData _mapData({

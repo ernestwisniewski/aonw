@@ -22,7 +22,7 @@ void main() {
     expect(strategy.contextViews.single, same(mapData.indexedView));
   });
 
-  test('validates tiles before map metadata like the legacy adapter', () {
+  test('validates tiles before map metadata like canonical freezing', () {
     final mapData = MapData(
       cols: 0,
       rows: 1,

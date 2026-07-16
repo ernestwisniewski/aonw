@@ -1,5 +1,64 @@
 part of '../world_foundation_boundary_test.dart';
 
+List<String> _mapDraftFreezeViolations(String source, String path) {
+  final unit = parseString(content: source, path: path).unit;
+  final mapDrafts = unit.declarations
+      .whereType<ClassDeclaration>()
+      .where(
+        (declaration) => declaration.namePart.typeName.lexeme == 'MapDraft',
+      )
+      .toList();
+  if (mapDrafts.length != 1) return ['$path must declare one MapDraft'];
+  final freezes = mapDrafts.single.body.members
+      .whereType<MethodDeclaration>()
+      .where((method) => method.name.lexeme == 'freeze')
+      .toList();
+  if (freezes.length != 1) return ['$path must declare one MapDraft.freeze'];
+
+  final freeze = freezes.single;
+  final visitor = _MapDraftFreezeVisitor();
+  freeze.accept(visitor);
+  final violations = <String>[];
+  if (freeze.returnType?.toSource() != 'WorldMap' ||
+      visitor.tileViewFactoryCalls != 1 ||
+      visitor.returnedTileViewFactoryCalls != 1) {
+    violations.add(
+      '$path MapDraft.freeze must return one WorldMap.fromTileViews call',
+    );
+  }
+  if (visitor.persistenceProjectionCalls != 0) {
+    violations.add('$path MapDraft.freeze must not call toMapData');
+  }
+  return violations;
+}
+
+final class _MapDraftFreezeVisitor extends RecursiveAstVisitor<void> {
+  int tileViewFactoryCalls = 0;
+  int returnedTileViewFactoryCalls = 0;
+  int persistenceProjectionCalls = 0;
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == 'fromTileViews' &&
+        node.realTarget?.toSource() == 'WorldMap') {
+      tileViewFactoryCalls += 1;
+      if (_isDirectlyReturned(node)) returnedTileViewFactoryCalls += 1;
+    }
+    if (node.methodName.name == 'toMapData') {
+      persistenceProjectionCalls += 1;
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+bool _isDirectlyReturned(Expression expression) {
+  final parent = expression.parent;
+  return (parent is ReturnStatement &&
+          identical(parent.expression, expression)) ||
+      (parent is ExpressionFunctionBody &&
+          identical(parent.expression, expression));
+}
+
 List<String> _converterViolations(
   Map<String, String> sources, {
   required Set<String> allowedPaths,

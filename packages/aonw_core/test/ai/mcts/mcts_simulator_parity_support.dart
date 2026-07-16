@@ -34,8 +34,14 @@ final class MctsSimulatorParityFixtures {
   }
 
   static WorldMap worldMap({MapData? mapData}) {
-    return LegacyWorldMapAdapter.fromMapData(
-      mapData ?? MctsSimulatorParityFixtures.mapData(),
+    final source = mapData ?? MctsSimulatorParityFixtures.mapData();
+    return WorldMap.fromTileViews(
+      cols: source.cols,
+      rows: source.rows,
+      tiles: source.tiles,
+      objectives: source.objectives,
+      mapName: source.mapName,
+      defaultZoom: source.defaultZoom,
     );
   }
 

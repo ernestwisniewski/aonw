@@ -7,7 +7,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 /// Zero-copy gameplay view over the canonical [WorldMap].
 ///
 /// Tile lookups return the immutable [WorldTile] owned by the map. The view
-/// deliberately does not project or cache legacy tile DTOs.
+/// deliberately does not project or cache persistence tile DTOs.
 final class WorldMapReadView implements MapReadView {
   const WorldMapReadView(this._worldMap);
 

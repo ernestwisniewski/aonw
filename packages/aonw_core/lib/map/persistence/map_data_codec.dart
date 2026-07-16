@@ -127,7 +127,7 @@ abstract final class MapDataCodec {
 
 MapData _validateCanonicalMap(MapData mapData) {
   try {
-    // WorldMap construction validates each tile before map-wide metadata.
+    // Canonical freezing validates each tile before map-wide metadata.
     // Preserve that public error ordering without materializing a throwaway
     // canonical map.
     validateMapDataTileInvariants(mapData);

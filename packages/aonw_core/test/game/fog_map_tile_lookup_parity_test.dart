@@ -146,7 +146,14 @@ Set<HexCoordinate> _visibleHexes(MapTileLookup mapData) {
 }
 
 MapTileLookup _worldMapLookup(MapData mapData) {
-  final worldMap = LegacyWorldMapAdapter.fromMapData(mapData);
+  final worldMap = WorldMap.fromTileViews(
+    cols: mapData.cols,
+    rows: mapData.rows,
+    tiles: mapData.tiles,
+    objectives: mapData.objectives,
+    mapName: mapData.mapName,
+    defaultZoom: mapData.defaultZoom,
+  );
   return WorldMapReadView(worldMap);
 }
 

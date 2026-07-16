@@ -9,7 +9,6 @@ part 'support/world_foundation_boundary_guard.dart';
 
 const _allowedAdapterPaths = {
   'packages/aonw_core/lib/game/domain/hex/legacy_hex_coord_adapter.dart',
-  'packages/aonw_core/lib/map/persistence/legacy_world_map_adapter.dart',
 };
 
 void main() {
@@ -77,29 +76,43 @@ void main() {
       );
     });
 
-    test('editor crosses the legacy map boundary only through MapDraft', () {
-      const allowedPaths = {'lib/editor/domain/map_draft.dart'};
-      const legacyIdentifiers = {'MapData', 'LegacyWorldMapAdapter'};
-      final violations = <String>[];
+    test(
+      'editor crosses the persistence map boundary only through MapDraft',
+      () {
+        const allowedPaths = {'lib/editor/domain/map_draft.dart'};
+        const persistenceIdentifiers = {'MapData'};
+        final violations = <String>[];
 
-      for (final file in _dartFiles('lib/editor')) {
-        final path = _relativePath(file.path);
-        if (allowedPaths.contains(path)) continue;
-        final unit = parseString(
-          content: file.readAsStringSync(),
-          path: path,
-        ).unit;
-        final identifiers = <String>{};
-        unit.accept(_IdentifierCollector(identifiers));
-        for (final identifier in legacyIdentifiers) {
-          if (identifiers.contains(identifier)) {
-            violations.add('$path: $identifier');
+        for (final file in _dartFiles('lib/editor')) {
+          final path = _relativePath(file.path);
+          if (allowedPaths.contains(path)) continue;
+          final unit = parseString(
+            content: file.readAsStringSync(),
+            path: path,
+          ).unit;
+          final identifiers = <String>{};
+          unit.accept(_IdentifierCollector(identifiers));
+          for (final identifier in persistenceIdentifiers) {
+            if (identifiers.contains(identifier)) {
+              violations.add('$path: $identifier');
+            }
           }
         }
-      }
 
-      expect(violations, isEmpty);
-    });
+        expect(violations, isEmpty);
+      },
+    );
+
+    test(
+      'MapDraft freezes directly through the canonical tile-view factory',
+      () {
+        const path = 'lib/editor/domain/map_draft.dart';
+        expect(
+          _mapDraftFreezeViolations(File(path).readAsStringSync(), path),
+          isEmpty,
+        );
+      },
+    );
 
     test('MapDraft remains owned by the editor in production', () {
       final violations = <String>[];
@@ -145,6 +158,30 @@ WorldMap freeze(MapData value) =>
       expect(violations.join('\n'), contains('city_converter.dart'));
       expect(violations.join('\n'), contains('inline_converter.dart'));
       expect(violations.join('\n'), contains('map_converter.dart'));
+    });
+
+    test('guard rejects MapDraft freeze through a persistence projection', () {
+      final violations = _mapDraftFreezeViolations('''
+final class MapDraft {
+  WorldMap freeze() => LegacyWorldMapAdapter.fromMapData(toMapData());
+}
+''', 'fixture.dart');
+
+      expect(violations, contains(contains('WorldMap.fromTileViews')));
+      expect(violations, contains(contains('must not call toMapData')));
+    });
+
+    test('guard rejects a discarded tile-view factory result', () {
+      final violations = _mapDraftFreezeViolations('''
+final class MapDraft {
+  WorldMap freeze() {
+    WorldMap.fromTileViews(cols: 1, rows: 1, tiles: const []);
+    return cachedWorld;
+  }
+}
+''', 'fixture.dart');
+
+      expect(violations, contains(contains('must return one')));
     });
 
     test('guard rejects constructor, factory, and captured converters', () {

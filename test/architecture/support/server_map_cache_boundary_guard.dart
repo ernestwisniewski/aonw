@@ -75,64 +75,56 @@ List<String> _serverMapCacheBoundaryViolations({
 
   final flow = _ServerMapCacheFlowVisitor();
   methodCollector.methods.single.accept(flow);
-  if (flow.validationCalls.length != 1) {
-    violations.add(
-      '$path _loadServerMap must validate tile invariants exactly once; '
-      'found ${flow.validationCalls.length}',
-    );
-  }
-  if (flow.indexedViewCalls.length != 1) {
-    violations.add(
-      '$path _loadServerMap must call indexedReadView exactly once; '
-      'found ${flow.indexedViewCalls.length}',
-    );
-  }
-  if (!_validServerMapFlow(flow)) {
-    violations.add(
-      '$path _loadServerMap must directly validate, index, and cache '
-      'sourceMapData in order within one block',
-    );
-  }
-  if (flow.mapViewDeclarations.length != 1 ||
-      !_isServerIndexedMapViewDeclaration(
-        flow.mapViewDeclarations.singleOrNull,
-      )) {
-    violations.add(
-      '$path _loadServerMap must assign sourceMapData.indexedReadView() '
-      'to one final mapView',
-    );
-  }
-  if (flow.loadedMapCalls.length != 1 ||
-      !_receivesSourceMapAndView(flow.loadedMapCalls.singleOrNull)) {
-    violations.add(
-      '$path _loadServerMap must cache sourceMapData with the same mapView',
-    );
-  }
-
-  final loadedMap = _classDeclarationNamed(unit, '_LoadedServerMap');
-  if (loadedMap == null) {
-    violations.add('$path must declare _LoadedServerMap');
-  } else {
-    final mapViewFields = <VariableDeclaration>[];
-    for (final field in loadedMap.body.members.whereType<FieldDeclaration>()) {
-      mapViewFields.addAll(
-        field.fields.variables.where(
-          (variable) => variable.name.lexeme == 'mapView',
-        ),
-      );
-    }
-    if (mapViewFields.length != 1) {
-      violations.add('$path _LoadedServerMap must declare one mapView field');
-    } else {
-      final fields = mapViewFields.single.parent as VariableDeclarationList;
-      if (!fields.isFinal || fields.type?.toSource() != 'MapReadView') {
-        violations.add(
-          '$path _LoadedServerMap.mapView must be final MapReadView',
-        );
-      }
-    }
-  }
+  violations
+    ..addAll(_serverMapCacheFlowViolations(flow, path))
+    ..addAll(_loadedServerMapViolations(unit, path));
   return violations;
+}
+
+List<String> _serverMapCacheFlowViolations(
+  _ServerMapCacheFlowVisitor flow,
+  String path,
+) {
+  return [
+    if (flow.validationCalls.length != 1)
+      '$path _loadServerMap must validate tile invariants exactly once; '
+          'found ${flow.validationCalls.length}',
+    if (flow.indexedViewCalls.length != 1)
+      '$path _loadServerMap must call indexedReadView exactly once; '
+          'found ${flow.indexedViewCalls.length}',
+    if (!_validServerMapFlow(flow))
+      '$path _loadServerMap must directly validate, index, and cache '
+          'sourceMapData in order within one block',
+    if (flow.mapViewDeclarations.length != 1 ||
+        !_isServerIndexedMapViewDeclaration(
+          flow.mapViewDeclarations.singleOrNull,
+        ))
+      '$path _loadServerMap must assign sourceMapData.indexedReadView() '
+          'to one final mapView',
+    if (flow.loadedMapCalls.length != 1 ||
+        !_receivesSourceMapAndView(flow.loadedMapCalls.singleOrNull))
+      '$path _loadServerMap must cache sourceMapData with the same mapView',
+  ];
+}
+
+List<String> _loadedServerMapViolations(CompilationUnit unit, String path) {
+  final loadedMap = _classDeclarationNamed(unit, '_LoadedServerMap');
+  if (loadedMap == null) return ['$path must declare _LoadedServerMap'];
+  final mapViewFields = <VariableDeclaration>[];
+  for (final field in loadedMap.body.members.whereType<FieldDeclaration>()) {
+    mapViewFields.addAll(
+      field.fields.variables.where(
+        (variable) => variable.name.lexeme == 'mapView',
+      ),
+    );
+  }
+  if (mapViewFields.length != 1) {
+    return ['$path _LoadedServerMap must declare one mapView field'];
+  }
+  final fields = mapViewFields.single.parent as VariableDeclarationList;
+  return fields.isFinal && fields.type?.toSource() == 'MapReadView'
+      ? const []
+      : ['$path _LoadedServerMap.mapView must be final MapReadView'];
 }
 
 List<String> _serverReducerLibraryDependencyViolations(
@@ -200,43 +192,58 @@ FormalParameter _normalizedParameter(FormalParameter parameter) {
 }
 
 bool _validServerMapFlow(_ServerMapCacheFlowVisitor flow) {
-  if (flow.validationCalls.length != 1 ||
-      flow.indexedViewCalls.length != 1 ||
-      flow.loadedMapCalls.length != 1 ||
-      flow.mapViewDeclarations.length != 1) {
-    return false;
-  }
+  if (flow.validationCalls.length != 1) return false;
+  if (flow.indexedViewCalls.length != 1) return false;
+  if (flow.loadedMapCalls.length != 1) return false;
+  if (flow.mapViewDeclarations.length != 1) return false;
   final validation = flow.validationCalls.single;
   final indexing = flow.indexedViewCalls.single;
   final loadedMapArguments = flow.loadedMapCalls.single;
-  final loadedMapCall = loadedMapArguments.parent;
-  if (validation.parent is! ExpressionStatement ||
-      loadedMapCall?.parent is! ReturnStatement ||
-      validation.argumentList.arguments.length != 1) {
-    return false;
-  }
-  final validationArgument = validation.argumentList.arguments.single;
+  return _hasServerMapCallShape(
+        validation: validation,
+        indexing: indexing,
+        mapViewDeclaration: flow.mapViewDeclarations.single,
+        loadedMapArguments: loadedMapArguments,
+      ) &&
+      _hasOrderedServerMapStatements(
+        validation: validation,
+        indexing: indexing,
+        loadedMapArguments: loadedMapArguments,
+      );
+}
+
+bool _hasServerMapCallShape({
+  required MethodInvocation validation,
+  required MethodInvocation indexing,
+  required VariableDeclaration mapViewDeclaration,
+  required ArgumentList loadedMapArguments,
+}) {
+  final validationArguments = validation.argumentList.arguments;
+  final validationArgument = validationArguments.singleOrNull;
   final indexedTarget = indexing.target;
-  if (validationArgument is! SimpleIdentifier ||
-      validationArgument.name != 'sourceMapData' ||
-      indexedTarget is! SimpleIdentifier ||
-      indexedTarget.name != 'sourceMapData' ||
-      !_isServerIndexedMapViewDeclaration(flow.mapViewDeclarations.single) ||
-      !_receivesSourceMapAndView(loadedMapArguments)) {
-    return false;
-  }
-  final validationStatement = validation.parent! as ExpressionStatement;
+  return validationArgument is SimpleIdentifier &&
+      validationArgument.name == 'sourceMapData' &&
+      indexedTarget is SimpleIdentifier &&
+      indexedTarget.name == 'sourceMapData' &&
+      _isServerIndexedMapViewDeclaration(mapViewDeclaration) &&
+      _receivesSourceMapAndView(loadedMapArguments);
+}
+
+bool _hasOrderedServerMapStatements({
+  required MethodInvocation validation,
+  required MethodInvocation indexing,
+  required ArgumentList loadedMapArguments,
+}) {
+  final validationStatement = validation.parent;
   final indexingStatement = _variableDeclarationStatementFor(indexing);
-  final loadedMapStatement = loadedMapCall!.parent! as ReturnStatement;
-  if (validationStatement.parent is! Block ||
-      indexingStatement == null ||
-      indexingStatement.parent is! Block ||
-      loadedMapStatement.parent is! Block ||
-      !identical(validationStatement.parent, indexingStatement.parent) ||
-      !identical(indexingStatement.parent, loadedMapStatement.parent)) {
-    return false;
-  }
-  final block = validationStatement.parent! as Block;
+  final loadedMapStatement = loadedMapArguments.parent?.parent;
+  if (validationStatement is! ExpressionStatement) return false;
+  if (indexingStatement == null) return false;
+  if (loadedMapStatement is! ReturnStatement) return false;
+  final block = validationStatement.parent;
+  if (block is! Block) return false;
+  if (!identical(block, indexingStatement.parent)) return false;
+  if (!identical(block, loadedMapStatement.parent)) return false;
   final validationIndex = block.statements.indexOf(validationStatement);
   final indexingIndex = block.statements.indexOf(indexingStatement);
   final loadedMapIndex = block.statements.indexOf(loadedMapStatement);

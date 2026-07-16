@@ -71,6 +71,97 @@ void main() {
       expect(() => map.objectives.clear(), throwsUnsupportedError);
     });
 
+    test('freezes representation-neutral tiles in their source order', () {
+      final objective = _objective(hex: const HexCoord(col: 2, row: 1));
+      final map = WorldMap.fromTileViews(
+        cols: 3,
+        rows: 2,
+        mapName: 'views',
+        defaultZoom: 1.75,
+        tiles: const [
+          TileData(
+            col: 2,
+            row: 1,
+            terrains: [TerrainType.hills, TerrainType.forest],
+            resources: [ResourceType.iron],
+            height: 3,
+          ),
+          TileData(
+            col: 0,
+            row: 0,
+            terrains: [TerrainType.ocean],
+            resources: [],
+            height: 0,
+          ),
+        ],
+        objectives: [objective],
+      );
+
+      expect(map.cols, 3);
+      expect(map.rows, 2);
+      expect(map.mapName, 'views');
+      expect(map.defaultZoom, 1.75);
+      expect(map.objectives, [objective]);
+      expect(map.tiles.map((tile) => tile.coordinate), [
+        const HexCoord(col: 2, row: 1),
+        const HexCoord(col: 0, row: 0),
+      ]);
+      expect(map.tiles.first.terrains, [TerrainType.hills, TerrainType.forest]);
+      expect(map.tiles.first.resources, [ResourceType.iron]);
+      expect(map.tiles.first.height, 3);
+    });
+
+    test('deeply freezes mutable tile views', () {
+      final tile = _MutableTileView(
+        col: 0,
+        row: 0,
+        terrains: [TerrainType.forest],
+        resources: [ResourceType.deer],
+        height: 2,
+      );
+      final tiles = <MapTileView>[tile];
+      final objectives = <MapObjectiveDefinition>[_objective()];
+      final map = WorldMap.fromTileViews(
+        cols: 1,
+        rows: 1,
+        tiles: tiles,
+        objectives: objectives,
+      );
+
+      tile
+        ..col = 1
+        ..row = 1
+        ..height = 5
+        ..terrains.add(TerrainType.hills)
+        ..resources.clear();
+      tiles.clear();
+      objectives.clear();
+
+      expect(map.tiles.single.coordinate, const HexCoord(col: 0, row: 0));
+      expect(map.tiles.single.height, 2);
+      expect(map.tiles.single.terrains, [TerrainType.forest]);
+      expect(map.tiles.single.resources, [ResourceType.deer]);
+      expect(map.objectives.single.id, 'objective_1');
+      expect(map.tiles.single, isNot(same(tile)));
+      expect(() => map.tiles.clear(), throwsUnsupportedError);
+      expect(() => map.tiles.single.terrains.clear(), throwsUnsupportedError);
+      expect(() => map.tiles.single.resources.clear(), throwsUnsupportedError);
+    });
+
+    test('freezes tile values before validating map metadata', () {
+      expect(
+        () => WorldMap.fromTileViews(
+          cols: 0,
+          rows: 1,
+          defaultZoom: 0,
+          tiles: const [
+            TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+          ],
+        ),
+        _failsWith('Tile terrains must not be empty'),
+      );
+    });
+
     test('rejects invalid dimensions', () {
       expect(
         () => WorldMap(cols: 0, rows: 1, tiles: const []),
@@ -289,4 +380,32 @@ Matcher _failsContaining(String message) {
       contains(message),
     ),
   );
+}
+
+final class _MutableTileView implements MapTileView {
+  _MutableTileView({
+    required this.col,
+    required this.row,
+    required this.terrains,
+    required this.resources,
+    required this.height,
+  });
+
+  @override
+  int col;
+
+  @override
+  int row;
+
+  @override
+  final List<TerrainType> terrains;
+
+  @override
+  final List<ResourceType> resources;
+
+  @override
+  int height;
+
+  @override
+  TerrainType get primaryTerrain => terrains.first;
 }

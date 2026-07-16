@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/legacy_world_map_adapter_guard.dart';
+import 'support/map_boundary_source_guard.dart';
 
 part 'support/world_map_combat_boundary_fixtures.dart';
 

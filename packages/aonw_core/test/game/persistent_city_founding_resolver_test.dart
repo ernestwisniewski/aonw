@@ -42,7 +42,7 @@ void main() {
       final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
         state: result.state,
         playerIds: const ['player_1'],
-        mapData: _mapData(),
+        mapData: WorldMapReadView(_worldMap()),
       );
 
       expect(advanced.state.units, isEmpty);
@@ -90,7 +90,7 @@ void main() {
       final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
         state: result.state,
         playerIds: const ['player_1'],
-        mapData: _mapData(),
+        mapData: WorldMapReadView(_worldMap()),
       );
 
       expect(advanced.state.units.single.troopCount(TroopType.settler), 0);
@@ -252,10 +252,6 @@ void main() {
       expect(result.accepted, isTrue);
     });
   });
-}
-
-MapData _mapData() {
-  return LegacyWorldMapAdapter.toMapData(_worldMap());
 }
 
 GameUnit _settler({String owner = 'player_1', int col = 0, int row = 0}) {

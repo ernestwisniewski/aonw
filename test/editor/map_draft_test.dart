@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -7,25 +5,20 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/map/persistence.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MapDraft', () {
-    test('preserves the complete legacy JSON contract through freeze', () {
+    test('preserves the complete map contract through freeze', () {
       final source = _sentinelMap();
-      final expectedJson = jsonDecode(MapDataCodec.toJson(source));
 
       final draft = MapDraft.fromMapData(source);
       final frozen = draft.freeze();
-      final thawed = LegacyWorldMapAdapter.toMapData(frozen);
 
-      expect(jsonDecode(MapDataCodec.toJson(thawed)), expectedJson);
-      expect(frozen.tileAt(const HexCoord(col: 1, row: 0))?.height, 3);
-      expect(frozen.objectives.single.hex, const HexCoord(col: 1, row: 0));
+      _expectFrozenWorldMatches(frozen, source);
     });
 
-    test('owns deep copies at both legacy boundaries', () {
+    test('owns deep copies across persistence and freeze boundaries', () {
       final source = _sentinelMap();
       final draft = MapDraft.fromMapData(source);
 
@@ -61,6 +54,32 @@ void main() {
       expect(draft.tiles, hasLength(2));
       expect(draft.objectives.single.id, 'pass_1');
       expect(draft.mapName, 'sentinel');
+
+      final frozen = draft.freeze(mapName: 'exported');
+      expect(draft.mapName, 'sentinel');
+      draft
+        ..mapName = 'draft-change'
+        ..defaultZoom = 2.5
+        ..updateTile(
+          col: 1,
+          row: 0,
+          terrains: const [TerrainType.desert],
+          resources: const [],
+          height: 1,
+        )
+        ..removeObjectiveAt(1, 0);
+
+      expect(frozen.mapName, 'exported');
+      expect(frozen.defaultZoom, 1.75);
+      expect(frozen.objectives.single.id, 'pass_1');
+      expect(frozen.tileAt(const HexCoord(col: 1, row: 0))?.terrains, [
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
+      expect(
+        () => frozen.tiles.first.terrains.add(TerrainType.river),
+        throwsUnsupportedError,
+      );
     });
 
     test('keeps incomplete terrain editable until freeze', () {
@@ -70,6 +89,23 @@ void main() {
       expect(draft.tileAt(1, 0)?.terrains, isEmpty);
       expect(() => draft.freeze(), throwsA(isA<WorldMapException>()));
       expect(draft.tileAt(1, 0)?.terrains, isEmpty);
+    });
+
+    test('validates tile values before map metadata when freezing', () {
+      final draft = MapDraft.fromMapData(_sentinelMap())
+        ..defaultZoom = 0
+        ..clearTerrainsAt(1, 0);
+
+      expect(
+        draft.freeze,
+        throwsA(
+          isA<WorldMapException>().having(
+            (error) => error.message,
+            'message',
+            'Tile terrains must not be empty',
+          ),
+        ),
+      );
     });
 
     test('updates tiles and bounds while retaining valid objectives', () {
@@ -244,5 +280,41 @@ MapData _sentinelMap() {
         goldPerTurn: 1,
       ),
     ],
+  );
+}
+
+void _expectFrozenWorldMatches(WorldMap world, MapData source) {
+  expect(world.cols, source.cols);
+  expect(world.rows, source.rows);
+  expect(world.mapName, source.mapName);
+  expect(world.defaultZoom, source.defaultZoom);
+  expect(world.indexedTileCount, source.tiles.length);
+  expect(
+    world.tiles
+        .map(
+          (tile) => {
+            'col': tile.col,
+            'row': tile.row,
+            'terrains': tile.terrains.toList(),
+            'resources': tile.resources.toList(),
+            'height': tile.height,
+          },
+        )
+        .toList(),
+    source.tiles
+        .map(
+          (tile) => {
+            'col': tile.col,
+            'row': tile.row,
+            'terrains': tile.terrains.toList(),
+            'resources': tile.resources.toList(),
+            'height': tile.height,
+          },
+        )
+        .toList(),
+  );
+  expect(
+    world.objectives.map((objective) => objective.toJson()).toList(),
+    source.objectives.map((objective) => objective.toJson()).toList(),
   );
 }

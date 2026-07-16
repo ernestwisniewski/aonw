@@ -145,8 +145,8 @@ class MapData implements MapTileSource, MapReadView {
 
 /// Validates tile-local invariants before map-wide metadata.
 ///
-/// This preserves the public error ordering of the legacy [WorldMap]
-/// conversion without materializing a second map representation.
+/// This preserves canonical freezing's public error ordering without
+/// materializing a second map representation.
 void validateMapDataTileInvariants(MapData mapData) {
   for (final tile in mapData.tiles) {
     validateWorldMapTile(

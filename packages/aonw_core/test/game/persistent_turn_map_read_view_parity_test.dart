@@ -2,7 +2,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('advancePlayer forwards objectives owned by the legacy map', () {
+  test('advancePlayer forwards objectives owned by MapData', () {
     const objective = MapObjectiveDefinition(
       id: 'pass_1',
       type: MapObjectiveType.strategicPass,
@@ -45,11 +45,18 @@ void main() {
   });
 
   test(
-    'legacy and canonical read views advance economy and movement equally',
+    'MapData and canonical read views advance economy and movement equally',
     () {
       final mapData = _mapData();
       final mapView = WorldMapReadView(
-        LegacyWorldMapAdapter.fromMapData(mapData),
+        WorldMap.fromTileViews(
+          cols: mapData.cols,
+          rows: mapData.rows,
+          tiles: mapData.tiles,
+          objectives: mapData.objectives,
+          mapName: mapData.mapName,
+          defaultZoom: mapData.defaultZoom,
+        ),
       );
       final state = _turnState();
 
