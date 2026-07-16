@@ -66,6 +66,29 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/city/city_expansion_reducer.dart',
+    owner: 'CityExpansionReducer',
+    boundaries: [
+      _Boundary.method(
+        'selectExpansionHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_isCandidate',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/city_selection_projector.dart',
+    owner: 'CitySelectionProjector',
+    boundaries: [
+      _Boundary.method('project', parameter: 'mapTiles', type: 'MapTileLookup'),
+    ],
+  ),
+  _Target(
     path:
         'lib/game/domain/reducer/game_state/'
         'game_state_reducer_taps.dart',

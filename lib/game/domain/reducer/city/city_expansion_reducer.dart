@@ -5,12 +5,12 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityExpansionReducer {
   static GameStateTransition selectExpansionHexWithEnvironment(
@@ -32,7 +32,7 @@ abstract final class CityExpansionReducer {
   static GameStateTransition selectExpansionHex(
     GameState state,
     SelectCityExpansionHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -55,7 +55,7 @@ abstract final class CityExpansionReducer {
       city: city,
       target: target,
       state: state,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
     )) {
@@ -71,7 +71,7 @@ abstract final class CityExpansionReducer {
         selection: CitySelectionProjector.project(
           state: next,
           city: updatedCity,
-          mapTiles: mapData,
+          mapTiles: mapTiles,
           cityRuleset: cityRuleset,
           technologyRuleset: technologyRuleset,
           stabilityRuleset: stabilityRuleset,
@@ -88,7 +88,7 @@ abstract final class CityExpansionReducer {
     required GameCity city,
     required CityHex target,
     required GameState state,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {
@@ -99,7 +99,7 @@ abstract final class CityExpansionReducer {
     );
     final candidates = CityExpansionSelector.candidatesFor(
       city: city,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       cities: state.cities,
       allowCoast: true,
       allowOcean: true,

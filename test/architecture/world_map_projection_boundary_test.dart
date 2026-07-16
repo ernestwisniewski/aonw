@@ -20,7 +20,9 @@ const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/hex_assessment/hex_assessment_rules.dart',
+  'lib/game/domain/city_selection_projector.dart',
   'lib/game/domain/game_selection.dart',
+  'lib/game/domain/reducer/city/city_expansion_reducer.dart',
   'lib/game/domain/reducer/city/city_founding_reducer.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
