@@ -3,18 +3,18 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class WorkerReducer {
   static GameStateTransition selectWorkerImprovement(
     GameState state,
     SelectWorkerImprovementCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -38,7 +38,7 @@ abstract final class WorkerReducer {
       state,
       unitId: command.unitId,
       improvementType: command.improvementType,
-      mapData: mapData,
+      mapTiles: mapTiles,
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -49,7 +49,7 @@ abstract final class WorkerReducer {
   static GameStateTransition confirmWorkerImprovement(
     GameState state,
     ConfirmWorkerImprovementCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -70,7 +70,7 @@ abstract final class WorkerReducer {
       state,
       unitId: command.unitId,
       improvementType: improvementType,
-      mapData: mapData,
+      mapTiles: mapTiles,
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -82,7 +82,7 @@ abstract final class WorkerReducer {
     GameState state, {
     required String unitId,
     required FieldImprovementType improvementType,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required GameCommandContext context,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
@@ -101,7 +101,7 @@ abstract final class WorkerReducer {
       improvementType: improvementType,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       research: state.research,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -134,7 +134,7 @@ abstract final class WorkerReducer {
       pendingAction: null,
       selection: GameSelection.unit(
         updatedWorker,
-        tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
+        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
       ),
     );
 
@@ -144,7 +144,7 @@ abstract final class WorkerReducer {
   static GameStateTransition cancelWorkerJob(
     GameState state,
     CancelWorkerJobCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unitIndex = state.units.indexWhere(
@@ -166,7 +166,7 @@ abstract final class WorkerReducer {
     next = next.copyWithInteraction(
       selection: GameSelection.unit(
         updatedWorker,
-        tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
+        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
       ),
     );
 
@@ -176,7 +176,7 @@ abstract final class WorkerReducer {
   static GameStateTransition assignWorkerToHex(
     GameState state,
     AssignWorkerToHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unitIndex = state.units.indexWhere(
@@ -194,7 +194,7 @@ abstract final class WorkerReducer {
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
     );
     if (!legality.allowed) return GameStateTransition(state: state);
 
@@ -212,7 +212,7 @@ abstract final class WorkerReducer {
       movePreview: null,
       selection: GameSelection.unit(
         updatedWorker,
-        tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
+        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
       ),
     );
 
@@ -222,7 +222,7 @@ abstract final class WorkerReducer {
   static GameStateTransition cancelWorkerAssignment(
     GameState state,
     CancelWorkerAssignmentCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unitIndex = state.units.indexWhere(
@@ -245,7 +245,7 @@ abstract final class WorkerReducer {
     next = next.copyWithInteraction(
       selection: GameSelection.unit(
         updatedWorker,
-        tile: mapData.tileAt(updatedWorker.col, updatedWorker.row),
+        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
       ),
     );
 

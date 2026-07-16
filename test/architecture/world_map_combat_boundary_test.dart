@@ -11,6 +11,37 @@ part 'support/world_map_combat_boundary_fixtures.dart';
 
 const _targets = [
   _Target(
+    path: 'lib/game/domain/reducer/worker/worker_reducer.dart',
+    owner: 'WorkerReducer',
+    boundaries: [
+      _Boundary.method(
+        'selectWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'confirmWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'cancelWorkerJob',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'assignWorkerToHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'cancelWorkerAssignment',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/interaction/selection_reducer.dart',
     owner: 'SelectionReducer',
     boundaries: [

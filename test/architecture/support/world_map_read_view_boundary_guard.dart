@@ -1,7 +1,7 @@
 part of '../world_map_projection_boundary_test.dart';
 
 const _mapTileViewMigrationPaths = {
-  ..._interactionSelectionPaths,
+  ..._rootMapViewMigrationPaths,
   '$_coreLib/ai/simulation/economy_simulation_command_staleness.dart',
   '$_gameDomain/city/city_expansion_rules.dart',
   '$_gameDomain/city/city_expansion_selector.dart',
