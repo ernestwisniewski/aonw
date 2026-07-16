@@ -21,15 +21,19 @@ const _legacyWorldMapAdapterPath =
 const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/hex_assessment/hex_assessment_rules.dart',
   'lib/game/domain/game_selection.dart',
+  'lib/game/domain/reducer/city/city_founding_reducer.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
   'lib/game/domain/reducer/worker/worker_reducer.dart',
+  'lib/game/presentation/widgets/hud/city/'
+      'hud_city_founding_availability.dart',
   'lib/game/presentation/widgets/selection/view_models/'
       'selection_resource_value_card_factory.dart',
   'lib/game/presentation/widgets/selection/view_models/'
       'selection_value_formatters.dart',
   'lib/game/presentation/widgets/selection/view_models/'
       'tile_selection_view_model_factory.dart',
+  '$_gameDomain/city/city_initial_territory_selector.dart',
   '$_gameDomain/trade/persistent_resource_trade_resolver.dart',
 };
 const _mapDataFreeMigrationPaths = {

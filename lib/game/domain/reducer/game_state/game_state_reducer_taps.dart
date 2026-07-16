@@ -206,15 +206,15 @@ abstract final class _GameStateTapReducer {
   static GameStateTransition _cityFoundingDraftTileTap(
     GameState state,
     TileTappedCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tileData = mapData.tileAt(command.col, command.row);
+    final tileData = mapTiles.tileAt(command.col, command.row);
     if (tileData == null) return GameStateTransition(state: state);
     if (!state.activePlayerVisibility.canInspectTile(tileData)) {
       return GameStateTransition(state: state);
     }
     return GameStateTransition(
-      state: CityFoundingReducer.toggleControlledHex(state, command, mapData),
+      state: CityFoundingReducer.toggleControlledHex(state, command, mapTiles),
     );
   }
 

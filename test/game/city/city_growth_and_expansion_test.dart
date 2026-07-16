@@ -104,7 +104,7 @@ void main() {
 
       final selected = CityInitialTerritorySelector.select(
         center: center,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: const [],
       );
 
@@ -135,7 +135,7 @@ void main() {
 
       final selected = CityInitialTerritorySelector.select(
         center: center,
-        mapData: mapData,
+        mapTiles: mapData,
         cities: const [],
         count: 1,
         ruleset: ruleset,

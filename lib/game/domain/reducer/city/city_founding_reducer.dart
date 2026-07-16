@@ -4,15 +4,15 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityFoundingReducer {
   static GameState startCityFounding(
     GameState state,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
   }) {
@@ -20,7 +20,7 @@ abstract final class CityFoundingReducer {
     if (unit == null || !context.canControlUnit(state, unit)) return state;
     if (unit.isWorking) return state;
 
-    final centerTile = mapData.tileAt(unit.col, unit.row);
+    final centerTile = mapTiles.tileAt(unit.col, unit.row);
     if (!CityFoundingRules.canStart(
       unit: unit,
       centerTile: centerTile,
@@ -32,7 +32,7 @@ abstract final class CityFoundingReducer {
     final center = CityHex(col: unit.col, row: unit.row);
     final candidates = CityInitialTerritorySelector.select(
       center: center,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cities: state.cities,
       ruleset: cityRuleset,
     );
@@ -61,12 +61,12 @@ abstract final class CityFoundingReducer {
   static GameState toggleControlledHex(
     GameState state,
     TileTappedCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final draft = state.cityFoundingDraft;
     if (draft == null) return state;
 
-    final tile = mapData.tileAt(command.col, command.row);
+    final tile = mapTiles.tileAt(command.col, command.row);
     if (tile == null) return state;
 
     final target = CityHex(col: command.col, row: command.row);
@@ -89,7 +89,7 @@ abstract final class CityFoundingReducer {
     if (!CityFoundingRules.isControlledHexCandidate(
       draft: draft,
       tile: tile,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       cities: state.cities,
     )) {
       return state;
@@ -104,7 +104,7 @@ abstract final class CityFoundingReducer {
 
   static GameStateTransition confirmCityFounding(
     GameState state,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     FoundCityCommand? command,
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
@@ -123,7 +123,7 @@ abstract final class CityFoundingReducer {
     }
     final startFailure = CityFoundingRules.startFailure(
       unit: founder,
-      centerTile: mapData.tileAt(founder.col, founder.row),
+      centerTile: mapTiles.tileAt(founder.col, founder.row),
       cities: state.cities,
     );
     if (startFailure != null) {
@@ -135,7 +135,7 @@ abstract final class CityFoundingReducer {
     if (draft == null || CityFoundingRules.confirmFailure(draft) != null) {
       return GameStateTransition(state: state);
     }
-    if (!_controlledHexesAreValid(draft, mapData, state.cities)) {
+    if (!_controlledHexesAreValid(draft, mapTiles, state.cities)) {
       return GameStateTransition(state: state);
     }
 
@@ -159,7 +159,7 @@ abstract final class CityFoundingReducer {
           pendingAction: null,
         );
     if (state.selectedUnitId == founder.id) {
-      final founderTile = mapData.tileAt(
+      final founderTile = mapTiles.tileAt(
         updatedFounder.col,
         updatedFounder.row,
       );
@@ -191,18 +191,18 @@ abstract final class CityFoundingReducer {
 
   static bool _controlledHexesAreValid(
     CityFoundingDraft draft,
-    MapData mapData,
+    MapTileLookup mapTiles,
     Iterable<GameCity> cities,
   ) {
     final unique = draft.controlledHexes.toSet();
     if (unique.length != draft.controlledHexes.length) return false;
     for (final hex in draft.controlledHexes) {
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) return false;
       if (!CityFoundingRules.isControlledHexCandidate(
         draft: draft,
         tile: tile,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
         cities: cities,
       )) {
         return false;

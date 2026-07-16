@@ -212,7 +212,7 @@ class HudOverlayFrame {
     );
     final canStartCityFounding = HudCityFoundingAvailability.canStart(
       state: gameState,
-      mapData: session.mapData,
+      mapTiles: session.mapData,
     );
     final cityProductionContext = HudCityProductionContext.from(
       modes: modes,
@@ -346,7 +346,7 @@ class HudOverlayFrame {
       cityFoundingBlockedReason: selectedUnitCanAct
           ? _cityFoundingBlockedReason(
               gameState: gameState,
-              mapData: session.mapData,
+              mapTiles: session.mapData,
               l10n: l10n,
             )
           : null,
@@ -555,7 +555,7 @@ class HudOverlayFrame {
 
   static String? _cityFoundingBlockedReason({
     required GameState? gameState,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required AppLocalizations l10n,
   }) {
     final unit = gameState?.selectedUnit;
@@ -564,7 +564,7 @@ class HudOverlayFrame {
     }
     final failure = CityFoundingRules.startFailure(
       unit: unit,
-      centerTile: mapData.tileAt(unit.col, unit.row),
+      centerTile: mapTiles.tileAt(unit.col, unit.row),
       cities: gameState?.cities ?? const [],
     );
     return _cityFoundingFailureReason(failure, l10n);

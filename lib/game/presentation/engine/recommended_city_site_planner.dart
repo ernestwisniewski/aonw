@@ -110,7 +110,7 @@ class RecommendedCitySitePlanner {
     );
     final initialHexes = CityInitialTerritorySelector.select(
       center: center,
-      mapData: mapData,
+      mapTiles: mapData,
       cities: state.cities,
       ruleset: CityRulesets.standard,
     ).toSet();

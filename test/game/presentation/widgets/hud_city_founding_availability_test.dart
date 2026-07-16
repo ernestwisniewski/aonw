@@ -19,20 +19,23 @@ void main() {
       );
 
       expect(
-        HudCityFoundingAvailability.canStart(state: state, mapData: _mapData()),
+        HudCityFoundingAvailability.canStart(
+          state: state,
+          mapTiles: _mapData(),
+        ),
         isTrue,
       );
     });
 
     test('rejects missing state or missing selected unit', () {
       expect(
-        HudCityFoundingAvailability.canStart(state: null, mapData: _mapData()),
+        HudCityFoundingAvailability.canStart(state: null, mapTiles: _mapData()),
         isFalse,
       );
       expect(
         HudCityFoundingAvailability.canStart(
           state: const GameState(activePlayerId: 'player_1'),
-          mapData: _mapData(),
+          mapTiles: _mapData(),
         ),
         isFalse,
       );
@@ -49,7 +52,10 @@ void main() {
       );
 
       expect(
-        HudCityFoundingAvailability.canStart(state: state, mapData: _mapData()),
+        HudCityFoundingAvailability.canStart(
+          state: state,
+          mapTiles: _mapData(),
+        ),
         isFalse,
       );
     });
@@ -65,7 +71,10 @@ void main() {
       );
 
       expect(
-        HudCityFoundingAvailability.canStart(state: state, mapData: _mapData()),
+        HudCityFoundingAvailability.canStart(
+          state: state,
+          mapTiles: _mapData(),
+        ),
         isFalse,
       );
     });

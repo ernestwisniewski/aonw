@@ -45,6 +45,66 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/city/city_founding_reducer.dart',
+    owner: 'CityFoundingReducer',
+    boundaries: [
+      _Boundary.method(
+        'startCityFounding',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'toggleControlledHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'confirmCityFounding',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/game_state/'
+        'game_state_reducer_taps.dart',
+    owner: '_GameStateTapReducer',
+    boundaries: [
+      _Boundary.method(
+        '_cityFoundingDraftTileTap',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/presentation/widgets/hud/city/'
+        'hud_city_founding_availability.dart',
+    owner: 'HudCityFoundingAvailability',
+    boundaries: [
+      _Boundary.method(
+        'canStart',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/presentation/widgets/hud/overlay/'
+        'hud_overlay_frame.dart',
+    owner: 'HudOverlayFrame',
+    boundaries: [
+      _Boundary.method(
+        '_cityFoundingBlockedReason',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/worker/worker_reducer.dart',
     owner: 'WorkerReducer',
     boundaries: [
@@ -203,6 +263,15 @@ const _targets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'city_initial_territory_selector.dart',
+    owner: 'CityInitialTerritorySelector',
+    boundaries: [
+      _Boundary.method('select', parameter: 'mapTiles', type: 'MapTileLookup'),
     ],
   ),
   _Target(

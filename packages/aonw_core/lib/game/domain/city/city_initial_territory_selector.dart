@@ -1,20 +1,19 @@
 import 'package:aonw_core/game/domain/city/city_expansion_rules.dart';
 import 'package:aonw_core/game/domain/city/city_expansion_selector.dart';
+import 'package:aonw_core/game/domain/city/city_founding_draft.dart';
 import 'package:aonw_core/game/domain/city/city_hex.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityInitialTerritorySelector {
-  static const requiredControlledHexes = 2;
-
   static List<CityHex> select({
     required CityHex center,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required Iterable<GameCity> cities,
-    int count = requiredControlledHexes,
+    int count = CityFoundingDraft.requiredControlledHexes,
     bool allowCoast = false,
     bool allowOcean = false,
     CityRuleset ruleset = CityRulesets.standard,
@@ -31,7 +30,7 @@ abstract final class CityInitialTerritorySelector {
       row: center.row,
     )) {
       final hex = CityHex(col: neighbor.col, row: neighbor.row);
-      final tile = mapData.tileAt(hex.col, hex.row);
+      final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) continue;
       if (!CityExpansionRules.canClaim(
         city: temporaryCity,
