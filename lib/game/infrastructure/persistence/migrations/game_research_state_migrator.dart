@@ -37,6 +37,9 @@ abstract final class GameResearchStateMigrator {
       'progressByTechnologyId': _knownProgressMap(
         json['progressByTechnologyId'],
       ),
+      if (json['scienceOverflow'] case final num scienceOverflow
+          when scienceOverflow.toInt() > 0)
+        'scienceOverflow': scienceOverflow.toInt(),
     };
   }
 

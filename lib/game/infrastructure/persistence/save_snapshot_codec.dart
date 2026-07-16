@@ -52,6 +52,7 @@ abstract final class SaveSnapshotCodec {
         ),
         _ => ResearchState.empty.toJson(),
       },
+      'wonderRegistry': json['wonderRegistry'],
       'runtimeState': switch (json['runtimeState']) {
         final Map<String, dynamic> value => GameRuntimeStateMigrator.migrate(
           value,

@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -164,6 +165,90 @@ void main() {
         'warrior_1',
       );
       expect(restored.eventLogOffset, 9);
+    });
+
+    test('round-trips current fog, research, and wonder sentinels', () {
+      const discoveredOnlyHex = HexCoordinate(col: 1, row: 2);
+      const visibleHex = HexCoordinate(col: 3, row: 4);
+      final snapshot = SaveSnapshot(
+        save: _save(),
+        fogOfWar: FogOfWarState(
+          players: {
+            'p1': PlayerFogOfWar(
+              playerId: 'p1',
+              discoveredHexes: {discoveredOnlyHex},
+              visibleHexes: {visibleHex},
+            ),
+          },
+        ),
+        research: ResearchState(
+          players: {
+            'p1': PlayerResearchState(
+              activeTechnologyId: TechnologyId.mining,
+              scienceOverflow: 17,
+            ),
+          },
+        ),
+        wonderRegistry: const WonderRegistry(
+          completedBy: {WonderType.greatLibrary: 'p1'},
+        ),
+      );
+      final json = SaveSnapshotCodec.toJson(snapshot);
+
+      final restored = SaveSnapshotCodec.fromJson(json);
+
+      final restoredFog = restored.fogOfWar.fogForPlayer('p1');
+      expect(restoredFog.discoveredHexes, {discoveredOnlyHex, visibleHex});
+      expect(restoredFog.visibleHexes, {visibleHex});
+      expect(restored.research.forPlayer('p1').scienceOverflow, 17);
+      expect(restored.wonderRegistry.ownerOf(WonderType.greatLibrary), 'p1');
+      expect(SaveSnapshotCodec.toJson(restored), json);
+    });
+
+    test('defaults state fields omitted by older snapshots', () {
+      const discoveredHex = HexCoordinate(col: 5, row: 6);
+      final json = SaveSnapshotCodec.toJson(
+        SaveSnapshot(
+          save: _save(),
+          fogOfWar: FogOfWarState(
+            players: {
+              'p1': PlayerFogOfWar(
+                playerId: 'p1',
+                discoveredHexes: {discoveredHex},
+              ),
+            },
+          ),
+          research: ResearchState(
+            players: {
+              'p1': PlayerResearchState(
+                activeTechnologyId: TechnologyId.mining,
+                scienceOverflow: 17,
+              ),
+            },
+          ),
+          wonderRegistry: const WonderRegistry(
+            completedBy: {WonderType.greatLibrary: 'p1'},
+          ),
+        ),
+      )..remove('wonderRegistry');
+      ((json['fogOfWar'] as List<dynamic>).single as Map<String, dynamic>)
+          .remove('visibleHexes');
+      (((json['research'] as Map<String, dynamic>)['players']
+                  as Map<String, dynamic>)['p1']
+              as Map<String, dynamic>)
+          .remove('scienceOverflow');
+
+      final restored = SaveSnapshotCodec.fromJson(json);
+
+      final restoredFog = restored.fogOfWar.fogForPlayer('p1');
+      expect(restoredFog.discoveredHexes, {discoveredHex});
+      expect(restoredFog.visibleHexes, isEmpty);
+      expect(
+        restored.research.forPlayer('p1').activeTechnologyId,
+        TechnologyId.mining,
+      );
+      expect(restored.research.forPlayer('p1').scienceOverflow, 0);
+      expect(restored.wonderRegistry, WonderRegistry.empty);
     });
 
     test('defaults stability state for snapshots created before stability', () {

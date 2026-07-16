@@ -8,6 +8,7 @@ abstract final class GameFogOfWarStateMigrator {
           {
             'playerId': entry['playerId'],
             'discoveredHexes': _migrateHexes(entry['discoveredHexes']),
+            'visibleHexes': _migrateHexes(entry['visibleHexes']),
           },
     ];
   }
