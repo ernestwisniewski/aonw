@@ -12,6 +12,7 @@ part 'support/economy_simulation_map_view_fixtures.dart';
 part 'support/local_reducer_map_view_guard.dart';
 part 'support/local_reducer_map_view_fixtures.dart';
 part 'support/server_map_cache_boundary_guard.dart';
+part 'support/server_map_cache_flow_guard.dart';
 part 'support/server_map_cache_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_guard.dart';

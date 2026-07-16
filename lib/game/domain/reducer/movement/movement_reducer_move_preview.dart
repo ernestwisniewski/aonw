@@ -66,7 +66,7 @@ abstract final class _MovePreviewReducer {
 
     final next = state.copyWithInteraction(
       movePreview: plan,
-      selection: MovementReducer._unitSelection(state, selected, mapView),
+      selection: _MoveSelection.forUnit(state, selected, mapView),
     );
     return GameStateTransition(state: next);
   }

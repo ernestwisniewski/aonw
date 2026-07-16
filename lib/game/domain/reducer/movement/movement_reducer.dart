@@ -22,6 +22,7 @@ import 'package:aonw_core/map/domain/map_tile_view.dart';
 part 'movement_reducer_auto_explore.dart';
 part 'movement_reducer_direct_move.dart';
 part 'movement_reducer_move_preview.dart';
+part 'movement_selection_projector.dart';
 part 'movement_reducer_turn_reset.dart';
 part 'movement_reducer_unit_action_state.dart';
 
@@ -461,19 +462,7 @@ abstract final class MovementReducer {
     MapTileLookup mapTiles,
   ) {
     return state.copyWithInteraction(
-      selection: _unitSelection(state, unit, mapTiles),
-    );
-  }
-
-  static GameSelection _unitSelection(
-    GameState state,
-    GameUnit unit,
-    MapTileLookup mapTiles,
-  ) {
-    final tile = mapTiles.tileAt(unit.col, unit.row);
-    return GameSelection.unit(unit, tile: tile).withVisibleResources(
-      playerId: state.activePlayerId,
-      research: state.research,
+      selection: _MoveSelection.forUnit(state, unit, mapTiles),
     );
   }
 }
