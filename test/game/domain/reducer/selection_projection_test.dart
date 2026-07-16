@@ -7,11 +7,15 @@ import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -97,6 +101,10 @@ void main() {
   );
 
   group('SelectionRefreshPhase', () {
+    final MapTileLookup mapTiles = WorldMapReadView(
+      _selectionRefreshWorldMap(),
+    );
+
     test('selects a city founded by the previously selected unit', () {
       final founder = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
@@ -119,12 +127,20 @@ void main() {
       );
 
       final refreshed = const SelectionRefreshPhase().apply(
-        _context(state, mapData),
+        _context(state, mapTiles),
       );
 
       expect(refreshed.state.selection?.type, GameSelectionType.city);
       expect(refreshed.state.selection?.city, same(foundedCity));
+      expect(refreshed.state.selection?.unit, isNull);
+      expect(refreshed.state.selection?.tile, isNull);
       expect(refreshed.state.selection?.cityYield, isNotNull);
+      expect(refreshed.state.selection?.cityTileYieldBreakdown, isNotNull);
+      expect(refreshed.state.selection?.cityEconomy, isNotNull);
+      expect(mapTiles.tileAt(1, 1)?.resources, [
+        ResourceType.oil,
+        ResourceType.wheat,
+      ]);
     });
 
     test('reprojects an updated selected city', () {
@@ -159,7 +175,7 @@ void main() {
       final refreshed = const SelectionRefreshPhase().apply(
         _context(
           state,
-          mapData,
+          mapTiles,
           ruleset: GameRuleset.standard().copyWith(
             stability: _customStabilityRuleset,
           ),
@@ -174,6 +190,81 @@ void main() {
         StabilityPolicy.modifierFor(StabilityBand.unrest),
       );
     });
+
+    test('hides unrevealed resources when refreshing a selected unit', () {
+      final selectedUnit = GameUnit.startingWarrior(
+        ownerPlayerId: 'player_1',
+        col: 1,
+        row: 1,
+      ).copyWith(movementPoints: 0);
+      final updatedUnit = selectedUnit.copyWith(movementPoints: 2);
+      final state = GameState(
+        units: [updatedUnit],
+        activePlayerId: 'player_1',
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(selectedUnit),
+        ),
+      );
+
+      final refreshed = const SelectionRefreshPhase().apply(
+        _context(state, mapTiles),
+      );
+
+      expect(refreshed.state.selection?.unit, same(updatedUnit));
+      expect(refreshed.state.selection?.tile?.resources, [ResourceType.wheat]);
+      expect(mapTiles.tileAt(1, 1)?.resources, [
+        ResourceType.oil,
+        ResourceType.wheat,
+      ]);
+    });
+
+    test(
+      'keeps revealed and hides unrevealed resources for an improvement',
+      () {
+        const selectedImprovement = FieldImprovement(
+          hex: CityHex(col: 2, row: 1),
+          type: FieldImprovementType.farm,
+          builtByCityId: 'old_city',
+        );
+        const updatedImprovement = FieldImprovement(
+          hex: CityHex(col: 2, row: 1),
+          type: FieldImprovementType.farm,
+          builtByCityId: 'city_1',
+        );
+        final state = GameState(
+          fieldImprovements: const [updatedImprovement],
+          activePlayerId: 'player_1',
+          research: ResearchState(
+            players: {
+              'player_1': PlayerResearchState(
+                unlockedTechnologyIds: {TechnologyId.combustion},
+              ),
+            },
+          ),
+          interaction: GameInteractionState(
+            selection: GameSelection.fieldImprovement(selectedImprovement),
+          ),
+        );
+
+        final refreshed = const SelectionRefreshPhase().apply(
+          _context(state, mapTiles),
+        );
+
+        expect(
+          refreshed.state.selection?.fieldImprovement,
+          same(updatedImprovement),
+        );
+        expect(refreshed.state.selection?.tile?.resources, [
+          ResourceType.oil,
+          ResourceType.wheat,
+        ]);
+        expect(mapTiles.tileAt(2, 1)?.resources, [
+          ResourceType.oil,
+          ResourceType.horses,
+          ResourceType.wheat,
+        ]);
+      },
+    );
   });
 }
 
@@ -207,3 +298,28 @@ MapData _map() => MapData(
         ),
   ],
 );
+
+WorldMap _selectionRefreshWorldMap() {
+  return WorldMap(
+    cols: 3,
+    rows: 3,
+    tiles: [
+      for (var row = 0; row < 3; row += 1)
+        for (var col = 0; col < 3; col += 1)
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.plains],
+            resources: switch ((col, row)) {
+              (1, 1) => const [ResourceType.oil, ResourceType.wheat],
+              (2, 1) => const [
+                ResourceType.oil,
+                ResourceType.horses,
+                ResourceType.wheat,
+              ],
+              _ => const [],
+            },
+            height: 0,
+          ),
+    ],
+  );
+}

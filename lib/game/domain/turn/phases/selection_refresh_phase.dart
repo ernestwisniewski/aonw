@@ -59,12 +59,15 @@ class SelectionRefreshPhase extends TurnPhase {
       return state.copyWithInteraction(selection: null);
     }
 
-    return state.copyWithInteraction(
-      selection: GameSelection.unit(
-        updatedUnit,
-        tile: context.mapTiles.tileAt(updatedUnit.col, updatedUnit.row),
-      ),
-    );
+    final selection =
+        GameSelection.unit(
+          updatedUnit,
+          tile: context.mapTiles.tileAt(updatedUnit.col, updatedUnit.row),
+        ).withVisibleResources(
+          playerId: state.activePlayerId,
+          research: state.research,
+        );
+    return state.copyWithInteraction(selection: selection);
   }
 
   GameState _refreshFieldImprovementSelection(TurnContext context) {
@@ -83,15 +86,18 @@ class SelectionRefreshPhase extends TurnPhase {
       return state.copyWithInteraction(selection: null);
     }
 
-    return state.copyWithInteraction(
-      selection: GameSelection.fieldImprovement(
-        updatedImprovement,
-        tile: context.mapTiles.tileAt(
-          updatedImprovement.hex.col,
-          updatedImprovement.hex.row,
-        ),
-      ),
-    );
+    final selection =
+        GameSelection.fieldImprovement(
+          updatedImprovement,
+          tile: context.mapTiles.tileAt(
+            updatedImprovement.hex.col,
+            updatedImprovement.hex.row,
+          ),
+        ).withVisibleResources(
+          playerId: state.activePlayerId,
+          research: state.research,
+        );
+    return state.copyWithInteraction(selection: selection);
   }
 
   GameState _refreshCitySelection(TurnContext context) {
