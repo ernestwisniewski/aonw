@@ -111,6 +111,28 @@ jobs:
       - name: Test
         run: ${{ matrix.test }}
 
+      - name: Build coverage baseline diagnostic
+        if: always() && matrix.package != 'server_client'
+        continue-on-error: true
+        run: |
+          report="coverage/${{ matrix.package }}.lcov.info"
+          if [ -f "$report" ]; then
+            dart run tool/check_coverage.dart snapshot \
+              --scope "${{ matrix.package }}" \
+              > "/tmp/aonw-coverage-${{ matrix.package }}.json"
+          fi
+
+      - name: Upload coverage diagnostics
+        if: always() && matrix.package != 'server_client'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-${{ matrix.package }}-${{ github.sha }}
+          path: |
+            /tmp/aonw-coverage-${{ matrix.package }}.json
+            coverage/${{ matrix.package }}.lcov.info
+          if-no-files-found: ignore
+          retention-days: 14
+
   mutation-gate:
     name: mutation gate
     runs-on: ubuntu-latest
