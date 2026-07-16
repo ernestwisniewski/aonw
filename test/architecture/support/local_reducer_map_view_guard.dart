@@ -66,126 +66,138 @@ List<String> _localReducerMapViewViolations() {
 }
 
 List<String> _localReducerMapViewViolationsFor(Map<String, String> sources) {
-  final violations = <String>[];
-  final constructionsByPath = <String, List<ArgumentList>>{};
-  final runAiTurnUseCaseConstructionsByPath = <String, List<ArgumentList>>{};
+  final localReducerConstructions = _typeConstructionsByPath(
+    sources,
+    'GameStateReducer',
+  );
+  final runAiTurnUseCaseConstructions = _typeConstructionsByPath(
+    sources,
+    'RunAiTurnUseCase',
+  );
+  return [
+    ..._unexpectedConstructionRootViolations(
+      constructions: localReducerConstructions,
+      contracts: _localReducerConstructionContracts,
+      typeName: 'GameStateReducer',
+      approvedRoots: 'indexed local composition roots',
+    ),
+    ..._constructionContractViolations(
+      sources: sources,
+      constructions: localReducerConstructions,
+      contracts: _localReducerConstructionContracts,
+      typeName: 'GameStateReducer',
+      missingRoot: 'a local reducer composition root',
+    ),
+    ..._unexpectedConstructionRootViolations(
+      constructions: runAiTurnUseCaseConstructions,
+      contracts: _runAiTurnUseCaseConstructionContracts,
+      typeName: 'RunAiTurnUseCase',
+      approvedRoots: 'indexed AI composition roots',
+    ),
+    ..._constructionContractViolations(
+      sources: sources,
+      constructions: runAiTurnUseCaseConstructions,
+      contracts: _runAiTurnUseCaseConstructionContracts,
+      typeName: 'RunAiTurnUseCase',
+      missingRoot: 'an AI composition root',
+    ),
+    ..._indexedReadCountViolations(sources),
+    ..._localCommandResolverViolations(sources),
+  ];
+}
 
+Map<String, List<ArgumentList>> _typeConstructionsByPath(
+  Map<String, String> sources,
+  String typeName,
+) {
+  final constructions = <String, List<ArgumentList>>{};
   for (final entry in sources.entries) {
     final unit = parseString(content: entry.value, path: entry.key).unit;
-    final collector = _TypeConstructionCollector('GameStateReducer');
+    final collector = _TypeConstructionCollector(typeName);
     unit.accept(collector);
-    if (collector.calls.isNotEmpty) {
-      constructionsByPath[entry.key] = collector.calls;
-    }
-    final runAiTurnUseCaseCollector = _TypeConstructionCollector(
-      'RunAiTurnUseCase',
-    );
-    unit.accept(runAiTurnUseCaseCollector);
-    if (runAiTurnUseCaseCollector.calls.isNotEmpty) {
-      runAiTurnUseCaseConstructionsByPath[entry.key] =
-          runAiTurnUseCaseCollector.calls;
-    }
+    if (collector.calls.isNotEmpty) constructions[entry.key] = collector.calls;
   }
+  return constructions;
+}
 
-  for (final entry in constructionsByPath.entries) {
-    if (!_localReducerConstructionContracts.containsKey(entry.key)) {
-      violations.add(
-        '${entry.key} must not construct GameStateReducer outside the '
-        'indexed local composition roots',
-      );
-    }
-  }
+List<String> _unexpectedConstructionRootViolations({
+  required Map<String, List<ArgumentList>> constructions,
+  required Map<String, ({int count, Set<String> mapSources})> contracts,
+  required String typeName,
+  required String approvedRoots,
+}) => [
+  for (final path in constructions.keys)
+    if (!contracts.containsKey(path))
+      '$path must not construct $typeName outside the $approvedRoots',
+];
 
-  for (final entry in runAiTurnUseCaseConstructionsByPath.entries) {
-    if (!_runAiTurnUseCaseConstructionContracts.containsKey(entry.key)) {
-      violations.add(
-        '${entry.key} must not construct RunAiTurnUseCase outside the '
-        'indexed AI composition roots',
-      );
-    }
-  }
-
-  for (final contractEntry in _localReducerConstructionContracts.entries) {
-    final path = contractEntry.key;
-    final contract = contractEntry.value;
-    final source = sources[path];
-    if (source == null) {
-      violations.add('$path must remain a local reducer composition root');
+List<String> _constructionContractViolations({
+  required Map<String, String> sources,
+  required Map<String, List<ArgumentList>> constructions,
+  required Map<String, ({int count, Set<String> mapSources})> contracts,
+  required String typeName,
+  required String missingRoot,
+}) {
+  final violations = <String>[];
+  for (final entry in contracts.entries) {
+    final path = entry.key;
+    final contract = entry.value;
+    if (!sources.containsKey(path)) {
+      violations.add('$path must remain $missingRoot');
       continue;
     }
-    final constructions = constructionsByPath[path] ?? const [];
-    if (constructions.length != contract.count) {
+    final calls = constructions[path] ?? const [];
+    if (calls.length != contract.count) {
       violations.add(
-        '$path must construct GameStateReducer exactly ${contract.count} '
-        'time(s); found '
-        '${constructions.length}',
+        '$path must construct $typeName exactly ${contract.count} time(s); '
+        'found ${calls.length}',
       );
     }
-    for (final construction in constructions) {
-      final mapData = _namedArgument(construction, 'mapData');
-      final source = mapData?.toSource() ?? '<missing>';
-      if (!contract.mapSources.contains(source)) {
+    for (final call in calls) {
+      final mapSource =
+          _namedArgument(call, 'mapData')?.toSource() ?? '<missing>';
+      if (!contract.mapSources.contains(mapSource)) {
         violations.add(
           '$path must pass an approved indexed MapReadView to '
-          'GameStateReducer.mapData; found $source',
+          '$typeName.mapData; found $mapSource',
         );
       }
     }
   }
+  return violations;
+}
 
-  for (final contractEntry in _runAiTurnUseCaseConstructionContracts.entries) {
-    final path = contractEntry.key;
-    final contract = contractEntry.value;
-    final source = sources[path];
+List<String> _indexedReadCountViolations(Map<String, String> sources) {
+  final violations = <String>[];
+  for (final entry in _localReducerIndexedReadCounts.entries) {
+    final source = sources[entry.key];
     if (source == null) {
-      violations.add('$path must remain an AI composition root');
-      continue;
-    }
-    final constructions = runAiTurnUseCaseConstructionsByPath[path] ?? const [];
-    if (constructions.length != contract.count) {
       violations.add(
-        '$path must construct RunAiTurnUseCase exactly ${contract.count} '
-        'time(s); found ${constructions.length}',
+        '${entry.key} must remain covered by the map-view index guard',
       );
-    }
-    for (final construction in constructions) {
-      final mapData = _namedArgument(construction, 'mapData');
-      final source = mapData?.toSource() ?? '<missing>';
-      if (!contract.mapSources.contains(source)) {
-        violations.add(
-          '$path must pass an approved indexed MapReadView to '
-          'RunAiTurnUseCase.mapData; found $source',
-        );
-      }
-    }
-  }
-
-  for (final countEntry in _localReducerIndexedReadCounts.entries) {
-    final path = countEntry.key;
-    final expectedCount = countEntry.value;
-    final source = sources[path];
-    if (source == null) {
-      violations.add('$path must remain covered by the map-view index guard');
       continue;
     }
-    final unit = parseString(content: source, path: path).unit;
+    final unit = parseString(content: source, path: entry.key).unit;
     final indexedReads = _NamedInvocationCollector('indexedReadView');
     unit.accept(indexedReads);
-    if (indexedReads.invocations.length != expectedCount) {
+    if (indexedReads.invocations.length != entry.value) {
       violations.add(
-        '$path must call indexedReadView exactly $expectedCount time(s); found '
-        '${indexedReads.invocations.length}',
+        '${entry.key} must call indexedReadView exactly ${entry.value} '
+        'time(s); found ${indexedReads.invocations.length}',
       );
     }
   }
+  return violations;
+}
 
+List<String> _localCommandResolverViolations(Map<String, String> sources) {
   final resolverSource = sources[_localCommandResolverPath];
   if (resolverSource == null) {
-    violations.add(
+    return [
       '$_localCommandResolverPath must forward the indexed reducer map view',
-    );
-    return violations;
+    ];
   }
+  final violations = <String>[];
   final resolverUnit = parseString(
     content: resolverSource,
     path: _localCommandResolverPath,
