@@ -23,6 +23,7 @@ import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'persistent_city_production_supply.dart';
+part 'persistent_city_production_rush.dart';
 
 class PersistentCityProductionResult {
   const PersistentCityProductionResult({
@@ -313,47 +314,16 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final technologyEffects = TechnologyEffectSummary.forPlayer(
-      playerId: city.ownerPlayerId,
-      research: state.research,
-      ruleset: technologyRuleset,
-    );
-    final cityYield = CityYieldCalculator.totalFor(
-      city,
-      mapTiles,
-      fieldImprovements: state.fieldImprovements,
-      units: state.units,
-      artifacts: state.artifacts,
-      ruleset: cityRuleset,
-    );
-    final cityEconomy = CityEconomyBreakdown.from(
+    final productionPerTurn = _rushProductionPerTurn(
+      state: state,
       city: city,
-      tileYield: cityYield,
-      mapTiles: mapTiles,
-      ruleset: cityRuleset,
-      technologyEffects: technologyEffects,
-      paceBalance: paceBalance,
-      cities: state.cities,
-      wonderRegistry: state.wonderRegistry,
-      wonderRuleset: wonderRuleset,
-      stabilityModifier: StabilityPolicy.modifierForNet(
-        state.playerStabilityNet[city.ownerPlayerId] ?? 0,
-        ruleset: stabilityRuleset,
-      ),
-    );
-    var productionPerTurn = CityProductionRules.productionPerTurn(
-      cityEconomy.netYield.production,
-    );
-    if (queue.target is UnitProductionTarget) {
-      productionPerTurn = CityTechnologyEffectRules.unitProductionPerTurn(
-        productionPerTurn,
-        effects: technologyEffects,
-      );
-    }
-    productionPerTurn = CitySpecializationRules.productionPerTurnForTarget(
-      productionPerTurn: productionPerTurn,
       target: queue.target,
-      specialization: city.specialization,
+      mapTiles: mapTiles,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
     );
 
     final targetCost = CityProductionRules.targetCost(
