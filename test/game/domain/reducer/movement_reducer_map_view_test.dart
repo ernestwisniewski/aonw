@@ -14,77 +14,10 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-typedef _UnitAction =
-    GameStateTransition Function(
-      GameState state,
-      MapTileLookup mapTiles,
-      GameUnit unit,
-    );
+part 'movement_reducer_map_lookup_tests.dart';
 
 void main() {
-  final actions = <({String name, _UnitAction apply})>[
-    (
-      name: 'cancel',
-      apply: (state, mapTiles, unit) => MovementReducer.cancelUnitAction(
-        state,
-        CancelUnitActionCommand(unit.id),
-        mapTiles,
-      ),
-    ),
-    (
-      name: 'skip',
-      apply: (state, mapTiles, unit) => MovementReducer.skipUnitTurn(
-        state,
-        SkipUnitTurnCommand(unit.id),
-        mapTiles,
-      ),
-    ),
-    (
-      name: 'fortify',
-      apply: (state, mapTiles, unit) => MovementReducer.fortifyUnit(
-        state,
-        FortifyUnitCommand(unit.id),
-        mapTiles,
-      ),
-    ),
-  ];
-
-  for (final action in actions) {
-    test(
-      '${action.name} refreshes selection through a canonical map lookup',
-      () {
-        final canonicalTile = WorldTile(
-          coordinate: const HexCoord(col: 0, row: 0),
-          terrains: const [TerrainType.plains],
-          resources: const [ResourceType.oil, ResourceType.wheat],
-          height: 0,
-        );
-        final mapTiles = WorldMapReadView(
-          WorldMap(cols: 1, rows: 1, tiles: [canonicalTile]),
-        );
-        final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-        final state = GameState(
-          activePlayerId: 'player_1',
-          units: [unit],
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(unit),
-          ),
-        );
-
-        final result = action.apply(state, mapTiles, unit);
-        final updatedUnit = result.state.units.single;
-
-        expect(result.state.selection?.unit, same(updatedUnit));
-        expect(result.state.selection?.tile?.resources, const [
-          ResourceType.wheat,
-        ]);
-        expect(canonicalTile.resources, const [
-          ResourceType.oil,
-          ResourceType.wheat,
-        ]);
-      },
-    );
-  }
+  _registerCanonicalMapLookupActionTests();
 
   test('previews and confirms movement through a canonical traversal view', () {
     final world = _canonicalWorld(cols: 4);
@@ -483,29 +416,7 @@ void main() {
     },
   );
 
-  test(
-    'selection keeps the updated unit when its canonical tile is absent',
-    () {
-      final mapTiles = WorldMapReadView(
-        WorldMap(cols: 1, rows: 1, tiles: const []),
-      );
-      final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-      final state = GameState(
-        activePlayerId: 'player_1',
-        units: [unit],
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
-      );
-
-      final result = MovementReducer.cancelUnitAction(
-        state,
-        CancelUnitActionCommand(unit.id),
-        mapTiles,
-      );
-
-      expect(result.state.selection?.unit, same(result.state.units.single));
-      expect(result.state.selection?.tile, isNull);
-    },
-  );
+  _registerMissingCanonicalTileSelectionTest();
 }
 
 WorldMap _canonicalWorld({required int cols, int rows = 1}) {
