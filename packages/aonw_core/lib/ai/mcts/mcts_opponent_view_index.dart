@@ -1,4 +1,5 @@
 import 'package:aonw_core/ai/game_view.dart';
+import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -9,20 +10,25 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 final class MctsOpponentViewIndex {
   final Map<String, List<GameUnit>> _unitsByOwner;
   final Map<String, List<GameCity>> _citiesByOwner;
+  final Map<String, List<WorldArtifact>> _artifactsByOwner;
   final Map<String, List<FieldImprovement>> _improvementsByOwner;
 
   MctsOpponentViewIndex._({
     required Map<String, List<GameUnit>> unitsByOwner,
     required Map<String, List<GameCity>> citiesByOwner,
+    required Map<String, List<WorldArtifact>> artifactsByOwner,
     required Map<String, List<FieldImprovement>> improvementsByOwner,
   }) : _unitsByOwner = _freezeListMap(unitsByOwner),
        _citiesByOwner = _freezeListMap(citiesByOwner),
+       _artifactsByOwner = _freezeListMap(artifactsByOwner),
        _improvementsByOwner = _freezeListMap(improvementsByOwner);
 
   factory MctsOpponentViewIndex.fromState(PersistentGameState state) {
     final unitsByOwner = <String, List<GameUnit>>{};
+    final unitOwnersById = <String, String>{};
     for (final unit in state.units) {
       (unitsByOwner[unit.ownerPlayerId] ??= []).add(unit);
+      unitOwnersById[unit.id] = unit.ownerPlayerId;
     }
 
     final citiesByOwner = <String, List<GameCity>>{};
@@ -35,6 +41,11 @@ final class MctsOpponentViewIndex {
     return MctsOpponentViewIndex._(
       unitsByOwner: unitsByOwner,
       citiesByOwner: citiesByOwner,
+      artifactsByOwner: _buildArtifactsByOwner(
+        artifacts: state.artifacts,
+        unitOwnersById: unitOwnersById,
+        cityOwnersById: cityOwnersById,
+      ),
       improvementsByOwner: _buildImprovementsByOwner(
         improvements: state.fieldImprovements,
         cities: state.cities,
@@ -71,6 +82,7 @@ final class MctsOpponentViewIndex {
       ownStabilityNet: state.playerStabilityNet[opponentId] ?? 0,
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
+      artifacts: _artifactsByOwner[opponentId] ?? const [],
       diplomacy: state.runtimeState.diplomacy,
       visibleEnemyUnits: _indexedValuesExceptOwner(_unitsByOwner, opponentId),
       rememberedEnemyCities: _indexedValuesExceptOwner(
@@ -136,6 +148,25 @@ final class MctsOpponentViewIndex {
       for (final ownerId in ownerIds) {
         (byOwner[ownerId] ??= []).add(improvement);
       }
+    }
+    return byOwner;
+  }
+
+  static Map<String, List<WorldArtifact>> _buildArtifactsByOwner({
+    required Iterable<WorldArtifact> artifacts,
+    required Map<String, String> unitOwnersById,
+    required Map<String, String> cityOwnersById,
+  }) {
+    final byOwner = <String, List<WorldArtifact>>{};
+    for (final artifact in artifacts) {
+      final location = artifact.location;
+      final ownerId = switch (location.kind) {
+        WorldArtifactLocationKind.carried => unitOwnersById[location.unitId],
+        WorldArtifactLocationKind.stored => cityOwnersById[location.cityId],
+        WorldArtifactLocationKind.map ||
+        WorldArtifactLocationKind.excavation => null,
+      };
+      if (ownerId != null) (byOwner[ownerId] ??= []).add(artifact);
     }
     return byOwner;
   }

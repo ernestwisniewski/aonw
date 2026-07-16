@@ -85,8 +85,126 @@ void main() {
       ]);
       expect(view.visibility.isEnabled, isFalse);
     });
+
+    test('shows only the opponent owned stored and carried artifacts', () {
+      final state = _artifactVisibilityState();
+      final index = MctsOpponentViewIndex.fromState(state);
+      final view = _viewFor(index, state, 'player_2');
+
+      expect(view.artifacts.map((artifact) => artifact.id), [
+        'opponent_stored',
+        'opponent_carried',
+      ]);
+      expect(
+        _viewFor(
+          index,
+          state,
+          'player_1',
+        ).artifacts.map((artifact) => artifact.id),
+        ['active_stored', 'active_carried'],
+      );
+      expect(
+        _viewFor(
+          index,
+          state,
+          'player_3',
+        ).artifacts.map((artifact) => artifact.id),
+        ['other_stored', 'other_carried'],
+      );
+      expect(_viewFor(index, state, 'missing').artifacts, isEmpty);
+      expect(state.artifacts, hasLength(10));
+      expect(() => view.artifacts.clear(), throwsUnsupportedError);
+    });
   });
 }
+
+PersistentGameState _artifactVisibilityState() {
+  return PersistentGameState(
+    units: [
+      _unit('unit_1', 'player_1'),
+      _unit('unit_2', 'player_2', col: 2),
+      _unit('unit_3', 'player_3', col: 4),
+    ],
+    cities: [
+      _city('city_1', 'player_1'),
+      _city('city_2', 'player_2', col: 2),
+      _city('city_3', 'player_3', col: 4),
+    ],
+    artifacts: _visibilityArtifacts,
+  );
+}
+
+GameView _viewFor(
+  MctsOpponentViewIndex index,
+  PersistentGameState state,
+  String playerId,
+) {
+  return index.viewFor(
+    state: state,
+    opponentId: playerId,
+    turn: 1,
+    mapData: MapData(cols: 5, rows: 1, tiles: const []),
+    ruleset: GameRuleset.standard(),
+  );
+}
+
+const _visibilityArtifacts = [
+  WorldArtifact(
+    id: 'active_stored',
+    type: WorldArtifactType.merchantsSeal,
+    location: WorldArtifactLocation.stored(cityId: 'city_1'),
+  ),
+  WorldArtifact(
+    id: 'active_carried',
+    type: WorldArtifactType.queensMirror,
+    location: WorldArtifactLocation.carried(unitId: 'unit_1'),
+  ),
+  WorldArtifact(
+    id: 'opponent_stored',
+    type: WorldArtifactType.astronomersTablets,
+    location: WorldArtifactLocation.stored(cityId: 'city_2'),
+  ),
+  WorldArtifact(
+    id: 'opponent_carried',
+    type: WorldArtifactType.heroSword,
+    location: WorldArtifactLocation.carried(unitId: 'unit_2'),
+  ),
+  WorldArtifact(
+    id: 'other_stored',
+    type: WorldArtifactType.prophetMask,
+    location: WorldArtifactLocation.stored(cityId: 'city_3'),
+  ),
+  WorldArtifact(
+    id: 'other_carried',
+    type: WorldArtifactType.ancientImperialCrown,
+    location: WorldArtifactLocation.carried(unitId: 'unit_3'),
+  ),
+  WorldArtifact(
+    id: 'map_artifact',
+    type: WorldArtifactType.firstPeoplesChronicle,
+    location: WorldArtifactLocation.map(col: 2, row: 0),
+  ),
+  WorldArtifact(
+    id: 'excavation_artifact',
+    type: WorldArtifactType.templeReliquary,
+    location: WorldArtifactLocation.excavation(
+      unitId: 'unit_2',
+      col: 2,
+      row: 0,
+      remainingTurns: 1,
+    ),
+  ),
+  WorldArtifact(
+    id: 'dangling_stored',
+    type: WorldArtifactType.queensMirror,
+    location: WorldArtifactLocation.stored(cityId: 'missing_city'),
+  ),
+  WorldArtifact(
+    id: 'dangling_carried',
+    type: WorldArtifactType.ancientImperialCrown,
+    location: WorldArtifactLocation.carried(unitId: 'missing_unit'),
+  ),
+];
 
 GameUnit _unit(String id, String ownerPlayerId, {int col = 0}) {
   return GameUnit.produced(
