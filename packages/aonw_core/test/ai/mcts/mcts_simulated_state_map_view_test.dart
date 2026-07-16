@@ -82,7 +82,7 @@ void main() {
         holdTurns: 2,
       ),
     };
-    const wonders = WonderRegistry(
+    final wonders = WonderRegistry(
       completedBy: {WonderType.greatLibrary: 'player_1'},
     );
     final mapView = _mapData().indexedReadView();

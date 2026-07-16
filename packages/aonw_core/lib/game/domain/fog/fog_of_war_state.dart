@@ -5,9 +5,14 @@ import 'package:aonw_core/game/domain/hex.dart';
 class FogOfWarState {
   final Map<String, PlayerFogOfWar> players;
 
-  const FogOfWarState({this.players = const {}});
+  factory FogOfWarState({Map<String, PlayerFogOfWar> players = const {}}) {
+    if (players.isEmpty) return empty;
+    return FogOfWarState._(Map.unmodifiable(players));
+  }
 
-  static const empty = FogOfWarState();
+  const FogOfWarState._(this.players);
+
+  static const empty = FogOfWarState._({});
 
   factory FogOfWarState.fromJson(List<dynamic> json) {
     final fogs = json.map(

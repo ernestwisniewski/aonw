@@ -2,9 +2,14 @@ import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
 class WonderRegistry {
-  const WonderRegistry({this.completedBy = const {}});
+  factory WonderRegistry({Map<WonderType, String> completedBy = const {}}) {
+    if (completedBy.isEmpty) return empty;
+    return WonderRegistry._(completedBy: Map.unmodifiable(completedBy));
+  }
 
-  static const empty = WonderRegistry();
+  const WonderRegistry._({required this.completedBy});
+
+  static const empty = WonderRegistry._(completedBy: {});
 
   final Map<WonderType, String> completedBy;
 

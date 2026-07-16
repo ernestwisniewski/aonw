@@ -14,6 +14,7 @@ part 'diplomatic_score_entry.dart';
 part 'diplomatic_score_reason.dart';
 part 'diplomacy_contact_pairs.dart';
 part 'diplomacy_state_model.dart';
+part 'diplomacy_state_immutability.dart';
 part 'diplomacy_state_serialization_helpers.dart';
 part 'diplomacy_json_helpers.dart';
 

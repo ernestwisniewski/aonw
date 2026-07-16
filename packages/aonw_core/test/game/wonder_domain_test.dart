@@ -149,6 +149,40 @@ void main() {
       expect(WonderRegistry.fromJson(registry.toJson()), registry);
     });
 
+    test('registry snapshots completed wonders and stays immutable', () {
+      final source = <WonderType, String>{
+        WonderType.greatWall: 'player_1',
+        WonderType.greatLibrary: 'player_2',
+      };
+      final registry = WonderRegistry(completedBy: source);
+      final originalHash = registry.hashCode;
+      final originalJson = registry.toJson();
+
+      source
+        ..[WonderType.greatWall] = 'rival'
+        ..[WonderType.hangingGardens] = 'player_3';
+
+      expect(registry.ownerOf(WonderType.greatWall), 'player_1');
+      expect(registry.isCompleted(WonderType.hangingGardens), isFalse);
+      expect(
+        () => registry.completedBy[WonderType.greatWall] = 'rival',
+        throwsUnsupportedError,
+      );
+      expect(registry.hashCode, originalHash);
+      expect(registry.toJson(), originalJson);
+
+      final completed = registry.complete(
+        type: WonderType.hangingGardens,
+        playerId: 'player_3',
+      );
+
+      expect(registry.isCompleted(WonderType.hangingGardens), isFalse);
+      expect(completed.ownerOf(WonderType.greatWall), 'player_1');
+      expect(completed.ownerOf(WonderType.hangingGardens), 'player_3');
+      expect(completed.completedBy, isNot(same(registry.completedBy)));
+      expect(completed.completedBy.clear, throwsUnsupportedError);
+    });
+
     test(
       'completion claims wonder, refunds losing queues, and keeps effects active by host',
       () {

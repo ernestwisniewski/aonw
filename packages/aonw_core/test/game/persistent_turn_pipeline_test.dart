@@ -22,12 +22,12 @@ void main() {
     test(
       'advancePlayer applies plain peace decay when turn number is unknown',
       () {
-        const state = PersistentGameState(
-          playerWarWeariness: {'player_1': 7},
+        final state = PersistentGameState(
+          playerWarWeariness: const {'player_1': 7},
           runtimeState: GameRuntimeState(
             diplomacy: DiplomacyState(
               relations: {
-                'player_1|player_2': DiplomaticRelation(
+                'player_1|player_2': const DiplomaticRelation(
                   playerAId: 'player_1',
                   playerBId: 'player_2',
                   status: DiplomaticRelationStatus.truce,

@@ -284,7 +284,7 @@ void main() {
     test('move targeting shows a move marker on reachable fog', () async {
       final map = _map();
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final fog = const FogOfWarState().updatePlayer(
+      final fog = FogOfWarState.empty.updatePlayer(
         PlayerFogOfWar(
           playerId: 'player_1',
           visibleHexes: {const HexCoordinate(col: 0, row: 0)},
@@ -317,7 +317,7 @@ void main() {
       () async {
         final map = _map(cols: 5, rows: 5);
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final fog = const FogOfWarState().updatePlayer(
+        final fog = FogOfWarState.empty.updatePlayer(
           PlayerFogOfWar(
             playerId: 'player_1',
             visibleHexes: {const HexCoordinate(col: 0, row: 0)},
@@ -587,7 +587,7 @@ void main() {
       () async {
         final map = _map();
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final fog = const FogOfWarState().updatePlayer(
+        final fog = FogOfWarState.empty.updatePlayer(
           PlayerFogOfWar(
             playerId: 'player_1',
             visibleHexes: {const HexCoordinate(col: 0, row: 0)},
@@ -642,7 +642,7 @@ void main() {
         final map = _map();
         final commands = <GameCommand>[];
         final events = <String>[];
-        final fog = const FogOfWarState().updatePlayer(
+        final fog = FogOfWarState.empty.updatePlayer(
           PlayerFogOfWar(
             playerId: 'player_1',
             visibleHexes: {const HexCoordinate(col: 0, row: 0)},
@@ -826,7 +826,7 @@ void main() {
     test('hidden fog tile suppresses hover markers', () async {
       final map = _map();
       const visibleHex = HexCoordinate(col: 0, row: 0);
-      final fog = const FogOfWarState().updatePlayer(
+      final fog = FogOfWarState.empty.updatePlayer(
         PlayerFogOfWar(playerId: 'player_1', visibleHexes: {visibleHex}),
       );
       final game = await _loadedGame(map);

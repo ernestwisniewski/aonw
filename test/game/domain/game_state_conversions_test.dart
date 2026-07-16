@@ -113,7 +113,7 @@ PersistentGameState _persistentProjection() {
     ],
     fogOfWar: fog,
     research: research,
-    wonderRegistry: const WonderRegistry(
+    wonderRegistry: WonderRegistry(
       completedBy: {WonderType.greatLibrary: 'player_1'},
     ),
     runtimeState: GameRuntimeState(
@@ -130,9 +130,9 @@ PersistentGameState _persistentProjection() {
           declaringPlayerId: 'player_1',
         ),
       ],
-      diplomacy: const DiplomacyState(
+      diplomacy: DiplomacyState(
         relations: {
-          'player_1|player_2': DiplomaticRelation(
+          'player_1|player_2': const DiplomaticRelation(
             playerAId: 'player_1',
             playerBId: 'player_2',
             status: DiplomaticRelationStatus.friendly,

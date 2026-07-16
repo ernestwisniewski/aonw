@@ -98,8 +98,8 @@ void main() {
         name: 'Opponent City',
         center: CityHex(col: 0, row: 0),
       );
-      const state = PersistentGameState(
-        cities: [opponentCity],
+      final state = PersistentGameState(
+        cities: const [opponentCity],
         wonderRegistry: _completedWonderRegistry,
       );
       final view = MctsOpponentViewIndex.fromState(state).viewFor(
@@ -196,7 +196,7 @@ const _cities = [
   ),
 ];
 
-const _completedWonderRegistry = WonderRegistry(
+final _completedWonderRegistry = WonderRegistry(
   completedBy: {WonderType.greatWall: _playerId},
 );
 

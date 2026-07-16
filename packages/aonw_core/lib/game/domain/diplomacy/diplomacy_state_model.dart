@@ -1,7 +1,13 @@
 part of 'diplomacy_state.dart';
 
 final class DiplomacyState {
-  static const empty = DiplomacyState();
+  static const empty = DiplomacyState._(
+    contactKeys: {},
+    relations: {},
+    pendingProposals: {},
+    messages: {},
+    scoreHistory: {},
+  );
 
   static const int minRelationScore = -100;
   static const int maxRelationScore = 100;
@@ -13,12 +19,26 @@ final class DiplomacyState {
   static const int defaultPromiseDurationTurns = 3;
   static const int defaultPromiseBrokenPenalty = -15;
 
-  const DiplomacyState({
-    this.contactKeys = const {},
-    this.relations = const {},
-    this.pendingProposals = const {},
-    this.messages = const {},
-    this.scoreHistory = const {},
+  factory DiplomacyState({
+    Set<String> contactKeys = const {},
+    Map<String, DiplomaticRelation> relations = const {},
+    Map<String, DiplomaticProposal> pendingProposals = const {},
+    Map<String, DiplomaticMessage> messages = const {},
+    Map<String, List<DiplomaticScoreEntry>> scoreHistory = const {},
+  }) => _immutableDiplomacyState(
+    contactKeys: contactKeys,
+    relations: relations,
+    pendingProposals: pendingProposals,
+    messages: messages,
+    scoreHistory: scoreHistory,
+  );
+
+  const DiplomacyState._({
+    required this.contactKeys,
+    required this.relations,
+    required this.pendingProposals,
+    required this.messages,
+    required this.scoreHistory,
   });
 
   factory DiplomacyState.fromJson(Object? json) {
@@ -30,14 +50,6 @@ final class DiplomacyState {
   final Map<String, DiplomaticProposal> pendingProposals;
   final Map<String, DiplomaticMessage> messages;
   final Map<String, List<DiplomaticScoreEntry>> scoreHistory;
-
-  bool get isEmpty =>
-      contactKeys.isEmpty &&
-      relations.isEmpty &&
-      pendingProposals.isEmpty &&
-      messages.isEmpty &&
-      scoreHistory.isEmpty;
-  bool get isNotEmpty => !isEmpty;
 
   bool hasContact(String playerAId, String playerBId) {
     final key = relationKey(playerAId, playerBId);
@@ -435,22 +447,6 @@ final class DiplomacyState {
           entry.key: entry.value,
     };
     return copyWith(pendingProposals: Map.unmodifiable(nextProposals));
-  }
-
-  DiplomacyState copyWith({
-    Set<String>? contactKeys,
-    Map<String, DiplomaticRelation>? relations,
-    Map<String, DiplomaticProposal>? pendingProposals,
-    Map<String, DiplomaticMessage>? messages,
-    Map<String, List<DiplomaticScoreEntry>>? scoreHistory,
-  }) {
-    return DiplomacyState(
-      contactKeys: contactKeys ?? this.contactKeys,
-      relations: relations ?? this.relations,
-      pendingProposals: pendingProposals ?? this.pendingProposals,
-      messages: messages ?? this.messages,
-      scoreHistory: scoreHistory ?? this.scoreHistory,
-    );
   }
 
   Map<String, dynamic> toJson() => {
