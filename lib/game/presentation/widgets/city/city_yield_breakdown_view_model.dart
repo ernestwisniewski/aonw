@@ -9,6 +9,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
+part 'city_yield_breakdown_rows.dart';
+
 class CityYieldBreakdownViewModel {
   const CityYieldBreakdownViewModel({
     required this.totalYield,
@@ -46,119 +48,15 @@ class CityYieldBreakdownViewModel {
     required AppLocalizations l10n,
   }) {
     final text = CityYieldBreakdownText(l10n);
-    final preMultiplier =
-        tileBreakdown.total +
-        economy.buildingYield +
-        economy.specializationYield +
-        economy.technologyYield;
-    final sourceYield = preMultiplier + economy.wonderYield;
-    final goldMultiplierYield = TileYield(
-      food: 0,
-      production: 0,
-      gold: economy.grossYield.gold - sourceYield.gold,
-      defense: 0,
-    );
-    final stableProduction = _scale(
-      economy.grossYield.production,
-      1 + economy.wonderProductionMultiplier,
-    );
-    final wonderYield =
-        economy.wonderYield +
-        TileYield(
-          food: 0,
-          production: stableProduction - economy.grossYield.production,
-          gold: 0,
-          defense: 0,
-        );
-    final consumedFoodUpkeep = economy.grossYield.food - economy.netFood;
-    final stabilityYield = _stabilityYieldFor(
-      economy,
-      stableProduction: stableProduction,
-    );
-
-    final rows = [
-      CityYieldBreakdownRow(
-        label: text.center,
-        detail: text.centerDetail,
-        yield: tileBreakdown.centerYield,
-      ),
-      CityYieldBreakdownRow(
-        label: text.populationFields,
-        detail: text.workedHexDetail(tileBreakdown.population.length),
-        yield: tileBreakdown.populationYield,
-      ),
-      CityYieldBreakdownRow(
-        label: text.workers,
-        detail: text.workerDetail(tileBreakdown.workers.length),
-        yield: tileBreakdown.workerYield,
-      ),
-      CityYieldBreakdownRow(
-        label: text.improvements,
-        detail: text.passiveImprovementDetail(
-          tileBreakdown.passiveImprovements.length,
-        ),
-        yield: tileBreakdown.passiveImprovementYield,
-      ),
-      if (!_isZero(tileBreakdown.artifactYield))
-        CityYieldBreakdownRow(
-          label: text.artifact,
-          detail: text.artifactDetail,
-          yield: tileBreakdown.artifactYield,
-        ),
-      CityYieldBreakdownRow(
-        label: text.buildings,
-        detail: text.buildingDetail(city, economy.buildingYield),
-        yield: economy.buildingYield,
-      ),
-      CityYieldBreakdownRow(
-        label: text.technologies,
-        detail: text.technologyDetail(economy.technologyYield),
-        yield: economy.technologyYield,
-      ),
-      if (!_isZero(economy.specializationYield) || city.specialization != null)
-        CityYieldBreakdownRow(
-          label: text.specialization,
-          detail: text.specializationDetail(city.specialization),
-          yield: economy.specializationYield,
-        ),
-      if (!_isZero(wonderYield))
-        CityYieldBreakdownRow(
-          label: text.wonders,
-          detail: text.wonderDetail,
-          yield: wonderYield,
-        ),
-      if (!_isZero(goldMultiplierYield))
-        CityYieldBreakdownRow(
-          label: text.goldMultiplier,
-          detail: text.goldMultiplierDetail,
-          yield: goldMultiplierYield,
-        ),
-      if (economy.stabilityModifier != StabilityModifier.stable)
-        CityYieldBreakdownRow(
-          label: text.stability,
-          detail: text.stabilityDetail(economy.stabilityModifier),
-          yield: stabilityYield,
-        ),
-      if (economy.populationUpkeep != 0)
-        CityYieldBreakdownRow(
-          label: text.upkeep,
-          detail: text.upkeepDetail(
-            city: city,
-            populationUpkeep: economy.populationUpkeep,
-            consumedUpkeep: consumedFoodUpkeep,
-          ),
-          yield: TileYield(
-            food: -consumedFoodUpkeep,
-            production: 0,
-            gold: 0,
-            defense: 0,
-          ),
-        ),
-    ];
 
     return CityYieldBreakdownViewModel(
       totalYield: economy.netYield,
-      rows: List.unmodifiable(rows),
+      rows: _cityYieldRows(
+        city: city,
+        tileBreakdown: tileBreakdown,
+        economy: economy,
+        text: text,
+      ),
       growthLabel: text.growthFood(city.storedFood, economy.growthCost),
       growthEta: _growthEta(
         city: city,
@@ -357,23 +255,6 @@ class CityYieldBreakdownViewModel {
       currentTurn: currentTurn,
       blockedLabel: text.stagnation,
     );
-  }
-
-  static TileYield _stabilityYieldFor(
-    CityEconomyBreakdown economy, {
-    required int stableProduction,
-  }) {
-    return TileYield(
-      food: 0,
-      production: economy.netYield.production - stableProduction,
-      gold: economy.netYield.gold - economy.grossYield.gold,
-      defense: 0,
-    );
-  }
-
-  static int _scale(int value, double multiplier) {
-    if (multiplier == 1.0) return value;
-    return (value * multiplier).floor();
   }
 
   static TileYield _sum(Iterable<TileYield> values) {

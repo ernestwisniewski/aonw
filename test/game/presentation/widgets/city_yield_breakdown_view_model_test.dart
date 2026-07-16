@@ -12,81 +12,7 @@ void main() {
   test(
     'CityYieldBreakdownViewModel maps real economy sources and matches total',
     () {
-      const city = GameCity(
-        id: 'city_1',
-        ownerPlayerId: 'player_1',
-        name: 'City',
-        population: 2,
-        storedFood: 4,
-        center: CityHex(col: 1, row: 1),
-        buildings: {CityBuildingType.workshop, CityBuildingType.archive},
-        specialization: CitySpecializationType.science,
-      );
-      const tileBreakdown = CityTileYieldBreakdown(
-        center: CityTileYieldContribution(
-          kind: CityTileYieldContributionKind.center,
-          hex: CityHex(col: 1, row: 1),
-          yield: TileYield(food: 2, production: 1, gold: 0, defense: 0),
-        ),
-        population: [
-          CityTileYieldContribution(
-            kind: CityTileYieldContributionKind.population,
-            hex: CityHex(col: 2, row: 1),
-            yield: TileYield(food: 2, production: 2, gold: 0, defense: 0),
-          ),
-        ],
-        workers: [
-          CityTileYieldContribution(
-            kind: CityTileYieldContributionKind.worker,
-            hex: CityHex(col: 2, row: 2),
-            yield: TileYield(food: 3, production: 0, gold: 0, defense: 0),
-          ),
-        ],
-        passiveImprovements: [
-          CityTileYieldContribution(
-            kind: CityTileYieldContributionKind.passiveImprovement,
-            hex: CityHex(col: 0, row: 1),
-            yield: TileYield(food: 1, production: 0, gold: 0, defense: 0),
-          ),
-        ],
-        artifacts: [
-          CityTileYieldContribution(
-            kind: CityTileYieldContributionKind.artifact,
-            hex: CityHex(col: 1, row: 1),
-            yield: TileYield(food: 1, production: 0, gold: 0, defense: 1),
-          ),
-        ],
-      );
-      final economy = CityEconomyBreakdown(
-        city: city,
-        tileYield: tileBreakdown.total,
-        buildingYield: const TileYield(
-          food: 0,
-          production: 2,
-          gold: 1,
-          defense: 0,
-        ),
-        specializationYield: const TileYield(
-          food: 0,
-          production: 0,
-          gold: 3,
-          defense: 0,
-        ),
-        technologyYield: const TileYield(
-          food: 0,
-          production: 1,
-          gold: 0,
-          defense: 1,
-        ),
-        technologyEffects: const TechnologyEffectSummary(
-          globalGoldMultiplier: 0.25,
-          cityScienceBonus: 1,
-        ),
-        populationUpkeep: 3,
-        netFood: 6,
-        foodDeposit: 6,
-        growthCost: 16,
-      );
+      final (:city, :tileBreakdown, :economy) = _realEconomySourcesFixture();
 
       final viewModel = CityYieldBreakdownViewModel.from(
         city: city,
@@ -314,4 +240,83 @@ void main() {
     expect(viewModel.growthEta.compactLabel(l10n), '2 turns • T4');
     expect(viewModel.rowsMatchTotal, isTrue);
   });
+}
+
+({
+  GameCity city,
+  CityTileYieldBreakdown tileBreakdown,
+  CityEconomyBreakdown economy,
+})
+_realEconomySourcesFixture() {
+  const city = GameCity(
+    id: 'city_1',
+    ownerPlayerId: 'player_1',
+    name: 'City',
+    population: 2,
+    storedFood: 4,
+    center: CityHex(col: 1, row: 1),
+    buildings: {CityBuildingType.workshop, CityBuildingType.archive},
+    specialization: CitySpecializationType.science,
+  );
+  const tileBreakdown = CityTileYieldBreakdown(
+    center: CityTileYieldContribution(
+      kind: CityTileYieldContributionKind.center,
+      hex: CityHex(col: 1, row: 1),
+      yield: TileYield(food: 2, production: 1, gold: 0, defense: 0),
+    ),
+    population: [
+      CityTileYieldContribution(
+        kind: CityTileYieldContributionKind.population,
+        hex: CityHex(col: 2, row: 1),
+        yield: TileYield(food: 2, production: 2, gold: 0, defense: 0),
+      ),
+    ],
+    workers: [
+      CityTileYieldContribution(
+        kind: CityTileYieldContributionKind.worker,
+        hex: CityHex(col: 2, row: 2),
+        yield: TileYield(food: 3, production: 0, gold: 0, defense: 0),
+      ),
+    ],
+    passiveImprovements: [
+      CityTileYieldContribution(
+        kind: CityTileYieldContributionKind.passiveImprovement,
+        hex: CityHex(col: 0, row: 1),
+        yield: TileYield(food: 1, production: 0, gold: 0, defense: 0),
+      ),
+    ],
+    artifacts: [
+      CityTileYieldContribution(
+        kind: CityTileYieldContributionKind.artifact,
+        hex: CityHex(col: 1, row: 1),
+        yield: TileYield(food: 1, production: 0, gold: 0, defense: 1),
+      ),
+    ],
+  );
+  final economy = CityEconomyBreakdown(
+    city: city,
+    tileYield: tileBreakdown.total,
+    buildingYield: const TileYield(food: 0, production: 2, gold: 1, defense: 0),
+    specializationYield: const TileYield(
+      food: 0,
+      production: 0,
+      gold: 3,
+      defense: 0,
+    ),
+    technologyYield: const TileYield(
+      food: 0,
+      production: 1,
+      gold: 0,
+      defense: 1,
+    ),
+    technologyEffects: const TechnologyEffectSummary(
+      globalGoldMultiplier: 0.25,
+      cityScienceBonus: 1,
+    ),
+    populationUpkeep: 3,
+    netFood: 6,
+    foodDeposit: 6,
+    growthCost: 16,
+  );
+  return (city: city, tileBreakdown: tileBreakdown, economy: economy);
 }
