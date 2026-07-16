@@ -3,7 +3,7 @@ part of 'combat_reducer.dart';
 abstract final class _CombatFogPolicy {
   static FogOfWarState recomputeAfterCombat({
     required FogOfWarState current,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
     required FogOfWarService fogOfWarService,
@@ -12,7 +12,7 @@ abstract final class _CombatFogPolicy {
   }) {
     return fogOfWarService.recompute(
       current: current,
-      mapData: mapData,
+      mapData: mapTiles,
       playerIds: {
         attackerOwnerPlayerId,
         defenderOwnerPlayerId,

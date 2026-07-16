@@ -6,7 +6,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -17,6 +16,8 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'combat_reducer_events.dart';
 part 'combat_reducer_fog.dart';
@@ -26,7 +27,7 @@ part 'combat_reducer_setup.dart';
 typedef _AttackSetup = ({
   GameUnit attacker,
   GameUnit defender,
-  TileData defenderTile,
+  MapTileView defenderTile,
   List<CombatModifier> attackerModifiers,
   CombatStats attackerBase,
   CombatStats attackerEffective,
@@ -35,7 +36,6 @@ typedef _AttackSetup = ({
 typedef _CityAttackSetup = ({
   GameUnit attacker,
   GameCity city,
-  TileData cityTile,
   List<CombatModifier> attackerModifiers,
   CombatStats attackerBase,
   CombatStats attackerEffective,
@@ -105,7 +105,7 @@ abstract final class CombatReducer {
   static GameStateTransition selectAttackTarget(
     GameState state,
     AttackHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CombatRuleset combatRuleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     GameCommandContext context = const GameCommandContext(),
@@ -113,7 +113,7 @@ abstract final class CombatReducer {
     final setup = _CombatSetupFactory.unitAttackSetup(
       state,
       command,
-      mapData,
+      mapTiles,
       combatRuleset: combatRuleset,
       technologyRuleset: technologyRuleset,
       context: context,
@@ -123,7 +123,7 @@ abstract final class CombatReducer {
         ? _CombatSetupFactory.cityAttackSetup(
             state,
             command,
-            mapData,
+            mapTiles,
             combatRuleset: combatRuleset,
             technologyRuleset: technologyRuleset,
             context: context,
@@ -158,7 +158,7 @@ abstract final class CombatReducer {
   static GameStateTransition attackHex(
     GameState state,
     AttackHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CombatRuleset combatRuleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     GameCommandContext context = const GameCommandContext(),
@@ -167,7 +167,7 @@ abstract final class CombatReducer {
     final setup = _CombatSetupFactory.unitAttackSetup(
       state,
       command,
-      mapData,
+      mapTiles,
       combatRuleset: combatRuleset,
       technologyRuleset: technologyRuleset,
       context: context,
@@ -176,7 +176,7 @@ abstract final class CombatReducer {
       final citySetup = _CombatSetupFactory.cityAttackSetup(
         state,
         command,
-        mapData,
+        mapTiles,
         combatRuleset: combatRuleset,
         technologyRuleset: technologyRuleset,
         context: context,
@@ -189,14 +189,14 @@ abstract final class CombatReducer {
           state,
           command,
           citySetup.attacker,
-          mapData,
+          mapTiles,
           context,
         );
       }
       return _attackCity(
         state: state,
         command: command,
-        mapData: mapData,
+        mapTiles: mapTiles,
         setup: citySetup,
         combatRuleset: combatRuleset,
         fogOfWarService: fogOfWarService,
@@ -210,12 +210,12 @@ abstract final class CombatReducer {
     final attackerEffective = setup.attackerEffective;
 
     if (combatRuleset.resolutionMode == CombatResolutionMode.simultaneous) {
-      return _recordIntent(state, command, attacker, mapData, context);
+      return _recordIntent(state, command, attacker, mapTiles, context);
     }
 
     final defense = _CombatSetupFactory.defenseSetup(
       state: state,
-      mapData: mapData,
+      mapTiles: mapTiles,
       attacker: attacker,
       defender: defender,
       defenderTile: setup.defenderTile,
@@ -269,7 +269,7 @@ abstract final class CombatReducer {
     );
     final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapTiles: mapTiles,
       units: applied.units,
       cities: applied.cities,
       fogOfWarService: fogOfWarService,
@@ -292,7 +292,7 @@ abstract final class CombatReducer {
         ),
       ),
       attackerUnitId: attacker.id,
-      mapData: mapData,
+      mapTiles: mapTiles,
     );
 
     return GameStateTransition(
@@ -321,7 +321,7 @@ abstract final class CombatReducer {
   static GameStateTransition _attackCity({
     required GameState state,
     required AttackHexCommand command,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required _CityAttackSetup setup,
     required CombatRuleset combatRuleset,
     required FogOfWarService fogOfWarService,
@@ -377,7 +377,7 @@ abstract final class CombatReducer {
     );
     final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapTiles: mapTiles,
       units: applied.units,
       cities: applied.cities,
       fogOfWarService: fogOfWarService,
@@ -416,7 +416,7 @@ abstract final class CombatReducer {
         ),
       ),
       attackerUnitId: attacker.id,
-      mapData: mapData,
+      mapTiles: mapTiles,
       changedCityId: changedCity?.id,
     );
 
@@ -502,7 +502,7 @@ abstract final class CombatReducer {
     GameState state,
     AttackHexCommand command,
     GameUnit attacker,
-    MapData mapData,
+    MapTileLookup mapTiles,
     GameCommandContext context,
   ) {
     final intent = IntendedAttack(
@@ -522,7 +522,7 @@ abstract final class CombatReducer {
         ],
       ),
       attackerUnitId: attacker.id,
-      mapData: mapData,
+      mapTiles: mapTiles,
     );
     return GameStateTransition(state: next);
   }
@@ -530,7 +530,7 @@ abstract final class CombatReducer {
   static GameState _clearAttackInteractionState(
     GameState state, {
     required String attackerUnitId,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     String? changedCityId,
   }) {
     var next = state.copyWithInteraction(
@@ -543,7 +543,7 @@ abstract final class CombatReducer {
         pendingAction.attackerUnitId == attackerUnitId) {
       next = next.copyWithInteraction(pendingAction: null);
     }
-    return _refreshSelection(next, mapData, changedCityId: changedCityId);
+    return _refreshSelection(next, mapTiles, changedCityId: changedCityId);
   }
 
   static List<GameUnit> _insertAtOriginalPosition(
@@ -580,7 +580,7 @@ abstract final class CombatReducer {
 
   static GameState _refreshSelection(
     GameState state,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     String? changedCityId,
   }) {
     final selection = state.selection;
@@ -588,7 +588,7 @@ abstract final class CombatReducer {
     return switch (selection.type) {
       GameSelectionType.tile => state,
       GameSelectionType.fieldImprovement => state,
-      GameSelectionType.unit => _refreshUnit(state, selection, mapData),
+      GameSelectionType.unit => _refreshUnit(state, selection, mapTiles),
       GameSelectionType.city =>
         selection.city?.id == changedCityId
             ? state.copyWithInteraction(selection: null)
@@ -599,17 +599,17 @@ abstract final class CombatReducer {
   static GameState _refreshUnit(
     GameState state,
     GameSelection selection,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final selectedId = selection.unit?.id;
     if (selectedId == null) return state.copyWithInteraction(selection: null);
     final unit = state.unitById(selectedId);
     if (unit == null) return state.copyWithInteraction(selection: null);
-    return state.copyWithInteraction(
-      selection: GameSelection.unit(
-        unit,
-        tile: mapData.tileAt(unit.col, unit.row),
-      ),
+    final tile = mapTiles.tileAt(unit.col, unit.row);
+    final refreshed = GameSelection.unit(unit, tile: tile).withVisibleResources(
+      playerId: state.activePlayerId,
+      research: state.research,
     );
+    return state.copyWithInteraction(selection: refreshed);
   }
 }

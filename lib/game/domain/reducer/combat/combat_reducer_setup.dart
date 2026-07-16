@@ -11,7 +11,7 @@ abstract final class _CombatSetupFactory {
   static _AttackSetup? unitAttackSetup(
     GameState state,
     AttackHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
     required GameCommandContext context,
@@ -20,7 +20,7 @@ abstract final class _CombatSetupFactory {
     final attackerSetup = _attackerCombatSetup(
       state,
       command,
-      mapData,
+      mapTiles,
       combatRuleset: combatRuleset,
       technologyRuleset: technologyRuleset,
       context: context,
@@ -28,7 +28,7 @@ abstract final class _CombatSetupFactory {
     );
     if (attackerSetup == null) return null;
 
-    final defenderTile = mapData.tileAt(
+    final defenderTile = mapTiles.tileAt(
       command.defenderCol,
       command.defenderRow,
     );
@@ -61,7 +61,7 @@ abstract final class _CombatSetupFactory {
   static _CityAttackSetup? cityAttackSetup(
     GameState state,
     AttackHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
     required GameCommandContext context,
@@ -70,7 +70,7 @@ abstract final class _CombatSetupFactory {
     final attackerSetup = _attackerCombatSetup(
       state,
       command,
-      mapData,
+      mapTiles,
       combatRuleset: combatRuleset,
       technologyRuleset: technologyRuleset,
       context: context,
@@ -78,8 +78,9 @@ abstract final class _CombatSetupFactory {
     );
     if (attackerSetup == null) return null;
 
-    final cityTile = mapData.tileAt(command.defenderCol, command.defenderRow);
-    if (cityTile == null) return null;
+    if (mapTiles.tileAt(command.defenderCol, command.defenderRow) == null) {
+      return null;
+    }
     if (_cityTargetHasOtherUnit(state, command, attackerSetup.attacker)) {
       return null;
     }
@@ -109,7 +110,6 @@ abstract final class _CombatSetupFactory {
     return (
       attacker: attackerSetup.attacker,
       city: city,
-      cityTile: cityTile,
       attackerModifiers: attackerSetup.attackerModifiers,
       attackerBase: attackerSetup.attackerBase,
       attackerEffective: attackerSetup.attackerEffective,
@@ -120,10 +120,10 @@ abstract final class _CombatSetupFactory {
 
   static _DefenseSetup defenseSetup({
     required GameState state,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required GameUnit attacker,
     required GameUnit defender,
-    required TileData defenderTile,
+    required MapTileView defenderTile,
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {
@@ -146,7 +146,7 @@ abstract final class _CombatSetupFactory {
             attacker: attacker,
             defender: defender,
             units: state.units,
-            tileAt: mapData.tileAt,
+            tileAt: mapTiles.tileAt,
           )
         : null;
 
@@ -162,7 +162,7 @@ abstract final class _CombatSetupFactory {
   static _AttackerCombatSetup? _attackerCombatSetup(
     GameState state,
     AttackHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
     required GameCommandContext context,
@@ -181,7 +181,7 @@ abstract final class _CombatSetupFactory {
       return null;
     }
 
-    final attackerTile = mapData.tileAt(attacker.col, attacker.row);
+    final attackerTile = mapTiles.tileAt(attacker.col, attacker.row);
     if (attackerTile == null) return null;
 
     final attackerModifiers = CombatModifierCollector.forAttacker(

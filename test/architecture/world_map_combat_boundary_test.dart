@@ -252,6 +252,84 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/combat/combat_reducer.dart',
+    owner: 'CombatReducer',
+    boundaries: [
+      _Boundary.method(
+        'selectAttackTarget',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'attackHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_attackCity',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_recordIntent',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_clearAttackInteractionState',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_refreshSelection',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_refreshUnit',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/combat/combat_reducer_setup.dart',
+    owner: '_CombatSetupFactory',
+    boundaries: [
+      _Boundary.method(
+        'unitAttackSetup',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'cityAttackSetup',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'defenseSetup',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_attackerCombatSetup',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/combat/combat_reducer_fog.dart',
+    owner: '_CombatFogPolicy',
+    boundaries: [
+      _Boundary.method(
+        'recomputeAfterCombat',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/turn/turn_context.dart',
     owner: 'TurnContext',
     boundaries: [
