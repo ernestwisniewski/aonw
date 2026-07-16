@@ -4,8 +4,8 @@ abstract final class _MovePreviewReducer {
   static GameStateTransition setPreview(
     GameState state,
     GameUnit selected,
-    TileData targetTile,
-    MapData mapData, {
+    MapTileView targetTile,
+    MapTraversalView mapView, {
     required GameCommandContext context,
   }) {
     final visibility = context.visibilityFor(state);
@@ -21,7 +21,7 @@ abstract final class _MovePreviewReducer {
     }
 
     final plan = UnitMovementPlanner(
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       canEnterTile: (tile) => UnitMovementVisibilityRules.canPlanThroughTile(
         unit: selected,
@@ -64,17 +64,16 @@ abstract final class _MovePreviewReducer {
       );
     }
 
-    final tile = mapData.tileAt(selected.col, selected.row);
     final next = state.copyWithInteraction(
       movePreview: plan,
-      selection: GameSelection.unit(selected, tile: tile),
+      selection: MovementReducer._unitSelection(state, selected, mapView),
     );
     return GameStateTransition(state: next);
   }
 
   static GameStateTransition confirmPreview(
     GameState state,
-    MapData mapData, {
+    MapTraversalView mapView, {
     required FogOfWarService fogOfWarService,
   }) {
     final preview = state.movePreview;
@@ -95,7 +94,7 @@ abstract final class _MovePreviewReducer {
 
     // The preview has already applied visibility checks; execution re-plans
     // against current blockers so queued moves cannot walk through new units.
-    final targetTile = mapData.tileAt(preview.targetCol, preview.targetRow);
+    final targetTile = mapView.tileAt(preview.targetCol, preview.targetRow);
     if (targetTile == null) {
       return GameStateTransition(
         state: MovementReducer._clearMoveTargeting(workState),
@@ -103,7 +102,7 @@ abstract final class _MovePreviewReducer {
     }
 
     final plan = UnitMovementPathfinder(
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
     ).plan(unit: selected, targetTile: targetTile);
 
@@ -122,10 +121,7 @@ abstract final class _MovePreviewReducer {
         var next = MovementReducer._clearMoveTargeting(
           workState,
         ).copyWith(units: updatedUnits);
-        final tile = mapData.tileAt(withPath.col, withPath.row);
-        next = next.copyWithInteraction(
-          selection: GameSelection.unit(withPath, tile: tile),
-        );
+        next = MovementReducer._selectUpdatedUnit(next, withPath, mapView);
         return GameStateTransition(state: next);
       }
       return GameStateTransition(
@@ -153,10 +149,7 @@ abstract final class _MovePreviewReducer {
       var next = MovementReducer._clearMoveTargeting(
         workState,
       ).copyWith(units: updatedUnits);
-      final tile = mapData.tileAt(withPath.col, withPath.row);
-      next = next.copyWithInteraction(
-        selection: GameSelection.unit(withPath, tile: tile),
-      );
+      next = MovementReducer._selectUpdatedUnit(next, withPath, mapView);
       return GameStateTransition(state: next);
     }
 
@@ -181,23 +174,20 @@ abstract final class _MovePreviewReducer {
 
     final newFog = fogOfWarService.recomputeAfterUnitMove(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapData: mapView,
       previousUnit: selected,
       movedUnit: movedWithPath,
       units: updatedUnits,
       cities: state.cities,
     );
 
-    final destTile = mapData.tileAt(movedWithPath.col, movedWithPath.row);
     final keepMoveTargetingActive = !isPartialMove;
     var next = withDiscoveredDiplomaticContacts(
       workState
           .copyWith(units: updatedUnits, fogOfWar: newFog)
           .copyWithInteraction(moveCommandActive: keepMoveTargetingActive),
     );
-    next = next.copyWithInteraction(
-      selection: GameSelection.unit(movedWithPath, tile: destTile),
-    );
+    next = MovementReducer._selectUpdatedUnit(next, movedWithPath, mapView);
 
     return GameStateTransition(
       state: next,
@@ -216,7 +206,7 @@ abstract final class _MovePreviewReducer {
   static ShowHudFeedbackEffect? _blockedFeedback({
     required GameState state,
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required FogVisibilityQuery visibility,
     required bool includeGeneric,
   }) {

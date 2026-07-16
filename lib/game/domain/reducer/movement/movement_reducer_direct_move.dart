@@ -4,7 +4,7 @@ abstract final class _DirectMoveProcessor {
   static GameStateTransition run(
     GameState state,
     MoveUnitCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
     required bool Function(MapTileView tile)? canEnterTile,
@@ -17,14 +17,14 @@ abstract final class _DirectMoveProcessor {
     if (validation is! ValidUnit) return GameStateTransition(state: state);
 
     final unit = validation.unit;
-    final targetTile = _validTargetTile(state, unit, command, mapData);
+    final targetTile = _validTargetTile(state, unit, command, mapView);
     if (targetTile == null) return GameStateTransition(state: state);
 
     final plan = _DirectMovePlanFinder(
       state: state,
       unit: unit,
       targetTile: targetTile,
-      mapData: mapData,
+      mapView: mapView,
       context: context,
       canEnterTileOverride: canEnterTile,
     ).plan();
@@ -36,7 +36,7 @@ abstract final class _DirectMoveProcessor {
 
     final execution = _DirectMoveExecution.from(plan);
     if (execution.keepsUnitAtOrigin(unit)) {
-      return MovementReducer._queueMovePath(state, unit, plan, mapData);
+      return MovementReducer._queueMovePath(state, unit, plan, mapView);
     }
 
     return _applyExecutedMove(
@@ -44,18 +44,18 @@ abstract final class _DirectMoveProcessor {
       unit: unit,
       movedUnit: execution.movedUnit(unit),
       animationSteps: execution.animationSteps,
-      mapData: mapData,
+      mapTiles: mapView,
       fogOfWarService: fogOfWarService,
     );
   }
 
-  static TileData? _validTargetTile(
+  static MapTileView? _validTargetTile(
     GameState state,
     GameUnit unit,
     MoveUnitCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final targetTile = mapData.tileAt(command.targetCol, command.targetRow);
+    final targetTile = mapTiles.tileAt(command.targetCol, command.targetRow);
     if (targetTile == null) return null;
     if (unit.occupies(targetTile.col, targetTile.row)) return null;
     if (MovementReducer._blocksForeignCityCenter(
@@ -72,7 +72,7 @@ abstract final class _DirectMoveProcessor {
   static bool _canTraverseEventually(
     GameState state,
     GameUnit unit,
-    TileData targetTile,
+    MapTileView targetTile,
     UnitMovementPlan plan,
   ) {
     return UnitMovementFeasibility.canEventuallyTraverse(
@@ -104,13 +104,13 @@ abstract final class _DirectMoveProcessor {
     required GameUnit unit,
     required GameUnit movedUnit,
     required List<UnitMovementStep> animationSteps,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required FogOfWarService fogOfWarService,
   }) {
     final updatedUnits = replaceUnit(state.units, movedUnit);
     final newFog = fogOfWarService.recomputeAfterUnitMove(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapData: mapTiles,
       previousUnit: unit,
       movedUnit: movedUnit,
       units: updatedUnits,
@@ -122,12 +122,7 @@ abstract final class _DirectMoveProcessor {
     ).copyWithInteraction(movePreview: null);
 
     if (state.selectedUnitId == unit.id) {
-      next = next.copyWithInteraction(
-        selection: GameSelection.unit(
-          movedUnit,
-          tile: mapData.tileAt(movedUnit.col, movedUnit.row),
-        ),
-      );
+      next = MovementReducer._selectUpdatedUnit(next, movedUnit, mapTiles);
     }
 
     return GameStateTransition(
@@ -159,21 +154,21 @@ final class _DirectMovePlanFinder {
     required this.state,
     required this.unit,
     required this.targetTile,
-    required this.mapData,
+    required this.mapView,
     required this.context,
     required this.canEnterTileOverride,
   });
 
   final GameState state;
   final GameUnit unit;
-  final TileData targetTile;
-  final MapData mapData;
+  final MapTileView targetTile;
+  final MapTraversalView mapView;
   final GameCommandContext context;
   final bool Function(MapTileView tile)? canEnterTileOverride;
 
   UnitMovementPlan? plan() {
     final pathfinder = UnitMovementPathfinder(
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       canEnterTile: _canEnterTile,
     );

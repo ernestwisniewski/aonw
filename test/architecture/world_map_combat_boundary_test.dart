@@ -537,6 +537,21 @@ const _targets = [
     owner: 'MovementReducer',
     boundaries: [
       _Boundary.method(
+        'handleMoveTargetTileWithEnvironment',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+      _Boundary.method(
+        'handleMoveTargetTile',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'moveUnit',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
         'cancelUnitAction',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
@@ -565,6 +580,67 @@ const _targets = [
         '_unitSelection',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_canCarryArtifactIntoTargetCity',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_direct_move.dart',
+    owner: '_DirectMoveProcessor',
+    boundaries: [
+      _Boundary.method('run', parameter: 'mapView', type: 'MapTraversalView'),
+      _Boundary.method(
+        '_validTargetTile',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_canTraverseEventually',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+      _Boundary.method(
+        '_applyExecutedMove',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_direct_move.dart',
+    owner: '_DirectMovePlanFinder',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapView', type: 'MapTraversalView'),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_move_preview.dart',
+    owner: '_MovePreviewReducer',
+    boundaries: [
+      _Boundary.method(
+        'setPreview',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'confirmPreview',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        '_blockedFeedback',
+        parameter: 'targetTile',
+        type: 'MapTileView',
       ),
     ],
   ),

@@ -7,7 +7,7 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
-import 'package:aonw/map/domain/map_data.dart' show MapData, TileData;
+import 'package:aonw/map/domain/map_data.dart' show MapData;
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -36,12 +36,12 @@ abstract final class MovementReducer {
 
   static GameStateTransition handleMoveTargetTileWithEnvironment(
     GameState state,
-    TileData tileData,
+    MapTileView targetTile,
     ReducerEnvironment environment,
   ) {
     return handleMoveTargetTile(
       state,
-      tileData,
+      targetTile,
       environment.mapData,
       context: environment.context,
       fogOfWarService: environment.fogOfWarService,
@@ -156,8 +156,8 @@ abstract final class MovementReducer {
   /// Handles a tile tap while move mode is active.
   static GameStateTransition handleMoveTargetTile(
     GameState state,
-    TileData tileData,
-    MapData mapData, {
+    MapTileView targetTile,
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
@@ -169,12 +169,9 @@ abstract final class MovementReducer {
       return GameStateTransition(state: _clearMoveTargeting(state));
     }
 
-    if (selected.occupies(tileData.col, tileData.row)) {
-      final tile = mapData.tileAt(selected.col, selected.row);
+    if (selected.occupies(targetTile.col, targetTile.row)) {
       var next = _clearMoveTargeting(state);
-      next = next.copyWithInteraction(
-        selection: GameSelection.unit(selected, tile: tile),
-      );
+      next = _selectUpdatedUnit(next, selected, mapView);
       return GameStateTransition(state: next);
     }
 
@@ -183,17 +180,17 @@ abstract final class MovementReducer {
     final isConfirmation =
         preview != null &&
         preview.unitId == selected.id &&
-        preview.targetCol == tileData.col &&
-        preview.targetRow == tileData.row;
+        preview.targetCol == targetTile.col &&
+        preview.targetRow == targetTile.row;
     final isUnreachableConfirm =
         preview != null &&
         preview.unitId == selected.id &&
-        preview.isStepUnreachableThisTurn(tileData.col, tileData.row);
+        preview.isStepUnreachableThisTurn(targetTile.col, targetTile.row);
 
     if (isConfirmation || isUnreachableConfirm) {
       return _MovePreviewReducer.confirmPreview(
         state,
-        mapData,
+        mapView,
         fogOfWarService: fogOfWarService,
       );
     }
@@ -201,8 +198,8 @@ abstract final class MovementReducer {
     return _MovePreviewReducer.setPreview(
       state,
       selected,
-      tileData,
-      mapData,
+      targetTile,
+      mapView,
       context: context,
     );
   }
@@ -212,7 +209,7 @@ abstract final class MovementReducer {
   static GameStateTransition moveUnit(
     GameState state,
     MoveUnitCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
     bool Function(MapTileView tile)? canEnterTile,
@@ -220,7 +217,7 @@ abstract final class MovementReducer {
     return _DirectMoveProcessor.run(
       state,
       command,
-      mapData,
+      mapView,
       context: context,
       fogOfWarService: fogOfWarService,
       canEnterTile: canEnterTile,
@@ -427,7 +424,7 @@ abstract final class MovementReducer {
   static bool _canCarryArtifactIntoTargetCity({
     required GameState state,
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required UnitMovementStep step,
   }) {
     if (unit.carriedArtifactId == null) return false;
