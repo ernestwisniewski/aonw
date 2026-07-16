@@ -74,6 +74,55 @@ void main() {
       expect(analysis.pressureTargetPlayerIds(), isEmpty);
     });
 
+    test('includes supplied map objective scores in the race', () {
+      const objective = MapObjectiveDefinition(
+        id: 'strategic_pass',
+        type: MapObjectiveType.strategicPass,
+        hex: HexCoord(col: 1, row: 0),
+        requiredHoldTurns: 1,
+        victoryPoints: 100,
+      );
+      const state = PersistentGameState(
+        cities: [
+          GameCity(
+            id: 'own_city',
+            ownerPlayerId: 'player_1',
+            name: 'Own city',
+            center: CityHex(col: 0, row: 0),
+          ),
+          GameCity(
+            id: 'rival_city',
+            ownerPlayerId: 'player_2',
+            name: 'Rival city',
+            center: CityHex(col: 1, row: 0),
+          ),
+        ],
+        runtimeState: GameRuntimeState(
+          mapObjectiveHoldStatesByObjectiveId: {
+            'strategic_pass': MapObjectiveHoldState(
+              objectiveId: 'strategic_pass',
+              playerId: 'player_2',
+              holdTurns: 1,
+            ),
+          },
+        ),
+      );
+
+      final analysis = analyzer.analyzeForPlayer(
+        playerId: 'player_1',
+        playerIds: const ['player_1', 'player_2'],
+        state: state,
+        turn: 12,
+        turnLimit: 60,
+        scoreFallbackEnabled: true,
+        mapObjectives: const [objective],
+      );
+
+      expect(analysis?.leaderPlayerId, 'player_2');
+      expect(analysis?.leader?.mapObjectiveScore, 100);
+      expect(analysis?.pressureTargetPlayerIds(), {'player_2'});
+    });
+
     test('ramps urgency through the final fifteen percent of turns', () {
       final early = analyzer.analyzeForPlayer(
         playerId: 'player_1',

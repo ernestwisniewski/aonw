@@ -87,7 +87,7 @@ final class AiTurnPreparationBuilder {
       state: planningPersistentState,
       turn: resolvedSnapshot.save.turn,
       matchRules: resolvedSnapshot.save.matchRules,
-      mapData: mapData,
+      mapObjectives: mapData.objectives,
     );
     final cityThreats = cityThreatAssessor.assess(
       state: planningPersistentState,

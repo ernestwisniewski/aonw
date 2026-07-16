@@ -11,6 +11,45 @@ part 'support/world_map_combat_boundary_fixtures.dart';
 
 const _targets = [
   _Target(
+    path: 'lib/game/domain/ai/pressure_target_resolver.dart',
+    owner: 'PressureTargetResolver',
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapObjectives',
+        type: 'Iterable<MapObjectiveDefinition>',
+      ),
+      _Boundary.method(
+        '_scoreRaceFor',
+        parameter: 'mapObjectives',
+        type: 'Iterable<MapObjectiveDefinition>',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/outcome/'
+        'score_race_analyzer.dart',
+    owner: 'ScoreRaceAnalyzer',
+    boundaries: [
+      _Boundary.method(
+        'analyzeForPlayer',
+        parameter: 'mapObjectives',
+        type: 'Iterable<MapObjectiveDefinition>',
+      ),
+      _Boundary.method(
+        'pressureTargetPlayerIds',
+        parameter: 'mapObjectives',
+        type: 'Iterable<MapObjectiveDefinition>',
+      ),
+      _Boundary.method(
+        '_breakdownByPlayerId',
+        parameter: 'mapObjectives',
+        type: 'Iterable<MapObjectiveDefinition>',
+      ),
+    ],
+  ),
+  _Target(
     path:
         'packages/aonw_core/lib/game/domain/trade/'
         'persistent_resource_trade_resolver.dart',
@@ -1137,14 +1176,8 @@ void _checkBoundaryType({
 }
 
 bool _isExpectedType(TypeAnnotation? type, String expectedType, bool nullable) {
-  return _isNamedType(type, expectedType) &&
-      (type?.question != null) == nullable;
-}
-
-bool _isNamedType(TypeAnnotation? type, String name) {
-  return type is NamedType &&
-      type.name.lexeme == name &&
-      type.typeArguments == null;
+  final expected = nullable ? '$expectedType?' : expectedType;
+  return type?.toSource() == expected;
 }
 
 bool _containsAnyNamedType(TypeAnnotation? type, Set<String> names) {

@@ -1,10 +1,10 @@
 import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -47,7 +47,7 @@ void main() {
         state: state,
         turn: 2,
         matchRules: MatchRules.standard,
-        mapData: _mapData,
+        mapObjectives: const [],
       );
 
       expect(result.playerIds, {'human'});
@@ -91,10 +91,63 @@ void main() {
         state: state,
         turn: 50,
         matchRules: matchRules,
-        mapData: _mapData,
+        mapObjectives: const [],
       );
 
       expect(result.scoreRace?.leaderPlayerId, 'leader');
+      expect(result.playerIds, {'leader'});
+    });
+
+    test('forwards map objective score into pressure analysis', () {
+      const objective = MapObjectiveDefinition(
+        id: 'strategic_pass',
+        type: MapObjectiveType.strategicPass,
+        hex: HexCoord(col: 1, row: 0),
+        requiredHoldTurns: 1,
+        victoryPoints: 100,
+      );
+      final state = PersistentGameState(
+        cities: const [
+          GameCity(
+            id: 'ai_city',
+            ownerPlayerId: 'ai',
+            name: 'AI City',
+            center: CityHex(col: 0, row: 0),
+          ),
+          GameCity(
+            id: 'leader_city',
+            ownerPlayerId: 'leader',
+            name: 'Leader City',
+            center: CityHex(col: 1, row: 0),
+          ),
+        ],
+        runtimeState: GameRuntimeState(
+          diplomacy: DiplomacyState.empty.setStatus(
+            'human',
+            'ai',
+            DiplomaticRelationStatus.neutral,
+          ),
+          mapObjectiveHoldStatesByObjectiveId: const {
+            'strategic_pass': MapObjectiveHoldState(
+              objectiveId: 'strategic_pass',
+              playerId: 'leader',
+              holdTurns: 1,
+            ),
+          },
+        ),
+      );
+
+      final result = const PressureTargetResolver().resolve(
+        players: _players,
+        playerId: 'ai',
+        state: state,
+        turn: 50,
+        matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
+        mapObjectives: const [objective],
+      );
+
+      expect(result.scoreRace?.leaderPlayerId, 'leader');
+      expect(result.scoreRace?.leader?.mapObjectiveScore, 100);
       expect(result.playerIds, {'leader'});
     });
   });
@@ -110,38 +163,3 @@ const _players = [
     kind: PlayerKind.ai,
   ),
 ];
-
-final _mapData = MapData(
-  cols: 4,
-  rows: 1,
-  tiles: const [
-    TileData(
-      col: 0,
-      row: 0,
-      terrains: [TerrainType.plains],
-      resources: [],
-      height: 0,
-    ),
-    TileData(
-      col: 1,
-      row: 0,
-      terrains: [TerrainType.plains],
-      resources: [],
-      height: 0,
-    ),
-    TileData(
-      col: 2,
-      row: 0,
-      terrains: [TerrainType.plains],
-      resources: [],
-      height: 0,
-    ),
-    TileData(
-      col: 3,
-      row: 0,
-      terrains: [TerrainType.plains],
-      resources: [],
-      height: 0,
-    ),
-  ],
-);

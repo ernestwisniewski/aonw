@@ -1,10 +1,10 @@
+import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 
 final class PressureTargetResolution {
   final Set<String> playerIds;
@@ -29,7 +29,7 @@ final class PressureTargetResolver {
     required PersistentGameState state,
     required int turn,
     required MatchRules matchRules,
-    required MapData mapData,
+    required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
     final diplomacy = state.runtimeState.diplomacy;
     final scoreRace = _scoreRaceFor(
@@ -38,7 +38,7 @@ final class PressureTargetResolver {
       state: state,
       turn: turn,
       matchRules: matchRules,
-      mapData: mapData,
+      mapObjectives: mapObjectives,
     );
 
     return PressureTargetResolution(
@@ -69,7 +69,7 @@ final class PressureTargetResolver {
     required PersistentGameState state,
     required int turn,
     required MatchRules matchRules,
-    required MapData mapData,
+    required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
     final victory = matchRules.victory;
     return scoreRaceAnalyzer.analyzeForPlayer(
@@ -79,7 +79,7 @@ final class PressureTargetResolver {
       turn: turn,
       turnLimit: victory.turnLimit,
       scoreFallbackEnabled: victory.scoreFallbackEnabled,
-      mapData: mapData,
+      mapObjectives: mapObjectives,
     );
   }
 

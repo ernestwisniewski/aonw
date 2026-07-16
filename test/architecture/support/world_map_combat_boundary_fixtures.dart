@@ -349,4 +349,35 @@ abstract class TurnContext {
       );
     },
   );
+
+  test('guard enforces exact generic boundary types', () {
+    const target = _Target(
+      path: 'lib/score_race_analyzer.dart',
+      owner: 'ScoreRaceAnalyzer',
+      boundaries: [
+        _Boundary.method(
+          'analyzeForPlayer',
+          parameter: 'mapObjectives',
+          type: 'Iterable<MapObjectiveDefinition>',
+        ),
+      ],
+    );
+
+    final violations = _violations('''
+class ScoreRaceAnalyzer {
+  void analyzeForPlayer({
+    List<MapObjectiveDefinition> mapObjectives = const [],
+  }) {}
+}
+''', target);
+
+    expect(
+      violations,
+      contains(
+        'ScoreRaceAnalyzer.analyzeForPlayer.mapObjectives must have type '
+        'Iterable<MapObjectiveDefinition>; found '
+        'List<MapObjectiveDefinition>',
+      ),
+    );
+  });
 }

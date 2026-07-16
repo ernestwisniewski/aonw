@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/game/domain/outcome/empire_score_calculator.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 
 class ScoreRaceAnalysis {
   final String playerId;
@@ -101,7 +101,7 @@ class ScoreRaceAnalyzer {
     required int turn,
     required int? turnLimit,
     required bool scoreFallbackEnabled,
-    MapData? mapData,
+    Iterable<MapObjectiveDefinition> mapObjectives = const [],
   }) {
     if (!scoreFallbackEnabled || turnLimit == null || turnLimit <= 0) {
       return null;
@@ -110,7 +110,7 @@ class ScoreRaceAnalyzer {
     final breakdownByPlayerId = _breakdownByPlayerId(
       playerIds: playerIds,
       state: state,
-      mapData: mapData,
+      mapObjectives: mapObjectives,
     );
     final player = breakdownByPlayerId[playerId];
     if (player == null) return null;
@@ -142,7 +142,7 @@ class ScoreRaceAnalyzer {
     required int turn,
     required int? turnLimit,
     required bool scoreFallbackEnabled,
-    MapData? mapData,
+    Iterable<MapObjectiveDefinition> mapObjectives = const [],
   }) {
     return analyzeForPlayer(
           playerId: playerId,
@@ -151,7 +151,7 @@ class ScoreRaceAnalyzer {
           turn: turn,
           turnLimit: turnLimit,
           scoreFallbackEnabled: scoreFallbackEnabled,
-          mapData: mapData,
+          mapObjectives: mapObjectives,
         )?.pressureTargetPlayerIds() ??
         const {};
   }
@@ -159,14 +159,14 @@ class ScoreRaceAnalyzer {
   Map<String, EmpireScoreBreakdown> _breakdownByPlayerId({
     required Iterable<String> playerIds,
     required PersistentGameState state,
-    required MapData? mapData,
+    required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
     return {
       for (final playerId in _cleanPlayerIds(playerIds))
         playerId: scoreCalculator.scoreFor(
           playerId: playerId,
           state: state,
-          mapObjectives: mapData?.objectives ?? const [],
+          mapObjectives: mapObjectives,
         ),
     };
   }

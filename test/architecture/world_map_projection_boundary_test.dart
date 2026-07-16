@@ -20,6 +20,7 @@ const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/hex_assessment/hex_assessment_rules.dart',
+  'lib/game/domain/ai/pressure_target_resolver.dart',
   'lib/game/domain/city_selection_projector.dart',
   'lib/game/domain/game_selection.dart',
   'lib/game/domain/movement/unit_movement_planner.dart',
@@ -61,6 +62,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/presentation/widgets/selection/view_models/'
       'tile_selection_view_model_factory.dart',
   '$_gameDomain/city/city_initial_territory_selector.dart',
+  '$_gameDomain/outcome/score_race_analyzer.dart',
   '$_gameDomain/trade/persistent_resource_trade_resolver.dart',
 };
 const _mapDataFreeMigrationPaths = {
