@@ -28,7 +28,7 @@ void main() {
         actorPlayerId: 'player_1',
         turn: 3,
         commandTick: 7,
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -68,7 +68,7 @@ void main() {
           actorPlayerId: 'player_1',
           turn: 3,
           commandTick: 7,
-          worldMap: _worldMap(),
+          mapTiles: WorldMapReadView(_worldMap()),
         );
 
         expect(result.accepted, isTrue, reason: action.name);
@@ -101,7 +101,7 @@ void main() {
               actorPlayerId: 'player_2',
               turn: 3,
               commandTick: 7,
-              worldMap: _worldMap(),
+              mapTiles: WorldMapReadView(_worldMap()),
             )
             .reason,
         'attacker_not_controlled',
@@ -114,7 +114,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              worldMap: _worldMap(),
+              mapTiles: WorldMapReadView(_worldMap()),
             )
             .reason,
         'attack_target_not_visible',
@@ -134,7 +134,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              worldMap: _worldMap(),
+              mapTiles: WorldMapReadView(_worldMap()),
             )
             .reason,
         'attack_target_out_of_range',
@@ -158,7 +158,7 @@ void main() {
               actorPlayerId: 'player_1',
               turn: 3,
               commandTick: 7,
-              worldMap: _worldMap(),
+              mapTiles: WorldMapReadView(_worldMap()),
             )
             .reason,
         'attack_target_protected_by_treaty',

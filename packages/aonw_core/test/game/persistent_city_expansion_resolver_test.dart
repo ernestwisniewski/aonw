@@ -10,7 +10,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 1, 2),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);
@@ -29,7 +29,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 1, 2),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isFalse);
@@ -44,7 +44,7 @@ void main() {
         state: state,
         command: const SelectCityExpansionHexCommand('city_1', 0, 0),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isFalse);

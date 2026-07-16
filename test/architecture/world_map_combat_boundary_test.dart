@@ -27,7 +27,9 @@ const _targets = [
     path:
         'packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart',
     owner: 'PersistentCombatCommandResolver',
-    boundaries: [_Boundary.method('resolve')],
+    boundaries: [
+      _Boundary.method('resolve', parameter: 'mapTiles', type: 'MapTileLookup'),
+    ],
   ),
   _Target(
     path:
@@ -111,7 +113,13 @@ const _targets = [
     path:
         'packages/aonw_core/lib/game/domain/city/persistent_city_expansion_resolver.dart',
     owner: 'PersistentCityExpansionResolver',
-    boundaries: [_Boundary.method('selectExpansionHex')],
+    boundaries: [
+      _Boundary.method(
+        'selectExpansionHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
   ),
   _Target(
     path:
@@ -155,7 +163,11 @@ const _targets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method('rushProduction'),
+      _Boundary.method(
+        'rushProduction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
     ],
   ),
   _Target(
@@ -453,15 +465,15 @@ enum _BoundaryKind {
 final class _Boundary {
   const _Boundary.method(
     this.name, {
-    this.parameter = 'worldMap',
-    this.type = 'WorldMap',
+    required this.parameter,
+    required this.type,
     this.nullable = false,
   }) : kind = _BoundaryKind.method;
 
   const _Boundary.constructor(
     this.name, {
-    this.parameter = 'worldMap',
-    this.type = 'WorldMap',
+    required this.parameter,
+    required this.type,
   }) : kind = _BoundaryKind.constructor,
        nullable = false;
 

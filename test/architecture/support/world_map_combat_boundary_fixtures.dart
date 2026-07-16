@@ -7,24 +7,30 @@ void _registerWorldMapCombatBoundaryFixtures() {
       const target = _Target(
         path: 'lib/persistent_combat_command_resolver.dart',
         owner: 'PersistentCombatCommandResolver',
-        boundaries: [_Boundary.method('resolve')],
+        boundaries: [
+          _Boundary.method(
+            'resolve',
+            parameter: 'mapTiles',
+            type: 'MapTileLookup',
+          ),
+        ],
       );
 
       final violations = _violations('''
 class PersistentCombatCommandResolver {
   final WorldMap cachedWorldMap;
 
-  void resolve({required MapData worldMap}) {}
+  void resolve({required MapData mapTiles}) {}
 }
 ''', target);
 
       expect(
         violations,
         containsAll([
-          'PersistentCombatCommandResolver.resolve.worldMap must have type '
-              'WorldMap; found MapData',
+          'PersistentCombatCommandResolver.resolve.mapTiles must have type '
+              'MapTileLookup; found MapData',
           'PersistentCombatCommandResolver.resolve must not expose MapData '
-              'through parameter worldMap',
+              'through parameter mapTiles',
         ]),
       );
     },
@@ -102,13 +108,19 @@ abstract final class PersistentTurnCombatResolver {
     const target = _Target(
       path: 'lib/persistent_combat_command_resolver.dart',
       owner: 'PersistentCombatCommandResolver',
-      boundaries: [_Boundary.method('resolve')],
+      boundaries: [
+        _Boundary.method(
+          'resolve',
+          parameter: 'mapTiles',
+          type: 'MapTileLookup',
+        ),
+      ],
     );
 
     final violations = _violations('''
 class PersistentCombatCommandResolver {
   void resolve({
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required List<MapData> snapshots,
     required Map<String, MapData?> archivedById,
   }) {}
@@ -163,7 +175,13 @@ final class PersistentTurnPipelineRequest {
     const target = _Target(
       path: 'lib/persistent_combat_command_resolver.dart',
       owner: 'PersistentCombatCommandResolver',
-      boundaries: [_Boundary.method('resolve')],
+      boundaries: [
+        _Boundary.method(
+          'resolve',
+          parameter: 'mapTiles',
+          type: 'MapTileLookup',
+        ),
+      ],
     );
     final sources = <String, String>{
       'lib/legacy_payload.dart': '''
@@ -174,7 +192,7 @@ import 'legacy_payload.dart';
 
 class PersistentCombatCommandResolver {
   void resolve({
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     required LegacyPayload payload,
   }) {}
 }

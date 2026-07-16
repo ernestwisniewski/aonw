@@ -15,7 +15,7 @@ List<String> _discoverEconomySimulationMapPaths() {
     }
   }
   paths.addAll(
-    _economySimulationPartPaths(
+    _libraryPartPaths(
       _economySimulationPath,
       File(_economySimulationPath).readAsStringSync(),
     ),
@@ -24,7 +24,7 @@ List<String> _discoverEconomySimulationMapPaths() {
   return List.unmodifiable(sortedPaths);
 }
 
-List<String> _economySimulationPartPaths(String libraryPath, String source) {
+List<String> _libraryPartPaths(String libraryPath, String source) {
   final unit = parseString(content: source, path: libraryPath).unit;
   final directory = File(libraryPath).parent.path;
   return [

@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat/combat_distance.dart';
 import 'package:aonw_core/game/domain/combat/combat_modifier_collector.dart';
@@ -15,7 +14,6 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCombatCommandResult {
   const PersistentCombatCommandResult({
@@ -49,7 +47,7 @@ class PersistentCombatCommandResolver {
     required String actorPlayerId,
     required int turn,
     required int commandTick,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     GameRuleset ruleset = GameRuleset.defaults,
   }) {
     final attacker = state.units.byId(command.attackerUnitId);
@@ -62,7 +60,6 @@ class PersistentCombatCommandResolver {
       return _reject(state, 'attacker_exhausted');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     final attackerTile = mapTiles.tileAt(attacker.col, attacker.row);
     if (attackerTile == null) {
       return _reject(state, 'attacker_out_of_bounds');

@@ -72,7 +72,6 @@ class ServerCommandReducer {
     }
 
     final loadedMap = await _loadServerMap(save.mapName);
-    final mapData = loadedMap.legacyMapData;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
@@ -109,7 +108,7 @@ class ServerCommandReducer {
         match: match,
         save: nextSave,
         state: result.state,
-        mapData: mapData,
+        mapView: loadedMap.mapView,
       ),
     );
   }
@@ -141,8 +140,6 @@ class ServerCommandReducer {
     }
 
     final loadedMap = await _loadServerMap(save.mapName);
-    final mapData = loadedMap.legacyMapData;
-    final worldMap = loadedMap.canonicalWorldMap;
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
@@ -156,7 +153,7 @@ class ServerCommandReducer {
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: nowUtc,
-      worldMap: worldMap,
+      mapView: loadedMap.mapView,
       ruleset: ruleset,
     );
 
@@ -178,7 +175,7 @@ class ServerCommandReducer {
         match: match,
         save: nextSave,
         state: result.state,
-        mapData: mapData,
+        mapView: loadedMap.mapView,
       ),
     );
   }
@@ -203,7 +200,7 @@ class ServerCommandReducer {
           command: command,
           actorPlayerId: actorPlayerId,
           now: now,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapView: loadedMap.mapView,
           ruleset: ruleset,
         );
       case EndTurnCommand(:final playerId):
@@ -214,7 +211,7 @@ class ServerCommandReducer {
           command: SubmitTurnCommand(playerId),
           actorPlayerId: actorPlayerId,
           now: now,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapView: loadedMap.mapView,
           ruleset: ruleset,
         );
       case MoveUnitCommand():
@@ -232,7 +229,7 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
           turn: save.turn,
           commandTick: commandTick,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapTiles: loadedMap.mapView,
           ruleset: ruleset,
         );
         return _fromPersistentResult(save, result);
@@ -363,7 +360,7 @@ class ServerCommandReducer {
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          worldMap: loadedMap.canonicalWorldMap,
+          mapTiles: loadedMap.mapView,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
           wonderRuleset: ruleset.wonders,
@@ -403,7 +400,7 @@ class ServerCommandReducer {
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
-              worldMap: loadedMap.canonicalWorldMap,
+              mapTiles: loadedMap.mapView,
               cityRuleset: ruleset.city,
               technologyRuleset: ruleset.technology,
             );

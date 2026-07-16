@@ -34,7 +34,7 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
     required WireMatch match,
     required GameSave save,
     required PersistentGameState state,
-    required MapData mapData,
+    required MapReadView mapView,
   }) {
     final kickedPlayerIds = state.runtimeState.kickedPlayerIds;
     return const GameOutcomeDetector().evaluate(
@@ -43,7 +43,7 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
           .where((playerId) => !kickedPlayerIds.contains(playerId)),
       state: state,
       matchRules: save.matchRules,
-      mapData: mapData,
+      mapData: mapView,
       turn: save.turn,
     );
   }

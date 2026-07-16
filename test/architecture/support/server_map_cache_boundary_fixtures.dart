@@ -1,0 +1,183 @@
+part of '../world_map_projection_boundary_test.dart';
+
+void _registerServerMapCacheBoundaryFixtures() {
+  test('server cache guard accepts one validated indexed view', () {
+    expect(
+      _serverMapCacheBoundaryViolations(
+        source: _validServerMapCacheFixture,
+        path: 'fixture.dart',
+        forbiddenTypeNames: const {
+          'WorldMap',
+          'WorldMapReadView',
+          'LegacyWorldMapAdapter',
+        },
+      ),
+      isEmpty,
+    );
+  });
+
+  test('server cache guard rejects duplicate and premature indexing', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture.replaceFirst(
+        'validateMapDataTileInvariants(sourceMapData);\n'
+            '    final mapView = sourceMapData.indexedReadView();',
+        'final mapView = sourceMapData.indexedReadView();\n'
+            '    final duplicate = sourceMapData.indexedReadView();\n'
+            '    validateMapDataTileInvariants(sourceMapData);',
+      ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      containsAll([
+        'fixture.dart _loadServerMap must call indexedReadView exactly once; '
+            'found 2',
+        'fixture.dart _loadServerMap must directly validate, index, and cache '
+            'sourceMapData in order within one block',
+      ]),
+    );
+  });
+
+  test('server cache guard rejects validation hidden in a local function', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture.replaceFirst(
+        'validateMapDataTileInvariants(sourceMapData);\n'
+            '    final mapView = sourceMapData.indexedReadView();',
+        'void validateLater() {\n'
+            '      validateMapDataTileInvariants(sourceMapData);\n'
+            '    }\n'
+            '    final mapView = sourceMapData.indexedReadView();\n'
+            '    validateLater();',
+      ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      contains(
+        'fixture.dart _loadServerMap must directly validate, index, and cache '
+        'sourceMapData in order within one block',
+      ),
+    );
+  });
+
+  test('server cache guard rejects conditional validation', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture.replaceFirst(
+        'validateMapDataTileInvariants(sourceMapData);',
+        'if (false) validateMapDataTileInvariants(sourceMapData);',
+      ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      contains(
+        'fixture.dart _loadServerMap must directly validate, index, and cache '
+        'sourceMapData in order within one block',
+      ),
+    );
+  });
+
+  test('server cache guard rejects legacy maps and a wider cache field', () {
+    final violations = _serverMapCacheBoundaryViolations(
+      source: _validServerMapCacheFixture
+          .replaceFirst(
+            'final mapView = sourceMapData.indexedReadView();',
+            'final mapView = WorldMapReadView('
+                'LegacyWorldMapAdapter.fromMapData(sourceMapData));',
+          )
+          .replaceFirst(
+            'final MapReadView mapView;',
+            'final WorldMap mapView;',
+          ),
+      path: 'fixture.dart',
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+
+    expect(
+      violations,
+      containsAll([
+        'fixture.dart must not reference LegacyWorldMapAdapter',
+        'fixture.dart must not reference WorldMapReadView',
+        'fixture.dart must not reference WorldMap',
+        'fixture.dart _LoadedServerMap.mapView must be final MapReadView',
+      ]),
+    );
+  });
+
+  test('server reducer guard rejects wide map contracts outside cache', () {
+    const turnsSource = '''
+extension Turns on ServerReducer {
+  void _submitTurn({required WorldMap mapView}) {}
+  void _finalizeSimultaneousTurn({required MapReadView mapView}) {}
+}
+''';
+    final dependencyViolations = _serverReducerLibraryDependencyViolations(
+      {_serverReducerTurnsPath: turnsSource},
+      forbiddenTypeNames: const {
+        'WorldMap',
+        'WorldMapReadView',
+        'LegacyWorldMapAdapter',
+      },
+    );
+    final contractViolations = _serverReducerMapContractViolations({
+      _serverReducerTurnsPath: turnsSource,
+      _serverReducerOutcomePath: '''
+extension Outcome on ServerReducer {
+  void _gameOutcome({required MapReadView mapView}) {}
+}
+''',
+    });
+
+    expect(
+      dependencyViolations,
+      contains('$_serverReducerTurnsPath must not reference WorldMap'),
+    );
+    expect(
+      contractViolations,
+      contains(
+        '$_serverReducerTurnsPath _submitTurn.mapView must have type '
+        'MapReadView; found WorldMap',
+      ),
+    );
+  });
+}
+
+const _validServerMapCacheFixture = '''
+extension ServerMapCache on ServerReducer {
+  Future<_LoadedServerMap> _loadServerMap(String mapName) async {
+    final sourceMapData = await catalog.loadAssetMap(mapName);
+    validateMapDataTileInvariants(sourceMapData);
+    final mapView = sourceMapData.indexedReadView();
+    return _LoadedServerMap(sourceMapData, mapView);
+  }
+}
+
+final class _LoadedServerMap {
+  const _LoadedServerMap(this.legacyMapData, this.mapView);
+
+  final MapData legacyMapData;
+  final MapReadView mapView;
+}
+''';

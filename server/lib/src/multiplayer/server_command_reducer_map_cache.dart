@@ -9,10 +9,9 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
     final source = Future<_LoadedServerMap>.sync(() async {
       final sourceMapData = await _mapCatalog.loadAssetMap(mapName);
       sourceMapData.mapName ??= mapName;
-      return _LoadedServerMap(
-        sourceMapData,
-        LegacyWorldMapAdapter.fromMapData(sourceMapData),
-      );
+      validateMapDataTileInvariants(sourceMapData);
+      final mapView = sourceMapData.indexedReadView();
+      return _LoadedServerMap(sourceMapData, mapView);
     });
     late final Future<_LoadedServerMap> loading;
     loading = source.onError((Object error, StackTrace stackTrace) {
@@ -27,12 +26,10 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
 }
 
 final class _LoadedServerMap {
-  _LoadedServerMap(this.legacyMapData, this.canonicalWorldMap)
-    : mapView = WorldMapReadView(canonicalWorldMap);
+  const _LoadedServerMap(this.legacyMapData, this.mapView);
 
   // Asset maps are read-only in the reducer. Keeping this cache reducer-owned
   // avoids changing the mutable map catalog contract used by editor tooling.
   final MapData legacyMapData;
-  final WorldMap canonicalWorldMap;
-  final WorldMapReadView mapView;
+  final MapReadView mapView;
 }

@@ -130,7 +130,7 @@ MapReadView helper(MapData mapData) {
 
   test('economy source discovery includes parts with unrelated names', () {
     expect(
-      _economySimulationPartPaths(
+      _libraryPartPaths(
         'lib/ai/simulation/economy_simulation.dart',
         "part 'support.dart';",
       ),

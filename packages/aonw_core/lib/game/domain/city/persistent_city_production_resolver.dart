@@ -1,4 +1,3 @@
-import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city/city_building_requirement_rules.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
@@ -21,7 +20,6 @@ import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 class PersistentCityProductionResult {
   const PersistentCityProductionResult({
@@ -297,7 +295,7 @@ class PersistentCityProductionResolver {
     required PersistentGameState state,
     required RushProductionCommand command,
     required String actorPlayerId,
-    required WorldMap worldMap,
+    required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
@@ -315,7 +313,6 @@ class PersistentCityProductionResolver {
       return _reject(state, 'project_cannot_be_rushed');
     }
 
-    final mapTiles = WorldMapReadView(worldMap);
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,

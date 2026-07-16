@@ -592,7 +592,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       final updatedCity = result.state.cities.single;
@@ -618,7 +618,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isFalse);
@@ -683,7 +683,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);

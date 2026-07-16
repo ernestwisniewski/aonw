@@ -46,7 +46,7 @@ void main() {
         state: state,
         command: const RushProductionCommand('city_1'),
         actorPlayerId: 'player_1',
-        worldMap: _worldMap(),
+        mapTiles: WorldMapReadView(_worldMap()),
       );
 
       expect(result.accepted, isTrue);

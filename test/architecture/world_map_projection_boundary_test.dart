@@ -10,6 +10,8 @@ import 'support/legacy_world_map_adapter_guard.dart';
 
 part 'support/economy_simulation_map_view_guard.dart';
 part 'support/economy_simulation_map_view_fixtures.dart';
+part 'support/server_map_cache_boundary_guard.dart';
+part 'support/server_map_cache_boundary_fixtures.dart';
 part 'support/world_map_projection_boundary_fixtures.dart';
 part 'support/world_map_read_view_boundary_guard.dart';
 
@@ -58,9 +60,6 @@ const _allowedFullMapConverterMethods = {'fromMapData', 'toMapData'};
 const _allowedProductionProjectionSites = <String, int>{};
 const _allowedProductionImportSites = <String, int>{
   'lib/editor/domain/map_draft.dart::class:MapDraft/method:freeze::call': 1,
-  'server/lib/src/multiplayer/server_command_reducer_map_cache.dart::'
-          'method:_loadServerMap::call':
-      1,
 };
 
 void main() {
@@ -128,6 +127,10 @@ void main() {
 
   test('economy simulation owns one shared indexed map view', () {
     expect(_economySimulationMapViewViolations(), isEmpty);
+  });
+
+  test('server map cache owns one validated indexed map view', () {
+    expect(_serverMapCacheBoundaryViolations(), isEmpty);
   });
 
   test('migrated map paths do not materialize legacy maps', () {
@@ -202,6 +205,7 @@ void main() {
 
   _registerWorldMapProjectionBoundaryFixtures();
   _registerEconomySimulationMapViewFixtures();
+  _registerServerMapCacheBoundaryFixtures();
 }
 
 List<String> _adapterTypedefViolations(Map<String, String> sources) {

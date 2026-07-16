@@ -25,7 +25,7 @@
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 978,
         "packages/aonw_core/lib/game/domain/city/city_building_catalog.dart": 592,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart": 504,
-        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart": 534,
+        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart": 531,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart": 736,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 507,
         "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart": 713,
@@ -52,7 +52,7 @@
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart::class:BalanceBatchReport": 759,
         "packages/aonw_core/lib/game/domain/city/city_building_catalog.dart::class:CityBuildingCatalog": 585,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 457,
-        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver": 495,
+        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver": 494,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer": 721,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 505,
@@ -136,7 +136,7 @@
         "packages/aonw_core/lib/game/domain/city/city_unit_supply_rules.dart::class:CityUnitSupplyRules/method:forPlayer": 75,
         "packages/aonw_core/lib/game/domain/city/city_yield_calculator.dart::class:CityYieldCalculator/method:breakdownFor": 122,
         "packages/aonw_core/lib/game/domain/city/persistent_city_founding_resolver.dart::class:PersistentCityFoundingResolver/method:foundCity": 69,
-        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver/method:rushProduction": 175,
+        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver/method:rushProduction": 174,
         "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver/method:startUnitProduction": 80,
         "packages/aonw_core/lib/game/domain/city/persistent_worker_command_resolver.dart::class:PersistentWorkerCommandResolver/method:_startImprovement": 61,
         "packages/aonw_core/lib/game/domain/city/worker_assignment_rules.dart::class:WorkerAssignmentRules/method:evaluate": 97,
@@ -144,7 +144,7 @@
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_counterModifiers": 80,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_technologyModifiers": 61,
         "packages/aonw_core/lib/game/domain/combat/combat_resolver.dart::class:CombatResolver/method:resolve": 78,
-        "packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart::class:PersistentCombatCommandResolver/method:resolve": 113,
+        "packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart::class:PersistentCombatCommandResolver/method:resolve": 112,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:fromJson": 312,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:toJson": 372,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_turn_resolver.dart::class:DiplomacyTurnResolver/method:resolve": 89,
@@ -1474,13 +1474,13 @@
     "server_lib": {
       "files": {
         "server/lib/src/multiplayer/player_match_view_projector.dart": 706,
-        "server/lib/src/multiplayer/server_command_reducer.dart": 753
+        "server/lib/src/multiplayer/server_command_reducer.dart": 750
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector": 632,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 690
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 687
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1495,8 +1495,8 @@
         "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 79,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 334,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 165,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 69,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 67,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 68,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 65,
         "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
@@ -1527,7 +1527,7 @@
         "server/test/integration/multiplayer_endpoint_smoke.dart": 1294,
         "server/test/multiplayer/player_match_view_projector_test.dart": 666,
         "server/test/multiplayer/realtime_match_hub_test.dart": 3831,
-        "server/test/multiplayer/server_command_reducer_test.dart": 960
+        "server/test/multiplayer/server_command_reducer_test.dart": 847
       },
       "legacyFiles": {},
       "declarations": {},
