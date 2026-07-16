@@ -7,7 +7,7 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw/map/domain/map_data.dart' show MapData, TileData;
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -17,6 +17,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'movement_reducer_auto_explore.dart';
@@ -231,7 +232,7 @@ abstract final class MovementReducer {
   static GameStateTransition cancelUnitAction(
     GameState state,
     CancelUnitActionCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final validation = UnitCommandValidator.controllableUnit(
@@ -268,7 +269,7 @@ abstract final class MovementReducer {
         .copyWithExcavatingArtifact(null)
         .copyWithMerchantTradeRoute(null)
         .copyWithPosture(UnitPosture.active);
-    final cleanup = _UnitActionStateCleanup(state, unit, updatedUnit, mapData)
+    final cleanup = _UnitActionStateCleanup(state, unit, updatedUnit, mapTiles)
       ..replaceUpdatedUnitIfChanged()
       ..cancelArtifactExcavation()
       ..clearMoveTargetingOwnedByUnit()
@@ -284,7 +285,7 @@ abstract final class MovementReducer {
   static GameStateTransition skipUnitTurn(
     GameState state,
     SkipUnitTurnCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final validation = UnitCommandValidator.controllableUnit(
@@ -314,7 +315,7 @@ abstract final class MovementReducer {
                 ),
             unit,
             updatedUnit,
-            mapData,
+            mapTiles,
           )
           ..clearMoveTargetingOwnedByUnit()
           ..clearCityFoundingDraftOwnedByUnit()
@@ -326,7 +327,7 @@ abstract final class MovementReducer {
   static GameStateTransition fortifyUnit(
     GameState state,
     FortifyUnitCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final validation = UnitCommandValidator.fortifiableUnit(
@@ -344,7 +345,7 @@ abstract final class MovementReducer {
                 .copyWithInteraction(pendingAction: null),
             unit,
             updatedUnit,
-            mapData,
+            mapTiles,
           )
           ..clearMoveTargetingOwnedByUnit()
           ..clearCityFoundingDraftOwnedByUnit()
@@ -388,7 +389,7 @@ abstract final class MovementReducer {
     GameState state,
     GameUnit unit,
     UnitMovementPlan plan,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final withPath = unit
         .copyWith(posture: UnitPosture.active)
@@ -397,12 +398,7 @@ abstract final class MovementReducer {
     var next = state.copyWith(units: updatedUnits);
     next = next.copyWithInteraction(movePreview: null);
     if (state.selectedUnitId == unit.id) {
-      next = next.copyWithInteraction(
-        selection: GameSelection.unit(
-          withPath,
-          tile: mapData.tileAt(withPath.col, withPath.row),
-        ),
-      );
+      next = _selectUpdatedUnit(next, withPath, mapTiles);
     }
     return GameStateTransition(state: next);
   }
@@ -466,13 +462,22 @@ abstract final class MovementReducer {
   static GameState _selectUpdatedUnit(
     GameState state,
     GameUnit unit,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     return state.copyWithInteraction(
-      selection: GameSelection.unit(
-        unit,
-        tile: mapData.tileAt(unit.col, unit.row),
-      ),
+      selection: _unitSelection(state, unit, mapTiles),
+    );
+  }
+
+  static GameSelection _unitSelection(
+    GameState state,
+    GameUnit unit,
+    MapTileLookup mapTiles,
+  ) {
+    final tile = mapTiles.tileAt(unit.col, unit.row);
+    return GameSelection.unit(unit, tile: tile).withVisibleResources(
+      playerId: state.activePlayerId,
+      research: state.research,
     );
   }
 }

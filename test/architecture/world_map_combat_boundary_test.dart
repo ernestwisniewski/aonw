@@ -533,6 +533,51 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/movement/movement_reducer.dart',
+    owner: 'MovementReducer',
+    boundaries: [
+      _Boundary.method(
+        'cancelUnitAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'skipUnitTurn',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'fortifyUnit',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_queueMovePath',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_selectUpdatedUnit',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_unitSelection',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/movement/'
+        'movement_reducer_unit_action_state.dart',
+    owner: '_UnitActionStateCleanup',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapTiles', type: 'MapTileLookup'),
+    ],
+  ),
+  _Target(
     path:
         'packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart',
     owner: 'PersistentUnitDetachmentResolver',

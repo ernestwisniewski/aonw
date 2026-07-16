@@ -5,13 +5,13 @@ final class _UnitActionStateCleanup {
     this.state,
     this.previousUnit,
     this.updatedUnit,
-    this.mapData,
+    this.mapTiles,
   );
 
   GameState state;
   final GameUnit previousUnit;
   final GameUnit updatedUnit;
-  final MapData mapData;
+  final MapTileLookup mapTiles;
 
   void replaceUpdatedUnitIfChanged() {
     if (updatedUnit != previousUnit) {
@@ -59,7 +59,8 @@ final class _UnitActionStateCleanup {
 
   void refreshSelection() {
     if (state.selectedUnitId == previousUnit.id) {
-      state = MovementReducer._selectUpdatedUnit(state, updatedUnit, mapData);
+      final currentUnit = state.unitById(updatedUnit.id) ?? updatedUnit;
+      state = MovementReducer._selectUpdatedUnit(state, currentUnit, mapTiles);
     }
   }
 

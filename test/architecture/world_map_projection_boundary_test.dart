@@ -24,6 +24,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/game_selection.dart',
   'lib/game/domain/movement/unit_movement_planner.dart',
   'lib/game/domain/movement/unit_movement_turn_rules.dart',
+  'lib/game/domain/reducer/movement/movement_reducer_unit_action_state.dart',
   'lib/game/domain/reducer/city/city_expansion_reducer.dart',
   'lib/game/domain/reducer/city/city_founding_reducer.dart',
   'lib/game/domain/reducer/combat/combat_reducer.dart',
