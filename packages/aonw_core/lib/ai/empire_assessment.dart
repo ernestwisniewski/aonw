@@ -149,6 +149,9 @@ class AiEmpireAssessment {
         ruleset: view.ruleset.city,
         paceBalance: view.ruleset.paceBalance,
         technologyEffects: technologyEffects,
+        cities: view.ownCities,
+        wonderRegistry: view.wonderRegistry,
+        wonderRuleset: view.ruleset.wonders,
       );
       cityGoldIncome += economy.netYield.gold < 0 ? 0 : economy.netYield.gold;
       if (city.productionQueue?.target case ProjectProductionTarget(

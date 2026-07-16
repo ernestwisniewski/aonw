@@ -122,6 +122,8 @@ final class _EconomySimulationTurnRowFactory {
       ruleset: ruleset.technology,
       artifacts: state.artifacts,
       cityRuleset: ruleset.city,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: ruleset.wonders,
     ).total;
   }
 
@@ -228,6 +230,9 @@ final class _EconomySimulationTurnRowFactory {
       ruleset: ruleset.city,
       paceBalance: ruleset.paceBalance,
       technologyEffects: technologyEffects,
+      cities: state.cities,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: ruleset.wonders,
     );
   }
 

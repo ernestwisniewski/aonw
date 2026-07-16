@@ -83,6 +83,7 @@ final class MctsOpponentViewIndex {
       ),
       mapData: mapData,
       ruleset: ruleset,
+      wonderRegistry: state.wonderRegistry,
     );
   }
 

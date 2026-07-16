@@ -71,6 +71,9 @@ class MctsStrategicStateScorer {
         ruleset: view.ruleset.city,
         paceBalance: view.ruleset.paceBalance,
         technologyEffects: technologyEffects,
+        cities: state.ownCities,
+        wonderRegistry: view.wonderRegistry,
+        wonderRuleset: view.ruleset.wonders,
       );
       score += economy.netYield.production * 0.018;
       score += economy.netYield.gold * 0.012;

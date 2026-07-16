@@ -171,6 +171,9 @@ final class _EmpireYieldSnapshot {
         ruleset: view.ruleset.city,
         paceBalance: view.ruleset.paceBalance,
         technologyEffects: technologyEffects,
+        cities: view.ownCities,
+        wonderRegistry: view.wonderRegistry,
+        wonderRuleset: view.ruleset.wonders,
       );
       food += economy.netYield.food;
       production += economy.netYield.production;
@@ -184,6 +187,8 @@ final class _EmpireYieldSnapshot {
       ruleset: view.ruleset.technology,
       artifacts: view.artifacts,
       cityRuleset: view.ruleset.city,
+      wonderRegistry: view.wonderRegistry,
+      wonderRuleset: view.ruleset.wonders,
     ).total;
 
     return _EmpireYieldSnapshot(

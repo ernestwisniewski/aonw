@@ -119,6 +119,8 @@ class EconomyHealth {
       ruleset: view.ruleset.technology,
       artifacts: view.artifacts,
       cityRuleset: view.ruleset.city,
+      wonderRegistry: view.wonderRegistry,
+      wonderRuleset: view.ruleset.wonders,
     ).total;
   }
 
