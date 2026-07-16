@@ -4,7 +4,6 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/turn/unit_turn_action_rules.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
@@ -13,6 +12,7 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class TurnReducer {
   static GameStateTransition submitTurn(GameState state, String playerId) {
@@ -43,7 +43,7 @@ abstract final class TurnReducer {
   static GameStateTransition focusNextPendingAction(
     GameState state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -56,7 +56,7 @@ abstract final class TurnReducer {
     final actions = _pendingTurnActions(
       state,
       playerId,
-      mapData,
+      mapTiles,
       technologyRuleset,
     );
     if (actions.isEmpty) return GameStateTransition(state: state);
@@ -76,7 +76,7 @@ abstract final class TurnReducer {
       state,
       playerId,
       actions[nextIndex],
-      mapData,
+      mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -120,7 +120,7 @@ abstract final class TurnReducer {
   static GameStateTransition focusTurnStartAction(
     GameState state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -130,13 +130,13 @@ abstract final class TurnReducer {
     final actions = _pendingTurnActions(
       state,
       playerId,
-      mapData,
+      mapTiles,
       technologyRuleset,
     );
     final productionEffects = _turnStartProductionEffects(
       state,
       playerId,
-      mapData,
+      mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -151,7 +151,7 @@ abstract final class TurnReducer {
       state,
       playerId,
       actions.first,
-      mapData,
+      mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -168,7 +168,7 @@ abstract final class TurnReducer {
   static List<ShowCityProductionBubbleEffect> _turnStartProductionEffects(
     GameState state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -190,7 +190,7 @@ abstract final class TurnReducer {
             state,
             city,
             queue,
-            mapData,
+            mapTiles,
             cityRuleset: cityRuleset,
             technologyRuleset: technologyRuleset,
             stabilityRuleset: stabilityRuleset,
@@ -208,7 +208,7 @@ abstract final class TurnReducer {
     GameState state,
     GameCity city,
     CityProductionQueue queue,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -229,7 +229,7 @@ abstract final class TurnReducer {
         state,
         city,
         queue,
-        mapData,
+        mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -243,7 +243,7 @@ abstract final class TurnReducer {
     GameState state,
     GameCity city,
     CityProductionQueue queue,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -257,7 +257,7 @@ abstract final class TurnReducer {
     );
     final cityYield = CityYieldCalculator.totalFor(
       city,
-      mapData,
+      mapTiles,
       fieldImprovements: state.fieldImprovements,
       units: state.units,
       artifacts: state.artifacts,
@@ -266,7 +266,7 @@ abstract final class TurnReducer {
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
       cities: state.cities,
@@ -297,14 +297,14 @@ abstract final class TurnReducer {
   static int pendingTurnActionCount(
     GameState? state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
     if (state == null || playerId.isEmpty) return 0;
     return _pendingTurnActions(
       state,
       playerId,
-      mapData,
+      mapTiles,
       technologyRuleset,
     ).length;
   }
@@ -312,7 +312,7 @@ abstract final class TurnReducer {
   static List<TurnActionTarget> pendingTurnActionTargets(
     GameState? state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
     if (state == null || playerId.isEmpty) return const [];
@@ -320,7 +320,7 @@ abstract final class TurnReducer {
       for (final action in _pendingTurnActions(
         state,
         playerId,
-        mapData,
+        mapTiles,
         technologyRuleset,
       ))
         switch (action) {
@@ -335,14 +335,14 @@ abstract final class TurnReducer {
   static int currentPendingTurnActionIndex(
     GameState? state,
     String playerId,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
     if (state == null || playerId.isEmpty) return -1;
     final actions = _pendingTurnActions(
       state,
       playerId,
-      mapData,
+      mapTiles,
       technologyRuleset,
     );
     if (actions.isEmpty) return -1;
@@ -352,15 +352,15 @@ abstract final class TurnReducer {
   static GameStateTransition _focusUnitAction(
     GameState state,
     GameUnit unit,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tileData = mapData.tileAt(unit.col, unit.row);
+    final tile = mapTiles.tileAt(unit.col, unit.row);
     final newState = state.copyWithInteraction(
       moveCommandActive: state.canControlUnit(unit) && !unit.isMerchant,
       movePreview: null,
       cityFoundingDraft: null,
       pendingAction: null,
-      selection: GameSelection.unit(unit, tile: tileData),
+      selection: GameSelection.unit(unit, tile: tile),
     );
 
     return GameStateTransition(
@@ -373,7 +373,7 @@ abstract final class TurnReducer {
     GameState state,
     String playerId,
     _PendingTurnAction action,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -381,11 +381,15 @@ abstract final class TurnReducer {
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     return switch (action) {
-      _PendingUnitAction(:final unit) => _focusUnitAction(state, unit, mapData),
+      _PendingUnitAction(:final unit) => _focusUnitAction(
+        state,
+        unit,
+        mapTiles,
+      ),
       _PendingCityProductionAction(:final city) => _focusCityProductionAction(
         state,
         city,
-        mapData,
+        mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -399,7 +403,7 @@ abstract final class TurnReducer {
   static GameStateTransition _focusCityProductionAction(
     GameState state,
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -414,7 +418,7 @@ abstract final class TurnReducer {
       selection: CitySelectionProjector.project(
         state: state,
         city: city,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -444,7 +448,7 @@ abstract final class TurnReducer {
   static List<_PendingTurnAction> _pendingTurnActions(
     GameState state,
     String playerId,
-    MapData mapData,
+    MapTileLookup mapTiles,
     TechnologyRuleset technologyRuleset,
   ) {
     final actions = <_PendingTurnAction>[];
@@ -459,7 +463,7 @@ abstract final class TurnReducer {
           category: _unitActionCategory(unit),
           seesEnemy: UnitFortificationRules.hasVisibleEnemy(
             unit: unit,
-            mapData: mapData,
+            mapData: mapTiles,
             units: state.units,
           ),
         ),

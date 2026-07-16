@@ -175,6 +175,72 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/turn/turn_reducer.dart',
+    owner: 'TurnReducer',
+    boundaries: [
+      _Boundary.method(
+        'focusNextPendingAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'focusTurnStartAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_turnStartProductionEffects',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_turnsRemainingForQueue',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_productionPerTurnForQueue',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'pendingTurnActionCount',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'pendingTurnActionTargets',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'currentPendingTurnActionIndex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_focusUnitAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_focusPendingTurnAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_focusCityProductionAction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_pendingTurnActions',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/unit/unit_attachment_reducer.dart',
     owner: 'UnitAttachmentReducer',
     boundaries: [

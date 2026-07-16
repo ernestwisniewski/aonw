@@ -5,11 +5,11 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_objective_labels.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 bool hudPlayerReadyToEndTurn({
   required GameState? gameState,
@@ -104,14 +104,14 @@ List<HudTurnActionOption> hudTurnActionOptions({
   required AppLocalizations l10n,
   required GameState? gameState,
   required String activePlayerId,
-  required MapData mapData,
+  required MapTileLookup mapTiles,
   required TechnologyRuleset technologyRuleset,
   required TechnologyPanelViewModel technologyViewModel,
 }) {
   final targets = TurnReducer.pendingTurnActionTargets(
     gameState,
     activePlayerId,
-    mapData,
+    mapTiles,
     technologyRuleset: technologyRuleset,
   );
   return [

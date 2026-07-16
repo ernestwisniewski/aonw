@@ -197,7 +197,7 @@ class HudOverlayFrame {
       l10n: l10n,
       gameState: gameState,
       activePlayerId: activePlayerId,
-      mapData: session.mapData,
+      mapTiles: session.mapData,
       technologyRuleset: technologyRuleset,
       technologyViewModel: technologyViewModel,
     );
