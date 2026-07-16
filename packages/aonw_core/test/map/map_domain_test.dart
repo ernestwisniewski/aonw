@@ -5,11 +5,44 @@ import 'package:test/test.dart';
 
 void main() {
   group('shared map domain', () {
-    test('exposes terrain and resource parsers', () {
+    test('exposes terrain and resource parsers with explicit failures', () {
       expect(TerrainType.fromString('forest'), TerrainType.forest);
       expect(TerrainType.fromString('wetlands'), TerrainType.wetlands);
       expect(TerrainType.fromString('lake'), TerrainType.lake);
+      expect(TerrainType.fromName('river'), TerrainType.river);
       expect(ResourceType.fromString('iron'), ResourceType.iron);
+      expect(ResourceType.fromName('gold'), ResourceType.gold);
+      expect(() => TerrainType.fromString('volcano'), throwsArgumentError);
+      expect(() => ResourceType.fromString('amber'), throwsArgumentError);
+    });
+
+    test('copies and serializes complete tile values', () {
+      const original = TileData(
+        col: 2,
+        row: 3,
+        terrains: [TerrainType.hills, TerrainType.forest],
+        resources: [ResourceType.iron],
+        height: 2,
+      );
+
+      final heightCopy = original.copyWith(height: 4);
+      final contentCopy = original.copyWith(
+        terrains: const [TerrainType.desert],
+        resources: const [ResourceType.gold],
+      );
+
+      expect(heightCopy.height, 4);
+      expect(heightCopy.terrains, original.terrains);
+      expect(heightCopy.terrains, isNot(same(original.terrains)));
+      expect(heightCopy.resources, isNot(same(original.resources)));
+      expect(contentCopy.height, original.height);
+      expect(contentCopy.toJson(), {
+        'col': 2,
+        'row': 3,
+        'terrains': ['desert'],
+        'resources': ['gold'],
+        'height': 2,
+      });
     });
 
     test('looks up tiles and preserves primary terrain fallback', () {
@@ -69,6 +102,17 @@ void main() {
       expect(terrainSurvey.map((entry) => entry.toList()).toList(), [
         [TerrainType.plains, TerrainType.river],
       ]);
+    });
+
+    test('owns replacement objective membership', () {
+      final map = _mapData();
+      final objectives = <MapObjectiveDefinition>[_objective()];
+
+      map.objectives = objectives;
+      objectives.clear();
+
+      expect(map.objectives.single.id, 'objective_1');
+      expect(() => map.objectives.clear(), throwsUnsupportedError);
     });
 
     test(
@@ -276,6 +320,24 @@ void main() {
       expect(
         HexGridTopology.neighbors(col: 1, row: 0),
         contains((col: 2, row: 1)),
+      );
+      expect(
+        HexGridTopology.areNeighbors(
+          col: 1,
+          row: 0,
+          targetCol: 2,
+          targetRow: 1,
+        ),
+        isTrue,
+      );
+      expect(
+        HexGridTopology.areNeighbors(
+          col: 1,
+          row: 0,
+          targetCol: 3,
+          targetRow: 3,
+        ),
+        isFalse,
       );
     });
   });

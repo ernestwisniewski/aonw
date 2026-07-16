@@ -9,6 +9,37 @@ void main() {
       expect(MapPlayerCapacityRules.maxPlayersForMapName('terenos'), 3);
     });
 
+    test('normalizes names and validates player-count helpers', () {
+      expect(
+        MapPlayerCapacityRules.singlePlayerPlayersForMapName(' MYRANTH '),
+        3,
+      );
+      expect(MapPlayerCapacityRules.singlePlayerPlayersForMapName('custom'), 4);
+      expect(MapPlayerCapacityRules.aiOpponentsForPlayerCount(1), 0);
+      expect(MapPlayerCapacityRules.aiOpponentsForPlayerCount(4), 3);
+      expect(
+        MapPlayerCapacityRules.supportsPlayerCount(
+          mapName: 'verdantia',
+          playerCount: 4,
+        ),
+        isTrue,
+      );
+      expect(
+        MapPlayerCapacityRules.supportsPlayerCount(
+          mapName: 'terenos',
+          playerCount: 4,
+        ),
+        isFalse,
+      );
+      expect(
+        MapPlayerCapacityRules.supportsPlayerCount(
+          mapName: 'verdantia',
+          playerCount: 1,
+        ),
+        isFalse,
+      );
+    });
+
     test('infers capacity from unknown map tile counts', () {
       expect(MapPlayerCapacityRules.maxPlayersForTileCount(600), 4);
       expect(MapPlayerCapacityRules.maxPlayersForTileCount(300), 3);

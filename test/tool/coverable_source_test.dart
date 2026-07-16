@@ -21,12 +21,20 @@ void main() {
     expect(resolved, isFalse);
   });
 
-  test('drops export-only barrels and pure abstract interfaces', () {
+  test('drops barrels, pure interfaces, and compile-time constant holders', () {
     final fixture = _SourceFixture.create({
       'lib/barrel.dart': "export 'logic.dart';\n",
       'lib/lookup.dart': '''
 abstract interface class Lookup {
   Object? find(String id);
+}
+''',
+      'lib/map_constraints.dart': '''
+const schemaVersion = 3;
+
+abstract final class MapConstraints {
+  static const int minCols = 5;
+  static const values = <String>['small', 'large'];
 }
 ''',
     });

@@ -6,10 +6,10 @@ import 'package:analyzer/dart/ast/visitor.dart';
 
 /// Retains only source paths that contain coverable code.
 ///
-/// Export-only barrels and pure abstract interfaces have no executable lines,
-/// so LCOV never records them. They are not missing coverage; they have
-/// nothing to instrument. A path already present in [recorded] is coverable by
-/// definition and is kept without parsing.
+/// Export-only barrels, pure abstract interfaces, and compile-time constant
+/// holders have no executable lines, so LCOV never records them. They are not
+/// missing coverage; they have nothing to instrument. A path already present
+/// in [recorded] is coverable by definition and is kept without parsing.
 Set<String> retainCoverable(
   Iterable<String> paths, {
   required Set<String> recorded,
@@ -59,7 +59,9 @@ final class _CoverableCodeVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitVariableDeclaration(VariableDeclaration node) {
-    if (node.initializer != null) _flag();
+    if (node.initializer != null && !node.isConst) {
+      _flag();
+    }
     super.visitVariableDeclaration(node);
   }
 

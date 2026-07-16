@@ -5,6 +5,13 @@ import 'package:test/test.dart';
 
 void main() {
   group('MapDataCodec canonical validation', () {
+    test('describes load failures', () {
+      expect(
+        const MapDataLoadException('broken').toString(),
+        'MapDataLoadException: broken',
+      );
+    });
+
     test('fromJson preserves exact validation messages', () {
       final cases =
           <({String name, Map<String, Object?> json, String message})>[
@@ -29,6 +36,31 @@ void main() {
               message: 'Duplicate tile at HexCoord(col: 0, row: 0)',
             ),
             (
+              name: 'unknown terrain',
+              json: _jsonMap(terrains: const ['volcano']),
+              message: 'Unknown terrain type: volcano',
+            ),
+            (
+              name: 'unknown resource',
+              json: _jsonMap(resources: const ['amber']),
+              message: 'Unknown resource type: amber',
+            ),
+            (
+              name: 'tile col',
+              json: _jsonMap(tileCol: 1),
+              message: 'Tile col 1 out of range [0, 1)',
+            ),
+            (
+              name: 'tile row',
+              json: _jsonMap(tileRow: 1),
+              message: 'Tile row 1 out of range [0, 1)',
+            ),
+            (
+              name: 'tile height',
+              json: _jsonMap(tileHeight: 6),
+              message: 'Tile height 6 out of range [0, 5]',
+            ),
+            (
               name: 'invalid objective',
               json: _jsonMap(objectives: [_jsonObjective(id: ' ')]),
               message: 'Objective id must not be empty',
@@ -42,6 +74,19 @@ void main() {
           reason: validationCase.name,
         );
       }
+    });
+
+    test('wraps malformed JSON failures', () {
+      expect(
+        () => MapDataCodec.fromJson('{'),
+        throwsA(
+          isA<MapDataLoadException>().having(
+            (error) => error.message,
+            'message',
+            startsWith('Failed to parse map JSON: FormatException:'),
+          ),
+        ),
+      );
     });
 
     test('toJson preserves exact canonical validation messages', () {
@@ -115,6 +160,44 @@ void main() {
         );
       }
     });
+
+    test('serializes optional metadata and tile payloads', () {
+      final encoded = MapDataCodec.toJson(
+        MapData(
+          cols: 1,
+          rows: 1,
+          mapName: 'sentinel',
+          defaultZoom: 1.5,
+          tiles: const [
+            TileData(
+              col: 0,
+              row: 0,
+              terrains: [TerrainType.forest],
+              resources: [ResourceType.deer],
+              height: 2,
+            ),
+          ],
+          objectives: [_objective(id: 'ruins')],
+        ),
+      );
+
+      expect(jsonDecode(encoded), {
+        'cols': 1,
+        'rows': 1,
+        'mapName': 'sentinel',
+        'defaultZoom': 1.5,
+        'objectives': [_jsonObjective(id: 'ruins')],
+        'tiles': [
+          {
+            'col': 0,
+            'row': 0,
+            'terrains': ['forest'],
+            'resources': ['deer'],
+            'height': 2,
+          },
+        ],
+      });
+    });
   });
 }
 
@@ -145,25 +228,45 @@ Map<String, Object?> _jsonMap({
   int cols = 1,
   num defaultZoom = 1,
   List<Map<String, Object?>>? tiles,
-  List<Map<String, Object?>> objectives = const [],
+  List<Object?> objectives = const [],
   List<String> terrains = const ['plains'],
+  List<String> resources = const [],
+  int tileCol = 0,
+  int tileRow = 0,
+  int tileHeight = 0,
 }) {
   return {
     'cols': cols,
     'rows': 1,
     'defaultZoom': defaultZoom,
-    'tiles': tiles ?? [_jsonTile(terrains: terrains)],
+    'tiles':
+        tiles ??
+        [
+          _jsonTile(
+            col: tileCol,
+            row: tileRow,
+            terrains: terrains,
+            resources: resources,
+            height: tileHeight,
+          ),
+        ],
     'objectives': objectives,
   };
 }
 
-Map<String, Object?> _jsonTile({List<String> terrains = const ['plains']}) {
+Map<String, Object?> _jsonTile({
+  int col = 0,
+  int row = 0,
+  List<String> terrains = const ['plains'],
+  List<String> resources = const [],
+  int height = 0,
+}) {
   return {
-    'col': 0,
-    'row': 0,
+    'col': col,
+    'row': row,
     'terrains': terrains,
-    'resources': <String>[],
-    'height': 0,
+    'resources': resources,
+    'height': height,
   };
 }
 
@@ -172,6 +275,7 @@ Map<String, Object?> _jsonObjective({required String id}) {
     'id': id,
     'type': 'ruins',
     'hex': {'col': 0, 'row': 0},
+    'requiredHoldTurns': 1,
   };
 }
 
