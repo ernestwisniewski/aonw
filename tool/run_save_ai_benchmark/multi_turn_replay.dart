@@ -172,7 +172,6 @@ class _MultiTurnReplayRunner {
     var rejected = 0;
     var stale = 0;
     var skippedTerminal = 0;
-    var terminalChangedState = false;
     final staleMoveDiagnostics = <_StaleMoveDiagnostic>[];
     final rejectedCommandDescriptions = <String>[];
     final executionStopwatch = Stopwatch()..start();
@@ -256,7 +255,7 @@ class _MultiTurnReplayRunner {
       context: _commandContext(playerId: player.id, aiContext: context),
     );
     eventCounts.add(terminalTransition);
-    terminalChangedState = terminalTransition.state != currentState;
+    final terminalChangedState = terminalTransition.state != currentState;
     currentState = terminalTransition.state;
 
     if (terminalCommand is SubmitTurnCommand) {
