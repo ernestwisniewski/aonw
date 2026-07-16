@@ -11,6 +11,37 @@ part 'support/world_map_combat_boundary_fixtures.dart';
 
 const _targets = [
   _Target(
+    path: 'lib/game/domain/reducer/interaction/selection_reducer.dart',
+    owner: 'SelectionReducer',
+    boundaries: [
+      _Boundary.method(
+        'selectTile',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'selectUnit',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'selectCity',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'handleTileTapped',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'handleCityTapped',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path:
         'packages/aonw_core/lib/game/domain/turn/persistent_turn_combat_resolver.dart',
     owner: 'PersistentTurnCombatResolver',
@@ -186,7 +217,7 @@ const _targets = [
 ];
 
 void main() {
-  test('migrated persistent boundaries declare canonical map APIs', () {
+  test('migrated gameplay boundaries declare canonical map APIs', () {
     final sources = productionDartSources();
     final mapDataTypeNames = mapDataBackedTypeNames(sources);
     final mapBoundaryTypeNames = typeNamesBackedBy(

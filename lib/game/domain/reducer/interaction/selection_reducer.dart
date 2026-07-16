@@ -3,7 +3,6 @@ import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -12,15 +11,17 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class SelectionReducer {
   /// Selects a tile by coordinates. Clears move/founding state.
   static GameState selectTile(
     GameState state,
     SelectTileCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tile = mapData.tileAt(command.col, command.row);
+    final tile = mapTiles.tileAt(command.col, command.row);
     if (tile == null) return state;
     final visibleTile = _visibleTileForActivePlayer(state, tile);
 
@@ -34,12 +35,12 @@ abstract final class SelectionReducer {
   static GameState selectUnit(
     GameState state,
     SelectUnitCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final unit = state.unitById(command.unitId);
     if (unit == null) return state;
 
-    final tile = mapData.tileAt(unit.col, unit.row);
+    final tile = mapTiles.tileAt(unit.col, unit.row);
     final visibleTile = tile == null
         ? null
         : _visibleTileForActivePlayer(state, tile);
@@ -66,7 +67,7 @@ abstract final class SelectionReducer {
   static GameState selectCity(
     GameState state,
     SelectCityCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -79,7 +80,7 @@ abstract final class SelectionReducer {
     return _selectCityDirect(
       state,
       city,
-      mapData,
+      mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -92,21 +93,21 @@ abstract final class SelectionReducer {
   static GameStateTransition handleTileTapped(
     GameState state,
     TileTappedCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final tileData = mapData.tileAt(command.col, command.row);
-    if (tileData == null) {
+    final tile = mapTiles.tileAt(command.col, command.row);
+    if (tile == null) {
       return GameStateTransition(state: state);
     }
 
     final visibility = state.activePlayerVisibility;
 
-    if (!visibility.canInspectTile(tileData)) {
+    if (!visibility.canInspectTile(tile)) {
       if (state.moveCommandActive) {
         final selected = state.selectedUnit;
         if (selected != null && state.canControlUnit(selected)) {
@@ -126,18 +127,17 @@ abstract final class SelectionReducer {
     if (state.moveCommandActive) {
       final selected = state.selectedUnit;
       if (selected != null && state.canControlUnit(selected)) {
-        final tappedUnit =
-            visibility.canSeeDynamicAt(tileData.col, tileData.row)
-            ? state.unitAt(tileData.col, tileData.row)
+        final tappedUnit = visibility.canSeeDynamicAt(tile.col, tile.row)
+            ? state.unitAt(tile.col, tile.row)
             : null;
         if (tappedUnit != null && tappedUnit.id != selected.id) {
           return GameStateTransition(
-            state: _selectUnitDirect(state, tappedUnit, mapData),
+            state: _selectUnitDirect(state, tappedUnit, mapTiles),
           );
         }
 
-        if (tileData.col == selected.col && tileData.row == selected.row) {
-          return GameStateTransition(state: _selectTileDirect(state, tileData));
+        if (tile.col == selected.col && tile.row == selected.row) {
+          return GameStateTransition(state: _selectTileDirect(state, tile));
         }
 
         return GameStateTransition(state: state);
@@ -151,9 +151,9 @@ abstract final class SelectionReducer {
     return GameStateTransition(
       state: _handleStandardSelection(
         selectionState,
-        tileData,
+        tile,
         visibility,
-        mapData,
+        mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -165,30 +165,30 @@ abstract final class SelectionReducer {
 
   static GameState _handleStandardSelection(
     GameState state,
-    TileData tileData,
+    MapTileView tile,
     FogVisibilityQuery visibility,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final tappedUnit = visibility.canSeeDynamicAt(tileData.col, tileData.row)
-        ? state.unitAt(tileData.col, tileData.row)
+    final tappedUnit = visibility.canSeeDynamicAt(tile.col, tile.row)
+        ? state.unitAt(tile.col, tile.row)
         : null;
 
     final tappedCity = state.citiesKnownToActivePlayer.cityAt(
-      tileData.col,
-      tileData.row,
+      tile.col,
+      tile.row,
     );
-    final tappedImprovement = _fieldImprovementAt(state, tileData, visibility);
+    final tappedImprovement = _fieldImprovementAt(state, tile, visibility);
 
     if (tappedCity != null) {
       return handleCityTapped(
         state,
         tappedCity,
-        mapData,
+        mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -201,28 +201,28 @@ abstract final class SelectionReducer {
       return _handleFieldImprovementTapped(
         state,
         tappedImprovement,
-        tileData,
+        tile,
         tappedUnit,
-        mapData,
+        mapTiles,
       );
     }
 
     if (tappedUnit != null) {
       if (_isSelectedUnit(state, tappedUnit)) {
-        return _selectTileDirect(state, tileData);
+        return _selectTileDirect(state, tile);
       } else {
-        return _selectUnitDirect(state, tappedUnit, mapData);
+        return _selectUnitDirect(state, tappedUnit, mapTiles);
       }
     }
 
-    return _selectTileDirect(state, tileData);
+    return _selectTileDirect(state, tile);
   }
 
   /// Handles city tapped with selection cycling logic.
   static GameState handleCityTapped(
     GameState state,
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -248,9 +248,9 @@ abstract final class SelectionReducer {
           current?.tile?.col == city.center.col &&
           current?.tile?.row == city.center.row;
       if (unitOnCity != null && onThisTile) {
-        return _selectUnitDirect(state, unitOnCity, mapData);
+        return _selectUnitDirect(state, unitOnCity, mapTiles);
       } else {
-        return _selectCityCenterTile(state, city, mapData);
+        return _selectCityCenterTile(state, city, mapTiles);
       }
     }
 
@@ -264,19 +264,19 @@ abstract final class SelectionReducer {
 
     if (unitOnCity != null) {
       if (onThisCity) {
-        return _selectUnitDirect(state, unitOnCity, mapData);
+        return _selectUnitDirect(state, unitOnCity, mapTiles);
       }
       if (onUnitHere) {
-        return _selectCityCenterTile(state, city, mapData);
+        return _selectCityCenterTile(state, city, mapTiles);
       }
     } else if (onThisCity) {
-      return _selectCityCenterTile(state, city, mapData);
+      return _selectCityCenterTile(state, city, mapTiles);
     }
 
     return _selectCityDirect(
       state,
       city,
-      mapData,
+      mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -288,9 +288,9 @@ abstract final class SelectionReducer {
   static GameState _handleFieldImprovementTapped(
     GameState state,
     FieldImprovement improvement,
-    TileData tileData,
+    MapTileView tile,
     GameUnit? unitOnTile,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
     final current = state.selection;
     final onThisImprovement =
@@ -307,21 +307,21 @@ abstract final class SelectionReducer {
 
     if (unitOnTile != null) {
       if (onThisImprovement) {
-        return _selectUnitDirect(state, unitOnTile, mapData);
+        return _selectUnitDirect(state, unitOnTile, mapTiles);
       }
       if (onUnitHere) {
-        return _selectTileDirect(state, tileData);
+        return _selectTileDirect(state, tile);
       }
-      return _selectFieldImprovementDirect(state, improvement, tileData);
+      return _selectFieldImprovementDirect(state, improvement, tile);
     }
 
     if (onThisImprovement) {
-      return _selectTileDirect(state, tileData);
+      return _selectTileDirect(state, tile);
     }
     if (onThisTile) {
-      return _selectFieldImprovementDirect(state, improvement, tileData);
+      return _selectFieldImprovementDirect(state, improvement, tile);
     }
-    return _selectFieldImprovementDirect(state, improvement, tileData);
+    return _selectFieldImprovementDirect(state, improvement, tile);
   }
 
   static bool _isSelectedUnit(GameState state, GameUnit unit) {
@@ -329,8 +329,8 @@ abstract final class SelectionReducer {
         state.selection?.unit?.id == unit.id;
   }
 
-  static GameState _selectTileDirect(GameState state, TileData tileData) {
-    final visibleTile = _visibleTileForActivePlayer(state, tileData);
+  static GameState _selectTileDirect(GameState state, MapTileView tile) {
+    final visibleTile = _visibleTileForActivePlayer(state, tile);
     return _withFreshInteractionSelection(
       state,
       GameSelection.tile(visibleTile),
@@ -340,9 +340,9 @@ abstract final class SelectionReducer {
   static GameState _selectUnitDirect(
     GameState state,
     GameUnit unit,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tile = mapData.tileAt(unit.col, unit.row);
+    final tile = mapTiles.tileAt(unit.col, unit.row);
     final visibleTile = tile == null
         ? null
         : _visibleTileForActivePlayer(state, tile);
@@ -364,9 +364,9 @@ abstract final class SelectionReducer {
   static GameState _selectFieldImprovementDirect(
     GameState state,
     FieldImprovement improvement,
-    TileData tileData,
+    MapTileView tile,
   ) {
-    final visibleTile = _visibleTileForActivePlayer(state, tileData);
+    final visibleTile = _visibleTileForActivePlayer(state, tile);
     return _withFreshInteractionSelection(
       state,
       GameSelection.fieldImprovement(improvement, tile: visibleTile),
@@ -376,7 +376,7 @@ abstract final class SelectionReducer {
   static GameState _selectCityDirect(
     GameState state,
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -388,7 +388,7 @@ abstract final class SelectionReducer {
       CitySelectionProjector.project(
         state: state,
         city: city,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,
@@ -401,14 +401,11 @@ abstract final class SelectionReducer {
   static GameState _selectCityCenterTile(
     GameState state,
     GameCity city,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final centerTile = mapData.tileAt(city.center.col, city.center.row);
+    final centerTile = mapTiles.tileAt(city.center.col, city.center.row);
     if (centerTile != null) {
-      return _selectTileDirect(
-        state,
-        _visibleTileForActivePlayer(state, centerTile),
-      );
+      return _selectTileDirect(state, centerTile);
     }
     return _withFreshInteractionSelection(state, null);
   }
@@ -418,24 +415,30 @@ abstract final class SelectionReducer {
         state.activePlayerId == ownerPlayerId;
   }
 
-  static TileData _visibleTileForActivePlayer(GameState state, TileData tile) {
-    return ResourceVisibilityRules.visibleTile(
-      tile: tile,
-      playerId: state.activePlayerId,
-      research: state.research,
+  static SelectedTile _visibleTileForActivePlayer(
+    GameState state,
+    MapTileView tile,
+  ) {
+    final snapshot = SelectedTile.fromMapTileView(tile);
+    return snapshot.withResources(
+      ResourceVisibilityRules.visibleResources(
+        resources: snapshot.resources,
+        playerId: state.activePlayerId,
+        research: state.research,
+      ),
     );
   }
 
   static FieldImprovement? _fieldImprovementAt(
     GameState state,
-    TileData tileData,
+    MapTileView tile,
     FogVisibilityQuery visibility,
   ) {
-    if (!visibility.canRememberStaticAt(tileData.col, tileData.row)) {
+    if (!visibility.canRememberStaticAt(tile.col, tile.row)) {
       return null;
     }
     for (final improvement in state.fieldImprovements) {
-      if (improvement.occupies(tileData.col, tileData.row)) {
+      if (improvement.occupies(tile.col, tile.row)) {
         return improvement;
       }
     }

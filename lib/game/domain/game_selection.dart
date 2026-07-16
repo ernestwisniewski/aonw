@@ -1,42 +1,71 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 enum GameSelectionType { tile, fieldImprovement, unit, city }
 
-class SelectedTile {
-  final int col;
-  final int row;
-  final int height;
-  final List<TerrainType> terrains;
-  final List<ResourceType> resources;
-
-  const SelectedTile({
+final class SelectedTile implements MapTileView {
+  SelectedTile._({
     required this.col,
     required this.row,
     required this.height,
-    required this.terrains,
-    required this.resources,
-  });
+    required Iterable<TerrainType> terrains,
+    required Iterable<ResourceType> resources,
+  }) : terrains = List.unmodifiable(terrains),
+       resources = List.unmodifiable(resources);
 
-  factory SelectedTile.fromTileData(TileData tile) => SelectedTile(
-    col: tile.col,
-    row: tile.row,
-    height: tile.height,
-    terrains: List.unmodifiable(tile.terrains),
-    resources: List.unmodifiable(tile.resources),
-  );
+  SelectedTile._withFrozenResources(SelectedTile source, this.resources)
+    : col = source.col,
+      row = source.row,
+      height = source.height,
+      terrains = source.terrains;
 
-  TileData toTileData() => TileData(
-    col: col,
-    row: row,
-    terrains: terrains,
-    resources: resources,
-    height: height,
-  );
+  factory SelectedTile.fromMapTileView(MapTileView tile) {
+    if (tile is SelectedTile) return tile;
+    return SelectedTile._(
+      col: tile.col,
+      row: tile.row,
+      height: tile.height,
+      terrains: tile.terrains,
+      resources: tile.resources,
+    );
+  }
+
+  @override
+  final int col;
+
+  @override
+  final int row;
+
+  @override
+  final int height;
+
+  @override
+  final List<TerrainType> terrains;
+
+  @override
+  final List<ResourceType> resources;
+
+  @override
+  TerrainType get primaryTerrain =>
+      terrains.isEmpty ? TerrainType.ocean : terrains.first;
+
+  SelectedTile withResources(Iterable<ResourceType> visibleResources) {
+    final copied = List<ResourceType>.unmodifiable(visibleResources);
+    if (_sameValues(resources, copied)) return this;
+    return SelectedTile._withFrozenResources(this, copied);
+  }
+
+  static bool _sameValues<T>(List<T> left, List<T> right) {
+    if (left.length != right.length) return false;
+    for (var index = 0; index < left.length; index += 1) {
+      if (left[index] != right[index]) return false;
+    }
+    return true;
+  }
 }
 
 class GameSelection {
@@ -75,26 +104,26 @@ class GameSelection {
          'Cached city economy must match the raw city yield.',
        );
 
-  GameSelection.tile(TileData tile)
+  GameSelection.tile(MapTileView tile)
     : this._(
         type: GameSelectionType.tile,
-        tile: SelectedTile.fromTileData(tile),
+        tile: SelectedTile.fromMapTileView(tile),
       );
 
-  GameSelection.unit(GameUnit unit, {TileData? tile})
+  GameSelection.unit(GameUnit unit, {MapTileView? tile})
     : this._(
         type: GameSelectionType.unit,
         unit: unit,
-        tile: tile == null ? null : SelectedTile.fromTileData(tile),
+        tile: tile == null ? null : SelectedTile.fromMapTileView(tile),
       );
 
   GameSelection.fieldImprovement(
     FieldImprovement fieldImprovement, {
-    TileData? tile,
+    MapTileView? tile,
   }) : this._(
          type: GameSelectionType.fieldImprovement,
          fieldImprovement: fieldImprovement,
-         tile: tile == null ? null : SelectedTile.fromTileData(tile),
+         tile: tile == null ? null : SelectedTile.fromMapTileView(tile),
        );
 
   GameSelection.city(
@@ -124,11 +153,8 @@ class GameSelection {
       playerId: playerId,
       research: research,
     );
-    if (_sameResources(selectedTile.resources, visibleResources)) return this;
-
-    final visibleTile = selectedTile.toTileData().copyWith(
-      resources: visibleResources,
-    );
+    final visibleTile = selectedTile.withResources(visibleResources);
+    if (identical(visibleTile, selectedTile)) return this;
     return switch (type) {
       GameSelectionType.tile => GameSelection.tile(visibleTile),
       GameSelectionType.unit =>
@@ -142,16 +168,5 @@ class GameSelection {
               ),
       GameSelectionType.city => this,
     };
-  }
-
-  static bool _sameResources(
-    List<ResourceType> left,
-    List<ResourceType> right,
-  ) {
-    if (left.length != right.length) return false;
-    for (var index = 0; index < left.length; index += 1) {
-      if (left[index] != right[index]) return false;
-    }
-    return true;
   }
 }

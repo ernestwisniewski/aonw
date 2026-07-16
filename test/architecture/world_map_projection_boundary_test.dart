@@ -18,7 +18,12 @@ const _coreLib = 'packages/aonw_core/lib';
 const _gameDomain = '$_coreLib/game/domain';
 const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
+const _interactionSelectionPaths = {
+  'lib/game/domain/game_selection.dart',
+  'lib/game/domain/reducer/interaction/selection_reducer.dart',
+};
 const _mapDataFreeMigrationPaths = {
+  ..._interactionSelectionPaths,
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
   '$_gameDomain/city/persistent_city_production_resolver.dart',
@@ -109,6 +114,20 @@ void main() {
           File(path).readAsStringSync(),
           path,
           symbol: 'MapData',
+        ),
+        isEmpty,
+        reason: path,
+      );
+    }
+  });
+
+  test('interaction selection does not import the legacy map DTO barrel', () {
+    for (final path in _interactionSelectionPaths) {
+      expect(
+        removedProductionSymbolViolations(
+          {path: File(path).readAsStringSync()},
+          symbol: 'MapData',
+          uriSuffix: '/map_data.dart',
         ),
         isEmpty,
         reason: path,

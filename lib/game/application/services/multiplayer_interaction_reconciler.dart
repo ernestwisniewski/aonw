@@ -79,15 +79,13 @@ abstract final class MultiplayerInteractionReconciler {
     if (selection == null) return null;
     return switch (selection.type) {
       GameSelectionType.tile =>
-        selection.tile == null
-            ? null
-            : GameSelection.tile(selection.tile!.toTileData()),
+        selection.tile == null ? null : GameSelection.tile(selection.tile!),
       GameSelectionType.fieldImprovement =>
         selection.fieldImprovement == null
             ? null
             : GameSelection.fieldImprovement(
                 selection.fieldImprovement!,
-                tile: selection.tile?.toTileData(),
+                tile: selection.tile,
               ),
       GameSelectionType.unit => _refreshedUnitSelection(state, selection),
       GameSelectionType.city => _refreshedCitySelection(state, selection),
@@ -102,7 +100,7 @@ abstract final class MultiplayerInteractionReconciler {
     if (unitId == null) return null;
     final unit = state.unitById(unitId);
     if (unit == null) return null;
-    return GameSelection.unit(unit, tile: selection.tile?.toTileData());
+    return GameSelection.unit(unit, tile: selection.tile);
   }
 
   static GameSelection? _refreshedCitySelection(
