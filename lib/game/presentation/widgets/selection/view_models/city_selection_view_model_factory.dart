@@ -20,6 +20,8 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
+part 'city_selection_view_model_support.dart';
+
 abstract final class CitySelectionViewModelFactory {
   static SelectionViewModel from(
     GameSelection selection, {
@@ -51,13 +53,7 @@ abstract final class CitySelectionViewModelFactory {
       yield: cityEconomy?.netYield ?? cityYield ?? TileYield.zero,
     );
     final storedArtifact = _storedArtifactForCity(city, artifacts);
-    final objectiveDescriptionItems =
-        CityObjectiveSelectionItemsFactory.descriptionItems(
-          city: city,
-          mapData: mapData,
-          units: units,
-          l10n: l10n,
-        );
+    final objectiveDescriptionItems = _objectives(city, mapData, units, l10n);
     final growthCost = cityEconomy?.growthCost;
     final netFood = cityEconomy?.netFood;
     final maxHexes = CityTechnologyEffectRules.effectiveMaxHexes(
@@ -193,19 +189,6 @@ abstract final class CitySelectionViewModelFactory {
       cityYieldBreakdown: yieldBreakdown,
       tags: const [],
     );
-  }
-
-  static WorldArtifact? _storedArtifactForCity(
-    GameCity city,
-    List<WorldArtifact> artifacts,
-  ) {
-    for (final artifact in artifacts) {
-      final location = artifact.location;
-      if (location.isStored && location.cityId == city.id) {
-        return artifact;
-      }
-    }
-    return null;
   }
 
   static String _subtitleFor(
