@@ -117,6 +117,7 @@ abstract final class MultiplayerInteractionReconciler {
     return GameSelection.city(
       city,
       cityYield: cityYield,
+      cityTileYieldBreakdown: selection.cityTileYieldBreakdown,
       cityEconomy: selection.cityEconomy,
       playerColor:
           state.colorForPlayer(city.ownerPlayerId) ??

@@ -12,7 +12,9 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -650,7 +652,11 @@ void main() {
 
     test('updates selection when city is currently selected', () {
       final city = _city();
-      final cityYield = CityYieldCalculator.totalFor(city, mapData);
+      final cityTileYieldBreakdown = CityYieldCalculator.breakdownFor(
+        city,
+        mapData,
+      );
+      final cityYield = cityTileYieldBreakdown.total;
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
@@ -663,6 +669,7 @@ void main() {
           selection: GameSelection.city(
             city,
             cityYield: cityYield,
+            cityTileYieldBreakdown: cityTileYieldBreakdown,
             cityEconomy: cityEconomy,
             playerColor: 0xFFFF0000,
           ),
@@ -688,7 +695,11 @@ void main() {
     test('does not update selection when a different city is selected', () {
       final city1 = _city(id: 'city_1', col: 1, row: 1);
       final city2 = _city(id: 'city_2', col: 5, row: 5);
-      final cityYield = CityYieldCalculator.totalFor(city2, mapData);
+      final cityTileYieldBreakdown = CityYieldCalculator.breakdownFor(
+        city2,
+        mapData,
+      );
+      final cityYield = cityTileYieldBreakdown.total;
       final cityEconomy = CityEconomyBreakdown.from(
         city: city2,
         tileYield: cityYield,
@@ -701,6 +712,7 @@ void main() {
           selection: GameSelection.city(
             city2,
             cityYield: cityYield,
+            cityTileYieldBreakdown: cityTileYieldBreakdown,
             cityEconomy: cityEconomy,
             playerColor: 0xFFFF0000,
           ),
@@ -973,7 +985,11 @@ void main() {
 
     test('updates selection when city is currently selected', () {
       final city = _city();
-      final cityYield = CityYieldCalculator.totalFor(city, mapData);
+      final cityTileYieldBreakdown = CityYieldCalculator.breakdownFor(
+        city,
+        mapData,
+      );
+      final cityYield = cityTileYieldBreakdown.total;
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
@@ -986,6 +1002,7 @@ void main() {
           selection: GameSelection.city(
             city,
             cityYield: cityYield,
+            cityTileYieldBreakdown: cityTileYieldBreakdown,
             cityEconomy: cityEconomy,
             playerColor: 0xFFFF0000,
           ),
@@ -1006,6 +1023,41 @@ void main() {
   });
 
   group('rushProduction', () {
+    test('uses cached unrest production for rush amount and cost', () {
+      final cityRuleset = CityRulesets.standard.copyWith(
+        cityCenterYield: const TileYield(
+          food: 2,
+          production: 8,
+          gold: 0,
+          defense: 0,
+        ),
+      );
+      final city = _city().copyWith(
+        productionQueue: CityProductionQueue.building(
+          buildingType: CityBuildingType.workshop,
+          investedProduction: 0,
+        ),
+      );
+      final state = GameState(
+        cities: [city],
+        activePlayerId: 'player_1',
+        playerGold: const {'player_1': 12},
+        playerStabilityNet: const {'player_1': -4},
+      );
+
+      final result = CityProductionReducer.rushProduction(
+        state,
+        const RushProductionCommand('city_1'),
+        mapData,
+        cityRuleset: cityRuleset,
+        stabilityRuleset: StabilityRuleset.standard,
+      );
+
+      expect(result.state.playerGold['player_1'], 0);
+      expect(result.state.cities.single.productionQueue?.investedProduction, 6);
+      expect(result.events, isEmpty);
+    });
+
     test('spends gold to finish an active building queue', () {
       final city = _city().copyWith(
         productionQueue: CityProductionQueue.building(
@@ -1318,7 +1370,11 @@ void main() {
 
     test('SetCitySpecializationCommand sets unlocked city specialization', () {
       final city = _city(buildings: {CityBuildingType.merchantHall});
-      final cityYield = CityYieldCalculator.totalFor(city, mapData);
+      final cityTileYieldBreakdown = CityYieldCalculator.breakdownFor(
+        city,
+        mapData,
+      );
+      final cityYield = cityTileYieldBreakdown.total;
       final cityEconomy = CityEconomyBreakdown.from(
         city: city,
         tileYield: cityYield,
@@ -1338,6 +1394,7 @@ void main() {
           selection: GameSelection.city(
             city,
             cityYield: cityYield,
+            cityTileYieldBreakdown: cityTileYieldBreakdown,
             cityEconomy: cityEconomy,
             playerColor: 0xFFFF0000,
           ),

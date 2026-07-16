@@ -185,4 +185,70 @@ void main() {
       expect(modifier.haltsGrowth, isFalse);
     });
   });
+
+  group('modifierForNet', () {
+    const contentModifier = StabilityModifier(
+      productionMultiplier: 1.0,
+      goldMultiplier: 1.0,
+      foodBonus: 1,
+      haltsGrowth: false,
+    );
+    const strainedModifier = StabilityModifier(
+      productionMultiplier: 1.0,
+      goldMultiplier: 0.9,
+      foodBonus: 0,
+      haltsGrowth: true,
+    );
+    const unrestModifier = StabilityModifier(
+      productionMultiplier: 0.75,
+      goldMultiplier: 0.75,
+      foodBonus: 0,
+      haltsGrowth: true,
+    );
+
+    test('maps the standard ruleset thresholds to their exact modifiers', () {
+      final cases = <(int, StabilityModifier)>[
+        (-5, unrestModifier),
+        (-4, unrestModifier),
+        (-3, strainedModifier),
+        (-1, strainedModifier),
+        (0, StabilityModifier.stable),
+        (3, StabilityModifier.stable),
+        (4, contentModifier),
+        (5, contentModifier),
+      ];
+
+      for (final (net, expected) in cases) {
+        expect(
+          StabilityPolicy.modifierForNet(net, ruleset: ruleset),
+          expected,
+          reason: 'unexpected modifier for stability net $net',
+        );
+      }
+    });
+
+    test('uses custom thresholds instead of standard boundary values', () {
+      final customRuleset = ruleset.copyWith(
+        contentThreshold: 7,
+        unrestThreshold: -2,
+      );
+      final cases = <(int, StabilityModifier)>[
+        (-3, unrestModifier),
+        (-2, unrestModifier),
+        (-1, strainedModifier),
+        (0, StabilityModifier.stable),
+        (6, StabilityModifier.stable),
+        (7, contentModifier),
+        (8, contentModifier),
+      ];
+
+      for (final (net, expected) in cases) {
+        expect(
+          StabilityPolicy.modifierForNet(net, ruleset: customRuleset),
+          expected,
+          reason: 'unexpected modifier for custom stability net $net',
+        );
+      }
+    });
+  });
 }

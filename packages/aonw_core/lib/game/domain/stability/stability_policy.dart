@@ -66,4 +66,11 @@ abstract final class StabilityPolicy {
       ),
     };
   }
+
+  static StabilityModifier modifierForNet(
+    int net, {
+    required StabilityRuleset ruleset,
+  }) {
+    return modifierFor(bandFor(net, ruleset: ruleset));
+  }
 }

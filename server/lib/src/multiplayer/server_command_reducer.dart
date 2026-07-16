@@ -363,6 +363,7 @@ class ServerCommandReducer {
           mapTiles: loadedMap.mapView,
           cityRuleset: ruleset.city,
           technologyRuleset: ruleset.technology,
+          stabilityRuleset: ruleset.stability,
           wonderRuleset: ruleset.wonders,
           paceBalance: ruleset.paceBalance,
         );

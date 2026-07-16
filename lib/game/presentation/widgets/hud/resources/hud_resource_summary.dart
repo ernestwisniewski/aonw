@@ -54,7 +54,7 @@ class HudResourceSummary {
     }
 
     final stabilityNet = state.playerStabilityNet[playerId] ?? 0;
-    final stabilityModifier = PersistentStabilityProcessor.modifierForNet(
+    final stabilityModifier = StabilityPolicy.modifierForNet(
       stabilityNet,
       ruleset: stabilityRuleset,
     );

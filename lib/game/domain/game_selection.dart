@@ -46,19 +46,34 @@ class GameSelection {
   final GameUnit? unit;
   final GameCity? city;
   final TileYield? cityYield;
+  final CityTileYieldBreakdown? cityTileYieldBreakdown;
   final CityEconomyBreakdown? cityEconomy;
   final int? cityPlayerColor;
 
-  const GameSelection._({
+  GameSelection._({
     required this.type,
     this.tile,
     this.fieldImprovement,
     this.unit,
     this.city,
     this.cityYield,
+    this.cityTileYieldBreakdown,
     this.cityEconomy,
     this.cityPlayerColor,
-  });
+  }) : assert(
+         type != GameSelectionType.city ||
+             (cityTileYieldBreakdown == null) == (cityEconomy == null),
+         'City tile breakdown and economy must form one cached snapshot.',
+       ),
+       assert(
+         cityTileYieldBreakdown == null ||
+             cityYield == cityTileYieldBreakdown.total,
+         'Cached city tile breakdown must match the raw city yield.',
+       ),
+       assert(
+         cityEconomy == null || cityEconomy.tileYield == cityYield,
+         'Cached city economy must match the raw city yield.',
+       );
 
   GameSelection.tile(TileData tile)
     : this._(
@@ -85,12 +100,14 @@ class GameSelection {
   GameSelection.city(
     GameCity city, {
     required TileYield cityYield,
+    CityTileYieldBreakdown? cityTileYieldBreakdown,
     CityEconomyBreakdown? cityEconomy,
     required int playerColor,
   }) : this._(
          type: GameSelectionType.city,
          city: city,
          cityYield: cityYield,
+         cityTileYieldBreakdown: cityTileYieldBreakdown,
          cityEconomy: cityEconomy,
          cityPlayerColor: playerColor,
        );

@@ -9,6 +9,7 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -198,6 +199,72 @@ void main() {
       expect(item.value, contains('Holding 0/3'));
       expect(item.value, contains('+2 VP'));
       expect(item.value, contains('+1 gold/turn'));
+    });
+
+    test('yield details reuse the cached stability economy projection', () {
+      const projectedCity = GameCity(
+        id: 'city_1_2',
+        ownerPlayerId: 'player_1',
+        name: 'Nowe City',
+        population: 1,
+        center: CityHex(col: 1, row: 2),
+      );
+      const authoritativeCity = GameCity(
+        id: 'city_1_2',
+        ownerPlayerId: 'player_1',
+        name: 'Nowe City after snapshot',
+        population: 2,
+        center: CityHex(col: 1, row: 2),
+      );
+      final mapData = _mapWithObjective();
+      const storedArtifact = WorldArtifact(
+        id: 'artifact_1',
+        type: WorldArtifactType.firstPeoplesChronicle,
+        location: WorldArtifactLocation.stored(cityId: 'city_1_2'),
+      );
+      final tileBreakdown = CityYieldCalculator.breakdownFor(
+        projectedCity,
+        mapData,
+        artifacts: const [storedArtifact],
+      );
+      final economy = CityEconomyBreakdown.from(
+        city: projectedCity,
+        tileYield: tileBreakdown.total,
+        mapTiles: mapData,
+        stabilityModifier: StabilityPolicy.modifierFor(StabilityBand.unrest),
+      );
+
+      final vm = SelectionViewModelFactory.from(
+        GameSelection.city(
+          authoritativeCity,
+          cityYield: tileBreakdown.total,
+          cityTileYieldBreakdown: tileBreakdown,
+          cityEconomy: economy,
+          playerColor: 0xFF4488cc,
+        ),
+        gameState: const GameState(
+          cities: [authoritativeCity],
+          artifacts: [storedArtifact],
+        ),
+        mapData: mapData,
+        l10n: l10n,
+      );
+
+      expect(vm.cityYieldBreakdown?.totalYield, economy.netYield);
+      expect(vm.cityYieldBreakdown?.rowsMatchTotal, isTrue);
+      expect(
+        vm.cityYieldBreakdown?.rows
+            .singleWhere((row) => row.label == l10n.citySelectionArtifactLabel)
+            .yield,
+        const TileYield(food: 1, production: 0, gold: 0, defense: 0),
+      );
+      expect(vm.cityYieldBreakdown?.growthEta.hasTurns, isFalse);
+      expect(
+        vm.cityYieldBreakdown?.rows.any(
+          (row) => row.label == l10n.stabilityBreakdownBand,
+        ),
+        isTrue,
+      );
     });
 
     test('keeps typed city buildings for details popups', () {

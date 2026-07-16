@@ -143,6 +143,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -158,6 +159,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -173,6 +175,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -185,6 +188,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -200,6 +204,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -215,6 +220,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
     );
   }
@@ -323,6 +329,9 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
     );
   }
 

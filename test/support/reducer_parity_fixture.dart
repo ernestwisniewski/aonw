@@ -360,7 +360,13 @@ abstract final class ReducerParityCorpus {
     final events = fixture.expectedEvents
         .map(GameEventSerializer.fromJson)
         .toList(growable: false);
-    if (tryRequireProduction(fixture.id, fixture.command, state, events)) {
+    if (tryRequireProduction(
+      fixture.id,
+      fixture.command,
+      fixture.state,
+      state,
+      events,
+    )) {
       return;
     }
     switch (fixture.command) {

@@ -8,6 +8,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
@@ -32,6 +33,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
@@ -78,6 +80,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
@@ -90,6 +93,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
@@ -155,6 +159,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
@@ -167,6 +172,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
@@ -190,6 +196,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
@@ -202,6 +209,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) => _startWonderProduction(
     state,
@@ -210,6 +218,7 @@ abstract final class CityProductionReducer {
     context: context,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
   );
 
@@ -220,6 +229,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) {
     final target = _controlledCityTarget(state, command.cityId, context);
@@ -253,6 +263,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: context.paceBalance,
     );
@@ -265,6 +276,7 @@ abstract final class CityProductionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
   }) => _rushCityProduction(
     state,
@@ -273,6 +285,7 @@ abstract final class CityProductionReducer {
     context: context,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
   );
 
@@ -284,6 +297,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) => _finishQueuedProductionUpdate(
@@ -294,6 +308,7 @@ abstract final class CityProductionReducer {
     mapData: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: paceBalance,
   );
@@ -309,6 +324,7 @@ abstract final class CityProductionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) => CitySelectionProjector.project(
@@ -317,6 +333,7 @@ abstract final class CityProductionReducer {
     mapTiles: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: paceBalance,
   );
@@ -399,6 +416,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    required StabilityRuleset stabilityRuleset,
     required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
   }) {
@@ -416,6 +434,7 @@ abstract final class CityProductionReducer {
       mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
@@ -430,6 +449,7 @@ abstract final class CityProductionReducer {
     required MapData mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    required StabilityRuleset stabilityRuleset,
     required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
   }) {
@@ -446,6 +466,7 @@ abstract final class CityProductionReducer {
         mapTiles: mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),

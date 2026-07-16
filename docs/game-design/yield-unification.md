@@ -187,6 +187,29 @@ required so a new caller cannot silently calculate a different supply limit.
 Wonder and stability modifiers remain separate balance decisions and are not
 implicitly added by this contract.
 
+## Stability In City Selection
+
+Fresh city selections project economy with the cached
+`GameState.playerStabilityNet` of the city's owner and the active
+`StabilityRuleset`. That cached value already includes relative-standing
+adjustment from the turn processor, so selection must not calculate the
+adjustment a second time.
+
+`cityYield` remains the raw city yield. Stability is stored on the projected
+`cityEconomy`: strained and unrest states apply their production/gold
+multipliers and halt growth, while content can add food to the growth deposit.
+The compact city panel and its detailed yield rows consume that same projected
+economy. The details include an explicit stability delta so their rows still
+sum to the displayed net yield.
+
+Direct selection, turn refresh, production refresh, worked-hex changes, and
+city expansion all pass the same ruleset into `CitySelectionProjector`.
+Multiplayer reconciliation is intentionally different: it rebinds the latest
+authoritative city entity while retaining the already projected interaction
+snapshot until the next fresh projection. That snapshot keeps the raw yield,
+its exact tile-source breakdown, and economy together; the detailed panel must
+never combine a fresh tile breakdown with cached economy.
+
 ## What We Are Not Doing Yet
 
 | Out of scope | Reason |

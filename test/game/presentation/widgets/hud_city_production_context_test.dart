@@ -33,7 +33,7 @@ void main() {
           cityYield: _yield(production: 3),
           cityEconomy: CityEconomyBreakdown(
             city: _city(),
-            tileYield: _yield(production: 5),
+            tileYield: _yield(production: 3),
             buildingYield: _yield(production: 2),
             populationUpkeep: 1,
             netFood: 1,
@@ -43,7 +43,7 @@ void main() {
         ),
       );
 
-      expect(context.productionPerTurn, 7);
+      expect(context.productionPerTurn, 5);
     });
 
     test('falls back to raw city yield and then to one production', () {
@@ -69,9 +69,19 @@ GameSelection _selection({
   required TileYield cityYield,
   CityEconomyBreakdown? cityEconomy,
 }) {
+  final tileBreakdown = cityEconomy == null
+      ? null
+      : CityTileYieldBreakdown(
+          center: CityTileYieldContribution(
+            kind: CityTileYieldContributionKind.center,
+            hex: _city().center,
+            yield: cityYield,
+          ),
+        );
   return GameSelection.city(
     _city(),
     cityYield: cityYield,
+    cityTileYieldBreakdown: tileBreakdown,
     cityEconomy: cityEconomy,
     playerColor: 0,
   );

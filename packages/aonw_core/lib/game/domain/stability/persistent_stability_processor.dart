@@ -125,21 +125,12 @@ abstract final class PersistentStabilityProcessor {
     );
   }
 
-  static StabilityModifier modifierForNet(
-    int net, {
-    StabilityRuleset ruleset = StabilityRuleset.standard,
-  }) {
-    return StabilityPolicy.modifierFor(
-      StabilityPolicy.bandFor(net, ruleset: ruleset),
-    );
-  }
-
   static StabilityModifier modifierForPlayer({
     required PersistentGameState state,
     required String playerId,
     StabilityRuleset ruleset = StabilityRuleset.standard,
   }) {
-    return modifierForNet(
+    return StabilityPolicy.modifierForNet(
       state.playerStabilityNet[playerId] ?? 0,
       ruleset: ruleset,
     );

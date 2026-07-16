@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
@@ -45,6 +46,7 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
     GameObjectiveAdvice? preferredObjectiveAdvice,
@@ -77,6 +79,7 @@ abstract final class TurnReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
@@ -120,6 +123,7 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -135,6 +139,8 @@ abstract final class TurnReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
     if (actions.isEmpty) {
@@ -148,6 +154,7 @@ abstract final class TurnReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
@@ -164,6 +171,8 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (playerId.isEmpty) return const [];
@@ -184,6 +193,8 @@ abstract final class TurnReducer {
             mapData,
             cityRuleset: cityRuleset,
             technologyRuleset: technologyRuleset,
+            stabilityRuleset: stabilityRuleset,
+            wonderRuleset: wonderRuleset,
             paceBalance: paceBalance,
           ),
           delay: Duration(milliseconds: 120 + effects.length * 140),
@@ -200,12 +211,15 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (queue.target is ProjectProductionTarget) return null;
     final targetCost = CityProductionRules.targetCost(
       queue.target,
       ruleset: cityRuleset,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
     return CityProductionRules.estimatedTurnsRemaining(
@@ -218,6 +232,8 @@ abstract final class TurnReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
+        wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
     );
@@ -230,6 +246,8 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
@@ -251,6 +269,13 @@ abstract final class TurnReducer {
       mapTiles: mapData,
       ruleset: cityRuleset,
       technologyEffects: technologyEffects,
+      cities: state.cities,
+      wonderRegistry: state.wonderRegistry,
+      wonderRuleset: wonderRuleset,
+      stabilityModifier: StabilityPolicy.modifierForNet(
+        state.playerStabilityNet[city.ownerPlayerId] ?? 0,
+        ruleset: stabilityRuleset,
+      ),
       paceBalance: paceBalance,
     );
     var productionPerTurn = CityProductionRules.productionPerTurn(
@@ -351,6 +376,7 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -362,6 +388,7 @@ abstract final class TurnReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
@@ -375,6 +402,7 @@ abstract final class TurnReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -389,6 +417,7 @@ abstract final class TurnReducer {
         mapTiles: mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),

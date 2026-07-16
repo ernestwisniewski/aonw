@@ -91,6 +91,8 @@ abstract final class CitySelectionViewModelFactory {
             cityRuleset: cityRuleset,
             research: research,
             technologyRuleset: technologyRuleset,
+            projectedTileBreakdown: selection.cityTileYieldBreakdown,
+            projectedEconomy: cityEconomy,
             currentTurn: currentTurn,
             paceBalance: paceBalance,
             l10n: l10n,

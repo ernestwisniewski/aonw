@@ -21,6 +21,7 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 MapData _map(int cols, int rows) => MapData(
@@ -815,6 +816,95 @@ void main() {
         expect(effect.delay, const Duration(milliseconds: 120));
       },
     );
+
+    test('production bubbles use cached unrest production', () {
+      final cityRuleset = CityRulesets.standard.copyWith(
+        cityCenterYield: const TileYield(
+          food: 2,
+          production: 8,
+          gold: 0,
+          defense: 0,
+        ),
+      );
+      final city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: const CityHex(col: 1, row: 1),
+        productionQueue: CityProductionQueue.building(
+          buildingType: CityBuildingType.workshop,
+          investedProduction: 0,
+        ),
+      );
+      final state = GameState(
+        cities: [city],
+        activePlayerId: 'player_1',
+        playerStabilityNet: const {'player_1': -4},
+      );
+
+      final result = TurnReducer.focusTurnStartAction(
+        state,
+        'player_1',
+        mapData,
+        cityRuleset: cityRuleset,
+        stabilityRuleset: StabilityRuleset.standard,
+      );
+
+      final effect = result.uiEffects
+          .whereType<ShowCityProductionBubbleEffect>()
+          .single;
+      expect(effect.turnsRemaining, 4);
+    });
+
+    test('wonder production bubbles use the supplied wonder cost', () {
+      final standardDefinition = WonderRuleset.standard.definitionFor(
+        WonderType.greatLibrary,
+      );
+      final wonderRuleset = WonderRuleset(
+        wonders: {
+          ...WonderRuleset.standard.wonders,
+          WonderType.greatLibrary: WonderDefinition(
+            type: WonderType.greatLibrary,
+            productionCost: 10,
+            unlockTech: standardDefinition.unlockTech,
+            requirements: standardDefinition.requirements,
+            standingEffects: standardDefinition.standingEffects,
+            completionEffects: standardDefinition.completionEffects,
+          ),
+        },
+      );
+      final cityRuleset = CityRulesets.standard.copyWith(
+        cityCenterYield: const TileYield(
+          food: 2,
+          production: 5,
+          gold: 0,
+          defense: 0,
+        ),
+      );
+      final city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: const CityHex(col: 1, row: 1),
+        productionQueue: CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: 0,
+        ),
+      );
+
+      final result = TurnReducer.focusTurnStartAction(
+        GameState(cities: [city], activePlayerId: 'player_1'),
+        'player_1',
+        mapData,
+        cityRuleset: cityRuleset,
+        wonderRuleset: wonderRuleset,
+      );
+
+      final effect = result.uiEffects
+          .whereType<ShowCityProductionBubbleEffect>()
+          .single;
+      expect(effect.turnsRemaining, 3);
+    });
 
     test(
       'focusTurnStartAction keeps exhausted selected unit when only city queues report progress',

@@ -7,6 +7,7 @@ GameStateTransition _startWonderProduction(
   required GameCommandContext context,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
+  required StabilityRuleset stabilityRuleset,
   required WonderRuleset wonderRuleset,
 }) {
   final target = CityProductionReducer._controlledCityTarget(
@@ -44,6 +45,7 @@ GameStateTransition _startWonderProduction(
     mapData: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: context.paceBalance,
   );

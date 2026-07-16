@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
@@ -14,11 +15,12 @@ abstract final class CitySelectionProjector {
     required GameCity city,
     required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
+    required StabilityRuleset stabilityRuleset,
     required TechnologyRuleset technologyRuleset,
     required WonderRuleset wonderRuleset,
     required PaceBalance paceBalance,
   }) {
-    final cityYield = CityYieldCalculator.totalFor(
+    final cityTileYieldBreakdown = CityYieldCalculator.breakdownFor(
       city,
       mapTiles,
       fieldImprovements: state.fieldImprovements,
@@ -26,6 +28,7 @@ abstract final class CitySelectionProjector {
       artifacts: state.artifacts,
       ruleset: cityRuleset,
     );
+    final cityYield = cityTileYieldBreakdown.total;
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
@@ -39,11 +42,16 @@ abstract final class CitySelectionProjector {
       cities: state.cities,
       wonderRegistry: state.wonderRegistry,
       wonderRuleset: wonderRuleset,
+      stabilityModifier: StabilityPolicy.modifierForNet(
+        state.playerStabilityNet[city.ownerPlayerId] ?? 0,
+        ruleset: stabilityRuleset,
+      ),
       paceBalance: paceBalance,
     );
     return GameSelection.city(
       city,
       cityYield: cityYield,
+      cityTileYieldBreakdown: cityTileYieldBreakdown,
       cityEconomy: cityEconomy,
       playerColor:
           state.colorForPlayer(city.ownerPlayerId) ?? Player.palette.first,

@@ -5,6 +5,8 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -162,6 +164,78 @@ void main() {
       );
 
       expect(result.pendingAction, isNull);
+    });
+
+    test('rebinds the city while preserving its cached economy projection', () {
+      const sourceCity = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Before snapshot',
+        center: CityHex(col: 0, row: 0),
+      );
+      const authoritativeCity = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'After snapshot',
+        population: 2,
+        center: CityHex(col: 0, row: 0),
+      );
+      const rawYield = TileYield(food: 2, production: 7, gold: 7, defense: 0);
+      const cachedTileBreakdown = CityTileYieldBreakdown(
+        center: CityTileYieldContribution(
+          kind: CityTileYieldContributionKind.center,
+          hex: CityHex(col: 0, row: 0),
+          yield: rawYield,
+        ),
+      );
+      const cachedEconomy = CityEconomyBreakdown(
+        city: sourceCity,
+        tileYield: rawYield,
+        buildingYield: TileYield.zero,
+        stabilityModifier: StabilityModifier(
+          productionMultiplier: 0.75,
+          goldMultiplier: 0.75,
+          foodBonus: 0,
+          haltsGrowth: true,
+        ),
+        populationUpkeep: 1,
+        netFood: 1,
+        foodDeposit: 0,
+        growthCost: 10,
+      );
+      final source = GameState(
+        activePlayerId: 'player_1',
+        cities: const [sourceCity],
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            sourceCity,
+            cityYield: rawYield,
+            cityTileYieldBreakdown: cachedTileBreakdown,
+            cityEconomy: cachedEconomy,
+            playerColor: 0xFF112233,
+          ),
+        ),
+      );
+
+      final result = MultiplayerInteractionReconciler.reconcile(
+        authoritativeState: const GameState(
+          activePlayerId: 'player_1',
+          cities: [authoritativeCity],
+          playerStabilityNet: {'player_1': 4},
+        ),
+        interactionSource: source,
+      );
+
+      expect(result.selection?.city, same(authoritativeCity));
+      expect(
+        result.selection?.cityTileYieldBreakdown,
+        same(cachedTileBreakdown),
+      );
+      expect(result.selection?.cityEconomy, same(cachedEconomy));
+      expect(
+        result.selection?.cityEconomy?.stabilityModifier,
+        cachedEconomy.stabilityModifier,
+      );
     });
   });
 }

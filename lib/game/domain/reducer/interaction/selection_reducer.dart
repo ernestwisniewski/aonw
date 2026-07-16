@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
@@ -68,6 +69,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -80,6 +82,7 @@ abstract final class SelectionReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
@@ -92,6 +95,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -152,6 +156,7 @@ abstract final class SelectionReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),
@@ -165,6 +170,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -185,6 +191,7 @@ abstract final class SelectionReducer {
         mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       );
@@ -218,6 +225,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -271,6 +279,7 @@ abstract final class SelectionReducer {
       mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
@@ -370,6 +379,7 @@ abstract final class SelectionReducer {
     MapData mapData, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -381,6 +391,7 @@ abstract final class SelectionReducer {
         mapTiles: mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
+        stabilityRuleset: stabilityRuleset,
         wonderRuleset: wonderRuleset,
         paceBalance: paceBalance,
       ),

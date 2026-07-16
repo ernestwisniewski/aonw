@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -296,6 +297,7 @@ class PersistentCityProductionResolver {
     required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -334,6 +336,10 @@ class PersistentCityProductionResolver {
       cities: state.cities,
       wonderRegistry: state.wonderRegistry,
       wonderRuleset: wonderRuleset,
+      stabilityModifier: StabilityPolicy.modifierForNet(
+        state.playerStabilityNet[city.ownerPlayerId] ?? 0,
+        ruleset: stabilityRuleset,
+      ),
     );
     var productionPerTurn = CityProductionRules.productionPerTurn(
       cityEconomy.netYield.production,

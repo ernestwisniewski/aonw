@@ -7,6 +7,7 @@ GameStateTransition _rushCityProduction(
   required GameCommandContext context,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
+  required StabilityRuleset stabilityRuleset,
   required WonderRuleset wonderRuleset,
 }) {
   final target = CityProductionReducer._controlledCityTarget(
@@ -30,6 +31,7 @@ GameStateTransition _rushCityProduction(
     target: queue.target,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: context.paceBalance,
   );
@@ -120,6 +122,7 @@ GameStateTransition _rushCityProduction(
     mapData: mapData,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
+    stabilityRuleset: stabilityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: context.paceBalance,
   );
@@ -134,6 +137,7 @@ int _productionPerTurnForTarget({
   required CityProductionTarget target,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
+  required StabilityRuleset stabilityRuleset,
   required WonderRuleset wonderRuleset,
   required PaceBalance paceBalance,
 }) {
@@ -160,6 +164,10 @@ int _productionPerTurnForTarget({
     cities: state.cities,
     wonderRegistry: state.wonderRegistry,
     wonderRuleset: wonderRuleset,
+    stabilityModifier: StabilityPolicy.modifierForNet(
+      state.playerStabilityNet[city.ownerPlayerId] ?? 0,
+      ruleset: stabilityRuleset,
+    ),
   );
   var productionPerTurn = CityProductionRules.productionPerTurn(
     cityEconomy.netYield.production,

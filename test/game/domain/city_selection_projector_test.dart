@@ -6,6 +6,7 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
@@ -31,6 +32,7 @@ void main() {
         city: city,
         mapTiles: _mapData(),
         cityRuleset: CityRulesets.standard,
+        stabilityRuleset: StabilityRuleset.standard,
         technologyRuleset: TechnologyRulesets.standard,
         wonderRuleset: WonderRuleset.standard,
         paceBalance: PaceBalance.unlimited,
@@ -83,6 +85,7 @@ void main() {
           city: selectedCity,
           mapTiles: _mapData(),
           cityRuleset: CityRulesets.standard,
+          stabilityRuleset: StabilityRuleset.standard,
           technologyRuleset: TechnologyRulesets.standard,
           wonderRuleset: sentinelRuleset,
           paceBalance: PaceBalance.unlimited,
@@ -107,6 +110,7 @@ void main() {
         city: city,
         mapTiles: _mapData(),
         cityRuleset: CityRulesets.standard,
+        stabilityRuleset: StabilityRuleset.standard,
         technologyRuleset: TechnologyRulesets.standard,
         wonderRuleset: WonderRuleset.standard,
         paceBalance: PaceBalance.unlimited,
@@ -114,8 +118,184 @@ void main() {
 
       expect(selection.cityPlayerColor, Player.palette.first);
     });
+
+    test('projects cached owner stability through the supplied ruleset without '
+        'changing raw yield', () {
+      final cityRuleset = CityRulesets.standard.copyWith(
+        cityCenterYield: _stabilityRawYield,
+      );
+
+      for (final testCase in _stabilityProjectionCases) {
+        final selection = CitySelectionProjector.project(
+          state: GameState(
+            cities: const [_stabilityCity],
+            playerStabilityNet: testCase.playerStabilityNet,
+            activePlayerId: testCase.activePlayerId,
+          ),
+          city: _stabilityCity,
+          mapTiles: _mapData(),
+          cityRuleset: cityRuleset,
+          stabilityRuleset: testCase.stabilityRuleset,
+          technologyRuleset: TechnologyRulesets.standard,
+          wonderRuleset: WonderRuleset.standard,
+          paceBalance: PaceBalance.unlimited,
+        );
+        final economy = selection.cityEconomy!;
+
+        expect(selection.cityYield, _stabilityRawYield, reason: testCase.label);
+        expect(economy.tileYield, _stabilityRawYield, reason: testCase.label);
+        expect(economy.grossYield, _stabilityRawYield, reason: testCase.label);
+        expect(
+          economy.stabilityModifier,
+          testCase.expectedModifier,
+          reason: testCase.label,
+        );
+        expect(
+          economy.netYield,
+          TileYield(
+            food: 7,
+            production: testCase.expectedProduction,
+            gold: testCase.expectedGold,
+            defense: 2,
+          ),
+          reason: testCase.label,
+        );
+        expect(
+          economy.foodDeposit,
+          testCase.expectedFoodDeposit,
+          reason: testCase.label,
+        );
+      }
+    });
   });
 }
+
+const _stabilityCity = GameCity(
+  id: 'selected_city',
+  ownerPlayerId: 'city_owner',
+  name: 'Selected',
+  population: 1,
+  center: CityHex(col: 0, row: 0),
+);
+
+const _stabilityRawYield = TileYield(
+  food: 8,
+  production: 7,
+  gold: 7,
+  defense: 2,
+);
+
+const _contentModifier = StabilityModifier(
+  productionMultiplier: 1,
+  goldMultiplier: 1,
+  foodBonus: 1,
+  haltsGrowth: false,
+);
+
+const _strainedModifier = StabilityModifier(
+  productionMultiplier: 1,
+  goldMultiplier: 0.9,
+  foodBonus: 0,
+  haltsGrowth: true,
+);
+
+const _unrestModifier = StabilityModifier(
+  productionMultiplier: 0.75,
+  goldMultiplier: 0.75,
+  foodBonus: 0,
+  haltsGrowth: true,
+);
+
+final _customStabilityRuleset = StabilityRuleset.standard.copyWith(
+  contentThreshold: 5,
+  unrestThreshold: -2,
+  relativeStandingOffset: 999,
+);
+
+final _stabilityProjectionCases =
+    <
+      ({
+        String label,
+        Map<String, int> playerStabilityNet,
+        String activePlayerId,
+        StabilityRuleset stabilityRuleset,
+        StabilityModifier expectedModifier,
+        int expectedProduction,
+        int expectedGold,
+        int expectedFoodDeposit,
+      })
+    >[
+      (
+        label: 'content',
+        playerStabilityNet: const {'city_owner': 4},
+        activePlayerId: 'city_owner',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: _contentModifier,
+        expectedProduction: 7,
+        expectedGold: 7,
+        expectedFoodDeposit: 8,
+      ),
+      (
+        label: 'stable',
+        playerStabilityNet: const {'city_owner': 0},
+        activePlayerId: 'city_owner',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: StabilityModifier.stable,
+        expectedProduction: 7,
+        expectedGold: 7,
+        expectedFoodDeposit: 7,
+      ),
+      (
+        label: 'strained with floor-rounded gold',
+        playerStabilityNet: const {'city_owner': -1},
+        activePlayerId: 'city_owner',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: _strainedModifier,
+        expectedProduction: 7,
+        expectedGold: 6,
+        expectedFoodDeposit: 0,
+      ),
+      (
+        label: 'unrest with floor-rounded production and gold',
+        playerStabilityNet: const {'city_owner': -4},
+        activePlayerId: 'city_owner',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: _unrestModifier,
+        expectedProduction: 5,
+        expectedGold: 5,
+        expectedFoodDeposit: 0,
+      ),
+      (
+        label: 'missing cached owner net defaults to stable zero',
+        playerStabilityNet: const {},
+        activePlayerId: 'city_owner',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: StabilityModifier.stable,
+        expectedProduction: 7,
+        expectedGold: 7,
+        expectedFoodDeposit: 7,
+      ),
+      (
+        label: 'city owner net wins over the active player net',
+        playerStabilityNet: const {'city_owner': -4, 'active_player': 4},
+        activePlayerId: 'active_player',
+        stabilityRuleset: StabilityRuleset.standard,
+        expectedModifier: _unrestModifier,
+        expectedProduction: 5,
+        expectedGold: 5,
+        expectedFoodDeposit: 0,
+      ),
+      (
+        label: 'custom thresholds classify standard content as stable',
+        playerStabilityNet: const {'city_owner': 4},
+        activePlayerId: 'other_player',
+        stabilityRuleset: _customStabilityRuleset,
+        expectedModifier: StabilityModifier.stable,
+        expectedProduction: 7,
+        expectedGold: 7,
+        expectedFoodDeposit: 7,
+      ),
+    ];
 
 MapData _mapData() => MapData(
   cols: 2,

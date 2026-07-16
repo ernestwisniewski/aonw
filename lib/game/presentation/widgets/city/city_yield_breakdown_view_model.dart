@@ -4,6 +4,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -50,15 +51,30 @@ class CityYieldBreakdownViewModel {
         economy.buildingYield +
         economy.specializationYield +
         economy.technologyYield;
+    final sourceYield = preMultiplier + economy.wonderYield;
     final goldMultiplierYield = TileYield(
       food: 0,
       production: 0,
-      gold: economy.grossYield.gold - preMultiplier.gold,
+      gold: economy.grossYield.gold - sourceYield.gold,
       defense: 0,
     );
-    final consumedFoodUpkeep = preMultiplier.food < economy.populationUpkeep
-        ? preMultiplier.food
-        : economy.populationUpkeep;
+    final stableProduction = _scale(
+      economy.grossYield.production,
+      1 + economy.wonderProductionMultiplier,
+    );
+    final wonderYield =
+        economy.wonderYield +
+        TileYield(
+          food: 0,
+          production: stableProduction - economy.grossYield.production,
+          gold: 0,
+          defense: 0,
+        );
+    final consumedFoodUpkeep = economy.grossYield.food - economy.netFood;
+    final stabilityYield = _stabilityYieldFor(
+      economy,
+      stableProduction: stableProduction,
+    );
 
     final rows = [
       CityYieldBreakdownRow(
@@ -83,6 +99,12 @@ class CityYieldBreakdownViewModel {
         ),
         yield: tileBreakdown.passiveImprovementYield,
       ),
+      if (!_isZero(tileBreakdown.artifactYield))
+        CityYieldBreakdownRow(
+          label: text.artifact,
+          detail: text.artifactDetail,
+          yield: tileBreakdown.artifactYield,
+        ),
       CityYieldBreakdownRow(
         label: text.buildings,
         detail: text.buildingDetail(city, economy.buildingYield),
@@ -99,11 +121,23 @@ class CityYieldBreakdownViewModel {
           detail: text.specializationDetail(city.specialization),
           yield: economy.specializationYield,
         ),
+      if (!_isZero(wonderYield))
+        CityYieldBreakdownRow(
+          label: text.wonders,
+          detail: text.wonderDetail,
+          yield: wonderYield,
+        ),
       if (!_isZero(goldMultiplierYield))
         CityYieldBreakdownRow(
           label: text.goldMultiplier,
           detail: text.goldMultiplierDetail,
           yield: goldMultiplierYield,
+        ),
+      if (economy.stabilityModifier != StabilityModifier.stable)
+        CityYieldBreakdownRow(
+          label: text.stability,
+          detail: text.stabilityDetail(economy.stabilityModifier),
+          yield: stabilityYield,
         ),
       if (economy.populationUpkeep != 0)
         CityYieldBreakdownRow(
@@ -151,33 +185,41 @@ class CityYieldBreakdownViewModel {
     required CityRuleset cityRuleset,
     required ResearchState research,
     required TechnologyRuleset technologyRuleset,
+    CityTileYieldBreakdown? projectedTileBreakdown,
+    CityEconomyBreakdown? projectedEconomy,
     int? currentTurn,
     PaceBalance paceBalance = PaceBalance.unlimited,
     required AppLocalizations l10n,
   }) {
-    final technologyEffects = TechnologyEffectSummary.forPlayer(
-      playerId: city.ownerPlayerId,
-      research: research,
-      ruleset: technologyRuleset,
-    );
-    final tileBreakdown = CityYieldCalculator.breakdownFor(
-      city,
-      mapData,
-      fieldImprovements: fieldImprovements,
-      units: units,
-      artifacts: artifacts,
-      ruleset: cityRuleset,
-    );
-    final economy = CityEconomyBreakdown.from(
-      city: city,
-      tileYield: tileBreakdown.total,
-      mapTiles: mapData,
-      ruleset: cityRuleset,
-      paceBalance: paceBalance,
-      technologyEffects: technologyEffects,
-    );
+    final useProjectedSnapshot =
+        projectedTileBreakdown != null && projectedEconomy != null;
+    final breakdownCity = useProjectedSnapshot ? projectedEconomy.city : city;
+    final tileBreakdown = useProjectedSnapshot
+        ? projectedTileBreakdown
+        : CityYieldCalculator.breakdownFor(
+            city,
+            mapData,
+            fieldImprovements: fieldImprovements,
+            units: units,
+            artifacts: artifacts,
+            ruleset: cityRuleset,
+          );
+    final economy = useProjectedSnapshot
+        ? projectedEconomy
+        : CityEconomyBreakdown.from(
+            city: city,
+            tileYield: tileBreakdown.total,
+            mapTiles: mapData,
+            ruleset: cityRuleset,
+            paceBalance: paceBalance,
+            technologyEffects: TechnologyEffectSummary.forPlayer(
+              playerId: city.ownerPlayerId,
+              research: research,
+              ruleset: technologyRuleset,
+            ),
+          );
     return CityYieldBreakdownViewModel.from(
-      city: city,
+      city: breakdownCity,
       tileBreakdown: tileBreakdown,
       economy: economy,
       cityRuleset: cityRuleset,
@@ -317,6 +359,23 @@ class CityYieldBreakdownViewModel {
     );
   }
 
+  static TileYield _stabilityYieldFor(
+    CityEconomyBreakdown economy, {
+    required int stableProduction,
+  }) {
+    return TileYield(
+      food: 0,
+      production: economy.netYield.production - stableProduction,
+      gold: economy.netYield.gold - economy.grossYield.gold,
+      defense: 0,
+    );
+  }
+
+  static int _scale(int value, double multiplier) {
+    if (multiplier == 1.0) return value;
+    return (value * multiplier).floor();
+  }
+
   static TileYield _sum(Iterable<TileYield> values) {
     var total = TileYield.zero;
     for (final value in values) {
@@ -342,17 +401,22 @@ class CityYieldBreakdownText {
   String get populationFields => l10n.cityYieldBreakdownPopulationFields;
   String get workers => l10n.cityYieldBreakdownWorkers;
   String get improvements => l10n.commonImprovements;
+  String get artifact => l10n.citySelectionArtifactLabel;
   String get buildings => l10n.cityYieldBreakdownBuildings;
   String get technologies => l10n.cityYieldBreakdownTechnologies;
   String get specialization => l10n.cityYieldBreakdownSpecialization;
+  String get wonders => l10n.cityProductionWondersSection;
   String get goldMultiplier => l10n.cityYieldBreakdownGoldMultiplier;
+  String get stability => l10n.stabilityBreakdownBand;
   String get upkeep => l10n.cityYieldBreakdownUpkeep;
   String get fieldsBucket => l10n.cityYieldBreakdownFieldsBucket;
   String get multipliers => l10n.commonMultipliers;
   String get other => l10n.commonOther;
   String get centerDetail => l10n.cityYieldBreakdownCenterDetail;
+  String get artifactDetail => l10n.worldArtifactLocationStored;
   String get goldMultiplierDetail =>
       l10n.cityYieldBreakdownGoldMultiplierDetail;
+  String get wonderDetail => l10n.wonderDetailsStandingEffects;
   String get baseScience => l10n.cityYieldBreakdownBaseScience;
   String get baseScienceDetail => l10n.cityYieldBreakdownBaseScienceDetail;
   String get researchProject => l10n.cityYieldBreakdownResearchProject;
@@ -446,6 +510,19 @@ class CityYieldBreakdownText {
         l10n.cityYieldBreakdownMilitarySpecializationDetail,
       null => l10n.cityYieldBreakdownNoSpecialization,
     };
+  }
+
+  String stabilityDetail(StabilityModifier modifier) {
+    if (modifier == StabilityPolicy.modifierFor(StabilityBand.content)) {
+      return l10n.stabilityBandContent;
+    }
+    if (modifier == StabilityPolicy.modifierFor(StabilityBand.strained)) {
+      return l10n.stabilityBandStrained;
+    }
+    if (modifier == StabilityPolicy.modifierFor(StabilityBand.unrest)) {
+      return l10n.stabilityBandUnrest;
+    }
+    return l10n.stabilityBandStable;
   }
 
   String manyScienceBuildings(int count) =>

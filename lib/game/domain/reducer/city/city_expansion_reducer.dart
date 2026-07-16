@@ -8,6 +8,7 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
@@ -23,6 +24,7 @@ abstract final class CityExpansionReducer {
     context: environment.context,
     cityRuleset: environment.cityRuleset,
     technologyRuleset: environment.technologyRuleset,
+    stabilityRuleset: environment.stabilityRuleset,
     wonderRuleset: environment.wonderRuleset,
     paceBalance: environment.paceBalance,
   );
@@ -34,6 +36,7 @@ abstract final class CityExpansionReducer {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -71,6 +74,7 @@ abstract final class CityExpansionReducer {
           mapTiles: mapData,
           cityRuleset: cityRuleset,
           technologyRuleset: technologyRuleset,
+          stabilityRuleset: stabilityRuleset,
           wonderRuleset: wonderRuleset,
           paceBalance: paceBalance,
         ),

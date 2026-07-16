@@ -9,6 +9,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +54,47 @@ void main() {
     expect(transition.state.moveCommandActive, isFalse);
     expect(transition.state.movePreview, isNull);
   });
+
+  test(
+    'city selection forwards custom stability into the fresh projection',
+    () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        population: 1,
+        center: CityHex(col: 1, row: 1),
+      );
+      const state = GameState(
+        cities: [city],
+        activePlayerId: 'player_1',
+        playerStabilityNet: {'player_1': -2},
+      );
+      final cityRuleset = CityRulesets.standard.copyWith(
+        cityCenterYield: const TileYield(
+          food: 2,
+          production: 7,
+          gold: 7,
+          defense: 0,
+        ),
+      );
+
+      final selected = SelectionReducer.selectCity(
+        state,
+        const SelectCityCommand('city_1'),
+        mapData,
+        cityRuleset: cityRuleset,
+        stabilityRuleset: _customStabilityRuleset,
+      );
+
+      expect(
+        selected.selection?.cityEconomy?.stabilityModifier,
+        StabilityPolicy.modifierFor(StabilityBand.unrest),
+      );
+      expect(selected.selection?.cityEconomy?.netYield.production, 5);
+      expect(selected.selection?.cityEconomy?.netYield.gold, 5);
+    },
+  );
 
   group('SelectionRefreshPhase', () {
     test('selects a city founded by the previously selected unit', () {
@@ -104,6 +146,7 @@ void main() {
       final state = GameState(
         cities: const [updatedCity],
         activePlayerId: 'player_1',
+        playerStabilityNet: const {'player_1': -2},
         interaction: GameInteractionState(
           selection: GameSelection.city(
             selectedCity,
@@ -114,20 +157,38 @@ void main() {
       );
 
       final refreshed = const SelectionRefreshPhase().apply(
-        _context(state, mapData),
+        _context(
+          state,
+          mapData,
+          ruleset: GameRuleset.standard().copyWith(
+            stability: _customStabilityRuleset,
+          ),
+        ),
       );
 
       expect(refreshed.state.selection?.city, same(updatedCity));
       expect(refreshed.state.selection?.city?.population, 2);
       expect(refreshed.state.selection?.cityYield, isNotNull);
+      expect(
+        refreshed.state.selection?.cityEconomy?.stabilityModifier,
+        StabilityPolicy.modifierFor(StabilityBand.unrest),
+      );
     });
   });
 }
 
-TurnContext _context(GameState state, MapData mapData) => TurnContext(
+final _customStabilityRuleset = StabilityRuleset.standard.copyWith(
+  unrestThreshold: -2,
+);
+
+TurnContext _context(
+  GameState state,
+  MapData mapData, {
+  GameRuleset? ruleset,
+}) => TurnContext(
   state: state,
   mapData: mapData,
-  ruleset: GameRuleset.standard(),
+  ruleset: ruleset ?? GameRuleset.standard(),
   playerId: 'player_1',
 );
 
