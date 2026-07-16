@@ -22,16 +22,7 @@ final class _EconomySimulationTurnRowFactory {
         if (city.ownerPlayerId == playerId) city,
     ];
     final research = state.research.forPlayer(playerId);
-    final unitSupply = CityUnitSupplyRules.forPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      units: state.units,
-      fieldImprovements: state.fieldImprovements,
-      mapView: mapView,
-      cityRuleset: ruleset.city,
-      research: state.research,
-      technologyRuleset: ruleset.technology,
-    );
+    final unitSupply = _unitSupplyForPlayer(state, playerId, mapView, ruleset);
     final goldBreakdown = _goldBreakdownForPlayer(
       state: state,
       playerId: playerId,
@@ -107,6 +98,25 @@ final class _EconomySimulationTurnRowFactory {
       dominationRequiredHoldTurns:
           domination?.requiredHoldTurns ??
           MatchRules.standard.victory.dominationHoldTurns,
+    );
+  }
+
+  CityUnitSupplyBreakdown _unitSupplyForPlayer(
+    PersistentGameState state,
+    String playerId,
+    MapReadView mapView,
+    GameRuleset ruleset,
+  ) {
+    return CityUnitSupplyRules.forPlayer(
+      playerId: playerId,
+      cities: state.cities,
+      units: state.units,
+      artifacts: state.artifacts,
+      fieldImprovements: state.fieldImprovements,
+      mapView: mapView,
+      cityRuleset: ruleset.city,
+      research: state.research,
+      technologyRuleset: ruleset.technology,
     );
   }
 

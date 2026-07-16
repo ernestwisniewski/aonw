@@ -71,6 +71,7 @@ final class MctsProductionCandidateCollector {
       unitType: unitType,
       cities: view.ownCities,
       units: view.ownUnits,
+      artifacts: view.artifacts,
       fieldImprovements: view.ownImprovements,
       mapView: view.mapData,
       cityRuleset: view.ruleset.city,

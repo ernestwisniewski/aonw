@@ -13,6 +13,7 @@ tables.
 | Resource yield | `CityRuleset.resourceYields` |
 | Improvement yield | `CityRuleset.improvements[*].tileYield` |
 | City center | `CityRuleset.cityCenterYield` |
+| Stored artifact yield | `WorldArtifactType.cityYield` |
 | Building science | `CityBuildingEffect.FlatCityScienceEffect` |
 
 `TileYieldRules` no longer has a separate balance table. For the standard game
@@ -32,6 +33,7 @@ specializations, projects, and buildings without muddying city economy.
 | `TileYieldRules.forInput(input, ruleset)` | Base yield for assessment systems |
 | `CityTileYieldRules.forTile(tile, improvement, ruleset)` | Hex yield with optional improvement |
 | `CityTileYieldRules.forCityHex(...)` | Hex yield in city context; the center has fixed city-center yield |
+| `CityUnitSupplyRules.forPlayer(...)` | Player unit-supply capacity from city economy, stored artifacts, and the map cap |
 | `ScienceYieldCalculator.totalForPlayer(...)` | Player science/turn from city base, technology effects, specialization, and buildings |
 | `WorkerImprovementScoring.scoreFor(...)` | Shared scoring for worker improvement recommendations |
 | `WorkerImprovementChargeRules` | Number of improvements a worker can complete before disappearing |
@@ -161,6 +163,29 @@ improvements it can still build.
 Worker removal happens only after `workerJob` completes, not when an option is
 selected. Canceling construction or receiving an illegal job should not consume
 a charge.
+
+## Unit Supply And Artifact Food
+
+Unit supply derives its food component through the city yield and economy
+calculators:
+
+```text
+city supply = max(0, population + net food)
+player supply = min(sum(city supply), map capacity)
+```
+
+Food from an artifact participates in that calculation only while the artifact
+is stored in one of the player's cities. It can increase that city's raw supply
+before the map cap is applied; existing food consumption and the non-negative
+net-food clamp can absorb some or all of the bonus. An artifact carried by a
+unit, placed on the map, under excavation, stored in another player's city, or
+pointing at a missing city contributes no supply.
+
+Gameplay reducers, the production dialog, AI/MCTS, and economy telemetry must
+pass the same artifact collection to `CityUnitSupplyRules`. The parameter is
+required so a new caller cannot silently calculate a different supply limit.
+Wonder and stability modifiers remain separate balance decisions and are not
+implicitly added by this contract.
 
 ## What We Are Not Doing Yet
 

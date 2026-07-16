@@ -160,6 +160,7 @@ final class MctsSimulatedEconomyCommandApplier {
       unitType: command.unitType,
       cities: ownCities,
       units: ownUnits,
+      artifacts: view.artifacts,
       fieldImprovements: view.ownImprovements,
       mapView: view.mapData,
       cityRuleset: view.ruleset.city,

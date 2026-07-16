@@ -1,6 +1,78 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+const _artifactSupplyCases =
+    <({String name, WorldArtifact artifact, int expectedDelta})>[
+      (
+        name: 'chronicle stored in own city',
+        artifact: WorldArtifact(
+          id: 'own_stored_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.stored(cityId: 'city_1'),
+        ),
+        expectedDelta: 1,
+      ),
+      (
+        name: 'carried chronicle',
+        artifact: WorldArtifact(
+          id: 'carried_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.carried(unitId: 'unit_1'),
+        ),
+        expectedDelta: 0,
+      ),
+      (
+        name: 'chronicle on map',
+        artifact: WorldArtifact(
+          id: 'map_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.map(col: 0, row: 0),
+        ),
+        expectedDelta: 0,
+      ),
+      (
+        name: 'chronicle under excavation',
+        artifact: WorldArtifact(
+          id: 'excavated_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.excavation(
+            unitId: 'unit_1',
+            col: 0,
+            row: 0,
+            remainingTurns: 1,
+          ),
+        ),
+        expectedDelta: 0,
+      ),
+      (
+        name: 'chronicle stored in foreign city',
+        artifact: WorldArtifact(
+          id: 'foreign_stored_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.stored(cityId: 'city_2'),
+        ),
+        expectedDelta: 0,
+      ),
+      (
+        name: 'chronicle stored in dangling city',
+        artifact: WorldArtifact(
+          id: 'dangling_stored_food',
+          type: WorldArtifactType.firstPeoplesChronicle,
+          location: WorldArtifactLocation.stored(cityId: 'missing_city'),
+        ),
+        expectedDelta: 0,
+      ),
+      (
+        name: 'non-food artifact stored in own city',
+        artifact: WorldArtifact(
+          id: 'own_stored_non_food',
+          type: WorldArtifactType.merchantsSeal,
+          location: WorldArtifactLocation.stored(cityId: 'city_1'),
+        ),
+        expectedDelta: 0,
+      ),
+    ];
+
 void main() {
   test('MapData and WorldMap read views produce identical unit supply', () {
     final mapData = _mapData();
@@ -35,6 +107,7 @@ void main() {
           cities: [city],
           units: units,
           fieldImprovements: const [],
+          artifacts: const [],
           mapView: view,
         ),
     ];
@@ -48,11 +121,68 @@ void main() {
           cities: [city],
           units: units,
           fieldImprovements: const [],
+          artifacts: const [],
           mapView: view,
         ),
       ),
       everyElement(isTrue),
     );
+  });
+
+  test('only an own-city stored Chronicle adds one supply', () {
+    const ownCity = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'Own city',
+      population: 3,
+      center: CityHex(col: 1, row: 1),
+      controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+    );
+    const foreignCity = GameCity(
+      id: 'city_2',
+      ownerPlayerId: 'player_2',
+      name: 'Foreign city',
+      population: 3,
+      center: CityHex(col: 2, row: 2),
+    );
+    final mapData = _mapData();
+    final baseline = CityUnitSupplyRules.forPlayer(
+      playerId: 'player_1',
+      cities: const [ownCity, foreignCity],
+      units: const [],
+      fieldImprovements: const [],
+      artifacts: const [],
+      mapView: mapData,
+    );
+    expect(baseline.rawCapacity, lessThan(baseline.mapCapacity));
+    expect(baseline.capacity, baseline.rawCapacity);
+    for (final testCase in _artifactSupplyCases) {
+      final supply = CityUnitSupplyRules.forPlayer(
+        playerId: 'player_1',
+        cities: const [ownCity, foreignCity],
+        units: const [],
+        fieldImprovements: const [],
+        artifacts: [testCase.artifact],
+        mapView: mapData,
+      );
+
+      expect(
+        supply.rawCapacity,
+        baseline.rawCapacity + testCase.expectedDelta,
+        reason: testCase.name,
+      );
+      expect(
+        supply.citySupplyById['city_1'],
+        baseline.citySupplyById['city_1']! + testCase.expectedDelta,
+        reason: testCase.name,
+      );
+      expect(
+        supply.capacity,
+        baseline.capacity + testCase.expectedDelta,
+        reason: testCase.name,
+      );
+      expect(supply.mapCapacity, baseline.mapCapacity, reason: testCase.name);
+    }
   });
 
   test('sparse terrain survey binds the same non-minimum map capacity', () {
@@ -81,6 +211,7 @@ void main() {
           cities: cities,
           units: const [],
           fieldImprovements: const [],
+          artifacts: const [],
           mapView: view,
         ),
     ];

@@ -284,68 +284,6 @@ void main() {
     );
   });
 
-  test('CityProductionDialogViewModel uses map-scaled unit supply limit', () {
-    final cities = [
-      for (var i = 0; i < 5; i++)
-        GameCity(
-          id: 'city_$i',
-          ownerPlayerId: 'player_1',
-          name: 'Miasto $i',
-          population: 3,
-          center: const CityHex(col: 1, row: 1),
-          controlledHexes: const [
-            CityHex(col: 1, row: 0),
-            CityHex(col: 0, row: 1),
-          ],
-        ),
-    ];
-    final units = [
-      for (var i = 0; i < CityUnitSupplyRules.minimumMapCapacity; i++)
-        GameUnit(
-          id: 'warrior_$i',
-          ownerPlayerId: 'player_1',
-          type: GameUnitType.warrior,
-          name: GameUnitType.warrior.defaultNameToken,
-          col: i % 3,
-          row: i ~/ 3,
-        ),
-    ];
-
-    final viewModel = CityProductionDialogViewModel.from(
-      cities.first,
-      l10n: l10n,
-      cityRuleset: CityRulesets.standard,
-      research: ResearchState.empty,
-      technologyRuleset: TechnologyRulesets.standard,
-      mapData: _map3x3(),
-      cities: cities,
-      units: units,
-      fieldImprovements: const [],
-      productionPerTurn: 4,
-    );
-
-    final warrior = viewModel.itemForUnit(GameUnitType.warrior);
-
-    expect(warrior, isNotNull);
-    expect(warrior!.locked, isTrue);
-    expect(
-      warrior.requirementLabel,
-      l10n.cityProductionUnitSupplyLimit(
-        CityUnitSupplyRules.minimumMapCapacity,
-        CityUnitSupplyRules.minimumMapCapacity,
-      ),
-    );
-    expect(
-      warrior.metaLabels,
-      contains(
-        l10n.cityProductionUnitSupplyUsed(
-          CityUnitSupplyRules.minimumMapCapacity,
-          CityUnitSupplyRules.minimumMapCapacity,
-        ),
-      ),
-    );
-  });
-
   test(
     'CityProductionDialogViewModel locks unit without required resource',
     () {

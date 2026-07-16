@@ -21,6 +21,8 @@ import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
+part 'persistent_city_production_supply.dart';
+
 class PersistentCityProductionResult {
   const PersistentCityProductionResult({
     required this.accepted,
@@ -143,17 +145,13 @@ class PersistentCityProductionResolver {
     )) {
       return _reject(state, 'unit_production_requires_coast');
     }
-    final hasSupply = CityUnitSupplyRules.canQueueUnit(
-      playerId: city.ownerPlayerId,
+    final hasSupply = _canQueuePersistentCityUnit(
+      state: state,
+      city: city,
       unitType: command.unitType,
-      cities: state.cities,
-      units: state.units,
-      fieldImprovements: state.fieldImprovements,
       mapView: mapView,
       cityRuleset: cityRuleset,
-      research: state.research,
       technologyRuleset: technologyRuleset,
-      replacingCityId: city.id,
     );
     if (!hasSupply) {
       return _reject(state, 'unit_supply_limit_reached');

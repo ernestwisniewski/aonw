@@ -195,19 +195,17 @@ class CityProductionDialogViewModel {
       _ => null,
     };
     final playerCities = cities.isEmpty ? [city] : cities;
-    final unitSupply = mapData == null
-        ? null
-        : CityUnitSupplyRules.forPlayer(
-            playerId: city.ownerPlayerId,
-            cities: playerCities,
-            units: units,
-            fieldImprovements: fieldImprovements,
-            mapView: mapData,
-            cityRuleset: cityRuleset,
-            research: research,
-            technologyRuleset: technologyRuleset,
-            replacingCityId: city.id,
-          );
+    final unitSupply = _unitSupplyFor(
+      city: city,
+      cities: playerCities,
+      units: units,
+      artifacts: artifacts,
+      fieldImprovements: fieldImprovements,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      research: research,
+      technologyRuleset: technologyRuleset,
+    );
     final unitUpkeep = UnitUpkeepRules.forPlayer(
       playerId: city.ownerPlayerId,
       cities: playerCities,

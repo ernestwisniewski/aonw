@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
@@ -77,6 +78,7 @@ abstract final class CityUnitSupplyRules {
     required String playerId,
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
+    required Iterable<WorldArtifact> artifacts,
     required Iterable<FieldImprovement> fieldImprovements,
     required MapReadView mapView,
     CityRuleset cityRuleset = CityRulesets.standard,
@@ -97,24 +99,17 @@ abstract final class CityUnitSupplyRules {
     var rawCapacity = 0;
     final mapTiles = mapView.mapTiles;
     for (final city in ownCities) {
-      final cityYield = CityYieldCalculator.totalFor(
-        city,
-        mapTiles,
+      final citySupply = _supplyForCity(
+        city: city,
+        mapTiles: mapTiles,
         fieldImprovements: fieldImprovements,
         units: units,
-        ruleset: cityRuleset,
-      );
-      final economy = CityEconomyBreakdown.from(
-        city: city,
-        tileYield: cityYield,
-        mapTiles: mapTiles,
-        ruleset: cityRuleset,
+        artifacts: artifacts,
+        cityRuleset: cityRuleset,
         technologyEffects: technologyEffects,
       );
-      final citySupply = city.population + economy.netYield.food;
-      final normalized = citySupply < 0 ? 0 : citySupply;
-      citySupplyById[city.id] = normalized;
-      rawCapacity += normalized;
+      citySupplyById[city.id] = citySupply;
+      rawCapacity += citySupply;
     }
     final mapCapacity = maxCapacityForMap(mapView);
     final capacity = rawCapacity < mapCapacity ? rawCapacity : mapCapacity;
@@ -149,11 +144,40 @@ abstract final class CityUnitSupplyRules {
     );
   }
 
+  static int _supplyForCity({
+    required GameCity city,
+    required MapTileLookup mapTiles,
+    required Iterable<FieldImprovement> fieldImprovements,
+    required Iterable<GameUnit> units,
+    required Iterable<WorldArtifact> artifacts,
+    required CityRuleset cityRuleset,
+    required TechnologyEffectSummary technologyEffects,
+  }) {
+    final cityYield = CityYieldCalculator.totalFor(
+      city,
+      mapTiles,
+      fieldImprovements: fieldImprovements,
+      units: units,
+      artifacts: artifacts,
+      ruleset: cityRuleset,
+    );
+    final economy = CityEconomyBreakdown.from(
+      city: city,
+      tileYield: cityYield,
+      mapTiles: mapTiles,
+      ruleset: cityRuleset,
+      technologyEffects: technologyEffects,
+    );
+    final supply = city.population + economy.netYield.food;
+    return supply < 0 ? 0 : supply;
+  }
+
   static bool canQueueUnit({
     required String playerId,
     required GameUnitType unitType,
     required Iterable<GameCity> cities,
     required Iterable<GameUnit> units,
+    required Iterable<WorldArtifact> artifacts,
     required Iterable<FieldImprovement> fieldImprovements,
     required MapReadView mapView,
     CityRuleset cityRuleset = CityRulesets.standard,
@@ -166,6 +190,7 @@ abstract final class CityUnitSupplyRules {
       playerId: playerId,
       cities: cities,
       units: units,
+      artifacts: artifacts,
       fieldImprovements: fieldImprovements,
       mapView: mapView,
       cityRuleset: cityRuleset,

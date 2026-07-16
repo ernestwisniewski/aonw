@@ -15,6 +15,7 @@ import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 
 part 'city_production_reducer_rush.dart';
+part 'city_production_reducer_supply.dart';
 part 'city_production_reducer_wonder.dart';
 
 typedef _RushProductionApplication = ({
@@ -127,17 +128,13 @@ abstract final class CityProductionReducer {
     )) {
       return GameStateTransition(state: state);
     }
-    final hasSupply = CityUnitSupplyRules.canQueueUnit(
-      playerId: city.ownerPlayerId,
+    final hasSupply = _canQueueCityUnit(
+      state: state,
+      city: city,
       unitType: command.unitType,
-      cities: state.cities,
-      units: state.units,
-      fieldImprovements: state.fieldImprovements,
-      mapView: mapData,
+      mapData: mapData,
       cityRuleset: cityRuleset,
-      research: state.research,
       technologyRuleset: technologyRuleset,
-      replacingCityId: city.id,
     );
     if (!hasSupply) {
       return GameStateTransition(state: state);

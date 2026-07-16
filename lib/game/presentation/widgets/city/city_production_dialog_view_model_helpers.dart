@@ -68,6 +68,32 @@ int _currentCityScienceFor({
   return science.byCityId[city.id] ?? 0;
 }
 
+CityUnitSupplyBreakdown? _unitSupplyFor({
+  required GameCity city,
+  required List<GameCity> cities,
+  required List<GameUnit> units,
+  required List<WorldArtifact> artifacts,
+  required List<FieldImprovement> fieldImprovements,
+  required MapData? mapData,
+  required CityRuleset cityRuleset,
+  required ResearchState research,
+  required TechnologyRuleset technologyRuleset,
+}) {
+  if (mapData == null) return null;
+  return CityUnitSupplyRules.forPlayer(
+    playerId: city.ownerPlayerId,
+    cities: cities,
+    units: units,
+    artifacts: artifacts,
+    fieldImprovements: fieldImprovements,
+    mapView: mapData,
+    cityRuleset: cityRuleset,
+    research: research,
+    technologyRuleset: technologyRuleset,
+    replacingCityId: city.id,
+  );
+}
+
 List<CityProductionItem> _wonderItems({
   required GameCity city,
   required List<GameCity> cities,

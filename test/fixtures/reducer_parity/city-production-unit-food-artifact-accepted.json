@@ -1,6 +1,6 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-unit-supply-full-rejected",
+  "id": "city-production-unit-food-artifact-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
@@ -270,7 +270,16 @@
           "productionOverflow": 0
         }
       ],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact.firstPeoplesChronicle",
+          "type": "firstPeoplesChronicle",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_1"
+          }
+        }
+      ],
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
@@ -285,8 +294,8 @@
     }
   },
   "expected": {
-    "accepted": false,
-    "reason": "unit_supply_limit_reached",
+    "accepted": true,
+    "reason": null,
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -423,10 +432,26 @@
           "buildings": [
             "granary"
           ],
+          "productionQueue": {
+            "target": {
+              "kind": "unit",
+              "unitType": "warrior"
+            },
+            "investedProduction": 0
+          },
           "productionOverflow": 0
         }
       ],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact.firstPeoplesChronicle",
+          "type": "firstPeoplesChronicle",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_1"
+          }
+        }
+      ],
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
