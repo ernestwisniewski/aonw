@@ -50,7 +50,6 @@ abstract final class SelectionViewModelFactory {
       GameSelectionType.tile => TileSelectionViewModelFactory.from(
         selection!.tile,
         gameState: gameState,
-        mapData: mapData,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         l10n: l10n,

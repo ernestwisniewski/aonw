@@ -19,10 +19,17 @@ const _gameDomain = '$_coreLib/game/domain';
 const _legacyWorldMapAdapterPath =
     '$_coreLib/map/persistence/legacy_world_map_adapter.dart';
 const _mapDataBarrelFreeMigrationPaths = {
+  'lib/game/domain/hex_assessment/hex_assessment_rules.dart',
   'lib/game/domain/game_selection.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
   'lib/game/domain/reducer/worker/worker_reducer.dart',
+  'lib/game/presentation/widgets/selection/view_models/'
+      'selection_resource_value_card_factory.dart',
+  'lib/game/presentation/widgets/selection/view_models/'
+      'selection_value_formatters.dart',
+  'lib/game/presentation/widgets/selection/view_models/'
+      'tile_selection_view_model_factory.dart',
   '$_gameDomain/trade/persistent_resource_trade_resolver.dart',
 };
 const _mapDataFreeMigrationPaths = {
@@ -150,6 +157,35 @@ void main() {
         reason: path,
       );
     }
+  });
+
+  test('game presentation does not reconstruct persistence tile DTOs', () {
+    final sources = Map.fromEntries(
+      productionDartSources(containing: 'TileData').entries.where(
+        (entry) => entry.key.startsWith('lib/game/presentation/'),
+      ),
+    );
+    expect(constructedTypeViolations(sources, type: 'TileData'), isEmpty);
+  });
+
+  test('constructed type guard matches only the exact DTO name', () {
+    expect(
+      constructedTypeViolations(const {
+        'fixture.dart': '''
+void buildTiles() {
+  TileData();
+  TileData.named();
+  dto.TileData.named();
+  MultiplayerAvatarTileData();
+}
+''',
+      }, type: 'TileData'),
+      [
+        'fixture.dart:2 must not construct TileData',
+        'fixture.dart:3 must not construct TileData',
+        'fixture.dart:4 must not construct TileData',
+      ],
+    );
   });
 
   test('read contracts and WorldMap view remain zero-copy', () {

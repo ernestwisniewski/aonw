@@ -105,6 +105,22 @@ List<String> sourceSymbolReferenceViolations(
   ];
 }
 
+List<String> constructedTypeViolations(
+  Map<String, String> sources, {
+  required String type,
+}) {
+  final violations = <String>[];
+  for (final entry in sources.entries) {
+    final unit = parseString(content: entry.value, path: entry.key).unit;
+    final visitor = _ConstructedTypeVisitor(type);
+    unit.accept(visitor);
+    for (final line in visitor.lines(unit)) {
+      violations.add('${entry.key}:$line must not construct $type');
+    }
+  }
+  return violations;
+}
+
 String _workspaceRelativeSourcePath(String path) {
   final prefix = '${Directory.current.path}${Platform.pathSeparator}';
   return path.startsWith(prefix) ? path.substring(prefix.length) : path;
@@ -140,6 +156,39 @@ final class _SymbolReferenceVisitor extends RecursiveAstVisitor<void> {
       offsets.add(node.offset);
     }
     super.visitSimpleIdentifier(node);
+  }
+
+  Iterable<int> lines(CompilationUnit unit) sync* {
+    final sorted = offsets.toList()..sort();
+    for (final offset in sorted) {
+      yield unit.lineInfo.getLocation(offset).lineNumber;
+    }
+  }
+}
+
+final class _ConstructedTypeVisitor extends RecursiveAstVisitor<void> {
+  _ConstructedTypeVisitor(this.type);
+
+  final String type;
+  final Set<int> offsets = {};
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (node.constructorName.type.name.lexeme == type) {
+      offsets.add(node.offset);
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target?.toSource();
+    if (node.methodName.name == type ||
+        target == type ||
+        target?.endsWith('.$type') == true) {
+      offsets.add(node.offset);
+    }
+    super.visitMethodInvocation(node);
   }
 
   Iterable<int> lines(CompilationUnit unit) sync* {

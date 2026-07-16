@@ -5,13 +5,13 @@ import 'package:aonw/game/domain/hex_assessment/hex_recommendation_rules.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_score.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_score_rules.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_tag_rules.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/hex_assessment/hex_assessment_input.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class HexAssessmentRules {
-  static HexAssessment assess(TileData tile) {
+  static HexAssessment assess(MapTileView tile) {
     return assessInput(HexAssessmentInput.fromTile(tile));
   }
 
@@ -44,7 +44,7 @@ abstract final class HexAssessmentRules {
     );
   }
 
-  static HexScore scoreTile(TileData tile) {
+  static HexScore scoreTile(MapTileView tile) {
     return scoreInput(HexAssessmentInput.fromTile(tile));
   }
 

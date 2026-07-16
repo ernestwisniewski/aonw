@@ -1,14 +1,14 @@
 import 'package:aonw/game/domain/hex_assessment.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-TileData _tile(
+MapTileView _tile(
   TerrainType terrain, {
   bool river = false,
   List<ResourceType> resources = const [],
 }) {
-  return TileData(
+  return _TestTile(
     col: 0,
     row: 0,
     terrains: [terrain, if (river) TerrainType.river],
@@ -145,8 +145,36 @@ void main() {
 
 class _KindCase {
   final String name;
-  final TileData tile;
+  final MapTileView tile;
   final HexAssessmentKind kind;
 
   const _KindCase({required this.name, required this.tile, required this.kind});
+}
+
+final class _TestTile implements MapTileView {
+  @override
+  final int col;
+
+  @override
+  final int row;
+
+  @override
+  final List<TerrainType> terrains;
+
+  @override
+  final List<ResourceType> resources;
+
+  @override
+  final int height;
+
+  const _TestTile({
+    required this.col,
+    required this.row,
+    required this.terrains,
+    required this.resources,
+    required this.height,
+  });
+
+  @override
+  TerrainType get primaryTerrain => terrains.first;
 }

@@ -1,5 +1,4 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/hex_assessment.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/hex_assessment_presenter.dart';
@@ -11,18 +10,17 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_v
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_yield_item.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:flutter/material.dart';
 
 abstract final class TileSelectionViewModelFactory {
   static SelectionViewModel from(
-    SelectedTile? tile, {
+    MapTileView? tile, {
     GameState? gameState,
-    MapData? mapData,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     required AppLocalizations l10n,
@@ -34,13 +32,11 @@ abstract final class TileSelectionViewModelFactory {
   }) {
     if (tile == null) return const SelectionViewModel.empty();
 
-    final tileData = selectedTileData(tile);
-    final assessment = HexAssessmentRules.assess(tileData);
+    final assessment = HexAssessmentRules.assess(tile);
     final profile = HexProfileViewModel.fromAssessment(assessment, l10n);
     final improvements = _improvementsFor(
-      tile: tileData,
+      tile: tile,
       gameState: gameState,
-      mapData: mapData,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       l10n: l10n,
@@ -50,7 +46,7 @@ abstract final class TileSelectionViewModelFactory {
       paceBalance: paceBalance,
     );
     final resourceValueCards = SelectionResourceValueCardFactory.fromTile(
-      tile: tileData,
+      tile: tile,
       assessment: assessment,
       gameState: gameState,
       l10n: l10n,
@@ -80,7 +76,7 @@ abstract final class TileSelectionViewModelFactory {
       tags: profile.tags,
       improvements: improvements,
       resourceValueCards: resourceValueCards,
-      selectionKey: 'tile:${tileData.col}:${tileData.row}',
+      selectionKey: 'tile:${tile.col}:${tile.row}',
       preferImprovementsTab: improvements.isNotEmpty,
       items: [
         SelectionInfoItem(
@@ -124,9 +120,8 @@ abstract final class TileSelectionViewModelFactory {
   }
 
   static List<SelectionImprovementItem> _improvementsFor({
-    required TileData tile,
+    required MapTileView tile,
     required GameState? gameState,
-    required MapData? mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required AppLocalizations l10n,
@@ -206,7 +201,7 @@ abstract final class TileSelectionViewModelFactory {
   }
 
   static _TileCityStatus _cityStatusFor({
-    required TileData tile,
+    required MapTileView tile,
     required GameState? gameState,
     required AppLocalizations l10n,
     required String Function(GameCity city) cityName,

@@ -83,15 +83,7 @@ String? _cityFoundingBlockedReason({
   final selectedTile = selection?.tile;
   final failure = CityFoundingRules.startFailure(
     unit: unit,
-    centerTile: selectedTile == null
-        ? null
-        : TileData(
-            col: selectedTile.col,
-            row: selectedTile.row,
-            terrains: selectedTile.terrains,
-            resources: selectedTile.resources,
-            height: selectedTile.height,
-          ),
+    centerTile: selectedTile,
     cities: gameState?.cities ?? const [],
   );
   return _cityFoundingFailureReason(l10n, failure) ??

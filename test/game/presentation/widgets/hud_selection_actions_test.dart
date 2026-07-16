@@ -851,6 +851,31 @@ void main() {
       },
     );
 
+    test('uses the selected map tile to explain invalid city founding', () {
+      final settler = _settler();
+      const mountain = TileData(
+        col: 0,
+        row: 0,
+        terrains: [TerrainType.mountain],
+        resources: [],
+        height: 1,
+      );
+
+      final actions = _actions(
+        gameState: GameState(
+          units: [settler],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(settler, tile: mountain),
+          ),
+        ),
+      );
+
+      expect(
+        _action(actions, 'Found city')?.disabledReason,
+        AppLocalizationsEn().selectionActionFoundCityInvalidCenter,
+      );
+    });
+
     test('replaces active city founding actions with cancel before ready', () {
       final settler = _settler();
       var started = false;

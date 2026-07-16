@@ -5,15 +5,15 @@ import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_resource_value_card.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_yield_item.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:flutter/material.dart';
 
 abstract final class SelectionResourceValueCardFactory {
   static List<SelectionResourceValueCard> fromTile({
-    required TileData tile,
+    required MapTileView tile,
     required HexAssessment assessment,
     required GameState? gameState,
     required AppLocalizations l10n,
@@ -44,7 +44,7 @@ abstract final class SelectionResourceValueCardFactory {
 
   static SelectionResourceValueCard _cardFor({
     required ResourceType resource,
-    required TileData tile,
+    required MapTileView tile,
     required TileYield tileYield,
     required GameState? gameState,
     required AppLocalizations l10n,
@@ -134,7 +134,7 @@ abstract final class SelectionResourceValueCardFactory {
 
   static FieldImprovementType? _preferredImprovementForResource({
     required ResourceType resource,
-    required TileData tile,
+    required MapTileView tile,
     required CityRuleset ruleset,
   }) {
     final specialistTypes = <FieldImprovementType>{
@@ -155,7 +155,7 @@ abstract final class SelectionResourceValueCardFactory {
   }
 
   static _TileCityStatus _cityStatusFor({
-    required TileData tile,
+    required MapTileView tile,
     required GameState? gameState,
     required AppLocalizations l10n,
     required String Function(GameCity city) cityName,
