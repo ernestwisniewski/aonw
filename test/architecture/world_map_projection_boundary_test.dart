@@ -27,6 +27,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/combat/combat_reducer.dart',
   'lib/game/domain/reducer/combat/combat_reducer_fog.dart',
   'lib/game/domain/reducer/combat/combat_reducer_setup.dart',
+  'lib/game/domain/reducer/diplomacy/merchant_trade_route_reducer.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
   'lib/game/domain/reducer/research/research_reducer.dart',

@@ -4,17 +4,17 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class MerchantTradeRouteReducer {
   static GameStateTransition startSelection(
     GameState state,
     StartMerchantTradeRouteSelectionCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
@@ -42,7 +42,7 @@ abstract final class MerchantTradeRouteReducer {
                 merchant: unit,
                 originCity: origin,
                 destinationCity: city,
-                mapData: mapData,
+                mapData: mapView,
                 units: state.units,
                 cities: state.cities,
               ) !=
@@ -50,14 +50,13 @@ abstract final class MerchantTradeRouteReducer {
         );
     if (!hasDestination) return GameStateTransition(state: state);
 
-    final tile = mapData.tileAt(unit.col, unit.row);
     return GameStateTransition(
       state: _clearTransientModes(state).copyWithInteraction(
         pendingAction: PendingMerchantTradeRouteSelection(
           ownerPlayerId: unit.ownerPlayerId,
           unitId: unit.id,
         ),
-        selection: GameSelection.unit(unit, tile: tile),
+        selection: _unitSelection(state, unit, mapView),
       ),
     );
   }
@@ -81,7 +80,7 @@ abstract final class MerchantTradeRouteReducer {
   static GameStateTransition assignRoute(
     GameState state,
     AssignMerchantTradeRouteCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
@@ -109,7 +108,7 @@ abstract final class MerchantTradeRouteReducer {
       merchant: unit,
       originCity: origin,
       destinationCity: destination,
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       cities: state.cities,
     );
@@ -131,9 +130,8 @@ abstract final class MerchantTradeRouteReducer {
       next = next.copyWithInteraction(cityFoundingDraft: null);
     }
     if (next.selectedUnitId == updated.id) {
-      final tile = mapData.tileAt(updated.col, updated.row);
       next = next.copyWithInteraction(
-        selection: GameSelection.unit(updated, tile: tile),
+        selection: _unitSelection(next, updated, mapView),
       );
     }
     return GameStateTransition(state: next);
@@ -142,7 +140,7 @@ abstract final class MerchantTradeRouteReducer {
   static GameStateTransition startMoveToCitySelection(
     GameState state,
     StartMerchantMoveToCitySelectionCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
@@ -165,7 +163,7 @@ abstract final class MerchantTradeRouteReducer {
               MerchantTradeRouteRules.planMoveToCity(
                 merchant: unit,
                 destinationCity: city,
-                mapData: mapData,
+                mapData: mapView,
                 units: state.units,
                 cities: state.cities,
               ) !=
@@ -173,14 +171,13 @@ abstract final class MerchantTradeRouteReducer {
         );
     if (!hasDestination) return GameStateTransition(state: state);
 
-    final tile = mapData.tileAt(unit.col, unit.row);
     return GameStateTransition(
       state: _clearTransientModes(state).copyWithInteraction(
         pendingAction: PendingMerchantMoveToCitySelection(
           ownerPlayerId: unit.ownerPlayerId,
           unitId: unit.id,
         ),
-        selection: GameSelection.unit(unit, tile: tile),
+        selection: _unitSelection(state, unit, mapView),
       ),
     );
   }
@@ -204,7 +201,7 @@ abstract final class MerchantTradeRouteReducer {
   static GameStateTransition moveToCity(
     GameState state,
     MoveMerchantToCityCommand command,
-    MapData mapData, {
+    MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
@@ -227,7 +224,7 @@ abstract final class MerchantTradeRouteReducer {
     final plan = MerchantTradeRouteRules.planMoveToCity(
       merchant: unit,
       destinationCity: destination,
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       cities: state.cities,
     );
@@ -249,9 +246,8 @@ abstract final class MerchantTradeRouteReducer {
       next = next.copyWithInteraction(cityFoundingDraft: null);
     }
     if (next.selectedUnitId == updated.id) {
-      final tile = mapData.tileAt(updated.col, updated.row);
       next = next.copyWithInteraction(
-        selection: GameSelection.unit(updated, tile: tile),
+        selection: _unitSelection(next, updated, mapView),
       );
     }
     return GameStateTransition(state: next);
@@ -265,6 +261,18 @@ abstract final class MerchantTradeRouteReducer {
 
   static GameState _clearTransientModes(GameState state) =>
       state.copyWith(interaction: state.interaction.clearTransientModes());
+
+  static GameSelection _unitSelection(
+    GameState state,
+    GameUnit unit,
+    MapTileLookup mapTiles,
+  ) {
+    final tile = mapTiles.tileAt(unit.col, unit.row);
+    return GameSelection.unit(unit, tile: tile).withVisibleResources(
+      playerId: state.activePlayerId,
+      research: state.research,
+    );
+  }
 
   static GameUnit? _findUnit(GameState state, String unitId) {
     return state.unitById(unitId);

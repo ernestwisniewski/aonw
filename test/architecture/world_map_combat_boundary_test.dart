@@ -45,6 +45,39 @@ const _targets = [
     ],
   ),
   _Target(
+    path:
+        'lib/game/domain/reducer/diplomacy/'
+        'merchant_trade_route_reducer.dart',
+    owner: 'MerchantTradeRouteReducer',
+    boundaries: [
+      _Boundary.method(
+        'startSelection',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'assignRoute',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'startMoveToCitySelection',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'moveToCity',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        '_unitSelection',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/city/city_founding_reducer.dart',
     owner: 'CityFoundingReducer',
     boundaries: [
