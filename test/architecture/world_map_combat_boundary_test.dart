@@ -504,6 +504,35 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/movement/unit_movement_planner.dart',
+    owner: 'UnitMovementPlanner',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapTraversalView'),
+      _Boundary.method(
+        'planMove',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/movement/unit_movement_turn_rules.dart',
+    owner: 'UnitMovementTurnRules',
+    boundaries: [
+      _Boundary.method(
+        'resetForNewTurn',
+        parameter: 'mapData',
+        type: 'MapTileLookup',
+        nullable: true,
+      ),
+      _Boundary.method(
+        'validateQueuedPath',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
+  ),
+  _Target(
     path:
         'packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart',
     owner: 'PersistentUnitDetachmentResolver',

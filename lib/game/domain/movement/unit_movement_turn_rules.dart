@@ -1,12 +1,12 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class UnitMovementTurnRules {
   static GameUnit resetForNewTurn(
     GameUnit unit, {
-    MapData? mapData,
+    MapTileLookup? mapData,
     Iterable<GameUnit>? allUnits,
   }) {
     if (unit.isFortified) {
@@ -35,7 +35,7 @@ abstract final class UnitMovementTurnRules {
   /// queuedPath is null or still valid.
   static GameUnit validateQueuedPath({
     required GameUnit unit,
-    required MapData mapData,
+    required MapTraversalView mapData,
     required List<GameUnit> allUnits,
     Iterable<GameCity> cities = const [],
   }) {
