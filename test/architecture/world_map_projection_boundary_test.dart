@@ -24,6 +24,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/city/city_founding_reducer.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
+  'lib/game/domain/reducer/research/research_reducer.dart',
   'lib/game/domain/reducer/worker/worker_reducer.dart',
   'lib/game/presentation/widgets/hud/city/'
       'hud_city_founding_availability.dart',
@@ -38,6 +39,7 @@ const _mapDataBarrelFreeMigrationPaths = {
 };
 const _mapDataFreeMigrationPaths = {
   ..._mapDataBarrelFreeMigrationPaths,
+  'lib/game/domain/reducer/game_state/game_state_reducer_taps.dart',
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
   '$_gameDomain/city/persistent_city_production_resolver.dart',

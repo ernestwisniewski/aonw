@@ -1,17 +1,17 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class ResearchReducer {
   static GameStateTransition selectTechnology(
     GameState state,
     SelectTechnologyCommand command, {
     GameCommandContext context = const GameCommandContext(),
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     TechnologyRuleset ruleset = TechnologyRulesets.standard,
   }) {
     if (!_canControlPlayer(state, command.playerId, context)) {
@@ -34,7 +34,7 @@ abstract final class ResearchReducer {
       technologyId: command.technologyId,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       ruleset: ruleset,
       paceBalance: context.paceBalance,
     );

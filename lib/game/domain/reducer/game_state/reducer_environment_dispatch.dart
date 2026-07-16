@@ -233,7 +233,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       state,
       command,
       context: context,
-      mapData: mapData,
+      mapTiles: mapData,
       ruleset: technologyRuleset,
     );
   }

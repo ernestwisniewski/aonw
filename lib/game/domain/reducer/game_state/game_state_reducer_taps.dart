@@ -358,17 +358,17 @@ abstract final class _GameStateTapReducer {
   static GameState _selectInspectionTileDuringResearch(
     GameState state,
     TileTappedCommand command,
-    MapData mapData,
+    MapTileLookup mapTiles,
   ) {
-    final tileData = mapData.tileAt(command.col, command.row);
-    if (tileData == null) return state;
+    final tile = mapTiles.tileAt(command.col, command.row);
+    if (tile == null) return state;
 
     final next = _clearMapInteractionState(state);
 
-    if (!state.activePlayerVisibility.canInspectTile(tileData)) {
+    if (!state.activePlayerVisibility.canInspectTile(tile)) {
       return next.copyWithInteraction(selection: null);
     }
 
-    return next.copyWithInteraction(selection: GameSelection.tile(tileData));
+    return next.copyWithInteraction(selection: GameSelection.tile(tile));
   }
 }

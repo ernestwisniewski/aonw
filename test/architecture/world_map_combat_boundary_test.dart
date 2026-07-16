@@ -76,6 +76,11 @@ const _targets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
+      _Boundary.method(
+        '_selectInspectionTileDuringResearch',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
     ],
   ),
   _Target(
@@ -130,6 +135,17 @@ const _targets = [
       ),
       _Boundary.method(
         'cancelWorkerAssignment',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/research/research_reducer.dart',
+    owner: 'ResearchReducer',
+    boundaries: [
+      _Boundary.method(
+        'selectTechnology',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
