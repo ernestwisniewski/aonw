@@ -347,6 +347,15 @@ class ServerCommandReducer {
           mapView: loadedMap.mapView,
           ruleset: ruleset,
         );
+      case RushProductionCommand():
+        return _applyProductionCommand(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          mapView: loadedMap.mapView,
+          ruleset: ruleset,
+        );
       case SetCitySpecializationCommand():
         final result = const PersistentCityProductionResolver()
             .setCitySpecialization(
@@ -354,19 +363,6 @@ class ServerCommandReducer {
               command: command,
               actorPlayerId: actorPlayerId,
             );
-        return _fromPersistentResult(save, result);
-      case RushProductionCommand():
-        final result = const PersistentCityProductionResolver().rushProduction(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-          cityRuleset: ruleset.city,
-          technologyRuleset: ruleset.technology,
-          stabilityRuleset: ruleset.stability,
-          wonderRuleset: ruleset.wonders,
-          paceBalance: ruleset.paceBalance,
-        );
         return _fromPersistentResult(save, result);
       case SelectTechnologyCommand():
         final result = const PersistentResearchCommandResolver()
