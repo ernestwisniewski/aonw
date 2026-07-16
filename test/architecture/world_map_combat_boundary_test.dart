@@ -152,6 +152,17 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/unit/unit_attachment_reducer.dart',
+    owner: 'UnitAttachmentReducer',
+    boundaries: [
+      _Boundary.method(
+        'detachTroop',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/interaction/selection_reducer.dart',
     owner: 'SelectionReducer',
     boundaries: [

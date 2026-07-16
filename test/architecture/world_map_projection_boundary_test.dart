@@ -25,6 +25,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
   'lib/game/domain/reducer/research/research_reducer.dart',
+  'lib/game/domain/reducer/unit/unit_attachment_reducer.dart',
   'lib/game/domain/reducer/worker/worker_reducer.dart',
   'lib/game/presentation/widgets/hud/city/'
       'hud_city_founding_availability.dart',

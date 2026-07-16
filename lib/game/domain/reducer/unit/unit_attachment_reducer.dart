@@ -4,17 +4,17 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
-import 'package:aonw/map/domain/hex_grid_topology.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/hex_grid_topology.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class UnitAttachmentReducer {
   static GameStateTransition detachTroop(
     GameState state,
     DetachTroopCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
@@ -29,7 +29,7 @@ abstract final class UnitAttachmentReducer {
     final destination = _detachmentDestinationFor(
       source,
       state,
-      mapData,
+      mapTiles,
       visibility: context.visibilityFor(state),
     );
     if (destination == null) return GameStateTransition(state: state);
@@ -57,13 +57,13 @@ abstract final class UnitAttachmentReducer {
 
     final newFog = fogOfWarService.recomputePlayer(
       current: state.fogOfWar,
-      mapData: mapData,
+      mapData: mapTiles,
       playerId: source.ownerPlayerId,
       units: updatedUnits,
       cities: state.cities,
     );
 
-    final sourceTile = mapData.tileAt(
+    final sourceTile = mapTiles.tileAt(
       detachment.updatedSource.col,
       detachment.updatedSource.row,
     );
@@ -83,14 +83,14 @@ abstract final class UnitAttachmentReducer {
   static ({int col, int row})? _detachmentDestinationFor(
     GameUnit source,
     GameState state,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     required FogVisibilityQuery visibility,
   }) {
     for (final neighbor in HexGridTopology.neighbors(
       col: source.col,
       row: source.row,
     )) {
-      final tile = mapData.tileAt(neighbor.col, neighbor.row);
+      final tile = mapTiles.tileAt(neighbor.col, neighbor.row);
       if (tile == null) continue;
       if (!visibility.canInspectTile(tile)) continue;
       if (state.unitAt(neighbor.col, neighbor.row) != null) continue;
