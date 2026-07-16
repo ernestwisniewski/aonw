@@ -1,10 +1,10 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'turn_context.freezed.dart';
@@ -16,7 +16,7 @@ abstract class TurnContext with _$TurnContext {
   const factory TurnContext({
     required GameState state,
     GameSave? save,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required GameRuleset ruleset,
     required String playerId,
     DateTime? savedAt,

@@ -82,7 +82,7 @@ abstract final class PersistentTurnPipeline {
   static PersistentPlayerTurnResult advancePlayer({
     required PersistentGameState state,
     required String playerId,
-    required MapReadView mapData,
+    required MapReadView mapView,
     GameRuleset ruleset = GameRuleset.defaults,
     FogOfWarService fogOfWarService = const FogOfWarService(),
     VictoryRules victoryRules = VictoryRules.standard,
@@ -91,10 +91,10 @@ abstract final class PersistentTurnPipeline {
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
       state: state,
       playerIds: [playerId],
-      mapData: mapData,
+      mapData: mapView,
       ruleset: ruleset,
       fogOfWarService: fogOfWarService,
-      mapObjectives: mapData.objectives,
+      mapObjectives: mapView.objectives,
       turn: turn,
     );
     final previousCulturalHoldTurns =

@@ -7,7 +7,7 @@ void main() {
       final result = PersistentTurnPipeline.advancePlayer(
         state: const PersistentGameState(),
         playerId: 'player_1',
-        mapData: _mapData(),
+        mapView: _mapData(),
       );
 
       expect(result.events.whereType<AllPlayersSubmittedEvent>(), isEmpty);
@@ -41,7 +41,7 @@ void main() {
         final result = PersistentTurnPipeline.advancePlayer(
           state: state,
           playerId: 'player_1',
-          mapData: _mapData(),
+          mapView: _mapData(),
         );
 
         expect(result.state.playerWarWeariness['player_1'], 6);

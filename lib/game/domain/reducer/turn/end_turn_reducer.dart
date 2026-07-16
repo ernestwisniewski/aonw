@@ -3,13 +3,13 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/turn.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class EndTurnReducer {
   /// Runs one city turn for every city owned by [playerId]:
@@ -19,7 +19,7 @@ abstract final class EndTurnReducer {
   static GameStateTransition advanceCitiesForPlayer(
     GameState state,
     String playerId,
-    MapData mapData, {
+    MapReadView mapView, {
     FogOfWarService fogOfWarService = const FogOfWarService(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -39,7 +39,7 @@ abstract final class EndTurnReducer {
     final result = PersistentTurnPipeline.advancePlayer(
       state: state.toPersistentState(),
       playerId: playerId,
-      mapData: mapData,
+      mapView: mapView,
       ruleset: ruleset,
       fogOfWarService: fogOfWarService,
       victoryRules: victoryRules,
@@ -48,7 +48,7 @@ abstract final class EndTurnReducer {
     final refreshed = const SelectionRefreshPhase().apply(
       TurnContext(
         state: state.copyWithPersistentState(result.state),
-        mapData: mapData,
+        mapTiles: mapView.mapTiles,
         ruleset: ruleset,
         playerId: playerId,
       ),

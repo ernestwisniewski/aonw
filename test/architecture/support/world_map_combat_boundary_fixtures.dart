@@ -317,4 +317,36 @@ class PersistentUnitDetachmentResolver {
       ),
     );
   });
+
+  test(
+    'guard checks an unnamed redirecting factory without generated fields',
+    () {
+      const target = _Target(
+        path: 'lib/turn_context.dart',
+        owner: 'TurnContext',
+        boundaries: [
+          _Boundary.constructor(
+            '',
+            parameter: 'mapTiles',
+            type: 'MapTileLookup',
+            requireField: false,
+          ),
+        ],
+      );
+
+      final violations = _violations('''
+abstract class TurnContext {
+  const factory TurnContext({required MapReadView mapTiles}) = _TurnContext;
+}
+''', target);
+
+      expect(
+        violations,
+        contains(
+          'TurnContext.<unnamed>.mapTiles must have type MapTileLookup; '
+          'found MapReadView',
+        ),
+      );
+    },
+  );
 }

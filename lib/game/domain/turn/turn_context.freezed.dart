@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TurnContext {
 
- GameState get state; GameSave? get save; MapData get mapData; GameRuleset get ruleset; String get playerId; DateTime? get savedAt; List<GameEvent> get events; List<UiEffect> get uiEffects; ScienceYieldBreakdown get bonusScience;
+ GameState get state; GameSave? get save; MapTileLookup get mapTiles; GameRuleset get ruleset; String get playerId; DateTime? get savedAt; List<GameEvent> get events; List<UiEffect> get uiEffects; ScienceYieldBreakdown get bonusScience;
 /// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TurnContextCopyWith<TurnContext> get copyWith => _$TurnContextCopyWithImpl<Turn
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnContext&&(identical(other.state, state) || other.state == state)&&(identical(other.save, save) || other.save == save)&&(identical(other.mapData, mapData) || other.mapData == mapData)&&(identical(other.ruleset, ruleset) || other.ruleset == ruleset)&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&const DeepCollectionEquality().equals(other.events, events)&&const DeepCollectionEquality().equals(other.uiEffects, uiEffects)&&(identical(other.bonusScience, bonusScience) || other.bonusScience == bonusScience));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnContext&&(identical(other.state, state) || other.state == state)&&(identical(other.save, save) || other.save == save)&&(identical(other.mapTiles, mapTiles) || other.mapTiles == mapTiles)&&(identical(other.ruleset, ruleset) || other.ruleset == ruleset)&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&const DeepCollectionEquality().equals(other.events, events)&&const DeepCollectionEquality().equals(other.uiEffects, uiEffects)&&(identical(other.bonusScience, bonusScience) || other.bonusScience == bonusScience));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,save,mapData,ruleset,playerId,savedAt,const DeepCollectionEquality().hash(events),const DeepCollectionEquality().hash(uiEffects),bonusScience);
+int get hashCode => Object.hash(runtimeType,state,save,mapTiles,ruleset,playerId,savedAt,const DeepCollectionEquality().hash(events),const DeepCollectionEquality().hash(uiEffects),bonusScience);
 
 @override
 String toString() {
-  return 'TurnContext(state: $state, save: $save, mapData: $mapData, ruleset: $ruleset, playerId: $playerId, savedAt: $savedAt, events: $events, uiEffects: $uiEffects, bonusScience: $bonusScience)';
+  return 'TurnContext(state: $state, save: $save, mapTiles: $mapTiles, ruleset: $ruleset, playerId: $playerId, savedAt: $savedAt, events: $events, uiEffects: $uiEffects, bonusScience: $bonusScience)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TurnContextCopyWith<$Res>  {
   factory $TurnContextCopyWith(TurnContext value, $Res Function(TurnContext) _then) = _$TurnContextCopyWithImpl;
 @useResult
 $Res call({
- GameState state, GameSave? save, MapData mapData, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
+ GameState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
 });
 
 
@@ -62,12 +62,12 @@ class _$TurnContextCopyWithImpl<$Res>
 
 /// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? state = null,Object? save = freezed,Object? mapData = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? state = null,Object? save = freezed,Object? mapTiles = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
   return _then(_self.copyWith(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
 as GameState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
-as GameSave?,mapData: null == mapData ? _self.mapData : mapData // ignore: cast_nullable_to_non_nullable
-as MapData,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
+as GameSave?,mapTiles: null == mapTiles ? _self.mapTiles : mapTiles // ignore: cast_nullable_to_non_nullable
+as MapTileLookup,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as String,savedAt: freezed == savedAt ? _self.savedAt : savedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,events: null == events ? _self.events : events // ignore: cast_nullable_to_non_nullable
@@ -179,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapData mapData,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TurnContext() when $default != null:
-return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
+return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
   return orElse();
 
 }
@@ -200,10 +200,10 @@ return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapData mapData,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)  $default,) {final _that = this;
 switch (_that) {
 case _TurnContext():
-return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
+return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -220,10 +220,10 @@ return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameState state,  GameSave? save,  MapData mapData,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,) {final _that = this;
 switch (_that) {
 case _TurnContext() when $default != null:
-return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
+return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
   return null;
 
 }
@@ -235,12 +235,12 @@ return $default(_that.state,_that.save,_that.mapData,_that.ruleset,_that.playerI
 
 
 class _TurnContext extends TurnContext {
-  const _TurnContext({required this.state, this.save, required this.mapData, required this.ruleset, required this.playerId, this.savedAt, final  List<GameEvent> events = const <GameEvent>[], final  List<UiEffect> uiEffects = const <UiEffect>[], this.bonusScience = ScienceYieldBreakdown.empty}): _events = events,_uiEffects = uiEffects,super._();
+  const _TurnContext({required this.state, this.save, required this.mapTiles, required this.ruleset, required this.playerId, this.savedAt, final  List<GameEvent> events = const <GameEvent>[], final  List<UiEffect> uiEffects = const <UiEffect>[], this.bonusScience = ScienceYieldBreakdown.empty}): _events = events,_uiEffects = uiEffects,super._();
   
 
 @override final  GameState state;
 @override final  GameSave? save;
-@override final  MapData mapData;
+@override final  MapTileLookup mapTiles;
 @override final  GameRuleset ruleset;
 @override final  String playerId;
 @override final  DateTime? savedAt;
@@ -270,16 +270,16 @@ _$TurnContextCopyWith<_TurnContext> get copyWith => __$TurnContextCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TurnContext&&(identical(other.state, state) || other.state == state)&&(identical(other.save, save) || other.save == save)&&(identical(other.mapData, mapData) || other.mapData == mapData)&&(identical(other.ruleset, ruleset) || other.ruleset == ruleset)&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&const DeepCollectionEquality().equals(other._events, _events)&&const DeepCollectionEquality().equals(other._uiEffects, _uiEffects)&&(identical(other.bonusScience, bonusScience) || other.bonusScience == bonusScience));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TurnContext&&(identical(other.state, state) || other.state == state)&&(identical(other.save, save) || other.save == save)&&(identical(other.mapTiles, mapTiles) || other.mapTiles == mapTiles)&&(identical(other.ruleset, ruleset) || other.ruleset == ruleset)&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&const DeepCollectionEquality().equals(other._events, _events)&&const DeepCollectionEquality().equals(other._uiEffects, _uiEffects)&&(identical(other.bonusScience, bonusScience) || other.bonusScience == bonusScience));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,save,mapData,ruleset,playerId,savedAt,const DeepCollectionEquality().hash(_events),const DeepCollectionEquality().hash(_uiEffects),bonusScience);
+int get hashCode => Object.hash(runtimeType,state,save,mapTiles,ruleset,playerId,savedAt,const DeepCollectionEquality().hash(_events),const DeepCollectionEquality().hash(_uiEffects),bonusScience);
 
 @override
 String toString() {
-  return 'TurnContext(state: $state, save: $save, mapData: $mapData, ruleset: $ruleset, playerId: $playerId, savedAt: $savedAt, events: $events, uiEffects: $uiEffects, bonusScience: $bonusScience)';
+  return 'TurnContext(state: $state, save: $save, mapTiles: $mapTiles, ruleset: $ruleset, playerId: $playerId, savedAt: $savedAt, events: $events, uiEffects: $uiEffects, bonusScience: $bonusScience)';
 }
 
 
@@ -290,7 +290,7 @@ abstract mixin class _$TurnContextCopyWith<$Res> implements $TurnContextCopyWith
   factory _$TurnContextCopyWith(_TurnContext value, $Res Function(_TurnContext) _then) = __$TurnContextCopyWithImpl;
 @override @useResult
 $Res call({
- GameState state, GameSave? save, MapData mapData, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
+ GameState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
 });
 
 
@@ -307,12 +307,12 @@ class __$TurnContextCopyWithImpl<$Res>
 
 /// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? state = null,Object? save = freezed,Object? mapData = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? state = null,Object? save = freezed,Object? mapTiles = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
   return _then(_TurnContext(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
 as GameState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
-as GameSave?,mapData: null == mapData ? _self.mapData : mapData // ignore: cast_nullable_to_non_nullable
-as MapData,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
+as GameSave?,mapTiles: null == mapTiles ? _self.mapTiles : mapTiles // ignore: cast_nullable_to_non_nullable
+as MapTileLookup,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as String,savedAt: freezed == savedAt ? _self.savedAt : savedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,events: null == events ? _self._events : events // ignore: cast_nullable_to_non_nullable

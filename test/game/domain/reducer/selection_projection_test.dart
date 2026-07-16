@@ -183,11 +183,11 @@ final _customStabilityRuleset = StabilityRuleset.standard.copyWith(
 
 TurnContext _context(
   GameState state,
-  MapData mapData, {
+  MapTileLookup mapTiles, {
   GameRuleset? ruleset,
 }) => TurnContext(
   state: state,
-  mapData: mapData,
+  mapTiles: mapTiles,
   ruleset: ruleset ?? GameRuleset.standard(),
   playerId: 'player_1',
 );

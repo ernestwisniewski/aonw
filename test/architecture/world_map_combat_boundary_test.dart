@@ -241,6 +241,29 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/turn/end_turn_reducer.dart',
+    owner: 'EndTurnReducer',
+    boundaries: [
+      _Boundary.method(
+        'advanceCitiesForPlayer',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/turn/turn_context.dart',
+    owner: 'TurnContext',
+    boundaries: [
+      _Boundary.constructor(
+        '',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+        requireField: false,
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/unit/unit_attachment_reducer.dart',
     owner: 'UnitAttachmentReducer',
     boundaries: [
@@ -310,6 +333,18 @@ const _targets = [
     boundaries: [
       _Boundary.constructor(
         'simultaneousFinalize',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart',
+    owner: 'PersistentTurnPipeline',
+    boundaries: [
+      _Boundary.method(
+        'advancePlayer',
         parameter: 'mapView',
         type: 'MapReadView',
       ),
@@ -536,7 +571,8 @@ void _checkBoundary(
   required Set<String> mapBoundaryTypeNames,
 }) {
   final member = _memberFor(owner, boundary);
-  final memberLabel = '${owner.namePart.typeName.lexeme}.${boundary.name}';
+  final boundaryName = boundary.name.isEmpty ? '<unnamed>' : boundary.name;
+  final memberLabel = '${owner.namePart.typeName.lexeme}.$boundaryName';
   if (member == null) {
     violations.add('$memberLabel must declare a public ${boundary.kind.label}');
     return;
@@ -587,7 +623,7 @@ void _checkBoundary(
     }
   }
 
-  if (boundary.kind == _BoundaryKind.constructor) {
+  if (boundary.kind == _BoundaryKind.constructor && boundary.requireField) {
     final field = _fieldFor(owner, boundary.parameter);
     final fieldLabel =
         '${owner.namePart.typeName.lexeme}.${boundary.parameter} field';
@@ -631,7 +667,9 @@ AstNode? _memberFor(ClassDeclaration owner, _Boundary boundary) {
     }
     if (boundary.kind == _BoundaryKind.constructor &&
         member is ConstructorDeclaration &&
-        member.name?.lexeme == boundary.name) {
+        (boundary.name.isEmpty
+            ? member.name == null
+            : member.name?.lexeme == boundary.name)) {
       return member;
     }
   }
@@ -749,12 +787,14 @@ final class _Boundary {
     required this.parameter,
     required this.type,
     this.nullable = false,
-  }) : kind = _BoundaryKind.method;
+  }) : kind = _BoundaryKind.method,
+       requireField = false;
 
   const _Boundary.constructor(
     this.name, {
     required this.parameter,
     required this.type,
+    this.requireField = true,
   }) : kind = _BoundaryKind.constructor,
        nullable = false;
 
@@ -763,6 +803,7 @@ final class _Boundary {
   final String parameter;
   final String type;
   final bool nullable;
+  final bool requireField;
 }
 
 final class _Target {

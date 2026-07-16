@@ -22,7 +22,7 @@ void main() {
     final result = PersistentTurnPipeline.advancePlayer(
       state: state,
       playerId: 'player_1',
-      mapData: mapData,
+      mapView: mapData,
     );
 
     expect(

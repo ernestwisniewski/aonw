@@ -47,7 +47,7 @@ class SelectionRefreshPhase extends TurnPhase {
           selection: CitySelectionProjector.project(
             state: state,
             city: foundedCity,
-            mapTiles: context.mapData,
+            mapTiles: context.mapTiles,
             cityRuleset: context.ruleset.city,
             technologyRuleset: context.ruleset.technology,
             stabilityRuleset: context.ruleset.stability,
@@ -62,7 +62,7 @@ class SelectionRefreshPhase extends TurnPhase {
     return state.copyWithInteraction(
       selection: GameSelection.unit(
         updatedUnit,
-        tile: context.mapData.tileAt(updatedUnit.col, updatedUnit.row),
+        tile: context.mapTiles.tileAt(updatedUnit.col, updatedUnit.row),
       ),
     );
   }
@@ -86,7 +86,7 @@ class SelectionRefreshPhase extends TurnPhase {
     return state.copyWithInteraction(
       selection: GameSelection.fieldImprovement(
         updatedImprovement,
-        tile: context.mapData.tileAt(
+        tile: context.mapTiles.tileAt(
           updatedImprovement.hex.col,
           updatedImprovement.hex.row,
         ),
@@ -106,7 +106,7 @@ class SelectionRefreshPhase extends TurnPhase {
       selection: CitySelectionProjector.project(
         state: state,
         city: updatedCity,
-        mapTiles: context.mapData,
+        mapTiles: context.mapTiles,
         cityRuleset: context.ruleset.city,
         technologyRuleset: context.ruleset.technology,
         stabilityRuleset: context.ruleset.stability,
