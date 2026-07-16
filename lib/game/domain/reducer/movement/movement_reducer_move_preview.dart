@@ -85,10 +85,7 @@ abstract final class _MovePreviewReducer {
       );
     }
 
-    final isPartialMove = preview.totalCost > preview.availableMovementPoints;
-    final stepsForAnimation = isPartialMove
-        ? preview.reachableSteps.skip(1).toList()
-        : preview.steps.skip(1).toList();
+    final previewIsPartialMove = !preview.canMoveNow;
 
     final workState = state.copyWithInteraction(movePreview: null);
 
@@ -107,16 +104,12 @@ abstract final class _MovePreviewReducer {
     ).plan(unit: selected, targetTile: targetTile);
 
     if (plan == null) {
-      if (isPartialMove ||
-          preview.totalCost > preview.availableMovementPoints) {
-        final queued = QueuedMovePath(
-          targetCol: preview.targetCol,
-          targetRow: preview.targetRow,
-          steps: preview.steps,
-        );
+      // A partial preview also records deferred destination intent. Preserve
+      // it without moving; turn reset validates and re-plans before execution.
+      if (previewIsPartialMove) {
         final withPath = selected
             .copyWith(posture: UnitPosture.active)
-            .copyWithQueuedPath(queued);
+            .copyWithQueuedPath(MovementReducer._queuedPathFor(preview));
         final updatedUnits = replaceUnit(workState.units, withPath);
         var next = MovementReducer._clearMoveTargeting(
           workState,
@@ -129,22 +122,20 @@ abstract final class _MovePreviewReducer {
       );
     }
 
-    final reachable = plan.canMoveNow;
-    final destinationStep = reachable
+    final isPartialMove = !plan.canMoveNow;
+    final stepsForAnimation = isPartialMove
+        ? plan.reachableSteps.skip(1).toList()
+        : plan.steps.skip(1).toList();
+    final destinationStep = plan.canMoveNow
         ? plan.steps.last
         : plan.furthestReachableStep;
 
     if (destinationStep == null ||
         (destinationStep.col == selected.col &&
             destinationStep.row == selected.row)) {
-      final queued = QueuedMovePath(
-        targetCol: preview.targetCol,
-        targetRow: preview.targetRow,
-        steps: preview.steps,
-      );
       final withPath = selected
           .copyWith(posture: UnitPosture.active)
-          .copyWithQueuedPath(queued);
+          .copyWithQueuedPath(MovementReducer._queuedPathFor(plan));
       final updatedUnits = replaceUnit(workState.units, withPath);
       var next = MovementReducer._clearMoveTargeting(
         workState,
@@ -161,13 +152,7 @@ abstract final class _MovePreviewReducer {
     );
 
     final movedWithPath = isPartialMove
-        ? moved.copyWithQueuedPath(
-            QueuedMovePath(
-              targetCol: preview.targetCol,
-              targetRow: preview.targetRow,
-              steps: preview.steps,
-            ),
-          )
+        ? moved.copyWithQueuedPath(MovementReducer._queuedPathFor(plan))
         : moved.copyWithQueuedPath(null);
 
     final updatedUnits = replaceUnit(workState.units, movedWithPath);

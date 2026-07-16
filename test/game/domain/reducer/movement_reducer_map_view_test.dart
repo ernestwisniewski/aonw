@@ -242,6 +242,132 @@ void main() {
   });
 
   test(
+    'confirmation animates the current partial route after a new blocker',
+    () {
+      final world = _canonicalWorld(cols: 3, rows: 2);
+      final MapTraversalView mapView = WorldMapReadView(world);
+      final unit = GameUnit.startingCommander(
+        ownerPlayerId: 'player_1',
+      ).copyWith(movementPoints: 3);
+      final blocker = GameUnit.startingWarrior(
+        ownerPlayerId: 'player_1',
+        col: 1,
+        row: 0,
+      );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [unit],
+        fogOfWar: _originFog(),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(unit),
+          moveCommandActive: true,
+        ),
+      );
+      final targetTile = mapView.tileAt(2, 0)!;
+      final previewed = MovementReducer.handleMoveTargetTile(
+        state,
+        targetTile,
+        mapView,
+      );
+
+      final confirmed = MovementReducer.handleMoveTargetTile(
+        previewed.state.copyWith(units: [unit, blocker]),
+        targetTile,
+        mapView,
+      );
+      final movedUnit = confirmed.state.unitById(unit.id)!;
+      final animation = confirmed.uiEffects
+          .whereType<AnimateUnitMoveEffect>()
+          .single;
+
+      expect(previewed.state.movePreview?.canMoveNow, isTrue);
+      expect(previewed.state.movePreview?.path, const [
+        (col: 0, row: 0),
+        (col: 1, row: 0),
+        (col: 2, row: 0),
+      ]);
+      expect((movedUnit.col, movedUnit.row), (2, 1));
+      expect(movedUnit.movementPoints, 0);
+      expect(movedUnit.queuedPath?.targetCol, 2);
+      expect(movedUnit.queuedPath?.targetRow, 0);
+      expect(
+        [for (final step in movedUnit.queuedPath!.steps) (step.col, step.row)],
+        const [(0, 0), (0, 1), (1, 1), (2, 1), (2, 0)],
+      );
+      expect(
+        [for (final step in animation.steps) (step.col, step.row)],
+        const [(0, 1), (1, 1), (2, 1)],
+      );
+      expect(animation.steps.last.coord, (
+        col: movedUnit.col,
+        row: movedUnit.row,
+      ));
+      expect(confirmed.state.moveCommandActive, isFalse);
+      expect(confirmed.events, isEmpty);
+    },
+  );
+
+  test('confirmation uses the current full route after a blocker leaves', () {
+    final world = _canonicalWorld(cols: 3, rows: 2);
+    final MapTraversalView mapView = WorldMapReadView(world);
+    final unit = GameUnit.startingCommander(
+      ownerPlayerId: 'player_1',
+    ).copyWith(movementPoints: 3);
+    final blocker = GameUnit.startingWarrior(
+      ownerPlayerId: 'player_1',
+      col: 1,
+      row: 0,
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [unit, blocker],
+      fogOfWar: _originFog(),
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(unit),
+        moveCommandActive: true,
+      ),
+    );
+    final targetTile = mapView.tileAt(2, 0)!;
+    final previewed = MovementReducer.handleMoveTargetTile(
+      state,
+      targetTile,
+      mapView,
+    );
+
+    final confirmed = MovementReducer.handleMoveTargetTile(
+      previewed.state.copyWith(units: [unit]),
+      targetTile,
+      mapView,
+    );
+    final movedUnit = confirmed.state.units.single;
+    final animation = confirmed.uiEffects
+        .whereType<AnimateUnitMoveEffect>()
+        .single;
+
+    expect(previewed.state.movePreview?.canMoveNow, isFalse);
+    expect(previewed.state.movePreview?.path, const [
+      (col: 0, row: 0),
+      (col: 0, row: 1),
+      (col: 1, row: 1),
+      (col: 2, row: 1),
+      (col: 2, row: 0),
+    ]);
+    expect((movedUnit.col, movedUnit.row), (2, 0));
+    expect(movedUnit.movementPoints, 1);
+    expect(movedUnit.queuedPath, isNull);
+    expect(
+      [for (final step in animation.steps) (step.col, step.row)],
+      const [(1, 0), (2, 0)],
+    );
+    expect(animation.steps.last.coord, (
+      col: movedUnit.col,
+      row: movedUnit.row,
+    ));
+    expect(confirmed.state.moveCommandActive, isTrue);
+    expect(confirmed.events, isEmpty);
+  });
+
+  test(
     'selection keeps the updated unit when its canonical tile is absent',
     () {
       final mapTiles = WorldMapReadView(
@@ -266,18 +392,19 @@ void main() {
   );
 }
 
-WorldMap _canonicalWorld({required int cols}) {
+WorldMap _canonicalWorld({required int cols, int rows = 1}) {
   return WorldMap(
     cols: cols,
-    rows: 1,
+    rows: rows,
     tiles: [
-      for (var col = 0; col < cols; col += 1)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.plains],
-          resources: const [ResourceType.oil, ResourceType.wheat],
-          height: 0,
-        ),
+      for (var row = 0; row < rows; row += 1)
+        for (var col = 0; col < cols; col += 1)
+          WorldTile(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.plains],
+            resources: const [ResourceType.oil, ResourceType.wheat],
+            height: 0,
+          ),
     ],
   );
 }
