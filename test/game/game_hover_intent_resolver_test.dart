@@ -3,10 +3,13 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/game_hover_intent_resolver.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw/map/domain/map_data.dart' show MapData, TileData;
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -22,11 +25,13 @@ void main() {
         ),
       );
 
-      final intent = _resolver(state, map).resolve(_tile(map, 1, 1));
+      final intents = _moveIntents(state, map, col: 1, row: 1);
 
-      expect(intent?.kind, HoverIntentKind.move);
-      expect(intent?.blocked, isTrue);
-      expect(intent?.color, HudPalette.danger);
+      for (final intent in intents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isTrue);
+        expect(intent?.color, HudPalette.danger);
+      }
     });
 
     test('marks targets beyond unit movement capacity as blocked', () {
@@ -71,17 +76,19 @@ void main() {
         ),
       );
 
-      final scoutIntent = _resolver(scoutState, map).resolve(_tile(map, 1, 0));
-      final cavalryIntent = _resolver(
-        cavalryState,
-        map,
-      ).resolve(_tile(map, 1, 0));
+      final scoutIntents = _moveIntents(scoutState, map, col: 1, row: 0);
+      final cavalryIntents = _moveIntents(cavalryState, map, col: 1, row: 0);
 
-      expect(scoutIntent?.kind, HoverIntentKind.move);
-      expect(scoutIntent?.blocked, isTrue);
-      expect(scoutIntent?.color, HudPalette.danger);
-      expect(cavalryIntent?.blocked, isFalse);
-      expect(cavalryIntent?.color, HudPalette.gold);
+      for (final intent in scoutIntents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isTrue);
+        expect(intent?.color, HudPalette.danger);
+      }
+      for (final intent in cavalryIntents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isFalse);
+        expect(intent?.color, HudPalette.gold);
+      }
     });
 
     test('does not block artifact carrier hover into own rough city', () {
@@ -119,11 +126,13 @@ void main() {
         ),
       );
 
-      final intent = _resolver(state, map).resolve(_tile(map, 1, 0));
+      final intents = _moveIntents(state, map, col: 1, row: 0);
 
-      expect(intent?.kind, HoverIntentKind.move);
-      expect(intent?.blocked, isFalse);
-      expect(intent?.color, HudPalette.gold);
+      for (final intent in intents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isFalse);
+        expect(intent?.color, HudPalette.gold);
+      }
     });
 
     test('uses founding player color and reduce-motion preference', () {
@@ -170,15 +179,34 @@ void main() {
 
 GameHoverIntentResolver _resolver(
   GameState state,
-  MapData map, {
+  MapTraversalView mapView, {
   bool reduceMotion = false,
 }) {
   return GameHoverIntentResolver(
     state: state,
-    mapData: map,
+    mapView: mapView,
     reduceMotion: reduceMotion,
     colorForPlayer: (playerId) => state.colorForPlayer(playerId) ?? 0xFF000000,
   );
+}
+
+List<HoverIntentMarkerSpec?> _moveIntents(
+  GameState state,
+  MapData legacyMap, {
+  required int col,
+  required int row,
+}) {
+  final canonicalView = WorldMapReadView(
+    WorldMap.fromTileViews(
+      cols: legacyMap.cols,
+      rows: legacyMap.rows,
+      tiles: legacyMap.tiles,
+    ),
+  );
+  return [
+    _resolver(state, legacyMap).resolve(legacyMap.tileAt(col, row)!),
+    _resolver(state, canonicalView).resolve(canonicalView.tileAt(col, row)!),
+  ];
 }
 
 MapData _map({

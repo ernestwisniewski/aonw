@@ -2,17 +2,18 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:flutter/material.dart' show Color;
 
 typedef PlayerColorResolver = int Function(String playerId);
 
 final class GameHoverIntentResolver {
   final GameState state;
-  final MapData mapData;
+  final MapTraversalView mapView;
   final bool reduceMotion;
   final PlayerColorResolver colorForPlayer;
   UnitMovementPathfinder? _movementPathfinder;
@@ -20,7 +21,7 @@ final class GameHoverIntentResolver {
 
   GameHoverIntentResolver({
     required this.state,
-    required this.mapData,
+    required this.mapView,
     required this.reduceMotion,
     required this.colorForPlayer,
   });
@@ -46,24 +47,21 @@ final class GameHoverIntentResolver {
   }
 
   HoverIntentMarkerSpec? resolve(
-    TileData tileData, {
+    MapTileView tile, {
     bool forceInspect = false,
   }) {
     final visibility = state.activePlayerVisibility;
-    if (visibility.isEnabled && !visibility.canInspectTile(tileData)) {
+    if (visibility.isEnabled && !visibility.canInspectTile(tile)) {
       if (forceInspect || !_canShowHiddenMoveIntent()) return null;
     }
 
-    final hex = CityHex(col: tileData.col, row: tileData.row);
+    final hex = CityHex(col: tile.col, row: tile.row);
     if (forceInspect) {
       return _hoverIntent(hex, HoverIntentKind.inspect, HudPalette.info);
     }
 
     return switch (state.interactionMode) {
-      GameInteractionMode.moveTargeting => _moveHoverIntentForTile(
-        tileData,
-        hex,
-      ),
+      GameInteractionMode.moveTargeting => _moveHoverIntentForTile(tile, hex),
       GameInteractionMode.attackTargeting => _hoverIntent(
         hex,
         HoverIntentKind.attack,
@@ -130,11 +128,8 @@ final class GameHoverIntentResolver {
     );
   }
 
-  HoverIntentMarkerSpec _moveHoverIntentForTile(
-    TileData tileData,
-    CityHex hex,
-  ) {
-    final blocked = _moveTargetBlockedForTile(tileData);
+  HoverIntentMarkerSpec _moveHoverIntentForTile(MapTileView tile, CityHex hex) {
+    final blocked = _moveTargetBlockedForTile(tile);
     return _hoverIntent(
       hex,
       HoverIntentKind.move,
@@ -143,27 +138,27 @@ final class GameHoverIntentResolver {
     );
   }
 
-  bool _moveTargetBlockedForTile(TileData tileData) {
+  bool _moveTargetBlockedForTile(MapTileView tile) {
     final unit = state.selectedUnit;
-    if (unit == null || unit.occupies(tileData.col, tileData.row)) {
+    if (unit == null || unit.occupies(tile.col, tile.row)) {
       return false;
     }
     if (UnitMovementCostRules.costToEnterTile(
-      tileData,
+      tile,
       unitType: unit.type,
     ).blocked) {
       return true;
     }
 
     final pathfinder = _pathfinderFor(unit);
-    final plan = pathfinder.plan(unit: unit, targetTile: tileData);
+    final plan = pathfinder.plan(unit: unit, targetTile: tile);
     if (plan == null) return true;
     return !UnitMovementFeasibility.canEventuallyTraverse(
       unit: unit,
       plan: plan,
       canEnterStepBeyondCapacity: (step) => _canCarryArtifactIntoTargetCity(
         unit: unit,
-        targetTile: tileData,
+        targetTile: tile,
         step: step,
       ),
     );
@@ -171,7 +166,7 @@ final class GameHoverIntentResolver {
 
   bool _canCarryArtifactIntoTargetCity({
     required GameUnit unit,
-    required TileData targetTile,
+    required MapTileView targetTile,
     required UnitMovementStep step,
   }) {
     if (unit.carriedArtifactId == null) return false;
@@ -191,7 +186,7 @@ final class GameHoverIntentResolver {
       return cached;
     }
     final pathfinder = UnitMovementPathfinder(
-      mapData: mapData,
+      mapData: mapView,
       units: state.units,
       canEnterTile: (tile) => UnitMovementVisibilityRules.canPlanThroughTile(
         unit: unit,

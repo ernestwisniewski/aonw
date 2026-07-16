@@ -166,6 +166,29 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/presentation/engine/game_hover_intent_resolver.dart',
+    owner: 'GameHoverIntentResolver',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapView', type: 'MapTraversalView'),
+      _Boundary.method('resolve', parameter: 'tile', type: 'MapTileView'),
+      _Boundary.method(
+        '_moveHoverIntentForTile',
+        parameter: 'tile',
+        type: 'MapTileView',
+      ),
+      _Boundary.method(
+        '_moveTargetBlockedForTile',
+        parameter: 'tile',
+        type: 'MapTileView',
+      ),
+      _Boundary.method(
+        '_canCarryArtifactIntoTargetCity',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/reducer/worker/worker_reducer.dart',
     owner: 'WorkerReducer',
     boundaries: [

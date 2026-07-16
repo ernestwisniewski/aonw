@@ -316,7 +316,7 @@ extension GameRendererStateSync on GameRenderer {
     }
     final resolver = GameHoverIntentResolver(
       state: _renderState,
-      mapData: mapData,
+      mapView: mapData,
       reduceMotion: _reduceMotion,
       colorForPlayer: _colorForPlayer,
     );

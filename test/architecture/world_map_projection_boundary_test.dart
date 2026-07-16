@@ -45,6 +45,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/worker/worker_reducer.dart',
   'lib/game/domain/turn/phases/selection_refresh_phase.dart',
   'lib/game/domain/turn/turn_context.dart',
+  'lib/game/presentation/engine/game_hover_intent_resolver.dart',
   'lib/game/presentation/widgets/hud/city/'
       'hud_city_founding_availability.dart',
   'lib/game/presentation/widgets/hud/turn/turn_action_hint.dart',
