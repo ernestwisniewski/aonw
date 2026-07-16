@@ -3,7 +3,7 @@ part of 'city_production_reducer.dart';
 GameStateTransition _startWonderProduction(
   GameState state,
   StartWonderCommand command,
-  MapData mapData, {
+  MapTileLookup mapTiles, {
   required GameCommandContext context,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
@@ -24,7 +24,7 @@ GameStateTransition _startWonderProduction(
     cities: state.cities,
     registry: state.wonderRegistry,
     research: state.research,
-    mapTiles: mapData,
+    mapTiles: mapTiles,
     ruleset: wonderRuleset,
   );
   if (!availability.isAvailable) return GameStateTransition(state: state);
@@ -42,7 +42,7 @@ GameStateTransition _startWonderProduction(
     updatedCity: updatedCity,
     cityIndex: target.index,
     cityId: command.cityId,
-    mapData: mapData,
+    mapTiles: mapTiles,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
     stabilityRuleset: stabilityRuleset,

@@ -4,7 +4,7 @@ bool _canQueueCityUnit({
   required GameState state,
   required GameCity city,
   required GameUnitType unitType,
-  required MapData mapData,
+  required MapReadView mapView,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
 }) {
@@ -15,7 +15,7 @@ bool _canQueueCityUnit({
     units: state.units,
     artifacts: state.artifacts,
     fieldImprovements: state.fieldImprovements,
-    mapView: mapData,
+    mapView: mapView,
     cityRuleset: cityRuleset,
     research: state.research,
     technologyRuleset: technologyRuleset,

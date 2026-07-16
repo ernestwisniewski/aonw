@@ -3,7 +3,7 @@ part of 'city_production_reducer.dart';
 GameStateTransition _rushCityProduction(
   GameState state,
   RushProductionCommand command,
-  MapData mapData, {
+  MapTileLookup mapTiles, {
   required GameCommandContext context,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
@@ -27,7 +27,7 @@ GameStateTransition _rushCityProduction(
   final productionPerTurn = _productionPerTurnForTarget(
     state: state,
     city: city,
-    mapData: mapData,
+    mapTiles: mapTiles,
     target: queue.target,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
@@ -67,7 +67,7 @@ GameStateTransition _rushCityProduction(
     units: state.units,
     advancedQueue: advanced,
     targetCost: targetCost,
-    mapData: mapData,
+    mapTiles: mapTiles,
     cityRuleset: cityRuleset,
     wonderRuleset: wonderRuleset,
     paceBalance: context.paceBalance,
@@ -119,7 +119,7 @@ GameStateTransition _rushCityProduction(
     next,
     cityId: command.cityId,
     city: refreshedCity,
-    mapData: mapData,
+    mapTiles: mapTiles,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
     stabilityRuleset: stabilityRuleset,
@@ -133,7 +133,7 @@ GameStateTransition _rushCityProduction(
 int _productionPerTurnForTarget({
   required GameState state,
   required GameCity city,
-  required MapData mapData,
+  required MapTileLookup mapTiles,
   required CityProductionTarget target,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
@@ -148,7 +148,7 @@ int _productionPerTurnForTarget({
   );
   final cityYield = CityYieldCalculator.totalFor(
     city,
-    mapData,
+    mapTiles,
     fieldImprovements: state.fieldImprovements,
     units: state.units,
     artifacts: state.artifacts,
@@ -157,7 +157,7 @@ int _productionPerTurnForTarget({
   final cityEconomy = CityEconomyBreakdown.from(
     city: city,
     tileYield: cityYield,
-    mapTiles: mapData,
+    mapTiles: mapTiles,
     ruleset: cityRuleset,
     paceBalance: paceBalance,
     technologyEffects: technologyEffects,
@@ -190,7 +190,7 @@ _RushProductionApplication _applyRushedProduction({
   required List<GameUnit> units,
   required CityProductionQueue advancedQueue,
   required int targetCost,
-  required MapData mapData,
+  required MapTileLookup mapTiles,
   required CityRuleset cityRuleset,
   required WonderRuleset wonderRuleset,
   required PaceBalance paceBalance,
@@ -229,7 +229,7 @@ _RushProductionApplication _applyRushedProduction({
         city: updatedCity,
         unitType: unitType,
         units: updatedUnits,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
       );
       if (producedUnit != null) {
         updatedUnits = [...updatedUnits, producedUnit];

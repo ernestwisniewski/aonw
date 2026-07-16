@@ -4,7 +4,6 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -14,6 +13,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'city_production_reducer_rush.dart';
 part 'city_production_reducer_supply.dart';
@@ -29,7 +29,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition startBuilding(
     GameState state,
     StartBuildingCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -51,7 +51,7 @@ abstract final class CityProductionReducer {
     final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
       city: city,
       buildingType: command.buildingType,
-      mapTiles: mapData,
+      mapTiles: mapTiles,
       ruleset: cityRuleset,
       research: state.research,
     );
@@ -77,7 +77,7 @@ abstract final class CityProductionReducer {
       updatedCity: updatedCity,
       cityIndex: target.index,
       cityId: command.cityId,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -89,7 +89,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition startUnitProduction(
     GameState state,
     StartUnitProductionCommand command,
-    MapData mapData, {
+    MapReadView mapView, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -112,7 +112,7 @@ abstract final class CityProductionReducer {
       playerId: city.ownerPlayerId,
       unitType: command.unitType,
       cities: state.cities,
-      mapTiles: mapData,
+      mapTiles: mapView,
       ruleset: cityRuleset,
       research: state.research,
       resourceTradeAgreements: state.resourceTradeAgreements,
@@ -128,7 +128,7 @@ abstract final class CityProductionReducer {
     if (!CityUnitProductionRules.canProduceInCity(
       city: city,
       unitType: command.unitType,
-      mapTiles: mapData,
+      mapTiles: mapView,
     )) {
       return GameStateTransition(state: state);
     }
@@ -136,7 +136,7 @@ abstract final class CityProductionReducer {
       state: state,
       city: city,
       unitType: command.unitType,
-      mapData: mapData,
+      mapView: mapView,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
     );
@@ -156,7 +156,7 @@ abstract final class CityProductionReducer {
       updatedCity: updatedCity,
       cityIndex: target.index,
       cityId: command.cityId,
-      mapData: mapData,
+      mapTiles: mapView,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -168,7 +168,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition startCityProject(
     GameState state,
     StartCityProjectCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -193,7 +193,7 @@ abstract final class CityProductionReducer {
       updatedCity: updatedCity,
       cityIndex: target.index,
       cityId: command.cityId,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -205,7 +205,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition startWonder(
     GameState state,
     StartWonderCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -214,7 +214,7 @@ abstract final class CityProductionReducer {
   }) => _startWonderProduction(
     state,
     command,
-    mapData,
+    mapTiles,
     context: context,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
@@ -225,7 +225,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition setCitySpecialization(
     GameState state,
     SetCitySpecializationCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -260,7 +260,7 @@ abstract final class CityProductionReducer {
       updatedCity: updatedCity,
       cityIndex: target.index,
       cityId: command.cityId,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -272,7 +272,7 @@ abstract final class CityProductionReducer {
   static GameStateTransition rushProduction(
     GameState state,
     RushProductionCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -281,7 +281,7 @@ abstract final class CityProductionReducer {
   }) => _rushCityProduction(
     state,
     command,
-    mapData,
+    mapTiles,
     context: context,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
@@ -294,7 +294,7 @@ abstract final class CityProductionReducer {
     required GameCity updatedCity,
     required int cityIndex,
     required String cityId,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -305,7 +305,7 @@ abstract final class CityProductionReducer {
     updatedCity: updatedCity,
     cityIndex: cityIndex,
     cityId: cityId,
-    mapData: mapData,
+    mapTiles: mapTiles,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
     stabilityRuleset: stabilityRuleset,
@@ -321,7 +321,7 @@ abstract final class CityProductionReducer {
   static GameSelection citySelection(
     GameState state,
     GameCity city,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -330,7 +330,7 @@ abstract final class CityProductionReducer {
   }) => CitySelectionProjector.project(
     state: state,
     city: city,
-    mapTiles: mapData,
+    mapTiles: mapTiles,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
     stabilityRuleset: stabilityRuleset,
@@ -413,7 +413,7 @@ abstract final class CityProductionReducer {
     required GameCity updatedCity,
     required int cityIndex,
     required String cityId,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityRuleset stabilityRuleset,
@@ -431,7 +431,7 @@ abstract final class CityProductionReducer {
       next,
       cityId: cityId,
       city: updatedCity,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,
@@ -446,7 +446,7 @@ abstract final class CityProductionReducer {
     GameState state, {
     required String cityId,
     required GameCity city,
-    required MapData mapData,
+    required MapTileLookup mapTiles,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityRuleset stabilityRuleset,
@@ -463,7 +463,7 @@ abstract final class CityProductionReducer {
       selection: CitySelectionProjector.project(
         state: state,
         city: city,
-        mapTiles: mapData,
+        mapTiles: mapTiles,
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         stabilityRuleset: stabilityRuleset,

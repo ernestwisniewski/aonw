@@ -3,18 +3,18 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityWorkedHexReducer {
   static GameStateTransition toggleWorkedHex(
     GameState state,
     ToggleWorkedHexCommand command,
-    MapData mapData, {
+    MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -61,7 +61,7 @@ abstract final class CityWorkedHexReducer {
       updatedCity: updatedCity,
       cityIndex: cityIndex,
       cityId: city.id,
-      mapData: mapData,
+      mapTiles: mapTiles,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       stabilityRuleset: stabilityRuleset,

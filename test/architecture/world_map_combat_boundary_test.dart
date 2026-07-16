@@ -115,6 +115,73 @@ const _targets = [
     ],
   ),
   _Target(
+    path: 'lib/game/domain/reducer/city/city_production_reducer.dart',
+    owner: 'CityProductionReducer',
+    boundaries: [
+      _Boundary.method(
+        'startBuilding',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'startUnitProduction',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+      _Boundary.method(
+        'startCityProject',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'startWonder',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'setCitySpecialization',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'rushProduction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'finishQueuedProductionUpdate',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'citySelection',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_finishQueuedProductionUpdate',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        '_refreshCitySelectionIfSelected',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/city/city_worked_hex_reducer.dart',
+    owner: 'CityWorkedHexReducer',
+    boundaries: [
+      _Boundary.method(
+        'toggleWorkedHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
     path: 'lib/game/domain/city_selection_projector.dart',
     owner: 'CitySelectionProjector',
     boundaries: [
