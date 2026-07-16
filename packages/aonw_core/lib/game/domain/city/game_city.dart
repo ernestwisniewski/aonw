@@ -8,7 +8,9 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 
-class GameCity {
+part 'game_city_copying.dart';
+
+final class GameCity {
   static const Object _unset = Object();
 
   static const int defaultStartPopulation =
@@ -37,7 +39,10 @@ class GameCity {
   final CitySpecializationType? specialization;
   final CityHex? preferredExpansionHex;
   final int? hitPoints;
+  final bool _isImmutableSnapshot;
 
+  /// Legacy const constructor retained for compile-time fixtures.
+  /// Runtime code must use [GameCity.snapshot].
   const GameCity({
     required this.id,
     required this.ownerPlayerId,
@@ -57,7 +62,53 @@ class GameCity {
     this.specialization,
     this.preferredExpansionHex,
     this.hitPoints,
-  });
+  }) : _isImmutableSnapshot = false;
+
+  GameCity.snapshot({
+    required this.id,
+    required this.ownerPlayerId,
+    this.foundingOwnerPlayerId,
+    required this.name,
+    this.population = defaultStartPopulation,
+    this.storedFood = defaultStartStoredFood,
+    this.maxHexes = defaultStartMaxHexes,
+    this.territoryRadius = defaultStartTerritoryRadius,
+    required this.center,
+    List<CityHex> controlledHexes = const [],
+    List<CityHex> workedHexes = const [],
+    Set<CityBuildingType> buildings = const {},
+    Set<WonderType> wonders = const {},
+    this.productionQueue,
+    this.productionOverflow = 0,
+    this.specialization,
+    this.preferredExpansionHex,
+    this.hitPoints,
+  }) : controlledHexes = _immutableCityList(controlledHexes),
+       workedHexes = _immutableCityList(workedHexes),
+       buildings = _immutableCitySet(buildings),
+       wonders = _immutableCitySet(wonders),
+       _isImmutableSnapshot = true;
+
+  const GameCity._owned({
+    required this.id,
+    required this.ownerPlayerId,
+    required this.foundingOwnerPlayerId,
+    required this.name,
+    required this.population,
+    required this.storedFood,
+    required this.maxHexes,
+    required this.territoryRadius,
+    required this.center,
+    required this.controlledHexes,
+    required this.workedHexes,
+    required this.buildings,
+    required this.wonders,
+    required this.productionQueue,
+    required this.productionOverflow,
+    required this.specialization,
+    required this.preferredExpansionHex,
+    required this.hitPoints,
+  }) : _isImmutableSnapshot = true;
 
   factory GameCity.founded({
     required GameUnit founder,
@@ -67,7 +118,7 @@ class GameCity {
     CityProgression progression = CityProgressionCatalog.standard,
   }) {
     final center = CityHex(col: founder.col, row: founder.row);
-    return GameCity(
+    return GameCity.snapshot(
       id: 'city_${founder.ownerPlayerId}_${center.col}_${center.row}',
       ownerPlayerId: founder.ownerPlayerId,
       foundingOwnerPlayerId: founder.ownerPlayerId,
@@ -82,7 +133,7 @@ class GameCity {
   }
 
   factory GameCity.fromJson(Map<String, dynamic> json) {
-    return GameCity(
+    return GameCity.snapshot(
       id: json['id'] as String,
       ownerPlayerId: json['ownerPlayerId'] as String,
       foundingOwnerPlayerId: json['foundingOwnerPlayerId'] as String?,
@@ -149,70 +200,7 @@ class GameCity {
     if (hitPoints != null) 'hitPoints': hitPoints,
   };
 
-  GameCity copyWith({
-    String? id,
-    String? ownerPlayerId,
-    Object? foundingOwnerPlayerId = _unset,
-    String? name,
-    int? population,
-    int? storedFood,
-    int? maxHexes,
-    int? territoryRadius,
-    CityHex? center,
-    List<CityHex>? controlledHexes,
-    List<CityHex>? workedHexes,
-    Set<CityBuildingType>? buildings,
-    Set<WonderType>? wonders,
-    Object? productionQueue = _unset,
-    int? productionOverflow,
-    Object? specialization = _unset,
-    Object? preferredExpansionHex = _unset,
-    Object? hitPoints = _unset,
-  }) {
-    final nextOwnerPlayerId = ownerPlayerId ?? this.ownerPlayerId;
-    final nextFoundingOwnerPlayerId = identical(foundingOwnerPlayerId, _unset)
-        ? _preservedFoundingOwnerFor(nextOwnerPlayerId)
-        : foundingOwnerPlayerId as String?;
-    return GameCity(
-      id: id ?? this.id,
-      ownerPlayerId: nextOwnerPlayerId,
-      foundingOwnerPlayerId: nextFoundingOwnerPlayerId,
-      name: name ?? this.name,
-      population: population ?? this.population,
-      storedFood: storedFood ?? this.storedFood,
-      maxHexes: maxHexes ?? this.maxHexes,
-      territoryRadius: territoryRadius ?? this.territoryRadius,
-      center: center ?? this.center,
-      controlledHexes: controlledHexes ?? this.controlledHexes,
-      workedHexes: workedHexes ?? this.workedHexes,
-      buildings: buildings ?? this.buildings,
-      wonders: wonders ?? this.wonders,
-      productionQueue: identical(productionQueue, _unset)
-          ? this.productionQueue
-          : productionQueue as CityProductionQueue?,
-      productionOverflow: productionOverflow ?? this.productionOverflow,
-      specialization: identical(specialization, _unset)
-          ? this.specialization
-          : specialization as CitySpecializationType?,
-      preferredExpansionHex: identical(preferredExpansionHex, _unset)
-          ? this.preferredExpansionHex
-          : preferredExpansionHex as CityHex?,
-      hitPoints: identical(hitPoints, _unset)
-          ? this.hitPoints
-          : hitPoints as int?,
-    );
-  }
-
-  /// Use this to set OR clear combat HP.
-  GameCity copyWithHitPoints(int? hitPoints) => copyWith(hitPoints: hitPoints);
-
   String get capitalOwnerPlayerId => foundingOwnerPlayerId ?? ownerPlayerId;
-
-  String? _preservedFoundingOwnerFor(String nextOwnerPlayerId) {
-    if (foundingOwnerPlayerId != null) return foundingOwnerPlayerId;
-    if (nextOwnerPlayerId == ownerPlayerId) return null;
-    return ownerPlayerId;
-  }
 
   List<CityHex> get territoryHexes => [center, ...controlledHexes];
 

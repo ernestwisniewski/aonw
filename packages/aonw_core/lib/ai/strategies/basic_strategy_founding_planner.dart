@@ -377,7 +377,7 @@ final class BasicStrategyFoundingPlanner {
   }
 
   GameCity _plannedCityFor(GameUnit founder, AiCitySiteScore site) {
-    return GameCity(
+    return GameCity.snapshot(
       id: 'planned_${founder.id}_${site.center.col}_${site.center.row}',
       ownerPlayerId: founder.ownerPlayerId,
       name: 'Planned',

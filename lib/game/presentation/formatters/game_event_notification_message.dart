@@ -866,7 +866,7 @@ String _unitSnapshotName(AppLocalizations l10n, GameActivityUnitSnapshot unit) {
 String _citySnapshotName(AppLocalizations l10n, GameActivityCitySnapshot city) {
   return GameDisplayNames.city(
     l10n,
-    GameCity(
+    GameCity.snapshot(
       id: city.id,
       ownerPlayerId: city.ownerPlayerId,
       name: city.name,

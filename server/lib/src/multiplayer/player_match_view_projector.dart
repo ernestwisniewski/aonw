@@ -657,7 +657,7 @@ final class PlayerMatchViewProjector {
   }
 
   GameCity _visibleOpponentCity(GameCity city, FogVisibilityQuery visibility) {
-    return GameCity(
+    return GameCity.snapshot(
       id: city.id,
       ownerPlayerId: city.ownerPlayerId,
       name: city.name,

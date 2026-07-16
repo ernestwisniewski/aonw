@@ -255,7 +255,7 @@ class CitySitePlanner {
       return _sortedHexes(territory);
     }
 
-    var projectedCity = GameCity(
+    var projectedCity = GameCity.snapshot(
       id: 'projected_${site.center.col}_${site.center.row}',
       ownerPlayerId: view.forPlayerId,
       name: 'Projected',

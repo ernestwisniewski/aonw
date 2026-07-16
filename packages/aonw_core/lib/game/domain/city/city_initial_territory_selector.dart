@@ -18,7 +18,7 @@ abstract final class CityInitialTerritorySelector {
     bool allowOcean = false,
     CityRuleset ruleset = CityRulesets.standard,
   }) {
-    final temporaryCity = GameCity(
+    final temporaryCity = GameCity.snapshot(
       id: '_draft_city_${center.col}_${center.row}',
       ownerPlayerId: '_draft',
       name: '_draft',
