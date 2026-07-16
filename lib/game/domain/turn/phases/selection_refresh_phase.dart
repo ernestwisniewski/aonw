@@ -48,11 +48,7 @@ class SelectionRefreshPhase extends TurnPhase {
             state: state,
             city: foundedCity,
             mapTiles: context.mapTiles,
-            cityRuleset: context.ruleset.city,
-            technologyRuleset: context.ruleset.technology,
-            stabilityRuleset: context.ruleset.stability,
-            wonderRuleset: context.ruleset.wonders,
-            paceBalance: context.ruleset.paceBalance,
+            ruleset: context.ruleset,
           ),
         );
       }
@@ -113,11 +109,7 @@ class SelectionRefreshPhase extends TurnPhase {
         state: state,
         city: updatedCity,
         mapTiles: context.mapTiles,
-        cityRuleset: context.ruleset.city,
-        technologyRuleset: context.ruleset.technology,
-        stabilityRuleset: context.ruleset.stability,
-        wonderRuleset: context.ruleset.wonders,
-        paceBalance: context.ruleset.paceBalance,
+        ruleset: context.ruleset,
       ),
     );
   }

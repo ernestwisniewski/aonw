@@ -4,10 +4,7 @@ import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityWorkedHexReducer {
@@ -16,11 +13,7 @@ abstract final class CityWorkedHexReducer {
     ToggleWorkedHexCommand command,
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
-    PaceBalance paceBalance = PaceBalance.unlimited,
+    GameRuleset ruleset = GameRuleset.defaults,
   }) {
     final cityIndex = state.cities.indexWhere((c) => c.id == command.cityId);
     if (cityIndex == -1) return GameStateTransition(state: state);
@@ -37,7 +30,7 @@ abstract final class CityWorkedHexReducer {
 
     final manualHexes = CityProductionReducer.normalizedWorkedHexes(
       city,
-      cityRuleset,
+      ruleset.city,
     );
     late final List<CityHex> updatedWorkedHexes;
     if (manualHexes.contains(target)) {
@@ -46,7 +39,7 @@ abstract final class CityWorkedHexReducer {
           if (hex != target) hex,
       ];
     } else {
-      final limit = cityRuleset.progression.workedHexLimitForPopulation(
+      final limit = ruleset.city.progression.workedHexLimitForPopulation(
         city.population,
       );
       if (manualHexes.length >= limit) {
@@ -62,11 +55,8 @@ abstract final class CityWorkedHexReducer {
       cityIndex: cityIndex,
       cityId: city.id,
       mapTiles: mapTiles,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
-      paceBalance: paceBalance,
+      ruleset: ruleset,
+      paceBalance: context.paceBalance,
     );
   }
 }

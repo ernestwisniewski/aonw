@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
@@ -1049,8 +1049,7 @@ void main() {
         state,
         const RushProductionCommand('city_1'),
         mapData,
-        cityRuleset: cityRuleset,
-        stabilityRuleset: StabilityRuleset.standard,
+        ruleset: GameRuleset.defaults.copyWith(city: cityRuleset),
       );
 
       expect(result.state.playerGold['player_1'], 0);

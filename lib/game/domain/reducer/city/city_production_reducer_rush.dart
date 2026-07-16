@@ -5,10 +5,7 @@ GameStateTransition _rushCityProduction(
   RushProductionCommand command,
   MapTileLookup mapTiles, {
   required GameCommandContext context,
-  required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
-  required StabilityRuleset stabilityRuleset,
-  required WonderRuleset wonderRuleset,
+  required GameRuleset ruleset,
 }) {
   final target = CityProductionReducer._controlledCityTarget(
     state,
@@ -29,17 +26,14 @@ GameStateTransition _rushCityProduction(
     city: city,
     mapTiles: mapTiles,
     target: queue.target,
-    cityRuleset: cityRuleset,
-    technologyRuleset: technologyRuleset,
-    stabilityRuleset: stabilityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset: ruleset,
     paceBalance: context.paceBalance,
   );
 
   final targetCost = CityProductionRules.targetCost(
     queue.target,
-    ruleset: cityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset: ruleset.city,
+    wonderRuleset: ruleset.wonders,
     paceBalance: context.paceBalance,
   );
   final rushedProduction = CityProductionRules.rushProductionAmount(
@@ -68,8 +62,7 @@ GameStateTransition _rushCityProduction(
     advancedQueue: advanced,
     targetCost: targetCost,
     mapTiles: mapTiles,
-    cityRuleset: cityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset: ruleset,
     paceBalance: context.paceBalance,
   );
 
@@ -83,8 +76,8 @@ GameStateTransition _rushCityProduction(
   var nextWonderRegistry = state.wonderRegistry;
   var events = applied.events;
   if (advanced.isCompleteFor(
-        cityRuleset,
-        wonderRuleset: wonderRuleset,
+        ruleset.city,
+        wonderRuleset: ruleset.wonders,
         paceBalance: context.paceBalance,
       ) &&
       advanced.target is WonderProductionTarget) {
@@ -94,7 +87,7 @@ GameStateTransition _rushCityProduction(
       registry: state.wonderRegistry,
       playerGold: updatedGold,
       research: state.research,
-      ruleset: wonderRuleset,
+      ruleset: ruleset.wonders,
       paceBalance: context.paceBalance,
     );
     updatedCities = completion.cities;
@@ -120,10 +113,7 @@ GameStateTransition _rushCityProduction(
     cityId: command.cityId,
     city: refreshedCity,
     mapTiles: mapTiles,
-    cityRuleset: cityRuleset,
-    technologyRuleset: technologyRuleset,
-    stabilityRuleset: stabilityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset: ruleset,
     paceBalance: context.paceBalance,
   );
 
@@ -135,16 +125,13 @@ int _productionPerTurnForTarget({
   required GameCity city,
   required MapTileLookup mapTiles,
   required CityProductionTarget target,
-  required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
-  required StabilityRuleset stabilityRuleset,
-  required WonderRuleset wonderRuleset,
+  required GameRuleset ruleset,
   required PaceBalance paceBalance,
 }) {
   final technologyEffects = TechnologyEffectSummary.forPlayer(
     playerId: city.ownerPlayerId,
     research: state.research,
-    ruleset: technologyRuleset,
+    ruleset: ruleset.technology,
   );
   final cityYield = CityYieldCalculator.totalFor(
     city,
@@ -152,21 +139,21 @@ int _productionPerTurnForTarget({
     fieldImprovements: state.fieldImprovements,
     units: state.units,
     artifacts: state.artifacts,
-    ruleset: cityRuleset,
+    ruleset: ruleset.city,
   );
   final cityEconomy = CityEconomyBreakdown.from(
     city: city,
     tileYield: cityYield,
     mapTiles: mapTiles,
-    ruleset: cityRuleset,
+    ruleset: ruleset.city,
     paceBalance: paceBalance,
     technologyEffects: technologyEffects,
     cities: state.cities,
     wonderRegistry: state.wonderRegistry,
-    wonderRuleset: wonderRuleset,
+    wonderRuleset: ruleset.wonders,
     stabilityModifier: StabilityPolicy.modifierForNet(
       state.playerStabilityNet[city.ownerPlayerId] ?? 0,
-      ruleset: stabilityRuleset,
+      ruleset: ruleset.stability,
     ),
   );
   var productionPerTurn = CityProductionRules.productionPerTurn(
@@ -191,8 +178,7 @@ _RushProductionApplication _applyRushedProduction({
   required CityProductionQueue advancedQueue,
   required int targetCost,
   required MapTileLookup mapTiles,
-  required CityRuleset cityRuleset,
-  required WonderRuleset wonderRuleset,
+  required GameRuleset ruleset,
   required PaceBalance paceBalance,
 }) {
   var updatedCity = city.copyWith(productionQueue: advancedQueue);
@@ -200,8 +186,8 @@ _RushProductionApplication _applyRushedProduction({
   final events = <GameEvent>[];
 
   if (!advancedQueue.isCompleteFor(
-    cityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset.city,
+    wonderRuleset: ruleset.wonders,
     paceBalance: paceBalance,
   )) {
     return (city: updatedCity, units: updatedUnits, events: events);

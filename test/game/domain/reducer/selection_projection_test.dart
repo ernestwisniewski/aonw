@@ -87,8 +87,10 @@ void main() {
         state,
         const SelectCityCommand('city_1'),
         mapData,
-        cityRuleset: cityRuleset,
-        stabilityRuleset: _customStabilityRuleset,
+        ruleset: GameRuleset.defaults.copyWith(
+          city: cityRuleset,
+          stability: _customStabilityRuleset,
+        ),
       );
 
       expect(

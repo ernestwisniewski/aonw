@@ -7,11 +7,11 @@ import 'package:aonw/game/domain/turn/unit_turn_action_rules.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class TurnReducer {
@@ -44,10 +44,7 @@ abstract final class TurnReducer {
     GameState state,
     String playerId,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
     GameObjectiveAdvice? preferredObjectiveAdvice,
     int? actionIndex,
@@ -57,7 +54,7 @@ abstract final class TurnReducer {
       state,
       playerId,
       mapTiles,
-      technologyRuleset,
+      ruleset.technology,
     );
     if (actions.isEmpty) return GameStateTransition(state: state);
 
@@ -77,10 +74,7 @@ abstract final class TurnReducer {
       playerId,
       actions[nextIndex],
       mapTiles,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
       paceBalance: paceBalance,
     );
   }
@@ -121,26 +115,20 @@ abstract final class TurnReducer {
     GameState state,
     String playerId,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final actions = _pendingTurnActions(
       state,
       playerId,
       mapTiles,
-      technologyRuleset,
+      ruleset.technology,
     );
     final productionEffects = _turnStartProductionEffects(
       state,
       playerId,
       mapTiles,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
       paceBalance: paceBalance,
     );
     if (actions.isEmpty) {
@@ -152,10 +140,7 @@ abstract final class TurnReducer {
       playerId,
       actions.first,
       mapTiles,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
       paceBalance: paceBalance,
     );
     return GameStateTransition(
@@ -169,10 +154,7 @@ abstract final class TurnReducer {
     GameState state,
     String playerId,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (playerId.isEmpty) return const [];
@@ -191,10 +173,7 @@ abstract final class TurnReducer {
             city,
             queue,
             mapTiles,
-            cityRuleset: cityRuleset,
-            technologyRuleset: technologyRuleset,
-            stabilityRuleset: stabilityRuleset,
-            wonderRuleset: wonderRuleset,
+            ruleset: ruleset,
             paceBalance: paceBalance,
           ),
           delay: Duration(milliseconds: 120 + effects.length * 140),
@@ -209,17 +188,14 @@ abstract final class TurnReducer {
     GameCity city,
     CityProductionQueue queue,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     if (queue.target is ProjectProductionTarget) return null;
     final targetCost = CityProductionRules.targetCost(
       queue.target,
-      ruleset: cityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset.city,
+      wonderRuleset: ruleset.wonders,
       paceBalance: paceBalance,
     );
     return CityProductionRules.estimatedTurnsRemaining(
@@ -230,10 +206,7 @@ abstract final class TurnReducer {
         city,
         queue,
         mapTiles,
-        cityRuleset: cityRuleset,
-        technologyRuleset: technologyRuleset,
-        stabilityRuleset: stabilityRuleset,
-        wonderRuleset: wonderRuleset,
+        ruleset: ruleset,
         paceBalance: paceBalance,
       ),
     );
@@ -244,16 +217,13 @@ abstract final class TurnReducer {
     GameCity city,
     CityProductionQueue queue,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,
-      ruleset: technologyRuleset,
+      ruleset: ruleset.technology,
     );
     final cityYield = CityYieldCalculator.totalFor(
       city,
@@ -261,20 +231,20 @@ abstract final class TurnReducer {
       fieldImprovements: state.fieldImprovements,
       units: state.units,
       artifacts: state.artifacts,
-      ruleset: cityRuleset,
+      ruleset: ruleset.city,
     );
     final cityEconomy = CityEconomyBreakdown.from(
       city: city,
       tileYield: cityYield,
       mapTiles: mapTiles,
-      ruleset: cityRuleset,
+      ruleset: ruleset.city,
       technologyEffects: technologyEffects,
       cities: state.cities,
       wonderRegistry: state.wonderRegistry,
-      wonderRuleset: wonderRuleset,
+      wonderRuleset: ruleset.wonders,
       stabilityModifier: StabilityPolicy.modifierForNet(
         state.playerStabilityNet[city.ownerPlayerId] ?? 0,
-        ruleset: stabilityRuleset,
+        ruleset: ruleset.stability,
       ),
       paceBalance: paceBalance,
     );
@@ -374,10 +344,7 @@ abstract final class TurnReducer {
     String playerId,
     _PendingTurnAction action,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     return switch (action) {
@@ -390,10 +357,7 @@ abstract final class TurnReducer {
         state,
         city,
         mapTiles,
-        cityRuleset: cityRuleset,
-        technologyRuleset: technologyRuleset,
-        stabilityRuleset: stabilityRuleset,
-        wonderRuleset: wonderRuleset,
+        ruleset: ruleset,
         paceBalance: paceBalance,
       ),
       _PendingResearchAction() => _focusResearchAction(state, playerId),
@@ -404,10 +368,7 @@ abstract final class TurnReducer {
     GameState state,
     GameCity city,
     MapTileLookup mapTiles, {
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    GameRuleset ruleset = GameRuleset.defaults,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
     final newState = state.copyWithInteraction(
@@ -419,10 +380,7 @@ abstract final class TurnReducer {
         state: state,
         city: city,
         mapTiles: mapTiles,
-        cityRuleset: cityRuleset,
-        technologyRuleset: technologyRuleset,
-        stabilityRuleset: stabilityRuleset,
-        wonderRuleset: wonderRuleset,
+        ruleset: ruleset,
         paceBalance: paceBalance,
       ),
     );

@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -31,11 +31,7 @@ void main() {
         state: const GameState(cities: [city], artifacts: [artifact]),
         city: city,
         mapTiles: _mapData(),
-        cityRuleset: CityRulesets.standard,
-        stabilityRuleset: StabilityRuleset.standard,
-        technologyRuleset: TechnologyRulesets.standard,
-        wonderRuleset: WonderRuleset.standard,
-        paceBalance: PaceBalance.unlimited,
+        ruleset: GameRuleset.defaults,
       );
 
       expect(selection.cityYield?.gold, 2);
@@ -84,11 +80,7 @@ void main() {
           ),
           city: selectedCity,
           mapTiles: _mapData(),
-          cityRuleset: CityRulesets.standard,
-          stabilityRuleset: StabilityRuleset.standard,
-          technologyRuleset: TechnologyRulesets.standard,
-          wonderRuleset: sentinelRuleset,
-          paceBalance: PaceBalance.unlimited,
+          ruleset: GameRuleset.defaults.copyWith(wonders: sentinelRuleset),
         );
 
         expect(selection.city?.id, selectedCity.id);
@@ -109,11 +101,7 @@ void main() {
         state: const GameState(cities: [city]),
         city: city,
         mapTiles: _mapData(),
-        cityRuleset: CityRulesets.standard,
-        stabilityRuleset: StabilityRuleset.standard,
-        technologyRuleset: TechnologyRulesets.standard,
-        wonderRuleset: WonderRuleset.standard,
-        paceBalance: PaceBalance.unlimited,
+        ruleset: GameRuleset.defaults,
       );
 
       expect(selection.cityPlayerColor, Player.palette.first);
@@ -134,11 +122,10 @@ void main() {
           ),
           city: _stabilityCity,
           mapTiles: _mapData(),
-          cityRuleset: cityRuleset,
-          stabilityRuleset: testCase.stabilityRuleset,
-          technologyRuleset: TechnologyRulesets.standard,
-          wonderRuleset: WonderRuleset.standard,
-          paceBalance: PaceBalance.unlimited,
+          ruleset: GameRuleset.defaults.copyWith(
+            city: cityRuleset,
+            stability: testCase.stabilityRuleset,
+          ),
         );
         final economy = selection.cityEconomy!;
 

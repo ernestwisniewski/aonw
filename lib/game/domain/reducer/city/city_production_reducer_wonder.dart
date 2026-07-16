@@ -5,10 +5,7 @@ GameStateTransition _startWonderProduction(
   StartWonderCommand command,
   MapTileLookup mapTiles, {
   required GameCommandContext context,
-  required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
-  required StabilityRuleset stabilityRuleset,
-  required WonderRuleset wonderRuleset,
+  required GameRuleset ruleset,
 }) {
   final target = CityProductionReducer._controlledCityTarget(
     state,
@@ -25,16 +22,15 @@ GameStateTransition _startWonderProduction(
     registry: state.wonderRegistry,
     research: state.research,
     mapTiles: mapTiles,
-    ruleset: wonderRuleset,
+    ruleset: ruleset.wonders,
   );
   if (!availability.isAvailable) return GameStateTransition(state: state);
 
   final updatedCity = CityProductionReducer._queueProduction(
     city,
     WonderProductionTarget(command.wonderType),
-    cityRuleset,
+    ruleset,
     context.paceBalance,
-    wonderRuleset: wonderRuleset,
   );
 
   return CityProductionReducer._finishQueuedProductionUpdate(
@@ -43,10 +39,7 @@ GameStateTransition _startWonderProduction(
     cityIndex: target.index,
     cityId: command.cityId,
     mapTiles: mapTiles,
-    cityRuleset: cityRuleset,
-    technologyRuleset: technologyRuleset,
-    stabilityRuleset: stabilityRuleset,
-    wonderRuleset: wonderRuleset,
+    ruleset: ruleset,
     paceBalance: context.paceBalance,
   );
 }

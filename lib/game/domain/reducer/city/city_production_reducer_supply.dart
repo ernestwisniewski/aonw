@@ -5,8 +5,7 @@ bool _canQueueCityUnit({
   required GameCity city,
   required GameUnitType unitType,
   required MapReadView mapView,
-  required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
+  required GameRuleset ruleset,
 }) {
   return CityUnitSupplyRules.canQueueUnit(
     playerId: city.ownerPlayerId,
@@ -16,9 +15,9 @@ bool _canQueueCityUnit({
     artifacts: state.artifacts,
     fieldImprovements: state.fieldImprovements,
     mapView: mapView,
-    cityRuleset: cityRuleset,
+    cityRuleset: ruleset.city,
     research: state.research,
-    technologyRuleset: technologyRuleset,
+    technologyRuleset: ruleset.technology,
     replacingCityId: city.id,
   );
 }

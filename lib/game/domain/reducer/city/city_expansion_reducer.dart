@@ -6,10 +6,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityExpansionReducer {
@@ -22,11 +20,7 @@ abstract final class CityExpansionReducer {
     command,
     environment.mapData,
     context: environment.context,
-    cityRuleset: environment.cityRuleset,
-    technologyRuleset: environment.technologyRuleset,
-    stabilityRuleset: environment.stabilityRuleset,
-    wonderRuleset: environment.wonderRuleset,
-    paceBalance: environment.paceBalance,
+    ruleset: environment.ruleset,
   );
 
   static GameStateTransition selectExpansionHex(
@@ -34,11 +28,7 @@ abstract final class CityExpansionReducer {
     SelectCityExpansionHexCommand command,
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
-    CityRuleset cityRuleset = CityRulesets.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
-    PaceBalance paceBalance = PaceBalance.unlimited,
+    GameRuleset ruleset = GameRuleset.defaults,
   }) {
     final cityIndex = state.cities.indexWhere(
       (city) => city.id == command.cityId,
@@ -56,8 +46,7 @@ abstract final class CityExpansionReducer {
       target: target,
       state: state,
       mapTiles: mapTiles,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
+      ruleset: ruleset,
     )) {
       return GameStateTransition(state: state);
     }
@@ -72,11 +61,8 @@ abstract final class CityExpansionReducer {
           state: next,
           city: updatedCity,
           mapTiles: mapTiles,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          stabilityRuleset: stabilityRuleset,
-          wonderRuleset: wonderRuleset,
-          paceBalance: paceBalance,
+          ruleset: ruleset,
+          paceBalance: context.paceBalance,
         ),
       );
     }
@@ -89,13 +75,12 @@ abstract final class CityExpansionReducer {
     required CityHex target,
     required GameState state,
     required MapTileLookup mapTiles,
-    required CityRuleset cityRuleset,
-    required TechnologyRuleset technologyRuleset,
+    required GameRuleset ruleset,
   }) {
     final technologyEffects = TechnologyEffectSummary.forPlayer(
       playerId: city.ownerPlayerId,
       research: state.research,
-      ruleset: technologyRuleset,
+      ruleset: ruleset.technology,
     );
     final candidates = CityExpansionSelector.candidatesFor(
       city: city,
@@ -103,7 +88,7 @@ abstract final class CityExpansionReducer {
       cities: state.cities,
       allowCoast: true,
       allowOcean: true,
-      ruleset: cityRuleset,
+      ruleset: ruleset.city,
       technologyEffects: technologyEffects,
     );
     for (final candidate in candidates) {

@@ -16,6 +16,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -801,7 +802,7 @@ void main() {
           state,
           'player_1',
           mapData,
-          cityRuleset: cityRuleset,
+          ruleset: GameRuleset.defaults.copyWith(city: cityRuleset),
         );
 
         expect(result.state, state);
@@ -846,8 +847,7 @@ void main() {
         state,
         'player_1',
         mapData,
-        cityRuleset: cityRuleset,
-        stabilityRuleset: StabilityRuleset.standard,
+        ruleset: GameRuleset.defaults.copyWith(city: cityRuleset),
       );
 
       final effect = result.uiEffects
@@ -896,8 +896,10 @@ void main() {
         GameState(cities: [city], activePlayerId: 'player_1'),
         'player_1',
         mapData,
-        cityRuleset: cityRuleset,
-        wonderRuleset: wonderRuleset,
+        ruleset: GameRuleset.defaults.copyWith(
+          city: cityRuleset,
+          wonders: wonderRuleset,
+        ),
       );
 
       final effect = result.uiEffects

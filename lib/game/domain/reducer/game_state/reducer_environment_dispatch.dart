@@ -141,10 +141,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -157,10 +154,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -173,10 +167,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -186,10 +177,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -202,10 +190,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -218,10 +203,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
+      ruleset: ruleset,
     );
   }
 
@@ -327,11 +309,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       command,
       mapData,
       context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      stabilityRuleset: stabilityRuleset,
-      wonderRuleset: wonderRuleset,
-      paceBalance: paceBalance,
+      ruleset: ruleset,
     );
   }
 
