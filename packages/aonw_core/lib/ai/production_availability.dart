@@ -7,7 +7,7 @@ bool _canProduceUnit(
   required int reservedSupply,
   required AiProductionScoringCache cache,
 }) {
-  final research = _researchFor(view, cache: cache);
+  final research = cache.research;
   final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
     playerId: view.forPlayerId,
     unitType: unitType,
@@ -60,7 +60,7 @@ bool _canBuild(
   required CityBuildingType buildingType,
   required AiProductionScoringCache cache,
 }) {
-  final research = _researchFor(view, cache: cache);
+  final research = cache.research;
   final technologyUnlocked = TechnologyUnlockQuery.hasBuildingUnlocked(
     playerId: view.forPlayerId,
     buildingType: buildingType,
@@ -81,30 +81,4 @@ bool _canBuild(
     technologyUnlocked: technologyUnlocked,
     requirementsMet: requirementsMet,
   );
-}
-
-ResearchState _researchFor(GameView view, {AiProductionScoringCache? cache}) {
-  if (cache != null) return cache.research;
-  return ResearchState(players: {view.forPlayerId: view.ownResearch});
-}
-
-int _availableUnitSupply(
-  GameView view,
-  AiProductionPlanState planState, {
-  AiProductionScoringCache? cache,
-}) {
-  if (cache != null) return cache.availableUnitSupply(planState);
-  final breakdown = CityUnitSupplyRules.forPlayer(
-    playerId: view.forPlayerId,
-    cities: view.ownCities,
-    units: view.ownUnits,
-    artifacts: view.artifacts,
-    fieldImprovements: view.ownImprovements,
-    mapView: view.mapData,
-    cityRuleset: view.ruleset.city,
-    research: _researchFor(view),
-    technologyRuleset: view.ruleset.technology,
-  );
-  final available = breakdown.available - planState.reservedUnitSupply;
-  return available < 0 ? 0 : available;
 }

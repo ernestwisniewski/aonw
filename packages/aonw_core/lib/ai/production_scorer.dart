@@ -259,7 +259,7 @@ class AiProductionScorer {
       hasResearchTarget:
           view.ownResearch.activeTechnologyId != null ||
           planState.hasResearchTarget,
-      availableUnitSupply: _availableUnitSupply(view, planState, cache: cache),
+      availableUnitSupply: cache.availableUnitSupply(planState),
       hasInfrastructureWindow: _hasInfrastructureWindow(
         context,
         assessment,

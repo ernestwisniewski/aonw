@@ -1,7 +1,7 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
-part 'persistent_city_production_rush_test.dart';
+part 'persistent_city_production_rush_cases.dart';
 
 void main() {
   group('PersistentCityProductionResolver', () {

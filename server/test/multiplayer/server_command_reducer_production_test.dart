@@ -30,6 +30,23 @@ void main() {
     );
   });
 
+  test('routes city projects through the production boundary', () async {
+    final reduction = await _reduceCommand(
+      const StartCityProjectCommand('city_1', CityProjectType.wealth),
+      state: PersistentGameState(cities: _tradeCities()),
+    );
+    final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+    expect(reduction.accepted, isTrue);
+    expect(
+      state.cities
+          .firstWhere((city) => city.id == 'city_1')
+          .productionQueue
+          ?.target,
+      const ProjectProductionTarget(CityProjectType.wealth),
+    );
+  });
+
   test(
     'routes the end-turn alias through authoritative turn handling',
     () async {
