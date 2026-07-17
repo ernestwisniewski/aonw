@@ -7,6 +7,8 @@ import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
+import 'package:aonw_core/application.dart';
+import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
@@ -136,6 +138,7 @@ class LocalCommandResolver {
       state: reducedState,
       playerIds: playerIds,
       savedAt: savedAt.toUtc(),
+      eventLogOffset: baseSnapshot.eventLogOffset,
     );
   }
 
@@ -144,11 +147,16 @@ class LocalCommandResolver {
     required GameState state,
     required List<String> playerIds,
     required DateTime savedAt,
+    required int eventLogOffset,
   }) {
-    final result = PersistentTurnPipeline.simultaneousFinalize(
-      PersistentTurnPipelineRequest.simultaneousFinalize(
-        save: save,
-        state: state.toPersistentState(),
+    const snapshotAdapter = LegacyGameSnapshotAdapter();
+    final result = CanonicalTurnPipeline.simultaneousFinalize(
+      CanonicalTurnPipelineRequest.simultaneousFinalize(
+        snapshot: snapshotAdapter.toCanonical(
+          save: save,
+          state: state.toPersistentState(),
+          eventLogOffset: eventLogOffset,
+        ),
         playerIds: playerIds,
         savedAt: savedAt,
         mapView: reducer.mapData,
@@ -162,17 +170,19 @@ class LocalCommandResolver {
             beforeUnits: movementDelta.beforeUnits,
             afterUnits: movementDelta.afterUnits,
           );
+    final legacyResult = snapshotAdapter.toLegacy(result.snapshot);
     final nextState =
         SaveSnapshot.fromPersistentState(
-          save: result.save,
-          state: result.state,
+          save: legacyResult.save,
+          state: legacyResult.state,
+          eventLogOffset: legacyResult.eventLogOffset,
         ).toGameState(
           activePlayerId: state.activePlayerId,
           activePlayerCanAct: state.activePlayerCanAct,
         );
 
     return _ResolvedLocalCommand(
-      save: result.save,
+      save: legacyResult.save,
       state: nextState,
       events: result.events,
       uiEffects: uiEffects,

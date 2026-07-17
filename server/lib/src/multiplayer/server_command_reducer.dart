@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
@@ -8,14 +10,8 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
+part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
-
-final class DecodedMatchSnapshot {
-  const DecodedMatchSnapshot({required this.save, required this.state});
-
-  final GameSave save;
-  final PersistentGameState state;
-}
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 
@@ -32,8 +28,9 @@ class ServerCommandReducer {
 
   DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) {
     return DecodedMatchSnapshot(
-      save: GameSave.fromJson(snapshot.save),
-      state: PersistentGameState.fromJson(snapshot.state),
+      GameSave.fromJson(snapshot.save),
+      PersistentGameState.fromJson(snapshot.state),
+      snapshot.offset,
     );
   }
 
@@ -76,8 +73,7 @@ class ServerCommandReducer {
       paceBalance: save.matchRules.paceBalance,
     );
     final result = _applyCommand(
-      save: save,
-      state: state,
+      decodedSnapshot: decodedSnapshot,
       match: match,
       command: command,
       commandTick: wireCommand.tick,
@@ -148,8 +144,7 @@ class ServerCommandReducer {
         .where((playerId) => !submittedPlayerIds.contains(playerId))
         .toList();
     final result = _finalizeSimultaneousTurn(
-      save: save,
-      state: state,
+      decodedSnapshot: decodedSnapshot,
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: nowUtc,
@@ -181,8 +176,7 @@ class ServerCommandReducer {
   }
 
   _CommandApplication _applyCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required DecodedMatchSnapshot decodedSnapshot,
     required WireMatch match,
     required GameCommand command,
     required int commandTick,
@@ -191,11 +185,12 @@ class ServerCommandReducer {
     required _LoadedServerMap loadedMap,
     required GameRuleset ruleset,
   }) {
+    final save = decodedSnapshot.save;
+    final state = decodedSnapshot.state;
     switch (command) {
       case SubmitTurnCommand():
         return _submitTurn(
-          save: save,
-          state: state,
+          decodedSnapshot: decodedSnapshot,
           match: match,
           command: command,
           actorPlayerId: actorPlayerId,
@@ -205,8 +200,7 @@ class ServerCommandReducer {
         );
       case EndTurnCommand(:final playerId):
         return _submitTurn(
-          save: save,
-          state: state,
+          decodedSnapshot: decodedSnapshot,
           match: match,
           command: SubmitTurnCommand(playerId),
           actorPlayerId: actorPlayerId,

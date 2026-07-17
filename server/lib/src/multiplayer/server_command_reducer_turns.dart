@@ -1,9 +1,10 @@
 part of 'server_command_reducer.dart';
 
+const _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
+
 extension ServerCommandReducerTurns on ServerCommandReducer {
   _CommandApplication _submitTurn({
-    required GameSave save,
-    required PersistentGameState state,
+    required DecodedMatchSnapshot decodedSnapshot,
     required WireMatch match,
     required SubmitTurnCommand command,
     required String actorPlayerId,
@@ -11,6 +12,8 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
+    final save = decodedSnapshot.save;
+    final state = decodedSnapshot.state;
     if (command.playerId != actorPlayerId) {
       return _CommandApplication.reject(
         save: save,
@@ -56,8 +59,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         .toList();
 
     return _finalizeSimultaneousTurn(
-      save: save,
-      state: submittedState,
+      decodedSnapshot: decodedSnapshot.withState(submittedState),
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: now,
@@ -67,18 +69,22 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
   }
 
   _CommandApplication _finalizeSimultaneousTurn({
-    required GameSave save,
-    required PersistentGameState state,
+    required DecodedMatchSnapshot decodedSnapshot,
     required List<String> playerIds,
     required List<String> skippedPlayerIds,
     required DateTime now,
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
-    final result = PersistentTurnPipeline.simultaneousFinalize(
-      PersistentTurnPipelineRequest.simultaneousFinalize(
-        save: save,
-        state: state,
+    final save = decodedSnapshot.save;
+    final state = decodedSnapshot.state;
+    final result = CanonicalTurnPipeline.simultaneousFinalize(
+      CanonicalTurnPipelineRequest.simultaneousFinalize(
+        snapshot: _legacyGameSnapshotAdapter.toCanonical(
+          save: save,
+          state: state,
+          eventLogOffset: decodedSnapshot.eventLogOffset,
+        ),
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,
@@ -88,9 +94,10 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         trackTimeoutStreaks: true,
       ),
     );
+    final legacyResult = _legacyGameSnapshotAdapter.toLegacy(result.snapshot);
     return _CommandApplication.accept(
-      save: result.save,
-      state: result.state,
+      save: legacyResult.save,
+      state: legacyResult.state,
       events: result.events,
     );
   }

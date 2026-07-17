@@ -7,6 +7,7 @@ import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -38,6 +39,57 @@ void main() {
     expect(result.state, state);
     expect(result.events, isEmpty);
   });
+
+  test(
+    'local final submit preserves presentation and persisted interaction',
+    () {
+      final save = GameSave(
+        id: 'save_1',
+        name: 'Canonical local turn',
+        mapName: 'verdantia',
+        turn: 7,
+        playerStates: const {
+          'player_1': PlayerTurnState.finished,
+          'player_2': PlayerTurnState.active,
+        },
+        savedAt: DateTime.utc(2026, 7, 11),
+        camera: CameraState.zero,
+        players: const [
+          Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
+          Player(id: 'player_2', name: 'Bob', colorValue: 0xFF000002),
+        ],
+        gameMode: GameMode.multiplayer,
+      );
+      const pendingAction = PendingResearchSelection(ownerPlayerId: 'player_1');
+      const state = GameState(
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+        submittedPlayerIds: {'player_1'},
+        interaction: GameInteractionState(pendingAction: pendingAction),
+      );
+      final baseSnapshot = SaveSnapshot.fromGameState(
+        save: save,
+        state: state,
+        eventLogOffset: 17,
+      );
+
+      final result =
+          LocalCommandResolver(
+            reducer: GameStateReducer(mapData: _mapData()),
+          ).resolve(
+            baseSnapshot: baseSnapshot,
+            currentState: state,
+            command: const SubmitTurnCommand('player_2'),
+            savedAt: DateTime.utc(2026, 7, 11, 12),
+          );
+
+      expect(result.save.turn, 8);
+      expect(result.state.submittedPlayerIds, isEmpty);
+      expect(result.state.pendingAction, pendingAction);
+      expect(result.state.activePlayerId, 'player_1');
+      expect(result.state.activePlayerCanAct, isTrue);
+    },
+  );
 }
 
 MapData _mapData() => MapData(
