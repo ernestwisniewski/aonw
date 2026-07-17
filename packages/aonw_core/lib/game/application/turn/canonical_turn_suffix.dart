@@ -172,7 +172,8 @@ abstract final class CanonicalTurnSuffix {
     final activePlayerIds = request.playerIds.toSet();
     return {
       for (final entry in request.snapshot.session.turnStatesByPlayerId.entries)
-        entry.key: request.preserveNonParticipantPlayerStates &&
+        entry.key:
+            request.preserveNonParticipantPlayerStates &&
                 !activePlayerIds.contains(entry.key)
             ? PlayerTurnState.finished
             : PlayerTurnState.active,
@@ -199,9 +200,7 @@ abstract final class CanonicalTurnSuffix {
     ];
   }
 
-  static List<String> _skippedPlayerIdsFor(
-    CanonicalTurnSuffixRequest request,
-  ) {
+  static List<String> _skippedPlayerIdsFor(CanonicalTurnSuffixRequest request) {
     final playerSet = request.playerIds.toSet();
     return [
       for (final playerId in request.skippedPlayerIds)
