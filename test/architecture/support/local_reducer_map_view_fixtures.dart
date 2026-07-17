@@ -18,7 +18,7 @@ void build(session) {
     sources[_localCommandResolverPath] = '''
 void finalize(reducer) {
   final duplicate = reducer.mapData.indexedReadView();
-  PersistentTurnPipelineRequest.simultaneousFinalize(mapView: duplicate);
+  CanonicalTurnPipelineRequest.simultaneousFinalize(mapView: duplicate);
 }
 ''';
 
@@ -32,7 +32,7 @@ void finalize(reducer) {
         '$_localCommandResolverPath must reuse reducer.mapData without '
             'building another indexed view',
         '$_localCommandResolverPath must pass reducer.mapData directly to '
-            'PersistentTurnPipelineRequest.mapView',
+            'CanonicalTurnPipelineRequest.mapView',
       ]),
     );
   });
@@ -109,7 +109,7 @@ void replay(session) {
 ''',
   _localCommandResolverPath: '''
 void finalize(reducer) {
-  PersistentTurnPipelineRequest.simultaneousFinalize(
+  CanonicalTurnPipelineRequest.simultaneousFinalize(
     mapView: reducer.mapData,
   );
 }

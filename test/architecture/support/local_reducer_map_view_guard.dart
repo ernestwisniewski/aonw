@@ -212,7 +212,7 @@ List<String> _localCommandResolverViolations(Map<String, String> sources) {
   }
 
   final requests = _NamedTypeConstructionCollector(
-    'PersistentTurnPipelineRequest.simultaneousFinalize',
+    'CanonicalTurnPipelineRequest.simultaneousFinalize',
   );
   resolverUnit.accept(requests);
   if (requests.calls.length != 1) {
@@ -225,7 +225,7 @@ List<String> _localCommandResolverViolations(Map<String, String> sources) {
     if (mapView?.toSource() != 'reducer.mapData') {
       violations.add(
         '$_localCommandResolverPath must pass reducer.mapData directly to '
-        'PersistentTurnPipelineRequest.mapView',
+        'CanonicalTurnPipelineRequest.mapView',
       );
     }
   }
