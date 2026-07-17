@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_combat_resolver.dart';
@@ -124,24 +125,54 @@ abstract final class PersistentTurnPipeline {
   static PersistentTurnPipelineResult simultaneousFinalize(
     PersistentTurnPipelineRequest request,
   ) {
+    final ruleset = _rulesetFor(request);
+    final combat = PersistentTurnCombatResolver.resolve(
+      turn: request.save.turn,
+      state: request.state,
+      mapTiles: request.mapView.mapTiles,
+      ruleset: ruleset,
+    );
+    return _simultaneousFinalizeAfterCombat(
+      request,
+      state: combat.state,
+      combatEvents: combat.events,
+    );
+  }
+
+  /// Completes simultaneous finalization after combat has already resolved.
+  ///
+  /// This is a temporary migration seam for the canonical combat prefix. The
+  /// request state must contain the combat result, while [combatEvents] retain
+  /// their original ordering and remain prior events for economy processing.
+  static PersistentTurnPipelineResult simultaneousFinalizeAfterCombat(
+    PersistentTurnPipelineRequest request, {
+    required Iterable<GameEvent> combatEvents,
+  }) {
+    return _simultaneousFinalizeAfterCombat(
+      request,
+      state: request.state,
+      combatEvents: combatEvents,
+    );
+  }
+
+  static PersistentTurnPipelineResult _simultaneousFinalizeAfterCombat(
+    PersistentTurnPipelineRequest request, {
+    required PersistentGameState state,
+    required Iterable<GameEvent> combatEvents,
+  }) {
     final mapView = request.mapView;
     final playerIds = request.playerIds;
     final skippedPlayerIds = _skippedPlayerIdsFor(request);
     final savedAt = request.savedAt.toUtc();
     final ruleset = _rulesetFor(request);
-    final combat = PersistentTurnCombatResolver.resolve(
-      turn: request.save.turn,
-      state: request.state,
-      mapTiles: mapView.mapTiles,
-      ruleset: ruleset,
-    );
+    final priorCombatEvents = List<GameEvent>.unmodifiable(combatEvents);
     final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: combat.state,
+      state: state,
       playerIds: playerIds,
       mapData: mapView,
       ruleset: ruleset,
       fogOfWarService: request.fogOfWarService,
-      priorEvents: combat.events,
+      priorEvents: priorCombatEvents,
       mapObjectives: mapView.objectives,
       turn: request.save.turn,
     );
@@ -151,84 +182,60 @@ abstract final class PersistentTurnPipeline {
       mapData: mapView,
       fogOfWarService: request.fogOfWarService,
     );
-    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: movement.state.runtimeState.diplomacy,
-      fogOfWar: movement.state.fogOfWar,
-      units: movement.state.units,
-      cities: movement.state.cities,
-      playerIds: playerIds,
-    );
-    final diplomacy = DiplomacyTurnResolver.resolve(
-      diplomacy: discoveredDiplomacy,
-      turn: request.save.turn + 1,
-      units: movement.state.units,
-      cities: movement.state.cities,
-    );
-    const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns =
-        movement.state.runtimeState.dominationHoldTurnsByPlayerId;
-    final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
-      playerIds: playerIds,
+    final diplomacy = _diplomacyAfterMovement(
       state: movement.state,
-      mapData: mapView,
-      victoryRules: request.save.matchRules.victory,
-      previousHoldTurnsByPlayerId: previousDominationHoldTurns,
+      playerIds: playerIds,
+      turn: request.save.turn + 1,
     );
-    final dominationEvents = dominationProgressCalculator
-        .thresholdReachedEvents(
-          playerIds: playerIds,
-          state: movement.state,
-          mapData: mapView,
-          victoryRules: request.save.matchRules.victory,
-          previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-          nextHoldTurnsByPlayerId: dominationHoldTurns,
-        );
-    final previousCulturalHoldTurns =
-        movement.state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
-    final culturalHoldTurns = request.save.matchRules.victory.culturalEnabled
-        ? CulturalVictoryProgressCalculator.advanceHoldTurns(
-            playerIds: playerIds,
-            state: movement.state,
-            previousHoldTurnsByPlayerId: previousCulturalHoldTurns,
-            requiredArtifactCount:
-                request.save.matchRules.victory.culturalRequiredArtifacts,
-          )
-        : previousCulturalHoldTurns;
-    final timeoutStreaks = request.trackTimeoutStreaks
-        ? _timeoutStreaksAfterTurn(
-            previous: movement.state.runtimeState.timeoutStreaksByPlayerId,
-            playerIds: playerIds,
-            skippedPlayerIds: skippedPlayerIds,
-          )
-        : movement.state.runtimeState.timeoutStreaksByPlayerId;
-    final runtimeState = movement.state.runtimeState.copyWith(
-      submittedPlayerIds: const {},
-      timeoutStreaksByPlayerId: timeoutStreaks,
-      intendedAttacks: const [],
-      diplomacy: diplomacy.diplomacy,
-      dominationHoldTurnsByPlayerId: dominationHoldTurns,
-      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-      turnStartedAt: savedAt,
+    final victory = _victoryProgressAfterMovement(
+      request: request,
+      state: movement.state,
+      playerIds: playerIds,
     );
-    final save = request.preserveNonParticipantPlayerStates
-        ? _saveWithNewTurnForPlayers(
-            request.save,
-            playerIds: playerIds,
-            savedAt: savedAt,
-          )
-        : request.save.withNewTurn().copyWith(savedAt: savedAt);
+    return _completeTurn(
+      request: request,
+      economy: economy,
+      movement: movement,
+      diplomacy: diplomacy,
+      victory: victory,
+      combatEvents: priorCombatEvents,
+      playerIds: playerIds,
+      skippedPlayerIds: skippedPlayerIds,
+      savedAt: savedAt,
+    );
+  }
 
+  static PersistentTurnPipelineResult _completeTurn({
+    required PersistentTurnPipelineRequest request,
+    required PersistentTurnEconomyResult economy,
+    required PersistentTurnMovementResult movement,
+    required DiplomacyTurnResolution diplomacy,
+    required _TurnVictoryProgress victory,
+    required List<GameEvent> combatEvents,
+    required List<String> playerIds,
+    required List<String> skippedPlayerIds,
+    required DateTime savedAt,
+  }) {
+    final runtimeState = _runtimeStateAfterTurn(
+      request: request,
+      state: movement.state,
+      diplomacy: diplomacy,
+      victory: victory,
+      playerIds: playerIds,
+      skippedPlayerIds: skippedPlayerIds,
+      savedAt: savedAt,
+    );
     return PersistentTurnPipelineResult(
-      save: save,
+      save: _saveAfterTurn(request, playerIds: playerIds, savedAt: savedAt),
       state: movement.state.copyWith(runtimeState: runtimeState),
       events: [
         for (final playerId in skippedPlayerIds)
           PlayerTimedOutEvent(turn: request.save.turn, playerId: playerId),
         AllPlayersSubmittedEvent(turn: request.save.turn, playerIds: playerIds),
-        ...combat.events,
+        ...combatEvents,
         ...economy.events,
         ...diplomacy.events,
-        ...dominationEvents,
+        ...victory.dominationEvents,
         for (final playerId in playerIds) TurnEndedEvent(playerId: playerId),
       ],
       movementDelta: PersistentTurnMovementDelta(
@@ -236,6 +243,106 @@ abstract final class PersistentTurnPipeline {
         afterUnits: movement.state.units,
       ),
     );
+  }
+
+  static GameRuntimeState _runtimeStateAfterTurn({
+    required PersistentTurnPipelineRequest request,
+    required PersistentGameState state,
+    required DiplomacyTurnResolution diplomacy,
+    required _TurnVictoryProgress victory,
+    required List<String> playerIds,
+    required List<String> skippedPlayerIds,
+    required DateTime savedAt,
+  }) {
+    final previousTimeouts = state.runtimeState.timeoutStreaksByPlayerId;
+    final timeoutStreaks = request.trackTimeoutStreaks
+        ? _timeoutStreaksAfterTurn(
+            previous: previousTimeouts,
+            playerIds: playerIds,
+            skippedPlayerIds: skippedPlayerIds,
+          )
+        : previousTimeouts;
+    return state.runtimeState.copyWith(
+      submittedPlayerIds: const {},
+      timeoutStreaksByPlayerId: timeoutStreaks,
+      intendedAttacks: const [],
+      diplomacy: diplomacy.diplomacy,
+      dominationHoldTurnsByPlayerId: victory.dominationHoldTurns,
+      culturalVictoryHoldTurnsByPlayerId: victory.culturalHoldTurns,
+      turnStartedAt: savedAt,
+    );
+  }
+
+  static DiplomacyTurnResolution _diplomacyAfterMovement({
+    required PersistentGameState state,
+    required List<String> playerIds,
+    required int turn,
+  }) {
+    final discovered = DiplomaticContact.mergeDiscoveredContacts(
+      diplomacy: state.runtimeState.diplomacy,
+      fogOfWar: state.fogOfWar,
+      units: state.units,
+      cities: state.cities,
+      playerIds: playerIds,
+    );
+    return DiplomacyTurnResolver.resolve(
+      diplomacy: discovered,
+      turn: turn,
+      units: state.units,
+      cities: state.cities,
+    );
+  }
+
+  static _TurnVictoryProgress _victoryProgressAfterMovement({
+    required PersistentTurnPipelineRequest request,
+    required PersistentGameState state,
+    required List<String> playerIds,
+  }) {
+    const domination = DominationProgressCalculator();
+    final victoryRules = request.save.matchRules.victory;
+    final previousDomination = state.runtimeState.dominationHoldTurnsByPlayerId;
+    final dominationHoldTurns = domination.advanceHoldTurns(
+      playerIds: playerIds,
+      state: state,
+      mapData: request.mapView,
+      victoryRules: victoryRules,
+      previousHoldTurnsByPlayerId: previousDomination,
+    );
+    final previousCultural =
+        state.runtimeState.culturalVictoryHoldTurnsByPlayerId;
+    return _TurnVictoryProgress(
+      dominationHoldTurns: dominationHoldTurns,
+      dominationEvents: domination.thresholdReachedEvents(
+        playerIds: playerIds,
+        state: state,
+        mapData: request.mapView,
+        victoryRules: victoryRules,
+        previousHoldTurnsByPlayerId: previousDomination,
+        nextHoldTurnsByPlayerId: dominationHoldTurns,
+      ),
+      culturalHoldTurns: victoryRules.culturalEnabled
+          ? CulturalVictoryProgressCalculator.advanceHoldTurns(
+              playerIds: playerIds,
+              state: state,
+              previousHoldTurnsByPlayerId: previousCultural,
+              requiredArtifactCount: victoryRules.culturalRequiredArtifacts,
+            )
+          : previousCultural,
+    );
+  }
+
+  static GameSave _saveAfterTurn(
+    PersistentTurnPipelineRequest request, {
+    required List<String> playerIds,
+    required DateTime savedAt,
+  }) {
+    return request.preserveNonParticipantPlayerStates
+        ? _saveWithNewTurnForPlayers(
+            request.save,
+            playerIds: playerIds,
+            savedAt: savedAt,
+          )
+        : request.save.withNewTurn().copyWith(savedAt: savedAt);
   }
 
   static List<String> _skippedPlayerIdsFor(
@@ -284,6 +391,18 @@ abstract final class PersistentTurnPipeline {
       savedAt: savedAt,
     );
   }
+}
+
+final class _TurnVictoryProgress {
+  _TurnVictoryProgress({
+    required this.dominationHoldTurns,
+    required Iterable<GameEvent> dominationEvents,
+    required this.culturalHoldTurns,
+  }) : dominationEvents = List.unmodifiable(dominationEvents);
+
+  final Map<String, int> dominationHoldTurns;
+  final List<GameEvent> dominationEvents;
+  final Map<String, int> culturalHoldTurns;
 }
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {

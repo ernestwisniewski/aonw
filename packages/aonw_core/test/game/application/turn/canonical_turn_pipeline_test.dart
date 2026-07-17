@@ -10,6 +10,10 @@ void main() {
       'preserves canonical session, interaction, metadata, and offset',
       _preservesCanonicalBoundaries,
     );
+    test(
+      'keeps city combat ordered and suppresses same-turn recovery',
+      _characterizesCityCombatPrefix,
+    );
   });
 }
 
@@ -75,6 +79,73 @@ void _preservesCanonicalBoundaries() {
   expect(delta.afterUnits, hasLength(1));
 }
 
+void _characterizesCityCombatPrefix() {
+  final input = _combatInput();
+  final legacyInput = _adapter.toLegacy(input);
+  final legacyResult = PersistentTurnPipeline.simultaneousFinalize(
+    PersistentTurnPipelineRequest.simultaneousFinalize(
+      save: legacyInput.save,
+      state: legacyInput.state,
+      playerIds: const ['p1', 'p2'],
+      savedAt: _finalizedAt,
+      mapView: _mapData(),
+      ruleset: _deterministicCombatRuleset,
+    ),
+  );
+
+  final result = CanonicalTurnPipeline.simultaneousFinalize(
+    CanonicalTurnPipelineRequest.simultaneousFinalize(
+      snapshot: input,
+      playerIds: const ['p1', 'p2'],
+      savedAt: _finalizedAt,
+      mapView: _mapData(),
+      ruleset: _deterministicCombatRuleset,
+    ),
+  );
+  final expectedSnapshot = _adapter.toCanonical(
+    save: legacyResult.save,
+    state: legacyResult.state,
+    eventLogOffset: input.eventLogOffset,
+  );
+
+  expect(result.snapshot, expectedSnapshot);
+  expect(_eventJson(result.events), _eventJson(legacyResult.events));
+  expect(
+    result.movementDelta?.beforeUnits,
+    legacyResult.movementDelta?.beforeUnits,
+  );
+  expect(
+    result.movementDelta?.afterUnits,
+    legacyResult.movementDelta?.afterUnits,
+  );
+
+  expect(result.events.take(4).map((event) => event.runtimeType), [
+    AllPlayersSubmittedEvent,
+    CityAttackedEvent,
+    CombatResolvedEvent,
+    UnitGainedExperienceEvent,
+  ]);
+  expect(
+    result.events
+        .skip(result.events.length - 2)
+        .map((event) => event.runtimeType),
+    [TurnEndedEvent, TurnEndedEvent],
+  );
+  expect(
+    result.events.whereType<TurnEndedEvent>().map((event) => event.playerId),
+    ['p1', 'p2'],
+  );
+
+  final combat = result.events.whereType<CombatResolvedEvent>().single;
+  expect(combat.outcome.defenderKilled, isFalse);
+  expect(combat.outcome.defenderHpAfter, 8);
+  expect(
+    result.snapshot.domain.cities.single.hitPoints,
+    combat.outcome.defenderHpAfter,
+    reason: 'combat events must remain prior events for same-turn economy',
+  );
+}
+
 CanonicalTurnPipelineRequest _canonicalRequest(CanonicalGameSnapshot snapshot) {
   return CanonicalTurnPipelineRequest.simultaneousFinalize(
     snapshot: snapshot,
@@ -105,6 +176,45 @@ CanonicalGameSnapshot _canonicalInput() {
     save: _save(),
     state: _state(),
     eventLogOffset: 41,
+  );
+}
+
+CanonicalGameSnapshot _combatInput() {
+  return _adapter.toCanonical(
+    save: _save(),
+    state: PersistentGameState(
+      units: [
+        GameUnit(
+          id: 'warrior_p1',
+          ownerPlayerId: 'p1',
+          type: GameUnitType.warrior,
+          name: 'Warrior',
+          col: 0,
+          row: 0,
+        ),
+      ],
+      cities: const [
+        GameCity(
+          id: 'city_p2',
+          ownerPlayerId: 'p2',
+          name: 'City two',
+          center: CityHex(col: 1, row: 0),
+          hitPoints: 10,
+        ),
+      ],
+      runtimeState: const GameRuntimeState(
+        intendedAttacks: [
+          IntendedAttack(
+            attackerUnitId: 'warrior_p1',
+            defenderCol: 1,
+            defenderRow: 0,
+            declaredAtTick: 7,
+            declaringPlayerId: 'p1',
+          ),
+        ],
+      ),
+    ),
+    eventLogOffset: 73,
   );
 }
 
@@ -182,6 +292,29 @@ List<Map<String, dynamic>> _eventJson(Iterable<GameEvent> events) {
 }
 
 const _adapter = LegacyGameSnapshotAdapter();
+const _deterministicCombatRuleset = GameRuleset(
+  city: CityRulesets.standard,
+  combat: CombatRuleset(
+    varianceRange: 0,
+    cityBaseStats: CombatStats(
+      attack: 0,
+      defense: 2,
+      hp: 16,
+      range: 1,
+      mobility: 0,
+    ),
+    unitBaseStats: {
+      GameUnitType.warrior: CombatStats(
+        attack: 4,
+        defense: 3,
+        hp: 10,
+        range: 1,
+        mobility: 1,
+      ),
+    },
+  ),
+  technology: TechnologyRulesets.standard,
+);
 final _startedAt = DateTime.utc(2026, 7, 17, 9);
 final _finalizedAt = DateTime.utc(2026, 7, 17, 10);
 const _players = [

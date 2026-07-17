@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/turn/domain_turn_combat_resolver.dart';
 import 'package:aonw_core/game/domain/turn/persistent_turn_pipeline.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -65,8 +66,17 @@ abstract final class CanonicalTurnPipeline {
   static CanonicalTurnPipelineResult simultaneousFinalize(
     CanonicalTurnPipelineRequest request,
   ) {
-    final legacyInput = _snapshotAdapter.toLegacy(request.snapshot);
-    final legacyResult = PersistentTurnPipeline.simultaneousFinalize(
+    final combat = DomainTurnCombatResolver.resolve(
+      state: request.snapshot.domain,
+      mapTiles: request.mapView.mapTiles,
+      ruleset: request.ruleset.copyWith(
+        paceBalance: request.snapshot.domain.matchRules.paceBalance,
+      ),
+    );
+    final legacyInput = _snapshotAdapter.toLegacy(
+      request.snapshot.copyWith(domain: combat.state),
+    );
+    final legacyResult = PersistentTurnPipeline.simultaneousFinalizeAfterCombat(
       PersistentTurnPipelineRequest.simultaneousFinalize(
         save: legacyInput.save,
         state: legacyInput.state,
@@ -80,6 +90,7 @@ abstract final class CanonicalTurnPipeline {
             request.preserveNonParticipantPlayerStates,
         trackTimeoutStreaks: request.trackTimeoutStreaks,
       ),
+      combatEvents: combat.events,
     );
     return CanonicalTurnPipelineResult(
       snapshot: _snapshotAdapter.toCanonical(

@@ -30,13 +30,21 @@ void main() {
       );
     });
 
-    test('persistent simultaneous-finalization kernel is facade-only', () {
+    test('persistent turn-tail migration seam is facade-only', () {
       final sources = productionDartSources();
       expect(
         _staticMemberReferencePaths(
           sources,
           'PersistentTurnPipeline',
           'simultaneousFinalize',
+        ),
+        isEmpty,
+      );
+      expect(
+        _staticMemberReferencePaths(
+          sources,
+          'PersistentTurnPipeline',
+          'simultaneousFinalizeAfterCombat',
         ),
         {_canonicalPipelinePath},
       );
@@ -74,6 +82,9 @@ void main() {
       const kernelSources = {
         'kernel_tear_off.dart':
             'final f = legacy.PersistentTurnPipeline.simultaneousFinalize;',
+        'tail_alias.dart':
+            'typedef TailAlias = PersistentTurnPipeline; '
+            'final f = TailAlias.simultaneousFinalizeAfterCombat;',
         'request_alias.dart':
             'typedef RequestAlias = PersistentTurnPipelineRequest; '
             'final f = RequestAlias.simultaneousFinalize;',
@@ -85,6 +96,14 @@ void main() {
           'simultaneousFinalize',
         ),
         {'kernel_tear_off.dart'},
+      );
+      expect(
+        _staticMemberReferencePaths(
+          kernelSources,
+          'PersistentTurnPipeline',
+          'simultaneousFinalizeAfterCombat',
+        ),
+        {'tail_alias.dart'},
       );
       expect(
         _staticMemberReferencePaths(
