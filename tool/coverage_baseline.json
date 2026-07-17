@@ -15,12 +15,12 @@
         },
         "domain": {
           "files": {
-            "hit": 266,
-            "found": 276
+            "hit": 276,
+            "found": 286
           },
           "lines": {
-            "hit": 10382,
-            "found": 12539
+            "hit": 10965,
+            "found": 13116
           }
         },
         "map": {
@@ -121,18 +121,18 @@
             "found": 47
           },
           "lines": {
-            "hit": 1798,
-            "found": 2134
+            "hit": 1813,
+            "found": 2139
           }
         },
         "game_domain": {
           "files": {
-            "hit": 66,
-            "found": 68
+            "hit": 68,
+            "found": 70
           },
           "lines": {
-            "hit": 3219,
-            "found": 3619
+            "hit": 3317,
+            "found": 3647
           }
         },
         "game_infrastructure": {
@@ -141,8 +141,8 @@
             "found": 21
           },
           "lines": {
-            "hit": 537,
-            "found": 579
+            "hit": 543,
+            "found": 584
           }
         },
         "game_presentation_engine": {
@@ -167,22 +167,22 @@
         },
         "game_presentation_support": {
           "files": {
-            "hit": 84,
+            "hit": 85,
             "found": 88
           },
           "lines": {
-            "hit": 4090,
+            "hit": 4108,
             "found": 4984
           }
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 300,
-            "found": 305
+            "hit": 302,
+            "found": 307
           },
           "lines": {
-            "hit": 19256,
-            "found": 21877
+            "hit": 19300,
+            "found": 21921
           }
         },
         "l10n": {
@@ -260,12 +260,12 @@
         },
         "multiplayer": {
           "files": {
-            "hit": 40,
-            "found": 43
+            "hit": 42,
+            "found": 45
           },
           "lines": {
-            "hit": 1753,
-            "found": 2394
+            "hit": 1791,
+            "found": 2432
           }
         },
         "observability": {
