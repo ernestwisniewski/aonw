@@ -1460,13 +1460,11 @@
     },
     "server_lib": {
       "files": {
-        "server/lib/src/multiplayer/player_match_view_projector.dart": 706,
         "server/lib/src/multiplayer/server_command_reducer.dart": 747
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector": 632,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 684
       },
       "callableLines": {
@@ -1479,7 +1477,6 @@
         "server/lib/src/multiplayer/match_lifecycle_service_resignation.dart::extension:MatchLifecycleServiceResignation/method:_runningStateAfterParticipantResigned": 72,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 79,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 331,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 165,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 68,
@@ -1497,15 +1494,12 @@
         "server/lib/src/multiplayer/client_message_guard.dart::class:_PayloadBudget/method:visit": 12,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 12,
         "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12,
-        "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_diplomacyFor": 11,
-        "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 16,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 62,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 16
       },
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 16,
-        "server/lib/src/multiplayer/player_match_view_projector.dart::class:PlayerMatchViewProjector/method:_stateFor": 21,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 33
       }
     },
