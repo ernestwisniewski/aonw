@@ -5,22 +5,22 @@
       "layers": {
         "ai": {
           "files": {
-            "hit": 186,
-            "found": 189
+            "hit": 187,
+            "found": 190
           },
           "lines": {
-            "hit": 12199,
-            "found": 13188
+            "hit": 12237,
+            "found": 13214
           }
         },
         "domain": {
           "files": {
-            "hit": 257,
-            "found": 267
+            "hit": 266,
+            "found": 276
           },
           "lines": {
-            "hit": 9997,
-            "found": 12305
+            "hit": 10382,
+            "found": 12539
           }
         },
         "map": {
@@ -49,7 +49,7 @@
             "found": 2
           },
           "lines": {
-            "hit": 100,
+            "hit": 105,
             "found": 125
           }
         }
@@ -264,8 +264,8 @@
             "found": 43
           },
           "lines": {
-            "hit": 1743,
-            "found": 2387
+            "hit": 1753,
+            "found": 2394
           }
         },
         "observability": {
