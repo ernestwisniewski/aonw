@@ -30,21 +30,27 @@ class ReplayTimelineRequest {
 
 final replayTimelineProvider = FutureProvider.autoDispose
     .family<ReplayTimeline, ReplayTimelineRequest>((ref, request) async {
-      final session = await ref.watch(
+      final sessionFuture = ref.watch(
         gameSessionProvider(request.selection, request.saveId).future,
       );
+      final cityRuleset = ref.watch(cityRulesetProvider);
+      final technologyRuleset = ref.watch(technologyRulesetProvider);
+      final stabilityRuleset = ref.watch(stabilityRulesetProvider);
+      final replayStore = ref.watch(replayStoreProvider);
+      final eventLog = ref.watch(eventLogProvider);
+      final session = await sessionFuture;
       final ruleset = GameRuleset.standard().copyWith(
-        city: ref.watch(cityRulesetProvider),
-        technology: ref.watch(technologyRulesetProvider),
-        stability: ref.watch(stabilityRulesetProvider),
+        city: cityRuleset,
+        technology: technologyRuleset,
+        stability: stabilityRuleset,
       );
       final reducer = GameStateReducer(
         mapData: session.mapData.indexedReadView(),
         ruleset: ruleset,
       );
       final service = ReplayService(
-        replayStore: ref.watch(replayStoreProvider),
-        eventLog: ref.watch(eventLogProvider),
+        replayStore: replayStore,
+        eventLog: eventLog,
         commandResolver: LocalCommandResolver(reducer: reducer),
       );
       return service.buildTimeline(request.saveId);

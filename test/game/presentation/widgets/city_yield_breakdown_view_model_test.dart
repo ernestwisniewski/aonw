@@ -240,6 +240,23 @@ void main() {
     expect(viewModel.growthEta.compactLabel(l10n), '2 turns • T4');
     expect(viewModel.rowsMatchTotal, isTrue);
   });
+
+  test('labels every stability modifier band', () {
+    final text = CityYieldBreakdownText(l10n);
+
+    expect(
+      [
+        for (final band in StabilityBand.values)
+          text.stabilityDetail(StabilityPolicy.modifierFor(band)),
+      ],
+      [
+        l10n.stabilityBandContent,
+        l10n.stabilityBandStable,
+        l10n.stabilityBandStrained,
+        l10n.stabilityBandUnrest,
+      ],
+    );
+  });
 }
 
 ({

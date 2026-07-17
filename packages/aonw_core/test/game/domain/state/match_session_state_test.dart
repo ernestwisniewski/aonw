@@ -4,6 +4,11 @@ import 'package:aonw_core/game/domain/state/match_session_state.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('classifies multiplayer participation explicitly', () {
+    expect(GameMode.hotSeat.isMultiplayer, isFalse);
+    expect(GameMode.multiplayer.isMultiplayer, isTrue);
+  });
+
   test('keeps turn, submission, and lifecycle facts independent', () {
     final state = MatchSessionState.snapshot(
       gameMode: GameMode.multiplayer,
