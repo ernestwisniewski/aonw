@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/immutable_snapshot_constructor_guard.dart';
 
-const _snapshotTypes = {'GameCity', 'GameRuntimeState'};
+const _snapshotTypes = {'GameCity', 'GameRuntimeState', 'PersistentGameState'};
 
 void main() {
   test('runtime production state uses immutable snapshot constructors', () {
@@ -16,20 +16,28 @@ GameCity runtimeCity() => GameCity(id: '1');
 GameCity snapshotCity() => GameCity.snapshot(id: '2');
 GameRuntimeState runtimeState() => GameRuntimeState();
 GameRuntimeState snapshotState() => GameRuntimeState.snapshot();
+PersistentGameState persistentState() => PersistentGameState();
+PersistentGameState snapshotPersistentState() => PersistentGameState.snapshot();
 const explicitCity = GameCity(id: '3');
 const implicitCity = [GameCity(id: '4')];
 const explicitState = GameRuntimeState();
 const implicitState = [GameRuntimeState()];
+const explicitPersistentState = PersistentGameState();
+const implicitPersistentState = [PersistentGameState()];
 ''',
       'fixture.dart',
       _snapshotTypes,
     );
 
-    expect(violations, hasLength(2));
+    expect(violations, hasLength(3));
     expect(violations.join('\n'), contains('GameCity runtime construction'));
     expect(
       violations.join('\n'),
       contains('GameRuntimeState runtime construction'),
+    );
+    expect(
+      violations.join('\n'),
+      contains('PersistentGameState runtime construction'),
     );
   });
 
@@ -38,6 +46,7 @@ const implicitState = [GameRuntimeState()];
       '''
 typedef City = GameCity;
 typedef Runtime = GameRuntimeState;
+typedef Persistent = PersistentGameState;
 ''',
       'alias_fixture.dart',
       _snapshotTypes,
@@ -46,14 +55,19 @@ typedef Runtime = GameRuntimeState;
       '''
 typedef CityResult = ({GameCity city});
 typedef RuntimeResult = ({GameRuntimeState state});
+typedef PersistentResult = ({PersistentGameState state});
 ''',
       'record_fixture.dart',
       _snapshotTypes,
     );
 
-    expect(directAliases, hasLength(2));
+    expect(directAliases, hasLength(3));
     expect(directAliases.join('\n'), contains('GameCity type alias'));
     expect(directAliases.join('\n'), contains('GameRuntimeState type alias'));
+    expect(
+      directAliases.join('\n'),
+      contains('PersistentGameState type alias'),
+    );
     expect(containingRecords, isEmpty);
   });
 
@@ -62,8 +76,10 @@ typedef RuntimeResult = ({GameRuntimeState state});
       '''
 GameCity runtimeCity() => GameCity.new(id: '1');
 GameRuntimeState runtimeState() => GameRuntimeState.new();
+PersistentGameState persistentState() => PersistentGameState.new();
 final createCity = GameCity.new;
 final createState = GameRuntimeState.new;
+final createPersistentState = PersistentGameState.new;
 ''',
       'tear_off_fixture.dart',
       _snapshotTypes,
@@ -74,6 +90,10 @@ final createState = GameRuntimeState.new;
     expect(
       violations.join('\n'),
       contains('GameRuntimeState legacy constructor'),
+    );
+    expect(
+      violations.join('\n'),
+      contains('PersistentGameState legacy constructor'),
     );
   });
 }

@@ -64,7 +64,7 @@ class InitialMultiplayerSnapshotFactory {
       players: players,
       gameMode: GameMode.multiplayer,
     );
-    final state = PersistentGameState(
+    final state = PersistentGameState.snapshot(
       playerColors: {
         for (final player in players) player.id: player.colorValue,
       },

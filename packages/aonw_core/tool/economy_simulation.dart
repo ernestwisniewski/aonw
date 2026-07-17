@@ -361,7 +361,7 @@ final _scoreChaserFixtures = [
   _ScoreChaserFixture(
     id: 'research_gap',
     label: 'Research gap',
-    state: PersistentGameState(
+    state: PersistentGameState.snapshot(
       units: const [],
       cities: const [
         GameCity(

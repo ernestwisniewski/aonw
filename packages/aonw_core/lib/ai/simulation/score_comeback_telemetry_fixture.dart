@@ -220,7 +220,7 @@ const _productionGap = _ScoreComebackScenario(
 final _researchGap = _ScoreComebackScenario(
   id: 'research_gap',
   label: 'Research gap',
-  state: PersistentGameState(
+  state: PersistentGameState.snapshot(
     units: [],
     cities: [
       const GameCity(

@@ -149,7 +149,7 @@ final class _StrategyFixture {
 }
 
 GameView _view(MapReadView mapView) => GameView.fromPersistentState(
-  PersistentGameState(
+  PersistentGameState.snapshot(
     playerGold: const {_playerId: 12, _enemyId: 8},
     units: [
       GameUnit.produced(

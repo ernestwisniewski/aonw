@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/state.dart';
 
 extension GameStatePersistence on GameState {
   PersistentGameState toPersistentState() {
-    return PersistentGameState(
+    return PersistentGameState.snapshot(
       playerColors: playerColors,
       playerCountries: playerCountries,
       playerGold: playerGold,

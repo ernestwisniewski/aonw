@@ -8,7 +8,13 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
-class PersistentGameState {
+part 'persistent_game_state_codec.dart';
+part 'persistent_game_state_copying.dart';
+part 'persistent_game_state_value.dart';
+
+final class PersistentGameState with _PersistentGameStateCopying {
+  /// Legacy const constructor retained for compile-time fixtures.
+  /// Runtime code must use [PersistentGameState.snapshot].
   const PersistentGameState({
     this.playerColors = const {},
     this.playerCountries = const {},
@@ -23,10 +29,52 @@ class PersistentGameState {
     this.research = ResearchState.empty,
     this.runtimeState = GameRuntimeState.empty,
     this.wonderRegistry = WonderRegistry.empty,
-  });
+  }) : _isImmutableSnapshot = false;
+
+  PersistentGameState.snapshot({
+    Map<String, int> playerColors = const {},
+    Map<String, PlayerCountry> playerCountries = const {},
+    Map<String, int> playerGold = const {},
+    Map<String, int> playerWarWeariness = const {},
+    Map<String, int> playerStabilityNet = const {},
+    List<GameUnit> units = const [],
+    List<GameCity> cities = const [],
+    List<WorldArtifact> artifacts = const [],
+    List<FieldImprovement> fieldImprovements = const [],
+    this.fogOfWar = FogOfWarState.empty,
+    this.research = ResearchState.empty,
+    GameRuntimeState runtimeState = GameRuntimeState.empty,
+    this.wonderRegistry = WonderRegistry.empty,
+  }) : playerColors = _immutablePersistentMap(playerColors),
+       playerCountries = _immutablePersistentMap(playerCountries),
+       playerGold = _immutablePersistentMap(playerGold),
+       playerWarWeariness = _immutablePersistentMap(playerWarWeariness),
+       playerStabilityNet = _immutablePersistentMap(playerStabilityNet),
+       units = _immutablePersistentList(units),
+       cities = _immutablePersistentCities(cities),
+       artifacts = _immutablePersistentList(artifacts),
+       fieldImprovements = _immutablePersistentList(fieldImprovements),
+       runtimeState = runtimeState.immutableSnapshot(),
+       _isImmutableSnapshot = true;
+
+  const PersistentGameState._owned({
+    this.playerColors = const {},
+    this.playerCountries = const {},
+    this.playerGold = const {},
+    this.playerWarWeariness = const {},
+    this.playerStabilityNet = const {},
+    this.units = const [],
+    this.cities = const [],
+    this.artifacts = const [],
+    this.fieldImprovements = const [],
+    this.fogOfWar = FogOfWarState.empty,
+    this.research = ResearchState.empty,
+    this.runtimeState = GameRuntimeState.empty,
+    this.wonderRegistry = WonderRegistry.empty,
+  }) : _isImmutableSnapshot = true;
 
   factory PersistentGameState.fromJson(Map<String, dynamic> json) {
-    return PersistentGameState(
+    return PersistentGameState.snapshot(
       playerColors: _intMap(json['playerColors'], 'playerColors'),
       playerCountries: _countryMap(json['playerCountries'], 'playerCountries'),
       playerGold: _intMap(json['playerGold'], 'playerGold'),
@@ -88,19 +136,34 @@ class PersistentGameState {
     );
   }
 
+  @override
   final Map<String, int> playerColors;
+  @override
   final Map<String, PlayerCountry> playerCountries;
+  @override
   final Map<String, int> playerGold;
+  @override
   final Map<String, int> playerWarWeariness;
+  @override
   final Map<String, int> playerStabilityNet;
+  @override
   final List<GameUnit> units;
+  @override
   final List<GameCity> cities;
+  @override
   final List<WorldArtifact> artifacts;
+  @override
   final List<FieldImprovement> fieldImprovements;
+  @override
   final FogOfWarState fogOfWar;
+  @override
   final ResearchState research;
+  @override
   final GameRuntimeState runtimeState;
+  @override
   final WonderRegistry wonderRegistry;
+  @override
+  final bool _isImmutableSnapshot;
 
   Set<String> get knownPlayerIds => <String>{
     ...playerColors.keys,
@@ -123,13 +186,13 @@ class PersistentGameState {
   }..removeWhere((playerId) => playerId.isEmpty);
 
   Map<String, dynamic> toJson() => {
-    'playerColors': playerColors,
+    'playerColors': {...playerColors},
     'playerCountries': playerCountries.map(
       (playerId, country) => MapEntry(playerId, country.name),
     ),
-    'playerGold': playerGold,
-    'playerWarWeariness': playerWarWeariness,
-    'playerStabilityNet': playerStabilityNet,
+    'playerGold': {...playerGold},
+    'playerWarWeariness': {...playerWarWeariness},
+    'playerStabilityNet': {...playerStabilityNet},
     'units': units.map((unit) => unit.toJson()).toList(),
     'cities': cities.map((city) => city.toJson()).toList(),
     'artifacts': artifacts.map((artifact) => artifact.toJson()).toList(),
@@ -147,54 +210,10 @@ class PersistentGameState {
     return copyWith(runtimeState: runtimeState.withoutClientInteractionState());
   }
 
-  PersistentGameState copyWith({
-    Map<String, int>? playerColors,
-    Map<String, PlayerCountry>? playerCountries,
-    Map<String, int>? playerGold,
-    Map<String, int>? playerWarWeariness,
-    Map<String, int>? playerStabilityNet,
-    List<GameUnit>? units,
-    List<GameCity>? cities,
-    List<WorldArtifact>? artifacts,
-    List<FieldImprovement>? fieldImprovements,
-    FogOfWarState? fogOfWar,
-    ResearchState? research,
-    GameRuntimeState? runtimeState,
-    WonderRegistry? wonderRegistry,
-  }) {
-    return PersistentGameState(
-      playerColors: playerColors ?? this.playerColors,
-      playerCountries: playerCountries ?? this.playerCountries,
-      playerGold: playerGold ?? this.playerGold,
-      playerWarWeariness: playerWarWeariness ?? this.playerWarWeariness,
-      playerStabilityNet: playerStabilityNet ?? this.playerStabilityNet,
-      units: units ?? this.units,
-      cities: cities ?? this.cities,
-      artifacts: artifacts ?? this.artifacts,
-      fieldImprovements: fieldImprovements ?? this.fieldImprovements,
-      fogOfWar: fogOfWar ?? this.fogOfWar,
-      research: research ?? this.research,
-      runtimeState: runtimeState ?? this.runtimeState,
-      wonderRegistry: wonderRegistry ?? this.wonderRegistry,
-    );
-  }
-
   @override
   bool operator ==(Object other) =>
-      other is PersistentGameState &&
-      mapEquals(other.playerColors, playerColors) &&
-      mapEquals(other.playerCountries, playerCountries) &&
-      mapEquals(other.playerGold, playerGold) &&
-      mapEquals(other.playerWarWeariness, playerWarWeariness) &&
-      mapEquals(other.playerStabilityNet, playerStabilityNet) &&
-      listEquals(other.units, units) &&
-      listEquals(other.cities, cities) &&
-      listEquals(other.artifacts, artifacts) &&
-      listEquals(other.fieldImprovements, fieldImprovements) &&
-      other.fogOfWar == fogOfWar &&
-      other.research == research &&
-      other.runtimeState == runtimeState &&
-      other.wonderRegistry == wonderRegistry;
+      identical(this, other) ||
+      other is PersistentGameState && _samePersistentState(this, other);
 
   @override
   int get hashCode => Object.hash(
@@ -215,87 +234,5 @@ class PersistentGameState {
 
   PlayerCountry countryForPlayer(String playerId) {
     return playerCountries[playerId] ?? PlayerCountry.poland;
-  }
-
-  static Map<String, int> _intMap(Object? value, String field) {
-    if (value == null) return const {};
-    if (value is! Map<Object?, Object?>) {
-      throw ArgumentError.value(
-        value,
-        'PersistentGameState.$field',
-        'Expected a JSON object',
-      );
-    }
-    return {
-      for (final entry in value.entries)
-        if (entry.key case final String key when key.isNotEmpty)
-          key: switch (entry.value) {
-            final int number => number,
-            final num number => number.toInt(),
-            final invalid => throw ArgumentError.value(
-              invalid,
-              'PersistentGameState.$field.$key',
-              'Expected a number',
-            ),
-          },
-    };
-  }
-
-  static Map<String, PlayerCountry> _countryMap(Object? value, String field) {
-    if (value == null) return const {};
-    if (value is! Map<Object?, Object?>) {
-      throw ArgumentError.value(
-        value,
-        'PersistentGameState.$field',
-        'Expected a JSON object',
-      );
-    }
-    return {
-      for (final entry in value.entries)
-        if (entry.key case final String key when key.isNotEmpty)
-          key: _countryFromJson(entry.value, '$field.$key'),
-    };
-  }
-
-  static PlayerCountry _countryFromJson(Object? value, String field) {
-    if (value is! String || value.isEmpty) {
-      throw ArgumentError.value(
-        value,
-        'PersistentGameState.$field',
-        'Expected a non-empty String',
-      );
-    }
-    for (final country in PlayerCountry.values) {
-      if (country.name == value) return country;
-    }
-    throw ArgumentError.value(
-      value,
-      'PersistentGameState.$field',
-      'Unknown country',
-    );
-  }
-
-  static List<Map<String, dynamic>> _jsonList(Object? value, String field) {
-    if (value == null) return const [];
-    if (value is! List) {
-      throw ArgumentError.value(
-        value,
-        'PersistentGameState.$field',
-        'Expected a JSON list',
-      );
-    }
-    return [
-      for (final entry in value)
-        if (entry is Map<String, dynamic>)
-          entry
-        else if (entry is Map<Object?, Object?>)
-          Map<String, dynamic>.from(entry)
-        else
-          throw ArgumentError.value(
-            entry,
-            'PersistentGameState.$field[]',
-            'Expected a JSON object',
-          ),
-    ];
   }
 }

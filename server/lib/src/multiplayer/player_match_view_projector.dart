@@ -487,7 +487,7 @@ final class PlayerMatchViewProjector {
         else if (visibility.canSeeDynamicAt(city.center.col, city.center.row))
           _visibleOpponentCity(city, visibility),
     ];
-    return PersistentGameState(
+    return PersistentGameState.snapshot(
       playerColors: Map<String, int>.from(canonical.playerColors),
       playerCountries: Map<String, PlayerCountry>.from(
         canonical.playerCountries,

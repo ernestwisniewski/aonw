@@ -63,26 +63,27 @@ class SaveSnapshot {
     required PersistentGameState state,
     int eventLogOffset = 0,
   }) {
+    final snapshot = state.immutableSnapshot();
     return SaveSnapshot(
       save: save,
-      playerColors: state.playerColors,
-      playerCountries: _withSaveCountryDefaults(save, state.playerCountries),
-      playerGold: state.playerGold,
-      playerWarWeariness: state.playerWarWeariness,
-      playerStabilityNet: state.playerStabilityNet,
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      wonderRegistry: state.wonderRegistry,
-      runtimeState: state.runtimeState,
+      playerColors: snapshot.playerColors,
+      playerCountries: _withSaveCountryDefaults(save, snapshot.playerCountries),
+      playerGold: snapshot.playerGold,
+      playerWarWeariness: snapshot.playerWarWeariness,
+      playerStabilityNet: snapshot.playerStabilityNet,
+      units: snapshot.units,
+      cities: snapshot.cities,
+      artifacts: snapshot.artifacts,
+      fieldImprovements: snapshot.fieldImprovements,
+      fogOfWar: snapshot.fogOfWar,
+      research: snapshot.research,
+      wonderRegistry: snapshot.wonderRegistry,
+      runtimeState: snapshot.runtimeState,
       eventLogOffset: eventLogOffset,
     );
   }
 
-  PersistentGameState get persistentState => PersistentGameState(
+  PersistentGameState get persistentState => PersistentGameState.snapshot(
     playerColors: playerColors,
     playerCountries: effectivePlayerCountries,
     playerGold: playerGold,

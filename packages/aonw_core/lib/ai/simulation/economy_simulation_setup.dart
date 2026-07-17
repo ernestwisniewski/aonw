@@ -8,7 +8,7 @@ abstract final class _EconomySimulationSetup {
   }) {
     final players = [player, ...opponents];
     final units = StartingUnits.unitsForPlayers(players, mapData: mapView);
-    final state = PersistentGameState(
+    final state = PersistentGameState.snapshot(
       playerColors: {
         for (final simulationPlayer in players)
           simulationPlayer.id: simulationPlayer.colorValue,

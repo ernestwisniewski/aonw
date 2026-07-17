@@ -305,7 +305,7 @@ class _MultiTurnReplayRunner {
     final ruleset = GameRuleset.defaults.copyWith(
       paceBalance: save.matchRules.paceBalance,
     );
-    final persistent = PersistentGameState(
+    final persistent = PersistentGameState.snapshot(
       playerColors: state.playerColors,
       playerCountries: state.playerCountries,
       playerGold: state.playerGold,

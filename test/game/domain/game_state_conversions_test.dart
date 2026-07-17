@@ -18,6 +18,18 @@ void main() {
       expect(projected.activePlayerCanAct, isFalse);
     });
 
+    test('projection does not cache a legacy mutable source', () {
+      final playerGold = <String, int>{'player_1': 1};
+      final state = GameState(playerGold: playerGold);
+
+      final beforeMutation = state.toPersistentState();
+      playerGold['player_1'] = 2;
+      final afterMutation = state.toPersistentState();
+
+      expect(beforeMutation.playerGold, {'player_1': 1});
+      expect(afterMutation.playerGold, {'player_1': 2});
+    });
+
     test(
       'copyWithPersistentState preserves lifecycle but drops interaction fields',
       () {

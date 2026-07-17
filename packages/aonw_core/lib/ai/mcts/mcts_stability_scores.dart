@@ -12,7 +12,7 @@ abstract final class MctsStabilityScores {
     final forPlayerId = view.forPlayerId;
     if (forPlayerId.isEmpty) return 0.0;
     final ruleset = context.ruleset.stability;
-    final projectedState = PersistentGameState(
+    final projectedState = PersistentGameState.snapshot(
       playerWarWeariness: {forPlayerId: view.ownWarWeariness},
       cities: state.ownCities,
       artifacts: view.artifacts,

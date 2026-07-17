@@ -55,6 +55,18 @@ void main() {
       });
     });
 
+    test('persistent projection does not cache a mutable legacy source', () {
+      final playerGold = <String, int>{'p1': 1};
+      final snapshot = SaveSnapshot(save: _save(), playerGold: playerGold);
+
+      final beforeMutation = snapshot.persistentState;
+      playerGold['p1'] = 2;
+      final afterMutation = snapshot.persistentState;
+
+      expect(beforeMutation.playerGold, {'p1': 1});
+      expect(afterMutation.playerGold, {'p1': 2});
+    });
+
     test('builds snapshot from persistent state', () {
       final runtimeState = GameRuntimeState(
         submittedPlayerIds: const {'p1'},

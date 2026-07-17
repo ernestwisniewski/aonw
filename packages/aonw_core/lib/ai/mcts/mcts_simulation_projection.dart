@@ -14,7 +14,7 @@ final class MctsSimulationProjection {
     required Iterable<GameCity> cities,
     required ResearchState research,
   }) {
-    return PersistentGameState(
+    return PersistentGameState.snapshot(
       playerGold: {view.forPlayerId: view.ownGold},
       playerWarWeariness: {view.forPlayerId: view.ownWarWeariness},
       playerStabilityNet: {view.forPlayerId: view.ownStabilityNet},
