@@ -367,7 +367,6 @@
         "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 16,
         "packages/aonw_core/lib/game/domain/stability/stability_inputs.dart::class:StabilityInputs/operator:==": 14,
         "packages/aonw_core/lib/game/domain/state/persistent_game_state.dart::class:PersistentGameState/constructor:fromJson": 12,
-        "packages/aonw_core/lib/game/domain/state/persistent_game_state.dart::class:PersistentGameState/operator:==": 14,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 15,
         "packages/aonw_core/lib/game/domain/technology/technology_definition.dart::class:TechnologyDefinition/operator:==": 12,
         "packages/aonw_core/lib/game/domain/technology/technology_effect_summary.dart::class:TechnologyEffectSummary/constructor:forPlayer": 13,
