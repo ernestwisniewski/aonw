@@ -61,6 +61,10 @@ abstract class GameInteractionState with _$GameInteractionState {
 abstract class GameState with _$GameState {
   const GameState._();
 
+  static final Expando<GameRuntimeState> _runtimeStateSnapshots = Expando(
+    'GameState.runtimeState',
+  );
+
   const factory GameState({
     @Default({}) Map<String, int> playerColors,
     @Default({}) Map<String, PlayerCountry> playerCountries,
@@ -194,19 +198,25 @@ abstract class GameState with _$GameState {
     return interaction.mode;
   }
 
-  GameRuntimeState get runtimeState => GameRuntimeState(
-    cityFoundingDraft: cityFoundingDraft,
-    pendingAction: pendingAction,
-    submittedPlayerIds: submittedPlayerIds,
-    timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
-    afkPlayerIds: afkPlayerIds,
-    kickedPlayerIds: kickedPlayerIds,
-    intendedAttacks: intendedAttacks,
-    diplomacy: diplomacy,
-    resourceTradeAgreements: resourceTradeAgreements,
-    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
-    culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
-    mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
-    turnStartedAt: turnStartedAt,
-  );
+  GameRuntimeState get runtimeState {
+    final cached = _runtimeStateSnapshots[this];
+    if (cached != null) return cached;
+    final snapshot = GameRuntimeState.snapshot(
+      cityFoundingDraft: cityFoundingDraft,
+      pendingAction: pendingAction,
+      submittedPlayerIds: submittedPlayerIds,
+      timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+      afkPlayerIds: afkPlayerIds,
+      kickedPlayerIds: kickedPlayerIds,
+      intendedAttacks: intendedAttacks,
+      diplomacy: diplomacy,
+      resourceTradeAgreements: resourceTradeAgreements,
+      dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
+      turnStartedAt: turnStartedAt,
+    );
+    _runtimeStateSnapshots[this] = snapshot;
+    return snapshot;
+  }
 }

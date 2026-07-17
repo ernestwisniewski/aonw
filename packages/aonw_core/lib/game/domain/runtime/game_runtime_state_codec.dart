@@ -23,7 +23,7 @@ Set<String> _readStringSet(Object? value, String field) {
       'Expected a non-empty String',
     );
   }
-  return Set.unmodifiable(result);
+  return result;
 }
 
 Map<String, int> _readNonNegativeIntMap(Object? value, String field) {
@@ -63,7 +63,7 @@ Map<String, int> _readNonNegativeIntMap(Object? value, String field) {
     }
     if (intValue > 0) result[key] = intValue;
   }
-  return Map.unmodifiable(result);
+  return result;
 }
 
 Map<String, int> _sortedIntMap(Map<String, int> map) {
@@ -81,7 +81,7 @@ Map<String, MapObjectiveHoldState> _readMapObjectiveHoldStates(Object? value) {
   )) {
     result[hold.objectiveId] = hold;
   }
-  return Map.unmodifiable(result);
+  return result;
 }
 
 List<Map<String, dynamic>> _sortedMapObjectiveHoldStates(
@@ -125,9 +125,7 @@ List<T> _readJsonObjectList<T>(
       'Expected a JSON list',
     );
   }
-  return List.unmodifiable([
-    for (final entry in value) mapObject(_readJsonObject(entry, field)),
-  ]);
+  return [for (final entry in value) mapObject(_readJsonObject(entry, field))];
 }
 
 Map<String, dynamic> _readJsonObject(Object? value, String field) {

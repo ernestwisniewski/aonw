@@ -537,7 +537,7 @@ final class PlayerMatchViewProjector {
     String playerId,
     Set<String> knownPlayerIds,
   ) {
-    return GameRuntimeState(
+    return GameRuntimeState.snapshot(
       cityFoundingDraft: canonical.cityFoundingDraft?.ownerPlayerId == playerId
           ? canonical.cityFoundingDraft
           : null,

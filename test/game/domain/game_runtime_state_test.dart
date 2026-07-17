@@ -201,6 +201,7 @@ void main() {
 
       expect(state.hasSubmittedTurn('player_1'), isTrue);
       expect(state.runtimeState.hasSubmitted('player_1'), isTrue);
+      expect(state.runtimeState, same(state.runtimeState));
     });
 
     test('runtimeState getter exposes intended attacks', () {

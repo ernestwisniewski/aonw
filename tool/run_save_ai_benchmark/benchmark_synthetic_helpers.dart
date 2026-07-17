@@ -259,7 +259,7 @@ SaveSnapshot _syntheticDiplomacySnapshot(MapData mapData) {
       ),
     ],
     fogOfWar: _syntheticVisibleFog(mapData, players),
-    runtimeState: GameRuntimeState(
+    runtimeState: GameRuntimeState.snapshot(
       diplomacy: diplomacy,
       turnStartedAt: savedAt,
     ),
@@ -345,7 +345,7 @@ SaveSnapshot _syntheticFortifiedWakeUpSnapshot(MapData mapData) {
       ),
     ],
     fogOfWar: _syntheticVisibleFog(mapData, players),
-    runtimeState: GameRuntimeState(
+    runtimeState: GameRuntimeState.snapshot(
       diplomacy: diplomacy,
       turnStartedAt: savedAt,
     ),

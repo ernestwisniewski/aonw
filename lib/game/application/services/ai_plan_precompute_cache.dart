@@ -94,7 +94,7 @@ class AiTurnPlanPrecomputeKey {
   }
 
   static int _worldStateHash(SaveSnapshot snapshot) {
-    final tacticalRuntimeState = GameRuntimeState(
+    final tacticalRuntimeState = GameRuntimeState.snapshot(
       intendedAttacks: snapshot.runtimeState.intendedAttacks,
     );
     return snapshot.persistentState

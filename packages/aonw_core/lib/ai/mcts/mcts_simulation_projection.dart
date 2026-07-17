@@ -24,7 +24,7 @@ final class MctsSimulationProjection {
       fieldImprovements: view.ownImprovements,
       fogOfWar: view.visibility.state,
       research: research,
-      runtimeState: GameRuntimeState(
+      runtimeState: GameRuntimeState.snapshot(
         diplomacy: view.diplomacy,
         mapObjectiveHoldStatesByObjectiveId:
             view.mapObjectiveHoldStatesByObjectiveId,

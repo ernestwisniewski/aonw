@@ -110,7 +110,7 @@ class WebGameRepository implements GameRepository {
       units: units,
       artifacts: artifacts,
       fogOfWar: fogOfWar,
-      runtimeState: GameRuntimeState(diplomacy: diplomacy),
+      runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
     );
 
     await snapshotStore.save(
