@@ -6,6 +6,7 @@ import 'persistence_workload.dart';
 import 'renderer_frame_workload.dart';
 import 'replay_workload.dart';
 import 'report_builder.dart';
+import 'turn_finalization_workload.dart';
 
 Future<PerformanceReportDocument> runPerformanceSuite() async {
   final persistence = await runPersistenceWorkload();
@@ -21,5 +22,6 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
     persistence,
     ...runRendererFrameWorkloads(),
     replay,
+    runTurnFinalizationWorkload(),
   ]);
 }
