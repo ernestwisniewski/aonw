@@ -34,7 +34,7 @@ enum PlayerCountry {
 
 /// Immutable player value object. Color is assigned automatically by index
 /// from [palette], so players cannot choose their own color.
-class Player {
+final class Player {
   const Player({
     required this.id,
     required this.name,

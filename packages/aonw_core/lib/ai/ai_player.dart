@@ -4,7 +4,7 @@ import 'package:aonw_core/ai/ai_strategy_id.dart';
 import 'package:aonw_core/ai/civilization/civilization_profile.dart';
 import 'package:aonw_core/util/wire_json.dart';
 
-class AiPlayer {
+final class AiPlayer {
   final AiStrategyId strategyId;
   final AiDifficulty difficulty;
   final AiPersona persona;
