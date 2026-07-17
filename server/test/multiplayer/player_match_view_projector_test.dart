@@ -282,7 +282,7 @@ void main() {
         saveDecodes += 1;
         return GameSave.fromJson(json);
       },
-      decodeState: (json) {
+      canonicalStateDecoder: (json) {
         stateDecodes += 1;
         return PersistentGameState.fromJson(json);
       },
