@@ -1,6 +1,7 @@
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -60,11 +61,11 @@ PerformanceCaseResult runTurnFinalizationWorkload({
 }
 
 void _validateInputs(List<int> entityCounts, int timingSamples) {
-  if (entityCounts.isEmpty || entityCounts.any((count) => count < 1)) {
+  if (entityCounts.isEmpty || entityCounts.any((count) => count < 2)) {
     throw ArgumentError.value(
       entityCounts,
       'entityCounts',
-      'Must contain positive values.',
+      'Must contain values of at least two for the combat fixture.',
     );
   }
   if (entityCounts.toSet().length != entityCounts.length) {
@@ -117,8 +118,23 @@ Map<String, Object?> _stableResult(
   final eventJson = [
     for (final event in result.events) GameEventSerializer.toJson(event),
   ];
+  final combatResolvedEvents = result.events
+      .whereType<CombatResolvedEvent>()
+      .toList(growable: false);
+  if (combatResolvedEvents.length != 1) {
+    throw StateError(
+      'Turn finalization did not resolve exactly one combat event at '
+      '${fixture.entityCount} entities.',
+    );
+  }
+  final combat = combatResolvedEvents.single;
   final movementDelta = result.movementDelta;
   return {
+    'combatAttackerKilled': combat.outcome.attackerKilled,
+    'combatAttackerUnitId': combat.attackerUnitId,
+    'combatDefenderKilled': combat.outcome.defenderKilled,
+    'combatDefenderUnitId': combat.defenderUnitId,
+    'combatResolvedEvents': combatResolvedEvents.length,
     'eventCount': result.events.length,
     'inputArtifacts': fixture.state.artifacts.length,
     'inputEntities': fixture.entityCount,
@@ -223,6 +239,15 @@ final class _TurnFinalizationFixture {
         artifacts: artifacts,
         runtimeState: GameRuntimeState.snapshot(
           submittedPlayerIds: const {'player_1', 'player_2'},
+          intendedAttacks: const [
+            IntendedAttack(
+              attackerUnitId: 'unit_0',
+              defenderCol: 1,
+              defenderRow: 0,
+              declaredAtTick: 1,
+              declaringPlayerId: 'player_1',
+            ),
+          ],
           turnStartedAt: DateTime.utc(2026, 7, 17, 11),
         ),
       ),

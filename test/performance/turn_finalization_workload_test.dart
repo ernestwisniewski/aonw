@@ -23,6 +23,11 @@ void main() {
     expect(sample['outputUnits'], 2);
     expect(sample['inputArtifacts'], 10);
     expect(sample['outputArtifacts'], 10);
+    expect(sample['combatResolvedEvents'], 1);
+    expect(sample['combatAttackerUnitId'], 'unit_0');
+    expect(sample['combatDefenderUnitId'], 'unit_1');
+    expect(sample['combatAttackerKilled'], isFalse);
+    expect(sample['combatDefenderKilled'], isFalse);
     expect(sample['eventCount'], greaterThan(0));
     expect(sample['inputOffset'], 31);
     expect(sample['outputOffset'], 31);
