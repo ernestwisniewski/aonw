@@ -71,7 +71,9 @@ void main() {
       expect(process.saveId, save.id);
       expect(process.playerId, 'ai_1');
       expect(process.useCase.repository, same(repository));
-      expect(process.useCase.mapData, same(mapData));
+      expect(process.useCase.mapData, isNot(same(mapData)));
+      expect(process.useCase.mapData.tileCount, mapData.tiles.length);
+      expect(process.useCase.mapData.tileViews, orderedEquals(mapData.tiles));
       expect(process.useCase.precomputeCache, same(precomputeCache));
       expect(
         process.useCase.strategicPlanProvider,
