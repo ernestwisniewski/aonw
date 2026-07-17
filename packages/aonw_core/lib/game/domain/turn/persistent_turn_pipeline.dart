@@ -139,22 +139,6 @@ abstract final class PersistentTurnPipeline {
     );
   }
 
-  /// Completes simultaneous finalization after combat has already resolved.
-  ///
-  /// This is a temporary migration seam for the canonical combat prefix. The
-  /// request state must contain the combat result, while [combatEvents] retain
-  /// their original ordering and remain prior events for economy processing.
-  static PersistentTurnPipelineResult simultaneousFinalizeAfterCombat(
-    PersistentTurnPipelineRequest request, {
-    required Iterable<GameEvent> combatEvents,
-  }) {
-    return _simultaneousFinalizeAfterCombat(
-      request,
-      state: request.state,
-      combatEvents: combatEvents,
-    );
-  }
-
   static PersistentTurnPipelineResult _simultaneousFinalizeAfterCombat(
     PersistentTurnPipelineRequest request, {
     required PersistentGameState state,

@@ -14,6 +14,10 @@ void main() {
       'keeps city combat ordered and suppresses same-turn recovery',
       _characterizesCityCombatPrefix,
     );
+    test(
+      'captures the exact post-economy movement boundary',
+      _characterizesMovementDelta,
+    );
   });
 }
 
@@ -146,6 +150,34 @@ void _characterizesCityCombatPrefix() {
   );
 }
 
+void _characterizesMovementDelta() {
+  final input = _movementInput();
+
+  final result = CanonicalTurnPipeline.simultaneousFinalize(
+    CanonicalTurnPipelineRequest.simultaneousFinalize(
+      snapshot: input,
+      playerIds: const ['p1', 'p2'],
+      savedAt: _finalizedAt,
+      mapView: _mapData(),
+    ),
+  );
+
+  final delta = result.movementDelta!;
+  expect(delta.beforeUnits, hasLength(1));
+  expect(delta.beforeUnits.single.occupies(0, 0), isTrue);
+  expect(delta.beforeUnits.single.movementPoints, 0);
+  expect(delta.beforeUnits.single.queuedPath?.targetCol, 2);
+  expect(delta.afterUnits, hasLength(1));
+  expect(delta.afterUnits.single.occupies(2, 0), isTrue);
+  expect(delta.afterUnits.single.movementPoints, 3);
+  expect(delta.afterUnits.single.queuedPath, isNull);
+  expect(result.events.map((event) => event.runtimeType), [
+    AllPlayersSubmittedEvent,
+    TurnEndedEvent,
+    TurnEndedEvent,
+  ]);
+}
+
 CanonicalTurnPipelineRequest _canonicalRequest(CanonicalGameSnapshot snapshot) {
   return CanonicalTurnPipelineRequest.simultaneousFinalize(
     snapshot: snapshot,
@@ -215,6 +247,27 @@ CanonicalGameSnapshot _combatInput() {
       ),
     ),
     eventLogOffset: 73,
+  );
+}
+
+CanonicalGameSnapshot _movementInput() {
+  final commander = GameUnit.startingCommander(ownerPlayerId: 'p1')
+      .copyWith(movementPoints: 0)
+      .copyWithQueuedPath(
+        QueuedMovePath(
+          targetCol: 2,
+          targetRow: 0,
+          steps: const [
+            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+            UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+          ],
+        ),
+      );
+  return _adapter.toCanonical(
+    save: _save(),
+    state: PersistentGameState(units: [commander]),
+    eventLogOffset: 91,
   );
 }
 

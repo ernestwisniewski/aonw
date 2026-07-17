@@ -1,10 +1,11 @@
+import 'package:aonw_core/game/application/turn/canonical_turn_suffix.dart';
 import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_combat_resolver.dart';
-import 'package:aonw_core/game/domain/turn/persistent_turn_pipeline.dart';
+import 'package:aonw_core/game/domain/turn/persistent_turn_economy_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -20,8 +21,10 @@ final class CanonicalTurnPipelineRequest {
     Iterable<String> skippedPlayerIds = const [],
     this.preserveNonParticipantPlayerStates = false,
     this.trackTimeoutStreaks = false,
-  }) : playerIds = List.unmodifiable(playerIds),
-       skippedPlayerIds = List.unmodifiable(skippedPlayerIds);
+  }) : playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
+       skippedPlayerIds = List.unmodifiable(
+         _orderedDistinctPlayerIds(skippedPlayerIds),
+       );
 
   final CanonicalGameSnapshot snapshot;
   final List<String> playerIds;
@@ -66,48 +69,62 @@ abstract final class CanonicalTurnPipeline {
   static CanonicalTurnPipelineResult simultaneousFinalize(
     CanonicalTurnPipelineRequest request,
   ) {
+    final ruleset = request.ruleset.copyWith(
+      paceBalance: request.snapshot.domain.matchRules.paceBalance,
+    );
     final combat = DomainTurnCombatResolver.resolve(
       state: request.snapshot.domain,
       mapTiles: request.mapView.mapTiles,
-      ruleset: request.ruleset.copyWith(
-        paceBalance: request.snapshot.domain.matchRules.paceBalance,
-      ),
+      ruleset: ruleset,
     );
     final legacyInput = _snapshotAdapter.toLegacy(
       request.snapshot.copyWith(domain: combat.state),
     );
-    final legacyResult = PersistentTurnPipeline.simultaneousFinalizeAfterCombat(
-      PersistentTurnPipelineRequest.simultaneousFinalize(
-        save: legacyInput.save,
-        state: legacyInput.state,
+    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
+      state: legacyInput.state,
+      playerIds: request.playerIds,
+      mapData: request.mapView,
+      ruleset: ruleset,
+      fogOfWarService: request.fogOfWarService,
+      priorEvents: combat.events,
+      mapObjectives: request.mapView.objectives,
+      turn: request.snapshot.domain.turn,
+    );
+    final postEconomySnapshot = _snapshotAdapter.toCanonical(
+      save: legacyInput.save,
+      state: economy.state,
+      eventLogOffset: request.snapshot.eventLogOffset,
+    );
+    final suffix = CanonicalTurnSuffix.finalizeAfterEconomy(
+      CanonicalTurnSuffixRequest(
+        snapshot: postEconomySnapshot,
         playerIds: request.playerIds,
+        skippedPlayerIds: request.skippedPlayerIds,
         savedAt: request.savedAt,
         mapView: request.mapView,
-        ruleset: request.ruleset,
+        combatEvents: combat.events,
+        economyEvents: economy.events,
         fogOfWarService: request.fogOfWarService,
-        skippedPlayerIds: request.skippedPlayerIds,
         preserveNonParticipantPlayerStates:
             request.preserveNonParticipantPlayerStates,
         trackTimeoutStreaks: request.trackTimeoutStreaks,
       ),
-      combatEvents: combat.events,
     );
     return CanonicalTurnPipelineResult(
-      snapshot: _snapshotAdapter.toCanonical(
-        save: legacyResult.save,
-        state: legacyResult.state,
-        eventLogOffset: request.snapshot.eventLogOffset,
+      snapshot: suffix.snapshot,
+      events: suffix.events,
+      movementDelta: TurnMovementDelta(
+        beforeUnits: suffix.beforeMovementUnits,
+        afterUnits: suffix.afterMovementUnits,
       ),
-      events: legacyResult.events,
-      movementDelta: _neutralMovementDelta(legacyResult.movementDelta),
     );
   }
 }
 
-TurnMovementDelta? _neutralMovementDelta(PersistentTurnMovementDelta? source) {
-  if (source == null) return null;
-  return TurnMovementDelta(
-    beforeUnits: source.beforeUnits,
-    afterUnits: source.afterUnits,
-  );
+List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
+  final seen = <String>{};
+  return [
+    for (final playerId in playerIds)
+      if (playerId.isNotEmpty && seen.add(playerId)) playerId,
+  ];
 }

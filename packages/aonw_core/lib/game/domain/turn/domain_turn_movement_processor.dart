@@ -1,24 +1,21 @@
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
-import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_context.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_orchestrator.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-class PersistentTurnMovementResult {
-  final PersistentGameState state;
-  final bool changed;
+final class DomainTurnMovementResult {
+  const DomainTurnMovementResult({required this.state, this.changed = false});
 
-  const PersistentTurnMovementResult({
-    required this.state,
-    this.changed = false,
-  });
+  final DomainState state;
+  final bool changed;
 }
 
-/// Persistence adapter for the neutral turn-movement kernel.
-abstract final class PersistentTurnMovementProcessor {
-  static PersistentTurnMovementResult resetForPlayers({
-    required PersistentGameState state,
+/// Canonical-state adapter for the persistence-neutral turn-movement kernel.
+abstract final class DomainTurnMovementProcessor {
+  static DomainTurnMovementResult resetForPlayers({
+    required DomainState state,
     required Iterable<String> playerIds,
     required MapTraversalView mapData,
     FogOfWarService fogOfWarService = const FogOfWarService(),
@@ -36,8 +33,8 @@ abstract final class PersistentTurnMovementProcessor {
         fogOfWarService: fogOfWarService,
       ),
     );
-    if (!movement.changed) return PersistentTurnMovementResult(state: state);
-    return PersistentTurnMovementResult(
+    if (!movement.changed) return DomainTurnMovementResult(state: state);
+    return DomainTurnMovementResult(
       state: state.copyWith(
         units: movement.state.units,
         fogOfWar: movement.state.fogOfWar,
@@ -46,7 +43,7 @@ abstract final class PersistentTurnMovementProcessor {
     );
   }
 
-  static Set<String> _knownPlayerIds(PersistentGameState state) {
+  static Set<String> _knownPlayerIds(DomainState state) {
     return {
       ...state.playerColors.keys,
       ...state.playerGold.keys,

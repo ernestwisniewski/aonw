@@ -30,7 +30,7 @@ void main() {
       );
     });
 
-    test('persistent turn-tail migration seam is facade-only', () {
+    test('persistent turn pipeline has no production consumers', () {
       final sources = productionDartSources();
       expect(
         _staticMemberReferencePaths(
@@ -46,7 +46,7 @@ void main() {
           'PersistentTurnPipeline',
           'simultaneousFinalizeAfterCombat',
         ),
-        {_canonicalPipelinePath},
+        isEmpty,
       );
       expect(
         _staticMemberReferencePaths(
@@ -54,7 +54,7 @@ void main() {
           'PersistentTurnPipelineRequest',
           'simultaneousFinalize',
         ),
-        {_canonicalPipelinePath},
+        isEmpty,
       );
     });
 

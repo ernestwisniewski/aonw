@@ -170,7 +170,6 @@
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openResourceForResourceTrade": 100,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceCities": 76,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:advanceForPlayers": 117,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:resetForPlayers": 91,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 80,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 62,
         "packages/aonw_core/lib/game/domain/wonder/wonder_completion_resolver.dart::class:WonderCompletionResolver/method:_claimWonder": 77,
@@ -372,8 +371,6 @@
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openResourceForResourceTrade": 11,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceResourceTrades": 12,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_eventsFromCityTurn": 13,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:_advanceQueuedPath": 11,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:resetForPlayers": 15,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/method:toJson": 12,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 20,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 11,
@@ -472,7 +469,6 @@
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 20,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceResourceTrades": 17,
         "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_eventsFromCityTurn": 18,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_movement_processor.dart::class:PersistentTurnMovementProcessor/method:resetForPlayers": 20,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 19,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 16
       }
