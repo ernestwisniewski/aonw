@@ -1,3 +1,4 @@
+export 'state/canonical_game_snapshot.dart';
 export 'state/domain_state.dart';
 export 'state/game_mode.dart';
 export 'state/game_snapshot_metadata.dart';
