@@ -412,8 +412,11 @@ void main() {
           UnitMovementStep(col: 2, row: 3, enterCost: 1, cumulativeCost: 1),
         ],
       );
+      final decoded = QueuedMovePath.fromJson(path.toJson());
 
-      expect(QueuedMovePath.fromJson(path.toJson()).toJson(), path.toJson());
+      expect(decoded, path);
+      expect(decoded.hashCode, path.hashCode);
+      expect(decoded.toJson(), path.toJson());
     });
   });
 }

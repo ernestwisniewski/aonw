@@ -1,12 +1,13 @@
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/state/game_mode.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+export 'package:aonw_core/game/domain/state/game_mode.dart';
+
 part 'game_save.freezed.dart';
 part 'game_save.g.dart';
-
-enum GameMode { hotSeat, multiplayer }
 
 const gameSaveCurrentSchemaVersion = 3;
 

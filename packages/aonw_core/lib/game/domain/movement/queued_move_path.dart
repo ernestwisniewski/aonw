@@ -1,6 +1,6 @@
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 
-class QueuedMovePath {
+final class QueuedMovePath {
   final int targetCol;
   final int targetRow;
   final List<UnitMovementStep> steps;
@@ -45,4 +45,26 @@ class QueuedMovePath {
         },
     ],
   };
+
+  @override
+  bool operator ==(Object other) {
+    return other is QueuedMovePath &&
+        other.targetCol == targetCol &&
+        other.targetRow == targetRow &&
+        _sameSteps(other.steps, steps);
+  }
+
+  @override
+  int get hashCode => Object.hash(targetCol, targetRow, Object.hashAll(steps));
+
+  static bool _sameSteps(
+    List<UnitMovementStep> left,
+    List<UnitMovementStep> right,
+  ) {
+    if (left.length != right.length) return false;
+    for (var i = 0; i < left.length; i++) {
+      if (left[i] != right[i]) return false;
+    }
+    return true;
+  }
 }
