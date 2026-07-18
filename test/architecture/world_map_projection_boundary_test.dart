@@ -89,6 +89,8 @@ const _mapDataFreeMigrationPaths = {
   '$_gameDomain/city/persistent_city_production_resolver.dart',
   '$_gameDomain/city/city_turn_processor.dart',
   '$_gameDomain/city/persistent_worker_command_resolver.dart',
+  '$_gameDomain/city/worker_command_resolver.dart',
+  '$_gameDomain/city/domain_worker_command_resolver.dart',
   '$_gameDomain/combat/persistent_combat_command_resolver.dart',
   '$_gameDomain/fog/fog_of_war_service.dart',
   '$_gameDomain/fog/fog_reveal_calculator.dart',

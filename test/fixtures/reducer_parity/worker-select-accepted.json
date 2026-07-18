@@ -1,6 +1,6 @@
 {
   "fixtureVersion": 1,
-  "id": "worker-self-contained-accepted",
+  "id": "worker-select-accepted",
   "family": "worker",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
@@ -271,7 +271,7 @@
       "runtimeState": {}
     },
     "command": {
-      "type": "ConfirmWorkerImprovement",
+      "type": "SelectWorkerImprovement",
       "unitId": "worker_1",
       "improvementType": "farm"
     }

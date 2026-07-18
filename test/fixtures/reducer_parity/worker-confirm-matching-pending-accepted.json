@@ -1,6 +1,6 @@
 {
   "fixtureVersion": 1,
-  "id": "worker-self-contained-accepted",
+  "id": "worker-confirm-matching-pending-accepted",
   "family": "worker",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
@@ -268,12 +268,18 @@
           }
         }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "pendingAction": {
+          "type": "workerActionSelection",
+          "ownerPlayerId": "player_1",
+          "unitId": "worker_1",
+          "improvementType": "farm"
+        }
+      }
     },
     "command": {
       "type": "ConfirmWorkerImprovement",
-      "unitId": "worker_1",
-      "improvementType": "farm"
+      "unitId": "worker_1"
     }
   },
   "expected": {

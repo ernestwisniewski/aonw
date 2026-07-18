@@ -13,7 +13,7 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
       UnitActionCommandResolver.cancelUnitAction(
         units: state.units,
         artifacts: state.artifacts,
-        interaction: _unitActionInteraction(state),
+        interaction: _persistedInteraction(state),
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -32,7 +32,7 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
       UnitActionCommandResolver.skipUnitTurn(
         units: state.units,
         artifacts: state.artifacts,
-        interaction: _unitActionInteraction(state),
+        interaction: _persistedInteraction(state),
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -51,7 +51,7 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
       UnitActionCommandResolver.fortifyUnit(
         units: state.units,
         artifacts: state.artifacts,
-        interaction: _unitActionInteraction(state),
+        interaction: _persistedInteraction(state),
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -73,7 +73,7 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
     }
     final unitsChanged = !identical(result.units, state.units);
     final artifactsChanged = !identical(result.artifacts, state.artifacts);
-    final runtimeState = _unitActionRuntimeState(
+    final runtimeState = _runtimeStateWithInteraction(
       state.runtimeState,
       result.interaction,
     );
@@ -92,27 +92,6 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
                   : runtimeState,
             )
           : state,
-    );
-  }
-
-  GameRuntimeState _unitActionRuntimeState(
-    GameRuntimeState runtimeState,
-    PersistedInteractionState interaction,
-  ) {
-    if (runtimeState.cityFoundingDraft == interaction.cityFoundingDraft &&
-        runtimeState.pendingAction == interaction.pendingAction) {
-      return runtimeState;
-    }
-    return runtimeState.copyWith(
-      cityFoundingDraft: interaction.cityFoundingDraft,
-      pendingAction: interaction.pendingAction,
-    );
-  }
-
-  PersistedInteractionState _unitActionInteraction(PersistentGameState state) {
-    return PersistedInteractionState(
-      cityFoundingDraft: state.runtimeState.cityFoundingDraft,
-      pendingAction: state.runtimeState.pendingAction,
     );
   }
 }

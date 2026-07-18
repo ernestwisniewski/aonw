@@ -136,7 +136,11 @@ bool _matchesUnitActionCommand(GameCommand command) {
 }
 
 bool _matchesWorkerCommand(GameCommand command) {
-  return command is ConfirmWorkerImprovementCommand;
+  return command is SelectWorkerImprovementCommand ||
+      command is ConfirmWorkerImprovementCommand ||
+      command is CancelWorkerJobCommand ||
+      command is AssignWorkerToHexCommand ||
+      command is CancelWorkerAssignmentCommand;
 }
 
 bool _matchesTurnFinalizationCommand(GameCommand command) {

@@ -21,10 +21,15 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
       pendingAction.ownerPlayerId == command.playerId;
   final permitsReviewedUnitActionPendingAction =
       _permitsReviewedUnitActionPendingAction(fixture);
-  if (runtime.cityFoundingDraft != null ||
+  final permitsReviewedWorkerInteraction = _permitsReviewedWorkerInteraction(
+    fixture,
+  );
+  if ((runtime.cityFoundingDraft != null &&
+          !permitsReviewedWorkerInteraction) ||
       (pendingAction != null &&
           !permitsReviewedResearchPendingAction &&
-          !permitsReviewedUnitActionPendingAction)) {
+          !permitsReviewedUnitActionPendingAction &&
+          !permitsReviewedWorkerInteraction)) {
     ReducerParityCorpus._fail(
       fixture,
       'uses client interaction fields outside parity scope',
@@ -52,6 +57,8 @@ final class _ReducerParityCorpusSummary {
   final unitActionAcceptanceModes = <String>{};
   final resourceTradeAcceptanceModes = <String>{};
   final cityWorkedHexAcceptanceModes = <String>{};
+  final workerAcceptanceModes = <String>{};
+  final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
 
   void record(ReducerParityFixture fixture) {
@@ -78,12 +85,7 @@ final class _ReducerParityCorpusSummary {
     );
     switch (fixture.family) {
       case 'artifacts':
-        artifactAcceptanceModes.add(switch (fixture.command) {
-          StartArtifactExcavationCommand() => 'excavation',
-          StoreArtifactInCityCommand() => 'store',
-          TradeArtifactCommand() => 'trade',
-          _ => 'unexpected',
-        });
+        artifactAcceptanceModes.add(_artifactAcceptanceMode(fixture.command));
       case 'unit-actions':
         unitActionAcceptanceModes.add(_unitActionAcceptanceMode(fixture));
       case 'turn-finalization':
@@ -93,11 +95,9 @@ final class _ReducerParityCorpusSummary {
               : 'finalizing',
         );
       case 'resource-trade':
-        resourceTradeAcceptanceModes.add(switch (fixture.command) {
-          OpenResourceTradeCommand() => 'gold',
-          OpenResourceExchangeCommand() => 'exchange',
-          _ => 'unexpected',
-        });
+        resourceTradeAcceptanceModes.add(
+          _resourceTradeAcceptanceMode(fixture.command),
+        );
       case 'city-worked-hex':
         final command = fixture.command as ToggleWorkedHexCommand;
         final city = fixture.state.cities.singleWhere(
@@ -107,8 +107,28 @@ final class _ReducerParityCorpusSummary {
         cityWorkedHexAcceptanceModes.add(
           city.workedHexes.contains(target) ? 'remove' : 'add',
         );
+      case 'worker':
+        workerAcceptanceModes.add(_workerAcceptanceMode(fixture));
+        workerInteractionModes.add(_workerInteractionMode(fixture));
     }
   }
+}
+
+String _artifactAcceptanceMode(GameCommand command) {
+  return switch (command) {
+    StartArtifactExcavationCommand() => 'excavation',
+    StoreArtifactInCityCommand() => 'store',
+    TradeArtifactCommand() => 'trade',
+    _ => 'unexpected',
+  };
+}
+
+String _resourceTradeAcceptanceMode(GameCommand command) {
+  return switch (command) {
+    OpenResourceTradeCommand() => 'gold',
+    OpenResourceExchangeCommand() => 'exchange',
+    _ => 'unexpected',
+  };
 }
 
 void _requireExactReducerParityFamilies(Set<String> actualFamilies) {
@@ -140,6 +160,8 @@ void _requireReducerParityFamilyCoverage(
       _requireResourceTradeAcceptanceCoverage(summary, family);
     case 'city-worked-hex':
       _requireCityWorkedHexAcceptanceCoverage(summary, family);
+    case 'worker':
+      _requireWorkerAcceptanceCoverage(summary, family);
   }
   _requireRejectionCoverage(summary, family);
 }
@@ -263,7 +285,7 @@ void _validateReducerParityAcceptedCommand(
     case 'unit-actions':
       _requireAcceptedParityUnitAction(fixture, state, events);
     case 'worker':
-      _requireAcceptedParityWorker(fixture, state);
+      _requireAcceptedParityWorker(fixture, state, events);
     case 'turn-finalization':
       _requireAcceptedParityTurn(fixture, state, events);
     default:
@@ -432,19 +454,6 @@ void _requireAcceptedParityResourceTrade(
     after: state,
     events: events,
   );
-}
-
-void _requireAcceptedParityWorker(
-  ReducerParityFixture fixture,
-  PersistentGameState state,
-) {
-  final command = fixture.command as ConfirmWorkerImprovementCommand;
-  final worker = state.units.byId(command.unitId);
-  if (command.improvementType == null ||
-      worker?.workerJob?.improvementType != command.improvementType ||
-      worker?.movementPoints != 0) {
-    ReducerParityCorpus._fail(fixture, 'must commit the reviewed worker job');
-  }
 }
 
 void _requireAcceptedParityTurn(

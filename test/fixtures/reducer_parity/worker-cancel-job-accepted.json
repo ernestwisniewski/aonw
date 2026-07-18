@@ -1,6 +1,6 @@
 {
   "fixtureVersion": 1,
-  "id": "worker-self-contained-accepted",
+  "id": "worker-cancel-job-accepted",
   "family": "worker",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
@@ -215,8 +215,35 @@
           "name": "worker",
           "col": 1,
           "row": 0,
-          "movementPoints": 3,
-          "army": []
+          "movementPoints": 0,
+          "army": [],
+          "queuedPath": {
+            "targetCol": 2,
+            "targetRow": 0,
+            "steps": [
+              {
+                "col": 1,
+                "row": 0,
+                "enterCost": 0,
+                "cumulativeCost": 0
+              },
+              {
+                "col": 2,
+                "row": 0,
+                "enterCost": 1,
+                "cumulativeCost": 1
+              }
+            ]
+          },
+          "workerJob": {
+            "targetHex": {
+              "col": 1,
+              "row": 0
+            },
+            "improvementType": "farm",
+            "remainingTurns": 2,
+            "totalTurns": 2
+          }
         },
         {
           "id": "worker_sentinel",
@@ -228,6 +255,17 @@
           "movementPoints": 1,
           "army": [],
           "experiencePoints": 2,
+          "posture": "fortified"
+        },
+        {
+          "id": "settler_sentinel",
+          "ownerPlayerId": "player_1",
+          "type": "settler",
+          "name": "settler",
+          "col": 0,
+          "row": 2,
+          "movementPoints": 2,
+          "army": [],
           "posture": "fortified"
         }
       ],
@@ -268,12 +306,22 @@
           }
         }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "cityFoundingDraft": {
+          "unitId": "settler_sentinel",
+          "ownerPlayerId": "player_1",
+          "center": {"col": 0, "row": 2},
+          "controlledHexes": [
+            {"col": 0, "row": 1},
+            {"col": 1, "row": 2}
+          ]
+        },
+        "pendingAction": {"type": "workerActionSelection", "ownerPlayerId": "player_1", "unitId": "worker_sentinel", "improvementType": "mine"}
+      }
     },
     "command": {
-      "type": "ConfirmWorkerImprovement",
-      "unitId": "worker_1",
-      "improvementType": "farm"
+      "type": "CancelWorkerJob",
+      "unitId": "worker_1"
     }
   },
   "expected": {
@@ -364,16 +412,7 @@
           "col": 1,
           "row": 0,
           "movementPoints": 0,
-          "army": [],
-          "workerJob": {
-            "targetHex": {
-              "col": 1,
-              "row": 0
-            },
-            "improvementType": "farm",
-            "remainingTurns": 2,
-            "totalTurns": 2
-          }
+          "army": []
         },
         {
           "id": "worker_sentinel",
@@ -385,6 +424,17 @@
           "movementPoints": 1,
           "army": [],
           "experiencePoints": 2,
+          "posture": "fortified"
+        },
+        {
+          "id": "settler_sentinel",
+          "ownerPlayerId": "player_1",
+          "type": "settler",
+          "name": "settler",
+          "col": 0,
+          "row": 2,
+          "movementPoints": 2,
+          "army": [],
           "posture": "fortified"
         }
       ],
@@ -425,7 +475,18 @@
           }
         }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "cityFoundingDraft": {
+          "unitId": "settler_sentinel",
+          "ownerPlayerId": "player_1",
+          "center": {"col": 0, "row": 2},
+          "controlledHexes": [
+            {"col": 0, "row": 1},
+            {"col": 1, "row": 2}
+          ]
+        },
+        "pendingAction": {"type": "workerActionSelection", "ownerPlayerId": "player_1", "unitId": "worker_sentinel", "improvementType": "mine"}
+      }
     },
     "events": []
   }

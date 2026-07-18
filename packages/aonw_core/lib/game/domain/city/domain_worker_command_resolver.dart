@@ -3,30 +3,33 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/worker_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
-import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-final class PersistentWorkerCommandResult {
-  const PersistentWorkerCommandResult({
+final class DomainWorkerCommandResult {
+  const DomainWorkerCommandResult({
     required this.accepted,
     required this.state,
+    required this.interaction,
     this.reason,
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
+  final PersistedInteractionState interaction;
   final String? reason;
 }
 
-/// Persistence adapter for the state-neutral worker command resolver.
-final class PersistentWorkerCommandResolver {
-  const PersistentWorkerCommandResolver();
+/// Canonical-state adapter for the state-neutral worker command resolver.
+final class DomainWorkerCommandResolver {
+  const DomainWorkerCommandResolver();
 
-  PersistentWorkerCommandResult selectWorkerImprovement({
-    required PersistentGameState state,
+  DomainWorkerCommandResult selectWorkerImprovement({
+    required DomainState state,
+    required PersistedInteractionState interaction,
     required SelectWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -34,9 +37,9 @@ final class PersistentWorkerCommandResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final interaction = _interactionFrom(state.runtimeState);
     return _apply(
       state,
+      interaction,
       WorkerCommandResolver.selectWorkerImprovement(
         units: state.units,
         cities: state.cities,
@@ -53,8 +56,9 @@ final class PersistentWorkerCommandResolver {
     );
   }
 
-  PersistentWorkerCommandResult confirmWorkerImprovement({
-    required PersistentGameState state,
+  DomainWorkerCommandResult confirmWorkerImprovement({
+    required DomainState state,
+    required PersistedInteractionState interaction,
     required ConfirmWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -62,9 +66,9 @@ final class PersistentWorkerCommandResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final interaction = _interactionFrom(state.runtimeState);
     return _apply(
       state,
+      interaction,
       WorkerCommandResolver.confirmWorkerImprovement(
         units: state.units,
         cities: state.cities,
@@ -81,14 +85,15 @@ final class PersistentWorkerCommandResolver {
     );
   }
 
-  PersistentWorkerCommandResult cancelWorkerJob({
-    required PersistentGameState state,
+  DomainWorkerCommandResult cancelWorkerJob({
+    required DomainState state,
+    required PersistedInteractionState interaction,
     required CancelWorkerJobCommand command,
     required String actorPlayerId,
   }) {
-    final interaction = _interactionFrom(state.runtimeState);
     return _apply(
       state,
+      interaction,
       WorkerCommandResolver.cancelWorkerJob(
         units: state.units,
         interaction: interaction,
@@ -98,15 +103,16 @@ final class PersistentWorkerCommandResolver {
     );
   }
 
-  PersistentWorkerCommandResult assignWorkerToHex({
-    required PersistentGameState state,
+  DomainWorkerCommandResult assignWorkerToHex({
+    required DomainState state,
+    required PersistedInteractionState interaction,
     required AssignWorkerToHexCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
   }) {
-    final interaction = _interactionFrom(state.runtimeState);
     return _apply(
       state,
+      interaction,
       WorkerCommandResolver.assignWorkerToHex(
         units: state.units,
         cities: state.cities,
@@ -119,14 +125,15 @@ final class PersistentWorkerCommandResolver {
     );
   }
 
-  PersistentWorkerCommandResult cancelWorkerAssignment({
-    required PersistentGameState state,
+  DomainWorkerCommandResult cancelWorkerAssignment({
+    required DomainState state,
+    required PersistedInteractionState interaction,
     required CancelWorkerAssignmentCommand command,
     required String actorPlayerId,
   }) {
-    final interaction = _interactionFrom(state.runtimeState);
     return _apply(
       state,
+      interaction,
       WorkerCommandResolver.cancelWorkerAssignment(
         units: state.units,
         interaction: interaction,
@@ -136,55 +143,25 @@ final class PersistentWorkerCommandResolver {
     );
   }
 
-  static PersistentWorkerCommandResult _apply(
-    PersistentGameState state,
+  static DomainWorkerCommandResult _apply(
+    DomainState state,
+    PersistedInteractionState interaction,
     WorkerCommandResult result,
   ) {
     if (!result.accepted) {
-      return PersistentWorkerCommandResult(
+      return DomainWorkerCommandResult(
         accepted: false,
         state: state,
+        interaction: interaction,
         reason: result.reason,
       );
     }
-    final unitsChanged = !identical(result.units, state.units);
-    final runtimeState = _runtimeStateAfter(
-      state.runtimeState,
-      result.interaction,
-    );
-    return PersistentWorkerCommandResult(
+    return DomainWorkerCommandResult(
       accepted: true,
-      state: unitsChanged || !identical(runtimeState, state.runtimeState)
-          ? state.copyWith(
-              units: unitsChanged ? result.units : null,
-              runtimeState: identical(runtimeState, state.runtimeState)
-                  ? null
-                  : runtimeState,
-            )
-          : state,
-    );
-  }
-
-  static PersistedInteractionState _interactionFrom(
-    GameRuntimeState runtimeState,
-  ) {
-    return PersistedInteractionState(
-      cityFoundingDraft: runtimeState.cityFoundingDraft,
-      pendingAction: runtimeState.pendingAction,
-    );
-  }
-
-  static GameRuntimeState _runtimeStateAfter(
-    GameRuntimeState runtimeState,
-    PersistedInteractionState interaction,
-  ) {
-    if (runtimeState.cityFoundingDraft == interaction.cityFoundingDraft &&
-        runtimeState.pendingAction == interaction.pendingAction) {
-      return runtimeState;
-    }
-    return runtimeState.copyWith(
-      cityFoundingDraft: interaction.cityFoundingDraft,
-      pendingAction: interaction.pendingAction,
+      state: identical(result.units, state.units)
+          ? state
+          : state.copyWith(units: result.units),
+      interaction: result.interaction,
     );
   }
 }

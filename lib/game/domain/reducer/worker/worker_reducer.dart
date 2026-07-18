@@ -3,9 +3,12 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -20,29 +23,39 @@ abstract final class WorkerReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final pending = state.pendingAction;
-    if (pending is PendingWorkerActionSelection) {
-      if (pending.unitId != command.unitId) {
-        return GameStateTransition(state: state);
-      }
+    if (state.pendingAction is PendingWorkerActionSelection) {
       return GameStateTransition(
-        state: state.copyWithInteraction(
-          pendingAction: pending.copyWith(
-            improvementType: command.improvementType,
-          ),
-        ),
+        state: InteractionReducer.selectWorkerImprovement(state, command),
       );
     }
-
-    return _startImprovement(
+    final input = _captureInput(state);
+    final actorPlayerId = _controlledActorPlayerId(
       state,
-      unitId: command.unitId,
-      improvementType: command.improvementType,
+      input.units,
+      command.unitId,
+      context,
+    );
+    if (actorPlayerId == null) return GameStateTransition(state: state);
+    final result = WorkerCommandResolver.selectWorkerImprovement(
+      units: input.units,
+      cities: input.cities,
+      fieldImprovements: input.fieldImprovements,
+      research: input.research,
+      interaction: input.interaction,
+      command: command,
+      actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
-      context: context,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
+    );
+    return _transitionFrom(
+      state,
+      input,
+      result,
+      unitId: command.unitId,
+      mapTiles: mapTiles,
+      clearWorkPresentation: true,
     );
   }
 
@@ -55,90 +68,35 @@ abstract final class WorkerReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final pending = state.pendingAction;
-    final pendingImprovement =
-        pending is PendingWorkerActionSelection &&
-            pending.unitId == command.unitId
-        ? pending.improvementType
-        : null;
-    final improvementType = command.improvementType ?? pendingImprovement;
-    if (improvementType == null) {
-      return GameStateTransition(state: state);
-    }
-
-    return _startImprovement(
+    final input = _captureInput(state);
+    final actorPlayerId = _controlledActorPlayerId(
       state,
+      input.units,
+      command.unitId,
+      context,
+    );
+    if (actorPlayerId == null) return GameStateTransition(state: state);
+    final result = WorkerCommandResolver.confirmWorkerImprovement(
+      units: input.units,
+      cities: input.cities,
+      fieldImprovements: input.fieldImprovements,
+      research: input.research,
+      interaction: input.interaction,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      paceBalance: paceBalance,
+    );
+    return _transitionFrom(
+      state,
+      input,
+      result,
       unitId: command.unitId,
-      improvementType: improvementType,
       mapTiles: mapTiles,
-      context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: paceBalance,
+      clearWorkPresentation: true,
     );
-  }
-
-  static GameStateTransition _startImprovement(
-    GameState state, {
-    required String unitId,
-    required FieldImprovementType improvementType,
-    required MapTileLookup mapTiles,
-    required GameCommandContext context,
-    required CityRuleset cityRuleset,
-    required TechnologyRuleset technologyRuleset,
-    required PaceBalance paceBalance,
-  }) {
-    final unitIndex = state.units.indexWhere((unit) => unit.id == unitId);
-    if (unitIndex == -1) return GameStateTransition(state: state);
-
-    final worker = state.units[unitIndex];
-    if (!context.canControlUnit(state, worker)) {
-      return GameStateTransition(state: state);
-    }
-
-    final legality = WorkerImprovementRules.evaluate(
-      unit: worker,
-      improvementType: improvementType,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      mapTiles: mapTiles,
-      research: state.research,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-    );
-    if (!legality.allowed) return GameStateTransition(state: state);
-
-    final totalTurns = FieldImprovementRules.buildTurnsFor(
-      improvementType,
-      ruleset: cityRuleset,
-      paceBalance: paceBalance,
-    );
-    final updatedWorker = worker
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithWorkerAssignment(null)
-        .copyWithWorkerJob(
-          WorkerJob(
-            targetHex: CityHex(col: worker.col, row: worker.row),
-            improvementType: improvementType,
-            remainingTurns: totalTurns,
-            totalTurns: totalTurns,
-          ),
-        );
-    final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
-
-    var next = state.copyWith(units: updatedUnits);
-    next = next.copyWithInteraction(
-      moveCommandActive: false,
-      movePreview: null,
-      pendingAction: null,
-      selection: GameSelection.unit(
-        updatedWorker,
-        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
-      ),
-    );
-
-    return GameStateTransition(state: next);
   }
 
   static GameStateTransition cancelWorkerJob(
@@ -147,30 +105,27 @@ abstract final class WorkerReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final unitIndex = state.units.indexWhere(
-      (unit) => unit.id == command.unitId,
+    final input = _captureInput(state);
+    final actorPlayerId = _controlledActorPlayerId(
+      state,
+      input.units,
+      command.unitId,
+      context,
     );
-    if (unitIndex == -1) return GameStateTransition(state: state);
-
-    final worker = state.units[unitIndex];
-    if (!context.canControlUnit(state, worker) || worker.workerJob == null) {
-      return GameStateTransition(state: state);
-    }
-
-    final updatedWorker = worker
-        .copyWithWorkerJob(null)
-        .copyWithQueuedPath(null);
-    final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
-
-    var next = state.copyWith(units: updatedUnits);
-    next = next.copyWithInteraction(
-      selection: GameSelection.unit(
-        updatedWorker,
-        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
-      ),
+    if (actorPlayerId == null) return GameStateTransition(state: state);
+    final result = WorkerCommandResolver.cancelWorkerJob(
+      units: input.units,
+      interaction: input.interaction,
+      command: command,
+      actorPlayerId: actorPlayerId,
     );
-
-    return GameStateTransition(state: next);
+    return _transitionFrom(
+      state,
+      input,
+      result,
+      unitId: command.unitId,
+      mapTiles: mapTiles,
+    );
   }
 
   static GameStateTransition assignWorkerToHex(
@@ -179,44 +134,31 @@ abstract final class WorkerReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final unitIndex = state.units.indexWhere(
-      (unit) => unit.id == command.unitId,
+    final input = _captureInput(state);
+    final actorPlayerId = _controlledActorPlayerId(
+      state,
+      input.units,
+      command.unitId,
+      context,
     );
-    if (unitIndex == -1) return GameStateTransition(state: state);
-
-    final worker = state.units[unitIndex];
-    if (!context.canControlUnit(state, worker)) {
-      return GameStateTransition(state: state);
-    }
-
-    final legality = WorkerAssignmentRules.evaluate(
-      unit: worker,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      units: state.units,
+    if (actorPlayerId == null) return GameStateTransition(state: state);
+    final result = WorkerCommandResolver.assignWorkerToHex(
+      units: input.units,
+      cities: input.cities,
+      fieldImprovements: input.fieldImprovements,
+      interaction: input.interaction,
+      command: command,
+      actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
     );
-    if (!legality.allowed) return GameStateTransition(state: state);
-
-    final targetHex = CityHex(col: worker.col, row: worker.row);
-    final updatedWorker = worker
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithWorkerAssignment(WorkerAssignment(targetHex: targetHex));
-    final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
-
-    var next = state
-        .copyWith(units: updatedUnits)
-        .copyWithInteraction(moveCommandActive: false, pendingAction: null);
-    next = next.copyWithInteraction(
-      movePreview: null,
-      selection: GameSelection.unit(
-        updatedWorker,
-        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
-      ),
+    return _transitionFrom(
+      state,
+      input,
+      result,
+      unitId: command.unitId,
+      mapTiles: mapTiles,
+      clearWorkPresentation: true,
     );
-
-    return GameStateTransition(state: next);
   }
 
   static GameStateTransition cancelWorkerAssignment(
@@ -225,30 +167,123 @@ abstract final class WorkerReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final unitIndex = state.units.indexWhere(
-      (unit) => unit.id == command.unitId,
+    final input = _captureInput(state);
+    final actorPlayerId = _controlledActorPlayerId(
+      state,
+      input.units,
+      command.unitId,
+      context,
     );
-    if (unitIndex == -1) return GameStateTransition(state: state);
+    if (actorPlayerId == null) return GameStateTransition(state: state);
+    final result = WorkerCommandResolver.cancelWorkerAssignment(
+      units: input.units,
+      interaction: input.interaction,
+      command: command,
+      actorPlayerId: actorPlayerId,
+    );
+    return _transitionFrom(
+      state,
+      input,
+      result,
+      unitId: command.unitId,
+      mapTiles: mapTiles,
+    );
+  }
 
-    final worker = state.units[unitIndex];
-    if (!context.canControlUnit(state, worker) ||
-        worker.workerAssignment == null) {
-      return GameStateTransition(state: state);
+  static GameStateTransition _transitionFrom(
+    GameState state,
+    _WorkerInput input,
+    WorkerCommandResult result, {
+    required String unitId,
+    required MapTileLookup mapTiles,
+    bool clearWorkPresentation = false,
+  }) {
+    if (!result.accepted) return GameStateTransition(state: state);
+    final unitsChanged = !identical(result.units, input.units);
+    var next = unitsChanged ? state.copyWith(units: result.units) : state;
+    final updatedWorker = _unitById(result.units, unitId)!;
+    final selection = GameSelection.unit(
+      updatedWorker,
+      tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
+    );
+    final pendingAction = clearWorkPresentation
+        ? null
+        : result.interaction.pendingAction;
+    final moveCommandActive = clearWorkPresentation
+        ? false
+        : state.moveCommandActive;
+    final movePreview = clearWorkPresentation ? null : state.movePreview;
+    if (_hasPresentationState(
+      next,
+      cityFoundingDraft: result.interaction.cityFoundingDraft,
+      pendingAction: pendingAction,
+      moveCommandActive: moveCommandActive,
+      movePreview: movePreview,
+      selection: selection,
+    )) {
+      return GameStateTransition(state: next);
     }
-
-    final updatedWorker = worker
-        .copyWithWorkerAssignment(null)
-        .copyWithQueuedPath(null);
-    final updatedUnits = [...state.units]..[unitIndex] = updatedWorker;
-
-    var next = state.copyWith(units: updatedUnits);
     next = next.copyWithInteraction(
-      selection: GameSelection.unit(
-        updatedWorker,
-        tile: mapTiles.tileAt(updatedWorker.col, updatedWorker.row),
-      ),
+      cityFoundingDraft: result.interaction.cityFoundingDraft,
+      pendingAction: pendingAction,
+      moveCommandActive: moveCommandActive,
+      movePreview: movePreview,
+      selection: selection,
     );
-
     return GameStateTransition(state: next);
   }
+
+  static bool _hasPresentationState(
+    GameState state, {
+    required CityFoundingDraft? cityFoundingDraft,
+    required PendingPlayerAction? pendingAction,
+    required bool moveCommandActive,
+    required UnitMovementPlan? movePreview,
+    required GameSelection selection,
+  }) {
+    return state.cityFoundingDraft == cityFoundingDraft &&
+        state.pendingAction == pendingAction &&
+        state.moveCommandActive == moveCommandActive &&
+        state.movePreview == movePreview &&
+        state.selection == selection;
+  }
+
+  static _WorkerInput _captureInput(GameState state) {
+    return (
+      units: state.units,
+      cities: state.cities,
+      fieldImprovements: state.fieldImprovements,
+      research: state.research,
+      interaction: PersistedInteractionState(
+        cityFoundingDraft: state.cityFoundingDraft,
+        pendingAction: state.pendingAction,
+      ),
+    );
+  }
+
+  static String? _controlledActorPlayerId(
+    GameState state,
+    List<GameUnit> units,
+    String unitId,
+    GameCommandContext context,
+  ) {
+    final unit = _unitById(units, unitId);
+    if (unit == null || !context.canControlUnit(state, unit)) return null;
+    return unit.ownerPlayerId;
+  }
+
+  static GameUnit? _unitById(List<GameUnit> units, String unitId) {
+    for (final unit in units) {
+      if (unit.id == unitId) return unit;
+    }
+    return null;
+  }
 }
+
+typedef _WorkerInput = ({
+  List<GameUnit> units,
+  List<GameCity> cities,
+  List<FieldImprovement> fieldImprovements,
+  ResearchState research,
+  PersistedInteractionState interaction,
+});

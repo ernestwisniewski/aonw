@@ -11,6 +11,7 @@ part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_detachment.dart';
+part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_merchant_routing.dart';
 part 'server_command_reducer_outcome.dart';
@@ -19,6 +20,7 @@ part 'server_command_reducer_research.dart';
 part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
+part 'server_command_reducer_worker.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 
@@ -385,53 +387,40 @@ class ServerCommandReducer {
           ruleset: ruleset,
         );
       case SelectWorkerImprovementCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .selectWorkerImprovement(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: loadedMap.mapView,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _fromPersistentResult(save, result);
-      case ConfirmWorkerImprovementCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .confirmWorkerImprovement(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: loadedMap.mapView,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _fromPersistentResult(save, result);
-      case CancelWorkerJobCommand():
-        final result = const PersistentWorkerCommandResolver().cancelWorkerJob(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
+        return _applySelectWorkerImprovement(
+          save,
+          state,
+          command,
+          actorPlayerId,
+          loadedMap.mapView,
+          ruleset,
         );
-        return _fromPersistentResult(save, result);
+      case ConfirmWorkerImprovementCommand():
+        return _applyConfirmWorkerImprovement(
+          save,
+          state,
+          command,
+          actorPlayerId,
+          loadedMap.mapView,
+          ruleset,
+        );
+      case CancelWorkerJobCommand():
+        return _applyCancelWorkerJob(save, state, command, actorPlayerId);
       case AssignWorkerToHexCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .assignWorkerToHex(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: loadedMap.mapView,
-            );
-        return _fromPersistentResult(save, result);
+        return _applyAssignWorkerToHex(
+          save,
+          state,
+          command,
+          actorPlayerId,
+          loadedMap.mapView,
+        );
       case CancelWorkerAssignmentCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .cancelWorkerAssignment(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            );
-        return _fromPersistentResult(save, result);
+        return _applyCancelWorkerAssignment(
+          save,
+          state,
+          command,
+          actorPlayerId,
+        );
       case StartArtifactExcavationCommand():
         return _applyStartArtifactExcavationCommand(
           save: save,
@@ -576,17 +565,6 @@ class ServerCommandReducer {
           accepted: accepted,
           state: state,
           events: events,
-          reason: reason,
-        ),
-      PersistentWorkerCommandResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
           reason: reason,
         ),
       _ => throw StateError('Unsupported persistent result: $result'),

@@ -1,6 +1,6 @@
 {
   "fixtureVersion": 1,
-  "id": "worker-self-contained-accepted",
+  "id": "worker-assign-accepted",
   "family": "worker",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
@@ -256,7 +256,16 @@
         }
       ],
       "artifacts": [],
-      "fieldImprovements": [],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 1,
+            "row": 0
+          },
+          "type": "farm",
+          "builtByCityId": "worker_city"
+        }
+      ],
       "fogOfWar": [],
       "research": {
         "players": {
@@ -271,9 +280,8 @@
       "runtimeState": {}
     },
     "command": {
-      "type": "ConfirmWorkerImprovement",
-      "unitId": "worker_1",
-      "improvementType": "farm"
+      "type": "AssignWorkerToHex",
+      "unitId": "worker_1"
     }
   },
   "expected": {
@@ -365,14 +373,11 @@
           "row": 0,
           "movementPoints": 0,
           "army": [],
-          "workerJob": {
+          "workerAssignment": {
             "targetHex": {
               "col": 1,
               "row": 0
-            },
-            "improvementType": "farm",
-            "remainingTurns": 2,
-            "totalTurns": 2
+            }
           }
         },
         {
@@ -413,7 +418,16 @@
         }
       ],
       "artifacts": [],
-      "fieldImprovements": [],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 1,
+            "row": 0
+          },
+          "type": "farm",
+          "builtByCityId": "worker_city"
+        }
+      ],
       "fogOfWar": [],
       "research": {
         "players": {

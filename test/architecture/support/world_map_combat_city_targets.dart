@@ -221,6 +221,52 @@ const _cityTargets = [
   ),
   _Target(
     path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'worker_command_resolver.dart',
+    owner: 'WorkerCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'confirmWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'assignWorkerToHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'domain_worker_command_resolver.dart',
+    owner: 'DomainWorkerCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'confirmWorkerImprovement',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'assignWorkerToHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
         'packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart',
     owner: 'PersistentCityProductionResolver',
     boundaries: [
