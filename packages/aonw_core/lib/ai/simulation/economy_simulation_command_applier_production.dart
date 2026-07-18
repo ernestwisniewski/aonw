@@ -79,7 +79,11 @@ extension _EconomySimulationProductionCommandApplier
       technologyRuleset: ruleset.technology,
       paceBalance: ruleset.paceBalance,
     );
-    return _ApplyCommandResult(accepted: result.accepted, state: result.state);
+    return _ApplyCommandResult(
+      accepted: result.accepted,
+      state: result.state,
+      reason: result.reason,
+    );
   }
 
   _ApplyCommandResult _startProject({

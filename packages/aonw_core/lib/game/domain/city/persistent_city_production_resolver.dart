@@ -7,7 +7,6 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/city/city_technology_effect_rules.dart';
 import 'package:aonw_core/game/domain/city/city_unit_production_rules.dart';
-import 'package:aonw_core/game/domain/city/city_unit_supply_rules.dart';
 import 'package:aonw_core/game/domain/city/city_yield_calculator.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -16,12 +15,10 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-part 'persistent_city_production_supply.dart';
 part 'persistent_city_production_rush.dart';
 
 class PersistentCityProductionResult {
@@ -72,72 +69,21 @@ class PersistentCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityLookup(state.cities, command.cityId);
-    if (lookup == null) return _reject(state, 'city_not_found');
-    final (:cityIndex, :city) = lookup;
-    if (city.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'city_not_controlled');
-    }
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      research: state.research,
-      ruleset: technologyRuleset,
-    );
-    if (!CityProductionRules.canProduceUnit(
-      command.unitType,
-      ruleset: cityRuleset,
-      technologyUnlocked: technologyUnlocked,
-    )) {
-      return _reject(state, 'unit_production_not_available');
-    }
-    final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
+    final result = CityProductionCommandResolver.startUnitProduction(
       cities: state.cities,
-      mapTiles: mapView.mapTiles,
-      ruleset: cityRuleset,
+      units: state.units,
+      artifacts: state.artifacts,
+      fieldImprovements: state.fieldImprovements,
       research: state.research,
       resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-    );
-    if (!requirementsMet) {
-      return _reject(state, 'unit_production_requires_resource');
-    }
-    if (!CityUnitProductionRules.canProduceInCity(
-      city: city,
-      unitType: command.unitType,
-      mapTiles: mapView.mapTiles,
-    )) {
-      return _reject(state, 'unit_production_requires_coast');
-    }
-    final hasSupply = _canQueuePersistentCityUnit(
-      state: state,
-      city: city,
-      unitType: command.unitType,
       mapView: mapView,
+      command: command,
+      actorPlayerId: actorPlayerId,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
+      paceBalance: paceBalance,
     );
-    if (!hasSupply) {
-      return _reject(state, 'unit_supply_limit_reached');
-    }
-
-    return PersistentCityProductionResult(
-      accepted: true,
-      state: state.copyWith(
-        cities: _replaceCity(
-          state.cities,
-          cityIndex,
-          _queueProduction(
-            city,
-            UnitProductionTarget(command.unitType),
-            cityRuleset,
-            paceBalance,
-          ),
-        ),
-      ),
-    );
+    return _fromCommandResult(state, result);
   }
 
   PersistentCityProductionResult startCityProject({
@@ -362,34 +308,6 @@ class PersistentCityProductionResolver {
       state: identical(result.cities, state.cities)
           ? state
           : state.copyWith(cities: result.cities),
-    );
-  }
-
-  static GameCity _queueProduction(
-    GameCity city,
-    CityProductionTarget target,
-    CityRuleset cityRuleset,
-    PaceBalance paceBalance,
-  ) {
-    final activeInvestment = city.productionQueue?.investedProduction;
-    final rolloverInvestment = activeInvestment == null
-        ? CityProductionRules.rolloverInvestment(
-            storedOverflow: city.productionOverflow,
-            productionCost: CityProductionRules.targetCost(
-              target,
-              ruleset: cityRuleset,
-              paceBalance: paceBalance,
-            ),
-          )
-        : 0;
-    return city.copyWith(
-      productionQueue: CityProductionQueue.target(
-        target: target,
-        investedProduction: activeInvestment ?? rolloverInvestment,
-      ),
-      productionOverflow: activeInvestment == null
-          ? 0
-          : city.productionOverflow,
     );
   }
 

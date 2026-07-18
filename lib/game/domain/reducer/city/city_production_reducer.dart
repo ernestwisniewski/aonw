@@ -18,7 +18,7 @@ part 'city_production_reducer_rush.dart';
 part 'city_production_reducer_building.dart';
 part 'city_production_reducer_project.dart';
 part 'city_production_reducer_specialization.dart';
-part 'city_production_reducer_supply.dart';
+part 'city_production_reducer_unit.dart';
 part 'city_production_reducer_wonder.dart';
 
 typedef _RushProductionApplication = ({
@@ -48,71 +48,13 @@ abstract final class CityProductionReducer {
     MapReadView mapView, {
     GameCommandContext context = const GameCommandContext(),
     GameRuleset ruleset = GameRuleset.defaults,
-  }) {
-    final target = _controlledCityTarget(state, command.cityId, context);
-    if (target == null) {
-      return GameStateTransition(state: state);
-    }
-    final city = target.city;
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      research: state.research,
-      ruleset: ruleset.technology,
-    );
-    final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      cities: state.cities,
-      mapTiles: mapView,
-      ruleset: ruleset.city,
-      research: state.research,
-      resourceTradeAgreements: state.resourceTradeAgreements,
-    );
-    if (!CityProductionRules.canProduceUnit(
-      command.unitType,
-      ruleset: ruleset.city,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return GameStateTransition(state: state);
-    }
-    if (!CityUnitProductionRules.canProduceInCity(
-      city: city,
-      unitType: command.unitType,
-      mapTiles: mapView,
-    )) {
-      return GameStateTransition(state: state);
-    }
-    final hasSupply = _canQueueCityUnit(
-      state: state,
-      city: city,
-      unitType: command.unitType,
-      mapView: mapView,
-      ruleset: ruleset,
-    );
-    if (!hasSupply) {
-      return GameStateTransition(state: state);
-    }
-
-    final updatedCity = _queueProduction(
-      city,
-      UnitProductionTarget(command.unitType),
-      ruleset,
-      context.paceBalance,
-    );
-
-    return _finishQueuedProductionUpdate(
-      state,
-      updatedCity: updatedCity,
-      cityIndex: target.index,
-      cityId: command.cityId,
-      mapTiles: mapView,
-      ruleset: ruleset,
-      paceBalance: context.paceBalance,
-    );
-  }
+  }) => _startUnitProduction(
+    state,
+    command,
+    mapView,
+    context: context,
+    ruleset: ruleset,
+  );
 
   static GameStateTransition startCityProject(
     GameState state,
@@ -201,35 +143,6 @@ abstract final class CityProductionReducer {
     ruleset: ruleset,
     paceBalance: paceBalance,
   );
-
-  static GameCity _queueProduction(
-    GameCity city,
-    CityProductionTarget target,
-    GameRuleset ruleset,
-    PaceBalance paceBalance,
-  ) {
-    final activeInvestment = city.productionQueue?.investedProduction;
-    final rolloverInvestment = activeInvestment == null
-        ? CityProductionRules.rolloverInvestment(
-            storedOverflow: city.productionOverflow,
-            productionCost: CityProductionRules.targetCost(
-              target,
-              ruleset: ruleset.city,
-              wonderRuleset: ruleset.wonders,
-              paceBalance: paceBalance,
-            ),
-          )
-        : 0;
-    return city.copyWith(
-      productionQueue: CityProductionQueue.target(
-        target: target,
-        investedProduction: activeInvestment ?? rolloverInvestment,
-      ),
-      productionOverflow: activeInvestment == null
-          ? 0
-          : city.productionOverflow,
-    );
-  }
 
   static ({int index, GameCity city})? _controlledCityTarget(
     GameState state,

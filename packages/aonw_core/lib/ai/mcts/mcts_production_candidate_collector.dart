@@ -50,6 +50,7 @@ final class MctsProductionCandidateCollector {
       mapTiles: view.mapData,
       ruleset: view.ruleset.city,
       research: research,
+      resourceTradeAgreements: view.resourceTradeAgreements,
     );
     if (!CityProductionRules.canProduceUnit(
       unitType,

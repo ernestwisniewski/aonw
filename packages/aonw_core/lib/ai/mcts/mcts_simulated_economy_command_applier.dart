@@ -109,58 +109,21 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartUnitProduction(StartUnitProductionCommand command) {
-    final lookup = _cityLookup(command.cityId);
-    if (lookup == null) return ownCities;
-    final (:cityIndex, :city) = lookup;
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      research: _researchState,
-      ruleset: view.ruleset.technology,
-    );
-    final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      cities: ownCities,
-      mapTiles: view.mapData,
-      ruleset: view.ruleset.city,
-      research: _researchState,
-    );
-    if (!CityProductionRules.canProduceUnit(
-      command.unitType,
-      ruleset: view.ruleset.city,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return ownCities;
-    }
-    if (!CityUnitProductionRules.canProduceInCity(
-      city: city,
-      unitType: command.unitType,
-      mapTiles: view.mapData,
-    )) {
-      return ownCities;
-    }
-    final hasSupply = CityUnitSupplyRules.canQueueUnit(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
+    final result = CityProductionCommandResolver.startUnitProduction(
       cities: ownCities,
       units: ownUnits,
       artifacts: view.artifacts,
       fieldImprovements: view.ownImprovements,
+      research: _researchState,
+      resourceTradeAgreements: view.resourceTradeAgreements,
+      command: command,
+      actorPlayerId: view.forPlayerId,
       mapView: view.mapData,
       cityRuleset: view.ruleset.city,
-      research: _researchState,
       technologyRuleset: view.ruleset.technology,
-      replacingCityId: city.id,
+      paceBalance: view.ruleset.paceBalance,
     );
-    if (!hasSupply) return ownCities;
-
-    return _replaceCity(
-      cityIndex,
-      _queueProduction(city, UnitProductionTarget(command.unitType)),
-    );
+    return result.accepted ? result.cities : ownCities;
   }
 
   List<GameCity> applyStartCityProject(StartCityProjectCommand command) {
@@ -196,44 +159,6 @@ final class MctsSimulatedEconomyCommandApplier {
 
   ResearchState get _researchState {
     return view.research.updatePlayer(view.forPlayerId, ownResearch);
-  }
-
-  ({int cityIndex, GameCity city})? _cityLookup(String cityId) {
-    for (var i = 0; i < ownCities.length; i++) {
-      final city = ownCities[i];
-      if (city.id == cityId) return (cityIndex: i, city: city);
-    }
-    return null;
-  }
-
-  List<GameCity> _replaceCity(int index, GameCity updated) {
-    return [
-      for (var i = 0; i < ownCities.length; i++)
-        if (i == index) updated else ownCities[i],
-    ];
-  }
-
-  GameCity _queueProduction(GameCity city, CityProductionTarget target) {
-    final activeInvestment = city.productionQueue?.investedProduction;
-    final rolloverInvestment = activeInvestment == null
-        ? CityProductionRules.rolloverInvestment(
-            storedOverflow: city.productionOverflow,
-            productionCost: CityProductionRules.targetCost(
-              target,
-              ruleset: view.ruleset.city,
-              paceBalance: view.ruleset.paceBalance,
-            ),
-          )
-        : 0;
-    return city.copyWith(
-      productionQueue: CityProductionQueue.target(
-        target: target,
-        investedProduction: activeInvestment ?? rolloverInvestment,
-      ),
-      productionOverflow: activeInvestment == null
-          ? 0
-          : city.productionOverflow,
-    );
   }
 
   PersistentGameState _persistentState() {

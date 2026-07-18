@@ -71,6 +71,7 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
     expect(reduction.outcome, isNotNull);
     expect(resultSave.savedAt, fixture.now);
   } else {
+    expect(reduction.snapshot, same(snapshot));
     expect(reduction.turn, isNull);
     expect(reduction.previousState, isNull);
     expect(reduction.state, isNull);

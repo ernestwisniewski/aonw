@@ -41,6 +41,16 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
         ruleset,
       );
     }
+    if (command is StartUnitProductionCommand) {
+      return _applyStartUnitProduction(
+        save,
+        state,
+        command,
+        actorPlayerId,
+        mapView,
+        ruleset,
+      );
+    }
     final result = _applyPersistentProductionCommand(
       state,
       command,
@@ -148,6 +158,36 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       reason: result.reason,
     );
   }
+
+  _CommandApplication _applyStartUnitProduction(
+    GameSave save,
+    PersistentGameState state,
+    StartUnitProductionCommand command,
+    String actorPlayerId,
+    MapReadView mapView,
+    GameRuleset ruleset,
+  ) {
+    final result = CityProductionCommandResolver.startUnitProduction(
+      cities: state.cities,
+      units: state.units,
+      artifacts: state.artifacts,
+      fieldImprovements: state.fieldImprovements,
+      research: state.research,
+      resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapView: mapView,
+      cityRuleset: ruleset.city,
+      technologyRuleset: ruleset.technology,
+      paceBalance: ruleset.paceBalance,
+    );
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      reason: result.reason,
+    );
+  }
 }
 
 PersistentCityProductionResult _applyPersistentProductionCommand(
@@ -157,13 +197,6 @@ PersistentCityProductionResult _applyPersistentProductionCommand(
   MapReadView mapView,
   GameRuleset ruleset,
 ) => switch (command) {
-  StartUnitProductionCommand() => _startUnitProduction(
-    state,
-    command,
-    actorPlayerId,
-    mapView,
-    ruleset,
-  ),
   RushProductionCommand() => _rushProduction(
     state,
     command,
@@ -177,22 +210,6 @@ PersistentCityProductionResult _applyPersistentProductionCommand(
     'Expected a production command',
   ),
 };
-
-PersistentCityProductionResult _startUnitProduction(
-  PersistentGameState state,
-  StartUnitProductionCommand command,
-  String actorPlayerId,
-  MapReadView mapView,
-  GameRuleset ruleset,
-) => const PersistentCityProductionResolver().startUnitProduction(
-  state: state,
-  command: command,
-  actorPlayerId: actorPlayerId,
-  mapView: mapView,
-  cityRuleset: ruleset.city,
-  technologyRuleset: ruleset.technology,
-  paceBalance: ruleset.paceBalance,
-);
 
 PersistentCityProductionResult _rushProduction(
   PersistentGameState state,

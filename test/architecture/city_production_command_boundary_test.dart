@@ -14,6 +14,8 @@ const _domainAdapterPath =
     'domain_city_production_resolver.dart';
 const _localBuildingCallSite =
     'lib/game/domain/reducer/city/city_production_reducer_building.dart';
+const _localUnitCallSite =
+    'lib/game/domain/reducer/city/city_production_reducer_unit.dart';
 const _localWonderCallSite =
     'lib/game/domain/reducer/city/city_production_reducer_wonder.dart';
 const _localProjectCallSite =
@@ -74,6 +76,41 @@ void main() {
       ),
       isEmpty,
       reason: 'Production must call the state-neutral production kernel.',
+    );
+  });
+
+  test('city unit paths share one state-neutral production kernel', () {
+    final sources = productionDartSources();
+
+    expect(
+      staticMemberReferenceCountsByPath(
+        sources,
+        'CityProductionCommandResolver',
+        'startUnitProduction',
+      ),
+      {
+        _persistentAdapterPath: 1,
+        _domainAdapterPath: 1,
+        _localUnitCallSite: 1,
+        _serverCallSite: 1,
+        _lightweightMctsCallSite: 1,
+      },
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'PersistentCityProductionResolver',
+        'startUnitProduction',
+      ),
+      {_fullMctsCallSite: 1, _economySimulationCallSite: 1},
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'DomainCityProductionResolver',
+        'startUnitProduction',
+      ),
+      isEmpty,
     );
   });
 
@@ -234,7 +271,6 @@ void main() {
         'GameRuleset',
         'MapData',
         'MapDefinition',
-        'MapReadView',
         'MapTraversalView',
         'MapTileView',
         'MapTileCatalog',
@@ -294,6 +330,30 @@ void main() {
           reason: methodName,
         );
       }
+
+      final mapReadViewTypes = typeNamesBackedBy(sources, const {
+        'MapReadView',
+      });
+      expect(
+        namedTypeReferencesOutsideClassMethods(
+          kernelSource,
+          path: _kernelPath,
+          className: 'CityProductionCommandResolver',
+          excludedMethodNames: const {'startUnitProduction'},
+        ).intersection(mapReadViewTypes),
+        isEmpty,
+        reason: 'Only startUnitProduction may depend on an indexed map view.',
+      );
+      expect(
+        classMethodParameterTypeSource(
+          kernelSource,
+          path: _kernelPath,
+          className: 'CityProductionCommandResolver',
+          methodName: 'startUnitProduction',
+          parameterName: 'mapView',
+        ),
+        'MapReadView',
+      );
     },
   );
 
@@ -302,6 +362,7 @@ void main() {
     () {
       for (final memberName in const {
         'startBuilding',
+        'startUnitProduction',
         'startWonder',
         'startCityProject',
         'setCitySpecialization',
@@ -363,6 +424,7 @@ void apply() => LegacyCityProductionCommandResolver.$memberName();
 abstract final class CityProductionCommandResolver {
   static void startBuilding({required MapTileLookup mapTiles}) {}
   static void startWonder({required MapTileLookup mapTiles}) {}
+  static void startUnitProduction({required MapReadView mapView}) {}
   static void startCityProject({required CityRuleset cityRuleset}) {}
 }
 ''';
@@ -390,16 +452,19 @@ abstract final class CityProductionCommandResolver {
         reason: methodName,
       );
     }
-
     const aliasedSource = '''
 abstract final class CityProductionCommandResolver {
   static void startBuilding({required MapTileLookup mapTiles}) {}
   static void startWonder({required MapTileLookup mapTiles}) {}
-  static void startCityProject({required Tiles mapTiles}) {}
+  static void startUnitProduction({required MapReadView mapView}) {}
+  static void startCityProject({required Tiles mapTiles, required View view}) {}
 }
 ''';
     final aliasedSources = {
-      'aliases.dart': 'typedef Tiles = MapTileLookup;',
+      'aliases.dart': '''
+typedef Tiles = MapTileLookup;
+typedef View = MapReadView;
+''',
       'kernel.dart': aliasedSource,
     };
     final aliasedMapTypes = typeNamesBackedBy(aliasedSources, const {
@@ -413,6 +478,18 @@ abstract final class CityProductionCommandResolver {
       ).intersection(aliasedMapTypes),
       isNotEmpty,
       reason: 'Scoped guard must catch MapTileLookup-backed aliases.',
+    );
+    final aliasedMapViewTypes = typeNamesBackedBy(aliasedSources, const {
+      'MapReadView',
+    });
+    expect(
+      namedTypeReferencesOutsideClassMethods(
+        aliasedSource,
+        className: 'CityProductionCommandResolver',
+        excludedMethodNames: const {'startUnitProduction'},
+      ).intersection(aliasedMapViewTypes),
+      isNotEmpty,
+      reason: 'Scoped guard must catch MapReadView-backed aliases.',
     );
   });
 }

@@ -47,6 +47,32 @@ final class DomainCityProductionResolver {
     return _fromCommandResult(state, result);
   }
 
+  DomainCityProductionResult startUnitProduction({
+    required DomainState state,
+    required StartUnitProductionCommand command,
+    required String actorPlayerId,
+    required MapReadView mapView,
+    CityRuleset cityRuleset = CityRulesets.standard,
+    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    final result = CityProductionCommandResolver.startUnitProduction(
+      cities: state.cities,
+      units: state.units,
+      artifacts: state.artifacts,
+      fieldImprovements: state.fieldImprovements,
+      research: state.research,
+      resourceTradeAgreements: state.resourceTradeAgreements,
+      mapView: mapView,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      paceBalance: paceBalance,
+    );
+    return _fromCommandResult(state, result);
+  }
+
   DomainCityProductionResult startCityProject({
     required DomainState state,
     required StartCityProjectCommand command,
