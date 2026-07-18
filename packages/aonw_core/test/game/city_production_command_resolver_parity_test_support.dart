@@ -13,7 +13,10 @@ typedef _ProductionResults = ({
   DomainCityProductionResult domain,
 });
 
-_ProductionStates _productionStates({required GameCity primary}) {
+_ProductionStates _productionStates({
+  required GameCity primary,
+  ResearchState research = ResearchState.empty,
+}) {
   final cities = [
     primary,
     _parityProductionCity(id: 'city_2', ownerPlayerId: _otherPlayerId),
@@ -27,6 +30,7 @@ _ProductionStates _productionStates({required GameCity primary}) {
       },
       playerGold: const {_playerId: 17, _otherPlayerId: 11},
       cities: cities,
+      research: research,
       runtimeState: GameRuntimeState.snapshot(
         submittedPlayerIds: const {_otherPlayerId},
         timeoutStreaksByPlayerId: const {_otherPlayerId: 2},
@@ -52,6 +56,7 @@ _ProductionStates _productionStates({required GameCity primary}) {
       ],
       playerGold: const {_playerId: 17, _otherPlayerId: 11},
       cities: cities,
+      research: research,
     ),
   );
 }
@@ -76,6 +81,48 @@ _ProductionResults _startBoth(
       cityRuleset: CityRulesets.standard,
       paceBalance: PaceBalance.standard60,
     ),
+  );
+}
+
+_ProductionResults _specializeBoth(
+  _ProductionStates states, {
+  String actorPlayerId = _playerId,
+}) {
+  const command = SetCitySpecializationCommand(
+    'city_1',
+    CitySpecializationType.industry,
+  );
+  return (
+    persistent: const PersistentCityProductionResolver().setCitySpecialization(
+      state: states.persistent,
+      command: command,
+      actorPlayerId: actorPlayerId,
+    ),
+    domain: const DomainCityProductionResolver().setCitySpecialization(
+      state: states.domain,
+      command: command,
+      actorPlayerId: actorPlayerId,
+    ),
+  );
+}
+
+ResearchState _paritySpecializationResearch() {
+  return ResearchState(
+    players: {
+      _playerId: PlayerResearchState(
+        unlockedTechnologyIds: const {
+          TechnologyId.agriculture,
+          TechnologyId.specialization,
+        },
+        activeTechnologyId: TechnologyId.craftsmanship,
+        progressByTechnologyId: const {TechnologyId.craftsmanship: 13},
+        scienceOverflow: 5,
+      ),
+      _otherPlayerId: PlayerResearchState(
+        unlockedTechnologyIds: const {TechnologyId.agriculture},
+        scienceOverflow: 2,
+      ),
+    },
   );
 }
 
@@ -130,6 +177,8 @@ GameCity _parityProductionCity({
   String ownerPlayerId = _playerId,
   CityProductionQueue? productionQueue,
   int productionOverflow = 0,
+  Set<CityBuildingType> buildings = const {},
+  CitySpecializationType? specialization,
 }) {
   return GameCity.snapshot(
     id: id,
@@ -140,5 +189,7 @@ GameCity _parityProductionCity({
         : const CityHex(col: 3, row: 3),
     productionQueue: productionQueue,
     productionOverflow: productionOverflow,
+    buildings: buildings,
+    specialization: specialization,
   );
 }

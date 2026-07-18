@@ -86,4 +86,72 @@ void main() {
       _expectProjectRejected(cities: foreign, reason: 'city_not_controlled');
     });
   });
+
+  group('CityProductionCommandResolver.setCitySpecialization', () {
+    test('updates one city in an immutable list without mutating inputs', () {
+      final selected = _productionCity(
+        buildings: const {CityBuildingType.workshop},
+      );
+      final unrelated = _productionCity(
+        id: 'city_2',
+        ownerPlayerId: _otherPlayerId,
+      );
+      final cities = [selected, unrelated];
+
+      final result = _setSpecialization(
+        cities: cities,
+        research: _specializationResearch(),
+      );
+
+      expect(result.accepted, isTrue);
+      expect(result.reason, isNull);
+      expect(identical(result.cities, cities), isFalse);
+      expect(
+        result.cities.first.specialization,
+        CitySpecializationType.industry,
+      );
+      expect(identical(result.cities.last, unrelated), isTrue);
+      expect(selected.specialization, isNull);
+      expect(identical(cities.first, selected), isTrue);
+      expect(() => result.cities.clear(), throwsUnsupportedError);
+    });
+
+    test('preserves exact rejection precedence and input identity', () {
+      _expectSpecializationRejected(
+        cities: const [],
+        research: _specializationResearch(),
+        actorPlayerId: _otherPlayerId,
+        reason: 'city_not_found',
+      );
+      _expectSpecializationRejected(
+        cities: [
+          _productionCity(
+            ownerPlayerId: _otherPlayerId,
+            specialization: CitySpecializationType.industry,
+          ),
+        ],
+        research: ResearchState.empty,
+        reason: 'city_not_controlled',
+      );
+      _expectSpecializationRejected(
+        cities: [
+          _productionCity(specialization: CitySpecializationType.industry),
+        ],
+        research: ResearchState.empty,
+        reason: 'city_specialization_locked',
+      );
+      _expectSpecializationRejected(
+        cities: [
+          _productionCity(specialization: CitySpecializationType.industry),
+        ],
+        research: _specializationResearch(),
+        reason: 'city_specialization_unchanged',
+      );
+      _expectSpecializationRejected(
+        cities: [_productionCity()],
+        research: _specializationResearch(),
+        reason: 'city_specialization_missing_building',
+      );
+    });
+  });
 }

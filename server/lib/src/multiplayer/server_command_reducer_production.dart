@@ -18,6 +18,9 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
         ruleset,
       );
     }
+    if (command is SetCitySpecializationCommand) {
+      return _applySetCitySpecialization(save, state, command, actorPlayerId);
+    }
     final result = switch (command) {
       StartBuildingCommand() => _startBuildingProduction(
         state,
@@ -69,6 +72,28 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       actorPlayerId: actorPlayerId,
       cityRuleset: ruleset.city,
       paceBalance: ruleset.paceBalance,
+    );
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: !result.accepted || identical(result.cities, state.cities)
+          ? state
+          : state.copyWith(cities: result.cities),
+      reason: result.reason,
+    );
+  }
+
+  _CommandApplication _applySetCitySpecialization(
+    GameSave save,
+    PersistentGameState state,
+    SetCitySpecializationCommand command,
+    String actorPlayerId,
+  ) {
+    final result = CityProductionCommandResolver.setCitySpecialization(
+      cities: state.cities,
+      research: state.research,
+      command: command,
+      actorPlayerId: actorPlayerId,
     );
     return _applicationFrom(
       save: save,

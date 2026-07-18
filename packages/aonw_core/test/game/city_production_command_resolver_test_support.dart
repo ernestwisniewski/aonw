@@ -28,11 +28,56 @@ void _expectProjectRejected({
   expect(identical(result.cities, cities), isTrue);
 }
 
+CityProductionCommandResult _setSpecialization({
+  required List<GameCity> cities,
+  required ResearchState research,
+  String actorPlayerId = _playerId,
+}) {
+  return CityProductionCommandResolver.setCitySpecialization(
+    cities: cities,
+    research: research,
+    command: const SetCitySpecializationCommand(
+      'city_1',
+      CitySpecializationType.industry,
+    ),
+    actorPlayerId: actorPlayerId,
+  );
+}
+
+void _expectSpecializationRejected({
+  required List<GameCity> cities,
+  required ResearchState research,
+  required String reason,
+  String actorPlayerId = _playerId,
+}) {
+  final result = _setSpecialization(
+    cities: cities,
+    research: research,
+    actorPlayerId: actorPlayerId,
+  );
+
+  expect(result.accepted, isFalse);
+  expect(result.reason, reason);
+  expect(identical(result.cities, cities), isTrue);
+}
+
+ResearchState _specializationResearch() {
+  return ResearchState(
+    players: {
+      _playerId: PlayerResearchState(
+        unlockedTechnologyIds: const {TechnologyId.specialization},
+      ),
+    },
+  );
+}
+
 GameCity _productionCity({
   String id = 'city_1',
   String ownerPlayerId = _playerId,
   CityProductionQueue? productionQueue,
   int productionOverflow = 0,
+  Set<CityBuildingType> buildings = const {},
+  CitySpecializationType? specialization,
 }) {
   return GameCity.snapshot(
     id: id,
@@ -43,5 +88,7 @@ GameCity _productionCity({
         : const CityHex(col: 3, row: 3),
     productionQueue: productionQueue,
     productionOverflow: productionOverflow,
+    buildings: buildings,
+    specialization: specialization,
   );
 }

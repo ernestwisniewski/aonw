@@ -191,13 +191,7 @@ class PersistentCityProductionResolver {
       cityRuleset: cityRuleset,
       paceBalance: paceBalance,
     );
-    if (!result.accepted) return _reject(state, result.reason!);
-    return PersistentCityProductionResult(
-      accepted: true,
-      state: identical(result.cities, state.cities)
-          ? state
-          : state.copyWith(cities: result.cities),
-    );
+    return _fromCommandResult(state, result);
   }
 
   PersistentCityProductionResult startWonder({
@@ -251,37 +245,13 @@ class PersistentCityProductionResolver {
     required SetCitySpecializationCommand command,
     required String actorPlayerId,
   }) {
-    final lookup = _cityLookup(state.cities, command.cityId);
-    if (lookup == null) return _reject(state, 'city_not_found');
-    final (:cityIndex, :city) = lookup;
-    if (city.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'city_not_controlled');
-    }
-    if (!state.research
-        .forPlayer(city.ownerPlayerId)
-        .hasUnlocked(TechnologyId.specialization)) {
-      return _reject(state, 'city_specialization_locked');
-    }
-    if (city.specialization == command.specialization) {
-      return _reject(state, 'city_specialization_unchanged');
-    }
-    if (!CitySpecializationRules.hasRequiredBuilding(
-      city.buildings,
-      command.specialization,
-    )) {
-      return _reject(state, 'city_specialization_missing_building');
-    }
-
-    return PersistentCityProductionResult(
-      accepted: true,
-      state: state.copyWith(
-        cities: _replaceCity(
-          state.cities,
-          cityIndex,
-          city.copyWith(specialization: command.specialization),
-        ),
-      ),
+    final result = CityProductionCommandResolver.setCitySpecialization(
+      cities: state.cities,
+      research: state.research,
+      command: command,
+      actorPlayerId: actorPlayerId,
     );
+    return _fromCommandResult(state, result);
   }
 
   PersistentCityProductionResult rushProduction({
@@ -441,6 +411,19 @@ class PersistentCityProductionResolver {
       accepted: false,
       state: state,
       reason: reason,
+    );
+  }
+
+  PersistentCityProductionResult _fromCommandResult(
+    PersistentGameState state,
+    CityProductionCommandResult result,
+  ) {
+    if (!result.accepted) return _reject(state, result.reason!);
+    return PersistentCityProductionResult(
+      accepted: true,
+      state: identical(result.cities, state.cities)
+          ? state
+          : state.copyWith(cities: result.cities),
     );
   }
 

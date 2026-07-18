@@ -1,11 +1,14 @@
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
+import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
+import 'package:aonw_core/game/domain/technology/research_state.dart';
+import 'package:aonw_core/game/domain/technology/technology_id.dart';
 
-/// Persistence-neutral result of starting a city project.
+/// Persistence-neutral result of applying a city-production command.
 ///
 /// Rejections and accepted semantic no-ops preserve [cities] identity. A
 /// changed collection is owned by the result and cannot be mutated.
@@ -24,7 +27,7 @@ final class CityProductionCommandResult {
   final List<GameCity> cities;
 }
 
-/// Applies the authoritative city-project rule without a state container.
+/// Applies authoritative city-production rules without a state container.
 abstract final class CityProductionCommandResolver {
   static CityProductionCommandResult startCityProject({
     required List<GameCity> cities,
@@ -51,6 +54,45 @@ abstract final class CityProductionCommandResolver {
         for (var index = 0; index < cities.length; index++)
           if (index == cityIndex)
             _queueProject(city, target, cityRuleset, paceBalance)
+          else
+            cities[index],
+      ]),
+    );
+  }
+
+  static CityProductionCommandResult setCitySpecialization({
+    required List<GameCity> cities,
+    required ResearchState research,
+    required SetCitySpecializationCommand command,
+    required String actorPlayerId,
+  }) {
+    final cityIndex = _cityIndexById(cities, command.cityId);
+    if (cityIndex == null) return _reject(cities, 'city_not_found');
+
+    final city = cities[cityIndex];
+    if (city.ownerPlayerId != actorPlayerId) {
+      return _reject(cities, 'city_not_controlled');
+    }
+    if (!research
+        .forPlayer(city.ownerPlayerId)
+        .hasUnlocked(TechnologyId.specialization)) {
+      return _reject(cities, 'city_specialization_locked');
+    }
+    if (city.specialization == command.specialization) {
+      return _reject(cities, 'city_specialization_unchanged');
+    }
+    if (!CitySpecializationRules.hasRequiredBuilding(
+      city.buildings,
+      command.specialization,
+    )) {
+      return _reject(cities, 'city_specialization_missing_building');
+    }
+
+    return CityProductionCommandResult._accepted(
+      cities: List<GameCity>.unmodifiable([
+        for (var index = 0; index < cities.length; index++)
+          if (index == cityIndex)
+            city.copyWith(specialization: command.specialization)
           else
             cities[index],
       ]),

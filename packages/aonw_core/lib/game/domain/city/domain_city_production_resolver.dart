@@ -35,6 +35,27 @@ final class DomainCityProductionResolver {
       cityRuleset: cityRuleset,
       paceBalance: paceBalance,
     );
+    return _fromCommandResult(state, result);
+  }
+
+  DomainCityProductionResult setCitySpecialization({
+    required DomainState state,
+    required SetCitySpecializationCommand command,
+    required String actorPlayerId,
+  }) {
+    final result = CityProductionCommandResolver.setCitySpecialization(
+      cities: state.cities,
+      research: state.research,
+      command: command,
+      actorPlayerId: actorPlayerId,
+    );
+    return _fromCommandResult(state, result);
+  }
+
+  DomainCityProductionResult _fromCommandResult(
+    DomainState state,
+    CityProductionCommandResult result,
+  ) {
     if (!result.accepted) {
       return DomainCityProductionResult(
         accepted: false,

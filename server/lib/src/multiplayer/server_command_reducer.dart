@@ -323,6 +323,7 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
         );
+      case SetCitySpecializationCommand():
       case StartBuildingCommand() ||
           StartUnitProductionCommand() ||
           StartCityProjectCommand() ||
@@ -344,14 +345,6 @@ class ServerCommandReducer {
           mapView: loadedMap.mapView,
           ruleset: ruleset,
         );
-      case SetCitySpecializationCommand():
-        final result = const PersistentCityProductionResolver()
-            .setCitySpecialization(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            );
-        return _fromPersistentResult(save, result);
       case SelectTechnologyCommand():
         return _applySelectTechnologyCommand(
           save: save,

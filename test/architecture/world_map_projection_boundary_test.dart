@@ -41,6 +41,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/city/city_production_reducer.dart',
   'lib/game/domain/reducer/city/city_production_reducer_project.dart',
   'lib/game/domain/reducer/city/city_production_reducer_rush.dart',
+  'lib/game/domain/reducer/city/city_production_reducer_specialization.dart',
   'lib/game/domain/reducer/city/city_production_reducer_supply.dart',
   'lib/game/domain/reducer/city/city_production_reducer_wonder.dart',
   'lib/game/domain/reducer/city/city_worked_hex_reducer.dart',

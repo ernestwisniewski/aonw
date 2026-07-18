@@ -87,5 +87,86 @@ void main() {
         reason: 'city_not_controlled',
       );
     });
+
+    test('specialization has exact parity and preserves research identity', () {
+      final research = _paritySpecializationResearch();
+      final states = _productionStates(
+        primary: _parityProductionCity(
+          buildings: const {CityBuildingType.workshop},
+        ),
+        research: research,
+      );
+
+      final results = _specializeBoth(states);
+
+      _expectAcceptedProductionParity(states, results);
+      expect(
+        results.persistent.state.cities.first.specialization,
+        CitySpecializationType.industry,
+      );
+      expect(results.persistent.state.cities, results.domain.state.cities);
+      expect(identical(results.persistent.state.research, research), isTrue);
+      expect(identical(results.domain.state.research, research), isTrue);
+      expect(states.persistent.cities.first.specialization, isNull);
+      expect(states.domain.cities.first.specialization, isNull);
+    });
+
+    test('specialization rejections preserve full precedence and state', () {
+      final unlocked = _paritySpecializationResearch();
+      final missingStates = _productionStates(
+        primary: _parityProductionCity(id: 'city_missing'),
+        research: unlocked,
+      );
+      _expectRejectedProductionParity(
+        missingStates,
+        _specializeBoth(missingStates, actorPlayerId: _otherPlayerId),
+        reason: 'city_not_found',
+      );
+
+      final foreignStates = _productionStates(
+        primary: _parityProductionCity(
+          ownerPlayerId: _otherPlayerId,
+          specialization: CitySpecializationType.industry,
+        ),
+      );
+      _expectRejectedProductionParity(
+        foreignStates,
+        _specializeBoth(foreignStates),
+        reason: 'city_not_controlled',
+      );
+
+      final lockedStates = _productionStates(
+        primary: _parityProductionCity(
+          specialization: CitySpecializationType.industry,
+        ),
+      );
+      _expectRejectedProductionParity(
+        lockedStates,
+        _specializeBoth(lockedStates),
+        reason: 'city_specialization_locked',
+      );
+
+      final unchangedStates = _productionStates(
+        primary: _parityProductionCity(
+          specialization: CitySpecializationType.industry,
+        ),
+        research: unlocked,
+      );
+      _expectRejectedProductionParity(
+        unchangedStates,
+        _specializeBoth(unchangedStates),
+        reason: 'city_specialization_unchanged',
+      );
+
+      final missingBuildingStates = _productionStates(
+        primary: _parityProductionCity(),
+        research: unlocked,
+      );
+      _expectRejectedProductionParity(
+        missingBuildingStates,
+        _specializeBoth(missingBuildingStates),
+        reason: 'city_specialization_missing_building',
+      );
+    });
   });
 }

@@ -17,6 +17,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'city_production_reducer_rush.dart';
 part 'city_production_reducer_project.dart';
+part 'city_production_reducer_specialization.dart';
 part 'city_production_reducer_supply.dart';
 part 'city_production_reducer_wonder.dart';
 
@@ -187,40 +188,13 @@ abstract final class CityProductionReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     GameRuleset ruleset = GameRuleset.defaults,
-  }) {
-    final target = _controlledCityTarget(state, command.cityId, context);
-    if (target == null) {
-      return GameStateTransition(state: state);
-    }
-    final city = target.city;
-
-    if (!state.research
-        .forPlayer(city.ownerPlayerId)
-        .hasUnlocked(TechnologyId.specialization)) {
-      return GameStateTransition(state: state);
-    }
-    if (city.specialization == command.specialization) {
-      return GameStateTransition(state: state);
-    }
-    if (!CitySpecializationRules.hasRequiredBuilding(
-      city.buildings,
-      command.specialization,
-    )) {
-      return GameStateTransition(state: state);
-    }
-
-    final updatedCity = city.copyWith(specialization: command.specialization);
-
-    return _finishQueuedProductionUpdate(
-      state,
-      updatedCity: updatedCity,
-      cityIndex: target.index,
-      cityId: command.cityId,
-      mapTiles: mapTiles,
-      ruleset: ruleset,
-      paceBalance: context.paceBalance,
-    );
-  }
+  }) => _setCitySpecialization(
+    state,
+    command,
+    mapTiles,
+    context: context,
+    ruleset: ruleset,
+  );
 
   static GameStateTransition rushProduction(
     GameState state,

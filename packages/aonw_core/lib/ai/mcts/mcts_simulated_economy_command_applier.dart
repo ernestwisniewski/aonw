@@ -197,26 +197,13 @@ final class MctsSimulatedEconomyCommandApplier {
   List<GameCity> applySetCitySpecialization(
     SetCitySpecializationCommand command,
   ) {
-    final lookup = _cityLookup(command.cityId);
-    if (lookup == null) return ownCities;
-    final (:cityIndex, :city) = lookup;
-    if (!_researchState
-        .forPlayer(city.ownerPlayerId)
-        .hasUnlocked(TechnologyId.specialization)) {
-      return ownCities;
-    }
-    if (city.specialization == command.specialization) return ownCities;
-    if (!CitySpecializationRules.hasRequiredBuilding(
-      city.buildings,
-      command.specialization,
-    )) {
-      return ownCities;
-    }
-
-    return _replaceCity(
-      cityIndex,
-      city.copyWith(specialization: command.specialization),
+    final result = CityProductionCommandResolver.setCitySpecialization(
+      cities: ownCities,
+      research: _researchState,
+      command: command,
+      actorPlayerId: view.forPlayerId,
     );
+    return result.accepted ? result.cities : ownCities;
   }
 
   MctsSimulatedCommandApplication get unchangedCommandApplication => (
