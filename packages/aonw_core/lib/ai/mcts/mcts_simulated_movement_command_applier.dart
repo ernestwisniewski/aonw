@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 final class MctsSimulatedMovementCommandApplier {
@@ -96,23 +97,28 @@ final class MctsSimulatedMovementCommandApplier {
   }
 
   List<GameUnit> applyCancelUnitAction(CancelUnitActionCommand command) {
-    final unitIndex = _unitIndexById(ownUnits, command.unitId);
-    if (unitIndex == null) return ownUnits;
-
-    final unit = ownUnits[unitIndex];
-    final nextMovementPoints = unit.isFortified
-        ? UnitMovementBalance.maxMovementPointsFor(
-            type: unit.type,
-            carriedArtifactId: unit.carriedArtifactId,
-          )
-        : unit.movementPoints;
-    final updated = unit
-        .copyWith(movementPoints: nextMovementPoints)
-        .copyWithQueuedPath(null)
-        .copyWithWorkerJob(null)
-        .copyWithWorkerAssignment(null)
-        .copyWithPosture(UnitPosture.active);
-    return _replaceUnit(updated);
+    // This projection only models the wake-up command emitted by the war-goal
+    // planner. Full-state simulations use PersistentUnitActionResolver so they
+    // can also project runtime interaction and artifact excavation changes.
+    final unit = ownUnits.byId(command.unitId);
+    if (unit == null ||
+        !unit.isFortified ||
+        unit.isWorking ||
+        unit.queuedPath != null ||
+        unit.merchantTradeRoute != null) {
+      return ownUnits;
+    }
+    final result = UnitActionCommandResolver.cancelUnitAction(
+      units: ownUnits,
+      artifacts: view.artifacts,
+      interaction: PersistedInteractionState.empty,
+      command: command,
+      actorPlayerId: view.forPlayerId,
+    );
+    if (!result.accepted || !identical(result.artifacts, view.artifacts)) {
+      return ownUnits;
+    }
+    return result.units;
   }
 
   List<GameUnit> _replaceUnit(GameUnit updated) {

@@ -4,10 +4,11 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
   final runtime = fixture.state.runtimeState;
   final pendingAction = runtime.pendingAction;
   final command = fixture.command;
-  if (fixture.family == 'artifacts' && runtime.turnStartedAt == null) {
+  if ((fixture.family == 'artifacts' || fixture.family == 'unit-actions') &&
+      runtime.turnStartedAt == null) {
     ReducerParityCorpus._fail(
       fixture,
-      'must preserve a non-empty runtime sentinel for artifact commands',
+      'must preserve a non-empty runtime sentinel for reviewed commands',
     );
   }
   final permitsReviewedResearchPendingAction =
@@ -16,8 +17,12 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
       command is SelectTechnologyCommand &&
       pendingAction is PendingResearchSelection &&
       pendingAction.ownerPlayerId == command.playerId;
+  final permitsReviewedUnitActionPendingAction =
+      _permitsReviewedUnitActionPendingAction(fixture);
   if (runtime.cityFoundingDraft != null ||
-      (pendingAction != null && !permitsReviewedResearchPendingAction)) {
+      (pendingAction != null &&
+          !permitsReviewedResearchPendingAction &&
+          !permitsReviewedUnitActionPendingAction)) {
     ReducerParityCorpus._fail(
       fixture,
       'uses client interaction fields outside parity scope',
@@ -42,6 +47,7 @@ final class _ReducerParityCorpusSummary {
   final acceptedCountByFamily = <String, int>{};
   final rejectionReasonsByFamily = <String, Set<String>>{};
   final artifactAcceptanceModes = <String>{};
+  final unitActionAcceptanceModes = <String>{};
   final resourceTradeAcceptanceModes = <String>{};
   final cityWorkedHexAcceptanceModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -76,6 +82,8 @@ final class _ReducerParityCorpusSummary {
           TradeArtifactCommand() => 'trade',
           _ => 'unexpected',
         });
+      case 'unit-actions':
+        unitActionAcceptanceModes.add(_unitActionAcceptanceMode(fixture));
       case 'turn-finalization':
         turnAcceptanceModes.add(
           fixture.expectedSave['turn'] == fixture.save.turn
@@ -122,6 +130,8 @@ void _requireReducerParityFamilyCoverage(
   switch (family) {
     case 'artifacts':
       _requireArtifactAcceptanceCoverage(summary, family);
+    case 'unit-actions':
+      _requireUnitActionAcceptanceCoverage(summary, family);
     case 'turn-finalization':
       _requireTurnFinalizationAcceptanceCoverage(summary, family);
     case 'resource-trade':
@@ -246,6 +256,8 @@ void _validateReducerParityAcceptedCommand(
       _requireAcceptedParityResearch(fixture, state, events);
     case 'resource-trade':
       _requireAcceptedParityResourceTrade(fixture, state, events);
+    case 'unit-actions':
+      _requireAcceptedParityUnitAction(fixture, state, events);
     case 'worker':
       _requireAcceptedParityWorker(fixture, state);
     case 'turn-finalization':

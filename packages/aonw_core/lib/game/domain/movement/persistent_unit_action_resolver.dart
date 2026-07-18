@@ -1,14 +1,15 @@
-import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/movement/persistent_move_unit_resolver.dart';
+import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
+import 'package:aonw_core/game/domain/movement/unit_action_command_resolver.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-class PersistentUnitActionResult {
+final class PersistentUnitActionResult {
   const PersistentUnitActionResult({
     required this.accepted,
     required this.state,
@@ -22,7 +23,7 @@ class PersistentUnitActionResult {
   final String? reason;
 }
 
-class PersistentUnitActionResolver {
+final class PersistentUnitActionResolver {
   const PersistentUnitActionResolver();
 
   PersistentUnitActionResult cancelUnitAction({
@@ -30,41 +31,16 @@ class PersistentUnitActionResolver {
     required CancelUnitActionCommand command,
     required String actorPlayerId,
   }) {
-    final unit = state.units.byId(command.unitId);
-    if (unit == null) return _reject(state, 'unit_not_found');
-    if (unit.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'unit_not_controlled');
-    }
-
-    final pendingTurnSkip =
-        state.runtimeState.pendingAction is PendingUnitTurnSkip
-        ? state.runtimeState.pendingAction as PendingUnitTurnSkip
-        : null;
-    final restoreMovementPoints = pendingTurnSkip?.unitId == unit.id
-        ? pendingTurnSkip!.restoreMovementPoints
-        : null;
-    final nextMovementPoints =
-        restoreMovementPoints ??
-        (unit.isFortified
-            ? UnitMovementBalance.maxMovementPointsFor(
-                type: unit.type,
-                carriedArtifactId: unit.carriedArtifactId,
-              )
-            : unit.movementPoints);
-    final updatedUnit = unit
-        .copyWith(movementPoints: nextMovementPoints)
-        .copyWithQueuedPath(null)
-        .copyWithWorkerJob(null)
-        .copyWithWorkerAssignment(null)
-        .copyWithExcavatingArtifact(null)
-        .copyWithPosture(UnitPosture.active);
-    final artifacts = _cancelArtifactExcavation(state.artifacts, unit);
-    final next = _replaceUnitAndClearRuntimeAction(
+    return _applyUnitAction(
       state,
-      unit,
-      updatedUnit,
-    ).copyWith(artifacts: artifacts);
-    return PersistentUnitActionResult(accepted: true, state: next);
+      UnitActionCommandResolver.cancelUnitAction(
+        units: state.units,
+        artifacts: state.artifacts,
+        interaction: _interactionFrom(state.runtimeState),
+        command: command,
+        actorPlayerId: actorPlayerId,
+      ),
+    );
   }
 
   PersistentUnitActionResult skipUnitTurn({
@@ -72,19 +48,15 @@ class PersistentUnitActionResolver {
     required SkipUnitTurnCommand command,
     required String actorPlayerId,
   }) {
-    final unit = state.units.byId(command.unitId);
-    if (unit == null) return _reject(state, 'unit_not_found');
-    if (unit.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'unit_not_controlled');
-    }
-
-    final updatedUnit = unit
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithPosture(UnitPosture.active);
-    return PersistentUnitActionResult(
-      accepted: true,
-      state: _replaceUnitAndSetTurnSkipAction(state, unit, updatedUnit),
+    return _applyUnitAction(
+      state,
+      UnitActionCommandResolver.skipUnitTurn(
+        units: state.units,
+        artifacts: state.artifacts,
+        interaction: _interactionFrom(state.runtimeState),
+        command: command,
+        actorPlayerId: actorPlayerId,
+      ),
     );
   }
 
@@ -93,16 +65,15 @@ class PersistentUnitActionResolver {
     required FortifyUnitCommand command,
     required String actorPlayerId,
   }) {
-    final unit = state.units.byId(command.unitId);
-    if (unit == null) return _reject(state, 'unit_not_found');
-    if (unit.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'unit_not_controlled');
-    }
-    if (unit.isWorking) return _reject(state, 'unit_busy');
-    final updatedUnit = UnitFortificationRules.fortify(unit);
-    return PersistentUnitActionResult(
-      accepted: true,
-      state: _replaceUnitAndClearRuntimeAction(state, unit, updatedUnit),
+    return _applyUnitAction(
+      state,
+      UnitActionCommandResolver.fortifyUnit(
+        units: state.units,
+        artifacts: state.artifacts,
+        interaction: _interactionFrom(state.runtimeState),
+        command: command,
+        actorPlayerId: actorPlayerId,
+      ),
     );
   }
 
@@ -166,6 +137,63 @@ class PersistentUnitActionResolver {
     );
   }
 
+  static PersistentUnitActionResult _applyUnitAction(
+    PersistentGameState state,
+    UnitActionCommandResult result,
+  ) {
+    if (!result.accepted) {
+      return PersistentUnitActionResult(
+        accepted: false,
+        state: state,
+        reason: result.reason,
+      );
+    }
+    final unitsChanged = !identical(result.units, state.units);
+    final artifactsChanged = !identical(result.artifacts, state.artifacts);
+    final runtimeState = _runtimeStateAfterUnitAction(
+      state.runtimeState,
+      result.interaction,
+    );
+    return PersistentUnitActionResult(
+      accepted: true,
+      state:
+          unitsChanged ||
+              artifactsChanged ||
+              !identical(runtimeState, state.runtimeState)
+          ? state.copyWith(
+              units: unitsChanged ? result.units : null,
+              artifacts: artifactsChanged ? result.artifacts : null,
+              runtimeState: identical(runtimeState, state.runtimeState)
+                  ? null
+                  : runtimeState,
+            )
+          : state,
+    );
+  }
+
+  static GameRuntimeState _runtimeStateAfterUnitAction(
+    GameRuntimeState runtimeState,
+    PersistedInteractionState interaction,
+  ) {
+    if (runtimeState.cityFoundingDraft == interaction.cityFoundingDraft &&
+        runtimeState.pendingAction == interaction.pendingAction) {
+      return runtimeState;
+    }
+    return runtimeState.copyWith(
+      cityFoundingDraft: interaction.cityFoundingDraft,
+      pendingAction: interaction.pendingAction,
+    );
+  }
+
+  static PersistedInteractionState _interactionFrom(
+    GameRuntimeState runtimeState,
+  ) {
+    return PersistedInteractionState(
+      cityFoundingDraft: runtimeState.cityFoundingDraft,
+      pendingAction: runtimeState.pendingAction,
+    );
+  }
+
   static PersistentGameState _replaceUnitAndClearRuntimeAction(
     PersistentGameState state,
     GameUnit original,
@@ -178,27 +206,6 @@ class PersistentUnitActionResolver {
     return state.copyWith(
       units: _replaceUnit(state.units, updated),
       runtimeState: runtimeState,
-    );
-  }
-
-  static PersistentGameState _replaceUnitAndSetTurnSkipAction(
-    PersistentGameState state,
-    GameUnit original,
-    GameUnit updated,
-  ) {
-    return state.copyWith(
-      units: _replaceUnit(state.units, updated),
-      runtimeState: state.runtimeState.copyWith(
-        cityFoundingDraft:
-            state.runtimeState.cityFoundingDraft?.unitId == original.id
-            ? null
-            : state.runtimeState.cityFoundingDraft,
-        pendingAction: PendingUnitTurnSkip(
-          ownerPlayerId: original.ownerPlayerId,
-          unitId: original.id,
-          restoreMovementPoints: original.movementPoints,
-        ),
-      ),
     );
   }
 
@@ -220,26 +227,6 @@ class PersistentUnitActionResolver {
     return [
       for (final unit in units)
         if (unit.id == updated.id) updated else unit,
-    ];
-  }
-
-  static List<WorldArtifact> _cancelArtifactExcavation(
-    List<WorldArtifact> artifacts,
-    GameUnit unit,
-  ) {
-    final artifactId = unit.excavatingArtifactId;
-    if (artifactId == null) return artifacts;
-    return [
-      for (final artifact in artifacts)
-        if (artifact.id == artifactId && artifact.location.isBeingExcavated)
-          artifact.copyWith(
-            location: WorldArtifactLocation.map(
-              col: artifact.location.col ?? unit.col,
-              row: artifact.location.row ?? unit.row,
-            ),
-          )
-        else
-          artifact,
     ];
   }
 }

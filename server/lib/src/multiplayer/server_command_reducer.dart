@@ -16,6 +16,7 @@ part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
 part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
+part 'server_command_reducer_unit_action.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 
@@ -232,26 +233,11 @@ class ServerCommandReducer {
         );
         return _fromPersistentResult(save, result);
       case CancelUnitActionCommand():
-        final result = const PersistentUnitActionResolver().cancelUnitAction(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-        return _fromPersistentResult(save, result);
+        return _applyCancelUnitAction(save, state, command, actorPlayerId);
       case SkipUnitTurnCommand():
-        final result = const PersistentUnitActionResolver().skipUnitTurn(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-        return _fromPersistentResult(save, result);
+        return _applySkipUnitTurn(save, state, command, actorPlayerId);
       case FortifyUnitCommand():
-        final result = const PersistentUnitActionResolver().fortifyUnit(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-        return _fromPersistentResult(save, result);
+        return _applyFortifyUnit(save, state, command, actorPlayerId);
       case AutoExploreUnitCommand():
         final result = const PersistentUnitActionResolver().autoExploreUnit(
           state: state,

@@ -7,14 +7,13 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
-import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -241,39 +240,26 @@ abstract final class MovementReducer {
       return GameStateTransition(state: state);
     }
     final unit = validation.unit;
-
-    final pendingTurnSkip = state.pendingAction is PendingUnitTurnSkip
-        ? state.pendingAction as PendingUnitTurnSkip
-        : null;
-    final restoreMovementPoints = pendingTurnSkip?.unitId == unit.id
-        ? pendingTurnSkip!.restoreMovementPoints
-        : null;
     final wasFortified = unit.isFortified;
-    final nextMovementPoints =
-        restoreMovementPoints ??
-        (unit.isFortified
-            ? UnitMovementBalance.maxMovementPointsFor(
-                type: unit.type,
-                carriedArtifactId: unit.carriedArtifactId,
-              )
-            : unit.movementPoints);
-    final updatedUnit = unit
-        .copyWith(movementPoints: nextMovementPoints)
-        .copyWithQueuedPath(null)
-        .copyWithWorkerJob(null)
-        .copyWithCityFoundingJob(null)
-        .copyWithWorkerAssignment(null)
-        .copyWithExcavatingArtifact(null)
-        .copyWithMerchantTradeRoute(null)
-        .copyWithPosture(UnitPosture.active);
-    final cleanup = _UnitActionStateCleanup(state, unit, updatedUnit, mapTiles)
-      ..replaceUpdatedUnitIfChanged()
-      ..cancelArtifactExcavation()
-      ..clearMoveTargetingOwnedByUnit()
-      ..clearPendingActionOwnedByUnit()
-      ..clearCityFoundingDraftOwnedByUnit()
-      ..refreshSelection()
-      ..activateMoveTargetingWhenReady(wasFortified);
+    final result = UnitActionCommandResolver.cancelUnitAction(
+      units: state.units,
+      artifacts: state.artifacts,
+      interaction: _persistedUnitActionInteraction(state),
+      command: command,
+      actorPlayerId: unit.ownerPlayerId,
+    );
+    if (!result.accepted) return GameStateTransition(state: state);
+    final updatedUnit = result.units.byId(unit.id)!;
+    final cleanup =
+        _UnitActionStateCleanup(
+            _applyUnitActionResult(state, result),
+            unit,
+            updatedUnit,
+            mapTiles,
+          )
+          ..clearMoveTargetingOwnedByUnit()
+          ..refreshSelection()
+          ..activateMoveTargetingWhenReady(wasFortified);
 
     return GameStateTransition(state: cleanup.state);
   }
@@ -294,28 +280,23 @@ abstract final class MovementReducer {
       return GameStateTransition(state: state);
     }
     final unit = validation.unit;
-
-    final updatedUnit = unit
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithPosture(UnitPosture.active);
+    final result = UnitActionCommandResolver.skipUnitTurn(
+      units: state.units,
+      artifacts: state.artifacts,
+      interaction: _persistedUnitActionInteraction(state),
+      command: command,
+      actorPlayerId: unit.ownerPlayerId,
+    );
+    if (!result.accepted) return GameStateTransition(state: state);
+    final updatedUnit = result.units.byId(unit.id)!;
     final cleanup =
         _UnitActionStateCleanup(
-            state
-                .copyWith(units: replaceUnit(state.units, updatedUnit))
-                .copyWithInteraction(
-                  pendingAction: PendingUnitTurnSkip(
-                    ownerPlayerId: unit.ownerPlayerId,
-                    unitId: unit.id,
-                    restoreMovementPoints: unit.movementPoints,
-                  ),
-                ),
+            _applyUnitActionResult(state, result),
             unit,
             updatedUnit,
             mapTiles,
           )
           ..clearMoveTargetingOwnedByUnit()
-          ..clearCityFoundingDraftOwnedByUnit()
           ..refreshSelection();
 
     return GameStateTransition(state: cleanup.state);
@@ -327,25 +308,30 @@ abstract final class MovementReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final validation = UnitCommandValidator.fortifiableUnit(
+    final validation = UnitCommandValidator.controllableUnit(
       state,
       unitId: command.unitId,
       context: context,
     );
     if (validation is! ValidUnit) return GameStateTransition(state: state);
     final unit = validation.unit;
-    final updatedUnit = UnitFortificationRules.fortify(unit);
+    final result = UnitActionCommandResolver.fortifyUnit(
+      units: state.units,
+      artifacts: state.artifacts,
+      interaction: _persistedUnitActionInteraction(state),
+      command: command,
+      actorPlayerId: unit.ownerPlayerId,
+    );
+    if (!result.accepted) return GameStateTransition(state: state);
+    final updatedUnit = result.units.byId(unit.id)!;
     final cleanup =
         _UnitActionStateCleanup(
-            state
-                .copyWith(units: replaceUnit(state.units, updatedUnit))
-                .copyWithInteraction(pendingAction: null),
+            _applyUnitActionResult(state, result),
             unit,
             updatedUnit,
             mapTiles,
           )
           ..clearMoveTargetingOwnedByUnit()
-          ..clearCityFoundingDraftOwnedByUnit()
           ..refreshSelection();
 
     return GameStateTransition(state: cleanup.state);

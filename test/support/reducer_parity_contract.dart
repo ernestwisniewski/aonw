@@ -11,6 +11,7 @@ const reducerParityRequiredFamilies = <String>{
   'detachment',
   'research',
   'resource-trade',
+  'unit-actions',
   'worker',
   'turn-finalization',
 };
@@ -43,6 +44,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'resource_trade_player_not_controlled',
     'resource_trade_export_unavailable',
   },
+  'unit-actions': {'unit_not_controlled', 'unit_busy'},
   'worker': {'worker_not_controlled', 'worker_improvement_unavailable'},
   'turn-finalization': {'turn_player_not_controlled', 'turn_player_not_active'},
 };
@@ -60,6 +62,7 @@ final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'detachment': _matchesDetachmentCommand,
   'research': _matchesResearchCommand,
   'resource-trade': _matchesResourceTradeCommand,
+  'unit-actions': _matchesUnitActionCommand,
   'worker': _matchesWorkerCommand,
   'turn-finalization': _matchesTurnFinalizationCommand,
 };
@@ -113,6 +116,12 @@ bool _matchesResearchCommand(GameCommand command) {
 bool _matchesResourceTradeCommand(GameCommand command) {
   return command is OpenResourceTradeCommand ||
       command is OpenResourceExchangeCommand;
+}
+
+bool _matchesUnitActionCommand(GameCommand command) {
+  return command is CancelUnitActionCommand ||
+      command is SkipUnitTurnCommand ||
+      command is FortifyUnitCommand;
 }
 
 bool _matchesWorkerCommand(GameCommand command) {

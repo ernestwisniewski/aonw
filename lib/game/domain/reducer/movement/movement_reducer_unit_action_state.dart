@@ -1,5 +1,38 @@
 part of 'movement_reducer.dart';
 
+PersistedInteractionState _persistedUnitActionInteraction(GameState state) {
+  return PersistedInteractionState(
+    cityFoundingDraft: state.cityFoundingDraft,
+    pendingAction: state.pendingAction,
+  );
+}
+
+GameState _applyUnitActionResult(
+  GameState state,
+  UnitActionCommandResult result,
+) {
+  final unitsChanged = !identical(result.units, state.units);
+  final artifactsChanged = !identical(result.artifacts, state.artifacts);
+  var next = switch ((unitsChanged, artifactsChanged)) {
+    (true, true) => state.copyWith(
+      units: result.units,
+      artifacts: result.artifacts,
+    ),
+    (true, false) => state.copyWith(units: result.units),
+    (false, true) => state.copyWith(artifacts: result.artifacts),
+    (false, false) => state,
+  };
+  if (state.cityFoundingDraft == result.interaction.cityFoundingDraft &&
+      state.pendingAction == result.interaction.pendingAction) {
+    return next;
+  }
+  next = next.copyWithInteraction(
+    cityFoundingDraft: result.interaction.cityFoundingDraft,
+    pendingAction: result.interaction.pendingAction,
+  );
+  return next;
+}
+
 final class _UnitActionStateCleanup {
   _UnitActionStateCleanup(
     this.state,
@@ -13,47 +46,9 @@ final class _UnitActionStateCleanup {
   final GameUnit updatedUnit;
   final MapTileLookup mapTiles;
 
-  void replaceUpdatedUnitIfChanged() {
-    if (updatedUnit != previousUnit) {
-      state = state.copyWith(units: replaceUnit(state.units, updatedUnit));
-    }
-  }
-
-  void cancelArtifactExcavation() {
-    final artifactId = previousUnit.excavatingArtifactId;
-    if (artifactId == null) return;
-
-    state = state.copyWith(
-      artifacts: [
-        for (final artifact in state.artifacts)
-          if (artifact.id == artifactId && artifact.location.isBeingExcavated)
-            artifact.copyWith(
-              location: WorldArtifactLocation.map(
-                col: artifact.location.col ?? previousUnit.col,
-                row: artifact.location.row ?? previousUnit.row,
-              ),
-            )
-          else
-            artifact,
-      ],
-    );
-  }
-
   void clearMoveTargetingOwnedByUnit() {
     if (MovementReducer._moveStateBelongsToUnit(state, previousUnit.id)) {
       state = MovementReducer._clearMoveTargeting(state);
-    }
-  }
-
-  void clearPendingActionOwnedByUnit() {
-    if (state.pendingAction?.ownsUnit(previousUnit.id) ?? false) {
-      state = state.copyWithInteraction(pendingAction: null);
-    }
-  }
-
-  void clearCityFoundingDraftOwnedByUnit() {
-    if (state.cityFoundingDraft?.unitId == previousUnit.id) {
-      state = state.copyWithInteraction(cityFoundingDraft: null);
     }
   }
 
