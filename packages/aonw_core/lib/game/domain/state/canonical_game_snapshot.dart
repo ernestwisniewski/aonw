@@ -68,6 +68,7 @@ final class CanonicalGameSnapshot {
         'Must not be negative',
       );
     }
+    _validateSessionParticipants(domain: domain, session: session);
     return CanonicalGameSnapshot._owned(
       domain: domain,
       session: session,
@@ -120,6 +121,30 @@ final class CanonicalGameSnapshot {
   @override
   int get hashCode =>
       Object.hash(domain, session, metadata, interaction, eventLogOffset);
+}
+
+void _validateSessionParticipants({
+  required DomainState domain,
+  required MatchSessionState session,
+}) {
+  final participantIds = {
+    for (final participant in domain.participants) participant.id,
+  };
+  final sessionPlayerIds = <String>{
+    ...session.turnStatesByPlayerId.keys,
+    ...session.submittedPlayerIds,
+    ...session.timeoutStreaksByPlayerId.keys,
+    ...session.afkPlayerIds,
+    ...session.kickedPlayerIds,
+  }..removeWhere((playerId) => playerId.isEmpty);
+  final unknownPlayerIds = sessionPlayerIds.difference(participantIds).toList()
+    ..sort();
+  if (unknownPlayerIds.isEmpty) return;
+  throw ArgumentError.value(
+    unknownPlayerIds,
+    'session',
+    'Session player ids must belong to domain participants',
+  );
 }
 
 CityFoundingDraft? _ownedCityFoundingDraft(CityFoundingDraft? source) {

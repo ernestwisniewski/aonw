@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
@@ -36,6 +37,30 @@ void main() {
     expect(first.copyWith(eventLogOffset: 8).eventLogOffset, 8);
     expect(() => first.copyWith(eventLogOffset: -1), throwsArgumentError);
   });
+
+  test('canonical envelope rejects session players outside the roster', () {
+    final snapshot = _snapshot();
+
+    expect(
+      () => snapshot.copyWith(
+        session: MatchSessionState.snapshot(
+          gameMode: GameMode.multiplayer,
+          turnStatesByPlayerId: const {
+            'player-1': PlayerTurnState.active,
+            'session-only': PlayerTurnState.finished,
+          },
+          submittedPlayerIds: const {'submitted-only'},
+        ),
+      ),
+      throwsA(
+        isA<ArgumentError>().having(
+          (error) => error.invalidValue,
+          'unknown player ids',
+          ['session-only', 'submitted-only'],
+        ),
+      ),
+    );
+  });
 }
 
 CanonicalGameSnapshot _snapshot() {
@@ -43,7 +68,9 @@ CanonicalGameSnapshot _snapshot() {
     domain: DomainState.snapshot(
       turn: 1,
       matchRules: MatchRules.standard,
-      participants: const [],
+      participants: const [
+        Player(id: 'player-1', name: 'Player', colorValue: 0xFF000001),
+      ],
     ),
     session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
     metadata: GameSnapshotMetadata(

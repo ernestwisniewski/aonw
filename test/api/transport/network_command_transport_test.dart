@@ -1018,12 +1018,12 @@ void main() {
           command: const SubmitTurnCommand('player_1'),
         );
 
+        final move = result.uiEffects.whereType<AnimateUnitMoveEffect>().single;
+        expect(move.unitId, 'commander_player_1');
+        expect((move.fromCol, move.fromRow), (0, 0));
         expect(
-          result.uiEffects.whereType<AnimateUnitMoveEffect>().single,
-          isA<AnimateUnitMoveEffect>()
-              .having((effect) => effect.unitId, 'unitId', 'commander_player_1')
-              .having((effect) => effect.fromCol, 'fromCol', 0)
-              .having((effect) => effect.steps.last.col, 'last col', 2),
+          [for (final step in move.steps) (step.col, step.row)],
+          const [(1, 0), (2, 0)],
         );
         expect(result.state.units.single.col, 2);
         expect(result.state.activePlayerCanAct, isTrue);

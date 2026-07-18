@@ -1,11 +1,10 @@
 import 'package:aonw_core/game/application/turn/canonical_turn_suffix.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_combat_resolver.dart';
-import 'package:aonw_core/game/domain/turn/persistent_turn_economy_processor.dart';
+import 'package:aonw_core/game/domain/turn/domain_turn_economy_processor.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -24,7 +23,10 @@ final class CanonicalTurnPipelineRequest {
   }) : playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
        skippedPlayerIds = List.unmodifiable(
          _orderedDistinctPlayerIds(skippedPlayerIds),
-       );
+       ) {
+    _validateParticipantScope(snapshot, this.playerIds);
+    _validateSkippedScope(this.playerIds, this.skippedPlayerIds);
+  }
 
   final CanonicalGameSnapshot snapshot;
   final List<String> playerIds;
@@ -62,10 +64,8 @@ final class CanonicalTurnPipelineResult {
   final TurnMovementDelta? movementDelta;
 }
 
-/// Canonical application facade over the temporary persistent turn kernel.
+/// Canonical application facade for simultaneous turn finalization.
 abstract final class CanonicalTurnPipeline {
-  static const _snapshotAdapter = LegacyGameSnapshotAdapter();
-
   static CanonicalTurnPipelineResult simultaneousFinalize(
     CanonicalTurnPipelineRequest request,
   ) {
@@ -77,27 +77,18 @@ abstract final class CanonicalTurnPipeline {
       mapTiles: request.mapView.mapTiles,
       ruleset: ruleset,
     );
-    final legacyInput = _snapshotAdapter.toLegacy(
-      request.snapshot.copyWith(domain: combat.state),
-    );
-    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: legacyInput.state,
+    final economy = DomainTurnEconomyProcessor.advanceForPlayers(
+      state: combat.state,
       playerIds: request.playerIds,
       mapData: request.mapView,
       ruleset: ruleset,
       fogOfWarService: request.fogOfWarService,
       priorEvents: combat.events,
       mapObjectives: request.mapView.objectives,
-      turn: request.snapshot.domain.turn,
-    );
-    final postEconomySnapshot = _snapshotAdapter.toCanonical(
-      save: legacyInput.save,
-      state: economy.state,
-      eventLogOffset: request.snapshot.eventLogOffset,
     );
     final suffix = CanonicalTurnSuffix.finalizeAfterEconomy(
       CanonicalTurnSuffixRequest(
-        snapshot: postEconomySnapshot,
+        snapshot: request.snapshot.copyWith(domain: economy.state),
         playerIds: request.playerIds,
         skippedPlayerIds: request.skippedPlayerIds,
         savedAt: request.savedAt,
@@ -127,4 +118,40 @@ List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
     for (final playerId in playerIds)
       if (playerId.isNotEmpty && seen.add(playerId)) playerId,
   ];
+}
+
+void _validateParticipantScope(
+  CanonicalGameSnapshot snapshot,
+  Iterable<String> playerIds,
+) {
+  final participantIds = {
+    for (final participant in snapshot.domain.participants) participant.id,
+  };
+  final unknownPlayerIds =
+      playerIds.where((playerId) => !participantIds.contains(playerId)).toList()
+        ..sort();
+  if (unknownPlayerIds.isEmpty) return;
+  throw ArgumentError.value(
+    unknownPlayerIds,
+    'playerIds',
+    'Turn players must belong to domain participants',
+  );
+}
+
+void _validateSkippedScope(
+  Iterable<String> playerIds,
+  Iterable<String> skippedPlayerIds,
+) {
+  final advancingPlayerIds = playerIds.toSet();
+  final unknownSkippedPlayerIds =
+      skippedPlayerIds
+          .where((playerId) => !advancingPlayerIds.contains(playerId))
+          .toList()
+        ..sort();
+  if (unknownSkippedPlayerIds.isEmpty) return;
+  throw ArgumentError.value(
+    unknownSkippedPlayerIds,
+    'skippedPlayerIds',
+    'Skipped players must belong to the finalized player scope',
+  );
 }

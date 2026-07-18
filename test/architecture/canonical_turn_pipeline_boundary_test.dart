@@ -115,11 +115,10 @@ void main() {
       );
     });
 
-    test('repo-wide ratchet limits each path to four conversions', () {
+    test('repo-wide ratchet limits each runtime path to two conversions', () {
       final sources = productionDartSources();
       final counts = _snapshotConversionCounts(sources);
       const allowedPaths = {
-        _canonicalPipelinePath,
         _localCallSite,
         _serverCallSite,
         _performanceCallSite,
@@ -132,16 +131,16 @@ void main() {
       for (final entry in counts.entries) {
         expect(entry.value.toCanonical, lessThanOrEqualTo(1));
         expect(entry.value.toLegacy, lessThanOrEqualTo(1));
+        expect(_total(entry.value), lessThanOrEqualTo(2));
       }
-      final facade = counts[_canonicalPipelinePath] ?? _zeroConversions;
-      for (final path in const {
-        _localCallSite,
-        _serverCallSite,
-        _performanceCallSite,
-      }) {
-        final boundary = counts[path] ?? _zeroConversions;
-        expect(_total(facade) + _total(boundary), lessThanOrEqualTo(4));
-      }
+      expect(
+        counts[_canonicalPipelinePath] ?? _zeroConversions,
+        _zeroConversions,
+      );
+      expect(
+        _adapterTypeReferencePaths(sources),
+        isNot(contains(_canonicalPipelinePath)),
+      );
     });
 
     test('conversion ratchet catches a helper outside the allowlist', () {
