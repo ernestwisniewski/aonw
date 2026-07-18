@@ -1,17 +1,12 @@
-import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/trade.dart';
-import 'package:aonw_core/game/domain/turn/persistent_city_hit_point_recovery_processor.dart';
-import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
+import 'package:aonw_core/game/domain/objective/map_objective.dart';
+import 'package:aonw_core/game/domain/ruleset/game_ruleset.dart';
+import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/technology/science_yield.dart';
+import 'package:aonw_core/game/domain/turn/economy/turn_economy_context.dart';
+import 'package:aonw_core/game/domain/turn/economy/turn_economy_orchestrator.dart';
+import 'package:aonw_core/game/domain/turn/economy/turn_economy_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class PersistentTurnEconomyResult {
@@ -26,6 +21,7 @@ class PersistentTurnEconomyResult {
   });
 }
 
+/// Compatibility adapter for callers that still own persistent game state.
 abstract final class PersistentTurnEconomyProcessor {
   static PersistentTurnEconomyResult advanceForPlayers({
     required PersistentGameState state,
@@ -37,556 +33,68 @@ abstract final class PersistentTurnEconomyProcessor {
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
     int? turn,
   }) {
-    var current = state;
-    final events = <GameEvent>[];
-    var scienceGained = ScienceYieldBreakdown.empty;
-
-    for (final playerId in _orderedDistinctPlayerIds(playerIds)) {
-      final afterCities = _advanceCities(
-        state: current,
-        playerId: playerId,
-        mapData: mapData.mapTiles,
-        ruleset: ruleset,
-        priorEvents: priorEvents,
-      );
-      current = afterCities.state;
-      events.addAll(afterCities.events);
-      scienceGained = _combineScience(scienceGained, afterCities.scienceGained);
-
-      final afterResearch = _advanceResearch(
-        state: current,
-        playerId: playerId,
+    final result = TurnEconomyOrchestrator.advanceForPlayers(
+      state: _toEconomyState(state),
+      context: TurnEconomyContext(
+        playerIds: playerIds,
         mapData: mapData,
         ruleset: ruleset,
-        bonusScience: afterCities.scienceGained,
-      );
-      current = afterResearch.state;
-      events.addAll(afterResearch.events);
-
-      final afterWorkers = _advanceWorkers(
-        state: current,
-        playerId: playerId,
-        mapData: mapData.mapTiles,
-        ruleset: ruleset,
-      );
-      current = afterWorkers.state;
-      events.addAll(afterWorkers.events);
-
-      final afterCityFoundingJobs = _advanceCityFoundingJobs(
-        state: current,
-        playerId: playerId,
-        mapData: mapData.mapTiles,
-        ruleset: ruleset,
-      );
-      current = afterCityFoundingJobs.state;
-      events.addAll(afterCityFoundingJobs.events);
-
-      final afterArtifacts = _advanceArtifacts(
-        state: current,
-        playerId: playerId,
-      );
-      current = afterArtifacts.state;
-      events.addAll(afterArtifacts.events);
-    }
-
-    final previousMapObjectiveHoldStates =
-        current.runtimeState.mapObjectiveHoldStatesByObjectiveId;
-    final mapObjectiveHoldStates = mapObjectives.isEmpty
-        ? previousMapObjectiveHoldStates
-        : MapObjectiveRules.advanceHoldStates(
-            objectives: mapObjectives,
-            cities: current.cities,
-            units: current.units,
-            previousHoldStatesByObjectiveId: previousMapObjectiveHoldStates,
-          );
-    if (mapObjectives.isNotEmpty) {
-      events.addAll(
-        _mapObjectiveSecuredEvents(
-          objectives: mapObjectives,
-          previous: previousMapObjectiveHoldStates,
-          next: mapObjectiveHoldStates,
-        ),
-      );
-    }
-    final runtimeState = current.runtimeState.copyWith(
-      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStates,
+        fogOfWarService: fogOfWarService,
+        priorEvents: priorEvents,
+        mapObjectives: mapObjectives,
+        baseKnownPlayerIds: state.knownPlayerIds,
+        countryForPlayer: state.countryForPlayer,
+        turn: turn,
+      ),
     );
-    current = current.copyWith(runtimeState: runtimeState);
-    current = _applyMapObjectiveGold(
-      state: current,
-      playerIds: playerIds,
-      objectives: mapObjectives,
-      holdStatesByObjectiveId: mapObjectiveHoldStates,
-    );
-    current = _advanceResourceTrades(state: current, playerIds: playerIds);
-    final stability = PersistentStabilityProcessor.advanceForPlayers(
-      state: current,
-      playerIds: playerIds,
-      mapData: mapData,
-      ruleset: ruleset.stability,
-      turnEvents: [...priorEvents, ...events],
-      turn: turn,
-    );
-    current = stability.state;
-    events.addAll(stability.events);
-
-    final fogOfWar = fogOfWarService.recompute(
-      current: current.fogOfWar,
-      mapData: mapData.mapTiles,
-      playerIds: current.knownPlayerIds,
-      units: current.units,
-      cities: current.cities,
-    );
-
     return PersistentTurnEconomyResult(
-      state: current.copyWith(fogOfWar: fogOfWar),
-      events: List.unmodifiable(events),
-      scienceGained: scienceGained,
-    );
-  }
-
-  static PersistentGameState _applyMapObjectiveGold({
-    required PersistentGameState state,
-    required Iterable<String> playerIds,
-    required Iterable<MapObjectiveDefinition> objectives,
-    required Map<String, MapObjectiveHoldState> holdStatesByObjectiveId,
-  }) {
-    final eligiblePlayerIds = _orderedDistinctPlayerIds(playerIds).toSet();
-    if (eligiblePlayerIds.isEmpty) return state;
-
-    final playerGold = Map<String, int>.from(state.playerGold);
-    var changed = false;
-    for (final objective in objectives) {
-      if (objective.goldPerTurn <= 0) continue;
-      final hold = holdStatesByObjectiveId[objective.id];
-      if (hold == null ||
-          !eligiblePlayerIds.contains(hold.playerId) ||
-          hold.holdTurns < objective.requiredHoldTurns) {
-        continue;
-      }
-      playerGold[hold.playerId] =
-          (playerGold[hold.playerId] ?? 0) + objective.goldPerTurn;
-      changed = true;
-    }
-    return changed
-        ? state.copyWith(playerGold: Map.unmodifiable(playerGold))
-        : state;
-  }
-
-  static List<MapObjectiveSecuredEvent> _mapObjectiveSecuredEvents({
-    required Iterable<MapObjectiveDefinition> objectives,
-    required Map<String, MapObjectiveHoldState> previous,
-    required Map<String, MapObjectiveHoldState> next,
-  }) {
-    final events = <MapObjectiveSecuredEvent>[];
-    for (final objective in objectives) {
-      final nextHold = next[objective.id];
-      if (nextHold == null) continue;
-      if (nextHold.holdTurns < objective.requiredHoldTurns) continue;
-      final previousHold = previous[objective.id];
-      final alreadySecured =
-          previousHold != null &&
-          previousHold.playerId == nextHold.playerId &&
-          previousHold.holdTurns >= objective.requiredHoldTurns;
-      if (alreadySecured) continue;
-      events.add(
-        MapObjectiveSecuredEvent(
-          playerId: nextHold.playerId,
-          objectiveId: objective.id,
-          objectiveType: objective.type,
-          col: objective.hex.col,
-          row: objective.hex.row,
-          holdTurns: nextHold.holdTurns,
-          requiredHoldTurns: objective.requiredHoldTurns,
-          victoryPoints: objective.victoryPoints,
-          goldPerTurn: objective.goldPerTurn,
-        ),
-      );
-    }
-    return events;
-  }
-
-  static PersistentGameState _advanceResourceTrades({
-    required PersistentGameState state,
-    required Iterable<String> playerIds,
-  }) {
-    final activeImporterIds = _orderedDistinctPlayerIds(playerIds).toSet();
-    if (activeImporterIds.isEmpty ||
-        state.runtimeState.resourceTradeAgreements.isEmpty) {
-      return state;
-    }
-
-    final playerGold = Map<String, int>.from(state.playerGold);
-    final nextAgreements = <ResourceTradeAgreement>[];
-    var changed = false;
-
-    for (final agreement in state.runtimeState.resourceTradeAgreements) {
-      if (!agreement.isActive ||
-          !activeImporterIds.contains(agreement.importerPlayerId)) {
-        nextAgreements.add(agreement);
-        continue;
-      }
-
-      final importerGold = playerGold[agreement.importerPlayerId] ?? 0;
-      if (importerGold < agreement.goldPerTurn) {
-        changed = true;
-        continue;
-      }
-
-      final tradeBonus = agreement.goldPerTurn > 0
-          ? DiplomaticRelationBenefits.resourceTradeGoldBonus(
-              diplomacy: state.runtimeState.diplomacy,
-              playerAId: agreement.importerPlayerId,
-              playerBId: agreement.exporterPlayerId,
-            )
-          : 0;
-      final exporterGoldPerTurn = agreement.goldPerTurn + tradeBonus;
-
-      if (agreement.goldPerTurn > 0) {
-        playerGold[agreement.importerPlayerId] =
-            importerGold - agreement.goldPerTurn;
-      }
-      if (exporterGoldPerTurn > 0) {
-        playerGold[agreement.exporterPlayerId] =
-            (playerGold[agreement.exporterPlayerId] ?? 0) + exporterGoldPerTurn;
-      }
-
-      final remainingTurns = agreement.remainingTurns - 1;
-      if (remainingTurns > 0) {
-        nextAgreements.add(agreement.copyWith(remainingTurns: remainingTurns));
-      }
-      changed = true;
-    }
-
-    if (!changed) return state;
-    return state.copyWith(
-      playerGold: Map.unmodifiable(playerGold),
-      runtimeState: state.runtimeState.copyWith(
-        resourceTradeAgreements: List.unmodifiable(nextAgreements),
-      ),
-    );
-  }
-
-  static PersistentTurnEconomyResult _advanceCities({
-    required PersistentGameState state,
-    required String playerId,
-    required MapTileLookup mapData,
-    required GameRuleset ruleset,
-    required Iterable<GameEvent> priorEvents,
-  }) {
-    final result = CityTurnProcessor.advanceForPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
-      units: state.units,
-      artifacts: state.artifacts,
-      ruleset: ruleset.city,
-      research: state.research,
-      technologyRuleset: ruleset.technology,
-      wonderRegistry: state.wonderRegistry,
-      wonderRuleset: ruleset.wonders,
-      stabilityModifier: PersistentStabilityProcessor.modifierForPlayer(
-        state: state,
-        playerId: playerId,
-        ruleset: ruleset.stability,
-      ),
-      paceBalance: ruleset.paceBalance,
-    );
-    final wonderCompletion = WonderCompletionResolver.resolveCompletedForPlayer(
-      playerId: playerId,
-      cities: result.cities,
-      registry: state.wonderRegistry,
-      playerGold: state.playerGold,
-      research: state.research,
-      ruleset: ruleset.wonders,
-      paceBalance: ruleset.paceBalance,
-    );
-    final nextCities = PersistentCityHitPointRecoveryProcessor.recoverForPlayer(
-      cities: wonderCompletion.cities,
-      artifacts: state.artifacts,
-      events: priorEvents,
-      combatRuleset: ruleset.combat,
-      playerId: playerId,
-    );
-    final nextFieldImprovements = List<FieldImprovement>.unmodifiable(
-      result.fieldImprovements,
-    );
-    final nextUnits = List<GameUnit>.unmodifiable(result.units);
-    final unitUpkeep = UnitUpkeepRules.forPlayer(
-      playerId: playerId,
-      units: nextUnits,
-      cities: nextCities,
-    );
-
-    return PersistentTurnEconomyResult(
-      state: state.copyWith(
-        units: nextUnits,
-        cities: nextCities,
-        fieldImprovements: nextFieldImprovements,
-        playerGold: _addGoldDelta(
-          wonderCompletion.playerGold,
-          playerId,
-          result.goldGained - unitUpkeep.total,
-        ),
-        research: wonderCompletion.research,
-        wonderRegistry: wonderCompletion.registry,
-      ),
-      events: [
-        ..._eventsFromCityTurn(
-          previousCities: state.cities,
-          cityEvents: result.events,
-          updatedCities: nextCities,
-        ),
-        ...wonderCompletion.events,
-      ],
+      state: _toPersistentState(state, result.state),
+      events: result.events,
       scienceGained: result.scienceGained,
     );
   }
+}
 
-  static PersistentTurnEconomyResult _advanceResearch({
-    required PersistentGameState state,
-    required String playerId,
-    required MapReadView mapData,
-    required GameRuleset ruleset,
-    ScienceYieldBreakdown bonusScience = ScienceYieldBreakdown.empty,
-  }) {
-    final result = ResearchTurnProcessor.advanceForPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      research: state.research,
-      mapData: mapData.mapTiles,
-      ruleset: ruleset.technology,
-      cityRuleset: ruleset.city,
-      wonderRegistry: state.wonderRegistry,
-      wonderRuleset: ruleset.wonders,
-      bonusScience: bonusScience,
-      paceBalance: ruleset.paceBalance,
-    );
+TurnEconomyState _toEconomyState(PersistentGameState state) {
+  final runtime = state.runtimeState;
+  return TurnEconomyState(
+    playerGold: state.playerGold,
+    playerWarWeariness: state.playerWarWeariness,
+    playerStabilityNet: state.playerStabilityNet,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    research: state.research,
+    wonderRegistry: state.wonderRegistry,
+    diplomacy: runtime.diplomacy,
+    resourceTradeAgreements: runtime.resourceTradeAgreements,
+    mapObjectiveHoldStatesByObjectiveId:
+        runtime.mapObjectiveHoldStatesByObjectiveId,
+  );
+}
 
-    return PersistentTurnEconomyResult(
-      state: state.copyWith(research: result.research),
-      events: [
-        if (result.scienceYield.total > 0)
-          ResearchPointsGainedEvent(
-            playerId: playerId,
-            points: result.scienceYield.total,
-          ),
-        if (result.completedTechnologyId != null)
-          TechnologyResearchedEvent(
-            playerId: playerId,
-            technologyId: result.completedTechnologyId!,
-          ),
-        if (result.completedTechnologyId != null)
-          ...StrategicResourceDiscoveryRules.eventsForTechnology(
-            playerId: playerId,
-            technologyId: result.completedTechnologyId!,
-            state: state,
-            mapData: mapData,
-          ),
-      ],
-    );
-  }
-
-  static PersistentTurnEconomyResult _advanceWorkers({
-    required PersistentGameState state,
-    required String playerId,
-    required MapTileLookup mapData,
-    required GameRuleset ruleset,
-  }) {
-    final result = WorkerTurnProcessor.advanceForPlayer(
-      playerId: playerId,
-      units: state.units,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      mapData: mapData,
-    );
-    final nextCities = List<GameCity>.unmodifiable(result.cities);
-    final nextUnits = List<GameUnit>.unmodifiable(result.units);
-    final nextFieldImprovements = List<FieldImprovement>.unmodifiable(
-      result.fieldImprovements,
-    );
-
-    return PersistentTurnEconomyResult(
-      state: state.copyWith(
-        cities: nextCities,
-        units: nextUnits,
-        fieldImprovements: nextFieldImprovements,
-      ),
-      events: [
-        ..._completedJobEvents(
-          playerId: playerId,
-          previousUnits: state.units,
-          updatedUnits: nextUnits,
-        ),
-        ..._claimedHexEvents(
-          previousCities: state.cities,
-          updatedCities: nextCities,
-        ),
-      ],
-    );
-  }
-
-  static PersistentTurnEconomyResult _advanceCityFoundingJobs({
-    required PersistentGameState state,
-    required String playerId,
-    required MapTileLookup mapData,
-    required GameRuleset ruleset,
-  }) {
-    final result = CityFoundingJobProcessor.advanceForPlayer(
-      playerId: playerId,
-      units: state.units,
-      cities: state.cities,
-      mapTiles: mapData,
-      countryForPlayer: state.countryForPlayer,
-      cityRuleset: ruleset.city,
-    );
-    final nextCities = List<GameCity>.unmodifiable(result.cities);
-    final nextUnits = List<GameUnit>.unmodifiable(result.units);
-
-    return PersistentTurnEconomyResult(
-      state: state.copyWith(cities: nextCities, units: nextUnits),
-      events: result.events,
-    );
-  }
-
-  static PersistentTurnEconomyResult _advanceArtifacts({
-    required PersistentGameState state,
-    required String playerId,
-  }) {
-    final result = PersistentArtifactTurnProcessor.advanceForPlayers(
-      state: state,
-      playerIds: [playerId],
-    );
-    return PersistentTurnEconomyResult(state: result.state);
-  }
-
-  static Map<String, int> _addGoldDelta(
-    Map<String, int> playerGold,
-    String playerId,
-    int amount,
-  ) {
-    if (playerId.isEmpty || amount == 0) return playerGold;
-    final nextGold = (playerGold[playerId] ?? 0) + amount;
-    return {...playerGold, playerId: nextGold < 0 ? 0 : nextGold};
-  }
-
-  static ScienceYieldBreakdown _combineScience(
-    ScienceYieldBreakdown total,
-    ScienceYieldBreakdown addition,
-  ) {
-    if (addition.total <= 0) return total;
-    if (total.total <= 0) return addition;
-
-    final byCityId = <String, int>{...total.byCityId};
-    for (final entry in addition.byCityId.entries) {
-      byCityId[entry.key] = (byCityId[entry.key] ?? 0) + entry.value;
-    }
-
-    return ScienceYieldBreakdown(
-      total: total.total + addition.total,
-      byCityId: Map.unmodifiable(byCityId),
-      sources: List.unmodifiable([...total.sources, ...addition.sources]),
-    );
-  }
-
-  static List<GameEvent> _eventsFromCityTurn({
-    required List<GameCity> previousCities,
-    required List<CityTurnEvent> cityEvents,
-    required List<GameCity> updatedCities,
-  }) {
-    final previousCityById = {for (final city in previousCities) city.id: city};
-    final updatedCityById = {for (final city in updatedCities) city.id: city};
-    final events = <GameEvent>[];
-
-    for (final cityEvent in cityEvents) {
-      switch (cityEvent.type) {
-        case CityTurnEventType.builtBuilding:
-          final previousCity = previousCityById[cityEvent.cityId];
-          final updatedCity = updatedCityById[cityEvent.cityId];
-          if (previousCity == null || updatedCity == null) break;
-          final newBuildings = updatedCity.buildings.difference(
-            previousCity.buildings,
-          );
-          final buildingType = newBuildings.firstOrNull;
-          if (buildingType != null) {
-            events.add(
-              CityBuiltBuildingEvent(
-                cityId: cityEvent.cityId,
-                buildingType: buildingType,
-              ),
-            );
-          }
-        case CityTurnEventType.producedUnit:
-          final producedUnit = cityEvent.producedUnit;
-          if (producedUnit != null) {
-            events.add(
-              CityProducedUnitEvent(
-                cityId: cityEvent.cityId,
-                unitType: producedUnit.type,
-                producedUnitId: producedUnit.id,
-              ),
-            );
-          }
-        case CityTurnEventType.grew:
-          break;
-        case CityTurnEventType.claimedHex:
-          final hex = cityEvent.hex;
-          if (hex != null) {
-            events.add(
-              CityClaimedHexEvent(
-                cityId: cityEvent.cityId,
-                col: hex.col,
-                row: hex.row,
-              ),
-            );
-          }
-      }
-    }
-
-    return events;
-  }
-
-  static List<GameEvent> _completedJobEvents({
-    required String playerId,
-    required List<GameUnit> previousUnits,
-    required List<GameUnit> updatedUnits,
-  }) {
-    final updatedById = {for (final unit in updatedUnits) unit.id: unit};
-    return [
-      for (final previous in previousUnits)
-        if (previous.ownerPlayerId == playerId &&
-            previous.workerJob != null &&
-            updatedById[previous.id]?.workerJob == null)
-          WorkerCompletedJobEvent(unitId: previous.id),
-    ];
-  }
-
-  static List<GameEvent> _claimedHexEvents({
-    required List<GameCity> previousCities,
-    required List<GameCity> updatedCities,
-  }) {
-    final previousById = {for (final city in previousCities) city.id: city};
-    final events = <GameEvent>[];
-    for (final city in updatedCities) {
-      final previous = previousById[city.id];
-      if (previous == null) continue;
-      final previousHexes = previous.controlledHexes.toSet();
-      for (final hex in city.controlledHexes) {
-        if (previousHexes.contains(hex)) continue;
-        events.add(
-          CityClaimedHexEvent(cityId: city.id, col: hex.col, row: hex.row),
-        );
-      }
-    }
-    return events;
-  }
-
-  static List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
-    return {
-      for (final playerId in playerIds)
-        if (playerId.isNotEmpty) playerId,
-    }.toList()..sort();
-  }
+PersistentGameState _toPersistentState(
+  PersistentGameState source,
+  TurnEconomyState economy,
+) {
+  return source.copyWith(
+    playerGold: economy.playerGold,
+    playerWarWeariness: economy.playerWarWeariness,
+    playerStabilityNet: economy.playerStabilityNet,
+    units: economy.units,
+    cities: economy.cities,
+    artifacts: economy.artifacts,
+    fieldImprovements: economy.fieldImprovements,
+    fogOfWar: economy.fogOfWar,
+    research: economy.research,
+    wonderRegistry: economy.wonderRegistry,
+    runtimeState: source.runtimeState.copyWith(
+      diplomacy: economy.diplomacy,
+      resourceTradeAgreements: economy.resourceTradeAgreements,
+      mapObjectiveHoldStatesByObjectiveId:
+          economy.mapObjectiveHoldStatesByObjectiveId,
+    ),
+  );
 }

@@ -213,4 +213,39 @@ const _turnCombatTargets = [
       ),
     ],
   ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/turn/'
+        'persistent_turn_economy_processor.dart',
+    owner: 'PersistentTurnEconomyProcessor',
+    boundaries: [
+      _Boundary.method(
+        'advanceForPlayers',
+        parameter: 'mapData',
+        type: 'MapReadView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/turn/'
+        'domain_turn_economy_processor.dart',
+    owner: 'DomainTurnEconomyProcessor',
+    boundaries: [
+      _Boundary.method(
+        'advanceForPlayers',
+        parameter: 'mapData',
+        type: 'MapReadView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/turn/economy/'
+        'turn_economy_context.dart',
+    owner: 'TurnEconomyContext',
+    boundaries: [
+      _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+    ],
+  ),
 ];

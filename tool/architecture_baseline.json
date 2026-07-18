@@ -32,8 +32,7 @@
         "packages/aonw_core/lib/game/domain/map_validation.dart": 586,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart": 694,
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart": 746,
-        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 751,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart": 592
+        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 751
       },
       "legacyFiles": {},
       "declarations": {
@@ -58,7 +57,6 @@
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator": 463,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker": 564,
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart::class:TechnologyCatalog": 734,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor": 564,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
       },
       "callableLines": {
@@ -121,7 +119,6 @@
         "packages/aonw_core/lib/ai/technology_persona_scorer.dart::class:AiTechnologyPersonaScorer/method:_buildingScore": 65,
         "packages/aonw_core/lib/ai/technology_score_snapshot.dart::class:AiTechnologyScoreSnapshot/constructor:from": 68,
         "packages/aonw_core/lib/ai/technology_state_scorer.dart::class:AiTechnologyStateScorer/method:score": 70,
-        "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_turn_processor.dart::class:PersistentArtifactTurnProcessor/method:advanceForPlayers": 82,
         "packages/aonw_core/lib/game/domain/artifact/world_artifact_generator.dart::class:WorldArtifactGenerator/method:generate": 79,
         "packages/aonw_core/lib/game/domain/city/city_building.dart::enum:CityBuildingType/getter:displayName": 61,
         "packages/aonw_core/lib/game/domain/city/city_economy_breakdown.dart::class:CityEconomyBreakdown/constructor:from": 90,
@@ -158,8 +155,6 @@
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:commandFor": 69,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 74,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker/method:activeStrategicObjectivesForPlayer": 72,
-        "packages/aonw_core/lib/game/domain/stability/persistent_stability_processor.dart::class:PersistentStabilityProcessor/method:advanceForPlayers": 98,
-        "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 101,
         "packages/aonw_core/lib/game/domain/state/persistent_game_state.dart::class:PersistentGameState/constructor:fromJson": 62,
         "packages/aonw_core/lib/game/domain/technology/research_turn_processor.dart::class:ResearchTurnProcessor/method:advanceForPlayer": 86,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 86,
@@ -168,8 +163,6 @@
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 107,
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openGoldForResourceTrade": 82,
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openResourceForResourceTrade": 100,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceCities": 76,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:advanceForPlayers": 117,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 80,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 62,
         "packages/aonw_core/lib/game/domain/wonder/wonder_completion_resolver.dart::class:WonderCompletionResolver/method:_claimWonder": 77,
@@ -191,8 +184,7 @@
         "packages/aonw_core/lib/game/domain/city/city_yield_calculator.dart::class:CityYieldCalculator/method:_assignedWorkerHexes": 4,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_technologyModifiers": 4,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_contact.dart::class:DiplomaticContact/method:contactKeys": 4,
-        "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 4,
-        "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 5
+        "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 4
       },
       "cyclomaticComplexity": {
         "packages/aonw_core/lib/ai/city_site_scorecard.dart::class:_CitySiteScorecard/method:_resourceScore": 33,
@@ -313,7 +305,6 @@
         "packages/aonw_core/lib/ai/telemetry/balance_runner_recovery_reports.dart::class:OpeningSurvivalReport/constructor:fromSamples": 17,
         "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_command_resolver.dart::class:PersistentArtifactCommandResolver/method:storeInCity": 12,
         "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_command_resolver.dart::class:PersistentArtifactCommandResolver/method:tradeArtifact": 15,
-        "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_turn_processor.dart::class:PersistentArtifactTurnProcessor/method:advanceForPlayers": 15,
         "packages/aonw_core/lib/game/domain/artifact/world_artifact_generator.dart::class:WorldArtifactGenerator/method:generate": 20,
         "packages/aonw_core/lib/game/domain/city/city_building.dart::enum:CityBuildingType/getter:displayName": 60,
         "packages/aonw_core/lib/game/domain/city/city_site_rules.dart::class:CitySiteRules/method:foundingFailureForInput": 16,
@@ -357,7 +348,6 @@
         "packages/aonw_core/lib/game/domain/runtime/game_runtime_state.dart::class:GameRuntimeState/method:toJson": 14,
         "packages/aonw_core/lib/game/domain/runtime/pending_player_action.dart::class:PendingPlayerAction/getter:jsonType": 11,
         "packages/aonw_core/lib/game/domain/stability/stability_breakdown.dart::class:StabilityBreakdown/operator:==": 14,
-        "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 16,
         "packages/aonw_core/lib/game/domain/stability/stability_inputs.dart::class:StabilityInputs/operator:==": 14,
         "packages/aonw_core/lib/game/domain/state/persistent_game_state.dart::class:PersistentGameState/constructor:fromJson": 12,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 15,
@@ -369,8 +359,6 @@
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isBase": 15,
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isFeature": 15,
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openResourceForResourceTrade": 11,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceResourceTrades": 12,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_eventsFromCityTurn": 13,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/method:toJson": 12,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 20,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 11,
@@ -448,7 +436,6 @@
         "packages/aonw_core/lib/ai/technology_persona_scorer.dart::class:AiTechnologyPersonaScorer/method:_improvementScore": 17,
         "packages/aonw_core/lib/ai/technology_state_scorer.dart::class:AiTechnologyStateScorer/method:score": 17,
         "packages/aonw_core/lib/ai/telemetry/balance_runner_recovery_reports.dart::class:OpeningSurvivalReport/constructor:fromSamples": 21,
-        "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_turn_processor.dart::class:PersistentArtifactTurnProcessor/method:advanceForPlayers": 21,
         "packages/aonw_core/lib/game/domain/artifact/world_artifact_generator.dart::class:WorldArtifactGenerator/method:generate": 28,
         "packages/aonw_core/lib/game/domain/city/city_resource_inventory.dart::class:EmpireResourceNetworkRules/method:_hiddenSourcesFor": 17,
         "packages/aonw_core/lib/game/domain/city/game_city.dart::class:GameCity/operator:==": 18,
@@ -462,13 +449,10 @@
         "packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart::class:PersistentMoveUnitResolver/method:resolve": 31,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 21,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 37,
-        "packages/aonw_core/lib/game/domain/stability/stability_input_builder.dart::class:StabilityInputBuilder/method:forPlayer": 35,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 24,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:_findingsFor": 19,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 26,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 20,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_advanceResourceTrades": 17,
-        "packages/aonw_core/lib/game/domain/turn/persistent_turn_economy_processor.dart::class:PersistentTurnEconomyProcessor/method:_eventsFromCityTurn": 18,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 19,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 16
       }

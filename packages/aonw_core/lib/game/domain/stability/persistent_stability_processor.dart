@@ -1,13 +1,10 @@
-import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/stability/stability_breakdown.dart';
-import 'package:aonw_core/game/domain/stability/stability_calculator.dart';
-import 'package:aonw_core/game/domain/stability/stability_input_builder.dart';
 import 'package:aonw_core/game/domain/stability/stability_inputs.dart';
 import 'package:aonw_core/game/domain/stability/stability_modifier.dart';
 import 'package:aonw_core/game/domain/stability/stability_policy.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
-import 'package:aonw_core/game/domain/stability/war_weariness_rules.dart';
+import 'package:aonw_core/game/domain/stability/stability_turn_processor.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -25,6 +22,7 @@ class PersistentStabilityTurnResult {
   final List<GameEvent> events;
 }
 
+/// Compatibility adapter for callers that still own [PersistentGameState].
 abstract final class PersistentStabilityProcessor {
   static PersistentStabilityTurnResult advanceForPlayers({
     required PersistentGameState state,
@@ -34,94 +32,32 @@ abstract final class PersistentStabilityProcessor {
     Iterable<GameEvent> turnEvents = const [],
     int? turn,
   }) {
-    final knownPlayerIds = StabilityInputBuilder.orderedKnownPlayerIds(
-      state,
-      playerIds,
-    );
-    if (knownPlayerIds.isEmpty) {
-      return PersistentStabilityTurnResult(state: state);
-    }
-
-    final advancingPlayerIds = {
-      for (final playerId in playerIds)
-        if (playerId.isNotEmpty) playerId,
-    };
-    final eventCounts = _WarWearinessEventCounts.from(turnEvents);
-    final warWeariness = <String, int>{...state.playerWarWeariness};
-    for (final playerId in advancingPlayerIds) {
-      final next = WarWearinessRules.next(
-        current: state.playerWarWeariness[playerId] ?? 0,
-        atWar: _isAtWar(state, playerId),
-        attacksThisTurn: eventCounts.attacksByPlayerId[playerId] ?? 0,
-        citiesLost: eventCounts.citiesLostByPlayerId[playerId] ?? 0,
-        signedPeace:
-            eventCounts.signedPeacePlayerIds.contains(playerId) ||
-            _signedPeaceThisTurn(state, playerId, turn),
-        ruleset: ruleset,
-      );
-      if (next > 0) {
-        warWeariness[playerId] = next;
-      } else {
-        warWeariness.remove(playerId);
-      }
-    }
-
-    final inputsByPlayerId = StabilityInputBuilder.forPlayers(
-      state: state,
-      playerIds: knownPlayerIds,
+    final result = StabilityTurnProcessor.advanceForPlayers(
+      knownPlayerIds: state.knownPlayerIds,
+      playerIds: playerIds,
+      playerWarWearinessByPlayerId: state.playerWarWeariness,
+      playerStabilityNetByPlayerId: state.playerStabilityNet,
+      cities: state.cities,
+      artifacts: state.artifacts,
+      research: state.research,
+      wonderRegistry: state.wonderRegistry,
+      diplomacy: state.runtimeState.diplomacy,
       mapData: mapData,
       ruleset: ruleset,
-      warWearinessByPlayerId: warWeariness,
+      turnEvents: turnEvents,
+      turn: turn,
     );
-    final breakdownsByPlayerId = <String, StabilityBreakdown>{};
-    final stabilityNet = <String, int>{};
-    final events = <GameEvent>[];
-    for (final entry in inputsByPlayerId.entries) {
-      final breakdown = StabilityCalculator.calculate(
-        inputs: entry.value,
-        ruleset: ruleset,
-      );
-      breakdownsByPlayerId[entry.key] = breakdown;
-      final relativeStanding = StabilityPolicy.relativeStandingFor(
-        controlPercent: entry.value.controlPercent,
-        playerCount: entry.value.playerCount,
-      );
-      stabilityNet[entry.key] = StabilityPolicy.effectiveNet(
-        breakdown.net,
-        relativeStanding: relativeStanding,
-        ruleset: ruleset,
-      );
-      final previousNet = state.playerStabilityNet[entry.key];
-      if (previousNet != null) {
-        final previousBand = StabilityPolicy.bandFor(
-          previousNet,
-          ruleset: ruleset,
-        );
-        final newBand = StabilityPolicy.bandFor(
-          stabilityNet[entry.key]!,
-          ruleset: ruleset,
-        );
-        if (previousBand != newBand) {
-          events.add(
-            StabilityBandChangedEvent(
-              playerId: entry.key,
-              previousBand: previousBand,
-              newBand: newBand,
-              net: stabilityNet[entry.key]!,
-            ),
-          );
-        }
-      }
+    if (result.inputsByPlayerId.isEmpty) {
+      return PersistentStabilityTurnResult(state: state);
     }
-
     return PersistentStabilityTurnResult(
       state: state.copyWith(
-        playerWarWeariness: Map.unmodifiable(warWeariness),
-        playerStabilityNet: Map.unmodifiable(stabilityNet),
+        playerWarWeariness: result.warWearinessByPlayerId,
+        playerStabilityNet: result.stabilityNetByPlayerId,
       ),
-      inputsByPlayerId: Map.unmodifiable(inputsByPlayerId),
-      breakdownsByPlayerId: Map.unmodifiable(breakdownsByPlayerId),
-      events: List.unmodifiable(events),
+      inputsByPlayerId: result.inputsByPlayerId,
+      breakdownsByPlayerId: result.breakdownsByPlayerId,
+      events: result.events,
     );
   }
 
@@ -134,77 +70,5 @@ abstract final class PersistentStabilityProcessor {
       state.playerStabilityNet[playerId] ?? 0,
       ruleset: ruleset,
     );
-  }
-
-  static bool _isAtWar(PersistentGameState state, String playerId) {
-    for (final relation in state.runtimeState.diplomacy.relations.values) {
-      if (relation.status != DiplomaticRelationStatus.war) continue;
-      if (relation.playerAId == playerId || relation.playerBId == playerId) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static bool _signedPeaceThisTurn(
-    PersistentGameState state,
-    String playerId,
-    int? turn,
-  ) {
-    if (turn == null) return false;
-    for (final relation in state.runtimeState.diplomacy.relations.values) {
-      if (relation.status != DiplomaticRelationStatus.truce) continue;
-      if (relation.lastChangedTurn != turn) continue;
-      if (relation.playerAId == playerId || relation.playerBId == playerId) {
-        return true;
-      }
-    }
-    return false;
-  }
-}
-
-class _WarWearinessEventCounts {
-  const _WarWearinessEventCounts({
-    required this.attacksByPlayerId,
-    required this.citiesLostByPlayerId,
-    required this.signedPeacePlayerIds,
-  });
-
-  final Map<String, int> attacksByPlayerId;
-  final Map<String, int> citiesLostByPlayerId;
-  final Set<String> signedPeacePlayerIds;
-
-  factory _WarWearinessEventCounts.from(Iterable<GameEvent> events) {
-    final attacksByPlayerId = <String, int>{};
-    final citiesLostByPlayerId = <String, int>{};
-    final signedPeacePlayerIds = <String>{};
-
-    for (final event in events) {
-      final descriptor = GameEventDomainDescriptor.forEvent(event);
-      for (final playerId in descriptor.attackingPlayerIds) {
-        _increment(attacksByPlayerId, playerId);
-      }
-      for (final playerId in descriptor.citiesLostPlayerIds) {
-        _increment(citiesLostByPlayerId, playerId);
-      }
-      for (final playerId in descriptor.signedPeacePlayerIds) {
-        _addPlayer(signedPeacePlayerIds, playerId);
-      }
-    }
-
-    return _WarWearinessEventCounts(
-      attacksByPlayerId: Map.unmodifiable(attacksByPlayerId),
-      citiesLostByPlayerId: Map.unmodifiable(citiesLostByPlayerId),
-      signedPeacePlayerIds: Set.unmodifiable(signedPeacePlayerIds),
-    );
-  }
-
-  static void _increment(Map<String, int> values, String playerId) {
-    if (playerId.isEmpty) return;
-    values[playerId] = (values[playerId] ?? 0) + 1;
-  }
-
-  static void _addPlayer(Set<String> values, String playerId) {
-    if (playerId.isNotEmpty) values.add(playerId);
   }
 }

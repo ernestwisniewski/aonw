@@ -22,14 +22,38 @@ void main() {
         ],
       );
 
+      final legacy = StrategicResourceDiscoveryRules.discoveriesForTechnology(
+        playerId: 'player_1',
+        technologyId: TechnologyId.combustion,
+        state: state,
+        mapData: _map(),
+      );
       final discoveries =
-          StrategicResourceDiscoveryRules.discoveriesForTechnology(
+          StrategicResourceDiscoveryRules.discoveriesForTechnologyFromCities(
             playerId: 'player_1',
             technologyId: TechnologyId.combustion,
-            state: state,
+            cities: state.cities,
+            mapData: _map(),
+          );
+      final legacyEvents = StrategicResourceDiscoveryRules.eventsForTechnology(
+        playerId: 'player_1',
+        technologyId: TechnologyId.combustion,
+        state: state,
+        mapData: _map(),
+      );
+      final neutralEvents =
+          StrategicResourceDiscoveryRules.eventsForTechnologyFromCities(
+            playerId: 'player_1',
+            technologyId: TechnologyId.combustion,
+            cities: state.cities,
             mapData: _map(),
           );
 
+      expect(_discoveryShape(discoveries), _discoveryShape(legacy));
+      expect(
+        neutralEvents.map(GameEventSerializer.toJson),
+        legacyEvents.map(GameEventSerializer.toJson),
+      );
       expect(discoveries, hasLength(1));
       final discovery = discoveries.single;
       expect(discovery.resourceType, ResourceType.oil);

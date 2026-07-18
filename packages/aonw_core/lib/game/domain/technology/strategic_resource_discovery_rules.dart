@@ -52,6 +52,20 @@ abstract final class StrategicResourceDiscoveryRules {
     required PersistentGameState state,
     required MapTileCatalog mapData,
   }) {
+    return discoveriesForTechnologyFromCities(
+      playerId: playerId,
+      technologyId: technologyId,
+      cities: state.cities,
+      mapData: mapData,
+    );
+  }
+
+  static List<StrategicResourceDiscovery> discoveriesForTechnologyFromCities({
+    required String playerId,
+    required TechnologyId technologyId,
+    required Iterable<GameCity> cities,
+    required MapTileCatalog mapData,
+  }) {
     final resources = [
       for (final resource in ResourceType.values)
         if (ResourceVisibilityRules.revealTechnologyFor(resource) ==
@@ -59,13 +73,14 @@ abstract final class StrategicResourceDiscoveryRules {
           resource,
     ];
     if (resources.isEmpty) return const [];
+    final cityList = List<GameCity>.unmodifiable(cities);
 
     return [
       for (final resource in resources)
         _discoveryForResource(
           playerId: playerId,
           resourceType: resource,
-          state: state,
+          cities: cityList,
           mapData: mapData,
         ),
     ].where((discovery) => discovery.hasAnySource).toList(growable: false);
@@ -77,11 +92,25 @@ abstract final class StrategicResourceDiscoveryRules {
     required PersistentGameState state,
     required MapTileCatalog mapData,
   }) {
+    return eventsForTechnologyFromCities(
+      playerId: playerId,
+      technologyId: technologyId,
+      cities: state.cities,
+      mapData: mapData,
+    );
+  }
+
+  static List<StrategicResourceDiscoveredEvent> eventsForTechnologyFromCities({
+    required String playerId,
+    required TechnologyId technologyId,
+    required Iterable<GameCity> cities,
+    required MapTileCatalog mapData,
+  }) {
     return [
-      for (final discovery in discoveriesForTechnology(
+      for (final discovery in discoveriesForTechnologyFromCities(
         playerId: playerId,
         technologyId: technologyId,
-        state: state,
+        cities: cities,
         mapData: mapData,
       ))
         discovery.toEvent(),
@@ -91,7 +120,7 @@ abstract final class StrategicResourceDiscoveryRules {
   static StrategicResourceDiscovery _discoveryForResource({
     required String playerId,
     required ResourceType resourceType,
-    required PersistentGameState state,
+    required Iterable<GameCity> cities,
     required MapTileCatalog mapData,
   }) {
     var controlledCount = 0;
@@ -100,7 +129,7 @@ abstract final class StrategicResourceDiscoveryRules {
 
     for (final tile in mapData.tileViews) {
       if (!tile.resources.contains(resourceType)) continue;
-      final owner = _ownerOfTile(tile.col, tile.row, state.cities);
+      final owner = _ownerOfTile(tile.col, tile.row, cities);
       if (owner == playerId) {
         controlledCount++;
       } else if (owner != null) {
@@ -118,7 +147,7 @@ abstract final class StrategicResourceDiscoveryRules {
       unclaimedCount: unclaimed.length,
       nearestUnclaimedHex: _nearestToPlayerCities(
         playerId: playerId,
-        cities: state.cities,
+        cities: cities,
         candidates: unclaimed,
       ),
     );

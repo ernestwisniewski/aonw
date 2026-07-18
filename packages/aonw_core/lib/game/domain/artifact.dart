@@ -1,3 +1,4 @@
+export 'artifact/artifact_turn_processor.dart';
 export 'artifact/cultural_victory_progress.dart';
 export 'artifact/persistent_artifact_command_resolver.dart';
 export 'artifact/persistent_artifact_turn_processor.dart';
