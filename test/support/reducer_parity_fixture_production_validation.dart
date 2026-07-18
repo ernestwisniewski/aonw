@@ -115,6 +115,7 @@ void _requireProductionAcceptanceCoverage(
       '${_requiredStartWonderUnavailableStatuses.toList()..sort()}.',
     );
   }
+  _requireStartUnitCorpusCoverage(summary.startUnit, family);
 }
 
 final class _StartBuildingCorpusSummary {
@@ -140,7 +141,9 @@ bool _acceptedFixtureLacksRequiredChange(
   ReducerParityFixture fixture,
   bool changed,
 ) {
-  return !changed && !_permitsReviewedStartBuildingValueNoOp(fixture);
+  return !changed &&
+      !_permitsReviewedStartBuildingValueNoOp(fixture) &&
+      !_permitsReviewedStartUnitValueNoOp(fixture);
 }
 
 _StartBuildingUnavailableCause? _startBuildingUnavailableCause(

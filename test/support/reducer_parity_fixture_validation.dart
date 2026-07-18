@@ -19,17 +19,13 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
       command is SelectTechnologyCommand &&
       pendingAction is PendingResearchSelection &&
       pendingAction.ownerPlayerId == command.playerId;
-  final permitsReviewedUnitActionPendingAction =
-      _permitsReviewedUnitActionPendingAction(fixture);
-  final permitsReviewedWorkerInteraction = _permitsReviewedWorkerInteraction(
-    fixture,
-  );
-  if ((runtime.cityFoundingDraft != null &&
-          !permitsReviewedWorkerInteraction) ||
+  final permitsUnitAction = _permitsReviewedUnitActionPendingAction(fixture);
+  final permitsWorker = _permitsReviewedWorkerInteraction(fixture);
+  if ((runtime.cityFoundingDraft != null && !permitsWorker) ||
       (pendingAction != null &&
           !permitsReviewedResearchPendingAction &&
-          !permitsReviewedUnitActionPendingAction &&
-          !permitsReviewedWorkerInteraction)) {
+          !permitsUnitAction &&
+          !permitsWorker)) {
     ReducerParityCorpus._fail(
       fixture,
       'uses client interaction fields outside parity scope',
@@ -61,6 +57,7 @@ final class _ReducerParityCorpusSummary {
   final productionAcceptanceModes = <String>{};
   final specializationRejectionReasons = <String>{};
   final startBuilding = _StartBuildingCorpusSummary();
+  final startUnit = _StartUnitCorpusSummary();
   final startWonder = _StartWonderCorpusSummary();
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
@@ -73,6 +70,7 @@ final class _ReducerParityCorpusSummary {
         .putIfAbsent(fixture.family, () => <bool>{})
         .add(fixture.expectedAccepted);
     startBuilding.record(fixture);
+    startUnit.record(fixture);
     startWonder.record(fixture);
     if (fixture.expectedAccepted) {
       _recordAcceptance(fixture);
@@ -244,8 +242,8 @@ void _requireRejectionCoverage(
   String family,
 ) {
   final requiredReasons = reducerParityRequiredRejectionReasons[family]!;
-  if (summary.rejectionReasonsByFamily[family]?.containsAll(requiredReasons) !=
-      true) {
+  final actualReasons = summary.rejectionReasonsByFamily[family];
+  if (actualReasons?.containsAll(requiredReasons) != true) {
     throw StateError(
       '$family needs rejection reasons: ${requiredReasons.toList()..sort()}.',
     );
@@ -254,9 +252,8 @@ void _requireRejectionCoverage(
 
 void _validateReducerParityAcceptedSemantics(ReducerParityFixture fixture) {
   final state = PersistentGameState.fromJson(fixture.expectedState);
-  final events = fixture.expectedEvents
-      .map(GameEventSerializer.fromJson)
-      .toList(growable: false);
+  const parseEvent = GameEventSerializer.fromJson;
+  final events = fixture.expectedEvents.map(parseEvent).toList(growable: false);
   if (tryRequireProduction(
     fixture.id,
     fixture.command,

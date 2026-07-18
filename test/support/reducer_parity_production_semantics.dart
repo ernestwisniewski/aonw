@@ -9,7 +9,7 @@ bool tryRequireProduction(
   PersistentGameState before,
   PersistentGameState after,
   List<GameEvent> events,
-  MapTileLookup mapTiles,
+  MapReadView mapView,
   PaceBalance paceBalance,
 ) {
   if (!reducerParityCommandMatchesFamily('city-production', command)) {
@@ -26,18 +26,19 @@ bool tryRequireProduction(
         before: before,
         after: after,
         events: events,
-        mapTiles: mapTiles,
+        mapTiles: mapView,
         paceBalance: paceBalance,
       );
-    case StartUnitProductionCommand(:final cityId, :final unitType):
-      _requireAcceptedProductionQueue(
+    case final StartUnitProductionCommand command:
+      _requireAcceptedStartUnitProduction(
         fixtureId: fixtureId,
-        cityId: cityId,
-        target: UnitProductionTarget(unitType),
+        command: command,
+        actorPlayerId: actorPlayerId,
+        before: before,
         after: after,
         events: events,
-        eventsMustBeEmpty: true,
-        failure: 'must commit the reviewed unit queue without events',
+        mapView: mapView,
+        paceBalance: paceBalance,
       );
     case final StartCityProjectCommand command:
       _requireAcceptedCityProject(fixtureId, command, before, after, events);
@@ -58,13 +59,117 @@ bool tryRequireProduction(
         before: before,
         after: after,
         events: events,
-        mapTiles: mapTiles,
+        mapTiles: mapView,
         paceBalance: paceBalance,
       );
     default:
       throw StateError('Expected a production command.');
   }
   return true;
+}
+
+void _requireAcceptedStartUnitProduction({
+  required String fixtureId,
+  required StartUnitProductionCommand command,
+  required String actorPlayerId,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+  required MapReadView mapView,
+  required PaceBalance paceBalance,
+}) {
+  final cityIndex = before.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (cityIndex < 0 ||
+      before.cities.length < 2 ||
+      before.runtimeState.turnStartedAt == null ||
+      events.isNotEmpty) {
+    throw FormatException(
+      '$fixtureId must target an existing city beside an unrelated sentinel, '
+      'preserve runtime state, and emit no events.',
+    );
+  }
+
+  final beforeCity = before.cities[cityIndex];
+  final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
+    playerId: beforeCity.ownerPlayerId,
+    unitType: command.unitType,
+    research: before.research,
+    ruleset: TechnologyRulesets.standard,
+  );
+  final resourcesAvailable = UnitProductionRequirementRules.meetsRequirements(
+    playerId: beforeCity.ownerPlayerId,
+    unitType: command.unitType,
+    cities: before.cities,
+    mapTiles: mapView.mapTiles,
+    ruleset: CityRulesets.standard,
+    research: before.research,
+    resourceTradeAgreements: before.runtimeState.resourceTradeAgreements,
+  );
+  final coastAvailable = CityUnitProductionRules.canProduceInCity(
+    city: beforeCity,
+    unitType: command.unitType,
+    mapTiles: mapView.mapTiles,
+  );
+  final supplyAvailable = CityUnitSupplyRules.canQueueUnit(
+    playerId: beforeCity.ownerPlayerId,
+    unitType: command.unitType,
+    cities: before.cities,
+    units: before.units,
+    artifacts: before.artifacts,
+    fieldImprovements: before.fieldImprovements,
+    mapView: mapView,
+    cityRuleset: CityRulesets.standard,
+    research: before.research,
+    technologyRuleset: TechnologyRulesets.standard,
+    replacingCityId: beforeCity.id,
+  );
+  if (beforeCity.ownerPlayerId != actorPlayerId ||
+      !CityProductionRules.canProduceUnit(
+        command.unitType,
+        ruleset: CityRulesets.standard,
+        technologyUnlocked: technologyUnlocked,
+      ) ||
+      !resourcesAvailable ||
+      !coastAvailable ||
+      !supplyAvailable) {
+    throw FormatException(
+      '$fixtureId must characterize a controlled unit target that passes '
+      'technology, resource, coast, and supply checks.',
+    );
+  }
+
+  final activeInvestment = beforeCity.productionQueue?.investedProduction;
+  final productionCost = CityProductionRules.unitProductionCost(
+    command.unitType,
+    ruleset: CityRulesets.standard,
+    paceBalance: paceBalance,
+  );
+  final rolloverInvestment = activeInvestment == null
+      ? _reviewedRolloverInvestment(
+          storedOverflow: beforeCity.productionOverflow,
+          productionCost: productionCost,
+        )
+      : 0;
+  final expectedCity = beforeCity.copyWith(
+    productionQueue: CityProductionQueue.unit(
+      unitType: command.unitType,
+      investedProduction: activeInvestment ?? rolloverInvestment,
+    ),
+    productionOverflow: activeInvestment == null
+        ? 0
+        : beforeCity.productionOverflow,
+  );
+  final expectedCities = [...before.cities]..[cityIndex] = expectedCity;
+  final expectedState = before.copyWith(cities: expectedCities);
+  if (after != expectedState) {
+    throw FormatException(
+      '$fixtureId must only replace the target city queue while preserving '
+      'pace-scaled overflow, active investment, city order, runtime, sentinels, '
+      'and every unrelated state slice.',
+    );
+  }
 }
 
 void _requireAcceptedStartBuilding({
@@ -344,20 +449,5 @@ void _requireAcceptedRushProduction(
     throw FormatException(
       '$fixtureId must advance or complete the reviewed rush queue.',
     );
-  }
-}
-
-void _requireAcceptedProductionQueue({
-  required String fixtureId,
-  required String cityId,
-  required CityProductionTarget target,
-  required PersistentGameState after,
-  required List<GameEvent> events,
-  required bool eventsMustBeEmpty,
-  required String failure,
-}) {
-  if (after.cities.byId(cityId)?.productionQueue?.target != target ||
-      eventsMustBeEmpty && events.isNotEmpty) {
-    throw FormatException('$fixtureId $failure.');
   }
 }

@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-unit-supply-full-rejected",
+  "id": "city-production-unit-same-target-no-op-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 206,
+    "tick": 209,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -217,66 +217,6 @@
           "row": 0,
           "movementPoints": 3,
           "army": []
-        },
-        {
-          "id": "supply_0",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 1,
-          "row": 0,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_1",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 2,
-          "row": 0,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_2",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 0,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_3",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 1,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_4",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 2,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_5",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 0,
-          "row": 2,
-          "movementPoints": 3,
-          "army": []
         }
       ],
       "cities": [
@@ -317,7 +257,7 @@
           "id": "city_1",
           "ownerPlayerId": "player_1",
           "name": "Unit City",
-          "population": 3,
+          "population": 10,
           "storedFood": 7,
           "maxHexes": 6,
           "territoryRadius": 2,
@@ -328,14 +268,23 @@
           "controlledHexes": [
             {
               "col": 1,
-              "row": 2
+              "row": 1
+            },
+            {
+              "col": 2,
+              "row": 1
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "granary"
-          ],
-          "productionOverflow": 0
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "unit",
+              "unitType": "warrior"
+            },
+            "investedProduction": 5
+          },
+          "productionOverflow": 13
         }
       ],
       "artifacts": [
@@ -400,8 +349,8 @@
     }
   },
   "expected": {
-    "accepted": false,
-    "reason": "unit_supply_limit_reached",
+    "accepted": true,
+    "reason": null,
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -488,66 +437,6 @@
           "row": 0,
           "movementPoints": 3,
           "army": []
-        },
-        {
-          "id": "supply_0",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 1,
-          "row": 0,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_1",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 2,
-          "row": 0,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_2",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 0,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_3",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 1,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_4",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 2,
-          "row": 1,
-          "movementPoints": 3,
-          "army": []
-        },
-        {
-          "id": "supply_5",
-          "ownerPlayerId": "player_1",
-          "type": "warrior",
-          "name": "warrior",
-          "col": 0,
-          "row": 2,
-          "movementPoints": 3,
-          "army": []
         }
       ],
       "cities": [
@@ -588,7 +477,7 @@
           "id": "city_1",
           "ownerPlayerId": "player_1",
           "name": "Unit City",
-          "population": 3,
+          "population": 10,
           "storedFood": 7,
           "maxHexes": 6,
           "territoryRadius": 2,
@@ -599,14 +488,23 @@
           "controlledHexes": [
             {
               "col": 1,
-              "row": 2
+              "row": 1
+            },
+            {
+              "col": 2,
+              "row": 1
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "granary"
-          ],
-          "productionOverflow": 0
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "unit",
+              "unitType": "warrior"
+            },
+            "investedProduction": 5
+          },
+          "productionOverflow": 13
         }
       ],
       "artifacts": [

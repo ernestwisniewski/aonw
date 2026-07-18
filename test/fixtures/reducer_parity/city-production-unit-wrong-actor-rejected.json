@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-unit-accepted",
+  "id": "city-production-unit-wrong-actor-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 22,
+    "tick": 201,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -207,24 +207,72 @@
         "player_1": 4,
         "player_2": 5
       },
-      "units": [],
+      "units": [
+        {
+          "id": "unit_sentinel",
+          "ownerPlayerId": "player_2",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 0,
+          "movementPoints": 3,
+          "army": []
+        }
+      ],
       "cities": [
         {
-          "id": "city_1",
-          "ownerPlayerId": "player_1",
-          "name": "Parity City",
-          "population": 3,
-          "storedFood": 0,
+          "id": "city_sentinel",
+          "ownerPlayerId": "player_2",
+          "name": "Unrelated Sentinel",
+          "population": 2,
+          "storedFood": 5,
           "maxHexes": 6,
           "territoryRadius": 2,
           "center": {
-            "col": 2,
-            "row": 2
+            "col": 0,
+            "row": 0
           },
           "controlledHexes": [
             {
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 0,
+              "row": 1
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "wonder",
+              "wonderType": "greatLibrary"
+            },
+            "investedProduction": 3
+          },
+          "productionOverflow": 2
+        },
+        {
+          "id": "city_1",
+          "ownerPlayerId": "player_2",
+          "name": "Unit City",
+          "population": 10,
+          "storedFood": 7,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 1,
+            "row": 1
+          },
+          "controlledHexes": [
+            {
+              "col": 1,
+              "row": 1
+            },
+            {
               "col": 2,
-              "row": 2
+              "row": 1
             }
           ],
           "workedHexes": [],
@@ -232,13 +280,60 @@
           "productionOverflow": 0
         }
       ],
-      "artifacts": [],
-      "fieldImprovements": [],
+      "artifacts": [
+        {
+          "id": "artifact.queensMirror",
+          "type": "queensMirror",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_sentinel"
+          }
+        }
+      ],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 0,
+            "row": 1
+          },
+          "type": "farm",
+          "builtByCityId": "city_sentinel"
+        }
+      ],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [],
+            "progressByTechnologyId": {}
+          },
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "agriculture"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "resourceTradeAgreements": [
+          {
+            "id": "trade_sentinel",
+            "exporterPlayerId": "player_1",
+            "importerPlayerId": "player_2",
+            "resource": "oil",
+            "goldPerTurn": 1,
+            "remainingTurns": 4
+          }
+        ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+      },
+      "wonderRegistry": {
+        "centralBank": "player_2"
+      }
     },
     "command": {
       "type": "StartUnitProduction",
@@ -247,8 +342,8 @@
     }
   },
   "expected": {
-    "accepted": true,
-    "reason": null,
+    "accepted": false,
+    "reason": "city_not_controlled",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -325,45 +420,133 @@
         "player_1": 4,
         "player_2": 5
       },
-      "units": [],
+      "units": [
+        {
+          "id": "unit_sentinel",
+          "ownerPlayerId": "player_2",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 0,
+          "movementPoints": 3,
+          "army": []
+        }
+      ],
       "cities": [
         {
-          "id": "city_1",
-          "ownerPlayerId": "player_1",
-          "name": "Parity City",
-          "population": 3,
-          "storedFood": 0,
+          "id": "city_sentinel",
+          "ownerPlayerId": "player_2",
+          "name": "Unrelated Sentinel",
+          "population": 2,
+          "storedFood": 5,
           "maxHexes": 6,
           "territoryRadius": 2,
           "center": {
-            "col": 2,
-            "row": 2
+            "col": 0,
+            "row": 0
           },
           "controlledHexes": [
             {
-              "col": 2,
-              "row": 2
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 0,
+              "row": 1
             }
           ],
           "workedHexes": [],
           "buildings": [],
           "productionQueue": {
             "target": {
-              "kind": "unit",
-              "unitType": "warrior"
+              "kind": "wonder",
+              "wonderType": "greatLibrary"
             },
-            "investedProduction": 0
+            "investedProduction": 3
           },
+          "productionOverflow": 2
+        },
+        {
+          "id": "city_1",
+          "ownerPlayerId": "player_2",
+          "name": "Unit City",
+          "population": 10,
+          "storedFood": 7,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 1,
+            "row": 1
+          },
+          "controlledHexes": [
+            {
+              "col": 1,
+              "row": 1
+            },
+            {
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
           "productionOverflow": 0
         }
       ],
-      "artifacts": [],
-      "fieldImprovements": [],
+      "artifacts": [
+        {
+          "id": "artifact.queensMirror",
+          "type": "queensMirror",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_sentinel"
+          }
+        }
+      ],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 0,
+            "row": 1
+          },
+          "type": "farm",
+          "builtByCityId": "city_sentinel"
+        }
+      ],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [],
+            "progressByTechnologyId": {}
+          },
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "agriculture"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "resourceTradeAgreements": [
+          {
+            "id": "trade_sentinel",
+            "exporterPlayerId": "player_1",
+            "importerPlayerId": "player_2",
+            "resource": "oil",
+            "goldPerTurn": 1,
+            "remainingTurns": 4
+          }
+        ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+      },
+      "wonderRegistry": {
+        "centralBank": "player_2"
+      }
     },
     "events": []
   }

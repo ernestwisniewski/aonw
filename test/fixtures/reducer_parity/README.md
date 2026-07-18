@@ -57,6 +57,15 @@ collapse to `wonder_not_available` are classified independently of the
 production policy.
 Accepted fixtures preserve full state and registry/runtime sentinels, emit no
 events, and use an independent queue/overflow oracle.
+`StartUnitProduction` is fail-closed over exactly eleven reviewed paths. They
+pin `city_not_found`, both otherwise-available and compound wrong-actor
+precedence, then the ordered availability, resource, coast, and supply
+rejections. Accepted cases cover warrior standard60 rollover (cost 12, cap 6),
+an iron import plus coastal warship queue replacement, today's accepted
+same-target value no-op, and the supply boundary crossed only by a stored food
+artifact together with a passive farm. Every accepted oracle replaces only the
+target city queue and compares the complete remaining state; all fixtures carry
+an unrelated-city/runtime sentinel and emit no events.
 Turn rejections cover both a forged player id and a player outside the active
 match roster. The corpus intentionally excludes client-only commands,
 server-managed commands,

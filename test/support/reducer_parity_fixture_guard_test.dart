@@ -5,7 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'reducer_parity_fixture.dart';
 
+part 'reducer_parity_fixture_start_unit_guard_tests.dart';
+
 void main() {
+  _registerStartUnitFixtureGuardTests();
+
   test(
     'StartBuilding corpus fails closed when one reviewed path is removed',
     () {

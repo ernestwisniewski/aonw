@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-unit-supply-full-rejected",
+  "id": "city-production-unit-coast-required-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 206,
+    "tick": 205,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -362,7 +362,9 @@
       "research": {
         "players": {
           "player_1": {
-            "unlockedTechnologyIds": [],
+            "unlockedTechnologyIds": [
+              "navalDoctrine"
+            ],
             "progressByTechnologyId": {}
           },
           "player_2": {
@@ -378,6 +380,14 @@
           "player_2"
         ],
         "resourceTradeAgreements": [
+          {
+            "id": "trade_import_iron",
+            "exporterPlayerId": "player_2",
+            "importerPlayerId": "player_1",
+            "resource": "iron",
+            "goldPerTurn": 3,
+            "remainingTurns": 8
+          },
           {
             "id": "trade_sentinel",
             "exporterPlayerId": "player_1",
@@ -396,12 +406,12 @@
     "command": {
       "type": "StartUnitProduction",
       "cityId": "city_1",
-      "unitType": "warrior"
+      "unitType": "warship"
     }
   },
   "expected": {
     "accepted": false,
-    "reason": "unit_supply_limit_reached",
+    "reason": "unit_production_requires_coast",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -633,7 +643,9 @@
       "research": {
         "players": {
           "player_1": {
-            "unlockedTechnologyIds": [],
+            "unlockedTechnologyIds": [
+              "navalDoctrine"
+            ],
             "progressByTechnologyId": {}
           },
           "player_2": {
@@ -649,6 +661,14 @@
           "player_2"
         ],
         "resourceTradeAgreements": [
+          {
+            "id": "trade_import_iron",
+            "exporterPlayerId": "player_2",
+            "importerPlayerId": "player_1",
+            "resource": "iron",
+            "goldPerTurn": 3,
+            "remainingTurns": 8
+          },
           {
             "id": "trade_sentinel",
             "exporterPlayerId": "player_1",

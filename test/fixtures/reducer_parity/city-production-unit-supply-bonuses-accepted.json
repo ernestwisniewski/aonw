@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-unit-supply-full-rejected",
+  "id": "city-production-unit-supply-bonuses-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 206,
+    "tick": 210,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -277,6 +277,16 @@
           "row": 2,
           "movementPoints": 3,
           "army": []
+        },
+        {
+          "id": "supply_6",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
         }
       ],
       "cities": [
@@ -346,6 +356,14 @@
             "kind": "stored",
             "cityId": "city_sentinel"
           }
+        },
+        {
+          "id": "artifact.firstPeoplesChronicle",
+          "type": "firstPeoplesChronicle",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_1"
+          }
         }
       ],
       "fieldImprovements": [
@@ -356,6 +374,14 @@
           },
           "type": "farm",
           "builtByCityId": "city_sentinel"
+        },
+        {
+          "hex": {
+            "col": 1,
+            "row": 2
+          },
+          "type": "farm",
+          "builtByCityId": "city_1"
         }
       ],
       "fogOfWar": [],
@@ -400,8 +426,8 @@
     }
   },
   "expected": {
-    "accepted": false,
-    "reason": "unit_supply_limit_reached",
+    "accepted": true,
+    "reason": null,
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -548,6 +574,16 @@
           "row": 2,
           "movementPoints": 3,
           "army": []
+        },
+        {
+          "id": "supply_6",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
         }
       ],
       "cities": [
@@ -606,6 +642,13 @@
           "buildings": [
             "granary"
           ],
+          "productionQueue": {
+            "target": {
+              "kind": "unit",
+              "unitType": "warrior"
+            },
+            "investedProduction": 0
+          },
           "productionOverflow": 0
         }
       ],
@@ -617,6 +660,14 @@
             "kind": "stored",
             "cityId": "city_sentinel"
           }
+        },
+        {
+          "id": "artifact.firstPeoplesChronicle",
+          "type": "firstPeoplesChronicle",
+          "location": {
+            "kind": "stored",
+            "cityId": "city_1"
+          }
         }
       ],
       "fieldImprovements": [
@@ -627,6 +678,14 @@
           },
           "type": "farm",
           "builtByCityId": "city_sentinel"
+        },
+        {
+          "hex": {
+            "col": 1,
+            "row": 2
+          },
+          "type": "farm",
+          "builtByCityId": "city_1"
         }
       ],
       "fogOfWar": [],
