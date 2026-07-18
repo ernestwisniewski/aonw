@@ -1,6 +1,7 @@
 import 'package:aonw_core/domain.dart';
 
 import 'reducer_parity_contract.dart';
+import 'reducer_parity_rush_semantics.dart';
 
 bool tryRequireProduction(
   String fixtureId,
@@ -17,7 +18,16 @@ bool tryRequireProduction(
   }
   switch (command) {
     case final RushProductionCommand command:
-      _requireAcceptedRushProduction(fixtureId, command, before, after, events);
+      requireAcceptedRushProduction(
+        fixtureId: fixtureId,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        before: before,
+        after: after,
+        events: events,
+        mapTiles: mapView,
+        paceBalance: paceBalance,
+      );
     case final StartBuildingCommand command:
       _requireAcceptedStartBuilding(
         fixtureId: fixtureId,
@@ -426,28 +436,6 @@ void _requireAcceptedStartWonder({
       '$fixtureId must only replace the target city queue while preserving '
       'pace-scaled overflow, active investment, city order, registry, runtime, '
       'sentinels, and every unrelated state slice.',
-    );
-  }
-}
-
-void _requireAcceptedRushProduction(
-  String fixtureId,
-  RushProductionCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
-  List<GameEvent> events,
-) {
-  final beforeQueue = before.cities.byId(command.cityId)?.productionQueue;
-  final afterQueue = after.cities.byId(command.cityId)?.productionQueue;
-  final progressed =
-      beforeQueue != null &&
-      afterQueue?.target == beforeQueue.target &&
-      afterQueue!.investedProduction > beforeQueue.investedProduction;
-  final completed =
-      beforeQueue != null && afterQueue == null && events.isNotEmpty;
-  if (!progressed && !completed) {
-    throw FormatException(
-      '$fixtureId must advance or complete the reviewed rush queue.',
     );
   }
 }

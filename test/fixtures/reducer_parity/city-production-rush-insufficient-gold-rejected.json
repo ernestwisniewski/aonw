@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-rush-unrest-accepted",
+  "id": "city-production-rush-insufficient-gold-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 327,
+    "tick": 325,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -196,7 +196,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 101,
+        "player_1": 1,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -204,7 +204,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -288,21 +288,15 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
+          "buildings": [],
           "productionQueue": {
             "target": {
               "kind": "building",
-              "buildingType": "marketplace"
+              "buildingType": "granary"
             },
             "investedProduction": 0
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -383,8 +377,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "command": {
@@ -393,8 +386,8 @@
     }
   },
   "expected": {
-    "accepted": true,
-    "reason": null,
+    "accepted": false,
+    "reason": "rush_production_unavailable",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -460,7 +453,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 83,
+        "player_1": 1,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -468,7 +461,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -552,21 +545,15 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
+          "buildings": [],
           "productionQueue": {
             "target": {
               "kind": "building",
-              "buildingType": "marketplace"
+              "buildingType": "granary"
             },
-            "investedProduction": 9
+            "investedProduction": 0
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -647,8 +634,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "events": []

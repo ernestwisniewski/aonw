@@ -52,6 +52,9 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'city_specialization_unchanged',
     'city_specialization_missing_building',
     'unit_supply_limit_reached',
+    'production_queue_empty',
+    'project_cannot_be_rushed',
+    'rush_production_unavailable',
   },
   'city-worked-hex': {'city_not_controlled', 'worked_hex_limit_reached'},
   'detachment': {

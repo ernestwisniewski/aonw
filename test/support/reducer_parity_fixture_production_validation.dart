@@ -116,6 +116,7 @@ void _requireProductionAcceptanceCoverage(
     );
   }
   _requireStartUnitCorpusCoverage(summary.startUnit, family);
+  _requireRushCorpusCoverage(summary.rush, family);
 }
 
 final class _StartBuildingCorpusSummary {

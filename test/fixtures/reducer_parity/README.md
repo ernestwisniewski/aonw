@@ -66,6 +66,18 @@ same-target value no-op, and the supply boundary crossed only by a stored food
 artifact together with a passive farm. Every accepted oracle replaces only the
 target city queue and compares the complete remaining state; all fixtures carry
 an unrelated-city/runtime sentinel and emit no events.
+`RushProduction` is fail-closed over exactly thirteen reviewed paths. Seven
+rejections pin `city_not_found`, both otherwise-rushable and foreign
+empty-queue/zero-treasury wrong-actor precedence, owned empty queue, a
+zero-treasury continuous project, insufficient gold, and an already-complete
+finite queue. The latter two independently classify the conditions collapsed
+into `rush_production_unavailable`. Six accepted
+paths cover a partial unrest-sensitive building advance, building completion,
+deterministic unit completion, today's accepted blocked-spawn behavior, Great
+Library completion with a free technology and competing-queue refund, and the
+refund path for a wonder already present in the registry. Complete-state
+oracles verify exact gold, cities, units, research, registry, sentinels, and
+ordered events; rejected commands preserve the complete canonical input.
 Turn rejections cover both a forged player id and a player outside the active
 match roster. The corpus intentionally excludes client-only commands,
 server-managed commands,

@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-rush-unrest-accepted",
+  "id": "city-production-rush-unit-spawn-blocked-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 327,
+    "tick": 330,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -196,7 +196,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 101,
+        "player_1": 50,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -204,7 +204,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -219,20 +219,74 @@
           "army": []
         },
         {
-          "id": "worker_sentinel",
+          "id": "spawn_blocker_0",
           "ownerPlayerId": "player_1",
-          "type": "worker",
-          "name": "worker",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 1,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_1",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
           "col": 2,
           "row": 1,
           "movementPoints": 3,
-          "army": [],
-          "workerAssignment": {
-            "targetHex": {
-              "col": 2,
-              "row": 1
-            }
-          }
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_2",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 2,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_3",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_4",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_5",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 1,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_6",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 0,
+          "movementPoints": 3,
+          "army": []
         }
       ],
       "cities": [
@@ -288,21 +342,15 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
+          "buildings": [],
           "productionQueue": {
             "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
+              "kind": "unit",
+              "unitType": "warrior"
             },
-            "investedProduction": 0
+            "investedProduction": 11
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -383,8 +431,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "command": {
@@ -460,7 +507,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 83,
+        "player_1": 48,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -468,7 +515,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -483,20 +530,74 @@
           "army": []
         },
         {
-          "id": "worker_sentinel",
+          "id": "spawn_blocker_0",
           "ownerPlayerId": "player_1",
-          "type": "worker",
-          "name": "worker",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 1,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_1",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
           "col": 2,
           "row": 1,
           "movementPoints": 3,
-          "army": [],
-          "workerAssignment": {
-            "targetHex": {
-              "col": 2,
-              "row": 1
-            }
-          }
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_2",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 2,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_3",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_4",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 2,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_5",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 0,
+          "row": 1,
+          "movementPoints": 3,
+          "army": []
+        },
+        {
+          "id": "spawn_blocker_6",
+          "ownerPlayerId": "player_1",
+          "type": "warrior",
+          "name": "warrior",
+          "col": 1,
+          "row": 0,
+          "movementPoints": 3,
+          "army": []
         }
       ],
       "cities": [
@@ -552,21 +653,15 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
+          "buildings": [],
           "productionQueue": {
             "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
+              "kind": "unit",
+              "unitType": "warrior"
             },
-            "investedProduction": 9
+            "investedProduction": 12
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -647,8 +742,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "events": []

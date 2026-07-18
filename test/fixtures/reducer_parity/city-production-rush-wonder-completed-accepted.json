@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-rush-unrest-accepted",
+  "id": "city-production-rush-wonder-completed-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 327,
+    "tick": 331,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -196,7 +196,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 101,
+        "player_1": 50,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -204,7 +204,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -288,21 +288,44 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
+          "buildings": [],
           "productionQueue": {
             "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
+              "kind": "wonder",
+              "wonderType": "greatLibrary"
             },
-            "investedProduction": 0
+            "investedProduction": 101
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "productionOverflow": 4
+        },
+        {
+          "id": "city_peer",
+          "ownerPlayerId": "player_1",
+          "name": "Competing Wonder City",
+          "population": 3,
+          "storedFood": 6,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 2,
+            "row": 2
+          },
+          "controlledHexes": [
+            {
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "wonder",
+              "wonderType": "greatLibrary"
+            },
+            "investedProduction": 7
+          },
+          "productionOverflow": 3
         }
       ],
       "artifacts": [
@@ -383,8 +406,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "command": {
@@ -460,7 +482,7 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 83,
+        "player_1": 48,
         "player_2": 23
       },
       "playerWarWeariness": {
@@ -468,7 +490,7 @@
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -552,21 +574,33 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
+          "buildings": [],
           "wonders": [
-            "motherFactory"
+            "greatLibrary"
           ],
-          "productionQueue": {
-            "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
-            },
-            "investedProduction": 9
+          "productionOverflow": 0
+        },
+        {
+          "id": "city_peer",
+          "ownerPlayerId": "player_1",
+          "name": "Competing Wonder City",
+          "population": 3,
+          "storedFood": 6,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 2,
+            "row": 2
           },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "controlledHexes": [
+            {
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 10
         }
       ],
       "artifacts": [
@@ -610,12 +644,10 @@
         "players": {
           "player_1": {
             "unlockedTechnologyIds": [
+              "agriculture",
               "logistics"
             ],
-            "activeTechnologyId": "agriculture",
-            "progressByTechnologyId": {
-              "agriculture": 4
-            },
+            "progressByTechnologyId": {},
             "scienceOverflow": 3
           },
           "player_2": {
@@ -648,9 +680,28 @@
       },
       "wonderRegistry": {
         "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "greatLibrary": "player_1"
       }
     },
-    "events": []
+    "events": [
+      {
+        "type": "CityBuiltWonder",
+        "cityId": "city_1",
+        "ownerPlayerId": "player_1",
+        "wonderType": "greatLibrary"
+      },
+      {
+        "type": "TechnologyResearched",
+        "playerId": "player_1",
+        "technologyId": "agriculture"
+      },
+      {
+        "type": "WonderProductionRefunded",
+        "cityId": "city_peer",
+        "ownerPlayerId": "player_1",
+        "wonderType": "greatLibrary",
+        "refundedProduction": 7
+      }
+    ]
   }
 }

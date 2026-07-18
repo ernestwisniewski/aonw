@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-rush-unrest-accepted",
+  "id": "city-production-rush-wrong-actor-compound-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 327,
+    "tick": 322,
     "rulesetId": "standard",
     "map": {
       "cols": 3,
@@ -196,15 +196,15 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 101,
-        "player_2": 23
+        "player_1": 0,
+        "player_2": 0
       },
       "playerWarWeariness": {
         "player_1": 2,
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -267,7 +267,7 @@
         },
         {
           "id": "city_1",
-          "ownerPlayerId": "player_1",
+          "ownerPlayerId": "player_2",
           "name": "Rush Target",
           "population": 5,
           "storedFood": 7,
@@ -288,21 +288,8 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
-          "productionQueue": {
-            "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
-            },
-            "investedProduction": 0
-          },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "buildings": [],
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -383,8 +370,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "command": {
@@ -393,8 +379,8 @@
     }
   },
   "expected": {
-    "accepted": true,
-    "reason": null,
+    "accepted": false,
+    "reason": "city_not_controlled",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -460,15 +446,15 @@
         "player_2": "japan"
       },
       "playerGold": {
-        "player_1": 83,
-        "player_2": 23
+        "player_1": 0,
+        "player_2": 0
       },
       "playerWarWeariness": {
         "player_1": 2,
         "player_2": 3
       },
       "playerStabilityNet": {
-        "player_1": -4,
+        "player_1": 4,
         "player_2": 5
       },
       "units": [
@@ -531,7 +517,7 @@
         },
         {
           "id": "city_1",
-          "ownerPlayerId": "player_1",
+          "ownerPlayerId": "player_2",
           "name": "Rush Target",
           "population": 5,
           "storedFood": 7,
@@ -552,21 +538,8 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [
-            "workshop"
-          ],
-          "wonders": [
-            "motherFactory"
-          ],
-          "productionQueue": {
-            "target": {
-              "kind": "building",
-              "buildingType": "marketplace"
-            },
-            "investedProduction": 9
-          },
-          "productionOverflow": 4,
-          "specialization": "industry"
+          "buildings": [],
+          "productionOverflow": 4
         }
       ],
       "artifacts": [
@@ -647,8 +620,7 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       },
       "wonderRegistry": {
-        "centralBank": "player_2",
-        "motherFactory": "player_1"
+        "centralBank": "player_2"
       }
     },
     "events": []

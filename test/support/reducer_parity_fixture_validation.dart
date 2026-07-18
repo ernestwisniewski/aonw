@@ -59,6 +59,7 @@ final class _ReducerParityCorpusSummary {
   final startBuilding = _StartBuildingCorpusSummary();
   final startUnit = _StartUnitCorpusSummary();
   final startWonder = _StartWonderCorpusSummary();
+  final rush = _RushCorpusSummary();
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -72,6 +73,7 @@ final class _ReducerParityCorpusSummary {
     startBuilding.record(fixture);
     startUnit.record(fixture);
     startWonder.record(fixture);
+    rush.record(fixture);
     if (fixture.expectedAccepted) {
       _recordAcceptance(fixture);
     } else {
