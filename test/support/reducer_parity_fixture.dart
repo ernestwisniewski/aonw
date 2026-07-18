@@ -8,8 +8,9 @@ import 'reducer_parity_accepted_semantics.dart';
 import 'reducer_parity_contract.dart';
 import 'reducer_parity_production_semantics.dart';
 
-part 'reducer_parity_fixture_validation.dart';
+part 'reducer_parity_fixture_city_expansion_validation.dart';
 part 'reducer_parity_fixture_unit_action_validation.dart';
+part 'reducer_parity_fixture_validation.dart';
 
 final class ReducerParityFixture {
   const ReducerParityFixture({

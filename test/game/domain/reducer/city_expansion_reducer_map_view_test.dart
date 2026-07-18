@@ -29,7 +29,7 @@ void main() {
     final state = GameState(
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      cities: const [city],
+      cities: [city],
       research: ResearchState(
         players: {
           'player_1': PlayerResearchState(
@@ -69,6 +69,64 @@ void main() {
     expect(result.state.selection?.cityTileYieldBreakdown, isNotNull);
     expect(result.state.pendingAction, pending);
     expect(result.events, isEmpty);
+  });
+
+  test('rejected expansion preserves the complete local state identity', () {
+    const city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'City',
+      center: CityHex(col: 1, row: 1),
+      controlledHexes: [CityHex(col: 2, row: 1)],
+    );
+    const state = GameState(
+      activePlayerId: 'player_2',
+      cities: [city],
+      interaction: GameInteractionState(
+        pendingAction: PendingCityExpansionSelection(
+          ownerPlayerId: 'player_1',
+          cityId: 'city_1',
+        ),
+      ),
+    );
+
+    final result = CityExpansionReducer.selectExpansionHex(
+      state,
+      const SelectCityExpansionHexCommand('city_1', 1, 2),
+      WorldMapReadView(_worldMap()),
+    );
+
+    expect(result.state, same(state));
+  });
+
+  test('accepted semantic no-op preserves selected local state identity', () {
+    const city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'City',
+      center: CityHex(col: 1, row: 1),
+      controlledHexes: [CityHex(col: 2, row: 1)],
+      preferredExpansionHex: CityHex(col: 1, row: 2),
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      cities: const [city],
+      interaction: GameInteractionState(
+        selection: GameSelection.city(
+          city,
+          cityYield: TileYield.zero,
+          playerColor: 0,
+        ),
+      ),
+    );
+
+    final result = CityExpansionReducer.selectExpansionHex(
+      state,
+      const SelectCityExpansionHexCommand('city_1', 1, 2),
+      WorldMapReadView(_worldMap()),
+    );
+
+    expect(result.state, same(state));
   });
 }
 

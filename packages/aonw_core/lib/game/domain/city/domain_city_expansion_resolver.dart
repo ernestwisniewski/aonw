@@ -2,29 +2,29 @@ import 'package:aonw_core/game/domain/city/city_expansion_command_resolver.dart'
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-final class PersistentCityExpansionResult {
-  const PersistentCityExpansionResult({
+final class DomainCityExpansionResult {
+  const DomainCityExpansionResult({
     required this.accepted,
     required this.state,
     this.reason,
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final String? reason;
 }
 
-/// Persistence adapter for the state-neutral city-expansion resolver.
-final class PersistentCityExpansionResolver {
-  const PersistentCityExpansionResolver();
+/// Canonical-state adapter for the persistence-neutral expansion resolver.
+final class DomainCityExpansionResolver {
+  const DomainCityExpansionResolver();
 
-  PersistentCityExpansionResult selectExpansionHex({
-    required PersistentGameState state,
+  DomainCityExpansionResult selectExpansionHex({
+    required DomainState state,
     required SelectCityExpansionHexCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -41,13 +41,13 @@ final class PersistentCityExpansionResolver {
       technologyRuleset: technologyRuleset,
     );
     if (!result.accepted) {
-      return PersistentCityExpansionResult(
+      return DomainCityExpansionResult(
         accepted: false,
         state: state,
         reason: result.reason,
       );
     }
-    return PersistentCityExpansionResult(
+    return DomainCityExpansionResult(
       accepted: true,
       state: identical(result.cities, state.cities)
           ? state

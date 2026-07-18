@@ -83,6 +83,8 @@ const _mapDataBarrelFreeMigrationPaths = {
 const _mapDataFreeMigrationPaths = {
   ..._mapDataBarrelFreeMigrationPaths,
   '$_gameDomain/city/persistent_city_expansion_resolver.dart',
+  '$_gameDomain/city/city_expansion_command_resolver.dart',
+  '$_gameDomain/city/domain_city_expansion_resolver.dart',
   '$_gameDomain/city/persistent_city_founding_resolver.dart',
   '$_gameDomain/city/persistent_city_production_resolver.dart',
   '$_gameDomain/city/city_turn_processor.dart',

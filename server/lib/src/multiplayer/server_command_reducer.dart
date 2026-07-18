@@ -9,6 +9,7 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 
 part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
+part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_merchant_routing.dart';
@@ -375,16 +376,14 @@ class ServerCommandReducer {
           ruleset: ruleset,
         );
       case SelectCityExpansionHexCommand():
-        final result = const PersistentCityExpansionResolver()
-            .selectExpansionHex(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: loadedMap.mapView,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-            );
-        return _fromPersistentResult(save, result);
+        return _applySelectCityExpansionHexCommand(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          mapTiles: loadedMap.mapView,
+          ruleset: ruleset,
+        );
       case SelectWorkerImprovementCommand():
         final result = const PersistentWorkerCommandResolver()
             .selectWorkerImprovement(
@@ -577,17 +576,6 @@ class ServerCommandReducer {
           accepted: accepted,
           state: state,
           events: events,
-          reason: reason,
-        ),
-      PersistentCityExpansionResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
           reason: reason,
         ),
       PersistentWorkerCommandResult(

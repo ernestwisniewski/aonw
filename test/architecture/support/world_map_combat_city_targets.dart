@@ -31,11 +31,6 @@ const _cityTargets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
-        '_isCandidate',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
     ],
   ),
   _Target(
@@ -168,6 +163,32 @@ const _cityTargets = [
     path:
         'packages/aonw_core/lib/game/domain/city/persistent_city_expansion_resolver.dart',
     owner: 'PersistentCityExpansionResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectExpansionHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'city_expansion_command_resolver.dart',
+    owner: 'CityExpansionCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectExpansionHex',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'domain_city_expansion_resolver.dart',
+    owner: 'DomainCityExpansionResolver',
     boundaries: [
       _Boundary.method(
         'selectExpansionHex',
