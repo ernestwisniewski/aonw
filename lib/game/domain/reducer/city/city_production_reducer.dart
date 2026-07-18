@@ -5,13 +5,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/stability.dart';
-import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'city_production_reducer_rush.dart';
@@ -20,12 +15,6 @@ part 'city_production_reducer_project.dart';
 part 'city_production_reducer_specialization.dart';
 part 'city_production_reducer_unit.dart';
 part 'city_production_reducer_wonder.dart';
-
-typedef _RushProductionApplication = ({
-  GameCity city,
-  List<GameUnit> units,
-  List<GameEvent> events,
-});
 
 abstract final class CityProductionReducer {
   static GameStateTransition startBuilding(

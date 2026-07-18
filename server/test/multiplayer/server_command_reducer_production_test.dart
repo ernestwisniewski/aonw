@@ -47,6 +47,42 @@ void main() {
     );
   });
 
+  test('rush preserves unchanged server state slices', () async {
+    final productionCost = CityProductionRules.buildingProductionCost(
+      CityBuildingType.granary,
+    );
+    final reduction = await _reduceCommand(
+      const RushProductionCommand('city_1'),
+      state: PersistentGameState.snapshot(
+        playerGold: const {'player_1': 2},
+        units: [
+          GameUnit.produced(
+            id: 'sentinel_unit',
+            ownerPlayerId: 'player_2',
+            type: GameUnitType.worker,
+            col: 2,
+            row: 2,
+          ),
+        ],
+        cities: [
+          GameCity.snapshot(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Rush City',
+            center: const CityHex(col: 0, row: 0),
+            productionQueue: CityProductionQueue.building(
+              buildingType: CityBuildingType.granary,
+              investedProduction: productionCost - 1,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    expect(reduction.accepted, isTrue);
+    expect(reduction.state?.units, same(reduction.previousState?.units));
+  });
+
   test(
     'routes the end-turn alias through authoritative turn handling',
     () async {

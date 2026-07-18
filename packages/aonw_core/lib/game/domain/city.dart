@@ -60,6 +60,7 @@ export 'city/persistent_city_founding_resolver.dart';
 export 'city/persistent_city_production_resolver.dart';
 export 'city/persistent_city_worked_hex_resolver.dart';
 export 'city/persistent_worker_command_resolver.dart';
+export 'city/rush_production_command_resolver.dart';
 export 'city/toggle_worked_hex_resolver.dart';
 export 'city/worker_assignment_rules.dart';
 export 'city/worker_command_resolver.dart';

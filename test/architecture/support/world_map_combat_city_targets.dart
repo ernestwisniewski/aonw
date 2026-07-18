@@ -318,4 +318,41 @@ const _cityTargets = [
       ),
     ],
   ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'rush_production_command_resolver.dart',
+    owner: 'RushProductionCommandResolver',
+    boundaries: [
+      _Boundary.method('resolve', parameter: 'mapTiles', type: 'MapTileLookup'),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'domain_city_production_resolver.dart',
+    owner: 'DomainCityProductionResolver',
+    boundaries: [
+      _Boundary.method(
+        'startBuilding',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'startUnitProduction',
+        parameter: 'mapView',
+        type: 'MapReadView',
+      ),
+      _Boundary.method(
+        'startWonder',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.method(
+        'rushProduction',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
 ];

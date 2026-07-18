@@ -1,8 +1,11 @@
 import 'package:aonw_core/game/domain/city/city_production_command_resolver.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
+import 'package:aonw_core/game/domain/city/rush_production_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
+import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
@@ -13,11 +16,13 @@ final class DomainCityProductionResult {
   const DomainCityProductionResult({
     required this.accepted,
     required this.state,
+    this.events = const [],
     this.reason,
   });
 
   final bool accepted;
   final DomainState state;
+  final List<GameEvent> events;
   final String? reason;
 }
 
@@ -125,6 +130,38 @@ final class DomainCityProductionResolver {
     return _fromCommandResult(state, result);
   }
 
+  DomainCityProductionResult rushProduction({
+    required DomainState state,
+    required RushProductionCommand command,
+    required String actorPlayerId,
+    required MapTileLookup mapTiles,
+    CityRuleset cityRuleset = CityRulesets.standard,
+    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    final result = RushProductionCommandResolver.resolve(
+      cities: state.cities,
+      units: state.units,
+      artifacts: state.artifacts,
+      fieldImprovements: state.fieldImprovements,
+      playerGold: state.playerGold,
+      playerStabilityNet: state.playerStabilityNet,
+      research: state.research,
+      wonderRegistry: state.wonderRegistry,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      stabilityRuleset: stabilityRuleset,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
+    );
+    return _fromRushResult(state, result);
+  }
+
   DomainCityProductionResult _fromCommandResult(
     DomainState state,
     CityProductionCommandResult result,
@@ -141,6 +178,36 @@ final class DomainCityProductionResolver {
       state: identical(result.cities, state.cities)
           ? state
           : state.copyWith(cities: result.cities),
+    );
+  }
+
+  DomainCityProductionResult _fromRushResult(
+    DomainState state,
+    RushProductionCommandResult result,
+  ) {
+    if (!result.accepted) {
+      return DomainCityProductionResult(
+        accepted: false,
+        state: state,
+        reason: result.reason,
+      );
+    }
+    return DomainCityProductionResult(
+      accepted: true,
+      state: state.copyWith(
+        cities: identical(result.cities, state.cities) ? null : result.cities,
+        units: identical(result.units, state.units) ? null : result.units,
+        playerGold: identical(result.playerGold, state.playerGold)
+            ? null
+            : result.playerGold,
+        research: identical(result.research, state.research)
+            ? null
+            : result.research,
+        wonderRegistry: identical(result.wonderRegistry, state.wonderRegistry)
+            ? null
+            : result.wonderRegistry,
+      ),
+      events: result.events,
     );
   }
 }
