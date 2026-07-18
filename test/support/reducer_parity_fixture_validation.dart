@@ -59,6 +59,7 @@ final class _ReducerParityCorpusSummary {
   final cityWorkedHexAcceptanceModes = <String>{};
   final cityFoundingAcceptanceModes = <String>{};
   final productionAcceptanceModes = <String>{};
+  final specializationRejectionReasons = <String>{};
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -76,6 +77,9 @@ final class _ReducerParityCorpusSummary {
       rejectionReasonsByFamily
           .putIfAbsent(fixture.family, () => <String>{})
           .add(fixture.expectedReason!);
+      if (fixture.command is SetCitySpecializationCommand) {
+        specializationRejectionReasons.add(fixture.expectedReason!);
+      }
     }
   }
 
@@ -253,6 +257,7 @@ void _validateReducerParityAcceptedSemantics(ReducerParityFixture fixture) {
   if (tryRequireProduction(
     fixture.id,
     fixture.command,
+    fixture.actorPlayerId,
     fixture.state,
     state,
     events,

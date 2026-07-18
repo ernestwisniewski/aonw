@@ -44,6 +44,9 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'city_not_found',
     'city_not_controlled',
     'building_not_available',
+    'city_specialization_locked',
+    'city_specialization_unchanged',
+    'city_specialization_missing_building',
     'unit_supply_limit_reached',
   },
   'city-worked-hex': {'city_not_controlled', 'worked_hex_limit_reached'},
@@ -122,6 +125,7 @@ bool _matchesCityProductionCommand(GameCommand command) {
       command is StartUnitProductionCommand ||
       command is StartCityProjectCommand ||
       command is StartWonderCommand ||
+      command is SetCitySpecializationCommand ||
       command is RushProductionCommand;
 }
 

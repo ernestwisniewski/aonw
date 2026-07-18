@@ -33,8 +33,8 @@ arrays remain ordered, including the exact order of domain events. Both input
 orders must produce the same committed oracle on every run.
 
 Version 1 covers movement, scout auto-exploration, merchant routing, instant
-combat, self-contained city-founding commands, city building, unit, and
-map-dependent wonder production, research,
+combat, self-contained city-founding commands, city building, unit,
+specialization, and map-dependent wonder production, research,
 worker improvements, manual city worked-hex add/remove selection,
 gold/resource exchange trades, waiting turn
 submissions, and simultaneous turn finalization.

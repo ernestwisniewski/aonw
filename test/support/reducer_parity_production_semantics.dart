@@ -5,6 +5,7 @@ import 'reducer_parity_contract.dart';
 bool tryRequireProduction(
   String fixtureId,
   GameCommand command,
+  String actorPlayerId,
   PersistentGameState before,
   PersistentGameState after,
   List<GameEvent> events,
@@ -37,6 +38,15 @@ bool tryRequireProduction(
       );
     case final StartCityProjectCommand command:
       _requireAcceptedCityProject(fixtureId, command, before, after, events);
+    case final SetCitySpecializationCommand command:
+      _requireAcceptedCitySpecialization(
+        fixtureId,
+        command,
+        actorPlayerId,
+        before,
+        after,
+        events,
+      );
     case StartWonderCommand(:final cityId, :final wonderType):
       _requireAcceptedProductionQueue(
         fixtureId: fixtureId,
@@ -51,6 +61,55 @@ bool tryRequireProduction(
       throw StateError('Expected a production command.');
   }
   return true;
+}
+
+void _requireAcceptedCitySpecialization(
+  String fixtureId,
+  SetCitySpecializationCommand command,
+  String actorPlayerId,
+  PersistentGameState before,
+  PersistentGameState after,
+  List<GameEvent> events,
+) {
+  final cityIndex = before.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (cityIndex < 0 ||
+      before.cities.length < 2 ||
+      before.runtimeState.turnStartedAt == null ||
+      events.isNotEmpty) {
+    throw FormatException(
+      '$fixtureId must target an existing city beside an unrelated sentinel, '
+      'preserve runtime state, and emit no events.',
+    );
+  }
+
+  final beforeCity = before.cities[cityIndex];
+  final specializationUnlocked = before.research
+      .forPlayer(beforeCity.ownerPlayerId)
+      .hasUnlocked(TechnologyId.specialization);
+  if (beforeCity.ownerPlayerId != actorPlayerId ||
+      !specializationUnlocked ||
+      beforeCity.specialization == command.specialization ||
+      !CitySpecializationRules.hasRequiredBuilding(
+        beforeCity.buildings,
+        command.specialization,
+      )) {
+    throw FormatException(
+      '$fixtureId must characterize a controlled, unlocked, changed '
+      'specialization with its required building.',
+    );
+  }
+
+  final expectedCities = [...before.cities]
+    ..[cityIndex] = beforeCity.copyWith(specialization: command.specialization);
+  final expectedState = before.copyWith(cities: expectedCities);
+  if (after != expectedState) {
+    throw FormatException(
+      '$fixtureId must only replace the target city specialization while '
+      'preserving city order, sentinels, production, and unrelated state.',
+    );
+  }
 }
 
 void _requireAcceptedCityProject(
