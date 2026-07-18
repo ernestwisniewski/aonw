@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,6 +35,48 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('sends and replays every authoritative diplomacy command', () {
+      const commands = <GameCommand>[
+        SendDiplomaticProposalCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          kind: DiplomaticProposalKind.friendship,
+        ),
+        RespondDiplomaticProposalCommand(
+          playerId: 'player_2',
+          proposalId: 'proposal_1',
+          accepted: true,
+        ),
+        DeclareWarCommand(playerId: 'player_1', targetPlayerId: 'player_2'),
+        SendGoldGiftCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          amount: 5,
+        ),
+        SendDiplomaticMessageCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          topic: DiplomaticMessageTopic.peacefulPraise,
+        ),
+        RespondDiplomaticMessageCommand(
+          playerId: 'player_2',
+          messageId: 'message_1',
+          response: DiplomaticMessageResponse.conciliatory,
+        ),
+      ];
+
+      for (final command in commands) {
+        expect(AuthoritativeCommandPolicy.shouldSendToServer(command), isTrue);
+        expect(
+          AuthoritativeCommandPolicy.shouldLogForReplay(
+            const GameState(),
+            command,
+          ),
+          isTrue,
+        );
+      }
     });
 
     test('keeps worker selection local and enriches confirmation', () {
