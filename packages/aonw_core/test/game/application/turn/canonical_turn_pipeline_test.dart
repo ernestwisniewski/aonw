@@ -1,13 +1,11 @@
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('CanonicalTurnPipeline', () {
-    test('matches the temporary persistent kernel', _matchesLegacyKernel);
     test(
-      'preserves canonical session, interaction, metadata, and offset',
+      'finalizes canonical session in stable player order',
       _preservesCanonicalBoundaries,
     );
     test(
@@ -21,34 +19,6 @@ void main() {
   });
 }
 
-void _matchesLegacyKernel() {
-  final input = _canonicalInput();
-  final legacyInput = _adapter.toLegacy(input);
-  final legacyResult = PersistentTurnPipeline.simultaneousFinalize(
-    _legacyRequest(legacyInput),
-  );
-
-  final result = CanonicalTurnPipeline.simultaneousFinalize(
-    _canonicalRequest(input),
-  );
-  final expectedSnapshot = _adapter.toCanonical(
-    save: legacyResult.save,
-    state: legacyResult.state,
-    eventLogOffset: input.eventLogOffset,
-  );
-
-  expect(result.snapshot, expectedSnapshot);
-  expect(_eventJson(result.events), _eventJson(legacyResult.events));
-  expect(
-    result.movementDelta?.beforeUnits,
-    legacyResult.movementDelta?.beforeUnits,
-  );
-  expect(
-    result.movementDelta?.afterUnits,
-    legacyResult.movementDelta?.afterUnits,
-  );
-}
-
 void _preservesCanonicalBoundaries() {
   final input = _canonicalInput();
 
@@ -59,6 +29,7 @@ void _preservesCanonicalBoundaries() {
 
   expect(snapshot.eventLogOffset, input.eventLogOffset);
   expect(snapshot.domain.turn, 2);
+  expect(snapshot.domain.intendedAttacks, isEmpty);
   expect(snapshot.session.gameMode, GameMode.multiplayer);
   expect(snapshot.session.turnStatesByPlayerId, {
     'p1': PlayerTurnState.active,
@@ -77,6 +48,20 @@ void _preservesCanonicalBoundaries() {
   expect(snapshot.metadata.world, input.metadata.world);
   expect(snapshot.metadata.camera, input.metadata.camera);
   expect(snapshot.metadata.savedAtUtc, _finalizedAt);
+  expect(
+    result.events.whereType<PlayerTimedOutEvent>().map(
+      (event) => event.playerId,
+    ),
+    ['p2'],
+  );
+  expect(result.events.whereType<AllPlayersSubmittedEvent>().single.playerIds, [
+    'p2',
+    'p1',
+  ]);
+  expect(
+    result.events.whereType<TurnEndedEvent>().map((event) => event.playerId),
+    ['p2', 'p1'],
+  );
   final TurnMovementDelta? delta = result.movementDelta;
   expect(delta, isNotNull);
   expect(delta!.beforeUnits, hasLength(1));
@@ -85,18 +70,6 @@ void _preservesCanonicalBoundaries() {
 
 void _characterizesCityCombatPrefix() {
   final input = _combatInput();
-  final legacyInput = _adapter.toLegacy(input);
-  final legacyResult = PersistentTurnPipeline.simultaneousFinalize(
-    PersistentTurnPipelineRequest.simultaneousFinalize(
-      save: legacyInput.save,
-      state: legacyInput.state,
-      playerIds: const ['p1', 'p2'],
-      savedAt: _finalizedAt,
-      mapView: _mapData(),
-      ruleset: _deterministicCombatRuleset,
-    ),
-  );
-
   final result = CanonicalTurnPipeline.simultaneousFinalize(
     CanonicalTurnPipelineRequest.simultaneousFinalize(
       snapshot: input,
@@ -105,22 +78,6 @@ void _characterizesCityCombatPrefix() {
       mapView: _mapData(),
       ruleset: _deterministicCombatRuleset,
     ),
-  );
-  final expectedSnapshot = _adapter.toCanonical(
-    save: legacyResult.save,
-    state: legacyResult.state,
-    eventLogOffset: input.eventLogOffset,
-  );
-
-  expect(result.snapshot, expectedSnapshot);
-  expect(_eventJson(result.events), _eventJson(legacyResult.events));
-  expect(
-    result.movementDelta?.beforeUnits,
-    legacyResult.movementDelta?.beforeUnits,
-  );
-  expect(
-    result.movementDelta?.afterUnits,
-    legacyResult.movementDelta?.afterUnits,
   );
 
   expect(result.events.take(4).map((event) => event.runtimeType), [
@@ -190,31 +147,57 @@ CanonicalTurnPipelineRequest _canonicalRequest(CanonicalGameSnapshot snapshot) {
   );
 }
 
-PersistentTurnPipelineRequest _legacyRequest(LegacyGameSnapshotParts input) {
-  return PersistentTurnPipelineRequest.simultaneousFinalize(
-    save: input.save,
-    state: input.state,
-    playerIds: const ['p2', 'p1', 'p1'],
-    skippedPlayerIds: const ['p2'],
-    savedAt: _finalizedAt,
-    mapView: _mapData(),
-    preserveNonParticipantPlayerStates: true,
-    trackTimeoutStreaks: true,
-  );
-}
-
 CanonicalGameSnapshot _canonicalInput() {
-  return _adapter.toCanonical(
-    save: _save(),
-    state: _state(),
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: _players,
+      units: [
+        GameUnit.startingWarrior(
+          ownerPlayerId: 'p1',
+          col: 1,
+          row: 1,
+        ).copyWith(movementPoints: 0),
+      ],
+      intendedAttacks: const [
+        IntendedAttack(
+          attackerUnitId: 'missing_attacker',
+          defenderCol: 2,
+          defenderRow: 2,
+          declaredAtTick: 1,
+          declaringPlayerId: 'p1',
+        ),
+      ],
+    ),
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.multiplayer,
+      turnStatesByPlayerId: _finishedPlayerStates,
+      submittedPlayerIds: const {'p1', 'p2'},
+      timeoutStreaksByPlayerId: const {'p2': 2},
+      afkPlayerIds: const {'p2'},
+      kickedPlayerIds: const {'p3'},
+      turnStartedAt: _startedAt,
+    ),
+    metadata: _metadata(),
+    interaction: PersistedInteractionState(
+      cityFoundingDraft: CityFoundingDraft(
+        unitId: 'warrior_p1',
+        ownerPlayerId: 'p1',
+        center: const CityHex(col: 1, row: 1),
+      ),
+      pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
+    ),
     eventLogOffset: 41,
   );
 }
 
 CanonicalGameSnapshot _combatInput() {
-  return _adapter.toCanonical(
-    save: _save(),
-    state: PersistentGameState(
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: _players,
       units: [
         GameUnit(
           id: 'warrior_p1',
@@ -234,18 +217,18 @@ CanonicalGameSnapshot _combatInput() {
           hitPoints: 10,
         ),
       ],
-      runtimeState: const GameRuntimeState(
-        intendedAttacks: [
-          IntendedAttack(
-            attackerUnitId: 'warrior_p1',
-            defenderCol: 1,
-            defenderRow: 0,
-            declaredAtTick: 7,
-            declaringPlayerId: 'p1',
-          ),
-        ],
-      ),
+      intendedAttacks: const [
+        IntendedAttack(
+          attackerUnitId: 'warrior_p1',
+          defenderCol: 1,
+          defenderRow: 0,
+          declaredAtTick: 7,
+          declaringPlayerId: 'p1',
+        ),
+      ],
     ),
+    session: _baseSession(),
+    metadata: _metadata(),
     eventLogOffset: 73,
   );
 }
@@ -264,61 +247,35 @@ CanonicalGameSnapshot _movementInput() {
           ],
         ),
       );
-  return _adapter.toCanonical(
-    save: _save(),
-    state: PersistentGameState(units: [commander]),
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: _players,
+      units: [commander],
+    ),
+    session: _baseSession(),
+    metadata: _metadata(),
     eventLogOffset: 91,
   );
 }
 
-GameSave _save() {
-  return GameSave(
-    id: 'save_1',
-    schemaVersion: gameSaveCurrentSchemaVersion,
-    name: 'Canonical turn fixture',
-    mapName: 'turn_map',
-    mapSource: MapSource.saved,
-    turn: 1,
-    playerStates: const {
-      'p1': PlayerTurnState.finished,
-      'p2': PlayerTurnState.finished,
-      'p3': PlayerTurnState.finished,
-    },
-    savedAt: _startedAt,
-    camera: const CameraState(x: 2, y: 3, zoom: 0.75),
-    players: _players,
+MatchSessionState _baseSession() {
+  return MatchSessionState.snapshot(
     gameMode: GameMode.multiplayer,
+    turnStatesByPlayerId: _finishedPlayerStates,
+    turnStartedAt: _startedAt,
   );
 }
 
-PersistentGameState _state() {
-  return PersistentGameState.snapshot(
-    playerColors: const {'p1': 0xFF000001, 'p2': 0xFF000002, 'p3': 0xFF000003},
-    playerCountries: const {
-      'p1': PlayerCountry.poland,
-      'p2': PlayerCountry.france,
-      'p3': PlayerCountry.japan,
-    },
-    units: [
-      GameUnit.startingWarrior(
-        ownerPlayerId: 'p1',
-        col: 1,
-        row: 1,
-      ).copyWith(movementPoints: 0),
-    ],
-    runtimeState: GameRuntimeState.snapshot(
-      cityFoundingDraft: CityFoundingDraft(
-        unitId: 'warrior_p1',
-        ownerPlayerId: 'p1',
-        center: const CityHex(col: 1, row: 1),
-      ),
-      pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
-      submittedPlayerIds: {'p1', 'p2'},
-      timeoutStreaksByPlayerId: {'p2': 2},
-      afkPlayerIds: {'p2'},
-      kickedPlayerIds: {'p3'},
-      turnStartedAt: _startedAt,
-    ),
+GameSnapshotMetadata _metadata() {
+  return GameSnapshotMetadata(
+    id: 'save_1',
+    schemaVersion: gameSaveCurrentSchemaVersion,
+    name: 'Canonical turn fixture',
+    world: const WorldReference(name: 'turn_map', source: MapSource.saved),
+    savedAtUtc: _startedAt,
+    camera: const GameSnapshotCamera(x: 2, y: 3, zoom: 0.75),
   );
 }
 
@@ -340,11 +297,6 @@ MapData _mapData() {
   );
 }
 
-List<Map<String, dynamic>> _eventJson(Iterable<GameEvent> events) {
-  return events.map(GameEventSerializer.toJson).toList();
-}
-
-const _adapter = LegacyGameSnapshotAdapter();
 const _deterministicCombatRuleset = GameRuleset(
   city: CityRulesets.standard,
   combat: CombatRuleset(
@@ -370,6 +322,11 @@ const _deterministicCombatRuleset = GameRuleset(
 );
 final _startedAt = DateTime.utc(2026, 7, 17, 9);
 final _finalizedAt = DateTime.utc(2026, 7, 17, 10);
+const _finishedPlayerStates = {
+  'p1': PlayerTurnState.finished,
+  'p2': PlayerTurnState.finished,
+  'p3': PlayerTurnState.finished,
+};
 const _players = [
   Player(id: 'p1', name: 'Player one', colorValue: 0xFF000001),
   Player(

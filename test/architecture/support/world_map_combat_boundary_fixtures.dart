@@ -36,26 +36,22 @@ class PersistentCombatCommandResolver {
     },
   );
 
-  test('guard rejects MapData in a public request field', () {
+  test('guard rejects MapData in the economy context map field', () {
     const target = _Target(
-      path: 'lib/persistent_turn_pipeline.dart',
-      owner: 'PersistentTurnPipelineRequest',
+      path: 'lib/turn_economy_context.dart',
+      owner: 'TurnEconomyContext',
       boundaries: [
-        _Boundary.constructor(
-          'simultaneousFinalize',
-          parameter: 'mapView',
-          type: 'MapReadView',
-        ),
+        _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
       ],
     );
 
     final violations = _violations('''
-final class PersistentTurnPipelineRequest {
-  PersistentTurnPipelineRequest.simultaneousFinalize({
-    required this.mapView,
+final class TurnEconomyContext {
+  TurnEconomyContext({
+    required this.mapData,
   });
 
-  final MapData mapView;
+  final MapData mapData;
   final WorldMap cachedWorldMap;
 }
 ''', target);
@@ -63,11 +59,11 @@ final class PersistentTurnPipelineRequest {
     expect(
       violations,
       containsAll([
-        'PersistentTurnPipelineRequest.simultaneousFinalize.mapView must '
+        'TurnEconomyContext.<unnamed>.mapData must '
             'have type MapReadView; found MapData',
-        'PersistentTurnPipelineRequest.mapView field must have type '
+        'TurnEconomyContext.mapData field must have type '
             'MapReadView; found MapData',
-        'PersistentTurnPipelineRequest.mapView field must not expose MapData',
+        'TurnEconomyContext.mapData field must not expose MapData',
       ]),
     );
   });
@@ -138,35 +134,31 @@ class PersistentCombatCommandResolver {
     );
   });
 
-  test('guard rejects MapData nested inside a boundary request field', () {
+  test('guard rejects MapData nested inside the economy context map field', () {
     const target = _Target(
-      path: 'lib/persistent_turn_pipeline.dart',
-      owner: 'PersistentTurnPipelineRequest',
+      path: 'lib/turn_economy_context.dart',
+      owner: 'TurnEconomyContext',
       boundaries: [
-        _Boundary.constructor(
-          'simultaneousFinalize',
-          parameter: 'mapView',
-          type: 'MapReadView',
-        ),
+        _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
       ],
     );
 
     final violations = _violations('''
-final class PersistentTurnPipelineRequest {
-  PersistentTurnPipelineRequest.simultaneousFinalize({
-    required this.mapView,
+final class TurnEconomyContext {
+  TurnEconomyContext({
+    required this.mapData,
   });
 
-  final List<MapData> mapView;
+  final List<MapData> mapData;
 }
 ''', target);
 
     expect(
       violations,
       containsAll([
-        'PersistentTurnPipelineRequest.simultaneousFinalize must not expose '
-            'MapData through parameter mapView',
-        'PersistentTurnPipelineRequest.mapView field must not expose MapData',
+        'TurnEconomyContext.<unnamed> must not expose MapData through '
+            'parameter mapData',
+        'TurnEconomyContext.mapData field must not expose MapData',
       ]),
     );
   });

@@ -192,18 +192,6 @@ const _turnCombatTargets = [
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart',
-    owner: 'PersistentTurnPipelineRequest',
-    boundaries: [
-      _Boundary.constructor(
-        'simultaneousFinalize',
-        parameter: 'mapView',
-        type: 'MapReadView',
-      ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart',
     owner: 'PersistentTurnPipeline',
     boundaries: [
       _Boundary.method(
