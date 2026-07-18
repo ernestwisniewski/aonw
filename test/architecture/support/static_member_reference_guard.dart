@@ -44,7 +44,7 @@ Set<String> instanceMemberReferencePaths(
     final references = _InstanceMemberReferenceCollector(
       targetTypes: targetTypes,
       targetBindings: bindings.targetBindings,
-      targetProducers: bindings.targetProducers,
+      targetFactories: bindings.targetFactories,
       memberName: memberName,
     );
     unit.accept(references);
@@ -98,7 +98,7 @@ final class _TargetInstanceBindingCollector extends RecursiveAstVisitor<void> {
 
   final Set<String> targetTypes;
   final Set<String> targetBindings = {};
-  final Set<String> targetProducers = {};
+  final Set<String> targetFactories = {};
   final List<VariableDeclaration> _inferredVariables = [];
 
   @override
@@ -133,7 +133,7 @@ final class _TargetInstanceBindingCollector extends RecursiveAstVisitor<void> {
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
     if (_isTargetType(node.returnType, targetTypes)) {
-      targetProducers.add(node.name.lexeme);
+      (node.isGetter ? targetBindings : targetFactories).add(node.name.lexeme);
     }
     super.visitFunctionDeclaration(node);
   }
@@ -141,7 +141,7 @@ final class _TargetInstanceBindingCollector extends RecursiveAstVisitor<void> {
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
     if (_isTargetType(node.returnType, targetTypes)) {
-      targetProducers.add(node.name.lexeme);
+      (node.isGetter ? targetBindings : targetFactories).add(node.name.lexeme);
     }
     super.visitMethodDeclaration(node);
   }
@@ -152,12 +152,21 @@ final class _TargetInstanceBindingCollector extends RecursiveAstVisitor<void> {
       changed = false;
       for (final variable in _inferredVariables) {
         final initializer = variable.initializer;
-        if (initializer != null &&
-            _isTargetExpression(
+        if (initializer == null) continue;
+        if (_isTargetFactoryExpression(
+              initializer,
+              targetTypes: targetTypes,
+              targetFactories: targetFactories,
+            ) &&
+            targetFactories.add(variable.name.lexeme)) {
+          changed = true;
+          continue;
+        }
+        if (_isTargetExpression(
               initializer,
               targetTypes: targetTypes,
               targetBindings: targetBindings,
-              targetProducers: targetProducers,
+              targetFactories: targetFactories,
             ) &&
             targetBindings.add(variable.name.lexeme)) {
           changed = true;
@@ -172,13 +181,13 @@ final class _InstanceMemberReferenceCollector
   _InstanceMemberReferenceCollector({
     required this.targetTypes,
     required this.targetBindings,
-    required this.targetProducers,
+    required this.targetFactories,
     required this.memberName,
   });
 
   final Set<String> targetTypes;
   final Set<String> targetBindings;
-  final Set<String> targetProducers;
+  final Set<String> targetFactories;
   final String memberName;
   bool found = false;
 
@@ -224,7 +233,7 @@ final class _InstanceMemberReferenceCollector
           target,
           targetTypes: targetTypes,
           targetBindings: targetBindings,
-          targetProducers: targetProducers,
+          targetFactories: targetFactories,
         );
   }
 }
@@ -262,29 +271,55 @@ bool _isTargetExpression(
   Expression expression, {
   required Set<String> targetTypes,
   required Set<String> targetBindings,
-  required Set<String> targetProducers,
+  required Set<String> targetFactories,
 }) {
   return switch (expression) {
     InstanceCreationExpression(:final constructorName) => targetTypes.contains(
       constructorName.type.name.lexeme,
     ),
-    SimpleIdentifier(:final name) =>
-      targetBindings.contains(name) || targetProducers.contains(name),
-    PrefixedIdentifier(:final identifier) =>
-      targetBindings.contains(identifier.name) ||
-          targetProducers.contains(identifier.name),
-    PropertyAccess(:final propertyName) =>
-      targetBindings.contains(propertyName.name) ||
-          targetProducers.contains(propertyName.name),
+    SimpleIdentifier(:final name) => targetBindings.contains(name),
+    PrefixedIdentifier(:final identifier) => targetBindings.contains(
+      identifier.name,
+    ),
+    PropertyAccess(:final propertyName) => targetBindings.contains(
+      propertyName.name,
+    ),
     ParenthesizedExpression(:final expression) => _isTargetExpression(
       expression,
       targetTypes: targetTypes,
       targetBindings: targetBindings,
-      targetProducers: targetProducers,
+      targetFactories: targetFactories,
     ),
     AsExpression(:final type) => _isTargetType(type, targetTypes),
-    MethodInvocation(:final methodName) => targetProducers.contains(
+    MethodInvocation(:final methodName) => targetFactories.contains(
       methodName.name,
+    ),
+    _ => false,
+  };
+}
+
+bool _isTargetFactoryExpression(
+  Expression expression, {
+  required Set<String> targetTypes,
+  required Set<String> targetFactories,
+}) {
+  final source = expression.toSource();
+  final constructorTearOff = targetTypes.any(
+    (type) => source == '$type.new' || source.endsWith('.$type.new'),
+  );
+  if (constructorTearOff) return true;
+  return switch (expression) {
+    SimpleIdentifier(:final name) => targetFactories.contains(name),
+    PrefixedIdentifier(:final identifier) => targetFactories.contains(
+      identifier.name,
+    ),
+    PropertyAccess(:final propertyName) => targetFactories.contains(
+      propertyName.name,
+    ),
+    ParenthesizedExpression(:final expression) => _isTargetFactoryExpression(
+      expression,
+      targetTypes: targetTypes,
+      targetFactories: targetFactories,
     ),
     _ => false,
   };

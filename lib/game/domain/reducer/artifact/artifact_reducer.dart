@@ -1,10 +1,8 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/state.dart';
 
 abstract final class ArtifactReducer {
   static GameStateTransition startExcavation(
@@ -12,14 +10,18 @@ abstract final class ArtifactReducer {
     StartArtifactExcavationCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final actorPlayerId = _actorPlayerId(state, context);
-    final result = const PersistentArtifactCommandResolver().startExcavation(
-      state: state.toPersistentState(),
+    final result = ArtifactCommandResolver.startExcavation(
+      units: state.units,
+      artifacts: state.artifacts,
       command: command,
-      actorPlayerId: actorPlayerId,
+      actorPlayerId: _actorPlayerId(state, context),
     );
     if (!result.accepted) return GameStateTransition(state: state);
-    return GameStateTransition(state: _fromPersistent(state, result.state));
+    return GameStateTransition(
+      state: _afterAcceptedArtifactCommand(
+        state.copyWith(units: result.units, artifacts: result.artifacts),
+      ),
+    );
   }
 
   static GameStateTransition storeInCity(
@@ -27,14 +29,19 @@ abstract final class ArtifactReducer {
     StoreArtifactInCityCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final actorPlayerId = _actorPlayerId(state, context);
-    final result = const PersistentArtifactCommandResolver().storeInCity(
-      state: state.toPersistentState(),
+    final result = ArtifactCommandResolver.storeInCity(
+      units: state.units,
+      cities: state.cities,
+      artifacts: state.artifacts,
       command: command,
-      actorPlayerId: actorPlayerId,
+      actorPlayerId: _actorPlayerId(state, context),
     );
     if (!result.accepted) return GameStateTransition(state: state);
-    return GameStateTransition(state: _fromPersistent(state, result.state));
+    return GameStateTransition(
+      state: _afterAcceptedArtifactCommand(
+        state.copyWith(units: result.units, artifacts: result.artifacts),
+      ),
+    );
   }
 
   static GameStateTransition tradeArtifact(
@@ -42,48 +49,34 @@ abstract final class ArtifactReducer {
     TradeArtifactCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final actorPlayerId = _actorPlayerId(state, context);
-    final result = const PersistentArtifactCommandResolver().tradeArtifact(
-      state: state.toPersistentState(),
+    final result = ArtifactCommandResolver.tradeArtifact(
+      cities: state.cities,
+      artifacts: state.artifacts,
+      playerGold: state.playerGold,
+      diplomacy: state.diplomacy,
       command: command,
-      actorPlayerId: actorPlayerId,
+      actorPlayerId: _actorPlayerId(state, context),
     );
     if (!result.accepted) return GameStateTransition(state: state);
-    return GameStateTransition(state: _fromPersistent(state, result.state));
+    return GameStateTransition(
+      state: _afterAcceptedArtifactCommand(
+        state.copyWith(
+          artifacts: result.artifacts,
+          playerGold: result.playerGold,
+        ),
+      ),
+    );
   }
 
   static String _actorPlayerId(GameState state, GameCommandContext context) {
     return context.actorPlayerId ?? state.activePlayerId;
   }
 
-  static GameState _fromPersistent(
-    GameState state,
-    PersistentGameState persistent,
-  ) {
-    return state.copyWith(
-      playerColors: persistent.playerColors,
-      playerCountries: persistent.playerCountries,
-      playerGold: persistent.playerGold,
-      playerWarWeariness: persistent.playerWarWeariness,
-      playerStabilityNet: persistent.playerStabilityNet,
-      units: persistent.units,
-      cities: persistent.cities,
-      artifacts: persistent.artifacts,
-      fieldImprovements: persistent.fieldImprovements,
-      fogOfWar: persistent.fogOfWar,
-      research: persistent.research,
-      diplomacy: persistent.runtimeState.diplomacy,
-      submittedPlayerIds: persistent.runtimeState.submittedPlayerIds,
-      intendedAttacks: persistent.runtimeState.intendedAttacks,
-      resourceTradeAgreements: persistent.runtimeState.resourceTradeAgreements,
-      dominationHoldTurnsByPlayerId:
-          persistent.runtimeState.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          persistent.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      interaction: GameInteractionState(
-        cityFoundingDraft: persistent.runtimeState.cityFoundingDraft,
-        pendingAction: persistent.runtimeState.pendingAction,
-      ),
+  static GameState _afterAcceptedArtifactCommand(GameState state) {
+    return state.copyWithInteraction(
+      selection: null,
+      movePreview: null,
+      moveCommandActive: false,
     );
   }
 }

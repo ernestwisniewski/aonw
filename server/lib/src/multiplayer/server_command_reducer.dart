@@ -7,6 +7,7 @@ import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 
+part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_map_cache.dart';
@@ -446,27 +447,26 @@ class ServerCommandReducer {
             );
         return _fromPersistentResult(save, result);
       case StartArtifactExcavationCommand():
-        final result = const PersistentArtifactCommandResolver()
-            .startExcavation(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            );
-        return _fromPersistentResult(save, result);
+        return _applyStartArtifactExcavationCommand(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+        );
       case StoreArtifactInCityCommand():
-        final result = const PersistentArtifactCommandResolver().storeInCity(
+        return _applyStoreArtifactInCityCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
         );
-        return _fromPersistentResult(save, result);
       case TradeArtifactCommand():
-        final result = const PersistentArtifactCommandResolver().tradeArtifact(
+        return _applyTradeArtifactCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
         );
-        return _fromPersistentResult(save, result);
       case ResetUnitMovementCommand():
         return _CommandApplication.reject(
           save: save,
@@ -615,17 +615,6 @@ class ServerCommandReducer {
           reason: reason,
         ),
       PersistentWorkerCommandResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          reason: reason,
-        ),
-      PersistentArtifactCommandResult(
         :final accepted,
         :final state,
         :final reason,

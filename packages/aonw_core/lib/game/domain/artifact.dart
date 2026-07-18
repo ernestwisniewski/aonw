@@ -1,5 +1,7 @@
+export 'artifact/artifact_command_resolver.dart';
 export 'artifact/artifact_turn_processor.dart';
 export 'artifact/cultural_victory_progress.dart';
+export 'artifact/domain_artifact_command_resolver.dart';
 export 'artifact/persistent_artifact_command_resolver.dart';
 export 'artifact/persistent_artifact_turn_processor.dart';
 export 'artifact/world_artifact.dart';

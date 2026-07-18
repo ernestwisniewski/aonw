@@ -2,6 +2,7 @@ import 'package:aonw_core/domain.dart';
 
 const reducerParityRequiredFamilies = <String>{
   'auto-explore',
+  'artifacts',
   'movement',
   'merchant-routing',
   'combat',
@@ -16,6 +17,13 @@ const reducerParityRequiredFamilies = <String>{
 
 const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   'auto-explore': {'unit_not_controlled', 'auto_explore_no_target'},
+  'artifacts': {
+    'unit_not_controlled',
+    'artifact_not_found',
+    'city_artifact_slot_full',
+    'invalid_artifact_trade_actor',
+    'artifact_trade_requires_acceptance',
+  },
   'movement': {'unit_not_controlled', 'move_target_out_of_bounds'},
   'merchant-routing': {'unit_not_controlled', 'merchant_route_not_found'},
   'combat': {'attacker_not_controlled', 'attack_target_not_found'},
@@ -43,6 +51,7 @@ typedef _ReducerParityCommandMatcher = bool Function(GameCommand command);
 
 final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'auto-explore': _matchesAutoExploreCommand,
+  'artifacts': _matchesArtifactCommand,
   'movement': _matchesMovementCommand,
   'merchant-routing': _matchesMerchantRoutingCommand,
   'combat': _matchesCombatCommand,
@@ -61,6 +70,12 @@ bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
 
 bool _matchesAutoExploreCommand(GameCommand command) {
   return command is AutoExploreUnitCommand;
+}
+
+bool _matchesArtifactCommand(GameCommand command) {
+  return command is StartArtifactExcavationCommand ||
+      command is StoreArtifactInCityCommand ||
+      command is TradeArtifactCommand;
 }
 
 bool _matchesMovementCommand(GameCommand command) {

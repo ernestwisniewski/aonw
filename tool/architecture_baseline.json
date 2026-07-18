@@ -303,8 +303,6 @@
         "packages/aonw_core/lib/ai/technology_state_scorer.dart::class:AiTechnologyStateScorer/method:_fieldImprovementScore": 14,
         "packages/aonw_core/lib/ai/technology_state_scorer.dart::class:AiTechnologyStateScorer/method:score": 21,
         "packages/aonw_core/lib/ai/telemetry/balance_runner_recovery_reports.dart::class:OpeningSurvivalReport/constructor:fromSamples": 17,
-        "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_command_resolver.dart::class:PersistentArtifactCommandResolver/method:storeInCity": 12,
-        "packages/aonw_core/lib/game/domain/artifact/persistent_artifact_command_resolver.dart::class:PersistentArtifactCommandResolver/method:tradeArtifact": 15,
         "packages/aonw_core/lib/game/domain/artifact/world_artifact_generator.dart::class:WorldArtifactGenerator/method:generate": 20,
         "packages/aonw_core/lib/game/domain/city/city_building.dart::enum:CityBuildingType/getter:displayName": 60,
         "packages/aonw_core/lib/game/domain/city/city_site_rules.dart::class:CitySiteRules/method:foundingFailureForInput": 16,
@@ -1430,12 +1428,12 @@
     },
     "server_lib": {
       "files": {
-        "server/lib/src/multiplayer/server_command_reducer.dart": 709
+        "server/lib/src/multiplayer/server_command_reducer.dart": 698
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 647
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 635
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1447,8 +1445,8 @@
         "server/lib/src/multiplayer/match_lifecycle_service_resignation.dart::extension:MatchLifecycleServiceResignation/method:_runningStateAfterParticipantResigned": 72,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 328,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 132,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 327,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 121,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduce": 67,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:reduceTimedOutTurn": 64,
         "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,
@@ -1465,7 +1463,7 @@
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 12,
         "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 62,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 13
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_fromPersistentResult": 12
       },
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17,

@@ -4,6 +4,12 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
   final runtime = fixture.state.runtimeState;
   final pendingAction = runtime.pendingAction;
   final command = fixture.command;
+  if (fixture.family == 'artifacts' && runtime.turnStartedAt == null) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must preserve a non-empty runtime sentinel for artifact commands',
+    );
+  }
   final permitsReviewedResearchPendingAction =
       fixture.family == 'research' &&
       fixture.expectedAccepted &&
@@ -35,6 +41,7 @@ final class _ReducerParityCorpusSummary {
   final coverage = <String, Set<bool>>{};
   final acceptedCountByFamily = <String, int>{};
   final rejectionReasonsByFamily = <String, Set<String>>{};
+  final artifactAcceptanceModes = <String>{};
   final resourceTradeAcceptanceModes = <String>{};
   final cityWorkedHexAcceptanceModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -62,6 +69,13 @@ final class _ReducerParityCorpusSummary {
       ifAbsent: () => 1,
     );
     switch (fixture.family) {
+      case 'artifacts':
+        artifactAcceptanceModes.add(switch (fixture.command) {
+          StartArtifactExcavationCommand() => 'excavation',
+          StoreArtifactInCityCommand() => 'store',
+          TradeArtifactCommand() => 'trade',
+          _ => 'unexpected',
+        });
       case 'turn-finalization':
         turnAcceptanceModes.add(
           fixture.expectedSave['turn'] == fixture.save.turn
@@ -106,6 +120,8 @@ void _requireReducerParityFamilyCoverage(
     throw StateError('$family needs accepted and rejected parity fixtures.');
   }
   switch (family) {
+    case 'artifacts':
+      _requireArtifactAcceptanceCoverage(summary, family);
     case 'turn-finalization':
       _requireTurnFinalizationAcceptanceCoverage(summary, family);
     case 'resource-trade':
@@ -114,6 +130,21 @@ void _requireReducerParityFamilyCoverage(
       _requireCityWorkedHexAcceptanceCoverage(summary, family);
   }
   _requireRejectionCoverage(summary, family);
+}
+
+void _requireArtifactAcceptanceCoverage(
+  _ReducerParityCorpusSummary summary,
+  String family,
+) {
+  if (!summary.artifactAcceptanceModes.containsAll(const {
+    'excavation',
+    'store',
+    'trade',
+  })) {
+    throw StateError(
+      '$family needs accepted excavation, store, and trade fixtures.',
+    );
+  }
 }
 
 void _requireCityWorkedHexAcceptanceCoverage(
@@ -203,6 +234,8 @@ void _validateReducerParityAcceptedCommand(
         after: state,
         events: events,
       );
+    case 'artifacts':
+      _requireAcceptedParityArtifact(fixture, state, events);
     case 'combat':
       _requireAcceptedParityCombat(fixture, state, events);
     case 'city-worked-hex':
@@ -222,6 +255,29 @@ void _validateReducerParityAcceptedCommand(
         fixture,
         'uses a command outside the reviewed parity corpus',
       );
+  }
+}
+
+void _requireAcceptedParityArtifact(
+  ReducerParityFixture fixture,
+  PersistentGameState state,
+  List<GameEvent> events,
+) {
+  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+      events.isNotEmpty) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must preserve save metadata without emitting events',
+    );
+  }
+  final failure = validateAcceptedArtifactCommand(
+    command: fixture.command,
+    before: fixture.state,
+    after: state,
+    events: events,
+  );
+  if (failure != null) {
+    ReducerParityCorpus._fail(fixture, failure);
   }
 }
 
