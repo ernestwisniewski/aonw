@@ -50,15 +50,16 @@ bool tryRequireProduction(
         after,
         events,
       );
-    case StartWonderCommand(:final cityId, :final wonderType):
-      _requireAcceptedProductionQueue(
+    case final StartWonderCommand command:
+      _requireAcceptedStartWonder(
         fixtureId: fixtureId,
-        cityId: cityId,
-        target: WonderProductionTarget(wonderType),
+        command: command,
+        actorPlayerId: actorPlayerId,
+        before: before,
         after: after,
         events: events,
-        eventsMustBeEmpty: true,
-        failure: 'must commit the reviewed wonder queue without events',
+        mapTiles: mapTiles,
+        paceBalance: paceBalance,
       );
     default:
       throw StateError('Expected a production command.');
@@ -235,6 +236,91 @@ void _requireAcceptedCityProject(
     throw FormatException(
       '$fixtureId must only replace the target city queue while preserving '
       'investment, overflow, city order, sentinels, and unrelated state.',
+    );
+  }
+}
+
+void _requireAcceptedStartWonder({
+  required String fixtureId,
+  required StartWonderCommand command,
+  required String actorPlayerId,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+  required MapTileLookup mapTiles,
+  required PaceBalance paceBalance,
+}) {
+  final cityIndex = before.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (cityIndex < 0 ||
+      before.cities.length < 2 ||
+      before.runtimeState.turnStartedAt == null ||
+      events.isNotEmpty) {
+    throw FormatException(
+      '$fixtureId must target an existing city beside an unrelated sentinel, '
+      'preserve runtime state, and emit no events.',
+    );
+  }
+
+  final beforeCity = before.cities[cityIndex];
+  final definition = WonderRuleset.standard.definitionFor(command.wonderType);
+  final technologyUnlocked = before.research
+      .forPlayer(beforeCity.ownerPlayerId)
+      .hasUnlocked(definition.unlockTech);
+  final requirementsMissing = WonderRequirementRules.missingRequirements(
+    city: beforeCity,
+    wonderType: command.wonderType,
+    mapTiles: mapTiles,
+    ruleset: WonderRuleset.standard,
+    research: before.research,
+  );
+  final targetCityAlreadyBuilding =
+      beforeCity.productionQueue?.target is WonderProductionTarget;
+  final playerAlreadyBuilding = before.cities.any(
+    (city) =>
+        city.id != beforeCity.id &&
+        city.ownerPlayerId == beforeCity.ownerPlayerId &&
+        city.productionQueue?.target is WonderProductionTarget,
+  );
+  if (beforeCity.ownerPlayerId != actorPlayerId ||
+      before.wonderRegistry.ownerOf(command.wonderType) != null ||
+      !technologyUnlocked ||
+      requirementsMissing.isNotEmpty ||
+      targetCityAlreadyBuilding ||
+      playerAlreadyBuilding) {
+    throw FormatException(
+      '$fixtureId must characterize a controlled and independently available '
+      'wonder target.',
+    );
+  }
+
+  final activeInvestment = beforeCity.productionQueue?.investedProduction;
+  final productionCost = paceBalance.buildingProductionCost(
+    definition.productionCost,
+  );
+  final rolloverInvestment = activeInvestment == null
+      ? _reviewedRolloverInvestment(
+          storedOverflow: beforeCity.productionOverflow,
+          productionCost: productionCost,
+        )
+      : 0;
+  final expectedCity = beforeCity.copyWith(
+    productionQueue: CityProductionQueue.wonder(
+      wonderType: command.wonderType,
+      investedProduction: activeInvestment ?? rolloverInvestment,
+    ),
+    productionOverflow: activeInvestment == null
+        ? 0
+        : beforeCity.productionOverflow,
+  );
+  final expectedCities = [...before.cities]..[cityIndex] = expectedCity;
+  final expectedState = before.copyWith(cities: expectedCities);
+  if (after != expectedState) {
+    throw FormatException(
+      '$fixtureId must only replace the target city queue while preserving '
+      'pace-scaled overflow, active investment, city order, registry, runtime, '
+      'sentinels, and every unrelated state slice.',
     );
   }
 }

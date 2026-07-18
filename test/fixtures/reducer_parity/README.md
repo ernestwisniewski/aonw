@@ -48,6 +48,15 @@ causes that currently collapse to `building_not_available` are classified
 explicitly by fixture id and validated against the fixture semantics. Every
 accepted building fixture carries an unrelated-city sentinel, a runtime
 sentinel, a complete-state oracle, and no events.
+`StartWonder` is likewise fail-closed over exactly ten reviewed paths:
+city-not-found, otherwise-available and same-target-unavailable wrong-actor
+precedence, completed, technology-locked, missing-map-requirement, same-target
+and other-own-city active-wonder rejections, plus fresh pace-scaled overflow
+and active non-wonder queue replacement. The five internal statuses that
+collapse to `wonder_not_available` are classified independently of the
+production policy.
+Accepted fixtures preserve full state and registry/runtime sentinels, emit no
+events, and use an independent queue/overflow oracle.
 Turn rejections cover both a forged player id and a player outside the active
 match roster. The corpus intentionally excludes client-only commands,
 server-managed commands,

@@ -44,6 +44,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'city_not_found',
     'city_not_controlled',
     'building_not_available',
+    'wonder_not_available',
     'city_specialization_locked',
     'city_specialization_unchanged',
     'city_specialization_missing_building',

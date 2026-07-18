@@ -264,6 +264,7 @@ abstract final class ReducerParityCorpus {
 
     _validateReducerParityInteractionScope(fixture);
     _validateStartBuildingCharacterizationFixture(fixture);
+    _validateStartWonderCharacterizationFixture(fixture);
     final expectedSave = GameSave.fromJson({
       ...fixture.expectedSave,
       'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
