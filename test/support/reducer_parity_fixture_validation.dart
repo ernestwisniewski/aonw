@@ -57,6 +57,7 @@ final class _ReducerParityCorpusSummary {
   final unitActionAcceptanceModes = <String>{};
   final resourceTradeAcceptanceModes = <String>{};
   final cityWorkedHexAcceptanceModes = <String>{};
+  final cityFoundingAcceptanceModes = <String>{};
   final productionAcceptanceModes = <String>{};
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
@@ -108,6 +109,8 @@ final class _ReducerParityCorpusSummary {
         cityWorkedHexAcceptanceModes.add(
           city.workedHexes.contains(target) ? 'remove' : 'add',
         );
+      case 'city-founding':
+        cityFoundingAcceptanceModes.add(_cityFoundingAcceptanceMode(fixture));
       case 'city-production':
         productionAcceptanceModes.add(_productionAcceptanceMode(fixture));
       case 'worker':
@@ -163,6 +166,8 @@ void _requireReducerParityFamilyCoverage(
       _requireResourceTradeAcceptanceCoverage(summary, family);
     case 'city-worked-hex':
       _requireCityWorkedHexAcceptanceCoverage(summary, family);
+    case 'city-founding':
+      _requireCityFoundingAcceptanceCoverage(summary, family);
     case 'city-production':
       _requireProductionAcceptanceCoverage(summary, family);
     case 'worker':
@@ -281,6 +286,8 @@ void _validateReducerParityAcceptedCommand(
       _requireAcceptedParityCityExpansion(fixture, state, events);
     case 'city-worked-hex':
       _requireAcceptedParityCityWorkedHex(fixture, state, events);
+    case 'city-founding':
+      _requireAcceptedParityCityFounding(fixture, state, events);
     case 'detachment':
       _requireAcceptedParityDetachment(fixture, state, events);
     case 'research':

@@ -7,6 +7,7 @@ const reducerParityRequiredFamilies = <String>{
   'merchant-routing',
   'combat',
   'city-expansion',
+  'city-founding',
   'city-production',
   'city-worked-hex',
   'detachment',
@@ -34,6 +35,11 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   },
   'combat': {'attacker_not_controlled', 'attack_target_not_found'},
   'city-expansion': {'city_not_controlled', 'city_expansion_hex_unavailable'},
+  'city-founding': {
+    'city_founder_not_found',
+    'city_founder_not_controlled',
+    'city_controlled_hexes_invalid',
+  },
   'city-production': {
     'city_not_found',
     'city_not_controlled',
@@ -65,6 +71,7 @@ final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'merchant-routing': _matchesMerchantRoutingCommand,
   'combat': _matchesCombatCommand,
   'city-expansion': _matchesCityExpansionCommand,
+  'city-founding': _matchesCityFoundingCommand,
   'city-production': _matchesCityProductionCommand,
   'city-worked-hex': _matchesCityWorkedHexCommand,
   'detachment': _matchesDetachmentCommand,
@@ -104,6 +111,10 @@ bool _matchesCombatCommand(GameCommand command) {
 
 bool _matchesCityExpansionCommand(GameCommand command) {
   return command is SelectCityExpansionHexCommand;
+}
+
+bool _matchesCityFoundingCommand(GameCommand command) {
+  return command is FoundCityCommand;
 }
 
 bool _matchesCityProductionCommand(GameCommand command) {

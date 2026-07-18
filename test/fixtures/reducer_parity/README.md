@@ -33,7 +33,8 @@ arrays remain ordered, including the exact order of domain events. Both input
 orders must produce the same committed oracle on every run.
 
 Version 1 covers movement, scout auto-exploration, merchant routing, instant
-combat, city building, unit, and map-dependent wonder production, research,
+combat, self-contained city-founding commands, city building, unit, and
+map-dependent wonder production, research,
 worker improvements, manual city worked-hex add/remove selection,
 gold/resource exchange trades, waiting turn
 submissions, and simultaneous turn finalization.
@@ -44,6 +45,12 @@ accepted no-op commands, timeout/system flows, and local `EndTurn` versus server
 `EndTurn`. The current local transition still has no structured
 acceptance/rejection, so the local path proves rejection through a canonical
 no-op while the server path additionally checks the committed reason.
+
+Authoritative city founding is characterized only through an explicit,
+complete `FoundCityCommand.controlledHexes` payload. An empty command payload
+does not mean "read the client city-founding draft". Draft-backed legacy client
+behavior and interaction cleanup differences are characterized separately
+until both adapters use the shared founding engine.
 
 Oracle changes require a focused JSON diff review and green local and server
 parity suites. Do not auto-regenerate, bulk-accept, or calculate `expected`
