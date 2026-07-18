@@ -1,10 +1,9 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -84,57 +83,17 @@ abstract final class MerchantTradeRouteReducer {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
-    if (unit == null ||
-        unit.type != GameUnitType.merchant ||
-        unit.isWorking ||
-        unit.isFortified ||
-        !context.canControlUnit(state, unit)) {
+    if (unit == null || !context.canControlUnit(state, unit)) {
       return GameStateTransition(state: state);
     }
-
-    final origin = MerchantTradeRouteRules.originCityFor(
-      merchant: unit,
-      cities: state.cities,
-    );
-    final destination = _findCity(state, command.destinationCityId);
-    if (origin == null ||
-        destination == null ||
-        destination.ownerPlayerId != unit.ownerPlayerId ||
-        destination.id == origin.id) {
-      return GameStateTransition(state: state);
-    }
-
-    final route = MerchantTradeRouteRules.planRoute(
-      merchant: unit,
-      originCity: origin,
-      destinationCity: destination,
-      mapData: mapView,
+    final result = MerchantRoutingCommandResolver.assignRoute(
       units: state.units,
       cities: state.cities,
+      mapData: mapView,
+      command: command,
+      actorPlayerId: unit.ownerPlayerId,
     );
-    if (route == null) return GameStateTransition(state: state);
-
-    final updated = unit
-        .copyWith(posture: UnitPosture.active)
-        .copyWithQueuedPath(null)
-        .copyWithMerchantTradeRoute(route);
-    var next = state.copyWith(units: replaceUnit(state.units, updated));
-    if (next.pendingAction?.ownsUnit(updated.id) ?? false) {
-      next = next.copyWithInteraction(pendingAction: null);
-    }
-    next = next.copyWithInteraction(
-      moveCommandActive: false,
-      movePreview: null,
-    );
-    if (next.cityFoundingDraft?.unitId == updated.id) {
-      next = next.copyWithInteraction(cityFoundingDraft: null);
-    }
-    if (next.selectedUnitId == updated.id) {
-      next = next.copyWithInteraction(
-        selection: _unitSelection(next, updated, mapView),
-      );
-    }
-    return GameStateTransition(state: next);
+    return _applyRoutingResult(state, result, unit.id, mapView);
   }
 
   static GameStateTransition startMoveToCitySelection(
@@ -205,36 +164,30 @@ abstract final class MerchantTradeRouteReducer {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final unit = _findUnit(state, command.unitId);
-    if (unit == null ||
-        unit.type != GameUnitType.merchant ||
-        unit.isWorking ||
-        unit.isFortified ||
-        unit.merchantTradeRoute != null ||
-        !context.canControlUnit(state, unit)) {
+    if (unit == null || !context.canControlUnit(state, unit)) {
       return GameStateTransition(state: state);
     }
-
-    final destination = _findCity(state, command.destinationCityId);
-    if (destination == null ||
-        destination.ownerPlayerId != unit.ownerPlayerId ||
-        destination.occupiesCenter(unit.col, unit.row)) {
-      return GameStateTransition(state: state);
-    }
-
-    final plan = MerchantTradeRouteRules.planMoveToCity(
-      merchant: unit,
-      destinationCity: destination,
-      mapData: mapView,
+    final result = MerchantRoutingCommandResolver.moveToCity(
       units: state.units,
       cities: state.cities,
+      mapData: mapView,
+      command: command,
+      actorPlayerId: unit.ownerPlayerId,
     );
-    if (plan == null) return GameStateTransition(state: state);
+    return _applyRoutingResult(state, result, unit.id, mapView);
+  }
 
-    final updated = unit
-        .copyWith(posture: UnitPosture.active)
-        .copyWithQueuedPath(_queuedPathFor(plan))
-        .copyWithMerchantTradeRoute(null);
-    var next = state.copyWith(units: replaceUnit(state.units, updated));
+  static GameStateTransition _applyRoutingResult(
+    GameState state,
+    MerchantRoutingCommandResult result,
+    String unitId,
+    MapTraversalView mapView,
+  ) {
+    if (!result.accepted) return GameStateTransition(state: state);
+    final updated = result.units.byId(unitId)!;
+    var next = identical(result.units, state.units)
+        ? state
+        : state.copyWith(units: result.units);
     if (next.pendingAction?.ownsUnit(updated.id) ?? false) {
       next = next.copyWithInteraction(pendingAction: null);
     }
@@ -253,12 +206,6 @@ abstract final class MerchantTradeRouteReducer {
     return GameStateTransition(state: next);
   }
 
-  static QueuedMovePath _queuedPathFor(UnitMovementPlan plan) => QueuedMovePath(
-    targetCol: plan.targetCol,
-    targetRow: plan.targetRow,
-    steps: plan.steps,
-  );
-
   static GameState _clearTransientModes(GameState state) =>
       state.copyWith(interaction: state.interaction.clearTransientModes());
 
@@ -276,9 +223,5 @@ abstract final class MerchantTradeRouteReducer {
 
   static GameUnit? _findUnit(GameState state, String unitId) {
     return state.unitById(unitId);
-  }
-
-  static GameCity? _findCity(GameState state, String cityId) {
-    return state.cityById(cityId);
   }
 }

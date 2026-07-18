@@ -26,7 +26,11 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'artifact_trade_requires_acceptance',
   },
   'movement': {'unit_not_controlled', 'move_target_out_of_bounds'},
-  'merchant-routing': {'unit_not_controlled', 'merchant_route_not_found'},
+  'merchant-routing': {
+    'unit_not_controlled',
+    'merchant_route_not_found',
+    'merchant_city_path_not_found',
+  },
   'combat': {'attacker_not_controlled', 'attack_target_not_found'},
   'city-production': {
     'city_not_controlled',

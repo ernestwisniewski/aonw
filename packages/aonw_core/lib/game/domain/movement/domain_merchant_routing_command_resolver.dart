@@ -1,26 +1,26 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement/merchant_routing_command_resolver.dart';
-import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-final class PersistentMerchantTradeRouteResult {
-  const PersistentMerchantTradeRouteResult({
+final class DomainMerchantRoutingCommandResult {
+  const DomainMerchantRoutingCommandResult({
     required this.accepted,
     required this.state,
     this.reason,
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final String? reason;
 }
 
-/// Persistence adapter for the state-neutral merchant-routing resolver.
-final class PersistentMerchantTradeRouteResolver {
-  const PersistentMerchantTradeRouteResolver();
+/// Canonical-state adapter for the persistence-neutral merchant resolver.
+final class DomainMerchantRoutingCommandResolver {
+  const DomainMerchantRoutingCommandResolver();
 
-  PersistentMerchantTradeRouteResult assignRoute({
-    required PersistentGameState state,
+  DomainMerchantRoutingCommandResult assignRoute({
+    required DomainState state,
     required AssignMerchantTradeRouteCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,
@@ -37,8 +37,8 @@ final class PersistentMerchantTradeRouteResolver {
     );
   }
 
-  PersistentMerchantTradeRouteResult moveToCity({
-    required PersistentGameState state,
+  DomainMerchantRoutingCommandResult moveToCity({
+    required DomainState state,
     required MoveMerchantToCityCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,
@@ -55,18 +55,18 @@ final class PersistentMerchantTradeRouteResolver {
     );
   }
 
-  static PersistentMerchantTradeRouteResult _apply(
-    PersistentGameState state,
+  static DomainMerchantRoutingCommandResult _apply(
+    DomainState state,
     MerchantRoutingCommandResult result,
   ) {
     if (!result.accepted) {
-      return PersistentMerchantTradeRouteResult(
+      return DomainMerchantRoutingCommandResult(
         accepted: false,
         state: state,
         reason: result.reason,
       );
     }
-    return PersistentMerchantTradeRouteResult(
+    return DomainMerchantRoutingCommandResult(
       accepted: true,
       state: identical(result.units, state.units)
           ? state

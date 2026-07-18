@@ -1,4 +1,6 @@
+export 'movement/domain_merchant_routing_command_resolver.dart';
 export 'movement/domain_unit_action_command_resolver.dart';
+export 'movement/merchant_routing_command_resolver.dart';
 export 'movement/merchant_trade_route_rules.dart';
 export 'movement/movement_cost.dart';
 export 'movement/persistent_merchant_trade_route_resolver.dart';

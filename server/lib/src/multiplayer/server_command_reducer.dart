@@ -11,6 +11,7 @@ part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_map_cache.dart';
+part 'server_command_reducer_merchant_routing.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
@@ -247,21 +248,21 @@ class ServerCommandReducer {
         );
         return _fromPersistentResult(save, result);
       case AssignMerchantTradeRouteCommand():
-        final result = const PersistentMerchantTradeRouteResolver().assignRoute(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapData: loadedMap.mapView,
+        return _applyAssignMerchantRoute(
+          save,
+          state,
+          command,
+          actorPlayerId,
+          loadedMap.mapView,
         );
-        return _fromPersistentResult(save, result);
       case MoveMerchantToCityCommand():
-        final result = const PersistentMerchantTradeRouteResolver().moveToCity(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapData: loadedMap.mapView,
+        return _applyMoveMerchantToCity(
+          save,
+          state,
+          command,
+          actorPlayerId,
+          loadedMap.mapView,
         );
-        return _fromPersistentResult(save, result);
       case OpenResourceTradeCommand(:final playerId):
         if (playerId != actorPlayerId) {
           return _CommandApplication.reject(
@@ -554,17 +555,6 @@ class ServerCommandReducer {
         events: action.events,
         reason: action.reason,
       ),
-      PersistentMerchantTradeRouteResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          reason: reason,
-        ),
       PersistentResourceTradeResult(
         :final accepted,
         :final state,

@@ -122,6 +122,97 @@ void main() {
       ResourceType.wheat,
     ]);
   });
+
+  test('accepted routing preserves interaction owned by another action', () {
+    final merchant = _merchant(col: 0);
+    final origin = _city('origin', 0);
+    final destination = _city('destination', 3);
+    const pending = PendingResearchSelection(ownerPlayerId: 'player_1');
+    final draft = CityFoundingDraft(
+      unitId: 'founder_1',
+      ownerPlayerId: 'player_1',
+      center: const CityHex(col: 2, row: 0),
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [merchant],
+      cities: [origin, destination],
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(merchant),
+        cityFoundingDraft: draft,
+        pendingAction: pending,
+        moveCommandActive: true,
+      ),
+    );
+
+    final result = MerchantTradeRouteReducer.assignRoute(
+      state,
+      const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
+      WorldMapReadView(_worldMap()),
+    );
+
+    expect(result.state.pendingAction, same(pending));
+    expect(result.state.cityFoundingDraft, same(draft));
+    expect(result.state.moveCommandActive, isFalse);
+    expect(result.state.movePreview, isNull);
+    expect(
+      result.state.selection?.unit,
+      same(result.state.unitById('merchant_1')),
+    );
+  });
+
+  test('accepted routing clears transient interaction owned by merchant', () {
+    final merchant = _merchant(col: 0);
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [merchant],
+      cities: [_city('origin', 0), _city('destination', 3)],
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(merchant),
+        cityFoundingDraft: CityFoundingDraft(
+          unitId: merchant.id,
+          ownerPlayerId: merchant.ownerPlayerId,
+          center: const CityHex(col: 0, row: 0),
+        ),
+        pendingAction: PendingAttackTargeting(
+          ownerPlayerId: merchant.ownerPlayerId,
+          attackerUnitId: merchant.id,
+        ),
+        moveCommandActive: true,
+      ),
+    );
+
+    final result = MerchantTradeRouteReducer.assignRoute(
+      state,
+      const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
+      WorldMapReadView(_worldMap()),
+    );
+
+    expect(result.state.pendingAction, isNull);
+    expect(result.state.cityFoundingDraft, isNull);
+    expect(result.state.moveCommandActive, isFalse);
+    expect(result.state.selection?.unit, result.state.unitById('merchant_1'));
+  });
+
+  test('rejected routing preserves the complete local state identity', () {
+    final merchant = _merchant(col: 0);
+    final state = GameState(
+      activePlayerId: 'player_2',
+      units: [merchant],
+      cities: [_city('origin', 0), _city('destination', 3)],
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(merchant),
+      ),
+    );
+
+    final result = MerchantTradeRouteReducer.assignRoute(
+      state,
+      const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
+      WorldMapReadView(_worldMap()),
+    );
+
+    expect(result.state, same(state));
+  });
 }
 
 GameUnit _merchant({required int col}) {
