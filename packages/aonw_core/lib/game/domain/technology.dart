@@ -1,12 +1,15 @@
+export 'technology/domain_research_command_resolver.dart';
 export 'technology/persistent_research_command_resolver.dart';
 export 'technology/player_research_state.dart';
 export 'technology/research_cost_calculator.dart';
 export 'technology/research_overflow_rules.dart';
+export 'technology/research_selection_pending_action_policy.dart';
 export 'technology/research_state.dart';
 export 'technology/research_turn_processor.dart';
 export 'technology/resource_visibility_rules.dart';
 export 'technology/science_yield.dart';
 export 'technology/science_yield_calculator.dart';
+export 'technology/select_technology_resolver.dart';
 export 'technology/strategic_resource_discovery_rules.dart';
 export 'technology/technology_availability_service.dart';
 export 'technology/technology_boost.dart';

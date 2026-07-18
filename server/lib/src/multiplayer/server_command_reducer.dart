@@ -11,6 +11,7 @@ part 'server_command_reducer_city.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
+part 'server_command_reducer_research.dart';
 part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
 
@@ -360,16 +361,14 @@ class ServerCommandReducer {
             );
         return _fromPersistentResult(save, result);
       case SelectTechnologyCommand():
-        final result = const PersistentResearchCommandResolver()
-            .selectTechnology(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: loadedMap.mapView,
-              ruleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _fromPersistentResult(save, result);
+        return _applySelectTechnologyCommand(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          mapTiles: loadedMap.mapView,
+          ruleset: ruleset,
+        );
       case DetachTroopCommand():
         final result = const PersistentUnitDetachmentResolver().detachTroop(
           state: state,
@@ -601,17 +600,6 @@ class ServerCommandReducer {
           accepted: accepted,
           state: state,
           events: events,
-          reason: reason,
-        ),
-      PersistentResearchCommandResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
           reason: reason,
         ),
       PersistentUnitDetachmentResult(

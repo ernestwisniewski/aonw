@@ -18,11 +18,13 @@ Each version 1 fixture contains:
 
 The local test calls `LocalCommandResolver(GameStateReducer)`. The server test
 calls `ServerCommandReducer`. Both deserialize the same input and compare their
-result with the complete committed oracle. UI interaction/effects, transport
-offsets, database behavior, and projections are not parity outputs. `savedAt`
-is the only excluded save field: local rejection currently advances it while
-server rejection preserves the input snapshot, and both tests assert that
-known adapter difference explicitly.
+result with the complete committed oracle. UI effects, transport offsets,
+database behavior, and projections are not parity outputs. Client interaction
+state is also excluded except for the matching pending research selection in
+the accepted research fixture, which proves that both reducers clear it.
+`savedAt` is the only excluded save field: local rejection currently advances
+it while server rejection preserves the input snapshot, and both tests assert
+that known adapter difference explicitly.
 
 Each fixture runs three times for both the committed input order and a variant
 whose JSON object entries are reversed recursively before deserialization. JSON

@@ -1,5 +1,24 @@
 part of 'reducer_parity_fixture.dart';
 
+void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
+  final runtime = fixture.state.runtimeState;
+  final pendingAction = runtime.pendingAction;
+  final command = fixture.command;
+  final permitsReviewedResearchPendingAction =
+      fixture.family == 'research' &&
+      fixture.expectedAccepted &&
+      command is SelectTechnologyCommand &&
+      pendingAction is PendingResearchSelection &&
+      pendingAction.ownerPlayerId == command.playerId;
+  if (runtime.cityFoundingDraft != null ||
+      (pendingAction != null && !permitsReviewedResearchPendingAction)) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'uses client interaction fields outside parity scope',
+    );
+  }
+}
+
 void _validateReducerParityCorpus(List<ReducerParityFixture> fixtures) {
   final summary = _ReducerParityCorpusSummary();
   for (final fixture in fixtures) {
@@ -191,7 +210,7 @@ void _validateReducerParityAcceptedCommand(
     case 'detachment':
       _requireAcceptedParityDetachment(fixture, state, events);
     case 'research':
-      _requireAcceptedParityResearch(fixture, state);
+      _requireAcceptedParityResearch(fixture, state, events);
     case 'resource-trade':
       _requireAcceptedParityResourceTrade(fixture, state, events);
     case 'worker':
@@ -274,13 +293,51 @@ void _requireAcceptedParityDetachment(
 void _requireAcceptedParityResearch(
   ReducerParityFixture fixture,
   PersistentGameState state,
+  List<GameEvent> events,
 ) {
   final command = fixture.command as SelectTechnologyCommand;
+  final pendingAction = fixture.state.runtimeState.pendingAction;
+  if (pendingAction is! PendingResearchSelection ||
+      pendingAction.ownerPlayerId != command.playerId) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must start with the matching pending research selection',
+    );
+  }
+  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+      events.isNotEmpty) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must preserve save metadata without emitting events',
+    );
+  }
   if (state.research.forPlayer(command.playerId).activeTechnologyId !=
       command.technologyId) {
     ReducerParityCorpus._fail(
       fixture,
       'must commit the reviewed research selection',
+    );
+  }
+  if (state.runtimeState.pendingAction != null) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must clear the matching pending research selection',
+    );
+  }
+
+  final expectedReviewedState = <String, dynamic>{
+    ...fixture.state.toJson(),
+    // Research values remain an independently reviewed fixture oracle. Do not
+    // reproduce overflow calculations in corpus validation.
+    'research': fixture.expectedState['research'],
+    'runtimeState': fixture.state.runtimeState
+        .copyWith(pendingAction: null)
+        .toJson(),
+  };
+  if (!_jsonDeepEquals(fixture.expectedState, expectedReviewedState)) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must only update research and clear its matching pending action',
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -37,24 +38,21 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   PlayerResearchState applySelectTechnology(SelectTechnologyCommand command) {
-    if (command.playerId != view.forPlayerId) return ownResearch;
-
-    final availability = TechnologyAvailabilityService.availabilityFor(
-      technologyId: command.technologyId,
-      playerResearch: ownResearch,
-      ruleset: view.ruleset.technology,
-    );
-    if (availability != TechnologyAvailability.available) return ownResearch;
-
-    return ResearchOverflowRules.applyToSelectedTechnology(
-      playerId: command.playerId,
-      playerResearch: ownResearch,
-      technologyId: command.technologyId,
+    final result = SelectTechnologyResolver.selectTechnology(
+      research: _researchState,
       cities: ownCities,
       fieldImprovements: view.ownImprovements,
+      command: command,
+      actorPlayerId: view.forPlayerId,
       mapTiles: view.mapData,
       ruleset: view.ruleset.technology,
+      // Preserve the current MCTS approximation; pace convergence is a
+      // separate, behavior-changing fix with its own characterization.
+      paceBalance: PaceBalance.unlimited,
     );
+    return result.accepted
+        ? result.research.forPlayer(command.playerId)
+        : ownResearch;
   }
 
   MctsSimulatedCommandApplication applySelectWorkerImprovement(

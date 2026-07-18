@@ -1,29 +1,29 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/technology/research_selection_pending_action_policy.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/select_technology_resolver.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-final class PersistentResearchCommandResult {
-  const PersistentResearchCommandResult({
+final class DomainResearchCommandResult {
+  const DomainResearchCommandResult({
     required this.accepted,
     required this.state,
     this.reason,
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final String? reason;
 }
 
-final class PersistentResearchCommandResolver {
-  const PersistentResearchCommandResolver();
+/// Canonical-state adapter for the persistence-neutral research resolver.
+final class DomainResearchCommandResolver {
+  const DomainResearchCommandResolver();
 
-  PersistentResearchCommandResult selectTechnology({
-    required PersistentGameState state,
+  DomainResearchCommandResult selectTechnology({
+    required DomainState state,
     required SelectTechnologyCommand command,
     required String actorPlayerId,
     MapTileLookup? mapTiles,
@@ -41,28 +41,15 @@ final class PersistentResearchCommandResolver {
       paceBalance: paceBalance,
     );
     if (!result.accepted) {
-      return PersistentResearchCommandResult(
+      return DomainResearchCommandResult(
         accepted: false,
         state: state,
         reason: result.reason,
       );
     }
-
-    final pendingAction =
-        ResearchSelectionPendingActionPolicy.afterAcceptedSelection(
-          pendingAction: state.runtimeState.pendingAction,
-          playerId: command.playerId,
-        );
-    final runtimeState =
-        identical(pendingAction, state.runtimeState.pendingAction)
-        ? null
-        : state.runtimeState.copyWith(pendingAction: pendingAction);
-    return PersistentResearchCommandResult(
+    return DomainResearchCommandResult(
       accepted: true,
-      state: state.copyWith(
-        research: result.research,
-        runtimeState: runtimeState,
-      ),
+      state: state.copyWith(research: result.research),
     );
   }
 }

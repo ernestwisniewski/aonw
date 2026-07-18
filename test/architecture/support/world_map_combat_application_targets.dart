@@ -204,4 +204,30 @@ const _applicationTargets = [
       ),
     ],
   ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/technology/domain_research_command_resolver.dart',
+    owner: 'DomainResearchCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectTechnology',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+        nullable: true,
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/technology/select_technology_resolver.dart',
+    owner: 'SelectTechnologyResolver',
+    boundaries: [
+      _Boundary.method(
+        'selectTechnology',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+        nullable: true,
+      ),
+    ],
+  ),
 ];

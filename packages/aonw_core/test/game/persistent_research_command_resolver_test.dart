@@ -91,6 +91,29 @@ void main() {
       expect(result.state, state);
     });
 
+    test('rejection preserves a matching pending selection', () {
+      const pendingAction = PendingResearchSelection(ownerPlayerId: 'player_1');
+      const state = PersistentGameState(
+        runtimeState: GameRuntimeState(pendingAction: pendingAction),
+      );
+
+      final result = const PersistentResearchCommandResolver().selectTechnology(
+        state: state,
+        command: const SelectTechnologyCommand(
+          'player_1',
+          TechnologyId.storage,
+        ),
+        actorPlayerId: 'player_1',
+      );
+
+      expect(result.accepted, isFalse);
+      expect(identical(result.state, state), isTrue);
+      expect(
+        identical(result.state.runtimeState.pendingAction, pendingAction),
+        isTrue,
+      );
+    });
+
     test('rejects technology blocked by another unlocked technology', () {
       final state = PersistentGameState(
         research: ResearchState(

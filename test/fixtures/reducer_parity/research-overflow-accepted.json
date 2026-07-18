@@ -221,7 +221,12 @@
           }
         }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "pendingAction": {
+          "type": "researchSelection",
+          "ownerPlayerId": "player_1"
+        }
+      }
     },
     "command": {
       "type": "SelectTechnology",

@@ -18,36 +18,30 @@ abstract final class ResearchReducer {
       return GameStateTransition(state: state);
     }
 
-    final playerResearch = state.research.forPlayer(command.playerId);
-    final availability = TechnologyAvailabilityService.availabilityFor(
-      technologyId: command.technologyId,
-      playerResearch: playerResearch,
-      ruleset: ruleset,
-    );
-    if (availability != TechnologyAvailability.available) {
-      return GameStateTransition(state: state);
-    }
-
-    final updatedPlayer = ResearchOverflowRules.applyToSelectedTechnology(
-      playerId: command.playerId,
-      playerResearch: playerResearch,
-      technologyId: command.technologyId,
+    final result = SelectTechnologyResolver.selectTechnology(
+      research: state.research,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
+      command: command,
+      actorPlayerId: command.playerId,
       mapTiles: mapTiles,
       ruleset: ruleset,
       paceBalance: context.paceBalance,
     );
-    final updatedResearch = state.research.updatePlayer(
-      command.playerId,
-      updatedPlayer,
-    );
+    if (!result.accepted) {
+      return GameStateTransition(state: state);
+    }
 
-    final pendingAction = state.pendingAction;
-    var updatedState = state.copyWith(research: updatedResearch);
-    if (pendingAction is PendingResearchSelection &&
-        pendingAction.ownerPlayerId == command.playerId) {
-      updatedState = updatedState.copyWithInteraction(pendingAction: null);
+    final pendingAction =
+        ResearchSelectionPendingActionPolicy.afterAcceptedSelection(
+          pendingAction: state.pendingAction,
+          playerId: command.playerId,
+        );
+    var updatedState = state.copyWith(research: result.research);
+    if (!identical(pendingAction, state.pendingAction)) {
+      updatedState = updatedState.copyWithInteraction(
+        pendingAction: pendingAction,
+      );
     }
 
     return GameStateTransition(state: updatedState);

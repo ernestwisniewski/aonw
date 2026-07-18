@@ -257,10 +257,7 @@ abstract final class ReducerParityCorpus {
       _fail(fixture, 'command does not match family ${fixture.family}');
     }
 
-    final runtime = fixture.state.runtimeState;
-    if (runtime.cityFoundingDraft != null || runtime.pendingAction != null) {
-      _fail(fixture, 'uses client interaction fields outside parity scope');
-    }
+    _validateReducerParityInteractionScope(fixture);
     final expectedSave = GameSave.fromJson({
       ...fixture.expectedSave,
       'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
