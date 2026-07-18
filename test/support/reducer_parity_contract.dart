@@ -35,6 +35,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   'combat': {'attacker_not_controlled', 'attack_target_not_found'},
   'city-expansion': {'city_not_controlled', 'city_expansion_hex_unavailable'},
   'city-production': {
+    'city_not_found',
     'city_not_controlled',
     'building_not_available',
     'unit_supply_limit_reached',
@@ -108,6 +109,7 @@ bool _matchesCityExpansionCommand(GameCommand command) {
 bool _matchesCityProductionCommand(GameCommand command) {
   return command is StartBuildingCommand ||
       command is StartUnitProductionCommand ||
+      command is StartCityProjectCommand ||
       command is StartWonderCommand ||
       command is RushProductionCommand;
 }

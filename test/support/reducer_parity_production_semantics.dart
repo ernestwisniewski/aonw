@@ -35,6 +35,8 @@ bool tryRequireProduction(
         eventsMustBeEmpty: true,
         failure: 'must commit the reviewed unit queue without events',
       );
+    case final StartCityProjectCommand command:
+      _requireAcceptedCityProject(fixtureId, command, before, after, events);
     case StartWonderCommand(:final cityId, :final wonderType):
       _requireAcceptedProductionQueue(
         fixtureId: fixtureId,
@@ -49,6 +51,44 @@ bool tryRequireProduction(
       throw StateError('Expected a production command.');
   }
   return true;
+}
+
+void _requireAcceptedCityProject(
+  String fixtureId,
+  StartCityProjectCommand command,
+  PersistentGameState before,
+  PersistentGameState after,
+  List<GameEvent> events,
+) {
+  final cityIndex = before.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (cityIndex < 0 || before.cities.length < 2 || events.isNotEmpty) {
+    throw FormatException(
+      '$fixtureId must target an existing city beside an unrelated sentinel '
+      'without emitting events.',
+    );
+  }
+
+  final beforeCity = before.cities[cityIndex];
+  final activeInvestment = beforeCity.productionQueue?.investedProduction;
+  final expectedCity = beforeCity.copyWith(
+    productionQueue: CityProductionQueue.target(
+      target: ProjectProductionTarget(command.projectType),
+      investedProduction: activeInvestment ?? 0,
+    ),
+    productionOverflow: activeInvestment == null
+        ? 0
+        : beforeCity.productionOverflow,
+  );
+  final expectedCities = [...before.cities]..[cityIndex] = expectedCity;
+  final expectedState = before.copyWith(cities: expectedCities);
+  if (after != expectedState) {
+    throw FormatException(
+      '$fixtureId must only replace the target city queue while preserving '
+      'investment, overflow, city order, sentinels, and unrelated state.',
+    );
+  }
 }
 
 void _requireAcceptedRushProduction(

@@ -57,6 +57,7 @@ final class _ReducerParityCorpusSummary {
   final unitActionAcceptanceModes = <String>{};
   final resourceTradeAcceptanceModes = <String>{};
   final cityWorkedHexAcceptanceModes = <String>{};
+  final productionAcceptanceModes = <String>{};
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -107,6 +108,8 @@ final class _ReducerParityCorpusSummary {
         cityWorkedHexAcceptanceModes.add(
           city.workedHexes.contains(target) ? 'remove' : 'add',
         );
+      case 'city-production':
+        productionAcceptanceModes.add(_productionAcceptanceMode(fixture));
       case 'worker':
         workerAcceptanceModes.add(_workerAcceptanceMode(fixture));
         workerInteractionModes.add(_workerInteractionMode(fixture));
@@ -160,6 +163,8 @@ void _requireReducerParityFamilyCoverage(
       _requireResourceTradeAcceptanceCoverage(summary, family);
     case 'city-worked-hex':
       _requireCityWorkedHexAcceptanceCoverage(summary, family);
+    case 'city-production':
+      _requireProductionAcceptanceCoverage(summary, family);
     case 'worker':
       _requireWorkerAcceptanceCoverage(summary, family);
   }
