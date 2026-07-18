@@ -9,6 +9,8 @@ bool tryRequireProduction(
   PersistentGameState before,
   PersistentGameState after,
   List<GameEvent> events,
+  MapTileLookup mapTiles,
+  PaceBalance paceBalance,
 ) {
   if (!reducerParityCommandMatchesFamily('city-production', command)) {
     return false;
@@ -16,15 +18,16 @@ bool tryRequireProduction(
   switch (command) {
     case final RushProductionCommand command:
       _requireAcceptedRushProduction(fixtureId, command, before, after, events);
-    case StartBuildingCommand(:final cityId, :final buildingType):
-      _requireAcceptedProductionQueue(
+    case final StartBuildingCommand command:
+      _requireAcceptedStartBuilding(
         fixtureId: fixtureId,
-        cityId: cityId,
-        target: BuildingProductionTarget(buildingType),
+        command: command,
+        actorPlayerId: actorPlayerId,
+        before: before,
         after: after,
         events: events,
-        eventsMustBeEmpty: false,
-        failure: 'must commit the reviewed building queue',
+        mapTiles: mapTiles,
+        paceBalance: paceBalance,
       );
     case StartUnitProductionCommand(:final cityId, :final unitType):
       _requireAcceptedProductionQueue(
@@ -61,6 +64,92 @@ bool tryRequireProduction(
       throw StateError('Expected a production command.');
   }
   return true;
+}
+
+void _requireAcceptedStartBuilding({
+  required String fixtureId,
+  required StartBuildingCommand command,
+  required String actorPlayerId,
+  required PersistentGameState before,
+  required PersistentGameState after,
+  required List<GameEvent> events,
+  required MapTileLookup mapTiles,
+  required PaceBalance paceBalance,
+}) {
+  final cityIndex = before.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (cityIndex < 0 ||
+      before.cities.length < 2 ||
+      before.runtimeState.turnStartedAt == null ||
+      events.isNotEmpty) {
+    throw FormatException(
+      '$fixtureId must target an existing city beside an unrelated sentinel, '
+      'preserve runtime state, and emit no events.',
+    );
+  }
+  final beforeCity = before.cities[cityIndex];
+  final technologyUnlocked = TechnologyUnlockQuery.hasBuildingUnlocked(
+    playerId: beforeCity.ownerPlayerId,
+    buildingType: command.buildingType,
+    research: before.research,
+    ruleset: TechnologyRulesets.standard,
+  );
+  final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
+    city: beforeCity,
+    buildingType: command.buildingType,
+    mapTiles: mapTiles,
+    ruleset: CityRulesets.standard,
+    research: before.research,
+  );
+  if (beforeCity.ownerPlayerId != actorPlayerId ||
+      !technologyUnlocked ||
+      !requirementsMet ||
+      beforeCity.buildings.contains(command.buildingType)) {
+    throw FormatException(
+      '$fixtureId must characterize a controlled and available building that '
+      'has not already been built.',
+    );
+  }
+
+  final activeInvestment = beforeCity.productionQueue?.investedProduction;
+  final baseCost = CityRulesets.standard
+      .buildingDefinitionFor(command.buildingType)
+      .productionCost;
+  final productionCost = paceBalance.buildingProductionCost(baseCost);
+  final rolloverInvestment = activeInvestment == null
+      ? _reviewedRolloverInvestment(
+          storedOverflow: beforeCity.productionOverflow,
+          productionCost: productionCost,
+        )
+      : 0;
+  final expectedCity = beforeCity.copyWith(
+    productionQueue: CityProductionQueue.building(
+      buildingType: command.buildingType,
+      investedProduction: activeInvestment ?? rolloverInvestment,
+    ),
+    productionOverflow: activeInvestment == null
+        ? 0
+        : beforeCity.productionOverflow,
+  );
+  final expectedCities = [...before.cities]..[cityIndex] = expectedCity;
+  final expectedState = before.copyWith(cities: expectedCities);
+  if (after != expectedState) {
+    throw FormatException(
+      '$fixtureId must only replace the target city queue while preserving '
+      'pace-scaled overflow, active investment, city order, sentinels, and '
+      'all unrelated state.',
+    );
+  }
+}
+
+int _reviewedRolloverInvestment({
+  required int storedOverflow,
+  required int productionCost,
+}) {
+  if (storedOverflow <= 0 || productionCost <= 1) return 0;
+  final cap = productionCost ~/ 2;
+  return storedOverflow < cap ? storedOverflow : cap;
 }
 
 void _requireAcceptedCitySpecialization(

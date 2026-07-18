@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-building-locked-rejected",
+  "id": "city-production-building-map-requirement-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 23,
+    "tick": 25,
     "rulesetId": "standard",
     "map": {
       "cols": 2,
@@ -202,7 +202,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [
@@ -214,7 +221,7 @@
     "command": {
       "type": "StartBuilding",
       "cityId": "city_1",
-      "buildingType": "workshop"
+      "buildingType": "stonemason"
     }
   },
   "expected": {
@@ -354,7 +361,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [

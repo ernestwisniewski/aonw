@@ -4,12 +4,12 @@
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
-    "actorPlayerId": "player_2",
-    "tick": 21,
+    "actorPlayerId": "player_1",
+    "tick": 22,
     "rulesetId": "standard",
     "map": {
-      "cols": 3,
-      "rows": 3,
+      "cols": 2,
+      "rows": 1,
       "mapName": "reducer_parity",
       "tiles": [
         {
@@ -27,70 +27,9 @@
           "terrains": [
             "grassland"
           ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 2,
-          "row": 0,
-          "terrains": [
-            "grassland"
+          "resources": [
+            "marble"
           ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 0,
-          "row": 1,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 1,
-          "row": 1,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 2,
-          "row": 1,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 0,
-          "row": 2,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 1,
-          "row": 2,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
-          "height": 0
-        },
-        {
-          "col": 2,
-          "row": 2,
-          "terrains": [
-            "grassland"
-          ],
-          "resources": [],
           "height": 0
         }
       ]
@@ -210,25 +149,54 @@
       "units": [],
       "cities": [
         {
-          "id": "city_1",
-          "ownerPlayerId": "player_1",
-          "name": "Parity City",
-          "population": 3,
-          "storedFood": 0,
+          "id": "city_sentinel",
+          "ownerPlayerId": "player_2",
+          "name": "Unrelated Sentinel",
+          "population": 2,
+          "storedFood": 5,
           "maxHexes": 6,
           "territoryRadius": 2,
           "center": {
-            "col": 2,
-            "row": 2
+            "col": 0,
+            "row": 0
           },
           "controlledHexes": [
             {
-              "col": 2,
-              "row": 2
+              "col": 0,
+              "row": 0
             }
           ],
           "workedHexes": [],
           "buildings": [],
+          "productionOverflow": 2
+        },
+        {
+          "id": "city_1",
+          "ownerPlayerId": "player_2",
+          "name": "Building City",
+          "population": 3,
+          "storedFood": 7,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 1,
+            "row": 0
+          },
+          "controlledHexes": [
+            {
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "building",
+              "buildingType": "granary"
+            },
+            "investedProduction": 4
+          },
           "productionOverflow": 6
         }
       ],
@@ -236,14 +204,26 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+      }
     },
     "command": {
       "type": "StartBuilding",
       "cityId": "city_1",
-      "buildingType": "granary"
+      "buildingType": "stonemason"
     }
   },
   "expected": {
@@ -328,25 +308,54 @@
       "units": [],
       "cities": [
         {
-          "id": "city_1",
-          "ownerPlayerId": "player_1",
-          "name": "Parity City",
-          "population": 3,
-          "storedFood": 0,
+          "id": "city_sentinel",
+          "ownerPlayerId": "player_2",
+          "name": "Unrelated Sentinel",
+          "population": 2,
+          "storedFood": 5,
           "maxHexes": 6,
           "territoryRadius": 2,
           "center": {
-            "col": 2,
-            "row": 2
+            "col": 0,
+            "row": 0
           },
           "controlledHexes": [
             {
-              "col": 2,
-              "row": 2
+              "col": 0,
+              "row": 0
             }
           ],
           "workedHexes": [],
           "buildings": [],
+          "productionOverflow": 2
+        },
+        {
+          "id": "city_1",
+          "ownerPlayerId": "player_2",
+          "name": "Building City",
+          "population": 3,
+          "storedFood": 7,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 1,
+            "row": 0
+          },
+          "controlledHexes": [
+            {
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "workedHexes": [],
+          "buildings": [],
+          "productionQueue": {
+            "target": {
+              "kind": "building",
+              "buildingType": "granary"
+            },
+            "investedProduction": 4
+          },
           "productionOverflow": 6
         }
       ],
@@ -354,9 +363,21 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
-      "runtimeState": {}
+      "runtimeState": {
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+      }
     },
     "events": []
   }

@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-building-locked-rejected",
+  "id": "city-production-building-same-target-no-op-accepted",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 23,
+    "tick": 28,
     "rulesetId": "standard",
     "map": {
       "cols": 2,
@@ -27,7 +27,9 @@
           "terrains": [
             "grassland"
           ],
-          "resources": [],
+          "resources": [
+            "marble"
+          ],
           "height": 0
         }
       ]
@@ -191,9 +193,9 @@
           "productionQueue": {
             "target": {
               "kind": "building",
-              "buildingType": "granary"
+              "buildingType": "stonemason"
             },
-            "investedProduction": 4
+            "investedProduction": 5
           },
           "productionOverflow": 6
         }
@@ -202,7 +204,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [
@@ -214,12 +223,12 @@
     "command": {
       "type": "StartBuilding",
       "cityId": "city_1",
-      "buildingType": "workshop"
+      "buildingType": "stonemason"
     }
   },
   "expected": {
-    "accepted": false,
-    "reason": "building_not_available",
+    "accepted": true,
+    "reason": null,
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -343,9 +352,9 @@
           "productionQueue": {
             "target": {
               "kind": "building",
-              "buildingType": "granary"
+              "buildingType": "stonemason"
             },
-            "investedProduction": 4
+            "investedProduction": 5
           },
           "productionOverflow": 6
         }
@@ -354,7 +363,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "stoneworking"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [

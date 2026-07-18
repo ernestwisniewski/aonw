@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-building-locked-rejected",
+  "id": "city-production-building-already-built-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 23,
+    "tick": 24,
     "rulesetId": "standard",
     "map": {
       "cols": 2,
@@ -187,7 +187,9 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [],
+          "buildings": [
+            "workshop"
+          ],
           "productionQueue": {
             "target": {
               "kind": "building",
@@ -202,7 +204,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "craftsmanship"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [
@@ -339,7 +348,9 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [],
+          "buildings": [
+            "workshop"
+          ],
           "productionQueue": {
             "target": {
               "kind": "building",
@@ -354,7 +365,14 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {
-        "players": {}
+        "players": {
+          "player_1": {
+            "unlockedTechnologyIds": [
+              "craftsmanship"
+            ],
+            "progressByTechnologyId": {}
+          }
+        }
       },
       "runtimeState": {
         "submittedPlayerIds": [

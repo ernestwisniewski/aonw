@@ -263,6 +263,7 @@ abstract final class ReducerParityCorpus {
     }
 
     _validateReducerParityInteractionScope(fixture);
+    _validateStartBuildingCharacterizationFixture(fixture);
     final expectedSave = GameSave.fromJson({
       ...fixture.expectedSave,
       'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
@@ -289,7 +290,7 @@ abstract final class ReducerParityCorpus {
         !_jsonDeepEquals(fixture.expectedSave, inputSave) ||
         !_jsonDeepEquals(fixture.expectedState, inputState) ||
         fixture.expectedEvents.isNotEmpty;
-    if (!changed) {
+    if (_acceptedFixtureLacksRequiredChange(fixture, changed)) {
       _fail(fixture, 'accepted fixture must have an observable domain change');
     }
     _validateAcceptedSemantics(fixture);

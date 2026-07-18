@@ -38,11 +38,22 @@ specialization, and map-dependent wonder production, research,
 worker improvements, manual city worked-hex add/remove selection,
 gold/resource exchange trades, waiting turn
 submissions, and simultaneous turn finalization.
+The `StartBuilding` slice is fail-closed over an exact fixture set: adversarial
+city-not-found precedence plus city-not-controlled precedence for both an
+otherwise available and a technology-locked foreign city, technology-locked,
+already-built, and missing-map-requirement rejections, a fresh pace-scaled
+overflow queue, replacement of an active queue with a satisfied map
+requirement, and today's accepted same-target value no-op. The three distinct
+causes that currently collapse to `building_not_available` are classified
+explicitly by fixture id and validated against the fixture semantics. Every
+accepted building fixture carries an unrelated-city sentinel, a runtime
+sentinel, a complete-state oracle, and no events.
 Turn rejections cover both a forged player id and a player outside the active
 match roster. The corpus intentionally excludes client-only commands,
 server-managed commands,
-accepted no-op commands, timeout/system flows, and local `EndTurn` versus server
-`EndTurn`. The current local transition still has no structured
+accepted no-op commands other than the explicitly reviewed same-target
+`StartBuilding` compatibility case, timeout/system flows, and local `EndTurn`
+versus server `EndTurn`. The current local transition still has no structured
 acceptance/rejection, so the local path proves rejection through a canonical
 no-op while the server path additionally checks the committed reason.
 

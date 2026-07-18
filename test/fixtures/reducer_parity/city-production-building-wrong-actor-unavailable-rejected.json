@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-building-locked-rejected",
+  "id": "city-production-building-wrong-actor-unavailable-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 23,
+    "tick": 29,
     "rulesetId": "standard",
     "map": {
       "cols": 2,
@@ -170,7 +170,7 @@
         },
         {
           "id": "city_1",
-          "ownerPlayerId": "player_1",
+          "ownerPlayerId": "player_2",
           "name": "Building City",
           "population": 3,
           "storedFood": 7,
@@ -219,7 +219,7 @@
   },
   "expected": {
     "accepted": false,
-    "reason": "building_not_available",
+    "reason": "city_not_controlled",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -322,7 +322,7 @@
         },
         {
           "id": "city_1",
-          "ownerPlayerId": "player_1",
+          "ownerPlayerId": "player_2",
           "name": "Building City",
           "population": 3,
           "storedFood": 7,

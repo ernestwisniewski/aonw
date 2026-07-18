@@ -1,11 +1,11 @@
 {
   "fixtureVersion": 1,
-  "id": "city-production-building-locked-rejected",
+  "id": "city-production-building-not-found-rejected",
   "family": "city-production",
   "input": {
     "now": "2026-01-02T03:04:05.000Z",
     "actorPlayerId": "player_1",
-    "tick": 23,
+    "tick": 21,
     "rulesetId": "standard",
     "map": {
       "cols": 2,
@@ -187,14 +187,9 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [],
-          "productionQueue": {
-            "target": {
-              "kind": "building",
-              "buildingType": "granary"
-            },
-            "investedProduction": 4
-          },
+          "buildings": [
+            "workshop"
+          ],
           "productionOverflow": 6
         }
       ],
@@ -213,13 +208,13 @@
     },
     "command": {
       "type": "StartBuilding",
-      "cityId": "city_1",
+      "cityId": "missing_city",
       "buildingType": "workshop"
     }
   },
   "expected": {
     "accepted": false,
-    "reason": "building_not_available",
+    "reason": "city_not_found",
     "save": {
       "id": "reducer-parity-match",
       "schemaVersion": 3,
@@ -339,14 +334,9 @@
             }
           ],
           "workedHexes": [],
-          "buildings": [],
-          "productionQueue": {
-            "target": {
-              "kind": "building",
-              "buildingType": "granary"
-            },
-            "investedProduction": 4
-          },
+          "buildings": [
+            "workshop"
+          ],
           "productionOverflow": 6
         }
       ],

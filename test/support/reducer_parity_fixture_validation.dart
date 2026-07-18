@@ -60,6 +60,7 @@ final class _ReducerParityCorpusSummary {
   final cityFoundingAcceptanceModes = <String>{};
   final productionAcceptanceModes = <String>{};
   final specializationRejectionReasons = <String>{};
+  final startBuilding = _StartBuildingCorpusSummary();
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
@@ -71,6 +72,7 @@ final class _ReducerParityCorpusSummary {
     coverage
         .putIfAbsent(fixture.family, () => <bool>{})
         .add(fixture.expectedAccepted);
+    startBuilding.record(fixture);
     if (fixture.expectedAccepted) {
       _recordAcceptance(fixture);
     } else {
@@ -261,6 +263,8 @@ void _validateReducerParityAcceptedSemantics(ReducerParityFixture fixture) {
     fixture.state,
     state,
     events,
+    fixture.mapData,
+    fixture.save.matchRules.paceBalance,
   )) {
     return;
   }
