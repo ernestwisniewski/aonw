@@ -620,7 +620,7 @@
         "lib/game/domain/reducer/game_state/game_state_reducer_taps.dart::class:_GameStateTapReducer": 369,
         "lib/game/domain/reducer/game_state/reducer_environment_dispatch.dart::extension:ReducerEnvironmentDispatch": 463,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer": 401,
-        "lib/game/domain/reducer/movement/movement_reducer.dart::class:MovementReducer": 427,
+        "lib/game/domain/reducer/movement/movement_reducer.dart::class:MovementReducer": 426,
         "lib/game/domain/reducer/turn/turn_reducer.dart::class:TurnReducer": 627,
         "lib/game/presentation/controllers/lobby_connection_controller.dart::class:LobbyConnectionController": 430,
         "lib/game/presentation/engine/game_event_renderer_effect_mapper.dart::class:GameEventRendererEffectMapper": 385,

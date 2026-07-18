@@ -82,18 +82,26 @@ abstract final class MerchantTradeRouteReducer {
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final unit = _findUnit(state, command.unitId);
+    final units = state.units;
+    final cities = state.cities;
+    final unit = units.byId(command.unitId);
     if (unit == null || !context.canControlUnit(state, unit)) {
       return GameStateTransition(state: state);
     }
     final result = MerchantRoutingCommandResolver.assignRoute(
-      units: state.units,
-      cities: state.cities,
+      units: units,
+      cities: cities,
       mapData: mapView,
       command: command,
       actorPlayerId: unit.ownerPlayerId,
     );
-    return _applyRoutingResult(state, result, unit.id, mapView);
+    return _applyRoutingResult(
+      state,
+      result,
+      unit.id,
+      mapView,
+      inputUnits: units,
+    );
   }
 
   static GameStateTransition startMoveToCitySelection(
@@ -163,42 +171,50 @@ abstract final class MerchantTradeRouteReducer {
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final unit = _findUnit(state, command.unitId);
+    final units = state.units;
+    final cities = state.cities;
+    final unit = units.byId(command.unitId);
     if (unit == null || !context.canControlUnit(state, unit)) {
       return GameStateTransition(state: state);
     }
     final result = MerchantRoutingCommandResolver.moveToCity(
-      units: state.units,
-      cities: state.cities,
+      units: units,
+      cities: cities,
       mapData: mapView,
       command: command,
       actorPlayerId: unit.ownerPlayerId,
     );
-    return _applyRoutingResult(state, result, unit.id, mapView);
+    return _applyRoutingResult(
+      state,
+      result,
+      unit.id,
+      mapView,
+      inputUnits: units,
+    );
   }
 
   static GameStateTransition _applyRoutingResult(
     GameState state,
     MerchantRoutingCommandResult result,
     String unitId,
-    MapTraversalView mapView,
-  ) {
+    MapTraversalView mapView, {
+    required List<GameUnit> inputUnits,
+  }) {
     if (!result.accepted) return GameStateTransition(state: state);
+    final unitsChanged = !identical(result.units, inputUnits);
     final updated = result.units.byId(unitId)!;
-    var next = identical(result.units, state.units)
-        ? state
-        : state.copyWith(units: result.units);
-    if (next.pendingAction?.ownsUnit(updated.id) ?? false) {
-      next = next.copyWithInteraction(pendingAction: null);
+    final cleanup = _merchantRoutingCleanupFor(state, updated.id);
+    final hasCleanup =
+        cleanup.pendingAction ||
+        cleanup.moveTargeting ||
+        cleanup.cityFoundingDraft;
+    if (!unitsChanged && !hasCleanup) {
+      return GameStateTransition(state: state);
     }
-    next = next.copyWithInteraction(
-      moveCommandActive: false,
-      movePreview: null,
-    );
-    if (next.cityFoundingDraft?.unitId == updated.id) {
-      next = next.copyWithInteraction(cityFoundingDraft: null);
-    }
-    if (next.selectedUnitId == updated.id) {
+
+    var next = unitsChanged ? state.copyWith(units: result.units) : state;
+    next = _applyMerchantRoutingCleanup(next, cleanup);
+    if (unitsChanged && next.selectedUnitId == updated.id) {
       next = next.copyWithInteraction(
         selection: _unitSelection(next, updated, mapView),
       );
@@ -224,4 +240,39 @@ abstract final class MerchantTradeRouteReducer {
   static GameUnit? _findUnit(GameState state, String unitId) {
     return state.unitById(unitId);
   }
+}
+
+typedef _MerchantRoutingCleanup = ({
+  bool pendingAction,
+  bool moveTargeting,
+  bool cityFoundingDraft,
+});
+
+_MerchantRoutingCleanup _merchantRoutingCleanupFor(
+  GameState state,
+  String unitId,
+) => (
+  pendingAction: state.pendingAction?.ownsUnit(unitId) ?? false,
+  moveTargeting: state.moveCommandActive || state.movePreview != null,
+  cityFoundingDraft: state.cityFoundingDraft?.unitId == unitId,
+);
+
+GameState _applyMerchantRoutingCleanup(
+  GameState state,
+  _MerchantRoutingCleanup cleanup,
+) {
+  var next = state;
+  if (cleanup.pendingAction) {
+    next = next.copyWithInteraction(pendingAction: null);
+  }
+  if (cleanup.moveTargeting) {
+    next = next.copyWithInteraction(
+      moveCommandActive: false,
+      movePreview: null,
+    );
+  }
+  if (cleanup.cityFoundingDraft) {
+    next = next.copyWithInteraction(cityFoundingDraft: null);
+  }
+  return next;
 }

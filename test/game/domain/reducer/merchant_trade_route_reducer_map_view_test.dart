@@ -194,6 +194,59 @@ void main() {
     expect(result.state.selection?.unit, result.state.unitById('merchant_1'));
   });
 
+  test('accepted unchanged trade route preserves full state identity', () {
+    final merchant = _merchant(col: 0);
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [merchant],
+      cities: [_city('origin', 0), _city('destination', 3)],
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(merchant),
+      ),
+    );
+    final mapView = WorldMapReadView(_worldMap());
+    const command = AssignMerchantTradeRouteCommand(
+      'merchant_1',
+      'destination',
+    );
+
+    final first = MerchantTradeRouteReducer.assignRoute(
+      state,
+      command,
+      mapView,
+    );
+    final repeated = MerchantTradeRouteReducer.assignRoute(
+      first.state,
+      command,
+      mapView,
+    );
+
+    expect(repeated.state, same(first.state));
+  });
+
+  test('accepted unchanged merchant move preserves full state identity', () {
+    final merchant = _merchant(col: 1);
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [merchant],
+      cities: [_city('destination', 3)],
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(merchant),
+      ),
+    );
+    final mapView = WorldMapReadView(_worldMap());
+    const command = MoveMerchantToCityCommand('merchant_1', 'destination');
+
+    final first = MerchantTradeRouteReducer.moveToCity(state, command, mapView);
+    final repeated = MerchantTradeRouteReducer.moveToCity(
+      first.state,
+      command,
+      mapView,
+    );
+
+    expect(repeated.state, same(first.state));
+  });
+
   test('rejected routing preserves the complete local state identity', () {
     final merchant = _merchant(col: 0);
     final state = GameState(

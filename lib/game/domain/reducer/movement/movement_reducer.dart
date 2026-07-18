@@ -7,6 +7,7 @@ import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
+import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -236,14 +237,13 @@ abstract final class MovementReducer {
       unitId: command.unitId,
       context: context,
     );
-    if (validation is! ValidUnit) {
-      return GameStateTransition(state: state);
-    }
+    if (validation is! ValidUnit) return GameStateTransition(state: state);
     final unit = validation.unit;
     final wasFortified = unit.isFortified;
+    final input = _captureUnitActionInput(state);
     final result = UnitActionCommandResolver.cancelUnitAction(
-      units: state.units,
-      artifacts: state.artifacts,
+      units: input.units,
+      artifacts: input.artifacts,
       interaction: _persistedUnitActionInteraction(state),
       command: command,
       actorPlayerId: unit.ownerPlayerId,
@@ -252,7 +252,7 @@ abstract final class MovementReducer {
     final updatedUnit = result.units.byId(unit.id)!;
     final cleanup =
         _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result),
+            _applyUnitActionResult(state, result, input),
             unit,
             updatedUnit,
             mapTiles,
@@ -276,13 +276,12 @@ abstract final class MovementReducer {
       unitId: command.unitId,
       context: context,
     );
-    if (validation is! ValidUnit) {
-      return GameStateTransition(state: state);
-    }
+    if (validation is! ValidUnit) return GameStateTransition(state: state);
     final unit = validation.unit;
+    final input = _captureUnitActionInput(state);
     final result = UnitActionCommandResolver.skipUnitTurn(
-      units: state.units,
-      artifacts: state.artifacts,
+      units: input.units,
+      artifacts: input.artifacts,
       interaction: _persistedUnitActionInteraction(state),
       command: command,
       actorPlayerId: unit.ownerPlayerId,
@@ -291,7 +290,7 @@ abstract final class MovementReducer {
     final updatedUnit = result.units.byId(unit.id)!;
     final cleanup =
         _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result),
+            _applyUnitActionResult(state, result, input),
             unit,
             updatedUnit,
             mapTiles,
@@ -315,9 +314,10 @@ abstract final class MovementReducer {
     );
     if (validation is! ValidUnit) return GameStateTransition(state: state);
     final unit = validation.unit;
+    final input = _captureUnitActionInput(state);
     final result = UnitActionCommandResolver.fortifyUnit(
-      units: state.units,
-      artifacts: state.artifacts,
+      units: input.units,
+      artifacts: input.artifacts,
       interaction: _persistedUnitActionInteraction(state),
       command: command,
       actorPlayerId: unit.ownerPlayerId,
@@ -326,7 +326,7 @@ abstract final class MovementReducer {
     final updatedUnit = result.units.byId(unit.id)!;
     final cleanup =
         _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result),
+            _applyUnitActionResult(state, result, input),
             unit,
             updatedUnit,
             mapTiles,

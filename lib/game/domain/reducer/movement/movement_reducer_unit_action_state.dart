@@ -1,5 +1,13 @@
 part of 'movement_reducer.dart';
 
+typedef _UnitActionInput = ({
+  List<GameUnit> units,
+  List<WorldArtifact> artifacts,
+});
+
+_UnitActionInput _captureUnitActionInput(GameState state) =>
+    (units: state.units, artifacts: state.artifacts);
+
 PersistedInteractionState _persistedUnitActionInteraction(GameState state) {
   return PersistedInteractionState(
     cityFoundingDraft: state.cityFoundingDraft,
@@ -10,9 +18,10 @@ PersistedInteractionState _persistedUnitActionInteraction(GameState state) {
 GameState _applyUnitActionResult(
   GameState state,
   UnitActionCommandResult result,
+  _UnitActionInput input,
 ) {
-  final unitsChanged = !identical(result.units, state.units);
-  final artifactsChanged = !identical(result.artifacts, state.artifacts);
+  final unitsChanged = !identical(result.units, input.units);
+  final artifactsChanged = !identical(result.artifacts, input.artifacts);
   var next = switch ((unitsChanged, artifactsChanged)) {
     (true, true) => state.copyWith(
       units: result.units,
@@ -47,6 +56,7 @@ final class _UnitActionStateCleanup {
   final MapTileLookup mapTiles;
 
   void clearMoveTargetingOwnedByUnit() {
+    if (!state.moveCommandActive && state.movePreview == null) return;
     if (MovementReducer._moveStateBelongsToUnit(state, previousUnit.id)) {
       state = MovementReducer._clearMoveTargeting(state);
     }
