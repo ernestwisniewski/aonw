@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/city/city_building_requirement_rules.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
+import 'package:aonw_core/game/domain/city/city_production_command_resolver.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
@@ -183,27 +184,19 @@ class PersistentCityProductionResolver {
     CityRuleset cityRuleset = CityRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityLookup(state.cities, command.cityId);
-    if (lookup == null) return _reject(state, 'city_not_found');
-    final (:cityIndex, :city) = lookup;
-    if (city.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'city_not_controlled');
-    }
-
+    final result = CityProductionCommandResolver.startCityProject(
+      cities: state.cities,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      cityRuleset: cityRuleset,
+      paceBalance: paceBalance,
+    );
+    if (!result.accepted) return _reject(state, result.reason!);
     return PersistentCityProductionResult(
       accepted: true,
-      state: state.copyWith(
-        cities: _replaceCity(
-          state.cities,
-          cityIndex,
-          _queueProduction(
-            city,
-            ProjectProductionTarget(command.projectType),
-            cityRuleset,
-            paceBalance,
-          ),
-        ),
-      ),
+      state: identical(result.cities, state.cities)
+          ? state
+          : state.copyWith(cities: result.cities),
     );
   }
 

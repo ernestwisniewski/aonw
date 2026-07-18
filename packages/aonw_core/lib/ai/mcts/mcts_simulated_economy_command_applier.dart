@@ -175,13 +175,14 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartCityProject(StartCityProjectCommand command) {
-    final lookup = _cityLookup(command.cityId);
-    if (lookup == null) return ownCities;
-    final (:cityIndex, :city) = lookup;
-    return _replaceCity(
-      cityIndex,
-      _queueProduction(city, ProjectProductionTarget(command.projectType)),
+    final result = CityProductionCommandResolver.startCityProject(
+      cities: ownCities,
+      command: command,
+      actorPlayerId: view.forPlayerId,
+      cityRuleset: view.ruleset.city,
+      paceBalance: view.ruleset.paceBalance,
     );
+    return result.accepted ? result.cities : ownCities;
   }
 
   List<GameCity> applySetCitySpecialization(

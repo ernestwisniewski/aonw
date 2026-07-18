@@ -60,6 +60,83 @@ void main() {
       ),
     );
     expect(unit.state.selection?.city, same(cityWithUnitQueue));
+
+    final project = CityProductionReducer.startCityProject(
+      _stateWithSelectedCity(city),
+      const StartCityProjectCommand('city_1', CityProjectType.research),
+      mapTiles,
+    );
+
+    final cityWithProjectQueue = project.state.cities.single;
+    expect(
+      cityWithProjectQueue.productionQueue,
+      CityProductionQueue.project(projectType: CityProjectType.research),
+    );
+    expect(project.state.selection?.city, same(cityWithProjectQueue));
+  });
+
+  test(
+    'keeps an unselected same-project command as a state identity no-op',
+    () {
+      final city = _city.copyWith(
+        productionQueue: CityProductionQueue.project(
+          projectType: CityProjectType.wealth,
+          investedProduction: 4,
+        ),
+      );
+      final state = GameState(cities: [city], activePlayerId: 'player_1');
+
+      final result = CityProductionReducer.startCityProject(
+        state,
+        const StartCityProjectCommand('city_1', CityProjectType.wealth),
+        mapTiles,
+      );
+
+      expect(result.state, same(state));
+    },
+  );
+
+  test('refreshes a stale selected city for a same-project command', () {
+    final city = _city.copyWith(
+      productionQueue: CityProductionQueue.project(
+        projectType: CityProjectType.wealth,
+        investedProduction: 4,
+      ),
+    );
+    final state = _stateWithSelectedCity(city).copyWithInteraction(
+      selection: GameSelection.city(
+        _city,
+        cityYield: TileYield.zero,
+        playerColor: 0xFF123456,
+      ),
+    );
+
+    final result = CityProductionReducer.startCityProject(
+      state,
+      const StartCityProjectCommand('city_1', CityProjectType.wealth),
+      mapTiles,
+    );
+
+    expect(result.state, isNot(same(state)));
+    expect(result.state.cities.single, same(city));
+    expect(result.state.selection?.city, same(result.state.cities.single));
+    expect(
+      result.state.selection?.city?.productionQueue?.investedProduction,
+      4,
+    );
+  });
+
+  test('preserves state identity when command context rejects the city', () {
+    final state = _stateWithSelectedCity(_city);
+
+    final result = CityProductionReducer.startCityProject(
+      state,
+      const StartCityProjectCommand('city_1', CityProjectType.wealth),
+      mapTiles,
+      context: const GameCommandContext(actorPlayerId: 'player_2'),
+    );
+
+    expect(result.state, same(state));
   });
 
   test(

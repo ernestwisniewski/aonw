@@ -9,6 +9,15 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
+    if (command is StartCityProjectCommand) {
+      return _applyStartCityProject(
+        save,
+        state,
+        command,
+        actorPlayerId,
+        ruleset,
+      );
+    }
     final result = switch (command) {
       StartBuildingCommand() => _startBuildingProduction(
         state,
@@ -22,12 +31,6 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
         command,
         actorPlayerId,
         mapView,
-        ruleset,
-      ),
-      StartCityProjectCommand() => _startCityProject(
-        state,
-        command,
-        actorPlayerId,
         ruleset,
       ),
       StartWonderCommand() => _startWonderProduction(
@@ -51,6 +54,30 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       ),
     };
     return _fromPersistentResult(save, result);
+  }
+
+  _CommandApplication _applyStartCityProject(
+    GameSave save,
+    PersistentGameState state,
+    StartCityProjectCommand command,
+    String actorPlayerId,
+    GameRuleset ruleset,
+  ) {
+    final result = CityProductionCommandResolver.startCityProject(
+      cities: state.cities,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      cityRuleset: ruleset.city,
+      paceBalance: ruleset.paceBalance,
+    );
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: !result.accepted || identical(result.cities, state.cities)
+          ? state
+          : state.copyWith(cities: result.cities),
+      reason: result.reason,
+    );
   }
 }
 
@@ -83,19 +110,6 @@ PersistentCityProductionResult _startUnitProduction(
   mapView: mapView,
   cityRuleset: ruleset.city,
   technologyRuleset: ruleset.technology,
-  paceBalance: ruleset.paceBalance,
-);
-
-PersistentCityProductionResult _startCityProject(
-  PersistentGameState state,
-  StartCityProjectCommand command,
-  String actorPlayerId,
-  GameRuleset ruleset,
-) => const PersistentCityProductionResolver().startCityProject(
-  state: state,
-  command: command,
-  actorPlayerId: actorPlayerId,
-  cityRuleset: ruleset.city,
   paceBalance: ruleset.paceBalance,
 );
 

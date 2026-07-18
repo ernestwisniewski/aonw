@@ -16,6 +16,7 @@ import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'city_production_reducer_rush.dart';
+part 'city_production_reducer_project.dart';
 part 'city_production_reducer_supply.dart';
 part 'city_production_reducer_wonder.dart';
 
@@ -158,30 +159,13 @@ abstract final class CityProductionReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     GameRuleset ruleset = GameRuleset.defaults,
-  }) {
-    final target = _controlledCityTarget(state, command.cityId, context);
-    if (target == null) {
-      return GameStateTransition(state: state);
-    }
-    final city = target.city;
-
-    final updatedCity = _queueProduction(
-      city,
-      ProjectProductionTarget(command.projectType),
-      ruleset,
-      context.paceBalance,
-    );
-
-    return _finishQueuedProductionUpdate(
-      state,
-      updatedCity: updatedCity,
-      cityIndex: target.index,
-      cityId: command.cityId,
-      mapTiles: mapTiles,
-      ruleset: ruleset,
-      paceBalance: context.paceBalance,
-    );
-  }
+  }) => _startCityProject(
+    state,
+    command,
+    mapTiles,
+    context: context,
+    ruleset: ruleset,
+  );
 
   static GameStateTransition startWonder(
     GameState state,
