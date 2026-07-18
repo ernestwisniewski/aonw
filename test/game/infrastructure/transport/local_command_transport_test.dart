@@ -3,11 +3,15 @@ import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
+import 'package:aonw/game/application/services/local_command_resolver.dart';
+import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -25,11 +29,17 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'local_command_transport_test_support.dart';
+part 'local_command_transport_worker_replay_tests.dart';
+
 void main() {
   group('LocalCommandTransport', () {
+    _registerWorkerReplayTests();
+
     test(
       'logs command events and saves the updated repository snapshot',
       () async {
@@ -691,19 +701,3 @@ GameUnit _queuedCommander() {
         ),
       );
 }
-
-MapData _map({int cols = 3, int rows = 3}) => MapData(
-  cols: cols,
-  rows: rows,
-  tiles: [
-    for (var row = 0; row < rows; row++)
-      for (var col = 0; col < cols; col++)
-        TileData(
-          col: col,
-          row: row,
-          terrains: const [TerrainType.plains],
-          resources: const [],
-          height: 0,
-        ),
-  ],
-);

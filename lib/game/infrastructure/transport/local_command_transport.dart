@@ -57,7 +57,7 @@ class LocalCommandTransport implements CommandTransport {
         );
     final shouldLogCommand =
         authoritativeCommand != null ||
-        AuthoritativeCommandPolicy.shouldLogForReplay(command);
+        AuthoritativeCommandPolicy.shouldLogForReplay(currentState, command);
     final offset = shouldLogCommand ? latestOffset + 1 : latestOffset;
     final commandToLog = authoritativeCommand ?? command;
 

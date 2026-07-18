@@ -8,8 +8,8 @@ abstract final class AuthoritativeCommandPolicy {
     return !isClientOnly(command) && !isServerManaged(command);
   }
 
-  static bool shouldLogForReplay(GameCommand command) {
-    return !isClientOnly(command);
+  static bool shouldLogForReplay(GameState state, GameCommand command) {
+    return !isClientOnlyForState(state, command);
   }
 
   static bool isClientOnly(GameCommand command) {
@@ -86,10 +86,8 @@ abstract final class AuthoritativeCommandPolicy {
   }
 
   static bool isClientOnlyForState(GameState state, GameCommand command) {
-    if (command case SelectWorkerImprovementCommand(:final unitId)) {
-      final pending = state.pendingAction;
-      return pending is PendingWorkerActionSelection &&
-          pending.unitId == unitId;
+    if (command is SelectWorkerImprovementCommand) {
+      return state.pendingAction is PendingWorkerActionSelection;
     }
     return isClientOnly(command);
   }

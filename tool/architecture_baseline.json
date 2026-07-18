@@ -1266,7 +1266,7 @@
         "test/game/game_rendering_coordinator_test.dart": 1579,
         "test/game/game_screen_test.dart": 1447,
         "test/game/hover_intent_marker_test.dart": 923,
-        "test/game/infrastructure/transport/local_command_transport_test.dart": 709,
+        "test/game/infrastructure/transport/local_command_transport_test.dart": 703,
         "test/game/lobby_connection_controller_test.dart": 656,
         "test/game/lobby_screen_test.dart": 582,
         "test/game/new_game_screen_test.dart": 511,

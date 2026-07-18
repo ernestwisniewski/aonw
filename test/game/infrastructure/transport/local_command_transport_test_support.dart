@@ -1,0 +1,17 @@
+part of 'local_command_transport_test.dart';
+
+MapData _map({int cols = 3, int rows = 3}) => MapData(
+  cols: cols,
+  rows: rows,
+  tiles: [
+    for (var row = 0; row < rows; row++)
+      for (var col = 0; col < cols; col++)
+        TileData(
+          col: col,
+          row: row,
+          terrains: const [TerrainType.plains],
+          resources: const [],
+          height: 0,
+        ),
+  ],
+);

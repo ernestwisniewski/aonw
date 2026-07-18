@@ -29,6 +29,7 @@ void main() {
       );
       expect(
         AuthoritativeCommandPolicy.shouldLogForReplay(
+          const GameState(),
           const ResetUnitMovementCommand(playerId: 'player_1'),
         ),
         isTrue,
@@ -53,6 +54,27 @@ void main() {
 
       expect(
         AuthoritativeCommandPolicy.isClientOnlyForState(state, selection),
+        isTrue,
+      );
+      expect(
+        AuthoritativeCommandPolicy.shouldLogForReplay(state, selection),
+        isFalse,
+      );
+      expect(
+        AuthoritativeCommandPolicy.shouldLogForReplay(
+          state,
+          const SelectWorkerImprovementCommand(
+            'worker_2',
+            FieldImprovementType.mine,
+          ),
+        ),
+        isFalse,
+      );
+      expect(
+        AuthoritativeCommandPolicy.shouldLogForReplay(
+          const GameState(),
+          selection,
+        ),
         isTrue,
       );
       expect(
