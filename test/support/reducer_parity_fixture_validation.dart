@@ -4,7 +4,9 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
   final runtime = fixture.state.runtimeState;
   final pendingAction = runtime.pendingAction;
   final command = fixture.command;
-  if ((fixture.family == 'artifacts' || fixture.family == 'unit-actions') &&
+  if ((fixture.family == 'artifacts' ||
+          fixture.family == 'city-expansion' ||
+          fixture.family == 'unit-actions') &&
       runtime.turnStartedAt == null) {
     ReducerParityCorpus._fail(
       fixture,
@@ -248,6 +250,8 @@ void _validateReducerParityAcceptedCommand(
       _requireAcceptedParityArtifact(fixture, state, events);
     case 'combat':
       _requireAcceptedParityCombat(fixture, state, events);
+    case 'city-expansion':
+      _requireAcceptedParityCityExpansion(fixture, state, events);
     case 'city-worked-hex':
       _requireAcceptedParityCityWorkedHex(fixture, state, events);
     case 'detachment':
@@ -267,6 +271,44 @@ void _validateReducerParityAcceptedCommand(
         fixture,
         'uses a command outside the reviewed parity corpus',
       );
+  }
+}
+
+void _requireAcceptedParityCityExpansion(
+  ReducerParityFixture fixture,
+  PersistentGameState state,
+  List<GameEvent> events,
+) {
+  final command = fixture.command as SelectCityExpansionHexCommand;
+  final beforeIndex = fixture.state.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (beforeIndex < 0 ||
+      fixture.state.runtimeState.submittedPlayerIds.isEmpty ||
+      events.isNotEmpty) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must update an existing city, preserve a runtime sentinel, and emit no events',
+    );
+  }
+  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must preserve save metadata for city expansion selection',
+    );
+  }
+
+  final beforeCity = fixture.state.cities[beforeIndex];
+  final expectedCities = [...fixture.state.cities]
+    ..[beforeIndex] = beforeCity.copyWith(
+      preferredExpansionHex: CityHex(col: command.col, row: command.row),
+    );
+  final expectedState = fixture.state.copyWith(cities: expectedCities);
+  if (!_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must only select the reviewed city preferred expansion hex',
+    );
   }
 }
 
