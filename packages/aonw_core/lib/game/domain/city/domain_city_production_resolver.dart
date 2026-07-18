@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class DomainCityProductionResult {
@@ -58,6 +59,27 @@ final class DomainCityProductionResolver {
       command: command,
       actorPlayerId: actorPlayerId,
       cityRuleset: cityRuleset,
+      paceBalance: paceBalance,
+    );
+    return _fromCommandResult(state, result);
+  }
+
+  DomainCityProductionResult startWonder({
+    required DomainState state,
+    required StartWonderCommand command,
+    required String actorPlayerId,
+    required MapTileLookup mapTiles,
+    WonderRuleset wonderRuleset = WonderRuleset.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    final result = CityProductionCommandResolver.startWonder(
+      cities: state.cities,
+      research: state.research,
+      wonderRegistry: state.wonderRegistry,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
     return _fromCommandResult(state, result);

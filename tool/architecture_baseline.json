@@ -47,7 +47,7 @@
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart::class:BalanceBatchReport": 759,
         "packages/aonw_core/lib/game/domain/city/city_building_catalog.dart::class:CityBuildingCatalog": 585,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 457,
-        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver": 404,
+        "packages/aonw_core/lib/game/domain/city/persistent_city_production_resolver.dart::class:PersistentCityProductionResolver": 377,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer": 721,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 501,

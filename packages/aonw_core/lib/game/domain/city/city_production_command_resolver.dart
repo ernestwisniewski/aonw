@@ -10,6 +10,9 @@ import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_unlock_query.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
+import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 /// Persistence-neutral result of applying a city-production command.
@@ -79,7 +82,15 @@ abstract final class CityProductionCommandResolver {
       cities: List<GameCity>.unmodifiable([
         for (var index = 0; index < cities.length; index++)
           if (index == cityIndex)
-            _queueProduction(city, target, cityRuleset, paceBalance)
+            _queueProduction(
+              city,
+              target,
+              productionCost: CityProductionRules.buildingProductionCost(
+                command.buildingType,
+                ruleset: cityRuleset,
+                paceBalance: paceBalance,
+              ),
+            )
           else
             cities[index],
       ]),
@@ -110,7 +121,66 @@ abstract final class CityProductionCommandResolver {
       cities: List<GameCity>.unmodifiable([
         for (var index = 0; index < cities.length; index++)
           if (index == cityIndex)
-            _queueProduction(city, target, cityRuleset, paceBalance)
+            _queueProduction(
+              city,
+              target,
+              productionCost: CityProductionRules.targetCost(
+                target,
+                ruleset: cityRuleset,
+                paceBalance: paceBalance,
+              ),
+            )
+          else
+            cities[index],
+      ]),
+    );
+  }
+
+  static CityProductionCommandResult startWonder({
+    required List<GameCity> cities,
+    required ResearchState research,
+    required WonderRegistry wonderRegistry,
+    required StartWonderCommand command,
+    required String actorPlayerId,
+    required MapTileLookup mapTiles,
+    required WonderRuleset wonderRuleset,
+    required PaceBalance paceBalance,
+  }) {
+    final cityIndex = _cityIndexById(cities, command.cityId);
+    if (cityIndex == null) return _reject(cities, 'city_not_found');
+
+    final city = cities[cityIndex];
+    if (city.ownerPlayerId != actorPlayerId) {
+      return _reject(cities, 'city_not_controlled');
+    }
+
+    final availability = WonderAvailabilityPolicy.availabilityFor(
+      city: city,
+      wonderType: command.wonderType,
+      cities: cities,
+      registry: wonderRegistry,
+      research: research,
+      mapTiles: mapTiles,
+      ruleset: wonderRuleset,
+    );
+    if (!availability.isAvailable) {
+      return _reject(cities, 'wonder_not_available');
+    }
+
+    final target = WonderProductionTarget(command.wonderType);
+    return CityProductionCommandResult._accepted(
+      cities: List<GameCity>.unmodifiable([
+        for (var index = 0; index < cities.length; index++)
+          if (index == cityIndex)
+            _queueProduction(
+              city,
+              target,
+              productionCost: CityProductionRules.wonderProductionCost(
+                command.wonderType,
+                ruleset: wonderRuleset,
+                paceBalance: paceBalance,
+              ),
+            )
           else
             cities[index],
       ]),
@@ -158,19 +228,14 @@ abstract final class CityProductionCommandResolver {
 
   static GameCity _queueProduction(
     GameCity city,
-    CityProductionTarget target,
-    CityRuleset cityRuleset,
-    PaceBalance paceBalance,
-  ) {
+    CityProductionTarget target, {
+    required int productionCost,
+  }) {
     final activeInvestment = city.productionQueue?.investedProduction;
     final rolloverInvestment = activeInvestment == null
         ? CityProductionRules.rolloverInvestment(
             storedOverflow: city.productionOverflow,
-            productionCost: CityProductionRules.targetCost(
-              target,
-              ruleset: cityRuleset,
-              paceBalance: paceBalance,
-            ),
+            productionCost: productionCost,
           )
         : 0;
     return city.copyWith(

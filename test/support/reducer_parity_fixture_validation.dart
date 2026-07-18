@@ -65,7 +65,6 @@ final class _ReducerParityCorpusSummary {
   final workerAcceptanceModes = <String>{};
   final workerInteractionModes = <String>{};
   final turnAcceptanceModes = <String>{};
-
   void record(ReducerParityFixture fixture) {
     if (!ids.add(fixture.id)) {
       throw StateError('Duplicate reducer parity fixture id: ${fixture.id}.');
@@ -444,8 +443,7 @@ void _requireAcceptedParityResearch(
 
   final expectedReviewedState = <String, dynamic>{
     ...fixture.state.toJson(),
-    // Research values remain an independently reviewed fixture oracle. Do not
-    // reproduce overflow calculations in corpus validation.
+    // Research stays an independent fixture oracle; do not reproduce overflow.
     'research': fixture.expectedState['research'],
     'runtimeState': fixture.state.runtimeState
         .copyWith(pendingAction: null)

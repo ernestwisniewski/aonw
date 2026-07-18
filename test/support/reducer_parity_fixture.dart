@@ -11,6 +11,7 @@ import 'reducer_parity_production_semantics.dart';
 part 'reducer_parity_fixture_city_expansion_validation.dart';
 part 'reducer_parity_fixture_city_founding_validation.dart';
 part 'reducer_parity_fixture_production_validation.dart';
+part 'reducer_parity_fixture_start_wonder_validation.dart';
 part 'reducer_parity_fixture_unit_action_validation.dart';
 part 'reducer_parity_fixture_validation.dart';
 part 'reducer_parity_fixture_worker_validation.dart';

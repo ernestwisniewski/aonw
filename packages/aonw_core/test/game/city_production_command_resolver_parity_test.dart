@@ -128,6 +128,104 @@ void main() {
       );
     });
 
+    test('wonder forwards custom rules, map, and pace across adapters', () {
+      final research = _parityWonderResearch();
+      final wonderRegistry = WonderRegistry.empty.complete(
+        type: WonderType.centralBank,
+        playerId: _otherPlayerId,
+      );
+      final states = _productionStates(
+        primary: _parityProductionCity(productionOverflow: 100),
+        research: research,
+        wonderRegistry: wonderRegistry,
+      );
+
+      final results = _startWonderBoth(
+        states,
+        mapTiles: _parityProductionMapTiles(hostTerrain: TerrainType.desert),
+        wonderRuleset: _parityCustomWonderRuleset,
+      );
+
+      _expectAcceptedProductionParity(states, results);
+      expect(
+        results.persistent.state.cities.first.productionQueue,
+        CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: 8,
+        ),
+      );
+      expect(results.persistent.state.cities.first.productionOverflow, 0);
+      expect(identical(results.persistent.state.research, research), isTrue);
+      expect(identical(results.domain.state.research, research), isTrue);
+      expect(
+        identical(results.persistent.state.wonderRegistry, wonderRegistry),
+        isTrue,
+      );
+      expect(
+        identical(results.domain.state.wonderRegistry, wonderRegistry),
+        isTrue,
+      );
+    });
+
+    test('wonder rejections preserve precedence and state identities', () {
+      final completed = WonderRegistry.empty.complete(
+        type: WonderType.greatLibrary,
+        playerId: _otherPlayerId,
+      );
+      final missingStates = _productionStates(
+        primary: _parityProductionCity(id: 'city_missing'),
+        wonderRegistry: completed,
+      );
+      _expectRejectedProductionParity(
+        missingStates,
+        _startWonderBoth(missingStates, actorPlayerId: _otherPlayerId),
+        reason: 'city_not_found',
+      );
+
+      final foreignStates = _productionStates(
+        primary: _parityProductionCity(
+          ownerPlayerId: _otherPlayerId,
+          productionQueue: CityProductionQueue.wonder(
+            wonderType: WonderType.greatLibrary,
+            investedProduction: 11,
+          ),
+        ),
+        research: ResearchState(
+          players: {
+            _otherPlayerId: PlayerResearchState(
+              unlockedTechnologyIds: const {TechnologyId.writing},
+            ),
+          },
+        ),
+        wonderRegistry: completed,
+      );
+      _expectRejectedProductionParity(
+        foreignStates,
+        _startWonderBoth(foreignStates),
+        reason: 'city_not_controlled',
+      );
+
+      final lockedStates = _productionStates(primary: _parityProductionCity());
+      _expectRejectedProductionParity(
+        lockedStates,
+        _startWonderBoth(lockedStates),
+        reason: 'wonder_not_available',
+      );
+
+      final missingRequirementStates = _productionStates(
+        primary: _parityProductionCity(productionOverflow: 100),
+        research: _parityWonderResearch(),
+      );
+      _expectRejectedProductionParity(
+        missingRequirementStates,
+        _startWonderBoth(
+          missingRequirementStates,
+          wonderRuleset: _parityCustomWonderRuleset,
+        ),
+        reason: 'wonder_not_available',
+      );
+    });
+
     test('fresh project has exact state-boundary parity', () {
       final states = _productionStates(
         primary: _parityProductionCity(productionOverflow: 21),

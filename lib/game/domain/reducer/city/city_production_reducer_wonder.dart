@@ -7,39 +7,36 @@ GameStateTransition _startWonderProduction(
   required GameCommandContext context,
   required GameRuleset ruleset,
 }) {
-  final target = CityProductionReducer._controlledCityTarget(
-    state,
-    command.cityId,
-    context,
-  );
-  if (target == null) return GameStateTransition(state: state);
-  final city = target.city;
+  final cities = state.cities;
+  final cityIndex = cities.indexWhere((city) => city.id == command.cityId);
+  if (cityIndex == -1) return GameStateTransition(state: state);
 
-  final availability = WonderAvailabilityPolicy.availabilityFor(
-    city: city,
-    wonderType: command.wonderType,
-    cities: state.cities,
-    registry: state.wonderRegistry,
+  final city = cities[cityIndex];
+  if (!context.canControlCity(state, city)) {
+    return GameStateTransition(state: state);
+  }
+
+  final result = CityProductionCommandResolver.startWonder(
+    cities: cities,
     research: state.research,
+    wonderRegistry: state.wonderRegistry,
+    command: command,
+    actorPlayerId: city.ownerPlayerId,
     mapTiles: mapTiles,
-    ruleset: ruleset.wonders,
-  );
-  if (!availability.isAvailable) return GameStateTransition(state: state);
-
-  final updatedCity = CityProductionReducer._queueProduction(
-    city,
-    WonderProductionTarget(command.wonderType),
-    ruleset,
-    context.paceBalance,
-  );
-
-  return CityProductionReducer._finishQueuedProductionUpdate(
-    state,
-    updatedCity: updatedCity,
-    cityIndex: target.index,
-    cityId: command.cityId,
-    mapTiles: mapTiles,
-    ruleset: ruleset,
+    wonderRuleset: ruleset.wonders,
     paceBalance: context.paceBalance,
+  );
+  if (!result.accepted) return GameStateTransition(state: state);
+
+  final next = state.copyWith(cities: result.cities);
+  return GameStateTransition(
+    state: CityProductionReducer._refreshCitySelectionIfSelected(
+      next,
+      cityId: command.cityId,
+      city: result.cities[cityIndex],
+      mapTiles: mapTiles,
+      ruleset: ruleset,
+      paceBalance: context.paceBalance,
+    ),
   );
 }

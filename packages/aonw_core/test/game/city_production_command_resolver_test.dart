@@ -156,6 +156,109 @@ void main() {
     });
   });
 
+  group('CityProductionCommandResolver.startWonder', () {
+    test('starts one immutable queue without mutating input identities', () {
+      final activeQueue = CityProductionQueue.building(
+        buildingType: CityBuildingType.granary,
+        investedProduction: 7,
+      );
+      final selected = _productionCity(
+        productionQueue: activeQueue,
+        productionOverflow: 13,
+      );
+      final unrelated = _productionCity(
+        id: 'city_2',
+        ownerPlayerId: _otherPlayerId,
+      );
+      final cities = [selected, unrelated];
+
+      final result = _startWonder(cities: cities);
+
+      expect(result.accepted, isTrue);
+      expect(result.reason, isNull);
+      expect(identical(result.cities, cities), isFalse);
+      expect(identical(result.cities.first, selected), isFalse);
+      expect(
+        identical(result.cities.first.productionQueue, activeQueue),
+        isFalse,
+      );
+      expect(identical(result.cities.last, unrelated), isTrue);
+      expect(
+        result.cities.first.productionQueue,
+        CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: 7,
+        ),
+      );
+      expect(result.cities.first.productionOverflow, 13);
+      expect(selected.productionQueue, same(activeQueue));
+      expect(selected.productionOverflow, 13);
+      expect(() => result.cities.clear(), throwsUnsupportedError);
+    });
+
+    test('forwards custom rules, map requirements, and pace-scaled cost', () {
+      final unavailableCities = [_productionCity(productionOverflow: 100)];
+      final unavailable = _startWonder(
+        cities: unavailableCities,
+        wonderRuleset: _customWonderRuleset,
+      );
+
+      expect(unavailable.accepted, isFalse);
+      expect(unavailable.reason, 'wonder_not_available');
+      expect(identical(unavailable.cities, unavailableCities), isTrue);
+
+      final availableCities = [_productionCity(productionOverflow: 100)];
+      final available = _startWonder(
+        cities: availableCities,
+        mapTiles: _productionMapTiles(hostTerrain: TerrainType.desert),
+        wonderRuleset: _customWonderRuleset,
+      );
+
+      expect(available.accepted, isTrue);
+      expect(
+        available.cities.single.productionQueue,
+        CityProductionQueue.wonder(
+          wonderType: WonderType.greatLibrary,
+          investedProduction: 8,
+        ),
+      );
+      expect(available.cities.single.productionOverflow, 0);
+    });
+
+    test('preserves exact rejection precedence and input identity', () {
+      final completed = WonderRegistry.empty.complete(
+        type: WonderType.greatLibrary,
+        playerId: _otherPlayerId,
+      );
+      _expectWonderRejected(
+        cities: const [],
+        actorPlayerId: _otherPlayerId,
+        research: ResearchState.empty,
+        wonderRegistry: completed,
+        reason: 'city_not_found',
+      );
+      _expectWonderRejected(
+        cities: [
+          _productionCity(
+            ownerPlayerId: _otherPlayerId,
+            productionQueue: CityProductionQueue.wonder(
+              wonderType: WonderType.greatLibrary,
+              investedProduction: 11,
+            ),
+          ),
+        ],
+        research: ResearchState.empty,
+        wonderRegistry: completed,
+        reason: 'city_not_controlled',
+      );
+      _expectWonderRejected(
+        cities: [_productionCity()],
+        research: ResearchState.empty,
+        reason: 'wonder_not_available',
+      );
+    });
+  });
+
   group('CityProductionCommandResolver.startCityProject', () {
     test('starts a fresh immutable project without carrying overflow', () {
       final selected = _productionCity(productionOverflow: 21);

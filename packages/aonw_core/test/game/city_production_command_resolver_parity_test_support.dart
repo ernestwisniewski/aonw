@@ -16,6 +16,7 @@ typedef _ProductionResults = ({
 _ProductionStates _productionStates({
   required GameCity primary,
   ResearchState research = ResearchState.empty,
+  WonderRegistry wonderRegistry = WonderRegistry.empty,
 }) {
   final cities = [
     primary,
@@ -31,6 +32,7 @@ _ProductionStates _productionStates({
       playerGold: const {_playerId: 17, _otherPlayerId: 11},
       cities: cities,
       research: research,
+      wonderRegistry: wonderRegistry,
       runtimeState: GameRuntimeState.snapshot(
         submittedPlayerIds: const {_otherPlayerId},
         timeoutStreaksByPlayerId: const {_otherPlayerId: 2},
@@ -57,6 +59,7 @@ _ProductionStates _productionStates({
       playerGold: const {_playerId: 17, _otherPlayerId: 11},
       cities: cities,
       research: research,
+      wonderRegistry: wonderRegistry,
     ),
   );
 }
@@ -108,6 +111,35 @@ _ProductionResults _startBuildingBoth(
       cityRuleset: CityRulesets.standard,
       technologyRuleset: TechnologyRulesets.standard,
       paceBalance: PaceBalance.standard60,
+    ),
+  );
+}
+
+_ProductionResults _startWonderBoth(
+  _ProductionStates states, {
+  String actorPlayerId = _playerId,
+  MapTileLookup? mapTiles,
+  WonderRuleset wonderRuleset = WonderRuleset.standard,
+  PaceBalance paceBalance = PaceBalance.standard60,
+}) {
+  const command = StartWonderCommand('city_1', WonderType.greatLibrary);
+  final resolvedMapTiles = mapTiles ?? _parityProductionMapTiles();
+  return (
+    persistent: const PersistentCityProductionResolver().startWonder(
+      state: states.persistent,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: resolvedMapTiles,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
+    ),
+    domain: const DomainCityProductionResolver().startWonder(
+      state: states.domain,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: resolvedMapTiles,
+      wonderRuleset: wonderRuleset,
+      paceBalance: paceBalance,
     ),
   );
 }
@@ -174,7 +206,29 @@ ResearchState _parityBuildingResearch() {
   );
 }
 
-MapTileLookup _parityProductionMapTiles() {
+ResearchState _parityWonderResearch() {
+  return ResearchState(
+    players: {
+      _playerId: PlayerResearchState(
+        unlockedTechnologyIds: const {
+          TechnologyId.agriculture,
+          TechnologyId.writing,
+        },
+        activeTechnologyId: TechnologyId.trade,
+        progressByTechnologyId: const {TechnologyId.trade: 7},
+        scienceOverflow: 3,
+      ),
+      _otherPlayerId: PlayerResearchState(
+        unlockedTechnologyIds: const {TechnologyId.agriculture},
+        scienceOverflow: 2,
+      ),
+    },
+  );
+}
+
+MapTileLookup _parityProductionMapTiles({
+  TerrainType hostTerrain = TerrainType.grassland,
+}) {
   return WorldMapReadView(
     WorldMap(
       cols: 5,
@@ -184,7 +238,9 @@ MapTileLookup _parityProductionMapTiles() {
           for (var col = 0; col < 5; col++)
             WorldTile(
               coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.grassland],
+              terrains: col == 1 && row == 1
+                  ? [hostTerrain]
+                  : const [TerrainType.grassland],
               resources: const [],
               height: 0,
             ),
@@ -192,6 +248,19 @@ MapTileLookup _parityProductionMapTiles() {
     ),
   );
 }
+
+const _parityCustomWonderRuleset = WonderRuleset(
+  wonders: {
+    WonderType.greatLibrary: WonderDefinition(
+      type: WonderType.greatLibrary,
+      productionCost: 20,
+      unlockTech: TechnologyId.writing,
+      requirements: [
+        WonderHostTerrainRequirement({TerrainType.desert}),
+      ],
+    ),
+  },
+);
 
 void _expectAcceptedProductionParity(
   _ProductionStates before,

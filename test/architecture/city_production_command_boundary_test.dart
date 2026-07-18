@@ -14,6 +14,8 @@ const _domainAdapterPath =
     'domain_city_production_resolver.dart';
 const _localBuildingCallSite =
     'lib/game/domain/reducer/city/city_production_reducer_building.dart';
+const _localWonderCallSite =
+    'lib/game/domain/reducer/city/city_production_reducer_wonder.dart';
 const _localProjectCallSite =
     'lib/game/domain/reducer/city/city_production_reducer_project.dart';
 const _localSpecializationCallSite =
@@ -69,6 +71,47 @@ void main() {
         sources,
         'DomainCityProductionResolver',
         'startBuilding',
+      ),
+      isEmpty,
+      reason: 'Production must call the state-neutral production kernel.',
+    );
+  });
+
+  test('city wonder paths share one state-neutral production kernel', () {
+    final sources = productionDartSources();
+
+    expect(
+      staticMemberReferenceCountsByPath(
+        sources,
+        'CityProductionCommandResolver',
+        'startWonder',
+      ),
+      {
+        _persistentAdapterPath: 1,
+        _domainAdapterPath: 1,
+        _localWonderCallSite: 1,
+        _serverCallSite: 1,
+      },
+      reason:
+          'Unexpected CityProductionCommandResolver.startWonder '
+          'call-sites.',
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'PersistentCityProductionResolver',
+        'startWonder',
+      ),
+      {_economySimulationCallSite: 1},
+      reason:
+          'Unexpected PersistentCityProductionResolver.startWonder '
+          'call-sites.',
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'DomainCityProductionResolver',
+        'startWonder',
       ),
       isEmpty,
       reason: 'Production must call the state-neutral production kernel.',
@@ -211,39 +254,46 @@ void main() {
       final mapTileLookupTypes = typeNamesBackedBy(sources, const {
         'MapTileLookup',
       });
-      final typesOutsideStartBuilding = namedTypeReferencesOutsideClassMethods(
-        kernelSource,
-        path: _kernelPath,
-        className: 'CityProductionCommandResolver',
-        excludedMethodNames: const {'startBuilding'},
-      );
+      const mapDependentMethods = {'startBuilding', 'startWonder'};
+      final typesOutsideMapDependentMethods =
+          namedTypeReferencesOutsideClassMethods(
+            kernelSource,
+            path: _kernelPath,
+            className: 'CityProductionCommandResolver',
+            excludedMethodNames: mapDependentMethods,
+          );
       expect(
-        typesOutsideStartBuilding.intersection(mapTileLookupTypes),
+        typesOutsideMapDependentMethods.intersection(mapTileLookupTypes),
         isEmpty,
-        reason: 'Only startBuilding may depend on bounded map lookup.',
+        reason:
+            'Only startBuilding and startWonder may depend on bounded map '
+            'lookup.',
       );
-      final startBuildingParameterTypes = classMethodParameterNamedTypes(
-        kernelSource,
-        path: _kernelPath,
-        className: 'CityProductionCommandResolver',
-        methodName: 'startBuilding',
-      );
-      final mapParameters = {
-        for (final entry in startBuildingParameterTypes.entries)
-          if (entry.value.intersection(mapTileLookupTypes).isNotEmpty)
-            entry.key,
-      };
-      expect(mapParameters, {'mapTiles'});
-      expect(
-        classMethodParameterTypeSource(
+      for (final methodName in mapDependentMethods) {
+        final parameterTypes = classMethodParameterNamedTypes(
           kernelSource,
           path: _kernelPath,
           className: 'CityProductionCommandResolver',
-          methodName: 'startBuilding',
-          parameterName: 'mapTiles',
-        ),
-        'MapTileLookup',
-      );
+          methodName: methodName,
+        );
+        final mapParameters = {
+          for (final entry in parameterTypes.entries)
+            if (entry.value.intersection(mapTileLookupTypes).isNotEmpty)
+              entry.key,
+        };
+        expect(mapParameters, {'mapTiles'}, reason: methodName);
+        expect(
+          classMethodParameterTypeSource(
+            kernelSource,
+            path: _kernelPath,
+            className: 'CityProductionCommandResolver',
+            methodName: methodName,
+            parameterName: 'mapTiles',
+          ),
+          'MapTileLookup',
+          reason: methodName,
+        );
+      }
     },
   );
 
@@ -252,6 +302,7 @@ void main() {
     () {
       for (final memberName in const {
         'startBuilding',
+        'startWonder',
         'startCityProject',
         'setCitySpecialization',
       }) {
@@ -307,10 +358,11 @@ void apply() => LegacyCityProductionCommandResolver.$memberName();
     },
   );
 
-  test('city building map dependency is scoped to one exact parameter', () {
+  test('city map dependencies are scoped to exact lookup parameters', () {
     const cleanSource = '''
 abstract final class CityProductionCommandResolver {
   static void startBuilding({required MapTileLookup mapTiles}) {}
+  static void startWonder({required MapTileLookup mapTiles}) {}
   static void startCityProject({required CityRuleset cityRuleset}) {}
 }
 ''';
@@ -322,23 +374,27 @@ abstract final class CityProductionCommandResolver {
       namedTypeReferencesOutsideClassMethods(
         cleanSource,
         className: 'CityProductionCommandResolver',
-        excludedMethodNames: const {'startBuilding'},
+        excludedMethodNames: const {'startBuilding', 'startWonder'},
       ).intersection(cleanMapTypes),
       isEmpty,
     );
-    expect(
-      classMethodParameterTypeSource(
-        cleanSource,
-        className: 'CityProductionCommandResolver',
-        methodName: 'startBuilding',
-        parameterName: 'mapTiles',
-      ),
-      'MapTileLookup',
-    );
+    for (final methodName in const {'startBuilding', 'startWonder'}) {
+      expect(
+        classMethodParameterTypeSource(
+          cleanSource,
+          className: 'CityProductionCommandResolver',
+          methodName: methodName,
+          parameterName: 'mapTiles',
+        ),
+        'MapTileLookup',
+        reason: methodName,
+      );
+    }
 
     const aliasedSource = '''
 abstract final class CityProductionCommandResolver {
   static void startBuilding({required MapTileLookup mapTiles}) {}
+  static void startWonder({required MapTileLookup mapTiles}) {}
   static void startCityProject({required Tiles mapTiles}) {}
 }
 ''';
@@ -353,7 +409,7 @@ abstract final class CityProductionCommandResolver {
       namedTypeReferencesOutsideClassMethods(
         aliasedSource,
         className: 'CityProductionCommandResolver',
-        excludedMethodNames: const {'startBuilding'},
+        excludedMethodNames: const {'startBuilding', 'startWonder'},
       ).intersection(aliasedMapTypes),
       isNotEmpty,
       reason: 'Scoped guard must catch MapTileLookup-backed aliases.',

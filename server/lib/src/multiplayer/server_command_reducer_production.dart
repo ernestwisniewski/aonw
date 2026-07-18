@@ -31,34 +31,23 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
         ruleset,
       );
     }
-    final result = switch (command) {
-      StartUnitProductionCommand() => _startUnitProduction(
+    if (command is StartWonderCommand) {
+      return _applyStartWonder(
+        save,
         state,
         command,
         actorPlayerId,
         mapView,
         ruleset,
-      ),
-      StartWonderCommand() => _startWonderProduction(
-        state,
-        command,
-        actorPlayerId,
-        mapView,
-        ruleset,
-      ),
-      RushProductionCommand() => _rushProduction(
-        state,
-        command,
-        actorPlayerId,
-        mapView,
-        ruleset,
-      ),
-      _ => throw ArgumentError.value(
-        command,
-        'command',
-        'Expected a production command',
-      ),
-    };
+      );
+    }
+    final result = _applyPersistentProductionCommand(
+      state,
+      command,
+      actorPlayerId,
+      mapView,
+      ruleset,
+    );
     return _fromPersistentResult(save, result);
   }
 
@@ -133,7 +122,61 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       reason: result.reason,
     );
   }
+
+  _CommandApplication _applyStartWonder(
+    GameSave save,
+    PersistentGameState state,
+    StartWonderCommand command,
+    String actorPlayerId,
+    MapReadView mapView,
+    GameRuleset ruleset,
+  ) {
+    final result = CityProductionCommandResolver.startWonder(
+      cities: state.cities,
+      research: state.research,
+      wonderRegistry: state.wonderRegistry,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapView,
+      wonderRuleset: ruleset.wonders,
+      paceBalance: ruleset.paceBalance,
+    );
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      reason: result.reason,
+    );
+  }
 }
+
+PersistentCityProductionResult _applyPersistentProductionCommand(
+  PersistentGameState state,
+  GameCommand command,
+  String actorPlayerId,
+  MapReadView mapView,
+  GameRuleset ruleset,
+) => switch (command) {
+  StartUnitProductionCommand() => _startUnitProduction(
+    state,
+    command,
+    actorPlayerId,
+    mapView,
+    ruleset,
+  ),
+  RushProductionCommand() => _rushProduction(
+    state,
+    command,
+    actorPlayerId,
+    mapView,
+    ruleset,
+  ),
+  _ => throw ArgumentError.value(
+    command,
+    'command',
+    'Expected a production command',
+  ),
+};
 
 PersistentCityProductionResult _startUnitProduction(
   PersistentGameState state,
@@ -148,21 +191,6 @@ PersistentCityProductionResult _startUnitProduction(
   mapView: mapView,
   cityRuleset: ruleset.city,
   technologyRuleset: ruleset.technology,
-  paceBalance: ruleset.paceBalance,
-);
-
-PersistentCityProductionResult _startWonderProduction(
-  PersistentGameState state,
-  StartWonderCommand command,
-  String actorPlayerId,
-  MapReadView mapView,
-  GameRuleset ruleset,
-) => const PersistentCityProductionResolver().startWonder(
-  state: state,
-  command: command,
-  actorPlayerId: actorPlayerId,
-  mapTiles: mapView,
-  wonderRuleset: ruleset.wonders,
   paceBalance: ruleset.paceBalance,
 );
 

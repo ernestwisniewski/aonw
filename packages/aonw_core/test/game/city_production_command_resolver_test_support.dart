@@ -34,6 +34,46 @@ void _expectBuildingRejected({
   expect(identical(result.cities, cities), isTrue);
 }
 
+CityProductionCommandResult _startWonder({
+  required List<GameCity> cities,
+  ResearchState? research,
+  WonderRegistry wonderRegistry = WonderRegistry.empty,
+  MapTileLookup? mapTiles,
+  WonderRuleset wonderRuleset = WonderRuleset.standard,
+  PaceBalance paceBalance = PaceBalance.standard60,
+  String actorPlayerId = _playerId,
+}) {
+  return CityProductionCommandResolver.startWonder(
+    cities: cities,
+    research: research ?? _researchWith({TechnologyId.writing}),
+    wonderRegistry: wonderRegistry,
+    command: const StartWonderCommand('city_1', WonderType.greatLibrary),
+    actorPlayerId: actorPlayerId,
+    mapTiles: mapTiles ?? _productionMapTiles(),
+    wonderRuleset: wonderRuleset,
+    paceBalance: paceBalance,
+  );
+}
+
+void _expectWonderRejected({
+  required List<GameCity> cities,
+  required ResearchState research,
+  required String reason,
+  WonderRegistry wonderRegistry = WonderRegistry.empty,
+  String actorPlayerId = _playerId,
+}) {
+  final result = _startWonder(
+    cities: cities,
+    research: research,
+    wonderRegistry: wonderRegistry,
+    actorPlayerId: actorPlayerId,
+  );
+
+  expect(result.accepted, isFalse);
+  expect(result.reason, reason);
+  expect(identical(result.cities, cities), isTrue);
+}
+
 CityProductionCommandResult _startProject({
   required List<GameCity> cities,
   String actorPlayerId = _playerId,
@@ -110,7 +150,10 @@ ResearchState _researchWith(Set<TechnologyId> technologyIds) {
   );
 }
 
-MapTileLookup _productionMapTiles({ResourceType? resource}) {
+MapTileLookup _productionMapTiles({
+  ResourceType? resource,
+  TerrainType hostTerrain = TerrainType.grassland,
+}) {
   return WorldMapReadView(
     WorldMap(
       cols: 5,
@@ -120,7 +163,9 @@ MapTileLookup _productionMapTiles({ResourceType? resource}) {
           for (var col = 0; col < 5; col++)
             WorldTile(
               coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.grassland],
+              terrains: col == 1 && row == 1
+                  ? [hostTerrain]
+                  : const [TerrainType.grassland],
               resources: col == 1 && row == 1 && resource != null
                   ? [resource]
                   : const [],
@@ -130,6 +175,19 @@ MapTileLookup _productionMapTiles({ResourceType? resource}) {
     ),
   );
 }
+
+const _customWonderRuleset = WonderRuleset(
+  wonders: {
+    WonderType.greatLibrary: WonderDefinition(
+      type: WonderType.greatLibrary,
+      productionCost: 20,
+      unlockTech: TechnologyId.writing,
+      requirements: [
+        WonderHostTerrainRequirement({TerrainType.desert}),
+      ],
+    ),
+  },
+);
 
 GameCity _productionCity({
   String id = 'city_1',
