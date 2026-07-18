@@ -84,6 +84,34 @@ _ProductionResults _startBoth(
   );
 }
 
+_ProductionResults _startBuildingBoth(
+  _ProductionStates states, {
+  String actorPlayerId = _playerId,
+}) {
+  const command = StartBuildingCommand('city_1', CityBuildingType.workshop);
+  final mapTiles = _parityProductionMapTiles();
+  return (
+    persistent: const PersistentCityProductionResolver().startBuilding(
+      state: states.persistent,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      cityRuleset: CityRulesets.standard,
+      technologyRuleset: TechnologyRulesets.standard,
+      paceBalance: PaceBalance.standard60,
+    ),
+    domain: const DomainCityProductionResolver().startBuilding(
+      state: states.domain,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      cityRuleset: CityRulesets.standard,
+      technologyRuleset: TechnologyRulesets.standard,
+      paceBalance: PaceBalance.standard60,
+    ),
+  );
+}
+
 _ProductionResults _specializeBoth(
   _ProductionStates states, {
   String actorPlayerId = _playerId,
@@ -123,6 +151,45 @@ ResearchState _paritySpecializationResearch() {
         scienceOverflow: 2,
       ),
     },
+  );
+}
+
+ResearchState _parityBuildingResearch() {
+  return ResearchState(
+    players: {
+      _playerId: PlayerResearchState(
+        unlockedTechnologyIds: const {
+          TechnologyId.agriculture,
+          TechnologyId.craftsmanship,
+        },
+        activeTechnologyId: TechnologyId.trade,
+        progressByTechnologyId: const {TechnologyId.trade: 7},
+        scienceOverflow: 3,
+      ),
+      _otherPlayerId: PlayerResearchState(
+        unlockedTechnologyIds: const {TechnologyId.agriculture},
+        scienceOverflow: 2,
+      ),
+    },
+  );
+}
+
+MapTileLookup _parityProductionMapTiles() {
+  return WorldMapReadView(
+    WorldMap(
+      cols: 5,
+      rows: 5,
+      tiles: [
+        for (var row = 0; row < 5; row++)
+          for (var col = 0; col < 5; col++)
+            WorldTile(
+              coordinate: HexCoord(col: col, row: row),
+              terrains: const [TerrainType.grassland],
+              resources: const [],
+              height: 0,
+            ),
+      ],
+    ),
   );
 }
 

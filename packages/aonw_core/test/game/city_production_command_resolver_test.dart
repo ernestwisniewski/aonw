@@ -4,6 +4,158 @@ import 'package:test/test.dart';
 part 'city_production_command_resolver_test_support.dart';
 
 void main() {
+  group('CityProductionCommandResolver.startBuilding', () {
+    test('starts production in one city and owns the immutable output', () {
+      final selected = _productionCity();
+      final unrelated = _productionCity(
+        id: 'city_2',
+        ownerPlayerId: _otherPlayerId,
+      );
+      final cities = [selected, unrelated];
+
+      final result = _startBuilding(cities: cities);
+
+      expect(result.accepted, isTrue);
+      expect(result.reason, isNull);
+      expect(identical(result.cities, cities), isFalse);
+      expect(identical(result.cities.first, selected), isFalse);
+      expect(identical(result.cities.last, unrelated), isTrue);
+      expect(
+        result.cities.first.productionQueue,
+        CityProductionQueue.building(
+          buildingType: CityBuildingType.granary,
+          investedProduction: 0,
+        ),
+      );
+      expect(selected.productionQueue, isNull);
+      expect(identical(cities.first, selected), isTrue);
+      expect(() => result.cities.clear(), throwsUnsupportedError);
+    });
+
+    test('rolls capped stored overflow into a fresh queue', () {
+      final result = _startBuilding(
+        cities: [_productionCity(productionOverflow: 21)],
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.cities.single.productionQueue,
+        CityProductionQueue.building(
+          buildingType: CityBuildingType.granary,
+          investedProduction: 3,
+        ),
+      );
+      expect(result.cities.single.productionOverflow, 0);
+    });
+
+    test('preserves active investment and stored overflow', () {
+      final result = _startBuilding(
+        cities: [
+          _productionCity(
+            productionQueue: CityProductionQueue.project(
+              projectType: CityProjectType.research,
+              investedProduction: 7,
+            ),
+            productionOverflow: 13,
+          ),
+        ],
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.cities.single.productionQueue,
+        CityProductionQueue.building(
+          buildingType: CityBuildingType.granary,
+          investedProduction: 7,
+        ),
+      );
+      expect(result.cities.single.productionOverflow, 13);
+    });
+
+    test('same target is an accepted value no-op with fresh identities', () {
+      final queue = CityProductionQueue.building(
+        buildingType: CityBuildingType.granary,
+        investedProduction: 5,
+      );
+      final city = _productionCity(
+        productionQueue: queue,
+        productionOverflow: 6,
+      );
+      final cities = [city];
+
+      final result = _startBuilding(cities: cities);
+
+      expect(result.accepted, isTrue);
+      expect(result.reason, isNull);
+      expect(identical(result.cities, cities), isFalse);
+      expect(identical(result.cities.single, city), isFalse);
+      expect(result.cities.single.productionQueue, queue);
+      expect(identical(result.cities.single.productionQueue, queue), isFalse);
+      expect(result.cities.single.productionOverflow, 6);
+    });
+
+    test('preserves exact rejection precedence and input identity', () {
+      _expectBuildingRejected(
+        cities: const [],
+        actorPlayerId: _otherPlayerId,
+        reason: 'city_not_found',
+      );
+      _expectBuildingRejected(
+        cities: [
+          _productionCity(
+            ownerPlayerId: _otherPlayerId,
+            buildings: const {CityBuildingType.granary},
+          ),
+        ],
+        reason: 'city_not_controlled',
+      );
+      _expectBuildingRejected(
+        cities: [
+          _productionCity(buildings: const {CityBuildingType.granary}),
+        ],
+        reason: 'building_not_available',
+      );
+    });
+
+    test('requires the configured technology unlock', () {
+      final locked = _startBuilding(
+        cities: [_productionCity()],
+        buildingType: CityBuildingType.workshop,
+      );
+      final unlocked = _startBuilding(
+        cities: [_productionCity()],
+        buildingType: CityBuildingType.workshop,
+        research: _researchWith({TechnologyId.craftsmanship}),
+      );
+
+      expect(locked.accepted, isFalse);
+      expect(locked.reason, 'building_not_available');
+      expect(unlocked.accepted, isTrue);
+    });
+
+    test('evaluates map-backed resource requirements', () {
+      final research = _researchWith({
+        TechnologyId.machinery,
+        TechnologyId.combustion,
+      });
+      final unavailable = _startBuilding(
+        cities: [_productionCity()],
+        buildingType: CityBuildingType.factory,
+        research: research,
+      );
+      final available = _startBuilding(
+        cities: [_productionCity()],
+        buildingType: CityBuildingType.factory,
+        research: research,
+        mapTiles: _productionMapTiles(resource: ResourceType.oil),
+      );
+
+      expect(unavailable.accepted, isFalse);
+      expect(unavailable.reason, 'building_not_available');
+      expect(available.accepted, isTrue);
+    });
+  });
+
   group('CityProductionCommandResolver.startCityProject', () {
     test('starts a fresh immutable project without carrying overflow', () {
       final selected = _productionCity(productionOverflow: 21);

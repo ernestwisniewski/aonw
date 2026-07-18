@@ -12,6 +12,8 @@ const _persistentAdapterPath =
 const _domainAdapterPath =
     'packages/aonw_core/lib/game/domain/city/'
     'domain_city_production_resolver.dart';
+const _localBuildingCallSite =
+    'lib/game/domain/reducer/city/city_production_reducer_building.dart';
 const _localProjectCallSite =
     'lib/game/domain/reducer/city/city_production_reducer_project.dart';
 const _localSpecializationCallSite =
@@ -31,39 +33,81 @@ const _economySimulationSpecializationCallSite =
     'economy_simulation_command_applier.dart';
 
 void main() {
+  test('city building paths share one state-neutral production kernel', () {
+    final sources = productionDartSources();
+
+    expect(
+      staticMemberReferenceCountsByPath(
+        sources,
+        'CityProductionCommandResolver',
+        'startBuilding',
+      ),
+      {
+        _persistentAdapterPath: 1,
+        _domainAdapterPath: 1,
+        _localBuildingCallSite: 1,
+        _serverCallSite: 1,
+        _lightweightMctsCallSite: 1,
+      },
+      reason:
+          'Unexpected CityProductionCommandResolver.startBuilding '
+          'call-sites.',
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'PersistentCityProductionResolver',
+        'startBuilding',
+      ),
+      {_fullMctsCallSite: 1, _economySimulationCallSite: 1},
+      reason:
+          'Unexpected PersistentCityProductionResolver.startBuilding '
+          'call-sites.',
+    );
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'DomainCityProductionResolver',
+        'startBuilding',
+      ),
+      isEmpty,
+      reason: 'Production must call the state-neutral production kernel.',
+    );
+  });
+
   test('city project paths share one state-neutral production kernel', () {
     final sources = productionDartSources();
 
     expect(
-      staticMemberReferencePaths(
+      staticMemberReferenceCountsByPath(
         sources,
         'CityProductionCommandResolver',
         'startCityProject',
       ),
       {
-        _persistentAdapterPath,
-        _domainAdapterPath,
-        _localProjectCallSite,
-        _serverCallSite,
-        _lightweightMctsCallSite,
+        _persistentAdapterPath: 1,
+        _domainAdapterPath: 1,
+        _localProjectCallSite: 1,
+        _serverCallSite: 1,
+        _lightweightMctsCallSite: 1,
       },
       reason:
           'Unexpected CityProductionCommandResolver.startCityProject '
           'call-sites.',
     );
     expect(
-      instanceMemberReferencePaths(
+      instanceMemberReferenceCountsByPath(
         sources,
         'PersistentCityProductionResolver',
         'startCityProject',
       ),
-      {_fullMctsCallSite, _economySimulationCallSite},
+      {_fullMctsCallSite: 1, _economySimulationCallSite: 1},
       reason:
           'Unexpected PersistentCityProductionResolver.startCityProject '
           'call-sites.',
     );
     expect(
-      instanceMemberReferencePaths(
+      instanceMemberReferenceCountsByPath(
         sources,
         'DomainCityProductionResolver',
         'startCityProject',
@@ -77,35 +121,35 @@ void main() {
     final sources = productionDartSources();
 
     expect(
-      staticMemberReferencePaths(
+      staticMemberReferenceCountsByPath(
         sources,
         'CityProductionCommandResolver',
         'setCitySpecialization',
       ),
       {
-        _persistentAdapterPath,
-        _domainAdapterPath,
-        _localSpecializationCallSite,
-        _serverCallSite,
-        _lightweightMctsCallSite,
+        _persistentAdapterPath: 1,
+        _domainAdapterPath: 1,
+        _localSpecializationCallSite: 1,
+        _serverCallSite: 1,
+        _lightweightMctsCallSite: 1,
       },
       reason:
           'Unexpected CityProductionCommandResolver.setCitySpecialization '
           'call-sites.',
     );
     expect(
-      instanceMemberReferencePaths(
+      instanceMemberReferenceCountsByPath(
         sources,
         'PersistentCityProductionResolver',
         'setCitySpecialization',
       ),
-      {_fullMctsCallSite, _economySimulationSpecializationCallSite},
+      {_fullMctsCallSite: 1, _economySimulationSpecializationCallSite: 1},
       reason:
           'Unexpected PersistentCityProductionResolver.setCitySpecialization '
           'call-sites.',
     );
     expect(
-      instanceMemberReferencePaths(
+      instanceMemberReferenceCountsByPath(
         sources,
         'DomainCityProductionResolver',
         'setCitySpecialization',
@@ -149,7 +193,6 @@ void main() {
         'MapDefinition',
         'MapReadView',
         'MapTraversalView',
-        'MapTileLookup',
         'MapTileView',
         'MapTileCatalog',
         'MapSurvey',
@@ -164,6 +207,43 @@ void main() {
         'UiEffect',
       });
       expect(kernelTypes.intersection(forbiddenTypes), isEmpty);
+
+      final mapTileLookupTypes = typeNamesBackedBy(sources, const {
+        'MapTileLookup',
+      });
+      final typesOutsideStartBuilding = namedTypeReferencesOutsideClassMethods(
+        kernelSource,
+        path: _kernelPath,
+        className: 'CityProductionCommandResolver',
+        excludedMethodNames: const {'startBuilding'},
+      );
+      expect(
+        typesOutsideStartBuilding.intersection(mapTileLookupTypes),
+        isEmpty,
+        reason: 'Only startBuilding may depend on bounded map lookup.',
+      );
+      final startBuildingParameterTypes = classMethodParameterNamedTypes(
+        kernelSource,
+        path: _kernelPath,
+        className: 'CityProductionCommandResolver',
+        methodName: 'startBuilding',
+      );
+      final mapParameters = {
+        for (final entry in startBuildingParameterTypes.entries)
+          if (entry.value.intersection(mapTileLookupTypes).isNotEmpty)
+            entry.key,
+      };
+      expect(mapParameters, {'mapTiles'});
+      expect(
+        classMethodParameterTypeSource(
+          kernelSource,
+          path: _kernelPath,
+          className: 'CityProductionCommandResolver',
+          methodName: 'startBuilding',
+          parameterName: 'mapTiles',
+        ),
+        'MapTileLookup',
+      );
     },
   );
 
@@ -171,6 +251,7 @@ void main() {
     'city production static guard catches aliases, prefixes, and tear-offs',
     () {
       for (final memberName in const {
+        'startBuilding',
         'startCityProject',
         'setCitySpecialization',
       }) {
@@ -194,6 +275,11 @@ void apply() => core.CityProductionCommandResolver.$memberName();
               '''
 final applyProduction = CityProductionCommandResolver.$memberName;
 ''',
+          'duplicate.dart':
+              '''
+void applyOnce() => CityProductionCommandResolver.$memberName();
+final applyAgain = CityProductionCommandResolver.$memberName;
+''',
           'unrelated.dart':
               '''
 abstract final class LegacyCityProductionCommandResolver {
@@ -204,15 +290,73 @@ void apply() => LegacyCityProductionCommandResolver.$memberName();
         };
 
         expect(
-          staticMemberReferencePaths(
+          staticMemberReferenceCountsByPath(
             sources,
             'CityProductionCommandResolver',
             memberName,
           ),
-          {'alias.dart', 'prefixed.dart', 'tear_off.dart'},
+          {
+            'alias.dart': 1,
+            'prefixed.dart': 1,
+            'tear_off.dart': 1,
+            'duplicate.dart': 2,
+          },
           reason: 'Static guard missed an indirect $memberName reference.',
         );
       }
     },
   );
+
+  test('city building map dependency is scoped to one exact parameter', () {
+    const cleanSource = '''
+abstract final class CityProductionCommandResolver {
+  static void startBuilding({required MapTileLookup mapTiles}) {}
+  static void startCityProject({required CityRuleset cityRuleset}) {}
+}
+''';
+    final cleanSources = {'kernel.dart': cleanSource};
+    final cleanMapTypes = typeNamesBackedBy(cleanSources, const {
+      'MapTileLookup',
+    });
+    expect(
+      namedTypeReferencesOutsideClassMethods(
+        cleanSource,
+        className: 'CityProductionCommandResolver',
+        excludedMethodNames: const {'startBuilding'},
+      ).intersection(cleanMapTypes),
+      isEmpty,
+    );
+    expect(
+      classMethodParameterTypeSource(
+        cleanSource,
+        className: 'CityProductionCommandResolver',
+        methodName: 'startBuilding',
+        parameterName: 'mapTiles',
+      ),
+      'MapTileLookup',
+    );
+
+    const aliasedSource = '''
+abstract final class CityProductionCommandResolver {
+  static void startBuilding({required MapTileLookup mapTiles}) {}
+  static void startCityProject({required Tiles mapTiles}) {}
+}
+''';
+    final aliasedSources = {
+      'aliases.dart': 'typedef Tiles = MapTileLookup;',
+      'kernel.dart': aliasedSource,
+    };
+    final aliasedMapTypes = typeNamesBackedBy(aliasedSources, const {
+      'MapTileLookup',
+    });
+    expect(
+      namedTypeReferencesOutsideClassMethods(
+        aliasedSource,
+        className: 'CityProductionCommandResolver',
+        excludedMethodNames: const {'startBuilding'},
+      ).intersection(aliasedMapTypes),
+      isNotEmpty,
+      reason: 'Scoped guard must catch MapTileLookup-backed aliases.',
+    );
+  });
 }

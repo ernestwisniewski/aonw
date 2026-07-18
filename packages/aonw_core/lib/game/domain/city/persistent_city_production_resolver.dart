@@ -1,4 +1,3 @@
-import 'package:aonw_core/game/domain/city/city_building_requirement_rules.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
 import 'package:aonw_core/game/domain/city/city_production_command_resolver.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
@@ -50,54 +49,19 @@ class PersistentCityProductionResolver {
     required MapTileLookup mapTiles,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    WonderRuleset wonderRuleset = WonderRuleset.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final lookup = _cityLookup(state.cities, command.cityId);
-    if (lookup == null) return _reject(state, 'city_not_found');
-    final (:cityIndex, :city) = lookup;
-    if (city.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'city_not_controlled');
-    }
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasBuildingUnlocked(
-      playerId: city.ownerPlayerId,
-      buildingType: command.buildingType,
+    final result = CityProductionCommandResolver.startBuilding(
+      cities: state.cities,
       research: state.research,
-      ruleset: technologyRuleset,
-    );
-    final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
-      city: city,
-      buildingType: command.buildingType,
+      command: command,
+      actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
-      ruleset: cityRuleset,
-      research: state.research,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      paceBalance: paceBalance,
     );
-    if (!CityProductionRules.canBuild(
-      city.buildings,
-      command.buildingType,
-      ruleset: cityRuleset,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return _reject(state, 'building_not_available');
-    }
-
-    return PersistentCityProductionResult(
-      accepted: true,
-      state: state.copyWith(
-        cities: _replaceCity(
-          state.cities,
-          cityIndex,
-          _queueProduction(
-            city,
-            BuildingProductionTarget(command.buildingType),
-            cityRuleset,
-            paceBalance,
-          ),
-        ),
-      ),
-    );
+    return _fromCommandResult(state, result);
   }
 
   PersistentCityProductionResult startUnitProduction({

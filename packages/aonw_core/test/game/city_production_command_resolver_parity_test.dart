@@ -5,6 +5,129 @@ part 'city_production_command_resolver_parity_test_support.dart';
 
 void main() {
   group('city production persistent/domain adapter parity', () {
+    test('fresh building has exact state-boundary parity', () {
+      final research = _parityBuildingResearch();
+      final states = _productionStates(
+        primary: _parityProductionCity(productionOverflow: 21),
+        research: research,
+      );
+
+      final results = _startBuildingBoth(states);
+
+      _expectAcceptedProductionParity(states, results);
+      expect(
+        results.persistent.state.cities.first.productionQueue,
+        CityProductionQueue.building(
+          buildingType: CityBuildingType.workshop,
+          investedProduction: 6,
+        ),
+      );
+      expect(results.persistent.state.cities.first.productionOverflow, 0);
+      expect(identical(results.persistent.state.research, research), isTrue);
+      expect(identical(results.domain.state.research, research), isTrue);
+    });
+
+    test('active building queue preserves investment across adapters', () {
+      final states = _productionStates(
+        primary: _parityProductionCity(
+          productionQueue: CityProductionQueue.project(
+            projectType: CityProjectType.research,
+            investedProduction: 7,
+          ),
+          productionOverflow: 13,
+        ),
+        research: _parityBuildingResearch(),
+      );
+
+      final results = _startBuildingBoth(states);
+
+      _expectAcceptedProductionParity(states, results);
+      expect(
+        results.domain.state.cities.first.productionQueue,
+        CityProductionQueue.building(
+          buildingType: CityBuildingType.workshop,
+          investedProduction: 7,
+        ),
+      );
+      expect(results.domain.state.cities.first.productionOverflow, 13);
+    });
+
+    test('same building target creates fresh identities in both adapters', () {
+      final primary = _parityProductionCity(
+        productionQueue: CityProductionQueue.building(
+          buildingType: CityBuildingType.workshop,
+          investedProduction: 9,
+        ),
+        productionOverflow: 4,
+      );
+      final states = _productionStates(
+        primary: primary,
+        research: _parityBuildingResearch(),
+      );
+
+      final results = _startBuildingBoth(states);
+
+      _expectAcceptedProductionParity(states, results);
+      expect(
+        results.persistent.state.cities.first.productionQueue,
+        states.persistent.cities.first.productionQueue,
+      );
+      expect(
+        identical(
+          results.persistent.state.cities.first,
+          states.persistent.cities.first,
+        ),
+        isFalse,
+      );
+      expect(
+        identical(
+          results.domain.state.cities.first,
+          states.domain.cities.first,
+        ),
+        isFalse,
+      );
+      expect(
+        identical(
+          results.persistent.state.cities.first.productionQueue,
+          states.persistent.cities.first.productionQueue,
+        ),
+        isFalse,
+      );
+    });
+
+    test('building rejections preserve precedence and state identities', () {
+      final missingStates = _productionStates(
+        primary: _parityProductionCity(id: 'city_missing'),
+      );
+      _expectRejectedProductionParity(
+        missingStates,
+        _startBuildingBoth(missingStates, actorPlayerId: _otherPlayerId),
+        reason: 'city_not_found',
+      );
+
+      final foreignStates = _productionStates(
+        primary: _parityProductionCity(
+          ownerPlayerId: _otherPlayerId,
+          buildings: const {CityBuildingType.workshop},
+        ),
+        research: _parityBuildingResearch(),
+      );
+      _expectRejectedProductionParity(
+        foreignStates,
+        _startBuildingBoth(foreignStates),
+        reason: 'city_not_controlled',
+      );
+
+      final unavailableStates = _productionStates(
+        primary: _parityProductionCity(),
+      );
+      _expectRejectedProductionParity(
+        unavailableStates,
+        _startBuildingBoth(unavailableStates),
+        reason: 'building_not_available',
+      );
+    });
+
     test('fresh project has exact state-boundary parity', () {
       final states = _productionStates(
         primary: _parityProductionCity(productionOverflow: 21),

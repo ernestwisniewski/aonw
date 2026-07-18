@@ -21,14 +21,17 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     if (command is SetCitySpecializationCommand) {
       return _applySetCitySpecialization(save, state, command, actorPlayerId);
     }
-    final result = switch (command) {
-      StartBuildingCommand() => _startBuildingProduction(
+    if (command is StartBuildingCommand) {
+      return _applyStartBuilding(
+        save,
         state,
         command,
         actorPlayerId,
         mapView,
         ruleset,
-      ),
+      );
+    }
+    final result = switch (command) {
       StartUnitProductionCommand() => _startUnitProduction(
         state,
         command,
@@ -104,23 +107,33 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       reason: result.reason,
     );
   }
-}
 
-PersistentCityProductionResult _startBuildingProduction(
-  PersistentGameState state,
-  StartBuildingCommand command,
-  String actorPlayerId,
-  MapReadView mapView,
-  GameRuleset ruleset,
-) => const PersistentCityProductionResolver().startBuilding(
-  state: state,
-  command: command,
-  actorPlayerId: actorPlayerId,
-  mapTiles: mapView,
-  cityRuleset: ruleset.city,
-  technologyRuleset: ruleset.technology,
-  paceBalance: ruleset.paceBalance,
-);
+  _CommandApplication _applyStartBuilding(
+    GameSave save,
+    PersistentGameState state,
+    StartBuildingCommand command,
+    String actorPlayerId,
+    MapReadView mapView,
+    GameRuleset ruleset,
+  ) {
+    final result = CityProductionCommandResolver.startBuilding(
+      cities: state.cities,
+      research: state.research,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapView,
+      cityRuleset: ruleset.city,
+      technologyRuleset: ruleset.technology,
+      paceBalance: ruleset.paceBalance,
+    );
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      reason: result.reason,
+    );
+  }
+}
 
 PersistentCityProductionResult _startUnitProduction(
   PersistentGameState state,

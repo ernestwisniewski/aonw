@@ -16,6 +16,7 @@ import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'city_production_reducer_rush.dart';
+part 'city_production_reducer_building.dart';
 part 'city_production_reducer_project.dart';
 part 'city_production_reducer_specialization.dart';
 part 'city_production_reducer_supply.dart';
@@ -34,53 +35,13 @@ abstract final class CityProductionReducer {
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     GameRuleset ruleset = GameRuleset.defaults,
-  }) {
-    final target = _controlledCityTarget(state, command.cityId, context);
-    if (target == null) {
-      return GameStateTransition(state: state);
-    }
-    final city = target.city;
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasBuildingUnlocked(
-      playerId: city.ownerPlayerId,
-      buildingType: command.buildingType,
-      research: state.research,
-      ruleset: ruleset.technology,
-    );
-    final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
-      city: city,
-      buildingType: command.buildingType,
-      mapTiles: mapTiles,
-      ruleset: ruleset.city,
-      research: state.research,
-    );
-    if (!CityProductionRules.canBuild(
-      city.buildings,
-      command.buildingType,
-      ruleset: ruleset.city,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return GameStateTransition(state: state);
-    }
-
-    final updatedCity = _queueProduction(
-      city,
-      BuildingProductionTarget(command.buildingType),
-      ruleset,
-      context.paceBalance,
-    );
-
-    return _finishQueuedProductionUpdate(
-      state,
-      updatedCity: updatedCity,
-      cityIndex: target.index,
-      cityId: command.cityId,
-      mapTiles: mapTiles,
-      ruleset: ruleset,
-      paceBalance: context.paceBalance,
-    );
-  }
+  }) => _startBuildingProduction(
+    state,
+    command,
+    mapTiles,
+    context: context,
+    ruleset: ruleset,
+  );
 
   static GameStateTransition startUnitProduction(
     GameState state,

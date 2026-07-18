@@ -4,6 +4,9 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
+import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
+import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class DomainCityProductionResult {
   const DomainCityProductionResult({
@@ -20,6 +23,28 @@ final class DomainCityProductionResult {
 /// Canonical-state adapter for the state-neutral city-production resolver.
 final class DomainCityProductionResolver {
   const DomainCityProductionResolver();
+
+  DomainCityProductionResult startBuilding({
+    required DomainState state,
+    required StartBuildingCommand command,
+    required String actorPlayerId,
+    required MapTileLookup mapTiles,
+    CityRuleset cityRuleset = CityRulesets.standard,
+    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
+    PaceBalance paceBalance = PaceBalance.unlimited,
+  }) {
+    final result = CityProductionCommandResolver.startBuilding(
+      cities: state.cities,
+      research: state.research,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      paceBalance: paceBalance,
+    );
+    return _fromCommandResult(state, result);
+  }
 
   DomainCityProductionResult startCityProject({
     required DomainState state,

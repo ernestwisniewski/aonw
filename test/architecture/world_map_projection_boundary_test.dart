@@ -39,6 +39,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/city/city_expansion_reducer.dart',
   'lib/game/domain/reducer/city/city_founding_reducer.dart',
   'lib/game/domain/reducer/city/city_production_reducer.dart',
+  'lib/game/domain/reducer/city/city_production_reducer_building.dart',
   'lib/game/domain/reducer/city/city_production_reducer_project.dart',
   'lib/game/domain/reducer/city/city_production_reducer_rush.dart',
   'lib/game/domain/reducer/city/city_production_reducer_specialization.dart',

@@ -95,37 +95,17 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   List<GameCity> applyStartBuilding(StartBuildingCommand command) {
-    final lookup = _cityLookup(command.cityId);
-    if (lookup == null) return ownCities;
-    final (:cityIndex, :city) = lookup;
-
-    final technologyUnlocked = TechnologyUnlockQuery.hasBuildingUnlocked(
-      playerId: city.ownerPlayerId,
-      buildingType: command.buildingType,
+    final result = CityProductionCommandResolver.startBuilding(
+      cities: ownCities,
       research: _researchState,
-      ruleset: view.ruleset.technology,
-    );
-    final requirementsMet = CityBuildingRequirementRules.meetsRequirements(
-      city: city,
-      buildingType: command.buildingType,
+      command: command,
+      actorPlayerId: view.forPlayerId,
       mapTiles: view.mapData,
-      ruleset: view.ruleset.city,
-      research: _researchState,
+      cityRuleset: view.ruleset.city,
+      technologyRuleset: view.ruleset.technology,
+      paceBalance: view.ruleset.paceBalance,
     );
-    if (!CityProductionRules.canBuild(
-      city.buildings,
-      command.buildingType,
-      ruleset: view.ruleset.city,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return ownCities;
-    }
-
-    return _replaceCity(
-      cityIndex,
-      _queueProduction(city, BuildingProductionTarget(command.buildingType)),
-    );
+    return result.accepted ? result.cities : ownCities;
   }
 
   List<GameCity> applyStartUnitProduction(StartUnitProductionCommand command) {

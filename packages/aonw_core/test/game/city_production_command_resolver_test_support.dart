@@ -3,6 +3,37 @@ part of 'city_production_command_resolver_test.dart';
 const _playerId = 'player_1';
 const _otherPlayerId = 'player_2';
 
+CityProductionCommandResult _startBuilding({
+  required List<GameCity> cities,
+  CityBuildingType buildingType = CityBuildingType.granary,
+  ResearchState research = ResearchState.empty,
+  MapTileLookup? mapTiles,
+  String actorPlayerId = _playerId,
+}) {
+  return CityProductionCommandResolver.startBuilding(
+    cities: cities,
+    research: research,
+    command: StartBuildingCommand('city_1', buildingType),
+    actorPlayerId: actorPlayerId,
+    mapTiles: mapTiles ?? _productionMapTiles(),
+    cityRuleset: CityRulesets.standard,
+    technologyRuleset: TechnologyRulesets.standard,
+    paceBalance: PaceBalance.standard60,
+  );
+}
+
+void _expectBuildingRejected({
+  required List<GameCity> cities,
+  required String reason,
+  String actorPlayerId = _playerId,
+}) {
+  final result = _startBuilding(cities: cities, actorPlayerId: actorPlayerId);
+
+  expect(result.accepted, isFalse);
+  expect(result.reason, reason);
+  expect(identical(result.cities, cities), isTrue);
+}
+
 CityProductionCommandResult _startProject({
   required List<GameCity> cities,
   String actorPlayerId = _playerId,
@@ -68,6 +99,35 @@ ResearchState _specializationResearch() {
         unlockedTechnologyIds: const {TechnologyId.specialization},
       ),
     },
+  );
+}
+
+ResearchState _researchWith(Set<TechnologyId> technologyIds) {
+  return ResearchState(
+    players: {
+      _playerId: PlayerResearchState(unlockedTechnologyIds: technologyIds),
+    },
+  );
+}
+
+MapTileLookup _productionMapTiles({ResourceType? resource}) {
+  return WorldMapReadView(
+    WorldMap(
+      cols: 5,
+      rows: 5,
+      tiles: [
+        for (var row = 0; row < 5; row++)
+          for (var col = 0; col < 5; col++)
+            WorldTile(
+              coordinate: HexCoord(col: col, row: row),
+              terrains: const [TerrainType.grassland],
+              resources: col == 1 && row == 1 && resource != null
+                  ? [resource]
+                  : const [],
+              height: 0,
+            ),
+      ],
+    ),
   );
 }
 

@@ -53,6 +53,87 @@ Set<String> namedTypeReferencesInSource(
   return names;
 }
 
+Set<String> namedTypeReferencesOutsideClassMethods(
+  String source, {
+  required String className,
+  required Set<String> excludedMethodNames,
+  String path = 'source.dart',
+}) {
+  final names = <String>{};
+  final unit = parseString(content: source, path: path).unit;
+  final visitor = _NamedTypeNameVisitor(names);
+  for (final declaration in unit.declarations) {
+    if (declaration is! ClassDeclaration ||
+        declaration.namePart.typeName.lexeme != className) {
+      declaration.accept(visitor);
+      continue;
+    }
+    for (final member in declaration.body.members) {
+      if (member is MethodDeclaration &&
+          excludedMethodNames.contains(member.name.lexeme)) {
+        continue;
+      }
+      member.accept(visitor);
+    }
+  }
+  return names;
+}
+
+Map<String, Set<String>> classMethodParameterNamedTypes(
+  String source, {
+  required String className,
+  required String methodName,
+  String path = 'source.dart',
+}) {
+  final method = _classMethod(
+    source,
+    path: path,
+    className: className,
+    methodName: methodName,
+  );
+  final result = <String, Set<String>>{};
+  for (final parameter
+      in method?.parameters?.parameters ?? const <FormalParameter>[]) {
+    final FormalParameter normalized = parameter is DefaultFormalParameter
+        ? parameter.parameter
+        : parameter;
+    final name = normalized.name?.lexeme;
+    if (name == null) continue;
+    final names = <String>{};
+    normalized.accept(_NamedTypeNameVisitor(names));
+    result[name] = names;
+  }
+  return result;
+}
+
+String? classMethodParameterTypeSource(
+  String source, {
+  required String className,
+  required String methodName,
+  required String parameterName,
+  String path = 'source.dart',
+}) {
+  final method = _classMethod(
+    source,
+    path: path,
+    className: className,
+    methodName: methodName,
+  );
+  for (final parameter
+      in method?.parameters?.parameters ?? const <FormalParameter>[]) {
+    final FormalParameter normalized = parameter is DefaultFormalParameter
+        ? parameter.parameter
+        : parameter;
+    if (normalized.name?.lexeme != parameterName) continue;
+    return switch (normalized) {
+      SimpleFormalParameter(:final type) => type?.toSource(),
+      FieldFormalParameter(:final type) => type?.toSource(),
+      _ => null,
+    };
+  }
+  return null;
+}
+
 Set<String> typeNamesBackedBy(
   Map<String, String> sources,
   Set<String> rootNames,
@@ -136,6 +217,23 @@ List<String> constructedTypeViolations(
 String _workspaceRelativeSourcePath(String path) {
   final prefix = '${Directory.current.path}${Platform.pathSeparator}';
   return path.startsWith(prefix) ? path.substring(prefix.length) : path;
+}
+
+MethodDeclaration? _classMethod(
+  String source, {
+  required String path,
+  required String className,
+  required String methodName,
+}) {
+  final unit = parseString(content: source, path: path).unit;
+  for (final declaration in unit.declarations.whereType<ClassDeclaration>()) {
+    if (declaration.namePart.typeName.lexeme != className) continue;
+    for (final method
+        in declaration.body.members.whereType<MethodDeclaration>()) {
+      if (method.name.lexeme == methodName) return method;
+    }
+  }
+  return null;
 }
 
 final class _NamedTypeNameVisitor extends RecursiveAstVisitor<void> {

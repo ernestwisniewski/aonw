@@ -10,16 +10,30 @@ Set<String> staticMemberReferencePaths(
   Map<String, String> sources,
   String targetType,
   String memberName,
+) => staticMemberReferenceCountsByPath(
+  sources,
+  targetType,
+  memberName,
+).keys.toSet();
+
+/// Counts static-member references per source file.
+///
+/// Unlike [staticMemberReferencePaths], this also guards against duplicate
+/// calls being hidden inside an already-allowed file.
+Map<String, int> staticMemberReferenceCountsByPath(
+  Map<String, String> sources,
+  String targetType,
+  String memberName,
 ) {
-  final paths = <String>{};
+  final counts = <String, int>{};
   final targetTypes = typeNamesBackedBy(sources, {targetType});
   for (final entry in sources.entries) {
     final unit = parseString(content: entry.value, path: entry.key).unit;
     final collector = _StaticMemberReferenceCollector(targetTypes, memberName);
     unit.accept(collector);
-    if (collector.found) paths.add(entry.key);
+    if (collector.count > 0) counts[entry.key] = collector.count;
   }
-  return paths;
+  return counts;
 }
 
 /// Finds source files that reference an instance member on [targetType].
@@ -32,8 +46,22 @@ Set<String> instanceMemberReferencePaths(
   Map<String, String> sources,
   String targetType,
   String memberName,
+) => instanceMemberReferenceCountsByPath(
+  sources,
+  targetType,
+  memberName,
+).keys.toSet();
+
+/// Counts instance-member references per source file.
+///
+/// This makes exact call-site ratchets sensitive to a second invocation added
+/// to a file that is already on the allowlist.
+Map<String, int> instanceMemberReferenceCountsByPath(
+  Map<String, String> sources,
+  String targetType,
+  String memberName,
 ) {
-  final paths = <String>{};
+  final counts = <String, int>{};
   final targetTypes = typeNamesBackedBy(sources, {targetType});
   for (final entry in sources.entries) {
     final unit = parseString(content: entry.value, path: entry.key).unit;
@@ -48,9 +76,9 @@ Set<String> instanceMemberReferencePaths(
       memberName: memberName,
     );
     unit.accept(references);
-    if (references.found) paths.add(entry.key);
+    if (references.count > 0) counts[entry.key] = references.count;
   }
-  return paths;
+  return counts;
 }
 
 final class _StaticMemberReferenceCollector extends RecursiveAstVisitor<void> {
@@ -58,12 +86,12 @@ final class _StaticMemberReferenceCollector extends RecursiveAstVisitor<void> {
 
   final Set<String> targetTypes;
   final String memberName;
-  bool found = false;
+  int count = 0;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == memberName && _isTarget(node.target)) {
-      found = true;
+      count++;
     }
     super.visitMethodInvocation(node);
   }
@@ -71,7 +99,7 @@ final class _StaticMemberReferenceCollector extends RecursiveAstVisitor<void> {
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
     if (node.identifier.name == memberName && _isTarget(node.prefix)) {
-      found = true;
+      count++;
     }
     super.visitPrefixedIdentifier(node);
   }
@@ -79,7 +107,7 @@ final class _StaticMemberReferenceCollector extends RecursiveAstVisitor<void> {
   @override
   void visitPropertyAccess(PropertyAccess node) {
     if (node.propertyName.name == memberName && _isTarget(node.target)) {
-      found = true;
+      count++;
     }
     super.visitPropertyAccess(node);
   }
@@ -189,12 +217,12 @@ final class _InstanceMemberReferenceCollector
   final Set<String> targetBindings;
   final Set<String> targetFactories;
   final String memberName;
-  bool found = false;
+  int count = 0;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == memberName && _isTarget(node.target)) {
-      found = true;
+      count++;
     }
     super.visitMethodInvocation(node);
   }
@@ -202,7 +230,7 @@ final class _InstanceMemberReferenceCollector
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
     if (node.identifier.name == memberName && _isTarget(node.prefix)) {
-      found = true;
+      count++;
     }
     super.visitPrefixedIdentifier(node);
   }
@@ -210,7 +238,7 @@ final class _InstanceMemberReferenceCollector
   @override
   void visitPropertyAccess(PropertyAccess node) {
     if (node.propertyName.name == memberName && _isTarget(node.target)) {
-      found = true;
+      count++;
     }
     super.visitPropertyAccess(node);
   }
@@ -222,7 +250,7 @@ final class _InstanceMemberReferenceCollector
       for (final section in node.cascadeSections) {
         section.accept(members);
       }
-      if (members.found) found = true;
+      count += members.count;
     }
     super.visitCascadeExpression(node);
   }
@@ -242,23 +270,23 @@ final class _NamedMemberCollector extends RecursiveAstVisitor<void> {
   _NamedMemberCollector(this.memberName);
 
   final String memberName;
-  bool found = false;
+  int count = 0;
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == memberName) found = true;
+    if (node.methodName.name == memberName) count++;
     super.visitMethodInvocation(node);
   }
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (node.identifier.name == memberName) found = true;
+    if (node.identifier.name == memberName) count++;
     super.visitPrefixedIdentifier(node);
   }
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    if (node.propertyName.name == memberName) found = true;
+    if (node.propertyName.name == memberName) count++;
     super.visitPropertyAccess(node);
   }
 }
