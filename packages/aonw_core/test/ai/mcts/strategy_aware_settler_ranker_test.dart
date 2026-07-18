@@ -7,7 +7,7 @@ void main() {
   group('strategy-aware settler ranker', () {
     test('prioritizes founding on an assigned city site', () {
       final ranking = rankStrategicSettlerCommand(
-        const FoundCityCommand('settler_1'),
+        FoundCityCommand('settler_1', controlledHexes: const []),
         _view(units: [_unit('settler_1', GameUnitType.settler)]),
         _context(),
         _plan(settlerAssignments: const {'settler_1': CityHex(col: 0, row: 0)}),
@@ -51,9 +51,9 @@ void main() {
         center: CityHex(col: 0, row: 0),
       );
       final near = rankStrategicSettlerCommand(
-        const FoundCityCommand(
+        FoundCityCommand(
           'near_settler',
-          controlledHexes: [CityHex(col: 2, row: 0)],
+          controlledHexes: const [CityHex(col: 2, row: 0)],
         ),
         _view(
           units: [_unit('near_settler', GameUnitType.settler, col: 3)],
@@ -64,9 +64,9 @@ void main() {
         _plan(),
       );
       final far = rankStrategicSettlerCommand(
-        const FoundCityCommand(
+        FoundCityCommand(
           'far_settler',
-          controlledHexes: [CityHex(col: 10, row: 0)],
+          controlledHexes: const [CityHex(col: 10, row: 0)],
         ),
         _view(
           units: [_unit('far_settler', GameUnitType.settler, col: 11)],

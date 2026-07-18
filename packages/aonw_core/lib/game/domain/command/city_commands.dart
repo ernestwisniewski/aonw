@@ -2,7 +2,8 @@ part of 'game_command.dart';
 
 /// Player founds a city using the settler unit [founderId].
 final class FoundCityCommand extends GameCommand {
-  const FoundCityCommand(this.founderId, {this.controlledHexes = const []});
+  FoundCityCommand(this.founderId, {required List<CityHex> controlledHexes})
+    : controlledHexes = List<CityHex>.unmodifiable(controlledHexes);
 
   final String founderId;
   final List<CityHex> controlledHexes;

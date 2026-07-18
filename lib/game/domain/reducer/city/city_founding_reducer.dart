@@ -3,10 +3,7 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/game_state/reducer_units.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityFoundingReducer {
@@ -104,61 +101,32 @@ abstract final class CityFoundingReducer {
 
   static GameStateTransition confirmCityFounding(
     GameState state,
+    FoundCityCommand command,
     MapTileLookup mapTiles, {
-    FoundCityCommand? command,
     GameCommandContext context = const GameCommandContext(),
-    FogOfWarService fogOfWarService = const FogOfWarService(),
-    CityRuleset cityRuleset = CityRulesets.standard,
   }) {
-    final founderId = command?.founderId ?? state.cityFoundingDraft?.unitId;
-    if (founderId == null) return GameStateTransition(state: state);
-    final founder = state.unitById(founderId);
-    if (founder == null ||
-        !context.canControlUnit(state, founder) ||
-        founder.isWorking ||
-        !CityFoundingRules.canFoundCityWith(founder)) {
-      return GameStateTransition(
-        state: state.copyWithInteraction(cityFoundingDraft: null),
-      );
-    }
-    final startFailure = CityFoundingRules.startFailure(
-      unit: founder,
-      centerTile: mapTiles.tileAt(founder.col, founder.row),
-      cities: state.cities,
-    );
-    if (startFailure != null) {
-      return GameStateTransition(
-        state: state.copyWithInteraction(cityFoundingDraft: null),
-      );
-    }
-    final draft = _foundingDraftFor(state, command, founder);
-    if (draft == null || CityFoundingRules.confirmFailure(draft) != null) {
-      return GameStateTransition(state: state);
-    }
-    if (!_controlledHexesAreValid(draft, mapTiles, state.cities)) {
+    if (!context.canAct || (!context.hasActor && !state.activePlayerCanAct)) {
       return GameStateTransition(state: state);
     }
 
-    final updatedFounder = founder
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithCityFoundingJob(
-          CityFoundingJob(
-            center: draft.center,
-            controlledHexes: draft.controlledHexes,
-            remainingTurns: 1,
-            totalTurns: 1,
-          ),
-        );
-    var next = state
-        .copyWith(units: replaceUnit(state.units, updatedFounder))
-        .copyWithInteraction(
-          moveCommandActive: false,
-          movePreview: null,
-          cityFoundingDraft: null,
-          pendingAction: null,
-        );
-    if (state.selectedUnitId == founder.id) {
+    final result = CityFoundingCommandResolver.foundCity(
+      units: state.units,
+      cities: state.cities,
+      cityFoundingDraft: state.cityFoundingDraft,
+      command: command,
+      actorPlayerId: _actorPlayerId(state, command, context),
+      mapTiles: mapTiles,
+    );
+    if (!result.accepted) return GameStateTransition(state: state);
+
+    var next = state.copyWith(units: result.units);
+    if (!identical(result.cityFoundingDraft, state.cityFoundingDraft)) {
+      next = next.copyWithInteraction(
+        cityFoundingDraft: result.cityFoundingDraft,
+      );
+    }
+    if (state.selectedUnitId == command.founderId) {
+      final updatedFounder = next.unitById(command.founderId)!;
       final founderTile = mapTiles.tileAt(
         updatedFounder.col,
         updatedFounder.row,
@@ -171,43 +139,13 @@ abstract final class CityFoundingReducer {
     return GameStateTransition(state: next);
   }
 
-  static CityFoundingDraft? _foundingDraftFor(
+  static String _actorPlayerId(
     GameState state,
-    FoundCityCommand? command,
-    GameUnit founder,
+    FoundCityCommand command,
+    GameCommandContext context,
   ) {
-    if (command == null || command.controlledHexes.isEmpty) {
-      final draft = state.cityFoundingDraft;
-      if (draft == null || draft.unitId != founder.id) return null;
-      return draft;
-    }
-    return CityFoundingDraft(
-      unitId: founder.id,
-      ownerPlayerId: founder.ownerPlayerId,
-      center: CityHex(col: founder.col, row: founder.row),
-      controlledHexes: command.controlledHexes,
-    );
-  }
-
-  static bool _controlledHexesAreValid(
-    CityFoundingDraft draft,
-    MapTileLookup mapTiles,
-    Iterable<GameCity> cities,
-  ) {
-    final unique = draft.controlledHexes.toSet();
-    if (unique.length != draft.controlledHexes.length) return false;
-    for (final hex in draft.controlledHexes) {
-      final tile = mapTiles.tileAt(hex.col, hex.row);
-      if (tile == null) return false;
-      if (!CityFoundingRules.isControlledHexCandidate(
-        draft: draft,
-        tile: tile,
-        mapTiles: mapTiles,
-        cities: cities,
-      )) {
-        return false;
-      }
-    }
-    return true;
+    if (context.hasActor) return context.actorPlayerId!;
+    if (state.activePlayerId.isNotEmpty) return state.activePlayerId;
+    return state.unitById(command.founderId)?.ownerPlayerId ?? '';
   }
 }

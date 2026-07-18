@@ -21,7 +21,6 @@ final class _EconomySimulationCommandApplier {
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: mapView,
-          cityRuleset: ruleset.city,
         );
         return _ApplyCommandResult(
           accepted: result.accepted,

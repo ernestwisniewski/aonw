@@ -20,6 +20,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'city_reducer_rush_production_tests.dart';
+part 'city_reducer_founding_confirmation_tests.dart';
 
 /// 7x7 plains map — large enough for city territory selection.
 MapData _map7x7() => MapData(
@@ -296,156 +297,7 @@ void main() {
     });
   });
 
-  group('confirmCityFounding', () {
-    test('starts founding job for commander with settler troop', () {
-      final settler = _settler();
-      final stateWithDraft = _withCompleteFoundingDraft(
-        CityFoundingReducer.startCityFounding(
-          GameState(
-            units: [settler],
-            activePlayerId: 'player_1',
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(settler),
-            ),
-          ),
-          mapData,
-        ),
-      );
-      expect(stateWithDraft.cityFoundingDraft, isNotNull);
-
-      final result = CityFoundingReducer.confirmCityFounding(
-        stateWithDraft,
-        mapData,
-      );
-
-      expect(result.events, isEmpty);
-      expect(result.state.cities, isEmpty);
-      expect(result.state.cityFoundingDraft, isNull);
-      expect(result.state.units.single.hasSettlers, isTrue);
-      expect(result.state.units.single.cityFoundingJob, isNotNull);
-      expect(result.state.units.single.movementPoints, 0);
-    });
-
-    test('starts founding job for standalone settler unit', () {
-      final settler = _standaloneSettler();
-      final stateWithDraft = _withCompleteFoundingDraft(
-        CityFoundingReducer.startCityFounding(
-          GameState(
-            units: [settler],
-            activePlayerId: 'player_1',
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(settler),
-            ),
-          ),
-          mapData,
-        ),
-      );
-      expect(stateWithDraft.cityFoundingDraft, isNotNull);
-
-      final result = CityFoundingReducer.confirmCityFounding(
-        stateWithDraft,
-        mapData,
-      );
-
-      expect(result.events, isEmpty);
-      expect(result.state.cities, isEmpty);
-      expect(result.state.cityFoundingDraft, isNull);
-      expect(result.state.units.single.cityFoundingJob, isNotNull);
-      expect(result.state.selection?.unit?.cityFoundingJob, isNotNull);
-    });
-
-    test(
-      'uses injected city ruleset progression when founding job completes',
-      () {
-        final ruleset = CityRulesets.standard.copyWith(
-          progression: const CityProgression(
-            startPopulation: 5,
-            startStoredFood: 2,
-            startMaxHexes: 9,
-            midGameMaxHexes: 10,
-            lateGameMaxHexes: 12,
-            startTerritoryRadius: 4,
-            expandedTerritoryRadius: 5,
-            foodUpkeepPerPopulation: 1,
-            growthBaseCost: 10,
-            growthCostPerPopulation: 4,
-            growthCostPerControlledHex: 3,
-          ),
-        );
-        final settler = _settler();
-        final stateWithDraft = _withCompleteFoundingDraft(
-          CityFoundingReducer.startCityFounding(
-            GameState(
-              units: [settler],
-              activePlayerId: 'player_1',
-              interaction: GameInteractionState(
-                selection: GameSelection.unit(settler),
-              ),
-            ),
-            mapData,
-          ),
-        );
-        final scheduled = CityFoundingReducer.confirmCityFounding(
-          stateWithDraft,
-          mapData,
-          cityRuleset: ruleset,
-        );
-        final result = CityFoundingJobProcessor.advanceForPlayer(
-          playerId: 'player_1',
-          units: scheduled.state.units,
-          cities: scheduled.state.cities,
-          mapTiles: mapData,
-          countryForPlayer: scheduled.state.countryForPlayer,
-          cityRuleset: ruleset,
-        );
-
-        final city = result.cities.single;
-        expect(city.population, 5);
-        expect(city.storedFood, 2);
-        expect(city.maxHexes, 9);
-        expect(city.territoryRadius, 4);
-      },
-    );
-
-    test('returns unchanged state when draft is null', () {
-      final settler = _settler();
-      final state = GameState(
-        units: [settler],
-        activePlayerId: 'player_1',
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
-      );
-
-      final result = CityFoundingReducer.confirmCityFounding(state, mapData);
-
-      expect(result.state, same(state));
-    });
-
-    test('can finalise founding from persisted draft without selection', () {
-      final settler = _settler();
-      final draft = CityFoundingDraft(
-        unitId: settler.id,
-        ownerPlayerId: 'player_1',
-        center: CityHex(col: settler.col, row: settler.row),
-        controlledHexes: [
-          const CityHex(col: 3, row: 2),
-          const CityHex(col: 4, row: 3),
-        ],
-      );
-      final state = GameState(
-        units: [settler],
-        activePlayerId: 'player_1',
-        interaction: GameInteractionState(cityFoundingDraft: draft),
-      );
-
-      final result = CityFoundingReducer.confirmCityFounding(state, mapData);
-
-      expect(result.state.cityFoundingDraft, isNull);
-      expect(result.state.cities, isEmpty);
-      expect(result.state.units.single.cityFoundingJob, isNotNull);
-    });
-  });
+  _registerCityFoundingConfirmationTests(() => mapData);
 
   group('startBuilding', () {
     test('starts production in city', () {
@@ -1235,7 +1087,10 @@ void main() {
 
       final result = reducer.reduce(
         stateWithDraft,
-        FoundCityCommand(settler.id),
+        FoundCityCommand(
+          settler.id,
+          controlledHexes: stateWithDraft.cityFoundingDraft!.controlledHexes,
+        ),
       );
 
       expect(result.state.cities, isEmpty);

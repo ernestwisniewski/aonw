@@ -5,6 +5,10 @@ const _playerId = 'player_1';
 const _enemyId = 'player_2';
 
 void main() {
+  List<CityHex> foundingHexes(int ac, int ar, int bc, int br) => [
+    CityHex(col: ac, row: ar),
+    CityHex(col: bc, row: br),
+  ];
   group('BasicPlanMctsActionGenerator', () {
     test('filters terminal and already used commands', () {
       const move = MoveUnitCommand('unit_1', 1, 0);
@@ -782,11 +786,11 @@ void main() {
     });
 
     test('drops founding commands that are illegal in the current state', () {
-      const invalidFounding = FoundCityCommand(
+      final invalidFounding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 2, row: 0), CityHex(col: 2, row: 1)],
+        controlledHexes: foundingHexes(2, 0, 2, 1),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [invalidFounding]),
         candidateLimit: 8,
       );
@@ -816,11 +820,11 @@ void main() {
     });
 
     test('drops founding commands when nearby fog could hide a city', () {
-      const riskyFounding = FoundCityCommand(
+      final riskyFounding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+        controlledHexes: foundingHexes(1, 0, 0, 1),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [riskyFounding]),
         candidateLimit: 8,
       );
@@ -865,11 +869,11 @@ void main() {
     });
 
     test('keeps founding commands under AI full-map planning', () {
-      const founding = FoundCityCommand(
+      final founding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+        controlledHexes: foundingHexes(1, 0, 0, 1),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [founding]),
         candidateLimit: 8,
       );
@@ -915,11 +919,11 @@ void main() {
     });
 
     test('keeps founding commands when the exclusion zone is known', () {
-      const founding = FoundCityCommand(
+      final founding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+        controlledHexes: foundingHexes(1, 0, 0, 1),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [founding]),
         candidateLimit: 8,
       );
@@ -1111,11 +1115,11 @@ void main() {
     });
 
     test('drops partial second-city founding until the ring is known', () {
-      const founding = FoundCityCommand(
+      final founding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 3, row: 2), CityHex(col: 4, row: 3)],
+        controlledHexes: foundingHexes(3, 2, 4, 3),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [founding]),
         candidateLimit: 8,
       );
@@ -1175,11 +1179,11 @@ void main() {
     });
 
     test('drops partial third-city founding until the ring is known', () {
-      const founding = FoundCityCommand(
+      final founding = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 3, row: 2), CityHex(col: 4, row: 3)],
+        controlledHexes: foundingHexes(3, 2, 4, 3),
       );
-      const generator = BasicPlanMctsActionGenerator(
+      final generator = BasicPlanMctsActionGenerator(
         source: _StaticStrategy(commands: [founding]),
         candidateLimit: 8,
       );
@@ -3125,17 +3129,17 @@ void main() {
         col: 1,
         row: 1,
       );
-      const found = FoundCityCommand(
+      final found = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 0)],
+        controlledHexes: foundingHexes(0, 1, 1, 0),
       );
       const attack = AttackHexCommand('warrior_1', 1, 1);
-      const generator = StrategyAwareMctsActionGenerator(
+      final generator = StrategyAwareMctsActionGenerator(
         inner: _StaticActionGenerator(
           actions: [
-            CommandMctsAction(attack),
+            const CommandMctsAction(attack),
             CommandMctsAction(found),
-            EndPlanningAction(),
+            const EndPlanningAction(),
           ],
         ),
         candidateLimit: 1,
@@ -3168,7 +3172,7 @@ void main() {
         ),
       );
 
-      expect(actions.first, const CommandMctsAction(found));
+      expect(actions.first, CommandMctsAction(found));
       expect(actions.last, const EndPlanningAction());
     });
 
@@ -3181,17 +3185,17 @@ void main() {
         col: 0,
         row: 0,
       );
-      const found = FoundCityCommand(
+      final found = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 0)],
+        controlledHexes: foundingHexes(0, 1, 1, 0),
       );
       const move = MoveUnitCommand('settler_1', 1, 0);
-      const generator = StrategyAwareMctsActionGenerator(
+      final generator = StrategyAwareMctsActionGenerator(
         inner: _StaticActionGenerator(
           actions: [
             CommandMctsAction(found),
-            CommandMctsAction(move),
-            EndPlanningAction(),
+            const CommandMctsAction(move),
+            const EndPlanningAction(),
           ],
         ),
         candidateLimit: 1,
@@ -3301,16 +3305,16 @@ void main() {
           row: 0,
         );
         const move = MoveUnitCommand('settler_1', 1, 0);
-        const foundAfterMove = FoundCityCommand(
+        final foundAfterMove = FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 2, row: 0), CityHex(col: 2, row: 1)],
+          controlledHexes: foundingHexes(2, 0, 2, 1),
         );
-        const generator = StrategyAwareMctsActionGenerator(
+        final generator = StrategyAwareMctsActionGenerator(
           inner: _StaticActionGenerator(
             actions: [
               CommandMctsAction(foundAfterMove),
-              CommandMctsAction(move),
-              EndPlanningAction(),
+              const CommandMctsAction(move),
+              const EndPlanningAction(),
             ],
           ),
           candidateLimit: 1,
@@ -3411,17 +3415,17 @@ void main() {
           row: 0,
           hitPoints: 1,
         );
-        const found = FoundCityCommand(
+        final found = FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 0)],
+          controlledHexes: foundingHexes(0, 1, 1, 0),
         );
         const attack = AttackHexCommand('warrior_1', 1, 0);
-        const generator = StrategyAwareMctsActionGenerator(
+        final generator = StrategyAwareMctsActionGenerator(
           inner: _StaticActionGenerator(
             actions: [
-              CommandMctsAction(attack),
+              const CommandMctsAction(attack),
               CommandMctsAction(found),
-              EndPlanningAction(),
+              const EndPlanningAction(),
             ],
           ),
           candidateLimit: 2,
@@ -3454,7 +3458,7 @@ void main() {
           ),
         );
 
-        expect(_commands(actions), const [attack, found]);
+        expect(_commands(actions), [attack, found]);
         expect(actions.last, const EndPlanningAction());
       },
     );
@@ -5174,13 +5178,9 @@ GameView _view({
   );
 }
 
-MapData _mapData() {
-  return _squareMap(cols: 3, rows: 2);
-}
+MapData _mapData() => _squareMap(cols: 3, rows: 2);
 
-MapData _lineMap(int cols) {
-  return _squareMap(cols: cols, rows: 1);
-}
+MapData _lineMap(int cols) => _squareMap(cols: cols, rows: 1);
 
 MapData _highCostLineMap() {
   return MapData(

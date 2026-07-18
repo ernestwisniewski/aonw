@@ -7,9 +7,12 @@ void main() {
   group('strategy-aware opening ranker', () {
     test('prioritizes founding the first city during opening survival', () {
       final ranking = rankOpeningSurvivalCommand(
-        const FoundCityCommand(
+        FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 0, row: 1),
+          ],
         ),
         _view(units: [_unit('settler_1', GameUnitType.settler)]),
         _context(),

@@ -234,7 +234,6 @@ class TracingMctsSimulator implements MctsSimulator {
               command: command,
               actorPlayerId: actorPlayerId,
               mapTiles: mapData,
-              cityRuleset: ruleset.city,
             )
             .state,
       SelectTechnologyCommand() =>

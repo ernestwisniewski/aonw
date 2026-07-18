@@ -211,9 +211,9 @@ void main() {
         units: [settler],
         fogOfWar: _visibleFog(),
       );
-      const command = FoundCityCommand(
+      final command = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 2, row: 0)],
+        controlledHexes: foundingHexes(1, 0, 2, 0),
       );
 
       final persistent = _resolvePersistentFounding(state, command);
@@ -239,9 +239,9 @@ void main() {
         units: [settler],
         fogOfWar: _visibleFog(),
       );
-      const command = FoundCityCommand(
+      final command = FoundCityCommand(
         'settler_1',
-        controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 1, row: 0)],
+        controlledHexes: foundingHexes(1, 0, 1, 0),
       );
 
       final persistent = _resolvePersistentFounding(state, command);
@@ -939,7 +939,6 @@ PersistentCityFoundingResult _resolvePersistentFounding(
     command: command,
     actorPlayerId: 'player_1',
     mapTiles: WorldMapReadView(_worldMap()),
-    cityRuleset: GameRuleset.defaults.city,
   );
 }
 

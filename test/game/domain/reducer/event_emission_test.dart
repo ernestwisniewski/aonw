@@ -108,6 +108,10 @@ void main() {
 
       final scheduled = CityFoundingReducer.confirmCityFounding(
         stateWithDraft,
+        FoundCityCommand(
+          settler.id,
+          controlledHexes: stateWithDraft.cityFoundingDraft!.controlledHexes,
+        ),
         mapData,
       );
       final transition = EndTurnReducer.advanceCitiesForPlayer(

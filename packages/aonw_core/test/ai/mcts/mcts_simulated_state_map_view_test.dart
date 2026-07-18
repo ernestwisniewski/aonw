@@ -31,10 +31,10 @@ void main() {
           ),
           maxPlanningDepth: 4,
         ).apply(
-          const CommandMctsAction(
+          CommandMctsAction(
             FoundCityCommand(
               'settler_1',
-              controlledHexes: [
+              controlledHexes: const [
                 CityHex(col: 1, row: 0),
                 CityHex(col: 2, row: 0),
               ],

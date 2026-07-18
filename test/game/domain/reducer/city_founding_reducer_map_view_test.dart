@@ -50,7 +50,14 @@ void main() {
       const TileTappedCommand(4, 3),
       mapTiles,
     );
-    final result = CityFoundingReducer.confirmCityFounding(complete, mapTiles);
+    final result = CityFoundingReducer.confirmCityFounding(
+      complete,
+      FoundCityCommand(
+        settler.id,
+        controlledHexes: complete.cityFoundingDraft!.controlledHexes,
+      ),
+      mapTiles,
+    );
 
     expect(complete.cityFoundingDraft?.controlledHexes, const [
       CityHex(col: 3, row: 2),

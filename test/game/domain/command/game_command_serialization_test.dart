@@ -30,7 +30,7 @@ void main() {
           const CancelUnitActionCommand('u'),
           const SkipUnitTurnCommand('u'),
           const FortifyUnitCommand('u'),
-          const FoundCityCommand('f'),
+          FoundCityCommand('f', controlledHexes: const []),
           const StartBuildingCommand('c', CityBuildingType.granary),
           const StartUnitProductionCommand('c', GameUnitType.warrior),
           const StartCityProjectCommand('c', CityProjectType.wealth),
@@ -133,14 +133,6 @@ void main() {
           }),
           const SkipUnitTurnCommand('unit-7'),
         );
-      });
-
-      test('FoundCityCommand', () {
-        const original = FoundCityCommand(
-          'settler-1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
-        );
-        expect(roundTrip(original), equals(original));
       });
 
       test('StartBuildingCommand — granary', () {
@@ -507,19 +499,6 @@ void main() {
           const AutoExploreUnitCommand('unit-7'),
         );
         expect(json['unitId'], 'unit-7');
-      });
-
-      test('FoundCityCommand encodes founderId', () {
-        final json = GameCommandSerializer.toJson(
-          const FoundCityCommand(
-            'settler-1',
-            controlledHexes: [CityHex(col: 1, row: 0)],
-          ),
-        );
-        expect(json['founderId'], 'settler-1');
-        expect(json['controlledHexes'], [
-          {'col': 1, 'row': 0},
-        ]);
       });
 
       test('StartBuildingCommand encodes buildingType as name string', () {

@@ -124,11 +124,9 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   GameStateTransition foundCity(GameState state, FoundCityCommand command) {
     return CityFoundingReducer.confirmCityFounding(
       state,
+      command,
       mapData,
-      command: command,
       context: context,
-      fogOfWarService: fogOfWarService,
-      cityRuleset: cityRuleset,
     );
   }
 

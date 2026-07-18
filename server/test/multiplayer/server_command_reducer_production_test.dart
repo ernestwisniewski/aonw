@@ -64,7 +64,7 @@ void main() {
   test('routes map-backed commands through the loaded server map', () async {
     final scenarios = <({GameCommand command, String reason})>[
       (
-        command: const FoundCityCommand('missing_settler'),
+        command: FoundCityCommand('missing_settler', controlledHexes: const []),
         reason: 'city_founder_not_found',
       ),
       (

@@ -114,16 +114,6 @@ void main() {
       expect(GameCommandSerializer.toJson(command)['actionStep'], -1);
     });
 
-    test('decodes FoundCity without controlledHexes as an empty list', () {
-      expect(
-        GameCommandSerializer.fromJson({
-          'type': 'FoundCity',
-          'founderId': 'settler_1',
-        }),
-        const FoundCityCommand('settler_1'),
-      );
-    });
-
     test('decodes legacy SleepUnit as SkipUnitTurn', () {
       expect(
         GameCommandSerializer.fromJson({
@@ -193,7 +183,15 @@ void main() {
   });
 }
 
-const _commandFixtures = <({GameCommand command, String type})>[
+final _commandFixtures = <({GameCommand command, String type})>[
+  ..._constantCommandFixtures,
+  (
+    command: FoundCityCommand('settler_1', controlledHexes: const []),
+    type: 'FoundCity',
+  ),
+];
+
+const _constantCommandFixtures = <({GameCommand command, String type})>[
   (command: TileTappedCommand(0, 1), type: 'TileTapped'),
   (command: CityTappedCommand('city_1'), type: 'CityTapped'),
   (command: MoveUnitCommand('scout_1', 2, 3), type: 'MoveUnit'),
@@ -240,13 +238,6 @@ const _commandFixtures = <({GameCommand command, String type})>[
       offeredArtifactId: 'artifact_1',
     ),
     type: 'TradeArtifact',
-  ),
-  (
-    command: FoundCityCommand(
-      'settler_1',
-      controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
-    ),
-    type: 'FoundCity',
   ),
   (
     command: StartBuildingCommand('city_1', CityBuildingType.granary),

@@ -10,6 +10,7 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
+part 'server_command_reducer_city_founding.dart';
 part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
@@ -315,14 +316,13 @@ class ServerCommandReducer {
         );
         return _fromPersistentResult(save, result);
       case FoundCityCommand():
-        final result = const PersistentCityFoundingResolver().foundCity(
+        return _applyCityFoundingCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
-          cityRuleset: ruleset.city,
         );
-        return _fromPersistentResult(save, result);
       case StartBuildingCommand() ||
           StartUnitProductionCommand() ||
           StartCityProjectCommand() ||
@@ -498,19 +498,6 @@ class ServerCommandReducer {
           reason: reason,
         ),
       PersistentCombatCommandResult(
-        :final accepted,
-        :final state,
-        :final events,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          events: events,
-          reason: reason,
-        ),
-      PersistentCityFoundingResult(
         :final accepted,
         :final state,
         :final events,

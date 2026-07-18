@@ -51,7 +51,7 @@ void main() {
       expect(
         BasicStrategyCommandAnalysis.unitIdsUsedBy([
           const MoveUnitCommand('scout', 1, 1),
-          const FoundCityCommand('settler'),
+          FoundCityCommand('settler', controlledHexes: const []),
           const AttackHexCommand('warrior', 2, 2),
           const EndTurnCommand('player_1'),
         ]),

@@ -1,5 +1,10 @@
 import 'package:aonw_core/domain.dart';
 
+List<CityHex> foundingHexes(int ac, int ar, int bc, int br) => [
+  CityHex(col: ac, row: ar),
+  CityHex(col: bc, row: br),
+];
+
 final class MctsSimulatorParityFixtures {
   const MctsSimulatorParityFixtures._();
 

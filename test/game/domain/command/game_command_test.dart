@@ -50,9 +50,9 @@ void main() {
       });
 
       test('FoundCityCommand stores founderId', () {
-        const cmd = FoundCityCommand(
+        final cmd = FoundCityCommand(
           'settler-1',
-          controlledHexes: [CityHex(col: 1, row: 0)],
+          controlledHexes: const [CityHex(col: 1, row: 0)],
         );
         expect(cmd.founderId, 'settler-1');
         expect(cmd.controlledHexes, [const CityHex(col: 1, row: 0)]);
@@ -296,7 +296,7 @@ void main() {
         const StartMerchantMoveToCitySelectionCommand('u'),
         const CancelMerchantMoveToCitySelectionCommand('u'),
         const MoveMerchantToCityCommand('u', 'c'),
-        const FoundCityCommand('f'),
+        FoundCityCommand('f', controlledHexes: const []),
         const StartBuildingCommand('c', CityBuildingType.granary),
         const StartUnitProductionCommand('c', GameUnitType.warrior),
         const StartCityProjectCommand('c', CityProjectType.wealth),
@@ -556,14 +556,14 @@ void main() {
 
       test('FoundCityCommand: same founderId is equal', () {
         expect(
-          const FoundCityCommand(
+          FoundCityCommand(
             'f',
-            controlledHexes: [CityHex(col: 1, row: 0)],
+            controlledHexes: const [CityHex(col: 1, row: 0)],
           ),
           equals(
-            const FoundCityCommand(
+            FoundCityCommand(
               'f',
-              controlledHexes: [CityHex(col: 1, row: 0)],
+              controlledHexes: const [CityHex(col: 1, row: 0)],
             ),
           ),
         );
@@ -571,15 +571,15 @@ void main() {
 
       test('FoundCityCommand: different controlledHexes is not equal', () {
         expect(
-          const FoundCityCommand(
+          FoundCityCommand(
             'f',
-            controlledHexes: [CityHex(col: 1, row: 0)],
+            controlledHexes: const [CityHex(col: 1, row: 0)],
           ),
           isNot(
             equals(
-              const FoundCityCommand(
+              FoundCityCommand(
                 'f',
-                controlledHexes: [CityHex(col: 0, row: 1)],
+                controlledHexes: const [CityHex(col: 0, row: 1)],
               ),
             ),
           ),

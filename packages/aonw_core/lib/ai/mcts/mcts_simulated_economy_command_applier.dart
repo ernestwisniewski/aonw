@@ -26,15 +26,24 @@ final class MctsSimulatedEconomyCommandApplier {
   final PlayerResearchState ownResearch;
 
   MctsSimulatedCommandApplication applyFoundCity(FoundCityCommand command) {
-    final result = const PersistentCityFoundingResolver().foundCity(
-      state: _persistentState(),
+    final result = CityFoundingCommandResolver.foundCity(
+      units: [...ownUnits, ...visibleEnemyUnits],
+      cities: [...ownCities, ...rememberedEnemyCities],
+      cityFoundingDraft: null,
       command: command,
       actorPlayerId: view.forPlayerId,
       mapTiles: view.mapData,
-      cityRuleset: view.ruleset.city,
     );
     if (!result.accepted) return unchangedCommandApplication;
-    return _applicationFromPersistent(result.state);
+    return (
+      nextOwnUnits: List<GameUnit>.unmodifiable(
+        result.units.take(ownUnits.length),
+      ),
+      nextVisibleEnemyUnits: visibleEnemyUnits,
+      nextOwnCities: ownCities,
+      nextRememberedEnemyCities: rememberedEnemyCities,
+      nextOwnResearch: ownResearch,
+    );
   }
 
   PlayerResearchState applySelectTechnology(SelectTechnologyCommand command) {

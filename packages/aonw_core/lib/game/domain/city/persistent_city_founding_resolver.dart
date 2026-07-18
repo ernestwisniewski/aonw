@@ -1,13 +1,12 @@
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/city/city_founding_command_resolver.dart';
+import 'package:aonw_core/game/domain/city/city_founding_draft.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-class PersistentCityFoundingResult {
+final class PersistentCityFoundingResult {
   const PersistentCityFoundingResult({
     required this.accepted,
     required this.state,
@@ -21,150 +20,54 @@ class PersistentCityFoundingResult {
   final String? reason;
 }
 
-class PersistentCityFoundingResolver {
-  const PersistentCityFoundingResolver({
-    this.fogOfWarService = const FogOfWarService(),
-  });
-
-  final FogOfWarService fogOfWarService;
+/// Persistence adapter for the state-neutral city-founding resolver.
+final class PersistentCityFoundingResolver {
+  const PersistentCityFoundingResolver();
 
   PersistentCityFoundingResult foundCity({
     required PersistentGameState state,
     required FoundCityCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
-    CityRuleset cityRuleset = CityRulesets.standard,
   }) {
-    final founderIndex = _unitIndexById(state.units, command.founderId);
-    if (founderIndex == null) return _reject(state, 'city_founder_not_found');
-
-    final founder = state.units[founderIndex];
-    if (founder.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'city_founder_not_controlled');
-    }
-    if (founder.isWorking) {
-      return _reject(state, 'city_founder_busy');
-    }
-
-    final centerTile = mapTiles.tileAt(founder.col, founder.row);
-    final startFailure = CityFoundingRules.startFailure(
-      unit: founder,
-      centerTile: centerTile,
+    final result = CityFoundingCommandResolver.foundCity(
+      units: state.units,
       cities: state.cities,
+      cityFoundingDraft: state.runtimeState.cityFoundingDraft,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapTiles,
     );
-    if (startFailure != null) {
-      return _reject(state, _reasonForStartFailure(startFailure));
+    if (!result.accepted) {
+      return PersistentCityFoundingResult(
+        accepted: false,
+        state: state,
+        reason: result.reason,
+      );
     }
 
-    final draft = CityFoundingDraft(
-      unitId: founder.id,
-      ownerPlayerId: founder.ownerPlayerId,
-      center: CityHex(col: founder.col, row: founder.row),
-      controlledHexes: command.controlledHexes,
+    final runtimeState = _runtimeStateAfterFounding(
+      state.runtimeState,
+      result.cityFoundingDraft,
     );
-    if (CityFoundingRules.confirmFailure(draft) != null) {
-      return _reject(state, 'city_controlled_hexes_invalid');
-    }
-    if (!_controlledHexesAreValid(draft, mapTiles, state.cities)) {
-      return _reject(state, 'city_controlled_hexes_invalid');
-    }
-
-    final updatedFounder = founder
-        .copyWith(movementPoints: 0)
-        .copyWithQueuedPath(null)
-        .copyWithCityFoundingJob(
-          CityFoundingJob(
-            center: draft.center,
-            controlledHexes: draft.controlledHexes,
-            remainingTurns: 1,
-            totalTurns: 1,
-          ),
-        );
-    final updatedUnits = _replaceUnitAt(
-      state.units,
-      founderIndex,
-      updatedFounder,
-    );
-
     return PersistentCityFoundingResult(
       accepted: true,
       state: state.copyWith(
-        units: updatedUnits,
-        runtimeState: _clearFoundingRuntimeState(
-          state.runtimeState,
-          founderId: founder.id,
-        ),
+        units: result.units,
+        runtimeState: identical(runtimeState, state.runtimeState)
+            ? null
+            : runtimeState,
       ),
     );
   }
 
-  PersistentCityFoundingResult _reject(
-    PersistentGameState state,
-    String reason,
+  static GameRuntimeState _runtimeStateAfterFounding(
+    GameRuntimeState runtimeState,
+    CityFoundingDraft? cityFoundingDraft,
   ) {
-    return PersistentCityFoundingResult(
-      accepted: false,
-      state: state,
-      reason: reason,
-    );
-  }
-
-  static bool _controlledHexesAreValid(
-    CityFoundingDraft draft,
-    MapTileLookup mapTiles,
-    Iterable<GameCity> cities,
-  ) {
-    final unique = draft.controlledHexes.toSet();
-    if (unique.length != draft.controlledHexes.length) return false;
-    for (final hex in draft.controlledHexes) {
-      final tile = mapTiles.tileAt(hex.col, hex.row);
-      if (tile == null) return false;
-      if (!CityFoundingRules.isControlledHexCandidate(
-        draft: draft,
-        tile: tile,
-        mapTiles: mapTiles,
-        cities: cities,
-      )) {
-        return false;
-      }
+    if (identical(cityFoundingDraft, runtimeState.cityFoundingDraft)) {
+      return runtimeState;
     }
-    return true;
-  }
-
-  static String _reasonForStartFailure(CityFoundingFailure failure) {
-    return switch (failure) {
-      CityFoundingFailure.noCommander => 'city_founder_invalid',
-      CityFoundingFailure.noSettlers => 'city_founder_no_settlers',
-      CityFoundingFailure.invalidCenter => 'city_site_invalid',
-      CityFoundingFailure.cityAlreadyExists => 'city_center_occupied',
-      CityFoundingFailure.centerOccupied => 'city_center_claimed',
-      CityFoundingFailure.tooCloseToCity => 'city_center_too_close',
-      CityFoundingFailure.invalidControlledHexes =>
-        'city_controlled_hexes_invalid',
-    };
-  }
-
-  static GameRuntimeState _clearFoundingRuntimeState(
-    GameRuntimeState runtimeState, {
-    required String founderId,
-  }) {
-    final clearDraft = runtimeState.cityFoundingDraft?.unitId == founderId;
-    if (!clearDraft) return runtimeState;
-    return runtimeState.copyWith(cityFoundingDraft: null);
-  }
-
-  static int? _unitIndexById(List<GameUnit> units, String unitId) {
-    for (var i = 0; i < units.length; i++) {
-      if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static List<GameUnit> _replaceUnitAt(
-    List<GameUnit> units,
-    int index,
-    GameUnit updated,
-  ) {
-    return [...units]..[index] = updated;
+    return runtimeState.copyWith(cityFoundingDraft: cityFoundingDraft);
   }
 }

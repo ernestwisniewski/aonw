@@ -129,7 +129,7 @@ void main() {
       const TileTappedCommand(1, 2),
       const CityTappedCommand('c1'),
       const MoveUnitCommand('u1', 3, 4),
-      const FoundCityCommand('u1'),
+      FoundCityCommand('u1', controlledHexes: const []),
       const StartBuildingCommand('c1', CityBuildingType.granary),
       const StartUnitProductionCommand('c1', GameUnitType.warrior),
       const StartCityProjectCommand('c1', CityProjectType.wealth),

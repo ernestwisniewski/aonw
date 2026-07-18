@@ -15,9 +15,9 @@ void main() {
           _logged(1, const StartCityFoundingCommand()),
           _logged(
             2,
-            const FoundCityCommand(
+            FoundCityCommand(
               'settler_player_1',
-              controlledHexes: [CityHex(col: 2, row: 3)],
+              controlledHexes: const [CityHex(col: 2, row: 3)],
             ),
           ),
           _logged(

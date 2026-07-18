@@ -24,9 +24,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 0, row: 1),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -74,9 +77,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'commander_player_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 0, row: 1),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -103,9 +109,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 0, row: 1),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -121,9 +130,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 1, row: 0)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 1, row: 0),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -157,9 +169,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 0), CityHex(col: 0, row: 1)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 0),
+            CityHex(col: 0, row: 1),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(sparseWorldMap),
@@ -185,9 +200,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 2, row: 1), CityHex(col: 1, row: 2)],
+          controlledHexes: const [
+            CityHex(col: 2, row: 1),
+            CityHex(col: 1, row: 2),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -213,9 +231,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 1, row: 1), CityHex(col: 0, row: 2)],
+          controlledHexes: const [
+            CityHex(col: 1, row: 1),
+            CityHex(col: 0, row: 2),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),
@@ -241,9 +262,12 @@ void main() {
 
       final result = const PersistentCityFoundingResolver().foundCity(
         state: state,
-        command: const FoundCityCommand(
+        command: FoundCityCommand(
           'settler_1',
-          controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 2)],
+          controlledHexes: const [
+            CityHex(col: 0, row: 1),
+            CityHex(col: 1, row: 2),
+          ],
         ),
         actorPlayerId: 'player_1',
         mapTiles: WorldMapReadView(_worldMap()),

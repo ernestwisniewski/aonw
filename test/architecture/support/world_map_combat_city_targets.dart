@@ -153,6 +153,32 @@ const _cityTargets = [
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/city/'
+        'city_founding_command_resolver.dart',
+    owner: 'CityFoundingCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'foundCity',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
+        'domain_city_founding_resolver.dart',
+    owner: 'DomainCityFoundingResolver',
+    boundaries: [
+      _Boundary.method(
+        'foundCity',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/city/'
         'city_initial_territory_selector.dart',
     owner: 'CityInitialTerritorySelector',
     boundaries: [
