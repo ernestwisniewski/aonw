@@ -25,7 +25,11 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'unit_supply_limit_reached',
   },
   'city-worked-hex': {'city_not_controlled', 'worked_hex_limit_reached'},
-  'detachment': {'unit_not_controlled', 'detachment_destination_unavailable'},
+  'detachment': {
+    'unit_not_controlled',
+    'detachment_destination_unavailable',
+    'detachment_source_out_of_bounds',
+  },
   'research': {'technology_player_not_controlled', 'technology_not_available'},
   'resource-trade': {
     'resource_trade_player_not_controlled',

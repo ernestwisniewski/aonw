@@ -132,4 +132,27 @@ const _interactionTargets = [
       ),
     ],
   ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/unit/domain_unit_detachment_resolver.dart',
+    owner: 'DomainUnitDetachmentResolver',
+    boundaries: [
+      _Boundary.method(
+        'detachTroop',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'packages/aonw_core/lib/game/domain/unit/detach_troop_resolver.dart',
+    owner: 'DetachTroopResolver',
+    boundaries: [
+      _Boundary.method(
+        'detachTroop',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
 ];

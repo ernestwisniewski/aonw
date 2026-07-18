@@ -1,5 +1,7 @@
 export 'unit/army_troop.dart';
 export 'unit/city_founding_job.dart';
+export 'unit/detach_troop_resolver.dart';
+export 'unit/domain_unit_detachment_resolver.dart';
 export 'unit/game_unit.dart';
 export 'unit/game_unit_type.dart';
 export 'unit/merchant_trade_route.dart';

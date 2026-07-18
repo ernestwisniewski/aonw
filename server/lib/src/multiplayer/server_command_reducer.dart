@@ -8,6 +8,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 
 part 'server_command_reducer_city.dart';
+part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
@@ -370,13 +371,13 @@ class ServerCommandReducer {
           ruleset: ruleset,
         );
       case DetachTroopCommand():
-        final result = const PersistentUnitDetachmentResolver().detachTroop(
+        return _applyDetachTroopCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
         );
-        return _fromPersistentResult(save, result);
       case ToggleWorkedHexCommand():
         return _applyToggleWorkedHexCommand(
           save: save,
@@ -600,17 +601,6 @@ class ServerCommandReducer {
           accepted: accepted,
           state: state,
           events: events,
-          reason: reason,
-        ),
-      PersistentUnitDetachmentResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
           reason: reason,
         ),
       PersistentCityExpansionResult(

@@ -1,8 +1,3 @@
-import 'dart:io';
-
-import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/map_boundary_source_guard.dart';
@@ -79,10 +74,12 @@ void main() {
       {_mctsPersistentResearchCallSite, _simulationPersistentResearchCallSite},
     );
 
-    final collector = _NamedTypeCollector();
-    _unitAt(_researchKernelPath).accept(collector);
+    final kernelTypes = namedTypeReferencesInSource(
+      sources[_researchKernelPath]!,
+      path: _researchKernelPath,
+    );
     expect(
-      collector.names.intersection(const {
+      kernelTypes.intersection(const {
         'PersistentGameState',
         'DomainState',
         'CanonicalGameSnapshot',
@@ -92,10 +89,12 @@ void main() {
       }),
       isEmpty,
     );
-    final policyCollector = _NamedTypeCollector();
-    _unitAt(_researchPendingPolicyPath).accept(policyCollector);
+    final policyTypes = namedTypeReferencesInSource(
+      sources[_researchPendingPolicyPath]!,
+      path: _researchPendingPolicyPath,
+    );
     expect(
-      policyCollector.names.intersection(const {
+      policyTypes.intersection(const {
         'PersistentGameState',
         'DomainState',
         'CanonicalGameSnapshot',
@@ -105,18 +104,4 @@ void main() {
       isEmpty,
     );
   });
-}
-
-CompilationUnit _unitAt(String path) {
-  return parseString(content: File(path).readAsStringSync(), path: path).unit;
-}
-
-final class _NamedTypeCollector extends RecursiveAstVisitor<void> {
-  final Set<String> names = {};
-
-  @override
-  void visitNamedType(NamedType node) {
-    names.add(node.name.lexeme);
-    super.visitNamedType(node);
-  }
 }

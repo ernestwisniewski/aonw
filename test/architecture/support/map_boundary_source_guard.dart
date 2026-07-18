@@ -41,6 +41,18 @@ Set<String> mapDataBackedTypeNames(Map<String, String> sources) {
   return typeNamesBackedBy(sources, const {'MapData'});
 }
 
+Set<String> namedTypeReferencesInSource(
+  String source, {
+  String path = 'source.dart',
+}) {
+  final names = <String>{};
+  parseString(
+    content: source,
+    path: path,
+  ).unit.accept(_NamedTypeNameVisitor(names));
+  return names;
+}
+
 Set<String> typeNamesBackedBy(
   Map<String, String> sources,
   Set<String> rootNames,
