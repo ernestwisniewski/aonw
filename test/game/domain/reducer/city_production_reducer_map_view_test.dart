@@ -9,6 +9,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -128,14 +129,95 @@ void main() {
       state,
       const ToggleWorkedHexCommand('city_1', 2, 1),
       mapTiles,
+      context: const GameCommandContext(paceBalance: PaceBalance.long120),
     );
 
     final updatedCity = result.state.cities.single;
     expect(updatedCity.workedHexes, const [CityHex(col: 2, row: 1)]);
     expect(result.state.selection?.city, same(updatedCity));
     expect(result.state.selection?.cityTileYieldBreakdown, isNotNull);
+    expect(
+      result.state.selection?.cityEconomy?.growthCost,
+      CityGrowthRules.growthCost(updatedCity, paceBalance: PaceBalance.long120),
+    );
+  });
+
+  test('preserves local sandbox authorization around worked-hex kernel', () {
+    final city = _city.copyWith(ownerPlayerId: 'player_2');
+    final sandboxState = _stateWithSelectedCity(
+      city,
+    ).copyWith(activePlayerId: '');
+
+    final accepted = CityWorkedHexReducer.toggleWorkedHex(
+      sandboxState,
+      const ToggleWorkedHexCommand('city_1', 2, 1),
+      mapTiles,
+    );
+    final blocked = CityWorkedHexReducer.toggleWorkedHex(
+      sandboxState,
+      const ToggleWorkedHexCommand('city_1', 2, 1),
+      mapTiles,
+      context: const GameCommandContext(canAct: false),
+    );
+
+    expect(accepted.state.cities.single.workedHexes, const [
+      CityHex(col: 2, row: 1),
+    ]);
+    expect(blocked.state, same(sandboxState));
+  });
+
+  test('forwards the injected worked-hex limit to the kernel', () {
+    final city = _city.copyWith(
+      population: 1,
+      controlledHexes: const [
+        CityHex(col: 1, row: 1),
+        CityHex(col: 2, row: 1),
+        CityHex(col: 3, row: 1),
+      ],
+      workedHexes: const [CityHex(col: 2, row: 1)],
+    );
+    final state = _stateWithSelectedCity(city);
+    final ruleset = GameRuleset.defaults.copyWith(
+      city: CityRulesets.standard.copyWith(
+        progression: _twoWorkedHexProgression,
+      ),
+    );
+
+    final defaultLimit = CityWorkedHexReducer.toggleWorkedHex(
+      state,
+      const ToggleWorkedHexCommand('city_1', 3, 1),
+      mapTiles,
+    );
+    final injectedLimit = CityWorkedHexReducer.toggleWorkedHex(
+      state,
+      const ToggleWorkedHexCommand('city_1', 3, 1),
+      mapTiles,
+      ruleset: ruleset,
+    );
+
+    expect(defaultLimit.state, same(state));
+    expect(injectedLimit.state.cities.single.workedHexes, const [
+      CityHex(col: 2, row: 1),
+      CityHex(col: 3, row: 1),
+    ]);
   });
 }
+
+const _twoWorkedHexProgression = CityProgression(
+  startPopulation: 3,
+  startStoredFood: 0,
+  startMaxHexes: 6,
+  midGameMaxHexes: 8,
+  lateGameMaxHexes: 10,
+  startTerritoryRadius: 2,
+  expandedTerritoryRadius: 3,
+  foodUpkeepPerPopulation: 1,
+  growthBaseCost: 10,
+  growthCostPerPopulation: 4,
+  growthCostPerControlledHex: 3,
+  workedHexLimitBase: 2,
+  workedHexesPerPopulation: 0,
+);
 
 const _city = GameCity(
   id: 'city_1',

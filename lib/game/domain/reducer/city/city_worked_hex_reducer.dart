@@ -23,32 +23,17 @@ abstract final class CityWorkedHexReducer {
       return GameStateTransition(state: state);
     }
 
-    final target = CityHex(col: command.col, row: command.row);
-    if (target == city.center || !city.controlledHexes.contains(target)) {
+    final result = ToggleWorkedHexResolver.toggleWorkedHex(
+      cities: state.cities,
+      command: command,
+      actorPlayerId: city.ownerPlayerId,
+      cityRuleset: ruleset.city,
+    );
+    if (!result.accepted) {
       return GameStateTransition(state: state);
     }
 
-    final manualHexes = CityProductionReducer.normalizedWorkedHexes(
-      city,
-      ruleset.city,
-    );
-    late final List<CityHex> updatedWorkedHexes;
-    if (manualHexes.contains(target)) {
-      updatedWorkedHexes = [
-        for (final hex in manualHexes)
-          if (hex != target) hex,
-      ];
-    } else {
-      final limit = ruleset.city.progression.workedHexLimitForPopulation(
-        city.population,
-      );
-      if (manualHexes.length >= limit) {
-        return GameStateTransition(state: state);
-      }
-      updatedWorkedHexes = [...manualHexes, target];
-    }
-
-    final updatedCity = city.copyWith(workedHexes: updatedWorkedHexes);
+    final updatedCity = result.cities[cityIndex];
     return CityProductionReducer.finishQueuedProductionUpdate(
       state,
       updatedCity: updatedCity,

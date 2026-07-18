@@ -7,9 +7,10 @@ import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 
-part 'server_command_reducer_production.dart';
+part 'server_command_reducer_city.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
+part 'server_command_reducer_production.dart';
 part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
 
@@ -378,13 +379,13 @@ class ServerCommandReducer {
         );
         return _fromPersistentResult(save, result);
       case ToggleWorkedHexCommand():
-        final result = const PersistentCityWorkedHexResolver().toggleWorkedHex(
+        return _applyToggleWorkedHexCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          cityRuleset: ruleset.city,
+          ruleset: ruleset,
         );
-        return _fromPersistentResult(save, result);
       case SelectCityExpansionHexCommand():
         final result = const PersistentCityExpansionResolver()
             .selectExpansionHex(
@@ -614,17 +615,6 @@ class ServerCommandReducer {
           reason: reason,
         ),
       PersistentUnitDetachmentResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          reason: reason,
-        ),
-      PersistentCityWorkedHexResult(
         :final accepted,
         :final state,
         :final reason,

@@ -17,6 +17,7 @@ final class _ReducerParityCorpusSummary {
   final acceptedCountByFamily = <String, int>{};
   final rejectionReasonsByFamily = <String, Set<String>>{};
   final resourceTradeAcceptanceModes = <String>{};
+  final cityWorkedHexAcceptanceModes = <String>{};
   final turnAcceptanceModes = <String>{};
 
   void record(ReducerParityFixture fixture) {
@@ -54,6 +55,15 @@ final class _ReducerParityCorpusSummary {
           OpenResourceExchangeCommand() => 'exchange',
           _ => 'unexpected',
         });
+      case 'city-worked-hex':
+        final command = fixture.command as ToggleWorkedHexCommand;
+        final city = fixture.state.cities.singleWhere(
+          (candidate) => candidate.id == command.cityId,
+        );
+        final target = CityHex(col: command.col, row: command.row);
+        cityWorkedHexAcceptanceModes.add(
+          city.workedHexes.contains(target) ? 'remove' : 'add',
+        );
     }
   }
 }
@@ -81,8 +91,22 @@ void _requireReducerParityFamilyCoverage(
       _requireTurnFinalizationAcceptanceCoverage(summary, family);
     case 'resource-trade':
       _requireResourceTradeAcceptanceCoverage(summary, family);
+    case 'city-worked-hex':
+      _requireCityWorkedHexAcceptanceCoverage(summary, family);
   }
   _requireRejectionCoverage(summary, family);
+}
+
+void _requireCityWorkedHexAcceptanceCoverage(
+  _ReducerParityCorpusSummary summary,
+  String family,
+) {
+  if (!summary.cityWorkedHexAcceptanceModes.containsAll(const {
+    'add',
+    'remove',
+  })) {
+    throw StateError('$family needs accepted add and remove parity fixtures.');
+  }
 }
 
 void _requireTurnFinalizationAcceptanceCoverage(
@@ -162,6 +186,8 @@ void _validateReducerParityAcceptedCommand(
       );
     case 'combat':
       _requireAcceptedParityCombat(fixture, state, events);
+    case 'city-worked-hex':
+      _requireAcceptedParityCityWorkedHex(fixture, state, events);
     case 'detachment':
       _requireAcceptedParityDetachment(fixture, state, events);
     case 'research':
@@ -177,6 +203,47 @@ void _validateReducerParityAcceptedCommand(
         fixture,
         'uses a command outside the reviewed parity corpus',
       );
+  }
+}
+
+void _requireAcceptedParityCityWorkedHex(
+  ReducerParityFixture fixture,
+  PersistentGameState state,
+  List<GameEvent> events,
+) {
+  final command = fixture.command as ToggleWorkedHexCommand;
+  final beforeIndex = fixture.state.cities.indexWhere(
+    (city) => city.id == command.cityId,
+  );
+  if (beforeIndex < 0 || events.isNotEmpty) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must update an existing city without emitting events',
+    );
+  }
+  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must preserve save metadata for worked-hex selection',
+    );
+  }
+
+  final beforeCity = fixture.state.cities[beforeIndex];
+  final target = CityHex(col: command.col, row: command.row);
+  final expectedWorkedHexes = beforeCity.workedHexes.contains(target)
+      ? [
+          for (final hex in beforeCity.workedHexes)
+            if (hex != target) hex,
+        ]
+      : [...beforeCity.workedHexes, target];
+  final expectedCities = [...fixture.state.cities]
+    ..[beforeIndex] = beforeCity.copyWith(workedHexes: expectedWorkedHexes);
+  final expectedState = fixture.state.copyWith(cities: expectedCities);
+  if (!_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+    ReducerParityCorpus._fail(
+      fixture,
+      'must only toggle the reviewed city worked hex',
+    );
   }
 }
 

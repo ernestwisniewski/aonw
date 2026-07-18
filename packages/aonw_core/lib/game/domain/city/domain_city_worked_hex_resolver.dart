@@ -2,26 +2,26 @@ import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/toggle_worked_hex_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 
-final class PersistentCityWorkedHexResult {
-  const PersistentCityWorkedHexResult({
+final class DomainCityWorkedHexResult {
+  const DomainCityWorkedHexResult({
     required this.accepted,
     required this.state,
     this.reason,
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final String? reason;
 }
 
-/// Compatibility adapter for the persistence-neutral worked-hex resolver.
-final class PersistentCityWorkedHexResolver {
-  const PersistentCityWorkedHexResolver();
+/// Canonical-state adapter for the persistence-neutral worked-hex resolver.
+final class DomainCityWorkedHexResolver {
+  const DomainCityWorkedHexResolver();
 
-  PersistentCityWorkedHexResult toggleWorkedHex({
-    required PersistentGameState state,
+  DomainCityWorkedHexResult toggleWorkedHex({
+    required DomainState state,
     required ToggleWorkedHexCommand command,
     required String actorPlayerId,
     CityRuleset cityRuleset = CityRulesets.standard,
@@ -33,13 +33,13 @@ final class PersistentCityWorkedHexResolver {
       cityRuleset: cityRuleset,
     );
     if (!result.accepted) {
-      return PersistentCityWorkedHexResult(
+      return DomainCityWorkedHexResult(
         accepted: false,
         state: state,
         reason: result.reason,
       );
     }
-    return PersistentCityWorkedHexResult(
+    return DomainCityWorkedHexResult(
       accepted: true,
       state: state.copyWith(cities: result.cities),
     );

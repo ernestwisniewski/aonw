@@ -6,6 +6,7 @@ const reducerParityRequiredFamilies = <String>{
   'merchant-routing',
   'combat',
   'city-production',
+  'city-worked-hex',
   'detachment',
   'research',
   'resource-trade',
@@ -23,6 +24,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'building_not_available',
     'unit_supply_limit_reached',
   },
+  'city-worked-hex': {'city_not_controlled', 'worked_hex_limit_reached'},
   'detachment': {'unit_not_controlled', 'detachment_destination_unavailable'},
   'research': {'technology_player_not_controlled', 'technology_not_available'},
   'resource-trade': {
@@ -41,6 +43,7 @@ final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'merchant-routing': _matchesMerchantRoutingCommand,
   'combat': _matchesCombatCommand,
   'city-production': _matchesCityProductionCommand,
+  'city-worked-hex': _matchesCityWorkedHexCommand,
   'detachment': _matchesDetachmentCommand,
   'research': _matchesResearchCommand,
   'resource-trade': _matchesResourceTradeCommand,
@@ -74,6 +77,10 @@ bool _matchesCityProductionCommand(GameCommand command) {
       command is StartUnitProductionCommand ||
       command is StartWonderCommand ||
       command is RushProductionCommand;
+}
+
+bool _matchesCityWorkedHexCommand(GameCommand command) {
+  return command is ToggleWorkedHexCommand;
 }
 
 bool _matchesDetachmentCommand(GameCommand command) {

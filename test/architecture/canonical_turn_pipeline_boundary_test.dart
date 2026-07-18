@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/map_boundary_source_guard.dart';
+import 'support/static_member_reference_guard.dart';
 
 const _canonicalPipelinePath =
     'packages/aonw_core/lib/game/application/turn/'
@@ -17,6 +18,19 @@ const _localCallSite =
 const _serverCallSite =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
 const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';
+const _workedHexKernelPath =
+    'packages/aonw_core/lib/game/domain/city/'
+    'toggle_worked_hex_resolver.dart';
+const _persistentWorkedHexAdapterPath =
+    'packages/aonw_core/lib/game/domain/city/'
+    'persistent_city_worked_hex_resolver.dart';
+const _domainWorkedHexAdapterPath =
+    'packages/aonw_core/lib/game/domain/city/'
+    'domain_city_worked_hex_resolver.dart';
+const _localWorkedHexCallSite =
+    'lib/game/domain/reducer/city/city_worked_hex_reducer.dart';
+const _serverWorkedHexCallSite =
+    'server/lib/src/multiplayer/server_command_reducer_city.dart';
 const _retiredPersistentTurnTypes = {
   'PersistentTurnMovementDelta',
   'PersistentTurnPipelineRequest',
@@ -32,7 +46,7 @@ void main() {
     test('runtime paths and workload share the canonical facade', () {
       final sources = productionDartSources();
       expect(
-        _staticMemberReferencePaths(
+        staticMemberReferencePaths(
           sources,
           'CanonicalTurnPipeline',
           'simultaneousFinalize',
@@ -77,6 +91,95 @@ abstract final class PersistentTurnPipeline {
       );
     });
 
+    test('worked-hex paths share one state-neutral kernel', () {
+      final sources = productionDartSources();
+      expect(
+        staticMemberReferencePaths(
+          sources,
+          'ToggleWorkedHexResolver',
+          'toggleWorkedHex',
+        ),
+        {
+          _persistentWorkedHexAdapterPath,
+          _domainWorkedHexAdapterPath,
+          _localWorkedHexCallSite,
+          _serverWorkedHexCallSite,
+        },
+      );
+      expect(
+        instanceMemberReferencePaths(
+          sources,
+          'PersistentCityWorkedHexResolver',
+          'toggleWorkedHex',
+        ),
+        isEmpty,
+      );
+
+      final collector = _NamedTypeCollector();
+      _unitAt(_workedHexKernelPath).accept(collector);
+      expect(
+        collector.names.intersection(const {
+          'PersistentGameState',
+          'DomainState',
+          'CanonicalGameSnapshot',
+          'GameState',
+        }),
+        isEmpty,
+      );
+    });
+
+    test('guard catches worked-hex instance calls and tear-offs', () {
+      final sources = <String, String>{
+        'constructor.dart': '''
+void f() {
+  const PersistentCityWorkedHexResolver().toggleWorkedHex();
+}
+''',
+        'typed.dart': '''
+void f(PersistentCityWorkedHexResolver parameter) {
+  final PersistentCityWorkedHexResolver local = parameter;
+  final inferred = const PersistentCityWorkedHexResolver();
+  parameter.toggleWorkedHex();
+  final tearOff = local.toggleWorkedHex;
+  inferred.toggleWorkedHex();
+}
+''',
+        'field.dart': '''
+final class Holder {
+  const Holder(this.adapter);
+  final PersistentCityWorkedHexResolver adapter;
+  void f() => adapter.toggleWorkedHex();
+}
+''',
+        'getter.dart': '''
+PersistentCityWorkedHexResolver get adapter =>
+    const PersistentCityWorkedHexResolver();
+void f() => adapter.toggleWorkedHex();
+''',
+        'alias.dart': '''
+typedef WorkedHexAdapter = PersistentCityWorkedHexResolver;
+void f(WorkedHexAdapter adapter) {
+  adapter..toggleWorkedHex();
+}
+''',
+        'clean.dart': 'void f(Object value) { value.toString(); }',
+      };
+      expect(
+        instanceMemberReferencePaths(
+          sources,
+          'PersistentCityWorkedHexResolver',
+          'toggleWorkedHex',
+        ),
+        {
+          'constructor.dart',
+          'typed.dart',
+          'field.dart',
+          'getter.dart',
+          'alias.dart',
+        },
+      );
+    });
+
     test('guard catches prefixed, aliased, and tear-off bypasses', () {
       final sources = <String, String>{
         'direct.dart':
@@ -91,7 +194,7 @@ abstract final class PersistentTurnPipeline {
             'final f = CanonicalTurnPipeline.simultaneousFinalize;',
       };
       expect(
-        _staticMemberReferencePaths(
+        staticMemberReferencePaths(
           sources,
           'CanonicalTurnPipeline',
           'simultaneousFinalize',
@@ -194,22 +297,6 @@ abstract final class PersistentTurnPipeline {
   });
 }
 
-Set<String> _staticMemberReferencePaths(
-  Map<String, String> sources,
-  String targetType,
-  String memberName,
-) {
-  final paths = <String>{};
-  final targetTypes = typeNamesBackedBy(sources, {targetType});
-  for (final entry in sources.entries) {
-    final unit = parseString(content: entry.value, path: entry.key).unit;
-    final collector = _StaticMemberReferenceCollector(targetTypes, memberName);
-    unit.accept(collector);
-    if (collector.found) paths.add(entry.key);
-  }
-  return paths;
-}
-
 List<String> _persistentTurnApiViolations(Map<String, String> sources) {
   final violations = <String>[];
   for (final entry in sources.entries) {
@@ -302,46 +389,6 @@ bool _isOuterGameLayerUri(String uri) {
       normalized.endsWith('/application.dart') ||
       normalized.contains('/game/compatibility/') ||
       normalized.endsWith('/compatibility.dart');
-}
-
-final class _StaticMemberReferenceCollector extends RecursiveAstVisitor<void> {
-  _StaticMemberReferenceCollector(this.targetTypes, this.memberName);
-
-  final Set<String> targetTypes;
-  final String memberName;
-  bool found = false;
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    if (node.methodName.name == memberName && _isTarget(node.target)) {
-      found = true;
-    }
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (node.identifier.name == memberName && _isTarget(node.prefix)) {
-      found = true;
-    }
-    super.visitPrefixedIdentifier(node);
-  }
-
-  @override
-  void visitPropertyAccess(PropertyAccess node) {
-    if (node.propertyName.name == memberName && _isTarget(node.target)) {
-      found = true;
-    }
-    super.visitPropertyAccess(node);
-  }
-
-  bool _isTarget(AstNode? target) {
-    final source = target?.toSource();
-    if (source == null) return false;
-    return targetTypes.any(
-      (type) => source == type || source.endsWith('.$type'),
-    );
-  }
 }
 
 final class _SnapshotConversionCollector extends RecursiveAstVisitor<void> {

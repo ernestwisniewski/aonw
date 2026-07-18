@@ -270,11 +270,6 @@ abstract final class CityProductionReducer {
     paceBalance: paceBalance,
   );
 
-  static List<CityHex> normalizedWorkedHexes(
-    GameCity city,
-    CityRuleset cityRuleset,
-  ) => _normalizedWorkedHexes(city, cityRuleset);
-
   static GameSelection citySelection(
     GameState state,
     GameCity city,
@@ -336,27 +331,6 @@ abstract final class CityProductionReducer {
     required int index,
     required GameCity city,
   }) => [...cities]..[index] = city;
-
-  static List<CityHex> _normalizedWorkedHexes(
-    GameCity city,
-    CityRuleset cityRuleset,
-  ) {
-    final limit = cityRuleset.progression.workedHexLimitForPopulation(
-      city.population,
-    );
-    if (limit <= 0) return const [];
-
-    final normalized = <CityHex>[];
-    final seen = <CityHex>{};
-    for (final hex in city.workedHexes) {
-      if (normalized.length >= limit) break;
-      if (hex == city.center) continue;
-      if (!city.controlledHexes.contains(hex)) continue;
-      if (!seen.add(hex)) continue;
-      normalized.add(hex);
-    }
-    return normalized;
-  }
 
   static GameStateTransition _finishQueuedProductionUpdate(
     GameState state, {
