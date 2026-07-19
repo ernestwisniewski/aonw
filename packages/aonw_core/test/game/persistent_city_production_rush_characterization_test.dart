@@ -180,7 +180,7 @@ void main() {
       expectRushUnitElementsShared(state, result.state);
     });
 
-    test('legacy: Hero Sword does not grant XP to a rushed unit', () {
+    test('Hero Sword grants XP to a rushed unit', () {
       final unitCost = CityProductionRules.targetCost(
         const UnitProductionTarget(GameUnitType.warrior),
       );
@@ -216,8 +216,8 @@ void main() {
       expect(produced.coordinate, const HexCoordinate(col: 1, row: 1));
       expect(
         produced.experiencePoints,
-        0,
-        reason: 'Characterizes the current rush-only Hero Sword XP gap.',
+        2,
+        reason: 'Rush completion follows the normal artifact XP rule.',
       );
       expect(result.state.cities.first.productionQueue, isNull);
       final event = result.events.single as CityProducedUnitEvent;

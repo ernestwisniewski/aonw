@@ -32,6 +32,7 @@ _RushKernelScenario _acceptedUnitRushKernelScenario() {
     state: _stateWithQueue(
       rushCharacterizationUnitQueue(investedProduction: cost - 1),
       playerGold: const {rushCharacterizationPlayerId: 2},
+      artifacts: [rushCharacterizationHeroSword()],
     ),
   );
 }
@@ -327,6 +328,7 @@ void _expectCompletedUnit(
   expect(produced.id, 'city_1_warrior_1');
   expect(produced.type, GameUnitType.warrior);
   expect(produced.coordinate, const HexCoordinate(col: 1, row: 1));
+  expect(produced.experiencePoints, 2);
   expect(direct.cities.first.productionQueue, isNull);
   final event = direct.events.single as CityProducedUnitEvent;
   expect(event.producedUnitId, produced.id);

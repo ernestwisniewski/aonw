@@ -161,7 +161,7 @@ void _registerRushFixtureGuardTests() {
     }
   });
 
-  test('Rush accepted oracle rejects gold and produced-unit drift', () {
+  test('Rush accepted oracle rejects gold, unit, and artifact-XP drift', () {
     final mutations = <({String fileName, _JsonMutation mutate})>[
       (
         fileName: 'city-production-rush-unrest-accepted.json',
@@ -180,6 +180,16 @@ void _registerRushFixtureGuardTests() {
           final units = (state['units'] as List<dynamic>)
               .cast<Map<String, dynamic>>();
           units.last['id'] = 'drifted_produced_unit';
+        },
+      ),
+      (
+        fileName: 'city-production-rush-unit-completed-accepted.json',
+        mutate: (json) {
+          final expected = json['expected'] as Map<String, dynamic>;
+          final state = expected['state'] as Map<String, dynamic>;
+          final units = (state['units'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+          units.last['experiencePoints'] = 1;
         },
       ),
     ];
@@ -204,6 +214,33 @@ void _registerRushFixtureGuardTests() {
         reason: mutation.fileName,
       );
     }
+  });
+
+  test('Rush unit completion pins the Hero Sword XP source', () {
+    final repository = _copyCorpus();
+    final fixture = File(
+      '${repository.path}/test/fixtures/reducer_parity/'
+      'city-production-rush-unit-completed-accepted.json',
+    );
+    _mutateFixture(fixture, (json) {
+      final artifacts = (_inputState(json)['artifacts'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final heroSword = artifacts.singleWhere(
+        (artifact) => artifact['id'] == 'artifact.heroSword',
+      );
+      heroSword['type'] = 'queensMirror';
+    });
+
+    expect(
+      () => ReducerParityCorpus.load(repository),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('RushProduction acceptance mode'),
+        ),
+      ),
+    );
   });
 
   test('Rush blocked spawn remains an explicit acceptance branch', () {

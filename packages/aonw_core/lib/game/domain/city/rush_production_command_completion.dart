@@ -88,13 +88,23 @@ final class _RushProductionCompletion {
     if (producedUnit == null) {
       return _acceptCity(advancedCity, spentGold);
     }
+    final unitWithArtifactExperience = UnitVeterancyRules.addExperience(
+      producedUnit,
+      WorldArtifactBonuses.producedUnitExperienceFor(
+        cityId: advancedCity.id,
+        artifacts: input.artifacts,
+      ),
+    );
     final completedCity = advancedCity.copyWith(
       productionQueue: null,
       productionOverflow: overflow,
     );
     return RushProductionCommandResult._accepted(
       cities: _replaceCity(completedCity),
-      units: List<GameUnit>.unmodifiable([...input.units, producedUnit]),
+      units: List<GameUnit>.unmodifiable([
+        ...input.units,
+        unitWithArtifactExperience,
+      ]),
       playerGold: spentGold,
       research: input.research,
       wonderRegistry: input.wonderRegistry,
@@ -102,7 +112,7 @@ final class _RushProductionCompletion {
         CityProducedUnitEvent(
           cityId: completedCity.id,
           unitType: unitType,
-          producedUnitId: producedUnit.id,
+          producedUnitId: unitWithArtifactExperience.id,
         ),
       ]),
     );

@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
+import 'package:aonw_core/game/domain/artifact/world_artifact_bonuses.dart';
 import 'package:aonw_core/game/domain/city/city_building.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
@@ -20,6 +21,7 @@ import 'package:aonw_core/game/domain/technology/technology_effect_summary.dart'
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/unit/unit_veterancy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_completion_resolver.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';

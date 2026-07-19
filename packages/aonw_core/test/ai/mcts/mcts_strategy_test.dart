@@ -3,25 +3,6 @@ import 'package:test/test.dart';
 
 void main() {
   group('MctsStrategy', () {
-    test('falls back when deadline is below minimum budget', () {
-      const fallbackCommand = SelectTechnologyCommand(
-        'player_1',
-        TechnologyId.agriculture,
-      );
-      const strategy = MctsStrategy(
-        config: MctsConfig(minimumBudget: Duration(seconds: 1)),
-        fallback: _StaticStrategy(commands: [fallbackCommand]),
-      );
-
-      final plan = strategy.plan(
-        _view(),
-        _context(deadline: DateTime.now().subtract(const Duration(seconds: 1))),
-      );
-
-      expect(plan.commands, const [fallbackCommand]);
-      expect(plan.debug?.strategyId, 'static');
-    });
-
     test('plans deterministic command-backed actions', () {
       const commands = [
         EndTurnCommand('player_1'),

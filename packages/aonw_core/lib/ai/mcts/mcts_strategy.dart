@@ -44,23 +44,12 @@ class MctsStrategy implements AiStrategy {
     final totalStopwatch = Stopwatch()..start();
     final effectiveConfig =
         config ?? _configFor(context.difficulty, runtimeProfile);
-    if (!_hasMinimumBudget(context, effectiveConfig)) {
-      return fallback.plan(view, context);
-    }
-    final bypassReason = _searchBypassPolicy.reasonFor(
+    final preSearchPlan = _preSearchFallbackPlan(
       view,
-      canBypassDefaultSearch:
-          config == null && actionGenerator == null && simulator == null,
-      isBatterySaver: runtimeProfile == MctsRuntimeProfile.batterySaver,
+      context,
+      effectiveConfig,
     );
-    if (bypassReason != null) {
-      return _fallbackOnlyPlan(
-        view,
-        context,
-        config: effectiveConfig,
-        reason: bypassReason,
-      );
-    }
+    if (preSearchPlan != null) return preSearchPlan;
 
     final actionGenerationStats = actionGenerator == null
         ? MctsActionGenerationStatsCollector()
@@ -138,6 +127,34 @@ class MctsStrategy implements AiStrategy {
           ),
         },
       ),
+    );
+  }
+
+  AiTurnPlan? _preSearchFallbackPlan(
+    GameView view,
+    AiContext context,
+    MctsConfig effectiveConfig,
+  ) {
+    if (!_hasMinimumBudget(context, effectiveConfig)) {
+      return _fallbackOnlyPlan(
+        view,
+        context,
+        config: effectiveConfig,
+        reason: 'deadline below minimum budget',
+      );
+    }
+    final bypassReason = _searchBypassPolicy.reasonFor(
+      view,
+      canBypassDefaultSearch:
+          config == null && actionGenerator == null && simulator == null,
+      isBatterySaver: runtimeProfile == MctsRuntimeProfile.batterySaver,
+    );
+    if (bypassReason == null) return null;
+    return _fallbackOnlyPlan(
+      view,
+      context,
+      config: effectiveConfig,
+      reason: bypassReason,
     );
   }
 

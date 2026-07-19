@@ -259,9 +259,13 @@ _ExpectedRushProduction _completedRushUnit(
   if (producedUnit == null) {
     return _incompleteRushProduction(context, advancedCity, spentGold);
   }
-
-  // This intentionally characterizes today's rush path. Artifact XP is
-  // aligned with normal turn completion in a separate behavior slice.
+  final unitWithArtifactExperience = UnitVeterancyRules.addExperience(
+    producedUnit,
+    WorldArtifactBonuses.producedUnitExperienceFor(
+      cityId: advancedCity.id,
+      artifacts: context.before.artifacts,
+    ),
+  );
   final completedCity = advancedCity.copyWith(
     productionQueue: null,
     productionOverflow: overflow,
@@ -273,14 +277,14 @@ _ExpectedRushProduction _completedRushUnit(
         context.cityIndex,
         completedCity,
       ),
-      units: [...context.before.units, producedUnit],
+      units: [...context.before.units, unitWithArtifactExperience],
       playerGold: spentGold,
     ),
     events: [
       CityProducedUnitEvent(
         cityId: completedCity.id,
         unitType: unitType,
-        producedUnitId: producedUnit.id,
+        producedUnitId: unitWithArtifactExperience.id,
       ),
     ],
   );

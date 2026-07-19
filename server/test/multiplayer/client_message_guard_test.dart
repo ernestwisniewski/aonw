@@ -31,6 +31,21 @@ void main() {
     }
   });
 
+  test('rejects a payload value outside the JSON model', () {
+    final guard = ClientMessageGuard(expectedMatchId: 'match-1');
+
+    expect(
+      () => guard.admit(
+        _message(
+          command: _command(
+            payload: {'type': 'SubmitTurn', 'marker': Object()},
+          ),
+        ),
+      ),
+      throwsA(_error('invalid_client_message')),
+    );
+  });
+
   test('rejects command metadata that does not match the connection', () {
     final guard = ClientMessageGuard(expectedMatchId: 'match-1');
 

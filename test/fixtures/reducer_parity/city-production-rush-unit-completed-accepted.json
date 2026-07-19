@@ -310,8 +310,8 @@
           }
         },
         {
-          "id": "artifact.firstPeoplesChronicle",
-          "type": "firstPeoplesChronicle",
+          "id": "artifact.heroSword",
+          "type": "heroSword",
           "location": {
             "kind": "stored",
             "cityId": "city_1"
@@ -500,7 +500,8 @@
           "col": 1,
           "row": 1,
           "movementPoints": 3,
-          "army": []
+          "army": [],
+          "experiencePoints": 2
         }
       ],
       "cities": [
@@ -571,8 +572,8 @@
           }
         },
         {
-          "id": "artifact.firstPeoplesChronicle",
-          "type": "firstPeoplesChronicle",
+          "id": "artifact.heroSword",
+          "type": "heroSword",
           "location": {
             "kind": "stored",
             "cityId": "city_1"

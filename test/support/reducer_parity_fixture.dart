@@ -12,6 +12,7 @@ import 'reducer_parity_rush_semantics.dart';
 part 'reducer_parity_fixture_city_expansion_validation.dart';
 part 'reducer_parity_fixture_city_founding_validation.dart';
 part 'reducer_parity_fixture_production_validation.dart';
+part 'reducer_parity_fixture_rush_acceptance_validation.dart';
 part 'reducer_parity_fixture_rush_validation.dart';
 part 'reducer_parity_fixture_start_unit_validation.dart';
 part 'reducer_parity_fixture_start_wonder_validation.dart';

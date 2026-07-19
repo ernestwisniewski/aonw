@@ -3305,6 +3305,67 @@ void main() {
     expect(inviteCodeGenerator.calls, 2);
   });
 
+  test('private match creation rejects an invalid generated code', () async {
+    final inviteCodeGenerator = _SequenceInviteCodeGenerator(['invalid-code']);
+    final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
+    final store = _MemoryMatchStore();
+
+    await expectLater(
+      hub.createMatch(
+        store: store,
+        userIdentifier: 'owner-user',
+        request: CreateMatchRequest(
+          name: 'Private lobby',
+          mapName: 'verdantia',
+          maxPlayers: 3,
+          minPlayers: 2,
+          private: true,
+        ),
+      ),
+      throwsStateError,
+    );
+    expect(inviteCodeGenerator.calls, 1);
+  });
+
+  test('rejects a seat update into a taken civilization', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
+    await hub.quickplay(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.japan.name,
+      ),
+    );
+    final joined = await hub.quickplay(
+      store: store,
+      userIdentifier: 'guest-user',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.france.name,
+      ),
+    );
+
+    await expectLater(
+      hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: joined.id,
+        countryId: PlayerCountry.japan.name,
+      ),
+      throwsA(_multiplayerError('country_unavailable')),
+    );
+  });
+
   test(
     'private match creation fails after bounded collision retries',
     () async {

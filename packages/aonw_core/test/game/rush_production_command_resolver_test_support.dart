@@ -77,12 +77,14 @@ _RushKernelScenario _scenario({
 PersistentGameState _stateWithQueue(
   CityProductionQueue? queue, {
   Map<String, int>? playerGold,
+  List<WorldArtifact>? artifacts,
 }) {
   return rushCharacterizationState(
     cities: rushCharacterizationCities(
       rushCharacterizationCity(productionQueue: queue),
     ),
     playerGold: playerGold,
+    artifacts: artifacts,
   );
 }
 

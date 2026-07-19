@@ -13,6 +13,7 @@ bool isLegalMctsCommandCandidate(
   bool allowNonVisibleMoveTarget = false,
 }) {
   return switch (command) {
+    RushProductionCommand() => false,
     FoundCityCommand() => _canApplyFoundCityCandidate(command, view),
     AttackHexCommand() => _canApplyAttackCandidate(command, view),
     MoveUnitCommand() => _canApplyMoveCandidate(

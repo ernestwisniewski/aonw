@@ -9,6 +9,18 @@ void main() {
       idGenerator: _SequentialPlayerIdGenerator(),
     );
 
+    test('describes an allocation failure with code and message', () {
+      const failure = PlayerSeatAllocationFailure(
+        code: 'seat_unavailable',
+        message: 'No free seat.',
+      );
+
+      expect(
+        failure.toString(),
+        'PlayerSeatAllocationFailure(seat_unavailable, No free seat.)',
+      );
+    });
+
     test('creates a human player with the requested civilization', () {
       final player = allocator.createHumanPlayer(
         userIdentifier: 'owner-user',
