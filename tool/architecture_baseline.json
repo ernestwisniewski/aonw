@@ -453,7 +453,7 @@
         "packages/aonw_core/test/ai/mcts/mcts_action_generator_test.dart": 5245,
         "packages/aonw_core/test/ai/mcts/mcts_evaluator_test.dart": 2127,
         "packages/aonw_core/test/ai/mcts/mcts_simulator_parity_test.dart": 1168,
-        "packages/aonw_core/test/ai/mcts/mcts_strategy_test.dart": 1709,
+        "packages/aonw_core/test/ai/mcts/mcts_strategy_test.dart": 1705,
         "packages/aonw_core/test/ai/strategic/city_site_planner_test.dart": 561,
         "packages/aonw_core/test/ai/strategic/defensive_stance_planner_test.dart": 835,
         "packages/aonw_core/test/ai/strategic/war_goal_generator_test.dart": 1325,

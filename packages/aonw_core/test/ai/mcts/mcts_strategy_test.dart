@@ -1,8 +1,29 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+part 'mcts_strategy_test_support.dart';
+
 void main() {
   group('MctsStrategy', () {
+    test('falls back when deadline is below minimum budget', () {
+      const fallbackCommand = SelectTechnologyCommand(
+        'player_1',
+        TechnologyId.agriculture,
+      );
+      const strategy = MctsStrategy(
+        config: MctsConfig(minimumBudget: Duration(seconds: 1)),
+        fallback: _StaticStrategy(commands: [fallbackCommand]),
+      );
+
+      final plan = strategy.plan(
+        _view(),
+        _context(deadline: DateTime.now().subtract(const Duration(seconds: 1))),
+      );
+
+      expect(plan.commands, const [fallbackCommand]);
+      expect(plan.debug?.strategyId, 'mcts');
+    });
+
     test('plans deterministic command-backed actions', () {
       const commands = [
         EndTurnCommand('player_1'),
@@ -737,31 +758,6 @@ void main() {
       );
     });
   });
-}
-
-class _StaticStrategy implements AiStrategy {
-  final List<GameCommand> commands;
-
-  const _StaticStrategy({required this.commands});
-
-  @override
-  AiTurnPlan plan(GameView view, AiContext context) {
-    return AiTurnPlan(
-      commands: commands,
-      debug: AiDebugInfo(strategyId: 'static'),
-    );
-  }
-}
-
-class _StaticActionGenerator implements MctsActionGenerator {
-  final List<MctsAction> actions;
-
-  const _StaticActionGenerator({required this.actions});
-
-  @override
-  List<MctsAction> candidatesFor(SimulatedState state, AiContext context) {
-    return actions;
-  }
 }
 
 AiContext _context({
