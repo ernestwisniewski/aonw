@@ -56,6 +56,10 @@ void main() {
         contains('bypassed search: deadline below minimum budget'),
       );
       expect(plan.debug?.metrics['mcts.searchBypassed'], true);
+      expect(
+        plan.debug?.metrics['mcts.bypassReason'],
+        'deadline below minimum budget',
+      );
     });
 
     test('filters RushProduction injected into the searched action route', () {
