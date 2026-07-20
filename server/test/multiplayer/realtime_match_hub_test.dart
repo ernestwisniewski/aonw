@@ -13,6 +13,8 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
+part 'support/realtime_match_hub_outcome_cases.dart';
+
 void main() {
   test(
     'quickplay preserves requested civilizations for lobby players',
@@ -2269,137 +2271,7 @@ void main() {
     await ownerInput.close();
   });
 
-  test(
-    'persists a natural outcome and rejects later multiplayer commands',
-    () async {
-      final endedAt = DateTime.utc(2026, 7, 12, 17);
-      final mapCatalog = _FakeMapCatalog(_testMap());
-      final hub = RealtimeMatchHub(
-        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-        nowUtc: () => endedAt,
-      );
-      final store = _MemoryMatchStore();
-      final open = await hub.createMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        request: CreateMatchRequest(
-          name: 'Natural outcome',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-        ),
-      );
-      final joined = await hub.joinMatch(
-        store: store,
-        userIdentifier: 'guest-user',
-        matchId: open.id,
-      );
-      final match = await hub.startMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: joined.id,
-        snapshotFactory: InitialMultiplayerSnapshotFactory(
-          mapCatalog: mapCatalog,
-        ),
-      );
-      final owner = match.players.first;
-      final guest = match.players.last;
-      final stored = (await store.findState(match.id))!;
-      final state = PersistentGameState.fromJson(stored.snapshot.state);
-      await store.saveState(
-        stored.copyWith(
-          snapshot: stored.snapshot.copyWith(
-            state: state
-                .copyWith(
-                  units: state.units
-                      .where((unit) => unit.ownerPlayerId != guest.id)
-                      .toList(),
-                  cities: state.cities
-                      .where((city) => city.ownerPlayerId != guest.id)
-                      .toList(),
-                )
-                .toJson(),
-          ),
-        ),
-      );
-
-      final input = StreamController<MultiplayerClientMessage>();
-      final stream = hub
-          .connect(
-            store: store,
-            userIdentifier: owner.userId,
-            matchId: match.id,
-            afterOffset: 0,
-            input: input.stream,
-          )
-          .asBroadcastStream();
-      await stream.first;
-      final finishedAck = stream.firstWhere((message) => message.ack != null);
-      final finishingCommand = MultiplayerClientMessage(
-        clientMessageId: 'natural-outcome-command',
-        lastSeenOffset: 0,
-        requestSnapshot: false,
-        command: WireCommand(
-          matchId: match.id,
-          tick: 1,
-          turn: 1,
-          actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
-        ),
-      );
-      input.add(finishingCommand);
-
-      final finishMessage = await finishedAck;
-      final authoritative = (await store.findState(match.id))!;
-      expect(finishMessage.ack!.accepted, isTrue);
-      expect(finishMessage.match?.state, 'finished');
-      expect(authoritative.match.state, 'finished');
-      expect(authoritative.match.endedAt, endedAt);
-      expect(authoritative.match.outcomeCondition, 'conquest');
-      expect(authoritative.match.winnerPlayerId, owner.id);
-      expect(authoritative.snapshot.state['phase'], 'finished');
-
-      final duplicateAck = stream.firstWhere((message) => message.ack != null);
-      input.add(finishingCommand);
-      final duplicateMessage = await duplicateAck;
-      expect(duplicateMessage.ack!.accepted, isTrue);
-      expect(duplicateMessage.match?.state, 'finished');
-      expect(duplicateMessage.match?.outcomeCondition, 'conquest');
-      expect(duplicateMessage.match?.winnerPlayerId, owner.id);
-
-      final rejectedAck = stream.firstWhere((message) => message.ack != null);
-      input.add(
-        MultiplayerClientMessage(
-          clientMessageId: 'command-after-finish',
-          lastSeenOffset: authoritative.offset,
-          requestSnapshot: false,
-          command: WireCommand(
-            matchId: match.id,
-            tick: 2,
-            turn: 1,
-            actorPlayerId: owner.id,
-            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
-          ),
-        ),
-      );
-      final rejectedMessage = await rejectedAck;
-      expect(rejectedMessage.ack!.accepted, isFalse);
-      expect(rejectedMessage.ack!.reason, 'match_not_running');
-
-      await hub.leaveMatch(
-        store: store,
-        userIdentifier: owner.userId,
-        matchId: match.id,
-      );
-      final afterLeave = (await store.findState(match.id))!.match;
-      expect(afterLeave.state, 'finished');
-      expect(afterLeave.outcomeCondition, 'conquest');
-      expect(afterLeave.winnerPlayerId, owner.id);
-
-      await input.close();
-    },
-  );
+  _registerRealtimeMatchHubOutcomeTests();
 
   test('routes diplomacy commands through the authoritative hub', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
