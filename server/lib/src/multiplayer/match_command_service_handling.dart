@@ -114,11 +114,11 @@ extension MatchCommandServiceHandling on MatchCommandService {
       tick: command.tick,
       turn: state.match.turn,
       command: command.command,
-      events: PlayerMatchEventAudience.annotateForStorage(
+      events: _eventAudienceForStorage(
         events: reduction.events,
         participantPlayerIds: state.match.players.map((player) => player.id),
-        previousState: reduction.previousState!,
-        state: reduction.state!,
+        previous: reduction.previousState!,
+        next: reduction.state!,
       ),
     );
     final updated = _stateAfterAcceptedReduction(

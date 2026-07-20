@@ -110,11 +110,11 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         tick: state.nextOffset(),
         turn: state.match.turn,
         command: GameCommandSerializer.toJson(command),
-        events: PlayerMatchEventAudience.annotateForStorage(
+        events: _eventAudienceForStorage(
           events: reduction.events,
           participantPlayerIds: state.match.players.map((player) => player.id),
-          previousState: reduction.previousState!,
-          state: reduction.state!,
+          previous: reduction.previousState!,
+          next: reduction.state!,
         ),
       );
       final updated = _stateAfterAcceptedReduction(

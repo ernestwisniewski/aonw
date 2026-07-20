@@ -342,39 +342,13 @@ class BalanceTelemetryAnalyzer {
         previousSample = sample;
         continue;
       }
-      for (final playerId in orderedPlayers) {
-        final builder = builders[playerId]!
-          ..captureMilestones(
-            playerId: playerId,
-            sample: sample,
-            previous: previousSample,
-          );
-        final objectiveAction = sample.objectiveActionByPlayerId[playerId];
-        if (objectiveAction != null) {
-          builder.captureObjectiveAction(objectiveAction);
-        }
-
-        if (previousSample == null) continue;
-
-        final deadTurn = _isDeadTurn(
-          playerId: playerId,
-          previous: previousSample.state,
-          current: sample.state,
-          events: sample.events,
-          commandCount: sample.meaningfulCommandsByPlayerId[playerId] ?? 0,
-        );
-        if (deadTurn) {
-          builder.deadTurnCount += 1;
-          activeDeadRuns.putIfAbsent(playerId, () => sample.turn);
-        } else {
-          _closeDeadRun(
-            builder: builder,
-            playerId: playerId,
-            activeDeadRuns: activeDeadRuns,
-            endTurn: sample.turn - 1,
-          );
-        }
-      }
+      _captureActiveSample(
+        playerIds: orderedPlayers,
+        builders: builders,
+        activeDeadRuns: activeDeadRuns,
+        previousSample: previousSample,
+        sample: sample,
+      );
 
       if (victoryTurn == null && sample.outcome.finished) {
         victoryTurn = sample.turn;
@@ -415,25 +389,6 @@ class BalanceTelemetryAnalyzer {
       winnerPlayerId: winnerPlayerId,
       findings: List.unmodifiable(findings),
     );
-  }
-
-  void _closeDeadRun({
-    required _PlayerReportBuilder builder,
-    required String playerId,
-    required Map<String, int> activeDeadRuns,
-    required int endTurn,
-  }) {
-    final startTurn = activeDeadRuns.remove(playerId);
-    if (startTurn == null || endTurn < startTurn) return;
-    final run = BalanceTelemetryDeadTurnRun(
-      playerId: playerId,
-      startTurn: startTurn,
-      endTurn: endTurn,
-    );
-    builder.deadTurnRuns.add(run);
-    if (run.length > builder.longestDeadTurnStreak) {
-      builder.longestDeadTurnStreak = run.length;
-    }
   }
 
   List<BalanceTelemetryFinding> _findingsFor({
@@ -655,7 +610,7 @@ class _PlayerReportBuilder {
   void captureMilestones({
     required String playerId,
     required BalanceTelemetryTurnSample sample,
-    required BalanceTelemetryTurnSample? previous,
+    required _EventOwnershipTransition ownership,
   }) {
     captureEndPace(playerId: playerId, sample: sample);
     final summary = _PlayerSnapshotSummary.fromState(sample.state, playerId);
@@ -668,8 +623,7 @@ class _PlayerReportBuilder {
     firstCombatTurn ??=
         _hasCombatEventForPlayer(
           playerId: playerId,
-          state: sample.state,
-          previousState: previous?.state,
+          ownership: ownership,
           events: sample.events,
         )
         ? sample.turn

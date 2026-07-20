@@ -1,4 +1,4 @@
-import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/domain/event.dart';
 
 /// Server-owned recipient metadata embedded only in canonical event storage.
 ///
@@ -11,15 +11,15 @@ abstract final class PlayerMatchEventAudience {
   /// Serializes domain events with the exact set of match participants allowed
   /// to receive each payload.
   ///
-  /// Both states are required because a transition can remove or transfer an
-  /// entity (for example, a killed unit or captured city). Computing history
-  /// visibility from the latest snapshot would otherwise assign an old event
-  /// to the wrong owner.
+  /// Both ownership indexes are required because a transition can remove or
+  /// transfer an entity (for example, a killed unit or captured city).
+  /// Computing history visibility from the latest snapshot would otherwise
+  /// assign an old event to the wrong owner.
   static List<Map<String, dynamic>> annotateForStorage({
     required Iterable<GameEvent> events,
     required Iterable<String> participantPlayerIds,
-    required PersistentGameState previousState,
-    required PersistentGameState state,
+    required GameEventOwnershipIndex previous,
+    required GameEventOwnershipIndex next,
   }) {
     final participants =
         participantPlayerIds
@@ -36,8 +36,8 @@ abstract final class PlayerMatchEventAudience {
               if (_isVisibleTo(
                 event,
                 playerId: playerId,
-                previousState: previousState,
-                state: state,
+                previous: previous,
+                next: next,
               ))
                 playerId,
           ],
@@ -74,15 +74,14 @@ abstract final class PlayerMatchEventAudience {
   static bool _isVisibleTo(
     GameEvent event, {
     required String playerId,
-    required PersistentGameState previousState,
-    required PersistentGameState state,
+    required GameEventOwnershipIndex previous,
+    required GameEventOwnershipIndex next,
   }) {
     final descriptor = GameEventDomainDescriptor.forEvent(event);
-    return descriptor.visibleToAllPlayers ||
-        descriptor.isVisibleToPlayer(
-          playerId: playerId,
-          state: state,
-          previousState: previousState,
-        );
+    return descriptor.isVisibleToPlayer(
+      playerId: playerId,
+      previous: previous,
+      next: next,
+    );
   }
 }

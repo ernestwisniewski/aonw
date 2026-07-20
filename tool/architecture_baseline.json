@@ -31,7 +31,7 @@
         "packages/aonw_core/lib/game/domain/map_validation.dart": 586,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart": 694,
         "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart": 746,
-        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 751
+        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 705
       },
       "legacyFiles": {},
       "declarations": {
@@ -154,7 +154,7 @@
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 86,
         "packages/aonw_core/lib/game/domain/technology/technology_effect_summary.dart::class:TechnologyEffectSummary/constructor:forPlayer": 69,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:_findingsFor": 122,
-        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 107,
+        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 82,
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openGoldForResourceTrade": 82,
         "packages/aonw_core/lib/game/domain/trade/persistent_resource_trade_resolver.dart::class:PersistentResourceTradeResolver/method:openResourceForResourceTrade": 100,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 80,
@@ -343,7 +343,7 @@
         "packages/aonw_core/lib/game/domain/technology/technology_definition.dart::class:TechnologyDefinition/operator:==": 12,
         "packages/aonw_core/lib/game/domain/technology/technology_effect_summary.dart::class:TechnologyEffectSummary/constructor:forPlayer": 13,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:_findingsFor": 11,
-        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 15,
+        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 11,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 21,
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isBase": 15,
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isFeature": 15,
@@ -440,7 +440,6 @@
         "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 37,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 24,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:_findingsFor": 19,
-        "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:analyze": 26,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 20,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 19,
         "packages/aonw_core/lib/game/domain/unit/worker_turn_processor.dart::class:WorkerTurnProcessor/method:advanceForPlayer": 16

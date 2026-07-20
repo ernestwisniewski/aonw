@@ -5,10 +5,10 @@ import 'package:test/test.dart';
 void main() {
   group('PlayerMatchEventAudience', () {
     test('uses transition ownership and strips storage-only metadata', () {
-      final previousState = PersistentGameState(
+      final previousOwnership = _ownership(
         cities: [_city('city-1', ownerPlayerId: 'player-1')],
       );
-      final state = PersistentGameState(
+      final nextOwnership = _ownership(
         cities: [_city('city-1', ownerPlayerId: 'player-2')],
       );
       final canonical = PlayerMatchEventAudience.annotateForStorage(
@@ -20,8 +20,8 @@ void main() {
           ),
         ],
         participantPlayerIds: const ['player-1', 'player-2', 'observer'],
-        previousState: previousState,
-        state: state,
+        previous: previousOwnership,
+        next: nextOwnership,
       );
       canonical.single['secret'] = 'must-not-cross-the-wire';
 
@@ -46,14 +46,14 @@ void main() {
     });
 
     test('resolves removed entity ownership from the previous state', () {
-      final previousState = PersistentGameState(
+      final previousOwnership = _ownership(
         units: [_unit('worker-1', ownerPlayerId: 'player-1')],
       );
       final canonical = PlayerMatchEventAudience.annotateForStorage(
         events: const [WorkerCompletedJobEvent(unitId: 'worker-1')],
         participantPlayerIds: const ['player-1', 'player-2'],
-        previousState: previousState,
-        state: const PersistentGameState(),
+        previous: previousOwnership,
+        next: GameEventOwnershipIndex.empty,
       );
 
       expect(
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('projects unit and city combat outcomes to both owners', () {
-      final previousState = PersistentGameState(
+      final ownership = _ownership(
         units: [
           _unit('attacker', ownerPlayerId: 'player-1'),
           _unit('defender', ownerPlayerId: 'player-2'),
@@ -86,8 +86,8 @@ void main() {
           _combatResolved('attacker', 'city-2'),
         ],
         participantPlayerIds: const ['player-1', 'player-2', 'observer'],
-        previousState: previousState,
-        state: previousState,
+        previous: ownership,
+        next: ownership,
       );
 
       final attacker = PlayerMatchEventAudience.projectForRecipient(
@@ -119,8 +119,8 @@ void main() {
           ),
         ],
         participantPlayerIds: const ['player-1', 'player-2'],
-        previousState: const PersistentGameState(),
-        state: const PersistentGameState(),
+        previous: GameEventOwnershipIndex.empty,
+        next: GameEventOwnershipIndex.empty,
       );
 
       for (final playerId in const ['player-1', 'player-2']) {
@@ -142,10 +142,10 @@ void main() {
     });
 
     test('normalizes participants and preserves ordered ownership modes', () {
-      final previousState = PersistentGameState(
+      final previousOwnership = _ownership(
         units: [_unit('removed-worker', ownerPlayerId: 'player-1')],
       );
-      final state = PersistentGameState(
+      final nextOwnership = _ownership(
         cities: [_city('current-city', ownerPlayerId: 'player-2')],
       );
 
@@ -166,8 +166,8 @@ void main() {
           'player-1',
           'player-2',
         ],
-        previousState: previousState,
-        state: state,
+        previous: previousOwnership,
+        next: nextOwnership,
       );
 
       expect(
@@ -222,6 +222,13 @@ void main() {
       );
     });
   });
+}
+
+GameEventOwnershipIndex _ownership({
+  Iterable<GameUnit> units = const [],
+  Iterable<GameCity> cities = const [],
+}) {
+  return GameEventOwnershipIndex.from(units, cities);
 }
 
 GameCity _city(String id, {required String ownerPlayerId}) {

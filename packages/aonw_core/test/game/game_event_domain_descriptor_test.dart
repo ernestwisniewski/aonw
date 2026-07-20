@@ -22,7 +22,8 @@ void main() {
       expect(
         descriptor.belongsToPlayer(
           playerId: 'player_1',
-          state: const PersistentGameState(),
+          previous: GameEventOwnershipIndex.empty,
+          next: GameEventOwnershipIndex.empty,
         ),
         isTrue,
       );
@@ -53,18 +54,16 @@ void main() {
       expect(peaceDescriptor.signedPeacePlayerIds, {'player_1', 'player_2'});
     });
 
-    test('resolves entity ownership from the previous state', () {
-      final previousState = PersistentGameState(
-        units: [
-          GameUnit.produced(
-            id: 'worker',
-            ownerPlayerId: 'player_1',
-            type: GameUnitType.worker,
-            col: 2,
-            row: 3,
-          ),
-        ],
-      );
+    test('resolves entity ownership from the previous index', () {
+      final previousOwnership = GameEventOwnershipIndex.from([
+        GameUnit.produced(
+          id: 'worker',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.worker,
+          col: 2,
+          row: 3,
+        ),
+      ], const []);
       final descriptor = GameEventDomainDescriptor.forEvent(
         const WorkerCompletedJobEvent(unitId: 'worker'),
       );
@@ -72,24 +71,79 @@ void main() {
       expect(
         descriptor.belongsToPlayer(
           playerId: 'player_1',
-          state: const PersistentGameState(),
-          previousState: previousState,
+          previous: previousOwnership,
+          next: GameEventOwnershipIndex.empty,
         ),
         isTrue,
       );
     });
 
-    test('routes a city kill event to the attacking city owner', () {
-      const state = PersistentGameState(
-        cities: [
-          GameCity(
-            id: 'city_1',
-            ownerPlayerId: 'player_1',
-            name: 'Warszawa',
-            center: CityHex(col: 2, row: 3),
+    test('preserves ordered previous, next, global, and closed modes', () {
+      final previousOwnership = GameEventOwnershipIndex.from([
+        GameUnit.produced(
+          id: 'removed-worker',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.worker,
+          col: 2,
+          row: 3,
+        ),
+      ], const []);
+      final nextOwnership = GameEventOwnershipIndex.from(const [], const [
+        GameCity(
+          id: 'current-city',
+          ownerPlayerId: 'player_2',
+          name: 'Current city',
+          center: CityHex(col: 2, row: 3),
+        ),
+      ]);
+      final descriptors = [
+        GameEventDomainDescriptor.forEvent(
+          const WorkerCompletedJobEvent(unitId: 'removed-worker'),
+        ),
+        GameEventDomainDescriptor.forEvent(
+          const CityClaimedHexEvent(cityId: 'current-city', col: 2, row: 3),
+        ),
+        GameEventDomainDescriptor.forEvent(
+          AllPlayersSubmittedEvent(
+            turn: 4,
+            playerIds: const ['player_1', 'player_2'],
           ),
+        ),
+        GameEventDomainDescriptor.forEvent(
+          const CommandRejectedEvent(reason: 'fail-closed'),
+        ),
+      ];
+
+      expect(
+        [
+          for (final descriptor in descriptors)
+            [
+              for (final playerId in const ['player_1', 'player_2', 'observer'])
+                descriptor.isVisibleToPlayer(
+                  playerId: playerId,
+                  previous: previousOwnership,
+                  next: nextOwnership,
+                ),
+            ],
+        ],
+        const [
+          [true, false, false],
+          [false, true, false],
+          [true, true, true],
+          [false, false, false],
         ],
       );
+    });
+
+    test('routes a city kill event to the attacking city owner', () {
+      final ownership = GameEventOwnershipIndex.from(const [], const [
+        GameCity(
+          id: 'city_1',
+          ownerPlayerId: 'player_1',
+          name: 'Warszawa',
+          center: CityHex(col: 2, row: 3),
+        ),
+      ]);
       final descriptor = GameEventDomainDescriptor.forEvent(
         const UnitKilledEvent(
           unitId: 'attacker',
@@ -99,11 +153,11 @@ void main() {
       );
 
       expect(
-        descriptor.isVisibleToPlayer(playerId: 'player_1', state: state),
+        _isVisible(descriptor, 'player_1', nextOwnership: ownership),
         isTrue,
       );
       expect(
-        descriptor.isVisibleToPlayer(playerId: 'player_2', state: state),
+        _isVisible(descriptor, 'player_2', nextOwnership: ownership),
         isTrue,
       );
     });
@@ -116,20 +170,8 @@ void main() {
         ),
       );
 
-      expect(
-        descriptor.isVisibleToPlayer(
-          playerId: 'player_1',
-          state: const PersistentGameState(),
-        ),
-        isTrue,
-      );
-      expect(
-        descriptor.isVisibleToPlayer(
-          playerId: 'player_2',
-          state: const PersistentGameState(),
-        ),
-        isFalse,
-      );
+      expect(_isVisible(descriptor, 'player_1'), isTrue);
+      expect(_isVisible(descriptor, 'player_2'), isFalse);
     });
 
     test('marks turn completion as visible to every participant', () {
@@ -138,13 +180,7 @@ void main() {
       );
 
       expect(descriptor.visibleToAllPlayers, isTrue);
-      expect(
-        descriptor.isVisibleToPlayer(
-          playerId: 'p2',
-          state: const PersistentGameState(),
-        ),
-        isTrue,
-      );
+      expect(_isVisible(descriptor, 'p2'), isTrue);
     });
 
     test('marks domination threshold alerts as globally visible', () {
@@ -159,13 +195,7 @@ void main() {
       );
 
       expect(descriptor.visibleToAllPlayers, isTrue);
-      expect(
-        descriptor.isVisibleToPlayer(
-          playerId: 'p2',
-          state: const PersistentGameState(),
-        ),
-        isTrue,
-      );
+      expect(_isVisible(descriptor, 'p2'), isTrue);
     });
 
     test('routes player system and research events only to their player', () {
@@ -188,22 +218,29 @@ void main() {
       ]) {
         final descriptor = GameEventDomainDescriptor.forEvent(event);
         expect(
-          descriptor.isVisibleToPlayer(
-            playerId: 'p1',
-            state: const PersistentGameState(),
-          ),
+          _isVisible(descriptor, 'p1'),
           isTrue,
           reason: event.runtimeType.toString(),
         );
         expect(
-          descriptor.isVisibleToPlayer(
-            playerId: 'p2',
-            state: const PersistentGameState(),
-          ),
+          _isVisible(descriptor, 'p2'),
           isFalse,
           reason: event.runtimeType.toString(),
         );
       }
     });
   });
+}
+
+bool _isVisible(
+  GameEventDomainDescriptor descriptor,
+  String playerId, {
+  GameEventOwnershipIndex previousOwnership = GameEventOwnershipIndex.empty,
+  GameEventOwnershipIndex nextOwnership = GameEventOwnershipIndex.empty,
+}) {
+  return descriptor.isVisibleToPlayer(
+    playerId: playerId,
+    previous: previousOwnership,
+    next: nextOwnership,
+  );
 }

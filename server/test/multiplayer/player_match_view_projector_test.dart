@@ -150,8 +150,8 @@ void main() {
         ),
       ],
       participantPlayerIds: const ['player-owner', 'player-guest'],
-      previousState: state,
-      state: state,
+      previous: GameEventOwnershipIndex.from(state.units, state.cities),
+      next: GameEventOwnershipIndex.from(state.units, state.cities),
     );
     final ownEvent = WireEvent(
       matchId: snapshot.matchId,
@@ -216,8 +216,8 @@ void main() {
           ),
         ],
         participantPlayerIds: const ['player-owner', 'player-guest'],
-        previousState: state,
-        state: state,
+        previous: GameEventOwnershipIndex.from(state.units, state.cities),
+        next: GameEventOwnershipIndex.from(state.units, state.cities),
       ),
     );
     final redactedGuestOnly = projector.eventFor(guestOnlyEvent, owner);

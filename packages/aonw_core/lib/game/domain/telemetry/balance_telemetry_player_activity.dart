@@ -1,5 +1,72 @@
 part of 'balance_telemetry.dart';
 
+void _captureActiveSample({
+  required List<String> playerIds,
+  required Map<String, _PlayerReportBuilder> builders,
+  required Map<String, int> activeDeadRuns,
+  required BalanceTelemetryTurnSample? previousSample,
+  required BalanceTelemetryTurnSample sample,
+}) {
+  final ownership = _eventOwnershipTransition(
+    previous: previousSample?.state,
+    next: sample.state,
+    hasEvents: sample.events.isNotEmpty,
+  );
+  for (final playerId in playerIds) {
+    final builder = builders[playerId]!
+      ..captureMilestones(
+        playerId: playerId,
+        sample: sample,
+        ownership: ownership,
+      );
+    final objectiveAction = sample.objectiveActionByPlayerId[playerId];
+    if (objectiveAction != null) {
+      builder.captureObjectiveAction(objectiveAction);
+    }
+
+    final previous = previousSample;
+    if (previous == null) continue;
+    final deadTurn = _isDeadTurn(
+      playerId: playerId,
+      previous: previous.state,
+      current: sample.state,
+      ownership: ownership,
+      events: sample.events,
+      commandCount: sample.meaningfulCommandsByPlayerId[playerId] ?? 0,
+    );
+    if (deadTurn) {
+      builder.deadTurnCount += 1;
+      activeDeadRuns.putIfAbsent(playerId, () => sample.turn);
+    } else {
+      _closeDeadRun(
+        builder: builder,
+        playerId: playerId,
+        activeDeadRuns: activeDeadRuns,
+        endTurn: sample.turn - 1,
+      );
+    }
+  }
+}
+
+void _closeDeadRun({
+  required _PlayerReportBuilder builder,
+  required String playerId,
+  required Map<String, int> activeDeadRuns,
+  required int endTurn,
+}) {
+  final startTurn = activeDeadRuns.remove(playerId);
+  if (startTurn == null || endTurn < startTurn) return;
+  final run = BalanceTelemetryDeadTurnRun(
+    playerId: playerId,
+    startTurn: startTurn,
+    endTurn: endTurn,
+  );
+  builder.deadTurnRuns.add(run);
+  if (run.length > builder.longestDeadTurnStreak) {
+    builder.longestDeadTurnStreak = run.length;
+  }
+}
+
 class _PlayerSnapshotSummary {
   const _PlayerSnapshotSummary({
     required this.cityCount,
@@ -93,14 +160,14 @@ bool _isDeadTurn({
   required String playerId,
   required PersistentGameState previous,
   required PersistentGameState current,
+  required _EventOwnershipTransition ownership,
   required Iterable<GameEvent> events,
   required int commandCount,
 }) {
   if (commandCount > 0) return false;
   if (_hasMeaningfulEventForPlayer(
     playerId: playerId,
-    state: current,
-    previousState: previous,
+    ownership: ownership,
     events: events,
   )) {
     return false;
@@ -128,24 +195,21 @@ bool _hasContact(PersistentGameState state, String playerId) {
 
 bool _hasMeaningfulEventForPlayer({
   required String playerId,
-  required PersistentGameState state,
-  required PersistentGameState? previousState,
+  required _EventOwnershipTransition ownership,
   required Iterable<GameEvent> events,
 }) {
   return events.any(
     (event) => _eventBelongsToPlayer(
       event: event,
       playerId: playerId,
-      state: state,
-      previousState: previousState,
+      ownership: ownership,
     ),
   );
 }
 
 bool _hasCombatEventForPlayer({
   required String playerId,
-  required PersistentGameState state,
-  required PersistentGameState? previousState,
+  required _EventOwnershipTransition ownership,
   required Iterable<GameEvent> events,
 }) {
   return events
@@ -154,8 +218,7 @@ bool _hasCombatEventForPlayer({
         (event) => _eventBelongsToPlayer(
           event: event,
           playerId: playerId,
-          state: state,
-          previousState: previousState,
+          ownership: ownership,
         ),
       );
 }
@@ -163,15 +226,38 @@ bool _hasCombatEventForPlayer({
 bool _eventBelongsToPlayer({
   required GameEvent event,
   required String playerId,
-  required PersistentGameState state,
-  required PersistentGameState? previousState,
+  required _EventOwnershipTransition ownership,
 }) {
   return GameEventDomainDescriptor.forEvent(event).belongsToPlayer(
     playerId: playerId,
-    state: state,
-    previousState: previousState,
+    previous: ownership.previous,
+    next: ownership.next,
   );
 }
+
+_EventOwnershipTransition _eventOwnershipTransition({
+  required PersistentGameState? previous,
+  required PersistentGameState next,
+  required bool hasEvents,
+}) {
+  if (!hasEvents) return _emptyEventOwnershipTransition;
+  return (
+    previous: previous == null
+        ? GameEventOwnershipIndex.empty
+        : GameEventOwnershipIndex.from(previous.units, previous.cities),
+    next: GameEventOwnershipIndex.from(next.units, next.cities),
+  );
+}
+
+typedef _EventOwnershipTransition = ({
+  GameEventOwnershipIndex previous,
+  GameEventOwnershipIndex next,
+});
+
+const _emptyEventOwnershipTransition = (
+  previous: GameEventOwnershipIndex.empty,
+  next: GameEventOwnershipIndex.empty,
+);
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {
   final seen = <String>{};

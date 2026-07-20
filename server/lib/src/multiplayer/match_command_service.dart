@@ -1,7 +1,7 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
-import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart' hide GameEvent;
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
@@ -100,4 +100,19 @@ final class MatchCommandService {
     });
     outcome.notifications.deliver(_broadcaster);
   }
+}
+
+List<Map<String, dynamic>> _eventAudienceForStorage({
+  required List<GameEvent> events,
+  required Iterable<String> participantPlayerIds,
+  required PersistentGameState previous,
+  required PersistentGameState next,
+}) {
+  if (events.isEmpty) return const [];
+  return PlayerMatchEventAudience.annotateForStorage(
+    events: events,
+    participantPlayerIds: participantPlayerIds,
+    previous: GameEventOwnershipIndex.from(previous.units, previous.cities),
+    next: GameEventOwnershipIndex.from(next.units, next.cities),
+  );
 }

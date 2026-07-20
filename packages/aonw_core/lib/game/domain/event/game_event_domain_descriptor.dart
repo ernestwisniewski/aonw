@@ -1,7 +1,6 @@
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
-import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/event/game_event_ownership_index.dart';
 
 final class GameEventHostility {
   const GameEventHostility({
@@ -255,34 +254,30 @@ final class GameEventDomainDescriptor {
   /// players.
   bool isVisibleToPlayer({
     required String playerId,
-    required PersistentGameState state,
-    PersistentGameState? previousState,
+    required GameEventOwnershipIndex previous,
+    required GameEventOwnershipIndex next,
   }) {
     if (visibleToAllPlayers) return true;
     final visiblePlayerIds = _visiblePlayerIds;
     if (visiblePlayerIds != null) return visiblePlayerIds.contains(playerId);
-    return belongsToPlayer(
-      playerId: playerId,
-      state: state,
-      previousState: previousState,
-    );
+    return belongsToPlayer(playerId: playerId, previous: previous, next: next);
   }
 
   bool belongsToPlayer({
     required String playerId,
-    required PersistentGameState state,
-    PersistentGameState? previousState,
+    required GameEventOwnershipIndex previous,
+    required GameEventOwnershipIndex next,
   }) {
     if (playerIds.contains(playerId)) return true;
     for (final unitId in unitIds) {
-      if (_unitOwner(state, unitId) == playerId ||
-          _unitOwner(previousState, unitId) == playerId) {
+      if (next.unitOwner(unitId) == playerId ||
+          previous.unitOwner(unitId) == playerId) {
         return true;
       }
     }
     for (final cityId in cityIds) {
-      if (_cityOwner(state, cityId) == playerId ||
-          _cityOwner(previousState, cityId) == playerId) {
+      if (next.cityOwner(cityId) == playerId ||
+          previous.cityOwner(cityId) == playerId) {
         return true;
       }
     }
@@ -304,12 +299,4 @@ final class GameEventDomainDescriptor {
     }
     return null;
   }
-}
-
-String? _unitOwner(PersistentGameState? state, String unitId) {
-  return state?.units.byId(unitId)?.ownerPlayerId;
-}
-
-String? _cityOwner(PersistentGameState? state, String cityId) {
-  return state?.cities.byId(cityId)?.ownerPlayerId;
 }
