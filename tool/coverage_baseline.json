@@ -15,12 +15,12 @@
         },
         "domain": {
           "files": {
-            "hit": 338,
-            "found": 347
+            "hit": 340,
+            "found": 349
           },
           "lines": {
-            "hit": 12425,
-            "found": 14262
+            "hit": 12517,
+            "found": 14345
           }
         },
         "map": {
@@ -264,8 +264,8 @@
             "found": 55
           },
           "lines": {
-            "hit": 2032,
-            "found": 2643
+            "hit": 2044,
+            "found": 2655
           }
         },
         "observability": {

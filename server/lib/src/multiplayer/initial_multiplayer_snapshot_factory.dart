@@ -14,7 +14,7 @@ class InitialMultiplayerSnapshotFactory {
     required WireMatch match,
     required DateTime startedAt,
   }) async {
-    final players = match.players.map(_domainPlayer).toList();
+    final players = match.players.map(domainPlayerFromWire).toList();
     final mapData = await _mapCatalog.loadAssetMap(match.mapName);
     mapData.mapName ??= match.mapName;
     final startPositionSeed = StartingPositionSeed.fromParts([
@@ -84,7 +84,7 @@ class InitialMultiplayerSnapshotFactory {
     );
   }
 
-  Player _domainPlayer(WirePlayer player) {
+  static Player domainPlayerFromWire(WirePlayer player) {
     return Player(
       id: player.id,
       name: player.name,

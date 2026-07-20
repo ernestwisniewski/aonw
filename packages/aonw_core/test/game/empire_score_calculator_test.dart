@@ -115,6 +115,65 @@ void main() {
       expect(score.total, 86);
     });
 
+    test('scores explicit collections and objective hold states', () {
+      const objective = MapObjectiveDefinition(
+        id: 'pass_1',
+        type: MapObjectiveType.strategicPass,
+        hex: HexCoord(col: 0, row: 0),
+        requiredHoldTurns: 2,
+        victoryPoints: 7,
+      );
+      const cities = [
+        GameCity(
+          id: 'city_1',
+          ownerPlayerId: 'player_1',
+          name: 'Roma',
+          center: CityHex(col: 0, row: 0),
+        ),
+      ];
+      final units = [
+        GameUnit.produced(
+          id: 'warrior_2',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          col: 1,
+          row: 0,
+        ),
+      ];
+      const objectiveHolds = {
+        'pass_1': MapObjectiveHoldState(
+          objectiveId: 'pass_1',
+          playerId: 'player_1',
+          holdTurns: 2,
+        ),
+      };
+
+      final score = calculator.scoreForCollections(
+        playerId: 'player_1',
+        cities: cities,
+        units: units,
+        fieldImprovements: const [],
+        research: ResearchState.empty,
+        playerGold: const {},
+        mapObjectives: const [objective],
+        mapObjectiveHoldStatesByObjectiveId: objectiveHolds,
+      );
+      final scores = calculator.scoresForCollections(
+        playerIds: const ['player_2', 'player_1'],
+        cities: cities,
+        units: units,
+        fieldImprovements: const [],
+        research: ResearchState.empty,
+        playerGold: const {},
+        mapObjectives: const [objective],
+        mapObjectiveHoldStatesByObjectiveId: objectiveHolds,
+      );
+
+      expect(score.mapObjectiveScore, 7);
+      expect(score.total, 86);
+      expect(scores, const {'player_1': 86, 'player_2': 15});
+    });
+
     test('returns stable sorted scores for the requested roster only', () {
       final scores = calculator.scoresFor(
         playerIds: const ['player_2', 'outsider', 'player_1', 'player_2'],

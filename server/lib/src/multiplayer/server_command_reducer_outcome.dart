@@ -30,21 +30,82 @@ class ServerCommandReduction {
 }
 
 extension _ServerCommandReducerOutcome on ServerCommandReducer {
-  GameOutcome _gameOutcome({
+  ServerCommandReduction _acceptedReduction({
     required WireMatch match,
-    required GameSave save,
-    required PersistentGameState state,
+    required WireSnapshot snapshot,
+    required PersistentGameState previousState,
+    required GameSave nextSave,
+    required _CommandApplication result,
     required MapReadView mapView,
   }) {
-    final kickedPlayerIds = state.runtimeState.kickedPlayerIds;
-    return const GameOutcomeDetector().evaluate(
-      playerIds: match.players
-          .map((player) => player.id)
-          .where((playerId) => !kickedPlayerIds.contains(playerId)),
-      state: state,
-      matchRules: save.matchRules,
-      mapData: mapView,
-      turn: save.turn,
+    final canonicalSnapshot =
+        result.canonicalSnapshot ??
+        _canonicalSnapshot(
+          save: nextSave,
+          state: result.state,
+          eventLogOffset: snapshot.offset,
+        );
+    final nextSnapshot = WireSnapshot(
+      matchId: snapshot.matchId,
+      offset: snapshot.offset,
+      save: nextSave.toJson(),
+      state: result.state.toJson(),
+    );
+    return ServerCommandReduction(
+      accepted: true,
+      snapshot: nextSnapshot,
+      events: result.events,
+      turn: nextSave.turn,
+      previousState: previousState,
+      state: result.state,
+      outcome: _gameOutcome(
+        match: match,
+        domain: canonicalSnapshot.domain,
+        session: canonicalSnapshot.session,
+        mapView: mapView,
+      ),
     );
   }
+
+  GameOutcome _gameOutcome({
+    required WireMatch match,
+    required DomainState domain,
+    required MatchSessionState session,
+    required MapReadView mapView,
+  }) {
+    return const GameOutcomeDetector().evaluateCanonical(
+      state: _reconcileOutcomeParticipants(match: match, domain: domain),
+      session: session,
+      mapData: mapView,
+    );
+  }
+}
+
+DomainState _reconcileOutcomeParticipants({
+  required WireMatch match,
+  required DomainState domain,
+}) {
+  final authoritativePlayersById = <String, WirePlayer>{};
+  for (final player in match.players) {
+    if (player.id.isEmpty) continue;
+    authoritativePlayersById.putIfAbsent(player.id, () => player);
+  }
+  final domainPlayersById = {
+    for (final player in domain.participants) player.id: player,
+  };
+  final participants = [
+    for (final wirePlayer in authoritativePlayersById.values)
+      domainPlayersById[wirePlayer.id] ??
+          InitialMultiplayerSnapshotFactory.domainPlayerFromWire(wirePlayer),
+  ];
+  if (_sameParticipants(domain.participants, participants)) return domain;
+  return domain.copyWith(participants: participants);
+}
+
+bool _sameParticipants(List<Player> current, List<Player> reconciled) {
+  if (current.length != reconciled.length) return false;
+  for (var index = 0; index < current.length; index++) {
+    if (!identical(current[index], reconciled[index])) return false;
+  }
+  return true;
 }

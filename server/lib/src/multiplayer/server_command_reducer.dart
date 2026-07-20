@@ -97,25 +97,13 @@ class ServerCommandReducer {
     }
 
     final nextSave = result.save.copyWith(savedAt: now.toUtc());
-    final nextSnapshot = WireSnapshot(
-      matchId: snapshot.matchId,
-      offset: snapshot.offset,
-      save: nextSave.toJson(),
-      state: result.state.toJson(),
-    );
-    return ServerCommandReduction(
-      accepted: true,
-      snapshot: nextSnapshot,
-      events: result.events,
-      turn: nextSave.turn,
+    return _acceptedReduction(
+      match: match,
+      snapshot: snapshot,
       previousState: state,
-      state: result.state,
-      outcome: _gameOutcome(
-        match: match,
-        save: nextSave,
-        state: result.state,
-        mapView: loadedMap.mapView,
-      ),
+      nextSave: nextSave,
+      result: result,
+      mapView: loadedMap.mapView,
     );
   }
 
@@ -163,25 +151,13 @@ class ServerCommandReducer {
     );
 
     final nextSave = result.save.copyWith(savedAt: nowUtc);
-    final nextSnapshot = WireSnapshot(
-      matchId: snapshot.matchId,
-      offset: snapshot.offset,
-      save: nextSave.toJson(),
-      state: result.state.toJson(),
-    );
-    return ServerCommandReduction(
-      accepted: true,
-      snapshot: nextSnapshot,
-      events: result.events,
-      turn: nextSave.turn,
+    return _acceptedReduction(
+      match: match,
+      snapshot: snapshot,
       previousState: state,
-      state: result.state,
-      outcome: _gameOutcome(
-        match: match,
-        save: nextSave,
-        state: result.state,
-        mapView: loadedMap.mapView,
-      ),
+      nextSave: nextSave,
+      result: result,
+      mapView: loadedMap.mapView,
     );
   }
 
@@ -583,6 +559,7 @@ class _CommandApplication {
     required this.save,
     required this.state,
     this.events = const [],
+    this.canonicalSnapshot,
     this.reason,
   });
 
@@ -590,18 +567,21 @@ class _CommandApplication {
   final GameSave save;
   final PersistentGameState state;
   final List<GameEvent> events;
+  final CanonicalGameSnapshot? canonicalSnapshot;
   final String? reason;
 
   factory _CommandApplication.accept({
     required GameSave save,
     required PersistentGameState state,
     List<GameEvent> events = const [],
+    CanonicalGameSnapshot? canonicalSnapshot,
   }) {
     return _CommandApplication(
       accepted: true,
       save: save,
       state: state,
       events: events,
+      canonicalSnapshot: canonicalSnapshot,
     );
   }
 

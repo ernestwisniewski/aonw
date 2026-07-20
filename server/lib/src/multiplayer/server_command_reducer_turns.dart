@@ -2,6 +2,18 @@ part of 'server_command_reducer.dart';
 
 const _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
 
+CanonicalGameSnapshot _canonicalSnapshot({
+  required GameSave save,
+  required PersistentGameState state,
+  required int eventLogOffset,
+}) {
+  return _legacyGameSnapshotAdapter.toCanonical(
+    save: save,
+    state: state,
+    eventLogOffset: eventLogOffset,
+  );
+}
+
 extension ServerCommandReducerTurns on ServerCommandReducer {
   _CommandApplication _submitTurn({
     required DecodedMatchSnapshot decodedSnapshot,
@@ -80,7 +92,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     final state = decodedSnapshot.state;
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: _legacyGameSnapshotAdapter.toCanonical(
+        snapshot: _canonicalSnapshot(
           save: save,
           state: state,
           eventLogOffset: decodedSnapshot.eventLogOffset,
@@ -99,6 +111,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       save: legacyResult.save,
       state: legacyResult.state,
       events: result.events,
+      canonicalSnapshot: result.snapshot,
     );
   }
 

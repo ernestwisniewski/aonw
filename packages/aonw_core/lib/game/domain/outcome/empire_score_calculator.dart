@@ -1,7 +1,11 @@
-import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/city/field_improvement.dart';
+import 'package:aonw_core/game/domain/city/game_city.dart';
+import 'package:aonw_core/game/domain/objective/map_objective.dart';
+import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/technology/research_state.dart';
+import 'package:aonw_core/game/domain/unit/game_unit.dart';
+import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/unit/unit_catalog.dart';
 
 class EmpireScoreBreakdown {
   final String playerId;
@@ -56,13 +60,45 @@ class EmpireScoreCalculator {
     required Iterable<String> playerIds,
     required PersistentGameState state,
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
+  }) => scoresForCollections(
+    playerIds: playerIds,
+    cities: state.cities,
+    units: state.units,
+    fieldImprovements: state.fieldImprovements,
+    research: state.research,
+    playerGold: state.playerGold,
+    mapObjectives: mapObjectives,
+    mapObjectiveHoldStatesByObjectiveId:
+        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+  );
+
+  Map<String, int> scoresForCollections({
+    required Iterable<String> playerIds,
+    required Iterable<GameCity> cities,
+    required Iterable<GameUnit> units,
+    required Iterable<FieldImprovement> fieldImprovements,
+    required ResearchState research,
+    required Map<String, int> playerGold,
+    Iterable<MapObjectiveDefinition> mapObjectives = const [],
+    Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
+        const {},
   }) {
+    final cityList = _stableList(cities);
+    final unitList = _stableList(units);
+    final improvementList = _stableList(fieldImprovements);
+    final objectiveList = _stableList(mapObjectives);
     return {
       for (final playerId in _cleanPlayerIds(playerIds))
-        playerId: scoreFor(
+        playerId: _scoreForCollections(
           playerId: playerId,
-          state: state,
-          mapObjectives: mapObjectives,
+          cities: cityList,
+          units: unitList,
+          fieldImprovements: improvementList,
+          research: research,
+          playerGold: playerGold,
+          mapObjectives: objectiveList,
+          mapObjectiveHoldStatesByObjectiveId:
+              mapObjectiveHoldStatesByObjectiveId,
         ).total,
     };
   }
@@ -71,56 +107,109 @@ class EmpireScoreCalculator {
     required String playerId,
     required PersistentGameState state,
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
+  }) => scoreForCollections(
+    playerId: playerId,
+    cities: state.cities,
+    units: state.units,
+    fieldImprovements: state.fieldImprovements,
+    research: state.research,
+    playerGold: state.playerGold,
+    mapObjectives: mapObjectives,
+    mapObjectiveHoldStatesByObjectiveId:
+        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+  );
+
+  EmpireScoreBreakdown scoreForCollections({
+    required String playerId,
+    required Iterable<GameCity> cities,
+    required Iterable<GameUnit> units,
+    required Iterable<FieldImprovement> fieldImprovements,
+    required ResearchState research,
+    required Map<String, int> playerGold,
+    Iterable<MapObjectiveDefinition> mapObjectives = const [],
+    Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
+        const {},
+  }) => _scoreForCollections(
+    playerId: playerId,
+    cities: _stableList(cities),
+    units: _stableList(units),
+    fieldImprovements: _stableList(fieldImprovements),
+    research: research,
+    playerGold: playerGold,
+    mapObjectives: _stableList(mapObjectives),
+    mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
+  );
+
+  EmpireScoreBreakdown _scoreForCollections({
+    required String playerId,
+    required List<GameCity> cities,
+    required List<GameUnit> units,
+    required List<FieldImprovement> fieldImprovements,
+    required ResearchState research,
+    required Map<String, int> playerGold,
+    required List<MapObjectiveDefinition> mapObjectives,
+    required Map<String, MapObjectiveHoldState>
+    mapObjectiveHoldStatesByObjectiveId,
   }) {
-    final cities = [
-      for (final city in state.cities)
+    final ownedCities = [
+      for (final city in cities)
         if (city.ownerPlayerId == playerId) city,
     ];
-    final units = [
-      for (final unit in state.units)
+    final ownedUnits = [
+      for (final unit in units)
         if (unit.ownerPlayerId == playerId) unit,
     ];
-    final cityIds = {for (final city in cities) city.id};
+    final cityIds = {for (final city in ownedCities) city.id};
     final improvements = [
-      for (final improvement in state.fieldImprovements)
+      for (final improvement in fieldImprovements)
         if (improvement.builtByCityId case final id? when cityIds.contains(id))
           improvement,
     ];
-    final research = state.research.forPlayer(playerId);
-    final gold = state.playerGold[playerId] ?? 0;
+    final playerResearch = research.forPlayer(playerId);
+    final gold = playerGold[playerId] ?? 0;
 
     return EmpireScoreBreakdown(
       playerId: playerId,
-      cityScore: cities.length * cityWeight,
-      populationScore: _population(cities) * populationWeight,
-      territoryScore: _territory(cities) * territoryHexWeight,
-      buildingScore: _buildings(cities) * buildingWeight,
-      unitScore: _unitScore(units),
-      technologyScore: research.unlockedTechnologyIds.length * technologyWeight,
+      cityScore: ownedCities.length * cityWeight,
+      populationScore: _population(ownedCities) * populationWeight,
+      territoryScore: _territory(ownedCities) * territoryHexWeight,
+      buildingScore: _buildings(ownedCities) * buildingWeight,
+      unitScore: _unitScore(ownedUnits),
+      technologyScore:
+          playerResearch.unlockedTechnologyIds.length * technologyWeight,
       improvementScore: improvements.length * improvementWeight,
       goldScore: goldScoreFor(gold),
       mapObjectiveScore: _mapObjectiveScore(
         playerId: playerId,
-        state: state,
+        cities: cities,
+        units: units,
         mapObjectives: mapObjectives,
+        mapObjectiveHoldStatesByObjectiveId:
+            mapObjectiveHoldStatesByObjectiveId,
       ),
     );
   }
 
   int _mapObjectiveScore({
     required String playerId,
-    required PersistentGameState state,
+    required Iterable<GameCity> cities,
+    required Iterable<GameUnit> units,
     required Iterable<MapObjectiveDefinition> mapObjectives,
+    required Map<String, MapObjectiveHoldState>
+    mapObjectiveHoldStatesByObjectiveId,
   }) {
     if (mapObjectives.isEmpty) return 0;
     final snapshot = MapObjectiveRules.snapshot(
       objectives: mapObjectives,
-      cities: state.cities,
-      units: state.units,
-      holdStatesByObjectiveId:
-          state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+      cities: cities,
+      units: units,
+      holdStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
     );
     return snapshot.victoryPointsByPlayerId()[playerId] ?? 0;
+  }
+
+  List<T> _stableList<T>(Iterable<T> values) {
+    return values is List<T> ? values : List<T>.unmodifiable(values);
   }
 
   List<String> _cleanPlayerIds(Iterable<String> playerIds) {
