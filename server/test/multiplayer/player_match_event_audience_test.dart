@@ -141,6 +141,46 @@ void main() {
       );
     });
 
+    test('normalizes participants and preserves ordered ownership modes', () {
+      final previousState = PersistentGameState(
+        units: [_unit('removed-worker', ownerPlayerId: 'player-1')],
+      );
+      final state = PersistentGameState(
+        cities: [_city('current-city', ownerPlayerId: 'player-2')],
+      );
+
+      final canonical = PlayerMatchEventAudience.annotateForStorage(
+        events: [
+          const WorkerCompletedJobEvent(unitId: 'removed-worker'),
+          const CityClaimedHexEvent(cityId: 'current-city', col: 2, row: 1),
+          AllPlayersSubmittedEvent(
+            turn: 7,
+            playerIds: const ['player-1', 'player-2'],
+          ),
+          const CommandRejectedEvent(reason: 'fail-closed'),
+        ],
+        participantPlayerIds: const [
+          'player-2',
+          '',
+          'observer',
+          'player-1',
+          'player-2',
+        ],
+        previousState: previousState,
+        state: state,
+      );
+
+      expect(
+        canonical.map((event) => event['_serverAudiencePlayerIds']).toList(),
+        const [
+          ['player-1'],
+          ['player-2'],
+          ['observer', 'player-1', 'player-2'],
+          <String>[],
+        ],
+      );
+    });
+
     test('redacts legacy events without server-owned audience metadata', () {
       final canonical = [
         GameEventSerializer.toJson(
