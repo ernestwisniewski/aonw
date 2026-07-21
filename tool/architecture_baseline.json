@@ -1453,7 +1453,7 @@
       "files": {
         "server/test/integration/multiplayer_endpoint_smoke.dart": 1294,
         "server/test/multiplayer/player_match_view_projector_test.dart": 666,
-        "server/test/multiplayer/realtime_match_hub_test.dart": 3703
+        "server/test/multiplayer/realtime_match_hub_test.dart": 3677
       },
       "legacyFiles": {},
       "declarations": {},

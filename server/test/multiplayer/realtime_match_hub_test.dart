@@ -13,7 +13,9 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
+part 'support/realtime_match_hub_fixture.dart';
 part 'support/realtime_match_hub_outcome_cases.dart';
+part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
 void main() {
   test(
@@ -1144,6 +1146,8 @@ void main() {
     await subscription.cancel();
     await input.close();
   });
+
+  _registerRealtimeMatchHubTimeoutActorTests();
 
   test('advanceTimedOutTurns finalizes a stored partial turn', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
@@ -3263,36 +3267,6 @@ Future<_RunningMatchFixture> _startRunningMatch(
     snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
   );
   return _RunningMatchFixture(hub: hub, store: store, match: match);
-}
-
-Future<WireMatch> _startRunningMatchInStore({
-  required RealtimeMatchHub hub,
-  required _MemoryMatchStore store,
-  required String suffix,
-  required _FakeMapCatalog mapCatalog,
-}) async {
-  final openMatch = await hub.createMatch(
-    store: store,
-    userIdentifier: 'owner-user-$suffix',
-    request: CreateMatchRequest(
-      name: 'Running match $suffix',
-      mapName: 'verdantia',
-      maxPlayers: 2,
-      minPlayers: 2,
-      private: false,
-    ),
-  );
-  final joined = await hub.joinMatch(
-    store: store,
-    userIdentifier: 'guest-user-$suffix',
-    matchId: openMatch.id,
-  );
-  return hub.startMatch(
-    store: store,
-    userIdentifier: 'owner-user-$suffix',
-    matchId: joined.id,
-    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
-  );
 }
 
 Future<WireMatch> _startRunningFfaMatchInStore({
