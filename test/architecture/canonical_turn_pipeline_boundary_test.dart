@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/map_boundary_source_guard.dart';
 import 'support/static_member_reference_guard.dart';
 
+part 'support/canonical_snapshot_conversion_guard.dart';
+
 const _canonicalPipelinePath =
     'packages/aonw_core/lib/game/application/turn/'
     'canonical_turn_pipeline.dart';
@@ -17,6 +19,14 @@ const _localCallSite =
     'lib/game/application/services/local_command_resolver.dart';
 const _serverCallSite =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
+const _timeoutCallSite =
+    'server/lib/src/multiplayer/match_command_service_timeout.dart';
+const _lifecycleServicePath =
+    'server/lib/src/multiplayer/match_lifecycle_service.dart';
+const _resignationCallSite =
+    'server/lib/src/multiplayer/match_lifecycle_service_resignation.dart';
+const _runningSnapshotCodecPath =
+    'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
 const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';
 const _workedHexKernelPath =
     'packages/aonw_core/lib/game/domain/city/'
@@ -203,33 +213,23 @@ void f(WorkedHexAdapter adapter) {
       );
     });
 
-    test('repo-wide ratchet limits each runtime path to two conversions', () {
-      final sources = productionDartSources();
-      final counts = _snapshotConversionCounts(sources);
-      const allowedPaths = {
-        _localCallSite,
-        _serverCallSite,
-        _performanceCallSite,
-      };
-      expect(counts.keys.toSet().difference(allowedPaths), isEmpty);
-      expect(
-        _adapterTypeReferencePaths(sources).difference(allowedPaths),
-        isEmpty,
-      );
-      for (final entry in counts.entries) {
-        expect(entry.value.toCanonical, lessThanOrEqualTo(1));
-        expect(entry.value.toLegacy, lessThanOrEqualTo(1));
-        expect(_total(entry.value), lessThanOrEqualTo(2));
-      }
-      expect(
-        counts[_canonicalPipelinePath] ?? _zeroConversions,
-        _zeroConversions,
-      );
-      expect(
-        _adapterTypeReferencePaths(sources),
-        isNot(contains(_canonicalPipelinePath)),
-      );
-    });
+    test(
+      'repo-wide snapshot conversion calls match the transition ratchet',
+      () {
+        final sources = productionDartSources();
+        final counts = _snapshotConversionCounts(sources);
+        expect(counts, _expectedSnapshotConversionCalls);
+        expect(_adapterTypeReferencePaths(sources), _expectedAdapterTypePaths);
+        expect(
+          counts[_canonicalPipelinePath] ?? _zeroConversions,
+          _zeroConversions,
+        );
+        expect(
+          _adapterTypeReferencePaths(sources),
+          isNot(contains(_canonicalPipelinePath)),
+        );
+      },
+    );
 
     test('conversion ratchet catches a helper outside the allowlist', () {
       const sources = {
@@ -350,35 +350,6 @@ List<String> _persistentTurnApiViolations(Map<String, String> sources) {
   return violations;
 }
 
-Map<String, _ConversionCounts> _snapshotConversionCounts(
-  Map<String, String> sources,
-) {
-  final result = <String, _ConversionCounts>{};
-  for (final entry in sources.entries) {
-    final collector = _SnapshotConversionCollector();
-    parseString(content: entry.value, path: entry.key).unit.accept(collector);
-    final counts = (
-      toCanonical: collector.toCanonical,
-      toLegacy: collector.toLegacy,
-    );
-    if (_total(counts) > 0) result[entry.key] = counts;
-  }
-  return result;
-}
-
-Set<String> _adapterTypeReferencePaths(Map<String, String> sources) {
-  final adapterTypes = typeNamesBackedBy(sources, const {
-    'LegacyGameSnapshotAdapter',
-  });
-  final paths = <String>{};
-  for (final entry in sources.entries) {
-    final collector = _NamedTypeCollector();
-    parseString(content: entry.value, path: entry.key).unit.accept(collector);
-    if (collector.names.any(adapterTypes.contains)) paths.add(entry.key);
-  }
-  return paths;
-}
-
 CompilationUnit _unitAt(String path) {
   return parseString(content: File(path).readAsStringSync(), path: path).unit;
 }
@@ -390,44 +361,6 @@ bool _isOuterGameLayerUri(String uri) {
       normalized.contains('/game/compatibility/') ||
       normalized.endsWith('/compatibility.dart');
 }
-
-final class _SnapshotConversionCollector extends RecursiveAstVisitor<void> {
-  int toCanonical = 0;
-  int toLegacy = 0;
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    _record(node.methodName.name);
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    _record(node.identifier.name);
-    super.visitPrefixedIdentifier(node);
-  }
-
-  @override
-  void visitPropertyAccess(PropertyAccess node) {
-    _record(node.propertyName.name);
-    super.visitPropertyAccess(node);
-  }
-
-  void _record(String name) {
-    switch (name) {
-      case 'toCanonical':
-        toCanonical++;
-      case 'toLegacy':
-        toLegacy++;
-    }
-  }
-}
-
-typedef _ConversionCounts = ({int toCanonical, int toLegacy});
-
-int _total(_ConversionCounts counts) => counts.toCanonical + counts.toLegacy;
-
-const _zeroConversions = (toCanonical: 0, toLegacy: 0);
 
 final class _NamedTypeCollector extends RecursiveAstVisitor<void> {
   final Set<String> names = {};
