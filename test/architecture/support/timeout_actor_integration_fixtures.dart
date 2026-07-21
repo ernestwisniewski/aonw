@@ -25,9 +25,18 @@ extension TimeoutSelection on MatchCommandService {
 const _invalidTimeoutCanonicalFlowFixture = '''
 extension TimeoutFlow on MatchCommandService {
   Future<void> advanceTimedOutTurn() async {
+    final DecodedMatchSnapshot decodedSnapshot = _commandReducer.decodeSnapshot(
+      match: staleMatch,
+      snapshot: state.snapshot,
+    );
     var canonicalSnapshot = decodedSnapshot.toCanonical();
     canonicalSnapshot = staleSnapshot;
-    decodedSnapshot.toCanonical();
+    final current = decodedSnapshot.canonical;
+    final duplicate = decodedSnapshot.canonical;
+    _commandReducer.hasTurnTimedOut(
+      decodedSnapshot: staleSnapshot,
+      now: now,
+    );
     _selectTimeoutActorPlayerId(canonicalSnapshot: canonicalSnapshot);
     await _commandReducer.reduceTimedOutTurn(
       decodedSnapshot: decodedSnapshot,
@@ -36,21 +45,28 @@ extension TimeoutFlow on MatchCommandService {
 }
 ''';
 
-const _invalidDecodedCanonicalBridgeFixture = '''
+const _invalidDecodedSnapshotAliasFixture = '''
 final class DecodedMatchSnapshot {
-  final CanonicalGameSnapshot _canonicalSnapshotValue = _canonicalSnapshot(
-    save: otherSave,
-    state: state,
-    eventLogOffset: eventLogOffset,
-  );
+  const DecodedMatchSnapshot(this.snapshot);
+  final WireSnapshot snapshot;
+}
+''';
 
-  CanonicalGameSnapshot toCanonical() => _canonicalSnapshot(
-    save: save,
-    state: state,
-    eventLogOffset: eventLogOffset,
-  );
+const _invalidReducerSnapshotDecodeFixture = '''
+class ServerCommandReducer {
+  DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) =>
+      DecodedMatchSnapshot(
+        GameSave.fromJson(snapshot.save),
+        PersistentGameState.fromJson(snapshot.state),
+        snapshot.offset,
+      );
 
-  DecodedMatchSnapshot withState(PersistentGameState state) => this;
+  Future<void> reduce({
+    required WireMatch match,
+    required WireSnapshot snapshot,
+  }) async {
+    final decodedSnapshot = decodeSnapshot(snapshot);
+  }
 }
 ''';
 
@@ -77,12 +93,13 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
   void _finalizeSimultaneousTurn({
     required DecodedMatchSnapshot decodedSnapshot,
   }) {
+    _canonicalSnapshot(
+      save: save,
+      state: state,
+      eventLogOffset: eventLogOffset,
+    );
     CanonicalTurnPipelineRequest.simultaneousFinalize(
-      snapshot: _canonicalSnapshot(
-        save: save,
-        state: state,
-        eventLogOffset: eventLogOffset,
-      ),
+      snapshot: decodedSnapshot.toCanonical(),
     );
   }
 }

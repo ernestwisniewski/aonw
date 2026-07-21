@@ -66,7 +66,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
 
       final now = _nowUtc();
       final DecodedMatchSnapshot decodedSnapshot = _commandReducer
-          .decodeSnapshot(state.snapshot);
+          .decodeSnapshot(match: state.match, snapshot: state.snapshot);
       if (!_commandReducer.hasTurnTimedOut(
         decodedSnapshot: decodedSnapshot,
         now: now,
@@ -75,7 +75,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final save = decodedSnapshot.save;
-      final canonicalSnapshot = decodedSnapshot.toCanonical();
+      final canonicalSnapshot = decodedSnapshot.canonical;
       final actorPlayerId = _selectTimeoutActorPlayerId(
         match: state.match,
         save: save,

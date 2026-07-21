@@ -10,6 +10,9 @@ import 'support/static_member_reference_guard.dart';
 
 part 'support/timeout_actor_integration_fixtures.dart';
 part 'support/timeout_actor_integration_guard.dart';
+part 'support/timeout_actor_integration_selection_guard.dart';
+part 'support/timeout_actor_integration_flow_guard.dart';
+part 'support/timeout_actor_integration_reducer_guard.dart';
 
 const _timeoutServicePath =
     'server/lib/src/multiplayer/match_command_service_timeout.dart';
@@ -28,18 +31,19 @@ void main() {
       );
     });
 
-    test('service canonicalizes once and forwards the same snapshot', () {
+    test('service decodes once and forwards the same snapshot', () {
       expect(
         _timeoutCanonicalFlowViolations(_unitAt(_timeoutServicePath)),
         isEmpty,
       );
     });
 
-    test('decoded snapshot memoizes the canonical bridge', () {
+    test('reducer keeps only the running snapshot alias and codec seam', () {
       expect(
-        _decodedCanonicalBridgeViolations(_unitAt(_reducerSnapshotPath)),
+        _decodedSnapshotAliasViolations(_unitAt(_reducerSnapshotPath)),
         isEmpty,
       );
+      expect(_reducerSnapshotDecodeViolations(_unitAt(_reducerPath)), isEmpty);
       expect(
         _timeoutReducerForwardingViolations(
           reducer: _unitAt(_reducerPath),
@@ -50,13 +54,22 @@ void main() {
     });
 
     test('canonical snapshot reads stay limited to service and finalizer', () {
+      final sources = productionDartSources();
       expect(
         instanceMemberReferenceCountsByPath(
-          productionDartSources(),
-          'DecodedMatchSnapshot',
-          'toCanonical',
+          sources,
+          'DecodedRunningMatchSnapshot',
+          'canonical',
         ),
         {_timeoutServicePath: 1, _reducerTurnsPath: 1},
+      );
+      expect(
+        instanceMemberReferenceCountsByPath(
+          sources,
+          'DecodedRunningMatchSnapshot',
+          'toCanonical',
+        ),
+        isEmpty,
       );
     });
 
@@ -95,38 +108,63 @@ void main() {
       );
     });
 
-    test('canonical flow guard rejects mutable and duplicate conversion', () {
+    test('canonical flow guard rejects stale decode and duplicate reads', () {
       final violations = _timeoutCanonicalFlowViolations(
         _parse(_invalidTimeoutCanonicalFlowFixture),
       );
 
       expect(
         violations,
-        contains('advanceTimedOutTurn must canonicalize decodedSnapshot once'),
+        contains(
+          'advanceTimedOutTurn must decode state.match/state.snapshot once',
+        ),
       );
-      expect(violations, contains('canonicalSnapshot must be a final local'));
+      expect(
+        violations,
+        contains(
+          'canonicalSnapshot must be a final local reading '
+          'decodedSnapshot.canonical once',
+        ),
+      );
+      expect(
+        violations,
+        contains('timeout canonical flow must not call toCanonical'),
+      );
     });
 
-    test('bridge guard rejects wrong conversion and forwarding', () {
-      final bridgeViolations = _decodedCanonicalBridgeViolations(
-        _parse(_invalidDecodedCanonicalBridgeFixture),
+    test('alias and reducer guards reject wrappers and direct decoding', () {
+      final aliasViolations = _decodedSnapshotAliasViolations(
+        _parse(_invalidDecodedSnapshotAliasFixture),
       );
       expect(
-        bridgeViolations,
-        contains('canonical cache must convert save/state/offset exactly once'),
-      );
-      expect(
-        bridgeViolations,
+        aliasViolations,
         contains(
-          'toCanonical must return only the memoized canonical snapshot',
+          'DecodedMatchSnapshot must be exactly a typedef to '
+          'DecodedRunningMatchSnapshot',
         ),
       );
       expect(
-        bridgeViolations,
+        aliasViolations,
+        contains('DecodedMatchSnapshot must not declare a concrete wrapper'),
+      );
+
+      final decodeViolations = _reducerSnapshotDecodeViolations(
+        _parse(_invalidReducerSnapshotDecodeFixture),
+      );
+      expect(
+        decodeViolations,
         contains(
-          'withState must create a fresh decoded snapshot without the cache',
+          'decodeSnapshot must require match/snapshot and delegate directly '
+          'to RunningMatchSnapshotCodec',
         ),
       );
+      expect(
+        decodeViolations,
+        contains('reduce must decode its match and snapshot once'),
+      );
+    });
+
+    test('forwarding guard rejects substituted snapshots and conversions', () {
       final violations = _timeoutReducerForwardingViolations(
         reducer: _parse(_invalidTimeoutReducerFixture),
         turns: _parse(_invalidTimeoutTurnsFixture),
@@ -142,7 +180,7 @@ void main() {
       expect(
         violations,
         contains(
-          '_finalizeSimultaneousTurn must read the decoded canonical cache',
+          '_finalizeSimultaneousTurn must read decodedSnapshot.canonical once',
         ),
       );
     });

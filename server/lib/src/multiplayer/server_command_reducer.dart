@@ -6,6 +6,7 @@ import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 
 part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
@@ -24,6 +25,7 @@ part 'server_command_reducer_unit_action.dart';
 part 'server_command_reducer_worker.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
+const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 
 class ServerCommandReducer {
   ServerCommandReducer({
@@ -36,12 +38,10 @@ class ServerCommandReducer {
   final Duration _turnTimeout;
   final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
 
-  DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) =>
-      DecodedMatchSnapshot(
-        GameSave.fromJson(snapshot.save),
-        PersistentGameState.fromJson(snapshot.state),
-        snapshot.offset,
-      );
+  DecodedMatchSnapshot decodeSnapshot({
+    required WireMatch match,
+    required WireSnapshot snapshot,
+  }) => _runningMatchSnapshotCodec.decode(match: match, snapshot: snapshot);
 
   bool hasTurnTimedOut({
     required DecodedMatchSnapshot decodedSnapshot,
@@ -59,7 +59,7 @@ class ServerCommandReducer {
       return _reject(snapshot, 'match_not_running');
     }
 
-    final decodedSnapshot = decodeSnapshot(snapshot);
+    final decodedSnapshot = decodeSnapshot(match: match, snapshot: snapshot);
     final save = decodedSnapshot.save;
     final state = decodedSnapshot.state;
     final command = GameCommandSerializer.fromJson(wireCommand.command);

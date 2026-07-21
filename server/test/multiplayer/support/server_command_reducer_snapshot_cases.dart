@@ -46,7 +46,7 @@ void _registerServerCommandReducerSnapshotTests() {
 
       final canonical = ServerCommandReducer(
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-      ).decodeSnapshot(snapshot).toCanonical();
+      ).decodeSnapshot(match: _runningMatch(), snapshot: snapshot).canonical;
 
       expect(canonical.session.turnStartedAt, save.savedAt.toUtc());
       expect(snapshot.toJson(), rawSnapshot);
@@ -62,34 +62,42 @@ void _registerServerCommandReducerSnapshotTests() {
     });
   });
 
-  group('DecodedMatchSnapshot canonical cache', () {
+  group('ServerCommandReducer decoded snapshot', () {
     test('memoizes the canonical snapshot', () {
-      final decoded = DecodedMatchSnapshot(
-        _save(),
-        const PersistentGameState(),
-        7,
-      );
+      final decoded =
+          ServerCommandReducer(
+            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+          ).decodeSnapshot(
+            match: _runningMatch(),
+            snapshot: _snapshot(
+              const PersistentGameState(),
+            ).copyWith(offset: 7),
+          );
 
-      final canonical = decoded.toCanonical();
+      final canonical = decoded.canonical;
 
-      expect(identical(decoded.toCanonical(), canonical), isTrue);
+      expect(identical(decoded.canonical, canonical), isTrue);
       expect(canonical.eventLogOffset, 7);
     });
 
     test('withState creates a fresh cache for submitted state', () {
-      final decoded = DecodedMatchSnapshot(
-        _save(),
-        const PersistentGameState(),
-        7,
-      );
-      final canonical = decoded.toCanonical();
+      final decoded =
+          ServerCommandReducer(
+            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+          ).decodeSnapshot(
+            match: _runningMatch(),
+            snapshot: _snapshot(
+              const PersistentGameState(),
+            ).copyWith(offset: 7),
+          );
+      final canonical = decoded.canonical;
       final submittedState = decoded.state.copyWith(
         runtimeState: decoded.state.runtimeState.copyWith(
           submittedPlayerIds: const {'player_1'},
         ),
       );
 
-      final refreshed = decoded.withState(submittedState).toCanonical();
+      final refreshed = decoded.withState(submittedState).canonical;
 
       expect(identical(refreshed, canonical), isFalse);
       expect(canonical.session.submittedPlayerIds, isEmpty);

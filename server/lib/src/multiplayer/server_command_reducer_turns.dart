@@ -90,7 +90,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
   }) {
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: decodedSnapshot.toCanonical(),
+        snapshot: decodedSnapshot.canonical,
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,
