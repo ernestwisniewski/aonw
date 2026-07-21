@@ -9,12 +9,14 @@ import 'package:test/test.dart';
 part 'support/server_command_reducer_fixture.dart';
 part 'support/server_command_reducer_map_cache_cases.dart';
 part 'support/server_command_reducer_outcome_cases.dart';
+part 'support/server_command_reducer_snapshot_cases.dart';
 part 'support/server_command_reducer_turn_timeout_cases.dart';
 part 'support/server_command_reducer_resource_trade_cases.dart';
 
 void main() {
   _registerServerCommandReducerMapCacheTests();
   _registerServerCommandReducerOutcomeTests();
+  _registerServerCommandReducerSnapshotTests();
   _registerServerCommandReducerTurnTimeoutTests();
 
   group('ServerCommandReducer diplomacy commands', () {

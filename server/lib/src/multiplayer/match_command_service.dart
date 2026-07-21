@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 

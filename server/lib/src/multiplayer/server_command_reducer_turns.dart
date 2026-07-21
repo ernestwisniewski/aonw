@@ -88,15 +88,9 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
-    final save = decodedSnapshot.save;
-    final state = decodedSnapshot.state;
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: _canonicalSnapshot(
-          save: save,
-          state: state,
-          eventLogOffset: decodedSnapshot.eventLogOffset,
-        ),
+        snapshot: decodedSnapshot.toCanonical(),
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,

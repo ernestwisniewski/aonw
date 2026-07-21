@@ -36,20 +36,17 @@ class ServerCommandReducer {
   final Duration _turnTimeout;
   final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
 
-  DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) {
-    return DecodedMatchSnapshot(
-      GameSave.fromJson(snapshot.save),
-      PersistentGameState.fromJson(snapshot.state),
-      snapshot.offset,
-    );
-  }
+  DecodedMatchSnapshot decodeSnapshot(WireSnapshot snapshot) =>
+      DecodedMatchSnapshot(
+        GameSave.fromJson(snapshot.save),
+        PersistentGameState.fromJson(snapshot.state),
+        snapshot.offset,
+      );
 
   bool hasTurnTimedOut({
     required DecodedMatchSnapshot decodedSnapshot,
     required DateTime now,
-  }) {
-    return _turnTimedOut(decodedSnapshot.save, decodedSnapshot.state, now);
-  }
+  }) => _turnTimedOut(decodedSnapshot.save, decodedSnapshot.state, now);
 
   Future<ServerCommandReduction> reduce({
     required WireMatch match,

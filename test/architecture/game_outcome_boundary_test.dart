@@ -19,6 +19,8 @@ const _serverReducerPath =
     'server/lib/src/multiplayer/server_command_reducer.dart';
 const _serverTurnsPath =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
+const _serverSnapshotPath =
+    'server/lib/src/multiplayer/server_command_reducer_snapshot.dart';
 const _serverOutcomePath =
     'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
 

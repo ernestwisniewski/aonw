@@ -16,7 +16,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
-    test('chooses lexical submitted id instead of Wire order', () async {
+    test('chooses the first submitted player in Wire order', () async {
       final fixture = await _createTimeoutActorFixture('submitted-lexical');
 
       final observation = await fixture.run(
@@ -30,10 +30,10 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         ),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
+      _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
-    test('chooses lexical fallback id instead of Wire order', () async {
+    test('chooses the first fallback player in Wire order', () async {
       final fixture = await _createTimeoutActorFixture('fallback-lexical');
 
       final observation = await fixture.run(
@@ -42,7 +42,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         ),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
+      _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
     test('skips a kicked submitted player', () async {

@@ -5,8 +5,13 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/map_boundary_source_guard.dart';
+import 'support/static_member_reference_guard.dart';
+
 const _selectorPath =
     'packages/aonw_core/lib/game/application/turn/timeout_actor_selector.dart';
+const _timeoutServicePath =
+    'server/lib/src/multiplayer/match_command_service_timeout.dart';
 
 const _requiredParameters = {
   'orderedParticipantPlayerIds': 'Iterable<String>',
@@ -31,6 +36,17 @@ void main() {
   group('timeout actor selector boundary', () {
     test('selector is an exact persistence-neutral collection kernel', () {
       expect(_selectorViolations(_unitAt(_selectorPath)), isEmpty);
+    });
+
+    test('selector has exactly one production call site', () {
+      expect(
+        staticMemberReferenceCountsByPath(
+          productionDartSources(),
+          'TimeoutActorSelector',
+          'select',
+        ),
+        {_timeoutServicePath: 1},
+      );
     });
 
     test('rejects optional, positional, and typed API drift', () {

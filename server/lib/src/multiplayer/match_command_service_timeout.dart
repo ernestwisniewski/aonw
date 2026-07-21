@@ -65,7 +65,8 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final now = _nowUtc();
-      final decodedSnapshot = _commandReducer.decodeSnapshot(state.snapshot);
+      final DecodedMatchSnapshot decodedSnapshot = _commandReducer
+          .decodeSnapshot(state.snapshot);
       if (!_commandReducer.hasTurnTimedOut(
         decodedSnapshot: decodedSnapshot,
         now: now,
@@ -74,17 +75,16 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final save = decodedSnapshot.save;
-      final persistentState = decodedSnapshot.state;
-      final actorPlayerId = _timeoutActorPlayerId(
-        state.match,
-        save,
-        persistentState,
+      final canonicalSnapshot = decodedSnapshot.toCanonical();
+      final actorPlayerId = _selectTimeoutActorPlayerId(
+        match: state.match,
+        save: save,
+        canonicalSnapshot: canonicalSnapshot,
       );
       if (actorPlayerId == null) {
         return const MatchMutationOutcome<bool>(false);
       }
 
-      final command = SubmitTurnCommand(actorPlayerId);
       final reduction = await _commandReducer.reduceTimedOutTurn(
         match: state.match,
         snapshot: state.snapshot,
@@ -109,7 +109,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         actorPlayerId: actorPlayerId,
         tick: state.nextOffset(),
         turn: state.match.turn,
-        command: GameCommandSerializer.toJson(command),
+        command: GameCommandSerializer.toJson(SubmitTurnCommand(actorPlayerId)),
         events: _eventAudienceForStorage(
           events: reduction.events,
           participantPlayerIds: state.match.players.map((player) => player.id),
@@ -148,39 +148,26 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     outcome.notifications.deliver(_broadcaster);
   }
 
-  String? _timeoutActorPlayerId(
-    WireMatch match,
-    GameSave save,
-    PersistentGameState state,
-  ) {
-    final kickedPlayerIds = state.runtimeState.kickedPlayerIds;
-    final matchPlayerIds = match.players.map((player) => player.id).toSet();
+  String? _selectTimeoutActorPlayerId({
+    required WireMatch match,
+    required GameSave save,
+    required CanonicalGameSnapshot canonicalSnapshot,
+  }) {
     final activePlayerIds = {
       for (final player in save.players)
         if (player.id.isNotEmpty) player.id,
-      for (final playerId in save.playerStates.keys)
+      for (final playerId
+          in canonicalSnapshot.session.turnStatesByPlayerId.keys)
         if (playerId.isNotEmpty) playerId,
     };
-    final submittedPlayerIds = state.runtimeState.submittedPlayerIds.toList()
-      ..sort();
-    for (final submittedPlayerId in submittedPlayerIds) {
-      if (!kickedPlayerIds.contains(submittedPlayerId) &&
-          matchPlayerIds.contains(submittedPlayerId) &&
-          activePlayerIds.contains(submittedPlayerId)) {
-        return submittedPlayerId;
-      }
-    }
-    final fallbackPlayerIds =
-        activePlayerIds
-            .where(
-              (playerId) =>
-                  !kickedPlayerIds.contains(playerId) &&
-                  matchPlayerIds.contains(playerId),
-            )
-            .toList()
-          ..sort();
-    if (fallbackPlayerIds.isNotEmpty) return fallbackPlayerIds.first;
-    return null;
+    return TimeoutActorSelector.select(
+      orderedParticipantPlayerIds: [
+        for (final player in match.players)
+          if (activePlayerIds.contains(player.id)) player.id,
+      ],
+      submittedPlayerIds: canonicalSnapshot.session.submittedPlayerIds,
+      kickedPlayerIds: canonicalSnapshot.session.kickedPlayerIds,
+    );
   }
 
   String _timeoutClientMessageId(String matchId, int turn) {

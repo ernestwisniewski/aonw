@@ -84,18 +84,17 @@ List<String> _canonicalSnapshotReferenceViolations(
   Map<String, CompilationUnit> sources,
 ) {
   const allowlist = {
-    _serverTurnsPath: {'_finalizeSimultaneousTurn': 1},
     _serverOutcomePath: {'_acceptedReduction': 1},
   };
+  const unitReferenceAllowlist = {_serverSnapshotPath: 1};
   final violations = <String>[];
   final paths = sources.keys.toList()..sort();
   for (final path in paths) {
     final unit = sources[path]!;
     final expectedMethods = allowlist[path] ?? const <String, int>{};
-    final expectedTotal = expectedMethods.values.fold<int>(
-      0,
-      (total, count) => total + count,
-    );
+    final expectedTotal =
+        expectedMethods.values.fold<int>(0, (total, count) => total + count) +
+        (unitReferenceAllowlist[path] ?? 0);
     final allReferences = _SymbolReferenceCollector('_canonicalSnapshot')
       ..collect(unit);
     if (allReferences.references.length != expectedTotal) {
@@ -122,6 +121,11 @@ List<String> _canonicalSnapshotReferenceViolations(
     }
   }
   for (final path in allowlist.keys.where(
+    (path) => !sources.containsKey(path),
+  )) {
+    violations.add('$path must be included in the reducer source set');
+  }
+  for (final path in unitReferenceAllowlist.keys.where(
     (path) => !sources.containsKey(path),
   )) {
     violations.add('$path must be included in the reducer source set');
