@@ -10,6 +10,10 @@ void main() {
     test('falls back to save player identity', _identityFallback);
     test('appends orphan players deterministically', _orphanOrdering);
     test('keeps turn status and submission independent', _sessionSeparation);
+    test(
+      'includes a submitted-only player in canonical identity',
+      _submittedOnly,
+    );
     test('materializes multiplayer timeout origin once', _timeoutFallback);
     test('keeps a missing hot-seat timeout origin null', _hotSeatNullStart);
   });
@@ -189,6 +193,36 @@ void _sessionSeparation() {
   expect(legacy.save.playerStates, save.playerStates);
   expect(legacy.state.runtimeState.submittedPlayerIds, {'p2'});
   expect(legacy.state.runtimeState.kickedPlayerIds, {'p1'});
+}
+
+void _submittedOnly() {
+  final canonical = _adapter.toCanonical(
+    save: _save(),
+    state: PersistentGameState.snapshot(
+      playerColors: _colors,
+      playerCountries: _countries,
+      runtimeState: GameRuntimeState.snapshot(
+        submittedPlayerIds: {'submitted-only'},
+      ),
+    ),
+  );
+  final legacy = _adapter.toLegacy(canonical);
+
+  expect(canonical.domain.participants.map((player) => player.id), [
+    'p1',
+    'p2',
+    'submitted-only',
+  ]);
+  expect(canonical.session.submittedPlayerIds, {'submitted-only'});
+  expect(
+    canonical.domain.participants.last,
+    Player(
+      id: 'submitted-only',
+      name: 'submitted-only',
+      colorValue: Player.palette[2],
+    ),
+  );
+  expect(legacy.state.runtimeState.submittedPlayerIds, {'submitted-only'});
 }
 
 void _timeoutFallback() {

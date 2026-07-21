@@ -137,6 +137,59 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       expect(updatedState.runtimeState.turnStartedAt, isNull);
     });
 
+    test(
+      'resigns a Wire-only actor without rebuilding legacy identity',
+      () async {
+        final fixture = await _createResignationFixture('wire-only-actor');
+        final stored = await fixture.state();
+        final template = fixture.player('guest-one');
+        final wireOnlyActor = template.copyWith(
+          id: 'wire-only-player',
+          userId: 'wire-only-user',
+          name: 'Wire-only player',
+        );
+        await fixture.store.saveState(
+          stored.copyWith(
+            match: stored.match.copyWith(
+              players: [...stored.match.players, wireOnlyActor],
+            ),
+          ),
+        );
+
+        final result = await fixture.hub.resignMatch(
+          store: fixture.store,
+          userIdentifier: wireOnlyActor.userId,
+          matchId: fixture.match.id,
+        );
+        final updated = await fixture.state();
+        final updatedSave = GameSave.fromJson(updated.snapshot.save);
+        final updatedState = PersistentGameState.fromJson(
+          updated.snapshot.state,
+        );
+
+        expect(result.state, 'running');
+        expect(
+          updatedSave.players.map((player) => player.id),
+          isNot(contains(wireOnlyActor.id)),
+        );
+        expect(updatedSave.playerStates, isNot(contains(wireOnlyActor.id)));
+        expect(
+          updatedState.runtimeState.kickedPlayerIds,
+          contains(wireOnlyActor.id),
+        );
+        expect(
+          updatedState.runtimeState.afkPlayerIds,
+          contains(wireOnlyActor.id),
+        );
+        expect(
+          updated.match.players
+              .singleWhere((player) => player.id == wireOnlyActor.id)
+              .connectionState,
+          WirePlayerConnectionState.offline,
+        );
+      },
+    );
+
     test('persists an exact no-op when the player already resigned', () async {
       final fixture = await _createResignationFixture('repeat-no-op');
       final actor = fixture.player('guest-one');
@@ -225,6 +278,7 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
                   .copyWith(
                     units: [...state.units, savePhantomUnit, statePhantomUnit],
                     runtimeState: state.runtimeState.copyWith(
+                      submittedPlayerIds: {statePhantomId},
                       afkPlayerIds: {survivor.id},
                       kickedPlayerIds: {kicked.id},
                     ),
@@ -247,6 +301,10 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
           updated.snapshot.state,
         );
         expect(updatedState.runtimeState.afkPlayerIds, contains(survivor.id));
+        expect(
+          updatedState.runtimeState.submittedPlayerIds,
+          contains(statePhantomId),
+        );
         expect(
           updatedState.runtimeState.kickedPlayerIds,
           isNot(contains(survivor.id)),

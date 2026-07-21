@@ -1,4 +1,6 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
@@ -11,6 +13,8 @@ import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
 
 part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';
+
+const _lifecycleSnapshotAdapter = LegacyGameSnapshotAdapter();
 
 final class MatchLifecycleService {
   const MatchLifecycleService({

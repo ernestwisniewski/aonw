@@ -13,6 +13,20 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
     }
 
     final save = GameSave.fromJson(state.snapshot.save);
+    final canonicalSnapshot = _lifecycleSnapshotAdapter.toCanonical(
+      save: save,
+      state: persistentState,
+      eventLogOffset: state.snapshot.offset,
+    );
+    final transition = ParticipantResignationTransition.apply(
+      domain: canonicalSnapshot.domain,
+      session: canonicalSnapshot.session,
+      actorPlayerId: player.id,
+      orderedHumanPlayerIds: [
+        for (final matchPlayer in state.match.players)
+          if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
+      ],
+    );
     final players = [
       for (final matchPlayer in state.match.players)
         matchPlayer.userId == userIdentifier
@@ -21,22 +35,14 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
               )
             : matchPlayer,
     ];
-    final kickedPlayerIds = {
-      ...persistentState.runtimeState.kickedPlayerIds,
-      player.id,
-    };
-    final playerStates = {
-      ...save.playerStates,
-      if (save.playerStates.containsKey(player.id))
-        player.id: PlayerTurnState.finished,
-    };
-    final nextSave = save.copyWith(playerStates: playerStates);
+    final nextSave = save.copyWith(
+      playerStates: transition.session.turnStatesByPlayerId,
+    );
     final nextPersistentState = persistentState.copyWith(
       runtimeState: persistentState.runtimeState.copyWith(
-        kickedPlayerIds: kickedPlayerIds,
-        afkPlayerIds: {...persistentState.runtimeState.afkPlayerIds, player.id},
-        submittedPlayerIds: persistentState.runtimeState.submittedPlayerIds
-            .difference({player.id}),
+        submittedPlayerIds: transition.session.submittedPlayerIds,
+        afkPlayerIds: transition.session.afkPlayerIds,
+        kickedPlayerIds: transition.session.kickedPlayerIds,
       ),
     );
     final runningState = state.copyWith(
@@ -46,33 +52,40 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
         state: nextPersistentState.toJson(),
       ),
     );
-    final remainingPlayers = _remainingHumanPlayers(
-      runningState.match,
-      kickedPlayerIds,
+    return _stateAfterResignationTransition(
+      originalState: state,
+      runningState: runningState,
+      transition: transition,
+      userIdentifier: userIdentifier,
+      endedAt: endedAt,
     );
-    final alivePlayerIds = const GameOutcomeDetector().alivePlayerIds(
-      playerIds: remainingPlayers.map((player) => player.id),
-      state: nextPersistentState,
-    );
-    if (alivePlayerIds.length == 1) {
-      return _finishedStateAfterResignation(
-        runningState,
-        resignedUserIdentifier: userIdentifier,
-        winnerPlayerId: alivePlayerIds.single,
-        endedAt: endedAt,
-      );
-    }
-    if (alivePlayerIds.isEmpty) {
-      return _stateAccess.abandonedState(
-        runningState,
-        reason: remainingPlayers.isEmpty
-            ? 'all_players_resigned'
-            : 'no_alive_players_after_resignation',
-        endedAt: endedAt,
-        userIdentifier: userIdentifier,
-      );
-    }
-    return runningState;
+  }
+
+  StoredMatchState _stateAfterResignationTransition({
+    required StoredMatchState originalState,
+    required StoredMatchState runningState,
+    required ParticipantResignationResult transition,
+    required String userIdentifier,
+    required DateTime endedAt,
+  }) {
+    return switch (transition.disposition) {
+      ParticipantResignationDisposition.unchanged => originalState,
+      ParticipantResignationDisposition.running => runningState,
+      ParticipantResignationDisposition.finished =>
+        _finishedStateAfterResignation(
+          runningState,
+          resignedUserIdentifier: userIdentifier,
+          winnerPlayerId: transition.outcome!.winnerPlayerId!,
+          endedAt: endedAt,
+        ),
+      ParticipantResignationDisposition.abandoned =>
+        _stateAccess.abandonedState(
+          runningState,
+          reason: _resignationAbandonmentReason(transition.abandonmentReason!),
+          endedAt: endedAt,
+          userIdentifier: userIdentifier,
+        ),
+    };
   }
 
   StoredMatchState _finishedStateAfterResignation(
@@ -98,17 +111,15 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
       ),
     );
   }
+}
 
-  List<WirePlayer> _remainingHumanPlayers(
-    WireMatch match,
-    Set<String> kickedPlayerIds,
-  ) {
-    return match.players
-        .where(
-          (player) =>
-              player.kind == WirePlayerKind.human &&
-              !kickedPlayerIds.contains(player.id),
-        )
-        .toList(growable: false);
-  }
+String _resignationAbandonmentReason(
+  ParticipantResignationAbandonmentReason reason,
+) {
+  return switch (reason) {
+    ParticipantResignationAbandonmentReason.allPlayersResigned =>
+      'all_players_resigned',
+    ParticipantResignationAbandonmentReason.noAlivePlayersAfterResignation =>
+      'no_alive_players_after_resignation',
+  };
 }
