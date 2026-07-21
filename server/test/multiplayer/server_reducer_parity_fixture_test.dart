@@ -7,6 +7,7 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
 import '../../../test/support/reducer_parity_fixture.dart';
+import '../../../test/support/reducer_parity_resource_trade_characterization.dart';
 
 const _repeatCount = 3;
 
@@ -17,9 +18,11 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = ReducerParityCorpus.load(
-        repositoryRoot,
-        reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = ResourceTradeReducerParityCharacterization.extend(
+        ReducerParityCorpus.load(
+          repositoryRoot,
+          reverseInputMapEntries: variant.reverseInputMapEntries,
+        ),
       );
       group(variant.name, () {
         for (final fixture in fixtures) {

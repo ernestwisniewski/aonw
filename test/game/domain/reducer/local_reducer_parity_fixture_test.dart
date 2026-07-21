@@ -9,6 +9,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/reducer_parity_fixture.dart';
+import '../../../support/reducer_parity_resource_trade_characterization.dart';
 
 const _repeatCount = 3;
 
@@ -18,9 +19,11 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = ReducerParityCorpus.load(
-        Directory.current,
-        reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = ResourceTradeReducerParityCharacterization.extend(
+        ReducerParityCorpus.load(
+          Directory.current,
+          reverseInputMapEntries: variant.reverseInputMapEntries,
+        ),
       );
       group(variant.name, () {
         for (final fixture in fixtures) {
@@ -68,6 +71,11 @@ void _runFixture(ReducerParityFixture fixture) {
   expect(result.state.toPersistentState().toJson(), fixture.expectedState);
   expect(reducerParityEvents(result.events), fixture.expectedEvents);
   expect(result.save.savedAt, fixture.now);
+  if (!fixture.expectedAccepted &&
+      fixture.id.startsWith('resource-trade-characterization-')) {
+    expect(result.state, same(initialState));
+    expect(result.events, isEmpty);
+  }
   if (!fixture.expectedAccepted) {
     expect(result.events, isEmpty);
     expect(result.state.toPersistentState().toJson(), fixture.state.toJson());

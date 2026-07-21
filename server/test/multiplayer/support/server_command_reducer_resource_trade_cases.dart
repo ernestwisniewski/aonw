@@ -37,6 +37,7 @@ void _registerServerCommandReducerResourceTradeTests() {
       final nextState = PersistentGameState.fromJson(reduction.snapshot.state);
 
       expect(reduction.accepted, isTrue);
+      expect(reduction.events, isEmpty);
       expect(nextState.runtimeState.resourceTradeAgreements, [
         const ResourceTradeAgreement(
           id: 'server_trade_1',
@@ -84,6 +85,7 @@ void _registerServerCommandReducerResourceTradeTests() {
       final nextState = PersistentGameState.fromJson(reduction.snapshot.state);
 
       expect(reduction.accepted, isTrue);
+      expect(reduction.events, isEmpty);
       expect(
         nextState.runtimeState.resourceTradeAgreements
             .map((agreement) => agreement.toJson())

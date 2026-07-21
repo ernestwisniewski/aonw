@@ -71,7 +71,7 @@
       "research": {"players": {"player_1": {"unlockedTechnologyIds": ["ironWorking"], "progressByTechnologyId": {}}, "player_2": {"unlockedTechnologyIds": ["animalHusbandry"], "progressByTechnologyId": {}}}},
       "runtimeState": {}
     },
-    "command": {"type": "OpenResourceTrade", "playerId": "player_1", "targetPlayerId": "player_2", "resource": "horses", "goldPerTurn": 3, "durationTurns": 5, "agreementId": "resource_trade_gold_1"}
+    "command": {"type": "OpenResourceTrade", "playerId": "player_1", "targetPlayerId": "player_2", "resource": "horses", "goldPerTurn": 3, "durationTurns": 5}
   },
   "expected": {
     "accepted": true,
@@ -111,7 +111,7 @@
       "fieldImprovements": [],
       "fogOfWar": [],
       "research": {"players": {"player_1": {"unlockedTechnologyIds": ["ironWorking"], "progressByTechnologyId": {}}, "player_2": {"unlockedTechnologyIds": ["animalHusbandry"], "progressByTechnologyId": {}}}},
-      "runtimeState": {"resourceTradeAgreements": [{"id": "resource_trade_gold_1", "exporterPlayerId": "player_2", "importerPlayerId": "player_1", "resource": "horses", "goldPerTurn": 3, "remainingTurns": 5}]}
+      "runtimeState": {"resourceTradeAgreements": [{"id": "resource_trade_player_1_player_2_horses_0", "exporterPlayerId": "player_2", "importerPlayerId": "player_1", "resource": "horses", "goldPerTurn": 3, "remainingTurns": 5}]}
     },
     "events": []
   }

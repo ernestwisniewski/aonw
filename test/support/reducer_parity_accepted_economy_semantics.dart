@@ -10,50 +10,12 @@ void requireAcceptedResourceTrade({
   final beforeAgreements = before.runtimeState.resourceTradeAgreements;
   final afterAgreements = after.runtimeState.resourceTradeAgreements;
   final expected = switch (command) {
-    OpenResourceTradeCommand(
-      :final playerId,
-      :final targetPlayerId,
-      :final resource,
-      :final goldPerTurn,
-      :final durationTurns,
-      :final agreementId,
-    ) =>
-      [
-        ResourceTradeAgreement(
-          id: agreementId!,
-          exporterPlayerId: targetPlayerId,
-          importerPlayerId: playerId,
-          resource: resource,
-          goldPerTurn: goldPerTurn,
-          remainingTurns: durationTurns,
-        ),
-      ],
-    OpenResourceExchangeCommand(
-      :final playerId,
-      :final targetPlayerId,
-      :final offeredResource,
-      :final requestedResource,
-      :final durationTurns,
-      :final agreementId,
-    ) =>
-      [
-        ResourceTradeAgreement(
-          id: '${agreementId!}_requested',
-          exporterPlayerId: targetPlayerId,
-          importerPlayerId: playerId,
-          resource: requestedResource,
-          goldPerTurn: 0,
-          remainingTurns: durationTurns,
-        ),
-        ResourceTradeAgreement(
-          id: '${agreementId}_offered',
-          exporterPlayerId: playerId,
-          importerPlayerId: targetPlayerId,
-          resource: offeredResource,
-          goldPerTurn: 0,
-          remainingTurns: durationTurns,
-        ),
-      ],
+    final OpenResourceTradeCommand value => _expectedGoldTradeAgreements(
+      value,
+      beforeAgreements.length,
+    ),
+    final OpenResourceExchangeCommand value =>
+      _expectedResourceExchangeAgreements(value, beforeAgreements.length),
     _ => throw StateError('Expected a resource trade command.'),
   };
   final expectedAgreements = [...beforeAgreements, ...expected]
@@ -70,6 +32,83 @@ void requireAcceptedResourceTrade({
       '$fixtureId must commit only the reviewed resource trade agreements.',
     );
   }
+}
+
+List<ResourceTradeAgreement> _expectedGoldTradeAgreements(
+  OpenResourceTradeCommand command,
+  int existingAgreementCount,
+) {
+  return [
+    ResourceTradeAgreement(
+      id: _expectedGoldTradeAgreementId(
+        agreementId: command.agreementId,
+        playerId: command.playerId,
+        targetPlayerId: command.targetPlayerId,
+        resource: command.resource,
+        existingAgreementCount: existingAgreementCount,
+      ),
+      exporterPlayerId: command.targetPlayerId,
+      importerPlayerId: command.playerId,
+      resource: command.resource,
+      goldPerTurn: command.goldPerTurn,
+      remainingTurns: command.durationTurns,
+    ),
+  ];
+}
+
+List<ResourceTradeAgreement> _expectedResourceExchangeAgreements(
+  OpenResourceExchangeCommand command,
+  int existingAgreementCount,
+) {
+  final baseId = _expectedExchangeAgreementId(
+    agreementId: command.agreementId,
+    playerId: command.playerId,
+    targetPlayerId: command.targetPlayerId,
+    offeredResource: command.offeredResource,
+    requestedResource: command.requestedResource,
+    existingAgreementCount: existingAgreementCount,
+  );
+  return [
+    ResourceTradeAgreement(
+      id: '${baseId}_requested',
+      exporterPlayerId: command.targetPlayerId,
+      importerPlayerId: command.playerId,
+      resource: command.requestedResource,
+      goldPerTurn: 0,
+      remainingTurns: command.durationTurns,
+    ),
+    ResourceTradeAgreement(
+      id: '${baseId}_offered',
+      exporterPlayerId: command.playerId,
+      importerPlayerId: command.targetPlayerId,
+      resource: command.offeredResource,
+      goldPerTurn: 0,
+      remainingTurns: command.durationTurns,
+    ),
+  ];
+}
+
+String _expectedGoldTradeAgreementId({
+  required String? agreementId,
+  required String playerId,
+  required String targetPlayerId,
+  required ResourceType resource,
+  required int existingAgreementCount,
+}) {
+  return agreementId ??
+      'resource_trade_${playerId}_${targetPlayerId}_${resource.name}_$existingAgreementCount';
+}
+
+String _expectedExchangeAgreementId({
+  required String? agreementId,
+  required String playerId,
+  required String targetPlayerId,
+  required ResourceType offeredResource,
+  required ResourceType requestedResource,
+  required int existingAgreementCount,
+}) {
+  return agreementId ??
+      'resource_exchange_${playerId}_${targetPlayerId}_${offeredResource.name}_${requestedResource.name}_$existingAgreementCount';
 }
 
 void requireAcceptedRichTurnFinalization(
