@@ -7,17 +7,17 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
     required DateTime endedAt,
   }) {
     final player = _stateAccess.requireParticipant(state, userIdentifier);
-    final persistentState = PersistentGameState.fromJson(state.snapshot.state);
+    final decodedSnapshot = _runningMatchSnapshotCodec.decode(
+      match: state.match,
+      snapshot: state.snapshot,
+    );
+    final persistentState = decodedSnapshot.state;
     if (persistentState.runtimeState.isKicked(player.id)) {
       return state;
     }
 
-    final save = GameSave.fromJson(state.snapshot.save);
-    final canonicalSnapshot = _lifecycleSnapshotAdapter.toCanonical(
-      save: save,
-      state: persistentState,
-      eventLogOffset: state.snapshot.offset,
-    );
+    final save = decodedSnapshot.save;
+    final canonicalSnapshot = decodedSnapshot.canonical;
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
       session: canonicalSnapshot.session,
@@ -47,9 +47,10 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
     );
     final runningState = state.copyWith(
       match: state.match.copyWith(players: players),
-      snapshot: state.snapshot.copyWith(
-        save: nextSave.toJson(),
-        state: nextPersistentState.toJson(),
+      snapshot: _runningMatchSnapshotCodec.encode(
+        decodedSnapshot,
+        save: nextSave,
+        state: nextPersistentState,
       ),
     );
     return _stateAfterResignationTransition(

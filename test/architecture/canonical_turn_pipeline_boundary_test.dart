@@ -19,10 +19,6 @@ const _localCallSite =
     'lib/game/application/services/local_command_resolver.dart';
 const _serverCallSite =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
-const _lifecycleServicePath =
-    'server/lib/src/multiplayer/match_lifecycle_service.dart';
-const _resignationCallSite =
-    'server/lib/src/multiplayer/match_lifecycle_service_resignation.dart';
 const _runningSnapshotCodecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
 const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';

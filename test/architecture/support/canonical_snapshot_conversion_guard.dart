@@ -5,7 +5,6 @@ typedef _ConversionCounts = ({int toCanonical, int toLegacy});
 const _expectedSnapshotConversionCalls = <String, _ConversionCounts>{
   _localCallSite: (toCanonical: 1, toLegacy: 1),
   _serverCallSite: (toCanonical: 1, toLegacy: 1),
-  _resignationCallSite: (toCanonical: 1, toLegacy: 0),
   _runningSnapshotCodecPath: (toCanonical: 1, toLegacy: 0),
   _performanceCallSite: (toCanonical: 1, toLegacy: 1),
 };
@@ -13,7 +12,6 @@ const _expectedSnapshotConversionCalls = <String, _ConversionCounts>{
 const _expectedAdapterTypePaths = {
   _localCallSite,
   _serverCallSite,
-  _lifecycleServicePath,
   _runningSnapshotCodecPath,
   _performanceCallSite,
 };

@@ -1,6 +1,5 @@
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
@@ -10,11 +9,12 @@ import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
+import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 
 part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';
 
-const _lifecycleSnapshotAdapter = LegacyGameSnapshotAdapter();
+const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 
 final class MatchLifecycleService {
   const MatchLifecycleService({

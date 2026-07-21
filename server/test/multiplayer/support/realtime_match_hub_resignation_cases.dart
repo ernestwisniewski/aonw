@@ -97,6 +97,12 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       expect(updatedState.runtimeState.afkPlayerIds, contains(actor.id));
       expect(updatedState.runtimeState.turnStartedAt, isNull);
       expect(
+        (updated.snapshot.state['runtimeState']! as Map).containsKey(
+          'turnStartedAt',
+        ),
+        isFalse,
+      );
+      expect(
         updated.match.players
             .singleWhere((player) => player.id == actor.id)
             .connectionState,
@@ -195,14 +201,24 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final actor = fixture.player('guest-one');
       await fixture.resign(actor);
       final afterFirst = await fixture.state();
+      final malformedSnapshot = afterFirst.snapshot.copyWith(
+        save: const {'malformed': true},
+      );
+      expect(
+        () => GameSave.fromJson(malformedSnapshot.save),
+        throwsA(anything),
+      );
+      final malformedState = afterFirst.copyWith(snapshot: malformedSnapshot);
+      await fixture.store.saveState(malformedState);
       final saveCallsBefore = fixture.store.saveStateCalls;
 
       final result = await fixture.resign(actor);
       final afterSecond = await fixture.state();
 
       expect(result.state, 'running');
-      expect(afterSecond.match.toJson(), afterFirst.match.toJson());
-      expect(afterSecond.snapshot.toJson(), afterFirst.snapshot.toJson());
+      expect(afterSecond.match.toJson(), malformedState.match.toJson());
+      expect(afterSecond.snapshot, same(malformedSnapshot));
+      expect(afterSecond.snapshot.toJson(), malformedSnapshot.toJson());
       expect(fixture.store.saveStateCalls, saveCallsBefore + 1);
       expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
