@@ -32,24 +32,23 @@ class ServerCommandReduction {
 extension _ServerCommandReducerOutcome on ServerCommandReducer {
   ServerCommandReduction _acceptedReduction({
     required WireMatch match,
-    required WireSnapshot snapshot,
-    required PersistentGameState previousState,
+    required DecodedMatchSnapshot decodedSnapshot,
     required GameSave nextSave,
     required _CommandApplication result,
     required MapReadView mapView,
   }) {
+    final previousState = decodedSnapshot.state;
     final canonicalSnapshot =
         result.canonicalSnapshot ??
         _canonicalSnapshot(
           save: nextSave,
           state: result.state,
-          eventLogOffset: snapshot.offset,
+          eventLogOffset: decodedSnapshot.eventLogOffset,
         );
-    final nextSnapshot = WireSnapshot(
-      matchId: snapshot.matchId,
-      offset: snapshot.offset,
-      save: nextSave.toJson(),
-      state: result.state.toJson(),
+    final nextSnapshot = _runningMatchSnapshotCodec.encode(
+      decodedSnapshot,
+      save: nextSave == decodedSnapshot.save ? null : nextSave,
+      state: result.state == previousState ? null : result.state,
     );
     return ServerCommandReduction(
       accepted: true,

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/map_boundary_source_guard.dart';
 
 part 'support/game_outcome_boundary_collectors.dart';
+part 'support/game_outcome_boundary_accepted_encode_guard.dart';
 part 'support/game_outcome_boundary_fixtures.dart';
 part 'support/game_outcome_boundary_guard.dart';
 
@@ -19,8 +20,6 @@ const _serverReducerPath =
     'server/lib/src/multiplayer/server_command_reducer.dart';
 const _serverTurnsPath =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
-const _serverSnapshotPath =
-    'server/lib/src/multiplayer/server_command_reducer_snapshot.dart';
 const _serverOutcomePath =
     'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
 
@@ -64,8 +63,7 @@ const _serverOutcomeRequiredParameters = {
 
 const _acceptedReductionRequiredParameters = {
   'match': 'WireMatch',
-  'snapshot': 'WireSnapshot',
-  'previousState': 'PersistentGameState',
+  'decodedSnapshot': 'DecodedMatchSnapshot',
   'nextSave': 'GameSave',
   'result': '_CommandApplication',
   'mapView': 'MapReadView',
@@ -144,6 +142,8 @@ void main() {
         expect(_canonicalSnapshotReferenceViolations(reducerSources), isEmpty);
         expect(_canonicalSnapshotProviderViolations(reducerSources), isEmpty);
         expect(_acceptedReductionCanonicalFlowViolations(outcome), isEmpty);
+        expect(_acceptedReductionFallbackArgumentViolations(outcome), isEmpty);
+        expect(_acceptedReductionEncodeViolations(outcome), isEmpty);
         final acceptedReductionCalls = _MethodInvocationCollector(
           '_acceptedReduction',
         )..collect(reducer);
@@ -164,12 +164,12 @@ void main() {
 final class Reducer {
   void _acceptedReduction({
     required WireMatch match,
-    required WireSnapshot snapshot,
-    required PersistentGameState previousState,
+    required DecodedMatchSnapshot decodedSnapshot,
     required GameSave nextSave,
     required _CommandApplication result,
     required MapReadView mapView,
   }) {
+    final previousState = decodedSnapshot.state;
     final eager = _canonicalSnapshot(save, state);
     final canonicalSnapshot = result.canonicalSnapshot ?? eager;
     _gameOutcome(
@@ -187,6 +187,42 @@ final class Reducer {
           '_canonicalSnapshot',
         ),
       );
+    });
+
+    test('accepted encode guard rejects every semantic bypass', () {
+      for (final entry in _acceptedReductionEncodeFixtures.entries) {
+        final unit = _parse(entry.value.source, '${entry.key}_fixture.dart');
+
+        expect(
+          _acceptedReductionEncodeViolations(unit),
+          contains(entry.value.violation),
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('accepted reduction requires the exact lazy fallback arguments', () {
+      for (final entry in _acceptedReductionFallbackFixtures.entries) {
+        final unit = _parse(entry.value.source, '${entry.key}_fixture.dart');
+
+        expect(
+          _acceptedReductionFallbackArgumentViolations(unit),
+          contains(entry.value.violation),
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('root reductions must forward the same decoded snapshot', () {
+      for (final entry in _acceptedReductionForwardingFixtures.entries) {
+        final unit = _parse(entry.value.source, '${entry.key}_fixture.dart');
+
+        expect(
+          _rootReductionDelegationViolations(unit, entry.value.methodName),
+          contains(entry.value.violation),
+          reason: entry.key,
+        );
+      }
     });
 
     test('canonical conversion allowlist rejects every reference form', () {

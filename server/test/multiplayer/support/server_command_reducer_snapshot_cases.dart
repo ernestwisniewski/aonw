@@ -60,6 +60,131 @@ void _registerServerCommandReducerSnapshotTests() {
         isFalse,
       );
     });
+
+    test(
+      'preserves raw state when an accepted repeat submission changes only save',
+      () async {
+        final save = _save(
+          playerStates: const {
+            'player_1': PlayerTurnState.finished,
+            'player_2': PlayerTurnState.active,
+          },
+        );
+        final state = _diplomacyState(
+          runtimeState: GameRuntimeState(
+            submittedPlayerIds: const {'player_1'},
+            diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
+          ),
+        );
+        final rawSave = save.toJson();
+        final rawState = <String, dynamic>{
+          ...state.toJson(),
+          'stateCanary': const {'preserve': true},
+        };
+        final rawRuntimeState = rawState['runtimeState']! as Map;
+        final snapshot = WireSnapshot(
+          v: 37,
+          matchId: 'match_1',
+          offset: 41,
+          save: rawSave,
+          state: rawState,
+        );
+        final now = DateTime.utc(2026, 6, 30, 11, 1);
+
+        expect(rawRuntimeState.containsKey('turnStartedAt'), isFalse);
+
+        final reduction =
+            await ServerCommandReducer(
+              mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+            ).reduce(
+              match: _runningMatch(),
+              snapshot: snapshot,
+              wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
+              actorPlayerId: 'player_1',
+              now: now,
+            );
+
+        expect(reduction.accepted, isTrue);
+        expect(reduction.turn, save.turn);
+        expect(reduction.events, isEmpty);
+        expect(reduction.state, reduction.previousState);
+        expect(reduction.state, isNot(same(reduction.previousState)));
+        expect(reduction.snapshot.state, same(rawState));
+        expect(reduction.snapshot.state['stateCanary'], const {
+          'preserve': true,
+        });
+        expect(
+          (reduction.snapshot.state['runtimeState']! as Map).containsKey(
+            'turnStartedAt',
+          ),
+          isFalse,
+        );
+        expect(reduction.snapshot.save, isNot(same(rawSave)));
+        expect(
+          GameSave.fromJson(reduction.snapshot.save),
+          save.copyWith(savedAt: now),
+        );
+        expect(reduction.snapshot.v, snapshot.v);
+        expect(reduction.snapshot.matchId, snapshot.matchId);
+        expect(reduction.snapshot.offset, snapshot.offset);
+      },
+    );
+
+    test(
+      'preserves raw save when accepted diplomacy changes only state',
+      () async {
+        final save = _save();
+        final state = _diplomacyState();
+        final rawSave = Map<String, dynamic>.from(save.toJson())
+          ..remove('schemaVersion')
+          ..['saveCanary'] = const {'preserve': true};
+        final rawState = state.toJson();
+        final snapshot = WireSnapshot(
+          v: 37,
+          matchId: 'match_1',
+          offset: 41,
+          save: rawSave,
+          state: rawState,
+        );
+
+        expect(rawSave.containsKey('schemaVersion'), isFalse);
+
+        final reduction =
+            await ServerCommandReducer(
+              mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+            ).reduce(
+              match: _runningMatch(),
+              snapshot: snapshot,
+              wireCommand: _wireCommand(
+                const SendDiplomaticProposalCommand(
+                  playerId: 'player_1',
+                  targetPlayerId: 'player_2',
+                  kind: DiplomaticProposalKind.friendship,
+                  proposalId: 'proposal_snapshot_boundary',
+                ),
+              ),
+              actorPlayerId: 'player_1',
+              now: save.savedAt,
+            );
+
+        expect(reduction.accepted, isTrue);
+        expect(reduction.state, isNot(reduction.previousState));
+        expect(reduction.snapshot.save, same(rawSave));
+        expect(reduction.snapshot.save['saveCanary'], const {'preserve': true});
+        expect(reduction.snapshot.save.containsKey('schemaVersion'), isFalse);
+        expect(GameSave.fromJson(reduction.snapshot.save), save);
+        expect(reduction.snapshot.state, isNot(same(rawState)));
+        expect(
+          PersistentGameState.fromJson(
+            reduction.snapshot.state,
+          ).runtimeState.diplomacy.pendingProposals,
+          contains('proposal_snapshot_boundary'),
+        );
+        expect(reduction.snapshot.v, snapshot.v);
+        expect(reduction.snapshot.matchId, snapshot.matchId);
+        expect(reduction.snapshot.offset, snapshot.offset);
+      },
+    );
   });
 
   group('ServerCommandReducer decoded snapshot', () {

@@ -86,15 +86,15 @@ List<String> _canonicalSnapshotReferenceViolations(
   const allowlist = {
     _serverOutcomePath: {'_acceptedReduction': 1},
   };
-  const unitReferenceAllowlist = {_serverSnapshotPath: 1};
   final violations = <String>[];
   final paths = sources.keys.toList()..sort();
   for (final path in paths) {
     final unit = sources[path]!;
     final expectedMethods = allowlist[path] ?? const <String, int>{};
-    final expectedTotal =
-        expectedMethods.values.fold<int>(0, (total, count) => total + count) +
-        (unitReferenceAllowlist[path] ?? 0);
+    final expectedTotal = expectedMethods.values.fold<int>(
+      0,
+      (total, count) => total + count,
+    );
     final allReferences = _SymbolReferenceCollector('_canonicalSnapshot')
       ..collect(unit);
     if (allReferences.references.length != expectedTotal) {
@@ -121,11 +121,6 @@ List<String> _canonicalSnapshotReferenceViolations(
     }
   }
   for (final path in allowlist.keys.where(
-    (path) => !sources.containsKey(path),
-  )) {
-    violations.add('$path must be included in the reducer source set');
-  }
-  for (final path in unitReferenceAllowlist.keys.where(
     (path) => !sources.containsKey(path),
   )) {
     violations.add('$path must be included in the reducer source set');
@@ -238,7 +233,7 @@ List<String> _acceptedReductionCanonicalFlowViolations(CompilationUnit unit) {
           optionalNamed: {},
         ))
       '_acceptedReduction must require exactly '
-          'match/snapshot/previousState/nextSave/result/mapView',
+          'match/decodedSnapshot/nextSave/result/mapView',
   ];
   final variables = _NamedVariableCollector('canonicalSnapshot')
     ..collect(method.body);
@@ -301,30 +296,6 @@ List<String> _acceptedReductionCanonicalFlowViolations(CompilationUnit unit) {
     violations.add('$methodName must pass session: canonicalSnapshot.session');
   }
   return violations;
-}
-
-List<String> _rootReductionDelegationViolations(
-  CompilationUnit unit,
-  String methodName,
-) {
-  final method = _singleMethod(unit, methodName);
-  if (method == null) return ['must declare exactly one $methodName method'];
-
-  final acceptedReductions = _MethodInvocationCollector('_acceptedReduction')
-    ..collect(method.body);
-  final conversions = _MethodInvocationCollector('_canonicalSnapshot')
-    ..collect(method.body);
-  final outcomes = _MethodInvocationCollector('_gameOutcome')
-    ..collect(method.body);
-  return [
-    if (acceptedReductions.invocations.length != 1)
-      '$methodName must call _acceptedReduction exactly once; found '
-          '${acceptedReductions.invocations.length}',
-    if (conversions.invocations.isNotEmpty)
-      '$methodName must not call _canonicalSnapshot directly',
-    if (outcomes.invocations.isNotEmpty)
-      '$methodName must not call _gameOutcome directly',
-  ];
 }
 
 List<String> _serverOutcomeViolations(CompilationUnit unit) {

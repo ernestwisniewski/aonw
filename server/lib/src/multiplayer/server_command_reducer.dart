@@ -96,8 +96,7 @@ class ServerCommandReducer {
     final nextSave = result.save.copyWith(savedAt: now.toUtc());
     return _acceptedReduction(
       match: match,
-      snapshot: snapshot,
-      previousState: state,
+      decodedSnapshot: decodedSnapshot,
       nextSave: nextSave,
       result: result,
       mapView: loadedMap.mapView,
@@ -150,8 +149,7 @@ class ServerCommandReducer {
     final nextSave = result.save.copyWith(savedAt: nowUtc);
     return _acceptedReduction(
       match: match,
-      snapshot: snapshot,
-      previousState: state,
+      decodedSnapshot: decodedSnapshot,
       nextSave: nextSave,
       result: result,
       mapView: loadedMap.mapView,
