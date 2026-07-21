@@ -19,6 +19,7 @@ part 'server_command_reducer_merchant_routing.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
+part 'server_command_reducer_resource_trade.dart';
 part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
@@ -238,46 +239,22 @@ class ServerCommandReducer {
           actorPlayerId,
           loadedMap.mapView,
         );
-      case OpenResourceTradeCommand(:final playerId):
-        if (playerId != actorPlayerId) {
-          return _CommandApplication.reject(
-            save: save,
-            state: state,
-            reason: 'resource_trade_player_not_controlled',
-          );
-        }
-        final result = const PersistentResourceTradeResolver()
-            .openGoldForResourceTrade(
-              state: state,
-              importerPlayerId: command.playerId,
-              exporterPlayerId: command.targetPlayerId,
-              resource: command.resource,
-              goldPerTurn: command.goldPerTurn,
-              durationTurns: command.durationTurns,
-              mapTiles: loadedMap.mapView,
-              agreementId: command.agreementId,
-            );
-        return _fromPersistentResult(save, result);
-      case OpenResourceExchangeCommand(:final playerId):
-        if (playerId != actorPlayerId) {
-          return _CommandApplication.reject(
-            save: save,
-            state: state,
-            reason: 'resource_trade_player_not_controlled',
-          );
-        }
-        final result = const PersistentResourceTradeResolver()
-            .openResourceForResourceTrade(
-              state: state,
-              playerId: command.playerId,
-              targetPlayerId: command.targetPlayerId,
-              offeredResource: command.offeredResource,
-              requestedResource: command.requestedResource,
-              durationTurns: command.durationTurns,
-              mapTiles: loadedMap.mapView,
-              agreementId: command.agreementId,
-            );
-        return _fromPersistentResult(save, result);
+      case OpenResourceTradeCommand():
+        return _applyOpenResourceTrade(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          mapTiles: loadedMap.mapView,
+        );
+      case OpenResourceExchangeCommand():
+        return _applyOpenResourceExchange(
+          save: save,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          mapTiles: loadedMap.mapView,
+        );
       case DiplomaticCommand():
         final result = const DiplomacyCommandRouter().route(
           state: state,
@@ -474,19 +451,6 @@ class ServerCommandReducer {
           events: events,
           reason: reason,
         ),
-      PersistentCityProductionResult(
-        :final accepted,
-        :final state,
-        :final events,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          events: events,
-          reason: reason,
-        ),
       final PersistentUnitActionResult action => _applicationFrom(
         save: save,
         accepted: action.accepted,
@@ -494,17 +458,6 @@ class ServerCommandReducer {
         events: action.events,
         reason: action.reason,
       ),
-      PersistentResourceTradeResult(
-        :final accepted,
-        :final state,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          reason: reason,
-        ),
       PersistentDiplomacyResult(
         :final accepted,
         :final state,

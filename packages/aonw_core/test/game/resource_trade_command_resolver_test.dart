@@ -2,7 +2,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('PersistentResourceTradeResolver', () {
+  group('ResourceTradeCommandResolver', () {
     test('opens gold-for-resource trade when exporter controls resource', () {
       final state = PersistentGameState(
         playerGold: const {'player_1': 8},
@@ -17,20 +17,26 @@ void main() {
         research: _researchWith('player_2', TechnologyId.animalHusbandry),
       );
 
-      final result = const PersistentResourceTradeResolver()
-          .openGoldForResourceTrade(
-            state: state,
-            importerPlayerId: 'player_1',
-            exporterPlayerId: 'player_2',
-            resource: ResourceType.horses,
-            goldPerTurn: 3,
-            durationTurns: 5,
-            mapTiles: _resourceMap(ResourceType.horses),
-            agreementId: 'trade_1',
-          );
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: state.playerGold,
+        cities: state.cities,
+        research: state.research,
+        diplomacy: state.runtimeState.diplomacy,
+        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.horses,
+          goldPerTurn: 3,
+          durationTurns: 5,
+          agreementId: 'trade_1',
+        ),
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.horses),
+      );
 
       expect(result.accepted, isTrue);
-      expect(result.state.runtimeState.resourceTradeAgreements, [
+      expect(result.resourceTradeAgreements, [
         const ResourceTradeAgreement(
           id: 'trade_1',
           exporterPlayerId: 'player_2',
@@ -55,20 +61,29 @@ void main() {
         ],
       );
 
-      final result = const PersistentResourceTradeResolver()
-          .openGoldForResourceTrade(
-            state: state,
-            importerPlayerId: 'player_1',
-            exporterPlayerId: 'player_2',
-            resource: ResourceType.horses,
-            goldPerTurn: 3,
-            durationTurns: 5,
-            mapTiles: _resourceMap(ResourceType.horses),
-          );
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: state.playerGold,
+        cities: state.cities,
+        research: state.research,
+        diplomacy: state.runtimeState.diplomacy,
+        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.horses,
+          goldPerTurn: 3,
+          durationTurns: 5,
+        ),
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.horses),
+      );
 
       expect(result.accepted, isFalse);
       expect(result.reason, 'resource_trade_export_unavailable');
-      expect(result.state, state);
+      expect(
+        result.resourceTradeAgreements,
+        same(state.runtimeState.resourceTradeAgreements),
+      );
     });
 
     test('rejects trade when all matching exports are already committed', () {
@@ -97,22 +112,28 @@ void main() {
         ),
       );
 
-      final result = const PersistentResourceTradeResolver()
-          .openGoldForResourceTrade(
-            state: state,
-            importerPlayerId: 'player_3',
-            exporterPlayerId: 'player_2',
-            resource: ResourceType.horses,
-            goldPerTurn: 3,
-            durationTurns: 5,
-            mapTiles: _resourceMap(ResourceType.horses),
-          );
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: state.playerGold,
+        cities: state.cities,
+        research: state.research,
+        diplomacy: state.runtimeState.diplomacy,
+        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_3',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.horses,
+          goldPerTurn: 3,
+          durationTurns: 5,
+        ),
+        actorPlayerId: 'player_3',
+        mapTiles: _resourceMap(ResourceType.horses),
+      );
 
       expect(result.accepted, isFalse);
       expect(result.reason, 'resource_trade_export_unavailable');
     });
 
-    test('rejects trade while players are at war', () {
+    test('actor rejection wins over every trade-rule rejection', () {
       final state = PersistentGameState(
         playerGold: const {'player_1': 8},
         runtimeState: GameRuntimeState(
@@ -124,19 +145,25 @@ void main() {
         ),
       );
 
-      final result = const PersistentResourceTradeResolver()
-          .openGoldForResourceTrade(
-            state: state,
-            importerPlayerId: 'player_1',
-            exporterPlayerId: 'player_2',
-            resource: ResourceType.iron,
-            goldPerTurn: 3,
-            durationTurns: 5,
-            mapTiles: _resourceMap(ResourceType.iron),
-          );
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: state.playerGold,
+        cities: state.cities,
+        research: state.research,
+        diplomacy: state.runtimeState.diplomacy,
+        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.iron,
+          goldPerTurn: 3,
+          durationTurns: 5,
+        ),
+        actorPlayerId: 'player_3',
+        mapTiles: _resourceMap(ResourceType.iron),
+      );
 
       expect(result.accepted, isFalse);
-      expect(result.reason, 'resource_trade_blocked_by_war');
+      expect(result.reason, 'resource_trade_player_not_controlled');
     });
 
     test(
@@ -163,20 +190,27 @@ void main() {
           }),
         );
 
-        final result = const PersistentResourceTradeResolver()
-            .openResourceForResourceTrade(
-              state: state,
-              playerId: 'player_1',
-              targetPlayerId: 'player_2',
-              offeredResource: ResourceType.iron,
-              requestedResource: ResourceType.horses,
-              durationTurns: 6,
+        final result =
+            ResourceTradeCommandResolver.openResourceForResourceTrade(
+              cities: state.cities,
+              research: state.research,
+              diplomacy: state.runtimeState.diplomacy,
+              resourceTradeAgreements:
+                  state.runtimeState.resourceTradeAgreements,
+              command: const OpenResourceExchangeCommand(
+                playerId: 'player_1',
+                targetPlayerId: 'player_2',
+                offeredResource: ResourceType.iron,
+                requestedResource: ResourceType.horses,
+                durationTurns: 6,
+                agreementId: 'exchange_1',
+              ),
+              actorPlayerId: 'player_1',
               mapTiles: _exchangeResourceMap(),
-              agreementId: 'exchange_1',
             );
 
         expect(result.accepted, isTrue);
-        expect(result.state.runtimeState.resourceTradeAgreements, [
+        expect(result.resourceTradeAgreements, [
           const ResourceTradeAgreement(
             id: 'exchange_1_requested',
             exporterPlayerId: 'player_2',
@@ -218,20 +252,28 @@ void main() {
         }),
       );
 
-      final result = const PersistentResourceTradeResolver()
-          .openResourceForResourceTrade(
-            state: state,
-            playerId: 'player_1',
-            targetPlayerId: 'player_2',
-            offeredResource: ResourceType.iron,
-            requestedResource: ResourceType.horses,
-            durationTurns: 6,
-            mapTiles: _exchangeResourceMap(),
-          );
+      final result = ResourceTradeCommandResolver.openResourceForResourceTrade(
+        cities: state.cities,
+        research: state.research,
+        diplomacy: state.runtimeState.diplomacy,
+        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        command: const OpenResourceExchangeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          offeredResource: ResourceType.iron,
+          requestedResource: ResourceType.horses,
+          durationTurns: 6,
+        ),
+        actorPlayerId: 'player_1',
+        mapTiles: _exchangeResourceMap(),
+      );
 
       expect(result.accepted, isFalse);
       expect(result.reason, 'resource_trade_offer_unavailable');
-      expect(result.state, state);
+      expect(
+        result.resourceTradeAgreements,
+        same(state.runtimeState.resourceTradeAgreements),
+      );
     });
   });
 }
