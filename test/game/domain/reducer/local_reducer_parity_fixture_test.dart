@@ -8,6 +8,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/reducer_parity_diplomacy_characterization.dart';
 import '../../../support/reducer_parity_fixture.dart';
 import '../../../support/reducer_parity_resource_trade_characterization.dart';
 
@@ -19,10 +20,12 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = ResourceTradeReducerParityCharacterization.extend(
-        ReducerParityCorpus.load(
-          Directory.current,
-          reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = DiplomacyReducerParityCharacterization.extend(
+        ResourceTradeReducerParityCharacterization.extend(
+          ReducerParityCorpus.load(
+            Directory.current,
+            reverseInputMapEntries: variant.reverseInputMapEntries,
+          ),
         ),
       );
       group(variant.name, () {
@@ -72,7 +75,8 @@ void _runFixture(ReducerParityFixture fixture) {
   expect(reducerParityEvents(result.events), fixture.expectedEvents);
   expect(result.save.savedAt, fixture.now);
   if (!fixture.expectedAccepted &&
-      fixture.id.startsWith('resource-trade-characterization-')) {
+      (fixture.id.startsWith('resource-trade-characterization-') ||
+          fixture.id.startsWith('diplomacy-characterization-'))) {
     expect(result.state, same(initialState));
     expect(result.events, isEmpty);
   }
