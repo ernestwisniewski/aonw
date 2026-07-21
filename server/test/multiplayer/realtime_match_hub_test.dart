@@ -15,6 +15,8 @@ import 'package:test/test.dart';
 
 part 'support/realtime_match_hub_fixture.dart';
 part 'support/realtime_match_hub_outcome_cases.dart';
+part 'support/realtime_match_hub_resignation_cases.dart';
+part 'support/realtime_match_hub_resignation_fixture.dart';
 part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
 void main() {
@@ -1621,6 +1623,8 @@ void main() {
       expect(store.runningCursors, [null, null]);
     },
   );
+
+  _registerRealtimeMatchHubResignationCharacterizationTests();
 
   test(
     'resignMatch keeps a running FFA alive until one player remains',
@@ -3267,66 +3271,6 @@ Future<_RunningMatchFixture> _startRunningMatch(
     snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
   );
   return _RunningMatchFixture(hub: hub, store: store, match: match);
-}
-
-Future<WireMatch> _startRunningFfaMatchInStore({
-  required RealtimeMatchHub hub,
-  required _MemoryMatchStore store,
-  required String suffix,
-  required _FakeMapCatalog mapCatalog,
-}) async {
-  final openMatch = await hub.createMatch(
-    store: store,
-    userIdentifier: 'owner-user-$suffix',
-    request: CreateMatchRequest(
-      name: 'Running FFA $suffix',
-      mapName: 'verdantia',
-      maxPlayers: 3,
-      minPlayers: 3,
-      private: false,
-    ),
-  );
-  await hub.joinMatch(
-    store: store,
-    userIdentifier: 'guest-one-$suffix',
-    matchId: openMatch.id,
-  );
-  final joined = await hub.joinMatch(
-    store: store,
-    userIdentifier: 'guest-two-$suffix',
-    matchId: openMatch.id,
-  );
-  return hub.startMatch(
-    store: store,
-    userIdentifier: 'owner-user-$suffix',
-    matchId: joined.id,
-    snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
-  );
-}
-
-Future<void> _eliminatePlayersInStoredMatch({
-  required _MemoryMatchStore store,
-  required String matchId,
-  required Set<String> playerIds,
-}) async {
-  final stored = (await store.findState(matchId))!;
-  final state = PersistentGameState.fromJson(stored.snapshot.state);
-  await store.saveState(
-    stored.copyWith(
-      snapshot: stored.snapshot.copyWith(
-        state: state
-            .copyWith(
-              units: state.units
-                  .where((unit) => !playerIds.contains(unit.ownerPlayerId))
-                  .toList(),
-              cities: state.cities
-                  .where((city) => !playerIds.contains(city.ownerPlayerId))
-                  .toList(),
-            )
-            .toJson(),
-      ),
-    ),
-  );
 }
 
 final class _RunningMatchFixture {
