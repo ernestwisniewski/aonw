@@ -215,15 +215,12 @@ class TracingMctsSimulator implements MctsSimulator {
               actorPlayerId: actorPlayerId,
             )
             .state,
-      AutoExploreUnitCommand() =>
-        const PersistentUnitActionResolver()
-            .autoExploreUnit(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapData: mapData,
-            )
-            .state,
+      AutoExploreUnitCommand() => _applyOpponentAutoExplore(
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        mapData: mapData,
+      ),
       FoundCityCommand() =>
         const PersistentCityFoundingResolver()
             .foundCity(
@@ -377,6 +374,23 @@ PersistentGameState _applyOpponentMove({
         actorPlayerId: actorPlayerId,
         mapData: mapData,
         visibilityMode: MovementCommandVisibilityMode.unrestricted,
+      )
+      .state;
+}
+
+PersistentGameState _applyOpponentAutoExplore({
+  required PersistentGameState state,
+  required AutoExploreUnitCommand command,
+  required String actorPlayerId,
+  required MapTraversalView mapData,
+}) {
+  return const PersistentAutoExploreCommandResolver()
+      .resolve(
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        mapData: mapData,
+        phase: AutoExploreCommandPhase.direct,
       )
       .state;
 }

@@ -31,11 +31,7 @@ void main() {
         runtimeSources,
         'PersistentMoveUnitResolver',
       ),
-      const {
-        movementMctsConsumerPath: 1,
-        movementEconomyConsumerPath: 1,
-        movementPersistentUnitActionPath: 1,
-      },
+      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
     );
     expect(
       movementConstructionReferenceCountsByPath(

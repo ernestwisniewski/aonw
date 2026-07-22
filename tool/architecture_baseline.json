@@ -73,7 +73,7 @@
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:_applyAttackCity": 122,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:applyAttackHex": 132,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_state.dart::class:SimulatedState/method:_applyCommand": 62,
-        "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:_applyOpponentCommand": 156,
+        "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:_applyOpponentCommand": 153,
         "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:advanceTurn": 65,
         "packages/aonw_core/lib/ai/mcts/mcts_strategy.dart::class:MctsStrategy/method:plan": 90,
         "packages/aonw_core/lib/ai/mcts/strategy_aware_action_generator.dart::function:_rankCommand": 95,
@@ -84,7 +84,7 @@
         "packages/aonw_core/lib/ai/mcts/strategy_aware_war_ranker.dart::function:rankTacticalAttack": 95,
         "packages/aonw_core/lib/ai/production_unit_policies.dart::class:_SettlerProductionPolicy/method:applyExpansionPlan": 86,
         "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 277,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 248,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 243,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 82,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 79,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_turn_row_factory.dart::class:_EconomySimulationTurnRowFactory/method:rowFor": 91,
@@ -311,7 +311,6 @@
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isFoodResource": 11,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isLuxuryResource": 15,
         "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 18,
-        "packages/aonw_core/lib/game/domain/movement/persistent_unit_action_resolver.dart::class:PersistentUnitActionResolver/method:autoExploreUnit": 11,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 11,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_balance.dart::class:UnitMovementBalance/method:maxMovementPointsForType": 18,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_baseCost": 16,
@@ -1388,12 +1387,12 @@
     },
     "server_lib": {
       "files": {
-        "server/lib/src/multiplayer/server_command_reducer.dart": 523
+        "server/lib/src/multiplayer/server_command_reducer.dart": 511
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 445
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 432
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,

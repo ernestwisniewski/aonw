@@ -1,13 +1,14 @@
 part of '../persistent_auto_explore_characterization_test.dart';
 
 void _expectRejectedAutoExplore(
-  PersistentUnitActionResult result,
+  PersistentAutoExploreCommandResult result,
   PersistentGameState input, {
   required String reason,
 }) {
   expect(result.accepted, isFalse);
   expect(result.reason, reason);
   expect(result.events, isEmpty);
+  expect(result.execution, isNull);
   expect(result.state, same(input));
   expect(result.state.units, same(input.units));
   expect(result.state.fogOfWar, same(input.fogOfWar));
@@ -17,7 +18,7 @@ void _expectRejectedAutoExplore(
 }
 
 void _expectImmediateAutoExplore(
-  PersistentUnitActionResult result,
+  PersistentAutoExploreCommandResult result,
   PersistentGameState input,
 ) {
   final before = input.units.first;
@@ -42,12 +43,12 @@ void _expectImmediateAutoExplore(
   expect(result.state.units.first, moved);
   expect(result.state.units.first.queuedPath, isNull);
   expect(result.state.fogOfWar, expectedFog);
-  _expectAutoExploreMoveEvent(result, fromCol: 0, toCol: 1);
+  _expectAutoExploreMoveOutput(result, fromCol: 0, toCol: 1);
   _expectChangedAutoExploreSharing(input, result.state);
 }
 
 void _expectPartialAutoExplore(
-  PersistentUnitActionResult result,
+  PersistentAutoExploreCommandResult result,
   PersistentGameState input,
 ) {
   final expectedPath = QueuedMovePath(
@@ -81,7 +82,7 @@ void _expectPartialAutoExplore(
   expect(result.state.units.first, moved);
   expect(result.state.units.first.queuedPath, expectedPath);
   expect(result.state.fogOfWar, expectedFog);
-  _expectAutoExploreMoveEvent(result, fromCol: 0, toCol: 1);
+  _expectAutoExploreMoveOutput(result, fromCol: 0, toCol: 1);
   _expectChangedAutoExploreSharing(
     input,
     result.state,
@@ -90,7 +91,7 @@ void _expectPartialAutoExplore(
 }
 
 void _expectHiddenAcceptedNoOp(
-  PersistentUnitActionResult result,
+  PersistentAutoExploreCommandResult result,
   PersistentGameState input,
 ) {
   final exploring = input.units.first
@@ -103,6 +104,7 @@ void _expectHiddenAcceptedNoOp(
   expect(result.accepted, isTrue);
   expect(result.reason, isNull);
   expect(result.events, isEmpty);
+  expect(result.execution, isNull);
   expect(result.state, expected);
   expect(result.state, isNot(same(input)));
   expect(result.state.units.first, exploring);
@@ -143,8 +145,8 @@ FogOfWarState _expectedAutoExploreFog({required int cols}) {
   );
 }
 
-void _expectAutoExploreMoveEvent(
-  PersistentUnitActionResult result, {
+void _expectAutoExploreMoveOutput(
+  PersistentAutoExploreCommandResult result, {
   required int fromCol,
   required int toCol,
 }) {
@@ -155,6 +157,12 @@ void _expectAutoExploreMoveEvent(
   expect(moved.unitId, _autoExploreUnitId);
   expect((moved.fromCol, moved.fromRow), (fromCol, 0));
   expect((moved.toCol, moved.toRow), (toCol, 0));
+  final execution = result.execution;
+  expect(execution, isNotNull);
+  expect(execution!.unitId, _autoExploreUnitId);
+  expect((execution.fromCol, execution.fromRow), (fromCol, 0));
+  expect(execution.steps, hasLength(1));
+  expect(execution.destination.coord, (col: toCol, row: 0));
 }
 
 void _expectChangedAutoExploreSharing(

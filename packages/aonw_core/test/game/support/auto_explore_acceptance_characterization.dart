@@ -48,7 +48,7 @@ void _registerAutoExploreAcceptanceCharacterizationTests() {
       _expectHiddenAcceptedNoOp(result, state);
     });
 
-    test('persistent result exposes events but no movement execution', () {
+    test('persistent result exposes events and movement execution', () {
       const origin = HexCoordinate(col: 0, row: 0);
       final state = _autoExploreState(
         units: [_autoExploreScout()],
@@ -56,13 +56,14 @@ void _registerAutoExploreAcceptanceCharacterizationTests() {
       );
 
       final result = _resolveAutoExplore(state, _autoExploreMap(cols: 2));
-      final dynamic currentSurface = result;
 
       expect(result.accepted, isTrue);
       expect(result.events.single, isA<UnitMovedEvent>());
-      // Deliberately probe the pre-kernel public surface being characterized.
-      // ignore: avoid_dynamic_calls
-      expect(() => currentSurface.execution, throwsNoSuchMethodError);
+      expect(result.execution, isNotNull);
+      expect(result.execution!.unitId, _autoExploreUnitId);
+      expect(result.execution!.fromCol, 0);
+      expect(result.execution!.fromRow, 0);
+      expect(result.execution!.destination.coord, const (col: 1, row: 0));
     });
   });
 }

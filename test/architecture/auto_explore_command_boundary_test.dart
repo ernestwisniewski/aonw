@@ -31,14 +31,22 @@ void main() {
         'AutoExploreCommandResolver',
         'resolve',
       ),
-      const {autoExplorePersistentAdapterPath: 1},
+      const {
+        autoExplorePersistentAdapterPath: 1,
+        autoExploreLocalCallSite: 1,
+        autoExploreServerCallSite: 1,
+      },
     );
     expect(
       movementConstructionReferenceCountsByPath(
         runtime,
         'AutoExploreCommandResolver',
       ),
-      const {autoExplorePersistentAdapterPath: 1},
+      const {
+        autoExplorePersistentAdapterPath: 1,
+        autoExploreLocalCallSite: 1,
+        autoExploreServerCallSite: 1,
+      },
     );
     expect(
       staticMemberReferenceCountsByPath(
@@ -54,15 +62,25 @@ void main() {
         'PersistentAutoExploreCommandResolver',
         'resolve',
       ),
-      isEmpty,
-      reason: 'The compatibility adapter is not cut over in this milestone.',
+      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
+      reason: 'Only full-state AI compatibility consumers may use the adapter.',
     );
     expect(
       movementConstructionReferenceCountsByPath(
         runtime,
         'PersistentAutoExploreCommandResolver',
       ),
+      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
+    );
+
+    expect(
+      movementInstanceMemberReferenceCountsByPath(
+        runtime,
+        'PersistentUnitActionResolver',
+        'autoExploreUnit',
+      ),
       isEmpty,
+      reason: 'The removed full-state AutoExplore route must not return.',
     );
 
     expect(
@@ -86,6 +104,55 @@ void main() {
     );
   });
 
+  test('direct consumers do not restore compatibility state bridges', () {
+    final sources = productionDartSources();
+    final local = sources[autoExploreLocalCallSite]!;
+    final server = sources[autoExploreServerCallSite]!;
+
+    expect(
+      namedTypeReferencesInSource(
+        local,
+        path: autoExploreLocalCallSite,
+      ).intersection(const {
+        'CanonicalGameSnapshot',
+        'DomainState',
+        'PersistentAutoExploreCommandResolver',
+        'PersistentAutoExploreCommandResult',
+        'PersistentGameState',
+        'PersistentMoveUnitResolver',
+        'PersistentMoveUnitResult',
+        'PersistentUnitActionResolver',
+        'PersistentUnitActionResult',
+      }),
+      isEmpty,
+    );
+    expect(
+      namedTypeReferencesInSource(
+        server,
+        path: autoExploreServerCallSite,
+      ).intersection(const {
+        'DomainState',
+        'PersistentAutoExploreCommandResolver',
+        'PersistentAutoExploreCommandResult',
+        'PersistentMoveUnitResolver',
+        'PersistentMoveUnitResult',
+        'PersistentUnitActionResolver',
+        'PersistentUnitActionResult',
+      }),
+      isEmpty,
+    );
+    for (final member in const {'toDomainState', 'toPersistentState'}) {
+      expect(
+        movementNamedMemberReferenceCountsByPath({
+          autoExploreLocalCallSite: local,
+          autoExploreServerCallSite: server,
+        }, member),
+        isEmpty,
+        reason: '$member must not bridge either direct consumer.',
+      );
+    }
+  });
+
   test('result guard rejects a borrowed mutable event list', () {
     final sources = productionDartSources();
     final mutable = sources[autoExploreResultPath]!.replaceFirst(
@@ -96,6 +163,23 @@ void main() {
     expect(
       autoExploreResultShapeViolations(mutable),
       contains('accepted result must own a defensive unmodifiable event list'),
+    );
+  });
+
+  test('phase guard rejects an unreviewed private policy member', () {
+    final sources = productionDartSources();
+    final widened = sources[autoExplorePhasePath]!.replaceFirst(
+      '  bool get isContinuation => this == continuation;',
+      '  bool get isContinuation => this == continuation;\n'
+          '  bool get _backdoor => true;',
+    );
+
+    expect(
+      autoExplorePhaseShapeViolations(widened),
+      contains(
+        'AutoExploreCommandPhase must contain only the reviewed continuation '
+        'policy getter',
+      ),
     );
   });
 

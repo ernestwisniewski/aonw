@@ -51,9 +51,9 @@ final class AutoExploreCommandResolver {
       mapData: mapData,
     );
     if (target == null) {
-      return phase == AutoExploreCommandPhase.direct
-          ? _reject(state, 'auto_explore_no_target')
-          : _finishContinuation(state, guarded.unitIndex!, unit);
+      return phase.isContinuation
+          ? _finishContinuation(state, guarded.unitIndex!, unit)
+          : _reject(state, 'auto_explore_no_target');
     }
     return _moveTowardTarget(
       state: state,
@@ -174,7 +174,7 @@ final class AutoExploreCommandResolver {
     if (unitIndex == null) return _reject(state, 'unit_not_found');
     final movedUnit = moved.units[unitIndex];
     final finished =
-        phase == AutoExploreCommandPhase.continuation &&
+        phase.isContinuation &&
         moved.execution == null &&
         movedUnit.queuedPath == null;
     return AutoExploreCommandResult.accepted(

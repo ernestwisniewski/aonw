@@ -17,6 +17,10 @@ const autoExploreTargetDependencyPath =
     '${movementLibraryPath}scout_auto_explore_target.dart';
 const autoExploreDiagnosticWorkloadPath =
     'tool/performance/auto_explore_workload.dart';
+const autoExploreLocalCallSite =
+    'lib/game/domain/reducer/movement/movement_reducer_auto_explore.dart';
+const autoExploreServerCallSite =
+    'server/lib/src/multiplayer/server_command_reducer_auto_explore.dart';
 
 const _autoExploreResultFields = {
   'accepted': 'bool',
@@ -133,6 +137,10 @@ List<String> autoExplorePhaseShapeViolations(String? source) {
         declaration.namePart.typeName.lexeme == 'AutoExploreCommandPhase',
   );
   final phase = enums.length == 1 ? enums.single : null;
+  final members = phase?.body.members ?? const <ClassMember>[];
+  final policy = members.length == 1 && members.single is MethodDeclaration
+      ? members.single as MethodDeclaration
+      : null;
   return [
     if (unit.declarations.length != 1 || phase == null)
       'auto-explore phase file must declare only its enum',
@@ -144,9 +152,28 @@ List<String> autoExplorePhaseShapeViolations(String? source) {
           const ['direct', 'continuation'],
         ))
       'AutoExploreCommandPhase must expose direct then continuation',
-    if (phase?.body.members.isNotEmpty == true)
-      'AutoExploreCommandPhase must not add members',
+    if (!_isExactContinuationPolicy(policy))
+      'AutoExploreCommandPhase must contain only the reviewed continuation '
+          'policy getter',
   ];
+}
+
+bool _isExactContinuationPolicy(MethodDeclaration? policy) {
+  if (policy == null ||
+      policy.name.lexeme != 'isContinuation' ||
+      !policy.isGetter ||
+      policy.isStatic ||
+      policy.returnType?.toSource() != 'bool') {
+    return false;
+  }
+  final body = policy.body;
+  if (body is! ExpressionFunctionBody) return false;
+  final expression = body.expression;
+  return expression is BinaryExpression &&
+      expression.operator.lexeme == '==' &&
+      expression.leftOperand is ThisExpression &&
+      expression.rightOperand is SimpleIdentifier &&
+      (expression.rightOperand as SimpleIdentifier).name == 'continuation';
 }
 
 List<String> autoExploreResultShapeViolations(String? source) {

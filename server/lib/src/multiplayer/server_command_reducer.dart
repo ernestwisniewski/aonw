@@ -9,6 +9,7 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 
 part 'server_command_reducer_artifact.dart';
+part 'server_command_reducer_auto_explore.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_city_founding.dart';
@@ -210,7 +211,7 @@ class ServerCommandReducer {
           mapTiles: loadedMap.mapView,
           ruleset: ruleset,
         );
-        return _fromPersistentResult(save, result);
+        return _fromPersistentCombatResult(save, result);
       case CancelUnitActionCommand():
         return _applyCancelUnitAction(save, state, command, actorPlayerId);
       case SkipUnitTurnCommand():
@@ -218,13 +219,13 @@ class ServerCommandReducer {
       case FortifyUnitCommand():
         return _applyFortifyUnit(save, state, command, actorPlayerId);
       case AutoExploreUnitCommand():
-        final result = const PersistentUnitActionResolver().autoExploreUnit(
+        return _applyAutoExplore(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: loadedMap.mapView,
+          mapView: loadedMap.mapView,
         );
-        return _fromPersistentResult(save, result);
       case AssignMerchantTradeRouteCommand():
         return _applyAssignMerchantRoute(
           save,
@@ -424,30 +425,17 @@ class ServerCommandReducer {
     }
   }
 
-  _CommandApplication _fromPersistentResult(GameSave save, Object result) {
-    return switch (result) {
-      PersistentCombatCommandResult(
-        :final accepted,
-        :final state,
-        :final events,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          events: events,
-          reason: reason,
-        ),
-      final PersistentUnitActionResult action => _applicationFrom(
-        save: save,
-        accepted: action.accepted,
-        state: action.state,
-        events: action.events,
-        reason: action.reason,
-      ),
-      _ => throw StateError('Unsupported persistent result: $result'),
-    };
+  _CommandApplication _fromPersistentCombatResult(
+    GameSave save,
+    PersistentCombatCommandResult result,
+  ) {
+    return _applicationFrom(
+      save: save,
+      accepted: result.accepted,
+      state: result.state,
+      events: result.events,
+      reason: result.reason,
+    );
   }
 
   _CommandApplication _applicationFrom({

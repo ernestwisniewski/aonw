@@ -139,7 +139,7 @@ void _registerAutoExploreRejectionCharacterizationTests() {
       _expectRejectedAutoExplore(result, state, reason: 'unit_out_of_bounds');
     });
 
-    test('known foreign city blocks the planner-selected route', () {
+    test('known foreign city prevents target selection', () {
       final known = {
         for (var col = 0; col <= 3; col++) HexCoordinate(col: col, row: 0),
       };
@@ -158,7 +158,11 @@ void _registerAutoExploreRejectionCharacterizationTests() {
 
       final result = _resolveAutoExplore(state, _autoExploreMap(cols: 5));
 
-      _expectRejectedAutoExplore(result, state, reason: 'move_path_not_found');
+      _expectRejectedAutoExplore(
+        result,
+        state,
+        reason: 'auto_explore_no_target',
+      );
     });
 
     test('an eventually untraversable tile preserves capacity rejection', () {

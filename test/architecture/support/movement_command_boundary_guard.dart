@@ -22,8 +22,6 @@ const movementPersistentAdapterPath =
     '${movementLibraryPath}persistent_move_unit_resolver.dart';
 const movementDomainAdapterPath =
     '${movementLibraryPath}domain_move_unit_resolver.dart';
-const movementPersistentUnitActionPath =
-    '${movementLibraryPath}persistent_unit_action_resolver.dart';
 const movementLocalCallSite =
     'lib/game/domain/reducer/movement/movement_reducer_direct_move.dart';
 const movementLegacyVisibilityPath =

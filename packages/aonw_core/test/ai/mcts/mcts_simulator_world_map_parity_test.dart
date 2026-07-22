@@ -5,7 +5,7 @@ import 'mcts_simulator_parity_support.dart';
 
 void main() {
   group('TracingMctsSimulator opponent WorldMap command parity', () {
-    test('auto-explores with the persistent WorldMap resolver', () {
+    test('auto-explores with the dedicated persistent adapter', () {
       final mapData = MctsSimulatorParityFixtures.explorationMapData();
       final scout = GameUnit.produced(
         id: 'scout_2',
@@ -31,13 +31,14 @@ void main() {
       );
       const command = AutoExploreUnitCommand('scout_2');
 
-      final persistent = const PersistentUnitActionResolver().autoExploreUnit(
+      final persistent = const PersistentAutoExploreCommandResolver().resolve(
         state: state,
         command: command,
         actorPlayerId: 'player_2',
         mapData: WorldMapReadView(
           MctsSimulatorParityFixtures.worldMap(mapData: mapData),
         ),
+        phase: AutoExploreCommandPhase.direct,
       );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
@@ -56,6 +57,8 @@ void main() {
       );
 
       expect(persistent.accepted, isTrue);
+      expect(persistent.events.single, isA<UnitMovedEvent>());
+      expect(persistent.execution, isNotNull);
       expect(
         MctsSimulatorParityFixtures.unitById(
           simulated.view.movementBlockingUnits,

@@ -22,6 +22,21 @@ void main() {
       );
     });
 
+    test('dispatches auto-explore through the persistent adapter', () {
+      const command = AutoExploreUnitCommand('warrior_player_1');
+      final result = EconomySimulation.run(
+        config: const EconomySimulationConfig(
+          turns: 1,
+          strategyOverride: _FixedPlanStrategy([command]),
+        ),
+      );
+
+      expect(result.appliedCommands, isEmpty);
+      final rejection = result.rejectedCommandRecords.single;
+      expect(rejection.command, command);
+      expect(rejection.reason, 'unit_not_scout');
+    });
+
     test('dispatches map-backed detachment and wonder commands', () {
       final result = EconomySimulation.run(
         config: const EconomySimulationConfig(

@@ -5,7 +5,7 @@ import 'auto_explore_command_resolver_test_support.dart';
 
 void main() {
   group('PersistentAutoExploreCommandResolver', () {
-    test('adapts the kernel result including event and execution', () {
+    test('moves scout and exposes event and execution', () {
       const origin = HexCoordinate(col: 0, row: 0);
       final sentinel = autoExploreScout(id: 'sentinel', col: 9, row: 9);
       final state = _persistentState(
@@ -47,6 +47,30 @@ void main() {
         ),
         throwsUnsupportedError,
       );
+    });
+
+    test('queues a distant fog target after moving a reachable prefix', () {
+      final knownHexes = {
+        for (var col = 0; col <= 4; col++) HexCoordinate(col: col, row: 0),
+      };
+      final state = _persistentState(
+        units: [autoExploreScout(movementPoints: 1)],
+        fogOfWar: autoExploreFog(visible: knownHexes, discovered: knownHexes),
+      );
+
+      final result = _resolvePersistent(state, autoExploreMap(cols: 8));
+      final moved = result.state.units.single;
+
+      expect(result.accepted, isTrue);
+      expect(moved.posture, UnitPosture.autoExploring);
+      expect((moved.col, moved.row), (1, 0));
+      expect(moved.queuedPath, isNotNull);
+      expect(moved.queuedPath!.targetCol, greaterThan(4));
+      expect(result.events.single, isA<UnitMovedEvent>());
+      expect(result.execution, isNotNull);
+      expect(autoExploreStepCoordinates(result.execution!.steps), const [
+        (1, 0),
+      ]);
     });
 
     test('rejection preserves the exact persistent state identity', () {

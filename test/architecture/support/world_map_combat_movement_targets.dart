@@ -103,11 +103,12 @@ const _movementTargets = [
   ),
   _Target(
     path:
-        'packages/aonw_core/lib/game/domain/movement/persistent_unit_action_resolver.dart',
-    owner: 'PersistentUnitActionResolver',
+        'packages/aonw_core/lib/game/domain/movement/'
+        'persistent_auto_explore_command_resolver.dart',
+    owner: 'PersistentAutoExploreCommandResolver',
     boundaries: [
       _Boundary.method(
-        'autoExploreUnit',
+        'resolve',
         parameter: 'mapData',
         type: 'MapTraversalView',
       ),

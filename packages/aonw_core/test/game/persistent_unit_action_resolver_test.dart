@@ -255,90 +255,6 @@ void main() {
       );
     });
 
-    test('autoExploreUnit moves scout and keeps auto-explore posture', () {
-      final scout = GameUnit(
-        id: 'scout_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.scout,
-        name: GameUnitType.scout.defaultNameToken,
-        col: 1,
-        row: 0,
-      );
-      final state = PersistentGameState(
-        units: [scout],
-        fogOfWar: FogOfWarState(
-          players: {
-            'player_1': PlayerFogOfWar(
-              playerId: 'player_1',
-              discoveredHexes: {
-                const HexCoordinate(col: 0, row: 0),
-                const HexCoordinate(col: 1, row: 0),
-                const HexCoordinate(col: 2, row: 0),
-              },
-              visibleHexes: {
-                const HexCoordinate(col: 0, row: 0),
-                const HexCoordinate(col: 1, row: 0),
-                const HexCoordinate(col: 2, row: 0),
-              },
-            ),
-          },
-        ),
-      );
-
-      final result = const PersistentUnitActionResolver().autoExploreUnit(
-        state: state,
-        command: const AutoExploreUnitCommand('scout_1'),
-        actorPlayerId: 'player_1',
-        mapData: WorldMapReadView(_worldMap(cols: 6, rows: 1)),
-      );
-      final moved = result.state.units.single;
-
-      expect(result.accepted, isTrue);
-      expect(moved.posture, UnitPosture.autoExploring);
-      expect(moved.col, greaterThan(1));
-    });
-
-    test('autoExploreUnit queues a distant fog target', () {
-      final scout = GameUnit(
-        id: 'scout_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.scout,
-        name: GameUnitType.scout.defaultNameToken,
-        col: 0,
-        row: 0,
-        movementPoints: 1,
-      );
-      final knownHexes = {
-        for (var col = 0; col <= 4; col++) HexCoordinate(col: col, row: 0),
-      };
-      final state = PersistentGameState(
-        units: [scout],
-        fogOfWar: FogOfWarState(
-          players: {
-            'player_1': PlayerFogOfWar(
-              playerId: 'player_1',
-              discoveredHexes: knownHexes,
-              visibleHexes: knownHexes,
-            ),
-          },
-        ),
-      );
-
-      final result = const PersistentUnitActionResolver().autoExploreUnit(
-        state: state,
-        command: const AutoExploreUnitCommand('scout_1'),
-        actorPlayerId: 'player_1',
-        mapData: WorldMapReadView(_worldMap(cols: 8, rows: 1)),
-      );
-      final moved = result.state.units.single;
-
-      expect(result.accepted, isTrue);
-      expect(moved.posture, UnitPosture.autoExploring);
-      expect(moved.col, 1);
-      expect(moved.queuedPath, isNotNull);
-      expect(moved.queuedPath!.targetCol, greaterThan(4));
-    });
-
     test('rejects unit action for another player unit', () {
       final state = PersistentGameState(
         units: [
@@ -364,23 +280,6 @@ void main() {
       expect(result.state, state);
     });
   });
-}
-
-WorldMap _worldMap({required int cols, required int rows}) {
-  return WorldMap(
-    cols: cols,
-    rows: rows,
-    tiles: [
-      for (var row = 0; row < rows; row++)
-        for (var col = 0; col < cols; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: row),
-            terrains: const [TerrainType.plains],
-            resources: const <ResourceType>[],
-            height: 0,
-          ),
-    ],
-  );
 }
 
 QueuedMovePath _queuedPath() {

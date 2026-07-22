@@ -162,15 +162,10 @@ final class _EconomySimulationCommandApplier {
           state: result.state,
         );
       case AutoExploreUnitCommand():
-        final result = const PersistentUnitActionResolver().autoExploreUnit(
+        return _applyAutoExplore(
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: mapView,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
         );
       case CancelUnitActionCommand():
         final result = const PersistentUnitActionResolver().cancelUnitAction(
@@ -270,6 +265,26 @@ final class _EconomySimulationCommandApplier {
     return _ApplyCommandResult(
       accepted: result.accepted,
       state: result.state,
+      reason: result.reason,
+    );
+  }
+
+  _ApplyCommandResult _applyAutoExplore({
+    required PersistentGameState state,
+    required AutoExploreUnitCommand command,
+    required String actorPlayerId,
+  }) {
+    final result = const PersistentAutoExploreCommandResolver().resolve(
+      state: state,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapData: mapView,
+      phase: AutoExploreCommandPhase.direct,
+    );
+    return _ApplyCommandResult(
+      accepted: result.accepted,
+      state: result.state,
+      events: result.events,
       reason: result.reason,
     );
   }

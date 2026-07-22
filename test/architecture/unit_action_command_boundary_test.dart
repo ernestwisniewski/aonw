@@ -35,6 +35,37 @@ const _economySimulationCallSite =
 const _fullMctsCallSite = 'packages/aonw_core/lib/ai/mcts/mcts_simulator.dart';
 
 void main() {
+  test('persistent adapter exposes only map-independent unit actions', () {
+    final sources = productionDartSources();
+
+    expect(
+      _persistentAdapterApiViolations(sources[_persistentAdapterPath]!),
+      isEmpty,
+    );
+  });
+
+  test('persistent adapter guard rejects a restored auto-explore method', () {
+    final source = productionDartSources()[_persistentAdapterPath]!;
+    for (final modifier in const ['', 'static ']) {
+      final widened = source.replaceFirst(
+        '  static PersistentUnitActionResult _applyUnitAction(',
+        '''
+  ${modifier}PersistentUnitActionResult autoExploreUnit() =>
+      throw UnimplementedError();
+
+  static PersistentUnitActionResult _applyUnitAction(''',
+      );
+
+      expect(
+        _persistentAdapterApiViolations(widened),
+        contains(
+          'PersistentUnitActionResolver must expose only its reviewed actions',
+        ),
+        reason: 'modifier: ${modifier.isEmpty ? 'instance' : 'static'}',
+      );
+    }
+  });
+
   test('unit action paths share one state-neutral kernel', () {
     final sources = productionDartSources();
     const sharedKernelCallSites = {
@@ -147,7 +178,7 @@ void main() {
         'PersistedInteractionUnitRules',
         'clearOwnedByUnit',
       ),
-      {_kernelPath: 2, _autoExploreKernelPath: 2, _persistentAdapterPath: 1},
+      {_kernelPath: 2, _autoExploreKernelPath: 2},
       reason: 'Selective unit interaction cleanup must not be duplicated.',
     );
 
@@ -169,11 +200,7 @@ void main() {
       'package:aonw_core/game/domain/state/'
           'canonical_game_snapshot.dart',
     });
-    for (final path in const [
-      _kernelPath,
-      _autoExploreKernelPath,
-      _persistentAdapterPath,
-    ]) {
+    for (final path in const [_kernelPath, _autoExploreKernelPath]) {
       expect(
         _importUris(sources[path]!, path),
         contains(_interactionRulesUri),
@@ -182,6 +209,44 @@ void main() {
     }
   });
 }
+
+List<String> _persistentAdapterApiViolations(String source) {
+  final unit = parseString(content: source, path: _persistentAdapterPath).unit;
+  final resolvers = unit.declarations.whereType<ClassDeclaration>().where(
+    (declaration) =>
+        declaration.namePart.typeName.lexeme == 'PersistentUnitActionResolver',
+  );
+  if (resolvers.length != 1) {
+    return const ['PersistentUnitActionResolver must exist exactly once'];
+  }
+  final resolver = resolvers.single;
+  final constructors = resolver.body.members
+      .whereType<ConstructorDeclaration>()
+      .toList(growable: false);
+  final publicMethods = {
+    for (final method in resolver.body.members.whereType<MethodDeclaration>())
+      if (!method.name.lexeme.startsWith('_'))
+        '${method.isStatic ? 'static' : 'instance'}:${method.name.lexeme}',
+  };
+  return [
+    if (resolver.finalKeyword == null)
+      'PersistentUnitActionResolver must remain final',
+    if (constructors.length != 1 ||
+        constructors.single.name != null ||
+        constructors.single.constKeyword == null ||
+        constructors.single.parameters.parameters.isNotEmpty)
+      'PersistentUnitActionResolver must keep one const empty constructor',
+    if (!_sameStringSet(publicMethods, const {
+      'instance:cancelUnitAction',
+      'instance:fortifyUnit',
+      'instance:skipUnitTurn',
+    }))
+      'PersistentUnitActionResolver must expose only its reviewed actions',
+  ];
+}
+
+bool _sameStringSet(Set<String> left, Set<String> right) =>
+    left.length == right.length && left.containsAll(right);
 
 Set<String> _importUris(String source, String path) {
   final unit = parseString(content: source, path: path).unit;

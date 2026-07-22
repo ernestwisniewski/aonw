@@ -8,19 +8,20 @@ part 'support/auto_explore_characterization_fixture.dart';
 part 'support/auto_explore_characterization_oracle.dart';
 part 'support/auto_explore_rejection_characterization.dart';
 
-const _autoExploreResolver = PersistentUnitActionResolver();
+const _autoExploreResolver = PersistentAutoExploreCommandResolver();
 
-PersistentUnitActionResult _resolveAutoExplore(
+PersistentAutoExploreCommandResult _resolveAutoExplore(
   PersistentGameState state,
   MapTraversalView map, {
   String unitId = _autoExploreUnitId,
   String actorPlayerId = _autoExploreActorId,
 }) {
-  return _autoExploreResolver.autoExploreUnit(
+  return _autoExploreResolver.resolve(
     state: state,
     command: AutoExploreUnitCommand(unitId),
     actorPlayerId: actorPlayerId,
     mapData: map,
+    phase: AutoExploreCommandPhase.direct,
   );
 }
 
@@ -35,6 +36,7 @@ void main() {
     ];
     const forbidden = [
       'PersistentUnitActionResolver',
+      'PersistentAutoExploreCommandResolver',
       'PersistentMoveUnitResolver',
       'ScoutAutoExplorePlanner',
       'MovementCommandResolver',

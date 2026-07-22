@@ -56,14 +56,10 @@ void _registerProductionBoundaryTests() {
         'PersistentMoveUnitResolver',
         'resolve',
       ),
-      const {
-        movementMctsConsumerPath: 1,
-        movementEconomyConsumerPath: 1,
-        movementPersistentUnitActionPath: 1,
-      },
+      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
       reason:
-          'Only MCTS, economy simulation, and AutoExplore may use the '
-          'persistent movement adapter.',
+          'Only MCTS and economy simulation may use the persistent movement '
+          'adapter.',
     );
     expect(
       movementInstanceMemberReferenceCountsByPath(
