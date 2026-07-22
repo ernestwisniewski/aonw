@@ -28,9 +28,9 @@ void main() {
 typedef _FixtureProvider = List<ReducerParityFixture> Function();
 
 void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
-  test('movement corpus has exactly 13 reviewed wire-safe shared cases', () {
+  test('movement corpus has exactly 18 reviewed wire-safe shared cases', () {
     final fixtures = fixtureProvider();
-    expect(fixtures, hasLength(13));
+    expect(fixtures, hasLength(18));
     expect(
       () => MovementReducerParityCharacterization.validateForTest(fixtures),
       returnsNormally,

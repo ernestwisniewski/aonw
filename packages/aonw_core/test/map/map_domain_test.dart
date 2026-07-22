@@ -61,7 +61,7 @@ void main() {
         ],
       );
 
-      final MapTileSource source = map;
+      final MapTileSource<TileData> source = map;
 
       expect(source.tileAt(0, 0)?.primaryTerrain, TerrainType.plains);
       expect(source.tileAt(1, 0)?.primaryTerrain, TerrainType.ocean);

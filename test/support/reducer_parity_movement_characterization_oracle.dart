@@ -1,9 +1,28 @@
 part of 'reducer_parity_movement_characterization.dart';
 
+const _movementIdentityStateFixtureIds = <String>{
+  'movement-characterization-hidden-target-no-op-accepted',
+  'movement-characterization-hidden-intermediate-no-op-accepted',
+  'movement-characterization-hidden-city-no-op-accepted',
+  'movement-characterization-unit-missing-rejected',
+  'movement-characterization-unit-working-rejected',
+  'movement-characterization-fortified-rejected',
+  'movement-characterization-merchant-rejected',
+  'movement-characterization-current-tile-rejected',
+  'movement-characterization-foreign-city-rejected',
+  'movement-characterization-visible-occupied-rejected',
+  'movement-characterization-path-not-found-rejected',
+  'movement-characterization-capacity-rejected',
+  'movement-characterization-invalid-origin-rejected',
+  'movement-characterization-far-hidden-rejected',
+  'movement-characterization-no-fog-occupied-rejected',
+};
+
 PersistentGameState _movementExpectedState(
   String fixtureId,
   PersistentGameState input,
 ) {
+  if (_movementIdentityStateFixtureIds.contains(fixtureId)) return input;
   return switch (fixtureId) {
     'movement-characterization-partial-queued-accepted' =>
       _movementStateWithUnit(
@@ -26,21 +45,15 @@ PersistentGameState _movementExpectedState(
       ),
     'movement-characterization-contact-discovery-accepted' =>
       _contactDiscoveryExpectedState(input),
-    'movement-characterization-hidden-target-no-op-accepted' ||
-    'movement-characterization-hidden-intermediate-no-op-accepted' ||
-    'movement-characterization-unit-missing-rejected' ||
-    'movement-characterization-unit-working-rejected' ||
-    'movement-characterization-merchant-rejected' ||
-    'movement-characterization-current-tile-rejected' ||
-    'movement-characterization-foreign-city-rejected' ||
-    'movement-characterization-visible-occupied-rejected' ||
-    'movement-characterization-path-not-found-rejected' ||
-    'movement-characterization-capacity-rejected' => input,
     _ => throw StateError('Unknown movement oracle id: $fixtureId.'),
   };
 }
 
 List<GameEvent> _movementExpectedEvents(String fixtureId) {
+  if (fixtureId == 'movement-characterization-zero-movement-queued-accepted' ||
+      _movementIdentityStateFixtureIds.contains(fixtureId)) {
+    return const [];
+  }
   return switch (fixtureId) {
     'movement-characterization-partial-queued-accepted' => const [
       UnitMovedEvent(
@@ -60,17 +73,6 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
         toRow: 0,
       ),
     ],
-    'movement-characterization-zero-movement-queued-accepted' ||
-    'movement-characterization-hidden-target-no-op-accepted' ||
-    'movement-characterization-hidden-intermediate-no-op-accepted' ||
-    'movement-characterization-unit-missing-rejected' ||
-    'movement-characterization-unit-working-rejected' ||
-    'movement-characterization-merchant-rejected' ||
-    'movement-characterization-current-tile-rejected' ||
-    'movement-characterization-foreign-city-rejected' ||
-    'movement-characterization-visible-occupied-rejected' ||
-    'movement-characterization-path-not-found-rejected' ||
-    'movement-characterization-capacity-rejected' => const [],
     _ => throw StateError('Unknown movement event oracle id: $fixtureId.'),
   };
 }

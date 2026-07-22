@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/movement/persistent_move_unit_resolver.dart';
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
 import 'package:aonw_core/game/domain/movement/unit_action_command_resolver.dart';
@@ -112,6 +113,7 @@ final class PersistentUnitActionResolver {
       command: move,
       actorPlayerId: actorPlayerId,
       mapData: mapData,
+      visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
     );
     if (!moved.accepted) return _reject(state, moved.reason ?? 'move_failed');
 

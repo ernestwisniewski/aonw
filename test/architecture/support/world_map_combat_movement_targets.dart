@@ -3,6 +3,76 @@ part of '../world_map_combat_boundary_test.dart';
 const _movementTargets = [
   _Target(
     path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'domain_move_unit_resolver.dart',
+    owner: 'DomainMoveUnitResolver',
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'movement_command_executor.dart',
+    owner: 'MovementCommandExecutor',
+    boundaries: [
+      _Boundary.method(
+        'execute',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'movement_command_guard.dart',
+    owner: 'MovementCommandGuard',
+    boundaries: [
+      _Boundary.method(
+        'validate',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        'canCarryArtifactIntoTargetCity',
+        parameter: 'targetTile',
+        type: 'MapTileView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'movement_command_planner.dart',
+    owner: 'MovementCommandPlanner',
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
+        'packages/aonw_core/lib/game/domain/movement/'
+        'movement_command_resolver.dart',
+    owner: 'MovementCommandResolver',
+    boundaries: [
+      _Boundary.method(
+        'resolve',
+        parameter: 'mapData',
+        type: 'MapTraversalView',
+      ),
+    ],
+  ),
+  _Target(
+    path:
         'packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart',
     owner: 'PersistentMoveUnitResolver',
     boundaries: [
@@ -117,11 +187,6 @@ const _movementTargets = [
         type: 'MapTileLookup',
       ),
       _Boundary.method(
-        '_queueMovePath',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
         '_selectUpdatedUnit',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
@@ -150,17 +215,7 @@ const _movementTargets = [
     boundaries: [
       _Boundary.method('run', parameter: 'mapView', type: 'MapTraversalView'),
       _Boundary.method(
-        '_validTargetTile',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_canTraverseEventually',
-        parameter: 'targetTile',
-        type: 'MapTileView',
-      ),
-      _Boundary.method(
-        '_applyExecutedMove',
+        '_projectAcceptedResult',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
@@ -198,19 +253,20 @@ const _movementTargets = [
     boundaries: [
       _Boundary.method('run', parameter: 'mapView', type: 'MapTraversalView'),
       _Boundary.method(
+        '_replanQueuedPath',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        '_planQueuedPath',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
         '_refreshSelectedUnit',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-    ],
-  ),
-  _Target(
-    path:
-        'lib/game/domain/reducer/movement/'
-        'movement_reducer_direct_move.dart',
-    owner: '_DirectMovePlanFinder',
-    boundaries: [
-      _Boundary.constructor('', parameter: 'mapView', type: 'MapTraversalView'),
     ],
   ),
   _Target(
@@ -226,6 +282,11 @@ const _movementTargets = [
       ),
       _Boundary.method(
         'confirmPreview',
+        parameter: 'mapView',
+        type: 'MapTraversalView',
+      ),
+      _Boundary.method(
+        '_planPreview',
         parameter: 'mapView',
         type: 'MapTraversalView',
       ),

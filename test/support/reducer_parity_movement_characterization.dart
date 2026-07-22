@@ -34,14 +34,15 @@ abstract final class MovementReducerParityCharacterization {
 typedef _MovementRequirement = ({bool accepted, String? reason});
 
 const _requiredMovementCharacterization = <String, _MovementRequirement>{
-  // `unit_out_of_bounds` is intentionally absent: local movement currently
-  // executes that input, so its server rejection belongs to the explicit
-  // local/persistent drift characterization rather than this shared corpus.
   'movement-characterization-unit-missing-rejected': (
     accepted: false,
     reason: 'unit_not_found',
   ),
   'movement-characterization-unit-working-rejected': (
+    accepted: false,
+    reason: 'unit_unavailable',
+  ),
+  'movement-characterization-fortified-rejected': (
     accepted: false,
     reason: 'unit_unavailable',
   ),
@@ -69,6 +70,18 @@ const _requiredMovementCharacterization = <String, _MovementRequirement>{
     accepted: false,
     reason: 'unit_movement_capacity_insufficient',
   ),
+  'movement-characterization-invalid-origin-rejected': (
+    accepted: false,
+    reason: 'unit_out_of_bounds',
+  ),
+  'movement-characterization-far-hidden-rejected': (
+    accepted: false,
+    reason: 'move_path_not_found',
+  ),
+  'movement-characterization-no-fog-occupied-rejected': (
+    accepted: false,
+    reason: 'move_target_occupied',
+  ),
   'movement-characterization-partial-queued-accepted': (
     accepted: true,
     reason: null,
@@ -82,6 +95,10 @@ const _requiredMovementCharacterization = <String, _MovementRequirement>{
     reason: null,
   ),
   'movement-characterization-hidden-intermediate-no-op-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-hidden-city-no-op-accepted': (
     accepted: true,
     reason: null,
   ),

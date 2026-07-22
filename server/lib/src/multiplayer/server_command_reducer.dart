@@ -17,6 +17,7 @@ part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_merchant_routing.dart';
+part 'server_command_reducer_movement.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
@@ -192,13 +193,13 @@ class ServerCommandReducer {
           ruleset: ruleset,
         );
       case MoveUnitCommand():
-        final result = const PersistentMoveUnitResolver().resolve(
+        return _applyMoveUnit(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: loadedMap.mapView,
+          mapView: loadedMap.mapView,
         );
-        return _fromPersistentResult(save, result);
       case AttackHexCommand():
         final result = const PersistentCombatCommandResolver().resolve(
           state: state,
@@ -425,19 +426,6 @@ class ServerCommandReducer {
 
   _CommandApplication _fromPersistentResult(GameSave save, Object result) {
     return switch (result) {
-      PersistentMoveUnitResult(
-        :final accepted,
-        :final state,
-        :final events,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          events: events,
-          reason: reason,
-        ),
       PersistentCombatCommandResult(
         :final accepted,
         :final state,

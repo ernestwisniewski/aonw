@@ -27,6 +27,7 @@ abstract final class PersistentTurnMovementProcessor {
       state: TurnMovementState(
         units: state.units,
         cities: state.cities,
+        diplomacy: state.runtimeState.diplomacy,
         fogOfWar: state.fogOfWar,
       ),
       context: TurnMovementContext(

@@ -281,13 +281,14 @@ void _expectMovedStateSharing(
     expect(actual.units[index], same(input.units[index]));
   }
   expect(actual.fogOfWar, isNot(same(input.fogOfWar)));
-  expect(actual.runtimeState, isNot(same(input.runtimeState)));
   if (diplomacyChanged) {
+    expect(actual.runtimeState, isNot(same(input.runtimeState)));
     expect(
       actual.runtimeState.diplomacy,
       isNot(same(input.runtimeState.diplomacy)),
     );
   } else {
+    expect(actual.runtimeState, same(input.runtimeState));
     expect(actual.runtimeState.diplomacy, same(input.runtimeState.diplomacy));
   }
   _expectOuterMovementSentinelsShared(input, actual);

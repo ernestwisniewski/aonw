@@ -185,14 +185,34 @@ final class GameHoverIntentResolver {
     if (cached != null && _movementPathfinderUnitId == unit.id) {
       return cached;
     }
+    final actorPlayerId = state.activePlayerId.isNotEmpty
+        ? state.activePlayerId
+        : unit.ownerPlayerId;
+    final visibility = UnitMovementVisibilityRules.visibilityForActor(
+      fogOfWar: state.fogOfWar,
+      actorPlayerId: actorPlayerId,
+    );
     final pathfinder = UnitMovementPathfinder(
       mapData: mapView,
-      units: state.units,
-      canEnterTile: (tile) => UnitMovementVisibilityRules.canPlanThroughTile(
-        unit: unit,
-        tile: tile,
-        visibility: state.activePlayerVisibility,
+      units: UnitMovementVisibilityRules.planningUnitsForActor(
+        units: state.units,
+        movingUnit: unit,
+        actorPlayerId: actorPlayerId,
+        visibility: visibility,
       ),
+      canEnterTile: (tile) =>
+          UnitMovementVisibilityRules.canPlanThroughTile(
+            unit: unit,
+            tile: tile,
+            visibility: visibility,
+          ) &&
+          MovementHiddenObstacleRules.canPlanThroughCity(
+            cities: state.cities,
+            diplomacy: state.diplomacy,
+            unit: unit,
+            tile: tile,
+            visibility: visibility,
+          ),
     );
     _movementPathfinder = pathfinder;
     _movementPathfinderUnitId = unit.id;

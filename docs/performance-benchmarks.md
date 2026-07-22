@@ -15,6 +15,7 @@ where the workload permits it.
 | --- | --- | --- |
 | Map lookup | 100, 1,000, and 10,000 tiles | resolve the first, middle, and last tile plus a missing coordinate through legacy `MapData` and the indexed `WorldMapReadView`; record actual list reads for the legacy model, the canonical index size, direct `WorldTile` hits and public lookup calls, plus matching output digests |
 | Movement path | 100, 1,000, and 10,000 tiles | plan the same three-hex path through `WorldMapReadView`; record logical lookups and unique tile coordinates read, which must remain constant as the surrounding map grows |
+| Movement command | 100, 1,000, and 10,000 tiles | resolve the same authoritative move through the neutral kernel and the Persistent/Domain adapters; record accepted boundaries, executed steps, fog recomputation paths, diplomatic contact, tile lookups, and a shared output digest |
 | Auto-explore | 100, 1,000, and 10,000 tiles | plan a scout destination across a fully reachable `WorldMap`; record every evaluated destination and unique tile coordinate read so the intentional full-map growth remains visible |
 | Persistence | 100, 1,000, and 10,000 records | run `JsonEventLog.latestOffset`, `readSince`, and `append`, then exercise snapshot codec round trips at the same scales |
 | Replay | 100, 1,000, and 10,000 events | replay a deterministic four-command mix through the real reducer and record yielded commands, offsets, steps, and the resulting state digest |
@@ -54,9 +55,13 @@ migration visible without timing-based CI.
 `map.movement-path` holds the source and destination coordinates fixed while
 the surrounding map grows. Its lookup and unique-coordinate counters are
 therefore a bounded-work invariant: a larger unrelated map must not expand the
-search. `map.auto-explore` has a different contract. It deliberately evaluates
-every reachable destination, so `candidateEvaluations` grows from `scale - 1`
-and `uniqueTileHits` grows with the map. The stable
+search. `map.movement-command` extends that invariant across the complete
+command boundary: kernel, both state adapters, incremental fog recomputation,
+diplomatic-contact discovery, events, and renderer-neutral execution must keep
+the same work counters and output digest as the unrelated map grows.
+`map.auto-explore` has a different contract. It deliberately evaluates every
+reachable destination, so `candidateEvaluations` grows from `scale - 1` and
+`uniqueTileHits` grows with the map. The stable
 `growthModel: full-reachable-map` marker documents that proportional scan and
 prevents it from being mistaken for the fixed-distance movement budget.
 

@@ -11,7 +11,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 /// It deliberately permits incomplete tile data while a user is painting. Call
 /// [freeze] at a persistence boundary to validate it as an immutable
 /// [WorldMap]. [toMapData] is the single editor JSON/persistence projection.
-final class MapDraft implements MapTileSource {
+final class MapDraft implements MapTileSource<TileData> {
   MapDraft({
     required int cols,
     required int rows,

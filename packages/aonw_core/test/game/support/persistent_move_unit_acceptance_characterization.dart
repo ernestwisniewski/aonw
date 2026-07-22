@@ -80,9 +80,7 @@ void _registerImmediateAndPartialMoveTests() {
 
 void _registerQueuedAndHiddenMoveTests() {
   test('zero movement points queue an immutable path without moving', () {
-    final state = _moveState(
-      units: [_moveUnit(movementPoints: 0, posture: UnitPosture.fortified)],
-    );
+    final state = _moveState(units: [_moveUnit(movementPoints: 0)]);
 
     final result = _resolveMove(
       state,

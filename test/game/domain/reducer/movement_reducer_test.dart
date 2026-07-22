@@ -845,38 +845,6 @@ void main() {
         );
       });
 
-      test('does not reveal an enemy unit on a hidden target tile', () {
-        final commander = _commander();
-        final enemy = GameUnit.startingWarrior(
-          ownerPlayerId: 'player_2',
-          col: 1,
-          row: 0,
-        );
-        final currentHex = HexCoordinate(
-          col: commander.col,
-          row: commander.row,
-        );
-        final state = GameState(
-          units: [commander, enemy],
-          activePlayerId: 'player_1',
-          fogOfWar: _fog(discovered: {currentHex}, visible: {currentHex}),
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(commander),
-            moveCommandActive: true,
-          ),
-        );
-
-        final result = MovementReducer.handleMoveTargetTile(
-          state,
-          mapData.tileAt(1, 0)!,
-          mapData,
-        );
-
-        expect(result.state, state);
-        final feedback = result.uiEffects.whereType<ShowHudFeedbackEffect>();
-        expect(feedback.single.reason, HudFeedbackReason.movementNoRoute);
-      });
-
       test('reports foreign cities before route preview is created', () {
         final commander = _commander();
         const city = GameCity(

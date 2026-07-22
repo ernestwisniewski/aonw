@@ -71,6 +71,8 @@ abstract final class _MovementTurnResetProcessor {
         mapData: mapView,
         allUnits: currentAllUnits,
         cities: state.cities,
+        diplomacy: state.diplomacy,
+        fogOfWar: state.fogOfWar,
       );
       if (validated.queuedPath == null) {
         if (unit.queuedPath != null) pathsInvalidated = true;
@@ -78,32 +80,15 @@ abstract final class _MovementTurnResetProcessor {
         continue;
       }
 
-      final path = validated.queuedPath!;
-      final targetTile = mapView.tileAt(path.targetCol, path.targetRow);
-      if (targetTile == null) {
-        finalUnits.add(validated.copyWithQueuedPath(null));
-        continue;
-      }
-
-      final plan = UnitMovementPathfinder(
-        mapData: mapView,
-        units: currentAllUnits,
-        canEnterOccupiedTile:
-            ({
-              required movingUnit,
-              required blockingUnit,
-              required col,
-              required row,
-            }) => MerchantTradeRouteRules.canShareOccupiedCityTile(
-              movingUnit: movingUnit,
-              col: col,
-              row: row,
-              cities: state.cities,
-            ),
-      ).plan(unit: validated, targetTile: targetTile);
-
+      final replan = _replanQueuedPath(
+        state: state,
+        unit: validated,
+        allUnits: currentAllUnits,
+        mapView: mapView,
+      );
+      final plan = replan.plan;
       if (plan == null) {
-        finalUnits.add(validated.copyWithQueuedPath(null));
+        finalUnits.add(replan.stoppedUnit!);
         continue;
       }
 
@@ -136,7 +121,7 @@ abstract final class _MovementTurnResetProcessor {
 
       final movedWithPath = reachable
           ? moved.copyWithQueuedPath(null)
-          : moved.copyWithQueuedPath(path);
+          : moved.copyWithQueuedPath(validated.queuedPath);
 
       finalUnits.add(movedWithPath);
       if (stepsForAnimation.isNotEmpty) {
@@ -207,6 +192,84 @@ abstract final class _MovementTurnResetProcessor {
     return GameStateTransition(state: next, uiEffects: animationEffects);
   }
 
+  static _QueuedPathReplan _replanQueuedPath({
+    required GameState state,
+    required GameUnit unit,
+    required List<GameUnit> allUnits,
+    required MapTraversalView mapView,
+  }) {
+    final path = unit.queuedPath!;
+    final targetTile = mapView.tileAt(path.targetCol, path.targetRow);
+    if (targetTile == null) {
+      return _QueuedPathReplan.stopped(unit.copyWithQueuedPath(null));
+    }
+
+    final visibility = UnitMovementVisibilityRules.visibilityForActor(
+      fogOfWar: state.fogOfWar,
+      actorPlayerId: unit.ownerPlayerId,
+    );
+    final plan = _planQueuedPath(
+      state: state,
+      unit: unit,
+      allUnits: allUnits,
+      mapView: mapView,
+      targetTile: targetTile,
+      visibility: visibility,
+    );
+    if (plan == null) {
+      return _QueuedPathReplan.stopped(unit.copyWithQueuedPath(null));
+    }
+    if (MovementHiddenObstacleRules.reachablePathHitsHiddenBlocker(
+      plan: plan,
+      movingUnit: unit,
+      allUnits: allUnits,
+      cities: state.cities,
+      diplomacy: state.diplomacy,
+      visibility: visibility,
+    )) {
+      return _QueuedPathReplan.stopped(unit);
+    }
+    return _QueuedPathReplan.ready(plan);
+  }
+
+  static UnitMovementPlan? _planQueuedPath({
+    required GameState state,
+    required GameUnit unit,
+    required List<GameUnit> allUnits,
+    required MapTraversalView mapView,
+    required MapTileView targetTile,
+    required FogVisibilityQuery visibility,
+  }) {
+    return UnitMovementPathfinder(
+      mapData: mapView,
+      units: UnitMovementVisibilityRules.planningUnitsForActor(
+        units: allUnits,
+        movingUnit: unit,
+        actorPlayerId: unit.ownerPlayerId,
+        visibility: visibility,
+      ),
+      canEnterTile: (tile) => MovementHiddenObstacleRules.canPlanThroughCity(
+        cities: state.cities,
+        diplomacy: state.diplomacy,
+        unit: unit,
+        tile: tile,
+        visibility: visibility,
+      ),
+      canEnterOccupiedTile:
+          ({
+            required movingUnit,
+            required blockingUnit,
+            required col,
+            required row,
+          }) => MerchantTradeRouteRules.canShareOccupiedCityTile(
+            movingUnit: movingUnit,
+            col: col,
+            row: row,
+            cities: state.cities,
+          ),
+    ).plan(unit: unit, targetTile: targetTile);
+  }
+
   static GameState _refreshSelectedUnit(
     GameState state,
     List<GameUnit> units,
@@ -232,4 +295,14 @@ abstract final class _MovementTurnResetProcessor {
 
     return next;
   }
+}
+
+final class _QueuedPathReplan {
+  const _QueuedPathReplan.ready(UnitMovementPlan this.plan)
+    : stoppedUnit = null;
+
+  const _QueuedPathReplan.stopped(GameUnit this.stoppedUnit) : plan = null;
+
+  final UnitMovementPlan? plan;
+  final GameUnit? stoppedUnit;
 }

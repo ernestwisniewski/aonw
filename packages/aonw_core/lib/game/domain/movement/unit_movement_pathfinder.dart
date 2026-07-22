@@ -1,8 +1,9 @@
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
-import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_source.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 class UnitMovementPathfinder {
@@ -29,7 +30,7 @@ class UnitMovementPathfinder {
     this.canEnterOccupiedTile,
   }) : units = List.unmodifiable(units),
        _tilesByKey = _initialTileIndex(mapData),
-       _hasCompleteTileIndex = mapData is MapTileSource,
+       _hasCompleteTileIndex = mapData is MapTileSource<MapTileView>,
        _unitsByKey = _indexUnits(units);
 
   /// Returns whether [unit] can plan a move ending on [col]/[row] using the
@@ -247,8 +248,8 @@ class UnitMovementPathfinder {
 
   /// Returns a tile through the pathfinder's request-scoped spatial index.
   ///
-  /// Complete legacy sources keep their eager O(1) index. Narrow traversal
-  /// views cache only borrowed tile references reached by the search.
+  /// Complete sources keep an eager O(1) index. Narrow traversal views cache
+  /// only borrowed tile references reached by the search.
   MapTileView? tileAt(int col, int row) {
     final key = _coordKey(col, row);
     final indexed = _tilesByKey[key];
@@ -294,7 +295,7 @@ class UnitMovementPathfinder {
   }
 
   static Map<String, MapTileView> _initialTileIndex(MapTraversalView mapData) {
-    return mapData is MapTileSource
+    return mapData is MapTileSource<MapTileView>
         ? _indexTiles(mapData.tiles)
         : <String, MapTileView>{};
   }

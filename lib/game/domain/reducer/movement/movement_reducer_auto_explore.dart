@@ -38,7 +38,7 @@ abstract final class _AutoExploreProcessor {
       mapView,
       context: context,
       fogOfWarService: fogOfWarService,
-      canEnterTile: (_) => true,
+      visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
     );
     return keepPosture(moved, unit.id, mapView);
   }
@@ -76,7 +76,7 @@ abstract final class _AutoExploreProcessor {
         mapView,
         context: context,
         fogOfWarService: fogOfWarService,
-        canEnterTile: (_) => true,
+        visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
       );
       final kept = keepPosture(moved, unit.id, mapView);
       current = kept.state;

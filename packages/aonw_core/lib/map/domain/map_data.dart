@@ -3,22 +3,12 @@ import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/domain/world_map_invariants.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_source.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 export 'package:aonw_core/map/domain/map_read_view.dart';
-
-/// Read-only spatial data consumed by map renderers.
-///
-/// [MapData] remains the legacy persistence model. Editor-only mutable state
-/// can implement this narrow contract without becoming a second persistence
-/// representation.
-abstract interface class MapTileSource implements MapTraversalView {
-  Iterable<TileData> get tiles;
-
-  @override
-  TileData? tileAt(int col, int row);
-}
+export 'package:aonw_core/map/domain/map_tile_source.dart';
 
 /// Data for a single hex tile.
 class TileData implements MapTileView {
@@ -79,7 +69,7 @@ class TileData implements MapTileView {
 /// owned by the editor's draft model. Its [MapReadView] implementation is a
 /// zero-copy borrowed view: [mapTiles] and [tileTerrains] can expose aliases,
 /// which read-view consumers must not mutate.
-class MapData implements MapTileSource, MapReadView {
+class MapData implements MapTileSource<TileData>, MapReadView {
   @override
   int cols;
 

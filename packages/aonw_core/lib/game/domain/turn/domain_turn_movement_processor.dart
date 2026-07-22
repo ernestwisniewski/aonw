@@ -24,6 +24,7 @@ abstract final class DomainTurnMovementProcessor {
       state: TurnMovementState(
         units: state.units,
         cities: state.cities,
+        diplomacy: state.diplomacy,
         fogOfWar: state.fogOfWar,
       ),
       context: TurnMovementContext(

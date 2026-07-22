@@ -2,6 +2,7 @@ import 'ai_mcts_workload.dart';
 import 'ai_strategy_workload.dart';
 import 'document.dart';
 import 'map_workload.dart';
+import 'movement_command_workload.dart';
 import 'persistence_workload.dart';
 import 'renderer_frame_workload.dart';
 import 'replay_workload.dart';
@@ -17,6 +18,7 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
     runAutoExploreWorkload(),
     runFogRevealWorkload(),
     runMapLookupWorkload(),
+    runMovementCommandWorkload(),
     runMovementPathWorkload(),
     runWorldMapLookupWorkload(),
     persistence,

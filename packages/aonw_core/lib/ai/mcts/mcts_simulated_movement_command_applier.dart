@@ -2,9 +2,11 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class MctsSimulatedMovementCommandApplier {
   const MctsSimulatedMovementCommandApplier({
@@ -20,80 +22,36 @@ final class MctsSimulatedMovementCommandApplier {
   final List<GameCity> rememberedEnemyCities;
 
   List<GameUnit> applyMoveUnit(MoveUnitCommand command) {
-    final unitIndex = _unitIndexById(ownUnits, command.unitId);
-    if (unitIndex == null) return ownUnits;
-
-    final unit = ownUnits[unitIndex];
-    if (unit.isWorking) return ownUnits;
-    if (view.mapData.tileAt(unit.col, unit.row) == null) return ownUnits;
-
-    final targetTile = view.mapData.tileAt(
-      command.targetCol,
-      command.targetRow,
-    );
-    if (targetTile == null || unit.occupies(targetTile.col, targetTile.row)) {
+    final movementUnits = view.movementBlockingUnits;
+    final cities = [...ownCities, ...rememberedEnemyCities];
+    final result =
+        const MovementCommandResolver(
+          fogOfWarService: _MctsNoOpFogOfWarService(),
+        ).resolve(
+          state: MovementCommandState(
+            units: movementUnits,
+            cities: cities,
+            fogOfWar: view.visibility.state,
+            diplomacy: view.diplomacy,
+            playerIds: {
+              view.forPlayerId,
+              for (final unit in movementUnits) unit.ownerPlayerId,
+              for (final city in cities) city.ownerPlayerId,
+            },
+          ),
+          command: command,
+          actorPlayerId: view.forPlayerId,
+          mapData: view.mapData,
+          visibilityMode: view.visibility.isEnabled
+              ? MovementCommandVisibilityMode.authoritative
+              : MovementCommandVisibilityMode.unrestricted,
+        );
+    if (!result.accepted || identical(result.units, movementUnits)) {
       return ownUnits;
     }
-    final targetCity =
-        ownCities.cityAt(targetTile.col, targetTile.row) ??
-        rememberedEnemyCities.cityAt(targetTile.col, targetTile.row);
-    if (targetCity != null && targetCity.ownerPlayerId != unit.ownerPlayerId) {
-      return ownUnits;
-    }
-
-    final knownUnits = view.movementBlockingUnits;
-    final targetBlocker = knownUnits.unitAt(targetTile.col, targetTile.row);
-    final pathfinder = UnitMovementPathfinder(
-      mapData: view.mapData,
-      units: knownUnits,
-    );
-    var plan = pathfinder.plan(unit: unit, targetTile: targetTile);
-    if (plan == null && targetBlocker != null && targetBlocker.id != unit.id) {
-      final approach = pathfinder.planTowardBlockedTarget(
-        unit: unit,
-        targetTile: targetTile,
-      );
-      final targetBlockedByOpponent =
-          targetBlocker.ownerPlayerId != unit.ownerPlayerId;
-      if (approach != null &&
-          (targetBlockedByOpponent ||
-              approach.totalCost > unit.movementPoints)) {
-        plan = approach;
-      }
-    }
-    if (plan == null) return ownUnits;
-    if (!UnitMovementFeasibility.canEventuallyTraverse(
-      unit: unit,
-      plan: plan,
-    )) {
-      return ownUnits;
-    }
-
-    final reachable = plan.canMoveNow;
-    final destinationStep = reachable
-        ? plan.steps.last
-        : plan.furthestReachableStep;
-
-    if (destinationStep == null ||
-        (destinationStep.col == unit.col && destinationStep.row == unit.row)) {
-      return _replaceUnit(
-        unit
-            .copyWith(posture: UnitPosture.active)
-            .copyWithQueuedPath(_queuedPathFor(plan)),
-      );
-    }
-
-    final moved = unit.copyWith(
-      col: destinationStep.col,
-      row: destinationStep.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destinationStep),
-      posture: UnitPosture.active,
-    );
-    return _replaceUnit(
-      reachable
-          ? moved.copyWithQueuedPath(null)
-          : moved.copyWithQueuedPath(_queuedPathFor(plan)),
-    );
+    return [
+      for (final ownUnit in ownUnits) result.units.byId(ownUnit.id) ?? ownUnit,
+    ];
   }
 
   List<GameUnit> applyCancelUnitAction(CancelUnitActionCommand command) {
@@ -120,26 +78,20 @@ final class MctsSimulatedMovementCommandApplier {
     }
     return result.units;
   }
+}
 
-  List<GameUnit> _replaceUnit(GameUnit updated) {
-    return [
-      for (final unit in ownUnits)
-        if (unit.id == updated.id) updated else unit,
-    ];
-  }
+final class _MctsNoOpFogOfWarService extends FogOfWarService {
+  const _MctsNoOpFogOfWarService();
 
-  static int? _unitIndexById(List<GameUnit> units, String unitId) {
-    for (var i = 0; i < units.length; i++) {
-      if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static QueuedMovePath _queuedPathFor(UnitMovementPlan plan) {
-    return QueuedMovePath(
-      targetCol: plan.targetCol,
-      targetRow: plan.targetRow,
-      steps: plan.steps,
-    );
+  @override
+  FogOfWarState recomputeAfterUnitMove({
+    required FogOfWarState current,
+    required MapTileLookup mapData,
+    required GameUnit previousUnit,
+    required GameUnit movedUnit,
+    required Iterable<GameUnit> units,
+    required Iterable<GameCity> cities,
+  }) {
+    return current;
   }
 }

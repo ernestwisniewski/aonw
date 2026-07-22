@@ -1,4 +1,4 @@
-import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
 
 class UnitMovementStep {
   final int col;

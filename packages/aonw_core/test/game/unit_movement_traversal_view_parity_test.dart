@@ -100,7 +100,74 @@ void main() {
       expect(counted.reads[(col: 41, row: 50)], 1);
       expect(counted.reads, hasLength(2));
     });
+
+    test('eagerly indexes a complete tile source without fallback lookups', () {
+      final source = _CountingTileSource(
+        cols: 3,
+        rows: 1,
+        tiles: const [
+          TileData(
+            col: 0,
+            row: 0,
+            terrains: [TerrainType.plains],
+            resources: [],
+            height: 0,
+          ),
+          TileData(
+            col: 2,
+            row: 0,
+            terrains: [TerrainType.grassland],
+            resources: [],
+            height: 0,
+          ),
+        ],
+      );
+
+      final pathfinder = UnitMovementPathfinder(
+        mapData: source,
+        units: const [],
+      );
+
+      expect(source.tileCollectionReads, 1);
+      expect(source.tileLookupReads, 0);
+      expect(pathfinder.tileAt(2, 0), same(source.sourceTiles.last));
+      expect(pathfinder.tileAt(1, 0), isNull);
+      expect(source.tileLookupReads, 0);
+    });
   });
+}
+
+final class _CountingTileSource implements MapTileSource<TileData> {
+  _CountingTileSource({
+    required this.cols,
+    required this.rows,
+    required List<TileData> tiles,
+  }) : sourceTiles = List.unmodifiable(tiles);
+
+  @override
+  final int cols;
+
+  @override
+  final int rows;
+
+  final List<TileData> sourceTiles;
+  int tileCollectionReads = 0;
+  int tileLookupReads = 0;
+
+  @override
+  Iterable<TileData> get tiles {
+    tileCollectionReads++;
+    return sourceTiles;
+  }
+
+  @override
+  TileData? tileAt(int col, int row) {
+    tileLookupReads++;
+    for (final tile in sourceTiles) {
+      if (tile.col == col && tile.row == row) return tile;
+    }
+    return null;
+  }
 }
 
 MapData _sparseMixedMap() {

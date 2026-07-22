@@ -8,51 +8,40 @@ abstract final class _MovePreviewReducer {
     MapTraversalView mapView, {
     required GameCommandContext context,
   }) {
-    final visibility = context.visibilityFor(state);
+    final planning = _previewVisibility(state, selected, context);
     final prePlanFeedback = _blockedFeedback(
       state: state,
       unit: selected,
       targetTile: targetTile,
-      visibility: visibility,
+      visibility: planning.visibility,
       includeGeneric: false,
     );
     if (prePlanFeedback != null) {
       return GameStateTransition(state: state, uiEffects: [prePlanFeedback]);
     }
 
-    final plan = UnitMovementPlanner(
-      mapData: mapView,
-      units: state.units,
-      canEnterTile: (tile) => UnitMovementVisibilityRules.canPlanThroughTile(
-        unit: selected,
-        tile: tile,
-        visibility: visibility,
-      ),
-    ).planMove(unit: selected, targetTile: targetTile);
+    final plan = _planPreview(
+      state: state,
+      selected: selected,
+      targetTile: targetTile,
+      mapView: mapView,
+      actorPlayerId: planning.actorPlayerId,
+      visibility: planning.visibility,
+    );
 
     if (plan == null) {
-      final feedback = _blockedFeedback(
+      return _noPlanTransition(
         state: state,
-        unit: selected,
+        selected: selected,
         targetTile: targetTile,
-        visibility: visibility,
-        includeGeneric: true,
-      );
-      return GameStateTransition(
-        state: state,
-        uiEffects: feedback == null ? const [] : [feedback],
+        visibility: planning.visibility,
       );
     }
-    if (!UnitMovementFeasibility.canEventuallyTraverse(
-      unit: selected,
+    if (!_canPreviewEventuallyTraverse(
+      state: state,
+      selected: selected,
       plan: plan,
-      canEnterStepBeyondCapacity: (step) =>
-          MovementReducer._canCarryArtifactIntoTargetCity(
-            state: state,
-            unit: selected,
-            targetTile: targetTile,
-            step: step,
-          ),
+      targetTile: targetTile,
     )) {
       return GameStateTransition(
         state: state,
@@ -71,9 +60,101 @@ abstract final class _MovePreviewReducer {
     return GameStateTransition(state: next);
   }
 
+  static ({String actorPlayerId, FogVisibilityQuery visibility})
+  _previewVisibility(
+    GameState state,
+    GameUnit selected,
+    GameCommandContext context,
+  ) {
+    final actorPlayerId = context.hasActor
+        ? context.actorPlayerId!
+        : state.activePlayerId.isNotEmpty
+        ? state.activePlayerId
+        : selected.ownerPlayerId;
+    return (
+      actorPlayerId: actorPlayerId,
+      visibility: UnitMovementVisibilityRules.visibilityForActor(
+        fogOfWar: state.fogOfWar,
+        actorPlayerId: actorPlayerId,
+        ignoreDynamicFog: context.ignoreFogOfWar,
+      ),
+    );
+  }
+
+  static GameStateTransition _noPlanTransition({
+    required GameState state,
+    required GameUnit selected,
+    required MapTileView targetTile,
+    required FogVisibilityQuery visibility,
+  }) {
+    final feedback = _blockedFeedback(
+      state: state,
+      unit: selected,
+      targetTile: targetTile,
+      visibility: visibility,
+      includeGeneric: true,
+    );
+    return GameStateTransition(
+      state: state,
+      uiEffects: feedback == null ? const [] : [feedback],
+    );
+  }
+
+  static bool _canPreviewEventuallyTraverse({
+    required GameState state,
+    required GameUnit selected,
+    required UnitMovementPlan plan,
+    required MapTileView targetTile,
+  }) {
+    return UnitMovementFeasibility.canEventuallyTraverse(
+      unit: selected,
+      plan: plan,
+      canEnterStepBeyondCapacity: (step) =>
+          MovementReducer._canCarryArtifactIntoTargetCity(
+            state: state,
+            unit: selected,
+            targetTile: targetTile,
+            step: step,
+          ),
+    );
+  }
+
+  static UnitMovementPlan? _planPreview({
+    required GameState state,
+    required GameUnit selected,
+    required MapTileView targetTile,
+    required MapTraversalView mapView,
+    required String actorPlayerId,
+    required FogVisibilityQuery visibility,
+  }) {
+    return UnitMovementPlanner(
+      mapData: mapView,
+      units: UnitMovementVisibilityRules.planningUnitsForActor(
+        units: state.units,
+        movingUnit: selected,
+        actorPlayerId: actorPlayerId,
+        visibility: visibility,
+      ),
+      canEnterTile: (tile) =>
+          UnitMovementVisibilityRules.canPlanThroughTile(
+            unit: selected,
+            tile: tile,
+            visibility: visibility,
+          ) &&
+          MovementHiddenObstacleRules.canPlanThroughCity(
+            cities: state.cities,
+            diplomacy: state.diplomacy,
+            unit: selected,
+            tile: tile,
+            visibility: visibility,
+          ),
+    ).planMove(unit: selected, targetTile: targetTile);
+  }
+
   static GameStateTransition confirmPreview(
     GameState state,
     MapTraversalView mapView, {
+    required GameCommandContext context,
     required FogOfWarService fogOfWarService,
   }) {
     final preview = state.movePreview;
@@ -85,106 +166,27 @@ abstract final class _MovePreviewReducer {
       );
     }
 
-    final previewIsPartialMove = !preview.canMoveNow;
-
     final workState = state.copyWithInteraction(movePreview: null);
-
-    // The preview has already applied visibility checks; execution re-plans
-    // against current blockers so queued moves cannot walk through new units.
-    final targetTile = mapView.tileAt(preview.targetCol, preview.targetRow);
-    if (targetTile == null) {
-      return GameStateTransition(
-        state: MovementReducer._clearMoveTargeting(workState),
-      );
-    }
-
-    final plan = UnitMovementPathfinder(
-      mapData: mapView,
-      units: state.units,
-    ).plan(unit: selected, targetTile: targetTile);
-
-    if (plan == null) {
-      // A partial preview also records deferred destination intent. Preserve
-      // it without moving; turn reset validates and re-plans before execution.
-      if (previewIsPartialMove) {
-        final withPath = selected
-            .copyWith(posture: UnitPosture.active)
-            .copyWithQueuedPath(MovementReducer._queuedPathFor(preview));
-        final updatedUnits = replaceUnit(workState.units, withPath);
-        var next = MovementReducer._clearMoveTargeting(
-          workState,
-        ).copyWith(units: updatedUnits);
-        next = MovementReducer._selectUpdatedUnit(next, withPath, mapView);
-        return GameStateTransition(state: next);
-      }
-      return GameStateTransition(
-        state: MovementReducer._clearMoveTargeting(workState),
-      );
-    }
-
-    final isPartialMove = !plan.canMoveNow;
-    final stepsForAnimation = isPartialMove
-        ? plan.reachableSteps.skip(1).toList()
-        : plan.steps.skip(1).toList();
-    final destinationStep = plan.canMoveNow
-        ? plan.steps.last
-        : plan.furthestReachableStep;
-
-    if (destinationStep == null ||
-        (destinationStep.col == selected.col &&
-            destinationStep.row == selected.row)) {
-      final withPath = selected
-          .copyWith(posture: UnitPosture.active)
-          .copyWithQueuedPath(MovementReducer._queuedPathFor(plan));
-      final updatedUnits = replaceUnit(workState.units, withPath);
-      var next = MovementReducer._clearMoveTargeting(
-        workState,
-      ).copyWith(units: updatedUnits);
-      next = MovementReducer._selectUpdatedUnit(next, withPath, mapView);
-      return GameStateTransition(state: next);
-    }
-
-    final moved = selected.copyWith(
-      col: destinationStep.col,
-      row: destinationStep.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destinationStep),
-      posture: UnitPosture.active,
+    final transition = MovementReducer.moveUnit(
+      workState,
+      MoveUnitCommand(selected.id, preview.targetCol, preview.targetRow),
+      mapView,
+      context: context,
+      fogOfWarService: fogOfWarService,
     );
-
-    final movedWithPath = isPartialMove
-        ? moved.copyWithQueuedPath(MovementReducer._queuedPathFor(plan))
-        : moved.copyWithQueuedPath(null);
-
-    final updatedUnits = replaceUnit(workState.units, movedWithPath);
-
-    final newFog = fogOfWarService.recomputeAfterUnitMove(
-      current: state.fogOfWar,
-      mapData: mapView,
-      previousUnit: selected,
-      movedUnit: movedWithPath,
-      units: updatedUnits,
-      cities: state.cities,
-    );
-
-    final keepMoveTargetingActive = !isPartialMove;
-    var next = withDiscoveredDiplomaticContacts(
-      workState
-          .copyWith(units: updatedUnits, fogOfWar: newFog)
-          .copyWithInteraction(moveCommandActive: keepMoveTargetingActive),
-    );
-    next = MovementReducer._selectUpdatedUnit(next, movedWithPath, mapView);
+    final updatedUnit = transition.state.unitById(selected.id);
+    final completedNow = updatedUnit != null && updatedUnit.queuedPath == null;
+    final next = identical(transition.state, workState)
+        ? MovementReducer._clearMoveTargeting(transition.state)
+        : transition.state.copyWithInteraction(
+            moveCommandActive: completedNow,
+            movePreview: null,
+          );
 
     return GameStateTransition(
       state: next,
-      uiEffects: [
-        if (stepsForAnimation.isNotEmpty)
-          AnimateUnitMoveEffect(
-            unitId: selected.id,
-            fromCol: selected.col,
-            fromRow: selected.row,
-            steps: stepsForAnimation,
-          ),
-      ],
+      events: transition.events,
+      uiEffects: transition.uiEffects,
     );
   }
 
@@ -224,7 +226,7 @@ abstract final class _MovePreviewReducer {
       }
     }
 
-    if (targetIsKnown &&
+    if (targetDynamicVisible &&
         MovementReducer._blocksForeignCityCenter(
           state,
           unit,

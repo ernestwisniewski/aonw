@@ -34,6 +34,20 @@ List<ReducerParityFixture> _movementUnitRejectionCases(
     ),
     _movementFixture(
       template,
+      id: 'movement-characterization-fortified-rejected',
+      tickOffset: 209,
+      mapData: line,
+      state: _movementState(
+        template.state,
+        mapCols: 3,
+        units: [
+          _movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
+        ],
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 1, 0),
+    ),
+    _movementFixture(
+      template,
       id: 'movement-characterization-merchant-rejected',
       tickOffset: 203,
       mapData: line,
@@ -60,6 +74,13 @@ List<ReducerParityFixture> _movementUnitRejectionCases(
 }
 
 List<ReducerParityFixture> _movementSpatialRejectionCases(
+  ReducerParityFixture template,
+) => [
+  ..._movementTerrainAndOccupancyRejectionCases(template),
+  ..._movementBoundsAndVisibilityRejectionCases(template),
+];
+
+List<ReducerParityFixture> _movementTerrainAndOccupancyRejectionCases(
   ReducerParityFixture template,
 ) {
   final line = _movementMap(template, cols: 3);
@@ -144,6 +165,70 @@ List<ReducerParityFixture> _movementSpatialRejectionCases(
   ];
 }
 
+List<ReducerParityFixture> _movementBoundsAndVisibilityRejectionCases(
+  ReducerParityFixture template,
+) {
+  final line = _movementMap(template, cols: 3);
+  return [
+    _movementFixture(
+      template,
+      id: 'movement-characterization-invalid-origin-rejected',
+      tickOffset: 210,
+      mapData: line,
+      state: _movementState(
+        template.state,
+        mapCols: 3,
+        units: [_movementUnit(col: -1)],
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 0, 0),
+    ),
+    _movementFixture(
+      template,
+      id: 'movement-characterization-far-hidden-rejected',
+      tickOffset: 211,
+      mapData: _movementMap(template, cols: 5),
+      state: _movementState(
+        template.state,
+        mapCols: 5,
+        units: [_movementUnit()],
+        cities: const [
+          GameCity(
+            id: 'far_hidden_foreign_city',
+            ownerPlayerId: _movementOpponentId,
+            name: 'Far hidden foreign city',
+            center: CityHex(col: 4, row: 0),
+          ),
+        ],
+        fogOfWar: _movementFog(
+          discovered: {const HexCoordinate(col: 0, row: 0)},
+          visible: {const HexCoordinate(col: 0, row: 0)},
+        ),
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 4, 0),
+    ),
+    _movementFixture(
+      template,
+      id: 'movement-characterization-no-fog-occupied-rejected',
+      tickOffset: 212,
+      mapData: _movementMap(template, cols: 2),
+      state: _movementState(
+        template.state,
+        mapCols: 2,
+        units: [
+          _movementUnit(),
+          _movementUnit(
+            id: 'no_fog_blocker',
+            ownerPlayerId: _movementOpponentId,
+            col: 1,
+          ),
+        ],
+        fogOfWar: FogOfWarState.empty,
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 1, 0),
+    ),
+  ];
+}
+
 List<ReducerParityFixture> _movementAcceptanceCases(
   ReducerParityFixture template,
 ) {
@@ -216,6 +301,27 @@ List<ReducerParityFixture> _movementAcceptanceCases(
         ),
       ),
       command: const MoveUnitCommand(_movementUnitId, 2, 0),
+    ),
+    _movementFixture(
+      template,
+      id: 'movement-characterization-hidden-city-no-op-accepted',
+      tickOffset: 226,
+      mapData: _movementMap(template, cols: 2),
+      state: _movementState(
+        template.state,
+        mapCols: 2,
+        units: [_movementUnit()],
+        cities: const [
+          GameCity(
+            id: 'hidden_foreign_city',
+            ownerPlayerId: _movementOpponentId,
+            name: 'Hidden foreign city',
+            center: CityHex(col: 1, row: 0),
+          ),
+        ],
+        fogOfWar: _movementFog(visible: {const HexCoordinate(col: 0, row: 0)}),
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 1, 0),
     ),
     _movementFixture(
       template,

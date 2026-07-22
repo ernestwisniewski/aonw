@@ -11,7 +11,6 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
@@ -51,16 +50,14 @@ abstract final class MovementReducer {
   static GameStateTransition moveUnitWithEnvironment(
     GameState state,
     MoveUnitCommand command,
-    ReducerEnvironment environment, {
-    bool Function(MapTileView tile)? canEnterTile,
-  }) {
+    ReducerEnvironment environment,
+  ) {
     return moveUnit(
       state,
       command,
       environment.mapData,
       context: environment.context,
       fogOfWarService: environment.fogOfWarService,
-      canEnterTile: canEnterTile,
     );
   }
 
@@ -191,6 +188,7 @@ abstract final class MovementReducer {
       return _MovePreviewReducer.confirmPreview(
         state,
         mapView,
+        context: context,
         fogOfWarService: fogOfWarService,
       );
     }
@@ -212,7 +210,8 @@ abstract final class MovementReducer {
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
-    bool Function(MapTileView tile)? canEnterTile,
+    MovementCommandVisibilityMode visibilityMode =
+        MovementCommandVisibilityMode.authoritative,
   }) {
     return _DirectMoveProcessor.run(
       state,
@@ -220,7 +219,7 @@ abstract final class MovementReducer {
       mapView,
       context: context,
       fogOfWarService: fogOfWarService,
-      canEnterTile: canEnterTile,
+      visibilityMode: visibilityMode,
     );
   }
 
@@ -367,30 +366,6 @@ abstract final class MovementReducer {
       fogOfWarService: fogOfWarService,
     );
   }
-
-  static GameStateTransition _queueMovePath(
-    GameState state,
-    GameUnit unit,
-    UnitMovementPlan plan,
-    MapTileLookup mapTiles,
-  ) {
-    final withPath = unit
-        .copyWith(posture: UnitPosture.active)
-        .copyWithQueuedPath(_queuedPathFor(plan));
-    final updatedUnits = replaceUnit(state.units, withPath);
-    var next = state.copyWith(units: updatedUnits);
-    next = next.copyWithInteraction(movePreview: null);
-    if (state.selectedUnitId == unit.id) {
-      next = _selectUpdatedUnit(next, withPath, mapTiles);
-    }
-    return GameStateTransition(state: next);
-  }
-
-  static QueuedMovePath _queuedPathFor(UnitMovementPlan plan) => QueuedMovePath(
-    targetCol: plan.targetCol,
-    targetRow: plan.targetRow,
-    steps: plan.steps,
-  );
 
   static bool _blocksForeignCityCenter(
     GameState state,

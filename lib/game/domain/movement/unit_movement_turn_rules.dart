@@ -1,4 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -38,6 +40,8 @@ abstract final class UnitMovementTurnRules {
     required MapTraversalView mapData,
     required List<GameUnit> allUnits,
     Iterable<GameCity> cities = const [],
+    DiplomacyState diplomacy = DiplomacyState.empty,
+    FogOfWarState fogOfWar = FogOfWarState.empty,
   }) {
     final path = unit.queuedPath;
     if (path == null) return unit;
@@ -45,10 +49,26 @@ abstract final class UnitMovementTurnRules {
 
     final targetTile = mapData.tileAt(path.targetCol, path.targetRow);
     if (targetTile == null) return unit.copyWithQueuedPath(null);
+    final visibility = UnitMovementVisibilityRules.visibilityForActor(
+      fogOfWar: fogOfWar,
+      actorPlayerId: unit.ownerPlayerId,
+    );
 
     final plan = UnitMovementPathfinder(
       mapData: mapData,
-      units: allUnits,
+      units: UnitMovementVisibilityRules.planningUnitsForActor(
+        units: allUnits,
+        movingUnit: unit,
+        actorPlayerId: unit.ownerPlayerId,
+        visibility: visibility,
+      ),
+      canEnterTile: (tile) => MovementHiddenObstacleRules.canPlanThroughCity(
+        cities: cities,
+        diplomacy: diplomacy,
+        unit: unit,
+        tile: tile,
+        visibility: visibility,
+      ),
       canEnterOccupiedTile:
           ({
             required movingUnit,
@@ -64,6 +84,16 @@ abstract final class UnitMovementTurnRules {
     ).plan(unit: unit, targetTile: targetTile);
 
     if (plan == null) return unit.copyWithQueuedPath(null);
+    if (MovementHiddenObstacleRules.reachablePathHitsHiddenBlocker(
+      plan: plan,
+      movingUnit: unit,
+      allUnits: allUnits,
+      cities: cities,
+      diplomacy: diplomacy,
+      visibility: visibility,
+    )) {
+      return unit;
+    }
     return unit;
   }
 

@@ -173,10 +173,56 @@ void main() {
       expect(result.state.cityFoundingDraft, same(draft));
       expect(result.state.selection?.unit, same(queued));
     });
+
+    test('unbound local actor keeps legacy unrestricted visibility', () {
+      final mover = _mover(movementPoints: 5);
+      final state = _state(
+        mover,
+        fogOfWar: _originOnlyFog(),
+      ).copyWith(activePlayerId: '');
+
+      final result = MovementReducer.moveUnit(
+        state,
+        MoveUnitCommand(mover.id, 4, 0),
+        _map(cols: 5),
+      );
+
+      expect(
+        (
+          result.state.units.single.col,
+          result.state.units.single.row,
+          result.state.units.single.movementPoints,
+        ),
+        (4, 0, 1),
+      );
+      expect(result.events, hasLength(1));
+      expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), hasLength(1));
+    });
+
+    test('hidden blocker no-op preserves exact local state identity', () {
+      final mover = _mover(movementPoints: 5);
+      final state = _state(
+        mover,
+        additionalUnits: [_enemy(col: 1)],
+        fogOfWar: _originOnlyFog(),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(mover),
+          moveCommandActive: true,
+        ),
+      );
+
+      final result = MovementReducer.moveUnit(
+        state,
+        MoveUnitCommand(mover.id, 1, 0),
+        _map(cols: 2),
+      );
+
+      expect(result.state, same(state));
+    });
   });
 
-  group('local and persistent movement drift characterization', () {
-    test('fortified zero-MP unit is local reject but persistent queue', () {
+  group('local and persistent movement convergence', () {
+    test('fortified zero-MP unit is rejected consistently', () {
       final mover = _mover(movementPoints: 0, posture: UnitPosture.fortified);
       final pair = _runBoth(
         _state(mover),
@@ -186,13 +232,14 @@ void main() {
 
       expect(pair.local.state, same(pair.localInput));
       expect(pair.local.events, isEmpty);
-      expect(pair.persistent.accepted, isTrue);
-      expect(pair.persistent.reason, isNull);
-      expect(pair.persistent.state.units.single.posture, UnitPosture.active);
-      expect(pair.persistent.state.units.single.queuedPath?.targetCol, 1);
+      expect(pair.local.uiEffects, isEmpty);
+      expect(pair.persistent.accepted, isFalse);
+      expect(pair.persistent.reason, 'unit_unavailable');
+      expect(pair.persistent.state, same(pair.persistentInput));
+      expect(pair.persistent.events, isEmpty);
     });
 
-    test('invalid origin is local move but persistent unit_out_of_bounds', () {
+    test('invalid origin is rejected consistently', () {
       final mover = _mover(col: -1, movementPoints: 5);
       final pair = _runBoth(
         _state(mover),
@@ -200,14 +247,13 @@ void main() {
         _map(cols: 3),
       );
 
-      expect(
-        (pair.local.state.units.single.col, pair.local.state.units.single.row),
-        (0, 0),
-      );
-      expect(pair.local.events, hasLength(1));
+      expect(pair.local.state, same(pair.localInput));
+      expect(pair.local.events, isEmpty);
+      expect(pair.local.uiEffects, isEmpty);
       expect(pair.persistent.accepted, isFalse);
       expect(pair.persistent.reason, 'unit_out_of_bounds');
       expect(pair.persistent.state, same(pair.persistentInput));
+      expect(pair.persistent.events, isEmpty);
     });
 
     test('hidden target at distance three moves in both reducers', () {
@@ -272,7 +318,7 @@ void main() {
       );
     });
 
-    test('far hidden target is local no-op but persistent move', () {
+    test('far hidden target is rejected consistently', () {
       final mover = _mover(movementPoints: 5);
       final state = _state(mover, fogOfWar: _originOnlyFog());
       final pair = _runBoth(
@@ -284,37 +330,29 @@ void main() {
       expect(pair.local.state, same(pair.localInput));
       expect(pair.local.events, isEmpty);
       expect(pair.local.uiEffects, isEmpty);
-      expect(pair.persistent.accepted, isTrue);
-      expect(
-        (
-          pair.persistent.state.units.first.col,
-          pair.persistent.state.units.first.row,
-        ),
-        (4, 0),
-      );
-      expect(pair.persistent.events, hasLength(1));
+      expect(pair.persistent.accepted, isFalse);
+      expect(pair.persistent.reason, 'move_path_not_found');
+      expect(pair.persistent.state, same(pair.persistentInput));
+      expect(pair.persistent.events, isEmpty);
     });
 
-    test(
-      'missing fog entry hides local blocker but not persistent blocker',
-      () {
-        final mover = _mover(movementPoints: 5);
-        final blocker = _enemy(col: 1);
-        final state = _state(mover, additionalUnits: [blocker]);
-        final pair = _runBoth(
-          state,
-          MoveUnitCommand(mover.id, 1, 0),
-          _map(cols: 2),
-        );
+    test('missing fog entry exposes the blocker consistently', () {
+      final mover = _mover(movementPoints: 5);
+      final blocker = _enemy(col: 1);
+      final state = _state(mover, additionalUnits: [blocker]);
+      final pair = _runBoth(
+        state,
+        MoveUnitCommand(mover.id, 1, 0),
+        _map(cols: 2),
+      );
 
-        expect(pair.local.state, same(pair.localInput));
-        expect(pair.local.events, isEmpty);
-        expect(pair.local.uiEffects, isEmpty);
-        expect(pair.persistent.accepted, isFalse);
-        expect(pair.persistent.reason, 'move_target_occupied');
-        expect(pair.persistent.state, same(pair.persistentInput));
-      },
-    );
+      expect(pair.local.state, same(pair.localInput));
+      expect(pair.local.events, isEmpty);
+      expect(pair.local.uiEffects, isEmpty);
+      expect(pair.persistent.accepted, isFalse);
+      expect(pair.persistent.reason, 'move_target_occupied');
+      expect(pair.persistent.state, same(pair.persistentInput));
+    });
   });
 }
 

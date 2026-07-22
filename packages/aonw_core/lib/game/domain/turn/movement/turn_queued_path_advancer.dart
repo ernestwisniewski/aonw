@@ -1,7 +1,11 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
+import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -12,6 +16,8 @@ abstract final class TurnQueuedPathAdvancer {
     required MapTraversalView mapData,
     required List<GameUnit> allUnits,
     required List<GameCity> cities,
+    required DiplomacyState diplomacy,
+    required FogOfWarState fogOfWar,
   }) {
     final path = unit.queuedPath;
     if (path == null) return unit;
@@ -21,9 +27,25 @@ abstract final class TurnQueuedPathAdvancer {
 
     final targetTile = mapData.tileAt(path.targetCol, path.targetRow);
     if (targetTile == null) return unit.copyWithQueuedPath(null);
+    final visibility = UnitMovementVisibilityRules.visibilityForActor(
+      fogOfWar: fogOfWar,
+      actorPlayerId: unit.ownerPlayerId,
+    );
     final plan = UnitMovementPathfinder(
       mapData: mapData,
-      units: allUnits,
+      units: UnitMovementVisibilityRules.planningUnitsForActor(
+        units: allUnits,
+        movingUnit: unit,
+        actorPlayerId: unit.ownerPlayerId,
+        visibility: visibility,
+      ),
+      canEnterTile: (tile) => MovementHiddenObstacleRules.canPlanThroughCity(
+        cities: cities,
+        diplomacy: diplomacy,
+        unit: unit,
+        tile: tile,
+        visibility: visibility,
+      ),
       canEnterOccupiedTile:
           ({
             required movingUnit,
@@ -38,6 +60,16 @@ abstract final class TurnQueuedPathAdvancer {
           ),
     ).plan(unit: unit, targetTile: targetTile);
     if (plan == null) return unit.copyWithQueuedPath(null);
+    if (MovementHiddenObstacleRules.reachablePathHitsHiddenBlocker(
+      plan: plan,
+      movingUnit: unit,
+      allUnits: allUnits,
+      cities: cities,
+      diplomacy: diplomacy,
+      visibility: visibility,
+    )) {
+      return unit;
+    }
     return _moveAlongPlan(unit, plan);
   }
 

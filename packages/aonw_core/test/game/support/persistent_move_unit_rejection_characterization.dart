@@ -72,6 +72,20 @@ void _registerMoveUnitGuardRejections() {
     _expectRejectedMove(result, state, 'unit_unavailable');
   });
 
+  test('fortified unit is unavailable until explicitly woken', () {
+    final state = _moveState(
+      units: [_moveUnit(movementPoints: 0, posture: UnitPosture.fortified)],
+    );
+
+    final result = _resolveMove(
+      state,
+      const MoveUnitCommand(_moverId, 1, 0),
+      _movementMap(cols: 2),
+    );
+
+    _expectRejectedMove(result, state, 'unit_unavailable');
+  });
+
   test('unit_uses_trade_routes wins over unit and target bounds', () {
     final state = _moveState(
       units: [_moveUnit(type: GameUnitType.merchant, col: 99)],

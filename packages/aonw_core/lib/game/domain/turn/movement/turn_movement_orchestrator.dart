@@ -12,6 +12,8 @@ abstract final class TurnMovementOrchestrator {
     final advanced = TurnUnitMovementAdvancer.advance(
       units: state.units,
       cities: state.cities,
+      diplomacy: state.diplomacy,
+      fogOfWar: state.fogOfWar,
       playerIds: context.playerIds,
       mapData: context.mapData,
     );
@@ -39,6 +41,7 @@ abstract final class TurnMovementOrchestrator {
       state: TurnMovementState(
         units: List.unmodifiable(autoExplore.units),
         cities: state.cities,
+        diplomacy: state.diplomacy,
         fogOfWar: autoExplore.fogOfWar,
       ),
       changed: true,

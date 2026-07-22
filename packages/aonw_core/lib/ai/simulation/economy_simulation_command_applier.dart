@@ -64,16 +64,10 @@ final class _EconomySimulationCommandApplier {
           state: result.state,
         );
       case MoveUnitCommand():
-        final result = const PersistentMoveUnitResolver().resolve(
+        return _applyMoveUnit(
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapData: mapView,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-          reason: result.reason,
         );
       case AssignMerchantTradeRouteCommand():
         final result = const PersistentMerchantTradeRouteResolver().assignRoute(
@@ -259,6 +253,25 @@ final class _EconomySimulationCommandApplier {
           reason: 'unsupported_command_for_simulation',
         );
     }
+  }
+
+  _ApplyCommandResult _applyMoveUnit({
+    required PersistentGameState state,
+    required MoveUnitCommand command,
+    required String actorPlayerId,
+  }) {
+    final result = const PersistentMoveUnitResolver().resolve(
+      state: state,
+      command: command,
+      actorPlayerId: actorPlayerId,
+      mapData: mapView,
+      visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
+    );
+    return _ApplyCommandResult(
+      accepted: result.accepted,
+      state: result.state,
+      reason: result.reason,
+    );
   }
 
   _ApplyCommandResult _applyAttackCommand({

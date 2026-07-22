@@ -7,6 +7,8 @@ import 'package:aonw/map/domain/map_data.dart' show MapData, TileData;
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
@@ -135,6 +137,83 @@ void main() {
       }
     });
 
+    test('hidden unit does not alter a movement hover marker', () {
+      final map = _map(cols: 3, rows: 1);
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final enemy = GameUnit.startingWarrior(
+        ownerPlayerId: 'player_2',
+        col: 1,
+        row: 0,
+      );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [commander, enemy],
+        fogOfWar: _movementFog(),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
+      );
+
+      final intents = _moveIntents(state, map, col: 2, row: 0);
+
+      for (final intent in intents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isFalse);
+        expect(intent?.color, HudPalette.gold);
+      }
+    });
+
+    test('hidden foreign city does not alter a movement hover marker', () {
+      final map = _map(cols: 3, rows: 1);
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      const city = GameCity(
+        id: 'hidden_city',
+        ownerPlayerId: 'player_2',
+        name: 'Hidden city',
+        center: CityHex(col: 1, row: 0),
+      );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [commander],
+        cities: const [city],
+        fogOfWar: _movementFog(),
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
+      );
+
+      final intents = _moveIntents(state, map, col: 2, row: 0);
+
+      for (final intent in intents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isFalse);
+        expect(intent?.color, HudPalette.gold);
+      }
+    });
+
+    test('missing actor fog entry does not limit movement hover distance', () {
+      final map = _map(cols: 5, rows: 1);
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final state = GameState(
+        activePlayerId: 'player_1',
+        units: [commander],
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+          moveCommandActive: true,
+        ),
+      );
+
+      final intents = _moveIntents(state, map, col: 4, row: 0);
+
+      for (final intent in intents) {
+        expect(intent?.kind, HoverIntentKind.move);
+        expect(intent?.blocked, isFalse);
+        expect(intent?.color, HudPalette.gold);
+      }
+    });
+
     test('uses founding player color and reduce-motion preference', () {
       final map = _map();
       final state = GameState(
@@ -175,6 +254,17 @@ void main() {
       );
     });
   });
+}
+
+FogOfWarState _movementFog() {
+  return FogOfWarState(
+    players: {
+      'player_1': PlayerFogOfWar(
+        playerId: 'player_1',
+        visibleHexes: {const HexCoordinate(col: 0, row: 0)},
+      ),
+    },
+  );
 }
 
 GameHoverIntentResolver _resolver(

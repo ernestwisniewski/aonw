@@ -20,7 +20,7 @@ typedef HexTileMarkerBuilder = HexTileMarkers Function(TileData tileData);
 /// Grid of [HexTile]s laid out from a read-only [MapTileSource].
 ///
 /// Applies Y-scale for isometric perspective.
-class HexGrid<T extends MapTileSource> extends PositionComponent {
+class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
   final T mapData;
   final MapConfig config;
   MapViewMode _viewMode;

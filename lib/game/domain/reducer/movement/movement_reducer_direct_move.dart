@@ -7,84 +7,106 @@ abstract final class _DirectMoveProcessor {
     MapTraversalView mapView, {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
-    required bool Function(MapTileView tile)? canEnterTile,
+    required MovementCommandVisibilityMode visibilityMode,
   }) {
-    final validation = UnitCommandValidator.movableUnit(
-      state,
-      unitId: command.unitId,
-      context: context,
+    final unit = state.unitById(command.unitId);
+    final input = MovementCommandState(
+      units: state.units,
+      cities: state.cities,
+      fogOfWar: state.fogOfWar,
+      diplomacy: state.diplomacy,
+      playerIds: knownPlayerIds(state),
     );
-    if (validation is! ValidUnit) return GameStateTransition(state: state);
-
-    final unit = validation.unit;
-    final targetTile = _validTargetTile(state, unit, command, mapView);
-    if (targetTile == null) return GameStateTransition(state: state);
-
-    final plan = _DirectMovePlanFinder(
-      state: state,
-      unit: unit,
-      targetTile: targetTile,
-      mapView: mapView,
-      context: context,
-      canEnterTileOverride: canEnterTile,
-    ).plan();
-    if (plan == null) return GameStateTransition(state: state);
-
-    if (!_canTraverseEventually(state, unit, targetTile, plan)) {
-      return _insufficientMovement(state);
+    final result = MovementCommandResolver(fogOfWarService: fogOfWarService)
+        .resolve(
+          state: input,
+          command: command,
+          actorPlayerId: _actorPlayerId(state, unit, context),
+          mapData: mapView,
+          canAct: _canAct(state, context),
+          visibilityMode: _visibilityMode(state, context, visibilityMode),
+        );
+    if (!result.accepted) {
+      return result.reason == 'unit_movement_capacity_insufficient'
+          ? _insufficientMovement(state)
+          : GameStateTransition(state: state);
     }
-
-    final execution = _DirectMoveExecution.from(plan);
-    if (execution.keepsUnitAtOrigin(unit)) {
-      return MovementReducer._queueMovePath(state, unit, plan, mapView);
+    if (_keepsAllStateSlices(input, result)) {
+      return GameStateTransition(state: state);
     }
-
-    return _applyExecutedMove(
-      state: state,
-      unit: unit,
-      movedUnit: execution.movedUnit(unit),
-      animationSteps: execution.animationSteps,
-      mapTiles: mapView,
-      fogOfWarService: fogOfWarService,
-    );
+    return _projectAcceptedResult(state, command.unitId, result, mapView);
   }
 
-  static MapTileView? _validTargetTile(
+  static String _actorPlayerId(
     GameState state,
-    GameUnit unit,
-    MoveUnitCommand command,
+    GameUnit? unit,
+    GameCommandContext context,
+  ) {
+    if (context.hasActor) return context.actorPlayerId!;
+    if (state.activePlayerId.isNotEmpty) return state.activePlayerId;
+    return unit?.ownerPlayerId ?? '';
+  }
+
+  static bool _canAct(GameState state, GameCommandContext context) {
+    if (!context.canAct) return false;
+    return context.hasActor || state.activePlayerCanAct;
+  }
+
+  static MovementCommandVisibilityMode _visibilityMode(
+    GameState state,
+    GameCommandContext context,
+    MovementCommandVisibilityMode requested,
+  ) {
+    if (requested != MovementCommandVisibilityMode.authoritative) {
+      return requested;
+    }
+    if (context.ignoreFogOfWar ||
+        !context.hasActor && state.activePlayerId.isEmpty) {
+      return MovementCommandVisibilityMode.unrestricted;
+    }
+    return requested;
+  }
+
+  static bool _keepsAllStateSlices(
+    MovementCommandState input,
+    MovementCommandResult result,
+  ) {
+    return identical(result.units, input.units) &&
+        identical(result.fogOfWar, input.fogOfWar) &&
+        identical(result.diplomacy, input.diplomacy);
+  }
+
+  static GameStateTransition _projectAcceptedResult(
+    GameState state,
+    String unitId,
+    MovementCommandResult result,
     MapTileLookup mapTiles,
   ) {
-    final targetTile = mapTiles.tileAt(command.targetCol, command.targetRow);
-    if (targetTile == null) return null;
-    if (unit.occupies(targetTile.col, targetTile.row)) return null;
-    if (MovementReducer._blocksForeignCityCenter(
-      state,
-      unit,
-      targetTile.col,
-      targetTile.row,
-    )) {
-      return null;
+    var next = state
+        .copyWith(
+          units: result.units,
+          fogOfWar: result.fogOfWar,
+          diplomacy: result.diplomacy,
+        )
+        .copyWithInteraction(movePreview: null);
+    final updatedUnit = result.units.byId(unitId);
+    if (updatedUnit != null && state.selectedUnitId == unitId) {
+      next = MovementReducer._selectUpdatedUnit(next, updatedUnit, mapTiles);
     }
-    return targetTile;
-  }
 
-  static bool _canTraverseEventually(
-    GameState state,
-    GameUnit unit,
-    MapTileView targetTile,
-    UnitMovementPlan plan,
-  ) {
-    return UnitMovementFeasibility.canEventuallyTraverse(
-      unit: unit,
-      plan: plan,
-      canEnterStepBeyondCapacity: (step) =>
-          MovementReducer._canCarryArtifactIntoTargetCity(
-            state: state,
-            unit: unit,
-            targetTile: targetTile,
-            step: step,
+    final execution = result.execution;
+    return GameStateTransition(
+      state: next,
+      events: result.events,
+      uiEffects: [
+        if (execution != null)
+          AnimateUnitMoveEffect(
+            unitId: execution.unitId,
+            fromCol: execution.fromCol,
+            fromRow: execution.fromRow,
+            steps: execution.steps,
           ),
+      ],
     );
   }
 
@@ -97,169 +119,5 @@ abstract final class _DirectMoveProcessor {
         ),
       ],
     );
-  }
-
-  static GameStateTransition _applyExecutedMove({
-    required GameState state,
-    required GameUnit unit,
-    required GameUnit movedUnit,
-    required List<UnitMovementStep> animationSteps,
-    required MapTileLookup mapTiles,
-    required FogOfWarService fogOfWarService,
-  }) {
-    final updatedUnits = replaceUnit(state.units, movedUnit);
-    final newFog = fogOfWarService.recomputeAfterUnitMove(
-      current: state.fogOfWar,
-      mapData: mapTiles,
-      previousUnit: unit,
-      movedUnit: movedUnit,
-      units: updatedUnits,
-      cities: state.cities,
-    );
-
-    var next = withDiscoveredDiplomaticContacts(
-      state.copyWith(units: updatedUnits, fogOfWar: newFog),
-    ).copyWithInteraction(movePreview: null);
-
-    if (state.selectedUnitId == unit.id) {
-      next = MovementReducer._selectUpdatedUnit(next, movedUnit, mapTiles);
-    }
-
-    return GameStateTransition(
-      state: next,
-      uiEffects: [
-        if (animationSteps.isNotEmpty)
-          AnimateUnitMoveEffect(
-            unitId: unit.id,
-            fromCol: unit.col,
-            fromRow: unit.row,
-            steps: animationSteps,
-          ),
-      ],
-      events: [
-        UnitMovedEvent(
-          unitId: unit.id,
-          fromCol: unit.col,
-          fromRow: unit.row,
-          toCol: movedUnit.col,
-          toRow: movedUnit.row,
-        ),
-      ],
-    );
-  }
-}
-
-final class _DirectMovePlanFinder {
-  _DirectMovePlanFinder({
-    required this.state,
-    required this.unit,
-    required this.targetTile,
-    required this.mapView,
-    required this.context,
-    required this.canEnterTileOverride,
-  });
-
-  final GameState state;
-  final GameUnit unit;
-  final MapTileView targetTile;
-  final MapTraversalView mapView;
-  final GameCommandContext context;
-  final bool Function(MapTileView tile)? canEnterTileOverride;
-
-  UnitMovementPlan? plan() {
-    final pathfinder = UnitMovementPathfinder(
-      mapData: mapView,
-      units: state.units,
-      canEnterTile: _canEnterTile,
-    );
-
-    return pathfinder.plan(unit: unit, targetTile: targetTile) ??
-        _approachBlockedTarget(pathfinder);
-  }
-
-  bool _canEnterTile(MapTileView tile) {
-    final override = canEnterTileOverride;
-    if (override != null) return override(tile);
-    return UnitMovementVisibilityRules.canPlanThroughTile(
-      unit: unit,
-      tile: tile,
-      visibility: context.visibilityFor(state),
-    );
-  }
-
-  UnitMovementPlan? _approachBlockedTarget(UnitMovementPathfinder pathfinder) {
-    final blocker = state.units.unitAt(targetTile.col, targetTile.row);
-    if (blocker == null || blocker.id == unit.id) return null;
-
-    final approach = pathfinder.planTowardBlockedTarget(
-      unit: unit,
-      targetTile: targetTile,
-    );
-    if (approach == null) return null;
-
-    return _shouldUseApproach(blocker, approach) ? approach : null;
-  }
-
-  bool _shouldUseApproach(GameUnit blocker, UnitMovementPlan approach) {
-    return _targetIsHidden ||
-        _targetIsBlockedByOpponent(blocker) ||
-        _approachCostsMoreThanCurrentTurn(approach);
-  }
-
-  bool get _targetIsHidden {
-    return !context
-        .visibilityFor(state)
-        .canSeeDynamicAt(targetTile.col, targetTile.row);
-  }
-
-  bool _targetIsBlockedByOpponent(GameUnit blocker) {
-    return blocker.ownerPlayerId != unit.ownerPlayerId;
-  }
-
-  bool _approachCostsMoreThanCurrentTurn(UnitMovementPlan approach) {
-    return approach.totalCost > unit.movementPoints;
-  }
-}
-
-final class _DirectMoveExecution {
-  _DirectMoveExecution({
-    required this.plan,
-    required this.destinationStep,
-    required this.animationSteps,
-  });
-
-  factory _DirectMoveExecution.from(UnitMovementPlan plan) {
-    final reachesTarget = plan.canMoveNow;
-    return _DirectMoveExecution(
-      plan: plan,
-      destinationStep: reachesTarget
-          ? plan.steps.last
-          : plan.furthestReachableStep,
-      animationSteps: reachesTarget
-          ? plan.steps.skip(1).toList()
-          : plan.reachableSteps.skip(1).toList(),
-    );
-  }
-
-  final UnitMovementPlan plan;
-  final UnitMovementStep? destinationStep;
-  final List<UnitMovementStep> animationSteps;
-
-  bool keepsUnitAtOrigin(GameUnit unit) {
-    final step = destinationStep;
-    return step == null || unit.occupies(step.col, step.row);
-  }
-
-  GameUnit movedUnit(GameUnit unit) {
-    final step = destinationStep!;
-    final moved = unit.copyWith(
-      col: step.col,
-      row: step.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(step),
-      posture: UnitPosture.active,
-    );
-    return plan.canMoveNow
-        ? moved.copyWithQueuedPath(null)
-        : moved.copyWithQueuedPath(MovementReducer._queuedPathFor(plan));
   }
 }

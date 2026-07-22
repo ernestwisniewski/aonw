@@ -1,33 +1,32 @@
-import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/entity_lookup.dart';
-import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/command/game_command.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
-import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_resolver.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_result.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
+import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/map_tile_view.dart';
 
-class PersistentMoveUnitResult {
+final class PersistentMoveUnitResult {
   const PersistentMoveUnitResult({
     required this.accepted,
     required this.state,
     this.events = const [],
+    this.execution,
     this.reason,
   });
 
   final bool accepted;
   final PersistentGameState state;
   final List<GameEvent> events;
+  final MovementCommandExecution? execution;
   final String? reason;
 }
 
-class PersistentMoveUnitResolver {
+/// Persistence adapter for the state-container-neutral movement resolver.
+final class PersistentMoveUnitResolver {
   const PersistentMoveUnitResolver({
     this.fogOfWarService = const FogOfWarService(),
   });
@@ -39,248 +38,59 @@ class PersistentMoveUnitResolver {
     required MoveUnitCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,
+    bool canAct = true,
+    MovementCommandVisibilityMode visibilityMode =
+        MovementCommandVisibilityMode.authoritative,
   }) {
-    final unitIndex = _unitIndexById(state.units, command.unitId);
-    if (unitIndex == null) return _reject(state, 'unit_not_found');
-
-    final unit = state.units[unitIndex];
-    if (unit.ownerPlayerId != actorPlayerId) {
-      return _reject(state, 'unit_not_controlled');
-    }
-    if (unit.isWorking) return _reject(state, 'unit_unavailable');
-    if (unit.type == GameUnitType.merchant) {
-      return _reject(state, 'unit_uses_trade_routes');
-    }
-
-    if (mapData.tileAt(unit.col, unit.row) == null) {
-      return _reject(state, 'unit_out_of_bounds');
-    }
-
-    final targetTile = mapData.tileAt(command.targetCol, command.targetRow);
-    if (targetTile == null) return _reject(state, 'move_target_out_of_bounds');
-    if (unit.occupies(targetTile.col, targetTile.row)) {
-      return _reject(state, 'move_target_is_current_tile');
-    }
-    if (CityEntryPolicy.blocksCityCenterEntry(
-      diplomacy: state.runtimeState.diplomacy,
-      cities: state.cities,
-      unitOwnerPlayerId: unit.ownerPlayerId,
-      col: targetTile.col,
-      row: targetTile.row,
-    )) {
-      return _reject(state, 'move_target_is_foreign_city_center');
-    }
-    final targetBlocker = state.units.unitAt(targetTile.col, targetTile.row);
-    final pathfinder = UnitMovementPathfinder(
-      mapData: mapData,
-      units: state.units,
-    );
-    var plan = pathfinder.plan(unit: unit, targetTile: targetTile);
-    if (plan == null && targetBlocker != null && targetBlocker.id != unit.id) {
-      final approach = pathfinder.planTowardBlockedTarget(
-        unit: unit,
-        targetTile: targetTile,
-      );
-      final targetHidden = _targetIsHiddenFromActor(
-        state: state,
-        actorPlayerId: actorPlayerId,
-        col: targetTile.col,
-        row: targetTile.row,
-      );
-      final targetBlockedByOpponent =
-          targetBlocker.ownerPlayerId != unit.ownerPlayerId;
-      if (approach != null &&
-          (targetHidden ||
-              targetBlockedByOpponent ||
-              approach.totalCost > unit.movementPoints)) {
-        plan = approach;
-      }
-    }
-
-    if (plan == null) {
-      if (targetBlocker != null && targetBlocker.id != unit.id) {
-        if (_targetIsHiddenFromActor(
-          state: state,
+    final result = MovementCommandResolver(fogOfWarService: fogOfWarService)
+        .resolve(
+          state: MovementCommandState(
+            units: state.units,
+            cities: state.cities,
+            fogOfWar: state.fogOfWar,
+            diplomacy: state.runtimeState.diplomacy,
+            playerIds: state.knownPlayerIds,
+          ),
+          command: command,
           actorPlayerId: actorPlayerId,
-          col: targetTile.col,
-          row: targetTile.row,
-        )) {
-          return PersistentMoveUnitResult(accepted: true, state: state);
-        }
-        return _reject(state, 'move_target_occupied');
-      }
-      if (_pathWasBlockedByHiddenUnit(
-        state: state,
-        actorPlayerId: actorPlayerId,
-        unit: unit,
-        targetTile: targetTile,
-        mapData: mapData,
-      )) {
-        return PersistentMoveUnitResult(accepted: true, state: state);
-      }
-      return _reject(state, 'move_path_not_found');
-    }
-    if (!UnitMovementFeasibility.canEventuallyTraverse(
-      unit: unit,
-      plan: plan,
-      canEnterStepBeyondCapacity: (step) => _canCarryArtifactIntoTargetCity(
-        state: state,
-        unit: unit,
-        targetTile: targetTile,
-        step: step,
-      ),
-    )) {
-      return _reject(state, 'unit_movement_capacity_insufficient');
-    }
+          mapData: mapData,
+          canAct: canAct,
+          visibilityMode: visibilityMode,
+        );
+    return _apply(state, result);
+  }
 
-    final reachable = plan.canMoveNow;
-    final destinationStep = reachable
-        ? plan.steps.last
-        : plan.furthestReachableStep;
-
-    if (destinationStep == null ||
-        (destinationStep.col == unit.col && destinationStep.row == unit.row)) {
-      final queued = unit
-          .copyWith(posture: UnitPosture.active)
-          .copyWithQueuedPath(_queuedPathFor(plan));
+  static PersistentMoveUnitResult _apply(
+    PersistentGameState state,
+    MovementCommandResult result,
+  ) {
+    if (!result.accepted) {
       return PersistentMoveUnitResult(
-        accepted: true,
-        state: state.copyWith(units: _replaceUnit(state.units, queued)),
+        accepted: false,
+        state: state,
+        reason: result.reason,
       );
     }
-
-    final moved = unit.copyWith(
-      col: destinationStep.col,
-      row: destinationStep.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destinationStep),
-      posture: UnitPosture.active,
+    final unitsChanged = !identical(result.units, state.units);
+    final fogChanged = !identical(result.fogOfWar, state.fogOfWar);
+    final diplomacyChanged = !identical(
+      result.diplomacy,
+      state.runtimeState.diplomacy,
     );
-    final movedWithPath = reachable
-        ? moved.copyWithQueuedPath(null)
-        : moved.copyWithQueuedPath(_queuedPathFor(plan));
-    final updatedUnits = _replaceUnit(state.units, movedWithPath);
-    final updatedFog = fogOfWarService.recomputeAfterUnitMove(
-      current: state.fogOfWar,
-      mapData: mapData,
-      previousUnit: unit,
-      movedUnit: movedWithPath,
-      units: updatedUnits,
-      cities: state.cities,
-    );
-    final discoveredDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: state.runtimeState.diplomacy,
-      fogOfWar: updatedFog,
-      units: updatedUnits,
-      cities: state.cities,
-      playerIds: state.knownPlayerIds,
-    );
-
+    final nextState = unitsChanged || fogChanged || diplomacyChanged
+        ? state.copyWith(
+            units: unitsChanged ? result.units : null,
+            fogOfWar: fogChanged ? result.fogOfWar : null,
+            runtimeState: diplomacyChanged
+                ? state.runtimeState.copyWith(diplomacy: result.diplomacy)
+                : null,
+          )
+        : state;
     return PersistentMoveUnitResult(
       accepted: true,
-      state: state.copyWith(
-        units: updatedUnits,
-        fogOfWar: updatedFog,
-        runtimeState: state.runtimeState.copyWith(
-          diplomacy: discoveredDiplomacy,
-        ),
-      ),
-      events: [
-        UnitMovedEvent(
-          unitId: unit.id,
-          fromCol: unit.col,
-          fromRow: unit.row,
-          toCol: movedWithPath.col,
-          toRow: movedWithPath.row,
-        ),
-      ],
+      state: nextState,
+      events: result.events,
+      execution: result.execution,
     );
-  }
-
-  PersistentMoveUnitResult _reject(PersistentGameState state, String reason) {
-    return PersistentMoveUnitResult(
-      accepted: false,
-      state: state,
-      reason: reason,
-    );
-  }
-
-  static QueuedMovePath _queuedPathFor(UnitMovementPlan plan) {
-    return QueuedMovePath(
-      targetCol: plan.targetCol,
-      targetRow: plan.targetRow,
-      steps: plan.steps,
-    );
-  }
-
-  static List<GameUnit> _replaceUnit(List<GameUnit> units, GameUnit updated) {
-    return [
-      for (final unit in units)
-        if (unit.id == updated.id) updated else unit,
-    ];
-  }
-
-  static int? _unitIndexById(List<GameUnit> units, String unitId) {
-    for (var i = 0; i < units.length; i++) {
-      if (units[i].id == unitId) return i;
-    }
-    return null;
-  }
-
-  static bool _canCarryArtifactIntoTargetCity({
-    required PersistentGameState state,
-    required GameUnit unit,
-    required MapTileView targetTile,
-    required UnitMovementStep step,
-  }) {
-    if (unit.carriedArtifactId == null) return false;
-    if (step.col != targetTile.col || step.row != targetTile.row) {
-      return false;
-    }
-    for (final city in state.cities) {
-      if (!city.occupiesCenter(step.col, step.row)) continue;
-      return city.ownerPlayerId == unit.ownerPlayerId;
-    }
-    return false;
-  }
-
-  static bool _targetIsHiddenFromActor({
-    required PersistentGameState state,
-    required String actorPlayerId,
-    required int col,
-    required int row,
-  }) {
-    if (!state.fogOfWar.players.containsKey(actorPlayerId)) return false;
-    return !state.fogOfWar.isVisible(
-      actorPlayerId,
-      HexCoordinate(col: col, row: row),
-    );
-  }
-
-  static bool _pathWasBlockedByHiddenUnit({
-    required PersistentGameState state,
-    required String actorPlayerId,
-    required GameUnit unit,
-    required MapTileView targetTile,
-    required MapTraversalView mapData,
-  }) {
-    if (!state.fogOfWar.players.containsKey(actorPlayerId)) return false;
-
-    final knownUnits = <GameUnit>[
-      for (final candidate in state.units)
-        if (candidate.id == unit.id ||
-            candidate.ownerPlayerId == actorPlayerId ||
-            state.fogOfWar.isVisible(
-              actorPlayerId,
-              HexCoordinate(col: candidate.col, row: candidate.row),
-            ))
-          candidate,
-    ];
-    if (knownUnits.length == state.units.length) return false;
-
-    final knownPathfinder = UnitMovementPathfinder(
-      mapData: mapData,
-      units: knownUnits,
-    );
-    return knownPathfinder.plan(unit: unit, targetTile: targetTile) != null;
   }
 }

@@ -176,15 +176,12 @@ class TracingMctsSimulator implements MctsSimulator {
     required GameRuleset ruleset,
   }) {
     return switch (command) {
-      MoveUnitCommand() =>
-        const PersistentMoveUnitResolver()
-            .resolve(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapData: mapData,
-            )
-            .state,
+      MoveUnitCommand() => _applyOpponentMove(
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        mapData: mapData,
+      ),
       AttackHexCommand() => _applyOpponentAttack(
         state: state,
         command: command,
@@ -365,4 +362,21 @@ class TracingMctsSimulator implements MctsSimulator {
   bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
+}
+
+PersistentGameState _applyOpponentMove({
+  required PersistentGameState state,
+  required MoveUnitCommand command,
+  required String actorPlayerId,
+  required MapTraversalView mapData,
+}) {
+  return const PersistentMoveUnitResolver()
+      .resolve(
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        mapData: mapData,
+        visibilityMode: MovementCommandVisibilityMode.unrestricted,
+      )
+      .state;
 }

@@ -1,4 +1,6 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_queued_path_advancer.dart';
@@ -18,6 +20,8 @@ abstract final class TurnUnitMovementAdvancer {
   static TurnUnitMovementAdvance advance({
     required List<GameUnit> units,
     required List<GameCity> cities,
+    required DiplomacyState diplomacy,
+    required FogOfWarState fogOfWar,
     required Set<String> playerIds,
     required MapTraversalView mapData,
   }) {
@@ -40,6 +44,8 @@ abstract final class TurnUnitMovementAdvancer {
         unit: unit,
         allUnits: currentAllUnits,
         cities: cities,
+        diplomacy: diplomacy,
+        fogOfWar: fogOfWar,
         mapData: mapData,
       );
       if (advanced.changed) changed = true;
@@ -52,6 +58,8 @@ abstract final class TurnUnitMovementAdvancer {
     required GameUnit unit,
     required List<GameUnit> allUnits,
     required List<GameCity> cities,
+    required DiplomacyState diplomacy,
+    required FogOfWarState fogOfWar,
     required MapTraversalView mapData,
   }) {
     final routed = MerchantTradeRouteRules.advanceUnit(
@@ -69,6 +77,8 @@ abstract final class TurnUnitMovementAdvancer {
       mapData: mapData,
       allUnits: allUnits,
       cities: cities,
+      diplomacy: diplomacy,
+      fogOfWar: fogOfWar,
     );
     return (unit: moved, changed: routed != unit || moved != routed);
   }

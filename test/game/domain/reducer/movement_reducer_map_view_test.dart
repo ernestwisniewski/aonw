@@ -237,7 +237,7 @@ void main() {
         row: movedUnit.row,
       ));
       expect(confirmed.state.moveCommandActive, isFalse);
-      expect(confirmed.events, isEmpty);
+      expect(confirmed.events.single, isA<UnitMovedEvent>());
     },
   );
 
@@ -298,7 +298,7 @@ void main() {
       row: movedUnit.row,
     ));
     expect(confirmed.state.moveCommandActive, isTrue);
-    expect(confirmed.events, isEmpty);
+    expect(confirmed.events.single, isA<UnitMovedEvent>());
   });
 
   test('auto-explores through a canonical traversal view', () {
