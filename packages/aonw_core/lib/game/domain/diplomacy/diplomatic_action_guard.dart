@@ -1,8 +1,8 @@
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomatic_contact.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
+import 'package:aonw_core/game/domain/unit/game_unit.dart';
 
 abstract final class DiplomaticActionGuard {
   static bool canIssue({

@@ -1,7 +1,8 @@
-import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
+import 'package:aonw_core/game/domain/hex/hex_coordinate.dart';
+import 'package:aonw_core/game/domain/unit/game_unit.dart';
 
 abstract final class DiplomaticContact {
   static Set<String> contactKeys({
@@ -14,11 +15,13 @@ abstract final class DiplomaticContact {
       ..removeWhere((playerId) => playerId.isEmpty);
     final keys = <String>{};
     for (final playerId in players) {
-      final query = FogVisibilityQuery(playerId: playerId, state: fogOfWar);
       for (final city in cities) {
         final ownerPlayerId = city.ownerPlayerId;
         if (ownerPlayerId.isEmpty || ownerPlayerId == playerId) continue;
-        if (query.canRememberStaticAt(city.center.col, city.center.row)) {
+        if (fogOfWar.isKnown(
+          playerId,
+          HexCoordinate(col: city.center.col, row: city.center.row),
+        )) {
           final key = DiplomacyState.relationKey(playerId, ownerPlayerId);
           if (key.isNotEmpty) keys.add(key);
         }
@@ -26,7 +29,10 @@ abstract final class DiplomaticContact {
       for (final unit in units) {
         final ownerPlayerId = unit.ownerPlayerId;
         if (ownerPlayerId.isEmpty || ownerPlayerId == playerId) continue;
-        if (query.canSeeDynamicAt(unit.col, unit.row)) {
+        if (fogOfWar.isVisible(
+          playerId,
+          HexCoordinate(col: unit.col, row: unit.row),
+        )) {
           final key = DiplomacyState.relationKey(playerId, ownerPlayerId);
           if (key.isNotEmpty) keys.add(key);
         }

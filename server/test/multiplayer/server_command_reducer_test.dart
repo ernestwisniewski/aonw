@@ -21,7 +21,7 @@ void main() {
 
   group('ServerCommandReducer diplomacy commands', () {
     test(
-      'routes proposals through the persistent diplomacy resolver',
+      'routes proposals through the shared state-neutral diplomacy resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(),
@@ -48,7 +48,7 @@ void main() {
     );
 
     test(
-      'routes proposal responses through the persistent diplomacy resolver',
+      'routes proposal responses through the shared state-neutral resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(
@@ -86,7 +86,7 @@ void main() {
     );
 
     test(
-      'routes war declarations through the persistent diplomacy resolver',
+      'routes war declarations through the shared state-neutral resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(),
@@ -111,7 +111,7 @@ void main() {
     );
 
     test(
-      'routes gold gifts through the persistent diplomacy resolver',
+      'routes gold gifts through the shared state-neutral diplomacy resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(playerGold: const {'player_1': 5}),
@@ -132,7 +132,7 @@ void main() {
     );
 
     test(
-      'routes diplomatic messages through the persistent diplomacy resolver',
+      'routes diplomatic messages through the shared state-neutral resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(),
@@ -156,7 +156,7 @@ void main() {
     );
 
     test(
-      'routes diplomatic message responses through the persistent resolver',
+      'routes diplomatic message responses through the shared neutral resolver',
       () async {
         final reduction = await _reduceDiplomacyCommand(
           state: _diplomacyState(

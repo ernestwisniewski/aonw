@@ -13,6 +13,7 @@ part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_city_founding.dart';
 part 'server_command_reducer_detachment.dart';
+part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_merchant_routing.dart';
@@ -256,13 +257,12 @@ class ServerCommandReducer {
           mapTiles: loadedMap.mapView,
         );
       case DiplomaticCommand():
-        final result = const DiplomacyCommandRouter().route(
+        return _applyDiplomacyCommand(
+          save: save,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          turn: save.turn,
         );
-        return _fromPersistentResult(save, result);
       case FoundCityCommand():
         return _applyCityFoundingCommand(
           save: save,
@@ -458,19 +458,6 @@ class ServerCommandReducer {
         events: action.events,
         reason: action.reason,
       ),
-      PersistentDiplomacyResult(
-        :final accepted,
-        :final state,
-        :final events,
-        :final reason,
-      ) =>
-        _applicationFrom(
-          save: save,
-          accepted: accepted,
-          state: state,
-          events: events,
-          reason: reason,
-        ),
       _ => throw StateError('Unsupported persistent result: $result'),
     };
   }

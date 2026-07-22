@@ -26,7 +26,6 @@
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart": 504,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart": 736,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 503,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart": 713,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart": 839,
         "packages/aonw_core/lib/game/domain/map_validation.dart": 586,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart": 694,
@@ -50,7 +49,6 @@
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer": 721,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 501,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver": 705,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer": 826,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator": 463,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker": 564,
@@ -135,10 +133,6 @@
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:fromJson": 312,
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:toJson": 372,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_turn_resolver.dart::class:DiplomacyTurnResolver/method:resolve": 89,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:declareWar": 70,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:respondMessage": 80,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:respondProposal": 107,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:sendGoldGift": 66,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:toJson": 430,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:tryFromJson": 345,
         "packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart::class:GameEventDomainDescriptor/constructor:forEvent": 197,
@@ -313,7 +307,6 @@
         "packages/aonw_core/lib/game/domain/command/game_command_serialization.dart::class:GameCommandSerializer/method:toJson": 72,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_contact.dart::class:DiplomaticContact/method:contactKeys": 12,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_warmonger_reputation.dart::class:DiplomaticWarmongerReputation/method:_knownObservers": 12,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:respondProposal": 13,
         "packages/aonw_core/lib/game/domain/diplomacy/proposal_acceptance_policy.dart::class:ProposalAcceptancePolicy/method:_truce": 11,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:toJson": 38,
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:tryFromJson": 39,
@@ -429,7 +422,6 @@
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_counterModifiers": 25,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_technologyModifiers": 26,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_contact.dart::class:DiplomaticContact/method:contactKeys": 27,
-        "packages/aonw_core/lib/game/domain/diplomacy/persistent_diplomacy_resolver.dart::class:PersistentDiplomacyResolver/method:respondProposal": 17,
         "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 26,
         "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 22,
         "packages/aonw_core/lib/game/domain/movement/persistent_move_unit_resolver.dart::class:PersistentMoveUnitResolver/method:resolve": 31,
@@ -1406,12 +1398,12 @@
     },
     "server_lib": {
       "files": {
-        "server/lib/src/multiplayer/server_command_reducer.dart": 548
+        "server/lib/src/multiplayer/server_command_reducer.dart": 535
       },
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 472
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 458
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1422,7 +1414,7 @@
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 265,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 264,
         "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,

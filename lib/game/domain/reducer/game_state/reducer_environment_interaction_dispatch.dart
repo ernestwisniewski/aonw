@@ -1,7 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/diplomacy_reducer.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_gold_gift_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
@@ -112,11 +111,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
     GameState state,
     SendGoldGiftCommand command,
   ) {
-    return DiplomaticGoldGiftReducer.sendGoldGift(
-      state,
-      command,
-      context: context,
-    );
+    return DiplomacyReducer.sendGoldGift(state, command, context: context);
   }
 
   GameStateTransition sendDiplomaticMessage(
