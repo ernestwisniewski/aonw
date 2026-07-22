@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/reducer_parity_diplomacy_characterization.dart';
 import '../../../support/reducer_parity_fixture.dart';
+import '../../../support/reducer_parity_movement_characterization.dart';
 import '../../../support/reducer_parity_resource_trade_characterization.dart';
 
 const _repeatCount = 3;
@@ -20,11 +21,13 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = DiplomacyReducerParityCharacterization.extend(
-        ResourceTradeReducerParityCharacterization.extend(
-          ReducerParityCorpus.load(
-            Directory.current,
-            reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = MovementReducerParityCharacterization.extend(
+        DiplomacyReducerParityCharacterization.extend(
+          ResourceTradeReducerParityCharacterization.extend(
+            ReducerParityCorpus.load(
+              Directory.current,
+              reverseInputMapEntries: variant.reverseInputMapEntries,
+            ),
           ),
         ),
       );
@@ -76,7 +79,8 @@ void _runFixture(ReducerParityFixture fixture) {
   expect(result.save.savedAt, fixture.now);
   if (!fixture.expectedAccepted &&
       (fixture.id.startsWith('resource-trade-characterization-') ||
-          fixture.id.startsWith('diplomacy-characterization-'))) {
+          fixture.id.startsWith('diplomacy-characterization-') ||
+          fixture.id.startsWith('movement-characterization-'))) {
     expect(result.state, same(initialState));
     expect(result.events, isEmpty);
   }

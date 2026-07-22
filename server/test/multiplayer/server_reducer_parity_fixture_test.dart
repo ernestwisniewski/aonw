@@ -8,6 +8,7 @@ import 'package:test/test.dart';
 
 import '../../../test/support/reducer_parity_diplomacy_characterization.dart';
 import '../../../test/support/reducer_parity_fixture.dart';
+import '../../../test/support/reducer_parity_movement_characterization.dart';
 import '../../../test/support/reducer_parity_resource_trade_characterization.dart';
 
 const _repeatCount = 3;
@@ -19,11 +20,13 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = DiplomacyReducerParityCharacterization.extend(
-        ResourceTradeReducerParityCharacterization.extend(
-          ReducerParityCorpus.load(
-            repositoryRoot,
-            reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = MovementReducerParityCharacterization.extend(
+        DiplomacyReducerParityCharacterization.extend(
+          ResourceTradeReducerParityCharacterization.extend(
+            ReducerParityCorpus.load(
+              repositoryRoot,
+              reverseInputMapEntries: variant.reverseInputMapEntries,
+            ),
           ),
         ),
       );
