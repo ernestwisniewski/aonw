@@ -20,6 +20,7 @@ void main() {
       const {
         movementPersistentAdapterPath: 1,
         movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
         movementLocalCallSite: 1,
         movementServerCallSite: 1,
         movementMctsProjectionConsumerPath: 1,
@@ -48,6 +49,7 @@ void main() {
       for (final path in const {
         movementPersistentAdapterPath,
         movementDomainAdapterPath,
+        movementAutoExploreKernelPath,
         movementLocalCallSite,
         movementServerCallSite,
         movementMctsProjectionConsumerPath,
@@ -59,6 +61,7 @@ void main() {
       const {
         movementPersistentAdapterPath: 1,
         movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
         movementLocalCallSite: 1,
         movementServerCallSite: 1,
         movementMctsProjectionConsumerPath: 1,

@@ -1,3 +1,7 @@
+export 'movement/auto_explore_command_phase.dart';
+export 'movement/auto_explore_command_resolver.dart';
+export 'movement/auto_explore_command_result.dart';
+export 'movement/auto_explore_command_state.dart';
 export 'movement/domain_merchant_routing_command_resolver.dart';
 export 'movement/domain_move_unit_resolver.dart';
 export 'movement/domain_unit_action_command_resolver.dart';
@@ -11,6 +15,7 @@ export 'movement/movement_command_state.dart';
 export 'movement/movement_command_visibility_mode.dart';
 export 'movement/movement_cost.dart';
 export 'movement/movement_hidden_obstacle_rules.dart';
+export 'movement/persistent_auto_explore_command_resolver.dart';
 export 'movement/persistent_merchant_trade_route_resolver.dart';
 export 'movement/persistent_move_unit_resolver.dart';
 export 'movement/persistent_unit_action_resolver.dart';

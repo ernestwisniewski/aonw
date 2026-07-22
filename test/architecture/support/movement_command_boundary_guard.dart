@@ -1,11 +1,15 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 
+part 'auto_explore_command_boundary_guard.dart';
+part 'auto_explore_command_semantic_guard.dart';
 part 'movement_path_contract_guard.dart';
 
 const movementLibraryPath = 'packages/aonw_core/lib/game/domain/movement/';
 const movementKernelPath =
     '${movementLibraryPath}movement_command_resolver.dart';
+const movementAutoExploreKernelPath =
+    '${movementLibraryPath}auto_explore_command_resolver.dart';
 const movementStatePath = '${movementLibraryPath}movement_command_state.dart';
 const movementResultPath = '${movementLibraryPath}movement_command_result.dart';
 const movementExecutionPath =

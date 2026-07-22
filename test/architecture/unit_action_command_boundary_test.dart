@@ -8,6 +8,9 @@ import 'support/static_member_reference_guard.dart';
 const _kernelPath =
     'packages/aonw_core/lib/game/domain/movement/'
     'unit_action_command_resolver.dart';
+const _autoExploreKernelPath =
+    'packages/aonw_core/lib/game/domain/movement/'
+    'auto_explore_command_resolver.dart';
 const _interactionRulesPath =
     'packages/aonw_core/lib/game/domain/state/'
     'persisted_interaction_unit_rules.dart';
@@ -144,7 +147,7 @@ void main() {
         'PersistedInteractionUnitRules',
         'clearOwnedByUnit',
       ),
-      {_kernelPath: 2, _persistentAdapterPath: 1},
+      {_kernelPath: 2, _autoExploreKernelPath: 2, _persistentAdapterPath: 1},
       reason: 'Selective unit interaction cleanup must not be duplicated.',
     );
 
@@ -166,7 +169,11 @@ void main() {
       'package:aonw_core/game/domain/state/'
           'canonical_game_snapshot.dart',
     });
-    for (final path in const [_kernelPath, _persistentAdapterPath]) {
+    for (final path in const [
+      _kernelPath,
+      _autoExploreKernelPath,
+      _persistentAdapterPath,
+    ]) {
       expect(
         _importUris(sources[path]!, path),
         contains(_interactionRulesUri),

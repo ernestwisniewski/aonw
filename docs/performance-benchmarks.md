@@ -63,7 +63,10 @@ the same work counters and output digest as the unrelated map grows.
 reachable destination, so `candidateEvaluations` grows from `scale - 1` and
 `uniqueTileHits` grows with the map. The stable
 `growthModel: full-reachable-map` marker documents that proportional scan and
-prevents it from being mistaken for the fixed-distance movement budget.
+prevents it from being mistaken for the fixed-distance movement budget. Its
+timed path executes the complete neutral auto-explore command resolver; a
+separate instrumented planner pass retains the stable candidate and lookup
+counters without mixing them with movement, fog, and diplomacy reads.
 
 The report, baseline, and policy are schema-versioned canonical JSON documents:
 

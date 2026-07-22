@@ -59,11 +59,13 @@ _ScaleResult _runAutoExploreScale(int scale, int timingSamples) {
 _CountedAutoExplore _executeCountedAutoExplore(_AutoExploreFixture fixture) {
   final traversal = _InstrumentedTraversalView(fixture.traversalView());
   final revealCalculator = _CountingFogRevealCalculator();
-  final output = _executeAutoExplore(
+  final planned = _planAutoExplore(
     fixture,
     traversal,
     planner: ScoutAutoExplorePlanner(revealCalculator: revealCalculator),
   );
+  final output = _executeAutoExplore(fixture, fixture.traversalView());
+  _verifyAutoExploreOutput(planned, output);
   return _CountedAutoExplore(
     output: output,
     candidateEvaluations: revealCalculator.calls,
@@ -72,6 +74,49 @@ _CountedAutoExplore _executeCountedAutoExplore(_AutoExploreFixture fixture) {
 }
 
 _AutoExploreOutput _executeAutoExplore(
+  _AutoExploreFixture fixture,
+  MapTraversalView traversal,
+) {
+  final result = const AutoExploreCommandResolver().resolve(
+    state: AutoExploreCommandState(
+      movement: MovementCommandState(
+        units: [fixture.unit],
+        cities: const [],
+        fogOfWar: FogOfWarState.empty,
+        diplomacy: DiplomacyState.empty,
+        playerIds: const ['benchmark_player'],
+      ),
+      interaction: PersistedInteractionState.empty,
+    ),
+    command: AutoExploreUnitCommand(fixture.unit.id),
+    actorPlayerId: fixture.unit.ownerPlayerId,
+    mapData: traversal,
+    phase: AutoExploreCommandPhase.direct,
+  );
+  if (!result.accepted) {
+    throw StateError('Auto-explore workload was rejected: ${result.reason}.');
+  }
+  final unit = result.units.firstWhere(
+    (candidate) => candidate.id == fixture.unit.id,
+  );
+  final target = switch (unit.queuedPath) {
+    final queued? => (col: queued.targetCol, row: queued.targetRow),
+    null => switch (result.execution) {
+      final execution? => (
+        col: execution.destination.col,
+        row: execution.destination.row,
+      ),
+      null => throw StateError('Auto-explore workload produced no route.'),
+    },
+  };
+  return _AutoExploreOutput(
+    unitId: unit.id,
+    targetCol: target.col,
+    targetRow: target.row,
+  );
+}
+
+_AutoExploreOutput _planAutoExplore(
   _AutoExploreFixture fixture,
   MapTraversalView traversal, {
   ScoutAutoExplorePlanner planner = const ScoutAutoExplorePlanner(),

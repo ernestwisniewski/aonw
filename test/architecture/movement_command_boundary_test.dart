@@ -29,6 +29,7 @@ void _registerProductionBoundaryTests() {
       const {
         movementPersistentAdapterPath: 1,
         movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
         movementLocalCallSite: 1,
         movementServerCallSite: 1,
         movementMctsProjectionConsumerPath: 1,
