@@ -11,6 +11,7 @@ const movementKernelRootPaths = {
   movementExecutionPath,
   '${movementLibraryPath}movement_command_executor.dart',
   '${movementLibraryPath}movement_command_guard.dart',
+  movementPathConstraintsPath,
   '${movementLibraryPath}movement_command_planner.dart',
   movementVisibilityModePath,
   movementVisibilityPath,

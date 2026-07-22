@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/diplomacy/city_entry_policy.dart';
 import 'package:aonw_core/game/domain/fog/fog_visibility_query.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_path_constraints.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
@@ -50,6 +51,7 @@ abstract final class MovementCommandPlanner {
     required String actorPlayerId,
     required MapTraversalView mapData,
     required MovementCommandVisibilityMode visibilityMode,
+    required MovementCommandPathConstraints pathConstraints,
   }) {
     final visibility = UnitMovementVisibilityRules.visibilityForActor(
       fogOfWar: state.fogOfWar,
@@ -81,7 +83,8 @@ abstract final class MovementCommandPlanner {
         ? (MapTileView _) => true
         : canonicalCanEnterTile;
     bool canEnterKnownTile(MapTileView tile) {
-      return canEnterTerrain(tile) &&
+      return !pathConstraints.excludes(tile.col, tile.row) &&
+          canEnterTerrain(tile) &&
           MovementHiddenObstacleRules.canPlanThroughCity(
             cities: state.cities,
             diplomacy: state.diplomacy,

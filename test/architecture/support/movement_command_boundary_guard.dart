@@ -1,6 +1,8 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 
+part 'movement_path_contract_guard.dart';
+
 const movementLibraryPath = 'packages/aonw_core/lib/game/domain/movement/';
 const movementKernelPath =
     '${movementLibraryPath}movement_command_resolver.dart';
@@ -78,14 +80,11 @@ const _resolverParameters = [
     'MovementCommandVisibilityMode',
     defaultValue: 'MovementCommandVisibilityMode.authoritative',
   ),
-];
-
-List<String> movementPublicApiViolations(Map<String, String> sources) => [
-  ...movementResolverShapeViolations(sources[movementKernelPath]),
-  ...movementStateShapeViolations(sources[movementStatePath]),
-  ...movementResultShapeViolations(sources[movementResultPath]),
-  ...movementExecutionShapeViolations(sources[movementExecutionPath]),
-  ...movementVisibilityModeShapeViolations(sources[movementVisibilityModePath]),
+  _ParameterShape(
+    'pathConstraints',
+    'MovementCommandPathConstraints',
+    defaultValue: 'const MovementCommandPathConstraints.none()',
+  ),
 ];
 
 List<String> movementResolverShapeViolations(String? source) {

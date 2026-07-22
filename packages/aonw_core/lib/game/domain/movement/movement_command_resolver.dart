@@ -2,6 +2,7 @@ import 'package:aonw_core/game/domain/command/game_command.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_executor.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_guard.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_path_constraints.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_planner.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_result.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
@@ -28,6 +29,8 @@ final class MovementCommandResolver {
     bool canAct = true,
     MovementCommandVisibilityMode visibilityMode =
         MovementCommandVisibilityMode.authoritative,
+    MovementCommandPathConstraints pathConstraints =
+        const MovementCommandPathConstraints.none(),
   }) {
     final guarded = MovementCommandGuard.validate(
       state: state,
@@ -47,6 +50,7 @@ final class MovementCommandResolver {
       actorPlayerId: actorPlayerId,
       mapData: mapData,
       visibilityMode: visibilityMode,
+      pathConstraints: pathConstraints,
     );
     return switch (planned) {
       MovementPlanRejected(:final reason) => _reject(state, reason),

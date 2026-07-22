@@ -1,6 +1,8 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_path_constraints.dart';
+import 'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -27,74 +29,125 @@ class ScoutAutoExplorePlanner {
     required FogOfWarState fogOfWar,
     bool Function(MapTileView tile)? canEnterTile,
   }) {
+    return targetFor(
+      unit: unit,
+      mapData: mapData,
+      units: units,
+      fogOfWar: fogOfWar,
+      canEnterTile: canEnterTile,
+    )?.command;
+  }
+
+  ScoutAutoExploreTarget? targetFor({
+    required GameUnit unit,
+    required MapTraversalView mapData,
+    required Iterable<GameUnit> units,
+    required FogOfWarState fogOfWar,
+    bool Function(MapTileView tile)? canEnterTile,
+  }) {
     if (!_canAutoExplore(unit)) return null;
 
     final reservedHexes = _reservedExplorationHexes(unit: unit, units: units);
-    final pathCanEnterTile = reservedHexes.isEmpty && canEnterTile == null
-        ? null
-        : (MapTileView tile) {
-            if (reservedHexes.contains(HexCoordinate.fromTile(tile))) {
-              return false;
-            }
-            return canEnterTile?.call(tile) ?? true;
-          };
     final pathfinder = UnitMovementPathfinder(
       mapData: mapData,
       units: units,
-      canEnterTile: pathCanEnterTile,
+      canEnterTile: _pathPolicyFor(
+        reservedHexes: reservedHexes,
+        canEnterTile: canEnterTile,
+      ),
     );
-    final movementCosts = pathfinder.movementCostsFrom(unit: unit);
-    final playerFog = fogOfWar.fogForPlayer(unit.ownerPlayerId);
+    final best = _bestCandidate(
+      unit: unit,
+      mapData: mapData,
+      pathfinder: pathfinder,
+      playerFog: fogOfWar.fogForPlayer(unit.ownerPlayerId),
+    );
+    if (best == null) return null;
+    return ScoutAutoExploreTarget(
+      command: best.command,
+      pathConstraints: reservedHexes.isEmpty
+          ? const MovementCommandPathConstraints.none()
+          : MovementCommandPathConstraints.excluding(
+              excludedHexes: reservedHexes,
+            ),
+    );
+  }
+
+  bool Function(MapTileView tile)? _pathPolicyFor({
+    required Set<HexCoordinate> reservedHexes,
+    required bool Function(MapTileView tile)? canEnterTile,
+  }) {
+    if (reservedHexes.isEmpty && canEnterTile == null) return null;
+    return (tile) {
+      if (reservedHexes.contains(HexCoordinate.fromTile(tile))) return false;
+      return canEnterTile?.call(tile) ?? true;
+    };
+  }
+
+  _AutoExploreCandidate? _bestCandidate({
+    required GameUnit unit,
+    required MapTraversalView mapData,
+    required UnitMovementPathfinder pathfinder,
+    required PlayerFogOfWar playerFog,
+  }) {
     final origin = HexCoordinate(col: unit.col, row: unit.row);
-
     _AutoExploreCandidate? best;
-    for (final movement in movementCosts.entries) {
-      final coordinate = movement.key;
-      final tile = pathfinder.tileAt(coordinate.col, coordinate.row);
-      if (tile == null) continue;
-      final movementCost = movement.value;
-
-      final targetHex = HexCoordinate.fromTile(tile);
-      if (reservedHexes.contains(targetHex)) continue;
-      final targetUndiscovered = !playerFog.discoveredHexes.contains(targetHex);
-      final candidateUnit = unit.copyWith(col: tile.col, row: tile.row);
-      final reveal = revealCalculator.visibleHexesFor(
+    for (final movement in pathfinder.movementCostsFrom(unit: unit).entries) {
+      final candidate = _candidateFor(
+        unit: unit,
         mapData: mapData,
-        sources: [
-          FogOfWarService.unitRevealSource(
-            playerId: unit.ownerPlayerId,
-            unit: candidateUnit,
-            mapData: mapData,
-          ),
-        ],
+        pathfinder: pathfinder,
+        playerFog: playerFog,
+        origin: origin,
+        coordinate: movement.key,
+        movementCost: movement.value,
       );
-      final newlyDiscovered = reveal
-          .where((hex) => !playerFog.discoveredHexes.contains(hex))
-          .length;
-      if (!targetUndiscovered &&
-          newlyDiscovered <
-              ScoutAutoExploreBalance.minimumNewlyDiscoveredHexes) {
-        continue;
-      }
-
-      final distanceFromStart = HexDistance.between(
-        origin,
-        HexCoordinate.fromTile(tile),
-      );
-      final candidate = _AutoExploreCandidate(
-        command: MoveUnitCommand(unit.id, tile.col, tile.row),
-        newlyDiscoveredHexes: newlyDiscovered,
-        targetUndiscovered: targetUndiscovered,
-        visibleHexes: reveal.length,
-        movementCost: movementCost,
-        distanceFromStart: distanceFromStart,
-      );
-      if (best == null || candidate.compareTo(best) > 0) {
+      if (candidate != null &&
+          (best == null || candidate.compareTo(best) > 0)) {
         best = candidate;
       }
     }
+    return best;
+  }
 
-    return best?.command;
+  _AutoExploreCandidate? _candidateFor({
+    required GameUnit unit,
+    required MapTraversalView mapData,
+    required UnitMovementPathfinder pathfinder,
+    required PlayerFogOfWar playerFog,
+    required HexCoordinate origin,
+    required ({int col, int row}) coordinate,
+    required int movementCost,
+  }) {
+    final tile = pathfinder.tileAt(coordinate.col, coordinate.row);
+    if (tile == null) return null;
+    final targetHex = HexCoordinate.fromTile(tile);
+    final targetUndiscovered = !playerFog.discoveredHexes.contains(targetHex);
+    final reveal = revealCalculator.visibleHexesFor(
+      mapData: mapData,
+      sources: [
+        FogOfWarService.unitRevealSource(
+          playerId: unit.ownerPlayerId,
+          unit: unit.copyWith(col: tile.col, row: tile.row),
+          mapData: mapData,
+        ),
+      ],
+    );
+    final newlyDiscovered = reveal
+        .where((hex) => !playerFog.discoveredHexes.contains(hex))
+        .length;
+    if (!targetUndiscovered &&
+        newlyDiscovered < ScoutAutoExploreBalance.minimumNewlyDiscoveredHexes) {
+      return null;
+    }
+    return _AutoExploreCandidate(
+      command: MoveUnitCommand(unit.id, tile.col, tile.row),
+      newlyDiscoveredHexes: newlyDiscovered,
+      targetUndiscovered: targetUndiscovered,
+      visibleHexes: reveal.length,
+      movementCost: movementCost,
+      distanceFromStart: HexDistance.between(origin, targetHex),
+    );
   }
 
   Set<HexCoordinate> _reservedExplorationHexes({
