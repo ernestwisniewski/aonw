@@ -8,6 +8,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/reducer_parity_auto_explore_characterization.dart';
 import '../../../support/reducer_parity_diplomacy_characterization.dart';
 import '../../../support/reducer_parity_fixture.dart';
 import '../../../support/reducer_parity_movement_characterization.dart';
@@ -21,12 +22,14 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = MovementReducerParityCharacterization.extend(
-        DiplomacyReducerParityCharacterization.extend(
-          ResourceTradeReducerParityCharacterization.extend(
-            ReducerParityCorpus.load(
-              Directory.current,
-              reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = AutoExploreReducerParityCharacterization.extend(
+        MovementReducerParityCharacterization.extend(
+          DiplomacyReducerParityCharacterization.extend(
+            ResourceTradeReducerParityCharacterization.extend(
+              ReducerParityCorpus.load(
+                Directory.current,
+                reverseInputMapEntries: variant.reverseInputMapEntries,
+              ),
             ),
           ),
         ),
