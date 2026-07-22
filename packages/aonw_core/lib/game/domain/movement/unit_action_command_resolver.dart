@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
+import 'package:aonw_core/game/domain/state/persisted_interaction_unit_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 /// Persistence-neutral result of a unit action command.
@@ -73,7 +74,10 @@ abstract final class UnitActionCommandResolver {
     return UnitActionCommandResult._accepted(
       units: _replaceUnit(units, updatedUnit),
       artifacts: _cancelArtifactExcavation(artifacts, unit),
-      interaction: _clearInteractionForUnit(interaction, unit.id),
+      interaction: PersistedInteractionUnitRules.clearOwnedByUnit(
+        interaction,
+        unit.id,
+      ),
     );
   }
 
@@ -132,7 +136,10 @@ abstract final class UnitActionCommandResolver {
     return UnitActionCommandResult._accepted(
       units: _replaceUnit(units, UnitFortificationRules.fortify(unit)),
       artifacts: artifacts,
-      interaction: _clearInteractionForUnit(interaction, unit.id),
+      interaction: PersistedInteractionUnitRules.clearOwnedByUnit(
+        interaction,
+        unit.id,
+      ),
     );
   }
 
@@ -160,19 +167,6 @@ abstract final class UnitActionCommandResolver {
       artifacts: artifacts,
       interaction: interaction,
       reason: reason,
-    );
-  }
-
-  static PersistedInteractionState _clearInteractionForUnit(
-    PersistedInteractionState interaction,
-    String unitId,
-  ) {
-    final clearPending = interaction.pendingAction?.ownsUnit(unitId) ?? false;
-    final clearDraft = interaction.cityFoundingDraft?.unitId == unitId;
-    if (!clearPending && !clearDraft) return interaction;
-    return interaction.copyWith(
-      cityFoundingDraft: clearDraft ? null : interaction.cityFoundingDraft,
-      pendingAction: clearPending ? null : interaction.pendingAction,
     );
   }
 

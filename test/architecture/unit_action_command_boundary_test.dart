@@ -8,6 +8,12 @@ import 'support/static_member_reference_guard.dart';
 const _kernelPath =
     'packages/aonw_core/lib/game/domain/movement/'
     'unit_action_command_resolver.dart';
+const _interactionRulesPath =
+    'packages/aonw_core/lib/game/domain/state/'
+    'persisted_interaction_unit_rules.dart';
+const _interactionRulesUri =
+    'package:aonw_core/game/domain/state/'
+    'persisted_interaction_unit_rules.dart';
 const _persistentAdapterPath =
     'packages/aonw_core/lib/game/domain/movement/'
     'persistent_unit_action_resolver.dart';
@@ -128,4 +134,53 @@ void main() {
       isEmpty,
     );
   });
+
+  test('unit interaction cleanup has one state-container-neutral rule', () {
+    final sources = productionDartSources();
+
+    expect(
+      staticMemberReferenceCountsByPath(
+        sources,
+        'PersistedInteractionUnitRules',
+        'clearOwnedByUnit',
+      ),
+      {_kernelPath: 2, _persistentAdapterPath: 1},
+      reason: 'Selective unit interaction cleanup must not be duplicated.',
+    );
+
+    final rulesSource = sources[_interactionRulesPath];
+    expect(
+      rulesSource,
+      isNotNull,
+      reason: 'The state-container-neutral interaction rule must exist.',
+    );
+    final requiredRulesSource = rulesSource!;
+    expect(
+      namedTypeReferencesInSource(
+        requiredRulesSource,
+        path: _interactionRulesPath,
+      ),
+      {'PersistedInteractionState', 'String'},
+    );
+    expect(_importUris(requiredRulesSource, _interactionRulesPath), {
+      'package:aonw_core/game/domain/state/'
+          'canonical_game_snapshot.dart',
+    });
+    for (final path in const [_kernelPath, _persistentAdapterPath]) {
+      expect(
+        _importUris(sources[path]!, path),
+        contains(_interactionRulesUri),
+        reason: '$path must import the narrow interaction-rule leaf.',
+      );
+    }
+  });
+}
+
+Set<String> _importUris(String source, String path) {
+  final unit = parseString(content: source, path: path).unit;
+  return unit.directives
+      .whereType<ImportDirective>()
+      .map((directive) => directive.uri.stringValue)
+      .whereType<String>()
+      .toSet();
 }

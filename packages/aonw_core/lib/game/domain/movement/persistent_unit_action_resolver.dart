@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
 import 'package:aonw_core/game/domain/movement/unit_action_command_resolver.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/state/persisted_interaction_unit_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -201,27 +202,17 @@ final class PersistentUnitActionResolver {
     GameUnit original,
     GameUnit updated,
   ) {
-    final runtimeState = _clearRuntimeActionForUnit(
-      state.runtimeState,
+    final interaction = PersistedInteractionUnitRules.clearOwnedByUnit(
+      _interactionFrom(state.runtimeState),
       original.id,
+    );
+    final runtimeState = _runtimeStateAfterUnitAction(
+      state.runtimeState,
+      interaction,
     );
     return state.copyWith(
       units: _replaceUnit(state.units, updated),
       runtimeState: runtimeState,
-    );
-  }
-
-  static GameRuntimeState _clearRuntimeActionForUnit(
-    GameRuntimeState runtimeState,
-    String unitId,
-  ) {
-    final clearPending = runtimeState.pendingAction?.ownsUnit(unitId) ?? false;
-    final clearDraft = runtimeState.cityFoundingDraft?.unitId == unitId;
-    if (!clearPending && !clearDraft) return runtimeState;
-
-    return runtimeState.copyWith(
-      cityFoundingDraft: clearDraft ? null : runtimeState.cityFoundingDraft,
-      pendingAction: clearPending ? null : runtimeState.pendingAction,
     );
   }
 
