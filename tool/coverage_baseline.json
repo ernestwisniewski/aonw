@@ -15,12 +15,12 @@
         },
         "domain": {
           "files": {
-            "hit": 344,
-            "found": 353
+            "hit": 354,
+            "found": 362
           },
           "lines": {
-            "hit": 12666,
-            "found": 14468
+            "hit": 12860,
+            "found": 14574
           }
         },
         "map": {
@@ -127,12 +127,12 @@
         },
         "game_domain": {
           "files": {
-            "hit": 71,
-            "found": 73
+            "hit": 69,
+            "found": 70
           },
           "lines": {
-            "hit": 3154,
-            "found": 3411
+            "hit": 3164,
+            "found": 3415
           }
         },
         "game_infrastructure": {
@@ -151,7 +151,7 @@
             "found": 85
           },
           "lines": {
-            "hit": 6866,
+            "hit": 6868,
             "found": 8960
           }
         },
@@ -171,7 +171,7 @@
             "found": 88
           },
           "lines": {
-            "hit": 4107,
+            "hit": 4108,
             "found": 4984
           }
         },
@@ -228,7 +228,6 @@
       },
       "missingFiles": [
         "lib/developer/asset_adjustment_file_store_stub.dart",
-        "lib/game/domain/reducer/diplomacy/diplomatic_war_reducer.dart",
         "lib/game/infrastructure/persistence/web/platform_persistence_adapters_web.dart",
         "lib/game/presentation/audio/game_sound_cue.dart",
         "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader_stub.dart",
@@ -260,12 +259,12 @@
         },
         "multiplayer": {
           "files": {
-            "hit": 53,
-            "found": 56
+            "hit": 54,
+            "found": 57
           },
           "lines": {
-            "hit": 2056,
-            "found": 2653
+            "hit": 2085,
+            "found": 2682
           }
         },
         "observability": {
