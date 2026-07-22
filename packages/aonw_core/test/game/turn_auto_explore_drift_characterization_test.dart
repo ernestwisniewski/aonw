@@ -5,9 +5,11 @@ import 'package:aonw_core/game/domain/turn/movement/turn_movement_orchestrator.d
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_state.dart';
 import 'package:test/test.dart';
 
+part 'support/turn_auto_explore_continuation_characterization.dart';
+
 void main() {
   group('turn auto-explore drift characterization', () {
-    test('moves into a currently known foreign city center', () {
+    test('legacy enters a known foreign city regardless of diplomacy', () {
       final scout = _autoExploringScout(movementPoints: 1);
       const foreignCity = GameCity(
         id: 'foreign_city',
@@ -15,19 +17,44 @@ void main() {
         name: 'Foreign city',
         center: CityHex(col: 1, row: 0),
       );
-
-      final result = _advance(
+      final fog = _fog(discovered: _lineHexes(2), visible: _lineHexes(2));
+      final map = _map(cols: 3);
+      final peace = _runLegacyAndKernel(
         units: [scout],
         cities: const [foreignCity],
-        fogOfWar: _fog(discovered: _lineHexes(2), visible: _lineHexes(2)),
-        mapData: _map(cols: 3),
+        fogOfWar: fog,
+        mapData: map,
       );
-      final moved = result.units.single;
+      final war = _runLegacyAndKernel(
+        units: [scout],
+        cities: const [foreignCity],
+        fogOfWar: fog,
+        diplomacy: _warDiplomacy(),
+        mapData: map,
+      );
 
-      expect(result.changed, isTrue);
-      expect((moved.col, moved.row), (1, 0));
-      expect(moved.queuedPath?.targetCol, 2);
-      expect(moved.posture, UnitPosture.autoExploring);
+      expect(peace.legacy.changed, isTrue);
+      expect(
+        peace.legacy.units.map(_autoExploreTurnUnitSnapshot),
+        war.legacy.units.map(_autoExploreTurnUnitSnapshot),
+      );
+      expect(
+        (peace.legacy.units.single.col, peace.legacy.units.single.row),
+        (1, 0),
+      );
+      expect(peace.legacy.units.single.queuedPath?.targetCol, 2);
+      expect(peace.legacy.units.single.posture, UnitPosture.autoExploring);
+      expect(peace.kernel.accepted, isTrue);
+      expect(peace.kernel.state.units.single.posture, UnitPosture.active);
+      expect(peace.kernel.execution, isNull);
+      expect(war.kernel.accepted, isTrue);
+      expect(
+        (war.kernel.state.units.single.col, war.kernel.state.units.single.row),
+        (0, 0),
+      );
+      expect(war.kernel.state.units.single.posture, UnitPosture.active);
+      expect(war.kernel.events, isEmpty);
+      expect(war.kernel.execution, isNull);
     });
 
     test('enters terrain beyond per-turn movement capacity', () {
@@ -49,16 +76,21 @@ void main() {
       );
       expect(targetCost.value, greaterThan(capacity));
 
-      final result = _advance(
+      final pair = _runLegacyAndKernel(
         units: [scout],
         fogOfWar: _originOnlyFog(),
         mapData: map,
       );
-      final moved = result.units.single;
+      final moved = pair.legacy.units.single;
 
-      expect(result.changed, isTrue);
+      expect(pair.legacy.changed, isTrue);
       expect((moved.col, moved.movementPoints), (1, 0));
       expect(moved.posture, UnitPosture.autoExploring);
+      expect(pair.kernel.accepted, isFalse);
+      expect(pair.kernel.reason, 'unit_movement_capacity_insufficient');
+      expect(pair.kernel.state, same(pair.kernelInput));
+      expect(pair.kernel.events, isEmpty);
+      expect(pair.kernel.execution, isNull);
     });
 
     test('hidden full-state blocker changes the chosen destination', () {
@@ -78,48 +110,50 @@ void main() {
         fogOfWar: _originOnlyFog(),
         mapData: map,
       );
-      final fullState = _advance(
+      final fullState = _runLegacyAndKernel(
         units: [scout, blocker],
         fogOfWar: _originOnlyFog(),
         mapData: map,
       );
 
       expect(projected.units.first.col, 2);
-      expect(fullState.units.first.col, 1);
-      expect(fullState.units.last, same(blocker));
+      expect(fullState.legacy.units.first.col, 1);
+      expect(fullState.legacy.units.last, same(blocker));
+      expect(fullState.kernel.accepted, isTrue);
+      expect(fullState.kernel.state.units.first.col, 1);
+      expect(
+        fullState.kernel.state.units.first.posture,
+        UnitPosture.autoExploring,
+      );
+      expect(fullState.kernel.state.units.last, same(blocker));
+      expect(
+        _eventSnapshot(fullState.kernel.events.single as UnitMovedEvent),
+        'turn_auto_scout:0,0->1,0',
+      );
+      expect(
+        _executionSnapshot(fullState.kernel.execution!),
+        'turn_auto_scout:0,0->1,0',
+      );
     });
 
     test('no target keeps auto-explore posture and reports no change', () {
       final scout = _autoExploringScout(movementPoints: 2);
       final inputFog = _originOnlyFog();
 
-      final result = _advance(
+      final pair = _runLegacyAndKernel(
         units: [scout],
         fogOfWar: inputFog,
         mapData: _map(cols: 1),
       );
 
-      expect(result.changed, isFalse);
-      expect(result.units.single, same(scout));
-      expect(result.units.single.posture, UnitPosture.autoExploring);
-      expect(result.fogOfWar, same(inputFog));
-    });
-
-    test('successful advance exposes no event or execution evidence', () {
-      final result = _advance(
-        units: [_autoExploringScout(movementPoints: 2)],
-        fogOfWar: _originOnlyFog(),
-        mapData: _map(cols: 3),
-      );
-      final dynamic currentSurface = result;
-
-      expect(result.changed, isTrue);
-      // ignore: avoid_dynamic_calls
-      expect(() => currentSurface.events, throwsNoSuchMethodError);
-      // ignore: avoid_dynamic_calls
-      expect(() => currentSurface.execution, throwsNoSuchMethodError);
-      // ignore: avoid_dynamic_calls
-      expect(() => currentSurface.executions, throwsNoSuchMethodError);
+      expect(pair.legacy.changed, isFalse);
+      expect(pair.legacy.units.single, same(scout));
+      expect(pair.legacy.units.single.posture, UnitPosture.autoExploring);
+      expect(pair.legacy.fogOfWar, same(inputFog));
+      expect(pair.kernel.accepted, isTrue);
+      expect(pair.kernel.state.units.single.posture, UnitPosture.active);
+      expect(pair.kernel.events, isEmpty);
+      expect(pair.kernel.execution, isNull);
     });
 
     test('finishes a queued path before choosing the next automatic route', () {
@@ -192,12 +226,25 @@ void main() {
         fogOfWar: _fog(discovered: origins, visible: origins),
         mapData: _map(cols: 6, rows: 2),
       );
+      final secondWithoutFirst = _advance(
+        units: [second],
+        fogOfWar: _fog(discovered: origins, visible: origins),
+        mapData: _map(cols: 6, rows: 2),
+      );
 
       expect(result.changed, isTrue);
+      expect(
+        _autoExploreTurnUnitSnapshot(secondWithoutFirst.units.single),
+        'second_scout:2,0;mp=0;target=3,0;steps=0,1|1,0|2,0|3,0',
+      );
       expect(result.units.map(_autoExploreTurnUnitSnapshot), [
         'first_scout:2,0;mp=0;target=3,0;steps=0,0|1,0|2,0|3,0',
         'second_scout:2,1;mp=0;target=5,0;steps=0,1|1,0|2,1|3,0|4,0|5,0',
       ]);
+      expect(
+        _sharedQueuedPathCoordinates(result.units[0], result.units[1]),
+        const ['1,0', '3,0'],
+      );
       expect(
         result.fogOfWar
             .fogForPlayer(_playerId)
@@ -220,6 +267,8 @@ void main() {
       );
     });
   });
+
+  _registerTurnAutoExploreContinuationCharacterizationTests();
 }
 
 const _playerId = 'player_1';
@@ -312,4 +361,15 @@ String _autoExploreTurnUnitSnapshot(GameUnit unit) {
       : path.steps.map((step) => '${step.col},${step.row}').join('|');
   return '${unit.id}:${unit.col},${unit.row};mp=${unit.movementPoints};'
       'target=$target;steps=$steps';
+}
+
+List<String> _sharedQueuedPathCoordinates(GameUnit first, GameUnit second) {
+  final firstCoordinates = {
+    for (final step in first.queuedPath!.steps) '${step.col},${step.row}',
+  };
+  return <String>[
+    for (final step in second.queuedPath!.steps)
+      if (firstCoordinates.contains('${step.col},${step.row}'))
+        '${step.col},${step.row}',
+  ]..sort();
 }
