@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
+import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_view_state_projector.dart';
 
 typedef PlayerMatchSaveDecoder = GameSave Function(Map<String, dynamic> json);
@@ -217,6 +218,10 @@ final class PlayerMatchViewProjector {
         turn: canonical.turn,
         command: isActor ? canonical.command : null,
         events: events,
+        movementExecutions: PlayerMatchMovementAudience.projectForRecipient(
+          canonical.movementExecutions,
+          recipientPlayerId: recipient.playerId,
+        ),
       ),
     );
   }
@@ -249,6 +254,10 @@ final class PlayerMatchViewProjector {
           recipientPlayerId: recipient.playerId,
         ),
         reason: canonical.reason,
+        movementExecutions: PlayerMatchMovementAudience.projectForRecipient(
+          canonical.movementExecutions,
+          recipientPlayerId: recipient.playerId,
+        ),
       ),
     );
   }
