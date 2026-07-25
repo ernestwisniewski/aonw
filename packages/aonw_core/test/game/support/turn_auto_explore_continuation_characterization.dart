@@ -2,84 +2,89 @@ part of '../turn_auto_explore_drift_characterization_test.dart';
 
 void _registerTurnAutoExploreContinuationCharacterizationTests() {
   group('turn auto-explore continuation kernel drift', () {
-    test('turn surfaces lose diplomacy contact discovered by the kernel', () {
-      final scout = _autoExploringScout(movementPoints: 1);
-      final rival = GameUnit(
-        id: 'hidden_rival',
-        ownerPlayerId: 'player_2',
-        type: GameUnitType.warrior,
-        name: 'Hidden rival',
-        col: 3,
-        row: 0,
-      );
-      final map = _map(cols: 4);
-      final fog = _originOnlyFog();
-      final input = _persistentTurnState(units: [scout, rival], fogOfWar: fog);
-      final kernel = const PersistentAutoExploreCommandResolver().resolve(
-        state: input,
-        command: const AutoExploreUnitCommand('turn_auto_scout'),
-        actorPlayerId: _playerId,
-        mapData: map,
-        phase: AutoExploreCommandPhase.continuation,
-      );
-      final turnInput = TurnMovementState(
-        units: [scout, rival],
-        cities: const [],
-        diplomacy: DiplomacyState.empty,
-        fogOfWar: fog,
-      );
-      final turn = TurnMovementOrchestrator.resetForPlayers(
-        state: turnInput,
-        context: TurnMovementContext(
-          playerIds: const {_playerId},
-          phaseKnownPlayerIds: const {_playerId, 'player_2'},
+    test(
+      'turn surfaces preserve diplomacy contact discovered by continuation',
+      () {
+        final scout = _autoExploringScout(movementPoints: 1);
+        final rival = GameUnit(
+          id: 'hidden_rival',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          name: 'Hidden rival',
+          col: 3,
+          row: 0,
+        );
+        final map = _map(cols: 4);
+        final fog = _originOnlyFog();
+        final input = _persistentTurnState(
+          units: [scout, rival],
+          fogOfWar: fog,
+        );
+        final kernel = const PersistentAutoExploreCommandResolver().resolve(
+          state: input,
+          command: const AutoExploreUnitCommand('turn_auto_scout'),
+          actorPlayerId: _playerId,
           mapData: map,
-        ),
-      );
-      final persistent = PersistentTurnMovementProcessor.resetForPlayers(
-        state: input,
-        playerIds: const {_playerId},
-        mapData: map,
-      );
+          phase: AutoExploreCommandPhase.continuation,
+        );
+        final turnInput = TurnMovementState(
+          units: [scout, rival],
+          cities: const [],
+          diplomacy: DiplomacyState.empty,
+          fogOfWar: fog,
+          interaction: PersistedInteractionState.empty,
+        );
+        final turn = TurnMovementOrchestrator.resetForPlayers(
+          state: turnInput,
+          context: TurnMovementContext(
+            playerIds: const {_playerId},
+            phaseKnownPlayerIds: const {_playerId, 'player_2'},
+            mapData: map,
+          ),
+        );
+        final persistent = PersistentTurnMovementProcessor.resetForPlayers(
+          state: input,
+          playerIds: const {_playerId},
+          mapData: map,
+        );
 
-      expect(kernel.accepted, isTrue);
-      expect(
-        kernel.state.runtimeState.diplomacy.hasContact(_playerId, 'player_2'),
-        isTrue,
-      );
-      expect(
-        (
-          kernel.state.units.first.col,
-          kernel.state.units.first.row,
-          turn.state.units.first.col,
-          turn.state.units.first.row,
-          persistent.state.units.first.col,
-          persistent.state.units.first.row,
-        ),
-        (1, 0, 1, 0, 1, 0),
-      );
-      expect(
-        persistent.state.units.map(_autoExploreTurnUnitSnapshot),
-        turn.state.units.map(_autoExploreTurnUnitSnapshot),
-      );
-      final kernelFog = kernel.state.fogOfWar.fogForPlayer(_playerId);
-      final turnFog = turn.state.fogOfWar.fogForPlayer(_playerId);
-      final persistentFog = persistent.state.fogOfWar.fogForPlayer(_playerId);
-      expect(turnFog.discoveredHexes, kernelFog.discoveredHexes);
-      expect(turnFog.visibleHexes, kernelFog.visibleHexes);
-      expect(persistentFog.discoveredHexes, kernelFog.discoveredHexes);
-      expect(persistentFog.visibleHexes, kernelFog.visibleHexes);
-      expect(turn.state.diplomacy, same(turnInput.diplomacy));
-      expect(turn.state.diplomacy.hasContact(_playerId, 'player_2'), isFalse);
-      expect(persistent.state.runtimeState, same(input.runtimeState));
-      expect(
-        persistent.state.runtimeState.diplomacy.hasContact(
-          _playerId,
-          'player_2',
-        ),
-        isFalse,
-      );
-    });
+        expect(kernel.accepted, isTrue);
+        expect(
+          kernel.state.runtimeState.diplomacy.hasContact(_playerId, 'player_2'),
+          isTrue,
+        );
+        expect(
+          (
+            kernel.state.units.first.col,
+            kernel.state.units.first.row,
+            turn.state.units.first.col,
+            turn.state.units.first.row,
+            persistent.state.units.first.col,
+            persistent.state.units.first.row,
+          ),
+          (1, 0, 2, 0, 2, 0),
+        );
+        expect(
+          persistent.state.units.map(_autoExploreTurnUnitSnapshot),
+          turn.state.units.map(_autoExploreTurnUnitSnapshot),
+        );
+        final kernelFog = kernel.state.fogOfWar.fogForPlayer(_playerId);
+        final turnFog = turn.state.fogOfWar.fogForPlayer(_playerId);
+        final persistentFog = persistent.state.fogOfWar.fogForPlayer(_playerId);
+        expect(turnFog.discoveredHexes, kernelFog.discoveredHexes);
+        expect(turnFog.visibleHexes, kernelFog.visibleHexes);
+        expect(persistentFog.discoveredHexes, kernelFog.discoveredHexes);
+        expect(persistentFog.visibleHexes, kernelFog.visibleHexes);
+        expect(turn.state.diplomacy.hasContact(_playerId, 'player_2'), isTrue);
+        expect(
+          persistent.state.runtimeState.diplomacy.hasContact(
+            _playerId,
+            'player_2',
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('turn movement evidence accumulator drift', () {
@@ -124,7 +129,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
       },
     );
 
-    test('turn and persistence surfaces omit the ordered evidence', () {
+    test('turn and persistence surfaces preserve ordered evidence', () {
       final scout = _autoExploringScout(movementPoints: 0).copyWithQueuedPath(
         QueuedMovePath(
           targetCol: 1,
@@ -142,6 +147,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         cities: const [],
         diplomacy: DiplomacyState.empty,
         fogOfWar: fog,
+        interaction: PersistedInteractionState.empty,
       );
       final context = TurnMovementContext(
         playerIds: const {_playerId},
@@ -175,9 +181,23 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         turn.state.units.map(_autoExploreTurnUnitSnapshot),
       );
       expect(persistent.state.runtimeState, same(persistentInput.runtimeState));
-      _expectNoOrderedMovementEvidence(autoOnly);
-      _expectNoOrderedMovementEvidence(turn);
-      _expectNoOrderedMovementEvidence(persistent);
+      expect(_eventSnapshots(autoOnly.events), ['turn_auto_scout:0,0->1,0']);
+      expect(_executionSnapshots(autoOnly.executions), [
+        'turn_auto_scout:0,0->1,0',
+      ]);
+      expect(_eventSnapshots(turn.events), ['turn_auto_scout:1,0->3,0']);
+      expect(_executionSnapshots(turn.executions), [
+        'turn_auto_scout:0,0->1,0',
+        'turn_auto_scout:1,0->2,0|3,0',
+      ]);
+      expect(_eventSnapshots(persistent.events), _eventSnapshots(turn.events));
+      expect(
+        _executionSnapshots(persistent.executions),
+        _executionSnapshots(turn.executions),
+      );
+      _expectImmutableEvidence(autoOnly.events, autoOnly.executions);
+      _expectImmutableEvidence(turn.events, turn.executions);
+      _expectImmutableEvidence(persistent.events, persistent.executions);
     });
   });
 }
@@ -201,6 +221,7 @@ _LegacyKernelPair _runLegacyAndKernel({
       units: units,
       cities: cities,
       fogOfWar: fogOfWar,
+      diplomacy: diplomacy,
       mapData: mapData,
     ),
     kernel: const PersistentAutoExploreCommandResolver().resolve(
@@ -283,15 +304,23 @@ String _executionSnapshot(MovementCommandExecution execution) {
   return '${execution.unitId}:${execution.fromCol},${execution.fromRow}->$steps';
 }
 
-void _expectNoOrderedMovementEvidence(Object result) {
-  final dynamic surface = result;
-  // These missing getters pin the current contract gap without adding a bridge.
-  // ignore: avoid_dynamic_calls
-  expect(() => surface.events, throwsNoSuchMethodError);
-  // ignore: avoid_dynamic_calls
-  expect(() => surface.execution, throwsNoSuchMethodError);
-  // ignore: avoid_dynamic_calls
-  expect(() => surface.executions, throwsNoSuchMethodError);
+List<String> _eventSnapshots(Iterable<GameEvent> events) => [
+  for (final event in events) _eventSnapshot(event as UnitMovedEvent),
+];
+
+List<String> _executionSnapshots(
+  Iterable<MovementCommandExecution> executions,
+) => [for (final execution in executions) _executionSnapshot(execution)];
+
+void _expectImmutableEvidence(
+  List<GameEvent> events,
+  List<MovementCommandExecution> executions,
+) {
+  expect(
+    () => events.add(const TurnEndedEvent(playerId: _playerId)),
+    throwsUnsupportedError,
+  );
+  expect(() => executions.removeLast(), throwsUnsupportedError);
 }
 
 typedef _LegacyKernelPair = ({

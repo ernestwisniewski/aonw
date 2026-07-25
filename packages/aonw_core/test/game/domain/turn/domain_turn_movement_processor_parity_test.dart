@@ -44,6 +44,57 @@ void main() {
       expect(identical(result.domain.state, result.domainInput), isTrue);
       expect(identical(result.persistent.state, input), isTrue);
     });
+
+    test('projects continuation interaction cleanup through both adapters', () {
+      final scout = GameUnit(
+        id: 'scout_p1',
+        ownerPlayerId: 'p1',
+        type: GameUnitType.scout,
+        name: GameUnitType.scout.defaultNameToken,
+        col: 0,
+        row: 0,
+        posture: UnitPosture.autoExploring,
+      );
+      final draft = CityFoundingDraft(
+        unitId: 'other_unit',
+        ownerPlayerId: 'p1',
+        center: const CityHex(col: 0, row: 0),
+      );
+      const pending = PendingUnitTurnSkip(
+        ownerPlayerId: 'p1',
+        unitId: 'scout_p1',
+        restoreMovementPoints: 2,
+      );
+      final input = PersistentGameState.snapshot(
+        playerColors: const {'p1': 0xFF000001, 'p2': 0xFF000002},
+        units: [scout],
+        fogOfWar: FogOfWarState(
+          players: {
+            'p1': PlayerFogOfWar(
+              playerId: 'p1',
+              discoveredHexes: {const HexCoordinate(col: 0, row: 0)},
+              visibleHexes: {const HexCoordinate(col: 0, row: 0)},
+            ),
+          },
+        ),
+        runtimeState: GameRuntimeState.snapshot(
+          cityFoundingDraft: draft,
+          pendingAction: pending,
+        ),
+      );
+      final result = _resolveBoth(input: input, playerIds: const ['p1']);
+
+      expect(result.domain.interaction.pendingAction, isNull);
+      expect(result.domain.interaction.cityFoundingDraft, draft);
+      expect(result.persistent.state.runtimeState.pendingAction, isNull);
+      expect(result.persistent.state.runtimeState.cityFoundingDraft, draft);
+      expect(
+        result.domain.events.map((event) => event.runtimeType),
+        result.persistent.events.map((event) => event.runtimeType),
+      );
+      expect(result.domain.executions, hasLength(1));
+      expect(result.persistent.executions, hasLength(1));
+    });
   });
 }
 
@@ -51,7 +102,8 @@ _ParityResult _resolveBoth({
   required PersistentGameState input,
   required Iterable<String> playerIds,
 }) {
-  final domainInput = _adapter.toCanonical(save: _save, state: input).domain;
+  final domainSnapshot = _adapter.toCanonical(save: _save, state: input);
+  final domainInput = domainSnapshot.domain;
   final persistent = PersistentTurnMovementProcessor.resetForPlayers(
     state: input,
     playerIds: playerIds,
@@ -59,17 +111,21 @@ _ParityResult _resolveBoth({
   );
   final domain = DomainTurnMovementProcessor.resetForPlayers(
     state: domainInput,
+    interaction: domainSnapshot.interaction,
     playerIds: playerIds,
     mapData: _mapView,
   );
-  final persistentProjection = _adapter
-      .toCanonical(save: _save, state: persistent.state)
-      .domain;
+  final persistentSnapshot = _adapter.toCanonical(
+    save: _save,
+    state: persistent.state,
+  );
+  final persistentProjection = persistentSnapshot.domain;
 
   expect(domain.changed, persistent.changed);
   expect(domain.state, persistentProjection);
   expect(domain.state.units, persistent.state.units);
   expect(domain.state.fogOfWar, persistent.state.fogOfWar);
+  expect(domain.interaction, persistentSnapshot.interaction);
 
   return _ParityResult(
     domainInput: domainInput,

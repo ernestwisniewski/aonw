@@ -35,6 +35,7 @@ void main() {
         autoExplorePersistentAdapterPath: 1,
         autoExploreLocalCallSite: 1,
         autoExploreServerCallSite: 1,
+        autoExploreTurnContinuationCallSite: 1,
       },
     );
     expect(
@@ -46,6 +47,7 @@ void main() {
         autoExplorePersistentAdapterPath: 1,
         autoExploreLocalCallSite: 1,
         autoExploreServerCallSite: 1,
+        autoExploreTurnContinuationCallSite: 1,
       },
     );
     expect(
@@ -55,6 +57,14 @@ void main() {
         'resolve',
       ),
       isEmpty,
+    );
+    expect(
+      staticMemberReferenceCountsByPath(
+        runtime,
+        'AutoExploreCommandPhase',
+        'continuation',
+      ),
+      const {autoExploreTurnContinuationCallSite: 1},
     );
     expect(
       movementInstanceMemberReferenceCountsByPath(
@@ -152,6 +162,51 @@ void main() {
       );
     }
   });
+
+  test(
+    'turn continuation has no second planner, executor, or state bridge',
+    () {
+      final sources = productionDartSources();
+      final continuationSources = {
+        autoExploreTurnContinuationCallSite:
+            sources[autoExploreTurnContinuationCallSite]!,
+        autoExploreLocalCallSite: sources[autoExploreLocalCallSite]!,
+      };
+
+      for (final entry in continuationSources.entries) {
+        expect(
+          namedTypeReferencesInSource(
+            entry.value,
+            path: entry.key,
+          ).intersection(const {
+            'CanonicalGameSnapshot',
+            'DomainState',
+            'PersistentAutoExploreCommandResolver',
+            'PersistentGameState',
+            'PersistentMoveUnitResolver',
+            'ScoutAutoExplorePlanner',
+            'UnitMovementPathfinder',
+          }),
+          isEmpty,
+          reason: '${entry.key} must stay state-container and replanning free.',
+        );
+      }
+      for (final member in const {
+        'commandFor',
+        'targetFor',
+        'moveUnit',
+        'keepPosture',
+        'toDomainState',
+        'toPersistentState',
+      }) {
+        expect(
+          movementNamedMemberReferenceCountsByPath(continuationSources, member),
+          isEmpty,
+          reason: '$member must not recreate the old continuation executor.',
+        );
+      }
+    },
+  );
 
   test('result guard rejects a borrowed mutable event list', () {
     final sources = productionDartSources();

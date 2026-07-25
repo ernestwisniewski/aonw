@@ -148,48 +148,48 @@ abstract final class _MovementTurnResetProcessor {
       );
     }
 
+    final autoInput = withDiscoveredDiplomaticContacts(
+      state.copyWith(units: workingUnits, fogOfWar: workingFog),
+    );
     final autoExplore = _AutoExploreProcessor.advanceForNewTurn(
-      state: withDiscoveredDiplomaticContacts(
-        state.copyWith(units: workingUnits, fogOfWar: workingFog),
-      ),
+      state: autoInput,
       mapView: mapView,
       resetPlayerId: playerId,
       fogOfWarService: fogOfWarService,
     );
-    if (autoExplore.changed) {
-      workingUnits = autoExplore.units;
-      workingFog = autoExplore.fogOfWar;
-      animationEffects.addAll(autoExplore.uiEffects);
-    }
-
+    workingUnits = autoExplore.units;
+    workingFog = autoExplore.fogOfWar;
+    _TurnProjection.apply(animationEffects, autoExplore.executions);
+    final interaction = autoExplore.interaction;
+    final contactsChanged = autoInput.diplomacy != state.diplomacy;
+    final interactionChanged = _TurnProjection.changed(state, interaction);
     final changed =
         mpChanged ||
         animationEffects.isNotEmpty ||
         pathsInvalidated ||
+        _TurnProjection.hasContinuationChanged(
+          contactsChanged,
+          interactionChanged,
+        ) ||
         autoExplore.changed;
     if (!changed) {
-      return GameStateTransition(
-        state: _refreshSelectedUnit(
-          state,
-          currentUnits,
-          mapView,
-          resetPlayerId: playerId,
-        ),
+      return _TurnProjection.unchangedTurn(
+        state: state,
+        currentUnits: currentUnits,
+        mapView: mapView,
+        playerId: playerId,
       );
     }
-
-    final next = _refreshSelectedUnit(
-      MovementReducer._clearMoveTargeting(
-        withDiscoveredDiplomaticContacts(
-          state.copyWith(units: workingUnits, fogOfWar: workingFog),
-        ),
-      ),
-      workingUnits,
-      mapView,
-      resetPlayerId: playerId,
+    return _TurnProjection.project(
+      state: state,
+      units: workingUnits,
+      fogOfWar: workingFog,
+      autoExplore: autoExplore,
+      animationEffects: animationEffects,
+      interactionChanged: interactionChanged,
+      mapView: mapView,
+      playerId: playerId,
     );
-
-    return GameStateTransition(state: next, uiEffects: animationEffects);
   }
 
   static _QueuedPathReplan _replanQueuedPath({
@@ -294,6 +294,89 @@ abstract final class _MovementTurnResetProcessor {
     }
 
     return next;
+  }
+}
+
+abstract final class _TurnProjection {
+  static void apply(
+    List<AnimateUnitMoveEffect> effects,
+    List<MovementCommandExecution> executions,
+  ) {
+    effects.addAll(animationEffectsFor(executions));
+  }
+
+  static List<AnimateUnitMoveEffect> animationEffectsFor(
+    List<MovementCommandExecution> executions,
+  ) {
+    return [
+      for (final execution in executions)
+        AnimateUnitMoveEffect(
+          unitId: execution.unitId,
+          fromCol: execution.fromCol,
+          fromRow: execution.fromRow,
+          steps: execution.steps,
+        ),
+    ];
+  }
+
+  static bool changed(GameState state, PersistedInteractionState interaction) {
+    return interaction.cityFoundingDraft != state.cityFoundingDraft ||
+        interaction.pendingAction != state.pendingAction;
+  }
+
+  static bool hasContinuationChanged(
+    bool contactsChanged,
+    bool interactionChanged,
+  ) => contactsChanged || interactionChanged;
+
+  static GameStateTransition unchangedTurn({
+    required GameState state,
+    required List<GameUnit> currentUnits,
+    required MapTraversalView mapView,
+    required String? playerId,
+  }) {
+    return GameStateTransition(
+      state: _MovementTurnResetProcessor._refreshSelectedUnit(
+        state,
+        currentUnits,
+        mapView,
+        resetPlayerId: playerId,
+      ),
+    );
+  }
+
+  static GameStateTransition project({
+    required GameState state,
+    required List<GameUnit> units,
+    required FogOfWarState fogOfWar,
+    required TurnAutoExploreAdvance autoExplore,
+    required List<AnimateUnitMoveEffect> animationEffects,
+    required bool interactionChanged,
+    required MapTraversalView mapView,
+    required String? playerId,
+  }) {
+    var projected = state.copyWith(
+      units: units,
+      fogOfWar: fogOfWar,
+      diplomacy: autoExplore.diplomacy,
+    );
+    if (interactionChanged) {
+      projected = projected.copyWithInteraction(
+        cityFoundingDraft: autoExplore.interaction.cityFoundingDraft,
+        pendingAction: autoExplore.interaction.pendingAction,
+      );
+    }
+    final next = _MovementTurnResetProcessor._refreshSelectedUnit(
+      MovementReducer._clearMoveTargeting(projected),
+      units,
+      mapView,
+      resetPlayerId: playerId,
+    );
+    return GameStateTransition(
+      state: next,
+      events: autoExplore.events,
+      uiEffects: animationEffects,
+    );
   }
 }
 

@@ -9,7 +9,7 @@ part 'support/turn_auto_explore_continuation_characterization.dart';
 
 void main() {
   group('turn auto-explore drift characterization', () {
-    test('legacy enters a known foreign city regardless of diplomacy', () {
+    test('continuation stops before a known foreign city at peace and war', () {
       final scout = _autoExploringScout(movementPoints: 1);
       const foreignCity = GameCity(
         id: 'foreign_city',
@@ -19,79 +19,84 @@ void main() {
       );
       final fog = _fog(discovered: _lineHexes(2), visible: _lineHexes(2));
       final map = _map(cols: 3);
-      final peace = _runLegacyAndKernel(
+      final peace = _advance(
         units: [scout],
         cities: const [foreignCity],
         fogOfWar: fog,
         mapData: map,
       );
-      final war = _runLegacyAndKernel(
+      final warDiplomacy = _warDiplomacy();
+      final war = _advance(
         units: [scout],
         cities: const [foreignCity],
         fogOfWar: fog,
-        diplomacy: _warDiplomacy(),
+        diplomacy: warDiplomacy,
         mapData: map,
       );
 
-      expect(peace.legacy.changed, isTrue);
-      expect(
-        peace.legacy.units.map(_autoExploreTurnUnitSnapshot),
-        war.legacy.units.map(_autoExploreTurnUnitSnapshot),
-      );
-      expect(
-        (peace.legacy.units.single.col, peace.legacy.units.single.row),
-        (1, 0),
-      );
-      expect(peace.legacy.units.single.queuedPath?.targetCol, 2);
-      expect(peace.legacy.units.single.posture, UnitPosture.autoExploring);
-      expect(peace.kernel.accepted, isTrue);
-      expect(peace.kernel.state.units.single.posture, UnitPosture.active);
-      expect(peace.kernel.execution, isNull);
-      expect(war.kernel.accepted, isTrue);
-      expect(
-        (war.kernel.state.units.single.col, war.kernel.state.units.single.row),
-        (0, 0),
-      );
-      expect(war.kernel.state.units.single.posture, UnitPosture.active);
-      expect(war.kernel.events, isEmpty);
-      expect(war.kernel.execution, isNull);
+      const stoppedScout = 'turn_auto_scout:0,0;mp=1;target=-;steps=-';
+      expect(peace.changed, isTrue);
+      expect(peace.units.map(_autoExploreTurnUnitSnapshot), [stoppedScout]);
+      expect(peace.units.single.posture, UnitPosture.active);
+      expect(peace.fogOfWar, same(fog));
+      expect(peace.diplomacy, DiplomacyState.empty);
+      expect(peace.interaction, PersistedInteractionState.empty);
+      expect(peace.events, isEmpty);
+      expect(peace.executions, isEmpty);
+
+      expect(war.changed, isTrue);
+      expect(war.units.map(_autoExploreTurnUnitSnapshot), [stoppedScout]);
+      expect(war.units.single.posture, UnitPosture.active);
+      expect(war.fogOfWar, same(fog));
+      expect(war.diplomacy, warDiplomacy);
+      expect(war.interaction, PersistedInteractionState.empty);
+      expect(war.events, isEmpty);
+      expect(war.executions, isEmpty);
     });
 
-    test('enters terrain beyond per-turn movement capacity', () {
-      final scout = _autoExploringScout(movementPoints: 2);
-      final map = _map(
-        cols: 2,
-        terrainOverrides: const {
-          1: [TerrainType.snow, TerrainType.forest, TerrainType.hills],
-        },
-      );
-      final target = map.tileAt(1, 0)!;
-      final targetCost = UnitMovementCostRules.costToEnterTile(
-        target,
-        unitType: scout.type,
-      );
-      final capacity = UnitMovementBalance.maxMovementPointsFor(
-        type: scout.type,
-        carriedArtifactId: scout.carriedArtifactId,
-      );
-      expect(targetCost.value, greaterThan(capacity));
+    test(
+      'rejects terrain beyond per-turn movement capacity like the resolver',
+      () {
+        final scout = _autoExploringScout(movementPoints: 2);
+        final map = _map(
+          cols: 2,
+          terrainOverrides: const {
+            1: [TerrainType.snow, TerrainType.forest, TerrainType.hills],
+          },
+        );
+        final target = map.tileAt(1, 0)!;
+        final targetCost = UnitMovementCostRules.costToEnterTile(
+          target,
+          unitType: scout.type,
+        );
+        final capacity = UnitMovementBalance.maxMovementPointsFor(
+          type: scout.type,
+          carriedArtifactId: scout.carriedArtifactId,
+        );
+        expect(targetCost.value, greaterThan(capacity));
 
-      final pair = _runLegacyAndKernel(
-        units: [scout],
-        fogOfWar: _originOnlyFog(),
-        mapData: map,
-      );
-      final moved = pair.legacy.units.single;
-
-      expect(pair.legacy.changed, isTrue);
-      expect((moved.col, moved.movementPoints), (1, 0));
-      expect(moved.posture, UnitPosture.autoExploring);
-      expect(pair.kernel.accepted, isFalse);
-      expect(pair.kernel.reason, 'unit_movement_capacity_insufficient');
-      expect(pair.kernel.state, same(pair.kernelInput));
-      expect(pair.kernel.events, isEmpty);
-      expect(pair.kernel.execution, isNull);
-    });
+        final pair = _runLegacyAndKernel(
+          units: [scout],
+          fogOfWar: _originOnlyFog(),
+          mapData: map,
+        );
+        expect(pair.legacy.changed, isFalse);
+        expect(pair.legacy.units, pair.kernelInput.units);
+        expect(pair.legacy.fogOfWar, same(pair.kernelInput.fogOfWar));
+        expect(
+          pair.legacy.diplomacy,
+          same(pair.kernelInput.runtimeState.diplomacy),
+        );
+        expect(pair.legacy.interaction, same(PersistedInteractionState.empty));
+        expect(pair.legacy.events, isEmpty);
+        expect(pair.legacy.executions, isEmpty);
+        expect(pair.kernel.accepted, isFalse);
+        expect(pair.kernel.reason, 'unit_movement_capacity_insufficient');
+        expect(pair.kernel.state, same(pair.kernelInput));
+        expect(pair.kernel.events, isEmpty);
+        expect(pair.kernel.execution, isNull);
+      },
+    );
 
     test('hidden full-state blocker changes the chosen destination', () {
       final scout = _autoExploringScout(movementPoints: 2);
@@ -136,7 +141,7 @@ void main() {
       );
     });
 
-    test('no target keeps auto-explore posture and reports no change', () {
+    test('no target finishes continuation like the resolver', () {
       final scout = _autoExploringScout(movementPoints: 2);
       final inputFog = _originOnlyFog();
 
@@ -146,14 +151,15 @@ void main() {
         mapData: _map(cols: 1),
       );
 
-      expect(pair.legacy.changed, isFalse);
-      expect(pair.legacy.units.single, same(scout));
-      expect(pair.legacy.units.single.posture, UnitPosture.autoExploring);
+      expect(pair.legacy.changed, isTrue);
+      expect(pair.legacy.units.single.posture, UnitPosture.active);
       expect(pair.legacy.fogOfWar, same(inputFog));
-      expect(pair.kernel.accepted, isTrue);
-      expect(pair.kernel.state.units.single.posture, UnitPosture.active);
-      expect(pair.kernel.events, isEmpty);
-      expect(pair.kernel.execution, isNull);
+      expect(
+        pair.legacy.units.map(_autoExploreTurnUnitSnapshot),
+        pair.kernel.state.units.map(_autoExploreTurnUnitSnapshot),
+      );
+      expect(pair.legacy.events, pair.kernel.events);
+      expect(pair.legacy.executions, isEmpty);
     });
 
     test('finishes a queued path before choosing the next automatic route', () {
@@ -174,6 +180,7 @@ void main() {
           cities: const [],
           diplomacy: DiplomacyState.empty,
           fogOfWar: _originOnlyFog(),
+          interaction: PersistedInteractionState.empty,
         ),
         context: TurnMovementContext(
           playerIds: const {_playerId},
@@ -239,11 +246,11 @@ void main() {
       );
       expect(result.units.map(_autoExploreTurnUnitSnapshot), [
         'first_scout:2,0;mp=0;target=3,0;steps=0,0|1,0|2,0|3,0',
-        'second_scout:2,1;mp=0;target=5,0;steps=0,1|1,0|2,1|3,0|4,0|5,0',
+        'second_scout:2,1;mp=0;target=5,0;steps=0,1|1,0|2,1|3,1|4,1|5,0',
       ]);
       expect(
         _sharedQueuedPathCoordinates(result.units[0], result.units[1]),
-        const ['1,0', '3,0'],
+        const ['1,0'],
       );
       expect(
         result.fogOfWar
@@ -296,12 +303,17 @@ TurnAutoExploreAdvance _advance({
   required FogOfWarState fogOfWar,
   required MapTraversalView mapData,
   List<GameCity> cities = const [],
+  DiplomacyState diplomacy = DiplomacyState.empty,
+  PersistedInteractionState interaction = PersistedInteractionState.empty,
 }) {
   return TurnAutoExploreAdvancer.advance(
     units: units,
     fogOfWar: fogOfWar,
+    diplomacy: diplomacy,
+    interaction: interaction,
     cities: cities,
     playerIds: const {_playerId},
+    phaseKnownPlayerIds: const {_playerId, 'player_2'},
     mapData: mapData,
     fogOfWarService: const FogOfWarService(),
   );

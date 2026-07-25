@@ -1,163 +1,164 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command/game_command.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
-import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
-import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/auto_explore_command_phase.dart';
+import 'package:aonw_core/game/domain/movement/auto_explore_command_resolver.dart';
+import 'package:aonw_core/game/domain/movement/auto_explore_command_result.dart';
+import 'package:aonw_core/game/domain/movement/auto_explore_command_state.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
+import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
+import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class TurnAutoExploreAdvance {
-  const TurnAutoExploreAdvance({
+  factory TurnAutoExploreAdvance({
+    required List<GameUnit> units,
+    required FogOfWarState fogOfWar,
+    required DiplomacyState diplomacy,
+    required PersistedInteractionState interaction,
+    bool changed = false,
+    Iterable<GameEvent> events = const [],
+    Iterable<MovementCommandExecution> executions = const [],
+  }) {
+    return TurnAutoExploreAdvance._(
+      units: units,
+      fogOfWar: fogOfWar,
+      diplomacy: diplomacy,
+      interaction: interaction,
+      changed: changed,
+      events: events.isEmpty ? const [] : List.unmodifiable(events),
+      executions: executions.isEmpty ? const [] : List.unmodifiable(executions),
+    );
+  }
+
+  const TurnAutoExploreAdvance._({
     required this.units,
     required this.fogOfWar,
-    this.changed = false,
+    required this.diplomacy,
+    required this.interaction,
+    required this.changed,
+    required this.events,
+    required this.executions,
   });
 
   final List<GameUnit> units;
   final FogOfWarState fogOfWar;
+  final DiplomacyState diplomacy;
+  final PersistedInteractionState interaction;
   final bool changed;
+  final List<GameEvent> events;
+  final List<MovementCommandExecution> executions;
 }
 
 abstract final class TurnAutoExploreAdvancer {
   static TurnAutoExploreAdvance advance({
     required List<GameUnit> units,
     required FogOfWarState fogOfWar,
+    required DiplomacyState diplomacy,
+    required PersistedInteractionState interaction,
     required List<GameCity> cities,
     required Set<String> playerIds,
+    required Set<String> phaseKnownPlayerIds,
     required MapTraversalView mapData,
     required FogOfWarService fogOfWarService,
   }) {
-    var currentUnits = List<GameUnit>.of(units);
+    var currentUnits = units;
     var currentFog = fogOfWar;
+    var currentDiplomacy = diplomacy;
+    var currentInteraction = interaction;
     var changed = false;
+    final events = <GameEvent>[];
+    final executions = <MovementCommandExecution>[];
+
     for (var index = 0; index < currentUnits.length; index++) {
       final unit = currentUnits[index];
       if (!_canAdvance(unit, playerIds)) continue;
-      final command = const ScoutAutoExplorePlanner().commandFor(
+      final result = _resolveContinuation(
         unit: unit,
-        mapData: mapData,
-        units: currentUnits,
-        fogOfWar: currentFog,
-      );
-      if (command == null) continue;
-      final moved = _moveUnit(
-        unit: unit,
-        command: command,
-        units: currentUnits,
-        mapData: mapData,
-      );
-      if (moved == unit) continue;
-      currentUnits = _replaceUnit(currentUnits, moved);
-      currentFog = _recomputeFog(
-        current: currentFog,
-        units: currentUnits,
-        cities: cities,
+        state: _continuationState(
+          units: currentUnits,
+          cities: cities,
+          fogOfWar: currentFog,
+          diplomacy: currentDiplomacy,
+          playerIds: phaseKnownPlayerIds,
+          interaction: currentInteraction,
+        ),
         mapData: mapData,
         fogOfWarService: fogOfWarService,
       );
-      changed = true;
+      if (!result.accepted) continue;
+
+      changed =
+          changed ||
+          !identical(result.units, currentUnits) ||
+          !identical(result.fogOfWar, currentFog) ||
+          !identical(result.diplomacy, currentDiplomacy) ||
+          !identical(result.interaction, currentInteraction);
+      currentUnits = result.units;
+      currentFog = result.fogOfWar;
+      currentDiplomacy = result.diplomacy;
+      currentInteraction = result.interaction;
+      events.addAll(result.events);
+      if (result.execution case final execution?) executions.add(execution);
     }
     return TurnAutoExploreAdvance(
       units: currentUnits,
       fogOfWar: currentFog,
+      diplomacy: currentDiplomacy,
+      interaction: currentInteraction,
       changed: changed,
+      events: events,
+      executions: executions,
+    );
+  }
+
+  static AutoExploreCommandState _continuationState({
+    required List<GameUnit> units,
+    required List<GameCity> cities,
+    required FogOfWarState fogOfWar,
+    required DiplomacyState diplomacy,
+    required Set<String> playerIds,
+    required PersistedInteractionState interaction,
+  }) {
+    return AutoExploreCommandState(
+      movement: MovementCommandState(
+        units: units,
+        cities: cities,
+        fogOfWar: fogOfWar,
+        diplomacy: diplomacy,
+        playerIds: playerIds,
+      ),
+      interaction: interaction,
+    );
+  }
+
+  static AutoExploreCommandResult _resolveContinuation({
+    required GameUnit unit,
+    required AutoExploreCommandState state,
+    required MapTraversalView mapData,
+    required FogOfWarService fogOfWarService,
+  }) {
+    return AutoExploreCommandResolver(fogOfWarService: fogOfWarService).resolve(
+      state: state,
+      command: AutoExploreUnitCommand(unit.id),
+      actorPlayerId: unit.ownerPlayerId,
+      mapData: mapData,
+      phase: AutoExploreCommandPhase.continuation,
     );
   }
 
   static bool _canAdvance(GameUnit unit, Set<String> playerIds) {
     return playerIds.contains(unit.ownerPlayerId) &&
+        unit.type == GameUnitType.scout &&
         unit.isAutoExploring &&
         unit.movementPoints > 0 &&
         unit.queuedPath == null &&
         !unit.isWorking &&
         !unit.isFortified;
-  }
-
-  static GameUnit _moveUnit({
-    required GameUnit unit,
-    required MoveUnitCommand command,
-    required List<GameUnit> units,
-    required MapTraversalView mapData,
-  }) {
-    final targetTile = mapData.tileAt(command.targetCol, command.targetRow);
-    if (targetTile == null) return unit;
-    final plan = UnitMovementPathfinder(
-      mapData: mapData,
-      units: units,
-    ).plan(unit: unit, targetTile: targetTile);
-    if (plan == null) return unit;
-    return _moveAlongPlan(unit, plan);
-  }
-
-  static GameUnit _moveAlongPlan(GameUnit unit, UnitMovementPlan plan) {
-    final reachable = plan.canMoveNow;
-    final destination = reachable
-        ? plan.steps.last
-        : plan.furthestReachableStep;
-    if (destination == null ||
-        (destination.col == unit.col && destination.row == unit.row)) {
-      return unit
-          .copyWith(posture: UnitPosture.autoExploring)
-          .copyWithQueuedPath(reachable ? null : _queuedPathFor(plan));
-    }
-    final moved = unit.copyWith(
-      col: destination.col,
-      row: destination.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destination),
-      posture: UnitPosture.autoExploring,
-    );
-    return reachable
-        ? moved.copyWithQueuedPath(null)
-        : moved.copyWithQueuedPath(_queuedPathFor(plan));
-  }
-
-  static FogOfWarState _recomputeFog({
-    required FogOfWarState current,
-    required List<GameUnit> units,
-    required List<GameCity> cities,
-    required MapTraversalView mapData,
-    required FogOfWarService fogOfWarService,
-  }) {
-    return fogOfWarService.recompute(
-      current: current,
-      mapData: mapData,
-      playerIds: _liveKnownPlayerIds(
-        cities: cities,
-        fogOfWar: current,
-        units: units,
-      ),
-      units: units,
-      cities: cities,
-    );
-  }
-
-  static Set<String> _liveKnownPlayerIds({
-    required Iterable<GameCity> cities,
-    required FogOfWarState fogOfWar,
-    required Iterable<GameUnit> units,
-  }) {
-    return {
-      ...fogOfWar.playerIds,
-      for (final unit in units) unit.ownerPlayerId,
-      for (final city in cities) city.ownerPlayerId,
-    };
-  }
-
-  static QueuedMovePath _queuedPathFor(UnitMovementPlan plan) {
-    return QueuedMovePath(
-      targetCol: plan.targetCol,
-      targetRow: plan.targetRow,
-      steps: plan.steps,
-    );
-  }
-
-  static List<GameUnit> _replaceUnit(List<GameUnit> units, GameUnit updated) {
-    return [
-      for (final unit in units)
-        if (unit.id == updated.id) updated else unit,
-    ];
   }
 }

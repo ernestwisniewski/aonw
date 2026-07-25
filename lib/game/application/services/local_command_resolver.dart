@@ -166,10 +166,7 @@ class LocalCommandResolver {
     final movementDelta = result.movementDelta;
     final uiEffects = movementDelta == null
         ? const <UiEffect>[]
-        : QueuedMovementEffectBuilder.fromUnitDelta(
-            beforeUnits: movementDelta.beforeUnits,
-            afterUnits: movementDelta.afterUnits,
-          );
+        : QueuedMovementEffectBuilder.fromExecutions(movementDelta.executions);
     final legacyResult = snapshotAdapter.toLegacy(result.snapshot);
     final nextState =
         SaveSnapshot.fromPersistentState(

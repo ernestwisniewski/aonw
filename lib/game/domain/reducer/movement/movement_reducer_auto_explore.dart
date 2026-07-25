@@ -78,101 +78,25 @@ abstract final class _AutoExploreProcessor {
     );
   }
 
-  static _AutoExploreTurnResult advanceForNewTurn({
+  static TurnAutoExploreAdvance advanceForNewTurn({
     required GameState state,
     required MapTraversalView mapView,
     required String? resetPlayerId,
     required FogOfWarService fogOfWarService,
   }) {
-    var current = state;
-    final effects = <AnimateUnitMoveEffect>[];
-    var changed = false;
-
-    for (var i = 0; i < current.units.length; i++) {
-      final unit = current.units[i];
-      if (resetPlayerId != null && unit.ownerPlayerId != resetPlayerId) {
-        continue;
-      }
-      if (!unit.isAutoExploring) continue;
-      if (unit.movementPoints <= 0 ||
-          unit.queuedPath != null ||
-          unit.isWorking ||
-          unit.isFortified) {
-        continue;
-      }
-
-      final context = GameCommandContext(actorPlayerId: unit.ownerPlayerId);
-      final command = _commandFor(state: current, unit: unit, mapView: mapView);
-      if (command == null) continue;
-
-      final moved = MovementReducer.moveUnit(
-        current,
-        command,
-        mapView,
-        context: context,
-        fogOfWarService: fogOfWarService,
-        visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
-      );
-      final kept = keepPosture(moved, unit.id, mapView);
-      current = kept.state;
-      effects.addAll(kept.uiEffects.whereType<AnimateUnitMoveEffect>());
-      changed = true;
-    }
-
-    return _AutoExploreTurnResult(
-      units: current.units,
-      fogOfWar: current.fogOfWar,
-      uiEffects: effects,
-      changed: changed,
-    );
-  }
-
-  static MoveUnitCommand? _commandFor({
-    required GameState state,
-    required GameUnit unit,
-    required MapTraversalView mapView,
-  }) {
-    return const ScoutAutoExplorePlanner().commandFor(
-      unit: unit,
-      mapData: mapView,
+    final playerIds = resetPlayerId == null
+        ? knownPlayerIds(state)
+        : {resetPlayerId};
+    return TurnAutoExploreAdvancer.advance(
       units: state.units,
+      cities: state.cities,
+      diplomacy: state.diplomacy,
       fogOfWar: state.fogOfWar,
+      interaction: _persistedUnitActionInteraction(state),
+      playerIds: playerIds,
+      phaseKnownPlayerIds: knownPlayerIds(state),
+      mapData: mapView,
+      fogOfWarService: fogOfWarService,
     );
   }
-
-  static GameStateTransition keepPosture(
-    GameStateTransition transition,
-    String unitId,
-    MapTileLookup mapTiles,
-  ) {
-    final moved = transition.state.unitById(unitId);
-    if (moved == null) return transition;
-
-    final exploring = moved.copyWith(posture: UnitPosture.autoExploring);
-    var next = transition.state.copyWith(
-      units: replaceUnit(transition.state.units, exploring),
-    );
-    if (next.selectedUnitId == unitId) {
-      next = MovementReducer._selectUpdatedUnit(next, exploring, mapTiles);
-    }
-    return GameStateTransition(
-      state: next,
-      events: transition.events,
-      uiEffects: transition.uiEffects,
-    );
-  }
-}
-
-class _AutoExploreTurnResult {
-  final List<GameUnit> units;
-  final FogOfWarState fogOfWar;
-  final List<AnimateUnitMoveEffect> uiEffects;
-  final bool changed;
-
-  const _AutoExploreTurnResult({
-    required this.units,
-    required this.fogOfWar,
-    required this.uiEffects,
-    required this.changed,
-  });
 }

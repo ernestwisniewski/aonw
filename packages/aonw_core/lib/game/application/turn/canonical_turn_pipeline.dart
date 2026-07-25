@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/application/turn/canonical_turn_suffix.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_combat_resolver.dart';
@@ -44,11 +45,14 @@ final class TurnMovementDelta {
   TurnMovementDelta({
     required Iterable<GameUnit> beforeUnits,
     required Iterable<GameUnit> afterUnits,
+    Iterable<MovementCommandExecution> executions = const [],
   }) : beforeUnits = List.unmodifiable(beforeUnits),
-       afterUnits = List.unmodifiable(afterUnits);
+       afterUnits = List.unmodifiable(afterUnits),
+       executions = List.unmodifiable(executions);
 
   final List<GameUnit> beforeUnits;
   final List<GameUnit> afterUnits;
+  final List<MovementCommandExecution> executions;
 }
 
 /// Canonical output of simultaneous turn finalization.
@@ -107,6 +111,7 @@ abstract final class CanonicalTurnPipeline {
       movementDelta: TurnMovementDelta(
         beforeUnits: suffix.beforeMovementUnits,
         afterUnits: suffix.afterMovementUnits,
+        executions: suffix.movementExecutions,
       ),
     );
   }

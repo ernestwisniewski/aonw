@@ -13,10 +13,8 @@ final class TurnMovementContext {
 
   final Set<String> playerIds;
 
-  /// Player scope used for the recompute between queued and automatic moves.
-  ///
-  /// Auto-exploration deliberately derives a narrower, live scope from fog,
-  /// units, and cities after every move.
+  /// Stable caller-supplied player scope used for the post-queued fog/contact
+  /// recompute and forwarded through each auto-explore continuation.
   final Set<String> phaseKnownPlayerIds;
   final MapTraversalView mapData;
   final FogOfWarService fogOfWarService;

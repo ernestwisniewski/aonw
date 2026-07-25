@@ -1,6 +1,9 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 
 /// Persistence-neutral state used by the movement phase of a turn.
@@ -10,18 +13,41 @@ final class TurnMovementState {
     required this.cities,
     required this.diplomacy,
     required this.fogOfWar,
+    required this.interaction,
   });
 
   final List<GameUnit> units;
   final List<GameCity> cities;
   final DiplomacyState diplomacy;
   final FogOfWarState fogOfWar;
+  final PersistedInteractionState interaction;
 }
 
 /// Persistence-neutral output of the movement phase of a turn.
 final class TurnMovementResult {
-  const TurnMovementResult({required this.state, this.changed = false});
+  factory TurnMovementResult({
+    required TurnMovementState state,
+    bool changed = false,
+    Iterable<GameEvent> events = const [],
+    Iterable<MovementCommandExecution> executions = const [],
+  }) {
+    return TurnMovementResult._(
+      state: state,
+      changed: changed,
+      events: events.isEmpty ? const [] : List.unmodifiable(events),
+      executions: executions.isEmpty ? const [] : List.unmodifiable(executions),
+    );
+  }
+
+  const TurnMovementResult._({
+    required this.state,
+    required this.changed,
+    required this.events,
+    required this.executions,
+  });
 
   final TurnMovementState state;
   final bool changed;
+  final List<GameEvent> events;
+  final List<MovementCommandExecution> executions;
 }

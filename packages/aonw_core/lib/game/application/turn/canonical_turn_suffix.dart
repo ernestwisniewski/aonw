@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_movement_processor.dart';
@@ -43,14 +44,17 @@ final class CanonicalTurnSuffixResult {
     required Iterable<GameEvent> events,
     required Iterable<GameUnit> beforeMovementUnits,
     required Iterable<GameUnit> afterMovementUnits,
+    required Iterable<MovementCommandExecution> movementExecutions,
   }) : events = List.unmodifiable(events),
        beforeMovementUnits = List.unmodifiable(beforeMovementUnits),
-       afterMovementUnits = List.unmodifiable(afterMovementUnits);
+       afterMovementUnits = List.unmodifiable(afterMovementUnits),
+       movementExecutions = List.unmodifiable(movementExecutions);
 
   final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
   final List<GameUnit> beforeMovementUnits;
   final List<GameUnit> afterMovementUnits;
+  final List<MovementCommandExecution> movementExecutions;
 }
 
 /// Canonical movement and turn finalization after the legacy economy island.
@@ -61,6 +65,7 @@ abstract final class CanonicalTurnSuffix {
     final beforeMovementUnits = request.snapshot.domain.units;
     final movement = DomainTurnMovementProcessor.resetForPlayers(
       state: request.snapshot.domain,
+      interaction: request.snapshot.interaction,
       playerIds: request.playerIds,
       mapData: request.mapView,
       fogOfWarService: request.fogOfWarService,
@@ -86,6 +91,7 @@ abstract final class CanonicalTurnSuffix {
       snapshot: _snapshotAfterTurn(
         request: request,
         state: movement.state,
+        interaction: movement.interaction,
         diplomacy: diplomacy,
         victory: victory,
         skippedPlayerIds: skippedPlayerIds,
@@ -96,9 +102,11 @@ abstract final class CanonicalTurnSuffix {
         diplomacy: diplomacy,
         victory: victory,
         skippedPlayerIds: skippedPlayerIds,
+        movementEvents: movement.events,
       ),
       beforeMovementUnits: beforeMovementUnits,
       afterMovementUnits: movement.state.units,
+      movementExecutions: movement.executions,
     );
   }
 
@@ -124,6 +132,7 @@ abstract final class CanonicalTurnSuffix {
   static CanonicalGameSnapshot _snapshotAfterTurn({
     required CanonicalTurnSuffixRequest request,
     required DomainState state,
+    required PersistedInteractionState interaction,
     required DiplomacyTurnResolution diplomacy,
     required TurnVictoryProgressResult victory,
     required List<String> skippedPlayerIds,
@@ -143,6 +152,7 @@ abstract final class CanonicalTurnSuffix {
         savedAt: savedAt,
       ),
       metadata: request.snapshot.metadata.copyWith(savedAtUtc: savedAt),
+      interaction: interaction,
     );
   }
 
@@ -185,6 +195,7 @@ abstract final class CanonicalTurnSuffix {
     required DiplomacyTurnResolution diplomacy,
     required TurnVictoryProgressResult victory,
     required List<String> skippedPlayerIds,
+    required Iterable<GameEvent> movementEvents,
   }) {
     final turn = request.snapshot.domain.turn;
     return [
@@ -193,6 +204,7 @@ abstract final class CanonicalTurnSuffix {
       AllPlayersSubmittedEvent(turn: turn, playerIds: request.playerIds),
       ...request.combatEvents,
       ...request.economyEvents,
+      ...movementEvents,
       ...diplomacy.events,
       ...victory.dominationEvents,
       for (final playerId in request.playerIds)

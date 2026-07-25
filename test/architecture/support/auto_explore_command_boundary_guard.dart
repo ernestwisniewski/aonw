@@ -21,6 +21,9 @@ const autoExploreLocalCallSite =
     'lib/game/domain/reducer/movement/movement_reducer_auto_explore.dart';
 const autoExploreServerCallSite =
     'server/lib/src/multiplayer/server_command_reducer_auto_explore.dart';
+const autoExploreTurnContinuationCallSite =
+    'packages/aonw_core/lib/game/domain/turn/movement/'
+    'turn_auto_explore_advancer.dart';
 
 const _autoExploreResultFields = {
   'accepted': 'bool',

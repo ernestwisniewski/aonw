@@ -6,9 +6,11 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,10 +74,95 @@ void main() {
         '3,0:1/2',
         '4,0:1/3',
       ]);
+      expect(result.events, hasLength(1));
+      expect(
+        result.events.single,
+        isA<UnitMovedEvent>()
+            .having((event) => event.unitId, 'unitId', 'turn_auto_scout')
+            .having((event) => event.fromCol, 'fromCol', 1)
+            .having((event) => event.fromRow, 'fromRow', 0)
+            .having((event) => event.toCol, 'toCol', 3)
+            .having((event) => event.toRow, 'toRow', 0),
+      );
+    });
+
+    test('clears only interaction owned by the continued scout', () {
+      final scout = _autoExploringScout(movementPoints: 0);
+      final unrelatedDraft = CityFoundingDraft(
+        unitId: 'other_unit',
+        ownerPlayerId: _playerId,
+        center: const CityHex(col: 7, row: 7),
+      );
+
+      final result = _reset(
+        units: [scout],
+        fogOfWar: _originOnlyFog(),
+        mapData: _map(cols: 3),
+        interaction: GameInteractionState(
+          cityFoundingDraft: unrelatedDraft,
+          pendingAction: const PendingUnitTurnSkip(
+            ownerPlayerId: _playerId,
+            unitId: 'turn_auto_scout',
+            restoreMovementPoints: 2,
+          ),
+        ),
+      );
+
+      expect(result.state.pendingAction, isNull);
+      expect(result.state.cityFoundingDraft, unrelatedDraft);
+      expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
       expect(result.events, isEmpty);
     });
 
-    test('plans in order but loses reserved route exclusions', () {
+    test(
+      'passes queued-movement contact discovery into continuation and final diplomacy',
+      () {
+        final scout = _autoExploringScout(movementPoints: 0).copyWithQueuedPath(
+          QueuedMovePath(
+            targetCol: 1,
+            targetRow: 0,
+            steps: const [
+              UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            ],
+          ),
+        );
+        final opponent = GameUnit(
+          id: 'contact_unit',
+          ownerPlayerId: _opponentId,
+          type: GameUnitType.warrior,
+          name: 'Contact unit',
+          col: 3,
+          row: 0,
+        );
+
+        final result = _reset(
+          units: [scout, opponent],
+          fogOfWar: _originOnlyFog(),
+          mapData: _map(cols: 4),
+        );
+
+        expect(
+          _unitSnapshot(result.state.units.first),
+          'turn_auto_scout:1,0;mp=2;target=-;steps=-',
+        );
+        expect(result.state.units.first.posture, UnitPosture.active);
+        expect(
+          result.uiEffects.whereType<AnimateUnitMoveEffect>().map(
+            _effectSnapshot,
+          ),
+          ['turn_auto_scout:0,0->1,0;steps=1,0:1/1'],
+        );
+        expect(result.events, isEmpty);
+        expect(result.state.diplomacy.contactKeys, {'player_1|player_2'});
+        expect(
+          result.state.diplomacy.hasContact(_playerId, _opponentId),
+          isTrue,
+        );
+      },
+    );
+
+    test('plans in order with reserved route exclusions', () {
       final first = _autoExploringScout(
         id: 'first_scout',
         row: 0,
@@ -101,7 +188,7 @@ void main() {
         'first_scout:3,0;mp=0;target=6,0;'
             'steps=0,0|1,0|2,0|3,0|4,0|5,0|6,0',
         'second_scout:3,1;mp=0;target=7,0;'
-            'steps=0,1|1,0|2,1|3,1|4,1|5,0|6,0|7,0',
+            'steps=0,1|1,0|2,1|3,1|4,1|5,1|6,1|7,0',
       ]);
       expect(
         result.uiEffects.whereType<AnimateUnitMoveEffect>().map(
@@ -139,39 +226,45 @@ void main() {
           .where((step) => step.col > result.state.units.last.col)
           .map((step) => '${step.col},${step.row}')
           .toSet();
-      expect(firstFutureRoute.intersection(secondFutureRoute), {'5,0', '6,0'});
-      expect(result.events, isEmpty);
+      expect(firstFutureRoute.intersection(secondFutureRoute), isEmpty);
+      expect(result.events, hasLength(2));
+      expect(
+        result.events.whereType<UnitMovedEvent>().map(
+          (event) => (
+            event.unitId,
+            event.fromCol,
+            event.fromRow,
+            event.toCol,
+            event.toRow,
+          ),
+        ),
+        const [('first_scout', 0, 0, 3, 0), ('second_scout', 0, 1, 3, 1)],
+      );
     });
 
-    test(
-      'no target retains local posture while core continuation finishes',
-      () {
-        final input = _autoExploringScout(movementPoints: 0);
-        final map = _map(cols: 1);
+    test('no target finishes local and core continuation posture', () {
+      final input = _autoExploringScout(movementPoints: _fullScoutMovement);
+      final fog = _originOnlyFog();
+      final map = _map(cols: 1);
 
-        final local = _reset(
-          units: [input],
-          fogOfWar: _originOnlyFog(),
-          mapData: map,
-        );
-        final localScout = local.state.units.single;
-        final core = _resolveCoreContinuation(
-          scout: localScout,
-          fogOfWar: local.state.fogOfWar,
-          mapData: map,
-        );
+      final local = _reset(units: [input], fogOfWar: fog, mapData: map);
+      final localScout = local.state.units.single;
+      final core = _resolveCoreContinuation(
+        scout: input,
+        fogOfWar: fog,
+        mapData: map,
+      );
 
-        expect(localScout.posture, UnitPosture.autoExploring);
-        expect(local.uiEffects, isEmpty);
-        expect(local.events, isEmpty);
-        expect(core.accepted, isTrue);
-        expect(core.units.single.posture, UnitPosture.active);
-        expect(core.execution, isNull);
-        expect(core.events, isEmpty);
-      },
-    );
+      expect(localScout.posture, UnitPosture.active);
+      expect(local.uiEffects, isEmpty);
+      expect(local.events, isEmpty);
+      expect(core.accepted, isTrue);
+      expect(core.units.single.posture, UnitPosture.active);
+      expect(core.execution, isNull);
+      expect(core.events, isEmpty);
+    });
 
-    test('hidden unit keeps local posture while core closes its no-op', () {
+    test('hidden unit closes the same local and core no-op', () {
       final scout = _autoExploringScout(movementPoints: _fullScoutMovement);
       final blocker = GameUnit(
         id: 'hidden_blocker',
@@ -198,7 +291,7 @@ void main() {
       );
 
       expect((localScout.col, localScout.row), (0, 0));
-      expect(localScout.posture, UnitPosture.autoExploring);
+      expect(localScout.posture, UnitPosture.active);
       expect(local.uiEffects, isEmpty);
       expect(core.accepted, isTrue);
       expect((core.units.first.col, core.units.first.row), (0, 0));
@@ -207,7 +300,7 @@ void main() {
       expect(core.events, isEmpty);
     });
 
-    test('hidden city yields the same no-op but different posture', () {
+    test('hidden city closes the same local and core no-op', () {
       final scout = _autoExploringScout(movementPoints: _fullScoutMovement);
       const city = GameCity(
         id: 'hidden_city',
@@ -233,7 +326,7 @@ void main() {
       );
 
       expect((localScout.col, localScout.row), (0, 0));
-      expect(localScout.posture, UnitPosture.autoExploring);
+      expect(localScout.posture, UnitPosture.active);
       expect(local.uiEffects, isEmpty);
       expect(core.accepted, isTrue);
       expect((core.units.single.col, core.units.single.row), (0, 0));
@@ -273,6 +366,8 @@ GameStateTransition _reset({
   required FogOfWarState fogOfWar,
   required MapData mapData,
   List<GameCity> cities = const [],
+  DiplomacyState diplomacy = DiplomacyState.empty,
+  GameInteractionState interaction = GameInteractionState.empty,
 }) {
   return MovementReducer.resetUnitMovementForNewTurn(
     GameState(
@@ -280,7 +375,9 @@ GameStateTransition _reset({
       activePlayerId: _playerId,
       units: units,
       cities: cities,
+      diplomacy: diplomacy,
       fogOfWar: fogOfWar,
+      interaction: interaction,
     ),
     mapData,
     playerId: _playerId,

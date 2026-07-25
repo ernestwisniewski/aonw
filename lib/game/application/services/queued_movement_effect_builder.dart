@@ -3,6 +3,24 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class QueuedMovementEffectBuilder {
+  /// Projects authoritative ordered movement evidence without re-planning.
+  static List<AnimateUnitMoveEffect> fromExecutions(
+    Iterable<MovementCommandExecution> executions,
+  ) {
+    final effects = [
+      for (final execution in executions)
+        AnimateUnitMoveEffect(
+          unitId: execution.unitId,
+          fromCol: execution.fromCol,
+          fromRow: execution.fromRow,
+          steps: execution.steps,
+        ),
+    ];
+    return effects.isEmpty
+        ? const []
+        : List<AnimateUnitMoveEffect>.unmodifiable(effects);
+  }
+
   /// Builds animations from an authoritative before/after unit delta.
   ///
   /// Ordinary moves have no path data in recipient-projected snapshots.

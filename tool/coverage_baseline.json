@@ -9,18 +9,18 @@
             "found": 190
           },
           "lines": {
-            "hit": 12169,
-            "found": 13130
+            "hit": 12179,
+            "found": 13135
           }
         },
         "domain": {
           "files": {
-            "hit": 365,
-            "found": 373
+            "hit": 374,
+            "found": 382
           },
           "lines": {
-            "hit": 13071,
-            "found": 14779
+            "hit": 13280,
+            "found": 14978
           }
         },
         "map": {
@@ -121,18 +121,18 @@
             "found": 47
           },
           "lines": {
-            "hit": 1817,
-            "found": 2137
+            "hit": 1825,
+            "found": 2145
           }
         },
         "game_domain": {
           "files": {
-            "hit": 68,
-            "found": 68
+            "hit": 67,
+            "found": 67
           },
           "lines": {
-            "hit": 3122,
-            "found": 3358
+            "hit": 3141,
+            "found": 3376
           }
         },
         "game_infrastructure": {
@@ -259,12 +259,12 @@
         },
         "multiplayer": {
           "files": {
-            "hit": 55,
-            "found": 58
+            "hit": 56,
+            "found": 59
           },
           "lines": {
-            "hit": 2100,
-            "found": 2697
+            "hit": 2123,
+            "found": 2719
           }
         },
         "observability": {

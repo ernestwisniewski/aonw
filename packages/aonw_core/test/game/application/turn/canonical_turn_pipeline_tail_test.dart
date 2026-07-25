@@ -62,11 +62,21 @@ void _characterizesVictoryTail() {
     AllPlayersSubmittedEvent,
     ResearchPointsGainedEvent,
     ResearchPointsGainedEvent,
+    UnitMovedEvent,
     DiplomaticProposalExpiredEvent,
     DominationThresholdReachedEvent,
     TurnEndedEvent,
     TurnEndedEvent,
   ]);
+  expect(
+    result.events.whereType<UnitMovedEvent>().single,
+    isA<UnitMovedEvent>()
+        .having((event) => event.unitId, 'unitId', 'scout_p1')
+        .having((event) => event.fromCol, 'fromCol', 0)
+        .having((event) => event.fromRow, 'fromRow', 0)
+        .having((event) => event.toCol, 'toCol', 3)
+        .having((event) => event.toRow, 'toRow', 0),
+  );
   expect(
     result.events.whereType<DominationThresholdReachedEvent>().single.playerId,
     'p1',
@@ -95,7 +105,7 @@ void _keepsNoOpDelta() {
 
 CanonicalGameSnapshot _victoryInput() {
   final victory = VictoryRules.standard.copyWith(
-    dominationControlPercent: 60,
+    dominationControlPercent: 30,
     dominationHoldTurns: 3,
     culturalRequiredArtifacts: 2,
   );
@@ -104,6 +114,18 @@ CanonicalGameSnapshot _victoryInput() {
       matchRules: MatchRules.standard.copyWith(victory: victory),
     ),
     state: PersistentGameState.snapshot(
+      units: [
+        GameUnit(
+          id: 'scout_p1',
+          ownerPlayerId: 'p1',
+          type: GameUnitType.scout,
+          name: 'Scout',
+          col: 0,
+          row: 0,
+          movementPoints: 2,
+          posture: UnitPosture.autoExploring,
+        ),
+      ],
       cities: const [
         GameCity(
           id: 'city_p1',
@@ -116,7 +138,7 @@ CanonicalGameSnapshot _victoryInput() {
           id: 'city_p2',
           ownerPlayerId: 'p2',
           name: 'City two',
-          center: CityHex(col: 2, row: 0),
+          center: CityHex(col: 5, row: 0),
         ),
       ],
       artifacts: const [
@@ -131,6 +153,15 @@ CanonicalGameSnapshot _victoryInput() {
           location: WorldArtifactLocation.stored(cityId: 'city_p1'),
         ),
       ],
+      fogOfWar: FogOfWarState(
+        players: {
+          'p1': PlayerFogOfWar(
+            playerId: 'p1',
+            discoveredHexes: {const HexCoordinate(col: 0, row: 0)},
+            visibleHexes: {const HexCoordinate(col: 0, row: 0)},
+          ),
+        },
+      ),
       runtimeState: GameRuntimeState.snapshot(
         diplomacy: DiplomacyState.empty.addProposal(
           const DiplomaticProposal(
@@ -173,10 +204,10 @@ GameSave _save() {
 
 MapData _mapData() {
   return MapData(
-    cols: 3,
+    cols: 6,
     rows: 1,
     tiles: [
-      for (var col = 0; col < 3; col++)
+      for (var col = 0; col < 6; col++)
         TileData(
           col: col,
           row: 0,

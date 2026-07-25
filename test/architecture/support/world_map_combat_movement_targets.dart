@@ -235,12 +235,7 @@ const _movementTargets = [
         type: 'MapTraversalView',
       ),
       _Boundary.method(
-        '_commandFor',
-        parameter: 'mapView',
-        type: 'MapTraversalView',
-      ),
-      _Boundary.method(
-        'keepPosture',
+        '_projectAcceptedResult',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),

@@ -128,6 +128,13 @@ void _characterizesMovementDelta() {
   expect(delta.afterUnits.single.occupies(2, 0), isTrue);
   expect(delta.afterUnits.single.movementPoints, 3);
   expect(delta.afterUnits.single.queuedPath, isNull);
+  expect(delta.executions, hasLength(1));
+  expect(delta.executions.single.unitId, 'commander_p1');
+  expect(delta.executions.single.steps.map((step) => (step.col, step.row)), [
+    (1, 0),
+    (2, 0),
+  ]);
+  expect(() => delta.executions.clear(), throwsUnsupportedError);
   expect(result.events.map((event) => event.runtimeType), [
     AllPlayersSubmittedEvent,
     TurnEndedEvent,
