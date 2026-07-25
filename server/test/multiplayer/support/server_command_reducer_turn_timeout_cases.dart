@@ -59,6 +59,76 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       expect(reduction.events, isEmpty);
     });
 
+    test(
+      'finalizes queued movement without exposing its executed route',
+      () async {
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1')
+            .copyWith(movementPoints: 0)
+            .copyWithQueuedPath(
+              QueuedMovePath(
+                targetCol: 2,
+                targetRow: 0,
+                steps: const [
+                  UnitMovementStep(
+                    col: 0,
+                    row: 0,
+                    enterCost: 0,
+                    cumulativeCost: 0,
+                  ),
+                  UnitMovementStep(
+                    col: 1,
+                    row: 0,
+                    enterCost: 1,
+                    cumulativeCost: 1,
+                  ),
+                  UnitMovementStep(
+                    col: 2,
+                    row: 0,
+                    enterCost: 1,
+                    cumulativeCost: 2,
+                  ),
+                ],
+              ),
+            );
+        final reducer = ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        );
+
+        final reduction = await reducer.reduce(
+          match: _runningMatch(),
+          snapshot: _snapshot(
+            _diplomacyState(
+              runtimeState: const GameRuntimeState(
+                submittedPlayerIds: {'player_1'},
+              ),
+            ).copyWith(units: [commander]),
+            save: _save(
+              playerStates: const {
+                'player_1': PlayerTurnState.finished,
+                'player_2': PlayerTurnState.active,
+              },
+            ),
+          ),
+          wireCommand: _wireCommand(
+            const SubmitTurnCommand('player_2'),
+            actorPlayerId: 'player_2',
+          ),
+          actorPlayerId: 'player_2',
+          now: DateTime.utc(2026, 6, 30, 11, 1),
+        );
+        final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+        expect(reduction.accepted, isTrue);
+        expect((state.units.single.col, state.units.single.row), (2, 0));
+        expect(state.units.single.queuedPath, isNull);
+        expect(reduction.events.whereType<UnitMovedEvent>(), isEmpty);
+        expect(
+          reduction.snapshot.toJson().toString(),
+          isNot(contains('movementExecutions')),
+        );
+      },
+    );
+
     test('finalizes an already submitted turn after the deadline', () async {
       final reducer = ServerCommandReducer(
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),

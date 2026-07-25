@@ -35,7 +35,6 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -786,36 +785,10 @@ void main() {
     );
 
     test(
-      'animates queued opponent movement from live multiplayer snapshot resync',
+      'collapses projected opponent movement to one inferred destination step',
       () async {
-        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2')
-            .copyWithQueuedPath(
-              QueuedMovePath(
-                targetCol: 2,
-                targetRow: 0,
-                steps: const [
-                  UnitMovementStep(
-                    col: 0,
-                    row: 0,
-                    enterCost: 0,
-                    cumulativeCost: 0,
-                  ),
-                  UnitMovementStep(
-                    col: 1,
-                    row: 0,
-                    enterCost: 1,
-                    cumulativeCost: 1,
-                  ),
-                  UnitMovementStep(
-                    col: 2,
-                    row: 0,
-                    enterCost: 1,
-                    cumulativeCost: 2,
-                  ),
-                ],
-              ),
-            );
-        final moved = commander.copyWith(col: 1, row: 0);
+        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
+        final moved = commander.copyWith(col: 2, row: 0);
         final save = _makeSave(
           players: const [_player1, _player2],
           gameMode: GameMode.multiplayer,
@@ -878,12 +851,18 @@ void main() {
               matchId: save.id,
               snapshot: snapshot,
             ),
+            event: const EventCodec().toWire(
+              matchId: save.id,
+              offset: 1,
+              timestamp: DateTime.utc(2026, 4, 27, 12),
+              events: const [],
+            ),
           ),
         );
 
         await _waitFor(() {
           final state = container.read(gameStateProvider(save.id)).value;
-          return state?.units.single.col == 1;
+          return state?.units.single.col == 2;
         });
 
         final state = container.read(gameStateProvider(save.id)).value!;
@@ -893,8 +872,11 @@ void main() {
         expect(effect.unitId, 'commander_player_2');
         expect(effect.fromCol, 0);
         expect(effect.fromRow, 0);
-        expect(effect.steps.single.col, 1);
+        expect(commander.queuedPath, isNull);
+        expect(effect.steps.single.col, 2);
         expect(effect.steps.single.row, 0);
+        expect(effect.steps.single.enterCost, 0);
+        expect(effect.steps.single.cumulativeCost, 0);
         expect(state.activePlayerId, 'player_1');
         expect(state.activePlayerCanAct, isTrue);
         expect(state.canControlUnit(state.units.single), isFalse);

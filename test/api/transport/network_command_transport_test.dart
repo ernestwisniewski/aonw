@@ -20,13 +20,14 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../support/network_command_transport_movement_fixtures.dart';
 
 void main() {
   test('Serverpod dispatcher stays lazy and closes idempotently', () {
@@ -987,7 +988,7 @@ void main() {
     test(
       'emits queued movement animation effects from accepted snapshots',
       () async {
-        final queued = _queuedCommander();
+        final queued = queuedNetworkCommander();
         final state = GameState(
           units: [queued],
           activePlayerId: 'player_1',
@@ -1018,12 +1019,16 @@ void main() {
           command: const SubmitTurnCommand('player_1'),
         );
 
+        expect(server.lastAck!.toJson(), isNot(contains('movementExecutions')));
         final move = result.uiEffects.whereType<AnimateUnitMoveEffect>().single;
         expect(move.unitId, 'commander_player_1');
         expect((move.fromCol, move.fromRow), (0, 0));
         expect(
-          [for (final step in move.steps) (step.col, step.row)],
-          const [(1, 0), (2, 0)],
+          [
+            for (final step in move.steps)
+              (step.col, step.row, step.enterCost, step.cumulativeCost),
+          ],
+          const [(1, 0, 1, 1), (2, 0, 1, 2)],
         );
         expect(result.state.units.single.col, 2);
         expect(result.state.activePlayerCanAct, isTrue);
@@ -1123,6 +1128,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
   GameSave save;
   GameState state;
   SaveSnapshot? nextAcceptedSnapshot;
+  WireCommandAck? lastAck;
   Object? nextError;
   int offset = 0;
 
@@ -1179,7 +1185,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
       activePlayerId: state.activePlayerId,
       activePlayerCanAct: state.activePlayerCanAct,
     );
-    return WireCommandAck(
+    return lastAck = WireCommandAck(
       matchId: wire.matchId,
       accepted: true,
       offset: offset,
@@ -1251,22 +1257,6 @@ GameSave _save() {
       Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4),
     ],
   );
-}
-
-GameUnit _queuedCommander() {
-  return GameUnit.startingCommander(ownerPlayerId: 'player_1')
-      .copyWith(movementPoints: 0)
-      .copyWithQueuedPath(
-        QueuedMovePath(
-          targetCol: 2,
-          targetRow: 0,
-          steps: const [
-            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-            UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-            UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-          ],
-        ),
-      );
 }
 
 MapData _map() => MapData(

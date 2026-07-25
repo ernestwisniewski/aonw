@@ -1201,7 +1201,7 @@
       "files": {
         "test/api/session/network_session_refresh_coordinator_test.dart": 821,
         "test/api/transport/live_event_subscription_test.dart": 736,
-        "test/api/transport/network_command_transport_test.dart": 1286,
+        "test/api/transport/network_command_transport_test.dart": 1276,
         "test/architecture/coverage_gate_test.dart": 682,
         "test/architecture/lint_configuration_guard_test.dart": 715,
         "test/editor/editor_grid_test.dart": 592,
@@ -1224,7 +1224,7 @@
         "test/game/game_effect_dispatcher_test.dart": 737,
         "test/game/game_event_renderer_effect_mapper_test.dart": 652,
         "test/game/game_hud_test.dart": 7599,
-        "test/game/game_providers_test.dart": 2659,
+        "test/game/game_providers_test.dart": 2641,
         "test/game/game_renderer_keyboard_test.dart": 3620,
         "test/game/game_rendering_coordinator_test.dart": 1579,
         "test/game/game_screen_test.dart": 1447,
