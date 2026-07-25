@@ -4,17 +4,37 @@ import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class QueuedMovementEffectBuilder {
   /// Projects authoritative ordered movement evidence without re-planning.
+  ///
+  /// When both unit snapshots are supplied, invalid evidence is suppressed per
+  /// complete unit chain. Omitting both preserves trusted local-domain mapping.
   static List<AnimateUnitMoveEffect> fromExecutions(
-    Iterable<MovementCommandExecution> executions,
-  ) {
+    Iterable<MovementCommandExecution> executions, {
+    Iterable<GameUnit>? beforeUnits,
+    Iterable<GameUnit>? afterUnits,
+  }) {
+    if ((beforeUnits == null) != (afterUnits == null)) {
+      throw ArgumentError(
+        'beforeUnits and afterUnits must be provided together.',
+      );
+    }
+    final ordered = List<MovementCommandExecution>.of(executions);
+    if (ordered.isEmpty) return const [];
+    final validUnitIds = beforeUnits == null
+        ? null
+        : _validExecutionUnitIds(
+            executions: ordered,
+            beforeUnits: beforeUnits,
+            afterUnits: afterUnits!,
+          );
     final effects = [
-      for (final execution in executions)
-        AnimateUnitMoveEffect(
-          unitId: execution.unitId,
-          fromCol: execution.fromCol,
-          fromRow: execution.fromRow,
-          steps: execution.steps,
-        ),
+      for (final execution in ordered)
+        if (validUnitIds == null || validUnitIds.contains(execution.unitId))
+          AnimateUnitMoveEffect(
+            unitId: execution.unitId,
+            fromCol: execution.fromCol,
+            fromRow: execution.fromRow,
+            steps: execution.steps,
+          ),
     ];
     return effects.isEmpty
         ? const []
@@ -75,24 +95,13 @@ abstract final class QueuedMovementEffectBuilder {
     final startIndex = pathSteps.indexWhere(
       (step) => step.col == before.col && step.row == before.row,
     );
-    final steps = <UnitMovementStep>[];
-    if (startIndex < 0) {
-      steps.add(_destinationStep(after));
-    } else {
-      final endIndex = pathSteps.indexWhere(
-        (step) => step.col == after.col && step.row == after.row,
-      );
-      if (endIndex > startIndex) {
-        steps.addAll(
-          pathSteps.skip(startIndex + 1).take(endIndex - startIndex),
-        );
-      }
-    }
-
-    if (steps.isEmpty) {
-      steps.add(_destinationStep(after));
-    }
-    return steps;
+    if (startIndex < 0) return null;
+    final endIndex = pathSteps.indexWhere(
+      (step) => step.col == after.col && step.row == after.row,
+      startIndex + 1,
+    );
+    if (endIndex <= startIndex) return null;
+    return pathSteps.skip(startIndex + 1).take(endIndex - startIndex).toList();
   }
 
   static List<UnitMovementStep>? _pathStepsFor(GameUnit unit) {
@@ -110,4 +119,65 @@ abstract final class QueuedMovementEffectBuilder {
       cumulativeCost: 0,
     );
   }
+}
+
+Set<String> _validExecutionUnitIds({
+  required Iterable<MovementCommandExecution> executions,
+  required Iterable<GameUnit> beforeUnits,
+  required Iterable<GameUnit> afterUnits,
+}) {
+  final chains = <String, _ExecutionChain>{};
+  for (final execution in executions) {
+    chains.putIfAbsent(execution.unitId, _ExecutionChain.new).add(execution);
+  }
+  final before = _UniqueUnitIndex(beforeUnits);
+  final after = _UniqueUnitIndex(afterUnits);
+  return {
+    for (final entry in chains.entries)
+      if (entry.value.matches(before[entry.key], after[entry.key])) entry.key,
+  };
+}
+
+final class _ExecutionChain {
+  ({int col, int row})? _origin;
+  ({int col, int row})? _destination;
+  var _continuous = true;
+
+  void add(MovementCommandExecution execution) {
+    final origin = (col: execution.fromCol, row: execution.fromRow);
+    _origin ??= origin;
+    if (_destination != null && _destination != origin) _continuous = false;
+    final destination = execution.destination;
+    _destination = (col: destination.col, row: destination.row);
+  }
+
+  bool matches(GameUnit? before, GameUnit? after) {
+    if (!_continuous ||
+        before == null ||
+        after == null ||
+        before.ownerPlayerId != after.ownerPlayerId) {
+      return false;
+    }
+    return _origin == (col: before.col, row: before.row) &&
+        _destination == (col: after.col, row: after.row);
+  }
+}
+
+final class _UniqueUnitIndex {
+  _UniqueUnitIndex(Iterable<GameUnit> units) {
+    for (final unit in units) {
+      if (_duplicates.contains(unit.id)) continue;
+      if (_units.containsKey(unit.id)) {
+        _units.remove(unit.id);
+        _duplicates.add(unit.id);
+      } else {
+        _units[unit.id] = unit;
+      }
+    }
+  }
+
+  final Map<String, GameUnit> _units = {};
+  final Set<String> _duplicates = {};
+
+  GameUnit? operator [](String unitId) => _units[unitId];
 }

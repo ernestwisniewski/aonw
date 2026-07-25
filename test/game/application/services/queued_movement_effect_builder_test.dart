@@ -404,51 +404,46 @@ void main() {
       );
     });
 
-    test(
-      'falls back to the destination when the queued path lacks its start',
-      () {
-        final before =
-            GameUnit.produced(
-              id: 'warrior_1',
-              ownerPlayerId: 'player_1',
-              type: GameUnitType.warrior,
-              col: 1,
-              row: 1,
-            ).copyWithQueuedPath(
-              QueuedMovePath(
-                targetCol: 3,
-                targetRow: 1,
-                steps: const [
-                  UnitMovementStep(
-                    col: 2,
-                    row: 1,
-                    enterCost: 1,
-                    cumulativeCost: 1,
-                  ),
-                  UnitMovementStep(
-                    col: 3,
-                    row: 1,
-                    enterCost: 1,
-                    cumulativeCost: 2,
-                  ),
-                ],
-              ),
-            );
-        final after = before.copyWith(col: 3, row: 1, movementPoints: 0);
+    test('rejects queued animation when the path lacks its start', () {
+      final before =
+          GameUnit.produced(
+            id: 'warrior_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.warrior,
+            col: 1,
+            row: 1,
+          ).copyWithQueuedPath(
+            QueuedMovePath(
+              targetCol: 3,
+              targetRow: 1,
+              steps: const [
+                UnitMovementStep(
+                  col: 2,
+                  row: 1,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+                UnitMovementStep(
+                  col: 3,
+                  row: 1,
+                  enterCost: 1,
+                  cumulativeCost: 2,
+                ),
+              ],
+            ),
+          );
+      final after = before.copyWith(col: 3, row: 1, movementPoints: 0);
 
-        final effects = QueuedMovementEffectBuilder.fromUnitDelta(
-          beforeUnits: [before],
-          afterUnits: [after],
-        );
+      final effects = QueuedMovementEffectBuilder.fromUnitDelta(
+        beforeUnits: [before],
+        afterUnits: [after],
+      );
 
-        expect(effects.single.steps, const [
-          UnitMovementStep(col: 3, row: 1, enterCost: 0, cumulativeCost: 0),
-        ]);
-      },
-    );
+      expect(effects, isEmpty);
+    });
 
     test(
-      'falls back to the destination when the queued path lacks its end',
+      'rejects queued animation when the path lacks its authoritative end',
       () {
         final before =
             GameUnit.produced(
@@ -482,11 +477,10 @@ void main() {
         final effects = QueuedMovementEffectBuilder.fromUnitDelta(
           beforeUnits: [before],
           afterUnits: [after],
+          inferDirectMoves: true,
         );
 
-        expect(effects.single.steps, const [
-          UnitMovementStep(col: 3, row: 1, enterCost: 0, cumulativeCost: 0),
-        ]);
+        expect(effects, isEmpty);
       },
     );
   });
