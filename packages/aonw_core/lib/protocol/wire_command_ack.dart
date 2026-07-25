@@ -1,5 +1,6 @@
 import 'package:aonw_core/protocol/protocol_version.dart';
 import 'package:aonw_core/protocol/wire_json.dart';
+import 'package:aonw_core/protocol/wire_movement_execution.dart';
 import 'package:aonw_core/protocol/wire_snapshot.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -17,6 +18,7 @@ abstract class WireCommandAck with _$WireCommandAck {
     required WireSnapshot snapshot,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
     String? reason,
+    WireMovementExecutionList? movementExecutions,
   }) = _WireCommandAck;
 
   factory WireCommandAck.fromJson(Map<String, dynamic> json) {
@@ -51,6 +53,10 @@ abstract class WireCommandAck with _$WireCommandAck {
           )
           .toList(),
       reason: WireJson.optionalString(json, 'WireCommandAck', 'reason'),
+      movementExecutions: switch (json['movementExecutions']) {
+        null => null,
+        final value => WireMovementExecutionList.fromJson(value),
+      },
     );
   }
 
@@ -62,5 +68,7 @@ abstract class WireCommandAck with _$WireCommandAck {
     'snapshot': snapshot.toJson(),
     'events': events.map(Map<String, dynamic>.from).toList(),
     if (reason != null) 'reason': reason,
+    if (movementExecutions != null)
+      'movementExecutions': movementExecutions!.toJson(),
   };
 }

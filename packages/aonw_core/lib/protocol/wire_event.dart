@@ -1,5 +1,6 @@
 import 'package:aonw_core/protocol/protocol_version.dart';
 import 'package:aonw_core/protocol/wire_json.dart';
+import 'package:aonw_core/protocol/wire_movement_execution.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'wire_event.freezed.dart';
@@ -18,6 +19,7 @@ abstract class WireEvent with _$WireEvent {
     int? turn,
     Map<String, dynamic>? command,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
+    WireMovementExecutionList? movementExecutions,
   }) = _WireEvent;
 
   factory WireEvent.fromJson(Map<String, dynamic> json) {
@@ -48,6 +50,10 @@ abstract class WireEvent with _$WireEvent {
       events: rawEvents
           .map((event) => WireJson.requiredMap(event, 'WireEvent.events[]'))
           .toList(),
+      movementExecutions: switch (json['movementExecutions']) {
+        null => null,
+        final value => WireMovementExecutionList.fromJson(value),
+      },
     );
   }
 
@@ -61,5 +67,7 @@ abstract class WireEvent with _$WireEvent {
     if (turn != null) 'turn': turn,
     if (command != null) 'command': Map<String, dynamic>.from(command!),
     'events': events.map(Map<String, dynamic>.from).toList(),
+    if (movementExecutions != null)
+      'movementExecutions': movementExecutions!.toJson(),
   };
 }
