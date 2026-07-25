@@ -3,18 +3,17 @@ import 'dart:async';
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/api/transport/acknowledged_command_effect_resolver.dart';
 import 'package:aonw/api/transport/wire_command_message_id.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
-import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
@@ -390,7 +389,6 @@ class NetworkCommandTransport implements CommandTransport {
       );
     }
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
-    final events = eventCodec.eventsFromJsonList(ack.events);
 
     final localTransition = localReducer.reduce(
       currentState,
@@ -406,27 +404,16 @@ class NetworkCommandTransport implements CommandTransport {
 
     return CommandTransportResult(
       state: nextState,
-      uiEffects: _acceptedCommandEffects(
+      uiEffects: AcknowledgedCommandEffectResolver.resolve(
         localEffects: localTransition.uiEffects,
-        currentState: currentState,
-        nextState: nextState,
+        movementExecutions: ack.movementExecutions,
+        beforeUnits: currentState.units,
+        afterUnits: nextState.units,
       ),
       snapshot: snapshot,
       offset: effectiveOffset,
-      events: events,
+      events: eventCodec.eventsFromJsonList(ack.events),
       storedSnapshot: true,
-    );
-  }
-
-  List<UiEffect> _acceptedCommandEffects({
-    required List<UiEffect> localEffects,
-    required GameState currentState,
-    required GameState nextState,
-  }) {
-    if (localEffects.isNotEmpty) return localEffects;
-    return QueuedMovementEffectBuilder.fromUnitDelta(
-      beforeUnits: currentState.units,
-      afterUnits: nextState.units,
     );
   }
 

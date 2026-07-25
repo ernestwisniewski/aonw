@@ -482,7 +482,7 @@
       "files": {
         "lib/api/session/network_session_refresh_coordinator.dart": 686,
         "lib/api/transport/live_event_subscription.dart": 554,
-        "lib/api/transport/network_command_transport.dart": 723,
+        "lib/api/transport/network_command_transport.dart": 710,
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
         "lib/developer/assets_editor_preview_widgets.dart": 580,
         "lib/editor/map_editor_screen.dart": 510,
@@ -584,7 +584,7 @@
       "declarations": {
         "lib/api/session/network_session_client.dart::class:NetworkSessionClient": 367,
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
-        "lib/api/transport/network_command_transport.dart::class:NetworkCommandTransport": 506,
+        "lib/api/transport/network_command_transport.dart::class:NetworkCommandTransport": 494,
         "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 408,
         "lib/editor/map_editor_screen.dart::class:_MapEditorScreenState": 475,
         "lib/game/domain/reducer/combat/combat_reducer.dart::class:CombatReducer": 543,
