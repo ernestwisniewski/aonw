@@ -1398,7 +1398,7 @@
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
         "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 72,
         "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 158,
-        "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 90,
+        "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 83,
         "server/lib/src/multiplayer/match_connection_registry_connect.dart::extension:MatchConnectionRegistryConnect/method:_connect/closure:_enqueueMatch#1": 61,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
@@ -1427,9 +1427,9 @@
     },
     "server_test": {
       "files": {
-        "server/test/integration/multiplayer_endpoint_smoke.dart": 1294,
+        "server/test/integration/multiplayer_endpoint_smoke.dart": 1287,
         "server/test/multiplayer/player_match_view_projector_test.dart": 666,
-        "server/test/multiplayer/realtime_match_hub_test.dart": 3621
+        "server/test/multiplayer/realtime_match_hub_test.dart": 3616
       },
       "legacyFiles": {},
       "declarations": {},

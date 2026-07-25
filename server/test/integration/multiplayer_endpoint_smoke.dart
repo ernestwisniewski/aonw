@@ -12,10 +12,14 @@ import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
 
+part 'support/multiplayer_endpoint_movement_smoke_cases.dart';
+
 void main() {
   withServerpod(
     'MultiplayerEndpoint',
     (sessionBuilder, endpoints) {
+      _registerMultiplayerEndpointMovementSmokeTests(sessionBuilder, endpoints);
+
       test(
         'rejects unauthenticated calls through Serverpod dispatch',
         () async {
@@ -1280,15 +1284,4 @@ MoveUnitCommand _legalMoveCommandFor({
     }
   }
   throw StateError('No legal movement candidate for $actorPlayerId.');
-}
-
-Map<String, ({int col, int row})> _unitPositionsFor(
-  PersistentGameState state,
-  String playerId,
-) {
-  return {
-    for (final unit in state.units)
-      if (unit.ownerPlayerId == playerId)
-        unit.id: (col: unit.col, row: unit.row),
-  };
 }

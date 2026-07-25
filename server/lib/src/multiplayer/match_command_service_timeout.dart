@@ -102,20 +102,12 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
 
       final nextOffset = state.nextOffset();
       final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
-      final event = WireEvent(
-        matchId: state.match.id,
+      final event = _acceptedTimeoutEventForStorage(
+        state: state,
+        reduction: reduction,
+        actorPlayerId: actorPlayerId,
         offset: nextOffset,
         timestamp: now,
-        actorPlayerId: actorPlayerId,
-        tick: state.nextOffset(),
-        turn: state.match.turn,
-        command: GameCommandSerializer.toJson(SubmitTurnCommand(actorPlayerId)),
-        events: _eventAudienceForStorage(
-          events: reduction.events,
-          participantPlayerIds: state.match.players.map((player) => player.id),
-          previous: reduction.previousState!,
-          next: reduction.state!,
-        ),
       );
       final updated = _stateAfterAcceptedReduction(
         state: state,

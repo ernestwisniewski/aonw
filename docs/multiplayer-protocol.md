@@ -40,7 +40,7 @@ the source for currently implemented version-3 behavior and rollout steps.
 | Account creation | `NetworkSessionClient.createAccount` | `emailIdp.createAccount` | Creates `serverpod_auth_core_user` plus `aonw_account`. |
 | Token refresh | `NetworkSessionClient.refresh` | `jwtRefresh.refreshAccessToken` | Refresh token is persisted client-side when present. |
 | List/create/join/start/leave match | `NetworkSessionClient` | `multiplayer` endpoint methods | Request/response operations for lobby actions. |
-| Snapshot/event reads | `NetworkGameRepository`, `NetworkEventLog` | `multiplayer` endpoint methods | Used for recovery and deterministic replay boundaries. |
+| Snapshot/event reads | `NetworkGameRepository`, `NetworkEventLog` | `multiplayer` endpoint methods | Used for recovery and command/domain-event history, not exact authoritative path replay. |
 | Live match updates | `LiveEventSubscription` | `multiplayer.connect` bidirectional stream | Stream payloads carry authoritative offsets. |
 | Player commands | `LiveWireCommandDispatcher` | Active `LiveEventSubscriptionHandle.sendCommand` | Commands are sent as `MultiplayerClientMessage.command`; ACKs return as `MultiplayerServerMessage.ack`. `NetworkCommandTransport` is a startup fallback before the live stream is ready. |
 
@@ -66,6 +66,22 @@ The runtime keeps these synchronization invariants:
   authoritative and precedes any newer projected event markers;
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
+
+Accepted finalization events can carry recipient-projected movement execution
+plans for live animation. PostgreSQL history retains the canonical plan, while
+public event reads remove storage-only audience metadata. Reconnect does not
+replay movements already represented by the current snapshot.
+
+Projected `UnitMovedEvent` domain history can coexist with that plan. It
+remains useful for activity/history consumers; a live renderer must treat the
+movement execution plan as the authoritative replacement, not as an additional
+animation source.
+
+`NetworkEventLog` intentionally maps commands, domain events, and activity
+entries into `LoggedCommand`, including legacy `UnitMovedEvent` values that can
+produce a coarse direct-move replay. It does not translate authoritative
+movement execution plans, their intermediate coordinates, or costs. Durable
+exact animation replay remains a separate event-plan contract.
 
 Quickplay uses one global public queue. A player's requested map is a lobby
 preference for newly created queues; once they join an existing queue, the

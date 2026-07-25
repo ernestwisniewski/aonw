@@ -9,6 +9,10 @@ import 'package:aonw/game/application/services/game_activity_event_projector.dar
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/protocol.dart';
 
+/// Reads command, domain-event and activity history from authoritative events.
+///
+/// Exact movement execution plans and costs are deliberately not converted
+/// into [LoggedCommand]. Legacy movement domain events remain in its history.
 class NetworkEventLog implements EventLog {
   final String serverpodHost;
   final AuthToken token;

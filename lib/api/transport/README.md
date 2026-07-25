@@ -6,7 +6,9 @@ Serverpod multiplayer client.
 
 - `NetworkCommandTransport` sends gameplay commands to the authoritative
   server and applies the acknowledged snapshot.
-- `NetworkEventLog` reads server-owned command/event history.
+- `NetworkEventLog` reads server-owned command/domain-event history. It does
+  not turn exact movement execution plans and costs into renderer replay;
+  legacy movement domain events remain available.
 - `NetworkSnapshotStore` reads the latest server snapshot for reconnect and
   bootstrap flows.
 - `NetworkGameRepository` maps match list/create/load/delete calls onto

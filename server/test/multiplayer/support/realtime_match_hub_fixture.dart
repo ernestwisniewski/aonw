@@ -29,3 +29,9 @@ Future<WireMatch> _startRunningMatchInStore({
     snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
   );
 }
+
+String _clientMessageKey(
+  String matchId,
+  String actorPlayerId,
+  String clientMessageId,
+) => '$matchId:$actorPlayerId:$clientMessageId';

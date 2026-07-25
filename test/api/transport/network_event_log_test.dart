@@ -107,6 +107,48 @@ void main() {
       expect(entry.activity.single.event, isA<CityCapturedEvent>());
     });
 
+    test(
+      'keeps authoritative movement plans out of LoggedCommand history',
+      () async {
+        final wire = WireEvent(
+          matchId: 'match_1',
+          offset: 11,
+          timestamp: DateTime.utc(2026, 7, 25),
+          movementExecutions: WireMovementExecutionList([
+            WireMovementExecution(
+              unitId: 'renderer-movement-canary',
+              fromCol: 0,
+              fromRow: 0,
+              steps: const [
+                WireMovementStep(
+                  col: 1,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+              ],
+            ),
+          ]),
+        );
+        final log = NetworkEventLog(
+          backendClient: _FakeMultiplayerBackend(events: [wire]),
+          token: AuthToken('jwt-token'),
+        );
+
+        final entry = (await log.readSince('match_1').toList()).single;
+
+        expect(entry.offset, 11);
+        expect(entry.command, isNull);
+        expect(entry.events, isEmpty);
+        expect(entry.activity, isEmpty);
+        expect(entry.toJson(), isNot(contains('movementExecutions')));
+        expect(
+          entry.toJson().toString(),
+          isNot(contains('renderer-movement-canary')),
+        );
+      },
+    );
+
     test('reads a full protocol page and the following page', () async {
       final backend = _PagedMultiplayerBackend([
         for (var offset = 1; offset <= multiplayerEventPageSize + 1; offset++)

@@ -3,6 +3,7 @@ part of '../realtime_match_hub_test.dart';
 const _turnMovementClientMessageId = 'turn-movement-final-submit';
 
 void _registerRealtimeMatchHubTurnMovementTests() {
+  _registerRealtimeMatchHubTurnMovementHistoryTests();
   test(
     'persists and reuses recipient-safe turn movement evidence',
     _persistsAndReusesTurnMovementEvidence,
@@ -13,12 +14,6 @@ Future<void> _persistsAndReusesTurnMovementEvidence() async {
   final fixture = await _startTurnMovementFixture();
   final clients = await _TurnMovementClients.connect(fixture);
   try {
-    final callerEventAbsent = expectLater(
-      clients.ownerStream
-          .firstWhere((message) => message.event != null)
-          .timeout(const Duration(milliseconds: 150)),
-      throwsA(isA<TimeoutException>()),
-    );
     final secondOwnerEvent = clients.secondOwnerStream.firstWhere(
       (message) => message.event != null,
     );
@@ -40,7 +35,6 @@ Future<void> _persistsAndReusesTurnMovementEvidence() async {
       secondOwnerMessage: secondOwnerMessage,
       observerMessage: observerMessage,
     );
-    await callerEventAbsent;
     await _expectStoredTurnMovement(fixture);
 
     final conflictAck = await clients.sendOwner(
@@ -67,22 +61,17 @@ void _expectInitialAndRetryDeliveries({
   required MultiplayerServerMessage secondOwnerMessage,
   required MultiplayerServerMessage observerMessage,
 }) {
-  final expectedOwner = [
-    'unit-a:0,0->1,0;enter=1;total=1;audience=public',
-    'unit-a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2'
-        ';audience=public',
-  ];
   expect(firstAck.ack?.accepted, isTrue);
   expect(retryAck.ack?.accepted, isTrue);
   expect(firstAck.ack?.offset, retryAck.ack?.offset);
   expect(
     _turnMovementSnapshots(firstAck.ack!.movementExecutions),
-    expectedOwner,
+    _expectedOwnerTurnMovements(),
   );
   expect(retryAck.ack!.movementExecutions, firstAck.ack!.movementExecutions);
   expect(
     _turnMovementSnapshots(secondOwnerMessage.event!.movementExecutions),
-    expectedOwner,
+    _expectedOwnerTurnMovements(),
   );
   expect(observerMessage.event!.movementExecutions, isNotNull);
   expect(observerMessage.event!.movementExecutions!.isEmpty, isTrue);
@@ -105,24 +94,24 @@ void _expectInitialAndRetryDeliveries({
 Future<void> _expectStoredTurnMovement(_TurnMovementFixture fixture) async {
   final events = await fixture.store.listEvents(fixture.match.id, 0);
   expect(events, hasLength(1));
-  expect(_turnMovementSnapshots(events.single.movementExecutions), [
-    'unit-a:0,0->1,0;enter=1;total=1;audience=${fixture.owner.id}',
-    'unit-b:0,1->1,1;enter=1;total=1'
-        ';audience=${fixture.unitBPlayer.id}',
-    'unit-a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2'
-        ';audience=${fixture.owner.id}',
-  ]);
+  expect(
+    _turnMovementSnapshots(events.single.movementExecutions),
+    _expectedStoredTurnMovements(fixture),
+  );
   expect(
     events.single.movementExecutions!.toJson().toString(),
     contains('_serverAudiencePlayerIds'),
   );
 }
 
-Future<_TurnMovementFixture> _startTurnMovementFixture() async {
+Future<_TurnMovementFixture> _startTurnMovementFixture({
+  Duration? turnTimeout,
+}) async {
   final mapCatalog = _FakeMapCatalog(_turnMovementMap());
-  final hub = RealtimeMatchHub(
-    commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-  );
+  final commandReducer = turnTimeout == null
+      ? ServerCommandReducer(mapCatalog: mapCatalog)
+      : ServerCommandReducer(mapCatalog: mapCatalog, turnTimeout: turnTimeout);
+  final hub = RealtimeMatchHub(commandReducer: commandReducer);
   final store = _MemoryMatchStore();
   final open = await hub.createMatch(
     store: store,

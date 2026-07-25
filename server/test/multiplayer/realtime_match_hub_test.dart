@@ -18,6 +18,7 @@ part 'support/realtime_match_hub_outcome_cases.dart';
 part 'support/realtime_match_hub_resignation_cases.dart';
 part 'support/realtime_match_hub_resignation_fixture.dart';
 part 'support/realtime_match_hub_turn_movement_cases.dart';
+part 'support/realtime_match_hub_turn_movement_history_cases.dart';
 part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
 void main() {
@@ -3570,12 +3571,6 @@ final class _SequenceInviteCodeGenerator implements InviteCodeGenerator {
     return code;
   }
 }
-
-String _clientMessageKey(
-  String matchId,
-  String actorPlayerId,
-  String clientMessageId,
-) => '$matchId:$actorPlayerId:$clientMessageId';
 
 bool _isActiveMatch(WireMatch match) =>
     match.state == 'open' || match.state == 'running';

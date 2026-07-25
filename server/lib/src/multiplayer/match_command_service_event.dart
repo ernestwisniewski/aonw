@@ -35,3 +35,26 @@ WireEvent _acceptedCommandEventForStorage({
     ),
   );
 }
+
+WireEvent _acceptedTimeoutEventForStorage({
+  required StoredMatchState state,
+  required ServerCommandReduction reduction,
+  required String actorPlayerId,
+  required int offset,
+  required DateTime timestamp,
+}) {
+  return _acceptedCommandEventForStorage(
+    state: state,
+    reduction: reduction,
+    command: WireCommand(
+      matchId: state.match.id,
+      tick: offset,
+      turn: state.match.turn,
+      actorPlayerId: actorPlayerId,
+      command: GameCommandSerializer.toJson(SubmitTurnCommand(actorPlayerId)),
+    ),
+    actorPlayerId: actorPlayerId,
+    offset: offset,
+    timestamp: timestamp,
+  );
+}
