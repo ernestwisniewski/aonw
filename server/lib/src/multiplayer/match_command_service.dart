@@ -9,8 +9,10 @@ import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
+import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 
+part 'match_command_service_event.dart';
 part 'match_command_service_handling.dart';
 part 'match_command_service_timeout.dart';
 

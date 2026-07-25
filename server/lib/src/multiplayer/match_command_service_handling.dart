@@ -70,6 +70,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
             offset: duplicate.offset,
             snapshot: state.snapshot,
             events: duplicate.events,
+            movementExecutions: duplicate.movementExecutions,
           ),
         ),
       );
@@ -106,20 +107,13 @@ extension MatchCommandServiceHandling on MatchCommandService {
 
     final nextOffset = state.nextOffset();
     final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
-    final event = WireEvent(
-      matchId: state.match.id,
+    final event = _acceptedCommandEventForStorage(
+      state: state,
+      reduction: reduction,
+      command: command,
+      actorPlayerId: player.id,
       offset: nextOffset,
       timestamp: now,
-      actorPlayerId: player.id,
-      tick: command.tick,
-      turn: state.match.turn,
-      command: command.command,
-      events: _eventAudienceForStorage(
-        events: reduction.events,
-        participantPlayerIds: state.match.players.map((player) => player.id),
-        previous: reduction.previousState!,
-        next: reduction.state!,
-      ),
     );
     final updated = _stateAfterAcceptedReduction(
       state: state,
@@ -155,6 +149,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
           offset: event.offset,
           snapshot: updated.snapshot,
           events: event.events,
+          movementExecutions: event.movementExecutions,
         ),
       ),
       recipient: caller,

@@ -17,9 +17,11 @@ part 'support/realtime_match_hub_fixture.dart';
 part 'support/realtime_match_hub_outcome_cases.dart';
 part 'support/realtime_match_hub_resignation_cases.dart';
 part 'support/realtime_match_hub_resignation_fixture.dart';
+part 'support/realtime_match_hub_turn_movement_cases.dart';
 part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
 void main() {
+  _registerRealtimeMatchHubTurnMovementTests();
   test(
     'quickplay preserves requested civilizations for lobby players',
     () async {
@@ -3573,9 +3575,7 @@ String _clientMessageKey(
   String matchId,
   String actorPlayerId,
   String clientMessageId,
-) {
-  return '$matchId:$actorPlayerId:$clientMessageId';
-}
+) => '$matchId:$actorPlayerId:$clientMessageId';
 
 bool _isActiveMatch(WireMatch match) =>
     match.state == 'open' || match.state == 'running';
