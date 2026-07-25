@@ -105,6 +105,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       save: legacyResult.save,
       state: legacyResult.state,
       events: result.events,
+      movementExecutions: result.movementDelta?.executions,
       canonicalSnapshot: result.snapshot,
     );
   }

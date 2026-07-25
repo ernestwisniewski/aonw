@@ -465,19 +465,21 @@ class ServerCommandReducer {
 }
 
 class _CommandApplication {
-  const _CommandApplication({
+  _CommandApplication({
     required this.accepted,
     required this.save,
     required this.state,
     this.events = const [],
+    Iterable<MovementCommandExecution>? movementExecutions,
     this.canonicalSnapshot,
     this.reason,
-  });
+  }) : movementExecutions = _ownedListOrNull(movementExecutions);
 
   final bool accepted;
   final GameSave save;
   final PersistentGameState state;
   final List<GameEvent> events;
+  final List<MovementCommandExecution>? movementExecutions;
   final CanonicalGameSnapshot? canonicalSnapshot;
   final String? reason;
 
@@ -485,27 +487,25 @@ class _CommandApplication {
     required GameSave save,
     required PersistentGameState state,
     List<GameEvent> events = const [],
+    Iterable<MovementCommandExecution>? movementExecutions,
     CanonicalGameSnapshot? canonicalSnapshot,
-  }) {
-    return _CommandApplication(
-      accepted: true,
-      save: save,
-      state: state,
-      events: events,
-      canonicalSnapshot: canonicalSnapshot,
-    );
-  }
+  }) => _CommandApplication(
+    accepted: true,
+    save: save,
+    state: state,
+    events: events,
+    movementExecutions: movementExecutions,
+    canonicalSnapshot: canonicalSnapshot,
+  );
 
   factory _CommandApplication.reject({
     required GameSave save,
     required PersistentGameState state,
     required String reason,
-  }) {
-    return _CommandApplication(
-      accepted: false,
-      save: save,
-      state: state,
-      reason: reason,
-    );
-  }
+  }) => _CommandApplication(
+    accepted: false,
+    save: save,
+    state: state,
+    reason: reason,
+  );
 }

@@ -1,16 +1,18 @@
 part of 'server_command_reducer.dart';
 
 class ServerCommandReduction {
-  const ServerCommandReduction({
+  ServerCommandReduction({
     required this.accepted,
     required this.snapshot,
     this.events = const [],
+    Iterable<MovementCommandExecution>? movementExecutions,
     this.turn,
     this.previousState,
     this.state,
     this.outcome,
     this.reason,
-  }) : assert(
+  }) : movementExecutions = _ownedListOrNull(movementExecutions),
+       assert(
          !accepted ||
              (turn != null &&
                  previousState != null &&
@@ -22,12 +24,16 @@ class ServerCommandReduction {
   final bool accepted;
   final WireSnapshot snapshot;
   final List<GameEvent> events;
+  final List<MovementCommandExecution>? movementExecutions;
   final int? turn;
   final PersistentGameState? previousState;
   final PersistentGameState? state;
   final GameOutcome? outcome;
   final String? reason;
 }
+
+List<T>? _ownedListOrNull<T>(Iterable<T>? values) =>
+    values == null ? null : List<T>.unmodifiable(values);
 
 extension _ServerCommandReducerOutcome on ServerCommandReducer {
   ServerCommandReduction _acceptedReduction({
@@ -54,6 +60,7 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
       accepted: true,
       snapshot: nextSnapshot,
       events: result.events,
+      movementExecutions: result.movementExecutions,
       turn: nextSave.turn,
       previousState: previousState,
       state: result.state,

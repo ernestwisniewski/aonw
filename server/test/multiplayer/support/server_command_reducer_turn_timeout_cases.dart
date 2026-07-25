@@ -57,76 +57,12 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       expect(save.playerStates['player_1'], PlayerTurnState.finished);
       expect(state.runtimeState.submittedPlayerIds, {'player_1'});
       expect(reduction.events, isEmpty);
+      expect(reduction.movementExecutions, isNull);
     });
 
     test(
-      'finalizes queued movement without exposing its executed route',
-      () async {
-        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1')
-            .copyWith(movementPoints: 0)
-            .copyWithQueuedPath(
-              QueuedMovePath(
-                targetCol: 2,
-                targetRow: 0,
-                steps: const [
-                  UnitMovementStep(
-                    col: 0,
-                    row: 0,
-                    enterCost: 0,
-                    cumulativeCost: 0,
-                  ),
-                  UnitMovementStep(
-                    col: 1,
-                    row: 0,
-                    enterCost: 1,
-                    cumulativeCost: 1,
-                  ),
-                  UnitMovementStep(
-                    col: 2,
-                    row: 0,
-                    enterCost: 1,
-                    cumulativeCost: 2,
-                  ),
-                ],
-              ),
-            );
-        final reducer = ServerCommandReducer(
-          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-        );
-
-        final reduction = await reducer.reduce(
-          match: _runningMatch(),
-          snapshot: _snapshot(
-            _diplomacyState(
-              runtimeState: const GameRuntimeState(
-                submittedPlayerIds: {'player_1'},
-              ),
-            ).copyWith(units: [commander]),
-            save: _save(
-              playerStates: const {
-                'player_1': PlayerTurnState.finished,
-                'player_2': PlayerTurnState.active,
-              },
-            ),
-          ),
-          wireCommand: _wireCommand(
-            const SubmitTurnCommand('player_2'),
-            actorPlayerId: 'player_2',
-          ),
-          actorPlayerId: 'player_2',
-          now: DateTime.utc(2026, 6, 30, 11, 1),
-        );
-        final state = PersistentGameState.fromJson(reduction.snapshot.state);
-
-        expect(reduction.accepted, isTrue);
-        expect((state.units.single.col, state.units.single.row), (2, 0));
-        expect(state.units.single.queuedPath, isNull);
-        expect(reduction.events.whereType<UnitMovedEvent>(), isEmpty);
-        expect(
-          reduction.snapshot.toJson().toString(),
-          isNot(contains('movementExecutions')),
-        );
-      },
+      'preserves global queued and automatic movement execution order',
+      _preservesGlobalTurnMovementExecutionOrder,
     );
 
     test('finalizes an already submitted turn after the deadline', () async {
@@ -265,4 +201,139 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       expect(state.artifacts.single.location.remainingTurns, 1);
     });
   });
+}
+
+Future<void> _preservesGlobalTurnMovementExecutionOrder() async {
+  final reduction =
+      await ServerCommandReducer(
+        mapCatalog: _FakeMapCatalog(_turnMovementExecutionMap()),
+      ).reduce(
+        match: _runningMatch(),
+        snapshot: _turnMovementExecutionSnapshot(),
+        wireCommand: _wireCommand(
+          const SubmitTurnCommand('player_2'),
+          actorPlayerId: 'player_2',
+        ),
+        actorPlayerId: 'player_2',
+        now: DateTime.utc(2026, 6, 30, 11, 1),
+      );
+  final state = PersistentGameState.fromJson(reduction.snapshot.state);
+
+  expect(reduction.accepted, isTrue);
+  expect(
+    (state.units.byId('unit_a')!.col, state.units.byId('unit_a')!.row),
+    (3, 0),
+  );
+  expect(
+    (state.units.byId('unit_b')!.col, state.units.byId('unit_b')!.row),
+    (1, 1),
+  );
+  expect(reduction.movementExecutions!.map(_movementExecutionSnapshot), [
+    'unit_a:0,0->1,0;enter=1;total=1',
+    'unit_b:0,1->1,1;enter=1;total=1',
+    'unit_a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2',
+  ]);
+  expect(() => reduction.movementExecutions!.clear(), throwsUnsupportedError);
+}
+
+WireSnapshot _turnMovementExecutionSnapshot() {
+  return _snapshot(
+    _diplomacyState(
+      runtimeState: const GameRuntimeState(submittedPlayerIds: {'player_1'}),
+    ).copyWith(
+      units: [
+        _queuedTurnMovementUnit(
+          id: 'unit_a',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.scout,
+          row: 0,
+          posture: UnitPosture.autoExploring,
+        ),
+        _queuedTurnMovementUnit(
+          id: 'unit_b',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          row: 1,
+        ),
+      ],
+      fogOfWar: FogOfWarState(
+        players: {
+          'player_1': _originFog(playerId: 'player_1', row: 0),
+          'player_2': _originFog(playerId: 'player_2', row: 1),
+        },
+      ),
+    ),
+    save: _save(
+      playerStates: const {
+        'player_1': PlayerTurnState.finished,
+        'player_2': PlayerTurnState.active,
+      },
+    ),
+  );
+}
+
+GameUnit _queuedTurnMovementUnit({
+  required String id,
+  required String ownerPlayerId,
+  required GameUnitType type,
+  required int row,
+  UnitPosture posture = UnitPosture.active,
+}) {
+  return GameUnit(
+    id: id,
+    ownerPlayerId: ownerPlayerId,
+    type: type,
+    name: id,
+    col: 0,
+    row: row,
+    movementPoints: 0,
+    posture: posture,
+  ).copyWithQueuedPath(
+    QueuedMovePath(
+      targetCol: 1,
+      targetRow: row,
+      steps: [
+        UnitMovementStep(col: 0, row: row, enterCost: 0, cumulativeCost: 0),
+        UnitMovementStep(col: 1, row: row, enterCost: 1, cumulativeCost: 1),
+      ],
+    ),
+  );
+}
+
+PlayerFogOfWar _originFog({required String playerId, required int row}) {
+  final origin = HexCoordinate(col: 0, row: row);
+  return PlayerFogOfWar(
+    playerId: playerId,
+    discoveredHexes: {origin},
+    visibleHexes: {origin},
+  );
+}
+
+String _movementExecutionSnapshot(MovementCommandExecution execution) {
+  final steps = execution.steps
+      .map(
+        (step) =>
+            '${step.col},${step.row};enter=${step.enterCost};'
+            'total=${step.cumulativeCost}',
+      )
+      .join('|');
+  return '${execution.unitId}:${execution.fromCol},${execution.fromRow}->$steps';
+}
+
+MapData _turnMovementExecutionMap() {
+  return MapData(
+    cols: 6,
+    rows: 2,
+    tiles: [
+      for (var row = 0; row < 2; row++)
+        for (var col = 0; col < 6; col++)
+          TileData(
+            col: col,
+            row: row,
+            terrains: const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
+  );
 }
