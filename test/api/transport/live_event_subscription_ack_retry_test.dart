@@ -7,6 +7,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
@@ -119,19 +120,92 @@ void main() {
       await handle.close();
     },
   );
+
+  test('maps live wire movement to one owned domain list', () async {
+    final connector = _FakeConnector();
+    final received = Completer<LiveServerEvent>();
+    final live = LiveEventSubscription(
+      serverpodHost: 'https://api.example.test',
+      connector: connector.connect,
+    );
+    final handle = await live.subscribe(
+      matchId: 'match_1',
+      token: AuthToken('jwt-token'),
+      fromOffset: 0,
+      onEvent: received.complete,
+      onSnapshotResync: (_) {},
+    );
+    final plan = _movementExecutions();
+    final wire = const EventCodec()
+        .toWire(
+          matchId: 'match_1',
+          offset: 1,
+          timestamp: DateTime.utc(2026, 7, 25, 12),
+          events: const [],
+        )
+        .copyWith(movementExecutions: plan);
+
+    connector.connections.single.add(_message(offset: 1, event: wire));
+    final event = await received.future;
+
+    expect(
+      event.movementExecutions,
+      everyElement(isA<MovementCommandExecution>()),
+    );
+    expect(
+      event.movementExecutions!.map((execution) {
+        final step = execution.steps.single;
+        return (
+          execution.unitId,
+          execution.fromCol,
+          execution.fromRow,
+          step.col,
+          step.row,
+          step.enterCost,
+          step.cumulativeCost,
+        );
+      }),
+      const [
+        ('unit_a', 0, 0, 1, 0, 7, 7),
+        ('unit_b', 0, 1, 1, 1, 11, 11),
+        ('unit_a', 1, 0, 2, 0, 13, 20),
+      ],
+    );
+    expect(event.movementExecutions!.clear, throwsUnsupportedError);
+    await handle.close();
+  });
 }
 
 WireMovementExecutionList _movementExecutions() {
   return WireMovementExecutionList([
-    WireMovementExecution(
-      unitId: 'unit_a',
-      fromCol: 0,
-      fromRow: 0,
-      steps: const [
-        WireMovementStep(col: 1, row: 0, enterCost: 7, cumulativeCost: 7),
-      ],
-    ),
+    _wireExecution('unit_a', 0, 0, 1, 0, 7, 7),
+    _wireExecution('unit_b', 0, 1, 1, 1, 11, 11),
+    _wireExecution('unit_a', 1, 0, 2, 0, 13, 20),
   ]);
+}
+
+WireMovementExecution _wireExecution(
+  String unitId,
+  int fromCol,
+  int fromRow,
+  int toCol,
+  int toRow,
+  int enterCost,
+  int cumulativeCost,
+) {
+  return WireMovementExecution(
+    unitId: unitId,
+    fromCol: fromCol,
+    fromRow: fromRow,
+    steps: [
+      WireMovementStep(
+        col: toCol,
+        row: toRow,
+        enterCost: enterCost,
+        cumulativeCost: cumulativeCost,
+      ),
+    ],
+  );
 }
 
 WireCommandAck _ack({required WireMovementExecutionList movementExecutions}) {

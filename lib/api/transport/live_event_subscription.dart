@@ -5,11 +5,13 @@ import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/api/transport/live_server_event.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
+
+export 'package:aonw/api/transport/live_server_event.dart';
 
 const _defaultReconnectDelays = [
   Duration(seconds: 1),
@@ -39,18 +41,6 @@ typedef ServerpodMultiplayerStreamConnectionFactory =
       required int afterOffset,
       required Stream<sp.MultiplayerClientMessage> input,
     });
-
-class LiveServerEvent {
-  final WireEvent wire;
-  final List<GameEvent> events;
-  final SaveSnapshot? snapshot;
-
-  const LiveServerEvent({
-    required this.wire,
-    required this.events,
-    this.snapshot,
-  });
-}
 
 class ServerpodMultiplayerStreamConnector {
   final String serverpodHost;
@@ -382,7 +372,7 @@ class _LiveEventSubscriptionController {
       _advanceTrackedOffset(event.offset);
       if (_localCommandEchoGuard.isLocalEcho(event)) return;
       onEvent(
-        LiveServerEvent(
+        LiveServerEvent.fromWire(
           wire: event,
           events: eventCodec.eventsFromWire(event),
           snapshot: saveSnapshot,

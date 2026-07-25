@@ -309,6 +309,41 @@ List<T> _transportOverrides<T>() {
   ];
 }
 
+ProviderContainer _liveMovementContainer({
+  required GameSave save,
+  required _FakeGameRepository gameRepository,
+  required _FakeMultiplayerStream fakeStream,
+  required _SpyGameRenderer renderer,
+  GameAudioController? audioController,
+}) {
+  return ProviderContainer(
+    overrides: [
+      activeGameSessionProvider.overrideWithValue(
+        _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+      ),
+      activeGameRendererProvider.overrideWithValue(renderer),
+      if (audioController != null)
+        gameAudioControllerProvider.overrideWithValue(audioController),
+      gameRepositoryProvider.overrideWithValue(gameRepository),
+      multiplayerStreamConnectorProvider.overrideWithValue(
+        fakeStream.connector,
+      ),
+      networkSessionProvider.overrideWithValue(
+        api.NetworkSession(
+          userId: 'user_1',
+          playerId: 'player_1',
+          token: AuthToken('jwt-token'),
+          matchId: save.id,
+          connectionState: const NetworkConnectionState(
+            status: NetworkConnectionStatus.connected,
+          ),
+        ),
+      ),
+      ..._transportOverrides(),
+    ],
+  );
+}
+
 MapData _makeMap() => MapData(
   cols: 5,
   rows: 5,
@@ -691,10 +726,10 @@ void main() {
     });
 
     test(
-      'animates opponent movement from live multiplayer event snapshots',
+      'animates exact authoritative opponent movement from live snapshots',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
-        final moved = commander.copyWith(col: 1, row: 0);
+        final moved = commander.copyWith(col: 2, row: 0);
         final save = _makeSave(
           players: const [_player1, _player2],
           gameMode: GameMode.multiplayer,
@@ -706,32 +741,11 @@ void main() {
         );
         final fakeStream = _FakeMultiplayerStream();
         final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = ProviderContainer(
-          overrides: [
-            activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
-                gameMode: GameMode.multiplayer,
-              ),
-            ),
-            activeGameRendererProvider.overrideWithValue(renderer),
-            gameRepositoryProvider.overrideWithValue(gameRepository),
-            multiplayerStreamConnectorProvider.overrideWithValue(
-              fakeStream.connector,
-            ),
-            networkSessionProvider.overrideWithValue(
-              api.NetworkSession(
-                userId: 'user_1',
-                playerId: 'player_1',
-                token: AuthToken('jwt-token'),
-                matchId: save.id,
-                connectionState: const NetworkConnectionState(
-                  status: NetworkConnectionStatus.connected,
-                ),
-              ),
-            ),
-            ..._transportOverrides(),
-          ],
+        final container = _liveMovementContainer(
+          save: save,
+          gameRepository: gameRepository,
+          fakeStream: fakeStream,
+          renderer: renderer,
         );
         addTearDown(container.dispose);
 
@@ -747,27 +761,60 @@ void main() {
           units: [moved],
           eventLogOffset: 1,
         );
-        fakeStream.add(
-          sp.MultiplayerServerMessage(
-            serverMessageId: 'server_1',
+        final message = sp.MultiplayerServerMessage(
+          serverMessageId: 'server_1',
+          matchId: save.id,
+          offset: 1,
+          snapshot: const SnapshotCodec().toWire(
             matchId: save.id,
-            offset: 1,
-            snapshot: const SnapshotCodec().toWire(
-              matchId: save.id,
-              snapshot: snapshot,
-            ),
-            event: const EventCodec().toWire(
-              matchId: save.id,
-              offset: 1,
-              timestamp: DateTime.utc(2026, 4, 27, 12),
-              events: const [],
-            ),
+            snapshot: snapshot,
           ),
+          event: const EventCodec()
+              .toWire(
+                matchId: save.id,
+                offset: 1,
+                timestamp: DateTime.utc(2026, 4, 27, 12),
+                events: const [
+                  UnitMovedEvent(
+                    unitId: 'commander_player_2',
+                    fromCol: 0,
+                    fromRow: 0,
+                    toCol: 2,
+                    toRow: 0,
+                  ),
+                ],
+              )
+              .copyWith(
+                movementExecutions: WireMovementExecutionList([
+                  WireMovementExecution(
+                    unitId: 'commander_player_2',
+                    fromCol: 0,
+                    fromRow: 0,
+                    steps: const [
+                      WireMovementStep(
+                        col: 1,
+                        row: 0,
+                        enterCost: 7,
+                        cumulativeCost: 7,
+                      ),
+                      WireMovementStep(
+                        col: 2,
+                        row: 0,
+                        enterCost: 13,
+                        cumulativeCost: 20,
+                      ),
+                    ],
+                  ),
+                ]),
+              ),
         );
+        fakeStream
+          ..add(message)
+          ..add(message);
 
         await _waitFor(() {
           final state = container.read(gameStateProvider(save.id)).value;
-          return state?.units.single.col == 1;
+          return state?.units.single.col == 2;
         });
 
         final state = container.read(gameStateProvider(save.id)).value!;
@@ -777,8 +824,17 @@ void main() {
         expect(effect.unitId, 'commander_player_2');
         expect(effect.fromCol, 0);
         expect(effect.fromRow, 0);
-        expect(effect.steps.single.col, 1);
-        expect(effect.steps.single.row, 0);
+        expect(effect.steps, hasLength(2));
+        expect(
+          effect.steps
+              .map(
+                (step) =>
+                    (step.col, step.row, step.enterCost, step.cumulativeCost),
+              )
+              .toList(),
+          [(1, 0, 7, 7), (2, 0, 13, 20)],
+        );
+        expect(state.units.single.queuedPath, isNull);
         expect(state.activePlayerId, 'player_1');
         expect(state.canControlUnit(state.units.single), isFalse);
       },
@@ -800,32 +856,11 @@ void main() {
         );
         final fakeStream = _FakeMultiplayerStream();
         final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = ProviderContainer(
-          overrides: [
-            activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
-                gameMode: GameMode.multiplayer,
-              ),
-            ),
-            activeGameRendererProvider.overrideWithValue(renderer),
-            gameRepositoryProvider.overrideWithValue(gameRepository),
-            multiplayerStreamConnectorProvider.overrideWithValue(
-              fakeStream.connector,
-            ),
-            networkSessionProvider.overrideWithValue(
-              api.NetworkSession(
-                userId: 'user_1',
-                playerId: 'player_1',
-                token: AuthToken('jwt-token'),
-                matchId: save.id,
-                connectionState: const NetworkConnectionState(
-                  status: NetworkConnectionStatus.connected,
-                ),
-              ),
-            ),
-            ..._transportOverrides(),
-          ],
+        final container = _liveMovementContainer(
+          save: save,
+          gameRepository: gameRepository,
+          fakeStream: fakeStream,
+          renderer: renderer,
         );
         addTearDown(container.dispose);
 
@@ -927,33 +962,12 @@ void main() {
       final fakeStream = _FakeMultiplayerStream();
       final renderer = _SpyGameRenderer(mapData: _makeLandMap());
       final audio = _RecordingAudioController();
-      final container = ProviderContainer(
-        overrides: [
-          activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
-              gameMode: GameMode.multiplayer,
-            ),
-          ),
-          activeGameRendererProvider.overrideWithValue(renderer),
-          gameAudioControllerProvider.overrideWithValue(audio),
-          gameRepositoryProvider.overrideWithValue(gameRepository),
-          multiplayerStreamConnectorProvider.overrideWithValue(
-            fakeStream.connector,
-          ),
-          networkSessionProvider.overrideWithValue(
-            api.NetworkSession(
-              userId: 'user_1',
-              playerId: 'player_1',
-              token: AuthToken('jwt-token'),
-              matchId: save.id,
-              connectionState: const NetworkConnectionState(
-                status: NetworkConnectionStatus.connected,
-              ),
-            ),
-          ),
-          ..._transportOverrides(),
-        ],
+      final container = _liveMovementContainer(
+        save: save,
+        gameRepository: gameRepository,
+        fakeStream: fakeStream,
+        renderer: renderer,
+        audioController: audio,
       );
       addTearDown(container.dispose);
 
@@ -1040,32 +1054,11 @@ void main() {
         );
         final fakeStream = _FakeMultiplayerStream();
         final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = ProviderContainer(
-          overrides: [
-            activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
-                gameMode: GameMode.multiplayer,
-              ),
-            ),
-            activeGameRendererProvider.overrideWithValue(renderer),
-            gameRepositoryProvider.overrideWithValue(gameRepository),
-            multiplayerStreamConnectorProvider.overrideWithValue(
-              fakeStream.connector,
-            ),
-            networkSessionProvider.overrideWithValue(
-              api.NetworkSession(
-                userId: 'user_1',
-                playerId: 'player_1',
-                token: AuthToken('jwt-token'),
-                matchId: save.id,
-                connectionState: const NetworkConnectionState(
-                  status: NetworkConnectionStatus.connected,
-                ),
-              ),
-            ),
-            ..._transportOverrides(),
-          ],
+        final container = _liveMovementContainer(
+          save: save,
+          gameRepository: gameRepository,
+          fakeStream: fakeStream,
+          renderer: renderer,
         );
         addTearDown(container.dispose);
 

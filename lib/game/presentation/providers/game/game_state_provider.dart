@@ -9,7 +9,6 @@ import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
@@ -19,11 +18,13 @@ import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
-import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
+import 'package:aonw/game/presentation/providers/game/external_snapshot_renderer_effect_resolver.dart';
 import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/game/live_snapshot_presentation_resolver.dart'
+    as live;
 import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart';
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
@@ -31,6 +32,7 @@ import 'package:aonw/game/presentation/providers/session/repository_providers.da
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -394,9 +396,8 @@ class GameStateNotifier extends _$GameStateNotifier {
     final incomingOffset = snapshot.eventLogOffset > 0
         ? snapshot.eventLogOffset
         : liveOffset ?? 0;
-    if (incomingOffset > 0 && incomingOffset <= _eventLogOffset) {
-      return;
-    }
+    if (incomingOffset > 0 && incomingOffset <= _eventLogOffset) return;
+    final presentation = live.resolve(_eventLogOffset, liveEvent, snapshot);
     final hasOffsetGap = liveOffset != null && liveOffset > _eventLogOffset + 1;
     if (hasOffsetGap) {
       _warn(
@@ -429,14 +430,15 @@ class GameStateNotifier extends _$GameStateNotifier {
       offset: incomingOffset,
     );
 
-    final liveEvents = hasOffsetGap
-        ? const <GameEvent>[]
-        : liveEvent?.events ?? const <GameEvent>[];
+    final liveEvents = presentation.canPresentLiveTransition
+        ? liveEvent?.events ?? const <GameEvent>[]
+        : const <GameEvent>[];
     await _presentExternalSnapshot(
       previousState: previousState,
       nextState: nextState,
       events: liveEvents,
-      inferDirectMoves: liveEvent != null && !hasOffsetGap,
+      movementExecutions: presentation.movementExecutions,
+      inferDirectMoves: presentation.inferDirectMoves,
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: ref.read(activeRendererViewModelProvider),

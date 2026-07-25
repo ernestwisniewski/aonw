@@ -5,6 +5,7 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required GameState? previousState,
     required GameState nextState,
     required List<GameEvent> events,
+    required List<MovementCommandExecution>? movementExecutions,
     required bool inferDirectMoves,
     required String? viewerPlayerId,
     required int turn,
@@ -14,10 +15,11 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required bool Function() isMounted,
   }) async {
     if (previousState == null) return;
-    final transitionEffects = _rendererEffectsForExternalSnapshot(
+    final transitionEffects = ExternalSnapshotRendererEffectResolver.resolve(
       previousState: previousState,
       nextState: nextState,
       events: events,
+      movementExecutions: movementExecutions,
       inferDirectMoves: inferDirectMoves,
       viewerPlayerId: viewerPlayerId,
       turn: _eventTurnFor(events, fallbackTurn: turn),
@@ -51,42 +53,6 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
       previousState: previousState,
       turn: turn,
     );
-  }
-
-  List<RendererEffect> _rendererEffectsForExternalSnapshot({
-    required GameState previousState,
-    required GameState nextState,
-    required Iterable<GameEvent> events,
-    bool inferDirectMoves = false,
-    String? viewerPlayerId,
-    int? turn,
-  }) {
-    final combatRetreatUnitIds = {
-      for (final event in events.whereType<CombatResolvedEvent>())
-        if (event.outcome.defenderRetreated) event.defenderUnitId,
-    };
-    final movementEffects =
-        QueuedMovementEffectBuilder.fromUnitDelta(
-              beforeUnits: previousState.units,
-              afterUnits: nextState.units,
-              inferDirectMoves: inferDirectMoves,
-            )
-            .where((effect) => !combatRetreatUnitIds.contains(effect.unitId))
-            .toList(growable: false);
-    final animatedUnitIds = {
-      for (final effect in movementEffects) effect.unitId,
-    };
-    return [
-      ...movementEffects,
-      ...GameEventRendererEffectMapper.effectsFor(
-        events: events,
-        state: nextState,
-        previousState: previousState,
-        skipUnitMoveIds: animatedUnitIds,
-        viewerPlayerId: viewerPlayerId,
-        turn: turn,
-      ),
-    ];
   }
 
   int? _eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
