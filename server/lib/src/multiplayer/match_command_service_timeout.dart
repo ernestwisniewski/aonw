@@ -65,45 +65,28 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final now = _nowUtc();
-      final DecodedMatchSnapshot decodedSnapshot = _commandReducer
-          .decodeSnapshot(match: state.match, snapshot: state.snapshot);
-      if (!_commandReducer.hasTurnTimedOut(
-        decodedSnapshot: decodedSnapshot,
-        now: now,
-      )) {
-        return const MatchMutationOutcome<bool>(false);
-      }
-
-      final save = decodedSnapshot.save;
+      final decodedSnapshot = _decodeRunningSnapshot(state);
       final canonicalSnapshot = decodedSnapshot.canonical;
-      final actorPlayerId = _selectTimeoutActorPlayerId(
-        match: state.match,
-        save: save,
-        canonicalSnapshot: canonicalSnapshot,
-      );
-      if (actorPlayerId == null) {
-        return const MatchMutationOutcome<bool>(false);
-      }
-
-      final reduction = await _commandReducer.reduceTimedOutTurn(
-        match: state.match,
-        snapshot: state.snapshot,
-        decodedSnapshot: decodedSnapshot,
-        actorPlayerId: actorPlayerId,
+      final timeoutReduction = await _reduceTimedOutTurnIfNeeded(
+        state: state,
+        snapshot: canonicalSnapshot,
         now: now,
       );
-      if (!reduction.accepted) {
+      if (timeoutReduction == null) {
         return const MatchMutationOutcome<bool>(false);
       }
-
-      if (reduction.turn == save.turn) {
-        return const MatchMutationOutcome<bool>(false);
-      }
+      final reduction = timeoutReduction.reduction;
+      final actorPlayerId = timeoutReduction.actorPlayerId;
 
       final nextOffset = state.nextOffset();
-      final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
+      final nextSnapshot = _encodeReductionSnapshot(
+        decoded: decodedSnapshot,
+        reduction: reduction,
+        offset: nextOffset,
+      );
       final event = _acceptedTimeoutEventForStorage(
         state: state,
+        previousSnapshot: canonicalSnapshot,
         reduction: reduction,
         actorPlayerId: actorPlayerId,
         offset: nextOffset,
@@ -119,7 +102,10 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         updated,
         event,
         actorPlayerId: actorPlayerId,
-        clientMessageId: _timeoutClientMessageId(state.match.id, save.turn),
+        clientMessageId: _timeoutClientMessageId(
+          state.match.id,
+          canonicalSnapshot.domain.turn,
+        ),
       );
 
       return MatchMutationOutcome<bool>(
@@ -140,16 +126,41 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     outcome.notifications.deliver(_broadcaster);
   }
 
+  Future<({ServerCommandReduction reduction, String actorPlayerId})?>
+  _reduceTimedOutTurnIfNeeded({
+    required StoredMatchState state,
+    required CanonicalGameSnapshot snapshot,
+    required DateTime now,
+  }) async {
+    if (!_commandReducer.hasTurnTimedOut(snapshot: snapshot, now: now)) {
+      return null;
+    }
+    final actorPlayerId = _selectTimeoutActorPlayerId(
+      match: state.match,
+      snapshot: snapshot,
+    );
+    if (actorPlayerId == null) return null;
+    final reduction = await _commandReducer.reduceTimedOutTurn(
+      match: state.match,
+      snapshot: snapshot,
+      actorPlayerId: actorPlayerId,
+      now: now,
+    );
+    if (!reduction.accepted ||
+        reduction.nextSnapshot!.domain.turn == snapshot.domain.turn) {
+      return null;
+    }
+    return (reduction: reduction, actorPlayerId: actorPlayerId);
+  }
+
   String? _selectTimeoutActorPlayerId({
     required WireMatch match,
-    required GameSave save,
-    required CanonicalGameSnapshot canonicalSnapshot,
+    required CanonicalGameSnapshot snapshot,
   }) {
     final activePlayerIds = {
-      for (final player in save.players)
+      for (final player in snapshot.domain.participants)
         if (player.id.isNotEmpty) player.id,
-      for (final playerId
-          in canonicalSnapshot.session.turnStatesByPlayerId.keys)
+      for (final playerId in snapshot.session.turnStatesByPlayerId.keys)
         if (playerId.isNotEmpty) playerId,
     };
     return TimeoutActorSelector.select(
@@ -157,8 +168,8 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         for (final player in match.players)
           if (activePlayerIds.contains(player.id)) player.id,
       ],
-      submittedPlayerIds: canonicalSnapshot.session.submittedPlayerIds,
-      kickedPlayerIds: canonicalSnapshot.session.kickedPlayerIds,
+      submittedPlayerIds: snapshot.session.submittedPlayerIds,
+      kickedPlayerIds: snapshot.session.kickedPlayerIds,
     );
   }
 

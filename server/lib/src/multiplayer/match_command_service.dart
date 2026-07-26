@@ -10,11 +10,14 @@ import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
+import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 
 part 'match_command_service_event.dart';
 part 'match_command_service_handling.dart';
 part 'match_command_service_timeout.dart';
+
+const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 
 final class MatchCommandService {
   MatchCommandService({
@@ -33,6 +36,23 @@ final class MatchCommandService {
   final DateTime Function() _nowUtc;
   RunningMatchCursor? _nextTimeoutSweepCursor;
 
+  DecodedRunningMatchSnapshot _decodeRunningSnapshot(StoredMatchState state) {
+    return _runningMatchSnapshotCodec.decode(
+      match: state.match,
+      snapshot: state.snapshot,
+    );
+  }
+
+  WireSnapshot _encodeReductionSnapshot({
+    required DecodedRunningMatchSnapshot decoded,
+    required ServerCommandReduction reduction,
+    required int offset,
+  }) {
+    return _runningMatchSnapshotCodec
+        .encodeCanonical(decoded, reduction.nextSnapshot!)
+        .copyWith(offset: offset);
+  }
+
   StoredMatchState _stateAfterAcceptedReduction({
     required StoredMatchState state,
     required ServerCommandReduction reduction,
@@ -40,9 +60,10 @@ final class MatchCommandService {
     required DateTime now,
   }) {
     final outcome = reduction.outcome!;
+    final turn = reduction.nextSnapshot!.domain.turn;
     if (!outcome.finished) {
       return state.copyWith(
-        match: state.match.copyWith(turn: reduction.turn!),
+        match: state.match.copyWith(turn: turn),
         snapshot: snapshot,
       );
     }
@@ -54,7 +75,7 @@ final class MatchCommandService {
     }
     return state.copyWith(
       match: state.match.copyWith(
-        turn: reduction.turn!,
+        turn: turn,
         state: 'finished',
         endedAt: now.toUtc(),
         outcomeCondition: outcome.condition.name,
@@ -108,8 +129,8 @@ final class MatchCommandService {
 List<Map<String, dynamic>> _eventAudienceForStorage({
   required List<GameEvent> events,
   required Iterable<String> participantPlayerIds,
-  required PersistentGameState previous,
-  required PersistentGameState next,
+  required DomainState previous,
+  required DomainState next,
 }) {
   if (events.isEmpty) return const [];
   return PlayerMatchEventAudience.annotateForStorage(

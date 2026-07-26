@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
@@ -12,8 +13,11 @@ import '../../../test/support/reducer_parity_diplomacy_characterization.dart';
 import '../../../test/support/reducer_parity_fixture.dart';
 import '../../../test/support/reducer_parity_movement_characterization.dart';
 import '../../../test/support/reducer_parity_resource_trade_characterization.dart';
+import 'support/server_command_reducer_test_driver.dart';
 
 const _repeatCount = 3;
+const _snapshotAdapter = LegacyGameSnapshotAdapter();
+const _reducerDriver = ServerCommandReducerTestDriver();
 
 void main() {
   final repositoryRoot = Directory.current.parent;
@@ -57,9 +61,10 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
     save: fixture.save.toJson(),
     state: fixture.state.toJson(),
   );
-  final reduction = await reducer.reduce(
+  final reduction = await _reducerDriver.reduce(
+    reducer: reducer,
     match: fixture.match,
-    snapshot: snapshot,
+    wireSnapshot: snapshot,
     wireCommand: WireCommand(
       matchId: fixture.match.id,
       tick: fixture.tick,
@@ -75,25 +80,56 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
   expect(reduction.reason, fixture.expectedReason);
   expect(reducerParityEvents(reduction.events), fixture.expectedEvents);
 
-  final resultSave = GameSave.fromJson(reduction.snapshot.save);
-  final resultState = PersistentGameState.fromJson(reduction.snapshot.state);
-  expect(reducerParitySave(resultSave), fixture.expectedSave);
-  expect(resultState.toJson(), fixture.expectedState);
   if (fixture.expectedAccepted) {
-    expect(reduction.turn, fixture.expectedSave['turn']);
-    expect(reduction.previousState?.toJson(), fixture.state.toJson());
-    expect(reduction.state?.toJson(), fixture.expectedState);
+    final nextSnapshot = reduction.nextSnapshot!;
+    final expectedPrevious = _snapshotAdapter.toCanonical(
+      save: fixture.save,
+      state: fixture.state,
+    );
+    final expectedSaveBeforeTimestampUpdate = GameSave.fromJson({
+      ...fixture.expectedSave,
+      'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
+    });
+    final expectedBeforeTimestampUpdate = _snapshotAdapter.toCanonical(
+      save: expectedSaveBeforeTimestampUpdate,
+      state: PersistentGameState.fromJson(fixture.expectedState),
+    );
+    final expectedNext = expectedBeforeTimestampUpdate.copyWith(
+      metadata: expectedBeforeTimestampUpdate.metadata.copyWith(
+        savedAtUtc: fixture.now,
+      ),
+    );
+    expect(
+      _canonicalParitySnapshot(reduction.previousSnapshot),
+      _canonicalParitySnapshot(expectedPrevious),
+    );
+    expect(
+      _canonicalParitySnapshot(nextSnapshot),
+      _canonicalParitySnapshot(expectedNext),
+    );
     expect(reduction.outcome, isNotNull);
-    expect(resultSave.savedAt, fixture.now);
+    expect(nextSnapshot.metadata.savedAtUtc, fixture.now);
   } else {
-    expect(reduction.snapshot, same(snapshot));
-    expect(reduction.turn, isNull);
-    expect(reduction.previousState, isNull);
-    expect(reduction.state, isNull);
+    final resultWire = reduction.wireSnapshot;
+    final resultSave = GameSave.fromJson(resultWire.save);
+    final resultState = PersistentGameState.fromJson(resultWire.state);
+    expect(reduction.nextSnapshot, isNull);
     expect(reduction.outcome, isNull);
-    expect(reduction.snapshot.toJson(), snapshot.toJson());
+    expect(resultWire, same(snapshot));
+    expect(resultWire.toJson(), snapshot.toJson());
+    expect(reducerParitySave(resultSave), fixture.expectedSave);
+    expect(resultState.toJson(), fixture.expectedState);
     expect(resultSave.savedAt, fixture.save.savedAt);
   }
+}
+
+Map<String, Object?> _canonicalParitySnapshot(CanonicalGameSnapshot snapshot) {
+  final legacy = _snapshotAdapter.toLegacy(snapshot);
+  return {
+    'save': legacy.save.toJson(),
+    'state': legacy.state.toJson(),
+    'eventLogOffset': legacy.eventLogOffset,
+  };
 }
 
 final class _FixtureMapCatalog implements MultiplayerMapCatalog {

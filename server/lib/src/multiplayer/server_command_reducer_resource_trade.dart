@@ -2,59 +2,63 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerResourceTrade on ServerCommandReducer {
   _CommandApplication _applyOpenResourceTrade({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required OpenResourceTradeCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
   }) {
+    final domain = snapshot.domain;
     final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
-      playerGold: state.playerGold,
-      cities: state.cities,
-      research: state.research,
-      diplomacy: state.runtimeState.diplomacy,
-      resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+      playerGold: domain.playerGold,
+      cities: domain.cities,
+      research: domain.research,
+      diplomacy: domain.diplomacy,
+      resourceTradeAgreements: domain.resourceTradeAgreements,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
     );
-    return _applyResourceTradeResult(save, state, result);
+    return _applyResourceTradeResult(snapshot, result);
   }
 
   _CommandApplication _applyOpenResourceExchange({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required OpenResourceExchangeCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
   }) {
+    final domain = snapshot.domain;
     final result = ResourceTradeCommandResolver.openResourceForResourceTrade(
-      cities: state.cities,
-      research: state.research,
-      diplomacy: state.runtimeState.diplomacy,
-      resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+      cities: domain.cities,
+      research: domain.research,
+      diplomacy: domain.diplomacy,
+      resourceTradeAgreements: domain.resourceTradeAgreements,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
     );
-    return _applyResourceTradeResult(save, state, result);
+    return _applyResourceTradeResult(snapshot, result);
   }
 
   _CommandApplication _applyResourceTradeResult(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     ResourceTradeCommandResult result,
   ) {
+    final domain = snapshot.domain;
+    final agreementsChanged =
+        result.accepted &&
+        !identical(
+          result.resourceTradeAgreements,
+          domain.resourceTradeAgreements,
+        );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: result.accepted
-          ? state.copyWith(
-              runtimeState: state.runtimeState.copyWith(
-                resourceTradeAgreements: result.resourceTradeAgreements,
-              ),
+      domain: agreementsChanged
+          ? domain.copyWith(
+              resourceTradeAgreements: result.resourceTradeAgreements,
             )
-          : state,
+          : null,
       reason: result.reason,
     );
   }

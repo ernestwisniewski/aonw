@@ -2,18 +2,16 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerUnitAction on ServerCommandReducer {
   _CommandApplication _applyCancelUnitAction(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     CancelUnitActionCommand command,
     String actorPlayerId,
   ) {
     return _applyUnitActionResult(
-      save,
-      state,
+      snapshot,
       UnitActionCommandResolver.cancelUnitAction(
-        units: state.units,
-        artifacts: state.artifacts,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        artifacts: snapshot.domain.artifacts,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -21,18 +19,16 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
   }
 
   _CommandApplication _applySkipUnitTurn(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     SkipUnitTurnCommand command,
     String actorPlayerId,
   ) {
     return _applyUnitActionResult(
-      save,
-      state,
+      snapshot,
       UnitActionCommandResolver.skipUnitTurn(
-        units: state.units,
-        artifacts: state.artifacts,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        artifacts: snapshot.domain.artifacts,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -40,18 +36,16 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
   }
 
   _CommandApplication _applyFortifyUnit(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     FortifyUnitCommand command,
     String actorPlayerId,
   ) {
     return _applyUnitActionResult(
-      save,
-      state,
+      snapshot,
       UnitActionCommandResolver.fortifyUnit(
-        units: state.units,
-        artifacts: state.artifacts,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        artifacts: snapshot.domain.artifacts,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -59,39 +53,33 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
   }
 
   _CommandApplication _applyUnitActionResult(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     UnitActionCommandResult result,
   ) {
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
-    final unitsChanged = !identical(result.units, state.units);
-    final artifactsChanged = !identical(result.artifacts, state.artifacts);
-    final runtimeState = _runtimeStateWithInteraction(
-      state.runtimeState,
-      result.interaction,
-    );
+    final domain = snapshot.domain;
+    final unitsChanged = !identical(result.units, domain.units);
+    final artifactsChanged = !identical(result.artifacts, domain.artifacts);
+    final domainChanged = unitsChanged || artifactsChanged;
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state:
-          unitsChanged ||
-              artifactsChanged ||
-              !identical(runtimeState, state.runtimeState)
-          ? state.copyWith(
+      domain: domainChanged
+          ? domain.copyWith(
               units: unitsChanged ? result.units : null,
               artifacts: artifactsChanged ? result.artifacts : null,
-              runtimeState: identical(runtimeState, state.runtimeState)
-                  ? null
-                  : runtimeState,
             )
-          : state,
+          : null,
+      interaction: _interactionReplacement(
+        snapshot.interaction,
+        result.interaction,
+      ),
     );
   }
 }

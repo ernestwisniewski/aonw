@@ -2,22 +2,23 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerAutoExplore on ServerCommandReducer {
   _CommandApplication _applyAutoExplore({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required AutoExploreUnitCommand command,
     required String actorPlayerId,
     required MapTraversalView mapView,
   }) {
+    final domain = snapshot.domain;
+    final interaction = snapshot.interaction;
     final result = const AutoExploreCommandResolver().resolve(
       state: AutoExploreCommandState(
         movement: MovementCommandState(
-          units: state.units,
-          cities: state.cities,
-          fogOfWar: state.fogOfWar,
-          diplomacy: state.runtimeState.diplomacy,
-          playerIds: state.knownPlayerIds,
+          units: domain.units,
+          cities: domain.cities,
+          fogOfWar: domain.fogOfWar,
+          diplomacy: domain.diplomacy,
+          playerIds: domain.participants.map((player) => player.id),
         ),
-        interaction: _persistedInteraction(state),
+        interaction: interaction,
       ),
       command: command,
       actorPlayerId: actorPlayerId,
@@ -26,49 +27,30 @@ extension _ServerCommandReducerAutoExplore on ServerCommandReducer {
     );
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
 
-    final unitsChanged = !identical(result.units, state.units);
-    final fogChanged = !identical(result.fogOfWar, state.fogOfWar);
-    final runtimeState = _autoExploreRuntimeState(state.runtimeState, result);
-    final runtimeChanged = !identical(runtimeState, state.runtimeState);
-    final nextState = unitsChanged || fogChanged || runtimeChanged
-        ? state.copyWith(
+    final unitsChanged = !identical(result.units, domain.units);
+    final fogChanged = !identical(result.fogOfWar, domain.fogOfWar);
+    final diplomacyChanged = !identical(result.diplomacy, domain.diplomacy);
+    final domainChanged = unitsChanged || fogChanged || diplomacyChanged;
+    final nextDomain = domainChanged
+        ? domain.copyWith(
             units: unitsChanged ? result.units : null,
             fogOfWar: fogChanged ? result.fogOfWar : null,
-            runtimeState: runtimeChanged ? runtimeState : null,
+            diplomacy: diplomacyChanged ? result.diplomacy : null,
           )
-        : state;
+        : domain;
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: nextState,
+      domain: domainChanged ? nextDomain : null,
+      interaction: _interactionReplacement(interaction, result.interaction),
       events: result.events,
       movementExecutions: [?result.execution],
     );
   }
-}
-
-GameRuntimeState _autoExploreRuntimeState(
-  GameRuntimeState input,
-  AutoExploreCommandResult result,
-) {
-  var current = input;
-  if (result.interaction.cityFoundingDraft != input.cityFoundingDraft) {
-    current = current.copyWith(
-      cityFoundingDraft: result.interaction.cityFoundingDraft,
-    );
-  }
-  if (result.interaction.pendingAction != input.pendingAction) {
-    current = current.copyWith(pendingAction: result.interaction.pendingAction);
-  }
-  if (!identical(result.diplomacy, input.diplomacy)) {
-    current = current.copyWith(diplomacy: result.diplomacy);
-  }
-  return current;
 }

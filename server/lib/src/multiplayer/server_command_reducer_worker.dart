@@ -2,22 +2,20 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerWorker on ServerCommandReducer {
   _CommandApplication _applySelectWorkerImprovement(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     SelectWorkerImprovementCommand command,
     String actorPlayerId,
     MapTileLookup mapTiles,
     GameRuleset ruleset,
   ) {
     return _applyWorkerResult(
-      save,
-      state,
+      snapshot,
       WorkerCommandResolver.selectWorkerImprovement(
-        units: state.units,
-        cities: state.cities,
-        fieldImprovements: state.fieldImprovements,
-        research: state.research,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        cities: snapshot.domain.cities,
+        fieldImprovements: snapshot.domain.fieldImprovements,
+        research: snapshot.domain.research,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
         mapTiles: mapTiles,
@@ -29,22 +27,20 @@ extension _ServerCommandReducerWorker on ServerCommandReducer {
   }
 
   _CommandApplication _applyConfirmWorkerImprovement(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     ConfirmWorkerImprovementCommand command,
     String actorPlayerId,
     MapTileLookup mapTiles,
     GameRuleset ruleset,
   ) {
     return _applyWorkerResult(
-      save,
-      state,
+      snapshot,
       WorkerCommandResolver.confirmWorkerImprovement(
-        units: state.units,
-        cities: state.cities,
-        fieldImprovements: state.fieldImprovements,
-        research: state.research,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        cities: snapshot.domain.cities,
+        fieldImprovements: snapshot.domain.fieldImprovements,
+        research: snapshot.domain.research,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
         mapTiles: mapTiles,
@@ -56,17 +52,15 @@ extension _ServerCommandReducerWorker on ServerCommandReducer {
   }
 
   _CommandApplication _applyCancelWorkerJob(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     CancelWorkerJobCommand command,
     String actorPlayerId,
   ) {
     return _applyWorkerResult(
-      save,
-      state,
+      snapshot,
       WorkerCommandResolver.cancelWorkerJob(
-        units: state.units,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -74,20 +68,18 @@ extension _ServerCommandReducerWorker on ServerCommandReducer {
   }
 
   _CommandApplication _applyAssignWorkerToHex(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     AssignWorkerToHexCommand command,
     String actorPlayerId,
     MapTileLookup mapTiles,
   ) {
     return _applyWorkerResult(
-      save,
-      state,
+      snapshot,
       WorkerCommandResolver.assignWorkerToHex(
-        units: state.units,
-        cities: state.cities,
-        fieldImprovements: state.fieldImprovements,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        cities: snapshot.domain.cities,
+        fieldImprovements: snapshot.domain.fieldImprovements,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
         mapTiles: mapTiles,
@@ -96,17 +88,15 @@ extension _ServerCommandReducerWorker on ServerCommandReducer {
   }
 
   _CommandApplication _applyCancelWorkerAssignment(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     CancelWorkerAssignmentCommand command,
     String actorPlayerId,
   ) {
     return _applyWorkerResult(
-      save,
-      state,
+      snapshot,
       WorkerCommandResolver.cancelWorkerAssignment(
-        units: state.units,
-        interaction: _persistedInteraction(state),
+        units: snapshot.domain.units,
+        interaction: snapshot.interaction,
         command: command,
         actorPlayerId: actorPlayerId,
       ),
@@ -114,34 +104,26 @@ extension _ServerCommandReducerWorker on ServerCommandReducer {
   }
 
   _CommandApplication _applyWorkerResult(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     WorkerCommandResult result,
   ) {
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
-    final unitsChanged = !identical(result.units, state.units);
-    final runtimeState = _runtimeStateWithInteraction(
-      state.runtimeState,
-      result.interaction,
-    );
+    final domain = snapshot.domain;
+    final unitsChanged = !identical(result.units, domain.units);
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: unitsChanged || !identical(runtimeState, state.runtimeState)
-          ? state.copyWith(
-              units: unitsChanged ? result.units : null,
-              runtimeState: identical(runtimeState, state.runtimeState)
-                  ? null
-                  : runtimeState,
-            )
-          : state,
+      domain: unitsChanged ? domain.copyWith(units: result.units) : null,
+      interaction: _interactionReplacement(
+        snapshot.interaction,
+        result.interaction,
+      ),
     );
   }
 }

@@ -2,16 +2,16 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerCityExpansion on ServerCommandReducer {
   _CommandApplication _applySelectCityExpansionHexCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required SelectCityExpansionHexCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
     required GameRuleset ruleset,
   }) {
+    final domain = snapshot.domain;
     final result = CityExpansionCommandResolver.selectExpansionHex(
-      cities: state.cities,
-      research: state.research,
+      cities: domain.cities,
+      research: domain.research,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
@@ -20,18 +20,17 @@ extension _ServerCommandReducerCityExpansion on ServerCommandReducer {
     );
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: identical(result.cities, state.cities)
-          ? state
-          : state.copyWith(cities: result.cities),
+      domain: identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
     );
   }
 }

@@ -2,19 +2,19 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerMovement on ServerCommandReducer {
   _CommandApplication _applyMoveUnit({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required MoveUnitCommand command,
     required String actorPlayerId,
     required MapTraversalView mapView,
   }) {
+    final domain = snapshot.domain;
     final result = const MovementCommandResolver().resolve(
       state: MovementCommandState(
-        units: state.units,
-        cities: state.cities,
-        fogOfWar: state.fogOfWar,
-        diplomacy: state.runtimeState.diplomacy,
-        playerIds: state.knownPlayerIds,
+        units: domain.units,
+        cities: domain.cities,
+        fogOfWar: domain.fogOfWar,
+        diplomacy: domain.diplomacy,
+        playerIds: domain.participants.map((participant) => participant.id),
       ),
       command: command,
       actorPlayerId: actorPlayerId,
@@ -22,33 +22,26 @@ extension _ServerCommandReducerMovement on ServerCommandReducer {
     );
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
 
-    final unitsChanged = !identical(result.units, state.units);
-    final fogChanged = !identical(result.fogOfWar, state.fogOfWar);
-    final diplomacyChanged = !identical(
-      result.diplomacy,
-      state.runtimeState.diplomacy,
-    );
-    final runtimeState = diplomacyChanged
-        ? state.runtimeState.copyWith(diplomacy: result.diplomacy)
-        : state.runtimeState;
-    final nextState = unitsChanged || fogChanged || diplomacyChanged
-        ? state.copyWith(
+    final unitsChanged = !identical(result.units, domain.units);
+    final fogChanged = !identical(result.fogOfWar, domain.fogOfWar);
+    final diplomacyChanged = !identical(result.diplomacy, domain.diplomacy);
+    final nextDomain = unitsChanged || fogChanged || diplomacyChanged
+        ? domain.copyWith(
             units: unitsChanged ? result.units : null,
             fogOfWar: fogChanged ? result.fogOfWar : null,
-            runtimeState: diplomacyChanged ? runtimeState : null,
+            diplomacy: diplomacyChanged ? result.diplomacy : null,
           )
-        : state;
+        : domain;
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: nextState,
+      domain: identical(nextDomain, domain) ? null : nextDomain,
       events: result.events,
       movementExecutions: [?result.execution],
     );

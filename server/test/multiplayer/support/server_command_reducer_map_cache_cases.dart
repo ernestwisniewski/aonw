@@ -121,13 +121,14 @@ void _registerServerCommandReducerMapCacheTests() {
   });
 }
 
-Future<ServerCommandReduction> _reduceForMap(
+Future<ServerCommandTestReduction> _reduceForMap(
   ServerCommandReducer reducer,
   String mapName,
 ) {
-  return reducer.reduce(
+  return const ServerCommandReducerTestDriver().reduce(
+    reducer: reducer,
     match: _runningMatch(mapName: mapName),
-    snapshot: _snapshot(_diplomacyState(), save: _save(mapName: mapName)),
+    wireSnapshot: _snapshot(_diplomacyState(), save: _save(mapName: mapName)),
     wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
     actorPlayerId: 'player_1',
     now: DateTime.utc(2026, 6, 30, 12),

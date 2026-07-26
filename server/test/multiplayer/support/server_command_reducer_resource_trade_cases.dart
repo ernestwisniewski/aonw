@@ -9,9 +9,10 @@ void _registerServerCommandReducerResourceTradeTests() {
         ),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await const ServerCommandReducerTestDriver().reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: _snapshot(
+        wireSnapshot: _snapshot(
           PersistentGameState(
             playerGold: const {'player_1': 8},
             cities: _tradeCities(),
@@ -34,11 +35,11 @@ void _registerServerCommandReducerResourceTradeTests() {
         now: DateTime.utc(2026, 6, 30, 12),
       );
 
-      final nextState = PersistentGameState.fromJson(reduction.snapshot.state);
+      final nextDomain = reduction.nextSnapshot!.domain;
 
       expect(reduction.accepted, isTrue);
       expect(reduction.events, isEmpty);
-      expect(nextState.runtimeState.resourceTradeAgreements, [
+      expect(nextDomain.resourceTradeAgreements, [
         const ResourceTradeAgreement(
           id: 'server_trade_1',
           exporterPlayerId: 'player_2',
@@ -57,9 +58,10 @@ void _registerServerCommandReducerResourceTradeTests() {
         ),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await const ServerCommandReducerTestDriver().reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: _snapshot(
+        wireSnapshot: _snapshot(
           PersistentGameState(
             cities: _tradeCities(),
             research: _researchWithMany({
@@ -82,27 +84,27 @@ void _registerServerCommandReducerResourceTradeTests() {
         now: DateTime.utc(2026, 6, 30, 12),
       );
 
-      final nextState = PersistentGameState.fromJson(reduction.snapshot.state);
+      final nextDomain = reduction.nextSnapshot!.domain;
 
       expect(reduction.accepted, isTrue);
       expect(reduction.events, isEmpty);
       expect(
-        nextState.runtimeState.resourceTradeAgreements
+        nextDomain.resourceTradeAgreements
             .map((agreement) => agreement.toJson())
             .toList(),
         [
-          {
-            'id': 'server_exchange_1_offered',
-            'exporterPlayerId': 'player_1',
-            'importerPlayerId': 'player_2',
-            'resource': ResourceType.iron.name,
-            'remainingTurns': 6,
-          },
           {
             'id': 'server_exchange_1_requested',
             'exporterPlayerId': 'player_2',
             'importerPlayerId': 'player_1',
             'resource': ResourceType.horses.name,
+            'remainingTurns': 6,
+          },
+          {
+            'id': 'server_exchange_1_offered',
+            'exporterPlayerId': 'player_1',
+            'importerPlayerId': 'player_2',
+            'resource': ResourceType.iron.name,
             'remainingTurns': 6,
           },
         ],
@@ -123,9 +125,10 @@ void _registerServerCommandReducerResourceTradeTests() {
         ),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await const ServerCommandReducerTestDriver().reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: snapshot,
+        wireSnapshot: snapshot,
         wireCommand: _wireCommand(
           const OpenResourceTradeCommand(
             playerId: 'player_2',
@@ -142,7 +145,8 @@ void _registerServerCommandReducerResourceTradeTests() {
 
       expect(reduction.accepted, isFalse);
       expect(reduction.reason, 'resource_trade_player_not_controlled');
-      expect(reduction.snapshot.toJson(), snapshot.toJson());
+      expect(reduction.nextSnapshot, isNull);
+      expect(reduction.wireSnapshot, same(snapshot));
     });
   });
 }

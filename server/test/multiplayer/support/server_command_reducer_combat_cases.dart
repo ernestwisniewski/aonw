@@ -1,5 +1,7 @@
 part of '../server_command_reducer_test.dart';
 
+const _combatReducerDriver = ServerCommandReducerTestDriver();
+
 void _registerServerCommandReducerCombatTests() {
   _registerServerCommandReducerCombatCommandTests();
   _registerServerCommandReducerCombatPrivacyTests();
@@ -8,73 +10,73 @@ void _registerServerCommandReducerCombatTests() {
 void _registerServerCommandReducerCombatCommandTests() {
   group('ServerCommandReducer combat commands', () {
     test('resolves a unit attack instead of rejecting the command', () async {
-      final reduction =
-          await ServerCommandReducer(
-            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-          ).reduce(
-            match: _runningMatch(),
-            snapshot: _snapshot(
-              _combatState(
-                units: [
-                  _combatUnit('attacker', 'player_1', 0, 0),
-                  _combatUnit(
-                    'defender',
-                    'player_2',
-                    1,
-                    0,
-                    type: GameUnitType.settler,
-                  ),
-                ],
+      final reduction = await _combatReducerDriver.reduce(
+        reducer: ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        ),
+        match: _runningMatch(),
+        wireSnapshot: _snapshot(
+          _combatState(
+            units: [
+              _combatUnit('attacker', 'player_1', 0, 0),
+              _combatUnit(
+                'defender',
+                'player_2',
+                1,
+                0,
+                type: GameUnitType.settler,
               ),
-            ),
-            wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
-            actorPlayerId: 'player_1',
-            now: DateTime.utc(2026, 6, 30, 12),
-          );
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+            ],
+          ),
+        ),
+        wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 12),
+      );
+      final domain = reduction.nextSnapshot!.domain;
 
       expect(reduction.accepted, isTrue);
       expect(reduction.reason, isNull);
       expect(reduction.events.whereType<UnitAttackedEvent>(), hasLength(1));
       expect(reduction.events.whereType<CombatResolvedEvent>(), hasLength(1));
-      expect(state.units.byId('attacker')?.movementPoints, 0);
+      expect(domain.units.byId('attacker')?.movementPoints, 0);
     });
 
     test('honors city destruction in an authoritative attack', () async {
-      final reduction =
-          await ServerCommandReducer(
-            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-          ).reduce(
-            match: _runningMatch(),
-            snapshot: _snapshot(
-              _combatState(
-                units: [_combatUnit('attacker', 'player_1', 0, 0)],
-                cities: const [
-                  GameCity(
-                    id: 'city_2',
-                    ownerPlayerId: 'player_2',
-                    name: 'City 2',
-                    center: CityHex(col: 1, row: 0),
-                    hitPoints: 1,
-                  ),
-                ],
+      final reduction = await _combatReducerDriver.reduce(
+        reducer: ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        ),
+        match: _runningMatch(),
+        wireSnapshot: _snapshot(
+          _combatState(
+            units: [_combatUnit('attacker', 'player_1', 0, 0)],
+            cities: const [
+              GameCity(
+                id: 'city_2',
+                ownerPlayerId: 'player_2',
+                name: 'City 2',
+                center: CityHex(col: 1, row: 0),
+                hitPoints: 1,
               ),
-            ),
-            wireCommand: _wireCommand(
-              const AttackHexCommand(
-                'attacker',
-                1,
-                0,
-                cityConquestAction: CityConquestAction.destroy,
-              ),
-            ),
-            actorPlayerId: 'player_1',
-            now: DateTime.utc(2026, 6, 30, 12),
-          );
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+            ],
+          ),
+        ),
+        wireCommand: _wireCommand(
+          const AttackHexCommand(
+            'attacker',
+            1,
+            0,
+            cityConquestAction: CityConquestAction.destroy,
+          ),
+        ),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 12),
+      );
+      final domain = reduction.nextSnapshot!.domain;
 
       expect(reduction.accepted, isTrue);
-      expect(state.cities, isEmpty);
+      expect(domain.cities, isEmpty);
       expect(reduction.events.whereType<CityAttackedEvent>(), hasLength(1));
       expect(reduction.events.whereType<CityDestroyedEvent>(), hasLength(1));
     });
@@ -119,27 +121,24 @@ void _registerServerCommandReducerCombatPrivacyTests() {
         () async {
           final state = _combatPrivacyState(privacyCase);
           final snapshot = _snapshot(state);
-          final reduction =
-              await ServerCommandReducer(
-                mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-              ).reduce(
-                match: _runningMatch(),
-                snapshot: snapshot,
-                wireCommand: _wireCommand(
-                  const AttackHexCommand('attacker', 1, 0),
-                ),
-                actorPlayerId: 'player_1',
-                now: DateTime.utc(2026, 6, 30, 12),
-              );
+          final reduction = await _combatReducerDriver.reduce(
+            reducer: ServerCommandReducer(
+              mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+            ),
+            match: _runningMatch(),
+            wireSnapshot: snapshot,
+            wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
+            actorPlayerId: 'player_1',
+            now: DateTime.utc(2026, 6, 30, 12),
+          );
 
           expect(reduction.accepted, isFalse);
           expect(reduction.reason, 'attack_target_not_visible');
-          expect(reduction.snapshot, same(snapshot));
-          expect(reduction.snapshot.toJson(), snapshot.toJson());
+          expect(reduction.nextSnapshot, isNull);
+          expect(reduction.wireSnapshot, same(snapshot));
+          expect(reduction.wireSnapshot.toJson(), snapshot.toJson());
           expect(reduction.events, isEmpty);
           expect(reduction.movementExecutions, isEmpty);
-          expect(reduction.previousState, isNull);
-          expect(reduction.state, isNull);
         },
       );
     }

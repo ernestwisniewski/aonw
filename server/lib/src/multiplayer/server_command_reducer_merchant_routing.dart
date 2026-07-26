@@ -2,18 +2,16 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerMerchantRouting on ServerCommandReducer {
   _CommandApplication _applyAssignMerchantRoute(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     AssignMerchantTradeRouteCommand command,
     String actorPlayerId,
     MapTraversalView mapData,
   ) {
     return _applyMerchantRoutingResult(
-      save,
-      state,
+      snapshot,
       MerchantRoutingCommandResolver.assignRoute(
-        units: state.units,
-        cities: state.cities,
+        units: snapshot.domain.units,
+        cities: snapshot.domain.cities,
         mapData: mapData,
         command: command,
         actorPlayerId: actorPlayerId,
@@ -22,18 +20,16 @@ extension _ServerCommandReducerMerchantRouting on ServerCommandReducer {
   }
 
   _CommandApplication _applyMoveMerchantToCity(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     MoveMerchantToCityCommand command,
     String actorPlayerId,
     MapTraversalView mapData,
   ) {
     return _applyMerchantRoutingResult(
-      save,
-      state,
+      snapshot,
       MerchantRoutingCommandResolver.moveToCity(
-        units: state.units,
-        cities: state.cities,
+        units: snapshot.domain.units,
+        cities: snapshot.domain.cities,
         mapData: mapData,
         command: command,
         actorPlayerId: actorPlayerId,
@@ -42,24 +38,23 @@ extension _ServerCommandReducerMerchantRouting on ServerCommandReducer {
   }
 
   _CommandApplication _applyMerchantRoutingResult(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     MerchantRoutingCommandResult result,
   ) {
+    final domain = snapshot.domain;
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: identical(result.units, state.units)
-          ? state
-          : state.copyWith(units: result.units),
+      domain: identical(result.units, domain.units)
+          ? null
+          : domain.copyWith(units: result.units),
     );
   }
 }

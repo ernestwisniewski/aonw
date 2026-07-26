@@ -2,29 +2,21 @@ part of 'server_command_reducer.dart';
 
 extension _ServerProductionCommandReducer on ServerCommandReducer {
   _CommandApplication _applyProductionCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required GameCommand command,
     required String actorPlayerId,
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
     if (command is StartCityProjectCommand) {
-      return _applyStartCityProject(
-        save,
-        state,
-        command,
-        actorPlayerId,
-        ruleset,
-      );
+      return _applyStartCityProject(snapshot, command, actorPlayerId, ruleset);
     }
     if (command is SetCitySpecializationCommand) {
-      return _applySetCitySpecialization(save, state, command, actorPlayerId);
+      return _applySetCitySpecialization(snapshot, command, actorPlayerId);
     }
     if (command is RushProductionCommand) {
       return _applyRushProduction(
-        save,
-        state,
+        snapshot,
         command,
         actorPlayerId,
         mapView,
@@ -32,8 +24,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       );
     }
     return _applyStartProductionCommand(
-      save: save,
-      state: state,
+      snapshot: snapshot,
       command: command,
       actorPlayerId: actorPlayerId,
       mapView: mapView,
@@ -42,8 +33,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
   }
 
   _CommandApplication _applyStartProductionCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required GameCommand command,
     required String actorPlayerId,
     required MapReadView mapView,
@@ -51,8 +41,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
   }) {
     if (command is StartBuildingCommand) {
       return _applyStartBuilding(
-        save,
-        state,
+        snapshot,
         command,
         actorPlayerId,
         mapView,
@@ -61,8 +50,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     }
     if (command is StartWonderCommand) {
       return _applyStartWonder(
-        save,
-        state,
+        snapshot,
         command,
         actorPlayerId,
         mapView,
@@ -71,8 +59,7 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
     }
     if (command is StartUnitProductionCommand) {
       return _applyStartUnitProduction(
-        save,
-        state,
+        snapshot,
         command,
         actorPlayerId,
         mapView,
@@ -87,62 +74,62 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
   }
 
   _CommandApplication _applyStartCityProject(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     StartCityProjectCommand command,
     String actorPlayerId,
     GameRuleset ruleset,
   ) {
+    final domain = snapshot.domain;
     final result = CityProductionCommandResolver.startCityProject(
-      cities: state.cities,
+      cities: domain.cities,
       command: command,
       actorPlayerId: actorPlayerId,
       cityRuleset: ruleset.city,
       paceBalance: ruleset.paceBalance,
     );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: !result.accepted || identical(result.cities, state.cities)
-          ? state
-          : state.copyWith(cities: result.cities),
+      domain: !result.accepted || identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
       reason: result.reason,
     );
   }
 
   _CommandApplication _applySetCitySpecialization(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     SetCitySpecializationCommand command,
     String actorPlayerId,
   ) {
+    final domain = snapshot.domain;
     final result = CityProductionCommandResolver.setCitySpecialization(
-      cities: state.cities,
-      research: state.research,
+      cities: domain.cities,
+      research: domain.research,
       command: command,
       actorPlayerId: actorPlayerId,
     );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: !result.accepted || identical(result.cities, state.cities)
-          ? state
-          : state.copyWith(cities: result.cities),
+      domain: !result.accepted || identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
       reason: result.reason,
     );
   }
 
   _CommandApplication _applyStartBuilding(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     StartBuildingCommand command,
     String actorPlayerId,
     MapReadView mapView,
     GameRuleset ruleset,
   ) {
+    final domain = snapshot.domain;
     final result = CityProductionCommandResolver.startBuilding(
-      cities: state.cities,
-      research: state.research,
+      cities: domain.cities,
+      research: domain.research,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapView,
@@ -151,25 +138,27 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       paceBalance: ruleset.paceBalance,
     );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      domain: !result.accepted || identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
       reason: result.reason,
     );
   }
 
   _CommandApplication _applyStartWonder(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     StartWonderCommand command,
     String actorPlayerId,
     MapReadView mapView,
     GameRuleset ruleset,
   ) {
+    final domain = snapshot.domain;
     final result = CityProductionCommandResolver.startWonder(
-      cities: state.cities,
-      research: state.research,
-      wonderRegistry: state.wonderRegistry,
+      cities: domain.cities,
+      research: domain.research,
+      wonderRegistry: domain.wonderRegistry,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapView,
@@ -177,28 +166,30 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       paceBalance: ruleset.paceBalance,
     );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      domain: !result.accepted || identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
       reason: result.reason,
     );
   }
 
   _CommandApplication _applyStartUnitProduction(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     StartUnitProductionCommand command,
     String actorPlayerId,
     MapReadView mapView,
     GameRuleset ruleset,
   ) {
+    final domain = snapshot.domain;
     final result = CityProductionCommandResolver.startUnitProduction(
-      cities: state.cities,
-      units: state.units,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      research: state.research,
-      resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+      cities: domain.cities,
+      units: domain.units,
+      artifacts: domain.artifacts,
+      fieldImprovements: domain.fieldImprovements,
+      research: domain.research,
+      resourceTradeAgreements: domain.resourceTradeAgreements,
       command: command,
       actorPlayerId: actorPlayerId,
       mapView: mapView,
@@ -207,30 +198,32 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       paceBalance: ruleset.paceBalance,
     );
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: !result.accepted ? state : state.copyWith(cities: result.cities),
+      domain: !result.accepted || identical(result.cities, domain.cities)
+          ? null
+          : domain.copyWith(cities: result.cities),
       reason: result.reason,
     );
   }
 
   _CommandApplication _applyRushProduction(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     RushProductionCommand command,
     String actorPlayerId,
     MapReadView mapView,
     GameRuleset ruleset,
   ) {
+    final domain = snapshot.domain;
     final result = RushProductionCommandResolver.resolve(
-      cities: state.cities,
-      units: state.units,
-      artifacts: state.artifacts,
-      fieldImprovements: state.fieldImprovements,
-      playerGold: state.playerGold,
-      playerStabilityNet: state.playerStabilityNet,
-      research: state.research,
-      wonderRegistry: state.wonderRegistry,
+      cities: domain.cities,
+      units: domain.units,
+      artifacts: domain.artifacts,
+      fieldImprovements: domain.fieldImprovements,
+      playerGold: domain.playerGold,
+      playerStabilityNet: domain.playerStabilityNet,
+      research: domain.research,
+      wonderRegistry: domain.wonderRegistry,
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapView,
@@ -240,31 +233,46 @@ extension _ServerProductionCommandReducer on ServerCommandReducer {
       wonderRuleset: ruleset.wonders,
       paceBalance: ruleset.paceBalance,
     );
+    final nextDomain = result.accepted ? _rushDomain(domain, result) : domain;
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: result.accepted,
-      state: result.accepted ? _rushState(state, result) : state,
+      domain: identical(nextDomain, domain) ? null : nextDomain,
       events: result.events,
       reason: result.reason,
     );
   }
 
-  PersistentGameState _rushState(
-    PersistentGameState state,
+  DomainState _rushDomain(
+    DomainState domain,
     RushProductionCommandResult result,
   ) {
-    return state.copyWith(
-      cities: identical(result.cities, state.cities) ? null : result.cities,
-      units: identical(result.units, state.units) ? null : result.units,
-      playerGold: identical(result.playerGold, state.playerGold)
-          ? null
-          : result.playerGold,
-      research: identical(result.research, state.research)
-          ? null
-          : result.research,
-      wonderRegistry: identical(result.wonderRegistry, state.wonderRegistry)
-          ? null
-          : result.wonderRegistry,
+    final cities = _productionChange(result.cities, domain.cities);
+    final units = _productionChange(result.units, domain.units);
+    final playerGold = _productionChange(result.playerGold, domain.playerGold);
+    final research = _productionChange(result.research, domain.research);
+    final wonderRegistry = _productionChange(
+      result.wonderRegistry,
+      domain.wonderRegistry,
+    );
+    if ([
+      cities,
+      units,
+      playerGold,
+      research,
+      wonderRegistry,
+    ].every((replacement) => replacement == null)) {
+      return domain;
+    }
+    return domain.copyWith(
+      cities: cities,
+      units: units,
+      playerGold: playerGold,
+      research: research,
+      wonderRegistry: wonderRegistry,
     );
   }
 }
+
+T? _productionChange<T extends Object>(T next, T current) =>
+    identical(next, current) ? null : next;

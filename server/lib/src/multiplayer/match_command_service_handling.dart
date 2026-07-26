@@ -12,24 +12,12 @@ extension MatchCommandServiceHandling on MatchCommandService {
     final state = await _stateAccess.requireMatch(store, matchId, lock: true);
     final player = _stateAccess.requireParticipant(state, userIdentifier);
     if (command.actorPlayerId != player.id) {
-      store.operationalEvents.commandRejected(
-        matchId: state.match.id,
+      return _rejectedCommandOutcome(
+        store: store,
+        state: state,
+        caller: caller,
         reasonCode: 'actor_mismatch',
-      );
-      return _directOutcome(
-        caller,
-        _broadcaster.message(
-          matchId: state.match.id,
-          offset: state.offset,
-          ack: WireCommandAck(
-            matchId: state.match.id,
-            accepted: false,
-            offset: state.offset,
-            snapshot: state.snapshot,
-            reason: 'Command actor does not match the authenticated player.',
-            movementExecutions: WireMovementExecutionList(const []),
-          ),
-        ),
+        reason: 'Command actor does not match the authenticated player.',
       );
     }
 
@@ -40,24 +28,12 @@ extension MatchCommandServiceHandling on MatchCommandService {
     );
     if (duplicate != null) {
       if (!_isSameCommandDelivery(duplicate, command)) {
-        store.operationalEvents.commandRejected(
-          matchId: state.match.id,
+        return _rejectedCommandOutcome(
+          store: store,
+          state: state,
+          caller: caller,
           reasonCode: 'client_message_id_conflict',
-        );
-        return _directOutcome(
-          caller,
-          _broadcaster.message(
-            matchId: state.match.id,
-            offset: state.offset,
-            ack: WireCommandAck(
-              matchId: state.match.id,
-              accepted: false,
-              offset: state.offset,
-              snapshot: state.snapshot,
-              reason: 'client_message_id_conflict',
-              movementExecutions: WireMovementExecutionList(const []),
-            ),
-          ),
+          reason: 'client_message_id_conflict',
         );
       }
       return _directOutcome(
@@ -78,40 +54,45 @@ extension MatchCommandServiceHandling on MatchCommandService {
       );
     }
 
+    if (state.match.state != 'running') {
+      return _rejectedCommandOutcome(
+        store: store,
+        state: state,
+        caller: caller,
+        reasonCode: 'match_not_running',
+        reason: 'match_not_running',
+      );
+    }
+
     final now = _nowUtc();
+    final decodedSnapshot = _decodeRunningSnapshot(state);
+    final previousSnapshot = decodedSnapshot.canonical;
     final reduction = await _commandReducer.reduce(
       match: state.match,
-      snapshot: state.snapshot,
+      snapshot: previousSnapshot,
       wireCommand: command,
       actorPlayerId: player.id,
       now: now,
     );
     if (!reduction.accepted) {
-      store.operationalEvents.commandRejected(
-        matchId: state.match.id,
+      return _rejectedCommandOutcome(
+        store: store,
+        state: state,
+        caller: caller,
         reasonCode: reduction.reason ?? 'command_rejected',
-      );
-      return _directOutcome(
-        caller,
-        _broadcaster.message(
-          matchId: state.match.id,
-          offset: state.offset,
-          ack: WireCommandAck(
-            matchId: state.match.id,
-            accepted: false,
-            offset: state.offset,
-            snapshot: reduction.snapshot,
-            reason: reduction.reason ?? 'Command rejected.',
-            movementExecutions: WireMovementExecutionList(const []),
-          ),
-        ),
+        reason: reduction.reason ?? 'Command rejected.',
       );
     }
 
     final nextOffset = state.nextOffset();
-    final nextSnapshot = reduction.snapshot.copyWith(offset: nextOffset);
+    final nextSnapshot = _encodeReductionSnapshot(
+      decoded: decodedSnapshot,
+      reduction: reduction,
+      offset: nextOffset,
+    );
     final event = _acceptedCommandEventForStorage(
       state: state,
+      previousSnapshot: previousSnapshot,
       reduction: reduction,
       command: command,
       actorPlayerId: player.id,
@@ -167,6 +148,34 @@ extension MatchCommandServiceHandling on MatchCommandService {
     null,
     notifications: broadcast.followedBy(ack),
   );
+
+  MatchMutationOutcome<void> _rejectedCommandOutcome({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required MatchMessageTarget caller,
+    required String reasonCode,
+    required String reason,
+  }) {
+    store.operationalEvents.commandRejected(
+      matchId: state.match.id,
+      reasonCode: reasonCode,
+    );
+    return _directOutcome(
+      caller,
+      _broadcaster.message(
+        matchId: state.match.id,
+        offset: state.offset,
+        ack: WireCommandAck(
+          matchId: state.match.id,
+          accepted: false,
+          offset: state.offset,
+          snapshot: state.snapshot,
+          reason: reason,
+          movementExecutions: WireMovementExecutionList(const []),
+        ),
+      ),
+    );
+  }
 
   bool _isSameCommandDelivery(WireEvent event, WireCommand command) {
     final actorPlayerId = event.actorPlayerId;

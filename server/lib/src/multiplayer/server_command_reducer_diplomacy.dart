@@ -2,55 +2,54 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerDiplomacy on ServerCommandReducer {
   _CommandApplication _applyDiplomacyCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required DiplomaticCommand command,
     required String actorPlayerId,
   }) {
-    final playerGold = state.playerGold;
+    final domain = snapshot.domain;
+    final playerGold = domain.playerGold;
     final result = _resolveDiplomacyCommand(
-      state: state,
+      domain: domain,
       playerGold: playerGold,
       command: command,
       actorPlayerId: actorPlayerId,
-      turn: save.turn,
+      turn: domain.turn,
     );
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
 
+    final nextDomain = _domainWithDiplomacyResult(domain, playerGold, result);
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: _stateWithDiplomacyResult(state, playerGold, result),
+      domain: identical(nextDomain, domain) ? null : nextDomain,
       events: result.events,
     );
   }
 
   DiplomacyCommandResult _resolveDiplomacyCommand({
-    required PersistentGameState state,
+    required DomainState domain,
     required Map<String, int> playerGold,
     required DiplomaticCommand command,
     required String actorPlayerId,
     required int turn,
   }) {
-    final runtimeState = state.runtimeState;
     return DiplomacyCommandResolver.resolve(
       state: DiplomacyCommandState(
-        playerColors: state.playerColors,
-        playerCountries: state.playerCountries,
+        playerColors: domain.playerColors,
+        playerCountries: domain.playerCountries,
         playerGold: playerGold,
-        units: state.units,
-        cities: state.cities,
-        fogOfWar: state.fogOfWar,
-        diplomacy: runtimeState.diplomacy,
-        intendedAttacks: runtimeState.intendedAttacks,
-        resourceTradeAgreements: runtimeState.resourceTradeAgreements,
+        units: domain.units,
+        cities: domain.cities,
+        fogOfWar: domain.fogOfWar,
+        diplomacy: domain.diplomacy,
+        intendedAttacks: domain.intendedAttacks,
+        resourceTradeAgreements: domain.resourceTradeAgreements,
       ),
       command: command,
       actorPlayerId: actorPlayerId,
@@ -58,49 +57,36 @@ extension _ServerCommandReducerDiplomacy on ServerCommandReducer {
     );
   }
 
-  PersistentGameState _stateWithDiplomacyResult(
-    PersistentGameState state,
+  DomainState _domainWithDiplomacyResult(
+    DomainState domain,
     Map<String, int> playerGold,
     DiplomacyCommandResult result,
   ) {
-    final runtimeState = state.runtimeState;
-    final nextRuntimeState = _runtimeStateWithDiplomacyResult(
-      runtimeState,
-      result,
-    );
     final nextPlayerGold = identical(result.playerGold, playerGold)
         ? null
         : result.playerGold;
-    final runtimeUnchanged = identical(nextRuntimeState, runtimeState);
-    if (nextPlayerGold == null && runtimeUnchanged) return state;
-    return state.copyWith(
-      playerGold: nextPlayerGold,
-      runtimeState: runtimeUnchanged ? null : nextRuntimeState,
-    );
-  }
-
-  GameRuntimeState _runtimeStateWithDiplomacyResult(
-    GameRuntimeState runtimeState,
-    DiplomacyCommandResult result,
-  ) {
-    final nextDiplomacy = identical(result.diplomacy, runtimeState.diplomacy)
+    final nextDiplomacy = identical(result.diplomacy, domain.diplomacy)
         ? null
         : result.diplomacy;
     final nextAttacks =
-        identical(result.intendedAttacks, runtimeState.intendedAttacks)
+        identical(result.intendedAttacks, domain.intendedAttacks)
         ? null
         : result.intendedAttacks;
     final nextTrades =
         identical(
           result.resourceTradeAgreements,
-          runtimeState.resourceTradeAgreements,
+          domain.resourceTradeAgreements,
         )
         ? null
         : result.resourceTradeAgreements;
-    if (nextDiplomacy == null && nextAttacks == null && nextTrades == null) {
-      return runtimeState;
+    if (nextPlayerGold == null &&
+        nextDiplomacy == null &&
+        nextAttacks == null &&
+        nextTrades == null) {
+      return domain;
     }
-    return runtimeState.copyWith(
+    return domain.copyWith(
+      playerGold: nextPlayerGold,
       diplomacy: nextDiplomacy,
       intendedAttacks: nextAttacks,
       resourceTradeAgreements: nextTrades,

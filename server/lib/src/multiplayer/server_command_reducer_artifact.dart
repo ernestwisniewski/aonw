@@ -2,85 +2,94 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerArtifact on ServerCommandReducer {
   _CommandApplication _applyStartArtifactExcavationCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required StartArtifactExcavationCommand command,
     required String actorPlayerId,
   }) {
+    final domain = snapshot.domain;
     final result = ArtifactCommandResolver.startExcavation(
-      units: state.units,
-      artifacts: state.artifacts,
+      units: domain.units,
+      artifacts: domain.artifacts,
       command: command,
       actorPlayerId: actorPlayerId,
     );
-    return _applyArtifactUnitResult(save, state, result);
+    return _applyArtifactUnitResult(snapshot, result);
   }
 
   _CommandApplication _applyStoreArtifactInCityCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required StoreArtifactInCityCommand command,
     required String actorPlayerId,
   }) {
+    final domain = snapshot.domain;
     final result = ArtifactCommandResolver.storeInCity(
-      units: state.units,
-      cities: state.cities,
-      artifacts: state.artifacts,
+      units: domain.units,
+      cities: domain.cities,
+      artifacts: domain.artifacts,
       command: command,
       actorPlayerId: actorPlayerId,
     );
-    return _applyArtifactUnitResult(save, state, result);
+    return _applyArtifactUnitResult(snapshot, result);
   }
 
   _CommandApplication _applyTradeArtifactCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required TradeArtifactCommand command,
     required String actorPlayerId,
   }) {
+    final domain = snapshot.domain;
     final result = ArtifactCommandResolver.tradeArtifact(
-      cities: state.cities,
-      artifacts: state.artifacts,
-      playerGold: state.playerGold,
-      diplomacy: state.runtimeState.diplomacy,
+      cities: domain.cities,
+      artifacts: domain.artifacts,
+      playerGold: domain.playerGold,
+      diplomacy: domain.diplomacy,
       command: command,
       actorPlayerId: actorPlayerId,
     );
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
+    final artifactsChanged = !identical(result.artifacts, domain.artifacts);
+    final playerGoldChanged = !identical(result.playerGold, domain.playerGold);
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: state.copyWith(
-        artifacts: result.artifacts,
-        playerGold: result.playerGold,
-      ),
+      domain: artifactsChanged || playerGoldChanged
+          ? domain.copyWith(
+              artifacts: artifactsChanged ? result.artifacts : null,
+              playerGold: playerGoldChanged ? result.playerGold : null,
+            )
+          : null,
     );
   }
 
   _CommandApplication _applyArtifactUnitResult(
-    GameSave save,
-    PersistentGameState state,
+    CanonicalGameSnapshot snapshot,
     ArtifactUnitCommandResult result,
   ) {
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
+    final domain = snapshot.domain;
+    final unitsChanged = !identical(result.units, domain.units);
+    final artifactsChanged = !identical(result.artifacts, domain.artifacts);
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: state.copyWith(units: result.units, artifacts: result.artifacts),
+      domain: unitsChanged || artifactsChanged
+          ? domain.copyWith(
+              units: unitsChanged ? result.units : null,
+              artifacts: artifactsChanged ? result.artifacts : null,
+            )
+          : null,
     );
   }
 }

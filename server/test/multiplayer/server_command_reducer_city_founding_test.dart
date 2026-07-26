@@ -4,42 +4,44 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
+import 'support/server_command_reducer_test_driver.dart';
+
 void main() {
   test('clears the founding draft when a settler founds a city', () async {
-    final reduction =
-        await ServerCommandReducer(
-          mapCatalog: _FoundingMapCatalog(_grasslandMap()),
-        ).reduce(
-          match: _runningMatch(),
-          snapshot: _snapshot(
-            PersistentGameState(
-              units: [_settler()],
-              runtimeState: GameRuntimeState(
-                cityFoundingDraft: CityFoundingDraft(
-                  unitId: 'settler_1',
-                  ownerPlayerId: 'player_1',
-                  center: const CityHex(col: 1, row: 1),
-                ),
-              ),
+    final reduction = await const ServerCommandReducerTestDriver().reduce(
+      reducer: ServerCommandReducer(
+        mapCatalog: _FoundingMapCatalog(_grasslandMap()),
+      ),
+      match: _runningMatch(),
+      wireSnapshot: _snapshot(
+        PersistentGameState(
+          units: [_settler()],
+          runtimeState: GameRuntimeState(
+            cityFoundingDraft: CityFoundingDraft(
+              unitId: 'settler_1',
+              ownerPlayerId: 'player_1',
+              center: const CityHex(col: 1, row: 1),
             ),
           ),
-          wireCommand: _wireCommand(
-            FoundCityCommand(
-              'settler_1',
-              controlledHexes: const [
-                CityHex(col: 2, row: 1),
-                CityHex(col: 1, row: 2),
-              ],
-            ),
-          ),
-          actorPlayerId: 'player_1',
-          now: DateTime.utc(2026, 6, 30, 12),
-        );
-    final state = PersistentGameState.fromJson(reduction.snapshot.state);
+        ),
+      ),
+      wireCommand: _wireCommand(
+        FoundCityCommand(
+          'settler_1',
+          controlledHexes: const [
+            CityHex(col: 2, row: 1),
+            CityHex(col: 1, row: 2),
+          ],
+        ),
+      ),
+      actorPlayerId: 'player_1',
+      now: DateTime.utc(2026, 6, 30, 12),
+    );
+    final nextSnapshot = reduction.nextSnapshot!;
 
     expect(reduction.accepted, isTrue);
-    expect(state.runtimeState.cityFoundingDraft, isNull);
-    expect(state.units.single.cityFoundingJob, isNotNull);
+    expect(nextSnapshot.interaction.cityFoundingDraft, isNull);
+    expect(nextSnapshot.domain.units.single.cityFoundingJob, isNotNull);
   });
 }
 

@@ -1,5 +1,7 @@
 part of '../server_command_reducer_test.dart';
 
+const _turnTimeoutReducerDriver = ServerCommandReducerTestDriver();
+
 void _registerServerCommandReducerTurnTimeoutTests() {
   group('ServerCommandReducer turn timeouts', () {
     test(
@@ -10,7 +12,8 @@ void _registerServerCommandReducerTurnTimeoutTests() {
           mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
         );
 
-        final reduction = await reducer.reduce(
+        final reduction = await _turnTimeoutReducerDriver.reduce(
+          reducer: reducer,
           match: _runningMatch(
             players: [
               players[0],
@@ -19,17 +22,16 @@ void _registerServerCommandReducerTurnTimeoutTests() {
               ),
             ],
           ),
-          snapshot: _snapshot(_diplomacyState()),
+          wireSnapshot: _snapshot(_diplomacyState()),
           wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
           actorPlayerId: 'player_1',
           now: DateTime.utc(2026, 6, 30, 11, 1),
         );
-        final save = GameSave.fromJson(reduction.snapshot.save);
-        final state = PersistentGameState.fromJson(reduction.snapshot.state);
+        final nextSnapshot = reduction.nextSnapshot!;
 
         expect(reduction.accepted, isTrue);
-        expect(save.turn, 2);
-        expect(state.runtimeState.timeoutStreaksByPlayerId, {'player_2': 1});
+        expect(nextSnapshot.domain.turn, 2);
+        expect(nextSnapshot.session.timeoutStreaksByPlayerId, {'player_2': 1});
         expect(
           reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
           'player_2',
@@ -42,20 +44,23 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await _turnTimeoutReducerDriver.reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: _snapshot(_diplomacyState()),
+        wireSnapshot: _snapshot(_diplomacyState()),
         wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
         actorPlayerId: 'player_1',
         now: DateTime.utc(2026, 6, 30, 11, 1),
       );
-      final save = GameSave.fromJson(reduction.snapshot.save);
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+      final nextSnapshot = reduction.nextSnapshot!;
 
       expect(reduction.accepted, isTrue);
-      expect(save.turn, 1);
-      expect(save.playerStates['player_1'], PlayerTurnState.finished);
-      expect(state.runtimeState.submittedPlayerIds, {'player_1'});
+      expect(nextSnapshot.domain.turn, 1);
+      expect(
+        nextSnapshot.session.turnStatesByPlayerId['player_1'],
+        PlayerTurnState.finished,
+      );
+      expect(nextSnapshot.session.submittedPlayerIds, {'player_1'});
       expect(reduction.events, isEmpty);
       expect(reduction.movementExecutions, isEmpty);
     });
@@ -85,19 +90,19 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         ),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await _turnTimeoutReducerDriver.reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: snapshot,
+        wireSnapshot: snapshot,
         wireCommand: _wireCommand(const SubmitTurnCommand('player_1')),
         actorPlayerId: 'player_1',
         now: DateTime.utc(2026, 6, 30, 11, 0, 11),
       );
-      final save = GameSave.fromJson(reduction.snapshot.save);
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+      final nextSnapshot = reduction.nextSnapshot!;
 
       expect(reduction.accepted, isTrue);
-      expect(save.turn, 2);
-      expect(state.runtimeState.timeoutStreaksByPlayerId, {'player_2': 1});
+      expect(nextSnapshot.domain.turn, 2);
+      expect(nextSnapshot.session.timeoutStreaksByPlayerId, {'player_2': 1});
       expect(
         reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
         'player_2',
@@ -118,9 +123,10 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await _turnTimeoutReducerDriver.reduce(
+        reducer: reducer,
         match: _runningMatch(players: [players[0], aiPlayer]),
-        snapshot: _snapshot(
+        wireSnapshot: _snapshot(
           _diplomacyState(),
           save: _save(
             players: [
@@ -141,10 +147,9 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         actorPlayerId: 'player_1',
         now: DateTime.utc(2026, 6, 30, 11, 1),
       );
-      final save = GameSave.fromJson(reduction.snapshot.save);
 
       expect(reduction.accepted, isTrue);
-      expect(save.turn, 2);
+      expect(reduction.nextSnapshot!.domain.turn, 2);
     });
 
     test('advances artifact excavation once during finalization', () async {
@@ -169,9 +174,10 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
 
-      final reduction = await reducer.reduce(
+      final reduction = await _turnTimeoutReducerDriver.reduce(
+        reducer: reducer,
         match: _runningMatch(),
-        snapshot: _snapshot(
+        wireSnapshot: _snapshot(
           PersistentGameState(
             units: [unit],
             artifacts: const [artifact],
@@ -193,39 +199,39 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         actorPlayerId: 'player_2',
         now: DateTime.utc(2026, 6, 30, 11, 1),
       );
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
+      final domain = reduction.nextSnapshot!.domain;
 
       expect(reduction.accepted, isTrue);
-      expect(state.units.single.excavatingArtifactId, 'artifact_1');
-      expect(state.units.single.carriedArtifactId, isNull);
-      expect(state.artifacts.single.location.remainingTurns, 1);
+      expect(domain.units.single.excavatingArtifactId, 'artifact_1');
+      expect(domain.units.single.carriedArtifactId, isNull);
+      expect(domain.artifacts.single.location.remainingTurns, 1);
     });
   });
 }
 
 Future<void> _preservesGlobalTurnMovementExecutionOrder() async {
-  final reduction =
-      await ServerCommandReducer(
-        mapCatalog: _FakeMapCatalog(_turnMovementExecutionMap()),
-      ).reduce(
-        match: _runningMatch(),
-        snapshot: _turnMovementExecutionSnapshot(),
-        wireCommand: _wireCommand(
-          const SubmitTurnCommand('player_2'),
-          actorPlayerId: 'player_2',
-        ),
-        actorPlayerId: 'player_2',
-        now: DateTime.utc(2026, 6, 30, 11, 1),
-      );
-  final state = PersistentGameState.fromJson(reduction.snapshot.state);
+  final reduction = await _turnTimeoutReducerDriver.reduce(
+    reducer: ServerCommandReducer(
+      mapCatalog: _FakeMapCatalog(_turnMovementExecutionMap()),
+    ),
+    match: _runningMatch(),
+    wireSnapshot: _turnMovementExecutionSnapshot(),
+    wireCommand: _wireCommand(
+      const SubmitTurnCommand('player_2'),
+      actorPlayerId: 'player_2',
+    ),
+    actorPlayerId: 'player_2',
+    now: DateTime.utc(2026, 6, 30, 11, 1),
+  );
+  final domain = reduction.nextSnapshot!.domain;
 
   expect(reduction.accepted, isTrue);
   expect(
-    (state.units.byId('unit_a')!.col, state.units.byId('unit_a')!.row),
+    (domain.units.byId('unit_a')!.col, domain.units.byId('unit_a')!.row),
     (3, 0),
   );
   expect(
-    (state.units.byId('unit_b')!.col, state.units.byId('unit_b')!.row),
+    (domain.units.byId('unit_b')!.col, domain.units.byId('unit_b')!.row),
     (1, 1),
   );
   expect(reduction.movementExecutions.map(_movementExecutionSnapshot), [

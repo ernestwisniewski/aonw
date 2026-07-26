@@ -2,110 +2,91 @@ part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerCombat on ServerCommandReducer {
   _CommandApplication _applyCombatCommand({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required AttackHexCommand command,
     required String actorPlayerId,
     required int commandTick,
     required MapTileLookup mapTiles,
     required GameRuleset ruleset,
   }) {
+    final domain = snapshot.domain;
     final result = const CombatCommandResolver().resolve(
       state: CombatCommandState(
-        units: state.units,
-        cities: state.cities,
-        artifacts: state.artifacts,
-        fogOfWar: state.fogOfWar,
-        research: state.research,
-        intendedAttacks: state.runtimeState.intendedAttacks,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-        playerIds: state.knownPlayerIds,
+        units: domain.units,
+        cities: domain.cities,
+        artifacts: domain.artifacts,
+        fogOfWar: domain.fogOfWar,
+        research: domain.research,
+        intendedAttacks: domain.intendedAttacks,
+        diplomacy: domain.diplomacy,
+        resourceTradeAgreements: domain.resourceTradeAgreements,
+        playerIds: domain.participants.map((participant) => participant.id),
       ),
       command: command,
       actorPlayerId: actorPlayerId,
-      turn: save.turn,
+      turn: domain.turn,
       commandTick: commandTick,
       mapTiles: mapTiles,
       ruleset: ruleset,
     );
-    return _applicationFromCombatResult(
-      save: save,
-      state: state,
-      result: result,
-    );
+    return _applicationFromCombatResult(snapshot: snapshot, result: result);
   }
 
   _CommandApplication _applicationFromCombatResult({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required CombatCommandResult result,
   }) {
     if (!result.accepted) {
       return _applicationFrom(
-        save: save,
+        snapshot: snapshot,
         accepted: false,
-        state: state,
         reason: result.reason,
       );
     }
+    final domain = snapshot.domain;
+    final nextDomain = _projectCombatResult(domain, result);
     return _applicationFrom(
-      save: save,
+      snapshot: snapshot,
       accepted: true,
-      state: _projectCombatResult(state, result),
+      domain: identical(nextDomain, domain) ? null : nextDomain,
       events: result.events,
     );
   }
 }
 
-PersistentGameState _projectCombatResult(
-  PersistentGameState state,
+DomainState _projectCombatResult(
+  DomainState domain,
   CombatCommandResult result,
 ) {
-  final units = _changedValue(state.units, result.units);
-  final cities = _changedValue(state.cities, result.cities);
-  final artifacts = _changedValue(state.artifacts, result.artifacts);
-  final fogOfWar = _changedValue(state.fogOfWar, result.fogOfWar);
-  final runtimeState = _projectCombatRuntimeState(state.runtimeState, result);
+  final units = _changedValue(domain.units, result.units);
+  final cities = _changedValue(domain.cities, result.cities);
+  final artifacts = _changedValue(domain.artifacts, result.artifacts);
+  final fogOfWar = _changedValue(domain.fogOfWar, result.fogOfWar);
+  final intendedAttacks = _changedValue(
+    domain.intendedAttacks,
+    result.intendedAttacks,
+  );
+  final diplomacy = _changedValue(domain.diplomacy, result.diplomacy);
+  final resourceTradeAgreements = _changedValue(
+    domain.resourceTradeAgreements,
+    result.resourceTradeAgreements,
+  );
   if (!_hasCombatStateChanges(
     units: units,
     cities: cities,
     artifacts: artifacts,
     fogOfWar: fogOfWar,
-    runtimeState: runtimeState,
+    intendedAttacks: intendedAttacks,
+    diplomacy: diplomacy,
+    resourceTradeAgreements: resourceTradeAgreements,
   )) {
-    return state;
+    return domain;
   }
-  return state.copyWith(
+  return domain.copyWith(
     units: units,
     cities: cities,
     artifacts: artifacts,
     fogOfWar: fogOfWar,
-    runtimeState: runtimeState,
-  );
-}
-
-GameRuntimeState? _projectCombatRuntimeState(
-  GameRuntimeState current,
-  CombatCommandResult result,
-) {
-  final intendedAttacks = _changedValue(
-    current.intendedAttacks,
-    result.intendedAttacks,
-  );
-  final diplomacy = _changedValue(current.diplomacy, result.diplomacy);
-  final resourceTradeAgreements = _changedValue(
-    current.resourceTradeAgreements,
-    result.resourceTradeAgreements,
-  );
-  if (!_hasCombatRuntimeChanges(
-    intendedAttacks,
-    diplomacy,
-    resourceTradeAgreements,
-  )) {
-    return null;
-  }
-  return current.copyWith(
     intendedAttacks: intendedAttacks,
     diplomacy: diplomacy,
     resourceTradeAgreements: resourceTradeAgreements,
@@ -117,19 +98,14 @@ bool _hasCombatStateChanges({
   required List<GameCity>? cities,
   required List<WorldArtifact>? artifacts,
   required FogOfWarState? fogOfWar,
-  required GameRuntimeState? runtimeState,
+  required List<IntendedAttack>? intendedAttacks,
+  required DiplomacyState? diplomacy,
+  required List<ResourceTradeAgreement>? resourceTradeAgreements,
 }) =>
     units != null ||
     cities != null ||
     artifacts != null ||
     fogOfWar != null ||
-    runtimeState != null;
-
-bool _hasCombatRuntimeChanges(
-  List<IntendedAttack>? intendedAttacks,
-  DiplomacyState? diplomacy,
-  List<ResourceTradeAgreement>? resourceTradeAgreements,
-) =>
     intendedAttacks != null ||
     diplomacy != null ||
     resourceTradeAgreements != null;

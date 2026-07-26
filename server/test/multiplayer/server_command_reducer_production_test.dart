@@ -4,25 +4,27 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
+import 'support/server_command_reducer_test_driver.dart';
+
 void main() {
   test('routes unit production through the canonical world map', () async {
-    final reduction =
-        await ServerCommandReducer(
-          mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
-        ).reduce(
-          match: _runningMatch(),
-          snapshot: _snapshot(PersistentGameState(cities: _tradeCities())),
-          wireCommand: _wireCommand(
-            const StartUnitProductionCommand('city_1', GameUnitType.warrior),
-          ),
-          actorPlayerId: 'player_1',
-          now: DateTime.utc(2026, 6, 30, 12),
-        );
-    final state = PersistentGameState.fromJson(reduction.snapshot.state);
+    final reduction = await const ServerCommandReducerTestDriver().reduce(
+      reducer: ServerCommandReducer(
+        mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
+      ),
+      match: _runningMatch(),
+      wireSnapshot: _snapshot(PersistentGameState(cities: _tradeCities())),
+      wireCommand: _wireCommand(
+        const StartUnitProductionCommand('city_1', GameUnitType.warrior),
+      ),
+      actorPlayerId: 'player_1',
+      now: DateTime.utc(2026, 6, 30, 12),
+    );
+    final domain = reduction.nextSnapshot!.domain;
 
     expect(reduction.accepted, isTrue);
     expect(
-      state.cities
+      domain.cities
           .firstWhere((city) => city.id == 'city_1')
           .productionQueue
           ?.target,
@@ -35,11 +37,11 @@ void main() {
       const StartCityProjectCommand('city_1', CityProjectType.wealth),
       state: PersistentGameState(cities: _tradeCities()),
     );
-    final state = PersistentGameState.fromJson(reduction.snapshot.state);
+    final domain = reduction.nextSnapshot!.domain;
 
     expect(reduction.accepted, isTrue);
     expect(
-      state.cities
+      domain.cities
           .firstWhere((city) => city.id == 'city_1')
           .productionQueue
           ?.target,
@@ -80,7 +82,10 @@ void main() {
     );
 
     expect(reduction.accepted, isTrue);
-    expect(reduction.state?.units, same(reduction.previousState?.units));
+    expect(
+      reduction.nextSnapshot!.domain.units,
+      same(reduction.previousSnapshot.domain.units),
+    );
   });
 
   test(
@@ -90,10 +95,9 @@ void main() {
         const EndTurnCommand('player_1'),
         state: const PersistentGameState(),
       );
-      final save = GameSave.fromJson(reduction.snapshot.save);
 
       expect(reduction.accepted, isTrue);
-      expect(save.turn, 2);
+      expect(reduction.nextSnapshot!.domain.turn, 2);
     },
   );
 
@@ -140,15 +144,16 @@ void main() {
   });
 }
 
-Future<ServerCommandReduction> _reduceCommand(
+Future<ServerCommandTestReduction> _reduceCommand(
   GameCommand command, {
   required PersistentGameState state,
 }) {
-  return ServerCommandReducer(
-    mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
-  ).reduce(
+  return const ServerCommandReducerTestDriver().reduce(
+    reducer: ServerCommandReducer(
+      mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
+    ),
     match: _runningMatch(),
-    snapshot: _snapshot(state),
+    wireSnapshot: _snapshot(state),
     wireCommand: _wireCommand(command),
     actorPlayerId: 'player_1',
     now: DateTime.utc(2026, 6, 30, 12),

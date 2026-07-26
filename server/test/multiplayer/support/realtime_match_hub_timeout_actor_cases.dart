@@ -74,7 +74,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
-    test('ignores a Wire-only submitted phantom', () async {
+    test('honors a canonicalized submitted participant in Wire', () async {
       final fixture = await _createTimeoutActorFixture('wire-phantom');
       const phantomId = '000-wire-only';
 
@@ -96,7 +96,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         ),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
+      _expectAcceptedTimeoutActor(observation, phantomId);
     });
 
     test('ignores a save-only submitted phantom outside Wire', () async {
@@ -120,31 +120,34 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
     });
 
-    test('ignores a persistent-state-only phantom in Wire', () async {
-      final fixture = await _createTimeoutActorFixture('state-phantom');
-      const phantomId = '000-state-only';
+    test(
+      'honors a canonicalized persistent-state participant in Wire',
+      () async {
+        final fixture = await _createTimeoutActorFixture('state-phantom');
+        const phantomId = '000-state-only';
 
-      final observation = await fixture.run(
-        match: fixture.match.copyWith(
-          players: [
-            fixture.lowWirePlayer.copyWith(
-              id: phantomId,
-              userId: 'state-only-user',
-              name: 'State only',
-            ),
-            ...fixture.match.players,
-          ],
-        ),
-        state: fixture.state.copyWith(
-          playerGold: {...fixture.state.playerGold, phantomId: 999},
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: const {phantomId},
+        final observation = await fixture.run(
+          match: fixture.match.copyWith(
+            players: [
+              fixture.lowWirePlayer.copyWith(
+                id: phantomId,
+                userId: 'state-only-user',
+                name: 'State only',
+              ),
+              ...fixture.match.players,
+            ],
           ),
-        ),
-      );
+          state: fixture.state.copyWith(
+            playerGold: {...fixture.state.playerGold, phantomId: 999},
+            runtimeState: fixture.state.runtimeState.copyWith(
+              submittedPlayerIds: const {phantomId},
+            ),
+          ),
+        );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
-    });
+        _expectAcceptedTimeoutActor(observation, phantomId);
+      },
+    );
 
     test('accepts a player present only in save.players', () async {
       final fixture = await _createTimeoutActorFixture('save-player-only');
@@ -185,7 +188,18 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       final fixture = await _createTimeoutActorFixture('no-candidate');
 
       final observation = await fixture.run(
-        save: fixture.save.copyWith(players: const [], playerStates: const {}),
+        match: fixture.match.copyWith(
+          players: [
+            fixture.lowWirePlayer.copyWith(
+              id: 'wire-only-low',
+              userId: 'wire-only-low-user',
+            ),
+            fixture.highWirePlayer.copyWith(
+              id: 'wire-only-high',
+              userId: 'wire-only-high-user',
+            ),
+          ],
+        ),
       );
 
       expect(observation.actorPlayerIds, isEmpty);
@@ -193,7 +207,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
     });
 
     test(
-      'preserves downstream no-op for inconsistent active sources',
+      'canonicalizes inconsistent active sources before selection',
       () async {
         final fixture = await _createTimeoutActorFixture('inconsistent-active');
 
@@ -210,7 +224,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         );
 
         expect(observation.actorPlayerIds, [fixture.lowPlayerId]);
-        _expectTimeoutNoOp(observation);
+        _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
       },
     );
   });
@@ -346,8 +360,7 @@ final class _CapturingTimeoutActorReducer extends ServerCommandReducer {
   @override
   Future<ServerCommandReduction> reduceTimedOutTurn({
     required WireMatch match,
-    required WireSnapshot snapshot,
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required String actorPlayerId,
     required DateTime now,
   }) {
@@ -355,7 +368,6 @@ final class _CapturingTimeoutActorReducer extends ServerCommandReducer {
     return super.reduceTimedOutTurn(
       match: match,
       snapshot: snapshot,
-      decodedSnapshot: decodedSnapshot,
       actorPlayerId: actorPlayerId,
       now: now,
     );

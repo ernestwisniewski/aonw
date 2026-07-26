@@ -1,33 +1,24 @@
 part of 'server_command_reducer.dart';
 
-class ServerCommandReduction {
+final class ServerCommandReduction {
   ServerCommandReduction({
     required this.accepted,
-    required this.snapshot,
-    this.events = const [],
+    this.nextSnapshot,
+    Iterable<GameEvent> events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
-    this.turn,
-    this.previousState,
-    this.state,
     this.outcome,
     this.reason,
-  }) : movementExecutions = _ownedList(movementExecutions),
+  }) : events = _ownedList(events),
+       movementExecutions = _ownedList(movementExecutions),
        assert(
-         !accepted ||
-             (turn != null &&
-                 previousState != null &&
-                 state != null &&
-                 outcome != null),
-         'Accepted reductions must expose their decoded transition.',
+         !accepted || (nextSnapshot != null && outcome != null),
+         'Accepted reductions must expose their canonical result.',
        );
 
   final bool accepted;
-  final WireSnapshot snapshot;
+  final CanonicalGameSnapshot? nextSnapshot;
   final List<GameEvent> events;
   final List<MovementCommandExecution> movementExecutions;
-  final int? turn;
-  final PersistentGameState? previousState;
-  final PersistentGameState? state;
   final GameOutcome? outcome;
   final String? reason;
 }
@@ -37,36 +28,19 @@ List<T> _ownedList<T>(Iterable<T> values) => List<T>.unmodifiable(values);
 extension _ServerCommandReducerOutcome on ServerCommandReducer {
   ServerCommandReduction _acceptedReduction({
     required WireMatch match,
-    required DecodedMatchSnapshot decodedSnapshot,
-    required GameSave nextSave,
     required _CommandApplication result,
     required MapReadView mapView,
   }) {
-    final previousState = decodedSnapshot.state;
-    final canonicalSnapshot =
-        result.canonicalSnapshot ??
-        _canonicalSnapshot(
-          save: nextSave,
-          state: result.state,
-          eventLogOffset: decodedSnapshot.eventLogOffset,
-        );
-    final nextSnapshot = _runningMatchSnapshotCodec.encode(
-      decodedSnapshot,
-      save: nextSave == decodedSnapshot.save ? null : nextSave,
-      state: result.state == previousState ? null : result.state,
-    );
+    final nextSnapshot = result.snapshot;
     return ServerCommandReduction(
       accepted: true,
-      snapshot: nextSnapshot,
+      nextSnapshot: nextSnapshot,
       events: result.events,
       movementExecutions: result.movementExecutions,
-      turn: nextSave.turn,
-      previousState: previousState,
-      state: result.state,
       outcome: _gameOutcome(
         match: match,
-        domain: canonicalSnapshot.domain,
-        session: canonicalSnapshot.session,
+        domain: nextSnapshot.domain,
+        session: nextSnapshot.session,
         mapView: mapView,
       ),
     );
@@ -85,12 +59,8 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
     );
   }
 
-  ServerCommandReduction _reject(WireSnapshot snapshot, String reason) {
-    return ServerCommandReduction(
-      accepted: false,
-      snapshot: snapshot,
-      reason: reason,
-    );
+  ServerCommandReduction _reject(String reason) {
+    return ServerCommandReduction(accepted: false, reason: reason);
   }
 }
 

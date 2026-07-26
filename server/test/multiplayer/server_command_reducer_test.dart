@@ -6,6 +6,8 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
+import 'support/server_command_reducer_test_driver.dart';
+
 part 'support/server_command_reducer_fixture.dart';
 part 'support/server_command_reducer_contract_cases.dart';
 part 'support/server_command_reducer_combat_cases.dart';
@@ -14,6 +16,8 @@ part 'support/server_command_reducer_outcome_cases.dart';
 part 'support/server_command_reducer_snapshot_cases.dart';
 part 'support/server_command_reducer_turn_timeout_cases.dart';
 part 'support/server_command_reducer_resource_trade_cases.dart';
+
+const _serverCommandTestDriver = ServerCommandReducerTestDriver();
 
 void main() {
   _registerServerCommandReductionContractTests();
@@ -36,19 +40,13 @@ void main() {
             proposalId: 'proposal_1',
           ),
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
+        final nextDomain = reduction.nextSnapshot!.domain;
 
         expect(reduction.accepted, isTrue);
-        expect(reduction.turn, 1);
-        expect(reduction.previousState, isNotNull);
-        expect(reduction.state, nextState);
+        expect(nextDomain.turn, 1);
+        expect(reduction.previousSnapshot.domain, isNot(same(nextDomain)));
         expect(reduction.movementExecutions, isEmpty);
-        expect(
-          nextState.runtimeState.diplomacy.pendingProposals,
-          contains('proposal_1'),
-        );
+        expect(nextDomain.diplomacy.pendingProposals, contains('proposal_1'));
       },
     );
 
@@ -75,16 +73,11 @@ void main() {
           ),
           actorPlayerId: 'player_2',
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
+        final nextDomain = reduction.nextSnapshot!.domain;
 
         expect(reduction.accepted, isTrue);
         expect(
-          nextState.runtimeState.diplomacy.statusBetween(
-            'player_1',
-            'player_2',
-          ),
+          nextDomain.diplomacy.statusBetween('player_1', 'player_2'),
           DiplomaticRelationStatus.friendly,
         );
       },
@@ -100,16 +93,11 @@ void main() {
             targetPlayerId: 'player_2',
           ),
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
+        final nextDomain = reduction.nextSnapshot!.domain;
 
         expect(reduction.accepted, isTrue);
         expect(
-          nextState.runtimeState.diplomacy.statusBetween(
-            'player_1',
-            'player_2',
-          ),
+          nextDomain.diplomacy.statusBetween('player_1', 'player_2'),
           DiplomaticRelationStatus.war,
         );
       },
@@ -126,13 +114,11 @@ void main() {
             amount: 5,
           ),
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
+        final nextDomain = reduction.nextSnapshot!.domain;
 
         expect(reduction.accepted, isTrue);
-        expect(nextState.playerGold['player_1'], 0);
-        expect(nextState.playerGold['player_2'], 5);
+        expect(nextDomain.playerGold['player_1'], 0);
+        expect(nextDomain.playerGold['player_2'], 5);
       },
     );
 
@@ -148,15 +134,10 @@ void main() {
             messageId: 'message_1',
           ),
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
+        final nextDomain = reduction.nextSnapshot!.domain;
 
         expect(reduction.accepted, isTrue);
-        expect(
-          nextState.runtimeState.diplomacy.messages,
-          contains('message_1'),
-        );
+        expect(nextDomain.diplomacy.messages, contains('message_1'));
       },
     );
 
@@ -183,10 +164,8 @@ void main() {
           ),
           actorPlayerId: 'player_2',
         );
-        final nextState = PersistentGameState.fromJson(
-          reduction.snapshot.state,
-        );
-        final message = nextState.runtimeState.diplomacy.messages['message_1'];
+        final message =
+            reduction.nextSnapshot!.domain.diplomacy.messages['message_1'];
 
         expect(reduction.accepted, isTrue);
         expect(message?.response, DiplomaticMessageResponse.conciliatory);
@@ -195,43 +174,45 @@ void main() {
 
     test('rejects diplomacy commands issued for another player', () async {
       final snapshot = _snapshot(_diplomacyState());
-      final reduction =
-          await ServerCommandReducer(
-            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-          ).reduce(
-            match: _runningMatch(),
-            snapshot: snapshot,
-            wireCommand: _wireCommand(
-              const SendGoldGiftCommand(
-                playerId: 'player_2',
-                targetPlayerId: 'player_1',
-                amount: 5,
-              ),
-              actorPlayerId: 'player_1',
-            ),
-            actorPlayerId: 'player_1',
-            now: DateTime.utc(2026, 6, 30, 12),
-          );
+      final reduction = await _serverCommandTestDriver.reduce(
+        reducer: ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+        ),
+        match: _runningMatch(),
+        wireSnapshot: snapshot,
+        wireCommand: _wireCommand(
+          const SendGoldGiftCommand(
+            playerId: 'player_2',
+            targetPlayerId: 'player_1',
+            amount: 5,
+          ),
+          actorPlayerId: 'player_1',
+        ),
+        actorPlayerId: 'player_1',
+        now: DateTime.utc(2026, 6, 30, 12),
+      );
 
       expect(reduction.accepted, isFalse);
       expect(reduction.reason, 'diplomacy_player_not_controlled');
-      expect(reduction.snapshot.toJson(), snapshot.toJson());
+      expect(reduction.nextSnapshot, isNull);
+      expect(reduction.wireSnapshot, same(snapshot));
     });
   });
 
   _registerServerCommandReducerResourceTradeTests();
 }
 
-Future<ServerCommandReduction> _reduceDiplomacyCommand({
+Future<ServerCommandTestReduction> _reduceDiplomacyCommand({
   required PersistentGameState state,
   required DiplomaticCommand command,
   String actorPlayerId = 'player_1',
 }) {
-  return ServerCommandReducer(
-    mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-  ).reduce(
+  return _serverCommandTestDriver.reduce(
+    reducer: ServerCommandReducer(
+      mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+    ),
     match: _runningMatch(),
-    snapshot: _snapshot(state),
+    wireSnapshot: _snapshot(state),
     wireCommand: _wireCommand(command, actorPlayerId: actorPlayerId),
     actorPlayerId: actorPlayerId,
     now: DateTime.utc(2026, 6, 30, 12),
@@ -245,6 +226,10 @@ PersistentGameState _diplomacyState({
 }) {
   return PersistentGameState(
     playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
+    playerCountries: const {
+      'player_1': PlayerCountry.poland,
+      'player_2': PlayerCountry.france,
+    },
     playerGold: playerGold,
     runtimeState:
         runtimeState ??

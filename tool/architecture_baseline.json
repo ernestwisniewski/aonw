@@ -1369,19 +1369,18 @@
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 418
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 381
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
         "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 72,
-        "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 158,
-        "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 83,
+        "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 139,
+        "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 69,
         "server/lib/src/multiplayer/match_connection_registry_connect.dart::extension:MatchConnectionRegistryConnect/method:_connect/closure:_enqueueMatch#1": 61,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 263,
-        "server/lib/src/multiplayer/server_command_reducer_turns.dart::extension:ServerCommandReducerTurns/method:_submitTurn": 63,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 233,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65

@@ -2,6 +2,7 @@ part of 'match_command_service.dart';
 
 WireEvent _acceptedCommandEventForStorage({
   required StoredMatchState state,
+  required CanonicalGameSnapshot previousSnapshot,
   required ServerCommandReduction reduction,
   required WireCommand command,
   required String actorPlayerId,
@@ -9,8 +10,8 @@ WireEvent _acceptedCommandEventForStorage({
   required DateTime timestamp,
 }) {
   final participantPlayerIds = state.match.players.map((player) => player.id);
-  final previous = reduction.previousState!;
-  final next = reduction.state!;
+  final previous = previousSnapshot.domain;
+  final next = reduction.nextSnapshot!.domain;
   return WireEvent(
     matchId: state.match.id,
     offset: offset,
@@ -38,6 +39,7 @@ WireEvent _acceptedCommandEventForStorage({
 
 WireEvent _acceptedTimeoutEventForStorage({
   required StoredMatchState state,
+  required CanonicalGameSnapshot previousSnapshot,
   required ServerCommandReduction reduction,
   required String actorPlayerId,
   required int offset,
@@ -45,6 +47,7 @@ WireEvent _acceptedTimeoutEventForStorage({
 }) {
   return _acceptedCommandEventForStorage(
     state: state,
+    previousSnapshot: previousSnapshot,
     reduction: reduction,
     command: WireCommand(
       matchId: state.match.id,

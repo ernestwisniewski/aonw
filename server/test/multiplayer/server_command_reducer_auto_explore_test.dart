@@ -4,6 +4,8 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
+import 'support/server_command_reducer_test_driver.dart';
+
 const _actorPlayerId = 'player_1';
 const _opponentPlayerId = 'player_2';
 const _scoutId = 'scout_1';
@@ -24,10 +26,9 @@ void main() {
 
         expect(reduction.accepted, isFalse);
         expect(reduction.reason, 'auto_explore_no_target');
-        expect(reduction.snapshot, same(snapshot));
+        expect(reduction.wireSnapshot, same(snapshot));
+        expect(reduction.nextSnapshot, isNull);
         expect(reduction.events, isEmpty);
-        expect(reduction.previousState, isNull);
-        expect(reduction.state, isNull);
       },
     );
 
@@ -43,8 +44,8 @@ Future<void> _forwardsMovementAndContact() async {
     snapshot: _snapshot(_contactState()),
     mapData: _map(cols: 4),
   );
-  final before = reduction.previousState!;
-  final after = reduction.state!;
+  final before = reduction.previousSnapshot;
+  final after = reduction.nextSnapshot!;
 
   _expectMovementAndContact(reduction, after);
   _expectUnrelatedStateShared(before, after);
@@ -98,10 +99,10 @@ PersistentGameState _contactState() {
 }
 
 void _expectMovementAndContact(
-  ServerCommandReduction reduction,
-  PersistentGameState after,
+  ServerCommandTestReduction reduction,
+  CanonicalGameSnapshot after,
 ) {
-  final moved = after.units.byId(_scoutId)!;
+  final moved = after.domain.units.byId(_scoutId)!;
   expect(reduction.accepted, isTrue);
   expect(reduction.reason, isNull);
   expect((moved.col, moved.row), (1, 0));
@@ -124,56 +125,47 @@ void _expectMovementAndContact(
     [(1, 0, 1, 1)],
   );
   expect(
-    after.runtimeState.diplomacy.hasContact(_actorPlayerId, _opponentPlayerId),
+    after.domain.diplomacy.hasContact(_actorPlayerId, _opponentPlayerId),
     isTrue,
   );
-  expect(after.runtimeState.pendingAction, isNull);
+  expect(after.interaction.pendingAction, isNull);
 }
 
 void _expectUnrelatedStateShared(
-  PersistentGameState before,
-  PersistentGameState after,
+  CanonicalGameSnapshot before,
+  CanonicalGameSnapshot after,
 ) {
   expect(
-    after.runtimeState.cityFoundingDraft,
-    same(before.runtimeState.cityFoundingDraft),
+    after.interaction.cityFoundingDraft,
+    same(before.interaction.cityFoundingDraft),
   );
-  expect(after.playerColors, same(before.playerColors));
-  expect(after.playerGold, same(before.playerGold));
-  expect(after.cities, same(before.cities));
-  expect(after.artifacts, same(before.artifacts));
-  expect(after.fieldImprovements, same(before.fieldImprovements));
-  expect(after.research, same(before.research));
-  expect(after.wonderRegistry, same(before.wonderRegistry));
+  expect(after.domain.playerColors, same(before.domain.playerColors));
+  expect(after.domain.playerGold, same(before.domain.playerGold));
+  expect(after.domain.cities, same(before.domain.cities));
+  expect(after.domain.artifacts, same(before.domain.artifacts));
+  expect(after.domain.fieldImprovements, same(before.domain.fieldImprovements));
+  expect(after.domain.research, same(before.domain.research));
+  expect(after.domain.wonderRegistry, same(before.domain.wonderRegistry));
   expect(
-    after.runtimeState.submittedPlayerIds,
-    same(before.runtimeState.submittedPlayerIds),
-  );
-  expect(
-    after.runtimeState.timeoutStreaksByPlayerId,
-    same(before.runtimeState.timeoutStreaksByPlayerId),
+    after.session.submittedPlayerIds,
+    same(before.session.submittedPlayerIds),
   );
   expect(
-    after.runtimeState.afkPlayerIds,
-    same(before.runtimeState.afkPlayerIds),
+    after.session.timeoutStreaksByPlayerId,
+    same(before.session.timeoutStreaksByPlayerId),
+  );
+  expect(after.session.afkPlayerIds, same(before.session.afkPlayerIds));
+  expect(after.session.kickedPlayerIds, same(before.session.kickedPlayerIds));
+  expect(after.domain.intendedAttacks, same(before.domain.intendedAttacks));
+  expect(
+    after.domain.dominationHoldTurnsByPlayerId,
+    same(before.domain.dominationHoldTurnsByPlayerId),
   );
   expect(
-    after.runtimeState.kickedPlayerIds,
-    same(before.runtimeState.kickedPlayerIds),
+    after.domain.culturalVictoryHoldTurnsByPlayerId,
+    same(before.domain.culturalVictoryHoldTurnsByPlayerId),
   );
-  expect(
-    after.runtimeState.intendedAttacks,
-    same(before.runtimeState.intendedAttacks),
-  );
-  expect(
-    after.runtimeState.dominationHoldTurnsByPlayerId,
-    same(before.runtimeState.dominationHoldTurnsByPlayerId),
-  );
-  expect(
-    after.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-    same(before.runtimeState.culturalVictoryHoldTurnsByPlayerId),
-  );
-  expect(after.runtimeState.turnStartedAt, before.runtimeState.turnStartedAt);
+  expect(after.session.turnStartedAt, before.session.turnStartedAt);
 }
 
 PersistentGameState _state({
@@ -213,15 +205,14 @@ GameUnit _scout({int movementPoints = 2}) {
   );
 }
 
-Future<ServerCommandReduction> _reduce({
+Future<ServerCommandTestReduction> _reduce({
   required WireSnapshot snapshot,
   required MapData mapData,
 }) {
-  return ServerCommandReducer(
-    mapCatalog: _AutoExploreMapCatalog(mapData),
-  ).reduce(
+  return const ServerCommandReducerTestDriver().reduce(
+    reducer: ServerCommandReducer(mapCatalog: _AutoExploreMapCatalog(mapData)),
     match: _runningMatch(),
-    snapshot: snapshot,
+    wireSnapshot: snapshot,
     wireCommand: WireCommand(
       matchId: 'match_1',
       tick: 1,

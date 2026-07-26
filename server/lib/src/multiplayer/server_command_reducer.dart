@@ -2,11 +2,9 @@ import 'dart:async';
 
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
-import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 
 part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_auto_explore.dart';
@@ -24,13 +22,11 @@ part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
 part 'server_command_reducer_resource_trade.dart';
-part 'server_command_reducer_snapshot.dart';
 part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
 part 'server_command_reducer_worker.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
-const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 
 class ServerCommandReducer {
   ServerCommandReducer({
@@ -43,19 +39,14 @@ class ServerCommandReducer {
   final Duration _turnTimeout;
   final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
 
-  DecodedMatchSnapshot decodeSnapshot({
-    required WireMatch match,
-    required WireSnapshot snapshot,
-  }) => _runningMatchSnapshotCodec.decode(match: match, snapshot: snapshot);
-
   bool hasTurnTimedOut({
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required DateTime now,
-  }) => _turnTimedOut(decodedSnapshot.save, decodedSnapshot.state, now);
+  }) => _turnTimedOut(snapshot, now);
 
   Future<ServerCommandReduction> reduce({
     required WireMatch match,
-    required WireSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required WireCommand wireCommand,
     required String actorPlayerId,
     required DateTime now,
@@ -63,31 +54,30 @@ class ServerCommandReducer {
     if (match.state != 'running') {
       // Outcome construction lives in its part, keeping the reducer focused on
       // command validation and application.
-      return _reject(snapshot, 'match_not_running');
+      return _reject('match_not_running');
     }
 
-    final decodedSnapshot = decodeSnapshot(match: match, snapshot: snapshot);
-    final save = decodedSnapshot.save;
-    final state = decodedSnapshot.state;
+    final domain = snapshot.domain;
+    final session = snapshot.session;
     final command = GameCommandSerializer.fromJson(wireCommand.command);
-    if (wireCommand.turn != null && wireCommand.turn != save.turn) {
-      return _reject(snapshot, 'stale_turn');
+    if (wireCommand.turn != null && wireCommand.turn != domain.turn) {
+      return _reject('stale_turn');
     }
-    if (state.runtimeState.isKicked(actorPlayerId)) {
-      return _reject(snapshot, 'player_eliminated');
+    if (session.isKicked(actorPlayerId)) {
+      return _reject('player_eliminated');
     }
     if (command is! SubmitTurnCommand &&
         command is! EndTurnCommand &&
-        state.runtimeState.hasSubmitted(actorPlayerId)) {
-      return _reject(snapshot, 'player_already_submitted');
+        session.hasSubmitted(actorPlayerId)) {
+      return _reject('player_already_submitted');
     }
 
-    final loadedMap = await _loadServerMap(save.mapName);
+    final loadedMap = await _loadServerMap(snapshot.metadata.world.name);
     final ruleset = GameRuleset.standard().copyWith(
-      paceBalance: save.matchRules.paceBalance,
+      paceBalance: domain.matchRules.paceBalance,
     );
     final result = _applyCommand(
-      decodedSnapshot: decodedSnapshot,
+      snapshot: snapshot,
       match: match,
       command: command,
       commandTick: wireCommand.tick,
@@ -97,55 +87,50 @@ class ServerCommandReducer {
       ruleset: ruleset,
     );
     if (!result.accepted) {
-      return _reject(snapshot, result.reason ?? 'command_rejected');
+      return _reject(result.reason ?? 'command_rejected');
     }
 
-    final nextSave = result.save.copyWith(savedAt: now.toUtc());
+    final nextSnapshot = _withSavedAt(result.snapshot, now.toUtc());
     return _acceptedReduction(
       match: match,
-      decodedSnapshot: decodedSnapshot,
-      nextSave: nextSave,
-      result: result,
+      result: result.withSnapshot(nextSnapshot),
       mapView: loadedMap.mapView,
     );
   }
 
   Future<ServerCommandReduction> reduceTimedOutTurn({
     required WireMatch match,
-    required WireSnapshot snapshot,
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required String actorPlayerId,
     required DateTime now,
   }) async {
     if (match.state != 'running') {
-      return _reject(snapshot, 'match_not_running');
+      return _reject('match_not_running');
     }
 
-    final save = decodedSnapshot.save;
-    final state = decodedSnapshot.state;
     final nowUtc = now.toUtc();
-    if (!_turnTimedOut(save, state, nowUtc)) {
-      return _reject(snapshot, 'turn_not_timed_out');
+    if (!_turnTimedOut(snapshot, nowUtc)) {
+      return _reject('turn_not_timed_out');
     }
-    if (state.runtimeState.isKicked(actorPlayerId)) {
-      return _reject(snapshot, 'player_eliminated');
+    if (snapshot.session.isKicked(actorPlayerId)) {
+      return _reject('player_eliminated');
     }
 
-    final playerIds = _turnPlayerIds(save, state);
+    final playerIds = _turnPlayerIds(snapshot);
     if (playerIds.isEmpty || !playerIds.contains(actorPlayerId)) {
-      return _reject(snapshot, 'turn_player_not_active');
+      return _reject('turn_player_not_active');
     }
 
-    final loadedMap = await _loadServerMap(save.mapName);
+    final loadedMap = await _loadServerMap(snapshot.metadata.world.name);
     final ruleset = GameRuleset.standard().copyWith(
-      paceBalance: save.matchRules.paceBalance,
+      paceBalance: snapshot.domain.matchRules.paceBalance,
     );
-    final submittedPlayerIds = state.runtimeState.submittedPlayerIds;
+    final submittedPlayerIds = snapshot.session.submittedPlayerIds;
     final skippedPlayerIds = playerIds
         .where((playerId) => !submittedPlayerIds.contains(playerId))
         .toList();
     final result = _finalizeSimultaneousTurn(
-      decodedSnapshot: decodedSnapshot,
+      snapshot: snapshot,
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: nowUtc,
@@ -153,18 +138,15 @@ class ServerCommandReducer {
       ruleset: ruleset,
     );
 
-    final nextSave = result.save.copyWith(savedAt: nowUtc);
     return _acceptedReduction(
       match: match,
-      decodedSnapshot: decodedSnapshot,
-      nextSave: nextSave,
-      result: result,
+      result: result.withSnapshot(_withSavedAt(result.snapshot, nowUtc)),
       mapView: loadedMap.mapView,
     );
   }
 
   _CommandApplication _applyCommand({
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required WireMatch match,
     required GameCommand command,
     required int commandTick,
@@ -173,12 +155,10 @@ class ServerCommandReducer {
     required _LoadedServerMap loadedMap,
     required GameRuleset ruleset,
   }) {
-    final save = decodedSnapshot.save;
-    final state = decodedSnapshot.state;
     switch (command) {
       case SubmitTurnCommand():
         return _submitTurn(
-          decodedSnapshot: decodedSnapshot,
+          snapshot: snapshot,
           match: match,
           command: command,
           actorPlayerId: actorPlayerId,
@@ -188,7 +168,7 @@ class ServerCommandReducer {
         );
       case EndTurnCommand(:final playerId):
         return _submitTurn(
-          decodedSnapshot: decodedSnapshot,
+          snapshot: snapshot,
           match: match,
           command: SubmitTurnCommand(playerId),
           actorPlayerId: actorPlayerId,
@@ -198,79 +178,70 @@ class ServerCommandReducer {
         );
       case MoveUnitCommand():
         return _applyMoveUnit(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapView: loadedMap.mapView,
         );
       case AttackHexCommand():
         return _applyCombatCommand(
-          save: save,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           commandTick: commandTick,
           mapTiles: loadedMap.mapView,
-          state: state,
           ruleset: ruleset,
         );
       case CancelUnitActionCommand():
-        return _applyCancelUnitAction(save, state, command, actorPlayerId);
+        return _applyCancelUnitAction(snapshot, command, actorPlayerId);
       case SkipUnitTurnCommand():
-        return _applySkipUnitTurn(save, state, command, actorPlayerId);
+        return _applySkipUnitTurn(snapshot, command, actorPlayerId);
       case FortifyUnitCommand():
-        return _applyFortifyUnit(save, state, command, actorPlayerId);
+        return _applyFortifyUnit(snapshot, command, actorPlayerId);
       case AutoExploreUnitCommand():
         return _applyAutoExplore(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapView: loadedMap.mapView,
         );
       case AssignMerchantTradeRouteCommand():
         return _applyAssignMerchantRoute(
-          save,
-          state,
+          snapshot,
           command,
           actorPlayerId,
           loadedMap.mapView,
         );
       case MoveMerchantToCityCommand():
         return _applyMoveMerchantToCity(
-          save,
-          state,
+          snapshot,
           command,
           actorPlayerId,
           loadedMap.mapView,
         );
       case OpenResourceTradeCommand():
         return _applyOpenResourceTrade(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
         );
       case OpenResourceExchangeCommand():
         return _applyOpenResourceExchange(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
         );
       case DiplomaticCommand():
         return _applyDiplomacyCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
         );
       case FoundCityCommand():
         return _applyCityFoundingCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
@@ -281,8 +252,7 @@ class ServerCommandReducer {
           StartCityProjectCommand() ||
           StartWonderCommand():
         return _applyProductionCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapView: loadedMap.mapView,
@@ -290,8 +260,7 @@ class ServerCommandReducer {
         );
       case RushProductionCommand():
         return _applyProductionCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapView: loadedMap.mapView,
@@ -299,8 +268,7 @@ class ServerCommandReducer {
         );
       case SelectTechnologyCommand():
         return _applySelectTechnologyCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
@@ -308,24 +276,21 @@ class ServerCommandReducer {
         );
       case DetachTroopCommand():
         return _applyDetachTroopCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
         );
       case ToggleWorkedHexCommand():
         return _applyToggleWorkedHexCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           ruleset: ruleset,
         );
       case SelectCityExpansionHexCommand():
         return _applySelectCityExpansionHexCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
@@ -333,8 +298,7 @@ class ServerCommandReducer {
         );
       case SelectWorkerImprovementCommand():
         return _applySelectWorkerImprovement(
-          save,
-          state,
+          snapshot,
           command,
           actorPlayerId,
           loadedMap.mapView,
@@ -342,55 +306,44 @@ class ServerCommandReducer {
         );
       case ConfirmWorkerImprovementCommand():
         return _applyConfirmWorkerImprovement(
-          save,
-          state,
+          snapshot,
           command,
           actorPlayerId,
           loadedMap.mapView,
           ruleset,
         );
       case CancelWorkerJobCommand():
-        return _applyCancelWorkerJob(save, state, command, actorPlayerId);
+        return _applyCancelWorkerJob(snapshot, command, actorPlayerId);
       case AssignWorkerToHexCommand():
         return _applyAssignWorkerToHex(
-          save,
-          state,
+          snapshot,
           command,
           actorPlayerId,
           loadedMap.mapView,
         );
       case CancelWorkerAssignmentCommand():
-        return _applyCancelWorkerAssignment(
-          save,
-          state,
-          command,
-          actorPlayerId,
-        );
+        return _applyCancelWorkerAssignment(snapshot, command, actorPlayerId);
       case StartArtifactExcavationCommand():
         return _applyStartArtifactExcavationCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
         );
       case StoreArtifactInCityCommand():
         return _applyStoreArtifactInCityCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
         );
       case TradeArtifactCommand():
         return _applyTradeArtifactCommand(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
         );
       case ResetUnitMovementCommand():
         return _CommandApplication.reject(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           reason: 'server_managed_command',
         );
       case SetActivePlayerCommand() ||
@@ -420,31 +373,37 @@ class ServerCommandReducer {
           FocusNextPendingActionCommand() ||
           FocusTurnStartActionCommand():
         return _CommandApplication.reject(
-          save: save,
-          state: state,
+          snapshot: snapshot,
           reason: 'client_only_command',
         );
     }
   }
 
   _CommandApplication _applicationFrom({
-    required GameSave save,
+    required CanonicalGameSnapshot snapshot,
     required bool accepted,
-    required PersistentGameState state,
+    DomainState? domain,
+    MatchSessionState? session,
+    GameSnapshotMetadata? metadata,
+    PersistedInteractionState? interaction,
     List<GameEvent> events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
     String? reason,
   }) {
     if (!accepted) {
       return _CommandApplication.reject(
-        save: save,
-        state: state,
+        snapshot: snapshot,
         reason: reason ?? 'command_rejected',
       );
     }
     return _CommandApplication.accept(
-      save: save,
-      state: state,
+      snapshot: _snapshotWithChanges(
+        snapshot,
+        domain: domain,
+        session: session,
+        metadata: metadata,
+        interaction: interaction,
+      ),
       events: events,
       movementExecutions: movementExecutions,
     );
@@ -454,45 +413,74 @@ class ServerCommandReducer {
 class _CommandApplication {
   _CommandApplication({
     required this.accepted,
-    required this.save,
-    required this.state,
+    required this.snapshot,
     this.events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
-    this.canonicalSnapshot,
     this.reason,
   }) : movementExecutions = _ownedList(movementExecutions);
 
   final bool accepted;
-  final GameSave save;
-  final PersistentGameState state;
+  final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
   final List<MovementCommandExecution> movementExecutions;
-  final CanonicalGameSnapshot? canonicalSnapshot;
   final String? reason;
 
   factory _CommandApplication.accept({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     List<GameEvent> events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
-    CanonicalGameSnapshot? canonicalSnapshot,
   }) => _CommandApplication(
     accepted: true,
-    save: save,
-    state: state,
+    snapshot: snapshot,
     events: events,
     movementExecutions: movementExecutions,
-    canonicalSnapshot: canonicalSnapshot,
   );
 
   factory _CommandApplication.reject({
-    required GameSave save,
-    required PersistentGameState state,
+    required CanonicalGameSnapshot snapshot,
     required String reason,
-  }) => _CommandApplication(
-    accepted: false,
-    save: save,
-    state: state,
-    reason: reason,
+  }) =>
+      _CommandApplication(accepted: false, snapshot: snapshot, reason: reason);
+
+  _CommandApplication withSnapshot(CanonicalGameSnapshot nextSnapshot) {
+    if (identical(nextSnapshot, snapshot)) return this;
+    return _CommandApplication(
+      accepted: accepted,
+      snapshot: nextSnapshot,
+      events: events,
+      movementExecutions: movementExecutions,
+      reason: reason,
+    );
+  }
+}
+
+CanonicalGameSnapshot _withSavedAt(
+  CanonicalGameSnapshot snapshot,
+  DateTime savedAtUtc,
+) {
+  if (snapshot.metadata.savedAtUtc == savedAtUtc) return snapshot;
+  return snapshot.copyWith(
+    metadata: snapshot.metadata.copyWith(savedAtUtc: savedAtUtc),
+  );
+}
+
+CanonicalGameSnapshot _snapshotWithChanges(
+  CanonicalGameSnapshot snapshot, {
+  DomainState? domain,
+  MatchSessionState? session,
+  GameSnapshotMetadata? metadata,
+  PersistedInteractionState? interaction,
+}) {
+  if (domain == null &&
+      session == null &&
+      metadata == null &&
+      interaction == null) {
+    return snapshot;
+  }
+  return snapshot.copyWith(
+    domain: domain,
+    session: session,
+    metadata: metadata,
+    interaction: interaction,
   );
 }

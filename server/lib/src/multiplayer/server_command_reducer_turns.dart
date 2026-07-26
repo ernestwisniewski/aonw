@@ -1,22 +1,8 @@
 part of 'server_command_reducer.dart';
 
-const _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
-
-CanonicalGameSnapshot _canonicalSnapshot({
-  required GameSave save,
-  required PersistentGameState state,
-  required int eventLogOffset,
-}) {
-  return _legacyGameSnapshotAdapter.toCanonical(
-    save: save,
-    state: state,
-    eventLogOffset: eventLogOffset,
-  );
-}
-
 extension ServerCommandReducerTurns on ServerCommandReducer {
   _CommandApplication _submitTurn({
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required WireMatch match,
     required SubmitTurnCommand command,
     required String actorPlayerId,
@@ -24,32 +10,25 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     required MapReadView mapView,
     required GameRuleset ruleset,
   }) {
-    final save = decodedSnapshot.save;
-    final state = decodedSnapshot.state;
+    final session = snapshot.session;
     if (command.playerId != actorPlayerId) {
       return _CommandApplication.reject(
-        save: save,
-        state: state,
+        snapshot: snapshot,
         reason: 'turn_player_not_controlled',
       );
     }
-    final playerIds = _turnPlayerIds(save, state);
+    final playerIds = _turnPlayerIds(snapshot);
     if (playerIds.isEmpty || !playerIds.contains(command.playerId)) {
       return _CommandApplication.reject(
-        save: save,
-        state: state,
+        snapshot: snapshot,
         reason: 'turn_player_not_active',
       );
     }
-    final alreadySubmitted = state.runtimeState.hasSubmitted(command.playerId);
-    final submitted = {
-      ...state.runtimeState.submittedPlayerIds,
-      command.playerId,
-    };
-    final submittedState = state.copyWith(
-      runtimeState: state.runtimeState.copyWith(submittedPlayerIds: submitted),
-    );
-    final turnTimedOut = _turnTimedOut(save, state, now);
+    final alreadySubmitted = session.hasSubmitted(command.playerId);
+    final submitted = {...session.submittedPlayerIds, command.playerId};
+    final submittedSession = session.copyWith(submittedPlayerIds: submitted);
+    final submittedSnapshot = snapshot.copyWith(session: submittedSession);
+    final turnTimedOut = _turnTimedOut(snapshot, now);
     final waitingPlayerIds = _waitingPlayerIds(
       match: match,
       playerIds: playerIds,
@@ -57,13 +36,15 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       turnTimedOut: turnTimedOut,
     );
     if (waitingPlayerIds.isNotEmpty) {
+      final turnStates = alreadySubmitted
+          ? submittedSession.turnStatesByPlayerId
+          : _finishedTurnStates(submittedSession, command.playerId);
       return _CommandApplication.accept(
-        save: alreadySubmitted
-            ? save.copyWith(savedAt: now.toUtc())
-            : save
-                  .withPlayerFinished(command.playerId)
-                  .copyWith(savedAt: now.toUtc()),
-        state: submittedState,
+        snapshot: submittedSnapshot.copyWith(
+          session: identical(turnStates, submittedSession.turnStatesByPlayerId)
+              ? submittedSession
+              : submittedSession.copyWith(turnStatesByPlayerId: turnStates),
+        ),
       );
     }
     final skippedPlayerIds = playerIds
@@ -71,7 +52,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         .toList();
 
     return _finalizeSimultaneousTurn(
-      decodedSnapshot: decodedSnapshot.withState(submittedState),
+      snapshot: submittedSnapshot,
       playerIds: playerIds,
       skippedPlayerIds: skippedPlayerIds,
       now: now,
@@ -81,7 +62,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
   }
 
   _CommandApplication _finalizeSimultaneousTurn({
-    required DecodedMatchSnapshot decodedSnapshot,
+    required CanonicalGameSnapshot snapshot,
     required List<String> playerIds,
     required List<String> skippedPlayerIds,
     required DateTime now,
@@ -90,7 +71,7 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
   }) {
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: decodedSnapshot.canonical,
+        snapshot: snapshot,
         playerIds: playerIds,
         skippedPlayerIds: skippedPlayerIds,
         savedAt: now,
@@ -100,31 +81,29 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         trackTimeoutStreaks: true,
       ),
     );
-    final legacyResult = _legacyGameSnapshotAdapter.toLegacy(result.snapshot);
     return _CommandApplication.accept(
-      save: legacyResult.save,
-      state: legacyResult.state,
+      snapshot: result.snapshot,
       events: result.events,
       movementExecutions: result.movementDelta.executions,
-      canonicalSnapshot: result.snapshot,
     );
   }
 
-  List<String> _turnPlayerIds(GameSave save, PersistentGameState state) {
-    final kickedPlayerIds = state.runtimeState.kickedPlayerIds;
-    final ids = save.players
+  List<String> _turnPlayerIds(CanonicalGameSnapshot snapshot) {
+    final kickedPlayerIds = snapshot.session.kickedPlayerIds;
+    final ids = snapshot.domain.participants
         .map((player) => player.id)
         .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
         .toList();
     if (ids.isNotEmpty) return ids..sort();
-    return save.playerStates.keys
+    return snapshot.session.turnStatesByPlayerId.keys
         .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
         .toList()
       ..sort();
   }
 
-  bool _turnTimedOut(GameSave save, PersistentGameState state, DateTime now) {
-    final turnStartedAt = state.runtimeState.turnStartedAt ?? save.savedAt;
+  bool _turnTimedOut(CanonicalGameSnapshot snapshot, DateTime now) {
+    final turnStartedAt =
+        snapshot.session.turnStartedAt ?? snapshot.metadata.savedAtUtc;
     final deadline = turnStartedAt.toUtc().add(_turnTimeout);
     return !now.toUtc().isBefore(deadline);
   }
@@ -157,4 +136,17 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
       WirePlayerConnectionState.offline => false,
     };
   }
+}
+
+Map<String, PlayerTurnState> _finishedTurnStates(
+  MatchSessionState session,
+  String playerId,
+) {
+  if (!session.turnStatesByPlayerId.containsKey(playerId)) {
+    return session.turnStatesByPlayerId;
+  }
+  return Map.unmodifiable({
+    ...session.turnStatesByPlayerId,
+    playerId: PlayerTurnState.finished,
+  });
 }

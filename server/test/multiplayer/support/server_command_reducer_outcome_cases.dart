@@ -80,17 +80,18 @@ void _registerServerCommandReducerOutcomeTests() {
   });
 }
 
-Future<ServerCommandReduction> _reduceOutcomeCommand({
+Future<ServerCommandTestReduction> _reduceOutcomeCommand({
   required WireMatch match,
   required PersistentGameState state,
   required List<Player> savePlayers,
 }) {
   const turn = GameLengthConfig.standard60TurnLimit;
-  return ServerCommandReducer(
-    mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-  ).reduce(
+  return const ServerCommandReducerTestDriver().reduce(
+    reducer: ServerCommandReducer(
+      mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+    ),
     match: match.copyWith(turn: turn),
-    snapshot: _snapshot(
+    wireSnapshot: _snapshot(
       state,
       save: _save(players: savePlayers).copyWith(
         turn: turn,
