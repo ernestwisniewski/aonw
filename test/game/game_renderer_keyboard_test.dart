@@ -1127,7 +1127,7 @@ void main() {
     });
 
     test(
-      'transition-controlled animations suppress automatic selection camera focus',
+      'combat animation focuses the retained killed attacker marker',
       () async {
         final map = _map(4, 4);
         final attacker = GameUnit.produced(
@@ -1154,32 +1154,32 @@ void main() {
         game.camera.viewfinder
           ..zoom = 2
           ..position = Vector2(900, 700);
-        final start = _visibleCenter(game).clone();
+        final attackPoint = game.unitMarkerPositionForTesting(attacker.id)!;
 
         final transition = game.applyTransition(
           GameState(
-            units: [attacker, defender],
+            units: [defender],
             interaction: GameInteractionState(
-              selection: GameSelection.unit(attacker, tile: _tile(map, 1, 1)),
+              selection: GameSelection.unit(defender, tile: _tile(map, 2, 1)),
             ),
           ),
           const [
             PlayCombatAnimationEffect(
               attackerUnitId: 'attacker_1',
               defenderUnitId: 'defender_1',
+              attackerKilled: true,
             ),
           ],
         );
         await Future<void>.delayed(Duration.zero);
 
-        game.update(0.2);
-
-        _expectVectorClose(_visibleCenter(game), start);
+        _expectVectorClose(_visibleCenter(game), attackPoint);
 
         game
           ..update(0.4)
           ..update(0.4);
         await transition;
+        expect(game.unitMarkerPositionForTesting(attacker.id), isNull);
       },
     );
 

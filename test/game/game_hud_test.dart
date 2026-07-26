@@ -68,6 +68,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'game_hud_auto_flow_regression_tests.dart';
+part 'game_hud_combat_camera_tests.dart';
 
 class _FakeGameRepository implements GameRepository {
   _FakeGameRepository({SaveSnapshot? snapshot})
@@ -6187,93 +6188,6 @@ void main() {
     expect(find.byKey(const Key('selectionInfo.action.move')), findsOneWidget);
   });
 
-  testWidgets('attack target opens prediction popup before confirming combat', (
-    tester,
-  ) async {
-    final attacker = GameUnit(
-      id: 'warrior_1',
-      ownerPlayerId: 'player_1',
-      type: GameUnitType.warrior,
-      name: GameUnitType.warrior.defaultNameToken,
-      col: 0,
-      row: 0,
-      movementPoints: 2,
-    );
-    final defender = GameUnit(
-      id: 'enemy_1',
-      ownerPlayerId: 'player_2',
-      type: GameUnitType.warrior,
-      name: GameUnitType.warrior.defaultNameToken,
-      col: 1,
-      row: 0,
-      movementPoints: 2,
-    );
-    final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
-        save: _save,
-        state: GameState(
-          activePlayerId: 'player_1',
-          units: [attacker, defender],
-          fogOfWar: FogOfWarState(
-            players: {
-              'player_1': PlayerFogOfWar(
-                playerId: 'player_1',
-                visibleHexes: {
-                  const HexCoordinate(col: 0, row: 0),
-                  const HexCoordinate(col: 1, row: 0),
-                },
-              ),
-            },
-          ),
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(attacker),
-          ),
-        ),
-      ),
-    );
-
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
-    await tester.pump();
-    await _disableAutoTurnFlow(tester);
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(GameHud)),
-      listen: false,
-    );
-    await container
-        .read(gameCommandControllerProvider.notifier)
-        .dispatch(const StartAttackTargetingCommand('warrior_1'));
-    await tester.pump();
-    await container
-        .read(gameCommandControllerProvider.notifier)
-        .dispatch(const TileTappedCommand(1, 0));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    var state = container.read(gameStateProvider('save')).value!;
-    final pending = state.pendingAction as PendingAttackTargeting;
-    expect(pending.defenderCol, 1);
-    expect(pending.defenderRow, 0);
-    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
-    expect(find.text('Confirm attack'), findsAtLeastNWidgets(1));
-    expect(find.text('Why this forecast?'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('hudCombatConfirm.confirm')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    state = container.read(gameStateProvider('save')).value!;
-    expect(state.pendingAction, isNull);
-    expect(
-      state.units.singleWhere((unit) => unit.id == 'warrior_1').movementPoints,
-      0,
-    );
-    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsNothing);
-  });
-
   testWidgets('action button opens non-modal city production panel', (
     tester,
   ) async {
@@ -6745,8 +6659,7 @@ void main() {
     },
   );
 
-  _registerHudAutoFlowRegressionTests();
-  _registerHudAutoFlowLifecycleTests();
+  _registerSplitHudTests();
 
   testWidgets(
     'Enabled Auto lets the player inspect a city while a unit can move',

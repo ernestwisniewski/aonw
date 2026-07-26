@@ -32,15 +32,14 @@ abstract final class GameEventRendererCombatEffects {
         (previousState ?? state).cityById(event.defenderUnitId) ??
         state.cityById(event.defenderUnitId);
 
+    final attackerVisible = _unitCanRenderTransientAtEither(
+      state,
+      previousState,
+      attacker,
+      viewerPlayerId: viewerPlayerId,
+    );
     final combatVisible =
-        (attacker != null &&
-            _canRenderTransientAtEither(
-              state,
-              previousState,
-              attacker.col,
-              attacker.row,
-              viewerPlayerId: viewerPlayerId,
-            )) ||
+        attackerVisible ||
         (defender != null &&
             _canRenderTransientAtEither(
               state,
@@ -166,6 +165,7 @@ abstract final class GameEventRendererCombatEffects {
           defenderCity,
           defenderDamage,
           viewerPlayerId: viewerPlayerId,
+          focusBeforeCombat: !attackerVisible,
         );
       }
     }
@@ -223,6 +223,7 @@ abstract final class GameEventRendererCombatEffects {
     GameCity city,
     int damage, {
     String? viewerPlayerId,
+    required bool focusBeforeCombat,
   }) {
     final cityVisible = _canRenderTransientAtEither(
       state,
@@ -231,9 +232,10 @@ abstract final class GameEventRendererCombatEffects {
       city.center.row,
       viewerPlayerId: viewerPlayerId,
     );
-    if (_isViewerCity(state, city, viewerPlayerId: viewerPlayerId)) {
+    if (focusBeforeCombat &&
+        _isViewerCity(state, city, viewerPlayerId: viewerPlayerId)) {
       effects.insert(
-        1,
+        0,
         SmoothCameraEffect(
           col: city.center.col,
           row: city.center.row,
@@ -295,6 +297,22 @@ abstract final class GameEventRendererCombatEffects {
       state,
       col,
       row,
+      viewerPlayerId: viewerPlayerId,
+    );
+  }
+
+  static bool _unitCanRenderTransientAtEither(
+    GameState state,
+    GameState? previousState,
+    GameUnit? unit, {
+    String? viewerPlayerId,
+  }) {
+    if (unit == null) return false;
+    return _canRenderTransientAtEither(
+      state,
+      previousState,
+      unit.col,
+      unit.row,
       viewerPlayerId: viewerPlayerId,
     );
   }

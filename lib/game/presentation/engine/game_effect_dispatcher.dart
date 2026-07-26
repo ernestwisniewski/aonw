@@ -130,6 +130,10 @@ class GameEffectDispatcher {
         :final defenderKilled,
         :final defenderRetaliated,
       ):
+        _focusCombatCamera(
+          attackerUnitId: attackerUnitId,
+          defenderUnitId: defenderUnitId,
+        );
         await _unitAnimationController.animateUnitCombat(
           attackerUnitId: attackerUnitId,
           defenderUnitId: defenderUnitId,
@@ -162,6 +166,17 @@ class GameEffectDispatcher {
           reduceMotion: _reduceMotion(),
         );
     }
+  }
+
+  void _focusCombatCamera({
+    required String attackerUnitId,
+    required String defenderUnitId,
+  }) {
+    final worldPoint =
+        _unitAnimationController.unitWorldPosition(attackerUnitId) ??
+        _unitAnimationController.unitWorldPosition(defenderUnitId);
+    if (worldPoint == null) return;
+    _cameraController.centerOnWorldPoint(worldPoint);
   }
 
   Future<void> _handleUnitMove(

@@ -50,8 +50,25 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
 
   Future<void> _showCombatModal(HudCombatPreview preview) async {
     if (_combatModalOpen || !mounted) return;
+    final requestedKey = _combatPreviewKey(preview);
+    if (!_combatPreviewIsCurrent(requestedKey)) {
+      _resyncStaleCombatPreview(requestedKey);
+      return;
+    }
+    await ref
+        .read(hudCommandDispatcherProvider)
+        .focusUnitMapTarget(preview.attackerUnitId);
+    if (!mounted) return;
+
+    if (!_combatPreviewIsCurrent(requestedKey)) {
+      _resyncStaleCombatPreview(requestedKey);
+      return;
+    }
+    if (_combatModalOpen) return;
+
+    final currentPreview = _combatConfirmationPreview!;
     _combatModalOpen = true;
-    _combatPreviewNotifier.value = preview;
+    _combatPreviewNotifier.value = currentPreview;
 
     await showGameModal<void>(
       context: context,
@@ -95,6 +112,19 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
     _combatModalOpen = false;
     _combatModalContext = null;
     _lastRequestedCombatPreviewKey = null;
+  }
+
+  bool _combatPreviewIsCurrent(String requestedKey) {
+    final currentPreview = _combatConfirmationPreview;
+    return currentPreview != null &&
+        _combatPreviewKey(currentPreview) == requestedKey;
+  }
+
+  void _resyncStaleCombatPreview(String requestedKey) {
+    if (_lastRequestedCombatPreviewKey == requestedKey) {
+      _lastRequestedCombatPreviewKey = null;
+    }
+    _syncCombatModal();
   }
 
   void _confirmCombatAttack(

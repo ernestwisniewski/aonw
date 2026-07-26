@@ -16,6 +16,8 @@ import 'package:flame/components.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'game_effect_dispatcher_combat_camera_test.dart';
+
 MapData _map() => MapData(
   cols: 2,
   rows: 1,
@@ -34,13 +36,22 @@ MapData _map() => MapData(
 class _FakeCameraController extends GameCameraController {
   ({int col, int row})? lastJump;
   ({int col, int row, double duration})? lastSmooth;
+  Vector2? lastCenteredWorldPoint;
   double? lastShakeIntensity;
   double? lastShakeDuration;
   bool following = false;
   int followCallCount = 0;
   int stopFollowCallCount = 0;
+  final List<String>? eventLog;
 
-  _FakeCameraController() : super(camera: CameraComponent(), mapData: _map());
+  _FakeCameraController({this.eventLog})
+    : super(camera: CameraComponent(), mapData: _map());
+
+  @override
+  void centerOnWorldPoint(Vector2 worldPoint) {
+    lastCenteredWorldPoint = worldPoint.clone();
+    eventLog?.add('focus');
+  }
 
   @override
   void jumpToTile(int col, int row) {
@@ -92,10 +103,20 @@ class _FakeUnitAnimationController extends UnitAnimationController {
   bool? attackerKilled;
   bool? defenderKilled;
   Vector2? visiblePosition = Vector2.zero();
-  _FakeUnitAnimationController() : super(_FakeUnitMarkerLayer());
+  final Map<String, Vector2?> visiblePositions = {};
+  final List<String> positionRequests = [];
+  final List<String>? eventLog;
+
+  _FakeUnitAnimationController({this.eventLog}) : super(_FakeUnitMarkerLayer());
 
   @override
-  Vector2? unitWorldPosition(String unitId) => visiblePosition?.clone();
+  Vector2? unitWorldPosition(String unitId) {
+    positionRequests.add(unitId);
+    final position = visiblePositions.containsKey(unitId)
+        ? visiblePositions[unitId]
+        : visiblePosition;
+    return position?.clone();
+  }
 
   @override
   Future<void> animateUnitMove({
@@ -123,6 +144,7 @@ class _FakeUnitAnimationController extends UnitAnimationController {
     bool defenderRetaliated = true,
     required VoidCallback onComplete,
   }) {
+    eventLog?.add('animate');
     this.attackerUnitId = attackerUnitId;
     this.defenderUnitId = defenderUnitId;
     this.attackerKilled = attackerKilled;
@@ -506,44 +528,7 @@ void main() {
       expect(synced, isTrue);
     });
 
-    test(
-      'dispatches combat animation effects and syncs after completion',
-      () async {
-        final cameraController = _FakeCameraController();
-        final animationController = _FakeUnitAnimationController();
-        final particleLayer = _FakeParticleEffectsLayer();
-        final floatingTextLayer = _FakeFloatingTextLayer();
-        final particleParent = Component();
-        addTearDown(animationController.dispose);
-        var synced = false;
-        final dispatcher = GameEffectDispatcher(
-          unitAnimationController: animationController,
-          cameraController: cameraController,
-          particleEffectsLayer: particleLayer,
-          floatingTextLayer: floatingTextLayer,
-          combatHexAlertLayer: CombatHexAlertLayer(),
-          particleParent: particleParent,
-          alertParent: particleParent,
-          reduceMotion: () => false,
-          followUnitMovementCamera: () => false,
-          onRendererStateChanged: () => synced = true,
-        );
-
-        await dispatcher.handleEffect(
-          const PlayCombatAnimationEffect(
-            attackerUnitId: 'attacker',
-            defenderUnitId: 'defender',
-            defenderKilled: true,
-          ),
-        );
-
-        expect(animationController.attackerUnitId, 'attacker');
-        expect(animationController.defenderUnitId, 'defender');
-        expect(animationController.attackerKilled, isFalse);
-        expect(animationController.defenderKilled, isTrue);
-        expect(synced, isTrue);
-      },
-    );
+    _registerCombatCameraTests();
 
     test('dispatches particle burst effects to the particle layer', () async {
       final cameraController = _FakeCameraController();
