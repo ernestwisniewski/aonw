@@ -9,6 +9,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/reducer_parity_auto_explore_characterization.dart';
+import '../../../support/reducer_parity_combat_characterization.dart';
 import '../../../support/reducer_parity_diplomacy_characterization.dart';
 import '../../../support/reducer_parity_fixture.dart';
 import '../../../support/reducer_parity_movement_characterization.dart';
@@ -22,13 +23,15 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = AutoExploreReducerParityCharacterization.extend(
-        MovementReducerParityCharacterization.extend(
-          DiplomacyReducerParityCharacterization.extend(
-            ResourceTradeReducerParityCharacterization.extend(
-              ReducerParityCorpus.load(
-                Directory.current,
-                reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = CombatReducerParityCharacterization.extend(
+        AutoExploreReducerParityCharacterization.extend(
+          MovementReducerParityCharacterization.extend(
+            DiplomacyReducerParityCharacterization.extend(
+              ResourceTradeReducerParityCharacterization.extend(
+                ReducerParityCorpus.load(
+                  Directory.current,
+                  reverseInputMapEntries: variant.reverseInputMapEntries,
+                ),
               ),
             ),
           ),
@@ -83,7 +86,8 @@ void _runFixture(ReducerParityFixture fixture) {
   if (!fixture.expectedAccepted &&
       (fixture.id.startsWith('resource-trade-characterization-') ||
           fixture.id.startsWith('diplomacy-characterization-') ||
-          fixture.id.startsWith('movement-characterization-'))) {
+          fixture.id.startsWith('movement-characterization-') ||
+          fixture.id.startsWith('combat-characterization-'))) {
     expect(result.state, same(initialState));
     expect(result.events, isEmpty);
   }

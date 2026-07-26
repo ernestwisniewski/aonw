@@ -7,6 +7,7 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 
 import '../../../test/support/reducer_parity_auto_explore_characterization.dart';
+import '../../../test/support/reducer_parity_combat_characterization.dart';
 import '../../../test/support/reducer_parity_diplomacy_characterization.dart';
 import '../../../test/support/reducer_parity_fixture.dart';
 import '../../../test/support/reducer_parity_movement_characterization.dart';
@@ -21,13 +22,15 @@ void main() {
       (name: 'canonical map order', reverseInputMapEntries: false),
       (name: 'reversed map order', reverseInputMapEntries: true),
     ]) {
-      final fixtures = AutoExploreReducerParityCharacterization.extend(
-        MovementReducerParityCharacterization.extend(
-          DiplomacyReducerParityCharacterization.extend(
-            ResourceTradeReducerParityCharacterization.extend(
-              ReducerParityCorpus.load(
-                repositoryRoot,
-                reverseInputMapEntries: variant.reverseInputMapEntries,
+      final fixtures = CombatReducerParityCharacterization.extend(
+        AutoExploreReducerParityCharacterization.extend(
+          MovementReducerParityCharacterization.extend(
+            DiplomacyReducerParityCharacterization.extend(
+              ResourceTradeReducerParityCharacterization.extend(
+                ReducerParityCorpus.load(
+                  repositoryRoot,
+                  reverseInputMapEntries: variant.reverseInputMapEntries,
+                ),
               ),
             ),
           ),
