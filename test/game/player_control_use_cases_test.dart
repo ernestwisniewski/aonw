@@ -49,6 +49,8 @@ class _MemoryGameRepository implements GameRepository {
 const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
 
+T _runtimeInstance<T>(T Function() create) => create();
+
 GameSave _save({
   int turn = 1,
   Map<String, PlayerTurnState>? playerStates,
@@ -100,7 +102,7 @@ void main() {
             dispatch: (command) async {
               commands.add(command);
               repository.snapshot = repository.snapshot.copyWith(
-                save: const AdvanceTurnPhase().advanceSave(
+                save: _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
                   repository.snapshot.save,
                   playerId: (command as EndTurnCommand).playerId,
                 ),
@@ -142,7 +144,7 @@ void main() {
             control: PlayerControlCoordinator.initial(save),
             dispatch: (command) async {
               repository.snapshot = repository.snapshot.copyWith(
-                save: const AdvanceTurnPhase().advanceSave(
+                save: _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
                   repository.snapshot.save,
                   playerId: (command as EndTurnCommand).playerId,
                 ),

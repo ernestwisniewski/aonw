@@ -52,6 +52,61 @@ void main() {
       );
     });
 
+    testWidgets('renders an explicit group break between command groups', (
+      tester,
+    ) async {
+      final groupBreak = SelectionActionGroupBreak(key: UniqueKey());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SelectionActionBar(
+              chips: const [],
+              openChipId: null,
+              onToggleChip: (_) {},
+              actions: [
+                SelectionCommandChip(
+                  icon: GameIcons.move,
+                  actionId: 'move',
+                  label: 'Move',
+                  onTap: () {},
+                ),
+                groupBreak,
+                SelectionCommandChip(
+                  icon: GameIcons.attack,
+                  actionId: 'attack',
+                  label: 'Attack',
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final actionGroup = tester.widget<Flex>(
+        find.byKey(const Key('selectionInfo.group.actions')),
+      );
+      expect(actionGroup.children, hasLength(3));
+      expect(
+        actionGroup.children[1],
+        isA<SizedBox>()
+            .having(
+              (widget) => widget.width,
+              'width',
+              SelectionActionBar.actionGroupBreakExtent,
+            )
+            .having(
+              (widget) => widget.height,
+              'height',
+              SelectionActionBar.actionChipHeight,
+            ),
+      );
+    });
+
     testWidgets('omits itself when there are no chips or actions', (
       tester,
     ) async {

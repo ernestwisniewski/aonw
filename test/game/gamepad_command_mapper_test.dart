@@ -6,9 +6,11 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+T _runtimeInstance<T>(T Function() create) => create();
+
 void main() {
   group('GamepadCommandMapper', () {
-    const mapper = GamepadCommandMapper();
+    final mapper = _runtimeInstance(GamepadCommandMapper.new);
 
     test('maps cancel to the active pending action cancel command', () {
       final commands = mapper.commandsForFrame(
