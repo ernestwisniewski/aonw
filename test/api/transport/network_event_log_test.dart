@@ -57,6 +57,7 @@ void main() {
               matchId: 'match_1',
               offset: 9,
               timestamp: DateTime.utc(2026),
+              movementExecutions: WireMovementExecutionList(const []),
             ),
           ],
         );
@@ -179,6 +180,7 @@ void main() {
           matchId: 'match_1',
           offset: multiplayerEventPageSize,
           timestamp: DateTime.utc(2026),
+          movementExecutions: WireMovementExecutionList(const []),
         ),
         _wireCommand(multiplayerEventPageSize + 1),
       ]);

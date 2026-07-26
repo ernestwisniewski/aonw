@@ -114,6 +114,7 @@ void main() {
         tick: 7,
         turn: 3,
         command: const {'type': 'MoveUnit'},
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final cleared = wire.copyWith(
@@ -143,6 +144,7 @@ void main() {
             reason: 'domain_reducer_not_configured',
           ),
         ],
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final event = codec
@@ -175,6 +177,7 @@ void main() {
             playerIds: const ['player_1', 'player_2'],
           ),
         ],
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final event = codec
@@ -201,6 +204,7 @@ void main() {
           'timedOut': true,
         },
         events: [SystemEventWire.playerTimedOut(turn: 1, playerId: 'player_2')],
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final event = codec
@@ -245,6 +249,7 @@ void main() {
         events: const [
           {'type': 'FromTheFuture'},
         ],
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       expect(() => codec.eventsFromWire(wire), throwsArgumentError);
@@ -414,12 +419,13 @@ void main() {
         save: {},
         state: {},
       );
-      const ack = WireCommandAck(
+      final ack = WireCommandAck(
         matchId: 'match_1',
         accepted: false,
         offset: 1,
         snapshot: snapshot,
         reason: 'stale_turn',
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final cleared = ack.copyWith(reason: null);

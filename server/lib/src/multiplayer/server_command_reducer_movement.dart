@@ -50,6 +50,7 @@ extension _ServerCommandReducerMovement on ServerCommandReducer {
       accepted: true,
       state: nextState,
       events: result.events,
+      movementExecutions: [?result.execution],
     );
   }
 }

@@ -127,29 +127,57 @@ When turn start selects a unit:
 target. Entering movement targeting only means the UI is ready for the player
 to choose a destination hex.
 
-## Simultaneous-Movement Animations
+## Authoritative Movement Animations
 
-In simultaneous turns, opponent movement must pass through the renderer as an
-animation even if it is the opponent's first action in a new turn and the local
-player is not issuing a command at that moment.
+Every movement-producing transition carries an explicit authoritative
+`movementExecutions` list. A regular `MoveUnitCommand` carries its exact single
+`MovementCommandExecution`. Simultaneous-turn finalization carries the complete
+globally ordered chain for queued-path and automatic turn movement. These
+executions, not a synthetic `UnitMovedEvent` or a snapshot delta, are the
+animation source. They carry each exact origin, travel step, entry cost, and
+cumulative cost through server persistence and recipient projection.
 
-Contract:
+The presentation contract is:
 
-| Movement source | Animation source |
+| Transition evidence | Renderer behavior |
 | --- | --- |
-| Local `MoveUnitCommand` | `MovementReducer` returns `AnimateUnitMoveEffect` |
-| Accepted network command | `UnitMovedEvent` maps to `AnimateUnitMoveEffect` |
-| Live multiplayer event from another player | Snapshot is applied by `GameRenderer.applyTransition(...)`, and `UnitMovedEvent` provides animation |
-| Queued-path movement at turn start | `QueuedMovementEffectBuilder.fromUnitDelta(...)` replays queued steps |
+| Non-empty authoritative executions | Validate complete per-unit chains against the previous and next snapshots, then play them in the supplied global order |
+| Explicit authoritative `[]` | Treat the lack of visible movement as intentional, apply state without movement animation, and never infer movement from the snapshot delta |
+| Missing key, JSON `null`, or malformed evidence | Reject the invalid protocol-v3 envelope |
+| Snapshot recovery, offset gap, stale event, or mismatched attached snapshot | Apply authoritative state without movement animation and never infer movement from the snapshot delta |
+| `UnitMovedEvent` beside authoritative executions | Keep it for activity/notification semantics and suppress its duplicate renderer move |
 
-`GameEventRendererEffectMapper` skips `UnitMovedEvent` for units that already
-have animation from command effects. That prevents local movement and
-single-player AI from receiving duplicate animation, while external multiplayer
-movement does not teleport units between snapshots.
+The global order may interleave segments from the same unit. Given
+`[A1, B1, A2]`, the renderer completes A1, keeps A's marker at that intermediate
+destination while B1 runs and while A2's camera pre-roll starts, then begins A2
+from the retained position. Only A's final segment releases the position lock
+and synchronizes it to the authoritative snapshot. Reduced-motion mode follows
+the same ownership and final-sync rules synchronously.
 
-The live multiplayer subscription starts from the last known `eventLogOffset +
-1` so old events are not replayed after bootstrap. New network snapshots are
-queued and ignored when their offset is not newer than the locally applied one.
+Recipient projection never exposes part of a hidden unit route. An opponent
+receives the whole chain only when its origin and every executed coordinate are
+visible in both the previous and next fog state; otherwise that unit's complete
+chain is omitted and the recipient receives explicit empty evidence when
+nothing remains visible. The owner can receive the complete chain.
+
+The command caller receives movement through the direct ACK and is excluded
+from the matching event broadcast. Other recipients receive the projected live
+event. Retrying the same accepted command reuses its stored plan and offset
+without creating another transition, while client echo and offset guards keep
+it from animating twice.
+
+Reconnect installs the latest snapshot and requests only events newer than
+that state, so movement already represented by the snapshot is not replayed.
+Recovery never reconstructs a movement animation from the snapshot delta.
+`NetworkEventLog` remains an activity/history reader rather than an exact
+renderer replay source; durable exact animation replay is a separate
+event-plan contract.
+
+This contract guarantees route and order, not shared wall-clock animation
+timing. Protocol v3 has no authoritative start tick or cross-client clock, and
+camera pre-roll, reduced-motion settings, runtime load, or recipient filtering
+can change local timing. Exact same-moment playback for every client remains
+the separate Etap 4 versioned `AnimationPlan` and virtual-clock milestone.
 
 ## Fallback
 

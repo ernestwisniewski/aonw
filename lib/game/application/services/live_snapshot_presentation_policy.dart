@@ -7,10 +7,7 @@ final class LiveSnapshotPresentationDecision {
   });
 
   final bool canPresentLiveTransition;
-  final List<MovementCommandExecution>? movementExecutions;
-
-  bool get inferDirectMoves =>
-      canPresentLiveTransition && movementExecutions == null;
+  final List<MovementCommandExecution> movementExecutions;
 }
 
 abstract final class LiveSnapshotPresentationPolicy {
@@ -24,12 +21,11 @@ abstract final class LiveSnapshotPresentationPolicy {
     required int? eventOffset,
     required int snapshotOffset,
     required bool snapshotAttached,
-    required List<MovementCommandExecution>? movementExecutions,
+    required List<MovementCommandExecution> movementExecutions,
   }) {
     final isNextEvent = eventOffset == previousOffset + 1;
     final snapshotMatchesEvent =
-        snapshotAttached &&
-        (snapshotOffset == eventOffset || snapshotOffset == 0);
+        snapshotAttached && snapshotOffset == eventOffset;
     if (!isNextEvent || !snapshotMatchesEvent) return _suppressed;
     return LiveSnapshotPresentationDecision(
       canPresentLiveTransition: true,

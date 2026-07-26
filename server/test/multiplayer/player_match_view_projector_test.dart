@@ -162,6 +162,7 @@ void main() {
       turn: 5,
       command: const {'type': 'own-command', 'secret': 'actor-secret'},
       events: storedEvents,
+      movementExecutions: WireMovementExecutionList(const []),
     );
     final otherEvent = ownEvent.copyWith(
       actorPlayerId: 'player-guest',
@@ -177,6 +178,7 @@ void main() {
         offset: 7,
         snapshot: snapshot,
         events: ownEvent.events,
+        movementExecutions: WireMovementExecutionList(const []),
       ),
       owner,
     );
@@ -349,16 +351,14 @@ WirePlayer _wirePlayer({
   required String id,
   required String userId,
   required String name,
-}) {
-  return WirePlayer(
-    id: id,
-    userId: userId,
-    name: name,
-    colorValue: 1,
-    kind: WirePlayerKind.human,
-    connectionState: WirePlayerConnectionState.connected,
-  );
-}
+}) => WirePlayer(
+  id: id,
+  userId: userId,
+  name: name,
+  colorValue: 1,
+  kind: WirePlayerKind.human,
+  connectionState: WirePlayerConnectionState.connected,
+);
 
 WireSnapshot _snapshot() {
   final save = GameSave(

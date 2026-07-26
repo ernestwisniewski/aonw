@@ -4,22 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('LiveSnapshotPresentationPolicy', () {
-    test('preserves exact attached evidence including null versus empty', () {
+    test('preserves exact attached full and empty evidence', () {
       final source = [_execution()];
 
-      final exact = LiveSnapshotPresentationPolicy.decide(
+      final full = LiveSnapshotPresentationPolicy.decide(
         previousOffset: 4,
         eventOffset: 5,
         snapshotOffset: 5,
         snapshotAttached: true,
         movementExecutions: source,
-      );
-      final legacy = LiveSnapshotPresentationPolicy.decide(
-        previousOffset: 4,
-        eventOffset: 5,
-        snapshotOffset: 5,
-        snapshotAttached: true,
-        movementExecutions: null,
       );
       final explicitEmpty = LiveSnapshotPresentationPolicy.decide(
         previousOffset: 4,
@@ -29,36 +22,33 @@ void main() {
         movementExecutions: const [],
       );
 
-      expect(exact.canPresentLiveTransition, isTrue);
-      expect(exact.movementExecutions, same(source));
-      expect(legacy.canPresentLiveTransition, isTrue);
-      expect(legacy.movementExecutions, isNull);
+      expect(full.canPresentLiveTransition, isTrue);
+      expect(full.movementExecutions, same(source));
       expect(explicitEmpty.canPresentLiveTransition, isTrue);
-      expect(explicitEmpty.movementExecutions, isNotNull);
       expect(explicitEmpty.movementExecutions, isEmpty);
     });
 
-    test('allows zero-offset compatibility only for attached snapshots', () {
+    test('requires the attached snapshot offset to equal the event offset', () {
       final source = [_execution()];
 
-      final attached = LiveSnapshotPresentationPolicy.decide(
+      final mismatchedZero = LiveSnapshotPresentationPolicy.decide(
         previousOffset: 4,
         eventOffset: 5,
         snapshotOffset: 0,
         snapshotAttached: true,
         movementExecutions: source,
       );
-      final reloaded = LiveSnapshotPresentationPolicy.decide(
-        previousOffset: 4,
-        eventOffset: 5,
+      final equalZero = LiveSnapshotPresentationPolicy.decide(
+        previousOffset: -1,
+        eventOffset: 0,
         snapshotOffset: 0,
-        snapshotAttached: false,
+        snapshotAttached: true,
         movementExecutions: source,
       );
 
-      expect(attached.canPresentLiveTransition, isTrue);
-      expect(attached.movementExecutions, same(source));
-      _expectSuppressed(reloaded);
+      _expectSuppressed(mismatchedZero);
+      expect(equalZero.canPresentLiveTransition, isTrue);
+      expect(equalZero.movementExecutions, same(source));
     });
 
     for (final unsafe in const [
@@ -129,7 +119,6 @@ void main() {
 
 void _expectSuppressed(LiveSnapshotPresentationDecision decision) {
   expect(decision.canPresentLiveTransition, isFalse);
-  expect(decision.movementExecutions, isNotNull);
   expect(decision.movementExecutions, isEmpty);
 }
 

@@ -12,6 +12,6 @@ LiveSnapshotPresentationDecision resolve(
     eventOffset: liveEvent?.wire.offset,
     snapshotOffset: snapshot.eventLogOffset,
     snapshotAttached: liveEvent?.snapshot != null,
-    movementExecutions: liveEvent?.movementExecutions,
+    movementExecutions: liveEvent?.movementExecutions ?? const [],
   );
 }

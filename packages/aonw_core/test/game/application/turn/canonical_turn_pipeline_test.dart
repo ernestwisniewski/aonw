@@ -62,9 +62,8 @@ void _preservesCanonicalBoundaries() {
     result.events.whereType<TurnEndedEvent>().map((event) => event.playerId),
     ['p2', 'p1'],
   );
-  final TurnMovementDelta? delta = result.movementDelta;
-  expect(delta, isNotNull);
-  expect(delta!.beforeUnits, hasLength(1));
+  final delta = result.movementDelta;
+  expect(delta.beforeUnits, hasLength(1));
   expect(delta.afterUnits, hasLength(1));
 }
 
@@ -119,7 +118,7 @@ void _characterizesMovementDelta() {
     ),
   );
 
-  final delta = result.movementDelta!;
+  final delta = result.movementDelta;
   expect(delta.beforeUnits, hasLength(1));
   expect(delta.beforeUnits.single.occupies(0, 0), isTrue);
   expect(delta.beforeUnits.single.movementPoints, 0);

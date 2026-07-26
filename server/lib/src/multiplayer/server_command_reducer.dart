@@ -60,6 +60,8 @@ class ServerCommandReducer {
     required DateTime now,
   }) async {
     if (match.state != 'running') {
+      // Outcome construction lives in its part, keeping the reducer focused on
+      // command validation and application.
       return _reject(snapshot, 'match_not_running');
     }
 
@@ -443,6 +445,7 @@ class ServerCommandReducer {
     required bool accepted,
     required PersistentGameState state,
     List<GameEvent> events = const [],
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     String? reason,
   }) {
     if (!accepted) {
@@ -452,14 +455,11 @@ class ServerCommandReducer {
         reason: reason ?? 'command_rejected',
       );
     }
-    return _CommandApplication.accept(save: save, state: state, events: events);
-  }
-
-  ServerCommandReduction _reject(WireSnapshot snapshot, String reason) {
-    return ServerCommandReduction(
-      accepted: false,
-      snapshot: snapshot,
-      reason: reason,
+    return _CommandApplication.accept(
+      save: save,
+      state: state,
+      events: events,
+      movementExecutions: movementExecutions,
     );
   }
 }
@@ -470,16 +470,16 @@ class _CommandApplication {
     required this.save,
     required this.state,
     this.events = const [],
-    Iterable<MovementCommandExecution>? movementExecutions,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     this.canonicalSnapshot,
     this.reason,
-  }) : movementExecutions = _ownedListOrNull(movementExecutions);
+  }) : movementExecutions = _ownedList(movementExecutions);
 
   final bool accepted;
   final GameSave save;
   final PersistentGameState state;
   final List<GameEvent> events;
-  final List<MovementCommandExecution>? movementExecutions;
+  final List<MovementCommandExecution> movementExecutions;
   final CanonicalGameSnapshot? canonicalSnapshot;
   final String? reason;
 
@@ -487,7 +487,7 @@ class _CommandApplication {
     required GameSave save,
     required PersistentGameState state,
     List<GameEvent> events = const [],
-    Iterable<MovementCommandExecution>? movementExecutions,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     CanonicalGameSnapshot? canonicalSnapshot,
   }) => _CommandApplication(
     accepted: true,

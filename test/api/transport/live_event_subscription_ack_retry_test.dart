@@ -153,7 +153,7 @@ void main() {
       everyElement(isA<MovementCommandExecution>()),
     );
     expect(
-      event.movementExecutions!.map((execution) {
+      event.movementExecutions.map((execution) {
         final step = execution.steps.single;
         return (
           execution.unitId,
@@ -171,7 +171,7 @@ void main() {
         ('unit_a', 1, 0, 2, 0, 13, 20),
       ],
     );
-    expect(event.movementExecutions!.clear, throwsUnsupportedError);
+    expect(event.movementExecutions.clear, throwsUnsupportedError);
     await handle.close();
   });
 }

@@ -610,7 +610,7 @@
         "lib/game/presentation/formatters/diplomacy_history_presenter.dart::class:DiplomacyHistoryPresenter": 380,
         "lib/game/presentation/formatters/game_display_names.dart::class:GameDisplayNames": 586,
         "lib/game/presentation/providers/game/game_actions_provider.dart::class:GameCommandController": 453,
-        "lib/game/presentation/providers/game/game_state_provider.dart::class:GameStateNotifier": 441,
+        "lib/game/presentation/providers/game/game_state_provider.dart::class:GameStateNotifier": 440,
         "lib/game/presentation/screens/lobby/lobby_screen.dart::class:_LobbyScreenState": 561,
         "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState": 397,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart::class:_DiplomaticMessagePopupOverlayState": 542,
@@ -682,7 +682,7 @@
         "lib/game/presentation/formatters/game_event_notification_city_messages.dart::function:_cityNotificationMessage": 61,
         "lib/game/presentation/formatters/game_event_notification_combat_messages.dart::function:_combatEventMessage": 91,
         "lib/game/presentation/formatters/game_event_notification_message.dart::function:_combatMessage": 68,
-        "lib/game/presentation/providers/game/game_state_provider.dart::class:GameStateNotifier/method:_applyNetworkSnapshot": 69,
+        "lib/game/presentation/providers/game/game_state_provider.dart::class:GameStateNotifier/method:_applyNetworkSnapshot": 68,
         "lib/game/presentation/screens/game/load_game_save_card.dart::class:_SaveCard/method:build/closure:LayoutBuilder#1": 101,
         "lib/game/presentation/screens/game/load_game_screen.dart::class:LoadGameScreen/method:_buildSaves": 69,
         "lib/game/presentation/screens/lobby/lobby_screen.dart::class:_LobbyScreenState/method:build": 98,
@@ -1198,7 +1198,7 @@
       "files": {
         "test/api/session/network_session_refresh_coordinator_test.dart": 821,
         "test/api/transport/live_event_subscription_test.dart": 736,
-        "test/api/transport/network_command_transport_test.dart": 1276,
+        "test/api/transport/network_command_transport_test.dart": 1266,
         "test/architecture/coverage_gate_test.dart": 682,
         "test/architecture/lint_configuration_guard_test.dart": 715,
         "test/editor/editor_grid_test.dart": 592,
@@ -1221,7 +1221,7 @@
         "test/game/game_effect_dispatcher_test.dart": 737,
         "test/game/game_event_renderer_effect_mapper_test.dart": 652,
         "test/game/game_hud_test.dart": 7599,
-        "test/game/game_providers_test.dart": 2634,
+        "test/game/game_providers_test.dart": 2630,
         "test/game/game_renderer_keyboard_test.dart": 3620,
         "test/game/game_rendering_coordinator_test.dart": 1579,
         "test/game/game_screen_test.dart": 1447,
@@ -1425,7 +1425,7 @@
       "files": {
         "server/test/integration/multiplayer_endpoint_smoke.dart": 1287,
         "server/test/multiplayer/player_match_view_projector_test.dart": 666,
-        "server/test/multiplayer/realtime_match_hub_test.dart": 3616
+        "server/test/multiplayer/realtime_match_hub_test.dart": 3615
       },
       "legacyFiles": {},
       "declarations": {},

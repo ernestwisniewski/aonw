@@ -8,11 +8,11 @@ final class LiveServerEvent {
     required this.wire,
     required Iterable<GameEvent> events,
     this.snapshot,
-    Iterable<MovementCommandExecution>? movementExecutions,
+    required Iterable<MovementCommandExecution> movementExecutions,
   }) : events = List<GameEvent>.unmodifiable(events),
-       movementExecutions = movementExecutions == null
-           ? null
-           : List<MovementCommandExecution>.unmodifiable(movementExecutions);
+       movementExecutions = List<MovementCommandExecution>.unmodifiable(
+         movementExecutions,
+       );
 
   factory LiveServerEvent.fromWire({
     required WireEvent wire,
@@ -23,7 +23,7 @@ final class LiveServerEvent {
       wire: wire,
       events: events,
       snapshot: snapshot,
-      movementExecutions: wire.movementExecutions?.values.map(
+      movementExecutions: wire.movementExecutions.values.map(
         MovementExecutionWireMapper.decode,
       ),
     );
@@ -32,5 +32,5 @@ final class LiveServerEvent {
   final WireEvent wire;
   final List<GameEvent> events;
   final SaveSnapshot? snapshot;
-  final List<MovementCommandExecution>? movementExecutions;
+  final List<MovementCommandExecution> movementExecutions;
 }

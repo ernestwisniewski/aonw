@@ -19,7 +19,7 @@ abstract class WireEvent with _$WireEvent {
     int? turn,
     Map<String, dynamic>? command,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
-    WireMovementExecutionList? movementExecutions,
+    required WireMovementExecutionList movementExecutions,
   }) = _WireEvent;
 
   factory WireEvent.fromJson(Map<String, dynamic> json) {
@@ -50,10 +50,9 @@ abstract class WireEvent with _$WireEvent {
       events: rawEvents
           .map((event) => WireJson.requiredMap(event, 'WireEvent.events[]'))
           .toList(),
-      movementExecutions: switch (json['movementExecutions']) {
-        null => null,
-        final value => WireMovementExecutionList.fromJson(value),
-      },
+      movementExecutions: WireMovementExecutionList.fromJson(
+        json['movementExecutions'],
+      ),
     );
   }
 
@@ -67,7 +66,6 @@ abstract class WireEvent with _$WireEvent {
     if (turn != null) 'turn': turn,
     if (command != null) 'command': Map<String, dynamic>.from(command!),
     'events': events.map(Map<String, dynamic>.from).toList(),
-    if (movementExecutions != null)
-      'movementExecutions': movementExecutions!.toJson(),
+    'movementExecutions': movementExecutions.toJson(),
   };
 }

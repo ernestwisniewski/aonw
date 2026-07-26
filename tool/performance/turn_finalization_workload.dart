@@ -141,8 +141,8 @@ Map<String, Object?> _stableResult(
     'inputOffset': fixture.eventLogOffset,
     'inputTurn': fixture.save.turn,
     'inputUnits': fixture.state.units.length,
-    'movementAfterUnits': movementDelta?.afterUnits.length ?? 0,
-    'movementBeforeUnits': movementDelta?.beforeUnits.length ?? 0,
+    'movementAfterUnits': movementDelta.afterUnits.length,
+    'movementBeforeUnits': movementDelta.beforeUnits.length,
     'offsetPreserved': result.legacy.eventLogOffset == fixture.eventLogOffset,
     'outputArtifacts': result.legacy.state.artifacts.length,
     'outputDigest': stableDigest({
@@ -271,7 +271,7 @@ final class _BoundaryResult {
 
   final LegacyGameSnapshotParts legacy;
   final List<GameEvent> events;
-  final TurnMovementDelta? movementDelta;
+  final TurnMovementDelta movementDelta;
 }
 
 MapReadView _mapView() => MapData(

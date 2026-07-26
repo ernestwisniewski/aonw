@@ -295,7 +295,7 @@ WireMovementExecution _wireExecution(
 
 WireCommandAck _acceptedAck({
   required GameState after,
-  WireMovementExecutionList? movementExecutions,
+  required WireMovementExecutionList movementExecutions,
 }) {
   const snapshotCodec = SnapshotCodec();
   return WireCommandAck(

@@ -42,7 +42,7 @@ void main() {
         expect(reduction.turn, 1);
         expect(reduction.previousState, isNotNull);
         expect(reduction.state, nextState);
-        expect(reduction.movementExecutions, isNull);
+        expect(reduction.movementExecutions, isEmpty);
         expect(
           nextState.runtimeState.diplomacy.pendingProposals,
           contains('proposal_1'),

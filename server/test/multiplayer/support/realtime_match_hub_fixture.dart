@@ -35,3 +35,21 @@ String _clientMessageKey(
   String actorPlayerId,
   String clientMessageId,
 ) => '$matchId:$actorPlayerId:$clientMessageId';
+
+MapData _realtimeMatchHubFixtureMap() {
+  return MapData(
+    cols: 6,
+    rows: 6,
+    tiles: [
+      for (var col = 0; col < 6; col++)
+        for (var row = 0; row < 6; row++)
+          TileData(
+            col: col,
+            row: row,
+            terrains: const [TerrainType.grassland],
+            resources: const [],
+            height: 1,
+          ),
+    ],
+  );
+}

@@ -2,22 +2,19 @@ import 'package:aonw_core/protocol.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('WireEvent movement executions compatibility', () {
-    test('treats a missing key as legacy fallback', () {
-      final event = WireEvent.fromJson(_wireEventJson());
-
-      expect(event.movementExecutions, isNull);
-      expect(event.toJson(), isNot(contains('movementExecutions')));
+  group('WireEvent movement executions contract', () {
+    test('rejects a missing key', () {
+      expect(() => WireEvent.fromJson(_wireEventJson()), throwsArgumentError);
     });
 
-    test('normalizes explicit null to an omitted key', () {
-      final event = WireEvent.fromJson({
-        ..._wireEventJson(),
-        'movementExecutions': null,
-      });
-
-      expect(event.movementExecutions, isNull);
-      expect(event.toJson(), isNot(contains('movementExecutions')));
+    test('rejects explicit null', () {
+      expect(
+        () => WireEvent.fromJson({
+          ..._wireEventJson(),
+          'movementExecutions': null,
+        }),
+        throwsArgumentError,
+      );
     });
 
     test('preserves an explicit authoritative empty list', () {
@@ -26,8 +23,7 @@ void main() {
         'movementExecutions': <Object>[],
       });
 
-      expect(event.movementExecutions, isNotNull);
-      expect(event.movementExecutions!.isEmpty, isTrue);
+      expect(event.movementExecutions.isEmpty, isTrue);
       expect(event.toJson(), containsPair('movementExecutions', <Object>[]));
     });
 
@@ -54,33 +50,24 @@ void main() {
         throwsArgumentError,
       );
     });
-
-    test('remains readable by the literal pre-movement v3 decoder', () {
-      final json = {
-        ..._wireEventJson(),
-        'movementExecutions': _movementExecutionJson(),
-      };
-
-      expect(_decodePreMovementV3Event(json), _wireEventJson());
-    });
   });
 
-  group('WireCommandAck movement executions compatibility', () {
-    test('treats a missing key as legacy fallback', () {
-      final ack = WireCommandAck.fromJson(_wireCommandAckJson());
-
-      expect(ack.movementExecutions, isNull);
-      expect(ack.toJson(), isNot(contains('movementExecutions')));
+  group('WireCommandAck movement executions contract', () {
+    test('rejects a missing key', () {
+      expect(
+        () => WireCommandAck.fromJson(_wireCommandAckJson()),
+        throwsArgumentError,
+      );
     });
 
-    test('normalizes explicit null to an omitted key', () {
-      final ack = WireCommandAck.fromJson({
-        ..._wireCommandAckJson(),
-        'movementExecutions': null,
-      });
-
-      expect(ack.movementExecutions, isNull);
-      expect(ack.toJson(), isNot(contains('movementExecutions')));
+    test('rejects explicit null', () {
+      expect(
+        () => WireCommandAck.fromJson({
+          ..._wireCommandAckJson(),
+          'movementExecutions': null,
+        }),
+        throwsArgumentError,
+      );
     });
 
     test('preserves an explicit authoritative empty list', () {
@@ -89,8 +76,7 @@ void main() {
         'movementExecutions': <Object>[],
       });
 
-      expect(ack.movementExecutions, isNotNull);
-      expect(ack.movementExecutions!.isEmpty, isTrue);
+      expect(ack.movementExecutions.isEmpty, isTrue);
       expect(ack.toJson(), containsPair('movementExecutions', <Object>[]));
     });
 
@@ -117,15 +103,6 @@ void main() {
         }),
         throwsArgumentError,
       );
-    });
-
-    test('remains readable by the literal pre-movement v3 decoder', () {
-      final json = {
-        ..._wireCommandAckJson(),
-        'movementExecutions': _movementExecutionJson(),
-      };
-
-      expect(_decodePreMovementV3CommandAck(json), _wireCommandAckJson());
     });
   });
 
@@ -217,54 +194,5 @@ Map<String, dynamic> _wireCommandAckJson() {
     'events': [
       {'type': 'TurnEndedEvent'},
     ],
-  };
-}
-
-// Frozen compatibility fixtures for the v3 readers that predate movement
-// executions. They intentionally select only old keys and never delegate to
-// WireEvent.fromJson or WireCommandAck.fromJson.
-Map<String, dynamic> _decodePreMovementV3Event(Map<String, dynamic> json) {
-  final version = json['v'];
-  if (version != 3) {
-    throw ArgumentError.value(version, 'v', 'Expected protocol v3');
-  }
-  return {
-    'v': version,
-    'matchId': json['matchId'] as String,
-    'offset': json['offset'] as int,
-    'timestamp': json['timestamp'] as String,
-    if (json['actorPlayerId'] case final String actorPlayerId)
-      'actorPlayerId': actorPlayerId,
-    if (json['tick'] case final int tick) 'tick': tick,
-    if (json['turn'] case final int turn) 'turn': turn,
-    if (json['command'] case final Map<Object?, Object?> command)
-      'command': Map<String, dynamic>.from(command),
-    'events': (json['events'] as List<Object?>)
-        .map(
-          (event) => Map<String, dynamic>.from(event! as Map<Object?, Object?>),
-        )
-        .toList(),
-  };
-}
-
-Map<String, dynamic> _decodePreMovementV3CommandAck(Map<String, dynamic> json) {
-  final version = json['v'];
-  if (version != 3) {
-    throw ArgumentError.value(version, 'v', 'Expected protocol v3');
-  }
-  return {
-    'v': version,
-    'matchId': json['matchId'] as String,
-    'accepted': json['accepted'] as bool,
-    'offset': json['offset'] as int,
-    'snapshot': Map<String, dynamic>.from(
-      json['snapshot']! as Map<Object?, Object?>,
-    ),
-    'events': (json['events'] as List<Object?>)
-        .map(
-          (event) => Map<String, dynamic>.from(event! as Map<Object?, Object?>),
-        )
-        .toList(),
-    if (json['reason'] case final String reason) 'reason': reason,
   };
 }

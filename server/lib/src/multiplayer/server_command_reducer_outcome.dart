@@ -5,13 +5,13 @@ class ServerCommandReduction {
     required this.accepted,
     required this.snapshot,
     this.events = const [],
-    Iterable<MovementCommandExecution>? movementExecutions,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     this.turn,
     this.previousState,
     this.state,
     this.outcome,
     this.reason,
-  }) : movementExecutions = _ownedListOrNull(movementExecutions),
+  }) : movementExecutions = _ownedList(movementExecutions),
        assert(
          !accepted ||
              (turn != null &&
@@ -24,7 +24,7 @@ class ServerCommandReduction {
   final bool accepted;
   final WireSnapshot snapshot;
   final List<GameEvent> events;
-  final List<MovementCommandExecution>? movementExecutions;
+  final List<MovementCommandExecution> movementExecutions;
   final int? turn;
   final PersistentGameState? previousState;
   final PersistentGameState? state;
@@ -32,8 +32,7 @@ class ServerCommandReduction {
   final String? reason;
 }
 
-List<T>? _ownedListOrNull<T>(Iterable<T>? values) =>
-    values == null ? null : List<T>.unmodifiable(values);
+List<T> _ownedList<T>(Iterable<T> values) => List<T>.unmodifiable(values);
 
 extension _ServerCommandReducerOutcome on ServerCommandReducer {
   ServerCommandReduction _acceptedReduction({
@@ -83,6 +82,14 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
       state: _reconcileOutcomeParticipants(match: match, domain: domain),
       session: session,
       mapData: mapView,
+    );
+  }
+
+  ServerCommandReduction _reject(WireSnapshot snapshot, String reason) {
+    return ServerCommandReduction(
+      accepted: false,
+      snapshot: snapshot,
+      reason: reason,
     );
   }
 }

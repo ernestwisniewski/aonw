@@ -17,6 +17,7 @@ void main() {
         ),
         events: [SystemEventWire.commandRejected(reason: 'not_allowed')],
         reason: 'not_allowed',
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final restored = WireCommandAck.fromJson(ack.toJson());
@@ -132,6 +133,7 @@ void main() {
         events: const [
           {'type': 'CommandAcceptedEvent'},
         ],
+        movementExecutions: WireMovementExecutionList(const []),
       );
 
       final decodedMatch = WireMatch.fromJson(match.toJson());

@@ -112,6 +112,17 @@ void _expectMovementAndContact(
     (event.unitId, event.fromCol, event.fromRow, event.toCol, event.toRow),
     (_scoutId, 0, 0, 1, 0),
   );
+  final execution = reduction.movementExecutions.single;
+  expect(
+    (execution.unitId, execution.fromCol, execution.fromRow),
+    (_scoutId, 0, 0),
+  );
+  expect(
+    execution.steps.map(
+      (step) => (step.col, step.row, step.enterCost, step.cumulativeCost),
+    ),
+    [(1, 0, 1, 1)],
+  );
   expect(
     after.runtimeState.diplomacy.hasContact(_actorPlayerId, _opponentPlayerId),
     isTrue,

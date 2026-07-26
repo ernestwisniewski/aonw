@@ -43,7 +43,7 @@ Future<void> _persistsAndReusesTurnMovementEvidence() async {
 
     expect(conflictAck.ack?.accepted, isFalse);
     expect(conflictAck.ack?.reason, 'client_message_id_conflict');
-    expect(conflictAck.ack?.movementExecutions, isNull);
+    expect(conflictAck.ack?.movementExecutions.isEmpty, isTrue);
     expect(await fixture.store.listEvents(fixture.match.id, 0), hasLength(1));
     expect(clients.ownerEvents, isEmpty);
     expect(clients.secondOwnerEvents, hasLength(1));
@@ -73,13 +73,12 @@ void _expectInitialAndRetryDeliveries({
     _turnMovementSnapshots(secondOwnerMessage.event!.movementExecutions),
     _expectedOwnerTurnMovements(),
   );
-  expect(observerMessage.event!.movementExecutions, isNotNull);
-  expect(observerMessage.event!.movementExecutions!.isEmpty, isTrue);
+  expect(observerMessage.event!.movementExecutions.isEmpty, isTrue);
   for (final plan in [
-    firstAck.ack!.movementExecutions!,
-    retryAck.ack!.movementExecutions!,
-    secondOwnerMessage.event!.movementExecutions!,
-    observerMessage.event!.movementExecutions!,
+    firstAck.ack!.movementExecutions,
+    retryAck.ack!.movementExecutions,
+    secondOwnerMessage.event!.movementExecutions,
+    observerMessage.event!.movementExecutions,
   ]) {
     expect(plan.toJson().toString(), isNot(contains('_serverAudience')));
   }
@@ -99,7 +98,7 @@ Future<void> _expectStoredTurnMovement(_TurnMovementFixture fixture) async {
     _expectedStoredTurnMovements(fixture),
   );
   expect(
-    events.single.movementExecutions!.toJson().toString(),
+    events.single.movementExecutions.toJson().toString(),
     contains('_serverAudiencePlayerIds'),
   );
 }
@@ -280,8 +279,7 @@ MultiplayerClientMessage _turnMovementMessage(
   );
 }
 
-List<String> _turnMovementSnapshots(WireMovementExecutionList? plan) {
-  if (plan == null) return const ['null'];
+List<String> _turnMovementSnapshots(WireMovementExecutionList plan) {
   return [
     for (final execution in plan.values)
       '${execution.unitId}:${execution.fromCol},${execution.fromRow}'

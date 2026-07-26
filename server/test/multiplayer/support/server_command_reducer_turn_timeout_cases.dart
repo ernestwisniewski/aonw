@@ -57,7 +57,7 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       expect(save.playerStates['player_1'], PlayerTurnState.finished);
       expect(state.runtimeState.submittedPlayerIds, {'player_1'});
       expect(reduction.events, isEmpty);
-      expect(reduction.movementExecutions, isNull);
+      expect(reduction.movementExecutions, isEmpty);
     });
 
     test(
@@ -228,12 +228,12 @@ Future<void> _preservesGlobalTurnMovementExecutionOrder() async {
     (state.units.byId('unit_b')!.col, state.units.byId('unit_b')!.row),
     (1, 1),
   );
-  expect(reduction.movementExecutions!.map(_movementExecutionSnapshot), [
+  expect(reduction.movementExecutions.map(_movementExecutionSnapshot), [
     'unit_a:0,0->1,0;enter=1;total=1',
     'unit_b:0,1->1,1;enter=1;total=1',
     'unit_a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2',
   ]);
-  expect(() => reduction.movementExecutions!.clear(), throwsUnsupportedError);
+  expect(() => reduction.movementExecutions.clear(), throwsUnsupportedError);
 }
 
 WireSnapshot _turnMovementExecutionSnapshot() {

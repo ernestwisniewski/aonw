@@ -26,6 +26,6 @@ void _registerServerCommandReductionContractTests() {
     source.clear();
 
     expect(reduction.movementExecutions, hasLength(1));
-    expect(() => reduction.movementExecutions!.clear(), throwsUnsupportedError);
+    expect(() => reduction.movementExecutions.clear(), throwsUnsupportedError);
   });
 }

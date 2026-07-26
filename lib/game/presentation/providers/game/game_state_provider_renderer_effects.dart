@@ -5,8 +5,7 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required GameState? previousState,
     required GameState nextState,
     required List<GameEvent> events,
-    required List<MovementCommandExecution>? movementExecutions,
-    required bool inferDirectMoves,
+    required List<MovementCommandExecution> movementExecutions,
     required String? viewerPlayerId,
     required int turn,
     required RendererViewModel? renderer,
@@ -20,7 +19,6 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
       nextState: nextState,
       events: events,
       movementExecutions: movementExecutions,
-      inferDirectMoves: inferDirectMoves,
       viewerPlayerId: viewerPlayerId,
       turn: _eventTurnFor(events, fallbackTurn: turn),
     );

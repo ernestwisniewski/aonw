@@ -117,7 +117,7 @@ Future<void> _expectCanonicalMovementRoundTrip(
   final roundTripped = (await store.listEvents(_movementMatchId, 0)).single;
   expect(roundTripped, canonical);
   expect(
-    roundTripped.movementExecutions!.values.map(
+    roundTripped.movementExecutions.values.map(
       (execution) => execution.serverAudiencePlayerIds,
     ),
     const [
@@ -137,8 +137,7 @@ Future<void> _expectOwnerMovementHistory(
     0,
   );
   final movements = history.single.movementExecutions;
-  expect(movements, isNotNull);
-  expect(movements!.values.map(_movementExecutionCoordinates), const [
+  expect(movements.values.map(_movementExecutionCoordinates), const [
     'unit-a:0,0->1,0',
     'unit-a:1,0->2,0',
   ]);
@@ -163,8 +162,7 @@ Future<void> _expectHiddenMovementHistory(
     _movementMatchId,
     0,
   );
-  expect(history.single.movementExecutions, isNotNull);
-  expect(history.single.movementExecutions!.isEmpty, isTrue);
+  expect(history.single.movementExecutions.isEmpty, isTrue);
   expect(
     history.single.toJson(),
     containsPair('movementExecutions', <Object>[]),

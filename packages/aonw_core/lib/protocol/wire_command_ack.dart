@@ -18,7 +18,7 @@ abstract class WireCommandAck with _$WireCommandAck {
     required WireSnapshot snapshot,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
     String? reason,
-    WireMovementExecutionList? movementExecutions,
+    required WireMovementExecutionList movementExecutions,
   }) = _WireCommandAck;
 
   factory WireCommandAck.fromJson(Map<String, dynamic> json) {
@@ -53,10 +53,9 @@ abstract class WireCommandAck with _$WireCommandAck {
           )
           .toList(),
       reason: WireJson.optionalString(json, 'WireCommandAck', 'reason'),
-      movementExecutions: switch (json['movementExecutions']) {
-        null => null,
-        final value => WireMovementExecutionList.fromJson(value),
-      },
+      movementExecutions: WireMovementExecutionList.fromJson(
+        json['movementExecutions'],
+      ),
     );
   }
 
@@ -68,7 +67,6 @@ abstract class WireCommandAck with _$WireCommandAck {
     'snapshot': snapshot.toJson(),
     'events': events.map(Map<String, dynamic>.from).toList(),
     if (reason != null) 'reason': reason,
-    if (movementExecutions != null)
-      'movementExecutions': movementExecutions!.toJson(),
+    'movementExecutions': movementExecutions.toJson(),
   };
 }

@@ -44,8 +44,7 @@ Future<void> _timeoutPersistsAndBroadcastsTurnMovements() async {
       _turnMovementSnapshots(messages[1].event!.movementExecutions),
       _expectedOwnerTurnMovements(),
     );
-    expect(messages[2].event!.movementExecutions, isNotNull);
-    expect(messages[2].event!.movementExecutions!.isEmpty, isTrue);
+    expect(messages[2].event!.movementExecutions.isEmpty, isTrue);
     expect(
       messages
           .map(
@@ -118,8 +117,7 @@ Future<void> _projectsStoredTurnMovementsWithoutReconnectReplay() async {
   expect(_turnMovementSnapshots(unitBHistory.single.movementExecutions), [
     'unit-b:0,1->1,1;enter=1;total=1;audience=public',
   ]);
-  expect(observerHistory.single.movementExecutions, isNotNull);
-  expect(observerHistory.single.movementExecutions!.isEmpty, isTrue);
+  expect(observerHistory.single.movementExecutions.isEmpty, isTrue);
   for (final history in [ownerHistory, unitBHistory, observerHistory]) {
     expect(
       history.single.toJson().toString(),
@@ -213,9 +211,8 @@ Future<void> _failsClosedForStoredMovementWithoutAudience() async {
     afterOffset: 0,
   );
 
-  expect(canonical.movementExecutions!.isEmpty, isFalse);
-  expect(history.single.movementExecutions, isNotNull);
-  expect(history.single.movementExecutions!.isEmpty, isTrue);
+  expect(canonical.movementExecutions.isEmpty, isFalse);
+  expect(history.single.movementExecutions.isEmpty, isTrue);
   expect(history.single.toJson().toString(), isNot(contains('unit-a')));
 }
 

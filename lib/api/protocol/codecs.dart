@@ -54,6 +54,7 @@ class EventCodec {
     int? tick,
     int? turn,
     GameCommand? command,
+    Iterable<WireMovementExecution> movementExecutions = const [],
   }) {
     return WireEvent(
       matchId: matchId,
@@ -64,6 +65,7 @@ class EventCodec {
       turn: turn,
       command: command == null ? null : GameCommandSerializer.toJson(command),
       events: events.map(GameEventSerializer.toJson).toList(),
+      movementExecutions: WireMovementExecutionList(movementExecutions),
     );
   }
 

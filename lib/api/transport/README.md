@@ -8,7 +8,7 @@ Serverpod multiplayer client.
   server and applies the acknowledged snapshot.
 - `NetworkEventLog` reads server-owned command/domain-event history. It does
   not turn exact movement execution plans and costs into renderer replay;
-  legacy movement domain events remain available.
+  coarse movement domain events remain available for activity history.
 - `NetworkSnapshotStore` reads the latest server snapshot for reconnect and
   bootstrap flows.
 - `NetworkGameRepository` maps match list/create/load/delete calls onto

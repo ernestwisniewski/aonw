@@ -237,10 +237,10 @@ void main() {
               matchId: 'match_1',
               snapshot: SaveSnapshot(save: _save(), eventLogOffset: 9),
             ),
+            movementExecutions: WireMovementExecutionList(const []),
           ),
         ),
       );
-
       final ack = await pendingAck;
       expect(ack.accepted, isTrue);
       expect(ack.offset, 9);

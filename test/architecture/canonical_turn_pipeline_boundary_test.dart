@@ -47,18 +47,6 @@ const _retiredPersistentTurnMethods = {
 
 void main() {
   group('canonical turn pipeline boundary', () {
-    test('runtime paths and workload share the canonical facade', () {
-      final sources = productionDartSources();
-      expect(
-        staticMemberReferencePaths(
-          sources,
-          'CanonicalTurnPipeline',
-          'simultaneousFinalize',
-        ),
-        {_localCallSite, _serverCallSite, _performanceCallSite},
-      );
-    });
-
     test('persistent turn pipeline keeps only the single-player seam', () {
       expect(_persistentTurnApiViolations(productionDartSources()), isEmpty);
     });

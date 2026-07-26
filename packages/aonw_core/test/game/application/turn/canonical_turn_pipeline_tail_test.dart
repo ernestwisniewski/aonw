@@ -98,9 +98,8 @@ void _keepsNoOpDelta() {
     ),
   );
 
-  expect(result.movementDelta, isNotNull);
-  expect(result.movementDelta!.beforeUnits, isEmpty);
-  expect(result.movementDelta!.afterUnits, isEmpty);
+  expect(result.movementDelta.beforeUnits, isEmpty);
+  expect(result.movementDelta.afterUnits, isEmpty);
 }
 
 CanonicalGameSnapshot _victoryInput() {

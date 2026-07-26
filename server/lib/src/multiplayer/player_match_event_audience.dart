@@ -47,7 +47,7 @@ abstract final class PlayerMatchEventAudience {
 
   /// Returns a canonical, metadata-free payload for [recipientPlayerId].
   ///
-  /// Legacy rows without server-owned audience metadata are deliberately
+  /// Rows without server-owned audience metadata are deliberately
   /// redacted. Malformed metadata fails projection instead of being treated as
   /// public data.
   static List<Map<String, dynamic>> projectForRecipient(

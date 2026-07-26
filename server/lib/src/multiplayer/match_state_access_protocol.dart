@@ -8,7 +8,8 @@ extension MatchStateAccessProtocol on MatchStateAccess {
   }
 
   bool supportsCurrentMatch(WireMatch match) {
-    return match.v == kProtocolVersion && !_hasLegacyPlayerIds(match);
+    return match.v == kProtocolVersion &&
+        !_hasAccountIdentifierInPlayerId(match);
   }
 
   bool supportsCurrentProtocol(StoredMatchState state) {
@@ -24,7 +25,7 @@ extension MatchStateAccessProtocol on MatchStateAccess {
     );
   }
 
-  bool _hasLegacyPlayerIds(WireMatch match) {
+  bool _hasAccountIdentifierInPlayerId(WireMatch match) {
     return match.players.any(
       (player) =>
           player.userId.isNotEmpty && player.id.endsWith('-${player.userId}'),

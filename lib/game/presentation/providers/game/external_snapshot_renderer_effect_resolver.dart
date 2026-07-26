@@ -11,8 +11,7 @@ abstract final class ExternalSnapshotRendererEffectResolver {
     required GameState previousState,
     required GameState nextState,
     required Iterable<GameEvent> events,
-    required Iterable<MovementCommandExecution>? movementExecutions,
-    bool inferDirectMoves = false,
+    required Iterable<MovementCommandExecution> movementExecutions,
     String? viewerPlayerId,
     int? turn,
     AppLocalizations? l10n,
@@ -23,23 +22,16 @@ abstract final class ExternalSnapshotRendererEffectResolver {
         if (event.outcome.defenderRetreated) event.defenderUnitId,
     };
     final movementEffects =
-        (movementExecutions == null
-                ? QueuedMovementEffectBuilder.fromUnitDelta(
-                    beforeUnits: previousState.units,
-                    afterUnits: nextState.units,
-                    inferDirectMoves: inferDirectMoves,
-                  )
-                : QueuedMovementEffectBuilder.fromExecutions(
-                    movementExecutions,
-                    beforeUnits: previousState.units,
-                    afterUnits: nextState.units,
-                  ))
+        QueuedMovementEffectBuilder.fromExecutions(
+              movementExecutions,
+              beforeUnits: previousState.units,
+              afterUnits: nextState.units,
+            )
             .where((effect) => !combatRetreatUnitIds.contains(effect.unitId))
             .toList(growable: false);
     final skipUnitMoveIds = {
       for (final effect in movementEffects) effect.unitId,
-      if (movementExecutions != null)
-        for (final event in eventList.whereType<UnitMovedEvent>()) event.unitId,
+      for (final event in eventList.whereType<UnitMovedEvent>()) event.unitId,
     };
     final effects = [
       ...movementEffects,

@@ -29,6 +29,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/network_command_transport_movement_fixtures.dart';
 
+part 'support/network_command_transport_test_helpers.dart';
+
 void main() {
   test('Serverpod dispatcher stays lazy and closes idempotently', () {
     var clientFactoryCalls = 0;
@@ -138,7 +140,7 @@ void main() {
     );
 
     test(
-      'uses local reducer movement effects for accepted server moves',
+      'uses authoritative movement effects for accepted server moves',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final server = _FakeCommandServer(
@@ -154,6 +156,7 @@ void main() {
               ),
             ),
           ),
+          nextMovementExecutions: _twoStepMovementExecutions(commander.id),
         );
         final transport = _transport(server);
 
@@ -368,6 +371,7 @@ void main() {
               snapshot: authoritativeSnapshot,
             ),
             reason: 'unit_unavailable',
+            movementExecutions: WireMovementExecutionList(const []),
           );
         });
         final transport = NetworkCommandTransport(
@@ -476,6 +480,7 @@ void main() {
           accepted: true,
           offset: 8,
           snapshot: snapshotCodec.toWire(matchId: 'save_1', snapshot: snapshot),
+          movementExecutions: WireMovementExecutionList(const []),
         );
       });
       final transport = NetworkCommandTransport(
@@ -533,6 +538,7 @@ void main() {
               snapshot: authoritativeSnapshot,
             ),
             reason: 'stale_turn',
+            movementExecutions: WireMovementExecutionList(const []),
           );
         });
         final transport = NetworkCommandTransport(
@@ -1010,6 +1016,7 @@ void main() {
             ),
             eventLogOffset: 1,
           ),
+          nextMovementExecutions: _twoStepMovementExecutions(queued.id),
         );
         final transport = _transport(server);
 
@@ -1019,7 +1026,7 @@ void main() {
           command: const SubmitTurnCommand('player_1'),
         );
 
-        expect(server.lastAck!.toJson(), isNot(contains('movementExecutions')));
+        expect(server.lastAck!.toJson()['movementExecutions'], hasLength(1));
         final move = result.uiEffects.whereType<AnimateUnitMoveEffect>().single;
         expect(move.unitId, 'commander_player_1');
         expect((move.fromCol, move.fromRow), (0, 0));
@@ -1035,22 +1042,6 @@ void main() {
       },
     );
   });
-}
-
-NetworkCommandTransport _transport(
-  _FakeCommandServer server, {
-  int startTickAt = 1,
-  CommandAuthTokenReader? tokenReader,
-}) {
-  return NetworkCommandTransport(
-    commandDispatcher: server,
-    token: AuthToken('jwt-token'),
-    tokenReader: tokenReader,
-    actorPlayerId: 'player_1',
-    tickGenerator: ClientTickGenerator(startAt: startTickAt),
-    localReducer: server.reducer,
-    gameRepository: _SnapshotRepository(server.snapshot),
-  );
 }
 
 class _SentCommand {
@@ -1112,13 +1103,6 @@ class _ScriptedCommandDispatcher implements WireCommandDispatcher {
   }
 }
 
-NetworkCommandConflictException _commandConflict(
-  String errorCode, {
-  int? nextTick,
-}) {
-  return NetworkCommandConflictException(code: errorCode, nextTick: nextTick);
-}
-
 class _FakeCommandServer implements WireCommandDispatcher {
   final GameStateReducer reducer = GameStateReducer(mapData: _map());
   final CommandCodec commandCodec = const CommandCodec();
@@ -1128,6 +1112,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
   GameSave save;
   GameState state;
   SaveSnapshot? nextAcceptedSnapshot;
+  WireMovementExecutionList nextMovementExecutions;
   WireCommandAck? lastAck;
   Object? nextError;
   int offset = 0;
@@ -1136,8 +1121,10 @@ class _FakeCommandServer implements WireCommandDispatcher {
     required this.save,
     required this.state,
     this.nextAcceptedSnapshot,
+    WireMovementExecutionList? nextMovementExecutions,
     this.nextError,
-  });
+  }) : nextMovementExecutions =
+           nextMovementExecutions ?? WireMovementExecutionList(const []);
 
   @override
   Future<WireCommandAck> send({
@@ -1169,6 +1156,8 @@ class _FakeCommandServer implements WireCommandDispatcher {
       command,
       context: commandCodec.contextFromWire(wire),
     );
+    final movementExecutions = nextMovementExecutions;
+    nextMovementExecutions = WireMovementExecutionList(const []);
     state = transition.state;
     final snapshot =
         nextAcceptedSnapshot ??
@@ -1191,6 +1180,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
       offset: offset,
       snapshot: snapshotCodec.toWire(matchId: wire.matchId, snapshot: snapshot),
       events: eventCodec.eventsToJsonList(transition.events),
+      movementExecutions: movementExecutions,
     );
   }
 

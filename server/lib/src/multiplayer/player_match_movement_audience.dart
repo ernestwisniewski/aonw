@@ -6,15 +6,14 @@ import 'package:aonw_core/protocol.dart';
 /// Annotation and projection both preserve the canonical execution order.
 /// Invalid evidence is removed per unit rather than clipped to a partial path.
 abstract final class PlayerMatchMovementAudience {
-  static WireMovementExecutionList? annotateForStorage({
-    required Iterable<MovementCommandExecution>? executions,
+  static WireMovementExecutionList annotateForStorage({
+    required Iterable<MovementCommandExecution> executions,
     required Iterable<String> participantPlayerIds,
     required Iterable<GameUnit> previousUnits,
     required Iterable<GameUnit> nextUnits,
     required FogOfWarState previousFog,
     required FogOfWarState nextFog,
   }) {
-    if (executions == null) return null;
     final ordered = List<MovementCommandExecution>.unmodifiable(executions);
     final chains = _domainChains(ordered);
     final audiences = _audiencesByUnit(
@@ -28,11 +27,10 @@ abstract final class PlayerMatchMovementAudience {
     return WireMovementExecutionList(_annotatedExecutions(ordered, audiences));
   }
 
-  static WireMovementExecutionList? projectForRecipient(
-    WireMovementExecutionList? canonical, {
+  static WireMovementExecutionList projectForRecipient(
+    WireMovementExecutionList canonical, {
     required String recipientPlayerId,
   }) {
-    if (canonical == null) return null;
     final audits = _wireChainAudits(canonical.values);
     return WireMovementExecutionList(
       _projectedExecutions(

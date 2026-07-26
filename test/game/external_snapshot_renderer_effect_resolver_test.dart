@@ -32,7 +32,6 @@ void main() {
           ),
         ],
         movementExecutions: _exactExecutions(),
-        inferDirectMoves: true,
       );
 
       expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
@@ -43,7 +42,7 @@ void main() {
       expect(effects.clear, throwsUnsupportedError);
     });
 
-    test('explicit empty suppresses delta and UnitMovedEvent fallback', () {
+    test('empty evidence does not repeat UnitMovedEvent animation', () {
       final effects = ExternalSnapshotRendererEffectResolver.resolve(
         previousState: _state(aCol: 0),
         nextState: _state(aCol: 2),
@@ -57,23 +56,20 @@ void main() {
           ),
         ],
         movementExecutions: const [],
-        inferDirectMoves: true,
       );
 
       expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
     });
 
-    test('missing evidence keeps the legacy one-step fallback', () {
+    test('empty evidence never infers movement from the state delta', () {
       final effects = ExternalSnapshotRendererEffectResolver.resolve(
         previousState: _state(aCol: 0),
         nextState: _state(aCol: 2),
         events: const [],
-        movementExecutions: null,
-        inferDirectMoves: true,
+        movementExecutions: const [],
       );
 
-      final movement = effects.whereType<AnimateUnitMoveEffect>().single;
-      expect(_snapshot(movement), const ('unit_a', 0, 0, 2, 0, 0, 0));
+      expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
     });
 
     for (final invalid in [
@@ -101,7 +97,6 @@ void main() {
             ),
           ],
           movementExecutions: invalid,
-          inferDirectMoves: true,
         );
 
         expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);

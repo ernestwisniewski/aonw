@@ -597,6 +597,7 @@ void main() {
       events: const [
         {'type': 'resolution', 'secret': 'canonical-event-secret'},
       ],
+      movementExecutions: WireMovementExecutionList(const []),
     );
     await fixture.store.appendEvent(
       latest.copyWith(snapshot: latest.snapshot.copyWith(offset: 1)),
@@ -652,6 +653,7 @@ void main() {
             tick: offset,
             command: {'type': 'paged-command-$offset'},
             events: const [],
+            movementExecutions: WireMovementExecutionList(const []),
           ),
           actorPlayerId: owner.id,
           clientMessageId: 'paged-command-$offset',
@@ -886,14 +888,14 @@ void main() {
     },
   );
 
-  test('retires pre-projection matches and legacy player ids', () async {
+  test('retires incompatible matches and noncanonical player ids', () async {
     final hub = RealtimeMatchHub();
     final store = _MemoryMatchStore();
-    final legacy = await hub.createMatch(
+    final noncanonical = await hub.createMatch(
       store: store,
-      userIdentifier: 'legacy-owner',
+      userIdentifier: 'embedded-account-owner',
       request: CreateMatchRequest(
-        name: 'Legacy identifiers',
+        name: 'Noncanonical identifiers',
         mapName: 'verdantia',
         maxPlayers: 2,
         minPlayers: 2,
@@ -911,14 +913,14 @@ void main() {
         private: false,
       ),
     );
-    final legacyState = (await store.findState(legacy.id))!;
+    final noncanonicalState = (await store.findState(noncanonical.id))!;
     await store.saveState(
-      legacyState.copyWith(
-        match: legacyState.match.copyWith(
+      noncanonicalState.copyWith(
+        match: noncanonicalState.match.copyWith(
           quickplay: true,
           players: [
-            legacyState.match.players.single.copyWith(
-              id: 'player-1-legacy-owner',
+            noncanonicalState.match.players.single.copyWith(
+              id: 'player-1-embedded-account-owner',
             ),
           ],
         ),
@@ -933,11 +935,14 @@ void main() {
     );
 
     expect(
-      await hub.listMatches(store: store, userIdentifier: 'legacy-owner'),
+      await hub.listMatches(
+        store: store,
+        userIdentifier: 'embedded-account-owner',
+      ),
       isEmpty,
     );
     for (final entry in [
-      (matchId: legacy.id, userId: 'legacy-owner'),
+      (matchId: noncanonical.id, userId: 'embedded-account-owner'),
       (matchId: stale.id, userId: 'stale-owner'),
     ]) {
       await expectLater(
@@ -961,8 +966,8 @@ void main() {
         private: false,
       ),
     );
-    expect(replacement.id, isNot(legacy.id));
-    final retired = (await store.findState(legacy.id))!;
+    expect(replacement.id, isNot(noncanonical.id));
+    final retired = (await store.findState(noncanonical.id))!;
     expect(retired.match.state, 'abandoned');
     expect(retired.snapshot.state['reason'], 'protocol_upgrade');
   });
@@ -2170,6 +2175,7 @@ void main() {
 
     expect(ack.accepted, isFalse);
     expect(ack.events, isEmpty);
+    expect(ack.movementExecutions.isEmpty, isTrue);
     expect(PersistentGameState.fromJson(ack.snapshot.state).playerGold, {
       owner.id: 111,
     });
@@ -2278,6 +2284,13 @@ void main() {
     expect(ackMessage.ack!.events.map(GameEventSerializer.fromJson).toList(), [
       isA<UnitMovedEvent>(),
     ]);
+    final movement = ackMessage.ack!.movementExecutions.values.single;
+    expect(
+      (movement.unitId, movement.fromCol, movement.fromRow),
+      (ownerUnit.id, ownerUnit.col, ownerUnit.row),
+    );
+    expect(movement.steps.last.col, target.col);
+    expect(movement.steps.last.row, target.row);
 
     await ownerInput.close();
   });
@@ -2919,6 +2932,7 @@ void main() {
     expect(ackMessages.map((message) => message.ack?.accepted), [true, false]);
     expect(ackMessages.map((message) => message.ack?.offset), [1, 1]);
     expect(ackMessages.last.ack?.reason, 'client_message_id_conflict');
+    expect(ackMessages.last.ack?.movementExecutions.isEmpty, isTrue);
     expect(await fixture.store.listEvents(fixture.match.id, 0), hasLength(1));
     expect((await fixture.store.findState(fixture.match.id))!.offset, 1);
 
@@ -3597,20 +3611,5 @@ class _FakeMapCatalog implements MultiplayerMapCatalog {
   Future<MapData> loadAssetMap(String mapName) async => mapData;
 }
 
-MapData _testMap() {
-  return MapData(
-    cols: 6,
-    rows: 6,
-    tiles: [
-      for (var col = 0; col < 6; col++)
-        for (var row = 0; row < 6; row++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 1,
-          ),
-    ],
-  );
-}
+/// Returns the shared map fixture used by the hub scenarios.
+MapData _testMap() => _realtimeMatchHubFixtureMap();

@@ -60,12 +60,12 @@ final class CanonicalTurnPipelineResult {
   CanonicalTurnPipelineResult({
     required this.snapshot,
     Iterable<GameEvent> events = const [],
-    this.movementDelta,
+    required this.movementDelta,
   }) : events = List.unmodifiable(events);
 
   final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
-  final TurnMovementDelta? movementDelta;
+  final TurnMovementDelta movementDelta;
 }
 
 /// Canonical application facade for simultaneous turn finalization.

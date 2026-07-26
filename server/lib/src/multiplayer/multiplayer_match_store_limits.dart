@@ -13,6 +13,6 @@ const multiplayerVisiblePublicLobbyLimit = 128;
 /// Maximum number of open quickplay rows inspected by one store query.
 const multiplayerQuickplayCandidateScanLimit = 16;
 
-/// Maximum number of stale or legacy quickplay candidates retired by a single
-/// matchmaking request before a fresh lobby is created.
+/// Maximum number of stale or incompatible quickplay candidates retired by a
+/// single matchmaking request before a fresh lobby is created.
 const multiplayerQuickplayCandidateRetirementLimit = 8;

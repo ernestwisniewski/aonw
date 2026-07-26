@@ -27,6 +27,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
             offset: state.offset,
             snapshot: state.snapshot,
             reason: 'Command actor does not match the authenticated player.',
+            movementExecutions: WireMovementExecutionList(const []),
           ),
         ),
       );
@@ -54,6 +55,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
               offset: state.offset,
               snapshot: state.snapshot,
               reason: 'client_message_id_conflict',
+              movementExecutions: WireMovementExecutionList(const []),
             ),
           ),
         );
@@ -100,6 +102,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
             offset: state.offset,
             snapshot: reduction.snapshot,
             reason: reduction.reason ?? 'Command rejected.',
+            movementExecutions: WireMovementExecutionList(const []),
           ),
         ),
       );
@@ -154,11 +157,16 @@ extension MatchCommandServiceHandling on MatchCommandService {
       ),
       recipient: caller,
     );
-    return MatchMutationOutcome<void>(
-      null,
-      notifications: broadcast.followedBy(ack),
-    );
+    return _commandOutcome(broadcast, ack);
   }
+
+  MatchMutationOutcome<void> _commandOutcome(
+    MatchNotificationPlan broadcast,
+    MatchNotificationPlan ack,
+  ) => MatchMutationOutcome<void>(
+    null,
+    notifications: broadcast.followedBy(ack),
+  );
 
   bool _isSameCommandDelivery(WireEvent event, WireCommand command) {
     final actorPlayerId = event.actorPlayerId;

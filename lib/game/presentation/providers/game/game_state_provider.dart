@@ -438,7 +438,6 @@ class GameStateNotifier extends _$GameStateNotifier {
       nextState: nextState,
       events: liveEvents,
       movementExecutions: presentation.movementExecutions,
-      inferDirectMoves: presentation.inferDirectMoves,
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: ref.read(activeRendererViewModelProvider),

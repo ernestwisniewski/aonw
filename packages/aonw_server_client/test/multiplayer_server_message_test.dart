@@ -17,7 +17,7 @@ void main() {
     );
 
     final restored = MultiplayerServerMessage.fromJson(message.toJson());
-    final movement = restored.event!.movementExecutions!.values.single;
+    final movement = restored.event!.movementExecutions.values.single;
 
     expect(restored.serverMessageId, 'message_1');
     expect(movement.unitId, 'unit_1');
@@ -55,7 +55,7 @@ void main() {
     );
 
     final restored = MultiplayerServerMessage.fromJson(message.toJson());
-    final movements = restored.ack!.movementExecutions!;
+    final movements = restored.ack!.movementExecutions;
 
     expect(restored.serverMessageId, 'message_2');
     expect(movements.values.single.steps.last.cumulativeCost, 2);

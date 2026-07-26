@@ -12,7 +12,7 @@ import 'package:aonw_core/protocol.dart';
 /// Reads command, domain-event and activity history from authoritative events.
 ///
 /// Exact movement execution plans and costs are deliberately not converted
-/// into [LoggedCommand]. Legacy movement domain events remain in its history.
+/// into [LoggedCommand]. Coarse movement domain events remain in its history.
 class NetworkEventLog implements EventLog {
   final String serverpodHost;
   final AuthToken token;

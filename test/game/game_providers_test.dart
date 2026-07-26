@@ -44,6 +44,8 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'support/game_provider_movement_fixtures.dart';
+
 class _FakeGameRepository implements GameRepository {
   final Map<String, SaveSnapshot> snapshots;
   final Map<String, GameSave>? saves;
@@ -841,7 +843,7 @@ void main() {
     );
 
     test(
-      'collapses projected opponent movement to one inferred destination step',
+      'does not infer opponent movement when the authoritative plan is empty',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
         final moved = commander.copyWith(col: 2, row: 0);
@@ -901,17 +903,10 @@ void main() {
         });
 
         final state = container.read(gameStateProvider(save.id)).value!;
-        final effect = renderer.handledEffects
-            .whereType<AnimateUnitMoveEffect>()
-            .single;
-        expect(effect.unitId, 'commander_player_2');
-        expect(effect.fromCol, 0);
-        expect(effect.fromRow, 0);
-        expect(commander.queuedPath, isNull);
-        expect(effect.steps.single.col, 2);
-        expect(effect.steps.single.row, 0);
-        expect(effect.steps.single.enterCost, 0);
-        expect(effect.steps.single.cumulativeCost, 0);
+        expect(
+          renderer.handledEffects.whereType<AnimateUnitMoveEffect>(),
+          isEmpty,
+        );
         expect(state.activePlayerId, 'player_1');
         expect(state.activePlayerCanAct, isTrue);
         expect(state.canControlUnit(state.units.single), isFalse);
@@ -1460,10 +1455,10 @@ void main() {
                   toRow: 0,
                 ),
               ]),
+              movementExecutions: WireMovementExecutionList(const []),
             ),
           ),
         );
-
         final result = await pendingResult;
 
         expect(result.state.units.single.col, 1);
@@ -1615,10 +1610,10 @@ void main() {
                   toRow: 0,
                 ),
               ]),
+              movementExecutions: _singleStepMove('commander_player_1'),
             ),
           ),
         );
-
         final result = await pendingResult;
 
         expect(result.state.units.single.col, 1);
@@ -2440,6 +2435,7 @@ void main() {
                 matchId: save.id,
                 snapshot: submittedSnapshot,
               ),
+              movementExecutions: WireMovementExecutionList(const []),
             ),
           ),
         );

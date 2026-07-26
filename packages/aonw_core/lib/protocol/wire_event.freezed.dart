@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WireEvent {
 
- int get v; String get matchId; int get offset; DateTime get timestamp; String? get actorPlayerId; int? get tick; int? get turn; Map<String, dynamic>? get command; List<Map<String, dynamic>> get events; WireMovementExecutionList? get movementExecutions;
+ int get v; String get matchId; int get offset; DateTime get timestamp; String? get actorPlayerId; int? get tick; int? get turn; Map<String, dynamic>? get command; List<Map<String, dynamic>> get events; WireMovementExecutionList get movementExecutions;
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $WireEventCopyWith<$Res>  {
   factory $WireEventCopyWith(WireEvent value, $Res Function(WireEvent) _then) = _$WireEventCopyWithImpl;
 @useResult
 $Res call({
- int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events, WireMovementExecutionList? movementExecutions
+ int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events, WireMovementExecutionList movementExecutions
 });
 
 
@@ -62,7 +62,7 @@ class _$WireEventCopyWithImpl<$Res>
 
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,Object? movementExecutions = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,Object? movementExecutions = null,}) {
   return _then(_self.copyWith(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
@@ -73,8 +73,8 @@ as String?,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to
 as int?,turn: freezed == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int?,command: freezed == command ? _self.command : command // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,events: null == events ? _self.events : events // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,movementExecutions: freezed == movementExecutions ? _self.movementExecutions : movementExecutions // ignore: cast_nullable_to_non_nullable
-as WireMovementExecutionList?,
+as List<Map<String, dynamic>>,movementExecutions: null == movementExecutions ? _self.movementExecutions : movementExecutions // ignore: cast_nullable_to_non_nullable
+as WireMovementExecutionList,
   ));
 }
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList? movementExecutions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList movementExecutions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WireEvent() when $default != null:
 return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events,_that.movementExecutions);case _:
@@ -180,7 +180,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList? movementExecutions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList movementExecutions)  $default,) {final _that = this;
 switch (_that) {
 case _WireEvent():
 return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events,_that.movementExecutions);case _:
@@ -200,7 +200,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList? movementExecutions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  int offset,  DateTime timestamp,  String? actorPlayerId,  int? tick,  int? turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events,  WireMovementExecutionList movementExecutions)?  $default,) {final _that = this;
 switch (_that) {
 case _WireEvent() when $default != null:
 return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPlayerId,_that.tick,_that.turn,_that.command,_that.events,_that.movementExecutions);case _:
@@ -215,7 +215,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 
 
 class _WireEvent extends WireEvent {
-  const _WireEvent({this.v = kProtocolVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], this.movementExecutions}): _command = command,_events = events,super._();
+  const _WireEvent({this.v = kProtocolVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], required this.movementExecutions}): _command = command,_events = events,super._();
   
 
 @override@JsonKey() final  int v;
@@ -241,7 +241,7 @@ class _WireEvent extends WireEvent {
   return EqualUnmodifiableListView(_events);
 }
 
-@override final  WireMovementExecutionList? movementExecutions;
+@override final  WireMovementExecutionList movementExecutions;
 
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -273,7 +273,7 @@ abstract mixin class _$WireEventCopyWith<$Res> implements $WireEventCopyWith<$Re
   factory _$WireEventCopyWith(_WireEvent value, $Res Function(_WireEvent) _then) = __$WireEventCopyWithImpl;
 @override @useResult
 $Res call({
- int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events, WireMovementExecutionList? movementExecutions
+ int v, String matchId, int offset, DateTime timestamp, String? actorPlayerId, int? tick, int? turn, Map<String, dynamic>? command, List<Map<String, dynamic>> events, WireMovementExecutionList movementExecutions
 });
 
 
@@ -290,7 +290,7 @@ class __$WireEventCopyWithImpl<$Res>
 
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,Object? movementExecutions = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,Object? movementExecutions = null,}) {
   return _then(_WireEvent(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
@@ -301,8 +301,8 @@ as String?,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to
 as int?,turn: freezed == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int?,command: freezed == command ? _self._command : command // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,events: null == events ? _self._events : events // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,movementExecutions: freezed == movementExecutions ? _self.movementExecutions : movementExecutions // ignore: cast_nullable_to_non_nullable
-as WireMovementExecutionList?,
+as List<Map<String, dynamic>>,movementExecutions: null == movementExecutions ? _self.movementExecutions : movementExecutions // ignore: cast_nullable_to_non_nullable
+as WireMovementExecutionList,
   ));
 }
 

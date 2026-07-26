@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';

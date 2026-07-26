@@ -16,20 +16,9 @@ typedef _Point = ({int col, int row});
 
 void main() {
   group('PlayerMatchMovementAudience annotation', () {
-    test('preserves legacy null versus authoritative empty input', () {
+    test('preserves authoritative empty input', () {
       final state = _state(a: (col: 0, row: 0), b: (col: 0, row: 1));
 
-      expect(
-        PlayerMatchMovementAudience.annotateForStorage(
-          executions: null,
-          participantPlayerIds: const [_playerA, _playerB],
-          previousUnits: state.units,
-          nextUnits: state.units,
-          previousFog: state.fogOfWar,
-          nextFog: state.fogOfWar,
-        ),
-        isNull,
-      );
       expect(
         PlayerMatchMovementAudience.annotateForStorage(
           executions: const [],
@@ -38,7 +27,7 @@ void main() {
           nextUnits: state.units,
           previousFog: state.fogOfWar,
           nextFog: state.fogOfWar,
-        )!.isEmpty,
+        ).isEmpty,
         isTrue,
       );
     });
@@ -230,7 +219,7 @@ void main() {
       final projected = PlayerMatchMovementAudience.projectForRecipient(
         canonical,
         recipientPlayerId: _observer,
-      )!;
+      );
 
       expect(projected.values.map(_wireExecutionSnapshot), [
         'unit-a:0,0->1,0;audience=public',
@@ -282,26 +271,22 @@ void main() {
       }
     });
 
-    test('event and ack projection preserve null versus explicit empty', () {
+    test('event and ack projection preserve empty and visible movement', () {
       const projector = PlayerMatchViewProjector();
-      final nullEvent = _event();
-      final emptyEvent = _event(
-        movementExecutions: WireMovementExecutionList(const []),
-      );
+      final emptyMovements = WireMovementExecutionList(const []);
+      final emptyEvent = _event(movementExecutions: emptyMovements);
       const snapshot = WireSnapshot(
         matchId: 'match-1',
         offset: 1,
         save: {},
         state: {},
       );
-      const nullAck = WireCommandAck(
+      final emptyAck = WireCommandAck(
         matchId: 'match-1',
         accepted: true,
         offset: 1,
         snapshot: snapshot,
-      );
-      final emptyAck = nullAck.copyWith(
-        movementExecutions: WireMovementExecutionList(const []),
+        movementExecutions: emptyMovements,
       );
       final visibleCanonical = WireMovementExecutionList([
         _wire(
@@ -314,26 +299,21 @@ void main() {
         _recipient,
       );
       final visibleAck = projector.ackFor(
-        nullAck.copyWith(movementExecutions: visibleCanonical),
+        emptyAck.copyWith(movementExecutions: visibleCanonical),
         _recipient,
       );
 
       expect(
-        projector.eventFor(nullEvent, _recipient).movementExecutions,
-        isNull,
-      );
-      expect(
-        projector.eventFor(emptyEvent, _recipient).movementExecutions!.isEmpty,
+        projector.eventFor(emptyEvent, _recipient).movementExecutions.isEmpty,
         isTrue,
       );
-      expect(projector.ackFor(nullAck, _recipient).movementExecutions, isNull);
       expect(
-        projector.ackFor(emptyAck, _recipient).movementExecutions!.isEmpty,
+        projector.ackFor(emptyAck, _recipient).movementExecutions.isEmpty,
         isTrue,
       );
       for (final movements in [
-        visibleEvent.movementExecutions!,
-        visibleAck.movementExecutions!,
+        visibleEvent.movementExecutions,
+        visibleAck.movementExecutions,
       ]) {
         expect(movements.values.map(_wireExecutionSnapshot), [
           'unit-a:0,0->1,0;audience=public',
@@ -359,7 +339,7 @@ WireMovementExecutionList _annotate({
     nextUnits: next.units,
     previousFog: previous.fogOfWar,
     nextFog: next.fogOfWar,
-  )!;
+  );
 }
 
 List<MovementCommandExecution> _orderedExecutions() => [
@@ -462,7 +442,7 @@ List<String> _projectSnapshots(
   return PlayerMatchMovementAudience.projectForRecipient(
     canonical,
     recipientPlayerId: playerId,
-  )!.values.map(_wireExecutionSnapshot).toList();
+  ).values.map(_wireExecutionSnapshot).toList();
 }
 
 String _wireExecutionSnapshot(WireMovementExecution execution) {
@@ -474,7 +454,7 @@ String _wireExecutionSnapshot(WireMovementExecution execution) {
       '->$path;audience=$audience';
 }
 
-WireEvent _event({WireMovementExecutionList? movementExecutions}) {
+WireEvent _event({required WireMovementExecutionList movementExecutions}) {
   return WireEvent(
     matchId: 'match-1',
     offset: 1,
