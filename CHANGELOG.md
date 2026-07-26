@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## 1.1.6 - 2026-07-26
+
+- Improved multiplayer movement playback so acting players, opponents, and
+  reconnecting observers preserve the exact server-approved path without
+  duplicate, inferred, or out-of-order movement effects.
+- Improved chained movement and auto-explore animations so intermediate steps
+  remain visible and renderer cancellation, disposal, and late callbacks no
+  longer leave ghost movement or visual jumps behind.
+- Unified local and server command rules across movement, city actions,
+  diplomacy, research, workers, units, artifacts, and resource trades so the
+  same command produces the same authoritative result in every game mode.
+- Made turn economy, combat, automatic movement, timeout handling,
+  resignations, and match outcomes use the same canonical state transitions.
+- Improved save, replay, and running-match snapshot consistency with lossless
+  state boundaries and stricter validation of authoritative multiplayer data.
+- Improved large-map and AI performance with indexed map views, bounded
+  traversal, and fewer full-map projections during movement, fog, production,
+  city management, and turn resolution.
+- Strengthened fog-of-war handling so multiplayer movement and event details
+  are projected separately for each recipient and fail closed when visibility
+  evidence is incomplete.
+- Hardened development and release checks with pinned toolchains,
+  local/server parity fixtures, deterministic performance budgets, mutation
+  tests, generated-code validation, and critical end-to-end multiplayer
+  journeys.
+- Removed the obsolete Game Jolt release integration from code and
+  documentation.
+
 ## 1.1.5 - 2026-07-12
 
 - Added a public multiplayer statistics page with aggregate match activity,
