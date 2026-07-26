@@ -310,8 +310,7 @@ Future<void> _pumpHud(
   final mapData = _makeMap();
   final activeSession = session ?? _makeSession(mapData);
   final activeRenderer =
-      renderer ??
-      GameRenderer(mapData: activeSession.mapData, onCommand: (_) async {});
+      renderer ?? _SpyGameRenderer(mapData: activeSession.mapData);
   final save = gameSave ?? _save;
   final activeEventLog = eventLog ?? _FakeEventLog();
   await tester.pumpWidget(

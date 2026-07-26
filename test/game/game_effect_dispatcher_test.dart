@@ -16,7 +16,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'game_effect_dispatcher_combat_camera_test.dart';
+part 'game_effect_dispatcher_combat_camera_tests.dart';
 
 MapData _map() => MapData(
   cols: 2,

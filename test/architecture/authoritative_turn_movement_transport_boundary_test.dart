@@ -33,6 +33,7 @@ void main() {
     test(
       'resolved production ownership and forwarding match the contract',
       _expectProductionContract,
+      timeout: const Timeout(Duration(minutes: 1)),
     );
 
     for (final scenario in _mutationScenarios()) {

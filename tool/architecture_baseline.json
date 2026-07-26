@@ -1216,7 +1216,7 @@
         "test/game/domain/reducer/selection_reducer_test.dart": 803,
         "test/game/domain/reducer/turn_reducer_test.dart": 934,
         "test/game/game_effect_dispatcher_test.dart": 722,
-        "test/game/game_hud_test.dart": 7281,
+        "test/game/game_hud_test.dart": 7280,
         "test/game/game_providers_test.dart": 2630,
         "test/game/game_renderer_keyboard_test.dart": 3620,
         "test/game/game_rendering_coordinator_test.dart": 1579,

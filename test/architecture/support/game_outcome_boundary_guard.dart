@@ -197,6 +197,14 @@ bool _isAcceptFactoryCanonicalSnapshotForwarding(NamedExpression argument) {
   final creation = argument.parent?.parent;
   final constructor = argument.thisOrAncestorOfType<ConstructorDeclaration>();
   final owner = constructor?.parent?.parent;
+  final canonicalSnapshotParameters =
+      constructor?.parameters.parameters.where((parameter) {
+        final normalized = parameter is DefaultFormalParameter
+            ? parameter.parameter
+            : parameter;
+        return normalized.name?.lexeme == 'canonicalSnapshot';
+      }).toList() ??
+      const <FormalParameter>[];
   if (value is! SimpleIdentifier ||
       value.name != 'canonicalSnapshot' ||
       creation is! MethodInvocation ||
@@ -205,20 +213,28 @@ bool _isAcceptFactoryCanonicalSnapshotForwarding(NamedExpression argument) {
       constructor?.factoryKeyword == null ||
       constructor?.name?.lexeme != 'accept' ||
       owner is! ClassDeclaration ||
-      owner.namePart.typeName.lexeme != '_CommandApplication') {
+      owner.namePart.typeName.lexeme != '_CommandApplication' ||
+      canonicalSnapshotParameters.length != 1) {
     return false;
   }
   final body = constructor!.body;
+  final creations = _MethodInvocationCollector('_CommandApplication')
+    ..collect(body);
+  return _factoryBodyReturnsOnly(body, creation) &&
+      creations.invocations.length == 1 &&
+      identical(creations.invocations.single, creation);
+}
+
+bool _factoryBodyReturnsOnly(FunctionBody body, Expression expression) {
+  if (body is ExpressionFunctionBody) {
+    return identical(body.expression, expression);
+  }
   if (body is! BlockFunctionBody || body.block.statements.length != 1) {
     return false;
   }
-  final returned = body.block.statements.single;
-  final creations = _MethodInvocationCollector('_CommandApplication')
-    ..collect(body);
-  return returned is ReturnStatement &&
-      identical(returned.expression, creation) &&
-      creations.invocations.length == 1 &&
-      identical(creations.invocations.single, creation);
+  final statement = body.block.statements.single;
+  return statement is ReturnStatement &&
+      identical(statement.expression, expression);
 }
 
 List<String> _acceptedReductionCanonicalFlowViolations(CompilationUnit unit) {
