@@ -101,6 +101,7 @@ void main() {
       const _MakeTarget(
         prerequisites: ['server-dependencies', 'coverage-directory'],
         recipes: [
+          '@rm -rf "\$(CURDIR)/server/.dart_tool/test"',
           "@cd server && dart test --concurrency=1 --coverage-package='^aonw_server\$\$' --coverage-path=\"\$(CURDIR)/coverage/server.lcov.info\" --reporter=failures-only",
         ],
       ),
