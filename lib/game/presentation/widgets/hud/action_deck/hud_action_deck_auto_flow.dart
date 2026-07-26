@@ -5,6 +5,36 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
     _queueAutoTurnFlow();
   }
 
+  void _setAutoTurnFlowEnabled(bool enabled) {
+    if (_autoTurnFlowEnabled == enabled) return;
+    _setAutoFlowState(() {
+      _autoTurnFlowEnabled = enabled;
+      if (enabled) {
+        _pausedManualAutoTargetKey = null;
+      }
+      _lastAutoTurnFlowSignature = null;
+    });
+    _queueAutoTurnFlow(force: enabled);
+  }
+
+  void _setAutoActionFlowEnabled(bool enabled) {
+    if (_autoActionFlowEnabled == enabled) return;
+    _setAutoFlowState(() {
+      _autoActionFlowEnabled = enabled;
+      if (enabled) {
+        _autoTurnFlowPrimed = true;
+        _pausedManualAutoTargetKey = null;
+      } else {
+        _autoTurnFlowPrimed = false;
+        _autoTurnFlowAdvancedThisTurn = false;
+        _completedManualCityTargetKey = null;
+      }
+      if (enabled) _clearDismissedResearchAction(_researchActionKey());
+      _lastAutoTurnFlowSignature = null;
+    });
+    _queueAutoTurnFlow(force: enabled);
+  }
+
   void _rememberCurrentAutoTurnFlowSignature() {
     final state = widget.gameState;
     _lastAutoTurnFlowSignature = state == null
@@ -44,6 +74,7 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
     if (!force && currentSignature == _lastAutoTurnFlowSignature) return;
 
     _lastAutoTurnFlowSignature = currentSignature;
+    _completedManualCityTargetKey = null;
     _autoTurnFlowInFlight = true;
     if (!isEndingTurn) {
       _autoTurnFlowAdvancedThisTurn = true;
@@ -65,7 +96,8 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
   }
 
   void _syncAutoTurnFlowAfterUpdate() {
-    final contextKey = '${widget.activePlayerId}:${widget.gameSave.turn}';
+    final contextKey =
+        '${widget.gameSave.id}:${widget.activePlayerId}:${widget.gameSave.turn}';
     if (_autoTurnFlowContextKey != contextKey) {
       _autoTurnFlowContextKey = contextKey;
       _autoTurnFlowPrimed = false;
@@ -73,35 +105,56 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
       _lastAutoTurnFlowSignature = null;
       _lastManualAutoTargetKey = null;
       _pausedManualAutoTargetKey = null;
+      _completedManualCityTargetKey = null;
     }
 
     final state = widget.gameState;
-    final manualTargetKey = state == null ? null : _manualAutoTargetKey(state);
+    if (state == null) {
+      _completedManualCityTargetKey = null;
+      return;
+    }
+    _invalidateCompletedManualCityKey(state);
+    final manualTargetKey = _manualAutoTargetKey(state);
     if (_lastManualAutoTargetKey != null && manualTargetKey == null) {
       final lastTargetKey = _lastManualAutoTargetKey!;
-      if (state != null &&
-          _manualAutoTargetStillNeedsOrder(state, lastTargetKey)) {
+      if (_manualAutoTargetStillNeedsOrder(state, lastTargetKey)) {
         _pausedManualAutoTargetKey = lastTargetKey;
+        _completedManualCityTargetKey = null;
       } else {
         _pausedManualAutoTargetKey = null;
+        _completedManualCityTargetKey = _completedManualCityKey(lastTargetKey);
         _autoTurnFlowPrimed = true;
         _lastAutoTurnFlowSignature = null;
       }
     } else if (manualTargetKey != null) {
       _pausedManualAutoTargetKey = null;
+      _completedManualCityTargetKey = null;
     } else {
       final pausedTargetKey = _pausedManualAutoTargetKey;
-      if (state == null ||
-          (pausedTargetKey != null &&
-              !_manualAutoTargetStillNeedsOrder(state, pausedTargetKey))) {
+      if (pausedTargetKey != null &&
+          !_manualAutoTargetStillNeedsOrder(state, pausedTargetKey)) {
         _pausedManualAutoTargetKey = null;
-        if (pausedTargetKey != null) {
-          _autoTurnFlowPrimed = true;
-          _lastAutoTurnFlowSignature = null;
-        }
+        _autoTurnFlowPrimed = true;
+        _lastAutoTurnFlowSignature = null;
       }
     }
     _lastManualAutoTargetKey = manualTargetKey;
+  }
+
+  void _invalidateCompletedManualCityKey(GameState state) {
+    final completedKey = _completedManualCityTargetKey;
+    if (completedKey == null) return;
+    final selectedCity = state.selection?.city;
+    if (selectedCity == null ||
+        completedKey != _HudManualAutoTarget.city(selectedCity.id).storageKey) {
+      _completedManualCityTargetKey = null;
+    }
+  }
+
+  String? _completedManualCityKey(String targetKey) {
+    if (!_autoActionFlowEnabled) return null;
+    final target = _HudManualAutoTarget.parse(targetKey);
+    return target?.kind == _HudManualAutoTargetKind.city ? targetKey : null;
   }
 
   void _syncDismissedResearchAction(HudActionDeck oldWidget) {

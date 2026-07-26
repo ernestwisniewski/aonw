@@ -20,8 +20,11 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
       autoActionFlowEnabled: _autoActionFlowEnabled,
       force: force,
       manualAutoTargetPaused: _pausedManualAutoTargetKey != null,
-      inspectingResolvedCityWhileUnitNeedsOrder:
-          _inspectingResolvedCityWhileUnitNeedsOrder(state),
+      inspectingResolvedCityWithPendingActions:
+          _isInspectingResolvedCityWithPendingActions(state),
+      resolvedCityCompletionCanAdvance: _resolvedCityCompletionCanAdvance(
+        state,
+      ),
       researchActionDismissed: _researchActionDismissed(state),
       waitsForManualDecision: _waitsForManualDecision(state),
       autoTurnFlowCanStart: _autoTurnFlowCanStartFrom(state),
@@ -83,11 +86,20 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     ).hasActionCandidate(state);
   }
 
-  bool _inspectingResolvedCityWhileUnitNeedsOrder(GameState state) {
+  bool _isInspectingResolvedCityWithPendingActions(GameState state) {
     return _HudResolvedCityInspectionPolicy(
       activePlayerId: widget.activePlayerId,
-      unitNeedsManualOrder: _unitNeedsManualOrder,
-    ).isInspectingResolvedCityWhileUnitNeedsOrder(state);
+    ).isInspectingResolvedCityWithPendingActions(
+      state,
+      pendingActionCount: widget.remainingActionCount,
+    );
+  }
+
+  bool _resolvedCityCompletionCanAdvance(GameState state) {
+    final selectedCity = state.selection?.city;
+    return selectedCity != null &&
+        _completedManualCityTargetKey ==
+            _HudManualAutoTarget.city(selectedCity.id).storageKey;
   }
 
   bool _canAutoOpenResearchAction(GameState state) {

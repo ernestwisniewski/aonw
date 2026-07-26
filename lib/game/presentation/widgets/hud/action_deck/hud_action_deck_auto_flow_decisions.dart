@@ -16,7 +16,8 @@ final class _HudAutoAdvanceContext {
     required this.autoActionFlowEnabled,
     required this.force,
     required this.manualAutoTargetPaused,
-    required this.inspectingResolvedCityWhileUnitNeedsOrder,
+    required this.inspectingResolvedCityWithPendingActions,
+    required this.resolvedCityCompletionCanAdvance,
     required this.researchActionDismissed,
     required this.waitsForManualDecision,
     required this.autoTurnFlowCanStart,
@@ -34,7 +35,8 @@ final class _HudAutoAdvanceContext {
   final bool autoActionFlowEnabled;
   final bool force;
   final bool manualAutoTargetPaused;
-  final bool inspectingResolvedCityWhileUnitNeedsOrder;
+  final bool inspectingResolvedCityWithPendingActions;
+  final bool resolvedCityCompletionCanAdvance;
   final bool researchActionDismissed;
   final bool waitsForManualDecision;
   final bool autoTurnFlowCanStart;
@@ -57,11 +59,11 @@ final class _HudAutoAdvanceContext {
     return readyToEndTurn || remainingActionCount > 0;
   }
 
-  bool get manualBypassesAreClear {
-    return force ||
-        (!manualAutoTargetPaused &&
-            !inspectingResolvedCityWhileUnitNeedsOrder &&
-            !researchActionDismissed);
+  bool get manualSafetyGuardsAreClear {
+    return !manualAutoTargetPaused &&
+        (!inspectingResolvedCityWithPendingActions ||
+            resolvedCityCompletionCanAdvance) &&
+        !researchActionDismissed;
   }
 
   bool get canStartCurrentStep {
@@ -77,7 +79,7 @@ final class _HudAutoAdvancePolicy {
         context.hudIsIdle &&
         context.hasActionBudget &&
         context.currentStepIsEnabled &&
-        context.manualBypassesAreClear &&
+        context.manualSafetyGuardsAreClear &&
         !context.waitsForManualDecision &&
         context.canStartCurrentStep;
   }
@@ -184,21 +186,16 @@ final class _HudAutoStartCandidatePolicy {
 }
 
 final class _HudResolvedCityInspectionPolicy {
-  const _HudResolvedCityInspectionPolicy({
-    required this.activePlayerId,
-    required this.unitNeedsManualOrder,
-  });
+  const _HudResolvedCityInspectionPolicy({required this.activePlayerId});
 
   final String activePlayerId;
-  final _HudUnitOrderPredicate unitNeedsManualOrder;
 
-  bool isInspectingResolvedCityWhileUnitNeedsOrder(GameState state) {
-    return _selectedCityIsResolved(state.selection?.city) &&
-        state.units.any(
-          (unit) =>
-              unit.ownerPlayerId == activePlayerId &&
-              unitNeedsManualOrder(unit),
-        );
+  bool isInspectingResolvedCityWithPendingActions(
+    GameState state, {
+    required int pendingActionCount,
+  }) {
+    return pendingActionCount > 0 &&
+        _selectedCityIsResolved(state.selection?.city);
   }
 
   bool _selectedCityIsResolved(GameCity? city) {

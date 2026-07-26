@@ -163,6 +163,7 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
   String? _autoTurnFlowContextKey;
   String? _lastManualAutoTargetKey;
   String? _pausedManualAutoTargetKey;
+  String? _completedManualCityTargetKey;
   BuildContext? _detailModalContext;
   BuildContext? _combatModalContext;
   bool _actionCompletionPulseVisible = false;
@@ -306,6 +307,8 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
     setState(() => _actionCompletionPulseVisible = false);
   }
 
+  void _setAutoFlowState(VoidCallback update) => setState(update);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -313,31 +316,6 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
     _syncCombatModal();
     _syncDetailModal();
     _queueAutoTurnFlow();
-  }
-
-  void _setAutoTurnFlowEnabled(bool enabled) {
-    if (_autoTurnFlowEnabled == enabled) return;
-    setState(() {
-      _autoTurnFlowEnabled = enabled;
-      _lastAutoTurnFlowSignature = null;
-    });
-    _queueAutoTurnFlow(force: enabled);
-  }
-
-  void _setAutoActionFlowEnabled(bool enabled) {
-    if (_autoActionFlowEnabled == enabled) return;
-    setState(() {
-      _autoActionFlowEnabled = enabled;
-      if (enabled) {
-        _autoTurnFlowPrimed = true;
-      } else {
-        _autoTurnFlowPrimed = false;
-        _autoTurnFlowAdvancedThisTurn = false;
-      }
-      if (enabled) _clearDismissedResearchAction(_researchActionKey());
-      _lastAutoTurnFlowSignature = null;
-    });
-    _queueAutoTurnFlow(force: enabled);
   }
 
   @override
