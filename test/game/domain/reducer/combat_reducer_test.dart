@@ -20,6 +20,8 @@ import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'combat_reducer_policy_tests.dart';
+
 void main() {
   group('CombatReducer via GameStateReducer', () {
     test('AttackHexCommand resolves combat, persists HP, and emits events', () {
@@ -65,13 +67,7 @@ void main() {
       final resolved = result.events[1] as CombatResolvedEvent;
       expect(resolved.outcome.attackerHpAfter, 9);
       expect(resolved.outcome.defenderHpAfter, 9);
-      final effect = result.uiEffects
-          .whereType<PlayCombatAnimationEffect>()
-          .single;
-      expect(effect.attackerUnitId, 'a');
-      expect(effect.defenderUnitId, 'd');
-      expect(effect.attackerKilled, isFalse);
-      expect(effect.defenderKilled, isFalse);
+      expect(result.uiEffects.whereType<PlayCombatAnimationEffect>(), isEmpty);
     });
 
     test('friendly units cannot be attacked', () {
@@ -106,7 +102,7 @@ void main() {
       expect(feedback.single.reason, HudFeedbackReason.attackProtectedByTreaty);
     });
 
-    test('combat fog recomputes only attacker and defender owners', () {
+    test('combat fog recomputes every known player', () {
       final mapData = _map(4, 4);
       final attacker = _unit(id: 'a', ownerPlayerId: 'p1', col: 0, row: 0);
       final defender = _unit(id: 'd', ownerPlayerId: 'p2', col: 1, row: 0);
@@ -147,7 +143,7 @@ void main() {
       expect(fogOfWarService.recomputedPlayerIds, hasLength(1));
       expect(
         fogOfWarService.recomputedPlayerIds.single,
-        unorderedEquals(['p1', 'p2']),
+        unorderedEquals(['p1', 'p2', 'p3']),
       );
     });
 
@@ -850,6 +846,8 @@ void main() {
       expect(result.state, state);
       expect(result.events, isEmpty);
     });
+
+    _registerCombatPolicyTests();
 
     test('does not attack outside effective range', () {
       final mapData = _map(4, 3);

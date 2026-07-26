@@ -1,7 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/diplomatic_war_effects.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
@@ -13,62 +12,18 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
-part 'combat_reducer_events.dart';
-part 'combat_reducer_fog.dart';
-part 'combat_reducer_outcomes.dart';
-part 'combat_reducer_setup.dart';
+part 'combat_reducer_targeting.dart';
 
-typedef _AttackSetup = ({
-  GameUnit attacker,
-  GameUnit defender,
-  MapTileView defenderTile,
-  List<CombatModifier> attackerModifiers,
-  CombatStats attackerBase,
-  CombatStats attackerEffective,
-});
+typedef _AttackSetup = ({GameUnit attacker, GameUnit defender});
 
-typedef _CityAttackSetup = ({
-  GameUnit attacker,
-  GameCity city,
-  List<CombatModifier> attackerModifiers,
-  CombatStats attackerBase,
-  CombatStats attackerEffective,
-  CombatStats cityBase,
-  CombatStats cityEffective,
-});
-
-typedef _DefenseSetup = ({
-  GameCity? defendedCity,
-  List<CombatModifier> defenderModifiers,
-  CombatStats defenderBase,
-  CombatStats defenderEffective,
-  HexCoordinate? retreatDestination,
-});
-
-typedef _CombatApplication = ({
-  List<GameUnit> units,
-  List<GameCity> cities,
-  GameUnit? updatedAttacker,
-  GameUnit? updatedDefender,
-  int attackerExperience,
-  int defenderExperience,
-});
-
-typedef _CityCombatApplication = ({
-  List<GameUnit> units,
-  List<GameCity> cities,
-  GameUnit? updatedAttacker,
-  int attackerExperience,
-  GameCity? updatedCity,
-  GameCity? capturedCity,
-  GameCity? destroyedCity,
-});
+typedef _CityAttackSetup = ({GameUnit attacker, GameCity city});
 
 abstract final class CombatReducer {
   static GameStateTransition selectAttackTargetWithEnvironment(
@@ -110,7 +65,7 @@ abstract final class CombatReducer {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     GameCommandContext context = const GameCommandContext(),
   }) {
-    final setup = _CombatSetupFactory.unitAttackSetup(
+    final setup = _CombatTargetingPolicy.unitTarget(
       state,
       command,
       mapTiles,
@@ -120,7 +75,7 @@ abstract final class CombatReducer {
       allowExistingTargetOverride: true,
     );
     final citySetup = setup == null
-        ? _CombatSetupFactory.cityAttackSetup(
+        ? _CombatTargetingPolicy.cityTarget(
             state,
             command,
             mapTiles,
@@ -164,367 +119,123 @@ abstract final class CombatReducer {
     GameCommandContext context = const GameCommandContext(),
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
-    final setup = _CombatSetupFactory.unitAttackSetup(
-      state,
-      command,
-      mapTiles,
-      combatRuleset: combatRuleset,
-      technologyRuleset: technologyRuleset,
-      context: context,
-    );
-    if (setup == null) {
-      final citySetup = _CombatSetupFactory.cityAttackSetup(
+    final attacker = state.unitById(command.attackerUnitId);
+    if (attacker != null &&
+        (!context.canControlUnit(state, attacker) ||
+            !_CombatTargetingPolicy.pendingAllowsCommand(
+              state: state,
+              command: command,
+              attacker: attacker,
+              allowExistingTargetOverride: false,
+            ))) {
+      return GameStateTransition(state: state);
+    }
+    final actorPlayerId = context.hasActor
+        ? context.actorPlayerId!
+        : state.activePlayerId.isNotEmpty
+        ? state.activePlayerId
+        : attacker?.ownerPlayerId ?? '';
+    final result = CombatCommandResolver(fogOfWarService: fogOfWarService)
+        .resolve(
+          state: CombatCommandState(
+            units: state.units,
+            cities: state.cities,
+            artifacts: state.artifacts,
+            fogOfWar: state.fogOfWar,
+            research: state.research,
+            intendedAttacks: state.intendedAttacks,
+            diplomacy: state.diplomacy,
+            resourceTradeAgreements: state.resourceTradeAgreements,
+            playerIds: knownPlayerIds(state),
+          ),
+          command: command,
+          actorPlayerId: actorPlayerId,
+          turn: context.combatSeedTurn,
+          commandTick: context.commandTick,
+          mapTiles: mapTiles,
+          ruleset: GameRuleset.defaults.copyWith(
+            combat: combatRuleset,
+            technology: technologyRuleset,
+          ),
+          ignoreFogOfWar: context.ignoreFogOfWar,
+        );
+    if (!result.accepted) {
+      return _rejectedAttackTransition(
         state,
         command,
-        mapTiles,
-        combatRuleset: combatRuleset,
-        technologyRuleset: technologyRuleset,
-        context: context,
-      );
-      if (citySetup == null) {
-        return _rejectedAttackTransition(state, command, context: context);
-      }
-      if (combatRuleset.resolutionMode == CombatResolutionMode.simultaneous) {
-        return _recordIntent(
-          state,
-          command,
-          citySetup.attacker,
-          mapTiles,
-          context,
-        );
-      }
-      return _attackCity(
-        state: state,
-        command: command,
-        mapTiles: mapTiles,
-        setup: citySetup,
-        combatRuleset: combatRuleset,
-        fogOfWarService: fogOfWarService,
+        reason: result.reason,
         context: context,
       );
     }
-    final attacker = setup.attacker;
-    final defender = setup.defender;
-    final attackerModifiers = setup.attackerModifiers;
-    final attackerBase = setup.attackerBase;
-    final attackerEffective = setup.attackerEffective;
 
-    if (combatRuleset.resolutionMode == CombatResolutionMode.simultaneous) {
-      return _recordIntent(state, command, attacker, mapTiles, context);
-    }
-
-    final defense = _CombatSetupFactory.defenseSetup(
-      state: state,
-      mapTiles: mapTiles,
-      attacker: attacker,
-      defender: defender,
-      defenderTile: setup.defenderTile,
-      combatRuleset: combatRuleset,
-      technologyRuleset: technologyRuleset,
+    final authoritativeState = state.copyWith(
+      units: result.units,
+      cities: result.cities,
+      artifacts: result.artifacts,
+      fogOfWar: result.fogOfWar,
+      intendedAttacks: result.intendedAttacks,
+      diplomacy: result.diplomacy,
+      resourceTradeAgreements: result.resourceTradeAgreements,
     );
-    final defenderModifiers = defense.defenderModifiers;
-    final defenderBase = defense.defenderBase;
-    final defenderEffective = defense.defenderEffective;
-    final retreatDestination = defense.retreatDestination;
-
-    final attackerCombatant = _combatant(
-      unit: attacker,
-      baseStats: attackerBase,
-      modifiers: attackerModifiers,
-      effectiveStats: attackerEffective,
-    );
-    final defenderCombatant = _combatant(
-      unit: defender,
-      baseStats: defenderBase,
-      modifiers: defenderModifiers,
-      effectiveStats: defenderEffective,
-    );
-    final outcome = CombatResolver.resolve(
-      attacker: attackerCombatant,
-      defender: defenderCombatant,
-      ruleset: combatRuleset,
-      rng: CombatRng.fromTurn(
-        turn: context.combatSeedTurn,
-        attackerId: attacker.id,
-        defenderId: defender.id,
-      ),
-      attackDistance: _unitDistance(attacker, defender),
-      defenderCanRetreat: retreatDestination != null,
-    );
-
-    final applied = _CombatOutcomeApplier.applyUnitCombat(
-      state: state,
-      attacker: attacker,
-      defender: defender,
-      outcome: outcome,
-      attackerEffective: attackerEffective,
-      defenderEffective: defenderEffective,
-      retreatDestination: retreatDestination,
-    );
-    final artifacts = _CombatArtifactPolicy.afterUnitCombat(
-      state.artifacts,
-      attacker: attacker,
-      defender: defender,
-      outcome: outcome,
-    );
-    final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
-      current: state.fogOfWar,
-      mapTiles: mapTiles,
-      units: applied.units,
-      cities: applied.cities,
-      fogOfWarService: fogOfWarService,
-      attackerOwnerPlayerId: attacker.ownerPlayerId,
-      defenderOwnerPlayerId: defender.ownerPlayerId,
-    );
-
     final next = _clearAttackInteractionState(
-      withDiscoveredDiplomaticContacts(
-        state.copyWith(
-          units: applied.units,
-          cities: applied.cities,
-          artifacts: artifacts,
-          fogOfWar: fogOfWar,
-          diplomacy: state.diplomacy.registerUnitAttack(
-            attackerPlayerId: attacker.ownerPlayerId,
-            defenderPlayerId: defender.ownerPlayerId,
-            turn: context.combatSeedTurn,
-          ),
-        ),
-      ),
-      attackerUnitId: attacker.id,
+      authoritativeState,
+      attackerUnitId: command.attackerUnitId,
       mapTiles: mapTiles,
+      changedCityId: _changedCityId(result.events),
     );
-
-    return GameStateTransition(
-      state: next,
-      events: _CombatEventFactory.unitCombatEvents(
-        attacker: attacker,
-        defender: defender,
-        outcome: outcome,
-        retreatDestination: retreatDestination,
-        application: applied,
-      ),
-      uiEffects: [
-        PlayCombatAnimationEffect(
-          attackerUnitId: attacker.id,
-          defenderUnitId: defender.id,
-          attackerKilled: outcome.attackerKilled,
-          defenderKilled: outcome.defenderKilled,
-          defenderRetaliated: outcome.steps.any(
-            (step) => step is RetaliationStep,
-          ),
-        ),
-      ],
-    );
-  }
-
-  static GameStateTransition _attackCity({
-    required GameState state,
-    required AttackHexCommand command,
-    required MapTileLookup mapTiles,
-    required _CityAttackSetup setup,
-    required CombatRuleset combatRuleset,
-    required FogOfWarService fogOfWarService,
-    required GameCommandContext context,
-  }) {
-    final attacker = setup.attacker;
-    final attackerCombatant = Combatant(
-      unitId: attacker.id,
-      ownerPlayerId: attacker.ownerPlayerId,
-      baseStats: setup.attackerBase,
-      modifiers: setup.attackerModifiers,
-      currentHp: UnitCombatHealth.currentHp(
-        attacker,
-        effectiveStats: setup.attackerEffective,
-      ),
-    );
-    final cityCombatant = Combatant(
-      unitId: setup.city.id,
-      ownerPlayerId: setup.city.ownerPlayerId,
-      baseStats: setup.cityBase,
-      currentHp: CityCombatHealth.currentHp(
-        setup.city,
-        effectiveStats: setup.cityEffective,
-      ),
-    );
-    final outcome = CombatResolver.resolve(
-      attacker: attackerCombatant,
-      defender: cityCombatant,
-      ruleset: combatRuleset,
-      rng: CombatRng.fromTurn(
-        turn: context.combatSeedTurn,
-        attackerId: attacker.id,
-        defenderId: setup.city.id,
-      ),
-      attackDistance: _cityDistance(attacker, setup.city),
-    );
-
-    final applied = _CombatOutcomeApplier.applyCityCombat(
-      state: state,
-      attacker: attacker,
-      city: setup.city,
-      outcome: outcome,
-      attackerEffective: setup.attackerEffective,
-      cityEffective: setup.cityEffective,
-      cityConquestAction: command.cityConquestAction,
-    );
-    final artifacts = _CombatArtifactPolicy.afterCityCombat(
-      state.artifacts,
-      attacker: attacker,
-      city: setup.city,
-      outcome: outcome,
-      cityConquestAction: command.cityConquestAction,
-    );
-    final fogOfWar = _CombatFogPolicy.recomputeAfterCombat(
-      current: state.fogOfWar,
-      mapTiles: mapTiles,
-      units: applied.units,
-      cities: applied.cities,
-      fogOfWarService: fogOfWarService,
-      attackerOwnerPlayerId: attacker.ownerPlayerId,
-      defenderOwnerPlayerId: setup.city.ownerPlayerId,
-    );
-    final changedCity =
-        applied.capturedCity ?? applied.destroyedCity ?? applied.updatedCity;
-    final reputation = DiplomaticWarmongerReputation.apply(
-      diplomacy: state.diplomacy.registerCityAttack(
-        attackerPlayerId: attacker.ownerPlayerId,
-        defenderPlayerId: setup.city.ownerPlayerId,
-        turn: context.combatSeedTurn,
-      ),
-      aggressorPlayerId: attacker.ownerPlayerId,
-      victimPlayerId: setup.city.ownerPlayerId,
-      action: DiplomaticWarmongerAction.cityAttack,
-      turn: context.combatSeedTurn,
-      sourceId: 'city_attack.${context.combatSeedTurn}.${attacker.id}',
-    );
-    final diplomacy = reputation.diplomacy;
-    final next = _clearAttackInteractionState(
-      withDiscoveredDiplomaticContacts(
-        state.copyWith(
-          units: applied.units,
-          cities: applied.cities,
-          artifacts: artifacts,
-          fogOfWar: fogOfWar,
-          diplomacy: diplomacy,
-          resourceTradeAgreements:
-              DiplomaticWarEffects.removeResourceTradeAgreementsBetween(
-                state.resourceTradeAgreements,
-                attacker.ownerPlayerId,
-                setup.city.ownerPlayerId,
-              ),
-        ),
-      ),
-      attackerUnitId: attacker.id,
-      mapTiles: mapTiles,
-      changedCityId: changedCity?.id,
-    );
-
-    return GameStateTransition(
-      state: next,
-      events: _CombatEventFactory.cityCombatEvents(
-        attacker: attacker,
-        city: setup.city,
-        outcome: outcome,
-        application: applied,
-        warmongerEntries: reputation.entries,
-      ),
-      uiEffects: [
-        PlayCombatAnimationEffect(
-          attackerUnitId: attacker.id,
-          defenderUnitId: setup.city.id,
-          attackerKilled: outcome.attackerKilled,
-          defenderKilled: outcome.defenderKilled,
-          defenderRetaliated: outcome.steps.any(
-            (step) => step is RetaliationStep,
-          ),
-        ),
-      ],
-    );
+    return GameStateTransition(state: next, events: result.events);
   }
 
   static GameStateTransition _rejectedAttackTransition(
     GameState state,
     AttackHexCommand command, {
+    String? reason,
     required GameCommandContext context,
   }) {
-    final feedback = _protectedAttackFeedback(state, command, context: context);
+    final targetIsVisible = context
+        .visibilityFor(state)
+        .canSeeDynamicAt(command.defenderCol, command.defenderRow);
+    final protectedTarget =
+        reason == 'attack_target_protected_by_treaty' ||
+        (reason == null &&
+            _selectionTargetsProtectedPlayer(state, command, context));
+    final feedback = protectedTarget && targetIsVisible
+        ? const ShowHudFeedbackEffect(
+            reason: HudFeedbackReason.attackProtectedByTreaty,
+          )
+        : null;
     return GameStateTransition(state: state, uiEffects: [?feedback]);
   }
 
-  static ShowHudFeedbackEffect? _protectedAttackFeedback(
+  static bool _selectionTargetsProtectedPlayer(
     GameState state,
-    AttackHexCommand command, {
-    required GameCommandContext context,
-  }) {
+    AttackHexCommand command,
+    GameCommandContext context,
+  ) {
     final attacker = state.unitById(command.attackerUnitId);
     if (attacker == null ||
         !context.canControlUnit(state, attacker) ||
         attacker.isWorking ||
         attacker.movementPoints <= 0) {
-      return null;
+      return false;
     }
-
-    final targetOwnerPlayerId = _attackTargetOwnerPlayerId(state, command);
-    if (targetOwnerPlayerId == null ||
-        targetOwnerPlayerId == attacker.ownerPlayerId) {
-      return null;
-    }
-    if (!_isProtectedRelation(
-      state,
-      attacker.ownerPlayerId,
-      targetOwnerPlayerId,
-    )) {
-      return null;
-    }
-    if (!context
-        .visibilityFor(state)
-        .canSeeDynamicAt(command.defenderCol, command.defenderRow)) {
-      return null;
-    }
-    return const ShowHudFeedbackEffect(
-      reason: HudFeedbackReason.attackProtectedByTreaty,
-    );
+    final targetOwnerPlayerId =
+        state.unitAt(command.defenderCol, command.defenderRow)?.ownerPlayerId ??
+        state.cityAt(command.defenderCol, command.defenderRow)?.ownerPlayerId;
+    return targetOwnerPlayerId != null &&
+        targetOwnerPlayerId != attacker.ownerPlayerId &&
+        _isProtectedRelation(
+          state,
+          attacker.ownerPlayerId,
+          targetOwnerPlayerId,
+        );
   }
 
-  static String? _attackTargetOwnerPlayerId(
-    GameState state,
-    AttackHexCommand command,
-  ) {
-    final defender = state.unitAt(command.defenderCol, command.defenderRow);
-    if (defender != null) return defender.ownerPlayerId;
-    return state
-        .cityAt(command.defenderCol, command.defenderRow)
-        ?.ownerPlayerId;
-  }
-
-  static GameStateTransition _recordIntent(
-    GameState state,
-    AttackHexCommand command,
-    GameUnit attacker,
-    MapTileLookup mapTiles,
-    GameCommandContext context,
-  ) {
-    final intent = IntendedAttack(
-      attackerUnitId: attacker.id,
-      defenderCol: command.defenderCol,
-      defenderRow: command.defenderRow,
-      declaredAtTick: context.commandTick,
-      declaringPlayerId: context.actorPlayerId ?? attacker.ownerPlayerId,
-      cityConquestAction: command.cityConquestAction,
-    );
-    final next = _clearAttackInteractionState(
-      state.copyWith(
-        intendedAttacks: [
-          for (final existing in state.intendedAttacks)
-            if (existing.attackerUnitId != attacker.id) existing,
-          intent,
-        ],
-      ),
-      attackerUnitId: attacker.id,
-      mapTiles: mapTiles,
-    );
-    return GameStateTransition(state: next);
+  static String? _changedCityId(Iterable<GameEvent> events) {
+    for (final event in events) {
+      if (event case CityAttackedEvent(:final cityId)) return cityId;
+    }
+    return null;
   }
 
   static GameState _clearAttackInteractionState(
@@ -544,25 +255,6 @@ abstract final class CombatReducer {
       next = next.copyWithInteraction(pendingAction: null);
     }
     return _refreshSelection(next, mapTiles, changedCityId: changedCityId);
-  }
-
-  static List<GameUnit> _insertAtOriginalPosition(
-    List<GameUnit> units,
-    List<GameUnit> original,
-    GameUnit updated,
-  ) {
-    final result = List<GameUnit>.of(units);
-    final originalIndex = original.indexWhere((unit) => unit.id == updated.id);
-    var insertIndex = result.length;
-    for (var i = 0; i < result.length; i++) {
-      final index = original.indexWhere((unit) => unit.id == result[i].id);
-      if (index > originalIndex) {
-        insertIndex = i;
-        break;
-      }
-    }
-    result.insert(insertIndex, updated);
-    return result;
   }
 
   static bool _isProtectedRelation(

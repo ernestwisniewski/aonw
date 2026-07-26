@@ -13,6 +13,7 @@ part 'server_command_reducer_auto_explore.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_city_founding.dart';
+part 'server_command_reducer_combat.dart';
 part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_interaction.dart';
@@ -204,16 +205,15 @@ class ServerCommandReducer {
           mapView: loadedMap.mapView,
         );
       case AttackHexCommand():
-        final result = const PersistentCombatCommandResolver().resolve(
-          state: state,
+        return _applyCombatCommand(
+          save: save,
           command: command,
           actorPlayerId: actorPlayerId,
-          turn: save.turn,
           commandTick: commandTick,
           mapTiles: loadedMap.mapView,
+          state: state,
           ruleset: ruleset,
         );
-        return _fromPersistentCombatResult(save, result);
       case CancelUnitActionCommand():
         return _applyCancelUnitAction(save, state, command, actorPlayerId);
       case SkipUnitTurnCommand():
@@ -425,19 +425,6 @@ class ServerCommandReducer {
           reason: 'client_only_command',
         );
     }
-  }
-
-  _CommandApplication _fromPersistentCombatResult(
-    GameSave save,
-    PersistentCombatCommandResult result,
-  ) {
-    return _applicationFrom(
-      save: save,
-      accepted: result.accepted,
-      state: result.state,
-      events: result.events,
-      reason: result.reason,
-    );
   }
 
   _CommandApplication _applicationFrom({

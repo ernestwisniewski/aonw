@@ -1,5 +1,8 @@
 export 'combat/city_combat_health.dart';
 export 'combat/city_conquest_action.dart';
+export 'combat/combat_command_resolver.dart';
+export 'combat/combat_command_result.dart';
+export 'combat/combat_command_state.dart';
 export 'combat/combat_distance.dart';
 export 'combat/combat_modifier.dart';
 export 'combat/combat_modifier_collector.dart';
@@ -12,6 +15,7 @@ export 'combat/combat_serialization.dart';
 export 'combat/combat_stats.dart';
 export 'combat/combat_step.dart';
 export 'combat/combatant.dart';
+export 'combat/domain_combat_command_resolver.dart';
 export 'combat/intended_attack.dart';
 export 'combat/persistent_combat_command_resolver.dart';
 export 'combat/unit_combat_health.dart';

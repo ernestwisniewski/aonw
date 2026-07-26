@@ -114,10 +114,7 @@ void main() {
         ),
       ),
     );
-    expect(
-      result.uiEffects.whereType<PlayCombatAnimationEffect>(),
-      hasLength(1),
-    );
+    expect(result.uiEffects.whereType<PlayCombatAnimationEffect>(), isEmpty);
     expect(result.state.selection?.unit, same(updatedAttacker));
     expect(result.state.selection?.tile?.col, 0);
     expect(result.state.selection?.tile?.row, 0);

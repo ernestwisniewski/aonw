@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -20,51 +21,49 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('combat command characterization', () {
-    test(
-      'documents counter-modifier drift between local instant and turn combat',
-      () {
-        final map = _combatMap(
-          targetTerrains: const [TerrainType.forest, TerrainType.hills],
-        );
-        final attacker = _unit(
-          id: 'attacker',
-          ownerPlayerId: 'player_1',
-          type: GameUnitType.cavalry,
-          col: 0,
-        );
-        final defender = _unit(
-          id: 'defender',
-          ownerPlayerId: 'player_2',
-          type: GameUnitType.archer,
-          col: 1,
-        );
-        final result = _resolveBoth(
-          map: map,
-          ruleset: _ruleset(),
-          units: [attacker, defender],
-        );
+    test('local instant and turn combat share counter modifiers', () {
+      final map = _combatMap(
+        targetTerrains: const [TerrainType.forest, TerrainType.hills],
+      );
+      final attacker = _unit(
+        id: 'attacker',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.cavalry,
+        col: 0,
+      );
+      final defender = _unit(
+        id: 'defender',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.archer,
+        col: 1,
+      );
+      final result = _resolveBoth(
+        map: map,
+        ruleset: _ruleset(),
+        units: [attacker, defender],
+      );
 
-        final localOutcome = result.local.events
-            .whereType<CombatResolvedEvent>()
-            .single
-            .outcome;
-        final authoritativeOutcome = result.authoritative.events
-            .whereType<CombatResolvedEvent>()
-            .single
-            .outcome;
-        final localCounterLabels = _counterLabels(localOutcome);
-        final authoritativeCounterLabels = _counterLabels(authoritativeOutcome);
+      final localOutcome = result.local.events
+          .whereType<CombatResolvedEvent>()
+          .single
+          .outcome;
+      final authoritativeOutcome = result.authoritative.events
+          .whereType<CombatResolvedEvent>()
+          .single
+          .outcome;
+      final localCounterLabels = _counterLabels(localOutcome);
+      final authoritativeCounterLabels = _counterLabels(authoritativeOutcome);
 
-        expect(localCounterLabels, isEmpty);
-        expect(authoritativeCounterLabels, {
-          'counter.archerDefensiveTerrain.defense',
-          'counter.cavalryRoughAttack.attack',
-        });
-        expect(localOutcome, isNot(authoritativeOutcome));
-      },
-    );
+      const expectedCounterLabels = {
+        'counter.archerDefensiveTerrain.defense',
+        'counter.cavalryRoughAttack.attack',
+      };
+      expect(localCounterLabels, expectedCounterLabels);
+      expect(authoritativeCounterLabels, expectedCounterLabels);
+      expect(localOutcome, authoritativeOutcome);
+    });
 
-    test('documents attacker-death event-order drift', () {
+    test('local instant uses authoritative attacker-death event order', () {
       final combat = CombatRuleset.standard.copyWith(
         varianceRange: 0,
         unitBaseStats: const {
@@ -106,8 +105,8 @@ void main() {
       expect(result.local.events.map((event) => event.runtimeType), [
         UnitAttackedEvent,
         CombatResolvedEvent,
-        UnitGainedExperienceEvent,
         UnitKilledEvent,
+        UnitGainedExperienceEvent,
       ]);
       expect(result.authoritative.events.map((event) => event.runtimeType), [
         UnitAttackedEvent,
@@ -125,7 +124,7 @@ void main() {
       );
     });
 
-    test('documents lethal-city warmonger event-order drift', () {
+    test('local instant uses authoritative lethal-city event order', () {
       final combat = CombatRuleset.standard.copyWith(
         varianceRange: 0,
         cityBaseStats: const CombatStats(
@@ -173,9 +172,9 @@ void main() {
       expect(result.local.events.map((event) => event.runtimeType), [
         CityAttackedEvent,
         CombatResolvedEvent,
+        DiplomaticScoreChangedEvent,
         UnitGainedExperienceEvent,
         CityCapturedEvent,
-        DiplomaticScoreChangedEvent,
       ]);
       expect(result.authoritative.events.map((event) => event.runtimeType), [
         CityAttackedEvent,
@@ -267,66 +266,77 @@ void main() {
       },
     );
 
-    test('instant mode owns one command animation outside domain events', () {
-      final attacker = _unit(
-        id: 'attacker',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.warrior,
-        col: 0,
-      );
-      final defender = _unit(
-        id: 'defender',
-        ownerPlayerId: 'player_2',
-        type: GameUnitType.warrior,
-        col: 1,
-      );
-      final state = GameState(
-        activePlayerId: 'player_1',
-        units: [attacker, defender],
-        fogOfWar: _visibleFog(),
-        interaction: const GameInteractionState(
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: 'player_1',
-            attackerUnitId: 'attacker',
-          ),
-        ),
-      );
-
-      final result =
-          GameStateReducer(mapData: _combatMap(), ruleset: _ruleset()).reduce(
-            state,
-            const AttackHexCommand('attacker', 1, 0),
-            context: const GameCommandContext(
-              actorPlayerId: 'player_1',
-              combatSeedTurn: 7,
-              commandTick: 13,
+    test(
+      'instant mode derives exactly one animation from its domain event',
+      () {
+        final attacker = _unit(
+          id: 'attacker',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          col: 0,
+        );
+        final defender = _unit(
+          id: 'defender',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          col: 1,
+        );
+        final state = GameState(
+          activePlayerId: 'player_1',
+          units: [attacker, defender],
+          fogOfWar: _visibleFog(),
+          interaction: const GameInteractionState(
+            pendingAction: PendingAttackTargeting(
+              ownerPlayerId: 'player_1',
+              attackerUnitId: 'attacker',
             ),
-          );
+          ),
+        );
 
-      expect(result.state.pendingAction, isNull);
-      expect(result.events.whereType<CombatResolvedEvent>(), hasLength(1));
-      final effect = result.uiEffects
-          .whereType<PlayCombatAnimationEffect>()
-          .single;
-      final outcome = result.events
-          .whereType<CombatResolvedEvent>()
-          .single
-          .outcome;
-      expect(
-        (
-          effect.attackerUnitId,
-          effect.defenderUnitId,
-          effect.attackerKilled,
-          effect.defenderKilled,
-        ),
-        (
-          'attacker',
-          'defender',
-          outcome.attackerKilled,
-          outcome.defenderKilled,
-        ),
-      );
-    });
+        final result =
+            GameStateReducer(mapData: _combatMap(), ruleset: _ruleset()).reduce(
+              state,
+              const AttackHexCommand('attacker', 1, 0),
+              context: const GameCommandContext(
+                actorPlayerId: 'player_1',
+                combatSeedTurn: 7,
+                commandTick: 13,
+              ),
+            );
+
+        expect(result.state.pendingAction, isNull);
+        expect(result.events.whereType<CombatResolvedEvent>(), hasLength(1));
+        expect(
+          result.uiEffects.whereType<PlayCombatAnimationEffect>(),
+          isEmpty,
+        );
+        final effects = GameRendererEffectSequenceBuilder.build(
+          commandEffects: result.uiEffects.rendererEffects,
+          events: result.events,
+          state: result.state,
+          previousState: state,
+        );
+        final effect = effects.whereType<PlayCombatAnimationEffect>().single;
+        final outcome = result.events
+            .whereType<CombatResolvedEvent>()
+            .single
+            .outcome;
+        expect(
+          (
+            effect.attackerUnitId,
+            effect.defenderUnitId,
+            effect.attackerKilled,
+            effect.defenderKilled,
+          ),
+          (
+            'attacker',
+            'defender',
+            outcome.attackerKilled,
+            outcome.defenderKilled,
+          ),
+        );
+      },
+    );
   });
 }
 

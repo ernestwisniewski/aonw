@@ -193,6 +193,45 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
     }
   });
 
+  test(
+    'occupancy-sensitive reasons are only characterized on visible targets',
+    () {
+      final fixtures = fixtureProvider();
+      for (final suffix in [
+        'target-not-enemy-rejected',
+        'target-protected-by-treaty-rejected',
+      ]) {
+        final fixture = _combatFixtureBySuffix(fixtures, suffix);
+        final command = fixture.command as AttackHexCommand;
+        expect(
+          fixture.state.fogOfWar
+              .fogForPlayer(fixture.actorPlayerId)
+              .visibleHexes,
+          contains(
+            HexCoordinate(col: command.defenderCol, row: command.defenderRow),
+          ),
+          reason: fixture.id,
+        );
+      }
+
+      final hidden = _combatFixtureBySuffix(
+        fixtures,
+        'target-not-visible-rejected',
+      );
+      final command = hidden.command as AttackHexCommand;
+      expect(
+        hidden.state.fogOfWar.fogForPlayer(hidden.actorPlayerId).visibleHexes,
+        isNot(
+          contains(
+            HexCoordinate(col: command.defenderCol, row: command.defenderRow),
+          ),
+        ),
+        reason: hidden.id,
+      );
+      expect(hidden.expectedReason, 'attack_target_not_visible');
+    },
+  );
+
   test('shared unit, garrison, retreat, and conquest outcomes are pinned', () {
     final fixtures = fixtureProvider();
     final unit = _combatFixtureBySuffix(fixtures, 'unit-accepted');

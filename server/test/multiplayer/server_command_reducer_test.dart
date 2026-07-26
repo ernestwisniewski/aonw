@@ -8,6 +8,7 @@ import 'package:test/test.dart';
 
 part 'support/server_command_reducer_fixture.dart';
 part 'support/server_command_reducer_contract_cases.dart';
+part 'support/server_command_reducer_combat_cases.dart';
 part 'support/server_command_reducer_map_cache_cases.dart';
 part 'support/server_command_reducer_outcome_cases.dart';
 part 'support/server_command_reducer_snapshot_cases.dart';
@@ -20,6 +21,7 @@ void main() {
   _registerServerCommandReducerOutcomeTests();
   _registerServerCommandReducerSnapshotTests();
   _registerServerCommandReducerTurnTimeoutTests();
+  _registerServerCommandReducerCombatTests();
 
   group('ServerCommandReducer diplomacy commands', () {
     test(
@@ -218,80 +220,6 @@ void main() {
   });
 
   _registerServerCommandReducerResourceTradeTests();
-
-  group('ServerCommandReducer combat commands', () {
-    test('resolves a unit attack instead of rejecting the command', () async {
-      final reduction =
-          await ServerCommandReducer(
-            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-          ).reduce(
-            match: _runningMatch(),
-            snapshot: _snapshot(
-              _combatState(
-                units: [
-                  _combatUnit('attacker', 'player_1', 0, 0),
-                  _combatUnit(
-                    'defender',
-                    'player_2',
-                    1,
-                    0,
-                    type: GameUnitType.settler,
-                  ),
-                ],
-              ),
-            ),
-            wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
-            actorPlayerId: 'player_1',
-            now: DateTime.utc(2026, 6, 30, 12),
-          );
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
-
-      expect(reduction.accepted, isTrue);
-      expect(reduction.reason, isNull);
-      expect(reduction.events.whereType<UnitAttackedEvent>(), hasLength(1));
-      expect(reduction.events.whereType<CombatResolvedEvent>(), hasLength(1));
-      expect(state.units.byId('attacker')?.movementPoints, 0);
-    });
-
-    test('honors city destruction in an authoritative attack', () async {
-      final reduction =
-          await ServerCommandReducer(
-            mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
-          ).reduce(
-            match: _runningMatch(),
-            snapshot: _snapshot(
-              _combatState(
-                units: [_combatUnit('attacker', 'player_1', 0, 0)],
-                cities: const [
-                  GameCity(
-                    id: 'city_2',
-                    ownerPlayerId: 'player_2',
-                    name: 'City 2',
-                    center: CityHex(col: 1, row: 0),
-                    hitPoints: 1,
-                  ),
-                ],
-              ),
-            ),
-            wireCommand: _wireCommand(
-              const AttackHexCommand(
-                'attacker',
-                1,
-                0,
-                cityConquestAction: CityConquestAction.destroy,
-              ),
-            ),
-            actorPlayerId: 'player_1',
-            now: DateTime.utc(2026, 6, 30, 12),
-          );
-      final state = PersistentGameState.fromJson(reduction.snapshot.state);
-
-      expect(reduction.accepted, isTrue);
-      expect(state.cities, isEmpty);
-      expect(reduction.events.whereType<CityAttackedEvent>(), hasLength(1));
-      expect(reduction.events.whereType<CityDestroyedEvent>(), hasLength(1));
-    });
-  });
 }
 
 Future<ServerCommandReduction> _reduceDiplomacyCommand({

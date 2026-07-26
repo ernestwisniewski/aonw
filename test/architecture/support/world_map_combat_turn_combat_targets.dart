@@ -93,16 +93,6 @@ const _turnCombatTargets = [
         type: 'MapTileLookup',
       ),
       _Boundary.method(
-        '_attackCity',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_recordIntent',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
         '_clearAttackInteractionState',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
@@ -120,40 +110,33 @@ const _turnCombatTargets = [
     ],
   ),
   _Target(
-    path: 'lib/game/domain/reducer/combat/combat_reducer_setup.dart',
-    owner: '_CombatSetupFactory',
+    path: 'lib/game/domain/reducer/combat/combat_reducer_targeting.dart',
+    owner: '_CombatTargetingPolicy',
     boundaries: [
       _Boundary.method(
-        'unitAttackSetup',
+        'unitTarget',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
       _Boundary.method(
-        'cityAttackSetup',
+        'cityTarget',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
       _Boundary.method(
-        'defenseSetup',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_attackerCombatSetup',
+        '_attackerForTargeting',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
     ],
   ),
   _Target(
-    path: 'lib/game/domain/reducer/combat/combat_reducer_fog.dart',
-    owner: '_CombatFogPolicy',
+    path:
+        'packages/aonw_core/lib/game/domain/combat/'
+        'combat_command_resolver.dart',
+    owner: 'CombatCommandResolver',
     boundaries: [
-      _Boundary.method(
-        'recomputeAfterCombat',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
+      _Boundary.method('resolve', parameter: 'mapTiles', type: 'MapTileLookup'),
     ],
   ),
   _Target(

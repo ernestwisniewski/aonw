@@ -1,5 +1,6 @@
 import 'ai_mcts_workload.dart';
 import 'ai_strategy_workload.dart';
+import 'combat_command_workload.dart';
 import 'document.dart';
 import 'map_workload.dart';
 import 'movement_command_workload.dart';
@@ -16,6 +17,7 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
     runAiMctsWorkload(),
     runAiStrategyWorkload(),
     runAutoExploreWorkload(),
+    runCombatCommandWorkload(),
     runFogRevealWorkload(),
     runMapLookupWorkload(),
     runMovementCommandWorkload(),

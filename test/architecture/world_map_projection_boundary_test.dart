@@ -56,8 +56,7 @@ const _mapDataBarrelFreeMigrationPaths = {
   'lib/game/domain/reducer/game_state/'
       'reducer_environment_interaction_dispatch.dart',
   'lib/game/domain/reducer/combat/combat_reducer.dart',
-  'lib/game/domain/reducer/combat/combat_reducer_fog.dart',
-  'lib/game/domain/reducer/combat/combat_reducer_setup.dart',
+  'lib/game/domain/reducer/combat/combat_reducer_targeting.dart',
   'lib/game/domain/reducer/diplomacy/merchant_trade_route_reducer.dart',
   'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
   'lib/game/domain/reducer/interaction/selection_reducer.dart',
@@ -99,6 +98,8 @@ const _mapDataFreeMigrationPaths = {
   '$_gameDomain/city/persistent_worker_command_resolver.dart',
   '$_gameDomain/city/worker_command_resolver.dart',
   '$_gameDomain/city/domain_worker_command_resolver.dart',
+  '$_gameDomain/combat/combat_command_resolver.dart',
+  '$_gameDomain/combat/domain_combat_command_resolver.dart',
   '$_gameDomain/combat/persistent_combat_command_resolver.dart',
   '$_gameDomain/fog/fog_of_war_service.dart',
   '$_gameDomain/fog/fog_reveal_calculator.dart',

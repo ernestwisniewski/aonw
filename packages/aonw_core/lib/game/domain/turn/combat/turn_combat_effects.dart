@@ -53,9 +53,10 @@ final class TurnCombatEffects {
     return null;
   }
 
-  int? unitIndexAt(int col, int row) {
+  int? unitIndexAt(int col, int row, {String? excludingUnitId}) {
     for (var index = 0; index < units.length; index++) {
-      if (units[index].occupies(col, row)) return index;
+      final unit = units[index];
+      if (unit.id != excludingUnitId && unit.occupies(col, row)) return index;
     }
     return null;
   }

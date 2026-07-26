@@ -6,6 +6,18 @@ List<ReducerParityFixture> _combatRejectionCases(
   final map = _combatMap(template, cols: 4, rows: 2);
   final visibleFog = _combatVisibleFog(cols: 4, rows: 2);
   return [
+    ..._combatAttackerGuardRejectionCases(template, map, visibleFog),
+    ..._combatCapabilityRejectionCases(template, map, visibleFog),
+    ..._combatTargetPolicyRejectionCases(template, map, visibleFog),
+  ];
+}
+
+List<ReducerParityFixture> _combatAttackerGuardRejectionCases(
+  ReducerParityFixture template,
+  MapData map,
+  FogOfWarState visibleFog,
+) {
+  return [
     _combatFixture(
       template,
       id: 'combat-characterization-attacker-missing-rejected',
@@ -75,6 +87,15 @@ List<ReducerParityFixture> _combatRejectionCases(
       ),
       command: const AttackHexCommand('exhausted_attacker', 9, 9),
     ),
+  ];
+}
+
+List<ReducerParityFixture> _combatCapabilityRejectionCases(
+  ReducerParityFixture template,
+  MapData map,
+  FogOfWarState visibleFog,
+) {
+  return [
     _combatFixture(
       template,
       id: 'combat-characterization-attacker-out-of-bounds-rejected',
@@ -134,6 +155,15 @@ List<ReducerParityFixture> _combatRejectionCases(
       ),
       command: const AttackHexCommand('missing_target_attacker', 1, 0),
     ),
+  ];
+}
+
+List<ReducerParityFixture> _combatTargetPolicyRejectionCases(
+  ReducerParityFixture template,
+  MapData map,
+  FogOfWarState visibleFog,
+) {
+  return [
     _combatFixture(
       template,
       id: 'combat-characterization-target-not-enemy-rejected',
@@ -150,11 +180,7 @@ List<ReducerParityFixture> _combatRejectionCases(
           ),
         ],
         cities: const [],
-        fogOfWar: _combatFog(
-          cols: 4,
-          rows: 2,
-          actorVisible: {const HexCoordinate(col: 0, row: 0)},
-        ),
+        fogOfWar: visibleFog,
       ),
       command: const AttackHexCommand('friendly_target_attacker', 2, 0),
     ),
@@ -174,11 +200,7 @@ List<ReducerParityFixture> _combatRejectionCases(
           ),
         ],
         cities: const [],
-        fogOfWar: _combatFog(
-          cols: 4,
-          rows: 2,
-          actorVisible: {const HexCoordinate(col: 0, row: 0)},
-        ),
+        fogOfWar: visibleFog,
         diplomacy: _combatTruceDiplomacy,
       ),
       command: const AttackHexCommand('truce_attacker', 2, 0),
@@ -235,6 +257,17 @@ List<ReducerParityFixture> _combatAcceptanceCases(
 ) {
   final map = _combatMap(template, cols: 3, rows: 2);
   final fog = _combatVisibleFog(cols: 3, rows: 2);
+  return [
+    ..._combatUnitAcceptanceCases(template, map, fog),
+    ..._combatCityAcceptanceCases(template, map, fog),
+  ];
+}
+
+List<ReducerParityFixture> _combatUnitAcceptanceCases(
+  ReducerParityFixture template,
+  MapData map,
+  FogOfWarState fog,
+) {
   return [
     _combatFixture(
       template,
@@ -307,6 +340,15 @@ List<ReducerParityFixture> _combatAcceptanceCases(
       ),
       command: const AttackHexCommand('retreat_attacker', 1, 0),
     ),
+  ];
+}
+
+List<ReducerParityFixture> _combatCityAcceptanceCases(
+  ReducerParityFixture template,
+  MapData map,
+  FogOfWarState fog,
+) {
+  return [
     _combatFixture(
       template,
       id: 'combat-characterization-city-capture-accepted',

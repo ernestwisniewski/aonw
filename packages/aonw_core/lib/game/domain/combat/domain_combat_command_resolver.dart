@@ -1,16 +1,15 @@
 import 'package:aonw_core/game/domain/combat/combat_command_resolver.dart';
 import 'package:aonw_core/game/domain/combat/combat_command_result.dart';
 import 'package:aonw_core/game/domain/combat/combat_command_state.dart';
-import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime/game_runtime_state.dart';
-import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/command/game_command.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
+import 'package:aonw_core/game/domain/ruleset/game_ruleset.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-final class PersistentCombatCommandResult {
-  const PersistentCombatCommandResult({
+final class DomainCombatCommandResult {
+  const DomainCombatCommandResult({
     required this.accepted,
     required this.state,
     this.events = const [],
@@ -18,27 +17,27 @@ final class PersistentCombatCommandResult {
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final List<GameEvent> events;
   final String? reason;
 }
 
-/// Persistence adapter for the state-container-neutral combat resolver.
-final class PersistentCombatCommandResolver {
-  const PersistentCombatCommandResolver({
+/// Canonical-state adapter for the state-container-neutral combat resolver.
+final class DomainCombatCommandResolver {
+  const DomainCombatCommandResolver({
     this.fogOfWarService = const FogOfWarService(),
   });
 
   final FogOfWarService fogOfWarService;
 
-  PersistentCombatCommandResult resolve({
-    required PersistentGameState state,
+  DomainCombatCommandResult resolve({
+    required DomainState state,
     required AttackHexCommand command,
     required String actorPlayerId,
-    required int turn,
     required int commandTick,
     required MapTileLookup mapTiles,
     GameRuleset ruleset = GameRuleset.defaults,
+    bool ignoreFogOfWar = false,
   }) {
     final result = CombatCommandResolver(fogOfWarService: fogOfWarService)
         .resolve(
@@ -48,55 +47,62 @@ final class PersistentCombatCommandResolver {
             artifacts: state.artifacts,
             fogOfWar: state.fogOfWar,
             research: state.research,
-            intendedAttacks: state.runtimeState.intendedAttacks,
-            diplomacy: state.runtimeState.diplomacy,
-            resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-            playerIds: state.knownPlayerIds,
+            intendedAttacks: state.intendedAttacks,
+            diplomacy: state.diplomacy,
+            resourceTradeAgreements: state.resourceTradeAgreements,
+            playerIds: state.participants.map((player) => player.id),
           ),
           command: command,
           actorPlayerId: actorPlayerId,
-          turn: turn,
+          turn: state.turn,
           commandTick: commandTick,
           mapTiles: mapTiles,
           ruleset: ruleset,
+          ignoreFogOfWar: ignoreFogOfWar,
         );
     return _apply(state, result);
   }
 
-  static PersistentCombatCommandResult _apply(
-    PersistentGameState state,
+  static DomainCombatCommandResult _apply(
+    DomainState state,
     CombatCommandResult result,
   ) {
     if (!result.accepted) {
-      return PersistentCombatCommandResult(
+      return DomainCombatCommandResult(
         accepted: false,
         state: state,
         reason: result.reason,
       );
     }
-    return PersistentCombatCommandResult(
+    return DomainCombatCommandResult(
       accepted: true,
       state: _stateAfterResult(state, result),
       events: result.events,
     );
   }
 
-  static PersistentGameState _stateAfterResult(
-    PersistentGameState state,
+  static DomainState _stateAfterResult(
+    DomainState state,
     CombatCommandResult result,
   ) {
     final units = _replacement(result.units, state.units);
     final cities = _replacement(result.cities, state.cities);
     final artifacts = _replacement(result.artifacts, state.artifacts);
     final fogOfWar = _replacement(result.fogOfWar, state.fogOfWar);
-    final runtimeState = _runtimeStateAfterResult(state.runtimeState, result);
-    final runtime = _replacement(runtimeState, state.runtimeState);
+    final attacks = _replacement(result.intendedAttacks, state.intendedAttacks);
+    final diplomacy = _replacement(result.diplomacy, state.diplomacy);
+    final trades = _replacement(
+      result.resourceTradeAgreements,
+      state.resourceTradeAgreements,
+    );
     if ([
       units,
       cities,
       artifacts,
       fogOfWar,
-      runtime,
+      attacks,
+      diplomacy,
+      trades,
     ].every((replacement) => replacement == null)) {
       return state;
     }
@@ -105,31 +111,6 @@ final class PersistentCombatCommandResolver {
       cities: cities,
       artifacts: artifacts,
       fogOfWar: fogOfWar,
-      runtimeState: runtime,
-    );
-  }
-
-  static GameRuntimeState _runtimeStateAfterResult(
-    GameRuntimeState runtimeState,
-    CombatCommandResult result,
-  ) {
-    final attacks = _replacement(
-      result.intendedAttacks,
-      runtimeState.intendedAttacks,
-    );
-    final diplomacy = _replacement(result.diplomacy, runtimeState.diplomacy);
-    final trades = _replacement(
-      result.resourceTradeAgreements,
-      runtimeState.resourceTradeAgreements,
-    );
-    if ([
-      attacks,
-      diplomacy,
-      trades,
-    ].every((replacement) => replacement == null)) {
-      return runtimeState;
-    }
-    return runtimeState.copyWith(
       intendedAttacks: attacks,
       diplomacy: diplomacy,
       resourceTradeAgreements: trades,

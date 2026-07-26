@@ -1,14 +1,17 @@
 part of 'combat_reducer.dart';
 
-typedef _AttackerCombatSetup = ({
+typedef _TargetingAttacker = ({
   GameUnit attacker,
-  List<CombatModifier> attackerModifiers,
+  MapTileView attackerTile,
   CombatStats attackerBase,
   CombatStats attackerEffective,
 });
 
-abstract final class _CombatSetupFactory {
-  static _AttackSetup? unitAttackSetup(
+/// Client-only target selection policy.
+///
+/// Authoritative validation and execution belong to [CombatCommandResolver].
+abstract final class _CombatTargetingPolicy {
+  static _AttackSetup? unitTarget(
     GameState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
@@ -17,7 +20,7 @@ abstract final class _CombatSetupFactory {
     required GameCommandContext context,
     bool allowExistingTargetOverride = false,
   }) {
-    final attackerSetup = _attackerCombatSetup(
+    final attackerSetup = _attackerForTargeting(
       state,
       command,
       mapTiles,
@@ -40,25 +43,31 @@ abstract final class _CombatSetupFactory {
     if (!_targetIsVisible(context, state, defender.col, defender.row)) {
       return null;
     }
+    final attackerModifiers = CombatModifierCollector.forAttacker(
+      unit: attackerSetup.attacker,
+      tile: attackerSetup.attackerTile,
+      research: state.research.forPlayer(attackerSetup.attacker.ownerPlayerId),
+      defender: defender,
+      defenderTile: defenderTile,
+      ruleset: combatRuleset,
+      technologyRuleset: technologyRuleset,
+    );
+    final attackerEffective = attackerSetup.attackerBase.applyAll(
+      attackerModifiers,
+    );
+    if (attackerEffective.attack <= 0) return null;
     if (!_targetIsInRange(
       attackerSetup.attacker,
-      attackerSetup.attackerEffective,
+      attackerEffective,
       HexCoordinate(col: defender.col, row: defender.row),
     )) {
       return null;
     }
 
-    return (
-      attacker: attackerSetup.attacker,
-      defender: defender,
-      defenderTile: defenderTile,
-      attackerModifiers: attackerSetup.attackerModifiers,
-      attackerBase: attackerSetup.attackerBase,
-      attackerEffective: attackerSetup.attackerEffective,
-    );
+    return (attacker: attackerSetup.attacker, defender: defender);
   }
 
-  static _CityAttackSetup? cityAttackSetup(
+  static _CityAttackSetup? cityTarget(
     GameState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
@@ -67,7 +76,7 @@ abstract final class _CombatSetupFactory {
     required GameCommandContext context,
     bool allowExistingTargetOverride = false,
   }) {
-    final attackerSetup = _attackerCombatSetup(
+    final attackerSetup = _attackerForTargeting(
       state,
       command,
       mapTiles,
@@ -107,59 +116,10 @@ abstract final class _CombatSetupFactory {
     final cityEffective = cityBase;
     if (cityEffective.hp <= 0) return null;
 
-    return (
-      attacker: attackerSetup.attacker,
-      city: city,
-      attackerModifiers: attackerSetup.attackerModifiers,
-      attackerBase: attackerSetup.attackerBase,
-      attackerEffective: attackerSetup.attackerEffective,
-      cityBase: cityBase,
-      cityEffective: cityEffective,
-    );
+    return (attacker: attackerSetup.attacker, city: city);
   }
 
-  static _DefenseSetup defenseSetup({
-    required GameState state,
-    required MapTileLookup mapTiles,
-    required GameUnit attacker,
-    required GameUnit defender,
-    required MapTileView defenderTile,
-    required CombatRuleset combatRuleset,
-    required TechnologyRuleset technologyRuleset,
-  }) {
-    final defendedCity = state.cityAt(defender.col, defender.row);
-    final defenderModifiers = CombatModifierCollector.forDefender(
-      unit: defender,
-      tile: defenderTile,
-      defendedCity: defendedCity,
-      research: state.research.forPlayer(defender.ownerPlayerId),
-      ruleset: combatRuleset,
-      technologyRuleset: technologyRuleset,
-    );
-    final defenderBase = UnitCombatStats.derive(
-      defender,
-      ruleset: combatRuleset,
-    );
-    final defenderEffective = defenderBase.applyAll(defenderModifiers);
-    final retreatDestination = defenderEffective.attack > 0
-        ? CombatRetreatResolver.destination(
-            attacker: attacker,
-            defender: defender,
-            units: state.units,
-            tileAt: mapTiles.tileAt,
-          )
-        : null;
-
-    return (
-      defendedCity: defendedCity,
-      defenderModifiers: defenderModifiers,
-      defenderBase: defenderBase,
-      defenderEffective: defenderEffective,
-      retreatDestination: retreatDestination,
-    );
-  }
-
-  static _AttackerCombatSetup? _attackerCombatSetup(
+  static _TargetingAttacker? _attackerForTargeting(
     GameState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
@@ -172,7 +132,7 @@ abstract final class _CombatSetupFactory {
     if (attacker == null || !_canUseAttacker(state, attacker, context)) {
       return null;
     }
-    if (!_pendingAttackAllowsCommand(
+    if (!pendingAllowsCommand(
       state: state,
       command: command,
       attacker: attacker,
@@ -200,7 +160,7 @@ abstract final class _CombatSetupFactory {
 
     return (
       attacker: attacker,
-      attackerModifiers: attackerModifiers,
+      attackerTile: attackerTile,
       attackerBase: attackerBase,
       attackerEffective: attackerEffective,
     );
@@ -216,7 +176,7 @@ abstract final class _CombatSetupFactory {
         attacker.movementPoints > 0;
   }
 
-  static bool _pendingAttackAllowsCommand({
+  static bool pendingAllowsCommand({
     required GameState state,
     required AttackHexCommand command,
     required GameUnit attacker,
@@ -280,11 +240,11 @@ abstract final class _CombatSetupFactory {
     AttackHexCommand command,
     GameUnit attacker,
   ) {
-    final targetOccupant = state.unitAt(
-      command.defenderCol,
-      command.defenderRow,
+    return state.units.any(
+      (unit) =>
+          unit.id != attacker.id &&
+          unit.occupies(command.defenderCol, command.defenderRow),
     );
-    return targetOccupant != null && targetOccupant.id != attacker.id;
   }
 
   static GameCity? _attackableCityAt(
@@ -298,12 +258,4 @@ abstract final class _CombatSetupFactory {
         ? city
         : null;
   }
-}
-
-int _unitDistance(GameUnit attacker, GameUnit defender) {
-  return CombatDistance.betweenUnits(attacker, defender);
-}
-
-int _cityDistance(GameUnit attacker, GameCity city) {
-  return CombatDistance.fromUnitToHex(attacker, city.center);
 }

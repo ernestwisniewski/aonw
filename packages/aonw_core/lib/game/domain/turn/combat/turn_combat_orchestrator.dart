@@ -18,6 +18,7 @@ abstract final class TurnCombatOrchestrator {
       final defenderIndex = effects.unitIndexAt(
         intent.defenderCol,
         intent.defenderRow,
+        excludingUnitId: intent.attackerUnitId,
       );
       if (defenderIndex == null) {
         CityTurnCombatResolver.resolve(
