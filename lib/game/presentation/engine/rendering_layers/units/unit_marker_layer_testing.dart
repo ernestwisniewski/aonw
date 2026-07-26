@@ -77,4 +77,10 @@ extension UnitMarkerLayerTesting on UnitMarkerLayer {
       worldPositionForUnit(unitId);
 
   bool hasMarkerForTesting(String unitId) => _markers.containsKey(unitId);
+
+  bool isPositionLockedForTesting(String unitId) =>
+      _animator.isPositionLocked(unitId);
+
+  bool isAnimationMarkerRetainedForTesting(String unitId) =>
+      _animator.isRetained(unitId);
 }

@@ -119,6 +119,14 @@ class GameCameraController {
     _trackedWorldPoint = null;
   }
 
+  void cancelPendingMotion() {
+    _trackedWorldPoint = null;
+    _cancelSmoothMotion();
+  }
+
+  bool get hasPendingMotion =>
+      _trackedWorldPoint != null || _smoothMotion != null;
+
   void update(double dt) {
     final trackedWorldPoint = _trackedWorldPoint?.call();
     if (trackedWorldPoint != null) {

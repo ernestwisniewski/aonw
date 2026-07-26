@@ -92,7 +92,6 @@ class _FakeUnitAnimationController extends UnitAnimationController {
   bool? attackerKilled;
   bool? defenderKilled;
   Vector2? visiblePosition = Vector2.zero();
-
   _FakeUnitAnimationController() : super(_FakeUnitMarkerLayer());
 
   @override
@@ -104,6 +103,7 @@ class _FakeUnitAnimationController extends UnitAnimationController {
     int? fromCol,
     int? fromRow,
     required List<UnitMovementStep> steps,
+    bool retainAtDestination = false,
     required VoidCallback onComplete,
   }) {
     this.unitId = unitId;

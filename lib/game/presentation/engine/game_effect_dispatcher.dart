@@ -63,57 +63,66 @@ class GameEffectDispatcher {
        _canAutoFocusMapTarget = canAutoFocusMapTarget ?? ((_, _) => true),
        _l10n = l10n;
 
-  Future<void> handleEffects(Iterable<RendererEffect> effects) async {
-    for (final effect in effects) {
-      await handleEffect(effect);
+  Future<void> handleEffects(
+    Iterable<RendererEffect> effects, {
+    VoidCallback? beforeEffect,
+  }) async {
+    final pending = effects.toList(growable: false);
+    final laterMovementUnitIds = <String>{};
+    final retainAtDestination = List<bool>.filled(pending.length, false);
+    for (var index = pending.length - 1; index >= 0; index -= 1) {
+      final effect = pending[index];
+      if (effect is! AnimateUnitMoveEffect) continue;
+      retainAtDestination[index] = !laterMovementUnitIds.add(effect.unitId);
+    }
+    var completed = false;
+    try {
+      beforeEffect?.call();
+      prepareMovementOrigins(pending);
+      for (var index = 0; index < pending.length; index += 1) {
+        beforeEffect?.call();
+        await _handleEffect(
+          pending[index],
+          retainMovementAtDestination: retainAtDestination[index],
+        );
+      }
+      beforeEffect?.call();
+      completed = true;
+    } finally {
+      if (completed) {
+        _unitAnimationController.releaseUnitAnimationState(
+          laterMovementUnitIds,
+        );
+      } else {
+        _unitAnimationController.cancelUnitAnimations(laterMovementUnitIds);
+      }
     }
   }
 
-  Future<void> handleEffect(RendererEffect effect) async {
+  void prepareMovementOrigins(Iterable<RendererEffect> effects) {
+    final preparedUnitIds = <String>{};
+    for (final effect in effects.whereType<AnimateUnitMoveEffect>()) {
+      if (!preparedUnitIds.add(effect.unitId)) continue;
+      _unitAnimationController.preparePendingMoveOrigin(
+        effect.unitId,
+        col: effect.fromCol,
+        row: effect.fromRow,
+      );
+    }
+  }
+
+  Future<void> handleEffect(RendererEffect effect) => handleEffects([effect]);
+
+  Future<void> _handleEffect(
+    RendererEffect effect, {
+    required bool retainMovementAtDestination,
+  }) async {
     switch (effect) {
-      case AnimateUnitMoveEffect(
-        :final unitId,
-        :final fromCol,
-        :final fromRow,
-        :final steps,
-      ):
-        final unitVisible =
-            _unitAnimationController.unitWorldPosition(unitId) != null;
-        var followingMovement = false;
-        var movedCamera = false;
-        if (unitVisible &&
-            _moveCameraForUnitMovement() &&
-            _moveCameraForUnitMovementForUnit(unitId)) {
-          await _cameraController.smoothToTile(
-            fromCol,
-            fromRow,
-            duration: 0.28,
-            curve: Curves.easeOutCubic,
-          );
-          movedCamera = true;
-          if (_followUnitMovementCamera()) {
-            followingMovement = true;
-            _cameraController.followWorldPoint(
-              () => _unitAnimationController.unitWorldPosition(unitId),
-            );
-          }
-        }
-        try {
-          await _unitAnimationController.animateUnitMove(
-            unitId: unitId,
-            fromCol: fromCol,
-            fromRow: fromRow,
-            steps: steps,
-            onComplete: _onRendererStateChanged,
-          );
-        } finally {
-          if (followingMovement) {
-            _cameraController.stopFollowingWorldPoint();
-          }
-          if (movedCamera) {
-            await _onUnitMovementCameraComplete(unitId);
-          }
-        }
+      case AnimateUnitMoveEffect():
+        await _handleUnitMove(
+          effect,
+          retainAtDestination: retainMovementAtDestination,
+        );
       case PlayCombatAnimationEffect(
         :final attackerUnitId,
         :final defenderUnitId,
@@ -152,6 +161,56 @@ class GameEffectDispatcher {
           effect: effect,
           reduceMotion: _reduceMotion(),
         );
+    }
+  }
+
+  Future<void> _handleUnitMove(
+    AnimateUnitMoveEffect effect, {
+    required bool retainAtDestination,
+  }) async {
+    final unitId = effect.unitId;
+    _unitAnimationController.preparePendingMoveOrigin(
+      unitId,
+      col: effect.fromCol,
+      row: effect.fromRow,
+    );
+    final unitVisible =
+        _unitAnimationController.unitWorldPosition(unitId) != null;
+    var followingMovement = false;
+    var movedCamera = false;
+    if (unitVisible &&
+        _moveCameraForUnitMovement() &&
+        _moveCameraForUnitMovementForUnit(unitId)) {
+      await _cameraController.smoothToTile(
+        effect.fromCol,
+        effect.fromRow,
+        duration: 0.28,
+        curve: Curves.easeOutCubic,
+      );
+      movedCamera = true;
+      if (_followUnitMovementCamera()) {
+        followingMovement = true;
+        _cameraController.followWorldPoint(
+          () => _unitAnimationController.unitWorldPosition(unitId),
+        );
+      }
+    }
+    try {
+      await _unitAnimationController.animateUnitMove(
+        unitId: unitId,
+        fromCol: effect.fromCol,
+        fromRow: effect.fromRow,
+        steps: effect.steps,
+        retainAtDestination: retainAtDestination,
+        onComplete: retainAtDestination ? () {} : _onRendererStateChanged,
+      );
+    } finally {
+      if (followingMovement) {
+        _cameraController.stopFollowingWorldPoint();
+      }
+      if (movedCamera) {
+        await _onUnitMovementCameraComplete(unitId);
+      }
     }
   }
 

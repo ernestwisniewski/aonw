@@ -17,6 +17,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
 part 'unit_marker_layer_testing.dart';
+part 'unit_marker_layer_animation_lifecycle.dart';
 
 enum _CityUnitMarkerPlacement { none, primary, companion }
 
@@ -194,14 +195,6 @@ class UnitMarkerLayer extends Component with LayerAttachment {
 
   Vector2? worldPositionForUnit(String unitId) =>
       _markers[unitId]?.position.clone();
-
-  void pinPendingMovePositions(Set<String> unitIds) {
-    _animator.pinPendingMovePositions(unitIds);
-  }
-
-  void retainPendingAnimationMarkers(Set<String> unitIds) {
-    _animator.retainPendingAnimationMarkers(unitIds);
-  }
 
   void sync({
     required Component parent,
@@ -412,6 +405,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
 
   @override
   void onRemove() {
+    _releaseAllAnimationLifecycleState();
     for (final marker in _markers.values) {
       marker.removeFromParent();
     }
@@ -424,10 +418,12 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     int? fromCol,
     int? fromRow,
     required List<UnitMovementStep> steps,
+    bool retainAtDestination = false,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
     void completeMove() {
-      _removeMarkerIfNoLongerVisible(unitId);
+      if (!retainAtDestination) _removeMarkerIfNoLongerVisible(unitId);
       onComplete();
     }
 
@@ -436,6 +432,8 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       fromCol: fromCol,
       fromRow: fromRow,
       steps: steps,
+      retainAtDestination: retainAtDestination,
+      onError: onError,
       onComplete: () {
         if (_reduceMotion) {
           completeMove();
@@ -453,6 +451,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     required bool defenderKilled,
     bool defenderRetaliated = true,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
     _animator.animateCombat(
       attackerUnitId: attackerUnitId,
@@ -461,18 +460,18 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       defenderKilled: defenderKilled,
       defenderRetaliated: defenderRetaliated,
       onComplete: onComplete,
+      onError: onError,
     );
   }
 
   void _removeMarkerIfNoLongerVisible(String unitId) {
-    if (_visibleUnitIds.contains(unitId)) return;
-    final marker = _markers.remove(unitId);
-    marker?.removeFromParent();
+    if (_visibleUnitIds.contains(unitId) || _animator.isRetained(unitId)) {
+      return;
+    }
+    _markers.remove(unitId)?.removeFromParent();
   }
 
-  Vector2 _worldPositionFor(int col, int row) {
-    return worldPositionFor(col, row);
-  }
+  Vector2 _worldPositionFor(int col, int row) => worldPositionFor(col, row);
 
   static Vector2 worldPositionFor(
     int col,

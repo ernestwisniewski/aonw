@@ -74,6 +74,7 @@ part 'game_renderer_input.dart';
 part 'game_renderer_state_sync.dart';
 part 'game_renderer_testing.dart';
 part 'game_renderer_tile_interactions.dart';
+part 'game_renderer_transition_queue.dart';
 part 'game_renderer_world_lifecycle.dart';
 
 typedef WorkerActionPaletteOptionsBuilder =
@@ -180,7 +181,7 @@ class GameRenderer extends HexWorld
   final ArtifactMarkerTapCycle _artifactTapCycle = ArtifactMarkerTapCycle();
   CityHex? _longPressInspectHex;
   GameState _renderState = const GameState(activePlayerId: _loadingPlayerId);
-  final List<RendererEffect> _queuedRendererEffects = [];
+  final _queuedRendererEffects = _QueuedRendererEffectQueue();
   WorkerActionPaletteOptionsBuilder? _workerActionPaletteOptionsBuilder;
   final ValueNotifier<GameRenderViewModel> _viewModelNotifier = ValueNotifier(
     GameRenderViewModel.empty,
@@ -394,7 +395,7 @@ class GameRenderer extends HexWorld
   @override
   void update(double dt) {
     super.update(dt);
-    if (_isReady) _cameraController.update(dt);
+    if (_isReady && !_isDisposed) _cameraController.update(dt);
     _syncFastCameraRendering(dt);
   }
 
@@ -551,14 +552,12 @@ class GameRenderer extends HexWorld
   Future<void> handleEffect(RendererEffect effect) => handleEffects([effect]);
 
   @override
-  Future<void> buildWorld() async {
-    await _buildRendererWorld();
-  }
+  Future<void> buildWorld() => _buildRendererWorldSafely();
 
   void disposeRenderer() {
     if (_isDisposed) return;
     _isDisposed = true;
-    _queuedRendererEffects.clear();
+    _cancelRendererTransitions();
     _readyNotifier.dispose();
     _zoomNotifier.dispose();
     _initialCameraFocusReadyNotifier.dispose();

@@ -174,6 +174,10 @@ extension GameRendererTestingHooks on GameRenderer {
   bool get isDisposedForTesting => _isDisposed;
 
   @visibleForTesting
+  bool get hasPendingCameraMotionForTesting =>
+      _isReady && _cameraController.hasPendingMotion;
+
+  @visibleForTesting
   bool isUnitMarkerSelectedForTesting(String unitId) =>
       _unitMarkerLayer.isMarkerSelectedForTesting(unitId);
 

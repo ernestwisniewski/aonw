@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_combat_animator.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -13,17 +14,25 @@ class UnitMarkerLayerAnimator {
     bool reduceMotion = false,
   }) : _markerFor = markerFor,
        _reduceMotion = reduceMotion,
-       _worldPositionFor = worldPositionFor;
+       _worldPositionFor = worldPositionFor {
+    _combatAnimator = UnitMarkerCombatAnimator(markerFor: markerFor);
+  }
 
   final UnitMarker? Function(String unitId) _markerFor;
   final Vector2 Function(int col, int row) _worldPositionFor;
+  late final UnitMarkerCombatAnimator _combatAnimator;
   bool _reduceMotion;
 
-  final Set<String> _animatingUnitIds = {};
+  final Set<String> _movingUnitIds = {};
   final Set<String> _positionLockedUnitIds = {};
-  final Set<String> _retainedAnimationUnitIds = {};
+  final Set<String> _movementRetainedUnitIds = {};
+  final Map<String, Object> _moveTokens = {};
+  final Map<String, SequenceEffect> _moveEffects = {};
 
-  Set<String> get animatingUnitIds => Set.unmodifiable(_animatingUnitIds);
+  Set<String> get animatingUnitIds => Set.unmodifiable({
+    ..._movingUnitIds,
+    ..._combatAnimator.animatingUnitIds,
+  });
 
   bool get reduceMotion => _reduceMotion;
 
@@ -32,21 +41,65 @@ class UnitMarkerLayerAnimator {
     _reduceMotion = value;
   }
 
-  bool isAnimating(String unitId) => _animatingUnitIds.contains(unitId);
+  bool isAnimating(String unitId) =>
+      _movingUnitIds.contains(unitId) || _combatAnimator.isAnimating(unitId);
 
   bool isPositionLocked(String unitId) =>
       _positionLockedUnitIds.contains(unitId);
 
-  bool isRetained(String unitId) => _retainedAnimationUnitIds.contains(unitId);
+  bool isRetained(String unitId) =>
+      _movementRetainedUnitIds.contains(unitId) ||
+      _combatAnimator.isRetained(unitId);
 
   void pinPendingMovePositions(Set<String> unitIds) {
     if (unitIds.isEmpty) return;
     _positionLockedUnitIds.addAll(unitIds);
   }
 
+  void preparePendingMoveOrigin(
+    String unitId, {
+    required int col,
+    required int row,
+  }) {
+    final marker = _markerFor(unitId);
+    if (marker == null) return;
+    marker
+      ..onCity = false
+      ..position = _worldPositionFor(col, row);
+  }
+
   void retainPendingAnimationMarkers(Set<String> unitIds) {
+    _combatAnimator.retainPendingMarkers(unitIds);
+  }
+
+  void retainPendingMoveMarkers(Set<String> unitIds) {
     if (unitIds.isEmpty) return;
-    _retainedAnimationUnitIds.addAll(unitIds);
+    _movementRetainedUnitIds.addAll(unitIds);
+  }
+
+  void releaseAnimationState(Iterable<String> unitIds) {
+    final ids = unitIds.toSet();
+    _combatAnimator.release(ids);
+    _releaseMovementState(ids);
+  }
+
+  void _releaseMovementState(Iterable<String> unitIds) {
+    for (final unitId in unitIds) {
+      _cancelActiveMove(unitId);
+      _positionLockedUnitIds.remove(unitId);
+      _movementRetainedUnitIds.remove(unitId);
+    }
+  }
+
+  void releaseAllAnimationState() {
+    _combatAnimator.releaseAll();
+    _releaseMovementState({
+      ..._movingUnitIds,
+      ..._positionLockedUnitIds,
+      ..._movementRetainedUnitIds,
+      ..._moveTokens.keys,
+      ..._moveEffects.keys,
+    });
   }
 
   void animateMove({
@@ -54,28 +107,33 @@ class UnitMarkerLayerAnimator {
     int? fromCol,
     int? fromRow,
     required List<UnitMovementStep> steps,
+    bool retainAtDestination = false,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
+    _cancelActiveMove(unitId);
     _positionLockedUnitIds.remove(unitId);
 
     final marker = _markerFor(unitId);
     if (marker == null) {
-      _clearRetention(unitId);
+      releaseAnimationState([unitId]);
       onComplete();
       return;
     }
 
     if (_reduceMotion) {
-      _clearRetention(unitId);
       marker
         ..onCity = false
         ..position = _worldPositionFor(steps.last.col, steps.last.row)
         ..playIdle();
+      _completeMoveState(unitId, retainAtDestination: retainAtDestination);
       onComplete();
       return;
     }
 
-    _animatingUnitIds.add(unitId);
+    final token = Object();
+    _moveTokens[unitId] = token;
+    _movingUnitIds.add(unitId);
     marker.onCity = false;
     if (fromCol != null && fromRow != null) {
       marker.position = _worldPositionFor(fromCol, fromRow);
@@ -87,16 +145,27 @@ class UnitMarkerLayerAnimator {
     _syncWalkDirection(marker, startPosition, steps.first);
 
     final sequence = _buildMoveSequence(marker, steps);
+    _moveEffects[unitId] = sequence;
     sequence
       ..removeOnFinish = false
       ..onComplete = () {
+        if (!identical(_moveTokens[unitId], token)) return;
+        _moveTokens.remove(unitId);
+        _moveEffects.remove(unitId);
         scheduleMicrotask(sequence.removeFromParent);
-        _animatingUnitIds.remove(unitId);
-        _clearRetention(unitId);
+        _completeMoveState(unitId, retainAtDestination: retainAtDestination);
         marker.playIdle();
         onComplete();
       };
-    unawaited(Future<void>.value(marker.add(sequence)));
+    unawaited(
+      _attachMoveEffect(
+        unitId: unitId,
+        token: token,
+        marker: marker,
+        sequence: sequence,
+        onError: onError,
+      ),
+    );
   }
 
   void animateCombat({
@@ -106,79 +175,59 @@ class UnitMarkerLayerAnimator {
     required bool defenderKilled,
     bool defenderRetaliated = true,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
-    final attackerMarker = _markerFor(attackerUnitId);
-    final defenderMarker = _markerFor(defenderUnitId);
-    if (attackerMarker == null && defenderMarker == null) {
-      _clearCombatRetention(attackerUnitId, defenderUnitId);
-      onComplete();
-      return;
-    }
-
-    if (_reduceMotion) {
-      _clearCombatRetention(attackerUnitId, defenderUnitId);
-      attackerMarker?.playIdle();
-      defenderMarker?.playIdle();
-      onComplete();
-      return;
-    }
-
-    if (attackerMarker != null) _animatingUnitIds.add(attackerUnitId);
-    if (defenderMarker != null) _animatingUnitIds.add(defenderUnitId);
-
-    if (attackerMarker != null && defenderMarker != null) {
-      attackerMarker.playAttackToward(
-        from: attackerMarker.position,
-        to: defenderMarker.position,
-      );
-      if (defenderRetaliated) {
-        defenderMarker.playAttackToward(
-          from: defenderMarker.position,
-          to: attackerMarker.position,
-        );
-      }
-    } else {
-      attackerMarker?.playAttack();
-      if (defenderRetaliated) defenderMarker?.playAttack();
-    }
-
-    var defenderDieStarted = false;
-    var attackerDieStarted = false;
-    final anchor = attackerMarker ?? defenderMarker!;
-    final effect = FunctionEffect<UnitMarker>((_, progress) {
-      if (defenderKilled && !defenderDieStarted && progress >= 0.48) {
-        defenderMarker?.playDie();
-        defenderDieStarted = true;
-      }
-      if (attackerKilled && !attackerDieStarted && progress >= 0.72) {
-        attackerMarker?.playDie();
-        attackerDieStarted = true;
-      }
-    }, EffectController(duration: _combatAnimationDuration));
-    effect
-      ..target = anchor
-      ..removeOnFinish = false
-      ..onComplete = () {
-        scheduleMicrotask(effect.removeFromParent);
-        _animatingUnitIds
-          ..remove(attackerUnitId)
-          ..remove(defenderUnitId);
-        _clearCombatRetention(attackerUnitId, defenderUnitId);
-        if (!attackerKilled) attackerMarker?.playIdle();
-        if (!defenderKilled) defenderMarker?.playIdle();
-        onComplete();
-      };
-    unawaited(Future<void>.value(anchor.add(effect)));
+    _combatAnimator.animate(
+      attackerUnitId: attackerUnitId,
+      defenderUnitId: defenderUnitId,
+      attackerKilled: attackerKilled,
+      defenderKilled: defenderKilled,
+      defenderRetaliated: defenderRetaliated,
+      reduceMotion: _reduceMotion,
+      onComplete: onComplete,
+      onError: onError,
+    );
   }
 
-  void _clearCombatRetention(String attackerUnitId, String defenderUnitId) {
-    _retainedAnimationUnitIds
-      ..remove(attackerUnitId)
-      ..remove(defenderUnitId);
+  void _completeMoveState(String unitId, {required bool retainAtDestination}) {
+    _movingUnitIds.remove(unitId);
+    if (retainAtDestination) {
+      _positionLockedUnitIds.add(unitId);
+      _movementRetainedUnitIds.add(unitId);
+      return;
+    }
+    _positionLockedUnitIds.remove(unitId);
+    _movementRetainedUnitIds.remove(unitId);
   }
 
-  void _clearRetention(String unitId) {
-    _retainedAnimationUnitIds.remove(unitId);
+  void _cancelActiveMove(String unitId) {
+    final wasMoving = _movingUnitIds.remove(unitId);
+    _moveTokens.remove(unitId);
+    _moveEffects.remove(unitId)?.removeFromParent();
+    if (wasMoving) _markerFor(unitId)?.playIdle();
+  }
+
+  Future<void> _attachMoveEffect({
+    required String unitId,
+    required Object token,
+    required UnitMarker marker,
+    required SequenceEffect sequence,
+    required void Function(Object error, StackTrace stackTrace)? onError,
+  }) async {
+    try {
+      await marker.add(sequence);
+      if (!identical(_moveTokens[unitId], token)) {
+        sequence.removeFromParent();
+      }
+    } catch (error, stackTrace) {
+      if (!identical(_moveTokens[unitId], token)) return;
+      releaseAnimationState([unitId]);
+      if (onError == null) {
+        Zone.current.handleUncaughtError(error, stackTrace);
+      } else {
+        onError(error, stackTrace);
+      }
+    }
   }
 
   SequenceEffect _buildMoveSequence(
@@ -216,5 +265,4 @@ class UnitMarkerLayerAnimator {
   }
 
   static const double _moveStepDuration = 0.6;
-  static const double _combatAnimationDuration = 0.72;
 }

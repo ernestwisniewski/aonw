@@ -1,6 +1,16 @@
 part of 'game_renderer.dart';
 
 extension GameRendererWorldLifecycle on GameRenderer {
+  Future<void> _buildRendererWorldSafely() async {
+    try {
+      await _buildRendererWorld();
+    } catch (error, stackTrace) {
+      _queuedRendererEffects.cancelAll(error, stackTrace);
+      disposeRenderer();
+      rethrow;
+    }
+  }
+
   Future<void> _buildRendererWorld() async {
     onLoadingProgress?.call(0);
     _cameraController = GameCameraController(
@@ -70,22 +80,100 @@ extension GameRendererWorldLifecycle on GameRenderer {
     _syncMarkerDensityForZoom(force: true);
     _syncAfterAction();
     onLoadingProgress?.call(0.92);
-    await _flushQueuedRendererEffects();
+    unawaited(_flushQueuedRendererEffectBatches());
     onLoadingProgress?.call(0.98);
     if (!_isDisposed) _readyNotifier.value = true;
     onLoadingProgress?.call(1);
   }
 
-  Future<void> _flushQueuedRendererEffects() async {
-    if (_queuedRendererEffects.isEmpty || _isDisposed) return;
-    final effects = List<RendererEffect>.of(_queuedRendererEffects);
-    _queuedRendererEffects.clear();
-    await _effectDispatcher.handleEffects(effects);
+  Future<void> _flushQueuedRendererEffectBatches() async {
+    _effectDispatcher.prepareMovementOrigins(
+      _queuedRendererEffects.pendingEffects,
+    );
+    while (_queuedRendererEffects.hasPending && !_isDisposed) {
+      final batch = _queuedRendererEffects.takeNext();
+      try {
+        await _effectDispatcher.handleEffects(
+          batch.effects,
+          beforeEffect: _ensureRendererActive,
+        );
+        batch.complete();
+      } catch (error, stackTrace) {
+        batch.completeError(error, stackTrace);
+      } finally {
+        _queuedRendererEffects.finish(batch);
+      }
+    }
+  }
+
+  void _cancelRendererTransitions() {
+    final error = StateError(
+      'GameRenderer disposed before queued effects completed',
+    );
+    _queuedRendererEffects.cancelAll(error, StackTrace.current);
+    if (_isReady) _cameraController.cancelPendingMotion();
   }
 
   void _applyViewMode() {
     if (!_isReady || _isDisposed) return;
     _sceneBuilder.setViewMode(_viewMode);
     _syncAfterAction();
+  }
+}
+
+final class _QueuedRendererEffectQueue {
+  final List<_QueuedRendererEffectBatch> _pending = [];
+  _QueuedRendererEffectBatch? _active;
+
+  bool get hasPending => _pending.isNotEmpty;
+
+  Iterable<RendererEffect> get pendingEffects sync* {
+    for (final batch in _pending) {
+      yield* batch.effects;
+    }
+  }
+
+  _QueuedRendererEffectBatch enqueue(Iterable<RendererEffect> effects) {
+    final batch = _QueuedRendererEffectBatch(effects);
+    _pending.add(batch);
+    return batch;
+  }
+
+  _QueuedRendererEffectBatch takeNext() {
+    final batch = _pending.removeAt(0);
+    _active = batch;
+    return batch;
+  }
+
+  void finish(_QueuedRendererEffectBatch batch) {
+    if (identical(_active, batch)) _active = null;
+  }
+
+  void cancelAll(Object error, StackTrace stackTrace) {
+    _active?.completeError(error, stackTrace);
+    for (final batch in _pending) {
+      batch.completeError(error, stackTrace);
+    }
+    _pending.clear();
+  }
+}
+
+final class _QueuedRendererEffectBatch {
+  _QueuedRendererEffectBatch(Iterable<RendererEffect> effects)
+    : effects = List<RendererEffect>.unmodifiable(effects);
+
+  final List<RendererEffect> effects;
+  final Completer<void> _completer = Completer<void>();
+
+  Future<void> get done => _completer.future;
+
+  void complete() {
+    if (!_completer.isCompleted) _completer.complete();
+  }
+
+  void completeError(Object error, StackTrace stackTrace) {
+    if (!_completer.isCompleted) {
+      _completer.completeError(error, stackTrace);
+    }
   }
 }

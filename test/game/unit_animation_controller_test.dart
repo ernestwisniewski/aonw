@@ -24,6 +24,8 @@ MapData _map() => MapData(
 class _FakeUnitMarkerLayer extends UnitMarkerLayer {
   VoidCallback? onMoveComplete;
   VoidCallback? onCombatComplete;
+  void Function(Object error, StackTrace stackTrace)? onMoveError;
+  void Function(Object error, StackTrace stackTrace)? onCombatError;
 
   _FakeUnitMarkerLayer()
     : super(mapData: _map(), colorForPlayer: (_) => 0xFF0000FF);
@@ -34,9 +36,12 @@ class _FakeUnitMarkerLayer extends UnitMarkerLayer {
     int? fromCol,
     int? fromRow,
     required List<UnitMovementStep> steps,
+    bool retainAtDestination = false,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
     onMoveComplete = onComplete;
+    onMoveError = onError;
   }
 
   @override
@@ -47,8 +52,10 @@ class _FakeUnitMarkerLayer extends UnitMarkerLayer {
     required bool defenderKilled,
     bool defenderRetaliated = true,
     required VoidCallback onComplete,
+    void Function(Object error, StackTrace stackTrace)? onError,
   }) {
     onCombatComplete = onComplete;
+    onCombatError = onError;
   }
 }
 

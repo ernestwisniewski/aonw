@@ -25,7 +25,7 @@ extension _GameRendererCameraPolicy on GameRenderer {
   }
 
   Future<void> _restoreCameraAfterUnitMovementEffect(String unitId) async {
-    if (!_followEnemyUnitCamera) return;
+    if (_isDisposed || !_followEnemyUnitCamera) return;
     final unit = _renderState.unitById(unitId);
     if (unit == null || !_isEnemyUnit(unit)) return;
     _focusSelection(_renderState.selection);

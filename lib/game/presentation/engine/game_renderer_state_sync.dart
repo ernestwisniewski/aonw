@@ -21,7 +21,7 @@ extension GameRendererStateSync on GameRenderer {
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
-    if (_isDisposed) return;
+    _ensureRendererActive();
     final pending = effects.toList(growable: false);
     final transitionControlsCamera = _transitionControlsCamera(pending);
     final animatedIds = <String>{
@@ -35,6 +35,7 @@ extension GameRendererStateSync on GameRenderer {
           e.defenderUnitId,
         ],
     };
+    final animationUnitIds = {...animatedIds, ...combatAnimatedIds};
     final combatAnimatedCityIds = <String>{
       for (final effect in pending.whereType<PlayCombatAnimationEffect>()) ...[
         if (_renderState.cityById(effect.attackerUnitId) != null ||
@@ -47,41 +48,30 @@ extension GameRendererStateSync on GameRenderer {
     };
     _unitMarkerLayer
       ..pinPendingMovePositions(animatedIds)
-      ..retainPendingAnimationMarkers({...animatedIds, ...combatAnimatedIds});
+      ..retainPendingMoveMarkers(animatedIds)
+      ..retainPendingAnimationMarkers(combatAnimatedIds);
     _cityMarkerLayer.retainPendingAnimationMarkers(combatAnimatedCityIds);
+    var completed = false;
     try {
       _applyState(
         state,
         suppressCameraFocus: transitionControlsCamera,
         currentTurn: currentTurn,
       );
-      await _handleEffectsNow(pending);
+      await _handleEffectsNow(pending, waitForQueuedPlayback: true);
+      completed = true;
     } finally {
+      _unitAnimationController.finishUnitAnimationTransition(
+        animationUnitIds,
+        completed: completed,
+        synchronizeAfterFailure: () =>
+            _syncAfterAction(suppressCameraFocus: true),
+      );
       _cityMarkerLayer.releasePendingAnimationMarkers(combatAnimatedCityIds);
       if (!_isDisposed && combatAnimatedCityIds.isNotEmpty) {
         _syncAfterAction(suppressCameraFocus: true);
       }
     }
-  }
-
-  Future<void> _handleEffectsNow(Iterable<RendererEffect> effects) async {
-    if (_isDisposed) return;
-    final pending = effects.toList();
-    if (pending.isEmpty) return;
-    if (!_isReady) {
-      _queuedRendererEffects.addAll(pending);
-      return;
-    }
-    await _effectDispatcher.handleEffects(pending);
-  }
-
-  Future<void> _enqueueTransition(Future<void> Function() operation) {
-    final next = _transitionQueue.then((_) => operation());
-    _transitionQueue = next.then<void>(
-      (_) {},
-      onError: (Object error, StackTrace stackTrace) {},
-    );
-    return next;
   }
 
   void _syncGridSelection() {
