@@ -10,6 +10,8 @@
 - Improved chained movement and auto-explore animations so intermediate steps
   remain visible and renderer cancellation, disposal, and late callbacks no
   longer leave ghost movement or visual jumps behind.
+- Kept city panels stable while automatic actions continue and kept the camera
+  focused on attacking units throughout combat playback.
 - Unified local and server command rules across movement, city actions,
   diplomacy, research, workers, units, artifacts, and resource trades so the
   same command produces the same authoritative result in every game mode.
