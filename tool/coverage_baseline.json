@@ -35,12 +35,12 @@
         },
         "protocol": {
           "files": {
-            "hit": 7,
-            "found": 8
+            "hit": 9,
+            "found": 10
           },
           "lines": {
-            "hit": 227,
-            "found": 292
+            "hit": 363,
+            "found": 425
           }
         },
         "util": {
