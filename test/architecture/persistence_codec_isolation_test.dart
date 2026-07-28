@@ -7,8 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _codecPath =
     'lib/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
+const _snapshotStorePath =
+    'lib/game/infrastructure/persistence/json_snapshot_store.dart';
 const _storePaths = {
-  'lib/game/infrastructure/persistence/json_snapshot_store.dart',
+  _snapshotStorePath,
   'lib/game/infrastructure/persistence/json_replay_store.dart',
 };
 
@@ -31,6 +33,16 @@ void main() {
       expect(source, isNot(contains('jsonDecode(')), reason: path);
       expect(source, contains('IsolatedSaveSnapshotCodec.'), reason: path);
     }
+  });
+
+  test('current snapshot writes avoid per-command isolate churn', () {
+    final source = File(_snapshotStorePath).readAsStringSync();
+
+    expect(source, contains('SaveSnapshotEnvelopeCodec.encode(snapshot)'));
+    expect(
+      source,
+      isNot(contains('IsolatedSaveSnapshotCodec.encodeEnvelope(snapshot)')),
+    );
   });
 }
 

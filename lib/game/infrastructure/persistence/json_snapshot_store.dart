@@ -4,6 +4,7 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
 import 'package:aonw/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
+import 'package:aonw/game/infrastructure/persistence/save_snapshot_envelope_codec.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 
 class JsonSnapshotStore implements SnapshotStore {
@@ -48,7 +49,7 @@ class JsonSnapshotStore implements SnapshotStore {
 
     final tmp = File(_tmpPath(file, clock.nowUtc()));
     try {
-      final encoded = await IsolatedSaveSnapshotCodec.encodeEnvelope(snapshot);
+      final encoded = SaveSnapshotEnvelopeCodec.encode(snapshot);
       await tmp.writeAsString(encoded, flush: true);
       await _replace(tmp, file);
     } catch (_) {
