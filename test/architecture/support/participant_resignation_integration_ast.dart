@@ -14,6 +14,17 @@ List<MethodInvocation> _methodInvocations(AstNode node, String name) {
   return collector.invocations;
 }
 
+List<MethodInvocation> _targetedInvocations(
+  AstNode node, {
+  required String target,
+  required String method,
+}) {
+  return _methodInvocations(
+    node,
+    method,
+  ).where((call) => call.target?.toSource() == target).toList();
+}
+
 Expression? _variableInitializer(AstNode node, String name) {
   final collector = _VariableCollector(name)..collect(node);
   return collector.variables.length == 1
@@ -21,10 +32,20 @@ Expression? _variableInitializer(AstNode node, String name) {
       : null;
 }
 
+VariableDeclaration? _variableDeclaration(AstNode node, String name) {
+  final collector = _VariableCollector(name)..collect(node);
+  return collector.variables.length == 1 ? collector.variables.single : null;
+}
+
 Map<String, String> _namedArguments(ArgumentList arguments) => {
   for (final argument in arguments.arguments.whereType<NamedExpression>())
     argument.name.label.name: argument.expression.toSource(),
 };
+
+List<String> _positionalArguments(ArgumentList arguments) => [
+  for (final argument in arguments.arguments)
+    if (argument is! NamedExpression) argument.toSource(),
+];
 
 bool _sameStringMap(Map<String, String> left, Map<String, String> right) {
   return left.length == right.length &&
@@ -46,6 +67,49 @@ int _targetMemberReferenceCount(
   final collector = _TargetMemberCollector(target: target, member: member)
     ..collect(node);
   return collector.count;
+}
+
+bool _isInitializerInvocation(
+  Expression? initializer,
+  MethodInvocation? invocation,
+) {
+  return initializer != null &&
+      invocation != null &&
+      initializer.offset == invocation.offset &&
+      initializer.length == invocation.length;
+}
+
+List<Statement> _blockStatements(MethodDeclaration method) {
+  return switch (method.body) {
+    BlockFunctionBody(:final block) => block.statements,
+    _ => const <Statement>[],
+  };
+}
+
+int _statementIndexDeclaring(List<Statement> statements, String name) {
+  return statements.indexWhere(
+    (statement) =>
+        statement is VariableDeclarationStatement &&
+        statement.variables.variables.any(
+          (variable) => variable.name.lexeme == name,
+        ),
+  );
+}
+
+int _statementIndexContaining(List<Statement> statements, AstNode? contained) {
+  if (contained == null) return -1;
+  return statements.indexWhere(
+    (statement) =>
+        statement.offset <= contained.offset && statement.end >= contained.end,
+  );
+}
+
+Set<String> _referencedForbiddenNames(
+  AstNode node,
+  Set<String> forbiddenNames,
+) {
+  final collector = _ForbiddenNameCollector(forbiddenNames)..collect(node);
+  return collector.found;
 }
 
 final class _MethodCollector extends RecursiveAstVisitor<void> {
@@ -116,5 +180,27 @@ final class _TargetMemberCollector extends RecursiveAstVisitor<void> {
       count++;
     }
     super.visitPropertyAccess(node);
+  }
+}
+
+final class _ForbiddenNameCollector extends RecursiveAstVisitor<void> {
+  _ForbiddenNameCollector(this.forbiddenNames);
+
+  final Set<String> forbiddenNames;
+  final Set<String> found = {};
+
+  void collect(AstNode node) => node.accept(this);
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if (forbiddenNames.contains(node.name)) found.add(node.name);
+    super.visitSimpleIdentifier(node);
+  }
+
+  @override
+  void visitNamedType(NamedType node) {
+    final name = node.name.lexeme;
+    if (forbiddenNames.contains(name)) found.add(name);
+    super.visitNamedType(node);
   }
 }

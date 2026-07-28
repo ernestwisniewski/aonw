@@ -19,11 +19,11 @@ const _resignationPath =
 
 void main() {
   group('participant resignation canonical integration', () {
-    test('keeps the kicked no-op at the lazy decode boundary', () {
-      expect(_earlyNoOpViolations(_unitAt(_resignationPath)), isEmpty);
+    test('keeps the strict canonical flow in dependency order', () {
+      expect(_canonicalFlowViolations(_unitAt(_resignationPath)), isEmpty);
     });
 
-    test('decodes, transitions, and losslessly encodes once', () {
+    test('decodes, validates, transitions, and canonically encodes once', () {
       final unit = _unitAt(_resignationPath);
 
       expect(_codecFlowViolations(unit), isEmpty);
@@ -37,25 +37,25 @@ void main() {
       );
     });
 
-    test('writes only the session slices owned by resignation', () {
-      expect(
-        _selectiveSnapshotPatchViolations(_unitAt(_resignationPath)),
-        isEmpty,
-      );
+    test('changes only the canonical session owned by resignation', () {
+      expect(_canonicalPatchViolations(_unitAt(_resignationPath)), isEmpty);
+    });
+
+    test('does not reach through the canonical boundary into legacy state', () {
+      expect(_legacyAccessViolations(_unitAt(_resignationPath)), isEmpty);
     });
 
     test('leaves lifecycle overlays on the server boundary', () {
       expect(_lifecycleDecisionViolations(_unitAt(_resignationPath)), isEmpty);
     });
 
-    test('rejects eager access and bypassing the lossless codec', () {
+    test('rejects reordered flow and bypassing roster validation', () {
       final violations = _allViolations(_parse(_invalidFlowFixture));
 
       expect(
         violations,
         contains(
-          'already-kicked return must immediately follow state access and '
-          'precede save/canonical access',
+          'resignation must require the participant before snapshot access',
         ),
       );
       expect(
@@ -65,61 +65,64 @@ void main() {
       expect(
         violations,
         contains(
-          'resignation must source state, save, and canonical data from '
-          'decodedSnapshot',
+          'canonical snapshot must come from validated roster exactly once',
         ),
       );
       expect(
         violations,
-        contains('running resignation must not bypass the snapshot codec'),
-      );
-      expect(
-        violations,
         contains(
-          'resignation must encode the same decoded snapshot exactly once',
+          'already-kicked return must immediately follow roster validation',
         ),
       );
       expect(
         violations,
-        contains('running state must use the codec-encoded snapshot'),
+        contains('resignation canonical flow must preserve dependency order'),
       );
+    });
+
+    test('rejects direct canonical access without roster validation', () {
+      final violations = _allViolations(_parse(_invalidValidationFixture));
+
       expect(
         violations,
         contains(
-          'transition must receive canonical state and Wire human order',
+          'canonical snapshot must come from validated roster exactly once',
         ),
       );
     });
 
-    test(
-      'rejects encoding a different decoded snapshot or a partial patch',
-      () {
-        final violations = _allViolations(_parse(_invalidEncodeFixture));
-
-        expect(
-          violations,
-          contains(
-            'resignation must encode the same decoded snapshot exactly once',
-          ),
-        );
-        expect(
-          violations,
-          contains('running state must use the codec-encoded snapshot'),
-        );
-      },
-    );
-
-    test('rejects broad snapshot rewrites and server-side outcome rules', () {
-      final violations = _allViolations(_parse(_invalidPatchFixture));
+    test('rejects a broad canonical rewrite and the wrong encode inputs', () {
+      final violations = _allViolations(_parse(_invalidEncodeFixture));
 
       expect(
         violations,
-        contains('save patch must write only canonical turn states'),
+        contains('canonical patch must write only the transition session'),
       );
       expect(
         violations,
         contains(
-          'runtime patch must write only submitted, AFK, and kicked session slices',
+          'resignation must encode the validated canonical transition exactly '
+          'once',
+        ),
+      );
+      expect(
+        violations,
+        contains('running state must use the canonical codec result'),
+      );
+    });
+
+    test('rejects legacy patching, conversion, and server outcome rules', () {
+      final violations = _allViolations(_parse(_invalidLegacyFixture));
+
+      expect(
+        violations,
+        contains('resignation must not access decoded legacy snapshot parts'),
+      );
+      expect(
+        violations,
+        contains(
+          'resignation must not reference legacy snapshot state or conversion '
+          'APIs',
         ),
       );
       expect(

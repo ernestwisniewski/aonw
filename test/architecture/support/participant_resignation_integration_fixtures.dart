@@ -7,39 +7,66 @@ extension Resignation on MatchLifecycleService {
     required String userIdentifier,
     required DateTime endedAt,
   }) {
-    final player = _stateAccess.requireParticipant(state, userIdentifier);
-    final persistentState = PersistentGameState.fromJson(state.snapshot.state);
-    final save = GameSave.fromJson(state.snapshot.save);
-    final canonicalSnapshot = _lifecycleSnapshotAdapter.toCanonical(
-      save: save,
-      state: persistentState,
-      eventLogOffset: state.snapshot.offset,
+    final decodedSnapshot = _runningMatchSnapshotCodec.decode(
+      match: state.match,
+      snapshot: unvalidatedSnapshot,
     );
-    if (persistentState.runtimeState.isKicked(player.id)) return state;
+    final player = _stateAccess.requireParticipant(state, userIdentifier);
+    final canonicalSnapshot = decodedSnapshot.canonical;
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
       session: canonicalSnapshot.session,
       actorPlayerId: player.id,
-      orderedHumanPlayerIds: save.players.map((player) => player.id),
+      orderedHumanPlayerIds: [
+        for (final matchPlayer in state.match.players)
+          if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
+      ],
     );
-    final nextSave = save.copyWith(
-      playerStates: transition.session.turnStatesByPlayerId,
-    );
-    final nextPersistentState = persistentState.copyWith(
-      runtimeState: persistentState.runtimeState.copyWith(
-        submittedPlayerIds: transition.session.submittedPlayerIds,
-        afkPlayerIds: transition.session.afkPlayerIds,
-        kickedPlayerIds: transition.session.kickedPlayerIds,
-      ),
-    );
-    final encodedSnapshot = _runningMatchSnapshotCodec.encode(
-      otherDecodedSnapshot,
-      save: nextSave,
+    if (canonicalSnapshot.session.isKicked(player.id)) return state;
+    final nextSnapshot = canonicalSnapshot.copyWith(
+      session: transition.session,
     );
     final runningState = state.copyWith(
-      snapshot: state.snapshot.copyWith(
-        save: nextSave.toJson(),
-        state: nextPersistentState.toJson(),
+      snapshot: _runningMatchSnapshotCodec.encodeCanonical(
+        decodedSnapshot,
+        nextSnapshot,
+      ),
+    );
+    return runningState;
+  }
+}
+''';
+
+const _invalidValidationFixture = '''
+extension Resignation on MatchLifecycleService {
+  StoredMatchState _runningStateAfterParticipantResigned(
+    StoredMatchState state, {
+    required String userIdentifier,
+    required DateTime endedAt,
+  }) {
+    final player = _stateAccess.requireParticipant(state, userIdentifier);
+    final decodedSnapshot = _runningMatchSnapshotCodec.decode(
+      match: state.match,
+      snapshot: state.snapshot,
+    );
+    final canonicalSnapshot = decodedSnapshot.canonical;
+    if (canonicalSnapshot.session.isKicked(player.id)) return state;
+    final transition = ParticipantResignationTransition.apply(
+      domain: canonicalSnapshot.domain,
+      session: canonicalSnapshot.session,
+      actorPlayerId: player.id,
+      orderedHumanPlayerIds: [
+        for (final matchPlayer in state.match.players)
+          if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
+      ],
+    );
+    final nextSnapshot = canonicalSnapshot.copyWith(
+      session: transition.session,
+    );
+    final runningState = state.copyWith(
+      snapshot: _runningMatchSnapshotCodec.encodeCanonical(
+        decodedSnapshot,
+        nextSnapshot,
       ),
     );
     return runningState;
@@ -59,10 +86,12 @@ extension Resignation on MatchLifecycleService {
       match: state.match,
       snapshot: state.snapshot,
     );
-    final persistentState = decodedSnapshot.state;
-    if (persistentState.runtimeState.isKicked(player.id)) return state;
-    final save = decodedSnapshot.save;
-    final canonicalSnapshot = decodedSnapshot.canonical;
+    final canonicalSnapshot =
+        _runningMatchSnapshotCodec.canonicalWithValidatedRoster(
+          decodedSnapshot,
+          match: state.match,
+        );
+    if (canonicalSnapshot.session.isKicked(player.id)) return state;
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
       session: canonicalSnapshot.session,
@@ -72,19 +101,13 @@ extension Resignation on MatchLifecycleService {
           if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
       ],
     );
-    final nextSave = save.copyWith(
-      playerStates: transition.session.turnStatesByPlayerId,
+    final nextSnapshot = canonicalSnapshot.copyWith(
+      domain: canonicalSnapshot.domain,
+      session: transition.session,
     );
-    final nextPersistentState = persistentState.copyWith(
-      runtimeState: persistentState.runtimeState.copyWith(
-        submittedPlayerIds: transition.session.submittedPlayerIds,
-        afkPlayerIds: transition.session.afkPlayerIds,
-        kickedPlayerIds: transition.session.kickedPlayerIds,
-      ),
-    );
-    final encodedSnapshot = _runningMatchSnapshotCodec.encode(
+    final encodedSnapshot = _runningMatchSnapshotCodec.encodeCanonical(
       otherDecodedSnapshot,
-      save: nextSave,
+      canonicalSnapshot,
     );
     final runningState = state.copyWith(snapshot: state.snapshot);
     return runningState;
@@ -92,7 +115,7 @@ extension Resignation on MatchLifecycleService {
 }
 ''';
 
-const _invalidPatchFixture = '''
+const _invalidLegacyFixture = '''
 extension Resignation on MatchLifecycleService {
   StoredMatchState _runningStateAfterParticipantResigned(
     StoredMatchState state, {
@@ -104,10 +127,12 @@ extension Resignation on MatchLifecycleService {
       match: state.match,
       snapshot: state.snapshot,
     );
-    final persistentState = decodedSnapshot.state;
-    if (persistentState.runtimeState.isKicked(player.id)) return state;
-    final save = decodedSnapshot.save;
-    final canonicalSnapshot = decodedSnapshot.canonical;
+    final canonicalSnapshot =
+        _runningMatchSnapshotCodec.canonicalWithValidatedRoster(
+          decodedSnapshot,
+          match: state.match,
+        );
+    if (canonicalSnapshot.session.isKicked(player.id)) return state;
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
       session: canonicalSnapshot.session,
@@ -117,27 +142,28 @@ extension Resignation on MatchLifecycleService {
           if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
       ],
     );
-    final nextSave = save.copyWith(
-      players: canonicalSnapshot.domain.participants,
-      playerStates: transition.session.turnStatesByPlayerId,
+    final GameSave save = decodedSnapshot.save;
+    final PersistentGameState persistentState = decodedSnapshot.state;
+    final canonicalAgain = adapter.toCanonical(
+      save: GameSave.fromJson(save.toJson()),
+      state: persistentState,
+      eventLogOffset: decodedSnapshot.wire.offset,
     );
-    final nextPersistentState = persistentState.copyWith(
-      runtimeState: persistentState.runtimeState.copyWith(
-        submittedPlayerIds: transition.session.submittedPlayerIds,
-        timeoutStreaksByPlayerId: transition.session.timeoutStreaksByPlayerId,
-        afkPlayerIds: transition.session.afkPlayerIds,
-        kickedPlayerIds: transition.session.kickedPlayerIds,
+    final legacy = adapter.toLegacy(canonicalAgain);
+    final GameRuntimeState runtimeState = persistentState.runtimeState;
+    final nextSnapshot = canonicalSnapshot.copyWith(
+      session: transition.session,
+    );
+    final runningState = state.copyWith(
+      snapshot: _runningMatchSnapshotCodec.encode(
+        decodedSnapshot,
+        save: legacy.save,
+        state: persistentState.copyWith(runtimeState: runtimeState),
       ),
     );
-    final encodedSnapshot = _runningMatchSnapshotCodec.encode(
-      decodedSnapshot,
-      save: nextSave,
-      state: nextPersistentState,
-    );
-    final runningState = state.copyWith(snapshot: encodedSnapshot);
     const GameOutcomeDetector().alivePlayerIds(
       playerIds: const [],
-      state: nextPersistentState,
+      state: persistentState,
     );
     return runningState;
   }

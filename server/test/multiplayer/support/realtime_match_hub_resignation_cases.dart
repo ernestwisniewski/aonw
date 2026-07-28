@@ -12,8 +12,8 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final seededRuntime = state.runtimeState.copyWith(
         submittedPlayerIds: {actor.id, survivor.id},
         timeoutStreaksByPlayerId: {survivor.id: 2},
-        afkPlayerIds: const {'existing-afk'},
-        kickedPlayerIds: const {'existing-kicked'},
+        afkPlayerIds: {survivor.id},
+        kickedPlayerIds: const {},
         turnStartedAt: DateTime.utc(2026, 7, 21, 11, 55),
       );
       final seededState = state.copyWith(runtimeState: seededRuntime);
@@ -27,8 +27,8 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final updated = await fixture.state();
       final expectedRuntime = seededRuntime.copyWith(
         submittedPlayerIds: {survivor.id},
-        afkPlayerIds: {'existing-afk', actor.id},
-        kickedPlayerIds: {'existing-kicked', actor.id},
+        afkPlayerIds: {survivor.id, actor.id},
+        kickedPlayerIds: {actor.id},
       );
       final expectedState = seededState.copyWith(runtimeState: expectedRuntime);
       final expectedSave = save.copyWith(
@@ -65,7 +65,7 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
 
-    test('does not synthesize a missing turn state', () async {
+    test('rejects a snapshot missing a participant turn state', () async {
       final fixture = await _createResignationFixture('missing-turn-state');
       final actor = fixture.player('guest-one');
       final stored = await fixture.state();
@@ -81,36 +81,22 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
           snapshot: stored.snapshot.copyWith(save: withoutActor.toJson()),
         ),
       );
+      final before = await fixture.state();
+      final saveCallsBefore = fixture.store.saveStateCalls;
 
-      final result = await fixture.resign(actor);
-      final updated = await fixture.state();
-      final updatedSave = GameSave.fromJson(updated.snapshot.save);
-      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
+      await expectLater(
+        fixture.resign(actor),
+        _throwsCanonicalResignationSnapshotError,
+      );
+      final after = await fixture.state();
 
-      expect(result.state, 'running');
-      expect(
-        updatedSave.players.map((player) => player.id),
-        contains(actor.id),
-      );
-      expect(updatedSave.playerStates, isNot(contains(actor.id)));
-      expect(updatedState.runtimeState.kickedPlayerIds, contains(actor.id));
-      expect(updatedState.runtimeState.afkPlayerIds, contains(actor.id));
-      expect(updatedState.runtimeState.turnStartedAt, isNull);
-      expect(
-        (updated.snapshot.state['runtimeState']! as Map).containsKey(
-          'turnStartedAt',
-        ),
-        isFalse,
-      );
-      expect(
-        updated.match.players
-            .singleWhere((player) => player.id == actor.id)
-            .connectionState,
-        WirePlayerConnectionState.offline,
-      );
+      expect(after.match.toJson(), before.match.toJson());
+      expect(after.snapshot.toJson(), before.snapshot.toJson());
+      expect(fixture.store.saveStateCalls, saveCallsBefore);
+      expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
 
-    test('finishes turn state without save player identity', () async {
+    test('rejects a snapshot missing canonical player identity', () async {
       final fixture = await _createResignationFixture('missing-save-player');
       final actor = fixture.player('guest-one');
       final stored = await fixture.state();
@@ -126,102 +112,84 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
           snapshot: stored.snapshot.copyWith(save: withoutActor.toJson()),
         ),
       );
+      final before = await fixture.state();
+      final saveCallsBefore = fixture.store.saveStateCalls;
 
-      final result = await fixture.resign(actor);
-      final updated = await fixture.state();
-      final updatedSave = GameSave.fromJson(updated.snapshot.save);
-      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
-
-      expect(result.state, 'running');
-      expect(
-        updatedSave.players.map((player) => player.id),
-        isNot(contains(actor.id)),
+      await expectLater(
+        fixture.resign(actor),
+        _throwsCanonicalResignationSnapshotError,
       );
-      expect(updatedSave.playerStates[actor.id], PlayerTurnState.finished);
-      expect(updatedState.runtimeState.kickedPlayerIds, contains(actor.id));
-      expect(updatedState.runtimeState.afkPlayerIds, contains(actor.id));
-      expect(updatedState.runtimeState.turnStartedAt, isNull);
+      final after = await fixture.state();
+
+      expect(after.match.toJson(), before.match.toJson());
+      expect(after.snapshot.toJson(), before.snapshot.toJson());
+      expect(fixture.store.saveStateCalls, saveCallsBefore);
+      expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
 
-    test(
-      'resigns a Wire-only actor without rebuilding legacy identity',
-      () async {
-        final fixture = await _createResignationFixture('wire-only-actor');
-        final stored = await fixture.state();
-        final template = fixture.player('guest-one');
-        final wireOnlyActor = template.copyWith(
-          id: 'wire-only-player',
-          userId: 'wire-only-user',
-          name: 'Wire-only player',
-        );
-        await fixture.store.saveState(
-          stored.copyWith(
-            match: stored.match.copyWith(
-              players: [...stored.match.players, wireOnlyActor],
-            ),
+    test('rejects a Wire-only actor outside the canonical roster', () async {
+      final fixture = await _createResignationFixture('wire-only-actor');
+      final stored = await fixture.state();
+      final template = fixture.player('guest-one');
+      final wireOnlyActor = template.copyWith(
+        id: 'wire-only-player',
+        userId: 'wire-only-user',
+        name: 'Wire-only player',
+      );
+      await fixture.store.saveState(
+        stored.copyWith(
+          match: stored.match.copyWith(
+            players: [...stored.match.players, wireOnlyActor],
           ),
-        );
+        ),
+      );
+      final before = await fixture.state();
+      final saveCallsBefore = fixture.store.saveStateCalls;
 
-        final result = await fixture.hub.resignMatch(
+      await expectLater(
+        fixture.hub.resignMatch(
           store: fixture.store,
           userIdentifier: wireOnlyActor.userId,
           matchId: fixture.match.id,
-        );
-        final updated = await fixture.state();
-        final updatedSave = GameSave.fromJson(updated.snapshot.save);
-        final updatedState = PersistentGameState.fromJson(
-          updated.snapshot.state,
-        );
-
-        expect(result.state, 'running');
-        expect(
-          updatedSave.players.map((player) => player.id),
-          isNot(contains(wireOnlyActor.id)),
-        );
-        expect(updatedSave.playerStates, isNot(contains(wireOnlyActor.id)));
-        expect(
-          updatedState.runtimeState.kickedPlayerIds,
-          contains(wireOnlyActor.id),
-        );
-        expect(
-          updatedState.runtimeState.afkPlayerIds,
-          contains(wireOnlyActor.id),
-        );
-        expect(
-          updated.match.players
-              .singleWhere((player) => player.id == wireOnlyActor.id)
-              .connectionState,
-          WirePlayerConnectionState.offline,
-        );
-      },
-    );
-
-    test('persists an exact no-op when the player already resigned', () async {
-      final fixture = await _createResignationFixture('repeat-no-op');
-      final actor = fixture.player('guest-one');
-      await fixture.resign(actor);
-      final afterFirst = await fixture.state();
-      final malformedSnapshot = afterFirst.snapshot.copyWith(
-        save: const {'malformed': true},
+        ),
+        _throwsCanonicalResignationSnapshotError,
       );
-      expect(
-        () => GameSave.fromJson(malformedSnapshot.save),
-        throwsA(anything),
-      );
-      final malformedState = afterFirst.copyWith(snapshot: malformedSnapshot);
-      await fixture.store.saveState(malformedState);
-      final saveCallsBefore = fixture.store.saveStateCalls;
+      final after = await fixture.state();
 
-      final result = await fixture.resign(actor);
-      final afterSecond = await fixture.state();
-
-      expect(result.state, 'running');
-      expect(afterSecond.match.toJson(), malformedState.match.toJson());
-      expect(afterSecond.snapshot, same(malformedSnapshot));
-      expect(afterSecond.snapshot.toJson(), malformedSnapshot.toJson());
-      expect(fixture.store.saveStateCalls, saveCallsBefore + 1);
+      expect(after.match.toJson(), before.match.toJson());
+      expect(after.snapshot.toJson(), before.snapshot.toJson());
+      expect(fixture.store.saveStateCalls, saveCallsBefore);
       expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
+
+    test(
+      'rejects a malformed snapshot even after the player resigned',
+      () async {
+        final fixture = await _createResignationFixture('repeat-no-op');
+        final actor = fixture.player('guest-one');
+        await fixture.resign(actor);
+        final afterFirst = await fixture.state();
+        final malformedSnapshot = afterFirst.snapshot.copyWith(
+          save: const {'malformed': true},
+        );
+        expect(
+          () => GameSave.fromJson(malformedSnapshot.save),
+          throwsA(anything),
+        );
+        final malformedState = afterFirst.copyWith(snapshot: malformedSnapshot);
+        await fixture.store.saveState(malformedState);
+        final saveCallsBefore = fixture.store.saveStateCalls;
+
+        await expectLater(fixture.resign(actor), throwsA(anything));
+        final afterSecond = await fixture.state();
+
+        expect(afterSecond.match.toJson(), malformedState.match.toJson());
+        expect(afterSecond.snapshot, same(malformedSnapshot));
+        expect(afterSecond.snapshot.toJson(), malformedSnapshot.toJson());
+        expect(fixture.store.saveStateCalls, saveCallsBefore);
+        expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
+      },
+    );
 
     test('rejects a non-participant without persistence or events', () async {
       final fixture = await _createResignationFixture('non-participant');
@@ -245,29 +213,14 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
     });
 
     test(
-      'uses Wire humans minus kicked and ignores offline and phantoms',
+      'uses Wire humans minus kicked and ignores offline presence',
       () async {
-        final fixture = await _createResignationFixture('phantom-winner');
+        final fixture = await _createResignationFixture('offline-winner');
         final kicked = fixture.player('owner-user');
         final actor = fixture.player('guest-one');
         final survivor = fixture.player('guest-two');
         final stored = await fixture.state();
-        final save = GameSave.fromJson(stored.snapshot.save);
         final state = PersistentGameState.fromJson(stored.snapshot.state);
-        const savePhantomId = 'state-and-save-phantom';
-        const statePhantomId = 'state-only-phantom';
-        final savePhantom = save.players.first.copyWith(
-          id: savePhantomId,
-          name: 'Phantom empire',
-        );
-        final savePhantomUnit = state.units.first.copyWith(
-          id: 'save-phantom-unit',
-          ownerPlayerId: savePhantomId,
-        );
-        final statePhantomUnit = state.units.first.copyWith(
-          id: 'state-phantom-unit',
-          ownerPlayerId: statePhantomId,
-        );
         await fixture.store.saveState(
           stored.copyWith(
             match: stored.match.copyWith(
@@ -281,20 +234,9 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
               ],
             ),
             snapshot: stored.snapshot.copyWith(
-              save: save
-                  .copyWith(
-                    players: [...save.players, savePhantom],
-                    playerStates: {
-                      ...save.playerStates,
-                      savePhantomId: PlayerTurnState.active,
-                    },
-                  )
-                  .toJson(),
               state: state
                   .copyWith(
-                    units: [...state.units, savePhantomUnit, statePhantomUnit],
                     runtimeState: state.runtimeState.copyWith(
-                      submittedPlayerIds: {statePhantomId},
                       afkPlayerIds: {survivor.id},
                       kickedPlayerIds: {kicked.id},
                     ),
@@ -311,16 +253,11 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         expect(result.outcomeCondition, 'resignation');
         expect(result.winnerPlayerId, survivor.id);
         expect(result.winnerPlayerId, isNot(kicked.id));
-        expect(result.winnerPlayerId, isNot(savePhantomId));
-        expect(result.winnerPlayerId, isNot(statePhantomId));
         final updatedState = PersistentGameState.fromJson(
           updated.snapshot.state,
         );
         expect(updatedState.runtimeState.afkPlayerIds, contains(survivor.id));
-        expect(
-          updatedState.runtimeState.submittedPlayerIds,
-          contains(statePhantomId),
-        );
+        expect(updatedState.runtimeState.kickedPlayerIds, contains(kicked.id));
         expect(
           updatedState.runtimeState.kickedPlayerIds,
           isNot(contains(survivor.id)),
@@ -383,15 +320,39 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         );
         final stored = await fixture.state();
         final save = GameSave.fromJson(stored.snapshot.save);
+        final wireAiSeat = aiSeat.copyWith(kind: WirePlayerKind.ai, ai: wireAi);
+        final domainAiSeat = save.players
+            .singleWhere((player) => player.id == aiSeat.id)
+            .copyWith(
+              kind: PlayerKind.ai,
+              ai: AiPlayer(
+                strategyId: wireAi.strategyId,
+                difficulty: wireAi.difficulty,
+                persona: wireAi.persona,
+                seed: StartingPositionSeed.fromParts([
+                  wireAiSeat.id,
+                  wireAiSeat.name,
+                  wireAiSeat.country.name,
+                ]),
+              ),
+            );
         await fixture.store.saveState(
           stored.copyWith(
             match: stored.match.copyWith(
               players: [
                 for (final player in stored.match.players)
-                  player.id == aiSeat.id
-                      ? player.copyWith(kind: WirePlayerKind.ai, ai: wireAi)
-                      : player,
+                  player.id == aiSeat.id ? wireAiSeat : player,
               ],
+            ),
+            snapshot: stored.snapshot.copyWith(
+              save: save
+                  .copyWith(
+                    players: [
+                      for (final player in save.players)
+                        player.id == aiSeat.id ? domainAiSeat : player,
+                    ],
+                  )
+                  .toJson(),
             ),
           ),
         );
@@ -409,11 +370,13 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
           updatedSave.players
               .singleWhere((player) => player.id == aiSeat.id)
               .kind,
-          PlayerKind.human,
+          PlayerKind.ai,
         );
         expect(
-          save.players.singleWhere((player) => player.id == aiSeat.id).kind,
-          PlayerKind.human,
+          updatedSave.players
+              .singleWhere((player) => player.id == aiSeat.id)
+              .ai,
+          domainAiSeat.ai,
         );
       },
     );
@@ -439,3 +402,11 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
     });
   });
 }
+
+final _throwsCanonicalResignationSnapshotError = throwsA(
+  isA<FormatException>().having(
+    (error) => error.message,
+    'message',
+    'Running snapshot roster must exactly match authoritative players.',
+  ),
+);

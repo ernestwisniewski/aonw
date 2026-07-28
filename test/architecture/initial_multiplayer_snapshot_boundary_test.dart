@@ -27,12 +27,13 @@ void main() {
     expect(_initialFactoryViolations(_unitAt(_initialFactoryPath)), isEmpty);
   });
 
-  test('wire player mapping has exactly two production call sites', () {
+  test('wire player mapping has exactly three production call sites', () {
     final sources = productionDartSources();
 
     expect(_domainPlayerMapperReferenceCounts(sources), {
       _lifecyclePath: 1,
       _outcomePath: 1,
+      _initialCodecPath: 1,
     });
     expect(
       _wirePlayerMapperViolations(_unitAt(_wirePlayerMapperPath)),

@@ -8,6 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 part 'support/running_match_snapshot_codec_fixtures.dart';
 part 'support/running_match_snapshot_codec_ast.dart';
 part 'support/running_match_snapshot_codec_guard.dart';
+part 'support/running_match_snapshot_codec_shape_guard.dart';
+part 'support/running_match_snapshot_codec_flow_guard.dart';
+part 'support/running_match_snapshot_codec_guard_helpers.dart';
 
 const _codecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
@@ -53,9 +56,12 @@ void main() {
           'DecodedRunningMatchSnapshot must be final',
           'decode must require exactly named WireMatch and WireSnapshot',
           'lossless decode must require exactly one WireSnapshot',
+          'canonicalWithValidatedRoster must require one decoded source and '
+              'named WireMatch',
           'encode must require one positional source and optional legacy parts',
           'encodeInitial must require exactly named WireMatch and canonical '
               'snapshot',
+          'encodeCanonical must require decoded source and canonical successor',
         ]),
       );
     });

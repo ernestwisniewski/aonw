@@ -11,13 +11,12 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
       match: state.match,
       snapshot: state.snapshot,
     );
-    final persistentState = decodedSnapshot.state;
-    if (persistentState.runtimeState.isKicked(player.id)) {
+    final canonicalSnapshot = _runningMatchSnapshotCodec
+        .canonicalWithValidatedRoster(decodedSnapshot, match: state.match);
+    if (canonicalSnapshot.session.isKicked(player.id)) {
       return state;
     }
 
-    final save = decodedSnapshot.save;
-    final canonicalSnapshot = decodedSnapshot.canonical;
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
       session: canonicalSnapshot.session,
@@ -35,22 +34,14 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
               )
             : matchPlayer,
     ];
-    final nextSave = save.copyWith(
-      playerStates: transition.session.turnStatesByPlayerId,
-    );
-    final nextPersistentState = persistentState.copyWith(
-      runtimeState: persistentState.runtimeState.copyWith(
-        submittedPlayerIds: transition.session.submittedPlayerIds,
-        afkPlayerIds: transition.session.afkPlayerIds,
-        kickedPlayerIds: transition.session.kickedPlayerIds,
-      ),
+    final nextSnapshot = canonicalSnapshot.copyWith(
+      session: transition.session,
     );
     final runningState = state.copyWith(
       match: state.match.copyWith(players: players),
-      snapshot: _runningMatchSnapshotCodec.encode(
+      snapshot: _runningMatchSnapshotCodec.encodeCanonical(
         decodedSnapshot,
-        save: nextSave,
-        state: nextPersistentState,
+        nextSnapshot,
       ),
     );
     return _stateAfterResignationTransition(

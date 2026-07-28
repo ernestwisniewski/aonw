@@ -1,51 +1,61 @@
 part of '../participant_resignation_integration_test.dart';
 
-List<String> _selectiveSnapshotPatchViolations(CompilationUnit unit) {
+List<String> _canonicalPatchViolations(CompilationUnit unit) {
   final method = _runningResignationMethod(unit);
   if (method == null) return const [];
-  final nextSave = _variableInitializer(method.body, 'nextSave');
-  final nextSaveCall = nextSave is MethodInvocation ? nextSave : null;
-  final nextPersistentState = _variableInitializer(
+  final nextSnapshot = _variableInitializer(method.body, 'nextSnapshot');
+  final copy = nextSnapshot is MethodInvocation ? nextSnapshot : null;
+  final canonicalCopies = _targetedInvocations(
     method.body,
-    'nextPersistentState',
+    target: 'canonicalSnapshot',
+    method: 'copyWith',
   );
-  final persistentCall = nextPersistentState is MethodInvocation
-      ? nextPersistentState
-      : null;
-  final persistentArguments = persistentCall == null
+  final arguments = copy == null
       ? const <String, String>{}
-      : _namedArguments(persistentCall.argumentList);
-  final runtimeExpression = persistentArguments['runtimeState'];
-  final runtimeCall = _methodInvocations(method.body, 'copyWith')
-      .where(
-        (call) =>
-            call.target?.toSource() == 'persistentState.runtimeState' &&
-            call.toSource() == runtimeExpression,
-      )
-      .toList();
-  final runtimeArguments = runtimeCall.length == 1
-      ? _namedArguments(runtimeCall.single.argumentList)
-      : const <String, String>{};
+      : _namedArguments(copy.argumentList);
   return [
-    if (nextSaveCall?.target?.toSource() != 'save' ||
-        !_sameStringMap(
-          nextSaveCall == null
-              ? const <String, String>{}
-              : _namedArguments(nextSaveCall.argumentList),
-          const {'playerStates': 'transition.session.turnStatesByPlayerId'},
-        ))
-      'save patch must write only canonical turn states',
-    if (persistentCall?.target?.toSource() != 'persistentState' ||
-        persistentArguments.keys.toSet().difference({
-          'runtimeState',
-        }).isNotEmpty ||
-        runtimeCall.length != 1 ||
-        !_sameStringMap(runtimeArguments, const {
-          'submittedPlayerIds': 'transition.session.submittedPlayerIds',
-          'afkPlayerIds': 'transition.session.afkPlayerIds',
-          'kickedPlayerIds': 'transition.session.kickedPlayerIds',
-        }))
-      'runtime patch must write only submitted, AFK, and kicked session slices',
+    if (copy?.target?.toSource() != 'canonicalSnapshot' ||
+        canonicalCopies.length != 1 ||
+        !identical(copy, canonicalCopies.single) ||
+        copy?.argumentList.arguments.length != 1 ||
+        !_sameStringMap(arguments, const {'session': 'transition.session'}))
+      'canonical patch must write only the transition session',
+  ];
+}
+
+List<String> _legacyAccessViolations(CompilationUnit unit) {
+  final method = _runningResignationMethod(unit);
+  if (method == null) return const [];
+  final decodedPartReferences =
+      _targetMemberReferenceCount(
+        method.body,
+        target: 'decodedSnapshot',
+        member: 'save',
+      ) +
+      _targetMemberReferenceCount(
+        method.body,
+        target: 'decodedSnapshot',
+        member: 'state',
+      );
+  const forbiddenNames = {
+    'GameSave',
+    'PersistentGameState',
+    'GameRuntimeState',
+    'runtimeState',
+    'toJson',
+    'toLegacy',
+    'toCanonical',
+  };
+  final referencedForbiddenNames = _referencedForbiddenNames(
+    method.body,
+    forbiddenNames,
+  );
+  final legacyEncodeCalls = _methodInvocations(method.body, 'encode');
+  return [
+    if (decodedPartReferences != 0)
+      'resignation must not access decoded legacy snapshot parts',
+    if (referencedForbiddenNames.isNotEmpty || legacyEncodeCalls.isNotEmpty)
+      'resignation must not reference legacy snapshot state or conversion APIs',
   ];
 }
 

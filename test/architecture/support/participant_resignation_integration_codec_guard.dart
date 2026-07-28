@@ -5,7 +5,7 @@ List<String> _codecFlowViolations(CompilationUnit unit) {
   if (method == null) return const [];
   return [
     ..._decodeViolations(method),
-    ..._decodedValueViolations(method),
+    ..._validatedCanonicalViolations(method),
     ..._transitionViolations(method),
     ..._encodeViolations(method),
   ];
@@ -32,30 +32,36 @@ List<String> _decodeViolations(MethodDeclaration method) {
   ];
 }
 
-List<String> _decodedValueViolations(MethodDeclaration method) {
-  final persistentState = _variableInitializer(method.body, 'persistentState');
-  final save = _variableInitializer(method.body, 'save');
+List<String> _validatedCanonicalViolations(MethodDeclaration method) {
   final canonicalSnapshot = _variableInitializer(
     method.body,
     'canonicalSnapshot',
   );
+  final calls = _targetedInvocations(
+    method.body,
+    target: '_runningMatchSnapshotCodec',
+    method: 'canonicalWithValidatedRoster',
+  );
+  final validation = calls.length == 1 ? calls.single : null;
+  final positional = validation == null
+      ? const <String>[]
+      : _positionalArguments(validation.argumentList);
+  final named = validation == null
+      ? const <String, String>{}
+      : _namedArguments(validation.argumentList);
   return [
-    if (persistentState?.toSource() != 'decodedSnapshot.state' ||
-        save?.toSource() != 'decodedSnapshot.save' ||
-        canonicalSnapshot?.toSource() != 'decodedSnapshot.canonical' ||
+    if (!_isInitializerInvocation(canonicalSnapshot, validation) ||
+        positional.length != 1 ||
+        positional.single != 'decodedSnapshot' ||
+        !_sameStringMap(named, const {'match': 'state.match'}) ||
+        validation?.argumentList.arguments.length != 2 ||
         _targetMemberReferenceCount(
               method.body,
               target: 'decodedSnapshot',
               member: 'canonical',
             ) !=
-            1)
-      'resignation must source state, save, and canonical data from '
-          'decodedSnapshot',
-    if (_directLegacyDecodeCalls(method.body).isNotEmpty ||
-        _methodInvocations(method.body, 'toCanonical').isNotEmpty ||
-        _methodInvocations(method.body, 'toLegacy').isNotEmpty ||
-        method.body.toSource().contains('_lifecycleSnapshotAdapter'))
-      'running resignation must not bypass the snapshot codec',
+            0)
+      'canonical snapshot must come from validated roster exactly once',
   ];
 }
 
@@ -90,36 +96,33 @@ List<String> _encodeViolations(MethodDeclaration method) {
 }
 
 List<String> _codecEncodeCallViolations(MethodDeclaration method) {
-  final calls = _methodInvocations(method.body, 'encode')
-      .where((call) => call.target?.toSource() == '_runningMatchSnapshotCodec')
-      .toList();
+  final calls = _targetedInvocations(
+    method.body,
+    target: '_runningMatchSnapshotCodec',
+    method: 'encodeCanonical',
+  );
   final encode = calls.length == 1 ? calls.single : null;
-  final namedArguments = encode == null
-      ? const <String, String>{}
-      : _namedArguments(encode.argumentList);
   final positionalArguments = encode == null
-      ? const <Expression>[]
-      : encode.argumentList.arguments
-            .whereType<Expression>()
-            .where((argument) => argument is! NamedExpression)
-            .toList();
+      ? const <String>[]
+      : _positionalArguments(encode.argumentList);
   return [
     if (encode == null ||
-        encode.argumentList.arguments.length != 3 ||
-        positionalArguments.length != 1 ||
-        positionalArguments.single.toSource() != 'decodedSnapshot' ||
-        !_sameStringMap(namedArguments, const {
-          'save': 'nextSave',
-          'state': 'nextPersistentState',
-        }))
-      'resignation must encode the same decoded snapshot exactly once',
+        encode.argumentList.arguments.length != 2 ||
+        positionalArguments.length != 2 ||
+        positionalArguments[0] != 'decodedSnapshot' ||
+        positionalArguments[1] != 'nextSnapshot' ||
+        _namedArguments(encode.argumentList).isNotEmpty)
+      'resignation must encode the validated canonical transition exactly '
+          'once',
   ];
 }
 
 List<String> _runningStateSnapshotViolations(MethodDeclaration method) {
-  final calls = _methodInvocations(method.body, 'encode')
-      .where((call) => call.target?.toSource() == '_runningMatchSnapshotCodec')
-      .toList();
+  final calls = _targetedInvocations(
+    method.body,
+    target: '_runningMatchSnapshotCodec',
+    method: 'encodeCanonical',
+  );
   final encode = calls.length == 1 ? calls.single : null;
   final runningState = _variableInitializer(method.body, 'runningState');
   final runningStateCall = runningState is MethodInvocation
@@ -134,19 +137,8 @@ List<String> _runningStateSnapshotViolations(MethodDeclaration method) {
         encode == null ||
         snapshotExpression == null ||
         !_usesCodecEncodeResult(method.body, snapshotExpression, encode))
-      'running state must use the codec-encoded snapshot',
+      'running state must use the canonical codec result',
   ];
-}
-
-List<MethodInvocation> _directLegacyDecodeCalls(AstNode node) {
-  return _methodInvocations(node, 'fromJson')
-      .where(
-        (call) => const {
-          'GameSave',
-          'PersistentGameState',
-        }.contains(call.target?.toSource()),
-      )
-      .toList();
 }
 
 bool _usesCodecEncodeResult(

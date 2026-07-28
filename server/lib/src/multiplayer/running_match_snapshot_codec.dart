@@ -3,6 +3,8 @@ import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
+import 'package:aonw_server/src/multiplayer/player_match_wire_schema_guard.dart';
+import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 export 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart'
     show DecodedRunningMatchSnapshot;
@@ -10,6 +12,8 @@ export 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart
 const _runningMatchSnapshotAdapter = LegacyGameSnapshotAdapter();
 const LosslessMatchSnapshotDecoder _losslessMatchSnapshotDecoder =
     LosslessMatchSnapshotDecoder();
+const PlayerMatchWireSchemaGuard _playerMatchWireSchemaGuard =
+    PlayerMatchWireSchemaGuard();
 
 /// Decodes only running snapshots and preserves their original wire envelope.
 final class RunningMatchSnapshotCodec {
@@ -25,6 +29,50 @@ final class RunningMatchSnapshotCodec {
       );
     }
     return _losslessMatchSnapshotDecoder.decode(snapshot);
+  }
+
+  /// Materializes canonical state only when its persisted roster is complete
+  /// and exactly matches the authoritative transport roster.
+  CanonicalGameSnapshot canonicalWithValidatedRoster(
+    DecodedRunningMatchSnapshot source, {
+    required WireMatch match,
+  }) {
+    if (match.state != 'running') {
+      throw StateError(
+        'Cannot validate a ${match.state} match as a running snapshot.',
+      );
+    }
+    final expectedParticipants = [
+      for (final player in match.players) domainPlayerFromWire(player),
+    ];
+    final expectedColors = {
+      for (final player in expectedParticipants) player.id: player.colorValue,
+    };
+    final expectedCountries = {
+      for (final player in expectedParticipants) player.id: player.country,
+    };
+    final expectedPlayerIds = expectedColors.keys.toSet();
+    final save = source.save;
+    final state = source.state;
+    _playerMatchWireSchemaGuard.validateCanonicalRoster(
+      save: save,
+      state: state,
+    );
+    final canonical = source.canonical;
+    _requireMatchingRoster(source.wire.matchId == match.id);
+    _requireMatchingRoster(canonical.metadata.id == match.id);
+    _requireMatchingRoster(
+      _sameOrderedPlayers(save.players, expectedParticipants),
+    );
+    _requireMatchingRoster(
+      _sameOrderedPlayers(canonical.domain.participants, expectedParticipants),
+    );
+    _requireMatchingRoster(_sameMap(state.playerColors, expectedColors));
+    _requireMatchingRoster(_sameMap(state.playerCountries, expectedCountries));
+    _requireMatchingRoster(
+      _sameSet(save.playerStates.keys.toSet(), expectedPlayerIds),
+    );
+    return canonical;
   }
 
   WireSnapshot encode(
@@ -112,6 +160,33 @@ PersistentGameState _withoutInitialTurnStartedAt(PersistentGameState state) {
   if (state.runtimeState.turnStartedAt == null) return state;
   return state.copyWith(
     runtimeState: state.runtimeState.copyWith(turnStartedAt: null),
+  );
+}
+
+bool _sameOrderedPlayers(List<Player> actual, List<Player> expected) {
+  if (actual.length != expected.length) return false;
+  for (var index = 0; index < actual.length; index += 1) {
+    if (actual[index] != expected[index]) return false;
+  }
+  return true;
+}
+
+bool _sameMap<K, V>(Map<K, V> actual, Map<K, V> expected) {
+  if (actual.length != expected.length) return false;
+  for (final entry in expected.entries) {
+    if (actual[entry.key] != entry.value) return false;
+  }
+  return true;
+}
+
+bool _sameSet<T>(Set<T> actual, Set<T> expected) {
+  return actual.length == expected.length && actual.containsAll(expected);
+}
+
+void _requireMatchingRoster(bool matches) {
+  if (matches) return;
+  throw const FormatException(
+    'Running snapshot roster must exactly match authoritative players.',
   );
 }
 

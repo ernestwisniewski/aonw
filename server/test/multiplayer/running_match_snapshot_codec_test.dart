@@ -3,6 +3,8 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 import 'package:test/test.dart';
 
+part 'support/running_match_snapshot_codec_roster_cases.dart';
+
 void main() {
   const codec = RunningMatchSnapshotCodec();
 
@@ -145,6 +147,8 @@ void main() {
       );
     });
   });
+
+  _registerRunningMatchSnapshotCodecRosterTests(codec);
 
   group('RunningMatchSnapshotCodec encoding', () {
     test('returns the original wire snapshot without replacements', () {
@@ -373,6 +377,7 @@ _CodecFixture _fixture({
   DateTime? turnStartedAt,
   int wireVersion = 11,
   int offset = 7,
+  bool includeSecondPlayer = false,
 }) {
   const player = Player(
     id: 'player-1',
@@ -389,21 +394,57 @@ _CodecFixture _fixture({
     kind: WirePlayerKind.human,
     connectionState: WirePlayerConnectionState.connected,
   );
+  const secondPlayer = Player(
+    id: 'player-2',
+    name: 'Player 2',
+    colorValue: 0xFF654321,
+    country: PlayerCountry.germany,
+  );
+  const secondWirePlayer = WirePlayer(
+    id: 'player-2',
+    userId: 'user-2',
+    name: 'Player 2',
+    colorValue: 0xFF654321,
+    country: PlayerCountry.germany,
+    kind: WirePlayerKind.human,
+    connectionState: WirePlayerConnectionState.connected,
+  );
+  final players = includeSecondPlayer
+      ? const [player, secondPlayer]
+      : const [player];
+  final wirePlayers = includeSecondPlayer
+      ? const [wirePlayer, secondWirePlayer]
+      : const [wirePlayer];
+  final playerStates = includeSecondPlayer
+      ? const {
+          'player-1': PlayerTurnState.active,
+          'player-2': PlayerTurnState.active,
+        }
+      : const {'player-1': PlayerTurnState.active};
+  final playerColors = includeSecondPlayer
+      ? const {'player-1': 0xFF123456, 'player-2': 0xFF654321}
+      : const {'player-1': 0xFF123456};
+  final playerCountries = includeSecondPlayer
+      ? const {
+          'player-1': PlayerCountry.poland,
+          'player-2': PlayerCountry.germany,
+        }
+      : const {'player-1': PlayerCountry.poland};
   final savedAt = DateTime.utc(2026, 7, 21, 15);
   final save = GameSave(
     id: 'match-1',
     name: 'Codec fixture',
     mapName: 'verdantia',
     turn: 1,
-    playerStates: const {'player-1': PlayerTurnState.active},
+    playerStates: playerStates,
     savedAt: savedAt,
     camera: CameraState.zero,
-    players: const [player],
+    players: players,
     gameMode: GameMode.multiplayer,
   );
   final state = PersistentGameState.snapshot(
-    playerColors: const {'player-1': 0xFF123456},
-    playerCountries: const {'player-1': PlayerCountry.poland},
+    playerColors: playerColors,
+    playerCountries: playerCountries,
     runtimeState: GameRuntimeState.snapshot(turnStartedAt: turnStartedAt),
   );
   final wire = WireSnapshot(
@@ -419,10 +460,18 @@ _CodecFixture _fixture({
     ownerUserId: 'user-1',
     name: 'Codec fixture',
     mapName: 'verdantia',
-    players: const [wirePlayer],
+    players: wirePlayers,
     turn: 1,
     state: 'running',
     createdAt: DateTime.utc(2026, 7, 21, 14),
   );
   return (match: match, wire: wire, save: save, state: state);
 }
+
+final _throwsRosterMismatch = throwsA(
+  isA<FormatException>().having(
+    (error) => error.message,
+    'message',
+    'Running snapshot roster must exactly match authoritative players.',
+  ),
+);
