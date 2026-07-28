@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/ai_domain_state_fingerprint.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 
 class AiTurnPlanPrecomputeKey {
   final String saveId;
@@ -94,12 +94,10 @@ class AiTurnPlanPrecomputeKey {
   }
 
   static int _worldStateHash(SaveSnapshot snapshot) {
-    final tacticalRuntimeState = GameRuntimeState.snapshot(
-      intendedAttacks: snapshot.runtimeState.intendedAttacks,
+    return AiDomainStateFingerprint.hash(
+      snapshot.canonical.domain,
+      includeIntendedAttacks: true,
     );
-    return snapshot.persistentState
-        .copyWith(runtimeState: tacticalRuntimeState)
-        .hashCode;
   }
 }
 

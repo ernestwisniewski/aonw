@@ -13,6 +13,8 @@ const _persistenceCodecPath =
 const _protocolCodecPath = 'lib/api/protocol/codecs.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
+const _aiTurnPreparationBuilderPath =
+    'lib/game/application/services/ai_turn_preparation_builder.dart';
 
 void main() {
   group('SaveSnapshot boundary', () {
@@ -86,6 +88,25 @@ void main() {
         isEmpty,
       );
       expect(names, containsAll(const {'SaveSnapshot', 'canonical'}));
+    });
+
+    test('production semantic snapshot reads ratchet to the AI builder', () {
+      expect(_productionPersistentStateReads(), {
+        _aiTurnPreparationBuilderPath: 1,
+      });
+    });
+
+    test('semantic read scanner ignores text and finds property access', () {
+      final unit = parseString(
+        content: '''
+const decoy = 'snapshot.persistentState';
+// snapshot.persistentState;
+Object read(SaveSnapshot snapshot) => snapshot.persistentState;
+Object indirect() => source().persistentState;
+''',
+      ).unit;
+
+      expect(_persistentStateReadCount(unit), 2);
     });
 
     test('AST guard catches semantic serialization helper bridges', () {
@@ -232,6 +253,29 @@ Set<String> _namesIn(AstNode node) {
   return collector.names;
 }
 
+Map<String, int> _productionPersistentStateReads() {
+  final reads = <String, int>{};
+  final files =
+      Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'))
+          .toList()
+        ..sort((left, right) => left.path.compareTo(right.path));
+  for (final file in files) {
+    final path = file.path.replaceAll(r'\', '/');
+    final count = _persistentStateReadCount(_unitAt(path));
+    if (count != 0) reads[path] = count;
+  }
+  return reads;
+}
+
+int _persistentStateReadCount(AstNode node) {
+  final collector = _PersistentStateReadCollector();
+  node.accept(collector);
+  return collector.count;
+}
+
 final class _NameCollector extends RecursiveAstVisitor<void> {
   final Set<String> names = {};
 
@@ -239,5 +283,21 @@ final class _NameCollector extends RecursiveAstVisitor<void> {
   void visitSimpleIdentifier(SimpleIdentifier node) {
     names.add(node.name);
     super.visitSimpleIdentifier(node);
+  }
+}
+
+final class _PersistentStateReadCollector extends RecursiveAstVisitor<void> {
+  int count = 0;
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (node.identifier.name == 'persistentState') count += 1;
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    if (node.propertyName.name == 'persistentState') count += 1;
+    super.visitPropertyAccess(node);
   }
 }

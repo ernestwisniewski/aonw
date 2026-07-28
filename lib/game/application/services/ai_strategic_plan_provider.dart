@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/ai_domain_state_fingerprint.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 class AiStrategicPlanProvider {
@@ -320,9 +320,7 @@ class _CachedStrategicPlan {
 }
 
 int _worldStateHash(SaveSnapshot snapshot) {
-  return snapshot.persistentState
-      .copyWith(runtimeState: GameRuntimeState.empty)
-      .hashCode;
+  return AiDomainStateFingerprint.hash(snapshot.canonical.domain);
 }
 
 bool _isMilitaryUnit(GameUnit unit) {
