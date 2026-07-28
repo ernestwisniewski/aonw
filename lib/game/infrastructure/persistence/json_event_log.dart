@@ -72,24 +72,14 @@ Future<String?> _readLastNonEmptyLine(File file) async {
       final start = length > window ? length - window : 0;
       await reader.setPosition(start);
       final bytes = await reader.read(length - start);
-      var end = bytes.length;
-      while (end > 0 &&
-          (bytes[end - 1] == 0x0a ||
-              bytes[end - 1] == 0x0d ||
-              bytes[end - 1] == 0x20 ||
-              bytes[end - 1] == 0x09)) {
-        end--;
-      }
+      final end = _trimmedLineEnd(bytes);
       if (end == 0) {
         if (start == 0) return null;
         window *= 2;
         continue;
       }
 
-      var lineStart = end - 1;
-      while (lineStart >= 0 && bytes[lineStart] != 0x0a) {
-        lineStart--;
-      }
+      final lineStart = _lastLineBreak(bytes, end);
       if (lineStart >= 0 || start == 0) {
         return utf8.decode(bytes.sublist(lineStart + 1, end));
       }
@@ -98,4 +88,23 @@ Future<String?> _readLastNonEmptyLine(File file) async {
   } finally {
     await reader.close();
   }
+}
+
+int _trimmedLineEnd(List<int> bytes) {
+  var end = bytes.length;
+  while (end > 0 && _isJsonlTrailingWhitespace(bytes[end - 1])) {
+    end--;
+  }
+  return end;
+}
+
+bool _isJsonlTrailingWhitespace(int byte) =>
+    byte == 0x0a || byte == 0x0d || byte == 0x20 || byte == 0x09;
+
+int _lastLineBreak(List<int> bytes, int end) {
+  var index = end - 1;
+  while (index >= 0 && bytes[index] != 0x0a) {
+    index--;
+  }
+  return index;
 }

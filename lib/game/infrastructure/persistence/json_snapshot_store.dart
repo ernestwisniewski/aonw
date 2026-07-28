@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
-import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
+import 'package:aonw/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 
 class JsonSnapshotStore implements SnapshotStore {
@@ -22,12 +21,7 @@ class JsonSnapshotStore implements SnapshotStore {
     final file = await _file(saveId);
     if (!await file.exists()) return null;
 
-    final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-    return Snapshot(
-      offset: json['offset'] as int,
-      createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
-      state: SaveSnapshotCodec.fromJson(json['state'] as Map<String, dynamic>),
-    );
+    return IsolatedSaveSnapshotCodec.decodeEnvelope(await file.readAsString());
   }
 
   @override
@@ -54,14 +48,8 @@ class JsonSnapshotStore implements SnapshotStore {
 
     final tmp = File(_tmpPath(file, clock.nowUtc()));
     try {
-      await tmp.writeAsString(
-        jsonEncode({
-          'offset': snapshot.offset,
-          'createdAt': snapshot.createdAt.toUtc().toIso8601String(),
-          'state': SaveSnapshotCodec.toJson(snapshot.state),
-        }),
-        flush: true,
-      );
+      final encoded = await IsolatedSaveSnapshotCodec.encodeEnvelope(snapshot);
+      await tmp.writeAsString(encoded, flush: true);
       await _replace(tmp, file);
     } catch (_) {
       if (await tmp.exists()) await tmp.delete();

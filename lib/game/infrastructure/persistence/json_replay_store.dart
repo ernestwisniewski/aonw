@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
-import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
+import 'package:aonw/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
 
 class JsonReplayStore implements ReplayStore {
   final Directory? savesDir;
@@ -16,8 +15,7 @@ class JsonReplayStore implements ReplayStore {
     final file = await _file(saveId);
     if (!await file.exists()) return null;
 
-    final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-    return SaveSnapshotCodec.fromJson(json);
+    return IsolatedSaveSnapshotCodec.decode(await file.readAsString());
   }
 
   @override
@@ -25,10 +23,8 @@ class JsonReplayStore implements ReplayStore {
     final file = await _file(saveId);
     await file.parent.create(recursive: true);
     if (await file.exists()) return;
-    await file.writeAsString(
-      jsonEncode(SaveSnapshotCodec.toJson(snapshot)),
-      flush: true,
-    );
+    final encoded = await IsolatedSaveSnapshotCodec.encode(snapshot);
+    await file.writeAsString(encoded, flush: true);
   }
 
   @override
