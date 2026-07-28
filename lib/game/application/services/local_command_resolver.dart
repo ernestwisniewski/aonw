@@ -39,9 +39,9 @@ class LocalCommandResolver {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final effectiveContext = context.copyWith(
-      combatSeedTurn: baseSnapshot.save.turn,
-      paceBalance: baseSnapshot.save.matchRules.paceBalance,
-      victoryRules: baseSnapshot.save.matchRules.victory,
+      combatSeedTurn: baseSnapshot.domain.turn,
+      paceBalance: baseSnapshot.domain.matchRules.paceBalance,
+      victoryRules: baseSnapshot.domain.matchRules.victory,
     );
     if (command is SubmitTurnCommand &&
         _rejectSubmitTurn(
@@ -129,7 +129,7 @@ class LocalCommandResolver {
     required DateTime savedAt,
   }) {
     final save = baseSnapshot.save;
-    final playerIds = _activePlayerIds(save);
+    final playerIds = _activePlayerIds(baseSnapshot);
     if (!playerIds.every(reducedState.submittedPlayerIds.contains)) {
       return _ResolvedLocalCommand(
         save: save
@@ -187,14 +187,17 @@ class LocalCommandResolver {
     );
   }
 
-  List<String> _activePlayerIds(GameSave save) {
-    final ids = save.players
+  List<String> _activePlayerIds(SaveSnapshot snapshot) {
+    final ids = snapshot.domain.participants
         .map((player) => player.id)
         .where((id) => id.isNotEmpty)
         .toList();
     if (ids.isNotEmpty) return ids..sort();
 
-    return save.playerStates.keys.where((id) => id.isNotEmpty).toList()..sort();
+    return snapshot.session.turnStatesByPlayerId.keys
+        .where((id) => id.isNotEmpty)
+        .toList()
+      ..sort();
   }
 
   bool _rejectSubmitTurn({
@@ -205,7 +208,7 @@ class LocalCommandResolver {
     return (actorPlayerId != null &&
             actorPlayerId.isNotEmpty &&
             actorPlayerId != command.playerId) ||
-        !_activePlayerIds(baseSnapshot.save).contains(command.playerId) ||
+        !_activePlayerIds(baseSnapshot).contains(command.playerId) ||
         baseSnapshot.session.hasSubmitted(command.playerId);
   }
 }

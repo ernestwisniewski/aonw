@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -38,8 +39,53 @@ void main() {
     expect(result.snapshot.save.savedAt, savedAt);
     expect(result.snapshot.eventLogOffset, 0);
     expect(result.snapshot.domain.turn, 7);
+    expect(result.context.combatSeedTurn, 7);
+    expect(
+      result.context.paceBalance,
+      result.snapshot.domain.matchRules.paceBalance,
+    );
+    expect(
+      result.context.victoryRules,
+      result.snapshot.domain.matchRules.victory,
+    );
     expect(result.state, state);
     expect(result.events, isEmpty);
+  });
+
+  test('local submit accepts a participant synthesized from sparse roster', () {
+    final save = GameSave(
+      id: 'save_1',
+      name: 'Sparse local save',
+      mapName: 'verdantia',
+      turn: 7,
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'legacy_only': PlayerTurnState.active,
+      },
+      savedAt: DateTime.utc(2026, 7, 11),
+      camera: CameraState.zero,
+      players: const [
+        Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
+      ],
+    );
+    const state = GameState(activePlayerId: 'legacy_only');
+
+    final result =
+        LocalCommandResolver(
+          reducer: GameStateReducer(mapData: _mapData()),
+        ).resolve(
+          baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+          currentState: state,
+          command: const SubmitTurnCommand('legacy_only'),
+          savedAt: DateTime.utc(2026, 7, 11, 12),
+          context: const GameCommandContext(actorPlayerId: 'legacy_only'),
+        );
+
+    expect(
+      result.snapshot.session.turnStatesByPlayerId['legacy_only'],
+      PlayerTurnState.finished,
+    );
+    expect(result.state.submittedPlayerIds, {'legacy_only'});
   });
 
   test(
