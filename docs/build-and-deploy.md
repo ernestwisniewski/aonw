@@ -441,6 +441,29 @@ flutter build macos --release \
   --dart-define=AONW_API_BASE_URL=https://api.aonw.net
 ```
 
+Release artifacts for Steam, itch.io, and direct downloads use the same
+Developer ID signed and Apple-notarized app. Configure the notarization
+credentials once in the local login Keychain:
+
+```sh
+xcrun notarytool store-credentials aonw-notary
+```
+
+The command prompts for the Apple ID, team ID, and app-specific password.
+Neither those credentials nor the resulting Keychain entry belong in Git,
+environment files, or Make arguments. Verify the local certificate and
+Keychain profile before starting a release:
+
+```sh
+make macos-distribution-preflight
+```
+
+`make steam-macos` builds the app, signs it with the configured Developer ID
+identity and hardened runtime, submits a temporary ZIP to Apple, staples the
+accepted ticket, validates it, and requires Gatekeeper acceptance before
+creating the final distribution ZIP. `deploy-all` runs the same preflight
+before its quality gates or version commit.
+
 Linux:
 
 ```sh

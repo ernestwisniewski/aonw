@@ -221,6 +221,50 @@ void main() {
       expect(upload, isNot(contains('build-homepage')));
     }
   });
+
+  test('macOS artifacts are verified before their final ZIP exists', () {
+    final macos = _targetBody(
+      makefile,
+      target: 'steam-macos',
+      nextTarget: 'steam-windows',
+    );
+    final orderedSteps = [
+      'flutter build macos',
+      'codesign --force',
+      'codesign --verify',
+      r'ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$$submission_zip"',
+      'notarytool submit',
+      'stapler staple',
+      'stapler validate',
+      'spctl --assess',
+      r'ditto -c -k --keepParent "$(STEAM_MACOS_APP)" '
+          r'"$(STEAM_MACOS_ZIP)"',
+    ];
+
+    var previous = -1;
+    for (final step in orderedSteps) {
+      final offset = macos.indexOf(step);
+      expect(offset, greaterThan(previous), reason: step);
+      previous = offset;
+    }
+    expect(macos, contains(r'--keychain-profile "$(MACOS_NOTARY_PROFILE)"'));
+    expect(macos, contains(r'--options runtime'));
+    expect(macos, contains(r'--timestamp'));
+  });
+
+  test('deploy preflight validates macOS distribution credentials', () {
+    final preflight = _targetBody(
+      makefile,
+      target: 'deploy-all-preflight',
+      nextTarget: 'deploy-all',
+    );
+
+    expect(makefile, contains('\nmacos-distribution-preflight:'));
+    expect(
+      preflight,
+      contains(r'$(MAKE) --no-print-directory macos-distribution-preflight'),
+    );
+  });
 }
 
 String _deployAllBody(String makefile) => _targetBody(

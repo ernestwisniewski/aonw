@@ -116,6 +116,9 @@ STEAM_MACOS_APP_NAME ?= aonw.app
 STEAM_MACOS_BUILD_DIR ?= build/macos/Build/Products/Release
 STEAM_MACOS_APP ?= $(STEAM_MACOS_BUILD_DIR)/$(STEAM_MACOS_APP_NAME)
 STEAM_MACOS_ZIP ?= $(STEAM_DIST_DIR)/aonw-macos-steam.zip
+MACOS_DEVELOPER_IDENTITY ?= Developer ID Application: Ernest Wisniewski (H64KBQ6T2S)
+MACOS_DEVELOPMENT_TEAM ?= H64KBQ6T2S
+MACOS_NOTARY_PROFILE ?= aonw-notary
 STEAM_WINDOWS_RELEASE_DIR ?= build/windows/x64/runner/Release
 STEAM_WINDOWS_ZIP ?= $(STEAM_DIST_DIR)/aonw-windows-steam.zip
 STEAM_WINDOWS_SOURCE ?= auto
@@ -196,7 +199,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -241,6 +244,7 @@ help:
 	@echo "  make deploy-homepage-files LOCAL: upload the staged homepage without rebuilding"
 	@echo "  make deploy-downloads LOCAL: publish latest downloadable builds under aonw.net/download/"
 	@echo "  make archive-ios   LOCAL: create an Xcode Organizer archive for current build"
+	@echo "  make macos-distribution-preflight LOCAL: verify Developer ID and notarization credentials"
 	@echo "  make android-keystore Create an Android upload keystore"
 	@echo "  make android-release LOCAL: test and build Play Store .aab"
 	@echo "  make android-upload-aab LOCAL: upload existing .aab to Google Play"
@@ -345,6 +349,9 @@ help:
 	@echo "  PLATFORM_SMOKE_ANDROID=1|0    multiplayer-platform-smoke Android debug build. Default: $(PLATFORM_SMOKE_ANDROID)"
 	@echo "  PLATFORM_SMOKE_WINDOWS=auto|1|0 multiplayer-platform-smoke Windows debug build. Default: $(PLATFORM_SMOKE_WINDOWS)"
 	@echo "  STEAM_API_BASE_URL=https://... Steam builds only. Default: $(STEAM_API_BASE_URL)"
+	@echo "  MACOS_DEVELOPER_IDENTITY=...   Developer ID identity. Default: $(MACOS_DEVELOPER_IDENTITY)"
+	@echo "  MACOS_DEVELOPMENT_TEAM=...     Apple Developer team. Default: $(MACOS_DEVELOPMENT_TEAM)"
+	@echo "  MACOS_NOTARY_PROFILE=name      notarytool Keychain profile. Default: $(MACOS_NOTARY_PROFILE)"
 	@echo "  STEAM_WINDOWS_SOURCE=auto|local|github|existing Steam Windows source. Default: $(STEAM_WINDOWS_SOURCE)"
 	@echo "  STEAM_LINUX_SOURCE=auto|local|github|existing Steam Linux source. Default: $(STEAM_LINUX_SOURCE)"
 	@echo "  STEAM_INCLUDE_LINUX=0|1     include Linux ZIP/depot in Steam prepare/upload. Default: $(STEAM_INCLUDE_LINUX)"
@@ -1118,7 +1125,24 @@ steam: steam-macos steam-windows
 
 steam-release-from-dist: steam-macos steam-prepare-from-dist steam-upload
 
-steam-macos:
+macos-distribution-preflight:
+	@test "$$(uname -s)" = "Darwin" || { echo "macOS distribution requires a macOS host."; exit 1; }
+	@for command in codesign security spctl xcrun ditto; do \
+		command -v "$$command" >/dev/null || { echo "$$command is required for macOS distribution."; exit 1; }; \
+	done
+	@test -n "$(MACOS_DEVELOPER_IDENTITY)" || { echo "MACOS_DEVELOPER_IDENTITY is required."; exit 1; }
+	@test -n "$(MACOS_DEVELOPMENT_TEAM)" || { echo "MACOS_DEVELOPMENT_TEAM is required."; exit 1; }
+	@test -n "$(MACOS_NOTARY_PROFILE)" || { echo "MACOS_NOTARY_PROFILE is required."; exit 1; }
+	@security find-identity -v -p codesigning \
+		| rg -F '"$(MACOS_DEVELOPER_IDENTITY)"' >/dev/null \
+		|| { echo "Developer ID identity with private key not found: $(MACOS_DEVELOPER_IDENTITY)"; exit 1; }
+	@xcrun notarytool history --keychain-profile "$(MACOS_NOTARY_PROFILE)" >/dev/null 2>&1 \
+		|| { echo "Invalid notarytool Keychain profile: $(MACOS_NOTARY_PROFILE)"; \
+			echo "Create it with: xcrun notarytool store-credentials $(MACOS_NOTARY_PROFILE)"; \
+			exit 1; }
+	@echo "macOS distribution preflight OK: team=$(MACOS_DEVELOPMENT_TEAM), profile=$(MACOS_NOTARY_PROFILE)"
+
+steam-macos: macos-distribution-preflight
 	@command -v flutter >/dev/null || { echo "flutter SDK is required for steam-macos."; exit 1; }
 	@command -v ditto >/dev/null || { echo "ditto is required for steam-macos."; exit 1; }
 	@command -v unzip >/dev/null || { echo "unzip is required for steam-macos."; exit 1; }
@@ -1131,10 +1155,23 @@ steam-macos:
 	test -n "$$app_binary" || { echo "Expected Flutter App.framework binary not found in $(STEAM_MACOS_APP)"; exit 1; }; \
 	strings "$$app_binary" | rg -F "$(STEAM_API_BASE_URL)" >/dev/null
 	@echo "Verified Steam macOS API: $(STEAM_API_BASE_URL)"
-	@mkdir -p "$(STEAM_DIST_DIR)"
-	@rm -f "$(STEAM_MACOS_ZIP)"
-	@ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$(STEAM_MACOS_APP)" "$(STEAM_MACOS_ZIP)"
-	@unzip -tq "$(STEAM_MACOS_ZIP)" >/dev/null
+	@set -e; \
+	submission_dir=$$(mktemp -d "$${TMPDIR:-/tmp}/aonw-notary.XXXXXX"); \
+	trap 'rm -rf "$$submission_dir"' EXIT HUP INT TERM; \
+	submission_zip="$$submission_dir/aonw-macos-notary.zip"; \
+	codesign --force --deep --options runtime --timestamp \
+		--sign "$(MACOS_DEVELOPER_IDENTITY)" "$(STEAM_MACOS_APP)"; \
+	codesign --verify --deep --strict --verbose=2 "$(STEAM_MACOS_APP)"; \
+	ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$$submission_zip"; \
+	xcrun notarytool submit "$$submission_zip" --wait \
+		--keychain-profile "$(MACOS_NOTARY_PROFILE)"; \
+	xcrun stapler staple "$(STEAM_MACOS_APP)"; \
+	xcrun stapler validate "$(STEAM_MACOS_APP)"; \
+	spctl --assess --type execute --verbose=2 "$(STEAM_MACOS_APP)"; \
+	mkdir -p "$(STEAM_DIST_DIR)"; \
+	rm -f "$(STEAM_MACOS_ZIP)"; \
+	ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$(STEAM_MACOS_ZIP)"; \
+	unzip -tq "$(STEAM_MACOS_ZIP)" >/dev/null
 	@echo "Steam macOS ZIP ready: $(STEAM_MACOS_ZIP)"
 
 steam-windows:
@@ -1639,6 +1676,7 @@ deploy-all-plan:
 deploy-all-preflight:
 	@$(MAKE) --no-print-directory deploy-all-plan
 	@$(MAKE) --no-print-directory preflight-release
+	@$(MAKE) --no-print-directory macos-distribution-preflight
 	@for command in flutter ssh rsync rg zip unzip ditto butler; do \
 		command -v "$$command" >/dev/null || { echo "$$command is required for deploy-all."; exit 1; }; \
 	done
