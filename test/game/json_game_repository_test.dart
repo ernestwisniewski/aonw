@@ -299,6 +299,37 @@ void main() {
     });
 
     test(
+      'lists a desktop-sized save catalog without isolate spawn churn',
+      () async {
+        final sourceId = await repository.create(
+          const NewGameRequest(
+            name: 'Game',
+            mapName: 'verdantia',
+            mapSource: MapSource.asset,
+          ),
+        );
+        final source = Directory('${tempDir.path}/$sourceId');
+        for (var index = 1; index < 52; index += 1) {
+          final target = Directory('${tempDir.path}/catalog_$index');
+          await target.create();
+          await File(
+            '${source.path}/snapshot.json',
+          ).copy('${target.path}/snapshot.json');
+          await File(
+            '${source.path}/replay_initial_snapshot.json',
+          ).copy('${target.path}/replay_initial_snapshot.json');
+        }
+
+        final saves = await repository.list().timeout(
+          const Duration(seconds: 5),
+        );
+
+        expect(saves, hasLength(52));
+        expect(saves.every((save) => save.replayAvailable), isTrue);
+      },
+    );
+
+    test(
       'load reads snapshot.json even when stray legacy files exist',
       () async {
         final saveId = await repository.create(

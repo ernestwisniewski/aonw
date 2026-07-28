@@ -7,10 +7,14 @@ import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 
 /// Moves potentially large save/replay JSON work away from the UI isolate.
 abstract final class IsolatedSaveSnapshotCodec {
-  static Future<SaveSnapshot> decode(String source) {
+  static const _isolateDecodeThreshold = 256 * 1024;
+
+  static Future<SaveSnapshot> decode(String source) async {
+    if (source.length < _isolateDecodeThreshold) {
+      return _decode(source);
+    }
     return Isolate.run(() {
-      final json = jsonDecode(source) as Map<String, dynamic>;
-      return SaveSnapshotCodec.fromJson(json);
+      return _decode(source);
     });
   }
 
@@ -18,16 +22,12 @@ abstract final class IsolatedSaveSnapshotCodec {
     return Isolate.run(() => jsonEncode(SaveSnapshotCodec.toJson(snapshot)));
   }
 
-  static Future<Snapshot> decodeEnvelope(String source) {
+  static Future<Snapshot> decodeEnvelope(String source) async {
+    if (source.length < _isolateDecodeThreshold) {
+      return _decodeEnvelope(source);
+    }
     return Isolate.run(() {
-      final json = jsonDecode(source) as Map<String, dynamic>;
-      return Snapshot(
-        offset: json['offset'] as int,
-        createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
-        state: SaveSnapshotCodec.fromJson(
-          json['state'] as Map<String, dynamic>,
-        ),
-      );
+      return _decodeEnvelope(source);
     });
   }
 
@@ -40,4 +40,18 @@ abstract final class IsolatedSaveSnapshotCodec {
       }),
     );
   }
+}
+
+SaveSnapshot _decode(String source) {
+  final json = jsonDecode(source) as Map<String, dynamic>;
+  return SaveSnapshotCodec.fromJson(json);
+}
+
+Snapshot _decodeEnvelope(String source) {
+  final json = jsonDecode(source) as Map<String, dynamic>;
+  return Snapshot(
+    offset: json['offset'] as int,
+    createdAt: DateTime.parse(json['createdAt'] as String).toUtc(),
+    state: SaveSnapshotCodec.fromJson(json['state'] as Map<String, dynamic>),
+  );
 }
