@@ -13,6 +13,8 @@ const _persistenceCodecPath =
 const _protocolCodecPath = 'lib/api/protocol/codecs.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
+const _aiTurnPreparationBuilderPath =
+    'lib/game/application/services/ai_turn_preparation_builder.dart';
 const _canonicalSessionConsumerPaths = [
   _localResolverPath,
   'lib/api/transport/network_command_transport.dart',
@@ -108,6 +110,15 @@ void main() {
         final names = _namesIn(_unitAt(path));
         expect(names, isNot(contains('runtimeState')), reason: path);
       }
+    });
+
+    test('AI builder keeps only its two reviewed legacy boundary reads', () {
+      final unit = _unitAt(_aiTurnPreparationBuilderPath);
+      expect(_propertyReadCount(unit, 'save'), 1);
+      expect(_propertyReadCount(unit, 'runtimeState'), 1);
+      expect(_propertyReadCount(unit, 'metadata'), 2);
+      expect(_propertyReadCount(unit, 'session'), 1);
+      expect(_propertyReadCount(unit, 'domain'), 3);
     });
 
     test('semantic read scanner ignores text and finds property access', () {
@@ -285,7 +296,11 @@ Map<String, int> _productionPersistentStateReads() {
 }
 
 int _persistentStateReadCount(AstNode node) {
-  final collector = _PersistentStateReadCollector();
+  return _propertyReadCount(node, 'persistentState');
+}
+
+int _propertyReadCount(AstNode node, String propertyName) {
+  final collector = _PropertyReadCollector(propertyName);
   node.accept(collector);
   return collector.count;
 }
@@ -300,18 +315,21 @@ final class _NameCollector extends RecursiveAstVisitor<void> {
   }
 }
 
-final class _PersistentStateReadCollector extends RecursiveAstVisitor<void> {
+final class _PropertyReadCollector extends RecursiveAstVisitor<void> {
+  _PropertyReadCollector(this.propertyName);
+
+  final String propertyName;
   int count = 0;
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (node.identifier.name == 'persistentState') count += 1;
+    if (node.identifier.name == propertyName) count += 1;
     super.visitPrefixedIdentifier(node);
   }
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    if (node.propertyName.name == 'persistentState') count += 1;
+    if (node.propertyName.name == propertyName) count += 1;
     super.visitPropertyAccess(node);
   }
 }

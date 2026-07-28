@@ -5,7 +5,6 @@ import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart'
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/domain/ai/city_threat_assessor.dart';
 import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw_core/ai.dart';
@@ -44,12 +43,11 @@ final class AiTurnPreparationBuilder {
     SaveSnapshot? snapshot,
   }) async {
     final resolvedSnapshot = snapshot ?? await repository.load(saveId);
-    if (resolvedSnapshot.save.id != saveId) return null;
-
-    final player = resolvedSnapshot.save.playerById(playerId);
-    if (player == null || player.kind != PlayerKind.ai || player.ai == null) {
-      return null;
-    }
+    final player = _aiPlayerFor(resolvedSnapshot, saveId, playerId);
+    if (player == null) return null;
+    final domain = resolvedSnapshot.domain;
+    final session = resolvedSnapshot.session;
+    final metadata = resolvedSnapshot.metadata;
 
     final ai = player.ai!;
     const civRegistry = CivilizationProfileRegistry();
@@ -59,12 +57,12 @@ final class AiTurnPreparationBuilder {
       activePlayerCanAct: true,
     );
     final movementPreparationCommands = _preparationCommandsFor(
-      gameMode: resolvedSnapshot.save.gameMode,
+      gameMode: session.gameMode,
       playerId: playerId,
     );
     final planningState = _planningState(
       initialState: initialState,
-      gameMode: resolvedSnapshot.save.gameMode,
+      gameMode: session.gameMode,
       playerId: playerId,
     );
     final planningSnapshot = SaveSnapshot.fromGameState(
@@ -74,7 +72,7 @@ final class AiTurnPreparationBuilder {
     );
     final planningDomain = planningSnapshot.canonical.domain;
     final effectiveRuleset = ruleset.copyWith(
-      paceBalance: resolvedSnapshot.save.matchRules.paceBalance,
+      paceBalance: domain.matchRules.paceBalance,
     );
     final loggedHostilePlayerIds =
         await recentHostilityTracker?.hostilePlayerIds(
@@ -83,11 +81,11 @@ final class AiTurnPreparationBuilder {
         ) ??
         const <String>{};
     final pressureTargets = pressureTargetResolver.resolve(
-      players: resolvedSnapshot.save.players,
+      players: domain.participants,
       playerId: playerId,
       state: planningDomain,
-      turn: resolvedSnapshot.save.turn,
-      matchRules: resolvedSnapshot.save.matchRules,
+      turn: domain.turn,
+      matchRules: domain.matchRules,
       mapObjectives: mapData.objectives,
     );
     final cityThreats = cityThreatAssessor.assess(
@@ -97,14 +95,14 @@ final class AiTurnPreparationBuilder {
     final view = GameView.fromDomainState(
       planningDomain,
       forPlayerId: playerId,
-      turn: resolvedSnapshot.save.turn,
+      turn: domain.turn,
       mapData: mapData,
       ruleset: effectiveRuleset,
       activeHostilePlayerIds: cityThreats.activeHostilePlayerIds,
       recentHostilePlayerIds: loggedHostilePlayerIds,
       pressureTargetPlayerIds: pressureTargets.playerIds,
       defaultNeutralPlayerIds: _defaultNeutralPlayerIds(
-        resolvedSnapshot.save.players,
+        domain.participants,
         playerId: playerId,
       ),
       pendingCityAttackThreats: cityThreats.pendingCityAttackThreats,
@@ -121,9 +119,9 @@ final class AiTurnPreparationBuilder {
     var context = AiContext(
       ruleset: effectiveRuleset,
       mapData: view.mapData,
-      turn: resolvedSnapshot.save.turn,
+      turn: domain.turn,
       rng: AiRng.fromTurn(
-        turn: resolvedSnapshot.save.turn,
+        turn: domain.turn,
         playerId: playerId,
         baseSeed: ai.seed,
       ),
@@ -132,8 +130,9 @@ final class AiTurnPreparationBuilder {
       civProfile: civProfile,
       scoreRace: pressureTargets.scoreRace,
       deadline: _deadlineFor(
-        resolvedSnapshot.save,
-        resolvedSnapshot.runtimeState.turnStartedAt,
+        gameMode: session.gameMode,
+        savedAt: metadata.savedAtUtc,
+        rawTurnStartedAt: resolvedSnapshot.runtimeState.turnStartedAt,
       ),
       ownControlPercent: hegemonyContext.controlPercent,
       knownPlayerCount: hegemonyContext.playerCount,
@@ -172,6 +171,13 @@ final class AiTurnPreparationBuilder {
         player: player,
       ),
     );
+  }
+
+  Player? _aiPlayerFor(SaveSnapshot snapshot, String saveId, String playerId) {
+    if (snapshot.metadata.id != saveId) return null;
+    final player = snapshot.domain.participants.byId(playerId);
+    if (player?.kind != PlayerKind.ai || player?.ai == null) return null;
+    return player;
   }
 
   ({double controlPercent, int playerCount}) _hegemonyContextFor(
@@ -217,9 +223,13 @@ final class AiTurnPreparationBuilder {
     return _PreparedAiStrategy(strategy, preparationCommands);
   }
 
-  static DateTime? _deadlineFor(GameSave save, DateTime? turnStartedAt) {
-    if (save.gameMode != GameMode.multiplayer) return null;
-    final startedAt = turnStartedAt ?? save.savedAt;
+  static DateTime? _deadlineFor({
+    required GameMode gameMode,
+    required DateTime savedAt,
+    required DateTime? rawTurnStartedAt,
+  }) {
+    if (gameMode != GameMode.multiplayer) return null;
+    final startedAt = rawTurnStartedAt ?? savedAt;
     return startedAt.toUtc().add(const Duration(seconds: 115));
   }
 
