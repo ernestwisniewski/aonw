@@ -143,6 +143,11 @@ final class SaveSnapshot {
     eventLogOffset: eventLogOffset,
   );
 
+  GameSnapshotMetadata get metadata => canonical.metadata;
+  DomainState get domain => canonical.domain;
+  MatchSessionState get session => canonical.session;
+  PersistedInteractionState get interaction => canonical.interaction;
+
   GameState toGameState({
     String activePlayerId = '',
     bool activePlayerCanAct = true,

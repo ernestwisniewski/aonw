@@ -41,16 +41,16 @@ class AiTurnPlanPrecomputeKey {
     }
 
     return AiTurnPlanPrecomputeKey(
-      saveId: snapshot.save.id,
-      turn: snapshot.save.turn,
-      gameMode: snapshot.save.gameMode,
+      saveId: snapshot.metadata.id,
+      turn: snapshot.domain.turn,
+      gameMode: snapshot.session.gameMode,
       playerId: player.id,
       country: player.country,
       strategyId: ai.strategyId,
       difficulty: ai.difficulty,
       persona: ai.persona,
       seed: ai.seed,
-      matchRulesHash: snapshot.save.matchRules.hashCode,
+      matchRulesHash: snapshot.domain.matchRules.hashCode,
       worldStateHash: _worldStateHash(snapshot),
     );
   }
@@ -95,7 +95,7 @@ class AiTurnPlanPrecomputeKey {
 
   static int _worldStateHash(SaveSnapshot snapshot) {
     return AiDomainStateFingerprint.hash(
-      snapshot.canonical.domain,
+      snapshot.domain,
       includeIntendedAttacks: true,
     );
   }

@@ -20,7 +20,7 @@ class AiRecentHostilityTracker {
     final hostilePlayerIds = <String>{};
 
     await for (final logged in eventLog.readSince(
-      snapshot.save.id,
+      snapshot.metadata.id,
       offset: startOffset,
     )) {
       if (logged.offset > snapshot.eventLogOffset) continue;

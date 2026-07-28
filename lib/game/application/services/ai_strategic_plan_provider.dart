@@ -29,7 +29,7 @@ class AiStrategicPlanProvider {
     }
 
     final key = _StrategicPlanCacheKey(
-      saveId: snapshot.save.id,
+      saveId: snapshot.metadata.id,
       playerId: player.id,
     );
     final identity = _StrategicPlanIdentity.from(
@@ -173,14 +173,14 @@ class _StrategicPlanIdentity {
   }) {
     final ai = player.ai!;
     return _StrategicPlanIdentity(
-      gameMode: snapshot.save.gameMode,
+      gameMode: snapshot.session.gameMode,
       country: player.country,
       strategyId: ai.strategyId,
       difficulty: ai.difficulty,
       configuredPersona: ai.persona,
       effectivePersona: persona,
       seed: ai.seed,
-      matchRulesHash: snapshot.save.matchRules.hashCode,
+      matchRulesHash: snapshot.domain.matchRules.hashCode,
     );
   }
 
@@ -320,7 +320,7 @@ class _CachedStrategicPlan {
 }
 
 int _worldStateHash(SaveSnapshot snapshot) {
-  return AiDomainStateFingerprint.hash(snapshot.canonical.domain);
+  return AiDomainStateFingerprint.hash(snapshot.domain);
 }
 
 bool _isMilitaryUnit(GameUnit unit) {

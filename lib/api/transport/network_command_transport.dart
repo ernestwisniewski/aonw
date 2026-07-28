@@ -474,7 +474,7 @@ class NetworkCommandTransport implements CommandTransport {
   Future<int?> _turnFor(String saveId) async {
     try {
       final snapshot = await gameRepository.load(saveId);
-      final turn = snapshot.save.turn;
+      final turn = snapshot.domain.turn;
       _lastKnownTurnBySaveId[saveId] = turn;
       _lastKnownOffsetBySaveId[saveId] = snapshot.eventLogOffset;
       return turn;
@@ -563,7 +563,7 @@ class NetworkCommandTransport implements CommandTransport {
   }
 
   void _rememberSnapshot(String saveId, SaveSnapshot snapshot, {int? offset}) {
-    _lastKnownTurnBySaveId[saveId] = snapshot.save.turn;
+    _lastKnownTurnBySaveId[saveId] = snapshot.domain.turn;
     _lastKnownOffsetBySaveId[saveId] = offset ?? snapshot.eventLogOffset;
   }
 
@@ -596,7 +596,7 @@ class NetworkCommandTransport implements CommandTransport {
     if (command case SubmitTurnCommand(
       :final playerId,
     ) when playerId == currentState.activePlayerId) {
-      return !snapshot.runtimeState.hasSubmitted(playerId);
+      return !snapshot.session.hasSubmitted(playerId);
     }
     return currentState.activePlayerCanAct;
   }

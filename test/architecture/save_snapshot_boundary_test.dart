@@ -13,6 +13,13 @@ const _persistenceCodecPath =
 const _protocolCodecPath = 'lib/api/protocol/codecs.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
+const _canonicalSessionConsumerPaths = [
+  _localResolverPath,
+  'lib/api/transport/network_command_transport.dart',
+  'lib/game/application/services/ai_plan_precompute_cache.dart',
+  'lib/game/application/services/ai_strategic_plan_provider.dart',
+  'lib/game/application/services/ai_recent_hostility_tracker.dart',
+];
 
 void main() {
   group('SaveSnapshot boundary', () {
@@ -50,6 +57,10 @@ void main() {
       expect(canonicalFields.single.fields.isLate, isTrue);
       expect(rawGetters, hasLength(1));
       expect(fromCanonical, hasLength(1));
+      expect(
+        _namesIn(snapshot),
+        containsAll(const {'metadata', 'domain', 'session', 'interaction'}),
+      );
     });
 
     test('persistence and protocol codecs serialize only raw views', () {
@@ -90,6 +101,13 @@ void main() {
 
     test('production semantic snapshot reads are eliminated', () {
       expect(_productionPersistentStateReads(), isEmpty);
+    });
+
+    test('migrated consumers query canonical snapshot boundaries', () {
+      for (final path in _canonicalSessionConsumerPaths) {
+        final names = _namesIn(_unitAt(path));
+        expect(names, isNot(contains('runtimeState')), reason: path);
+      }
     });
 
     test('semantic read scanner ignores text and finds property access', () {

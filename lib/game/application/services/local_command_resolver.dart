@@ -198,7 +198,7 @@ class LocalCommandResolver {
             actorPlayerId.isNotEmpty &&
             actorPlayerId != command.playerId) ||
         !_activePlayerIds(baseSnapshot.save).contains(command.playerId) ||
-        baseSnapshot.runtimeState.hasSubmitted(command.playerId);
+        baseSnapshot.session.hasSubmitted(command.playerId);
   }
 }
 

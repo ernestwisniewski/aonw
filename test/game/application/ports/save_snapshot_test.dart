@@ -110,6 +110,10 @@ void main() {
       final canonical = snapshot.canonical;
 
       expect(snapshot.canonical, same(canonical));
+      expect(snapshot.metadata, same(canonical.metadata));
+      expect(snapshot.domain, same(canonical.domain));
+      expect(snapshot.session, same(canonical.session));
+      expect(snapshot.interaction, same(canonical.interaction));
       expect(
         () => snapshot.playerGold['p1'] = 2,
         throwsA(isA<UnsupportedError>()),
