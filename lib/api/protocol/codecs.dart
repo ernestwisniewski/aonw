@@ -163,7 +163,7 @@ class SnapshotCodec {
   Map<String, dynamic> _stateToJson(SaveSnapshot snapshot) {
     return {
       'playerColors': snapshot.playerColors,
-      'playerCountries': snapshot.effectivePlayerCountries.map(
+      'playerCountries': snapshot.playerCountries.map(
         (playerId, country) => MapEntry(playerId, country.name),
       ),
       'playerGold': snapshot.playerGold,

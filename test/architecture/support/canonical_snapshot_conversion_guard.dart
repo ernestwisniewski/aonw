@@ -3,14 +3,14 @@ part of '../canonical_turn_pipeline_boundary_test.dart';
 typedef _ConversionCounts = ({int toCanonical, int toLegacy});
 
 const _expectedSnapshotConversionCalls = <String, _ConversionCounts>{
-  _localCallSite: (toCanonical: 1, toLegacy: 1),
+  _saveSnapshotPath: (toCanonical: 1, toLegacy: 1),
   _losslessSnapshotDecoderPath: (toCanonical: 1, toLegacy: 0),
   _runningSnapshotCodecPath: (toCanonical: 0, toLegacy: 1),
   _performanceCallSite: (toCanonical: 1, toLegacy: 1),
 };
 
 const _expectedAdapterTypePaths = {
-  _localCallSite,
+  _saveSnapshotPath,
   _losslessSnapshotDecoderPath,
   _runningSnapshotCodecPath,
   _performanceCallSite,

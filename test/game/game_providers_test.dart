@@ -2609,7 +2609,7 @@ void main() {
 
       await expectLater(
         container.read(gameSaveProvider('save_1').future),
-        completion(same(save)),
+        completion(equals(save)),
       );
       expect(gameRepository.loadCount, 1);
     });

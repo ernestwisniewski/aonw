@@ -67,12 +67,12 @@
       "layers": {
         "api": {
           "files": {
-            "hit": 20,
-            "found": 20
+            "hit": 19,
+            "found": 19
           },
           "lines": {
-            "hit": 1089,
-            "found": 1318
+            "hit": 1042,
+            "found": 1260
           }
         },
         "app": {
@@ -121,8 +121,8 @@
             "found": 48
           },
           "lines": {
-            "hit": 1860,
-            "found": 2180
+            "hit": 1874,
+            "found": 2194
           }
         },
         "game_domain": {

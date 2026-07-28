@@ -12,7 +12,7 @@ abstract final class SaveSnapshotCodec {
   static Map<String, dynamic> toJson(SaveSnapshot snapshot) {
     return {
       'save': snapshot.save.toJson(),
-      ...snapshot.persistentState.toJson(),
+      ...snapshot.rawPersistentState.toJson(),
       'eventLogOffset': snapshot.eventLogOffset,
     };
   }
@@ -35,7 +35,7 @@ abstract final class SaveSnapshotCodec {
     final rawFieldImprovements =
         json['fieldImprovements'] as List<dynamic>? ?? const <dynamic>[];
 
-    final persistentState = PersistentGameState.fromJson({
+    final rawPersistentState = PersistentGameState.fromJson({
       'playerColors': rawPlayerColors,
       'playerCountries': rawPlayerCountries,
       'playerGold': rawPlayerGold,
@@ -65,7 +65,7 @@ abstract final class SaveSnapshotCodec {
       save: GameSave.fromJson(
         GameSaveMigrator.migrate(json['save'] as Map<String, dynamic>),
       ),
-      state: persistentState,
+      state: rawPersistentState,
       eventLogOffset: json['eventLogOffset'] as int? ?? 0,
     );
   }

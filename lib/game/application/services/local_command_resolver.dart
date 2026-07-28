@@ -3,12 +3,10 @@ import 'package:aonw/game/application/services/queued_movement_effect_builder.da
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/application.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
@@ -149,14 +147,14 @@ class LocalCommandResolver {
     required DateTime savedAt,
     required int eventLogOffset,
   }) {
-    const snapshotAdapter = LegacyGameSnapshotAdapter();
+    final inputSnapshot = SaveSnapshot.fromGameState(
+      save: save,
+      state: state,
+      eventLogOffset: eventLogOffset,
+    );
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: snapshotAdapter.toCanonical(
-          save: save,
-          state: state.toPersistentState(),
-          eventLogOffset: eventLogOffset,
-        ),
+        snapshot: inputSnapshot.canonical,
         playerIds: playerIds,
         savedAt: savedAt,
         mapView: reducer.mapData,
@@ -167,19 +165,14 @@ class LocalCommandResolver {
     final uiEffects = QueuedMovementEffectBuilder.fromExecutions(
       movementDelta.executions,
     );
-    final legacyResult = snapshotAdapter.toLegacy(result.snapshot);
-    final nextState =
-        SaveSnapshot.fromPersistentState(
-          save: legacyResult.save,
-          state: legacyResult.state,
-          eventLogOffset: legacyResult.eventLogOffset,
-        ).toGameState(
-          activePlayerId: state.activePlayerId,
-          activePlayerCanAct: state.activePlayerCanAct,
-        );
+    final resolvedSnapshot = SaveSnapshot.fromCanonical(result.snapshot);
+    final nextState = resolvedSnapshot.toGameState(
+      activePlayerId: state.activePlayerId,
+      activePlayerCanAct: state.activePlayerCanAct,
+    );
 
     return _ResolvedLocalCommand(
-      save: legacyResult.save,
+      save: resolvedSnapshot.save,
       state: nextState,
       events: result.events,
       uiEffects: uiEffects,

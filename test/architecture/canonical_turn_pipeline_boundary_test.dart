@@ -15,6 +15,7 @@ const _canonicalPipelinePath =
     'canonical_turn_pipeline.dart';
 const _persistentPipelinePath =
     'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart';
+const _saveSnapshotPath = 'lib/game/application/ports/save_snapshot.dart';
 const _localCallSite =
     'lib/game/application/services/local_command_resolver.dart';
 const _runningSnapshotCodecPath =
@@ -209,6 +210,21 @@ void f(WorkedHexAdapter adapter) {
         expect(
           _adapterTypeReferencePaths(sources),
           isNot(contains(_canonicalPipelinePath)),
+        );
+        expect(counts[_localCallSite] ?? _zeroConversions, _zeroConversions);
+        expect(
+          _adapterTypeReferencePaths(sources),
+          isNot(contains(_localCallSite)),
+        );
+        expect(
+          counts.values.fold(
+            _zeroConversions,
+            (total, current) => (
+              toCanonical: total.toCanonical + current.toCanonical,
+              toLegacy: total.toLegacy + current.toLegacy,
+            ),
+          ),
+          (toCanonical: 3, toLegacy: 3),
         );
       },
     );

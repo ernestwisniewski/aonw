@@ -67,7 +67,8 @@ void main() {
 
       expect(process, isNotNull);
       expect(process!.repository, same(repository));
-      expect(process.snapshot.save, same(save));
+      expect(process.snapshot.save, equals(save));
+      expect(process.snapshot.save, isNot(same(save)));
       expect(process.saveId, save.id);
       expect(process.playerId, 'ai_1');
       expect(process.useCase.repository, same(repository));

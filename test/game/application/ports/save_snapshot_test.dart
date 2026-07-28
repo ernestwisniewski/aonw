@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -55,16 +56,94 @@ void main() {
       });
     });
 
-    test('persistent projection does not cache a mutable legacy source', () {
-      final playerGold = <String, int>{'p1': 1};
-      final snapshot = SaveSnapshot(save: _save(), playerGold: playerGold);
+    test(
+      'owns raw save and persistent collections before canonical access',
+      () {
+        final playerStates = <String, PlayerTurnState>{
+          'p1': PlayerTurnState.active,
+        };
+        final players = <Player>[
+          const Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4),
+        ];
+        final playerGold = <String, int>{'p1': 1};
+        final units = <GameUnit>[
+          GameUnit.startingCommander(ownerPlayerId: 'p1'),
+        ];
+        final sourceSave = _save().copyWith(
+          playerStates: playerStates,
+          players: players,
+        );
+        final snapshot = SaveSnapshot(
+          save: sourceSave,
+          playerGold: playerGold,
+          units: units,
+        );
 
-      final beforeMutation = snapshot.persistentState;
-      playerGold['p1'] = 2;
-      final afterMutation = snapshot.persistentState;
+        playerGold['p1'] = 2;
+        playerStates['p2'] = PlayerTurnState.finished;
+        players.add(
+          const Player(id: 'p2', name: 'Bob', colorValue: 0xFFB83A3A),
+        );
+        units.clear();
 
-      expect(beforeMutation.playerGold, {'p1': 1});
-      expect(afterMutation.playerGold, {'p1': 2});
+        expect(snapshot.playerGold, {'p1': 1});
+        expect(snapshot.save.playerStates, {'p1': PlayerTurnState.active});
+        expect(snapshot.save.players.map((player) => player.id), ['p1']);
+        expect(snapshot.units, hasLength(1));
+        expect(snapshot.canonical.domain.playerGold, {'p1': 1});
+        expect(snapshot.canonical.domain.participants, hasLength(1));
+
+        playerGold['p1'] = 3;
+        players.clear();
+        expect(snapshot.playerGold, {'p1': 1});
+        expect(snapshot.save.players, hasLength(1));
+        expect(snapshot.canonical.domain.playerGold, {'p1': 1});
+      },
+    );
+
+    test('exposes immutable collections and memoizes canonical view', () {
+      final snapshot = SaveSnapshot(
+        save: _save(),
+        playerGold: const {'p1': 1},
+        units: [GameUnit.startingCommander(ownerPlayerId: 'p1')],
+      );
+      final canonical = snapshot.canonical;
+
+      expect(snapshot.canonical, same(canonical));
+      expect(
+        () => snapshot.playerGold['p1'] = 2,
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(() => snapshot.units.clear(), throwsA(isA<UnsupportedError>()));
+      expect(
+        () => snapshot.save.playerStates['p2'] = PlayerTurnState.active,
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(
+        () => snapshot.save.players.clear(),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('copyWith owns replacements and derives an independent view', () {
+      final snapshot = SaveSnapshot(
+        save: _save(),
+        playerGold: const {'p1': 1},
+        eventLogOffset: 4,
+      );
+      final replacement = <String, int>{'p1': 2};
+
+      final copied = snapshot.copyWith(
+        playerGold: replacement,
+        eventLogOffset: 7,
+      );
+      replacement['p1'] = 3;
+
+      expect(copied.playerGold, {'p1': 2});
+      expect(copied.eventLogOffset, 7);
+      expect(copied.canonical.domain.playerGold, {'p1': 2});
+      expect(copied.canonical.eventLogOffset, 7);
+      expect(copied.canonical, isNot(same(snapshot.canonical)));
     });
 
     test('builds snapshot from persistent state', () {
