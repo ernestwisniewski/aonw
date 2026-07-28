@@ -497,7 +497,7 @@
         "lib/game/presentation/engine/rendering_layers/units/unit_marker_renderer.dart": 585,
         "lib/game/presentation/engine/rendering_layers/units/unit_move_preview.dart": 782,
         "lib/game/presentation/formatters/game_display_names.dart": 598,
-        "lib/game/presentation/formatters/game_event_notification_message.dart": 904,
+        "lib/game/presentation/formatters/game_event_notification_message.dart": 884,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 828,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 636,

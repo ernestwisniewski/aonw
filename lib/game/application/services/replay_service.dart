@@ -37,7 +37,6 @@ class ReplayTimeline {
     required this.steps,
   });
 
-  GameSave get save => initialSnapshot.save;
   GameSnapshotMetadata get metadata => initialSnapshot.metadata;
   List<Player> get participants => initialSnapshot.domain.participants;
   MatchSessionState get session => initialSnapshot.session;

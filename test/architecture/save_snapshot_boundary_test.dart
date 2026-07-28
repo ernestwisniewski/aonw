@@ -20,6 +20,8 @@ const _bootstrapGameStatePath =
 const _replayServicePath = 'lib/game/application/services/replay_service.dart';
 const _replayControlSelectorsPath =
     'lib/game/presentation/screens/replay/replay_control_selectors.dart';
+const _replayControlsPath =
+    'lib/game/presentation/screens/replay/replay_controls.dart';
 const _replayRendererHostPath =
     'lib/game/presentation/screens/replay/replay_renderer_host.dart';
 const _canonicalSessionConsumerPaths = [
@@ -157,7 +159,7 @@ void main() {
 
     test('replay read model ratchets initial snapshot legacy access', () {
       final unit = _unitAt(_replayServicePath);
-      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'save'), 2);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'save'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'metadata'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'session'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'domain'), 2);
@@ -194,9 +196,13 @@ void main() {
 
     test('replay name and roster presentation use canonical read model', () {
       final selectors = _namesIn(_unitAt(_replayControlSelectorsPath));
+      final controls = _unitAt(_replayControlsPath);
       final renderer = _namesIn(_unitAt(_replayRendererHostPath));
       expect(selectors, contains('participants'));
       expect(selectors, isNot(contains('save')));
+      expect(_propertyReadCount(controls, 'save'), 0);
+      expect(_propertyReadCount(controls, 'participants'), 2);
+      expect(_namesIn(controls), contains('fromPlayers'));
       expect(renderer, contains('metadata'));
       expect(renderer, isNot(contains('save')));
     });

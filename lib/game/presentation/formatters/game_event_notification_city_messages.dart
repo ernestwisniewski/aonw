@@ -2,7 +2,7 @@ part of 'game_event_notification_message.dart';
 
 GameEventNotificationMessage _cityNotificationMessage({
   required AppLocalizations l10n,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
   required GameState state,
   required GameActivityContext activityContext,
   required GameEvent event,
@@ -12,7 +12,7 @@ GameEventNotificationMessage _cityNotificationMessage({
       GameEventNotificationMessage(
         title: l10n.eventCityFoundedTitle,
         body:
-            '${_cityName(l10n, state, cityId, activityContext)} (${_playerName(l10n, save, ownerPlayerId)})',
+            '${_cityName(l10n, state, cityId, activityContext)} (${_playerName(l10n, roster, ownerPlayerId)})',
         thumbnail: const CityEventNotificationThumbnail(),
       ),
     CityBuiltBuildingEvent(:final cityId, :final buildingType) =>

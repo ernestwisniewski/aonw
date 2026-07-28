@@ -12,7 +12,6 @@ import 'package:aonw/game/presentation/providers/game/game_event_notifications_p
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -20,6 +19,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 
 part 'game_event_notification_combat_messages.dart';
 part 'game_event_notification_city_messages.dart';
+part 'game_event_notification_player_names.dart';
 
 class GameEventNotificationMessage {
   final String title;
@@ -37,12 +37,20 @@ class GameEventNotificationMessage {
   static GameEventNotificationMessage from(
     AppLocalizations l10n,
     GameEventNotification notification,
-    GameSave? save,
+    GameSave? legacySave,
+  ) {
+    return fromPlayers(l10n, notification, legacySave?.players ?? const []);
+  }
+
+  static GameEventNotificationMessage fromPlayers(
+    AppLocalizations l10n,
+    GameEventNotification notification,
+    Iterable<Player> players,
   ) {
     return _GameEventNotificationMessageFormatter(
       l10n: l10n,
       notification: notification,
-      save: save,
+      roster: _GameEventPlayerRoster(players),
     ).message();
   }
 }
@@ -50,12 +58,12 @@ class GameEventNotificationMessage {
 class _GameEventNotificationMessageFormatter {
   final AppLocalizations l10n;
   final GameEventNotification notification;
-  final GameSave? save;
+  final _GameEventPlayerRoster roster;
 
   const _GameEventNotificationMessageFormatter({
     required this.l10n,
     required this.notification,
-    required this.save,
+    required this.roster,
   });
 
   GameState get state => notification.state;
@@ -71,7 +79,7 @@ class _GameEventNotificationMessageFormatter {
       GameEventMessageGroup.unit => _unitEventMessage(event),
       GameEventMessageGroup.combat => _combatEventMessage(
         l10n: l10n,
-        save: save,
+        roster: roster,
         state: state,
         previousState: previousState,
         activityContext: activityContext,
@@ -88,7 +96,7 @@ class _GameEventNotificationMessageFormatter {
   GameEventNotificationMessage _cityEventMessage(GameEvent event) =>
       _cityNotificationMessage(
         l10n: l10n,
-        save: save,
+        roster: roster,
         state: state,
         activityContext: activityContext,
         event: event,
@@ -143,7 +151,7 @@ class _GameEventNotificationMessageFormatter {
     return switch (event) {
       TurnEndedEvent(:final playerId) => GameEventNotificationMessage(
         title: l10n.eventTurnEndedTitle,
-        body: _playerName(l10n, save, playerId),
+        body: _playerName(l10n, roster, playerId),
         thumbnail: const IconEventNotificationThumbnail(
           EventNotificationIconThumbnailKind.turn,
         ),
@@ -157,7 +165,7 @@ class _GameEventNotificationMessageFormatter {
       ) =>
         _dominationThresholdMessage(
           l10n: l10n,
-          save: save,
+          roster: roster,
           state: state,
           playerId: playerId,
           controlPercent: controlPercent,
@@ -168,7 +176,7 @@ class _GameEventNotificationMessageFormatter {
       StabilityBandChangedEvent(:final playerId, :final newBand, :final net) =>
         stabilityBandChangedMessage(
           l10n: l10n,
-          playerName: _playerName(l10n, save, playerId),
+          playerName: _playerName(l10n, roster, playerId),
           newBand: newBand,
           net: net,
         ),
@@ -182,7 +190,7 @@ class _GameEventNotificationMessageFormatter {
         GameEventNotificationMessage(
           title: l10n.eventResearchPointsTitle,
           body: l10n.eventResearchPointsBody(
-            _playerName(l10n, save, playerId),
+            _playerName(l10n, roster, playerId),
             points,
           ),
           thumbnail: const IconEventNotificationThumbnail(
@@ -193,7 +201,7 @@ class _GameEventNotificationMessageFormatter {
         GameEventNotificationMessage(
           title: l10n.eventTechnologyResearchedTitle,
           body:
-              '${_playerName(l10n, save, playerId)}: ${GameDisplayNames.technology(l10n, technologyId)}',
+              '${_playerName(l10n, roster, playerId)}: ${GameDisplayNames.technology(l10n, technologyId)}',
           thumbnail: TechnologyEventNotificationThumbnail(technologyId),
         ),
       StrategicResourceDiscoveredEvent(
@@ -209,7 +217,7 @@ class _GameEventNotificationMessageFormatter {
         GameEventNotificationMessage(
           title: l10n.eventStrategicResourceDiscoveredTitle,
           body: l10n.eventStrategicResourceDiscoveredBody(
-            _playerName(l10n, save, playerId),
+            _playerName(l10n, roster, playerId),
             GameDisplayNames.resource(l10n, resourceType),
           ),
           details: [
@@ -246,7 +254,7 @@ class _GameEventNotificationMessageFormatter {
         GameEventNotificationMessage(
           title: l10n.eventMapObjectiveSecuredTitle,
           body: l10n.eventMapObjectiveSecuredBody(
-            _playerName(l10n, save, playerId),
+            _playerName(l10n, roster, playerId),
             GameDisplayNames.mapObjective(l10n, objectiveType),
           ),
           details: [
@@ -269,7 +277,7 @@ class _GameEventNotificationMessageFormatter {
     return switch (event) {
       CivilizationMetEvent(:final metPlayerId) => _civilizationMetMessage(
         l10n: l10n,
-        save: save,
+        roster: roster,
         state: state,
         metPlayerId: metPlayerId,
       ),
@@ -283,7 +291,7 @@ class _GameEventNotificationMessageFormatter {
       DiplomaticPromiseBrokenEvent() => _diplomacyHistoryMessage(
         l10n: l10n,
         notification: notification,
-        save: save,
+        roster: roster,
       ),
       _ => _unsupportedEvent('diplomacy', event),
     };
@@ -314,7 +322,7 @@ class _GameEventNotificationMessageFormatter {
       ) => GameEventNotificationMessage(
         title: l10n.eventPlayerTimedOutTitle,
         body: l10n.eventPlayerTimedOutBody(
-          _playerName(l10n, save, playerId),
+          _playerName(l10n, roster, playerId),
           turn,
         ),
         thumbnail: const IconEventNotificationThumbnail(
@@ -351,14 +359,14 @@ String _strategicResourcePressureDetail(
 GameEventNotificationMessage _diplomacyHistoryMessage({
   required AppLocalizations l10n,
   required GameEventNotification notification,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
 }) {
   final event = notification.event;
   final text = DiplomacyHistoryPresenter.event(
     l10n,
     event,
     turn: notification.turn,
-    playerNameFor: (playerId) => _playerName(l10n, save, playerId),
+    playerNameFor: (playerId) => _playerName(l10n, roster, playerId),
   );
   final details = <String>[
     if (text.detail != null) text.detail!,
@@ -464,18 +472,18 @@ final class IconEventNotificationThumbnail
 
 GameEventNotificationMessage _civilizationMetMessage({
   required AppLocalizations l10n,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
   required GameState state,
   required String metPlayerId,
 }) {
-  final country = _playerCountry(save, state, metPlayerId);
+  final country = _playerCountry(roster, state, metPlayerId);
   final civilizationName = GameDisplayNames.playerCountry(l10n, country);
   final leaderName = GameDisplayNames.playerCountryLeader(l10n, country);
   return GameEventNotificationMessage(
     title: l10n.eventCivilizationMetTitle,
     body: l10n.eventCivilizationMetBody(
       civilizationName,
-      _playerName(l10n, save, metPlayerId),
+      _playerName(l10n, roster, metPlayerId),
     ),
     details: [leaderName],
     thumbnail: const IconEventNotificationThumbnail(
@@ -486,7 +494,7 @@ GameEventNotificationMessage _civilizationMetMessage({
 
 GameEventNotificationMessage _combatMessage({
   required AppLocalizations l10n,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
   required GameState state,
   required GameState? previousState,
   required String attackerUnitId,
@@ -533,9 +541,9 @@ GameEventNotificationMessage _combatMessage({
   return GameEventNotificationMessage(
     title: l10n.eventCombatTitle,
     body: l10n.eventCombatSimpleBody(
-      _playerCountryName(l10n, save, state, attackerOwnerPlayerId),
+      _playerCountryName(l10n, roster, state, attackerOwnerPlayerId),
       attackerName,
-      _playerCountryName(l10n, save, state, defenderOwnerPlayerId),
+      _playerCountryName(l10n, roster, state, defenderOwnerPlayerId),
       defenderName,
       outcome.attackerHpAfter,
       outcome.defenderHpAfter,
@@ -635,7 +643,7 @@ String _attackerCombatResult(AppLocalizations l10n, CombatOutcome outcome) {
 
 GameEventNotificationMessage _dominationThresholdMessage({
   required AppLocalizations l10n,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
   required GameState state,
   required String playerId,
   required double controlPercent,
@@ -643,7 +651,7 @@ GameEventNotificationMessage _dominationThresholdMessage({
   required int holdTurns,
   required int requiredHoldTurns,
 }) {
-  final playerName = _playerName(l10n, save, playerId);
+  final playerName = _playerName(l10n, roster, playerId);
   final isSelf =
       state.activePlayerId.isNotEmpty && state.activePlayerId == playerId;
   final control = percent(controlPercent, false, false);
@@ -873,32 +881,4 @@ String _citySnapshotName(AppLocalizations l10n, GameActivityCitySnapshot city) {
       center: const CityHex(col: 0, row: 0),
     ),
   );
-}
-
-String _playerName(AppLocalizations l10n, GameSave? save, String playerId) {
-  final player = save?.playerById(playerId);
-  return player == null ? playerId : GameDisplayNames.player(l10n, player);
-}
-
-String _playerCountryName(
-  AppLocalizations l10n,
-  GameSave? save,
-  GameState state,
-  String? playerId,
-) {
-  if (playerId == null || playerId.isEmpty) return '';
-  final player = save?.playerById(playerId);
-  if (player != null) {
-    return GameDisplayNames.playerCountry(l10n, player.country);
-  }
-  final stateCountry = state.playerCountries[playerId];
-  if (stateCountry != null) {
-    return GameDisplayNames.playerCountry(l10n, stateCountry);
-  }
-  return _playerName(l10n, save, playerId);
-}
-
-PlayerCountry _playerCountry(GameSave? save, GameState state, String playerId) {
-  return save?.playerById(playerId)?.country ??
-      state.countryForPlayer(playerId);
 }

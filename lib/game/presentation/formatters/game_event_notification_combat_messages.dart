@@ -2,7 +2,7 @@ part of 'game_event_notification_message.dart';
 
 GameEventNotificationMessage _combatEventMessage({
   required AppLocalizations l10n,
-  required GameSave? save,
+  required _GameEventPlayerRoster? roster,
   required GameState state,
   required GameState? previousState,
   required GameActivityContext activityContext,
@@ -53,7 +53,7 @@ GameEventNotificationMessage _combatEventMessage({
       _combatMessage(
         l10n: l10n,
         state: state,
-        save: save,
+        roster: roster,
         previousState: previousState,
         attackerUnitId: attackerUnitId,
         defenderUnitId: defenderUnitId,
@@ -78,14 +78,14 @@ GameEventNotificationMessage _combatEventMessage({
       GameEventNotificationMessage(
         title: l10n.eventCityCapturedTitle,
         body:
-            '${_cityName(l10n, state, cityId, activityContext)} (${_playerName(l10n, save, newOwnerPlayerId)})',
+            '${_cityName(l10n, state, cityId, activityContext)} (${_playerName(l10n, roster, newOwnerPlayerId)})',
         thumbnail: const CityEventNotificationThumbnail(),
       ),
     CityDestroyedEvent(:final cityId, :final attackerOwnerPlayerId) =>
       GameEventNotificationMessage(
         title: l10n.eventCityDestroyedTitle,
         body:
-            '${_cityName(l10n, previousState ?? state, cityId, activityContext)} (${_playerName(l10n, save, attackerOwnerPlayerId)})',
+            '${_cityName(l10n, previousState ?? state, cityId, activityContext)} (${_playerName(l10n, roster, attackerOwnerPlayerId)})',
         thumbnail: const CityEventNotificationThumbnail(),
       ),
     _ => _unsupportedEvent('combat', event),

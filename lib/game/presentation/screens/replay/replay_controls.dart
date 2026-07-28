@@ -183,7 +183,7 @@ class _ReplayControls extends StatelessWidget {
       final entries = _activityEntriesForPerspective(activity);
       return [
         for (var i = 0; i < entries.length && i < 3; i++)
-          GameEventNotificationMessage.from(
+          GameEventNotificationMessage.fromPlayers(
             l10n,
             GameEventNotification(
               id: step.offset * 1000 + i,
@@ -194,13 +194,13 @@ class _ReplayControls extends StatelessWidget {
               turn: step.turn,
               context: entries[i].context,
             ),
-            timeline.save,
+            timeline.participants,
           ),
       ];
     }
     return [
       for (var i = 0; i < step.events.length && i < 3; i++)
-        GameEventNotificationMessage.from(
+        GameEventNotificationMessage.fromPlayers(
           l10n,
           GameEventNotification(
             id: step.offset * 1000 + i,
@@ -210,7 +210,7 @@ class _ReplayControls extends StatelessWidget {
             playerId: step.effectiveActorPlayerId ?? '',
             turn: step.turn,
           ),
-          timeline.save,
+          timeline.participants,
         ),
     ];
   }
