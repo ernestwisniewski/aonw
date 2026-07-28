@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/advance_turn_snapshot.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -93,17 +94,13 @@ class LocalCommandResolver {
     }
 
     if (command is EndTurnCommand) {
-      final save = const AdvanceTurnPhase().advanceSave(
-        baseSnapshot.save,
+      final snapshot = const AdvanceTurnPhase().advanceSnapshot(
+        baseSnapshot,
         playerId: command.playerId,
         savedAt: savedAt,
       );
       return _ResolvedLocalCommand(
-        snapshot: SaveSnapshot.fromGameState(
-          save: save,
-          state: reducedState,
-          eventLogOffset: baseSnapshot.eventLogOffset,
-        ),
+        snapshot: snapshot.withGameState(reducedState),
         state: reducedState,
       );
     }
