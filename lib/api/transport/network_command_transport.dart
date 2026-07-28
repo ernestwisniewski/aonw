@@ -10,12 +10,10 @@ import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 
@@ -269,11 +267,7 @@ class NetworkCommandTransport implements CommandTransport {
       final offset = _lastKnownOffsetBySaveId[saveId] ?? -1;
       return CommandTransportResult(
         state: currentState,
-        snapshot: SaveSnapshot.fromGameState(
-          save: _clientOnlySave(saveId, currentState),
-          state: currentState,
-          eventLogOffset: offset < 0 ? 0 : offset,
-        ),
+        snapshot: null,
         offset: offset,
       );
     }
@@ -585,53 +579,12 @@ class NetworkCommandTransport implements CommandTransport {
       context: context,
     );
     final offset = _lastKnownOffsetBySaveId[saveId] ?? -1;
-    final snapshot = SaveSnapshot.fromGameState(
-      save: _clientOnlySave(saveId, currentState),
-      state: transition.state,
-      eventLogOffset: offset < 0 ? 0 : offset,
-    );
     return CommandTransportResult(
       state: transition.state,
       uiEffects: transition.uiEffects,
       events: transition.events,
-      snapshot: snapshot,
+      snapshot: null,
       offset: offset,
-    );
-  }
-
-  GameSave _clientOnlySave(String saveId, GameState state) {
-    final playerIds = <String>[
-      ...state.playerColors.keys,
-      ...state.playerCountries.keys.where(
-        (id) => !state.playerColors.containsKey(id),
-      ),
-      if (state.activePlayerId.isNotEmpty &&
-          !state.playerColors.containsKey(state.activePlayerId) &&
-          !state.playerCountries.containsKey(state.activePlayerId))
-        state.activePlayerId,
-    ];
-    return GameSave(
-      id: saveId,
-      name: saveId,
-      mapName: '',
-      turn: _lastKnownTurnBySaveId[saveId] ?? 0,
-      playerStates: {
-        for (final playerId in playerIds) playerId: PlayerTurnState.active,
-      },
-      savedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      camera: CameraState.zero,
-      players: [
-        for (var index = 0; index < playerIds.length; index++)
-          Player(
-            id: playerIds[index],
-            name: playerIds[index],
-            colorValue:
-                state.playerColors[playerIds[index]] ??
-                Player.palette[index % Player.palette.length],
-            country: state.countryForPlayer(playerIds[index]),
-          ),
-      ],
-      gameMode: GameMode.multiplayer,
     );
   }
 

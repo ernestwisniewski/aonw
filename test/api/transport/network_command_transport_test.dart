@@ -30,6 +30,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/network_command_transport_movement_fixtures.dart';
 
 part 'support/network_command_transport_test_helpers.dart';
+part 'support/network_command_transport_transient_snapshot_cases.dart';
 
 void main() {
   test('Serverpod dispatcher stays lazy and closes idempotently', () {
@@ -107,7 +108,8 @@ void main() {
         expect(result.state.units.single.col, 1);
         expect(result.state.activePlayerId, 'player_1');
         expect(result.events.single, isA<UnitMovedEvent>());
-        expect(result.snapshot.eventLogOffset, 1);
+        expect(result.snapshot, isNotNull);
+        expect(result.snapshot!.eventLogOffset, 1);
         expect(result.storedSnapshot, isTrue);
       },
     );
@@ -398,6 +400,7 @@ void main() {
           ),
         ]);
         expect(result.offset, 7);
+        expect(result.snapshot, isNotNull);
         expect(result.storedSnapshot, isTrue);
       },
     );
@@ -442,6 +445,7 @@ void main() {
         expect(result.offset, 12);
         expect(result.state.units.single.col, 3);
         expect(result.events, isEmpty);
+        expect(result.snapshot, same(snapshot));
         expect(result.storedSnapshot, isTrue);
       });
     }
@@ -505,6 +509,7 @@ void main() {
       expect(ticks, [3, 8]);
       expect(result.offset, 8);
       expect(result.state.units.single.col, 1);
+      expect(result.snapshot, isNotNull);
       expect(result.storedSnapshot, isTrue);
     });
 
@@ -558,8 +563,9 @@ void main() {
 
         expect(dispatcher.sentCommands, hasLength(1));
         expect(result.offset, 12);
-        expect(result.snapshot.eventLogOffset, 12);
-        expect(result.snapshot.save.turn, 2);
+        expect(result.snapshot, isNotNull);
+        expect(result.snapshot!.eventLogOffset, 12);
+        expect(result.snapshot!.save.turn, 2);
         expect(result.state.units.single.col, 3);
         expect(result.events, isEmpty);
         expect(result.storedSnapshot, isTrue);
@@ -595,31 +601,12 @@ void main() {
       );
 
       expect(result.offset, 12);
-      expect(result.snapshot.eventLogOffset, 12);
+      expect(result.snapshot, isNotNull);
+      expect(result.snapshot!.eventLogOffset, 12);
       expect(result.state.units.single.col, 1);
     });
 
-    test('applies client-only commands locally without HTTP', () async {
-      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
-        units: [commander],
-        activePlayerId: 'player_1',
-        activePlayerCanAct: true,
-      );
-      final server = _FakeCommandServer(save: _save(), state: state);
-      final transport = _transport(server);
-
-      final result = await transport.dispatch(
-        saveId: 'save_1',
-        currentState: state,
-        command: const SetActivePlayerCommand('player_2', canAct: false),
-      );
-
-      expect(server.sentCommands, isEmpty);
-      expect(result.state.activePlayerId, 'player_2');
-      expect(result.state.activePlayerCanAct, isFalse);
-      expect(result.storedSnapshot, isFalse);
-    });
+    _registerTransientSnapshotCases();
 
     test('handles tile taps for movement preview locally', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
@@ -723,25 +710,6 @@ void main() {
       },
     );
 
-    test('does not send server-managed movement resets', () async {
-      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
-        units: [commander],
-        activePlayerId: 'player_1',
-        activePlayerCanAct: true,
-      );
-      final server = _FakeCommandServer(save: _save(), state: state);
-
-      final result = await _transport(server).dispatch(
-        saveId: 'save_1',
-        currentState: state,
-        command: const ResetUnitMovementCommand(playerId: 'player_1'),
-      );
-
-      expect(server.sentCommands, isEmpty);
-      expect(result.state, same(state));
-    });
-
     test(
       'translates confirmed tile movement to MoveUnit for the server',
       () async {
@@ -776,6 +744,7 @@ void main() {
         expect(sent.command['targetCol'], 1);
         expect(sent.command['targetRow'], 0);
         expect(moved.state.units.single.col, 1);
+        expect(moved.snapshot, isNotNull);
         expect(moved.storedSnapshot, isTrue);
       },
     );
@@ -948,7 +917,8 @@ void main() {
       expect(result.state.activePlayerId, 'player_1');
       expect(result.state.activePlayerCanAct, isFalse);
       expect(result.state.submittedPlayerIds, {'player_1'});
-      expect(result.snapshot.save.turn, 1);
+      expect(result.snapshot, isNotNull);
+      expect(result.snapshot!.save.turn, 1);
       expect(result.storedSnapshot, isTrue);
     });
 
@@ -986,7 +956,8 @@ void main() {
         expect(result.state.activePlayerId, 'player_1');
         expect(result.state.activePlayerCanAct, isTrue);
         expect(result.state.submittedPlayerIds, isEmpty);
-        expect(result.snapshot.save.turn, 2);
+        expect(result.snapshot, isNotNull);
+        expect(result.snapshot!.save.turn, 2);
         expect(result.storedSnapshot, isTrue);
       },
     );

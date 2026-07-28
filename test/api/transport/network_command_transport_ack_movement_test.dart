@@ -48,6 +48,7 @@ void main() {
           command: const SubmitTurnCommand('player_1'),
         );
 
+        expect(result.snapshot, isNotNull);
         expect(result.uiEffects.first, same(camera));
         expect(
           result.uiEffects.whereType<AnimateUnitMoveEffect>().map(
@@ -90,6 +91,7 @@ void main() {
         command: const SubmitTurnCommand('player_1'),
       );
 
+      expect(result.snapshot, isNotNull);
       expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
       expect(result.uiEffects, [same(camera)]);
     });
@@ -133,6 +135,7 @@ void main() {
         dispatcher.sent.map((value) => value.clientMessageId).toSet(),
         hasLength(1),
       );
+      expect(retried.snapshot, isNotNull);
       expect(
         retried.uiEffects.whereType<AnimateUnitMoveEffect>(),
         hasLength(3),
@@ -174,6 +177,7 @@ void main() {
 
       expect(dispatcher.commits, 1);
       expect(reducer.calls, 1);
+      expect(retried.snapshot, isNotNull);
       expect(retried.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
     });
   });

@@ -9,7 +9,12 @@ class CommandTransportResult {
   final GameState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
-  final SaveSnapshot snapshot;
+
+  /// Snapshot produced or observed by this dispatch, when one exists.
+  ///
+  /// Network commands handled only on the client or managed entirely by the
+  /// server do not fabricate a persistence snapshot.
+  final SaveSnapshot? snapshot;
   final int offset;
   final bool storedSnapshot;
 
@@ -20,7 +25,7 @@ class CommandTransportResult {
     this.uiEffects = const [],
     this.events = const [],
     this.storedSnapshot = false,
-  });
+  }) : assert(!storedSnapshot || snapshot != null);
 }
 
 abstract interface class CommandTransport {

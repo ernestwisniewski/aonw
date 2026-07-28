@@ -9,10 +9,8 @@ Serverpod multiplayer client.
 - `NetworkEventLog` reads server-owned command/domain-event history. It does
   not turn exact movement execution plans and costs into renderer replay;
   coarse movement domain events remain available for activity history.
-- `NetworkSnapshotStore` reads the latest server snapshot for reconnect and
-  bootstrap flows.
 - `NetworkGameRepository` maps match list/create/load/delete calls onto
-  Serverpod endpoints.
+  Serverpod endpoints, including snapshot reads for bootstrap and reconnect.
 - `LiveEventSubscription` owns the active Serverpod two-way match stream for
   events, match updates, snapshot resync, and command ACKs.
 - `LiveWireCommandDispatcher` routes gameplay commands through the active live

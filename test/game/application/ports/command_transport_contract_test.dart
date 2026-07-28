@@ -20,6 +20,18 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('cannot report a stored snapshot without carrying it', () {
+    expect(
+      () => CommandTransportResult(
+        state: const GameState(),
+        snapshot: null,
+        offset: 0,
+        storedSnapshot: true,
+      ),
+      throwsAssertionError,
+    );
+  });
+
   group('CommandTransport contract: LocalCommandTransport', () {
     test(
       'dispatch applies the command, appends the log, and saves a snapshot',
@@ -49,7 +61,8 @@ void main() {
 
         expect(result.offset, 1);
         expect(result.state.units.single.col, 1);
-        expect(result.snapshot.eventLogOffset, 1);
+        expect(result.snapshot, isNotNull);
+        expect(result.snapshot!.eventLogOffset, 1);
         expect(result.storedSnapshot, isFalse);
         expect(eventLog.commands.single.offset, 1);
         expect(eventLog.commands.single.actorPlayerId, 'player_1');
