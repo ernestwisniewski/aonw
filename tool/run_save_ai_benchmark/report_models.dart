@@ -10,7 +10,6 @@ class _BenchmarkRuntimeReport {
     required this.totalCityCount,
     required this.findings,
   });
-
   final bool shouldRunLocalAi;
   final bool localSinglePlayer;
   final AiRuntimeThrottleSnapshot throttle;
@@ -18,30 +17,31 @@ class _BenchmarkRuntimeReport {
   final int totalUnitCount;
   final int totalCityCount;
   final List<_Finding> findings;
-
   factory _BenchmarkRuntimeReport.fromSnapshot(SaveSnapshot snapshot) {
-    final save = snapshot.save;
+    final domain = snapshot.domain;
     final shouldRunLocalAi = shouldRunLocalAiForMode(
-      gameMode: save.gameMode,
-      saveId: save.id,
+      gameMode: snapshot.session.gameMode,
+      saveId: snapshot.metadata.id,
       networkSession: null,
     );
-    final localSinglePlayer = isLocalSinglePlayerAiRuntime(
-      save: save,
+    final localSinglePlayer = isLocalSinglePlayerAiRuntimeForParticipants(
+      gameMode: snapshot.session.gameMode,
+      saveId: snapshot.metadata.id,
+      participants: snapshot.persistedPlayers,
       networkSession: null,
     );
     final throttle = AiRuntimeThrottler().snapshotFor(
       localSinglePlayer: localSinglePlayer,
-      turn: save.turn,
-      totalUnitCount: snapshot.units.length,
-      totalCityCount: snapshot.cities.length,
+      turn: domain.turn,
+      totalUnitCount: domain.units.length,
+      totalCityCount: domain.cities.length,
     );
     final findings = <_Finding>[];
     final lateGameThresholdReached =
-        save.turn >= AiRuntimeThrottler.adaptiveLateGameTurnThreshold ||
-        snapshot.units.length >=
+        domain.turn >= AiRuntimeThrottler.adaptiveLateGameTurnThreshold ||
+        domain.units.length >=
             AiRuntimeThrottler.adaptiveLateGameUnitThreshold ||
-        snapshot.cities.length >=
+        domain.cities.length >=
             AiRuntimeThrottler.adaptiveLateGameCityThreshold;
     if (localSinglePlayer &&
         lateGameThresholdReached &&
@@ -58,9 +58,9 @@ class _BenchmarkRuntimeReport {
       shouldRunLocalAi: shouldRunLocalAi,
       localSinglePlayer: localSinglePlayer,
       throttle: throttle,
-      turn: save.turn,
-      totalUnitCount: snapshot.units.length,
-      totalCityCount: snapshot.cities.length,
+      turn: domain.turn,
+      totalUnitCount: domain.units.length,
+      totalCityCount: domain.cities.length,
       findings: findings,
     );
   }
@@ -136,12 +136,12 @@ class _BenchmarkReport {
     return {
       'save': {
         'path': savePath,
-        'id': snapshot.save.id,
-        'name': snapshot.save.name,
-        'turn': snapshot.save.turn,
-        'savedAt': snapshot.save.savedAt.toUtc().toIso8601String(),
-        'mapName': snapshot.save.mapName,
-        'gameMode': snapshot.save.gameMode.name,
+        'id': snapshot.metadata.id,
+        'name': snapshot.metadata.name,
+        'turn': snapshot.domain.turn,
+        'savedAt': snapshot.metadata.savedAtUtc.toIso8601String(),
+        'mapName': snapshot.metadata.world.name,
+        'gameMode': snapshot.session.gameMode.name,
       },
       'runtime': runtime.toJson(),
       'parameters': {
@@ -152,10 +152,10 @@ class _BenchmarkReport {
         'assumedInterCommandDelayMs': _singlePlayerDelay.inMilliseconds,
       },
       'counts': {
-        'players': snapshot.save.players.length,
-        'units': snapshot.units.length,
-        'cities': snapshot.cities.length,
-        'fieldImprovements': snapshot.fieldImprovements.length,
+        'players': snapshot.persistedPlayers.length,
+        'units': snapshot.domain.units.length,
+        'cities': snapshot.domain.cities.length,
+        'fieldImprovements': snapshot.domain.fieldImprovements.length,
         'mapTiles': mapData.tiles.length,
       },
       'players': [for (final result in playerResults) result.toJson()],
@@ -171,18 +171,18 @@ class _BenchmarkReport {
     final buffer = StringBuffer()
       ..writeln('# Save AI benchmark')
       ..writeln()
-      ..writeln('- Save: `${snapshot.save.name}` (`${snapshot.save.id}`)')
+      ..writeln(
+        '- Save: `${snapshot.metadata.name}` (`${snapshot.metadata.id}`)',
+      )
       ..writeln('- Path: `$savePath`')
-      ..writeln('- Turn: ${snapshot.save.turn}')
+      ..writeln('- Turn: ${snapshot.domain.turn}')
+      ..writeln('- Saved at: ${snapshot.metadata.savedAtUtc.toIso8601String()}')
       ..writeln(
-        '- Saved at: ${snapshot.save.savedAt.toUtc().toIso8601String()}',
+        '- Map: ${snapshot.metadata.world.name} (${mapData.cols}x${mapData.rows})',
       )
       ..writeln(
-        '- Map: ${snapshot.save.mapName} (${mapData.cols}x${mapData.rows})',
-      )
-      ..writeln(
-        '- Scope: ${snapshot.units.length} units, ${snapshot.cities.length} cities, '
-        '${snapshot.fieldImprovements.length} improvements',
+        '- Scope: ${snapshot.domain.units.length} units, ${snapshot.domain.cities.length} cities, '
+        '${snapshot.domain.fieldImprovements.length} improvements',
       )
       ..writeln('- Repeats: $repeats')
       ..writeln('- Deadline emulation: ${includeDeadline ? 'on' : 'off'}')

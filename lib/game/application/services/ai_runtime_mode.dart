@@ -19,11 +19,23 @@ bool shouldRunLocalAiForMode({
 bool isLocalSinglePlayerAiRuntime({
   required GameSave save,
   required NetworkSession? networkSession,
+}) => isLocalSinglePlayerAiRuntimeForParticipants(
+  gameMode: save.gameMode,
+  saveId: save.id,
+  participants: save.players,
+  networkSession: networkSession,
+);
+
+bool isLocalSinglePlayerAiRuntimeForParticipants({
+  required GameMode gameMode,
+  required String saveId,
+  required Iterable<Player> participants,
+  required NetworkSession? networkSession,
 }) {
-  if (save.gameMode != GameMode.multiplayer) return false;
+  if (gameMode != GameMode.multiplayer) return false;
   if (!shouldRunLocalAiForMode(
-    gameMode: save.gameMode,
-    saveId: save.id,
+    gameMode: gameMode,
+    saveId: saveId,
     networkSession: networkSession,
   )) {
     return false;
@@ -31,7 +43,7 @@ bool isLocalSinglePlayerAiRuntime({
 
   var humanCount = 0;
   var aiCount = 0;
-  for (final player in save.players) {
+  for (final player in participants) {
     switch (player.kind) {
       case PlayerKind.human:
         humanCount += 1;

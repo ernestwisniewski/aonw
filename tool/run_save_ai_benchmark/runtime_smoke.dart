@@ -15,16 +15,16 @@ class _RuntimeUseCaseSmokeRunner {
 
   Future<_RuntimeUseCaseSmokeReport> run() async {
     final humanPlayerIds = {
-      for (final player in snapshot.save.players)
+      for (final player in snapshot.domain.participants)
         if (player.kind == PlayerKind.human) player.id,
     };
     final aiPlayers = [
-      for (final player in snapshot.save.players)
+      for (final player in snapshot.domain.participants)
         if (player.kind == PlayerKind.ai && player.ai != null) player,
     ];
     final repository = _RuntimeSmokeRepository(snapshot);
     final smokeRuleset = GameRuleset.defaults.copyWith(
-      paceBalance: snapshot.save.matchRules.paceBalance,
+      paceBalance: snapshot.domain.matchRules.paceBalance,
     );
     final transport = _RuntimeSmokeCommandTransport(
       repository: repository,
@@ -59,7 +59,7 @@ class _RuntimeUseCaseSmokeRunner {
         includeDeadline: false,
       );
       final report = await useCase.execute(
-        saveId: playerSnapshot.save.id,
+        saveId: playerSnapshot.metadata.id,
         playerId: player.id,
         interCommandDelay: _singlePlayerDelay,
       );

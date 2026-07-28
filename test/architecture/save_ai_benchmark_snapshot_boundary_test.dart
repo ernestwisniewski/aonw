@@ -6,6 +6,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _benchmarkPath = 'tool/run_save_ai_benchmark.dart';
+const _reportModelsPath = 'tool/run_save_ai_benchmark/report_models.dart';
+const _runtimeSmokePath = 'tool/run_save_ai_benchmark/runtime_smoke.dart';
 
 void main() {
   test('save AI benchmark preparation uses canonical snapshot state', () {
@@ -21,6 +23,50 @@ void main() {
     expect(_propertyReadCount(unit, 'session'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
   });
+
+  test('benchmark report models use canonical snapshot state', () {
+    final unit = _unitAt(_reportModelsPath);
+
+    expect(_propertyReadCount(unit, 'save'), 0);
+    expect(_propertyReadCount(unit, 'persistentState'), 0);
+    expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
+    expect(_propertyReadCount(unit, 'session'), greaterThan(0));
+    expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
+    expect(_propertyReadCount(unit, 'persistedPlayers'), greaterThan(0));
+  });
+
+  test('runtime smoke setup uses canonical snapshot state', () {
+    final runMethod = _methodAt(
+      _unitAt(_runtimeSmokePath),
+      className: '_RuntimeUseCaseSmokeRunner',
+      methodName: 'run',
+    );
+
+    expect(_propertyReadCount(runMethod, 'save'), 0);
+    expect(_propertyReadCount(runMethod, 'persistentState'), 0);
+    expect(_propertyReadCount(runMethod, 'runtimeState'), 0);
+    expect(_propertyReadCount(runMethod, 'domain'), greaterThan(0));
+    expect(_propertyReadCount(runMethod, 'metadata'), greaterThan(0));
+  });
+}
+
+CompilationUnit _unitAt(String path) =>
+    parseString(content: File(path).readAsStringSync(), path: path).unit;
+
+MethodDeclaration _methodAt(
+  CompilationUnit unit, {
+  required String className,
+  required String methodName,
+}) {
+  final declaration = unit.declarations
+      .whereType<ClassDeclaration>()
+      .singleWhere(
+        (declaration) => declaration.namePart.typeName.lexeme == className,
+      );
+  return declaration.body.members.whereType<MethodDeclaration>().singleWhere(
+    (declaration) => declaration.name.lexeme == methodName,
+  );
 }
 
 int _propertyReadCount(AstNode node, String propertyName) {

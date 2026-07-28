@@ -140,6 +140,10 @@ final class SaveSnapshot {
   /// Exact persisted turn start without the canonical multiplayer fallback.
   DateTime? get persistedTurnStartedAt => _rawState.runtimeState.turnStartedAt;
 
+  /// Exact player roster persisted in the legacy save without canonical
+  /// fallback participants.
+  List<Player> get persistedPlayers => save.players;
+
   late final CanonicalGameSnapshot canonical = _saveSnapshotAdapter.toCanonical(
     save: save,
     state: _rawState,

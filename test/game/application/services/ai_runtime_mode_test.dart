@@ -29,6 +29,66 @@ void main() {
       );
     });
 
+    test('collection API follows runtime mode and roster truth table', () {
+      final localSave = _save(gameMode: GameMode.multiplayer);
+      final cases = [
+        (
+          gameMode: GameMode.multiplayer,
+          saveId: localSave.id,
+          participants: localSave.players,
+          networkSession: null,
+          expected: true,
+        ),
+        (
+          gameMode: GameMode.hotSeat,
+          saveId: localSave.id,
+          participants: localSave.players,
+          networkSession: null,
+          expected: false,
+        ),
+        (
+          gameMode: GameMode.multiplayer,
+          saveId: localSave.id,
+          participants: localSave.players,
+          networkSession: _connectedSession(matchId: localSave.id),
+          expected: false,
+        ),
+        (
+          gameMode: GameMode.multiplayer,
+          saveId: localSave.id,
+          participants: [...localSave.players, _humanPlayer('human_2')],
+          networkSession: null,
+          expected: false,
+        ),
+        (
+          gameMode: GameMode.multiplayer,
+          saveId: localSave.id,
+          participants: [_humanPlayer('human_1')],
+          networkSession: null,
+          expected: false,
+        ),
+        (
+          gameMode: GameMode.multiplayer,
+          saveId: localSave.id,
+          participants: [localSave.players.last],
+          networkSession: null,
+          expected: false,
+        ),
+      ];
+
+      for (final testCase in cases) {
+        expect(
+          isLocalSinglePlayerAiRuntimeForParticipants(
+            gameMode: testCase.gameMode,
+            saveId: testCase.saveId,
+            participants: testCase.participants,
+            networkSession: testCase.networkSession,
+          ),
+          testCase.expected,
+        );
+      }
+    });
+
     test(
       'keeps connected matching multiplayer out of local single-player mode',
       () {
@@ -126,3 +186,6 @@ GameSave _save({required GameMode gameMode, int turn = 1}) {
     gameMode: gameMode,
   );
 }
+
+Player _humanPlayer(String id) =>
+    Player(id: id, name: id, colorValue: 0xFF2563EB);
