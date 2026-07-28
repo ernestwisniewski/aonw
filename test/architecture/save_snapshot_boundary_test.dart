@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/save_snapshot_serialization_guard.dart';
+import 'support/target_method_invocation_count.dart';
 
 const _snapshotPath = 'lib/game/application/ports/save_snapshot.dart';
 const _persistenceCodecPath =
@@ -128,9 +129,13 @@ void main() {
       expect(resolutionFields, contains('snapshot'));
       expect(resolutionFields, isNot(contains('save')));
       expect(resolutionSaveGetters, isEmpty);
-      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'save'), 3);
+      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'save'), 2);
       expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'domain'), 3);
       expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'session'), 1);
+      expect(
+        targetMethodInvocationCount(unit, 'baseSnapshot', 'withSavedAt'),
+        2,
+      );
     });
 
     test('production semantic snapshot reads are eliminated', () {

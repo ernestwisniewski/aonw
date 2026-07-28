@@ -50,11 +50,7 @@ class LocalCommandResolver {
           actorPlayerId: effectiveContext.actorPlayerId,
         )) {
       return LocalCommandResolution(
-        snapshot: SaveSnapshot.fromGameState(
-          save: baseSnapshot.save.copyWith(savedAt: savedAt.toUtc()),
-          state: currentState,
-          eventLogOffset: baseSnapshot.eventLogOffset,
-        ),
+        snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(currentState),
         state: currentState,
         events: const [],
         uiEffects: const [],
@@ -74,31 +70,12 @@ class LocalCommandResolver {
     );
 
     return LocalCommandResolution(
-      snapshot: SaveSnapshot.fromGameState(
-        save: resolved.save,
-        state: resolved.state,
-        eventLogOffset: baseSnapshot.eventLogOffset,
-      ),
+      snapshot: resolved.snapshot,
       state: resolved.state,
       events: [...transition.events, ...resolved.events],
       uiEffects: [...transition.uiEffects, ...resolved.uiEffects],
       context: effectiveContext,
     );
-  }
-
-  GameSave _saveForCommand(
-    GameSave save,
-    GameCommand command,
-    DateTime savedAt,
-  ) {
-    if (command is EndTurnCommand) {
-      return const AdvanceTurnPhase().advanceSave(
-        save,
-        playerId: command.playerId,
-        savedAt: savedAt,
-      );
-    }
-    return save.copyWith(savedAt: savedAt);
   }
 
   _ResolvedLocalCommand _resolveCommand({
@@ -116,8 +93,23 @@ class LocalCommandResolver {
       );
     }
 
+    if (command is EndTurnCommand) {
+      final save = const AdvanceTurnPhase().advanceSave(
+        baseSnapshot.save,
+        playerId: command.playerId,
+        savedAt: savedAt,
+      );
+      return _ResolvedLocalCommand(
+        snapshot: SaveSnapshot.fromGameState(
+          save: save,
+          state: reducedState,
+          eventLogOffset: baseSnapshot.eventLogOffset,
+        ),
+        state: reducedState,
+      );
+    }
     return _ResolvedLocalCommand(
-      save: _saveForCommand(baseSnapshot.save, command, savedAt),
+      snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(reducedState),
       state: reducedState,
     );
   }
@@ -132,9 +124,13 @@ class LocalCommandResolver {
     final playerIds = _activePlayerIds(baseSnapshot);
     if (!playerIds.every(reducedState.submittedPlayerIds.contains)) {
       return _ResolvedLocalCommand(
-        save: save
-            .withPlayerFinished(command.playerId)
-            .copyWith(savedAt: savedAt.toUtc()),
+        snapshot: SaveSnapshot.fromGameState(
+          save: save
+              .withPlayerFinished(command.playerId)
+              .copyWith(savedAt: savedAt.toUtc()),
+          state: reducedState,
+          eventLogOffset: baseSnapshot.eventLogOffset,
+        ),
         state: reducedState,
       );
     }
@@ -180,7 +176,7 @@ class LocalCommandResolver {
     );
 
     return _ResolvedLocalCommand(
-      save: resolvedSnapshot.save,
+      snapshot: resolvedSnapshot,
       state: nextState,
       events: result.events,
       uiEffects: uiEffects,
@@ -214,13 +210,13 @@ class LocalCommandResolver {
 }
 
 class _ResolvedLocalCommand {
-  final GameSave save;
+  final SaveSnapshot snapshot;
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
 
   const _ResolvedLocalCommand({
-    required this.save,
+    required this.snapshot,
     required this.state,
     this.events = const [],
     this.uiEffects = const [],

@@ -243,6 +243,22 @@ void main() {
       expect(rebuilt.domain.playerGold, {'p1': 9});
     });
 
+    test('updates savedAt losslessly without changing state or offset', () {
+      final snapshot = SaveSnapshot.fromGameState(
+        save: _save(),
+        state: const GameState(playerGold: {'p1': 9}),
+        eventLogOffset: 4,
+      );
+      final savedAt = DateTime.parse('2026-07-28T14:30:00+02:00');
+      final updated = snapshot.withSavedAt(savedAt);
+
+      expect(updated.metadata.savedAtUtc, DateTime.utc(2026, 7, 28, 12, 30));
+      expect(updated.save.savedAt, DateTime.utc(2026, 7, 28, 12, 30));
+      expect(updated.eventLogOffset, 4);
+      expect(updated.domain, snapshot.domain);
+      expect(updated.rawPersistentState, snapshot.rawPersistentState);
+    });
+
     test('keeps persisted turn start distinct from canonical fallback', () {
       final savedAt = DateTime.utc(2026, 1, 1);
       final snapshot = SaveSnapshot(

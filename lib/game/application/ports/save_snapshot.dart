@@ -159,6 +159,10 @@ final class SaveSnapshot {
     );
   }
 
+  SaveSnapshot withSavedAt(DateTime savedAt) {
+    return copyWith(save: save.copyWith(savedAt: savedAt.toUtc()));
+  }
+
   GameState toGameState({
     String activePlayerId = '',
     bool activePlayerCanAct = true,
