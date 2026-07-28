@@ -127,12 +127,12 @@
         },
         "game_domain": {
           "files": {
-            "hit": 67,
-            "found": 67
+            "hit": 63,
+            "found": 63
           },
           "lines": {
-            "hit": 3141,
-            "found": 3376
+            "hit": 2892,
+            "found": 3104
           }
         },
         "game_infrastructure": {
@@ -177,12 +177,12 @@
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 302,
-            "found": 307
+            "hit": 305,
+            "found": 310
           },
           "lines": {
-            "hit": 19356,
-            "found": 21961
+            "hit": 19431,
+            "found": 22004
           }
         },
         "l10n": {
