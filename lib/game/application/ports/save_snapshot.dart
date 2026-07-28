@@ -163,6 +163,10 @@ final class SaveSnapshot {
     return copyWith(save: save.copyWith(savedAt: savedAt.toUtc()));
   }
 
+  SaveSnapshot withPlayerFinished(String playerId) {
+    return copyWith(save: save.withPlayerFinished(playerId));
+  }
+
   GameState toGameState({
     String activePlayerId = '',
     bool activePlayerCanAct = true,

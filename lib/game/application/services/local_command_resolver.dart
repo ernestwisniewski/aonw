@@ -1,7 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -120,45 +119,34 @@ class LocalCommandResolver {
     required GameState reducedState,
     required DateTime savedAt,
   }) {
-    final save = baseSnapshot.save;
     final playerIds = _activePlayerIds(baseSnapshot);
     if (!playerIds.every(reducedState.submittedPlayerIds.contains)) {
       return _ResolvedLocalCommand(
-        snapshot: SaveSnapshot.fromGameState(
-          save: save
-              .withPlayerFinished(command.playerId)
-              .copyWith(savedAt: savedAt.toUtc()),
-          state: reducedState,
-          eventLogOffset: baseSnapshot.eventLogOffset,
-        ),
+        snapshot: baseSnapshot
+            .withPlayerFinished(command.playerId)
+            .withSavedAt(savedAt)
+            .withGameState(reducedState),
         state: reducedState,
       );
     }
 
     return _finalizeSimultaneousTurn(
-      save: save,
+      snapshot: baseSnapshot,
       state: reducedState,
       playerIds: playerIds,
       savedAt: savedAt.toUtc(),
-      eventLogOffset: baseSnapshot.eventLogOffset,
     );
   }
 
   _ResolvedLocalCommand _finalizeSimultaneousTurn({
-    required GameSave save,
+    required SaveSnapshot snapshot,
     required GameState state,
     required List<String> playerIds,
     required DateTime savedAt,
-    required int eventLogOffset,
   }) {
-    final inputSnapshot = SaveSnapshot.fromGameState(
-      save: save,
-      state: state,
-      eventLogOffset: eventLogOffset,
-    );
     final result = CanonicalTurnPipeline.simultaneousFinalize(
       CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: inputSnapshot.canonical,
+        snapshot: snapshot.withGameState(state).canonical,
         playerIds: playerIds,
         savedAt: savedAt,
         mapView: reducer.mapData,

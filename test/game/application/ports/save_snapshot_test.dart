@@ -259,6 +259,29 @@ void main() {
       expect(updated.rawPersistentState, snapshot.rawPersistentState);
     });
 
+    test('marks one player finished without changing state or offset', () {
+      final snapshot = SaveSnapshot.fromGameState(
+        save: _save().copyWith(
+          playerStates: const {
+            'p1': PlayerTurnState.active,
+            'p2': PlayerTurnState.active,
+          },
+        ),
+        state: const GameState(playerGold: {'p1': 9}),
+        eventLogOffset: 4,
+      );
+      final updated = snapshot.withPlayerFinished('p1');
+
+      expect(updated.session.turnStatesByPlayerId, const {
+        'p1': PlayerTurnState.finished,
+        'p2': PlayerTurnState.active,
+      });
+      expect(updated.domain.turn, snapshot.domain.turn);
+      expect(updated.metadata, snapshot.metadata);
+      expect(updated.eventLogOffset, 4);
+      expect(updated.rawPersistentState, snapshot.rawPersistentState);
+    });
+
     test('keeps persisted turn start distinct from canonical fallback', () {
       final savedAt = DateTime.utc(2026, 1, 1);
       final snapshot = SaveSnapshot(

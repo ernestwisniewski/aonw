@@ -129,12 +129,16 @@ void main() {
       expect(resolutionFields, contains('snapshot'));
       expect(resolutionFields, isNot(contains('save')));
       expect(resolutionSaveGetters, isEmpty);
-      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'save'), 2);
+      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'save'), 1);
       expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'domain'), 3);
       expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'session'), 1);
       expect(
         targetMethodInvocationCount(unit, 'baseSnapshot', 'withSavedAt'),
         2,
+      );
+      expect(
+        targetMethodInvocationCount(unit, 'baseSnapshot', 'withPlayerFinished'),
+        1,
       );
     });
 
