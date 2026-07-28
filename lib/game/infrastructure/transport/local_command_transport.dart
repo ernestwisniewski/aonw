@@ -37,6 +37,32 @@ class LocalCommandTransport implements CommandTransport {
     required GameCommand command,
     GameCommandContext context = const GameCommandContext(),
   }) async {
+    final authoritativeCommand =
+        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
+          currentState,
+          command,
+          context,
+        );
+    if (command is! SetActivePlayerCommand &&
+        authoritativeCommand == null &&
+        AuthoritativeCommandPolicy.isClientOnlyForState(
+          currentState,
+          command,
+        )) {
+      final transition = reducer.reduce(
+        currentState,
+        command,
+        context: context,
+      );
+      return CommandTransportResult(
+        state: transition.state,
+        uiEffects: transition.uiEffects,
+        events: transition.events,
+        snapshot: null,
+        offset: -1,
+      );
+    }
+
     final baseSnapshot = await gameRepository.load(saveId);
     final latestOffset = await eventLog.latestOffset(saveId);
     final timestamp = clock.nowUtc();
@@ -48,25 +74,25 @@ class LocalCommandTransport implements CommandTransport {
       savedAt: timestamp,
       context: context,
     );
-    final authoritativeCommand =
+    final resolvedAuthoritativeCommand =
         AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
           currentState,
           command,
           resolved.context,
         );
     final shouldLogCommand =
-        authoritativeCommand != null ||
+        resolvedAuthoritativeCommand != null ||
         AuthoritativeCommandPolicy.shouldLogForReplay(currentState, command);
     final offset = shouldLogCommand ? latestOffset + 1 : latestOffset;
-    final commandToLog = authoritativeCommand ?? command;
+    final commandToLog = resolvedAuthoritativeCommand ?? command;
 
     if (shouldLogCommand) {
-      final logResolution = authoritativeCommand == null
+      final logResolution = resolvedAuthoritativeCommand == null
           ? resolved
           : resolver.resolve(
               baseSnapshot: baseSnapshot,
               currentState: currentState,
-              command: authoritativeCommand,
+              command: resolvedAuthoritativeCommand,
               savedAt: timestamp,
               context: context,
             );

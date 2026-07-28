@@ -108,11 +108,56 @@ void main() {
         context: const GameCommandContext(actorPlayerId: 'player_1'),
       );
 
-      expect(result.offset, 0);
+      expect(result.offset, -1);
       expect(result.state.selectedUnitId, commander.id);
+      expect(result.snapshot, isNull);
       expect(result.storedSnapshot, isFalse);
       expect(eventLog.commands, isEmpty);
       expect(repository.snapshot.eventLogOffset, 0);
+    });
+
+    test('previews movement without accessing persistence', () async {
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final save = _save(players: const [_player1]);
+      final mapData = _map();
+      final repository = _MemoryGameRepository(
+        SaveSnapshot(save: save, units: [commander]),
+      );
+      final eventLog = _MemoryEventLog();
+      final snapshotStore = _MemorySnapshotStore();
+      final transport = LocalCommandTransport(
+        reducer: GameStateReducer(mapData: mapData),
+        gameRepository: repository,
+        eventLog: eventLog,
+        snapshotStore: snapshotStore,
+        clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
+      );
+
+      final result = await transport.dispatch(
+        saveId: save.id,
+        currentState: GameState(
+          units: [commander],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(
+              commander,
+              tile: mapData.tileAt(0, 0),
+            ),
+            moveCommandActive: true,
+          ),
+        ),
+        command: const TileTappedCommand(1, 0),
+        context: const GameCommandContext(actorPlayerId: 'player_1'),
+      );
+
+      expect(result.state.movePreview?.targetCol, 1);
+      expect(result.snapshot, isNull);
+      expect(result.offset, -1);
+      expect(repository.loadCalls, 0);
+      expect(repository.saveCalls, 0);
+      expect(eventLog.accessCalls, 0);
+      expect(snapshotStore.accessCalls, 0);
     });
 
     test(
@@ -158,7 +203,7 @@ void main() {
           context: const GameCommandContext(actorPlayerId: 'player_1'),
         );
 
-        expect(preview.offset, 0);
+        expect(preview.offset, -1);
         expect(preview.state.movePreview?.targetCol, 1);
         expect(eventLog.commands, hasLength(1));
         expect(
@@ -569,6 +614,8 @@ class _FixedClock extends Clock {
 
 class _MemoryGameRepository implements GameRepository {
   SaveSnapshot snapshot;
+  var loadCalls = 0;
+  var saveCalls = 0;
 
   _MemoryGameRepository(this.snapshot);
 
@@ -585,10 +632,14 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<SaveSnapshot> load(String saveId) async {
+    loadCalls++;
+    return snapshot;
+  }
 
   @override
   Future<void> save(SaveSnapshot snapshot) async {
+    saveCalls++;
     this.snapshot = snapshot;
   }
 
@@ -604,14 +655,17 @@ class _MemoryGameRepository implements GameRepository {
 
 class _MemoryEventLog implements EventLog {
   final commands = <LoggedCommand>[];
+  var accessCalls = 0;
 
   @override
   Future<void> append(String saveId, LoggedCommand command) async {
+    accessCalls++;
     commands.add(command);
   }
 
   @override
   Future<int> latestOffset(String saveId) async {
+    accessCalls++;
     return commands.fold<int>(0, (latest, command) {
       return command.offset > latest ? command.offset : latest;
     });
@@ -624,6 +678,7 @@ class _MemoryEventLog implements EventLog {
 
   @override
   Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+    accessCalls++;
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }
@@ -632,12 +687,17 @@ class _MemoryEventLog implements EventLog {
 
 class _MemorySnapshotStore implements SnapshotStore {
   Snapshot? latestSnapshot;
+  var accessCalls = 0;
 
   @override
-  Future<Snapshot?> latest(String saveId) async => latestSnapshot;
+  Future<Snapshot?> latest(String saveId) async {
+    accessCalls++;
+    return latestSnapshot;
+  }
 
   @override
   Future<void> save(String saveId, Snapshot snapshot) async {
+    accessCalls++;
     latestSnapshot = snapshot;
   }
 }
