@@ -1442,6 +1442,7 @@ void main() {
               playerName: 'Alice',
               playerColorValue: 0xFF4a7fc4,
               turnNumber: 1,
+              freshTurn: true,
             ),
           );
       await tester.pump();
@@ -1457,7 +1458,6 @@ void main() {
       await tester.pump();
 
       expect(find.text('ALICE'), findsOneWidget);
-      expect(find.text('CONTINUE'), findsOneWidget);
       expect(gate.isCompleted, isFalse);
 
       gate.complete();

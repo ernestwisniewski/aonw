@@ -153,7 +153,8 @@ List<String> _rawCanonicalPatchFlowViolations(CompilationUnit unit) => [
   if (!_hasExactRawFieldPreservationFlow(
     _singleTopLevelFunction(unit, '_preserveRawFields'),
   ))
-    '_preserveRawFields must retain present keys and remove absent keys',
+    '_preserveRawFields must retain raw extensions and preserve reviewed '
+        'field presence',
 ];
 
 FunctionDeclaration? _singleTopLevelFunction(
@@ -194,19 +195,37 @@ bool _hasExactCanonicalPartsFlow(FunctionDeclaration? declaration) {
 
 bool _hasExactRawFieldPreservationFlow(FunctionDeclaration? declaration) {
   final body = declaration?.functionExpression.body;
-  if (body is! BlockFunctionBody || body.block.statements.length != 3) {
+  if (body is! BlockFunctionBody || body.block.statements.length != 4) {
     return false;
   }
   final statements = body.block.statements;
   return _hasExactPreservedMapInitializer(statements[0]) &&
-      _hasExactRawFieldLoop(statements[1]) &&
-      statements[2] is ReturnStatement &&
-      (statements[2] as ReturnStatement).expression?.toSource() == 'preserved';
+      _hasExactRawExtensionLoop(statements[1]) &&
+      _hasExactRawFieldLoop(statements[2]) &&
+      statements[3] is ReturnStatement &&
+      (statements[3] as ReturnStatement).expression?.toSource() == 'preserved';
 }
 
 bool _hasExactPreservedMapInitializer(Statement statement) {
   final initializer = _singleLocalInitializer(statement, 'preserved');
   return initializer?.toSource() == 'Map<String, dynamic>.from(candidate)';
+}
+
+bool _hasExactRawExtensionLoop(Statement statement) {
+  if (statement is! ForStatement ||
+      statement.forLoopParts is! ForEachPartsWithDeclaration ||
+      statement.body is! Block) {
+    return false;
+  }
+  final parts = statement.forLoopParts as ForEachPartsWithDeclaration;
+  final variable = parts.loopVariable;
+  final body = statement.body as Block;
+  return variable.isFinal &&
+      variable.name.lexeme == 'entry' &&
+      parts.iterable.toSource() == 'raw.entries' &&
+      body.statements.length == 1 &&
+      body.statements.single.toSource() ==
+          'preserved.putIfAbsent(entry.key, () => entry.value);';
 }
 
 bool _hasExactRawFieldLoop(Statement statement) {

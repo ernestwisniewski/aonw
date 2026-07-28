@@ -227,7 +227,8 @@ void main() {
         ),
         containsAll([
           '_encodeCanonicalParts must preserve only the reviewed raw fields',
-          '_preserveRawFields must retain present keys and remove absent keys',
+          '_preserveRawFields must retain raw extensions and preserve reviewed '
+              'field presence',
         ]),
       );
     });
