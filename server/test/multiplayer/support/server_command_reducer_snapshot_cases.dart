@@ -57,13 +57,11 @@ void _registerServerCommandReducerSnapshotTests() {
           reduction.previousSnapshot.session.turnStartedAt,
           save.savedAt.toUtc(),
         );
-        expect(wireSnapshot.state, same(rawState));
+        expect(wireSnapshot.state, isNot(same(rawState)));
         expect(wireSnapshot.state['stateCanary'], const {'preserve': true});
         expect(
-          (wireSnapshot.state['runtimeState']! as Map).containsKey(
-            'turnStartedAt',
-          ),
-          isFalse,
+          (wireSnapshot.state['runtimeState']! as Map)['turnStartedAt'],
+          save.savedAt.toIso8601String(),
         );
         expect(wireSnapshot.save, isNot(same(rawSave)));
         expect(

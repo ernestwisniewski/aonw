@@ -199,6 +199,9 @@ Map<String, dynamic> _preserveRawFields(
   Set<String> fields,
 ) {
   final preserved = Map<String, dynamic>.from(candidate);
+  for (final entry in raw.entries) {
+    preserved.putIfAbsent(entry.key, () => entry.value);
+  }
   for (final field in fields) {
     if (raw.containsKey(field)) {
       preserved[field] = raw[field];
