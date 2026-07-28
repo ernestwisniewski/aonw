@@ -125,11 +125,11 @@ void main() {
       expect(_propertyReadCount(unit, 'domain'), 3);
     });
 
-    test('bootstrap keeps legacy save only for player control selection', () {
+    test('bootstrap uses canonical player control inputs', () {
       final unit = _unitAt(_bootstrapGameStatePath);
-      expect(_propertyReadCount(unit, 'save'), 1);
-      expect(_propertyReadCount(unit, 'session'), 2);
-      expect(_propertyReadCount(unit, 'domain'), 1);
+      expect(_propertyReadCount(unit, 'save'), 0);
+      expect(_propertyReadCount(unit, 'session'), 3);
+      expect(_propertyReadCount(unit, 'domain'), 2);
     });
 
     test('semantic read scanner ignores text and finds property access', () {

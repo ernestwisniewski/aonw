@@ -643,7 +643,7 @@
         "lib/game/application/services/multiplayer_interaction_reconciler.dart::class:MultiplayerInteractionReconciler/method:reconcile": 62,
         "lib/game/application/services/replay_service.dart::class:ReplayService/method:buildTimeline": 94,
         "lib/game/application/services/replay_service.dart::class:ReplayStep/method:_inferActorPlayerId": 80,
-        "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 81,
+        "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 78,
         "lib/game/domain/reducer/combat/combat_reducer.dart::class:CombatReducer/method:attackHex": 75,
         "lib/game/domain/reducer/game_state/game_state_reducer.dart::class:GameStateReducer/method:reduceWithEnvironment": 196,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:handleTileTapped": 66,

@@ -56,10 +56,7 @@ class BootstrapGameStateUseCase {
       attempt++
     ) {
       snapshot = await repository.load(saveId);
-      control = PlayerControlCoordinator.initialForPlayer(
-        save: snapshot.save,
-        preferredPlayerId: preferredPlayerId,
-      );
+      control = _initialControl(snapshot, preferredPlayerId);
       offset = snapshot.eventLogOffset;
       initialState = snapshot.toGameState(
         activePlayerId: control.activePlayerId,
@@ -118,6 +115,15 @@ class BootstrapGameStateUseCase {
     offset = _maxOffset(offset, focused.offset);
     return BootstrapGameStateResult(state: focused.state, offset: offset);
   }
+
+  PlayerControlState _initialControl(
+    SaveSnapshot snapshot,
+    String? preferredPlayerId,
+  ) => PlayerControlCoordinator.initialFromCollections(
+    orderedPlayers: snapshot.domain.participants,
+    turnStatesByPlayerId: snapshot.session.turnStatesByPlayerId,
+    preferredPlayerId: preferredPlayerId,
+  );
 
   int _maxOffset(int first, int second) => first > second ? first : second;
 }

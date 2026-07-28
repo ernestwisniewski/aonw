@@ -38,6 +38,23 @@ abstract final class PlayerControlCoordinator {
     return initial(save);
   }
 
+  static PlayerControlState initialFromCollections({
+    required Iterable<Player> orderedPlayers,
+    required Map<String, PlayerTurnState> turnStatesByPlayerId,
+    String? preferredPlayerId,
+  }) {
+    final players = orderedPlayers.toList(growable: false);
+    if (players.isEmpty) return const PlayerControlState();
+    final preferredIsKnown =
+        preferredPlayerId != null &&
+        players.any((player) => player.id == preferredPlayerId);
+    final playerId = preferredIsKnown ? preferredPlayerId : players.first.id;
+    return PlayerControlState(
+      activePlayerId: playerId,
+      canAct: turnStatesByPlayerId[playerId] != PlayerTurnState.finished,
+    );
+  }
+
   static PlayerControlState normalizeForPlayer({
     required PlayerControlState current,
     required GameSave? save,

@@ -46,6 +46,43 @@ void main() {
       expect(state.canAct, isTrue);
     });
 
+    test('canonical collections preserve preferred-player semantics', () {
+      final fromSave = PlayerControlCoordinator.initialForPlayer(
+        save: _save(
+          playerStates: const {
+            'player_1': PlayerTurnState.active,
+            'player_2': PlayerTurnState.finished,
+            'player_3': PlayerTurnState.active,
+          },
+        ),
+        preferredPlayerId: 'player_2',
+      );
+      final fromCollections = PlayerControlCoordinator.initialFromCollections(
+        orderedPlayers: const [_player1, _player2, _player3],
+        turnStatesByPlayerId: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.finished,
+          'player_3': PlayerTurnState.active,
+        },
+        preferredPlayerId: 'player_2',
+      );
+
+      expect(fromCollections, fromSave);
+    });
+
+    test(
+      'canonical collections select first player for unknown preference',
+      () {
+        final state = PlayerControlCoordinator.initialFromCollections(
+          orderedPlayers: const [_player1, _player2],
+          turnStatesByPlayerId: const {},
+          preferredPlayerId: 'missing',
+        );
+
+        expect(state, const PlayerControlState(activePlayerId: 'player_1'));
+      },
+    );
+
     test('normalize keeps an existing player and refreshes canAct', () {
       final save = _save(
         playerStates: const {
