@@ -46,15 +46,56 @@ class JsonEventLog implements EventLog {
 
   @override
   Future<int> latestOffset(String saveId) async {
-    var latest = 0;
-    await for (final command in readSince(saveId)) {
-      if (command.offset > latest) latest = command.offset;
-    }
-    return latest;
+    final file = await _file(saveId);
+    if (!await file.exists()) return 0;
+    final line = await _readLastNonEmptyLine(file);
+    if (line == null) return 0;
+    return LoggedCommand.fromJson(
+      jsonDecode(line) as Map<String, dynamic>,
+    ).offset;
   }
 
   Future<File> _file(String saveId) async {
     final dir = await GameStorage.saveDirectory(saveId, savesDir: savesDir);
     return File('${dir.path}/events.log');
+  }
+}
+
+Future<String?> _readLastNonEmptyLine(File file) async {
+  final reader = await file.open();
+  try {
+    final length = await reader.length();
+    if (length == 0) return null;
+
+    var window = 4096;
+    while (true) {
+      final start = length > window ? length - window : 0;
+      await reader.setPosition(start);
+      final bytes = await reader.read(length - start);
+      var end = bytes.length;
+      while (end > 0 &&
+          (bytes[end - 1] == 0x0a ||
+              bytes[end - 1] == 0x0d ||
+              bytes[end - 1] == 0x20 ||
+              bytes[end - 1] == 0x09)) {
+        end--;
+      }
+      if (end == 0) {
+        if (start == 0) return null;
+        window *= 2;
+        continue;
+      }
+
+      var lineStart = end - 1;
+      while (lineStart >= 0 && bytes[lineStart] != 0x0a) {
+        lineStart--;
+      }
+      if (lineStart >= 0 || start == 0) {
+        return utf8.decode(bytes.sublist(lineStart + 1, end));
+      }
+      window *= 2;
+    }
+  } finally {
+    await reader.close();
   }
 }

@@ -89,5 +89,30 @@ void main() {
       expect((await log.readSince('save_a').toList()).length, 1);
       expect((await log.readSince('save_b').toList()).length, 1);
     });
+
+    test('latestOffset selects the final key for the requested save', () async {
+      for (final offset in [2, 10, 3]) {
+        await log.append(
+          'save_a',
+          LoggedCommand(
+            offset: offset,
+            timestamp: DateTime.utc(2026, 1, offset),
+            turn: 1,
+            command: SkipUnitTurnCommand('unit_$offset'),
+          ),
+        );
+      }
+      await log.append(
+        'save_b',
+        LoggedCommand(
+          offset: 99,
+          timestamp: DateTime.utc(2026, 1, 1),
+          turn: 1,
+          command: const SkipUnitTurnCommand('other'),
+        ),
+      );
+
+      expect(await log.latestOffset('save_a'), 10);
+    });
   });
 }

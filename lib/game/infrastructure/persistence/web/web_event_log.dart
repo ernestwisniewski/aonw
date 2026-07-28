@@ -37,11 +37,19 @@ class WebEventLog implements EventLog {
 
   @override
   Future<int> latestOffset(String saveId) async {
-    var latest = 0;
-    await for (final command in readSince(saveId)) {
-      if (command.offset > latest) latest = command.offset;
-    }
-    return latest;
+    final prefix = '$saveId:';
+    final records = await _store.find(
+      database.database,
+      finder: Finder(
+        filter: Filter.matches(Field.key, '^${RegExp.escape(prefix)}'),
+        sortOrders: [SortOrder(Field.key, false)],
+        limit: 1,
+      ),
+    );
+    if (records.isEmpty) return 0;
+    return LoggedCommand.fromJson(
+      Map<String, dynamic>.from(records.single.value),
+    ).offset;
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/logged_command.dart';
@@ -37,6 +38,37 @@ void main() {
       expect(commands.first.command, isA<EndTurnCommand>());
       expect(commands.first.events.single, isA<TurnEndedEvent>());
       expect(await eventLog.latestOffset('save_1'), 5);
+    });
+
+    test(
+      'reads the final legacy JSONL record without scanning earlier data',
+      () async {
+        final saveDir = Directory('${tempDir.path}/save_1');
+        await saveDir.create(recursive: true);
+        final first = _logged(1, 'p1').toJson();
+        first['events'] = [
+          {
+            'type': 'turnEnded',
+            'playerId': 'p1',
+            'padding': List.filled(6000, 'ą').join(),
+          },
+        ];
+        await File('${saveDir.path}/events.log').writeAsString(
+          '${jsonEncode(first)}\n${jsonEncode(_logged(9, 'p2').toJson())}\n',
+        );
+
+        expect(await eventLog.latestOffset('save_1'), 9);
+      },
+    );
+
+    test('ignores trailing whitespace after the final record', () async {
+      final saveDir = Directory('${tempDir.path}/save_1');
+      await saveDir.create(recursive: true);
+      await File(
+        '${saveDir.path}/events.log',
+      ).writeAsString('${jsonEncode(_logged(7, 'p1').toJson())}\n\n  \t');
+
+      expect(await eventLog.latestOffset('save_1'), 7);
     });
   });
 }
