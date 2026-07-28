@@ -161,10 +161,11 @@ void main() {
 
     test('replay read model ratchets initial snapshot legacy access', () {
       final unit = _unitAt(_replayServicePath);
-      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'save'), 1);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'save'), 0);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'metadata'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'session'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'domain'), 2);
+      expect(_namesIn(unit), isNot(contains('currentSave')));
 
       final replayStep = unit.declarations
           .whereType<ClassDeclaration>()

@@ -641,7 +641,7 @@
         "lib/game/application/services/authoritative_command_policy.dart::class:AuthoritativeCommandPolicy/method:isClientOnly": 68,
         "lib/game/application/services/game_event_descriptor.dart::function:_describeGameEvent": 412,
         "lib/game/application/services/multiplayer_interaction_reconciler.dart::class:MultiplayerInteractionReconciler/method:reconcile": 62,
-        "lib/game/application/services/replay_service.dart::class:ReplayService/method:buildTimeline": 89,
+        "lib/game/application/services/replay_service.dart::class:ReplayService/method:buildTimeline": 86,
         "lib/game/application/services/replay_service.dart::class:ReplayStep/method:_inferActorPlayerId": 80,
         "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 78,
         "lib/game/domain/reducer/combat/combat_reducer.dart::class:CombatReducer/method:attackHex": 75,

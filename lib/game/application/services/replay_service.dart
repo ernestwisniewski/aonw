@@ -239,21 +239,21 @@ class ReplayService {
       );
     }
 
-    var currentSave = initialSnapshot.save;
+    var currentSnapshot = initialSnapshot;
     var currentState = initialSnapshot.toGameState();
-    var currentOffset = initialSnapshot.eventLogOffset;
     final steps = <ReplayStep>[];
 
     try {
       await for (final logged in eventLog.readSince(
         saveId,
-        offset: currentOffset + 1,
+        offset: currentSnapshot.eventLogOffset + 1,
       )) {
-        if (logged.offset <= currentOffset) continue;
-        if (logged.offset != currentOffset + 1) {
+        if (logged.offset <= currentSnapshot.eventLogOffset) continue;
+        if (logged.offset != currentSnapshot.eventLogOffset + 1) {
           throw ReplayBuildException(
             ReplayBuildFailureReason.offsetGap,
-            'Replay log has a gap between offsets $currentOffset and '
+            'Replay log has a gap between offsets '
+            '${currentSnapshot.eventLogOffset} and '
             '${logged.offset}.',
           );
         }
@@ -267,23 +267,18 @@ class ReplayService {
             'deterministic replay is unavailable.',
           );
         }
-        final originatingTurn = logged.turn ?? currentSave.turn;
+        final originatingTurn = logged.turn ?? currentSnapshot.domain.turn;
         final commandContext = logged.toCommandContext(
-          victoryRules: currentSave.matchRules.victory,
-          paceBalance: currentSave.matchRules.paceBalance,
+          victoryRules: currentSnapshot.domain.matchRules.victory,
+          paceBalance: currentSnapshot.domain.matchRules.paceBalance,
           fallbackTurn: originatingTurn,
         );
         final effectiveActorPlayerId = ReplayStep.inferEffectiveActorPlayerId(
           loggedCommand: logged,
           state: currentState,
         );
-        final baseSnapshot = SaveSnapshot.fromGameState(
-          save: currentSave,
-          state: currentState,
-          eventLogOffset: currentOffset,
-        );
         final resolved = commandResolver.resolve(
-          baseSnapshot: baseSnapshot,
+          baseSnapshot: currentSnapshot,
           currentState: currentState,
           command: command,
           savedAt: logged.timestamp,
@@ -291,13 +286,15 @@ class ReplayService {
             actorPlayerId: effectiveActorPlayerId,
           ),
         );
-        currentSave = resolved.snapshot.save;
+        currentSnapshot = resolved.snapshot.copyWith(
+          eventLogOffset: logged.offset,
+        );
         currentState = resolved.state;
-        currentOffset = logged.offset;
         _appendReplayStep(
           steps,
           logged: logged,
           resolved: resolved,
+          snapshot: currentSnapshot,
           previousState: previousState,
           originatingTurn: originatingTurn,
         );
@@ -325,10 +322,10 @@ void _appendReplayStep(
   List<ReplayStep> steps, {
   required LoggedCommand logged,
   required LocalCommandResolution resolved,
+  required SaveSnapshot snapshot,
   required GameState previousState,
   required int originatingTurn,
 }) {
-  final snapshot = resolved.snapshot.copyWith(eventLogOffset: logged.offset);
   steps.add(
     ReplayStep(
       index: steps.length + 1,
