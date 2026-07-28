@@ -2,7 +2,7 @@ name: aonw
 description: "4X strategic hex game"
 publish_to: 'none'
 
-version: 1.1.6+77
+version: 1.1.7+78
 
 environment:
   sdk: ^3.11.4
