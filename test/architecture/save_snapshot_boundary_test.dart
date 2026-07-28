@@ -15,6 +15,8 @@ const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
 const _aiTurnPreparationBuilderPath =
     'lib/game/application/services/ai_turn_preparation_builder.dart';
+const _bootstrapGameStatePath =
+    'lib/game/application/use_cases/bootstrap_game_state_use_case.dart';
 const _canonicalSessionConsumerPaths = [
   _localResolverPath,
   'lib/api/transport/network_command_transport.dart',
@@ -121,6 +123,13 @@ void main() {
       expect(_propertyReadCount(unit, 'metadata'), 2);
       expect(_propertyReadCount(unit, 'session'), 1);
       expect(_propertyReadCount(unit, 'domain'), 3);
+    });
+
+    test('bootstrap keeps legacy save only for player control selection', () {
+      final unit = _unitAt(_bootstrapGameStatePath);
+      expect(_propertyReadCount(unit, 'save'), 1);
+      expect(_propertyReadCount(unit, 'session'), 2);
+      expect(_propertyReadCount(unit, 'domain'), 1);
     });
 
     test('semantic read scanner ignores text and finds property access', () {

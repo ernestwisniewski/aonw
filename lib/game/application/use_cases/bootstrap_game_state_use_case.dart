@@ -66,13 +66,13 @@ class BootstrapGameStateUseCase {
         activePlayerCanAct: control.canAct,
       );
       final replay = eventReplay;
-      if (snapshot.save.gameMode == GameMode.multiplayer && replay != null) {
+      if (snapshot.session.gameMode == GameMode.multiplayer && replay != null) {
         try {
           final replayed = await replay.replaySinceSnapshot(
             saveId: saveId,
             state: initialState,
             offset: offset,
-            matchRules: snapshot.save.matchRules,
+            matchRules: snapshot.domain.matchRules,
           );
           initialState = replayed.state;
           offset = replayed.offset;
@@ -106,7 +106,7 @@ class BootstrapGameStateUseCase {
       command: SetActivePlayerCommand(control.activePlayerId, canAct: canAct),
     );
     offset = _maxOffset(offset, result.offset);
-    if (snapshot.save.gameMode != GameMode.multiplayer || !canAct) {
+    if (snapshot.session.gameMode != GameMode.multiplayer || !canAct) {
       return BootstrapGameStateResult(state: result.state, offset: offset);
     }
 
