@@ -155,16 +155,35 @@ final class SaveSnapshot {
   MatchSessionState get session => canonical.session;
   PersistedInteractionState get interaction => canonical.interaction;
 
-  SaveSnapshot withGameState(GameState state) {
+  SaveSnapshot withGameState(GameState state, {int? eventLogOffset}) {
     return SaveSnapshot.fromGameState(
       save: save,
       state: state,
-      eventLogOffset: eventLogOffset,
+      eventLogOffset: eventLogOffset ?? this.eventLogOffset,
     );
   }
 
   SaveSnapshot withSavedAt(DateTime savedAt) {
     return copyWith(save: save.copyWith(savedAt: savedAt.toUtc()));
+  }
+
+  SaveSnapshot withCamera(CameraState camera, {DateTime? savedAt}) {
+    return copyWith(
+      save: save.copyWith(camera: camera, savedAt: savedAt ?? save.savedAt),
+    );
+  }
+
+  SaveSnapshot withPlayerUnsubmitted(String playerId) {
+    final submitted = _rawState.runtimeState.submittedPlayerIds;
+    if (!submitted.contains(playerId)) return this;
+    return copyWith(
+      runtimeState: _rawState.runtimeState.copyWith(
+        submittedPlayerIds: {
+          for (final submittedPlayerId in submitted)
+            if (submittedPlayerId != playerId) submittedPlayerId,
+        },
+      ),
+    );
   }
 
   SaveSnapshot withPlayerFinished(String playerId) {

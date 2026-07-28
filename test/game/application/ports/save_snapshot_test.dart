@@ -236,11 +236,71 @@ void main() {
       final snapshot = SaveSnapshot(save: _save(), eventLogOffset: 4);
       final rebuilt = snapshot.withGameState(
         const GameState(playerGold: {'p1': 9}),
+        eventLogOffset: 8,
       );
 
       expect(rebuilt.save.toJson(), snapshot.save.toJson());
-      expect(rebuilt.eventLogOffset, 4);
+      expect(rebuilt.eventLogOffset, 8);
       expect(rebuilt.domain.playerGold, {'p1': 9});
+    });
+
+    test('updates camera without materializing sparse roster defaults', () {
+      final savedAt = DateTime.utc(2026, 7, 28, 12, 30);
+      final snapshot = SaveSnapshot(
+        save: _save().copyWith(players: const [], savedAt: savedAt),
+        playerCountries: const {'p1': PlayerCountry.canada},
+        eventLogOffset: 4,
+      );
+      const camera = CameraState(x: 12.5, y: -8.25, zoom: 1.5);
+
+      final updated = snapshot.withCamera(camera);
+
+      expect(
+        updated.metadata.camera,
+        const GameSnapshotCamera(x: 12.5, y: -8.25, zoom: 1.5),
+      );
+      expect(updated.metadata.savedAtUtc, savedAt);
+      expect(updated.save.players, isEmpty);
+      expect(updated.rawPersistentState, snapshot.rawPersistentState);
+      expect(updated.eventLogOffset, 4);
+    });
+
+    test('updates camera with the supplied savedAt normalized to UTC', () {
+      final snapshot = SaveSnapshot(save: _save(), eventLogOffset: 4);
+      final savedAt = DateTime.parse('2026-07-28T14:30:00+02:00');
+
+      final updated = snapshot.withCamera(CameraState.zero, savedAt: savedAt);
+
+      expect(updated.save.savedAt, savedAt);
+      expect(updated.save.savedAt.isUtc, isTrue);
+      expect(updated.metadata.savedAtUtc, DateTime.utc(2026, 7, 28, 12, 30));
+      expect(updated.rawPersistentState, snapshot.rawPersistentState);
+      expect(updated.eventLogOffset, 4);
+    });
+
+    test('unsubmits one player without adding a fallback turn start', () {
+      final savedAt = DateTime.utc(2026, 7, 28, 12, 30);
+      final snapshot = SaveSnapshot(
+        save: _save().copyWith(
+          gameMode: GameMode.multiplayer,
+          savedAt: savedAt,
+          players: const [],
+        ),
+        playerCountries: const {'p1': PlayerCountry.canada},
+        runtimeState: const GameRuntimeState(submittedPlayerIds: {'p1', 'p2'}),
+        eventLogOffset: 4,
+      );
+
+      final updated = snapshot.withPlayerUnsubmitted('p1');
+
+      expect(updated.session.submittedPlayerIds, {'p2'});
+      expect(updated.persistedTurnStartedAt, isNull);
+      expect(updated.rawPersistentState.runtimeState.submittedPlayerIds, {
+        'p2',
+      });
+      expect(updated.save.players, isEmpty);
+      expect(updated.eventLogOffset, 4);
+      expect(snapshot.withPlayerUnsubmitted('missing'), same(snapshot));
     });
 
     test('updates savedAt losslessly without changing state or offset', () {

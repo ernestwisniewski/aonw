@@ -111,16 +111,7 @@ class _RuntimeUseCaseSmokeRunner {
   }
 
   SaveSnapshot _unsubmitPlayer(SaveSnapshot source, String playerId) {
-    final submitted = source.runtimeState.submittedPlayerIds;
-    if (!submitted.contains(playerId)) return source;
-    return source.copyWith(
-      runtimeState: source.runtimeState.copyWith(
-        submittedPlayerIds: {
-          for (final submittedPlayerId in submitted)
-            if (submittedPlayerId != playerId) submittedPlayerId,
-        },
-      ),
-    );
+    return source.withPlayerUnsubmitted(playerId);
   }
 }
 
@@ -320,7 +311,7 @@ class _RuntimeSmokeRepository implements GameRepository {
   String defaultSaveName(String mapDisplayName, DateTime now) => mapDisplayName;
 
   @override
-  Future<String> create(NewGameRequest request) async => snapshot.save.id;
+  Future<String> create(NewGameRequest request) async => snapshot.metadata.id;
 
   @override
   Future<void> delete(String saveId) async {}
@@ -342,12 +333,7 @@ class _RuntimeSmokeRepository implements GameRepository {
     CameraState camera, {
     DateTime? savedAt,
   }) async {
-    snapshot = snapshot.copyWith(
-      save: snapshot.save.copyWith(
-        camera: camera,
-        savedAt: savedAt ?? snapshot.save.savedAt,
-      ),
-    );
+    snapshot = snapshot.withCamera(camera, savedAt: savedAt);
     return snapshot;
   }
 }
@@ -374,9 +360,8 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
     final reducer = GameStateReducer(mapData: mapView, ruleset: ruleset);
     final transition = reducer.reduce(currentState, command, context: context);
     _offset += 1;
-    final nextSnapshot = SaveSnapshot.fromGameState(
-      save: repository.snapshot.save,
-      state: transition.state,
+    final nextSnapshot = repository.snapshot.withGameState(
+      transition.state,
       eventLogOffset: repository.snapshot.eventLogOffset + _offset,
     );
     repository.replace(nextSnapshot);
