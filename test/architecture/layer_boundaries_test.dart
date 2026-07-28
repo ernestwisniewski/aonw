@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/layer_boundary_import_scanner.dart';
+
 void main() {
   group('Layer boundaries', () {
     test(
@@ -195,6 +197,30 @@ void main() {
         isEmpty,
       );
     });
+
+    test(
+      'import scanner reads directives but ignores comments and fixtures',
+      () {
+        const source = r'''import
+  'package:aonw_server/primary.dart';
+export 'package:aonw_core/domain.dart'
+  if (dart.library.io) 'package:aonw_server/conditional.dart';
+// import 'package:aonw_server/comment.dart';
+const fixture = """
+import 'package:aonw_server/fixture.dart';
+""";
+''';
+
+        expect(
+          parseNamespaceDirectiveUris(source, path: 'fixture.dart'),
+          const [
+            (uri: 'package:aonw_server/primary.dart', line: 2),
+            (uri: 'package:aonw_core/domain.dart', line: 3),
+            (uri: 'package:aonw_server/conditional.dart', line: 4),
+          ],
+        );
+      },
+    );
   });
 }
 
@@ -207,13 +233,16 @@ List<String> _violations({
   for (final file in roots.expand(_dartFiles)) {
     final relativePath = _relativePath(file.path);
     if (allowedPaths.contains(relativePath)) continue;
-    final lines = file.readAsLinesSync();
-    for (var i = 0; i < lines.length; i++) {
-      final uri = _importUri(lines[i]);
-      if (uri == null) continue;
+    final imports = parseNamespaceDirectiveUris(
+      file.readAsStringSync(),
+      path: relativePath,
+    );
+    for (final import in imports) {
       for (final rule in disallowed) {
-        if (rule.matches(uri)) {
-          violations.add('$relativePath:${i + 1} ${rule.message}: $uri');
+        if (rule.matches(import.uri)) {
+          violations.add(
+            '$relativePath:${import.line} ${rule.message}: ${import.uri}',
+          );
         }
       }
     }
@@ -251,13 +280,6 @@ Iterable<File> _dartFiles(String root) {
       .whereType<File>()
       .where((file) => file.path.endsWith('.dart'))
       .where((file) => !file.path.endsWith('.g.dart'));
-}
-
-String? _importUri(String line) {
-  final match = RegExp(
-    r'''^\s*(import|export)\s+['"]([^'"]+)['"]''',
-  ).firstMatch(line);
-  return match?.group(2);
 }
 
 String _relativePath(String path) {
