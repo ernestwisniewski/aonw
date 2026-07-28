@@ -76,8 +76,8 @@ void main() {
     };
     const expectedStaticCallSites = {
       'cancelUnitAction': {...sharedKernelCallSites, _lightweightMctsCallSite},
-      'skipUnitTurn': sharedKernelCallSites,
-      'fortifyUnit': sharedKernelCallSites,
+      'skipUnitTurn': {...sharedKernelCallSites, _lightweightMctsCallSite},
+      'fortifyUnit': {...sharedKernelCallSites, _lightweightMctsCallSite},
     };
     const expectedPersistentCallSites = {
       _economySimulationCallSite,
