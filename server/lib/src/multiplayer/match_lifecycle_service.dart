@@ -10,6 +10,7 @@ import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
 import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
+import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';
@@ -291,9 +292,19 @@ final class MatchLifecycleService {
       winnerPlayerId: null,
       autoStartAt: null,
     );
-    final snapshot = await snapshotFactory.create(
-      match: runningMatch,
+    final participants = runningMatch.players
+        .map(domainPlayerFromWire)
+        .toList(growable: false);
+    final canonicalSnapshot = await snapshotFactory.create(
+      matchId: runningMatch.id,
+      matchName: runningMatch.name,
+      mapName: runningMatch.mapName,
+      participants: participants,
       startedAt: now,
+    );
+    final snapshot = _runningMatchSnapshotCodec.encodeInitial(
+      match: runningMatch,
+      snapshot: canonicalSnapshot,
     );
     final updated = state.copyWith(match: runningMatch, snapshot: snapshot);
     await store.saveState(updated);

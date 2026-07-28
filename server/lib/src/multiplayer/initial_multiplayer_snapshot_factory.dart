@@ -1,26 +1,28 @@
-import 'dart:io';
-
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/protocol.dart';
 
-class InitialMultiplayerSnapshotFactory {
+import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
+
+final class InitialMultiplayerSnapshotFactory {
   const InitialMultiplayerSnapshotFactory({
     MultiplayerMapCatalog mapCatalog = const FileMultiplayerMapCatalog(),
   }) : _mapCatalog = mapCatalog;
 
   final MultiplayerMapCatalog _mapCatalog;
 
-  Future<WireSnapshot> create({
-    required WireMatch match,
+  Future<CanonicalGameSnapshot> create({
+    required String matchId,
+    required String matchName,
+    required String mapName,
+    required List<Player> participants,
     required DateTime startedAt,
   }) async {
-    final players = match.players.map(domainPlayerFromWire).toList();
-    final mapData = await _mapCatalog.loadAssetMap(match.mapName);
-    mapData.mapName ??= match.mapName;
+    final players = List<Player>.unmodifiable(participants);
+    final mapData = await _mapCatalog.loadAssetMap(mapName);
+    mapData.mapName ??= mapName;
     final startPositionSeed = StartingPositionSeed.fromParts([
       startedAt,
-      match.id,
-      match.mapName,
+      matchId,
+      mapName,
       players.length,
       for (final player in players) player.id,
     ]);
@@ -49,97 +51,31 @@ class InitialMultiplayerSnapshotFactory {
       cities: const [],
       playerIds: playerIds,
     );
-    final save = GameSave(
-      id: match.id,
-      name: match.name,
-      mapName: match.mapName,
-      mapSource: MapSource.asset,
-      turn: 1,
-      playerStates: {
-        for (final player in players) player.id: PlayerTurnState.active,
-      },
-      savedAt: startedAt,
-      camera: CameraState.zero,
-      matchRules: MatchRules.standard,
-      players: players,
-      gameMode: GameMode.multiplayer,
+    return CanonicalGameSnapshot.snapshot(
+      domain: DomainState.snapshot(
+        turn: 1,
+        matchRules: MatchRules.standard,
+        participants: players,
+        units: units,
+        artifacts: artifacts,
+        fogOfWar: fogOfWar,
+        diplomacy: diplomacy,
+      ),
+      session: MatchSessionState.snapshot(
+        gameMode: GameMode.multiplayer,
+        turnStatesByPlayerId: {
+          for (final player in players) player.id: PlayerTurnState.active,
+        },
+        turnStartedAt: startedAt,
+      ),
+      metadata: GameSnapshotMetadata(
+        id: matchId,
+        schemaVersion: gameSaveCurrentSchemaVersion,
+        name: matchName,
+        world: WorldReference(name: mapName, source: MapSource.asset),
+        savedAtUtc: startedAt,
+        camera: GameSnapshotCamera.zero,
+      ),
     );
-    final state = PersistentGameState.snapshot(
-      playerColors: {
-        for (final player in players) player.id: player.colorValue,
-      },
-      playerCountries: {
-        for (final player in players) player.id: player.country,
-      },
-      units: units,
-      artifacts: artifacts,
-      fogOfWar: fogOfWar,
-      runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
-    );
-    return WireSnapshot(
-      matchId: match.id,
-      offset: 0,
-      save: save.toJson(),
-      state: state.toJson(),
-    );
-  }
-
-  static Player domainPlayerFromWire(WirePlayer player) {
-    return Player(
-      id: player.id,
-      name: player.name,
-      colorValue: player.colorValue,
-      country: player.country,
-      kind: switch (player.kind) {
-        WirePlayerKind.human => PlayerKind.human,
-        WirePlayerKind.ai => PlayerKind.ai,
-      },
-      ai: player.ai == null
-          ? null
-          : AiPlayer(
-              strategyId: player.ai!.strategyId,
-              difficulty: player.ai!.difficulty,
-              persona: player.ai!.persona,
-              seed: StartingPositionSeed.fromParts([
-                player.id,
-                player.name,
-                player.country.name,
-              ]),
-            ),
-    );
-  }
-}
-
-abstract interface class MultiplayerMapCatalog {
-  Future<MapData> loadAssetMap(String mapName);
-}
-
-class FileMultiplayerMapCatalog implements MultiplayerMapCatalog {
-  const FileMultiplayerMapCatalog({List<String>? roots}) : _roots = roots;
-
-  final List<String>? _roots;
-
-  @override
-  Future<MapData> loadAssetMap(String mapName) async {
-    final safeName = _safeMapName(mapName);
-    final roots = _roots ?? const ['assets/maps', '../assets/maps'];
-    for (final root in roots) {
-      final file = File('$root/$safeName/map.json');
-      if (await file.exists()) {
-        return MapDataCodec.fromJson(await file.readAsString());
-      }
-    }
-    throw StateError('Map asset not found: $safeName');
-  }
-
-  String _safeMapName(String mapName) {
-    final trimmed = mapName.trim();
-    if (trimmed.isEmpty ||
-        trimmed.contains('/') ||
-        trimmed.contains(r'\') ||
-        trimmed.contains('..')) {
-      throw ArgumentError.value(mapName, 'mapName', 'Invalid map asset name');
-    }
-    return trimmed;
   }
 }

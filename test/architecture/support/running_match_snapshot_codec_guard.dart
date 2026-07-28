@@ -20,6 +20,7 @@ List<String> _codecShapeViolations(
   final runningDecode = _singleMethod(codec, 'decode');
   final losslessDecode = _singleMethod(decoder, 'decode');
   final encode = _singleMethod(codec, 'encode');
+  final encodeInitial = _singleMethod(codec, 'encodeInitial');
   return [
     if (codec == null)
       'must declare exactly one RunningMatchSnapshotCodec'
@@ -39,6 +40,9 @@ List<String> _codecShapeViolations(
       'lossless decode must require exactly one WireSnapshot',
     if (!_hasExactEncodeContract(encode))
       'encode must require one positional source and optional legacy parts',
+    if (!_hasExactInitialEncodeContract(encodeInitial))
+      'encodeInitial must require exactly named WireMatch and canonical '
+          'snapshot',
     if (!_hasFinalField(decoded, 'wire', 'WireSnapshot') ||
         !_hasFinalField(decoded, 'save', 'GameSave') ||
         !_hasFinalField(decoded, 'state', 'PersistentGameState'))
@@ -241,6 +245,26 @@ bool _hasExactEncodeContract(MethodDeclaration? method) {
         name: 'state',
         type: 'PersistentGameState?',
         required: false,
+      );
+}
+
+bool _hasExactInitialEncodeContract(MethodDeclaration? method) {
+  if (method == null || method.returnType?.toSource() != 'WireSnapshot') {
+    return false;
+  }
+  final parameters = method.parameters?.parameters ?? const <FormalParameter>[];
+  if (parameters.length != 2) return false;
+  return _isNamedParameter(
+        parameters[0],
+        name: 'match',
+        type: 'WireMatch',
+        required: true,
+      ) &&
+      _isNamedParameter(
+        parameters[1],
+        name: 'snapshot',
+        type: 'CanonicalGameSnapshot',
+        required: true,
       );
 }
 

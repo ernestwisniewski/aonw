@@ -4,7 +4,8 @@ import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
-import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
+import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_auto_explore.dart';

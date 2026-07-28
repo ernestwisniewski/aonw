@@ -54,6 +54,8 @@ void main() {
           'decode must require exactly named WireMatch and WireSnapshot',
           'lossless decode must require exactly one WireSnapshot',
           'encode must require one positional source and optional legacy parts',
+          'encodeInitial must require exactly named WireMatch and canonical '
+              'snapshot',
         ]),
       );
     });

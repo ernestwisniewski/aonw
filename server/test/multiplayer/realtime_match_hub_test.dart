@@ -5,15 +5,18 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
 part 'support/realtime_match_hub_fixture.dart';
+part 'support/realtime_match_hub_initial_snapshot_cases.dart';
 part 'support/realtime_match_hub_outcome_cases.dart';
 part 'support/realtime_match_hub_resignation_cases.dart';
 part 'support/realtime_match_hub_resignation_fixture.dart';
@@ -23,6 +26,7 @@ part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
 void main() {
   _registerRealtimeMatchHubTurnMovementTests();
+  _registerRealtimeMatchHubInitialSnapshotTests();
   test(
     'quickplay preserves requested civilizations for lobby players',
     () async {
@@ -428,58 +432,6 @@ void main() {
       staleStates.where((state) => state!.match.state == 'open'),
       hasLength(2),
     );
-  });
-
-  test('startMatch persists a full initial game snapshot', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
-    final hub = RealtimeMatchHub(
-      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-    );
-    final store = _MemoryMatchStore();
-    final match = await hub.createMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      request: CreateMatchRequest(
-        name: 'Test match',
-        mapName: 'verdantia',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-    await hub.joinMatch(
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: match.id,
-    );
-
-    final started = await hub.startMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: match.id,
-      snapshotFactory: InitialMultiplayerSnapshotFactory(
-        mapCatalog: mapCatalog,
-      ),
-    );
-    final state = await store.findState(match.id);
-    final save = GameSave.fromJson(state!.snapshot.save);
-    final gameState = PersistentGameState.fromJson(state.snapshot.state);
-
-    expect(started.state, 'running');
-    expect(started.turn, 1);
-    expect(save.id, match.id);
-    expect(save.gameMode, GameMode.multiplayer);
-    expect(save.turn, 1);
-    final playerIds = started.players.map((player) => player.id).toSet();
-    expect(save.players.map((player) => player.id).toSet(), playerIds);
-    expect(playerIds, hasLength(2));
-    expect(playerIds, everyElement(isNot(contains('user'))));
-    expect(gameState.units, hasLength(4));
-    expect(
-      gameState.units.map((unit) => unit.ownerPlayerId).toSet(),
-      playerIds,
-    );
-    expect(gameState.fogOfWar.playerIds, containsAll(save.playerStates.keys));
   });
 
   test(

@@ -197,6 +197,90 @@ void main() {
     });
   });
 
+  group('RunningMatchSnapshotCodec initial encoding', () {
+    test('round-trips canonical state without serializing turnStartedAt', () {
+      final fixture = _fixture();
+      final decoded = codec.decode(
+        match: fixture.match,
+        snapshot: fixture.wire,
+      );
+      final initial = decoded.canonical.copyWith(eventLogOffset: 0);
+
+      final encoded = codec.encodeInitial(
+        match: fixture.match,
+        snapshot: initial,
+      );
+
+      expect(encoded.matchId, fixture.match.id);
+      expect(encoded.offset, 0);
+      expect(encoded.save, fixture.save.toJson());
+      expect(encoded.state, fixture.state.toJson());
+      expect(
+        (encoded.state['runtimeState']! as Map).containsKey('turnStartedAt'),
+        isFalse,
+      );
+      expect(
+        codec.decode(match: fixture.match, snapshot: encoded).canonical,
+        initial,
+      );
+    });
+
+    test('rejects non-running, mismatched, and non-zero initial sources', () {
+      final fixture = _fixture();
+      final canonical = codec
+          .decode(match: fixture.match, snapshot: fixture.wire)
+          .canonical;
+      final initial = canonical.copyWith(eventLogOffset: 0);
+
+      expect(
+        () => codec.encodeInitial(
+          match: fixture.match.copyWith(state: 'open'),
+          snapshot: initial,
+        ),
+        throwsStateError,
+      );
+      expect(
+        () => codec.encodeInitial(
+          match: fixture.match,
+          snapshot: initial.copyWith(
+            metadata: initial.metadata.copyWith(id: 'different-match'),
+          ),
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => codec.encodeInitial(match: fixture.match, snapshot: canonical),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects an implicit turn start that cannot round-trip', () {
+      final fixture = _fixture();
+      final initial = codec
+          .decode(match: fixture.match, snapshot: fixture.wire)
+          .canonical
+          .copyWith(eventLogOffset: 0);
+
+      for (final invalidTurnStart in <DateTime?>[
+        null,
+        initial.metadata.savedAtUtc.add(const Duration(seconds: 1)),
+      ]) {
+        expect(
+          () => codec.encodeInitial(
+            match: fixture.match,
+            snapshot: initial.copyWith(
+              session: initial.session.copyWith(
+                turnStartedAt: invalidTurnStart,
+              ),
+            ),
+          ),
+          throwsArgumentError,
+          reason: '$invalidTurnStart',
+        );
+      }
+    });
+  });
+
   group('RunningMatchSnapshotCodec canonical transitions', () {
     test('returns the raw snapshot for a semantic no-op', () {
       final fixture = _fixture();

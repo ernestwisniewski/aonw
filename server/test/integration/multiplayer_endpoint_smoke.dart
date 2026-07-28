@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
-import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:serverpod/serverpod.dart' show QueryParameters;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'

@@ -78,8 +78,7 @@ DomainState _reconcileOutcomeParticipants({
   };
   final participants = [
     for (final wirePlayer in authoritativePlayersById.values)
-      domainPlayersById[wirePlayer.id] ??
-          InitialMultiplayerSnapshotFactory.domainPlayerFromWire(wirePlayer),
+      domainPlayersById[wirePlayer.id] ?? domainPlayerFromWire(wirePlayer),
   ];
   if (_sameParticipants(domain.participants, participants)) return domain;
   return domain.copyWith(participants: participants);
