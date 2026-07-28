@@ -17,6 +17,11 @@ const _aiTurnPreparationBuilderPath =
     'lib/game/application/services/ai_turn_preparation_builder.dart';
 const _bootstrapGameStatePath =
     'lib/game/application/use_cases/bootstrap_game_state_use_case.dart';
+const _replayServicePath = 'lib/game/application/services/replay_service.dart';
+const _replayControlSelectorsPath =
+    'lib/game/presentation/screens/replay/replay_control_selectors.dart';
+const _replayRendererHostPath =
+    'lib/game/presentation/screens/replay/replay_renderer_host.dart';
 const _canonicalSessionConsumerPaths = [
   _localResolverPath,
   'lib/api/transport/network_command_transport.dart',
@@ -130,6 +135,23 @@ void main() {
       expect(_propertyReadCount(unit, 'save'), 0);
       expect(_propertyReadCount(unit, 'session'), 3);
       expect(_propertyReadCount(unit, 'domain'), 2);
+    });
+
+    test('replay read model ratchets initial snapshot legacy access', () {
+      final unit = _unitAt(_replayServicePath);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'save'), 2);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'metadata'), 1);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'session'), 1);
+      expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'domain'), 2);
+    });
+
+    test('replay name and roster presentation use canonical read model', () {
+      final selectors = _namesIn(_unitAt(_replayControlSelectorsPath));
+      final renderer = _namesIn(_unitAt(_replayRendererHostPath));
+      expect(selectors, contains('participants'));
+      expect(selectors, isNot(contains('save')));
+      expect(renderer, contains('metadata'));
+      expect(renderer, isNot(contains('save')));
     });
 
     test('semantic read scanner ignores text and finds property access', () {
@@ -316,6 +338,16 @@ int _propertyReadCount(AstNode node, String propertyName) {
   return collector.count;
 }
 
+int _targetPropertyReadCount(
+  AstNode node,
+  String targetName,
+  String propertyName,
+) {
+  final collector = _TargetPropertyReadCollector(targetName, propertyName);
+  node.accept(collector);
+  return collector.count;
+}
+
 final class _NameCollector extends RecursiveAstVisitor<void> {
   final Set<String> names = {};
 
@@ -348,5 +380,33 @@ final class _PropertyReadCollector extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == propertyName) count += 1;
     super.visitMethodInvocation(node);
+  }
+}
+
+final class _TargetPropertyReadCollector extends RecursiveAstVisitor<void> {
+  _TargetPropertyReadCollector(this.targetName, this.propertyName);
+
+  final String targetName;
+  final String propertyName;
+  int count = 0;
+
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (node.prefix.name == targetName &&
+        node.identifier.name == propertyName) {
+      count += 1;
+    }
+    super.visitPrefixedIdentifier(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    final target = node.realTarget;
+    if (target is SimpleIdentifier &&
+        target.name == targetName &&
+        node.propertyName.name == propertyName) {
+      count += 1;
+    }
+    super.visitPropertyAccess(node);
   }
 }

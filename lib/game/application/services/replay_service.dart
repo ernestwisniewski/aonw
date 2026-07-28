@@ -8,6 +8,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 enum ReplayBuildFailureReason { missingInitialSnapshot, offsetGap, corruptLog }
 
@@ -36,21 +38,24 @@ class ReplayTimeline {
   });
 
   GameSave get save => initialSnapshot.save;
+  GameSnapshotMetadata get metadata => initialSnapshot.metadata;
+  List<Player> get participants => initialSnapshot.domain.participants;
+  MatchSessionState get session => initialSnapshot.session;
 
   List<String> get playerIds {
     final ids = [
-      for (final player in save.players)
+      for (final player in participants)
         if (player.id.isNotEmpty) player.id,
-      for (final playerId in save.playerStates.keys)
+      for (final playerId in session.turnStatesByPlayerId.keys)
         if (playerId.isNotEmpty) playerId,
     ];
     return ids.toSet().toList()..sort();
   }
 
-  int get firstTurn => save.turn;
+  int get firstTurn => initialSnapshot.domain.turn;
 
   int get lastTurn {
-    if (steps.isEmpty) return save.turn;
+    if (steps.isEmpty) return firstTurn;
     return steps.last.save.turn;
   }
 }

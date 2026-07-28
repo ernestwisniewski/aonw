@@ -43,7 +43,7 @@ class _ReplayPerspectiveSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final players = {
-      for (final player in timeline.save.players) player.id: player,
+      for (final player in timeline.participants) player.id: player,
     };
     return Row(
       mainAxisSize: MainAxisSize.min,

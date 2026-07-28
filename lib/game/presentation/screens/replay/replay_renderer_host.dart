@@ -280,7 +280,7 @@ class _ReplayRendererHostState extends ConsumerState<_ReplayRendererHost> {
             right: 0,
             child: _ReplayTopBar(
               title: widget.l10n.replayTitle,
-              saveName: widget.timeline.save.name,
+              saveName: widget.timeline.metadata.name,
               onClose: () => context.go('/load-game'),
             ),
           ),
