@@ -194,7 +194,7 @@ class LocalCommandTransport implements CommandTransport {
       LoggedCommand(
         offset: offset,
         timestamp: timestamp,
-        turn: baseSnapshot.save.turn,
+        turn: baseSnapshot.domain.turn,
         actorPlayerId: logResolution.context.actorPlayerId,
         canAct: logResolution.context.canAct,
         commandTick: logResolution.context.commandTick,

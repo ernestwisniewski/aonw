@@ -14,6 +14,8 @@ const _persistenceCodecPath =
 const _protocolCodecPath = 'lib/api/protocol/codecs.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
+const _localTransportPath =
+    'lib/game/infrastructure/transport/local_command_transport.dart';
 const _aiTurnPreparationBuilderPath =
     'lib/game/application/services/ai_turn_preparation_builder.dart';
 const _bootstrapGameStatePath =
@@ -141,6 +143,13 @@ void main() {
         1,
       );
       expect(_namesIn(unit), contains('advanceSnapshot'));
+    });
+
+    test('local transport logs turns from the canonical snapshot', () {
+      final unit = _unitAt(_localTransportPath);
+
+      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'save'), 0);
+      expect(_targetPropertyReadCount(unit, 'baseSnapshot', 'domain'), 1);
     });
 
     test('production semantic snapshot reads are eliminated', () {
