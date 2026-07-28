@@ -79,10 +79,10 @@ void _runFixture(ReducerParityFixture fixture) {
         ),
       );
 
-  expect(reducerParitySave(result.save), fixture.expectedSave);
+  expect(reducerParitySave(result.snapshot.save), fixture.expectedSave);
   expect(result.state.toPersistentState().toJson(), fixture.expectedState);
   expect(reducerParityEvents(result.events), fixture.expectedEvents);
-  expect(result.save.savedAt, fixture.now);
+  expect(result.snapshot.metadata.savedAtUtc, fixture.now);
   if (!fixture.expectedAccepted &&
       (fixture.id.startsWith('resource-trade-characterization-') ||
           fixture.id.startsWith('diplomacy-characterization-') ||

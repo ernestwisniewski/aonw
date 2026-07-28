@@ -123,7 +123,7 @@ void main() {
     );
 
     expect(reducer.mapData, same(mapView));
-    expect(result.save.turn, 2);
+    expect(result.snapshot.domain.turn, 2);
     expect(result.state.submittedPlayerIds, isEmpty);
     expect(result.events.whereType<AllPlayersSubmittedEvent>(), hasLength(1));
     expect(result.events.whereType<TurnEndedEvent>(), hasLength(2));
