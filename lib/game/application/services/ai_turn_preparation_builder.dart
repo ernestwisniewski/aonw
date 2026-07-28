@@ -65,11 +65,7 @@ final class AiTurnPreparationBuilder {
       gameMode: session.gameMode,
       playerId: playerId,
     );
-    final planningSnapshot = SaveSnapshot.fromGameState(
-      save: resolvedSnapshot.save,
-      state: planningState,
-      eventLogOffset: resolvedSnapshot.eventLogOffset,
-    );
+    final planningSnapshot = resolvedSnapshot.withGameState(planningState);
     final planningDomain = planningSnapshot.canonical.domain;
     final effectiveRuleset = ruleset.copyWith(
       paceBalance: domain.matchRules.paceBalance,
@@ -132,7 +128,7 @@ final class AiTurnPreparationBuilder {
       deadline: _deadlineFor(
         gameMode: session.gameMode,
         savedAt: metadata.savedAtUtc,
-        rawTurnStartedAt: resolvedSnapshot.runtimeState.turnStartedAt,
+        rawTurnStartedAt: resolvedSnapshot.persistedTurnStartedAt,
       ),
       ownControlPercent: hegemonyContext.controlPercent,
       knownPlayerCount: hegemonyContext.playerCount,

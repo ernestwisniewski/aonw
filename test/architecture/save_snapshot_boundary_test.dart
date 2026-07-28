@@ -112,10 +112,12 @@ void main() {
       }
     });
 
-    test('AI builder keeps only its two reviewed legacy boundary reads', () {
+    test('AI builder uses canonical and lossless snapshot APIs only', () {
       final unit = _unitAt(_aiTurnPreparationBuilderPath);
-      expect(_propertyReadCount(unit, 'save'), 1);
-      expect(_propertyReadCount(unit, 'runtimeState'), 1);
+      expect(_propertyReadCount(unit, 'save'), 0);
+      expect(_propertyReadCount(unit, 'runtimeState'), 0);
+      expect(_propertyReadCount(unit, 'withGameState'), 1);
+      expect(_propertyReadCount(unit, 'persistedTurnStartedAt'), 1);
       expect(_propertyReadCount(unit, 'metadata'), 2);
       expect(_propertyReadCount(unit, 'session'), 1);
       expect(_propertyReadCount(unit, 'domain'), 3);
@@ -331,5 +333,11 @@ final class _PropertyReadCollector extends RecursiveAstVisitor<void> {
   void visitPropertyAccess(PropertyAccess node) {
     if (node.propertyName.name == propertyName) count += 1;
     super.visitPropertyAccess(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.methodName.name == propertyName) count += 1;
+    super.visitMethodInvocation(node);
   }
 }

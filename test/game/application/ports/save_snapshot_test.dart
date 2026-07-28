@@ -231,6 +231,30 @@ void main() {
       expect(snapshot.copyWith().eventLogOffset, 4);
       expect(snapshot.copyWith(eventLogOffset: 5).eventLogOffset, 5);
     });
+
+    test('rebuilds game state without exposing legacy envelope ownership', () {
+      final snapshot = SaveSnapshot(save: _save(), eventLogOffset: 4);
+      final rebuilt = snapshot.withGameState(
+        const GameState(playerGold: {'p1': 9}),
+      );
+
+      expect(rebuilt.save.toJson(), snapshot.save.toJson());
+      expect(rebuilt.eventLogOffset, 4);
+      expect(rebuilt.domain.playerGold, {'p1': 9});
+    });
+
+    test('keeps persisted turn start distinct from canonical fallback', () {
+      final savedAt = DateTime.utc(2026, 1, 1);
+      final snapshot = SaveSnapshot(
+        save: _save().copyWith(
+          gameMode: GameMode.multiplayer,
+          savedAt: savedAt,
+        ),
+      );
+
+      expect(snapshot.persistedTurnStartedAt, isNull);
+      expect(snapshot.session.turnStartedAt, savedAt);
+    });
   });
 }
 

@@ -636,7 +636,7 @@
         "lib/game/application/services/ai_strategic_plan_provider.dart::class:AiStrategicPlanProvider/method:resolve": 68,
         "lib/game/application/services/ai_turn_command_executor.dart::class:AiTurnCommandExecutor/method:describeCommand": 133,
         "lib/game/application/services/ai_turn_command_executor.dart::class:AiTurnCommandExecutor/method:executePlan": 91,
-        "lib/game/application/services/ai_turn_preparation_builder.dart::class:AiTurnPreparationBuilder/method:prepare": 134,
+        "lib/game/application/services/ai_turn_preparation_builder.dart::class:AiTurnPreparationBuilder/method:prepare": 130,
         "lib/game/application/services/ai_turn_runner.dart::class:AiTurnRunner/method:run": 97,
         "lib/game/application/services/authoritative_command_policy.dart::class:AuthoritativeCommandPolicy/method:isClientOnly": 68,
         "lib/game/application/services/game_event_descriptor.dart::function:_describeGameEvent": 412,

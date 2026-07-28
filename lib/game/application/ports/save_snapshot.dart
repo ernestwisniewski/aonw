@@ -137,6 +137,9 @@ final class SaveSnapshot {
   WonderRegistry get wonderRegistry => _rawState.wonderRegistry;
   GameRuntimeState get runtimeState => _rawState.runtimeState;
 
+  /// Exact persisted turn start without the canonical multiplayer fallback.
+  DateTime? get persistedTurnStartedAt => _rawState.runtimeState.turnStartedAt;
+
   late final CanonicalGameSnapshot canonical = _saveSnapshotAdapter.toCanonical(
     save: save,
     state: _rawState,
@@ -147,6 +150,14 @@ final class SaveSnapshot {
   DomainState get domain => canonical.domain;
   MatchSessionState get session => canonical.session;
   PersistedInteractionState get interaction => canonical.interaction;
+
+  SaveSnapshot withGameState(GameState state) {
+    return SaveSnapshot.fromGameState(
+      save: save,
+      state: state,
+      eventLogOffset: eventLogOffset,
+    );
+  }
 
   GameState toGameState({
     String activePlayerId = '',
