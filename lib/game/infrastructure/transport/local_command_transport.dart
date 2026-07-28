@@ -3,7 +3,6 @@ import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
@@ -92,11 +91,7 @@ class LocalCommandTransport implements CommandTransport {
       );
     }
 
-    final snapshot = SaveSnapshot.fromGameState(
-      save: resolved.save,
-      state: resolved.state,
-      eventLogOffset: offset,
-    );
+    final snapshot = resolved.snapshot.copyWith(eventLogOffset: offset);
     await gameRepository.save(snapshot);
 
     final shouldStoreSnapshot =

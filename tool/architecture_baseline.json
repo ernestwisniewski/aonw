@@ -651,7 +651,7 @@
         "lib/game/domain/reducer/movement/movement_reducer_turn_reset.dart::class:_MovementTurnResetProcessor/method:run": 190,
         "lib/game/infrastructure/persistence/json_game_repository.dart::class:JsonGameRepository/method:create": 73,
         "lib/game/infrastructure/persistence/web/web_game_repository.dart::class:WebGameRepository/method:create": 76,
-        "lib/game/infrastructure/transport/local_command_transport.dart::class:LocalCommandTransport/method:dispatch": 89,
+        "lib/game/infrastructure/transport/local_command_transport.dart::class:LocalCommandTransport/method:dispatch": 85,
         "lib/game/presentation/audio/game_sound_cue_mapper.dart::class:GameSoundCueMapper/method:_commandBelongsToPlayer": 93,
         "lib/game/presentation/engine/game_event_renderer_combat_effects.dart::class:GameEventRendererCombatEffects/method:combatResolvedEffects": 201,
         "lib/game/presentation/engine/game_event_renderer_effect_mapper.dart::class:GameEventRendererEffectMapper/method:_effectsForEvent": 107,

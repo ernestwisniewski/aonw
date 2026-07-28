@@ -106,6 +106,24 @@ void main() {
         isEmpty,
       );
       expect(names, containsAll(const {'SaveSnapshot', 'canonical'}));
+
+      final resolution = unit.declarations
+          .whereType<ClassDeclaration>()
+          .singleWhere(
+            (declaration) =>
+                declaration.namePart.typeName.lexeme ==
+                'LocalCommandResolution',
+          );
+      final resolutionFields = resolution.body.members
+          .whereType<FieldDeclaration>()
+          .expand((field) => field.fields.variables)
+          .map((variable) => variable.name.lexeme);
+      final resolutionSaveGetters = resolution.body.members
+          .whereType<MethodDeclaration>()
+          .where((method) => method.isGetter && method.name.lexeme == 'save');
+      expect(resolutionFields, contains('snapshot'));
+      expect(resolutionFields, isNot(contains('save')));
+      expect(resolutionSaveGetters, isEmpty);
     });
 
     test('production semantic snapshot reads are eliminated', () {

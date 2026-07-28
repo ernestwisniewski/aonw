@@ -11,14 +11,14 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 class LocalCommandResolution {
-  final GameSave save;
+  final SaveSnapshot snapshot;
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final GameCommandContext context;
 
   const LocalCommandResolution({
-    required this.save,
+    required this.snapshot,
     required this.state,
     required this.events,
     required this.uiEffects,
@@ -50,7 +50,11 @@ class LocalCommandResolver {
           actorPlayerId: effectiveContext.actorPlayerId,
         )) {
       return LocalCommandResolution(
-        save: baseSnapshot.save.copyWith(savedAt: savedAt.toUtc()),
+        snapshot: SaveSnapshot.fromGameState(
+          save: baseSnapshot.save.copyWith(savedAt: savedAt.toUtc()),
+          state: currentState,
+          eventLogOffset: baseSnapshot.eventLogOffset,
+        ),
         state: currentState,
         events: const [],
         uiEffects: const [],
@@ -70,7 +74,11 @@ class LocalCommandResolver {
     );
 
     return LocalCommandResolution(
-      save: resolved.save,
+      snapshot: SaveSnapshot.fromGameState(
+        save: resolved.save,
+        state: resolved.state,
+        eventLogOffset: baseSnapshot.eventLogOffset,
+      ),
       state: resolved.state,
       events: [...transition.events, ...resolved.events],
       uiEffects: [...transition.uiEffects, ...resolved.uiEffects],

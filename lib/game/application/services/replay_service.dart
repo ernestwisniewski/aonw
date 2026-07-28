@@ -289,7 +289,7 @@ class ReplayService {
             actorPlayerId: effectiveActorPlayerId,
           ),
         );
-        currentSave = resolved.save;
+        currentSave = resolved.snapshot.save;
         currentState = resolved.state;
         currentOffset = logged.offset;
         _appendReplayStep(
@@ -326,11 +326,7 @@ void _appendReplayStep(
   required GameState previousState,
   required int originatingTurn,
 }) {
-  final snapshot = SaveSnapshot.fromGameState(
-    save: resolved.save,
-    state: resolved.state,
-    eventLogOffset: logged.offset,
-  );
+  final snapshot = resolved.snapshot.copyWith(eventLogOffset: logged.offset);
   steps.add(
     ReplayStep(
       index: steps.length + 1,

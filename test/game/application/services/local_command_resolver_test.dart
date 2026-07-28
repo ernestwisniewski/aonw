@@ -34,8 +34,10 @@ void main() {
           savedAt: savedAt,
         );
 
-    expect(result.save.playerStates, save.playerStates);
-    expect(result.save.savedAt, savedAt);
+    expect(result.snapshot.save.playerStates, save.playerStates);
+    expect(result.snapshot.save.savedAt, savedAt);
+    expect(result.snapshot.eventLogOffset, 0);
+    expect(result.snapshot.domain.turn, 7);
     expect(result.state, state);
     expect(result.events, isEmpty);
   });
@@ -83,7 +85,9 @@ void main() {
             savedAt: DateTime.utc(2026, 7, 11, 12),
           );
 
-      expect(result.save.turn, 8);
+      expect(result.snapshot.save.turn, 8);
+      expect(result.snapshot.eventLogOffset, 17);
+      expect(result.snapshot.domain.turn, 8);
       expect(result.state.submittedPlayerIds, isEmpty);
       expect(result.state.pendingAction, pendingAction);
       expect(result.state.activePlayerId, 'player_1');
