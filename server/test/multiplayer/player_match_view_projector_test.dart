@@ -1,15 +1,24 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
 import 'package:test/test.dart';
+
+import 'support/player_match_view_projection_fixture.dart';
+
+part 'support/player_match_view_projection_guard_cases.dart';
 
 void main() {
   const projector = PlayerMatchViewProjector();
   const owner = MatchRecipient(
     userIdentifier: 'owner-auth-id',
     playerId: 'player-owner',
+  );
+  const guest = MatchRecipient(
+    userIdentifier: 'guest-auth-id',
+    playerId: 'player-guest',
   );
 
   test('redacts account identifiers and private invite codes from matches', () {
@@ -40,91 +49,29 @@ void main() {
   });
 
   test('projects a fail-closed player-visible snapshot', () {
-    final canonical = _snapshot();
+    final canonical = playerMatchViewProjectionFixture;
     final canonicalJson = canonical.toJson().toString();
 
     final projected = projector.snapshotFor(canonical, owner);
+    final projectedGuest = projector.snapshotFor(canonical, guest);
     final save = GameSave.fromJson(projected.save);
     final state = PersistentGameState.fromJson(projected.state);
+    final guestState = PersistentGameState.fromJson(projectedGuest.state);
 
-    expect(save.camera, CameraState.zero);
-    expect(save.players.last.ai?.seed, 0);
-    expect(
-      state.playerColors.keys,
-      containsAll(['player-owner', 'player-guest']),
+    _expectPublicSave(save);
+    _expectOwnerRuleProjection(state);
+    _expectOwnerRuntimeProjection(state);
+    _expectGuestProjection(guestState);
+    _expectProjectionSecrecy(
+      canonical: canonical,
+      canonicalJson: canonicalJson,
+      projected: projected,
+      projectedGuest: projectedGuest,
     );
-    expect(state.playerGold, {'player-owner': 111});
-    expect(state.playerWarWeariness, {'player-owner': 3});
-    expect(state.playerStabilityNet, {'player-owner': 4});
-    expect(state.fogOfWar.playerIds, ['player-owner']);
-    expect(state.research.players.keys, ['player-owner']);
-
-    expect(state.units.map((unit) => unit.id), [
-      'own-unit',
-      'visible-enemy-unit',
-    ]);
-    final visibleEnemy = state.units.last;
-    expect(visibleEnemy.movementPoints, 0);
-    expect(visibleEnemy.army, isEmpty);
-    expect(visibleEnemy.queuedPath, isNull);
-    expect(visibleEnemy.experiencePoints, 0);
-
-    expect(state.cities.map((city) => city.id), [
-      'own-city',
-      'visible-enemy-city',
-    ]);
-    final visibleEnemyCity = state.cities.last;
-    expect(visibleEnemyCity.storedFood, GameCity.defaultStartStoredFood);
-    expect(visibleEnemyCity.buildings, isEmpty);
-    expect(visibleEnemyCity.productionQueue, isNull);
-    expect(visibleEnemyCity.productionOverflow, 0);
-    expect(visibleEnemyCity.controlledHexes, [const CityHex(col: 2, row: 3)]);
-
-    expect(state.fieldImprovements, hasLength(2));
-    expect(state.fieldImprovements.last.builtByCityId, isNull);
-    expect(state.artifacts.map((artifact) => artifact.id), [
-      'visible-artifact',
-      'own-carried-artifact',
-    ]);
-    expect(state.runtimeState.cityFoundingDraft, isNull);
-    expect(state.runtimeState.pendingAction, isNull);
-    expect(state.runtimeState.timeoutStreaksByPlayerId, {'player-owner': 1});
-    expect(state.runtimeState.intendedAttacks, hasLength(1));
-    expect(
-      state.runtimeState.intendedAttacks.single.declaringPlayerId,
-      'player-owner',
-    );
-    expect(state.runtimeState.diplomacy.relations, hasLength(1));
-    expect(
-      state.runtimeState.diplomacy.hasContact('player-owner', 'player-ai'),
-      isTrue,
-    );
-    expect(
-      state.runtimeState.diplomacy.scoreHistory.values.single,
-      hasLength(1),
-    );
-    expect(
-      state.runtimeState.diplomacy.scoreHistory.values.single.single.sourceId,
-      'owner-score',
-    );
-    expect(state.runtimeState.dominationHoldTurnsByPlayerId, {
-      'player-owner': 2,
-    });
-    expect(state.runtimeState.mapObjectiveHoldStatesByObjectiveId.keys, [
-      'objective-own',
-    ]);
-    expect(state.runtimeState.resourceTradeAgreements, hasLength(1));
-    expect(projected.state['reason'], 'owner_left');
-    expect(projected.state, isNot(contains('leftUserIdentifier')));
-
-    expect(canonical.toJson().toString(), canonicalJson);
-    expect(canonical.state.toString(), contains('hidden-enemy-unit'));
-    expect(projected.state.toString(), isNot(contains('hidden-enemy-unit')));
-    expect(projected.state.toString(), isNot(contains('guest-secret')));
   });
 
   test('projects only recipient events and command acknowledgements', () {
-    final snapshot = _snapshot();
+    final snapshot = playerMatchViewProjectionFixture;
     final state = PersistentGameState.fromJson(snapshot.state);
     final storedEvents = PlayerMatchEventAudience.annotateForStorage(
       events: const [
@@ -246,87 +193,131 @@ void main() {
     expect(projected.state, {'phase': 'lobby', 'mapName': 'test-map'});
   });
 
-  test('fails closed when snapshot schema gains an unreviewed field', () {
-    final canonical = _snapshot();
-    final withUnknownField = canonical.copyWith(
-      state: {...canonical.state, 'futureSecret': 'must-not-pass-through'},
-    );
+  _registerPlayerMatchProjectionGuardTests(
+    projector: projector,
+    owner: owner,
+    guest: guest,
+  );
+}
 
-    expect(
-      () => projector.snapshotFor(withUnknownField, owner),
-      throwsFormatException,
-    );
+void _expectPublicSave(GameSave save) {
+  expect(save.camera, CameraState.zero);
+  expect(save.players.last.ai?.seed, 0);
+}
+
+void _expectOwnerRuleProjection(PersistentGameState state) {
+  expect(state.playerColors, {
+    'player-owner': 1,
+    'player-guest': 2,
+    'player-ai': 3,
   });
-
-  test('fails closed when runtime schema gains an unreviewed field', () {
-    final canonical = _snapshot();
-    final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState'] as Map,
-    );
-    final withUnknownField = canonical.copyWith(
-      state: {
-        ...canonical.state,
-        'runtimeState': {...runtime, 'futureRuntimeSecret': true},
-      },
-    );
-
-    expect(
-      () => projector.snapshotFor(withUnknownField, owner),
-      throwsFormatException,
-    );
+  expect(state.playerCountries, {
+    'player-owner': PlayerCountry.poland,
+    'player-guest': PlayerCountry.france,
+    'player-ai': PlayerCountry.germany,
   });
+  expect(state.playerGold, {'player-owner': 111});
+  expect(state.playerWarWeariness, {'player-owner': 3});
+  expect(state.playerStabilityNet, {'player-owner': 4});
+  expect(state.fogOfWar.playerIds, ['player-owner']);
+  expect(state.research.players.keys, ['player-owner']);
+  expect(state.units.map((unit) => unit.id), [
+    'own-unit',
+    'visible-enemy-unit',
+  ]);
+  final visibleEnemy = state.units.last;
+  expect(visibleEnemy.movementPoints, 0);
+  expect(visibleEnemy.army, isEmpty);
+  expect(visibleEnemy.queuedPath, isNull);
+  expect(visibleEnemy.experiencePoints, 0);
+  expect(state.cities.map((city) => city.id), [
+    'own-city',
+    'visible-enemy-city',
+  ]);
+  final visibleEnemyCity = state.cities.last;
+  expect(visibleEnemyCity.storedFood, GameCity.defaultStartStoredFood);
+  expect(visibleEnemyCity.buildings, isEmpty);
+  expect(visibleEnemyCity.productionQueue, isNull);
+  expect(visibleEnemyCity.productionOverflow, 0);
+  expect(visibleEnemyCity.controlledHexes, [const CityHex(col: 2, row: 3)]);
+  expect(state.fieldImprovements, hasLength(2));
+  expect(state.fieldImprovements.last.builtByCityId, isNull);
+  expect(state.artifacts.map((artifact) => artifact.id), [
+    'visible-artifact',
+    'own-carried-artifact',
+  ]);
+  expect(state.wonderRegistry.ownerOf(WonderType.greatLibrary), 'player-owner');
+}
 
-  test('prepares canonical snapshots once for multiple recipients', () {
-    var saveDecodes = 0;
-    var stateDecodes = 0;
-    final countingProjector = PlayerMatchViewProjector(
-      decodeSave: (json) {
-        saveDecodes += 1;
-        return GameSave.fromJson(json);
-      },
-      canonicalStateDecoder: (json) {
-        stateDecodes += 1;
-        return PersistentGameState.fromJson(json);
-      },
-    );
-    final snapshot = _snapshot();
-    final canonical = MultiplayerServerMessage(
-      serverMessageId: 'message-1',
-      matchId: snapshot.matchId,
-      offset: snapshot.offset,
-      snapshot: snapshot,
-    );
-
-    final prepared = countingProjector.prepareMessage(canonical);
-    final ownerView = countingProjector.projectMessage(prepared, owner).wire;
-    final guestView = countingProjector
-        .projectMessage(
-          prepared,
-          const MatchRecipient(
-            userIdentifier: 'guest-auth-id',
-            playerId: 'player-guest',
-          ),
-        )
-        .wire;
-
-    expect(saveDecodes, 1);
-    expect(stateDecodes, 1);
-    expect(ownerView.snapshot?.save, same(guestView.snapshot?.save));
-    expect(ownerView.snapshot?.state, isNot(same(guestView.snapshot?.state)));
+void _expectOwnerRuntimeProjection(PersistentGameState state) {
+  final runtime = state.runtimeState;
+  expect(runtime.cityFoundingDraft, isNull);
+  expect(runtime.pendingAction, isNull);
+  expect(runtime.submittedPlayerIds, {'player-owner', 'player-guest'});
+  expect(runtime.timeoutStreaksByPlayerId, {'player-owner': 1});
+  expect(runtime.afkPlayerIds, {'player-guest'});
+  expect(runtime.kickedPlayerIds, {'player-ai'});
+  expect(runtime.turnStartedAt, DateTime.utc(2026, 7, 10));
+  expect(runtime.intendedAttacks, hasLength(1));
+  expect(runtime.intendedAttacks.single.declaringPlayerId, 'player-owner');
+  expect(runtime.diplomacy.relations.keys, {
+    DiplomacyState.relationKey('player-owner', 'player-guest'),
   });
+  expect(runtime.diplomacy.contactKeys, {
+    DiplomacyState.relationKey('player-owner', 'player-guest'),
+    DiplomacyState.relationKey('player-owner', 'player-ai'),
+  });
+  expect(runtime.diplomacy.pendingProposals.keys, {'owner-proposal'});
+  expect(runtime.diplomacy.messages.keys, {'owner-message'});
+  expect(
+    runtime.diplomacy.scoreHistory.values
+        .expand((scores) => scores)
+        .map((score) => score.sourceId),
+    unorderedEquals({'shared-score', 'owner-secret-score'}),
+  );
+  expect(runtime.dominationHoldTurnsByPlayerId, {'player-owner': 2});
+  expect(runtime.culturalVictoryHoldTurnsByPlayerId, {'player-owner': 3});
+  expect(runtime.mapObjectiveHoldStatesByObjectiveId.keys, ['objective-own']);
+  expect(runtime.resourceTradeAgreements, hasLength(1));
+}
 
-  test(
-    'malformed running snapshots fail instead of returning canonical data',
-    () {
-      const malformed = WireSnapshot(
-        matchId: 'match-1',
-        offset: 1,
-        save: {'id': 'incomplete'},
-        state: {'secret': 'must-not-pass-through'},
-      );
+void _expectGuestProjection(PersistentGameState state) {
+  final runtime = state.runtimeState;
+  expect(runtime.cityFoundingDraft?.ownerPlayerId, 'player-guest');
+  expect(runtime.pendingAction, isA<PendingResearchSelection>());
+  expect(runtime.timeoutStreaksByPlayerId, {'player-guest': 9});
+  expect(runtime.intendedAttacks, hasLength(1));
+  expect(runtime.dominationHoldTurnsByPlayerId, {'player-guest': 8});
+  expect(runtime.culturalVictoryHoldTurnsByPlayerId, {'player-guest': 7});
+  expect(runtime.diplomacy.relations.keys, {
+    DiplomacyState.relationKey('player-owner', 'player-guest'),
+    DiplomacyState.relationKey('player-guest', 'player-ai'),
+  });
+  expect(runtime.diplomacy.contactKeys, {
+    DiplomacyState.relationKey('player-owner', 'player-guest'),
+    DiplomacyState.relationKey('player-guest', 'player-ai'),
+  });
+  expect(runtime.diplomacy.pendingProposals.keys, {'guest-secret-proposal'});
+  expect(runtime.diplomacy.messages.keys, {'guest-secret-message'});
+}
 
-      expect(() => projector.snapshotFor(malformed, owner), throwsA(anything));
-    },
+void _expectProjectionSecrecy({
+  required WireSnapshot canonical,
+  required String canonicalJson,
+  required WireSnapshot projected,
+  required WireSnapshot projectedGuest,
+}) {
+  expect(projected.state['reason'], 'owner_left');
+  expect(projected.state, isNot(contains('leftUserIdentifier')));
+  expect(canonical.toJson().toString(), canonicalJson);
+  expect(canonical.state.toString(), contains('hidden-enemy-unit'));
+  expect(projected.state.toString(), isNot(contains('hidden-enemy-unit')));
+  expect(projected.state.toString(), isNot(contains('guest-secret')));
+  expect(projectedGuest.state.toString(), isNot(contains('owner-proposal')));
+  expect(projectedGuest.state.toString(), isNot(contains('owner-message')));
+  expect(
+    projectedGuest.state.toString(),
+    isNot(contains('owner-secret-score')),
   );
 }
 
@@ -359,308 +350,3 @@ WirePlayer _wirePlayer({
   kind: WirePlayerKind.human,
   connectionState: WirePlayerConnectionState.connected,
 );
-
-WireSnapshot _snapshot() {
-  final save = GameSave(
-    id: 'match-1',
-    name: 'Projected match',
-    mapName: 'test-map',
-    turn: 3,
-    playerStates: const {
-      'player-owner': PlayerTurnState.active,
-      'player-guest': PlayerTurnState.finished,
-      'player-ai': PlayerTurnState.active,
-    },
-    savedAt: DateTime.utc(2026, 7, 10),
-    camera: const CameraState(x: 9, y: 8, zoom: 7),
-    players: const [
-      Player(id: 'player-owner', name: 'Owner', colorValue: 1),
-      Player(id: 'player-guest', name: 'Guest', colorValue: 2),
-      Player(
-        id: 'player-ai',
-        name: 'AI',
-        colorValue: 3,
-        kind: PlayerKind.ai,
-        ai: AiPlayer(strategyId: AiStrategyId.random, seed: 424242),
-      ),
-    ],
-    gameMode: GameMode.multiplayer,
-  );
-  final viewerFog = PlayerFogOfWar(
-    playerId: 'player-owner',
-    discoveredHexes: {
-      const HexCoordinate(col: 1, row: 1),
-      const HexCoordinate(col: 2, row: 2),
-      const HexCoordinate(col: 2, row: 3),
-      const HexCoordinate(col: 4, row: 4),
-    },
-    visibleHexes: {
-      const HexCoordinate(col: 1, row: 1),
-      const HexCoordinate(col: 2, row: 2),
-      const HexCoordinate(col: 2, row: 3),
-      const HexCoordinate(col: 4, row: 4),
-    },
-  );
-  final state = PersistentGameState(
-    playerColors: const {'player-owner': 1, 'player-guest': 2, 'player-ai': 3},
-    playerCountries: const {
-      'player-owner': PlayerCountry.poland,
-      'player-guest': PlayerCountry.france,
-    },
-    playerGold: const {'player-owner': 111, 'player-guest': 999999},
-    playerWarWeariness: const {'player-owner': 3, 'player-guest': 77},
-    playerStabilityNet: const {'player-owner': 4, 'player-guest': -99},
-    units: [
-      GameUnit(
-        id: 'own-unit',
-        ownerPlayerId: 'player-owner',
-        type: GameUnitType.warrior,
-        name: 'Own unit',
-        col: 9,
-        row: 9,
-      ),
-      GameUnit(
-        id: 'visible-enemy-unit',
-        ownerPlayerId: 'player-guest',
-        type: GameUnitType.warrior,
-        name: 'Visible enemy',
-        col: 1,
-        row: 1,
-        movementPoints: 9,
-        experiencePoints: 88,
-        queuedPath: QueuedMovePath(targetCol: 7, targetRow: 7, steps: const []),
-      ),
-      GameUnit(
-        id: 'hidden-enemy-unit',
-        ownerPlayerId: 'player-guest',
-        type: GameUnitType.warrior,
-        name: 'guest-secret-unit',
-        col: 8,
-        row: 8,
-      ),
-    ],
-    cities: [
-      const GameCity(
-        id: 'own-city',
-        ownerPlayerId: 'player-owner',
-        name: 'Own City',
-        center: CityHex(col: 9, row: 8),
-      ),
-      GameCity(
-        id: 'visible-enemy-city',
-        ownerPlayerId: 'player-guest',
-        name: 'Visible City',
-        center: const CityHex(col: 2, row: 2),
-        storedFood: 987,
-        controlledHexes: const [
-          CityHex(col: 2, row: 3),
-          CityHex(col: 3, row: 3),
-        ],
-        buildings: const {CityBuildingType.factory},
-        productionQueue: CityProductionQueue.building(
-          buildingType: CityBuildingType.reactor,
-          investedProduction: 123,
-        ),
-        productionOverflow: 456,
-      ),
-      const GameCity(
-        id: 'hidden-enemy-city',
-        ownerPlayerId: 'player-guest',
-        name: 'guest-secret-city',
-        center: CityHex(col: 8, row: 7),
-      ),
-    ],
-    artifacts: const [
-      WorldArtifact(
-        id: 'visible-artifact',
-        type: WorldArtifactType.heroSword,
-        location: WorldArtifactLocation.map(col: 4, row: 4),
-      ),
-      WorldArtifact(
-        id: 'hidden-artifact',
-        type: WorldArtifactType.queensMirror,
-        location: WorldArtifactLocation.map(col: 7, row: 7),
-      ),
-      WorldArtifact(
-        id: 'own-carried-artifact',
-        type: WorldArtifactType.merchantsSeal,
-        location: WorldArtifactLocation.carried(unitId: 'own-unit'),
-      ),
-      WorldArtifact(
-        id: 'enemy-carried-artifact',
-        type: WorldArtifactType.prophetMask,
-        location: WorldArtifactLocation.carried(unitId: 'visible-enemy-unit'),
-      ),
-      WorldArtifact(
-        id: 'enemy-excavation-artifact',
-        type: WorldArtifactType.ancientImperialCrown,
-        location: WorldArtifactLocation.excavation(
-          unitId: 'visible-enemy-unit',
-          col: 4,
-          row: 4,
-          remainingTurns: 9,
-        ),
-      ),
-    ],
-    fieldImprovements: const [
-      FieldImprovement(
-        hex: CityHex(col: 9, row: 8),
-        type: FieldImprovementType.farm,
-        builtByCityId: 'own-city',
-      ),
-      FieldImprovement(
-        hex: CityHex(col: 4, row: 4),
-        type: FieldImprovementType.mine,
-        builtByCityId: 'visible-enemy-city',
-      ),
-      FieldImprovement(
-        hex: CityHex(col: 6, row: 6),
-        type: FieldImprovementType.oilWell,
-        builtByCityId: 'hidden-enemy-city',
-      ),
-    ],
-    fogOfWar: FogOfWarState(
-      players: {
-        'player-owner': viewerFog,
-        'player-guest': PlayerFogOfWar(
-          playerId: 'player-guest',
-          visibleHexes: {const HexCoordinate(col: 8, row: 8)},
-        ),
-      },
-    ),
-    research: ResearchState(
-      players: {
-        'player-owner': PlayerResearchState(
-          unlockedTechnologyIds: const {TechnologyId.agriculture},
-        ),
-        'player-guest': PlayerResearchState(
-          activeTechnologyId: TechnologyId.nuclearPhysics,
-          scienceOverflow: 999,
-        ),
-      },
-    ),
-    runtimeState: GameRuntimeState(
-      cityFoundingDraft: CityFoundingDraft(
-        unitId: 'hidden-enemy-unit',
-        ownerPlayerId: 'player-guest',
-        center: const CityHex(col: 8, row: 8),
-      ),
-      pendingAction: const PendingResearchSelection(
-        ownerPlayerId: 'player-guest',
-      ),
-      submittedPlayerIds: const {'player-owner', 'player-guest'},
-      timeoutStreaksByPlayerId: const {'player-owner': 1, 'player-guest': 9},
-      afkPlayerIds: const {'player-guest'},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'own-unit',
-          defenderCol: 1,
-          defenderRow: 1,
-          declaredAtTick: 1,
-          declaringPlayerId: 'player-owner',
-        ),
-        IntendedAttack(
-          attackerUnitId: 'hidden-enemy-unit',
-          defenderCol: 9,
-          defenderRow: 9,
-          declaredAtTick: 2,
-          declaringPlayerId: 'player-guest',
-        ),
-      ],
-      diplomacy: DiplomacyState(
-        contactKeys: {
-          DiplomacyState.relationKey('player-owner', 'player-guest'),
-          DiplomacyState.relationKey('player-owner', 'player-ai'),
-          DiplomacyState.relationKey('player-guest', 'player-ai'),
-        },
-        relations: {
-          DiplomacyState.relationKey(
-            'player-owner',
-            'player-guest',
-          ): DiplomaticRelation.between(
-            playerAId: 'player-owner',
-            playerBId: 'player-guest',
-            relationScore: -10,
-          ),
-          DiplomacyState.relationKey(
-            'player-guest',
-            'player-ai',
-          ): DiplomaticRelation.between(
-            playerAId: 'player-guest',
-            playerBId: 'player-ai',
-            relationScore: 99,
-          ),
-        },
-        scoreHistory: {
-          'corrupt-mixed-key': [
-            DiplomaticScoreEntry.between(
-              playerAId: 'player-owner',
-              playerBId: 'player-guest',
-              turn: 1,
-              delta: 1,
-              scoreAfter: 1,
-              reason: DiplomaticScoreChangeReason.manual,
-              sourceId: 'owner-score',
-            ),
-            DiplomaticScoreEntry.between(
-              playerAId: 'player-guest',
-              playerBId: 'player-ai',
-              turn: 1,
-              delta: 99,
-              scoreAfter: 99,
-              reason: DiplomaticScoreChangeReason.manual,
-              sourceId: 'guest-secret-score',
-            ),
-          ],
-        },
-      ),
-      dominationHoldTurnsByPlayerId: const {
-        'player-owner': 2,
-        'player-guest': 8,
-      },
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'objective-own': MapObjectiveHoldState(
-          objectiveId: 'objective-own',
-          playerId: 'player-owner',
-          holdTurns: 1,
-        ),
-        'objective-guest': MapObjectiveHoldState(
-          objectiveId: 'objective-guest',
-          playerId: 'player-guest',
-          holdTurns: 9,
-        ),
-      },
-      resourceTradeAgreements: const [
-        ResourceTradeAgreement(
-          id: 'own-trade',
-          exporterPlayerId: 'player-owner',
-          importerPlayerId: 'player-guest',
-          resource: ResourceType.iron,
-          goldPerTurn: 2,
-          remainingTurns: 3,
-        ),
-        ResourceTradeAgreement(
-          id: 'guest-secret-trade',
-          exporterPlayerId: 'player-guest',
-          importerPlayerId: 'player-ai',
-          resource: ResourceType.uranium,
-          goldPerTurn: 99,
-          remainingTurns: 9,
-        ),
-      ],
-      turnStartedAt: DateTime.utc(2026, 7, 10),
-    ),
-  );
-
-  return WireSnapshot(
-    matchId: 'match-1',
-    offset: 6,
-    save: save.toJson(),
-    state: {
-      ...state.toJson(),
-      'phase': 'abandoned',
-      'reason': 'owner_left',
-      'leftUserIdentifier': 'owner-auth-id',
-    },
-  );
-}

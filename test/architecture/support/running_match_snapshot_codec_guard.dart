@@ -1,71 +1,91 @@
 part of '../running_match_snapshot_codec_boundary_test.dart';
 
-List<String> _codecBoundaryViolations(CompilationUnit unit) => [
-  ..._codecShapeViolations(unit),
-  ..._decodeFlowViolations(unit),
-  ..._encodeFlowViolations(unit),
+List<String> _codecBoundaryViolations(
+  CompilationUnit codecUnit,
+  CompilationUnit decoderUnit,
+) => [
+  ..._codecShapeViolations(codecUnit, decoderUnit),
+  ..._runningDecodeFlowViolations(codecUnit),
+  ..._losslessDecodeFlowViolations(decoderUnit),
+  ..._encodeFlowViolations(codecUnit),
 ];
 
-List<String> _codecShapeViolations(CompilationUnit unit) {
-  final codec = _singleClass(unit, 'RunningMatchSnapshotCodec');
-  final decoded = _singleClass(unit, 'DecodedRunningMatchSnapshot');
-  final decode = _singleMethod(codec, 'decode');
+List<String> _codecShapeViolations(
+  CompilationUnit codecUnit,
+  CompilationUnit decoderUnit,
+) {
+  final codec = _singleClass(codecUnit, 'RunningMatchSnapshotCodec');
+  final decoder = _singleClass(decoderUnit, 'LosslessMatchSnapshotDecoder');
+  final decoded = _singleClass(decoderUnit, 'DecodedRunningMatchSnapshot');
+  final runningDecode = _singleMethod(codec, 'decode');
+  final losslessDecode = _singleMethod(decoder, 'decode');
   final encode = _singleMethod(codec, 'encode');
   return [
     if (codec == null)
       'must declare exactly one RunningMatchSnapshotCodec'
     else if (codec.finalKeyword == null)
       'RunningMatchSnapshotCodec must be final',
+    if (decoder == null)
+      'must declare exactly one LosslessMatchSnapshotDecoder'
+    else if (decoder.finalKeyword == null)
+      'LosslessMatchSnapshotDecoder must be final',
     if (decoded == null)
       'must declare exactly one DecodedRunningMatchSnapshot'
     else if (decoded.finalKeyword == null)
       'DecodedRunningMatchSnapshot must be final',
-    if (!_hasExactDecodeContract(decode))
+    if (!_hasExactRunningDecodeContract(runningDecode))
       'decode must require exactly named WireMatch and WireSnapshot',
+    if (!_hasExactLosslessDecodeContract(losslessDecode))
+      'lossless decode must require exactly one WireSnapshot',
     if (!_hasExactEncodeContract(encode))
       'encode must require one positional source and optional legacy parts',
     if (!_hasFinalField(decoded, 'wire', 'WireSnapshot') ||
         !_hasFinalField(decoded, 'save', 'GameSave') ||
         !_hasFinalField(decoded, 'state', 'PersistentGameState'))
       'decoded snapshot must retain final wire, save, and state values',
+    if (!_hasExactLosslessDecoderBinding(codecUnit))
+      'running codec must bind exactly one const lossless decoder',
   ];
 }
 
-List<String> _decodeFlowViolations(CompilationUnit unit) {
-  final codec = _singleClass(unit, 'RunningMatchSnapshotCodec');
-  final decoded = _singleClass(unit, 'DecodedRunningMatchSnapshot');
-  final decode = _singleMethod(codec, 'decode');
+List<String> _runningDecodeFlowViolations(CompilationUnit unit) {
+  final decode = _singleMethod(
+    _singleClass(unit, 'RunningMatchSnapshotCodec'),
+    'decode',
+  );
   if (decode == null) return const ['must declare decode'];
-
-  return [
-    ..._decodeLifecycleGuardViolations(decode.body),
-    ..._decodeLazyWrapperViolations(decoded, decode.body),
-  ];
-}
-
-List<String> _decodeLifecycleGuardViolations(FunctionBody body) {
-  final lifecycleGuard = _firstStatementIf(body);
-  final heuristicCollector = _PhaseHeuristicCollector()..collect(body);
+  final lifecycleGuard = _firstStatementIf(decode.body);
+  final heuristicCollector = _PhaseHeuristicCollector()..collect(decode.body);
   return [
     if (!_isExactRunningLifecycleGuard(lifecycleGuard))
       'decode must reject a non-running match as its first statement',
     if (heuristicCollector.found)
       'decode must not infer lifecycle from snapshot phase',
+    if (!_delegatesDirectlyAfterLifecycleGuard(decode.body))
+      'running decode must delegate directly to the lossless decoder after '
+          'lifecycle rejection',
   ];
 }
 
-List<String> _decodeLazyWrapperViolations(
-  ClassDeclaration? decoded,
-  FunctionBody body,
-) {
-  final constructions = _constructions(body, 'DecodedRunningMatchSnapshot');
+List<String> _losslessDecodeFlowViolations(CompilationUnit unit) {
+  final decoded = _singleClass(unit, 'DecodedRunningMatchSnapshot');
+  final decode = _singleMethod(
+    _singleClass(unit, 'LosslessMatchSnapshotDecoder'),
+    'decode',
+  );
+  final returned = decode == null
+      ? null
+      : _singleReturnedExpression(decode.body);
+  final constructions = _constructions(unit, 'DecodedRunningMatchSnapshot');
+  final constructsExactWrapper =
+      returned?.toSource() == 'DecodedRunningMatchSnapshot._(wire: snapshot)' &&
+      constructions.length == 1 &&
+      identical(returned, constructions.single.node);
   return [
-    if (!_constructsOnlyLazyRawWrapper(body, constructions))
-      'decode must construct only the lazy raw-wire wrapper',
+    if (!constructsExactWrapper)
+      'lossless decode must directly construct the lazy raw-wire wrapper',
     if (!_hasLazyLegacyParsers(decoded))
       'legacy save and state parsing must remain lazy on the decoded wrapper',
-    if (!_lifecycleGuardPrecedesConstruction(body, constructions))
-      'lifecycle rejection must precede legacy parsing and construction',
   ];
 }
 
@@ -87,64 +107,23 @@ bool _isExactRunningLifecycleGuard(IfStatement? lifecycleGuard) {
       identical(errorConstructions.single.node, directThrow?.expression);
 }
 
-bool _constructsOnlyLazyRawWrapper(
-  FunctionBody body,
-  List<_ConstructionReference> constructions,
-) {
-  final saveDecodes = _targetedInvocations(
-    body,
-    target: 'GameSave',
-    method: 'fromJson',
-  );
-  final stateDecodes = _targetedInvocations(
-    body,
-    target: 'PersistentGameState',
-    method: 'fromJson',
-  );
-  final conversions = [
-    ..._methodInvocations(body, 'toCanonical'),
-    ..._methodInvocations(body, 'toLegacy'),
-  ];
-  final conversionReferences = _ConversionReferenceCollector()..collect(body);
-  final constructionArguments = constructions.length == 1
-      ? _namedArgumentSources(constructions.single.arguments)
-      : const <String, String>{};
-  final returned = _secondReturnedExpression(body);
-  return constructions.length == 1 &&
-      identical(returned, constructions.single.node) &&
-      saveDecodes.isEmpty &&
-      stateDecodes.isEmpty &&
-      conversions.isEmpty &&
-      !conversionReferences.found &&
-      _sameStringMap(constructionArguments, const {'wire': 'snapshot'});
+bool _delegatesDirectlyAfterLifecycleGuard(FunctionBody body) {
+  if (body is! BlockFunctionBody || body.block.statements.length != 2) {
+    return false;
+  }
+  final returned = body.block.statements[1];
+  if (returned is! ReturnStatement) return false;
+  return returned.expression?.toSource() ==
+      '_losslessMatchSnapshotDecoder.decode(snapshot)';
 }
 
-bool _hasLazyLegacyParsers(ClassDeclaration? decoded) {
-  return _hasLazyLegacyParser(
-        decoded,
-        fieldName: 'save',
-        fieldType: 'GameSave',
-        decoderType: 'GameSave',
-        wireField: 'wire.save',
-      ) &&
-      _hasLazyLegacyParser(
-        decoded,
-        fieldName: 'state',
-        fieldType: 'PersistentGameState',
-        decoderType: 'PersistentGameState',
-        wireField: 'wire.state',
-      );
-}
-
-bool _lifecycleGuardPrecedesConstruction(
-  FunctionBody body,
-  List<_ConstructionReference> constructions,
-) {
-  final lifecycleGuard = _firstStatementIf(body);
-  return lifecycleGuard != null &&
-      constructions.length == 1 &&
-      lifecycleGuard.end < constructions.single.node.offset &&
-      identical(_secondReturnedExpression(body), constructions.single.node);
+Expression? _singleReturnedExpression(FunctionBody body) {
+  if (body is ExpressionFunctionBody) return null;
+  if (body is! BlockFunctionBody || body.block.statements.length != 1) {
+    return null;
+  }
+  final statement = body.block.statements.single;
+  return statement is ReturnStatement ? statement.expression : null;
 }
 
 ThrowExpression? _singleDirectThrow(Statement statement) {
@@ -155,14 +134,6 @@ ThrowExpression? _singleDirectThrow(Statement statement) {
     return null;
   }
   return direct.expression as ThrowExpression;
-}
-
-Expression? _secondReturnedExpression(FunctionBody body) {
-  if (body is! BlockFunctionBody || body.block.statements.length != 2) {
-    return null;
-  }
-  final second = body.block.statements[1];
-  return second is ReturnStatement ? second.expression : null;
 }
 
 List<String> _encodeFlowViolations(CompilationUnit unit) {
@@ -211,7 +182,7 @@ List<String> _encodeFlowViolations(CompilationUnit unit) {
   ];
 }
 
-bool _hasExactDecodeContract(MethodDeclaration? method) {
+bool _hasExactRunningDecodeContract(MethodDeclaration? method) {
   if (method == null ||
       method.returnType?.toSource() != 'DecodedRunningMatchSnapshot') {
     return false;
@@ -229,6 +200,20 @@ bool _hasExactDecodeContract(MethodDeclaration? method) {
         name: 'snapshot',
         type: 'WireSnapshot',
         required: true,
+      );
+}
+
+bool _hasExactLosslessDecodeContract(MethodDeclaration? method) {
+  if (method == null ||
+      method.returnType?.toSource() != 'DecodedRunningMatchSnapshot') {
+    return false;
+  }
+  final parameters = method.parameters?.parameters ?? const <FormalParameter>[];
+  return parameters.length == 1 &&
+      _isRequiredPositionalParameter(
+        parameters.single,
+        name: 'snapshot',
+        type: 'WireSnapshot',
       );
 }
 
@@ -257,6 +242,19 @@ bool _hasExactEncodeContract(MethodDeclaration? method) {
         type: 'PersistentGameState?',
         required: false,
       );
+}
+
+bool _hasExactLosslessDecoderBinding(CompilationUnit unit) {
+  final declarations = unit.declarations
+      .whereType<TopLevelVariableDeclaration>()
+      .where(
+        (declaration) =>
+            declaration.toSource() ==
+            'const LosslessMatchSnapshotDecoder '
+                '_losslessMatchSnapshotDecoder = '
+                'LosslessMatchSnapshotDecoder();',
+      );
+  return declarations.length == 1;
 }
 
 bool _isRequiredPositionalParameter(
@@ -296,6 +294,23 @@ bool _hasFinalField(ClassDeclaration? declaration, String name, String type) {
   return field.isFinal &&
       field.type?.toSource() == type &&
       field.variables.length == 1;
+}
+
+bool _hasLazyLegacyParsers(ClassDeclaration? declaration) {
+  return _hasLazyLegacyParser(
+        declaration,
+        fieldName: 'save',
+        fieldType: 'GameSave',
+        decoderType: 'GameSave',
+        wireField: 'wire.save',
+      ) &&
+      _hasLazyLegacyParser(
+        declaration,
+        fieldName: 'state',
+        fieldType: 'PersistentGameState',
+        decoderType: 'PersistentGameState',
+        wireField: 'wire.state',
+      );
 }
 
 bool _hasLazyLegacyParser(
@@ -386,9 +401,7 @@ bool _hasSingleArgument(List<MethodInvocation> calls, String expected) {
 
 Expression? _lastReturnedExpression(FunctionBody body) {
   if (body is ExpressionFunctionBody) return body.expression;
-  if (body is! BlockFunctionBody || body.block.statements.isEmpty) {
-    return null;
-  }
+  if (body is! BlockFunctionBody || body.block.statements.isEmpty) return null;
   final statement = body.block.statements.last;
   return statement is ReturnStatement ? statement.expression : null;
 }

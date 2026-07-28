@@ -2,39 +2,14 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
+
+export 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart'
+    show DecodedRunningMatchSnapshot;
+
 const _runningMatchSnapshotAdapter = LegacyGameSnapshotAdapter();
-
-/// A lossless view of one authoritative snapshot from a running match.
-///
-/// The raw wire representation stays available so unchanged fields and absent
-/// optional keys do not get materialized by a legacy/canonical round-trip.
-final class DecodedRunningMatchSnapshot {
-  DecodedRunningMatchSnapshot._({
-    required this.wire,
-    GameSave? decodedSave,
-    PersistentGameState? decodedState,
-  }) : _decodedSave = decodedSave,
-       _decodedState = decodedState;
-
-  final WireSnapshot wire;
-  final GameSave? _decodedSave;
-  final PersistentGameState? _decodedState;
-
-  int get eventLogOffset => wire.offset;
-
-  late final GameSave save = _decodedSave ?? GameSave.fromJson(wire.save);
-
-  late final PersistentGameState state =
-      _decodedState ?? PersistentGameState.fromJson(wire.state);
-
-  late final CanonicalGameSnapshot canonical = _runningMatchSnapshotAdapter
-      .toCanonical(save: save, state: state, eventLogOffset: eventLogOffset);
-
-  bool get hadExplicitTurnStartedAt {
-    final runtimeState = wire.state['runtimeState'];
-    return runtimeState is Map && runtimeState.containsKey('turnStartedAt');
-  }
-}
+const LosslessMatchSnapshotDecoder _losslessMatchSnapshotDecoder =
+    LosslessMatchSnapshotDecoder();
 
 /// Decodes only running snapshots and preserves their original wire envelope.
 final class RunningMatchSnapshotCodec {
@@ -49,7 +24,7 @@ final class RunningMatchSnapshotCodec {
         'Cannot decode a ${match.state} match as a running snapshot.',
       );
     }
-    return DecodedRunningMatchSnapshot._(wire: snapshot);
+    return _losslessMatchSnapshotDecoder.decode(snapshot);
   }
 
   WireSnapshot encode(
@@ -94,7 +69,7 @@ PersistentGameState _preserveImplicitTurnStartedAt({
   required CanonicalGameSnapshot next,
   required PersistentGameState state,
 }) {
-  if (source.hadExplicitTurnStartedAt ||
+  if (source.hasSerializedTurnStartedAt ||
       next.session.turnStartedAt != previous.session.turnStartedAt ||
       state.runtimeState.turnStartedAt == null) {
     return state;

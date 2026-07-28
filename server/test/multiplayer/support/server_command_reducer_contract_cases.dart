@@ -43,4 +43,166 @@ void _registerServerCommandReductionContractTests() {
     expect(reduction.movementExecutions, hasLength(1));
     expect(() => reduction.movementExecutions.clear(), throwsUnsupportedError);
   });
+
+  _registerCanonicalReducerGuardTests();
+}
+
+void _registerCanonicalReducerGuardTests() {
+  group('ServerCommandReducer canonical rejection guards', () {
+    for (final scenario in _commandGuardScenarios) {
+      test('rejects ${scenario.name} before loading a map', () async {
+        final reduction = await ServerCommandReducer().reduce(
+          match: scenario.match,
+          snapshot: scenario.snapshot,
+          wireCommand: scenario.command,
+          actorPlayerId: scenario.actorPlayerId,
+          now: DateTime.utc(2026, 6, 30, 12),
+        );
+
+        expect(reduction.reason, scenario.reason);
+      });
+    }
+    for (final scenario in _timeoutGuardScenarios) {
+      test('rejects timeout ${scenario.name} before loading a map', () async {
+        final reduction = await ServerCommandReducer().reduceTimedOutTurn(
+          match: scenario.match,
+          snapshot: scenario.snapshot,
+          actorPlayerId: scenario.actorPlayerId,
+          now: DateTime.utc(2026, 6, 30, 12),
+        );
+
+        expect(reduction.reason, scenario.reason);
+      });
+    }
+  });
+}
+
+typedef _CommandGuardScenario = ({
+  String name,
+  WireMatch match,
+  CanonicalGameSnapshot snapshot,
+  WireCommand command,
+  String actorPlayerId,
+  String reason,
+});
+
+final List<_CommandGuardScenario> _commandGuardScenarios = [
+  (
+    name: 'a non-running match',
+    match: _runningMatch().copyWith(state: 'finished'),
+    snapshot: _reducerGuardSnapshot(),
+    command: _wireCommand(const EndTurnCommand('player_1')),
+    actorPlayerId: 'player_1',
+    reason: 'match_not_running',
+  ),
+  (
+    name: 'a stale turn',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(),
+    command: _wireCommand(const EndTurnCommand('player_1')).copyWith(turn: 2),
+    actorPlayerId: 'player_1',
+    reason: 'stale_turn',
+  ),
+  (
+    name: 'an eliminated player',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(kickedPlayerIds: const {'player_1'}),
+    command: _wireCommand(const EndTurnCommand('player_1')),
+    actorPlayerId: 'player_1',
+    reason: 'player_eliminated',
+  ),
+  (
+    name: 'an already submitted player',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(submittedPlayerIds: const {'player_1'}),
+    command: _wireCommand(
+      const SendGoldGiftCommand(
+        playerId: 'player_1',
+        targetPlayerId: 'player_2',
+        amount: 1,
+      ),
+    ),
+    actorPlayerId: 'player_1',
+    reason: 'player_already_submitted',
+  ),
+];
+
+typedef _TimeoutGuardScenario = ({
+  String name,
+  WireMatch match,
+  CanonicalGameSnapshot snapshot,
+  String actorPlayerId,
+  String reason,
+});
+
+final List<_TimeoutGuardScenario> _timeoutGuardScenarios = [
+  (
+    name: 'for a non-running match',
+    match: _runningMatch().copyWith(state: 'finished'),
+    snapshot: _reducerGuardSnapshot(
+      turnStartedAt: DateTime.utc(2026, 6, 30, 11),
+    ),
+    actorPlayerId: 'player_1',
+    reason: 'match_not_running',
+  ),
+  (
+    name: 'inside the active window',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(
+      turnStartedAt: DateTime.utc(2026, 6, 30, 12),
+    ),
+    actorPlayerId: 'player_1',
+    reason: 'turn_not_timed_out',
+  ),
+  (
+    name: 'for an eliminated actor',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(
+      kickedPlayerIds: const {'player_1'},
+      turnStartedAt: DateTime.utc(2026, 6, 30, 11),
+    ),
+    actorPlayerId: 'player_1',
+    reason: 'player_eliminated',
+  ),
+  (
+    name: 'for an actor outside the active roster',
+    match: _runningMatch(),
+    snapshot: _reducerGuardSnapshot(
+      turnStartedAt: DateTime.utc(2026, 6, 30, 11),
+    ),
+    actorPlayerId: 'not-active',
+    reason: 'turn_player_not_active',
+  ),
+];
+
+CanonicalGameSnapshot _reducerGuardSnapshot({
+  Set<String> submittedPlayerIds = const {},
+  Set<String> kickedPlayerIds = const {},
+  DateTime? turnStartedAt,
+}) {
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: _domainPlayers(),
+    ),
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.multiplayer,
+      turnStatesByPlayerId: const {
+        'player_1': PlayerTurnState.active,
+        'player_2': PlayerTurnState.active,
+      },
+      submittedPlayerIds: submittedPlayerIds,
+      kickedPlayerIds: kickedPlayerIds,
+      turnStartedAt: turnStartedAt,
+    ),
+    metadata: GameSnapshotMetadata(
+      id: 'save_1',
+      schemaVersion: 1,
+      name: 'Reducer guard snapshot',
+      world: const WorldReference(name: 'test_map', source: MapSource.asset),
+      savedAtUtc: DateTime.utc(2026, 6, 30, 11),
+      camera: GameSnapshotCamera.zero,
+    ),
+  );
 }

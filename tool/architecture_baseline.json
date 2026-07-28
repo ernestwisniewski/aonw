@@ -1404,7 +1404,6 @@
     "server_test": {
       "files": {
         "server/test/integration/multiplayer_endpoint_smoke.dart": 1287,
-        "server/test/multiplayer/player_match_view_projector_test.dart": 666,
         "server/test/multiplayer/realtime_match_hub_test.dart": 3615
       },
       "legacyFiles": {},
@@ -1412,7 +1411,6 @@
       "callableLines": {
         "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140,
         "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 219,
-        "server/test/multiplayer/player_match_view_projector_test.dart::function:_snapshot": 304,
         "server/test/multiplayer/realtime_match_hub_test.dart::function:main/closure:test[routes_diplomacy_commands_through_the_authoritative_hub]#1": 149
       },
       "nesting": {},

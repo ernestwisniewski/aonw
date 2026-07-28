@@ -17,10 +17,10 @@ const _persistentPipelinePath =
     'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart';
 const _localCallSite =
     'lib/game/application/services/local_command_resolver.dart';
-const _serverCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_turns.dart';
 const _runningSnapshotCodecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
+const _losslessSnapshotDecoderPath =
+    'server/lib/src/multiplayer/lossless_match_snapshot_decoder.dart';
 const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';
 const _workedHexKernelPath =
     'packages/aonw_core/lib/game/domain/city/'

@@ -11,15 +11,30 @@ part 'support/running_match_snapshot_codec_guard.dart';
 
 const _codecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
+const _losslessDecoderPath =
+    'server/lib/src/multiplayer/lossless_match_snapshot_decoder.dart';
 
 void main() {
   group('running match snapshot codec boundary', () {
     test('declares final nominal types and the exact boundary API', () {
-      expect(_codecShapeViolations(_unitAt(_codecPath)), isEmpty);
+      expect(
+        _codecShapeViolations(
+          _unitAt(_codecPath),
+          _unitAt(_losslessDecoderPath),
+        ),
+        isEmpty,
+      );
     });
 
     test('rejects lifecycle before decoding without phase heuristics', () {
-      expect(_decodeFlowViolations(_unitAt(_codecPath)), isEmpty);
+      expect(_runningDecodeFlowViolations(_unitAt(_codecPath)), isEmpty);
+    });
+
+    test('lossless decoder constructs only the lazy raw-wire wrapper', () {
+      expect(
+        _losslessDecodeFlowViolations(_unitAt(_losslessDecoderPath)),
+        isEmpty,
+      );
     });
 
     test('encodes only by patching the retained raw snapshot', () {
@@ -27,23 +42,24 @@ void main() {
     });
 
     test('guard rejects open types and widened method contracts', () {
-      final violations = _codecBoundaryViolations(
-        _parse(_invalidCodecShapeFixture),
-      );
+      final unit = _parse(_invalidCodecShapeFixture);
+      final violations = _codecBoundaryViolations(unit, unit);
 
       expect(
         violations,
         containsAll([
           'RunningMatchSnapshotCodec must be final',
+          'must declare exactly one LosslessMatchSnapshotDecoder',
           'DecodedRunningMatchSnapshot must be final',
           'decode must require exactly named WireMatch and WireSnapshot',
+          'lossless decode must require exactly one WireSnapshot',
           'encode must require one positional source and optional legacy parts',
         ]),
       );
     });
 
     test('guard rejects late lifecycle checks and phase heuristics', () {
-      final violations = _decodeFlowViolations(
+      final violations = _runningDecodeFlowViolations(
         _parse(_invalidDecodeFlowFixture),
       );
 
@@ -52,20 +68,23 @@ void main() {
         containsAll([
           'decode must reject a non-running match as its first statement',
           'decode must not infer lifecycle from snapshot phase',
-          'legacy save and state parsing must remain lazy on the decoded wrapper',
-          'lifecycle rejection must precede legacy parsing and construction',
+          'running decode must delegate directly to the lossless decoder after '
+              'lifecycle rejection',
         ]),
       );
     });
 
     test('guard rejects eager parsing after a valid lifecycle check', () {
-      final violations = _decodeFlowViolations(
+      final violations = _runningDecodeFlowViolations(
         _parse(_invalidEagerDecodeFixture),
       );
 
       expect(
         violations,
-        contains('decode must construct only the lazy raw-wire wrapper'),
+        contains(
+          'running decode must delegate directly to the lossless decoder after '
+          'lifecycle rejection',
+        ),
       );
       expect(
         violations,
@@ -77,14 +96,35 @@ void main() {
       );
     });
 
-    test('guard rejects helper work between lifecycle and construction', () {
-      final violations = _decodeFlowViolations(
+    test('guard rejects helper work between lifecycle and delegation', () {
+      final violations = _runningDecodeFlowViolations(
         _parse(_invalidHelperDecodeFixture),
       );
 
       expect(
         violations,
-        contains('decode must construct only the lazy raw-wire wrapper'),
+        contains(
+          'running decode must delegate directly to the lossless decoder after '
+          'lifecycle rejection',
+        ),
+      );
+    });
+
+    test('guard rejects helper work in the lossless decoder', () {
+      expect(
+        _losslessDecodeFlowViolations(_parse(_invalidLosslessHelperFixture)),
+        contains(
+          'lossless decode must directly construct the lazy raw-wire wrapper',
+        ),
+      );
+    });
+
+    test('guard rejects a lossless constructor tear-off', () {
+      expect(
+        _losslessDecodeFlowViolations(_parse(_invalidLosslessTearOffFixture)),
+        contains(
+          'lossless decode must directly construct the lazy raw-wire wrapper',
+        ),
       );
     });
 

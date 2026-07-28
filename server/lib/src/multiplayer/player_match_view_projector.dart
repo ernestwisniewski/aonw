@@ -3,13 +3,22 @@ import 'package:aonw_core/game/view.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
+import 'package:aonw_server/src/multiplayer/player_match_wire_schema_guard.dart';
 import 'package:aonw_server/src/multiplayer/player_view_state_projector.dart';
 
-typedef PlayerMatchSaveDecoder = GameSave Function(Map<String, dynamic> json);
-typedef PlayerMatchCanonicalStateDecoder =
-    PersistentGameState Function(Map<String, dynamic> json);
+typedef PlayerMatchSnapshotDecoder =
+    DecodedRunningMatchSnapshot Function(WireSnapshot snapshot);
+
+const LosslessMatchSnapshotDecoder _playerMatchSnapshotDecoder =
+    LosslessMatchSnapshotDecoder();
+const _playerMatchWireSchemaGuard = PlayerMatchWireSchemaGuard();
+
+DecodedRunningMatchSnapshot _decodePlayerMatchSnapshot(WireSnapshot snapshot) {
+  return _playerMatchSnapshotDecoder.decode(snapshot);
+}
 
 final class MatchRecipient {
   const MatchRecipient({required this.userIdentifier, required this.playerId});
@@ -21,14 +30,16 @@ final class MatchRecipient {
 /// Canonical snapshot decoded once before recipient-specific projection.
 final class PreparedPlayerMatchSnapshot {
   const PreparedPlayerMatchSnapshot._({
-    required this.canonical,
+    required this.wire,
     required this.publicSave,
-    required this.canonicalState,
+    required this.canonicalSnapshot,
+    required this.hasSerializedTurnStartedAt,
   });
 
-  final WireSnapshot canonical;
+  final WireSnapshot wire;
   final Map<String, dynamic>? publicSave;
-  final PersistentGameState? canonicalState;
+  final CanonicalGameSnapshot? canonicalSnapshot;
+  final bool hasSerializedTurnStartedAt;
 }
 
 /// Canonical server message prepared once for any number of recipients.
@@ -77,35 +88,16 @@ extension type const ProjectedWireCommandAck._(WireCommandAck wire)
 /// must call this projector before returning or publishing them to a client.
 final class PlayerMatchViewProjector {
   const PlayerMatchViewProjector({
-    PlayerMatchSaveDecoder decodeSave = GameSave.fromJson,
-    PlayerMatchCanonicalStateDecoder canonicalStateDecoder =
-        PersistentGameState.fromJson,
-  }) : _decodeSave = decodeSave,
-       _canonicalStateDecoder = canonicalStateDecoder;
+    PlayerMatchSnapshotDecoder decodeSnapshot = _decodePlayerMatchSnapshot,
+  }) : _decodeSnapshot = decodeSnapshot;
 
-  final PlayerMatchSaveDecoder _decodeSave;
-  final PlayerMatchCanonicalStateDecoder _canonicalStateDecoder;
+  final PlayerMatchSnapshotDecoder _decodeSnapshot;
 
   ProjectedWireMatch matchFor(
     WireMatch canonical, {
     required String userIdentifier,
   }) {
-    _requireKnownFields('match', canonical.toJson(), _knownMatchFields);
-    for (final player in canonical.players) {
-      _requireKnownFields(
-        'match player',
-        player.toJson(),
-        _knownWirePlayerFields,
-      );
-      final ai = player.ai;
-      if (ai != null) {
-        _requireKnownFields(
-          'match AI player',
-          ai.toJson(),
-          _knownWireAiPlayerFields,
-        );
-      }
-    }
+    _playerMatchWireSchemaGuard.validateMatch(canonical);
     final isOwner = canonical.ownerUserId == userIdentifier;
     final owner = canonical.players.where(
       (player) => player.userId == canonical.ownerUserId,
@@ -128,18 +120,24 @@ final class PlayerMatchViewProjector {
   }
 
   PreparedPlayerMatchSnapshot prepareSnapshot(WireSnapshot canonical) {
-    _requireKnownSnapshotStateFields(canonical.state);
+    _playerMatchWireSchemaGuard.validateSnapshotState(canonical.state);
     if (canonical.save.isEmpty) {
       return PreparedPlayerMatchSnapshot._(
-        canonical: canonical,
+        wire: canonical,
         publicSave: null,
-        canonicalState: null,
+        canonicalSnapshot: null,
+        hasSerializedTurnStartedAt: false,
       );
     }
-    _requireKnownFields('game save', canonical.save, _knownGameSaveFields);
-    final save = _prepareSave(canonical.save);
+    _playerMatchWireSchemaGuard.validateGameSaveEnvelope(canonical.save);
+    final decoded = _decodeSnapshot(canonical);
+    final save = _prepareSave(decoded.save);
+    _playerMatchWireSchemaGuard.validateCanonicalRoster(
+      save: save,
+      state: decoded.state,
+    );
     return PreparedPlayerMatchSnapshot._(
-      canonical: canonical,
+      wire: canonical,
       publicSave: Map.unmodifiable(
         save
             .copyWith(
@@ -150,19 +148,13 @@ final class PlayerMatchViewProjector {
             )
             .toJson(),
       ),
-      canonicalState: _canonicalStateDecoder(canonical.state),
+      canonicalSnapshot: decoded.canonical,
+      hasSerializedTurnStartedAt: decoded.hasSerializedTurnStartedAt,
     );
   }
 
-  GameSave _prepareSave(Map<String, dynamic> canonical) {
-    final save = _decodeSave(canonical);
-    for (final player in save.players) {
-      _requireKnownFields(
-        'game save player',
-        player.toJson(),
-        _knownGameSavePlayerFields,
-      );
-    }
+  GameSave _prepareSave(GameSave save) {
+    _playerMatchWireSchemaGuard.validateGameSavePlayers(save.players);
     return save;
   }
 
@@ -177,15 +169,22 @@ final class PlayerMatchViewProjector {
     PreparedPlayerMatchSnapshot prepared,
     MatchRecipient recipient,
   ) {
-    final canonical = prepared.canonical;
+    final canonical = prepared.wire;
     final publicSave = prepared.publicSave;
-    final canonicalState = prepared.canonicalState;
-    if (publicSave == null || canonicalState == null) {
+    final canonicalSnapshot = prepared.canonicalSnapshot;
+    if (publicSave == null || canonicalSnapshot == null) {
       return ProjectedWireSnapshot._(
         canonical.copyWith(state: _lifecycleState(canonical.state)),
       );
     }
-    final playerViewState = _stateFor(canonicalState, recipient.playerId);
+    final playerViewState = _stateFor(
+      canonicalSnapshot,
+      recipient.playerId,
+      knownDiplomacyPlayerIds: _knownDiplomacyPlayerIds(
+        prepared,
+        recipient.playerId,
+      ),
+    );
     return ProjectedWireSnapshot._(
       WireSnapshot(
         v: canonical.v,
@@ -193,7 +192,7 @@ final class PlayerMatchViewProjector {
         offset: canonical.offset,
         save: publicSave,
         state: {
-          ...const PlayerViewStateWireCodec().encode(playerViewState),
+          ..._encodePlayerViewState(prepared, playerViewState),
           ..._lifecycleState(canonical.state),
         },
       ),
@@ -316,62 +315,67 @@ final class PlayerMatchViewProjector {
     );
   }
 
-  void _requireKnownSnapshotStateFields(Map<String, dynamic> state) {
-    final unknownStateFields = state.keys.toSet().difference(
-      _knownSnapshotStateFields,
-    );
-    if (unknownStateFields.isNotEmpty) {
-      final fields = unknownStateFields.toList()..sort();
-      throw FormatException(
-        'Unreviewed multiplayer snapshot fields: ${fields.join(', ')}.',
-      );
-    }
-
-    final rawRuntime = state['runtimeState'];
-    if (rawRuntime == null) return;
-    if (rawRuntime is! Map<Object?, Object?>) {
-      throw const FormatException(
-        'Multiplayer runtime state must be a JSON object.',
-      );
-    }
-    final runtimeFields = rawRuntime.keys.whereType<String>().toSet();
-    if (runtimeFields.length != rawRuntime.length) {
-      throw const FormatException(
-        'Multiplayer runtime state field names must be strings.',
-      );
-    }
-    final unknownRuntimeFields = runtimeFields.difference(
-      _knownRuntimeStateFields,
-    );
-    if (unknownRuntimeFields.isNotEmpty) {
-      final fields = unknownRuntimeFields.toList()..sort();
-      throw FormatException(
-        'Unreviewed multiplayer runtime fields: ${fields.join(', ')}.',
-      );
-    }
-  }
-
-  void _requireKnownFields(
-    String label,
-    Map<String, dynamic> value,
-    Set<String> knownFields,
-  ) {
-    final unknownFields = value.keys.toSet().difference(knownFields);
-    if (unknownFields.isEmpty) return;
-    final fields = unknownFields.toList()..sort();
-    throw FormatException(
-      'Unreviewed multiplayer $label fields: ${fields.join(', ')}.',
-    );
-  }
-
   PlayerViewState _stateFor(
-    PersistentGameState canonicalState,
-    String playerId,
-  ) {
+    CanonicalGameSnapshot canonicalSnapshot,
+    String playerId, {
+    required Set<String> knownDiplomacyPlayerIds,
+  }) {
     return const PlayerViewStateProjector().project(
-      canonicalState: canonicalState,
+      domain: canonicalSnapshot.domain,
+      session: canonicalSnapshot.session,
+      interaction: canonicalSnapshot.interaction,
       recipientPlayerId: playerId,
+      knownDiplomacyPlayerIds: knownDiplomacyPlayerIds,
     );
+  }
+
+  Set<String> _knownDiplomacyPlayerIds(
+    PreparedPlayerMatchSnapshot prepared,
+    String recipientPlayerId,
+  ) {
+    return {
+      recipientPlayerId,
+      ..._stringMapKeys(prepared.wire.state['playerColors']),
+      ..._stringMapKeys(prepared.wire.state['playerCountries']),
+    };
+  }
+
+  Iterable<String> _stringMapKeys(Object? value) {
+    return value is Map ? value.keys.whereType<String>() : const [];
+  }
+
+  Map<String, dynamic> _encodePlayerViewState(
+    PreparedPlayerMatchSnapshot prepared,
+    PlayerViewState state,
+  ) {
+    final encoded = _preserveRawRosterEncoding(
+      prepared,
+      const PlayerViewStateWireCodec().encode(state),
+    );
+    if (prepared.hasSerializedTurnStartedAt) return encoded;
+    final runtime = encoded['runtimeState'];
+    if (runtime is! Map) return encoded;
+    final projectedRuntime = Map<String, dynamic>.from(runtime)
+      ..remove('turnStartedAt');
+    return {...encoded, 'runtimeState': projectedRuntime};
+  }
+
+  Map<String, dynamic> _preserveRawRosterEncoding(
+    PreparedPlayerMatchSnapshot prepared,
+    Map<String, dynamic> encoded,
+  ) {
+    final projected = Map<String, dynamic>.from(encoded);
+    for (final field in const {'playerColors', 'playerCountries'}) {
+      final raw = prepared.wire.state[field];
+      if (raw is Map) {
+        projected[field] = Map<String, dynamic>.unmodifiable(
+          Map<String, dynamic>.from(raw),
+        );
+      } else {
+        projected.remove(field);
+      }
+    }
+    return projected;
   }
 
   Player _publicPlayer(Player player) {
@@ -396,99 +400,3 @@ final class PlayerMatchViewProjector {
     };
   }
 }
-
-const _knownMatchFields = {
-  'v',
-  'id',
-  'ownerUserId',
-  'name',
-  'mapName',
-  'players',
-  'maxPlayers',
-  'minPlayers',
-  'quickplay',
-  'turn',
-  'state',
-  'createdAt',
-  'endedAt',
-  'outcomeCondition',
-  'winnerPlayerId',
-  'autoStartAt',
-  'inviteCode',
-};
-
-const _knownWirePlayerFields = {
-  'id',
-  'userId',
-  'name',
-  'colorValue',
-  'countryId',
-  'kind',
-  'connectionState',
-  'ready',
-  'ai',
-};
-
-const _knownWireAiPlayerFields = {'strategyId', 'difficulty', 'persona'};
-
-const _knownGameSaveFields = {
-  'id',
-  'schemaVersion',
-  'name',
-  'mapName',
-  'mapSource',
-  'turn',
-  'playerStates',
-  'savedAt',
-  'camera',
-  'ruleset',
-  'players',
-  'gameMode',
-};
-
-const _knownGameSavePlayerFields = {
-  'id',
-  'name',
-  'colorValue',
-  'country',
-  'kind',
-  'ai',
-};
-
-const _knownSnapshotStateFields = {
-  'playerColors',
-  'playerCountries',
-  'playerGold',
-  'playerWarWeariness',
-  'playerStabilityNet',
-  'units',
-  'cities',
-  'artifacts',
-  'fieldImprovements',
-  'fogOfWar',
-  'research',
-  'runtimeState',
-  'wonderRegistry',
-  'phase',
-  'reason',
-  'mapName',
-  // Stored lifecycle audit fields are deliberately omitted from output.
-  'leftUserIdentifier',
-  'resignedUserIdentifier',
-};
-
-const _knownRuntimeStateFields = {
-  'cityFoundingDraft',
-  'pendingAction',
-  'submittedPlayerIds',
-  'timeoutStreaksByPlayerId',
-  'afkPlayerIds',
-  'kickedPlayerIds',
-  'intendedAttacks',
-  'diplomacy',
-  'dominationHoldTurnsByPlayerId',
-  'culturalVictoryHoldTurnsByPlayerId',
-  'mapObjectiveHoldStates',
-  'resourceTradeAgreements',
-  'turnStartedAt',
-};

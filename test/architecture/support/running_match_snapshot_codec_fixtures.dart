@@ -191,3 +191,39 @@ final class RunningMatchSnapshotCodec {
   }
 }
 ''';
+
+const _invalidLosslessHelperFixture = '''
+final class DecodedRunningMatchSnapshot {
+  DecodedRunningMatchSnapshot._({required this.wire});
+
+  final WireSnapshot wire;
+  late final GameSave save = GameSave.fromJson(wire.save);
+  late final PersistentGameState state =
+      PersistentGameState.fromJson(wire.state);
+}
+
+final class LosslessMatchSnapshotDecoder {
+  DecodedRunningMatchSnapshot decode(WireSnapshot snapshot) {
+    inspectSnapshot(snapshot);
+    return DecodedRunningMatchSnapshot._(wire: snapshot);
+  }
+}
+''';
+
+const _invalidLosslessTearOffFixture = '''
+final class DecodedRunningMatchSnapshot {
+  DecodedRunningMatchSnapshot._({required this.wire});
+
+  final WireSnapshot wire;
+  late final GameSave save = GameSave.fromJson(wire.save);
+  late final PersistentGameState state =
+      PersistentGameState.fromJson(wire.state);
+}
+
+final class LosslessMatchSnapshotDecoder {
+  DecodedRunningMatchSnapshot decode(WireSnapshot snapshot) {
+    final make = DecodedRunningMatchSnapshot._;
+    return make(wire: snapshot);
+  }
+}
+''';

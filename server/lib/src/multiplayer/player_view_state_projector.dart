@@ -6,20 +6,26 @@ final class PlayerViewStateProjector {
   const PlayerViewStateProjector();
 
   PlayerViewState project({
-    required PersistentGameState canonicalState,
+    required DomainState domain,
+    required MatchSessionState session,
+    required PersistedInteractionState interaction,
     required String recipientPlayerId,
+    required Set<String> knownDiplomacyPlayerIds,
   }) {
     final visibility = FogVisibilityQuery(
       playerId: recipientPlayerId,
-      state: canonicalState.fogOfWar,
+      state: domain.fogOfWar,
     );
-    final ownCityIds = _ownCityIds(canonicalState, recipientPlayerId);
-    final ownUnitIds = _ownUnitIds(canonicalState, recipientPlayerId);
+    final ownCityIds = _ownCityIds(domain, recipientPlayerId);
+    final ownUnitIds = _ownUnitIds(domain, recipientPlayerId);
     return PlayerViewState(
       recipientPlayerId: recipientPlayerId,
       projectedState: _projectedState(
-        canonicalState,
+        domain,
+        session,
+        interaction,
         recipientPlayerId,
+        knownDiplomacyPlayerIds: knownDiplomacyPlayerIds,
         visibility: visibility,
         ownCityIds: ownCityIds,
         ownUnitIds: ownUnitIds,
@@ -29,66 +35,67 @@ final class PlayerViewStateProjector {
 }
 
 PersistentGameState _projectedState(
-  PersistentGameState canonical,
+  DomainState domain,
+  MatchSessionState session,
+  PersistedInteractionState interaction,
   String playerId, {
+  required Set<String> knownDiplomacyPlayerIds,
   required FogVisibilityQuery visibility,
   required Set<String> ownCityIds,
   required Set<String> ownUnitIds,
 }) {
   return PersistentGameState.snapshot(
-    playerColors: Map<String, int>.from(canonical.playerColors),
-    playerCountries: Map<String, PlayerCountry>.from(canonical.playerCountries),
-    playerGold: _ownEntry(canonical.playerGold, playerId),
-    playerWarWeariness: _ownEntry(canonical.playerWarWeariness, playerId),
-    playerStabilityNet: _ownEntry(canonical.playerStabilityNet, playerId),
-    units: _unitsFor(canonical, playerId, visibility),
-    cities: _citiesFor(canonical, playerId, visibility),
+    playerColors: domain.playerColors,
+    playerCountries: domain.playerCountries,
+    playerGold: _ownEntry(domain.playerGold, playerId),
+    playerWarWeariness: _ownEntry(domain.playerWarWeariness, playerId),
+    playerStabilityNet: _ownEntry(domain.playerStabilityNet, playerId),
+    units: _unitsFor(domain, playerId, visibility),
+    cities: _citiesFor(domain, playerId, visibility),
     artifacts: _artifactsFor(
-      canonical,
+      domain,
       visibility: visibility,
       ownCityIds: ownCityIds,
       ownUnitIds: ownUnitIds,
     ),
     fieldImprovements: _fieldImprovementsFor(
-      canonical,
+      domain,
       visibility: visibility,
       ownCityIds: ownCityIds,
     ),
     fogOfWar: FogOfWarState(
-      players: {playerId: canonical.fogOfWar.fogForPlayer(playerId)},
+      players: {playerId: domain.fogOfWar.fogForPlayer(playerId)},
     ),
     research: ResearchState(
-      players: {playerId: canonical.research.forPlayer(playerId)},
+      players: {playerId: domain.research.forPlayer(playerId)},
     ),
     runtimeState: _runtimeFor(
-      canonical.runtimeState,
-      playerId,
-      _knownPlayerIds(canonical, playerId),
+      domain: domain,
+      session: session,
+      interaction: interaction,
+      playerId: playerId,
+      knownPlayerIds: knownDiplomacyPlayerIds,
     ),
-    wonderRegistry: canonical.wonderRegistry,
+    wonderRegistry: domain.wonderRegistry,
   );
 }
 
-Set<String> _ownCityIds(PersistentGameState state, String playerId) {
+Set<String> _ownCityIds(DomainState state, String playerId) {
   return {
     for (final city in state.cities)
       if (city.ownerPlayerId == playerId) city.id,
   };
 }
 
-Set<String> _ownUnitIds(PersistentGameState state, String playerId) {
+Set<String> _ownUnitIds(DomainState state, String playerId) {
   return {
     for (final unit in state.units)
       if (unit.ownerPlayerId == playerId) unit.id,
   };
 }
 
-Set<String> _knownPlayerIds(PersistentGameState state, String playerId) {
-  return {playerId, ...state.playerColors.keys, ...state.playerCountries.keys};
-}
-
 List<GameUnit> _unitsFor(
-  PersistentGameState state,
+  DomainState state,
   String playerId,
   FogVisibilityQuery visibility,
 ) {
@@ -102,7 +109,7 @@ List<GameUnit> _unitsFor(
 }
 
 List<GameCity> _citiesFor(
-  PersistentGameState state,
+  DomainState state,
   String playerId,
   FogVisibilityQuery visibility,
 ) {
@@ -116,7 +123,7 @@ List<GameCity> _citiesFor(
 }
 
 List<WorldArtifact> _artifactsFor(
-  PersistentGameState state, {
+  DomainState state, {
   required FogVisibilityQuery visibility,
   required Set<String> ownCityIds,
   required Set<String> ownUnitIds,
@@ -134,7 +141,7 @@ List<WorldArtifact> _artifactsFor(
 }
 
 List<FieldImprovement> _fieldImprovementsFor(
-  PersistentGameState state, {
+  DomainState state, {
   required FogVisibilityQuery visibility,
   required Set<String> ownCityIds,
 }) {
@@ -150,49 +157,51 @@ List<FieldImprovement> _fieldImprovementsFor(
   ];
 }
 
-GameRuntimeState _runtimeFor(
-  GameRuntimeState canonical,
-  String playerId,
-  Set<String> knownPlayerIds,
-) {
+GameRuntimeState _runtimeFor({
+  required DomainState domain,
+  required MatchSessionState session,
+  required PersistedInteractionState interaction,
+  required String playerId,
+  required Set<String> knownPlayerIds,
+}) {
   return GameRuntimeState.snapshot(
-    cityFoundingDraft: canonical.cityFoundingDraft?.ownerPlayerId == playerId
-        ? canonical.cityFoundingDraft
+    cityFoundingDraft: interaction.cityFoundingDraft?.ownerPlayerId == playerId
+        ? interaction.cityFoundingDraft
         : null,
-    pendingAction: canonical.pendingAction?.ownerPlayerId == playerId
-        ? canonical.pendingAction
+    pendingAction: interaction.pendingAction?.ownerPlayerId == playerId
+        ? interaction.pendingAction
         : null,
-    submittedPlayerIds: Set<String>.from(canonical.submittedPlayerIds),
+    submittedPlayerIds: session.submittedPlayerIds,
     timeoutStreaksByPlayerId: _ownEntry(
-      canonical.timeoutStreaksByPlayerId,
+      session.timeoutStreaksByPlayerId,
       playerId,
     ),
-    afkPlayerIds: Set<String>.from(canonical.afkPlayerIds),
-    kickedPlayerIds: Set<String>.from(canonical.kickedPlayerIds),
+    afkPlayerIds: session.afkPlayerIds,
+    kickedPlayerIds: session.kickedPlayerIds,
     intendedAttacks: [
-      for (final attack in canonical.intendedAttacks)
+      for (final attack in domain.intendedAttacks)
         if (attack.declaringPlayerId == playerId) attack,
     ],
-    diplomacy: _diplomacyFor(canonical.diplomacy, playerId, knownPlayerIds),
+    diplomacy: _diplomacyFor(domain.diplomacy, playerId, knownPlayerIds),
     dominationHoldTurnsByPlayerId: _ownEntry(
-      canonical.dominationHoldTurnsByPlayerId,
+      domain.dominationHoldTurnsByPlayerId,
       playerId,
     ),
     culturalVictoryHoldTurnsByPlayerId: _ownEntry(
-      canonical.culturalVictoryHoldTurnsByPlayerId,
+      domain.culturalVictoryHoldTurnsByPlayerId,
       playerId,
     ),
     mapObjectiveHoldStatesByObjectiveId: {
-      for (final entry in canonical.mapObjectiveHoldStatesByObjectiveId.entries)
+      for (final entry in domain.mapObjectiveHoldStatesByObjectiveId.entries)
         if (entry.value.playerId == playerId) entry.key: entry.value,
     },
     resourceTradeAgreements: [
-      for (final agreement in canonical.resourceTradeAgreements)
+      for (final agreement in domain.resourceTradeAgreements)
         if (agreement.exporterPlayerId == playerId ||
             agreement.importerPlayerId == playerId)
           agreement,
     ],
-    turnStartedAt: canonical.turnStartedAt,
+    turnStartedAt: session.turnStartedAt,
   );
 }
 

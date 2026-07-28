@@ -93,7 +93,7 @@ void main() {
       final rawRuntime = fixture.wire.state['runtimeState']! as Map;
 
       expect(rawRuntime.containsKey('turnStartedAt'), isFalse);
-      expect(decoded.hadExplicitTurnStartedAt, isFalse);
+      expect(decoded.hasSerializedTurnStartedAt, isFalse);
       expect(decoded.state.runtimeState.turnStartedAt, isNull);
       expect(decoded.canonical.session.turnStartedAt, fixture.save.savedAt);
       expect(
@@ -102,6 +102,22 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('treats a serialized null turnStartedAt as an implicit value', () {
+      final fixture = _fixture();
+      final rawRuntime = Map<String, dynamic>.from(
+        fixture.wire.state['runtimeState']! as Map,
+      )..['turnStartedAt'] = null;
+      final wire = fixture.wire.copyWith(
+        state: {...fixture.wire.state, 'runtimeState': rawRuntime},
+      );
+
+      final decoded = codec.decode(match: fixture.match, snapshot: wire);
+
+      expect(decoded.hasSerializedTurnStartedAt, isFalse);
+      expect(decoded.state.runtimeState.turnStartedAt, isNull);
+      expect(decoded.canonical.session.turnStartedAt, fixture.save.savedAt);
     });
 
     test('detects and preserves an explicit turnStartedAt', () {
@@ -113,7 +129,7 @@ void main() {
       );
       final rawState = fixture.wire.state;
 
-      expect(decoded.hadExplicitTurnStartedAt, isTrue);
+      expect(decoded.hasSerializedTurnStartedAt, isTrue);
       expect(decoded.state.runtimeState.turnStartedAt, startedAt);
       expect(decoded.canonical.session.turnStartedAt, startedAt);
 
