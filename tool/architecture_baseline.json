@@ -71,7 +71,6 @@
         "packages/aonw_core/lib/ai/mcts/mcts_search.dart::class:MctsSearch/method:search": 62,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:_applyAttackCity": 122,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:applyAttackHex": 132,
-        "packages/aonw_core/lib/ai/mcts/mcts_simulated_state.dart::class:SimulatedState/method:_applyCommand": 62,
         "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:_applyOpponentCommand": 153,
         "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:advanceTurn": 65,
         "packages/aonw_core/lib/ai/mcts/mcts_strategy.dart::class:MctsStrategy/method:plan": 90,

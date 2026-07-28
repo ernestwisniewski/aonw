@@ -54,7 +54,21 @@ final class MctsSimulatedMovementCommandApplier {
     ];
   }
 
-  List<GameUnit> applyCancelUnitAction(CancelUnitActionCommand command) {
+  bool supportsUnitAction(GameCommand command) =>
+      command is CancelUnitActionCommand ||
+      command is SkipUnitTurnCommand ||
+      command is FortifyUnitCommand;
+
+  List<GameUnit> applyUnitAction(GameCommand command) {
+    return switch (command) {
+      final CancelUnitActionCommand value => _applyCancelUnitAction(value),
+      final SkipUnitTurnCommand value => _applySkipUnitTurn(value),
+      final FortifyUnitCommand value => _applyFortifyUnit(value),
+      _ => ownUnits,
+    };
+  }
+
+  List<GameUnit> _applyCancelUnitAction(CancelUnitActionCommand command) {
     // This projection only models the wake-up command emitted by the war-goal
     // planner. Full-state simulations use PersistentUnitActionResolver so they
     // can also project runtime interaction and artifact excavation changes.
@@ -73,6 +87,35 @@ final class MctsSimulatedMovementCommandApplier {
       command: command,
       actorPlayerId: view.forPlayerId,
     );
+    if (!result.accepted || !identical(result.artifacts, view.artifacts)) {
+      return ownUnits;
+    }
+    return result.units;
+  }
+
+  List<GameUnit> _applySkipUnitTurn(SkipUnitTurnCommand command) {
+    final result = UnitActionCommandResolver.skipUnitTurn(
+      units: ownUnits,
+      artifacts: view.artifacts,
+      interaction: PersistedInteractionState.empty,
+      command: command,
+      actorPlayerId: view.forPlayerId,
+    );
+    return _projectUnitAction(result);
+  }
+
+  List<GameUnit> _applyFortifyUnit(FortifyUnitCommand command) {
+    final result = UnitActionCommandResolver.fortifyUnit(
+      units: ownUnits,
+      artifacts: view.artifacts,
+      interaction: PersistedInteractionState.empty,
+      command: command,
+      actorPlayerId: view.forPlayerId,
+    );
+    return _projectUnitAction(result);
+  }
+
+  List<GameUnit> _projectUnitAction(UnitActionCommandResult result) {
     if (!result.accepted || !identical(result.artifacts, view.artifacts)) {
       return ownUnits;
     }

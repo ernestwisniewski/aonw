@@ -189,6 +189,11 @@ class SimulatedState {
   }
 
   MctsSimulatedCommandApplication _applyCommand(GameCommand command) {
+    if (_movementCommandApplier.supportsUnitAction(command)) {
+      return _unitCommandApplication(
+        _movementCommandApplier.applyUnitAction(command),
+      );
+    }
     return switch (command) {
       MoveUnitCommand() => (
         nextOwnUnits: _movementCommandApplier.applyMoveUnit(command),
@@ -240,16 +245,19 @@ class SimulatedState {
         _economyCommandApplier.applySelectWorkerImprovement(command),
       AssignWorkerToHexCommand() =>
         _economyCommandApplier.applyAssignWorkerToHex(command),
-      CancelUnitActionCommand() => (
-        nextOwnUnits: _movementCommandApplier.applyCancelUnitAction(command),
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: ownCities,
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
-      ),
       _ => _unchangedCommandApplication,
     };
   }
+
+  MctsSimulatedCommandApplication _unitCommandApplication(
+    List<GameUnit> units,
+  ) => (
+    nextOwnUnits: units,
+    nextVisibleEnemyUnits: visibleEnemyUnits,
+    nextOwnCities: ownCities,
+    nextRememberedEnemyCities: rememberedEnemyCities,
+    nextOwnResearch: ownResearch,
+  );
 
   MctsSimulatedEconomyCommandApplier get _economyCommandApplier {
     return MctsSimulatedEconomyCommandApplier(

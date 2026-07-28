@@ -128,6 +128,98 @@ void main() {
     expect(afterFullTurn.wonderRegistry.completedBy, wonders.completedBy);
     expect(afterFullTurn.research.forPlayer('player_2'), playerTwoResearch);
   });
+
+  test('lightweight skip projects the canonical unit mutation', () {
+    final unit =
+        GameUnit(
+          id: 'warrior_1',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          name: 'Warrior',
+          col: 0,
+          row: 0,
+          movementPoints: 2,
+          posture: UnitPosture.fortified,
+        ).copyWithQueuedPath(
+          QueuedMovePath(
+            targetCol: 2,
+            targetRow: 0,
+            steps: const [
+              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            ],
+          ),
+        );
+    final view = _view(mapView: _mapData().indexedReadView(), ownUnits: [unit]);
+    final expected = UnitActionCommandResolver.skipUnitTurn(
+      units: [unit],
+      artifacts: view.artifacts,
+      interaction: PersistedInteractionState.empty,
+      command: const SkipUnitTurnCommand('warrior_1'),
+      actorPlayerId: 'player_1',
+    );
+
+    final actual = SimulatedState.fromView(
+      view,
+      maxPlanningDepth: 2,
+    ).apply(const CommandMctsAction(SkipUnitTurnCommand('warrior_1')));
+
+    expect(actual.ownUnits, expected.units);
+    expect(actual.ownUnits.single.movementPoints, 0);
+    expect(actual.ownUnits.single.queuedPath, isNull);
+    expect(actual.ownUnits.single.posture, UnitPosture.active);
+  });
+
+  test(
+    'lightweight fortify projects accept and preserves rejected workers',
+    () {
+      final warrior = GameUnit(
+        id: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Warrior',
+        col: 0,
+        row: 0,
+        movementPoints: 2,
+      );
+      final worker = GameUnit(
+        id: 'worker_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.worker,
+        name: 'Worker',
+        col: 1,
+        row: 0,
+        workerJob: const WorkerJob(
+          improvementType: FieldImprovementType.farm,
+          targetHex: CityHex(col: 1, row: 0),
+          remainingTurns: 2,
+          totalTurns: 3,
+        ),
+      );
+      final view = _view(
+        mapView: _mapData().indexedReadView(),
+        ownUnits: [warrior, worker],
+      );
+      final expected = UnitActionCommandResolver.fortifyUnit(
+        units: [warrior, worker],
+        artifacts: view.artifacts,
+        interaction: PersistedInteractionState.empty,
+        command: const FortifyUnitCommand('warrior_1'),
+        actorPlayerId: 'player_1',
+      );
+      final root = SimulatedState.fromView(view, maxPlanningDepth: 3);
+
+      final fortified = root.apply(
+        const CommandMctsAction(FortifyUnitCommand('warrior_1')),
+      );
+      final rejected = root.apply(
+        const CommandMctsAction(FortifyUnitCommand('worker_1')),
+      );
+
+      expect(fortified.ownUnits, expected.units);
+      expect(fortified.ownUnits.first.posture, UnitPosture.fortified);
+      expect(rejected.ownUnits, root.ownUnits);
+    },
+  );
 }
 
 GameView _view({
