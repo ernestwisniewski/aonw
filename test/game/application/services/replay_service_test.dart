@@ -43,7 +43,7 @@ void main() {
       expect(timeline.steps.single.previousState.activePlayerId, isEmpty);
       expect(timeline.steps.single.state.activePlayerId, 'p1');
       expect(
-        timeline.steps.single.save.savedAt,
+        timeline.steps.single.metadata.savedAtUtc,
         DateTime.utc(2026, 4, 24, 12, 1),
       );
     });

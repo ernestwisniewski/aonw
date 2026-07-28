@@ -40,7 +40,17 @@ void main() {
     expect(timeline.lastTurn, 1);
   });
 
-  test('last turn follows the resulting replay step save', () {
+  test('initial camera is adapted losslessly from canonical metadata', () {
+    const camera = CameraState(x: 12.5, y: -4.25, zoom: 1.75);
+    final timeline = _timeline(_save(camera: camera));
+
+    expect(timeline.metadata.camera.x, camera.x);
+    expect(timeline.metadata.camera.y, camera.y);
+    expect(timeline.metadata.camera.zoom, camera.zoom);
+    expect(timeline.initialCamera, camera);
+  });
+
+  test('last turn follows the resulting replay step snapshot', () {
     final initialSave = _save();
     final initialSnapshot = SaveSnapshot(save: initialSave);
     final timeline = ReplayTimeline(
@@ -87,6 +97,7 @@ ReplayTimeline _timeline(GameSave save) {
 GameSave _save({
   String name = 'Campaign',
   int turn = 1,
+  CameraState camera = CameraState.zero,
   Map<String, PlayerTurnState> playerStates = const {
     'p1': PlayerTurnState.active,
   },
@@ -99,7 +110,7 @@ GameSave _save({
     turn: turn,
     playerStates: playerStates,
     savedAt: DateTime.utc(2026, 4, 24, 12),
-    camera: CameraState.zero,
+    camera: camera,
     players: const [Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4)],
   );
 }

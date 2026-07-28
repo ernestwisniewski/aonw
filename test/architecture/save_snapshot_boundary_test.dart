@@ -24,6 +24,8 @@ const _replayControlsPath =
     'lib/game/presentation/screens/replay/replay_controls.dart';
 const _replayRendererHostPath =
     'lib/game/presentation/screens/replay/replay_renderer_host.dart';
+const _replayRendererLifecyclePath =
+    'lib/game/presentation/screens/replay/replay_renderer_host_lifecycle.dart';
 const _canonicalSessionConsumerPaths = [
   _localResolverPath,
   'lib/api/transport/network_command_transport.dart',
@@ -179,7 +181,7 @@ void main() {
           .where((method) => method.isGetter && method.name.lexeme == 'save');
       expect(replayStepFields, contains('snapshot'));
       expect(replayStepFields, isNot(contains('save')));
-      expect(replayStepSaveGetters, hasLength(1));
+      expect(replayStepSaveGetters, isEmpty);
 
       final timeline = unit.declarations
           .whereType<ClassDeclaration>()
@@ -198,6 +200,7 @@ void main() {
       final selectors = _namesIn(_unitAt(_replayControlSelectorsPath));
       final controls = _unitAt(_replayControlsPath);
       final renderer = _namesIn(_unitAt(_replayRendererHostPath));
+      final rendererLifecycle = _unitAt(_replayRendererLifecyclePath);
       expect(selectors, contains('participants'));
       expect(selectors, isNot(contains('save')));
       expect(_propertyReadCount(controls, 'save'), 0);
@@ -205,6 +208,8 @@ void main() {
       expect(_namesIn(controls), contains('fromPlayers'));
       expect(renderer, contains('metadata'));
       expect(renderer, isNot(contains('save')));
+      expect(_propertyReadCount(rendererLifecycle, 'save'), 0);
+      expect(_propertyReadCount(rendererLifecycle, 'initialCamera'), 3);
     });
 
     test('semantic read scanner ignores text and finds property access', () {

@@ -40,6 +40,10 @@ class ReplayTimeline {
   GameSnapshotMetadata get metadata => initialSnapshot.metadata;
   List<Player> get participants => initialSnapshot.domain.participants;
   MatchSessionState get session => initialSnapshot.session;
+  CameraState get initialCamera {
+    final camera = metadata.camera;
+    return CameraState(x: camera.x, y: camera.y, zoom: camera.zoom);
+  }
 
   List<String> get playerIds {
     final ids = [
@@ -80,7 +84,6 @@ class ReplayStep {
     this.originatingTurn,
   });
 
-  GameSave get save => snapshot.save;
   GameSnapshotMetadata get metadata => snapshot.metadata;
   DomainState get domain => snapshot.domain;
   MatchSessionState get session => snapshot.session;
