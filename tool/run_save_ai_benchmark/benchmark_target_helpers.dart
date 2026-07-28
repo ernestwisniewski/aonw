@@ -304,9 +304,13 @@ GameCity? _cityAt(
   return null;
 }
 
-DateTime? _deadlineFor(GameSave save, DateTime? turnStartedAt) {
-  if (save.gameMode != GameMode.multiplayer) return null;
-  final startedAt = turnStartedAt ?? save.savedAt;
+DateTime? _deadlineFor({
+  required GameMode gameMode,
+  required DateTime savedAt,
+  required DateTime? turnStartedAt,
+}) {
+  if (gameMode != GameMode.multiplayer) return null;
+  final startedAt = turnStartedAt ?? savedAt;
   return startedAt.toUtc().add(const Duration(seconds: 115));
 }
 

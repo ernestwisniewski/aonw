@@ -140,10 +140,10 @@ class _SaveAiBenchmark {
     final runtime = _BenchmarkRuntimeReport.fromSnapshot(snapshot);
     final playerResults = <_PlayerBenchmarkResult>[];
     final humanPlayerIds = {
-      for (final player in snapshot.save.players)
+      for (final player in snapshot.domain.participants)
         if (player.kind == PlayerKind.human) player.id,
     };
-    for (final player in snapshot.save.players) {
+    for (final player in snapshot.domain.participants) {
       if (player.kind != PlayerKind.ai || player.ai == null) continue;
       final prepared = _PreparedPlayer.fromSnapshot(
         snapshot: snapshot,
@@ -230,21 +230,21 @@ class _PreparedPlayer {
     const civRegistry = CivilizationProfileRegistry();
     final civProfile = civRegistry.profileFor(player.country);
     final ruleset = GameRuleset.defaults.copyWith(
-      paceBalance: snapshot.save.matchRules.paceBalance,
+      paceBalance: snapshot.domain.matchRules.paceBalance,
     );
     final pressureTargetPlayerIds = _pressureTargetPlayerIds(
-      snapshot.save.players,
+      snapshot.domain.participants,
       playerId: player.id,
-      diplomacy: snapshot.runtimeState.diplomacy,
+      diplomacy: snapshot.domain.diplomacy,
     );
     final pendingCityAttackThreats = _pendingCityAttackThreats(
       snapshot: snapshot,
       playerId: player.id,
     );
-    final view = GameView.fromPersistentState(
-      snapshot.persistentState,
+    final view = GameView.fromDomainState(
+      snapshot.domain,
       forPlayerId: player.id,
-      turn: snapshot.save.turn,
+      turn: snapshot.domain.turn,
       mapData: mapView,
       ruleset: ruleset,
       activeHostilePlayerIds: _pendingHostilePlayerIds(
@@ -253,7 +253,7 @@ class _PreparedPlayer {
       ),
       pressureTargetPlayerIds: pressureTargetPlayerIds,
       defaultNeutralPlayerIds: _defaultNeutralPlayerIds(
-        snapshot.save.players,
+        snapshot.domain.participants,
         playerId: player.id,
       ),
       pendingCityAttackThreats: pendingCityAttackThreats,
@@ -265,9 +265,9 @@ class _PreparedPlayer {
     var context = AiContext(
       ruleset: ruleset,
       mapData: mapView,
-      turn: snapshot.save.turn,
+      turn: snapshot.domain.turn,
       rng: AiRng.fromTurn(
-        turn: snapshot.save.turn,
+        turn: snapshot.domain.turn,
         playerId: player.id,
         baseSeed: ai.seed,
       ),
@@ -275,7 +275,11 @@ class _PreparedPlayer {
       difficulty: ai.difficulty,
       civProfile: civProfile,
       deadline: includeDeadline
-          ? _deadlineFor(snapshot.save, snapshot.runtimeState.turnStartedAt)
+          ? _deadlineFor(
+              gameMode: snapshot.session.gameMode,
+              savedAt: snapshot.metadata.savedAtUtc,
+              turnStartedAt: snapshot.persistedTurnStartedAt,
+            )
           : null,
     );
     final assessment = AiEmpireAssessment.fromView(view, context);
@@ -394,7 +398,10 @@ class _PreparedPlayer {
       dispatched.add(command);
     }
 
-    final terminalCommand = _terminalFor(snapshot.save.gameMode, player.id);
+    final terminalCommand = _terminalFor(
+      snapshot.session.gameMode,
+      player.id,
+    );
     final terminalStopwatch = Stopwatch()..start();
     final terminalTransition = reducer.reduce(
       state,
@@ -430,7 +437,7 @@ class _PreparedPlayer {
       activePlayerId: player.id,
       activePlayerCanAct: true,
     );
-    if (snapshot.save.gameMode != GameMode.multiplayer ||
+    if (snapshot.session.gameMode != GameMode.multiplayer ||
         !state.submittedPlayerIds.contains(player.id)) {
       return state;
     }
