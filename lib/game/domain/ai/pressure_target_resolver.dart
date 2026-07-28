@@ -26,12 +26,12 @@ final class PressureTargetResolver {
   PressureTargetResolution resolve({
     required Iterable<Player> players,
     required String playerId,
-    required PersistentGameState state,
+    required DomainState state,
     required int turn,
     required MatchRules matchRules,
     required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
-    final diplomacy = state.runtimeState.diplomacy;
+    final diplomacy = state.diplomacy;
     final scoreRace = _scoreRaceFor(
       players: players,
       playerId: playerId,
@@ -66,13 +66,13 @@ final class PressureTargetResolver {
   ScoreRaceAnalysis? _scoreRaceFor({
     required Iterable<Player> players,
     required String playerId,
-    required PersistentGameState state,
+    required DomainState state,
     required int turn,
     required MatchRules matchRules,
     required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
     final victory = matchRules.victory;
-    return scoreRaceAnalyzer.analyzeForPlayer(
+    return scoreRaceAnalyzer.analyzeDomainStateForPlayer(
       playerId: playerId,
       playerIds: players.map((player) => player.id),
       state: state,
@@ -137,7 +137,7 @@ final class PressureTargetResolver {
   }
 
   Set<String> _culturalPressureTargetPlayerIds(
-    PersistentGameState state, {
+    DomainState state, {
     required String playerId,
     required MatchRules matchRules,
   }) {

@@ -13,6 +13,8 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
+part 'game_view_projection_helpers.dart';
+
 class PendingCityAttackThreat {
   final String attackerPlayerId;
   final String attackerUnitId;
@@ -213,126 +215,282 @@ class GameView {
     Iterable<String> forcedVisibleEnemyUnitIds = const [],
     bool ignoreFogOfWar = false,
     bool ignoreDynamicFogOfWar = false,
-  }) {
-    final visibility = FogVisibilityQuery(
-      playerId: ignoreFogOfWar ? '' : forPlayerId,
-      state: state.fogOfWar,
-    );
-    final dynamicVisibility = FogVisibilityQuery(
-      playerId: ignoreFogOfWar && ignoreDynamicFogOfWar ? '' : forPlayerId,
-      state: state.fogOfWar,
-    );
-    final ownCities = [
-      for (final city in state.cities)
-        if (city.ownerPlayerId == forPlayerId) city,
-    ];
-    final ownCityIds = {for (final city in ownCities) city.id};
-    final ownUnitIds = {
-      for (final unit in state.units)
-        if (unit.ownerPlayerId == forPlayerId) unit.id,
-    };
-    final forcedVisibleUnitIds = forcedVisibleEnemyUnitIds.toSet();
+  }) => GameView._fromStateValues(
+    forPlayerId: forPlayerId,
+    turn: turn,
+    mapData: mapData,
+    ruleset: ruleset,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    playerGold: state.playerGold,
+    playerWarWeariness: state.playerWarWeariness,
+    playerStabilityNet: state.playerStabilityNet,
+    research: state.research,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+    mapObjectiveHoldStatesByObjectiveId:
+        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    diplomacy: state.runtimeState.diplomacy,
+    wonderRegistry: state.wonderRegistry,
+    recentHostilePlayerIds: recentHostilePlayerIds,
+    activeHostilePlayerIds: activeHostilePlayerIds,
+    pressureTargetPlayerIds: pressureTargetPlayerIds,
+    defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+    pendingCityAttackThreats: pendingCityAttackThreats,
+    forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+    ignoreFogOfWar: ignoreFogOfWar,
+    ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+  );
 
-    return GameView(
-      forPlayerId: forPlayerId,
-      turn: turn,
-      ownUnits: [
-        for (final unit in state.units)
-          if (unit.ownerPlayerId == forPlayerId) unit,
-      ],
-      ownCities: ownCities,
-      artifacts: [
-        for (final artifact in state.artifacts)
-          if (_canSeeArtifact(
-            artifact,
-            cities: state.cities,
-            units: state.units,
-            ownCityIds: ownCityIds,
-            ownUnitIds: ownUnitIds,
-            visibility: visibility,
-          ))
-            artifact,
-      ],
-      ownGold: state.playerGold[forPlayerId] ?? 0,
-      ownWarWeariness: state.playerWarWeariness[forPlayerId] ?? 0,
-      ownStabilityNet: state.playerStabilityNet[forPlayerId] ?? 0,
-      research: state.research,
-      ownResearch: state.research.forPlayer(forPlayerId),
-      ownImprovements: [
-        for (final improvement in state.fieldImprovements)
-          if (_isOwnImprovement(improvement, ownCities, ownCityIds))
-            improvement,
-      ],
-      resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-      mapObjectiveHoldStatesByObjectiveId:
-          state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-      diplomacy: state.runtimeState.diplomacy,
-      visibleEnemyUnits: [
-        for (final unit in state.units)
-          if (unit.ownerPlayerId != forPlayerId &&
-              (dynamicVisibility.canSeeDynamicAt(unit.col, unit.row) ||
-                  forcedVisibleUnitIds.contains(unit.id)))
-            unit,
-      ],
-      movementBlockingUnits: state.units,
-      rememberedEnemyCities: [
-        for (final city in state.cities)
-          if (city.ownerPlayerId != forPlayerId &&
-              visibility.canRememberStaticAt(city.center.col, city.center.row))
-            city,
-      ],
-      activeHostilePlayerIds: activeHostilePlayerIds,
-      recentHostilePlayerIds: recentHostilePlayerIds,
-      pressureTargetPlayerIds: pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: defaultNeutralPlayerIds,
-      pendingCityAttackThreats: pendingCityAttackThreats,
-      visibility: visibility,
-      mapData: mapData,
-      ruleset: ruleset,
-      wonderRegistry: state.wonderRegistry,
-    );
-  }
+  factory GameView.fromDomainState(
+    DomainState state, {
+    required String forPlayerId,
+    required int turn,
+    required MapReadView mapData,
+    required GameRuleset ruleset,
+    Iterable<String> recentHostilePlayerIds = const [],
+    Iterable<String> activeHostilePlayerIds = const [],
+    Iterable<String> pressureTargetPlayerIds = const [],
+    Iterable<String> defaultNeutralPlayerIds = const [],
+    Iterable<PendingCityAttackThreat> pendingCityAttackThreats = const [],
+    Iterable<String> forcedVisibleEnemyUnitIds = const [],
+    bool ignoreFogOfWar = false,
+    bool ignoreDynamicFogOfWar = false,
+  }) => GameView._fromStateValues(
+    forPlayerId: forPlayerId,
+    turn: turn,
+    mapData: mapData,
+    ruleset: ruleset,
+    units: state.units,
+    cities: state.cities,
+    artifacts: state.artifacts,
+    playerGold: state.playerGold,
+    playerWarWeariness: state.playerWarWeariness,
+    playerStabilityNet: state.playerStabilityNet,
+    research: state.research,
+    fieldImprovements: state.fieldImprovements,
+    fogOfWar: state.fogOfWar,
+    resourceTradeAgreements: state.resourceTradeAgreements,
+    mapObjectiveHoldStatesByObjectiveId:
+        state.mapObjectiveHoldStatesByObjectiveId,
+    diplomacy: state.diplomacy,
+    wonderRegistry: state.wonderRegistry,
+    recentHostilePlayerIds: recentHostilePlayerIds,
+    activeHostilePlayerIds: activeHostilePlayerIds,
+    pressureTargetPlayerIds: pressureTargetPlayerIds,
+    defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+    pendingCityAttackThreats: pendingCityAttackThreats,
+    forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+    ignoreFogOfWar: ignoreFogOfWar,
+    ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+  );
 
-  static bool _isOwnImprovement(
-    FieldImprovement improvement,
-    List<GameCity> ownCities,
-    Set<String> ownCityIds,
-  ) {
-    final builtByCityId = improvement.builtByCityId;
-    if (builtByCityId != null) return ownCityIds.contains(builtByCityId);
-    return ownCities.any((city) => city.controlsHex(improvement.hex));
-  }
-
-  static bool _canSeeArtifact(
-    WorldArtifact artifact, {
-    required List<GameCity> cities,
+  factory GameView._fromStateValues({
+    required String forPlayerId,
+    required int turn,
+    required MapReadView mapData,
+    required GameRuleset ruleset,
     required List<GameUnit> units,
-    required Set<String> ownCityIds,
-    required Set<String> ownUnitIds,
-    required FogVisibilityQuery visibility,
+    required List<GameCity> cities,
+    required List<WorldArtifact> artifacts,
+    required Map<String, int> playerGold,
+    required Map<String, int> playerWarWeariness,
+    required Map<String, int> playerStabilityNet,
+    required ResearchState research,
+    required List<FieldImprovement> fieldImprovements,
+    required FogOfWarState fogOfWar,
+    required List<ResourceTradeAgreement> resourceTradeAgreements,
+    required Map<String, MapObjectiveHoldState>
+    mapObjectiveHoldStatesByObjectiveId,
+    required DiplomacyState diplomacy,
+    required WonderRegistry wonderRegistry,
+    required Iterable<String> recentHostilePlayerIds,
+    required Iterable<String> activeHostilePlayerIds,
+    required Iterable<String> pressureTargetPlayerIds,
+    required Iterable<String> defaultNeutralPlayerIds,
+    required Iterable<PendingCityAttackThreat> pendingCityAttackThreats,
+    required Iterable<String> forcedVisibleEnemyUnitIds,
+    required bool ignoreFogOfWar,
+    required bool ignoreDynamicFogOfWar,
   }) {
-    final location = artifact.location;
-    switch (location.kind) {
-      case WorldArtifactLocationKind.map:
-      case WorldArtifactLocationKind.excavation:
-        final col = location.col;
-        final row = location.row;
-        return col != null &&
-            row != null &&
-            visibility.canSeeDynamicAt(col, row);
-      case WorldArtifactLocationKind.carried:
-        final unitId = location.unitId;
-        if (unitId == null) return false;
-        if (ownUnitIds.contains(unitId)) return true;
-        final unit = units.byId(unitId);
-        return unit != null && visibility.canSeeDynamicAt(unit.col, unit.row);
-      case WorldArtifactLocationKind.stored:
-        final cityId = location.cityId;
-        if (cityId == null) return false;
-        if (ownCityIds.contains(cityId)) return true;
-        final city = cities.byId(cityId);
-        return city != null &&
-            visibility.canSeeDynamicAt(city.center.col, city.center.row);
-    }
+    return _buildGameView(
+      _GameViewProjection(
+        forPlayerId: forPlayerId,
+        turn: turn,
+        mapData: mapData,
+        ruleset: ruleset,
+        units: units,
+        cities: cities,
+        artifacts: artifacts,
+        playerGold: playerGold,
+        playerWarWeariness: playerWarWeariness,
+        playerStabilityNet: playerStabilityNet,
+        research: research,
+        fieldImprovements: fieldImprovements,
+        fogOfWar: fogOfWar,
+        resourceTradeAgreements: resourceTradeAgreements,
+        mapObjectiveHoldStatesByObjectiveId:
+            mapObjectiveHoldStatesByObjectiveId,
+        diplomacy: diplomacy,
+        wonderRegistry: wonderRegistry,
+        recentHostilePlayerIds: recentHostilePlayerIds,
+        activeHostilePlayerIds: activeHostilePlayerIds,
+        pressureTargetPlayerIds: pressureTargetPlayerIds,
+        defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+        pendingCityAttackThreats: pendingCityAttackThreats,
+        forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+        ignoreFogOfWar: ignoreFogOfWar,
+        ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+      ),
+    );
   }
 }
+
+final class _GameViewProjection {
+  _GameViewProjection({
+    required this.forPlayerId,
+    required this.turn,
+    required this.mapData,
+    required this.ruleset,
+    required this.units,
+    required this.cities,
+    required this.artifacts,
+    required this.playerGold,
+    required this.playerWarWeariness,
+    required this.playerStabilityNet,
+    required this.research,
+    required this.fieldImprovements,
+    required this.fogOfWar,
+    required this.resourceTradeAgreements,
+    required this.mapObjectiveHoldStatesByObjectiveId,
+    required this.diplomacy,
+    required this.wonderRegistry,
+    required this.recentHostilePlayerIds,
+    required this.activeHostilePlayerIds,
+    required this.pressureTargetPlayerIds,
+    required this.defaultNeutralPlayerIds,
+    required this.pendingCityAttackThreats,
+    required Iterable<String> forcedVisibleEnemyUnitIds,
+    required this.ignoreFogOfWar,
+    required this.ignoreDynamicFogOfWar,
+  }) : forcedVisibleEnemyUnitIds = forcedVisibleEnemyUnitIds.toSet();
+
+  final String forPlayerId;
+  final int turn;
+  final MapReadView mapData;
+  final GameRuleset ruleset;
+  final List<GameUnit> units;
+  final List<GameCity> cities;
+  final List<WorldArtifact> artifacts;
+  final Map<String, int> playerGold;
+  final Map<String, int> playerWarWeariness;
+  final Map<String, int> playerStabilityNet;
+  final ResearchState research;
+  final List<FieldImprovement> fieldImprovements;
+  final FogOfWarState fogOfWar;
+  final List<ResourceTradeAgreement> resourceTradeAgreements;
+  final Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId;
+  final DiplomacyState diplomacy;
+  final WonderRegistry wonderRegistry;
+  final Iterable<String> recentHostilePlayerIds;
+  final Iterable<String> activeHostilePlayerIds;
+  final Iterable<String> pressureTargetPlayerIds;
+  final Iterable<String> defaultNeutralPlayerIds;
+  final Iterable<PendingCityAttackThreat> pendingCityAttackThreats;
+  final Set<String> forcedVisibleEnemyUnitIds;
+  final bool ignoreFogOfWar;
+  final bool ignoreDynamicFogOfWar;
+
+  FogVisibilityQuery get visibility => FogVisibilityQuery(
+    playerId: ignoreFogOfWar ? '' : forPlayerId,
+    state: fogOfWar,
+  );
+
+  FogVisibilityQuery get dynamicVisibility => FogVisibilityQuery(
+    playerId: ignoreFogOfWar && ignoreDynamicFogOfWar ? '' : forPlayerId,
+    state: fogOfWar,
+  );
+
+  List<GameCity> get ownCities => [
+    for (final city in cities)
+      if (city.ownerPlayerId == forPlayerId) city,
+  ];
+
+  List<GameUnit> get ownUnits => [
+    for (final unit in units)
+      if (unit.ownerPlayerId == forPlayerId) unit,
+  ];
+}
+
+GameView _buildGameView(_GameViewProjection source) {
+  final ownCities = source.ownCities;
+  final ownCityIds = {for (final city in ownCities) city.id};
+  final ownUnitIds = {for (final unit in source.ownUnits) unit.id};
+  final visibility = source.visibility;
+  return GameView(
+    forPlayerId: source.forPlayerId,
+    turn: source.turn,
+    ownUnits: source.ownUnits,
+    ownCities: ownCities,
+    artifacts: _visibleArtifacts(source, ownCityIds, ownUnitIds, visibility),
+    ownGold: source.playerGold[source.forPlayerId] ?? 0,
+    ownWarWeariness: source.playerWarWeariness[source.forPlayerId] ?? 0,
+    ownStabilityNet: source.playerStabilityNet[source.forPlayerId] ?? 0,
+    research: source.research,
+    ownResearch: source.research.forPlayer(source.forPlayerId),
+    ownImprovements: _ownImprovements(source, ownCities, ownCityIds),
+    resourceTradeAgreements: source.resourceTradeAgreements,
+    mapObjectiveHoldStatesByObjectiveId:
+        source.mapObjectiveHoldStatesByObjectiveId,
+    diplomacy: source.diplomacy,
+    visibleEnemyUnits: _visibleEnemyUnits(source),
+    movementBlockingUnits: source.units,
+    rememberedEnemyCities: _rememberedEnemyCities(source, visibility),
+    activeHostilePlayerIds: source.activeHostilePlayerIds,
+    recentHostilePlayerIds: source.recentHostilePlayerIds,
+    pressureTargetPlayerIds: source.pressureTargetPlayerIds,
+    defaultNeutralPlayerIds: source.defaultNeutralPlayerIds,
+    pendingCityAttackThreats: source.pendingCityAttackThreats,
+    visibility: visibility,
+    mapData: source.mapData,
+    ruleset: source.ruleset,
+    wonderRegistry: source.wonderRegistry,
+  );
+}
+
+List<WorldArtifact> _visibleArtifacts(
+  _GameViewProjection source,
+  Set<String> ownCityIds,
+  Set<String> ownUnitIds,
+  FogVisibilityQuery visibility,
+) => [
+  for (final artifact in source.artifacts)
+    if (_canSeeArtifact(
+      artifact,
+      cities: source.cities,
+      units: source.units,
+      ownCityIds: ownCityIds,
+      ownUnitIds: ownUnitIds,
+      visibility: visibility,
+    ))
+      artifact,
+];
+
+List<FieldImprovement> _ownImprovements(
+  _GameViewProjection source,
+  List<GameCity> ownCities,
+  Set<String> ownCityIds,
+) => [
+  for (final improvement in source.fieldImprovements)
+    if (_isOwnImprovement(improvement, ownCities, ownCityIds)) improvement,
+];
+
+List<GameUnit> _visibleEnemyUnits(_GameViewProjection source) => [
+  for (final unit in source.units)
+    if (unit.ownerPlayerId != source.forPlayerId &&
+        (source.dynamicVisibility.canSeeDynamicAt(unit.col, unit.row) ||
+            source.forcedVisibleEnemyUnitIds.contains(unit.id)))
+      unit,
+];

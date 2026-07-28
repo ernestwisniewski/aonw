@@ -13,8 +13,6 @@ const _persistenceCodecPath =
 const _protocolCodecPath = 'lib/api/protocol/codecs.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
-const _aiTurnPreparationBuilderPath =
-    'lib/game/application/services/ai_turn_preparation_builder.dart';
 
 void main() {
   group('SaveSnapshot boundary', () {
@@ -90,10 +88,8 @@ void main() {
       expect(names, containsAll(const {'SaveSnapshot', 'canonical'}));
     });
 
-    test('production semantic snapshot reads ratchet to the AI builder', () {
-      expect(_productionPersistentStateReads(), {
-        _aiTurnPreparationBuilderPath: 1,
-      });
+    test('production semantic snapshot reads are eliminated', () {
+      expect(_productionPersistentStateReads(), isEmpty);
     });
 
     test('semantic read scanner ignores text and finds property access', () {

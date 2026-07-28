@@ -6,7 +6,6 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,7 +21,10 @@ void main() {
             center: CityHex(col: i, row: 0),
           ),
       ];
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
+        turn: 2,
+        matchRules: MatchRules.standard,
+        participants: _players,
         cities: cities,
         artifacts: [
           for (var i = 0; i < 4; i++)
@@ -32,12 +34,10 @@ void main() {
               location: WorldArtifactLocation.stored(cityId: cities[i].id),
             ),
         ],
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'human',
-            'ai',
-            DiplomaticRelationStatus.neutral,
-          ),
+        diplomacy: DiplomacyState.empty.setStatus(
+          'human',
+          'ai',
+          DiplomaticRelationStatus.neutral,
         ),
       );
 
@@ -55,7 +55,10 @@ void main() {
 
     test('includes score leader and exposes score race analysis', () {
       final matchRules = MatchRules.forGameLength(GameLengthConfig.standard60);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
+        turn: 50,
+        matchRules: matchRules,
+        participants: _players,
         cities: const [
           GameCity(
             id: 'ai_city',
@@ -76,12 +79,10 @@ void main() {
             center: CityHex(col: 2, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'human',
-            'ai',
-            DiplomaticRelationStatus.neutral,
-          ),
+        diplomacy: DiplomacyState.empty.setStatus(
+          'human',
+          'ai',
+          DiplomaticRelationStatus.neutral,
         ),
       );
 
@@ -106,7 +107,11 @@ void main() {
         requiredHoldTurns: 1,
         victoryPoints: 100,
       );
-      final state = PersistentGameState(
+      final matchRules = MatchRules.forGameLength(GameLengthConfig.standard60);
+      final state = DomainState.snapshot(
+        turn: 50,
+        matchRules: matchRules,
+        participants: _players,
         cities: const [
           GameCity(
             id: 'ai_city',
@@ -121,20 +126,18 @@ void main() {
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'human',
-            'ai',
-            DiplomaticRelationStatus.neutral,
-          ),
-          mapObjectiveHoldStatesByObjectiveId: const {
-            'strategic_pass': MapObjectiveHoldState(
-              objectiveId: 'strategic_pass',
-              playerId: 'leader',
-              holdTurns: 1,
-            ),
-          },
+        diplomacy: DiplomacyState.empty.setStatus(
+          'human',
+          'ai',
+          DiplomaticRelationStatus.neutral,
         ),
+        mapObjectiveHoldStatesByObjectiveId: const {
+          'strategic_pass': MapObjectiveHoldState(
+            objectiveId: 'strategic_pass',
+            playerId: 'leader',
+            holdTurns: 1,
+          ),
+        },
       );
 
       final result = const PressureTargetResolver().resolve(
@@ -142,7 +145,7 @@ void main() {
         playerId: 'ai',
         state: state,
         turn: 50,
-        matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
+        matchRules: matchRules,
         mapObjectives: const [objective],
       );
 

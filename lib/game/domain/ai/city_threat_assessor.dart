@@ -19,7 +19,7 @@ final class CityThreatAssessor {
   const CityThreatAssessor();
 
   CityThreatAssessment assess({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
   }) {
     return CityThreatAssessment(
@@ -35,11 +35,11 @@ final class CityThreatAssessor {
   }
 
   Set<String> _pendingHostilePlayerIds({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
   }) {
     final hostilePlayerIds = <String>{};
-    for (final attack in state.runtimeState.intendedAttacks) {
+    for (final attack in state.intendedAttacks) {
       if (attack.declaringPlayerId == playerId) continue;
       if (_targetsPlayer(state, playerId: playerId, attack: attack)) {
         hostilePlayerIds.add(attack.declaringPlayerId);
@@ -49,7 +49,7 @@ final class CityThreatAssessor {
   }
 
   bool _targetsPlayer(
-    PersistentGameState state, {
+    DomainState state, {
     required String playerId,
     required IntendedAttack attack,
   }) {
@@ -60,12 +60,12 @@ final class CityThreatAssessor {
   }
 
   List<PendingCityAttackThreat> _pendingCityAttackThreats({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
   }) {
     final unitsById = {for (final unit in state.units) unit.id: unit};
     final threats = <PendingCityAttackThreat>[];
-    for (final attack in state.runtimeState.intendedAttacks) {
+    for (final attack in state.intendedAttacks) {
       if (attack.declaringPlayerId == playerId) continue;
       final attacker = unitsById[attack.attackerUnitId];
       if (attacker == null || attacker.ownerPlayerId == playerId) continue;

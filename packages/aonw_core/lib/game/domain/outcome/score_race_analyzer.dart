@@ -103,15 +103,61 @@ class ScoreRaceAnalyzer {
     required bool scoreFallbackEnabled,
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
   }) {
-    if (!scoreFallbackEnabled || turnLimit == null || turnLimit <= 0) {
-      return null;
-    }
-
-    final breakdownByPlayerId = _breakdownByPlayerId(
-      playerIds: playerIds,
-      state: state,
-      mapObjectives: mapObjectives,
+    if (!_isEnabled(turnLimit, scoreFallbackEnabled)) return null;
+    return _analyzeForPlayer(
+      playerId: playerId,
+      breakdownByPlayerId: _breakdownByPlayerId(
+        playerIds: playerIds,
+        state: state,
+        mapObjectives: mapObjectives,
+      ),
+      turn: turn,
+      turnLimit: turnLimit,
+      scoreFallbackEnabled: scoreFallbackEnabled,
     );
+  }
+
+  ScoreRaceAnalysis? analyzeDomainStateForPlayer({
+    required String playerId,
+    required Iterable<String> playerIds,
+    required DomainState state,
+    required int turn,
+    required int? turnLimit,
+    required bool scoreFallbackEnabled,
+    Iterable<MapObjectiveDefinition> mapObjectives = const [],
+  }) {
+    if (!_isEnabled(turnLimit, scoreFallbackEnabled)) return null;
+    return _analyzeForPlayer(
+      playerId: playerId,
+      breakdownByPlayerId: {
+        for (final candidateId in _cleanPlayerIds(playerIds))
+          candidateId: scoreCalculator.scoreForCollections(
+            playerId: candidateId,
+            cities: state.cities,
+            units: state.units,
+            fieldImprovements: state.fieldImprovements,
+            research: state.research,
+            playerGold: state.playerGold,
+            mapObjectives: mapObjectives,
+            mapObjectiveHoldStatesByObjectiveId:
+                state.mapObjectiveHoldStatesByObjectiveId,
+          ),
+      },
+      turn: turn,
+      turnLimit: turnLimit,
+      scoreFallbackEnabled: scoreFallbackEnabled,
+    );
+  }
+
+  ScoreRaceAnalysis? _analyzeForPlayer({
+    required String playerId,
+    required Map<String, EmpireScoreBreakdown> breakdownByPlayerId,
+    required int turn,
+    required int? turnLimit,
+    required bool scoreFallbackEnabled,
+  }) {
+    if (!_isEnabled(turnLimit, scoreFallbackEnabled)) return null;
+    final resolvedTurnLimit = turnLimit!;
     final player = breakdownByPlayerId[playerId];
     if (player == null) return null;
 
@@ -121,7 +167,9 @@ class ScoreRaceAnalyzer {
 
     final leader = sorted.first;
     final runnerUp = sorted.skip(1).firstOrNull;
-    final remainingTurns = (turnLimit - turn).clamp(0, turnLimit).toInt();
+    final remainingTurns = (resolvedTurnLimit - turn)
+        .clamp(0, resolvedTurnLimit)
+        .toInt();
 
     return ScoreRaceAnalysis(
       playerId: playerId,
@@ -129,11 +177,14 @@ class ScoreRaceAnalyzer {
       leader: leader,
       runnerUp: runnerUp,
       turn: turn,
-      turnLimit: turnLimit,
+      turnLimit: resolvedTurnLimit,
       remainingTurns: remainingTurns,
-      pressureWindowTurns: _pressureWindowTurns(turnLimit),
+      pressureWindowTurns: _pressureWindowTurns(resolvedTurnLimit),
     );
   }
+
+  bool _isEnabled(int? turnLimit, bool scoreFallbackEnabled) =>
+      scoreFallbackEnabled && turnLimit != null && turnLimit > 0;
 
   Set<String> pressureTargetPlayerIds({
     required String playerId,

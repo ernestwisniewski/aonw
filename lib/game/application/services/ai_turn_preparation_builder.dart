@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class AiTurnPreparationBuilder {
@@ -71,7 +72,7 @@ final class AiTurnPreparationBuilder {
       state: planningState,
       eventLogOffset: resolvedSnapshot.eventLogOffset,
     );
-    final planningPersistentState = planningSnapshot.persistentState;
+    final planningDomain = planningSnapshot.canonical.domain;
     final effectiveRuleset = ruleset.copyWith(
       paceBalance: resolvedSnapshot.save.matchRules.paceBalance,
     );
@@ -84,17 +85,17 @@ final class AiTurnPreparationBuilder {
     final pressureTargets = pressureTargetResolver.resolve(
       players: resolvedSnapshot.save.players,
       playerId: playerId,
-      state: planningPersistentState,
+      state: planningDomain,
       turn: resolvedSnapshot.save.turn,
       matchRules: resolvedSnapshot.save.matchRules,
       mapObjectives: mapData.objectives,
     );
     final cityThreats = cityThreatAssessor.assess(
-      state: planningPersistentState,
+      state: planningDomain,
       playerId: playerId,
     );
-    final view = GameView.fromPersistentState(
-      planningPersistentState,
+    final view = GameView.fromDomainState(
+      planningDomain,
       forPlayerId: playerId,
       turn: resolvedSnapshot.save.turn,
       mapData: mapData,
@@ -112,8 +113,8 @@ final class AiTurnPreparationBuilder {
       ),
       ignoreFogOfWar: true,
     );
-    final hegemonyContext = StabilityInputBuilder.hegemonyContextFor(
-      state: planningPersistentState,
+    final hegemonyContext = _hegemonyContextFor(
+      planningDomain,
       playerId: playerId,
       mapData: view.mapData,
     );
@@ -172,6 +173,17 @@ final class AiTurnPreparationBuilder {
       ),
     );
   }
+
+  ({double controlPercent, int playerCount}) _hegemonyContextFor(
+    DomainState state, {
+    required String playerId,
+    required MapReadView mapData,
+  }) => StabilityInputBuilder.hegemonyContextFromCollections(
+    cities: state.cities,
+    knownPlayerIds: state.participants.map((player) => player.id),
+    playerId: playerId,
+    mapData: mapData,
+  );
 
   GameState _planningState({
     required GameState initialState,
