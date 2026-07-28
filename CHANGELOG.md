@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.1.7 - 2026-07-28
+
+- Unified the map, save, replay, AI, and local-command read paths around the
+  canonical snapshot model while preserving the existing save and replay
+  formats.
+- Improved early-turn AI responsiveness and movement previews by removing
+  short-lived persistence isolates from frequent snapshot writes and small
+  save-catalog reads.
+- Kept local movement previews outside persistent command work so route
+  feedback remains responsive while authoritative commands retain their
+  existing replay and snapshot guarantees.
+- Made event-log offset lookup constant-cost for desktop and web saves instead
+  of scanning the complete command history.
+- Preserved forward-compatible snapshot fields and stabilized turn timing when
+  older or externally extended snapshots are decoded and written again.
+- Expanded parity, architecture, persistence, and performance coverage around
+  canonical state transitions and lightweight AI unit actions.
+
 ## 1.1.6 - 2026-07-26
 
 - Improved multiplayer movement playback so acting players, opponents, and
