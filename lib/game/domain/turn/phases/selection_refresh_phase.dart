@@ -102,7 +102,9 @@ class SelectionRefreshPhase extends TurnPhase {
     if (selectedId == null) return state;
 
     final updatedCity = state.cityById(selectedId);
-    if (updatedCity == null) return state;
+    if (updatedCity == null) {
+      return state.copyWithInteraction(selection: null);
+    }
 
     return state.copyWithInteraction(
       selection: CitySelectionProjector.project(

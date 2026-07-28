@@ -193,6 +193,31 @@ void main() {
       );
     });
 
+    test('clears a selected city that no longer exists', () {
+      const removedCity = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Removed city',
+        center: CityHex(col: 1, row: 1),
+      );
+      final state = GameState(
+        activePlayerId: 'player_1',
+        interaction: GameInteractionState(
+          selection: GameSelection.city(
+            removedCity,
+            cityYield: TileYield.zero,
+            playerColor: 0,
+          ),
+        ),
+      );
+
+      final refreshed = const SelectionRefreshPhase().apply(
+        _context(state, mapTiles),
+      );
+
+      expect(refreshed.state.selection, isNull);
+    });
+
     test('hides unrevealed resources when refreshing a selected unit', () {
       final selectedUnit = GameUnit.startingWarrior(
         ownerPlayerId: 'player_1',
