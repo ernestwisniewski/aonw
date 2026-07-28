@@ -21,6 +21,8 @@ const _outcomePath =
     'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
 const _initialCodecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
+const _losslessCodecPath =
+    'server/lib/src/multiplayer/lossless_match_snapshot_codec.dart';
 
 void main() {
   test('initial factory constructs one canonical snapshot without legacy', () {
@@ -49,7 +51,8 @@ void main() {
     final unit = _unitAt(_initialCodecPath);
 
     expect(_initialEncodeFlowViolations(unit), isEmpty);
-    expect(_identifierCount(unit, 'toLegacy'), 1);
+    expect(_identifierCount(unit, 'toLegacy'), 0);
+    expect(_identifierCount(_unitAt(_losslessCodecPath), 'toLegacy'), 1);
     expect(_identifierCount(_unitAt(_initialFactoryPath), 'toLegacy'), 0);
     expect(_identifierCount(_unitAt(_initialFactoryPath), 'toCanonical'), 0);
   });
@@ -91,7 +94,9 @@ void main() {
       containsAll([
         'encodeInitial must perform exact lifecycle, id, offset, and implicit '
             'turn-start guards',
-        'encodeInitial must use the shared legacy conversion helper once',
+        'encodeInitial must validate the authoritative roster before '
+            'conversion',
+        'encodeInitial must use the shared lossless codec once',
         'encodeInitial must apply the initial turn-start wire policy once',
         'encodeInitial must not convert snapshots directly',
       ]),

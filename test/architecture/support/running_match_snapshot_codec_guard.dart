@@ -8,4 +8,7 @@ List<String> _codecBoundaryViolations(
   ..._runningDecodeFlowViolations(codecUnit),
   ..._losslessDecodeFlowViolations(decoderUnit),
   ..._encodeFlowViolations(codecUnit),
+  ..._canonicalEncodeFlowViolations(codecUnit),
+  ..._losslessConversionFlowViolations(decoderUnit),
+  ..._rawCanonicalPatchFlowViolations(codecUnit),
 ];

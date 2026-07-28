@@ -1,7 +1,7 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
-import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_decoder.dart';
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
 import 'package:test/test.dart';

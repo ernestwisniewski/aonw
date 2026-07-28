@@ -239,6 +239,7 @@ const _projectionCapabilities = {
   '_decodePlayerMatchSnapshot',
   '_playerMatchSnapshotDecoder',
   'LosslessMatchSnapshotDecoder',
+  'LosslessMatchSnapshotCodec',
   'DecodedRunningMatchSnapshot',
   'RunningMatchSnapshotCodec',
   'decode',

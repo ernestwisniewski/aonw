@@ -213,9 +213,7 @@ List<String> _initialEncodeFlowViolations(CompilationUnit unit) {
             'snapshot.session.turnStartedAt != snapshot.metadata.savedAtUtc')
       'encodeInitial must perform exact lifecycle, id, offset, and implicit '
           'turn-start guards',
-    if (_methodCalls(body, '_legacySnapshotParts').length != 1 ||
-        _localInitializer(method, 'legacy') != '_legacySnapshotParts(snapshot)')
-      'encodeInitial must use the shared legacy conversion helper once',
+    ..._initialRosterConversionViolations(method, body),
     if (_methodCalls(body, '_withoutInitialTurnStartedAt').length != 1 ||
         _localInitializer(method, 'state') !=
             '_withoutInitialTurnStartedAt(legacy.state)')
@@ -229,6 +227,31 @@ List<String> _initialEncodeFlowViolations(CompilationUnit unit) {
         _identifierCount(body, 'toCanonical') > 0 ||
         _identifierCount(body, 'LegacyGameSnapshotAdapter') > 0)
       'encodeInitial must not convert snapshots directly',
+  ];
+}
+
+List<String> _initialRosterConversionViolations(
+  MethodDeclaration method,
+  FunctionBody body,
+) {
+  final rosterGuards = _methodCalls(body, '_requireMatchingRoster');
+  final conversions = _methodCalls(
+    body,
+    'encodeCanonical',
+  ).where((call) => call.target?.toSource() == '_losslessMatchSnapshotCodec');
+  final validatesBeforeConversion =
+      rosterGuards.length == 1 &&
+      conversions.length == 1 &&
+      rosterGuards.single.offset < conversions.single.offset;
+  final usesSharedCodec =
+      conversions.length == 1 &&
+      _localInitializer(method, 'legacy') ==
+          '_losslessMatchSnapshotCodec.encodeCanonical(snapshot)';
+  return [
+    if (!validatesBeforeConversion)
+      'encodeInitial must validate the authoritative roster before conversion',
+    if (!usesSharedCodec)
+      'encodeInitial must use the shared lossless codec once',
   ];
 }
 

@@ -89,6 +89,12 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             ...fixture.match.players,
           ],
         ),
+        save: fixture.save.copyWith(
+          playerStates: {
+            ...fixture.save.playerStates,
+            phantomId: PlayerTurnState.active,
+          },
+        ),
         state: fixture.state.copyWith(
           runtimeState: fixture.state.runtimeState.copyWith(
             submittedPlayerIds: const {phantomId},
@@ -109,6 +115,10 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             fixture.lowDomainPlayer.copyWith(id: phantomId, name: 'Save only'),
             ...fixture.save.players,
           ],
+          playerStates: {
+            ...fixture.save.playerStates,
+            phantomId: PlayerTurnState.active,
+          },
         ),
         state: fixture.state.copyWith(
           runtimeState: fixture.state.runtimeState.copyWith(
@@ -137,6 +147,12 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
               ...fixture.match.players,
             ],
           ),
+          save: fixture.save.copyWith(
+            playerStates: {
+              ...fixture.save.playerStates,
+              phantomId: PlayerTurnState.active,
+            },
+          ),
           state: fixture.state.copyWith(
             playerGold: {...fixture.state.playerGold, phantomId: 999},
             runtimeState: fixture.state.runtimeState.copyWith(
@@ -149,7 +165,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       },
     );
 
-    test('accepts a player present only in save.players', () async {
+    test('rejects a participant missing its turn state', () async {
       final fixture = await _createTimeoutActorFixture('save-player-only');
 
       final observation = await fixture.run(
@@ -164,9 +180,10 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             submittedPlayerIds: {fixture.highPlayerId},
           ),
         ),
+        expectRosterFailure: true,
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
+      _expectTimeoutNoOp(observation);
     });
 
     test('accepts players present only in save.playerStates', () async {
@@ -206,27 +223,24 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectTimeoutNoOp(observation);
     });
 
-    test(
-      'canonicalizes inconsistent active sources before selection',
-      () async {
-        final fixture = await _createTimeoutActorFixture('inconsistent-active');
+    test('rejects inconsistent active roster sources', () async {
+      final fixture = await _createTimeoutActorFixture('inconsistent-active');
 
-        final observation = await fixture.run(
-          save: fixture.save.copyWith(
-            players: [fixture.highDomainPlayer],
-            playerStates: {fixture.lowPlayerId: PlayerTurnState.active},
+      final observation = await fixture.run(
+        save: fixture.save.copyWith(
+          players: [fixture.highDomainPlayer],
+          playerStates: {fixture.lowPlayerId: PlayerTurnState.active},
+        ),
+        state: fixture.state.copyWith(
+          runtimeState: fixture.state.runtimeState.copyWith(
+            submittedPlayerIds: {fixture.lowPlayerId},
           ),
-          state: fixture.state.copyWith(
-            runtimeState: fixture.state.runtimeState.copyWith(
-              submittedPlayerIds: {fixture.lowPlayerId},
-            ),
-          ),
-        );
+        ),
+        expectRosterFailure: true,
+      );
 
-        expect(observation.actorPlayerIds, [fixture.lowPlayerId]);
-        _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
-      },
-    );
+      _expectTimeoutNoOp(observation);
+    });
   });
 }
 
@@ -306,6 +320,7 @@ final class _TimeoutActorFixture {
     WireMatch? match,
     GameSave? save,
     PersistentGameState? state,
+    bool expectRosterFailure = false,
   }) async {
     final arrangedState = state ?? this.state;
     final timedOutState = arrangedState.copyWith(
@@ -323,7 +338,19 @@ final class _TimeoutActorFixture {
     await store.saveState(before);
 
     final failures = await hub.advanceTimedOutTurns(store: store);
-    expect(failures, isEmpty);
+    if (expectRosterFailure) {
+      expect(failures, hasLength(1));
+      expect(
+        failures.single.error,
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Running snapshot roster must exactly match authoritative players.',
+        ),
+      );
+    } else {
+      expect(failures, isEmpty);
+    }
 
     final after = (await store.findState(before.match.id))!;
     return _TimeoutActorObservation(

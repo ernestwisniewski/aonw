@@ -10,21 +10,19 @@ part 'support/running_match_snapshot_codec_ast.dart';
 part 'support/running_match_snapshot_codec_guard.dart';
 part 'support/running_match_snapshot_codec_shape_guard.dart';
 part 'support/running_match_snapshot_codec_flow_guard.dart';
+part 'support/running_match_snapshot_codec_conversion_flow_guard.dart';
 part 'support/running_match_snapshot_codec_guard_helpers.dart';
 
 const _codecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
-const _losslessDecoderPath =
-    'server/lib/src/multiplayer/lossless_match_snapshot_decoder.dart';
+const _losslessCodecPath =
+    'server/lib/src/multiplayer/lossless_match_snapshot_codec.dart';
 
 void main() {
   group('running match snapshot codec boundary', () {
     test('declares final nominal types and the exact boundary API', () {
       expect(
-        _codecShapeViolations(
-          _unitAt(_codecPath),
-          _unitAt(_losslessDecoderPath),
-        ),
+        _codecShapeViolations(_unitAt(_codecPath), _unitAt(_losslessCodecPath)),
         isEmpty,
       );
     });
@@ -33,15 +31,30 @@ void main() {
       expect(_runningDecodeFlowViolations(_unitAt(_codecPath)), isEmpty);
     });
 
-    test('lossless decoder constructs only the lazy raw-wire wrapper', () {
+    test('lossless codec constructs only the lazy raw-wire wrapper', () {
       expect(
-        _losslessDecodeFlowViolations(_unitAt(_losslessDecoderPath)),
+        _losslessDecodeFlowViolations(_unitAt(_losslessCodecPath)),
         isEmpty,
       );
     });
 
     test('encodes only by patching the retained raw snapshot', () {
       expect(_encodeFlowViolations(_unitAt(_codecPath)), isEmpty);
+    });
+
+    test('canonical transitions preserve raw roster provenance', () {
+      expect(_canonicalEncodeFlowViolations(_unitAt(_codecPath)), isEmpty);
+    });
+
+    test('lossless codec owns the exact compatibility conversion flow', () {
+      expect(
+        _losslessConversionFlowViolations(_unitAt(_losslessCodecPath)),
+        isEmpty,
+      );
+    });
+
+    test('canonical patch helpers preserve only reviewed raw fields', () {
+      expect(_rawCanonicalPatchFlowViolations(_unitAt(_codecPath)), isEmpty);
     });
 
     test('guard rejects open types and widened method contracts', () {
@@ -52,10 +65,12 @@ void main() {
         violations,
         containsAll([
           'RunningMatchSnapshotCodec must be final',
-          'must declare exactly one LosslessMatchSnapshotDecoder',
+          'must declare exactly one LosslessMatchSnapshotCodec',
           'DecodedRunningMatchSnapshot must be final',
           'decode must require exactly named WireMatch and WireSnapshot',
-          'lossless decode must require exactly one WireSnapshot',
+          'lossless codec decode must require exactly one WireSnapshot',
+          'canonical must require exactly one decoded snapshot',
+          'encodeCanonical must require exactly one canonical snapshot',
           'canonicalWithValidatedRoster must require one decoded source and '
               'named WireMatch',
           'encode must require one positional source and optional legacy parts',
@@ -76,7 +91,7 @@ void main() {
         containsAll([
           'decode must reject a non-running match as its first statement',
           'decode must not infer lifecycle from snapshot phase',
-          'running decode must delegate directly to the lossless decoder after '
+          'running decode must delegate directly to the lossless codec after '
               'lifecycle rejection',
         ]),
       );
@@ -90,7 +105,7 @@ void main() {
       expect(
         violations,
         contains(
-          'running decode must delegate directly to the lossless decoder after '
+          'running decode must delegate directly to the lossless codec after '
           'lifecycle rejection',
         ),
       );
@@ -112,17 +127,18 @@ void main() {
       expect(
         violations,
         contains(
-          'running decode must delegate directly to the lossless decoder after '
+          'running decode must delegate directly to the lossless codec after '
           'lifecycle rejection',
         ),
       );
     });
 
-    test('guard rejects helper work in the lossless decoder', () {
+    test('guard rejects helper work in the lossless codec', () {
       expect(
         _losslessDecodeFlowViolations(_parse(_invalidLosslessHelperFixture)),
         contains(
-          'lossless decode must directly construct the lazy raw-wire wrapper',
+          'lossless codec decode must directly construct the lazy raw-wire '
+          'wrapper',
         ),
       );
     });
@@ -131,7 +147,8 @@ void main() {
       expect(
         _losslessDecodeFlowViolations(_parse(_invalidLosslessTearOffFixture)),
         contains(
-          'lossless decode must directly construct the lazy raw-wire wrapper',
+          'lossless codec decode must directly construct the lazy raw-wire '
+          'wrapper',
         ),
       );
     });
@@ -147,6 +164,70 @@ void main() {
           'encode must return source.wire.copyWith directly',
           'encode must not construct a WireSnapshot',
           'encode must not use legacy or canonical conversion',
+        ]),
+      );
+    });
+
+    test('guard rejects canonical encoding without raw roster policy', () {
+      final violations = _canonicalEncodeFlowViolations(
+        _parse(_invalidCanonicalEncodeFlowFixture),
+      );
+
+      expect(
+        violations,
+        containsAll([
+          'encodeCanonical must return raw wire for a semantic no-op before '
+              'conversion',
+          'encodeCanonical must reject ordered participant changes before '
+              'conversion',
+          'encodeCanonical must reject event-log offset changes before '
+              'conversion',
+          'encodeCanonical must reject unrepresentable turn starts before '
+              'conversion',
+          'encodeCanonical must use the shared lossless codec exactly once',
+          'encodeCanonical must preserve the typed raw save roster',
+          'encodeCanonical must preserve typed raw state roster and timeout '
+              'policy',
+          'encodeCanonical must patch only through the raw-preserving helper',
+          'encodeCanonical must not perform compatibility conversion directly',
+        ]),
+      );
+    });
+
+    test('guard ignores adapter conversions hidden in dead helpers', () {
+      expect(
+        _losslessConversionFlowViolations(
+          _parse(_invalidLosslessConversionDecoyFixture),
+        ),
+        containsAll([
+          'lossless canonical must delegate directly to the legacy-parts '
+              'helper',
+          'lossless encodeCanonical must verify an exact legacy round-trip '
+              'before returning parts',
+        ]),
+      );
+    });
+
+    test('guard rejects an event-log offset check after conversion', () {
+      expect(
+        _canonicalEncodeFlowViolations(
+          _parse(_invalidLateEventLogOffsetGuardFixture),
+        ),
+        contains(
+          'encodeCanonical must reject event-log offset changes before '
+          'conversion',
+        ),
+      );
+    });
+
+    test('guard ignores raw-field preservation hidden in dead helpers', () {
+      expect(
+        _rawCanonicalPatchFlowViolations(
+          _parse(_invalidRawPreservationDecoyFixture),
+        ),
+        containsAll([
+          '_encodeCanonicalParts must preserve only the reviewed raw fields',
+          '_preserveRawFields must retain present keys and remove absent keys',
         ]),
       );
     });

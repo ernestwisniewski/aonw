@@ -121,10 +121,7 @@ void _expectLosslessDecoderBoundary(CompilationUnit matchUnit) {
       'LosslessMatchSnapshotDecoder',
       'decode',
     ),
-    {
-      'server/lib/src/multiplayer/running_match_snapshot_codec.dart': 1,
-      _projectorPath: 1,
-    },
+    {_projectorPath: 1},
   );
 }
 

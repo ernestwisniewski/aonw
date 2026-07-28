@@ -4,6 +4,8 @@ import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 import 'package:test/test.dart';
 
 part 'support/running_match_snapshot_codec_roster_cases.dart';
+part 'support/running_match_snapshot_codec_lossless_roster_cases.dart';
+part 'support/running_match_snapshot_codec_transition_cases.dart';
 
 void main() {
   const codec = RunningMatchSnapshotCodec();
@@ -149,6 +151,7 @@ void main() {
   });
 
   _registerRunningMatchSnapshotCodecRosterTests(codec);
+  _registerRunningMatchSnapshotCodecLosslessRosterTests(codec);
 
   group('RunningMatchSnapshotCodec encoding', () {
     test('returns the original wire snapshot without replacements', () {
@@ -285,85 +288,7 @@ void main() {
     });
   });
 
-  group('RunningMatchSnapshotCodec canonical transitions', () {
-    test('returns the raw snapshot for a semantic no-op', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-
-      expect(
-        codec.encodeCanonical(decoded, decoded.canonical),
-        same(fixture.wire),
-      );
-    });
-
-    test('metadata-only change preserves raw state and implicit timeout', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final next = decoded.canonical.copyWith(
-        metadata: decoded.canonical.metadata.copyWith(
-          savedAtUtc: decoded.canonical.metadata.savedAtUtc.add(
-            const Duration(seconds: 1),
-          ),
-        ),
-      );
-
-      final encoded = codec.encodeCanonical(decoded, next);
-
-      expect(encoded.state, same(fixture.wire.state));
-      expect(encoded.save, isNot(same(fixture.wire.save)));
-      expect(
-        (encoded.state['runtimeState']! as Map).containsKey('turnStartedAt'),
-        isFalse,
-      );
-    });
-
-    test('domain-only change preserves raw save and implicit timeout', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final next = decoded.canonical.copyWith(
-        domain: decoded.canonical.domain.copyWith(
-          playerGold: const {'player-1': 17},
-        ),
-      );
-
-      final encoded = codec.encodeCanonical(decoded, next);
-
-      expect(encoded.save, same(fixture.wire.save));
-      expect(encoded.state['playerGold'], const {'player-1': 17});
-      expect(
-        (encoded.state['runtimeState']! as Map).containsKey('turnStartedAt'),
-        isFalse,
-      );
-    });
-
-    test('writes turnStartedAt only when the canonical value changes', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final startedAt = fixture.save.savedAt.add(const Duration(minutes: 1));
-      final next = decoded.canonical.copyWith(
-        session: decoded.canonical.session.copyWith(turnStartedAt: startedAt),
-      );
-
-      final encoded = codec.encodeCanonical(decoded, next);
-
-      expect(
-        (encoded.state['runtimeState']! as Map)['turnStartedAt'],
-        startedAt.toIso8601String(),
-      );
-    });
-  });
+  _registerRunningMatchSnapshotCodecTransitionTests(codec);
 }
 
 typedef _CodecFixture = ({

@@ -2,13 +2,19 @@ part of '../running_match_snapshot_codec_boundary_test.dart';
 
 List<String> _codecShapeViolations(
   CompilationUnit codecUnit,
-  CompilationUnit decoderUnit,
+  CompilationUnit losslessUnit,
 ) {
   final codec = _singleClass(codecUnit, 'RunningMatchSnapshotCodec');
-  final decoder = _singleClass(decoderUnit, 'LosslessMatchSnapshotDecoder');
-  final decoded = _singleClass(decoderUnit, 'DecodedRunningMatchSnapshot');
+  final losslessCodec = _singleClass(
+    losslessUnit,
+    'LosslessMatchSnapshotCodec',
+  );
+  final decoder = _singleClass(losslessUnit, 'LosslessMatchSnapshotDecoder');
+  final decoded = _singleClass(losslessUnit, 'DecodedRunningMatchSnapshot');
   final runningDecode = _singleMethod(codec, 'decode');
-  final losslessDecode = _singleMethod(decoder, 'decode');
+  final losslessDecode = _singleMethod(losslessCodec, 'decode');
+  final canonical = _singleMethod(losslessCodec, 'canonical');
+  final losslessEncode = _singleMethod(losslessCodec, 'encodeCanonical');
   final validatedCanonical = _singleMethod(
     codec,
     'canonicalWithValidatedRoster',
@@ -17,19 +23,26 @@ List<String> _codecShapeViolations(
   final encodeInitial = _singleMethod(codec, 'encodeInitial');
   final encodeCanonical = _singleMethod(codec, 'encodeCanonical');
   return [
-    ..._nominalTypeViolations(codec, decoder, decoded),
+    ..._nominalTypeViolations(codec, losslessCodec, decoder, decoded),
     ..._decodeContractViolations(
       runningDecode,
       losslessDecode,
+      canonical,
       validatedCanonical,
     ),
-    ..._encodeContractViolations(encode, encodeInitial, encodeCanonical),
+    ..._encodeContractViolations(
+      encode,
+      encodeInitial,
+      encodeCanonical,
+      losslessEncode,
+    ),
     ..._decodedWrapperShapeViolations(decoded, codecUnit),
   ];
 }
 
 List<String> _nominalTypeViolations(
   ClassDeclaration? codec,
+  ClassDeclaration? losslessCodec,
   ClassDeclaration? decoder,
   ClassDeclaration? decoded,
 ) => [
@@ -37,6 +50,10 @@ List<String> _nominalTypeViolations(
     'must declare exactly one RunningMatchSnapshotCodec'
   else if (codec.finalKeyword == null)
     'RunningMatchSnapshotCodec must be final',
+  if (losslessCodec == null)
+    'must declare exactly one LosslessMatchSnapshotCodec'
+  else if (losslessCodec.finalKeyword == null)
+    'LosslessMatchSnapshotCodec must be final',
   if (decoder == null)
     'must declare exactly one LosslessMatchSnapshotDecoder'
   else if (decoder.finalKeyword == null)
@@ -50,12 +67,15 @@ List<String> _nominalTypeViolations(
 List<String> _decodeContractViolations(
   MethodDeclaration? runningDecode,
   MethodDeclaration? losslessDecode,
+  MethodDeclaration? canonical,
   MethodDeclaration? validatedCanonical,
 ) => [
   if (!_hasExactRunningDecodeContract(runningDecode))
     'decode must require exactly named WireMatch and WireSnapshot',
   if (!_hasExactLosslessDecodeContract(losslessDecode))
-    'lossless decode must require exactly one WireSnapshot',
+    'lossless codec decode must require exactly one WireSnapshot',
+  if (!_hasExactCanonicalContract(canonical))
+    'canonical must require exactly one decoded snapshot',
   if (!_hasExactValidatedCanonicalContract(validatedCanonical))
     'canonicalWithValidatedRoster must require one decoded source and named '
         'WireMatch',
@@ -65,6 +85,7 @@ List<String> _encodeContractViolations(
   MethodDeclaration? encode,
   MethodDeclaration? encodeInitial,
   MethodDeclaration? encodeCanonical,
+  MethodDeclaration? losslessEncode,
 ) => [
   if (!_hasExactEncodeContract(encode))
     'encode must require one positional source and optional legacy parts',
@@ -73,6 +94,8 @@ List<String> _encodeContractViolations(
         'snapshot',
   if (!_hasExactCanonicalEncodeContract(encodeCanonical))
     'encodeCanonical must require decoded source and canonical successor',
+  if (!_hasExactLosslessEncodeContract(losslessEncode))
+    'encodeCanonical must require exactly one canonical snapshot',
 ];
 
 List<String> _decodedWrapperShapeViolations(
@@ -83,8 +106,8 @@ List<String> _decodedWrapperShapeViolations(
       !_hasFinalField(decoded, 'save', 'GameSave') ||
       !_hasFinalField(decoded, 'state', 'PersistentGameState'))
     'decoded snapshot must retain final wire, save, and state values',
-  if (!_hasExactLosslessDecoderBinding(codecUnit))
-    'running codec must bind exactly one const lossless decoder',
+  if (!_hasExactLosslessCodecBinding(codecUnit))
+    'running codec must bind exactly one const lossless codec',
 ];
 
 bool _hasExactRunningDecodeContract(MethodDeclaration? method) {
@@ -119,6 +142,20 @@ bool _hasExactLosslessDecodeContract(MethodDeclaration? method) {
         parameters.single,
         name: 'snapshot',
         type: 'WireSnapshot',
+      );
+}
+
+bool _hasExactCanonicalContract(MethodDeclaration? method) {
+  if (method == null ||
+      method.returnType?.toSource() != 'CanonicalGameSnapshot') {
+    return false;
+  }
+  final parameters = method.parameters?.parameters ?? const <FormalParameter>[];
+  return parameters.length == 1 &&
+      _isRequiredPositionalParameter(
+        parameters.single,
+        name: 'snapshot',
+        type: 'DecodedRunningMatchSnapshot',
       );
 }
 
@@ -187,6 +224,21 @@ bool _hasExactCanonicalEncodeContract(MethodDeclaration? method) {
       );
 }
 
+bool _hasExactLosslessEncodeContract(MethodDeclaration? method) {
+  if (method == null ||
+      method.returnType?.toSource() !=
+          '({GameSave save, PersistentGameState state})') {
+    return false;
+  }
+  final parameters = method.parameters?.parameters ?? const <FormalParameter>[];
+  return parameters.length == 1 &&
+      _isRequiredPositionalParameter(
+        parameters.single,
+        name: 'snapshot',
+        type: 'CanonicalGameSnapshot',
+      );
+}
+
 bool _hasExactInitialEncodeContract(MethodDeclaration? method) {
   if (method == null || method.returnType?.toSource() != 'WireSnapshot') {
     return false;
@@ -207,15 +259,15 @@ bool _hasExactInitialEncodeContract(MethodDeclaration? method) {
       );
 }
 
-bool _hasExactLosslessDecoderBinding(CompilationUnit unit) {
+bool _hasExactLosslessCodecBinding(CompilationUnit unit) {
   final declarations = unit.declarations
       .whereType<TopLevelVariableDeclaration>()
       .where(
         (declaration) =>
             declaration.toSource() ==
-            'const LosslessMatchSnapshotDecoder '
-                '_losslessMatchSnapshotDecoder = '
-                'LosslessMatchSnapshotDecoder();',
+            'const LosslessMatchSnapshotCodec '
+                '_losslessMatchSnapshotCodec = '
+                'LosslessMatchSnapshotCodec();',
       );
   return declarations.length == 1;
 }

@@ -192,6 +192,21 @@ final class RunningMatchSnapshotCodec {
 }
 ''';
 
+const _invalidCanonicalEncodeFlowFixture = '''
+final class RunningMatchSnapshotCodec {
+  WireSnapshot encodeCanonical(
+    DecodedRunningMatchSnapshot source,
+    CanonicalGameSnapshot next,
+  ) {
+    final legacy = adapter.toLegacy(next);
+    return source.wire.copyWith(
+      save: legacy.save.toJson(),
+      state: legacy.state.toJson(),
+    );
+  }
+}
+''';
+
 const _invalidLosslessHelperFixture = '''
 final class DecodedRunningMatchSnapshot {
   DecodedRunningMatchSnapshot._({required this.wire});
@@ -202,7 +217,7 @@ final class DecodedRunningMatchSnapshot {
       PersistentGameState.fromJson(wire.state);
 }
 
-final class LosslessMatchSnapshotDecoder {
+final class LosslessMatchSnapshotCodec {
   DecodedRunningMatchSnapshot decode(WireSnapshot snapshot) {
     inspectSnapshot(snapshot);
     return DecodedRunningMatchSnapshot._(wire: snapshot);
@@ -220,10 +235,150 @@ final class DecodedRunningMatchSnapshot {
       PersistentGameState.fromJson(wire.state);
 }
 
-final class LosslessMatchSnapshotDecoder {
+final class LosslessMatchSnapshotCodec {
   DecodedRunningMatchSnapshot decode(WireSnapshot snapshot) {
     final make = DecodedRunningMatchSnapshot._;
     return make(wire: snapshot);
   }
+}
+''';
+
+const _invalidLosslessConversionDecoyFixture = '''
+const _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
+
+final class LosslessMatchSnapshotCodec {
+  CanonicalGameSnapshot canonical(DecodedRunningMatchSnapshot snapshot) {
+    return canonicalFromAdapter(snapshot);
+  }
+
+  ({GameSave save, PersistentGameState state}) encodeCanonical(
+    CanonicalGameSnapshot snapshot,
+  ) {
+    final legacy = encodeWithAdapter(snapshot);
+    return (save: legacy.save, state: legacy.state);
+  }
+}
+
+CanonicalGameSnapshot canonicalFromAdapter(
+  DecodedRunningMatchSnapshot snapshot,
+) {
+  return _canonicalFromLegacyParts(
+    save: snapshot.save,
+    state: snapshot.state,
+    eventLogOffset: snapshot.eventLogOffset,
+  );
+}
+
+CanonicalGameSnapshot _canonicalFromLegacyParts({
+  required GameSave save,
+  required PersistentGameState state,
+  required int eventLogOffset,
+}) {
+  return _legacyGameSnapshotAdapter.toCanonical(
+    save: save,
+    state: state,
+    eventLogOffset: eventLogOffset,
+  );
+}
+
+({GameSave save, PersistentGameState state}) encodeWithAdapter(
+  CanonicalGameSnapshot snapshot,
+) {
+  final legacy = _legacyGameSnapshotAdapter.toLegacy(snapshot);
+  final represented = _canonicalFromLegacyParts(
+    save: legacy.save,
+    state: legacy.state,
+    eventLogOffset: legacy.eventLogOffset,
+  );
+  if (represented != snapshot) {
+    throw ArgumentError.value(snapshot, 'snapshot', 'not lossless');
+  }
+  return (save: legacy.save, state: legacy.state);
+}
+''';
+
+const _invalidLateEventLogOffsetGuardFixture = '''
+final class RunningMatchSnapshotCodec {
+  WireSnapshot encodeCanonical(
+    DecodedRunningMatchSnapshot source,
+    CanonicalGameSnapshot next,
+  ) {
+    final previous = source.canonical;
+    if (next == previous) return source.wire;
+    _requireMatchingRoster(
+      _sameOrderedPlayers(
+            next.domain.participants,
+            previous.domain.participants,
+          ) &&
+          _hasCompleteTurnStateRoster(next),
+    );
+    _requireRepresentableRunningTurnStart(next);
+    final legacy = _losslessMatchSnapshotCodec.encodeCanonical(next);
+    _requireUnchangedEventLogOffset(previous, next);
+    return source.wire;
+  }
+}
+''';
+
+const _invalidRawPreservationDecoyFixture = '''
+WireSnapshot _encodeCanonicalParts(
+  DecodedRunningMatchSnapshot source, {
+  GameSave? save,
+  PersistentGameState? state,
+}) {
+  if (save == null && state == null) return source.wire;
+  return source.wire.copyWith(
+    save: save?.toJson(),
+    state: state?.toJson(),
+  );
+}
+
+Map<String, dynamic> _preserveRawFields(
+  Map<String, dynamic> candidate,
+  Map<String, dynamic> raw,
+  Set<String> fields,
+) {
+  final preserved = Map<String, dynamic>.from(candidate);
+  for (final field in fields) {
+    preserved[field] = raw[field];
+  }
+  return preserved;
+}
+
+WireSnapshot _correctCanonicalParts(
+  DecodedRunningMatchSnapshot source, {
+  GameSave? save,
+  PersistentGameState? state,
+}) {
+  if (save == null && state == null) return source.wire;
+  return source.wire.copyWith(
+    save: save == null
+        ? null
+        : _preserveRawFields(save.toJson(), source.wire.save, const {
+            'players',
+          }),
+    state: state == null
+        ? null
+        : _preserveRawFields(state.toJson(), source.wire.state, const {
+            'playerColors',
+            'playerCountries',
+          }),
+  );
+}
+
+Map<String, dynamic> _correctRawFields(
+  Map<String, dynamic> candidate,
+  Map<String, dynamic> raw,
+  Set<String> fields,
+) {
+  final preserved = Map<String, dynamic>.from(candidate);
+  for (final field in fields) {
+    if (raw.containsKey(field)) {
+      preserved[field] = raw[field];
+    } else {
+      preserved.remove(field);
+    }
+  }
+  return preserved;
 }
 ''';
