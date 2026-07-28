@@ -70,6 +70,30 @@ void main() {
 
       expect(await eventLog.latestOffset('save_1'), 7);
     });
+
+    test('expands past a trailing whitespace window', () async {
+      final saveDir = Directory('${tempDir.path}/save_1');
+      await saveDir.create(recursive: true);
+      await File('${saveDir.path}/events.log').writeAsString(
+        '${jsonEncode(_logged(8, 'p1').toJson())}\n'
+        '${List.filled(5000, ' ').join()}',
+      );
+
+      expect(await eventLog.latestOffset('save_1'), 8);
+    });
+
+    test('expands until a large final JSONL record is complete', () async {
+      final saveDir = Directory('${tempDir.path}/save_1');
+      await saveDir.create(recursive: true);
+      final finalRecord = _logged(11, 'p2').toJson()
+        ..['padding'] = List.filled(5000, 'x').join();
+      await File('${saveDir.path}/events.log').writeAsString(
+        '${jsonEncode(_logged(1, 'p1').toJson())}\n'
+        '${jsonEncode(finalRecord)}\n',
+      );
+
+      expect(await eventLog.latestOffset('save_1'), 11);
+    });
   });
 }
 

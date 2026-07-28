@@ -5,12 +5,12 @@
       "layers": {
         "ai": {
           "files": {
-            "hit": 187,
-            "found": 190
+            "hit": 188,
+            "found": 191
           },
           "lines": {
-            "hit": 12179,
-            "found": 13135
+            "hit": 12265,
+            "found": 13221
           }
         },
         "domain": {
@@ -19,8 +19,8 @@
             "found": 386
           },
           "lines": {
-            "hit": 13448,
-            "found": 15132
+            "hit": 13455,
+            "found": 15151
           }
         },
         "map": {
@@ -117,12 +117,12 @@
         },
         "game_application": {
           "files": {
-            "hit": 47,
-            "found": 48
+            "hit": 49,
+            "found": 50
           },
           "lines": {
-            "hit": 1874,
-            "found": 2194
+            "hit": 1941,
+            "found": 2247
           }
         },
         "game_domain": {
@@ -131,18 +131,18 @@
             "found": 63
           },
           "lines": {
-            "hit": 2892,
-            "found": 3104
+            "hit": 2893,
+            "found": 3105
           }
         },
         "game_infrastructure": {
           "files": {
-            "hit": 20,
-            "found": 21
+            "hit": 22,
+            "found": 23
           },
           "lines": {
-            "hit": 543,
-            "found": 584
+            "hit": 618,
+            "found": 659
           }
         },
         "game_presentation_engine": {
@@ -151,28 +151,28 @@
             "found": 88
           },
           "lines": {
-            "hit": 7181,
+            "hit": 7188,
             "found": 9249
           }
         },
         "game_presentation_screens": {
           "files": {
-            "hit": 41,
+            "hit": 51,
             "found": 55
           },
           "lines": {
-            "hit": 2919,
-            "found": 4483
+            "hit": 3434,
+            "found": 4482
           }
         },
         "game_presentation_support": {
           "files": {
-            "hit": 87,
-            "found": 90
+            "hit": 88,
+            "found": 91
           },
           "lines": {
-            "hit": 4137,
-            "found": 4997
+            "hit": 4177,
+            "found": 5003
           }
         },
         "game_presentation_widgets": {
@@ -181,7 +181,7 @@
             "found": 310
           },
           "lines": {
-            "hit": 19431,
+            "hit": 19433,
             "found": 22004
           }
         },
@@ -263,8 +263,8 @@
             "found": 66
           },
           "lines": {
-            "hit": 2506,
-            "found": 3074
+            "hit": 2563,
+            "found": 3132
           }
         },
         "observability": {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -5,6 +6,7 @@ import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/persistence/json_snapshot_store.dart';
+import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_envelope_codec.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -44,6 +46,34 @@ void main() {
       expect(decoded.createdAt, snapshot.createdAt);
       expect(decoded.state.eventLogOffset, snapshot.state.eventLogOffset);
       expect(decoded.state.save.toJson(), snapshot.state.save.toJson());
+    });
+
+    test('large snapshot and envelope decode off the caller isolate', () async {
+      final state = SaveSnapshot(save: _save(turn: 1), eventLogOffset: 3);
+      final stateJson = SaveSnapshotCodec.toJson(state)
+        ..['padding'] = List.filled(300 * 1024, 'x').join();
+      final decodedState = await IsolatedSaveSnapshotCodec.decode(
+        jsonEncode(stateJson),
+      );
+      final envelopeJson =
+          jsonDecode(
+                  SaveSnapshotEnvelopeCodec.encode(
+                    Snapshot(
+                      offset: 3,
+                      createdAt: DateTime.utc(2026, 4, 24, 12),
+                      state: state,
+                    ),
+                  ),
+                )
+                as Map<String, dynamic>
+            ..['padding'] = List.filled(300 * 1024, 'x').join();
+      final decodedEnvelope = await IsolatedSaveSnapshotCodec.decodeEnvelope(
+        jsonEncode(envelopeJson),
+      );
+
+      expect(decodedState.eventLogOffset, 3);
+      expect(decodedEnvelope.offset, 3);
+      expect(decodedEnvelope.state.eventLogOffset, 3);
     });
 
     test('saves and replaces snapshot.json atomically', () async {

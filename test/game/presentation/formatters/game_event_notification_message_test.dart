@@ -102,5 +102,79 @@ void main() {
       expect(canonical.details, legacy.details);
       expect(canonical.thumbnail.runtimeType, legacy.thumbnail.runtimeType);
     });
+
+    test('canonical roster formats civilization and timeout player names', () {
+      final l10n = AppLocalizationsEn();
+      const players = [
+        Player(
+          id: 'player_2',
+          name: 'Bob',
+          colorValue: 0xFFB83A3A,
+          country: PlayerCountry.germany,
+        ),
+      ];
+      const state = GameState(
+        playerCountries: {'player_2': PlayerCountry.france},
+      );
+
+      final civilization = GameEventNotificationMessage.fromPlayers(
+        l10n,
+        const GameEventNotification(
+          id: 4,
+          event: CivilizationMetEvent(
+            playerId: 'player_1',
+            metPlayerId: 'player_2',
+          ),
+          state: state,
+          playerId: 'player_1',
+        ),
+        players,
+      );
+      final timeout = GameEventNotificationMessage.fromPlayers(
+        l10n,
+        const GameEventNotification(
+          id: 5,
+          event: PlayerTimedOutEvent(turn: 7, playerId: 'player_2'),
+          state: state,
+          playerId: 'player_2',
+        ),
+        players,
+      );
+
+      expect(civilization.body, contains('Bob'));
+      expect(civilization.body, contains('Germany'));
+      expect(timeout.body, contains('Bob'));
+      expect(timeout.body, contains('7'));
+    });
+
+    test('canonical roster formats destroyed city attacker', () {
+      final message = GameEventNotificationMessage.fromPlayers(
+        AppLocalizationsEn(),
+        const GameEventNotification(
+          id: 6,
+          event: CityDestroyedEvent(
+            cityId: 'city_1',
+            previousOwnerPlayerId: 'player_2',
+            attackerOwnerPlayerId: 'player_1',
+          ),
+          state: GameState(),
+          previousState: GameState(
+            cities: [
+              GameCity(
+                id: 'city_1',
+                ownerPlayerId: 'player_2',
+                name: 'Old capital',
+                center: CityHex(col: 0, row: 0),
+              ),
+            ],
+          ),
+          playerId: 'player_1',
+        ),
+        const [Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4A7FC4)],
+      );
+
+      expect(message.body, contains('Old capital'));
+      expect(message.body, contains('Alice'));
+    });
   });
 }
