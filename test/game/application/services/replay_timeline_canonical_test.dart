@@ -56,7 +56,11 @@ void main() {
             turn: 1,
             command: const EndTurnCommand('p1'),
           ),
-          save: initialSave.copyWith(turn: 2),
+          snapshot: SaveSnapshot.fromGameState(
+            save: initialSave.copyWith(turn: 2),
+            state: const GameState(),
+            eventLogOffset: 1,
+          ),
           previousState: const GameState(),
           state: const GameState(),
           events: const [],

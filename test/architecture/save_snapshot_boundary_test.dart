@@ -143,6 +143,35 @@ void main() {
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'metadata'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'session'), 1);
       expect(_targetPropertyReadCount(unit, 'initialSnapshot', 'domain'), 2);
+
+      final replayStep = unit.declarations
+          .whereType<ClassDeclaration>()
+          .singleWhere(
+            (declaration) =>
+                declaration.namePart.typeName.lexeme == 'ReplayStep',
+          );
+      final replayStepFields = replayStep.body.members
+          .whereType<FieldDeclaration>()
+          .expand((field) => field.fields.variables)
+          .map((variable) => variable.name.lexeme);
+      final replayStepSaveGetters = replayStep.body.members
+          .whereType<MethodDeclaration>()
+          .where((method) => method.isGetter && method.name.lexeme == 'save');
+      expect(replayStepFields, contains('snapshot'));
+      expect(replayStepFields, isNot(contains('save')));
+      expect(replayStepSaveGetters, hasLength(1));
+
+      final timeline = unit.declarations
+          .whereType<ClassDeclaration>()
+          .singleWhere(
+            (declaration) =>
+                declaration.namePart.typeName.lexeme == 'ReplayTimeline',
+          );
+      final lastTurn = timeline.body.members
+          .whereType<MethodDeclaration>()
+          .singleWhere((method) => method.name.lexeme == 'lastTurn');
+      expect(_namesIn(lastTurn), contains('domain'));
+      expect(_namesIn(lastTurn), isNot(contains('save')));
     });
 
     test('replay name and roster presentation use canonical read model', () {

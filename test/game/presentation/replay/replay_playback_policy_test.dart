@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -53,7 +54,7 @@ void main() {
           turn: 8,
           command: const StartArtifactExcavationCommand('warrior_player_1'),
         ),
-        save: _save,
+        snapshot: SaveSnapshot.fromGameState(save: _save, state: state),
         previousState: state,
         state: state.copyWith(
           units: [unit.copyWithExcavatingArtifact('artifact_1')],

@@ -56,14 +56,14 @@ class ReplayTimeline {
 
   int get lastTurn {
     if (steps.isEmpty) return firstTurn;
-    return steps.last.save.turn;
+    return steps.last.domain.turn;
   }
 }
 
 class ReplayStep {
   final int index;
   final LoggedCommand loggedCommand;
-  final GameSave save;
+  final SaveSnapshot snapshot;
   final GameState previousState;
   final GameState state;
   final List<GameEvent> events;
@@ -73,7 +73,7 @@ class ReplayStep {
   const ReplayStep({
     required this.index,
     required this.loggedCommand,
-    required this.save,
+    required this.snapshot,
     required this.previousState,
     required this.state,
     required this.events,
@@ -81,9 +81,14 @@ class ReplayStep {
     this.originatingTurn,
   });
 
+  GameSave get save => snapshot.save;
+  GameSnapshotMetadata get metadata => snapshot.metadata;
+  DomainState get domain => snapshot.domain;
+  MatchSessionState get session => snapshot.session;
+
   int get offset => loggedCommand.offset;
 
-  int get turn => originatingTurn ?? loggedCommand.turn ?? save.turn;
+  int get turn => originatingTurn ?? loggedCommand.turn ?? domain.turn;
 
   DateTime get timestamp => loggedCommand.timestamp;
 
@@ -287,17 +292,12 @@ class ReplayService {
         currentSave = resolved.save;
         currentState = resolved.state;
         currentOffset = logged.offset;
-        steps.add(
-          ReplayStep(
-            index: steps.length + 1,
-            loggedCommand: logged,
-            save: currentSave,
-            previousState: previousState,
-            state: currentState,
-            events: logged.events,
-            uiEffects: resolved.uiEffects,
-            originatingTurn: originatingTurn,
-          ),
+        _appendReplayStep(
+          steps,
+          logged: logged,
+          resolved: resolved,
+          previousState: previousState,
+          originatingTurn: originatingTurn,
         );
       }
     } on ReplayBuildException {
@@ -317,4 +317,30 @@ class ReplayService {
       steps: List.unmodifiable(steps),
     );
   }
+}
+
+void _appendReplayStep(
+  List<ReplayStep> steps, {
+  required LoggedCommand logged,
+  required LocalCommandResolution resolved,
+  required GameState previousState,
+  required int originatingTurn,
+}) {
+  final snapshot = SaveSnapshot.fromGameState(
+    save: resolved.save,
+    state: resolved.state,
+    eventLogOffset: logged.offset,
+  );
+  steps.add(
+    ReplayStep(
+      index: steps.length + 1,
+      loggedCommand: logged,
+      snapshot: snapshot,
+      previousState: previousState,
+      state: resolved.state,
+      events: logged.events,
+      uiEffects: resolved.uiEffects,
+      originatingTurn: originatingTurn,
+    ),
+  );
 }
