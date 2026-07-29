@@ -1,6 +1,36 @@
 part of 'server_command_reducer.dart';
 
 extension _ServerCommandReducerUnitAction on ServerCommandReducer {
+  _CommandApplication _applyUnitActionEngine(
+    CanonicalGameSnapshot snapshot,
+    DomainCommand command,
+    String actorPlayerId,
+    int commandTick,
+    MapReadView mapView,
+    GameRuleset ruleset,
+  ) {
+    final result = const GameEngine().apply(
+      snapshot: snapshot,
+      command: command,
+      context: GameEngineContext(
+        actorPlayerId: actorPlayerId,
+        mapView: mapView,
+        ruleset: ruleset,
+        commandTick: commandTick,
+      ),
+    );
+    return switch (result) {
+      GameEngineAccepted() => _CommandApplication.accept(
+        snapshot: result.snapshot,
+        events: result.events,
+      ),
+      final GameEngineRejected rejected => _CommandApplication.reject(
+        snapshot: snapshot,
+        reason: rejected.reason,
+      ),
+    };
+  }
+
   _CommandApplication _applyCancelUnitAction(
     CanonicalGameSnapshot snapshot,
     CancelUnitActionCommand command,
@@ -9,40 +39,6 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
     return _applyUnitActionResult(
       snapshot,
       UnitActionCommandResolver.cancelUnitAction(
-        units: snapshot.domain.units,
-        artifacts: snapshot.domain.artifacts,
-        interaction: snapshot.interaction,
-        command: command,
-        actorPlayerId: actorPlayerId,
-      ),
-    );
-  }
-
-  _CommandApplication _applySkipUnitTurn(
-    CanonicalGameSnapshot snapshot,
-    SkipUnitTurnCommand command,
-    String actorPlayerId,
-  ) {
-    return _applyUnitActionResult(
-      snapshot,
-      UnitActionCommandResolver.skipUnitTurn(
-        units: snapshot.domain.units,
-        artifacts: snapshot.domain.artifacts,
-        interaction: snapshot.interaction,
-        command: command,
-        actorPlayerId: actorPlayerId,
-      ),
-    );
-  }
-
-  _CommandApplication _applyFortifyUnit(
-    CanonicalGameSnapshot snapshot,
-    FortifyUnitCommand command,
-    String actorPlayerId,
-  ) {
-    return _applyUnitActionResult(
-      snapshot,
-      UnitActionCommandResolver.fortifyUnit(
         units: snapshot.domain.units,
         artifacts: snapshot.domain.artifacts,
         interaction: snapshot.interaction,

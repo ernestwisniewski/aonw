@@ -1,4 +1,5 @@
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/compatibility.dart';
 
 import 'measurement.dart';
 
@@ -148,8 +149,8 @@ final class _StrategyFixture {
   final AiContext context;
 }
 
-GameView _view(MapReadView mapView) => GameView.fromPersistentState(
-  PersistentGameState.snapshot(
+GameView _view(MapReadView mapView) {
+  final state = PersistentGameState.snapshot(
     playerGold: const {_playerId: 12, _enemyId: 8},
     units: [
       GameUnit.produced(
@@ -212,12 +213,35 @@ GameView _view(MapReadView mapView) => GameView.fromPersistentState(
       },
     ),
     fogOfWar: _visibleFog(mapView),
-  ),
-  forPlayerId: _playerId,
-  turn: 5,
-  mapData: mapView,
-  ruleset: GameRuleset.defaults,
-);
+  );
+  final engineSnapshot = const LegacyGameSnapshotAdapter().toCanonical(
+    save: GameSave(
+      id: 'performance-ai-strategy',
+      name: 'Performance AI strategy',
+      mapName: mapView.mapName ?? 'performance',
+      turn: 5,
+      playerStates: const {
+        _playerId: PlayerTurnState.active,
+        _enemyId: PlayerTurnState.active,
+      },
+      savedAt: DateTime.utc(1970),
+      camera: CameraState.zero,
+      players: const [
+        Player(id: _playerId, name: _playerId, colorValue: 0),
+        Player(id: _enemyId, name: _enemyId, colorValue: 0),
+      ],
+    ),
+    state: state,
+  );
+  return GameView.fromPersistentState(
+    state,
+    forPlayerId: _playerId,
+    turn: 5,
+    mapData: mapView,
+    ruleset: GameRuleset.defaults,
+    engineSnapshot: engineSnapshot,
+  );
+}
 
 FogOfWarState _visibleFog(MapReadView mapView) => FogOfWarState(
   players: {

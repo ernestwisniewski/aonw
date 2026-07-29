@@ -76,12 +76,13 @@ void main() {
     };
     const expectedStaticCallSites = {
       'cancelUnitAction': {...sharedKernelCallSites, _lightweightMctsCallSite},
-      'skipUnitTurn': {...sharedKernelCallSites, _lightweightMctsCallSite},
-      'fortifyUnit': {...sharedKernelCallSites, _lightweightMctsCallSite},
+      'skipUnitTurn': {_domainAdapterPath},
+      'fortifyUnit': {_domainAdapterPath},
     };
     const expectedPersistentCallSites = {
-      _economySimulationCallSite,
-      _fullMctsCallSite,
+      'cancelUnitAction': {_economySimulationCallSite, _fullMctsCallSite},
+      'skipUnitTurn': <String>{},
+      'fortifyUnit': <String>{},
     };
 
     for (final entry in expectedStaticCallSites.entries) {
@@ -100,7 +101,7 @@ void main() {
           'PersistentUnitActionResolver',
           entry.key,
         ),
-        expectedPersistentCallSites,
+        expectedPersistentCallSites[entry.key],
         reason:
             'Unexpected PersistentUnitActionResolver.${entry.key} '
             'call-sites.',
@@ -236,11 +237,7 @@ List<String> _persistentAdapterApiViolations(String source) {
         constructors.single.constKeyword == null ||
         constructors.single.parameters.parameters.isNotEmpty)
       'PersistentUnitActionResolver must keep one const empty constructor',
-    if (!_sameStringSet(publicMethods, const {
-      'instance:cancelUnitAction',
-      'instance:fortifyUnit',
-      'instance:skipUnitTurn',
-    }))
+    if (!_sameStringSet(publicMethods, const {'instance:cancelUnitAction'}))
       'PersistentUnitActionResolver must expose only its reviewed actions',
   ];
 }

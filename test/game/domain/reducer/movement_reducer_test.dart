@@ -246,34 +246,6 @@ void main() {
         expect(result.state.artifacts.single.location.row, 1);
       });
 
-      test('skipUnitTurn consumes movement and keeps unit selectable', () {
-        final commander = _commander().copyWithQueuedPath(
-          QueuedMovePath(targetCol: 3, targetRow: 0, steps: []),
-        );
-        final state = GameState(
-          units: [commander],
-          activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(commander),
-            moveCommandActive: true,
-          ),
-        );
-
-        final result = MovementReducer.skipUnitTurn(
-          state,
-          const SkipUnitTurnCommand('commander_player_1'),
-          mapData,
-        );
-
-        final skipped = result.state.units.single;
-        expect(skipped.movementPoints, 0);
-        expect(skipped.queuedPath, isNull);
-        expect(result.state.pendingAction, isA<PendingUnitTurnSkip>());
-        expect(result.state.moveCommandActive, isFalse);
-        expect(result.state.selection?.unit?.id, commander.id);
-        expect(result.state.selection?.unit?.movementPoints, 0);
-      });
-
       test('cancelUnitAction restores movement after skipping turn', () {
         final commander = _commander(movementPoints: 2);
         final skippedState = GameState(
@@ -300,39 +272,6 @@ void main() {
         expect(result.state.units.single.movementPoints, 2);
         expect(result.state.pendingAction, isNull);
         expect(result.state.selection?.unit?.movementPoints, 2);
-      });
-
-      test('fortifyUnit consumes movement and stores unit posture', () {
-        final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1')
-            .copyWithQueuedPath(
-              QueuedMovePath(targetCol: 3, targetRow: 0, steps: []),
-            );
-        final state = GameState(
-          units: [warrior],
-          activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(warrior),
-            moveCommandActive: true,
-            pendingAction: PendingAttackTargeting(
-              ownerPlayerId: warrior.ownerPlayerId,
-              attackerUnitId: warrior.id,
-            ),
-          ),
-        );
-
-        final result = MovementReducer.fortifyUnit(
-          state,
-          FortifyUnitCommand(warrior.id),
-          mapData,
-        );
-
-        final fortified = result.state.units.single;
-        expect(fortified.movementPoints, 0);
-        expect(fortified.queuedPath, isNull);
-        expect(fortified.posture, UnitPosture.fortified);
-        expect(result.state.pendingAction, isNull);
-        expect(result.state.moveCommandActive, isFalse);
-        expect(result.state.selection?.unit?.posture, UnitPosture.fortified);
       });
 
       test('cancelUnitAction wakes fortified unit with fresh movement', () {

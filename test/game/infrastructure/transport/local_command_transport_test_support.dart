@@ -15,3 +15,11 @@ MapData _map({int cols = 3, int rows = 3}) => MapData(
         ),
   ],
 );
+
+const _damagedCity = GameCity(
+  id: 'city_1',
+  ownerPlayerId: 'player_1',
+  name: 'City 1',
+  center: CityHex(col: 0, row: 0),
+  hitPoints: 10,
+);

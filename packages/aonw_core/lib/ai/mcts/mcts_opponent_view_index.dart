@@ -71,6 +71,7 @@ final class MctsOpponentViewIndex {
     required int turn,
     required MapReadView mapData,
     required GameRuleset ruleset,
+    CanonicalGameSnapshot? engineSnapshot,
   }) {
     return GameView(
       forPlayerId: opponentId,
@@ -96,6 +97,7 @@ final class MctsOpponentViewIndex {
       mapData: mapData,
       ruleset: ruleset,
       wonderRegistry: state.wonderRegistry,
+      engineSnapshot: engineSnapshot,
     );
   }
 

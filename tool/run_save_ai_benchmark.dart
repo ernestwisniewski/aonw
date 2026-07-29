@@ -247,6 +247,7 @@ class _PreparedPlayer {
       turn: snapshot.domain.turn,
       mapData: mapView,
       ruleset: ruleset,
+      engineSnapshot: snapshot.canonical,
       activeHostilePlayerIds: _pendingHostilePlayerIds(
         snapshot: snapshot,
         playerId: player.id,
@@ -398,10 +399,7 @@ class _PreparedPlayer {
       dispatched.add(command);
     }
 
-    final terminalCommand = _terminalFor(
-      snapshot.session.gameMode,
-      player.id,
-    );
+    final terminalCommand = _terminalFor(snapshot.session.gameMode, player.id);
     final terminalStopwatch = Stopwatch()..start();
     final terminalTransition = reducer.reduce(
       state,

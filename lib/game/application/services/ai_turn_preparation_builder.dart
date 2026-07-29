@@ -48,7 +48,6 @@ final class AiTurnPreparationBuilder {
     final domain = resolvedSnapshot.domain;
     final session = resolvedSnapshot.session;
     final metadata = resolvedSnapshot.metadata;
-
     final ai = player.ai!;
     const civRegistry = CivilizationProfileRegistry();
     final civProfile = civRegistry.profileFor(player.country);
@@ -88,24 +87,16 @@ final class AiTurnPreparationBuilder {
       state: planningDomain,
       playerId: playerId,
     );
-    final view = GameView.fromDomainState(
-      planningDomain,
-      forPlayerId: playerId,
-      turn: domain.turn,
+    final view = _aiPlanningView(
+      snapshot: planningSnapshot,
+      domain: planningDomain,
+      playerId: playerId,
       mapData: mapData,
       ruleset: effectiveRuleset,
       activeHostilePlayerIds: cityThreats.activeHostilePlayerIds,
       recentHostilePlayerIds: loggedHostilePlayerIds,
       pressureTargetPlayerIds: pressureTargets.playerIds,
-      defaultNeutralPlayerIds: _defaultNeutralPlayerIds(
-        domain.participants,
-        playerId: playerId,
-      ),
       pendingCityAttackThreats: cityThreats.pendingCityAttackThreats,
-      forcedVisibleEnemyUnitIds: cityThreats.pendingCityAttackThreats.map(
-        (threat) => threat.attackerUnitId,
-      ),
-      ignoreFogOfWar: true,
     );
     final hegemonyContext = _hegemonyContextFor(
       planningDomain,
@@ -217,6 +208,40 @@ final class AiTurnPreparationBuilder {
   ) {
     if (preparationCommands.isEmpty) return strategy;
     return _PreparedAiStrategy(strategy, preparationCommands);
+  }
+
+  static GameView _aiPlanningView({
+    required SaveSnapshot snapshot,
+    required DomainState domain,
+    required String playerId,
+    required MapReadView mapData,
+    required GameRuleset ruleset,
+    required Iterable<String> activeHostilePlayerIds,
+    required Iterable<String> recentHostilePlayerIds,
+    required Iterable<String> pressureTargetPlayerIds,
+    required Iterable<PendingCityAttackThreat> pendingCityAttackThreats,
+  }) {
+    final canonical = snapshot.canonical;
+    return GameView.fromDomainState(
+      domain,
+      forPlayerId: playerId,
+      turn: domain.turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      engineSnapshot: canonical,
+      activeHostilePlayerIds: activeHostilePlayerIds,
+      recentHostilePlayerIds: recentHostilePlayerIds,
+      pressureTargetPlayerIds: pressureTargetPlayerIds,
+      defaultNeutralPlayerIds: _defaultNeutralPlayerIds(
+        domain.participants,
+        playerId: playerId,
+      ),
+      pendingCityAttackThreats: pendingCityAttackThreats,
+      forcedVisibleEnemyUnitIds: pendingCityAttackThreats.map(
+        (threat) => threat.attackerUnitId,
+      ),
+      ignoreFogOfWar: true,
+    );
   }
 
   static DateTime? _deadlineFor({

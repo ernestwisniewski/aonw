@@ -2,6 +2,7 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_staleness.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_command_stats.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -19,6 +20,7 @@ import 'package:aonw_core/game/domain/telemetry.dart';
 import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
@@ -54,7 +56,11 @@ abstract final class EconomySimulation {
       opponents: config.opponents,
       mapView: mapView,
     );
-    final commandApplier = _EconomySimulationCommandApplier(mapView);
+    final commandApplier = _economySimulationCommandApplierForSetup(
+      config: config,
+      state: state,
+      mapView: mapView,
+    );
     const rowFactory = _EconomySimulationTurnRowFactory();
     final hostilityMemory = _EconomySimulationHostilityMemory();
     final rows = <EconomySimulationTurnRow>[];
@@ -87,27 +93,23 @@ abstract final class EconomySimulation {
       var commandTick = 0;
 
       for (final actingPlayer in players) {
-        state = state.copyWith(
-          fogOfWar: const FogOfWarService().recompute(
-            current: state.fogOfWar,
-            mapData: mapView,
-            playerIds: playerIds,
-            units: state.units,
-            cities: state.cities,
-          ),
+        state = _EconomySimulationSetup.recomputeFog(
+          state: state,
+          mapView: mapView,
+          playerIds: playerIds,
         );
         final commandStats = commandStatsByPlayerId[actingPlayer.id]!;
-        final view = GameView.fromPersistentState(
-          state,
-          forPlayerId: actingPlayer.id,
+        final view = _EconomySimulationSetup.planningView(
+          state: state,
+          playerId: actingPlayer.id,
           turn: turn,
-          mapData: mapView,
+          mapView: mapView,
           ruleset: config.ruleset,
+          engineSnapshot: commandApplier.engineSnapshot,
           recentHostilePlayerIds: hostilityMemory.recentFor(
             playerId: actingPlayer.id,
             turn: turn,
           ),
-          ignoreFogOfWar: true,
         );
         final ai = actingPlayer.ai ?? _defaultAiPlayer;
         const civRegistry = CivilizationProfileRegistry();

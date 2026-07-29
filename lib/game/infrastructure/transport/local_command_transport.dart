@@ -121,7 +121,7 @@ class LocalCommandTransport implements CommandTransport {
       shouldLog: shouldLogCommand,
     );
 
-    final snapshot = resolved.snapshot.copyWith(eventLogOffset: offset);
+    final snapshot = resolved.snapshot.withEventLogOffset(offset);
     await gameRepository.save(snapshot);
 
     final storedSnapshot = await _storeSnapshotIfNeeded(

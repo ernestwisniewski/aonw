@@ -147,6 +147,41 @@ void main() {
   );
 
   test(
+    'MCTS benchmark carries the engine envelope into unit actions',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'aonw-save-ai-benchmark-mcts-envelope.',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final saveFile = File('${directory.path}/snapshot.json');
+      final jsonFile = File('${directory.path}/report.json');
+      await saveFile.writeAsString(
+        jsonEncode({
+          'state': SaveSnapshotCodec.toJson(_pendingCityAttackSnapshot()),
+        }),
+      );
+
+      final result = await Process.run('dart', [
+        'run',
+        'tool/run_save_ai_benchmark.dart',
+        '--save',
+        saveFile.path,
+        '--strategy',
+        'mcts',
+        '--profiles',
+        'batterySaver',
+        '--json-out',
+        jsonFile.path,
+      ]);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      final report =
+          jsonDecode(await jsonFile.readAsString()) as Map<String, dynamic>;
+      expect(report['players'], hasLength(1));
+    },
+  );
+
+  test(
     'replays normal and sparse rosters against pinned report goldens',
     _verifyReplayParity,
   );

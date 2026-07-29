@@ -81,6 +81,7 @@ class SimulatedState {
       mapData: _baseView.mapData,
       ruleset: _baseView.ruleset,
       wonderRegistry: _baseView.wonderRegistry,
+      engineSnapshot: _baseView.engineSnapshot,
     );
   }
 

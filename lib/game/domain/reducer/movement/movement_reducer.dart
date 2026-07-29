@@ -74,32 +74,6 @@ abstract final class MovementReducer {
     );
   }
 
-  static GameStateTransition skipUnitTurnWithEnvironment(
-    GameState state,
-    SkipUnitTurnCommand command,
-    ReducerEnvironment environment,
-  ) {
-    return skipUnitTurn(
-      state,
-      command,
-      environment.mapData,
-      context: environment.context,
-    );
-  }
-
-  static GameStateTransition fortifyUnitWithEnvironment(
-    GameState state,
-    FortifyUnitCommand command,
-    ReducerEnvironment environment,
-  ) {
-    return fortifyUnit(
-      state,
-      command,
-      environment.mapData,
-      context: environment.context,
-    );
-  }
-
   static GameStateTransition autoExploreUnitWithEnvironment(
     GameState state,
     AutoExploreUnitCommand command,
@@ -259,79 +233,6 @@ abstract final class MovementReducer {
           ..clearMoveTargetingOwnedByUnit()
           ..refreshSelection()
           ..activateMoveTargetingWhenReady(wasFortified);
-
-    return GameStateTransition(state: cleanup.state);
-  }
-
-  /// Skips a unit for the current turn without preventing manual reselection.
-  static GameStateTransition skipUnitTurn(
-    GameState state,
-    SkipUnitTurnCommand command,
-    MapTileLookup mapTiles, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    final validation = UnitCommandValidator.controllableUnit(
-      state,
-      unitId: command.unitId,
-      context: context,
-    );
-    if (validation is! ValidUnit) return GameStateTransition(state: state);
-    final unit = validation.unit;
-    final input = _captureUnitActionInput(state);
-    final result = UnitActionCommandResolver.skipUnitTurn(
-      units: input.units,
-      artifacts: input.artifacts,
-      interaction: _persistedUnitActionInteraction(state),
-      command: command,
-      actorPlayerId: unit.ownerPlayerId,
-    );
-    if (!result.accepted) return GameStateTransition(state: state);
-    final updatedUnit = result.units.byId(unit.id)!;
-    final cleanup =
-        _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result, input),
-            unit,
-            updatedUnit,
-            mapTiles,
-          )
-          ..clearMoveTargetingOwnedByUnit()
-          ..refreshSelection();
-
-    return GameStateTransition(state: cleanup.state);
-  }
-
-  static GameStateTransition fortifyUnit(
-    GameState state,
-    FortifyUnitCommand command,
-    MapTileLookup mapTiles, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    final validation = UnitCommandValidator.controllableUnit(
-      state,
-      unitId: command.unitId,
-      context: context,
-    );
-    if (validation is! ValidUnit) return GameStateTransition(state: state);
-    final unit = validation.unit;
-    final input = _captureUnitActionInput(state);
-    final result = UnitActionCommandResolver.fortifyUnit(
-      units: input.units,
-      artifacts: input.artifacts,
-      interaction: _persistedUnitActionInteraction(state),
-      command: command,
-      actorPlayerId: unit.ownerPlayerId,
-    );
-    if (!result.accepted) return GameStateTransition(state: state);
-    final updatedUnit = result.units.byId(unit.id)!;
-    final cleanup =
-        _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result, input),
-            unit,
-            updatedUnit,
-            mapTiles,
-          )
-          ..clearMoveTargetingOwnedByUnit()
-          ..refreshSelection();
 
     return GameStateTransition(state: cleanup.state);
   }

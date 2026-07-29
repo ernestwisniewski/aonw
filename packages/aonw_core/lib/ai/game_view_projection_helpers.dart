@@ -1,5 +1,40 @@
 part of 'game_view.dart';
 
+List<WorldArtifact> _visibleArtifacts(
+  _GameViewProjection source,
+  Set<String> ownCityIds,
+  Set<String> ownUnitIds,
+  FogVisibilityQuery visibility,
+) => [
+  for (final artifact in source.artifacts)
+    if (_canSeeArtifact(
+      artifact,
+      cities: source.cities,
+      units: source.units,
+      ownCityIds: ownCityIds,
+      ownUnitIds: ownUnitIds,
+      visibility: visibility,
+    ))
+      artifact,
+];
+
+List<FieldImprovement> _ownImprovements(
+  _GameViewProjection source,
+  List<GameCity> ownCities,
+  Set<String> ownCityIds,
+) => [
+  for (final improvement in source.fieldImprovements)
+    if (_isOwnImprovement(improvement, ownCities, ownCityIds)) improvement,
+];
+
+List<GameUnit> _visibleEnemyUnits(_GameViewProjection source) => [
+  for (final unit in source.units)
+    if (unit.ownerPlayerId != source.forPlayerId &&
+        (source.dynamicVisibility.canSeeDynamicAt(unit.col, unit.row) ||
+            source.forcedVisibleEnemyUnitIds.contains(unit.id)))
+      unit,
+];
+
 List<GameCity> _rememberedEnemyCities(
   _GameViewProjection source,
   FogVisibilityQuery visibility,

@@ -9,7 +9,6 @@ const _commandLibraryPath =
     'packages/aonw_core/lib/game/domain/command/game_command.dart';
 const _serializerPath =
     'packages/aonw_core/lib/game/domain/command/game_command_serialization.dart';
-
 const _rolePolicy = <String, _CommandRole>{
   'AssignMerchantTradeRouteCommand': _CommandRole.domain,
   'AssignWorkerToHexCommand': _CommandRole.domain,
@@ -141,6 +140,18 @@ void main() {
       moveUnit.aiConsumers,
       contains('packages/aonw_core/lib/ai/mcts/mcts_simulated_state.dart'),
     );
+    for (final className in const [
+      'SkipUnitTurnCommand',
+      'FortifyUnitCommand',
+    ]) {
+      final entry = inventory.entries.singleWhere(
+        (candidate) => candidate.className == className,
+      );
+      expect(entry.localHandlers, isEmpty);
+      expect(entry.serverHandlers, [
+        'server/lib/src/multiplayer/server_command_reducer.dart',
+      ]);
+    }
   });
 }
 

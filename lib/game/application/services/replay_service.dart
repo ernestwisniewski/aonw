@@ -242,7 +242,6 @@ class ReplayService {
     var currentSnapshot = initialSnapshot;
     var currentState = initialSnapshot.toGameState();
     final steps = <ReplayStep>[];
-
     try {
       await for (final logged in eventLog.readSince(
         saveId,
@@ -286,9 +285,10 @@ class ReplayService {
             actorPlayerId: effectiveActorPlayerId,
           ),
         );
-        currentSnapshot = resolved.snapshot.copyWith(
-          eventLogOffset: logged.offset,
+        final resolvedSnapshotWithOffset = resolved.snapshot.withEventLogOffset(
+          logged.offset,
         );
+        currentSnapshot = resolvedSnapshotWithOffset;
         currentState = resolved.state;
         _appendReplayStep(
           steps,

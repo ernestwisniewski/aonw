@@ -179,6 +179,7 @@ final class MctsSimulatedEconomyCommandApplier {
       turn: view.turn,
       mapData: view.mapData,
       ruleset: view.ruleset,
+      engineSnapshot: view.engineSnapshot,
       activeHostilePlayerIds: view.activeHostilePlayerIds,
       recentHostilePlayerIds: view.recentHostilePlayerIds,
       pressureTargetPlayerIds: view.pressureTargetPlayerIds,

@@ -169,6 +169,24 @@ void main() {
     expect(actual.ownUnits.single.posture, UnitPosture.active);
   });
 
+  test('lightweight unit actions fail loudly without an engine envelope', () {
+    final view = _view(
+      mapView: _mapData().indexedReadView(),
+      includeEngineSnapshot: false,
+    );
+    final root = SimulatedState.fromView(view, maxPlanningDepth: 2);
+
+    for (final command in const [
+      SkipUnitTurnCommand('warrior_1'),
+      FortifyUnitCommand('warrior_1'),
+    ]) {
+      expect(
+        () => root.apply(CommandMctsAction(command)),
+        throwsA(isA<StateError>()),
+      );
+    }
+  });
+
   test(
     'lightweight fortify projects accept and preserves rejected workers',
     () {
@@ -230,22 +248,24 @@ GameView _view({
   Map<String, MapObjectiveHoldState> holdStates = const {},
   WonderRegistry wonders = WonderRegistry.empty,
   int ownGold = 0,
+  bool includeEngineSnapshot = true,
 }) {
+  final units =
+      ownUnits?.toList(growable: false) ??
+      [
+        GameUnit(
+          id: 'warrior_1',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          name: 'Warrior',
+          col: 0,
+          row: 0,
+        ),
+      ];
   return GameView(
     forPlayerId: 'player_1',
     turn: 1,
-    ownUnits:
-        ownUnits ??
-        [
-          GameUnit(
-            id: 'warrior_1',
-            ownerPlayerId: 'player_1',
-            type: GameUnitType.warrior,
-            name: 'Warrior',
-            col: 0,
-            row: 0,
-          ),
-        ],
+    ownUnits: units,
     ownCities: const [],
     ownGold: ownGold,
     research: research,
@@ -262,6 +282,27 @@ GameView _view({
     mapData: mapView,
     ruleset: GameRuleset.defaults,
     wonderRegistry: wonders,
+    engineSnapshot: includeEngineSnapshot ? _engineSnapshot(units) : null,
+  );
+}
+
+CanonicalGameSnapshot _engineSnapshot(List<GameUnit> units) {
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: const [Player(id: 'player_1', name: 'AI', colorValue: 1)],
+      units: units,
+    ),
+    session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+    metadata: GameSnapshotMetadata(
+      id: 'mcts_test',
+      schemaVersion: 3,
+      name: 'MCTS test',
+      world: const WorldReference(name: 'test', source: MapSource.asset),
+      savedAtUtc: DateTime.utc(2026, 7, 29),
+      camera: GameSnapshotCamera.zero,
+    ),
   );
 }
 

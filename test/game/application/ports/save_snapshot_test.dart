@@ -319,6 +319,114 @@ void main() {
       expect(updated.rawPersistentState, snapshot.rawPersistentState);
     });
 
+    test('patches only reviewed unit-action slices on a sparse envelope', () {
+      final unit = GameUnit(
+        id: 'unit_1',
+        ownerPlayerId: 'p1',
+        type: GameUnitType.warrior,
+        name: GameUnitType.warrior.defaultNameToken,
+        col: 0,
+        row: 0,
+        movementPoints: 3,
+      );
+      final snapshot = SaveSnapshot(
+        save: _save().copyWith(
+          gameMode: GameMode.multiplayer,
+          players: const [],
+        ),
+        playerColors: const {'p1': 0xFF010203},
+        units: [unit],
+        runtimeState: GameRuntimeState.snapshot(
+          submittedPlayerIds: const {'session_only'},
+          timeoutStreaksByPlayerId: const {'timeout_only': 2},
+          afkPlayerIds: const {'afk_only'},
+          kickedPlayerIds: const {'kicked_only'},
+        ),
+        eventLogOffset: 73,
+      );
+      final savedAt = DateTime.parse('2026-07-29T20:00:00+02:00');
+      final updatedUnit = unit.copyWith(movementPoints: 0);
+      final interaction = PersistedInteractionState(
+        pendingAction: const PendingUnitTurnSkip(
+          ownerPlayerId: 'p1',
+          unitId: 'unit_1',
+          restoreMovementPoints: 3,
+        ),
+      );
+
+      final updated = snapshot.withUnitActionEngineProjection(
+        units: [updatedUnit],
+        artifacts: snapshot.artifacts,
+        interaction: interaction,
+        savedAt: savedAt,
+      );
+
+      expect(updated.units.single, updatedUnit);
+      expect(updated.runtimeState.pendingAction, interaction.pendingAction);
+      expect(updated.save.savedAt, DateTime.utc(2026, 7, 29, 18));
+      expect(updated.save.players, isEmpty);
+      expect(updated.playerColors, same(snapshot.playerColors));
+      expect(
+        updated.runtimeState.submittedPlayerIds,
+        same(snapshot.runtimeState.submittedPlayerIds),
+      );
+      expect(
+        updated.runtimeState.timeoutStreaksByPlayerId,
+        same(snapshot.runtimeState.timeoutStreaksByPlayerId),
+      );
+      expect(
+        updated.runtimeState.afkPlayerIds,
+        same(snapshot.runtimeState.afkPlayerIds),
+      );
+      expect(
+        updated.runtimeState.kickedPlayerIds,
+        same(snapshot.runtimeState.kickedPlayerIds),
+      );
+      expect(updated.runtimeState.turnStartedAt, isNull);
+      expect(updated.eventLogOffset, 73);
+
+      final withOffset = updated.withEventLogOffset(74);
+      expect(withOffset.eventLogOffset, 74);
+      expect(withOffset.canonical.eventLogOffset, 74);
+      expect(withOffset.session, updated.session);
+
+      final legacyUpdated = withOffset
+          .withSavedAt(DateTime.utc(2026, 7, 30))
+          .withGameState(withOffset.toGameState());
+      expect(legacyUpdated.save.savedAt, DateTime.utc(2026, 7, 30));
+      expect(legacyUpdated.session, updated.session);
+      expect(legacyUpdated.persistedTurnStartedAt, isNull);
+
+      final genericOffset = updated.copyWith(eventLogOffset: 74);
+      expect(genericOffset.canonical.eventLogOffset, 74);
+      expect(genericOffset.session, updated.session);
+    });
+
+    test('recomputes an inferred turn start when the save turn changes', () {
+      final snapshot = _projectedSparseMultiplayerSnapshot();
+      final nextSavedAt = DateTime.utc(2026, 1, 3);
+
+      final updated = snapshot.copyWith(
+        save: snapshot.save.copyWith(turn: 2, savedAt: nextSavedAt),
+      );
+
+      expect(updated.domain.turn, 2);
+      expect(updated.session.turnStartedAt, nextSavedAt);
+      expect(updated.persistedTurnStartedAt, isNull);
+    });
+
+    test('drops an inferred turn start when the game mode changes', () {
+      final snapshot = _projectedSparseMultiplayerSnapshot();
+
+      final updated = snapshot.copyWith(
+        save: snapshot.save.copyWith(gameMode: GameMode.hotSeat),
+      );
+
+      expect(updated.session.gameMode, GameMode.hotSeat);
+      expect(updated.session.turnStartedAt, isNull);
+      expect(updated.persistedTurnStartedAt, isNull);
+    });
+
     test('marks one player finished without changing state or offset', () {
       final snapshot = SaveSnapshot.fromGameState(
         save: _save().copyWith(
@@ -397,6 +505,18 @@ void main() {
       expect(snapshot.session.turnStartedAt, savedAt);
     });
   });
+}
+
+SaveSnapshot _projectedSparseMultiplayerSnapshot() {
+  final snapshot = SaveSnapshot(
+    save: _save().copyWith(gameMode: GameMode.multiplayer, players: const []),
+  );
+  return snapshot.withUnitActionEngineProjection(
+    units: snapshot.units,
+    artifacts: snapshot.artifacts,
+    interaction: snapshot.interaction,
+    savedAt: DateTime.utc(2026, 1, 2),
+  );
 }
 
 GameSave _save() {

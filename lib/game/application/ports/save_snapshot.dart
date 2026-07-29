@@ -22,6 +22,7 @@ const _saveSnapshotAdapter = LegacyGameSnapshotAdapter();
 final class SaveSnapshot {
   final GameSave save;
   final PersistentGameState _rawState;
+  final CanonicalGameSnapshot? _canonicalProjection;
   final int eventLogOffset;
 
   factory SaveSnapshot({
@@ -66,7 +67,9 @@ final class SaveSnapshot {
     required this.save,
     required PersistentGameState rawState,
     required this.eventLogOffset,
-  }) : _rawState = rawState;
+    CanonicalGameSnapshot? canonicalProjection,
+  }) : _rawState = rawState,
+       _canonicalProjection = canonicalProjection;
 
   factory SaveSnapshot.fromGameState({
     required GameSave save,
@@ -144,11 +147,13 @@ final class SaveSnapshot {
   /// fallback participants.
   List<Player> get persistedPlayers => save.players;
 
-  late final CanonicalGameSnapshot canonical = _saveSnapshotAdapter.toCanonical(
-    save: save,
-    state: _rawState,
-    eventLogOffset: eventLogOffset,
-  );
+  late final CanonicalGameSnapshot canonical =
+      _canonicalProjection ??
+      _saveSnapshotAdapter.toCanonical(
+        save: save,
+        state: _rawState,
+        eventLogOffset: eventLogOffset,
+      );
 
   GameSnapshotMetadata get metadata => canonical.metadata;
   DomainState get domain => canonical.domain;
@@ -156,10 +161,18 @@ final class SaveSnapshot {
   PersistedInteractionState get interaction => canonical.interaction;
 
   SaveSnapshot withGameState(GameState state, {int? eventLogOffset}) {
-    return SaveSnapshot.fromGameState(
+    final nextOffset = eventLogOffset ?? this.eventLogOffset;
+    final rawState = state.toPersistentState().immutableSnapshot();
+    return SaveSnapshot._owned(
       save: save,
-      state: state,
-      eventLogOffset: eventLogOffset ?? this.eventLogOffset,
+      rawState: rawState,
+      eventLogOffset: nextOffset,
+      canonicalProjection: _projectionAfterUpdate(
+        _canonicalProjection,
+        save: save,
+        state: rawState,
+        eventLogOffset: nextOffset,
+      ),
     );
   }
 
@@ -280,24 +293,33 @@ final class SaveSnapshot {
     GameRuntimeState? runtimeState,
     int? eventLogOffset,
   }) {
+    final nextSave = save == null ? this.save : _ownedSave(save);
+    final nextState = _rawState.copyWith(
+      playerColors: playerColors,
+      playerCountries: playerCountries,
+      playerGold: playerGold,
+      playerWarWeariness: playerWarWeariness,
+      playerStabilityNet: playerStabilityNet,
+      units: units,
+      cities: cities,
+      artifacts: artifacts,
+      fieldImprovements: fieldImprovements,
+      fogOfWar: fogOfWar,
+      research: research,
+      wonderRegistry: wonderRegistry,
+      runtimeState: runtimeState,
+    );
+    final nextOffset = eventLogOffset ?? this.eventLogOffset;
     return SaveSnapshot._owned(
-      save: save == null ? this.save : _ownedSave(save),
-      rawState: _rawState.copyWith(
-        playerColors: playerColors,
-        playerCountries: playerCountries,
-        playerGold: playerGold,
-        playerWarWeariness: playerWarWeariness,
-        playerStabilityNet: playerStabilityNet,
-        units: units,
-        cities: cities,
-        artifacts: artifacts,
-        fieldImprovements: fieldImprovements,
-        fogOfWar: fogOfWar,
-        research: research,
-        wonderRegistry: wonderRegistry,
-        runtimeState: runtimeState,
+      save: nextSave,
+      rawState: nextState,
+      eventLogOffset: nextOffset,
+      canonicalProjection: _projectionAfterUpdate(
+        _canonicalProjection,
+        save: nextSave,
+        state: nextState,
+        eventLogOffset: nextOffset,
       ),
-      eventLogOffset: eventLogOffset ?? this.eventLogOffset,
     );
   }
 
@@ -313,6 +335,81 @@ final class SaveSnapshot {
       ...playerCountries,
     };
   }
+}
+
+extension SaveSnapshotEngineProjection on SaveSnapshot {
+  /// Applies the only legacy persistence slices reviewed for engine-backed
+  /// unit actions without materializing canonical roster/session defaults.
+  SaveSnapshot withUnitActionEngineProjection({
+    required List<GameUnit> units,
+    required List<WorldArtifact> artifacts,
+    required PersistedInteractionState interaction,
+    required DateTime savedAt,
+  }) {
+    final runtime = _rawState.runtimeState;
+    final interactionChanged =
+        runtime.cityFoundingDraft != interaction.cityFoundingDraft ||
+        runtime.pendingAction != interaction.pendingAction;
+    final projectedRawState = _rawState.copyWith(
+      units: identical(units, this.units) ? null : units,
+      artifacts: identical(artifacts, this.artifacts) ? null : artifacts,
+      runtimeState: interactionChanged
+          ? runtime.copyWith(
+              cityFoundingDraft: interaction.cityFoundingDraft,
+              pendingAction: interaction.pendingAction,
+            )
+          : null,
+    );
+    final canonicalProjection = canonical.copyWith(
+      domain: canonical.domain.copyWith(units: units, artifacts: artifacts),
+      metadata: canonical.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
+      interaction: interaction,
+    );
+    return SaveSnapshot._owned(
+      save: _ownedSave(save.copyWith(savedAt: savedAt.toUtc())),
+      rawState: projectedRawState,
+      eventLogOffset: eventLogOffset,
+      canonicalProjection: canonicalProjection,
+    );
+  }
+
+  /// Changes only the replay offset while retaining any lossless canonical
+  /// projection already attached to this snapshot.
+  SaveSnapshot withEventLogOffset(int eventLogOffset) {
+    final canonicalProjection = _canonicalProjection;
+    return SaveSnapshot._owned(
+      save: save,
+      rawState: _rawState,
+      eventLogOffset: eventLogOffset,
+      canonicalProjection: canonicalProjection?.copyWith(
+        eventLogOffset: eventLogOffset,
+      ),
+    );
+  }
+}
+
+CanonicalGameSnapshot? _projectionAfterUpdate(
+  CanonicalGameSnapshot? previous, {
+  required GameSave save,
+  required PersistentGameState state,
+  required int eventLogOffset,
+}) {
+  if (previous == null) return null;
+  final updated = _saveSnapshotAdapter.toCanonical(
+    save: save,
+    state: state,
+    eventLogOffset: eventLogOffset,
+  );
+  if (state.runtimeState.turnStartedAt != null ||
+      previous.domain.turn != save.turn ||
+      previous.session.gameMode != save.gameMode) {
+    return updated;
+  }
+  return updated.copyWith(
+    session: updated.session.copyWith(
+      turnStartedAt: previous.session.turnStartedAt,
+    ),
+  );
 }
 
 PersistentGameState _stateWithCountryDefaults(

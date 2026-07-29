@@ -1,4 +1,6 @@
 import 'package:aonw_core/ai/game_view.dart';
+import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -62,8 +64,8 @@ final class MctsSimulatedMovementCommandApplier {
   List<GameUnit> applyUnitAction(GameCommand command) {
     return switch (command) {
       final CancelUnitActionCommand value => _applyCancelUnitAction(value),
-      final SkipUnitTurnCommand value => _applySkipUnitTurn(value),
-      final FortifyUnitCommand value => _applyFortifyUnit(value),
+      final SkipUnitTurnCommand value => _applyEngineUnitAction(value),
+      final FortifyUnitCommand value => _applyEngineUnitAction(value),
       _ => ownUnits,
     };
   }
@@ -93,33 +95,32 @@ final class MctsSimulatedMovementCommandApplier {
     return result.units;
   }
 
-  List<GameUnit> _applySkipUnitTurn(SkipUnitTurnCommand command) {
-    final result = UnitActionCommandResolver.skipUnitTurn(
+  List<GameUnit> _applyEngineUnitAction(DomainCommand command) {
+    final engineSnapshot =
+        view.engineSnapshot ??
+        (throw StateError(
+          'MCTS unit actions require a canonical engine snapshot.',
+        ));
+    final state = MctsSimulationProjection.persistentStateFromView(
+      view,
       units: ownUnits,
-      artifacts: view.artifacts,
-      interaction: PersistedInteractionState.empty,
+      cities: [...ownCities, ...rememberedEnemyCities],
+      research: view.research,
+    );
+    final result = const SimulationGameEngineAdapter().apply(
+      snapshot: engineSnapshot,
+      state: state,
       command: command,
       actorPlayerId: view.forPlayerId,
+      commandTick: 0,
+      mapView: view.mapData,
+      ruleset: view.ruleset,
     );
-    return _projectUnitAction(result);
-  }
-
-  List<GameUnit> _applyFortifyUnit(FortifyUnitCommand command) {
-    final result = UnitActionCommandResolver.fortifyUnit(
-      units: ownUnits,
-      artifacts: view.artifacts,
-      interaction: PersistedInteractionState.empty,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-    );
-    return _projectUnitAction(result);
-  }
-
-  List<GameUnit> _projectUnitAction(UnitActionCommandResult result) {
-    if (!result.accepted || !identical(result.artifacts, view.artifacts)) {
+    if (!result.accepted ||
+        !identical(result.state.artifacts, state.artifacts)) {
       return ownUnits;
     }
-    return result.units;
+    return result.state.units;
   }
 }
 

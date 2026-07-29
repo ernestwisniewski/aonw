@@ -74,16 +74,6 @@ class GameStateReducer {
           command,
           environment,
         ),
-      SkipUnitTurnCommand() => MovementReducer.skipUnitTurnWithEnvironment(
-        state,
-        command,
-        environment,
-      ),
-      FortifyUnitCommand() => MovementReducer.fortifyUnitWithEnvironment(
-        state,
-        command,
-        environment,
-      ),
       AutoExploreUnitCommand() =>
         MovementReducer.autoExploreUnitWithEnvironment(
           state,
@@ -235,6 +225,9 @@ class GameStateReducer {
       RespondDiplomaticMessageCommand() => environment.respondDiplomaticMessage(
         state,
         command,
+      ),
+      _ => throw UnsupportedError(
+        '${command.runtimeType} is not handled by the legacy reducer',
       ),
     };
   }

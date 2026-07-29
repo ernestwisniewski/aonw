@@ -17,22 +17,6 @@ void _registerCanonicalMapLookupActionTests() {
         mapTiles,
       ),
     ),
-    (
-      name: 'skip',
-      apply: (state, mapTiles, unit) => MovementReducer.skipUnitTurn(
-        state,
-        SkipUnitTurnCommand(unit.id),
-        mapTiles,
-      ),
-    ),
-    (
-      name: 'fortify',
-      apply: (state, mapTiles, unit) => MovementReducer.fortifyUnit(
-        state,
-        FortifyUnitCommand(unit.id),
-        mapTiles,
-      ),
-    ),
   ];
 
   for (final action in actions) {

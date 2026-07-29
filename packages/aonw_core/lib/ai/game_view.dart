@@ -79,6 +79,7 @@ class GameView {
   final MapReadView mapData;
   final GameRuleset ruleset;
   final WonderRegistry wonderRegistry;
+  final CanonicalGameSnapshot? engineSnapshot;
 
   GameView({
     required this.forPlayerId,
@@ -108,6 +109,7 @@ class GameView {
     required this.mapData,
     required this.ruleset,
     this.wonderRegistry = WonderRegistry.empty,
+    this.engineSnapshot,
   }) : ownUnits = List.unmodifiable(ownUnits),
        ownCities = List.unmodifiable(ownCities),
        artifacts = List.unmodifiable(artifacts),
@@ -207,6 +209,7 @@ class GameView {
     required int turn,
     required MapReadView mapData,
     required GameRuleset ruleset,
+    CanonicalGameSnapshot? engineSnapshot,
     Iterable<String> recentHostilePlayerIds = const [],
     Iterable<String> activeHostilePlayerIds = const [],
     Iterable<String> pressureTargetPlayerIds = const [],
@@ -220,6 +223,7 @@ class GameView {
     turn: turn,
     mapData: mapData,
     ruleset: ruleset,
+    engineSnapshot: engineSnapshot,
     units: state.units,
     cities: state.cities,
     artifacts: state.artifacts,
@@ -250,6 +254,7 @@ class GameView {
     required int turn,
     required MapReadView mapData,
     required GameRuleset ruleset,
+    CanonicalGameSnapshot? engineSnapshot,
     Iterable<String> recentHostilePlayerIds = const [],
     Iterable<String> activeHostilePlayerIds = const [],
     Iterable<String> pressureTargetPlayerIds = const [],
@@ -263,6 +268,7 @@ class GameView {
     turn: turn,
     mapData: mapData,
     ruleset: ruleset,
+    engineSnapshot: engineSnapshot,
     units: state.units,
     cities: state.cities,
     artifacts: state.artifacts,
@@ -292,6 +298,7 @@ class GameView {
     required int turn,
     required MapReadView mapData,
     required GameRuleset ruleset,
+    required CanonicalGameSnapshot? engineSnapshot,
     required List<GameUnit> units,
     required List<GameCity> cities,
     required List<WorldArtifact> artifacts,
@@ -314,38 +321,36 @@ class GameView {
     required Iterable<String> forcedVisibleEnemyUnitIds,
     required bool ignoreFogOfWar,
     required bool ignoreDynamicFogOfWar,
-  }) {
-    return _buildGameView(
-      _GameViewProjection(
-        forPlayerId: forPlayerId,
-        turn: turn,
-        mapData: mapData,
-        ruleset: ruleset,
-        units: units,
-        cities: cities,
-        artifacts: artifacts,
-        playerGold: playerGold,
-        playerWarWeariness: playerWarWeariness,
-        playerStabilityNet: playerStabilityNet,
-        research: research,
-        fieldImprovements: fieldImprovements,
-        fogOfWar: fogOfWar,
-        resourceTradeAgreements: resourceTradeAgreements,
-        mapObjectiveHoldStatesByObjectiveId:
-            mapObjectiveHoldStatesByObjectiveId,
-        diplomacy: diplomacy,
-        wonderRegistry: wonderRegistry,
-        recentHostilePlayerIds: recentHostilePlayerIds,
-        activeHostilePlayerIds: activeHostilePlayerIds,
-        pressureTargetPlayerIds: pressureTargetPlayerIds,
-        defaultNeutralPlayerIds: defaultNeutralPlayerIds,
-        pendingCityAttackThreats: pendingCityAttackThreats,
-        forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
-        ignoreFogOfWar: ignoreFogOfWar,
-        ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
-      ),
-    );
-  }
+  }) => _buildGameView(
+    _GameViewProjection(
+      forPlayerId: forPlayerId,
+      turn: turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      engineSnapshot: engineSnapshot,
+      units: units,
+      cities: cities,
+      artifacts: artifacts,
+      playerGold: playerGold,
+      playerWarWeariness: playerWarWeariness,
+      playerStabilityNet: playerStabilityNet,
+      research: research,
+      fieldImprovements: fieldImprovements,
+      fogOfWar: fogOfWar,
+      resourceTradeAgreements: resourceTradeAgreements,
+      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
+      diplomacy: diplomacy,
+      wonderRegistry: wonderRegistry,
+      recentHostilePlayerIds: recentHostilePlayerIds,
+      activeHostilePlayerIds: activeHostilePlayerIds,
+      pressureTargetPlayerIds: pressureTargetPlayerIds,
+      defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+      pendingCityAttackThreats: pendingCityAttackThreats,
+      forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+      ignoreFogOfWar: ignoreFogOfWar,
+      ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+    ),
+  );
 }
 
 final class _GameViewProjection {
@@ -354,6 +359,7 @@ final class _GameViewProjection {
     required this.turn,
     required this.mapData,
     required this.ruleset,
+    required this.engineSnapshot,
     required this.units,
     required this.cities,
     required this.artifacts,
@@ -381,6 +387,7 @@ final class _GameViewProjection {
   final int turn;
   final MapReadView mapData;
   final GameRuleset ruleset;
+  final CanonicalGameSnapshot? engineSnapshot;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -457,40 +464,6 @@ GameView _buildGameView(_GameViewProjection source) {
     mapData: source.mapData,
     ruleset: source.ruleset,
     wonderRegistry: source.wonderRegistry,
+    engineSnapshot: source.engineSnapshot,
   );
 }
-
-List<WorldArtifact> _visibleArtifacts(
-  _GameViewProjection source,
-  Set<String> ownCityIds,
-  Set<String> ownUnitIds,
-  FogVisibilityQuery visibility,
-) => [
-  for (final artifact in source.artifacts)
-    if (_canSeeArtifact(
-      artifact,
-      cities: source.cities,
-      units: source.units,
-      ownCityIds: ownCityIds,
-      ownUnitIds: ownUnitIds,
-      visibility: visibility,
-    ))
-      artifact,
-];
-
-List<FieldImprovement> _ownImprovements(
-  _GameViewProjection source,
-  List<GameCity> ownCities,
-  Set<String> ownCityIds,
-) => [
-  for (final improvement in source.fieldImprovements)
-    if (_isOwnImprovement(improvement, ownCities, ownCityIds)) improvement,
-];
-
-List<GameUnit> _visibleEnemyUnits(_GameViewProjection source) => [
-  for (final unit in source.units)
-    if (unit.ownerPlayerId != source.forPlayerId &&
-        (source.dynamicVisibility.canSeeDynamicAt(unit.col, unit.row) ||
-            source.forcedVisibleEnemyUnitIds.contains(unit.id)))
-      unit,
-];

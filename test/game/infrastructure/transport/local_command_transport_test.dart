@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
@@ -15,6 +17,7 @@ import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
@@ -35,12 +38,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'local_command_transport_test_support.dart';
 part 'local_command_transport_preview_fast_path_tests.dart';
+part 'local_command_transport_unit_action_tests.dart';
 part 'local_command_transport_worker_replay_tests.dart';
 
 void main() {
   group('LocalCommandTransport', () {
     _registerWorkerReplayTests();
     _registerPreviewFastPathTests();
+    _registerUnitActionTransportTests();
 
     test(
       'logs command events and saves the updated repository snapshot',
@@ -579,7 +584,10 @@ class _MemoryGameRepository implements GameRepository {
 
 class _MemoryEventLog implements EventLog {
   final commands = <LoggedCommand>[];
+  final int latestOffsetFloor;
   var accessCalls = 0;
+
+  _MemoryEventLog({this.latestOffsetFloor = 0});
 
   @override
   Future<void> append(String saveId, LoggedCommand command) async {
@@ -590,7 +598,7 @@ class _MemoryEventLog implements EventLog {
   @override
   Future<int> latestOffset(String saveId) async {
     accessCalls++;
-    return commands.fold<int>(0, (latest, command) {
+    return commands.fold<int>(latestOffsetFloor, (latest, command) {
       return command.offset > latest ? command.offset : latest;
     });
   }
@@ -628,14 +636,6 @@ class _MemorySnapshotStore implements SnapshotStore {
 
 const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
-
-const _damagedCity = GameCity(
-  id: 'city_1',
-  ownerPlayerId: 'player_1',
-  name: 'City 1',
-  center: CityHex(col: 0, row: 0),
-  hitPoints: 10,
-);
 
 GameSave _save({
   required List<Player> players,

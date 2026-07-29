@@ -38,40 +38,6 @@ final class PersistentUnitActionResolver {
     );
   }
 
-  PersistentUnitActionResult skipUnitTurn({
-    required PersistentGameState state,
-    required SkipUnitTurnCommand command,
-    required String actorPlayerId,
-  }) {
-    return _applyUnitAction(
-      state,
-      UnitActionCommandResolver.skipUnitTurn(
-        units: state.units,
-        artifacts: state.artifacts,
-        interaction: _interactionFrom(state.runtimeState),
-        command: command,
-        actorPlayerId: actorPlayerId,
-      ),
-    );
-  }
-
-  PersistentUnitActionResult fortifyUnit({
-    required PersistentGameState state,
-    required FortifyUnitCommand command,
-    required String actorPlayerId,
-  }) {
-    return _applyUnitAction(
-      state,
-      UnitActionCommandResolver.fortifyUnit(
-        units: state.units,
-        artifacts: state.artifacts,
-        interaction: _interactionFrom(state.runtimeState),
-        command: command,
-        actorPlayerId: actorPlayerId,
-      ),
-    );
-  }
-
   static PersistentUnitActionResult _applyUnitAction(
     PersistentGameState state,
     UnitActionCommandResult result,

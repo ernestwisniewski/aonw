@@ -71,8 +71,7 @@
         "packages/aonw_core/lib/ai/mcts/mcts_search.dart::class:MctsSearch/method:search": 62,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:_applyAttackCity": 122,
         "packages/aonw_core/lib/ai/mcts/mcts_simulated_combat_command_applier.dart::class:MctsSimulatedCombatCommandApplier/method:applyAttackHex": 132,
-        "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:_applyOpponentCommand": 153,
-        "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:advanceTurn": 65,
+        "packages/aonw_core/lib/ai/mcts/mcts_simulator.dart::class:TracingMctsSimulator/method:_applyOpponentCommand": 146,
         "packages/aonw_core/lib/ai/mcts/mcts_strategy.dart::class:MctsStrategy/method:plan": 90,
         "packages/aonw_core/lib/ai/mcts/strategy_aware_action_generator.dart::function:_rankCommand": 95,
         "packages/aonw_core/lib/ai/mcts/strategy_aware_candidate_ranking.dart::function:_slotQuotas": 61,
@@ -82,7 +81,7 @@
         "packages/aonw_core/lib/ai/mcts/strategy_aware_war_ranker.dart::function:rankTacticalAttack": 95,
         "packages/aonw_core/lib/ai/production_unit_policies.dart::class:_SettlerProductionPolicy/method:applyExpansionPlan": 86,
         "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 277,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 243,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_applier.dart::class:_EconomySimulationCommandApplier/method:apply": 232,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 82,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 79,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_turn_row_factory.dart::class:_EconomySimulationTurnRowFactory/method:rowFor": 91,
@@ -579,7 +578,6 @@
         "lib/game/domain/reducer/game_state/game_state_reducer_taps.dart::class:_GameStateTapReducer": 369,
         "lib/game/domain/reducer/game_state/reducer_environment_dispatch.dart::extension:ReducerEnvironmentDispatch": 461,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer": 401,
-        "lib/game/domain/reducer/movement/movement_reducer.dart::class:MovementReducer": 402,
         "lib/game/domain/reducer/turn/turn_reducer.dart::class:TurnReducer": 627,
         "lib/game/presentation/controllers/lobby_connection_controller.dart::class:LobbyConnectionController": 430,
         "lib/game/presentation/engine/game_event_renderer_effect_mapper.dart::class:GameEventRendererEffectMapper": 385,
@@ -634,7 +632,7 @@
         "lib/game/application/services/ai_strategic_plan_provider.dart::class:AiStrategicPlanProvider/method:resolve": 68,
         "lib/game/application/services/ai_turn_command_executor.dart::class:AiTurnCommandExecutor/method:describeCommand": 133,
         "lib/game/application/services/ai_turn_command_executor.dart::class:AiTurnCommandExecutor/method:executePlan": 91,
-        "lib/game/application/services/ai_turn_preparation_builder.dart::class:AiTurnPreparationBuilder/method:prepare": 130,
+        "lib/game/application/services/ai_turn_preparation_builder.dart::class:AiTurnPreparationBuilder/method:prepare": 122,
         "lib/game/application/services/ai_turn_runner.dart::class:AiTurnRunner/method:run": 97,
         "lib/game/application/services/authoritative_command_policy.dart::class:AuthoritativeCommandPolicy/method:isClientOnly": 68,
         "lib/game/application/services/game_event_descriptor.dart::function:_describeGameEvent": 412,
@@ -643,7 +641,7 @@
         "lib/game/application/services/replay_service.dart::class:ReplayStep/method:_inferActorPlayerId": 80,
         "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 78,
         "lib/game/domain/reducer/combat/combat_reducer.dart::class:CombatReducer/method:attackHex": 75,
-        "lib/game/domain/reducer/game_state/game_state_reducer.dart::class:GameStateReducer/method:reduceWithEnvironment": 196,
+        "lib/game/domain/reducer/game_state/game_state_reducer.dart::class:GameStateReducer/method:reduceWithEnvironment": 189,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:handleTileTapped": 66,
         "lib/game/domain/reducer/movement/movement_reducer_move_preview.dart::class:_MovePreviewReducer/method:_blockedFeedback": 76,
         "lib/game/domain/reducer/movement/movement_reducer_turn_reset.dart::class:_MovementTurnResetProcessor/method:run": 190,
@@ -902,7 +900,7 @@
         "lib/game/domain/hex_assessment/hex_score_rules.dart::class:HexScoreRules/method:defenseScoreFromTerrain": 15,
         "lib/game/domain/hex_assessment/hex_score_rules.dart::class:HexScoreRules/method:economyScoreFromTerrain": 15,
         "lib/game/domain/hex_assessment/hex_tag_rules.dart::class:HexTagRules/method:tagsFor": 18,
-        "lib/game/domain/reducer/game_state/game_state_reducer.dart::class:GameStateReducer/method:reduceWithEnvironment": 65,
+        "lib/game/domain/reducer/game_state/game_state_reducer.dart::class:GameStateReducer/method:reduceWithEnvironment": 64,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:_handleFieldImprovementTapped": 11,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:handleCityTapped": 16,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:handleTileTapped": 15,
@@ -1192,7 +1190,7 @@
         "test/game/domain/reducer/diplomacy_reducer_test.dart": 880,
         "test/game/domain/reducer/game_state_reducer_integration_test.dart": 953,
         "test/game/domain/reducer/game_state_reducer_test.dart": 554,
-        "test/game/domain/reducer/movement_reducer_test.dart": 1645,
+        "test/game/domain/reducer/movement_reducer_test.dart": 1584,
         "test/game/domain/reducer/selection_reducer_test.dart": 803,
         "test/game/domain/reducer/turn_reducer_test.dart": 934,
         "test/game/game_effect_dispatcher_test.dart": 722,
@@ -1362,7 +1360,7 @@
       "legacyFiles": {},
       "declarations": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 381
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer": 380
       },
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
@@ -1373,7 +1371,7 @@
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 233,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 232,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65
@@ -1391,7 +1389,7 @@
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 16,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 29
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 26
       }
     },
     "server_test": {

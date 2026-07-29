@@ -65,42 +65,6 @@ void main() {
       },
     );
 
-    test('skipUnitTurn consumes movement and clears queued path', () {
-      final unit = GameUnit(
-        id: 'commander_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.commander,
-        name: 'Commander',
-        col: 0,
-        row: 0,
-        movementPoints: 3,
-        queuedPath: _queuedPath(),
-      );
-      final state = PersistentGameState(
-        units: [unit],
-        runtimeState: const GameRuntimeState(
-          mapObjectiveHoldStatesByObjectiveId: _mapObjectiveHoldStates,
-          resourceTradeAgreements: _resourceTradeAgreements,
-        ),
-      );
-
-      final result = const PersistentUnitActionResolver().skipUnitTurn(
-        state: state,
-        command: const SkipUnitTurnCommand('commander_1'),
-        actorPlayerId: 'player_1',
-      );
-
-      final skipped = result.state.units.single;
-      expect(result.accepted, isTrue);
-      expect(skipped.movementPoints, 0);
-      expect(skipped.queuedPath, isNull);
-      expect(
-        result.state.runtimeState.pendingAction,
-        isA<PendingUnitTurnSkip>(),
-      );
-      _expectPersistentRuntimeSlices(result.state.runtimeState);
-    });
-
     test('cancelUnitAction restores movement after skipping turn', () {
       final unit = GameUnit(
         id: 'commander_1',
@@ -169,64 +133,6 @@ void main() {
       expect(result.state.artifacts.single.location.row, 1);
     });
 
-    test('fortifyUnit stores posture and clears transient action state', () {
-      final unit = GameUnit(
-        id: 'warrior_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.warrior,
-        name: 'Warrior',
-        col: 0,
-        row: 0,
-        movementPoints: 2,
-        queuedPath: _queuedPath(),
-      ).copyWithHitPoints(7);
-      final state = PersistentGameState(
-        units: [unit],
-        runtimeState: const GameRuntimeState(
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: 'player_1',
-            attackerUnitId: 'warrior_1',
-          ),
-        ),
-      );
-
-      final result = const PersistentUnitActionResolver().fortifyUnit(
-        state: state,
-        command: const FortifyUnitCommand('warrior_1'),
-        actorPlayerId: 'player_1',
-      );
-
-      final fortified = result.state.units.single;
-      expect(result.accepted, isTrue);
-      expect(fortified.movementPoints, 0);
-      expect(fortified.queuedPath, isNull);
-      expect(fortified.posture, UnitPosture.fortified);
-      expect(result.state.runtimeState.pendingAction, isNull);
-    });
-
-    test('fortifyUnit accepts full-health units for regular fortification', () {
-      final unit = GameUnit(
-        id: 'warrior_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.warrior,
-        name: 'Warrior',
-        col: 0,
-        row: 0,
-        movementPoints: 2,
-      );
-      final state = PersistentGameState(units: [unit]);
-
-      final result = const PersistentUnitActionResolver().fortifyUnit(
-        state: state,
-        command: const FortifyUnitCommand('warrior_1'),
-        actorPlayerId: 'player_1',
-      );
-
-      expect(result.accepted, isTrue);
-      expect(result.state.units.single.movementPoints, 0);
-      expect(result.state.units.single.posture, UnitPosture.fortified);
-    });
-
     test('cancelUnitAction wakes fortified unit with fresh movement', () {
       final unit = GameUnit(
         id: 'warrior_1',
@@ -253,31 +159,6 @@ void main() {
         active.movementPoints,
         UnitMovementBalance.maxMovementPointsForType(active.type),
       );
-    });
-
-    test('rejects unit action for another player unit', () {
-      final state = PersistentGameState(
-        units: [
-          GameUnit(
-            id: 'commander_2',
-            ownerPlayerId: 'player_2',
-            type: GameUnitType.commander,
-            name: 'Commander',
-            col: 0,
-            row: 0,
-          ),
-        ],
-      );
-
-      final result = const PersistentUnitActionResolver().skipUnitTurn(
-        state: state,
-        command: const SkipUnitTurnCommand('commander_2'),
-        actorPlayerId: 'player_1',
-      );
-
-      expect(result.accepted, isFalse);
-      expect(result.reason, 'unit_not_controlled');
-      expect(result.state, state);
     });
   });
 }

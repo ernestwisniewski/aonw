@@ -7,6 +7,7 @@ import 'package:aonw_core/ai/mcts/mcts_action.dart';
 import 'package:aonw_core/ai/mcts/mcts_opponent_view_index.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -60,6 +61,12 @@ class TracingMctsSimulator implements MctsSimulator {
     final view = state.view;
     final mapData = view.mapData;
     final ruleset = view.ruleset;
+    final opponentInput = (
+      turn: view.turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      engineSnapshot: view.engineSnapshot,
+    );
     final persistent = MctsSimulationProjection.persistentStateFromView(
       view,
       units: view.movementBlockingUnits,
@@ -70,9 +77,7 @@ class TracingMctsSimulator implements MctsSimulator {
         ? _applyOpponentPlans(
             state: persistent,
             forPlayerId: view.forPlayerId,
-            turn: view.turn,
-            mapData: mapData,
-            ruleset: ruleset,
+            input: opponentInput,
           )
         : persistent;
     final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
@@ -84,19 +89,7 @@ class TracingMctsSimulator implements MctsSimulator {
       ruleset: ruleset,
       mapObjectives: mapData.objectives,
     );
-    final nextView = GameView.fromPersistentState(
-      advanced.state,
-      forPlayerId: view.forPlayerId,
-      turn: view.turn + 1,
-      mapData: mapData,
-      ruleset: ruleset,
-      activeHostilePlayerIds: view.activeHostilePlayerIds,
-      recentHostilePlayerIds: view.recentHostilePlayerIds,
-      pressureTargetPlayerIds: view.pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: view.defaultNeutralPlayerIds,
-      pendingCityAttackThreats: view.pendingCityAttackThreats,
-      ignoreFogOfWar: !view.visibility.isEnabled,
-    );
+    final nextView = _nextMctsView(advanced.state, view);
     return SimulatedState(
       view: nextView,
       plannedActions: state.plannedActions,
@@ -109,10 +102,9 @@ class TracingMctsSimulator implements MctsSimulator {
   PersistentGameState _applyOpponentPlans({
     required PersistentGameState state,
     required String forPlayerId,
-    required int turn,
-    required MapReadView mapData,
-    required GameRuleset ruleset,
+    required _OpponentPlanningInput input,
   }) {
+    final (:turn, :mapData, :ruleset, :engineSnapshot) = input;
     var current = state;
     var viewIndex = MctsOpponentViewIndex.fromState(current);
     final opponentPlayerIds = viewIndex.opponentPlayerIds(forPlayerId);
@@ -124,6 +116,7 @@ class TracingMctsSimulator implements MctsSimulator {
         turn: turn,
         mapData: mapData,
         ruleset: ruleset,
+        engineSnapshot: engineSnapshot,
       );
       if (opponentView.ownUnits.isEmpty && opponentView.ownCities.isEmpty) {
         continue;
@@ -152,10 +145,8 @@ class TracingMctsSimulator implements MctsSimulator {
           state: current,
           command: command,
           actorPlayerId: opponentId,
-          turn: turn,
           tick: tick,
-          mapData: mapData,
-          ruleset: ruleset,
+          input: input,
         );
         tick += 1;
       }
@@ -170,11 +161,10 @@ class TracingMctsSimulator implements MctsSimulator {
     required PersistentGameState state,
     required GameCommand command,
     required String actorPlayerId,
-    required int turn,
     required int tick,
-    required MapReadView mapData,
-    required GameRuleset ruleset,
+    required _OpponentPlanningInput input,
   }) {
+    final (:turn, :mapData, :ruleset, :engineSnapshot) = input;
     return switch (command) {
       MoveUnitCommand() => _applyOpponentMove(
         state: state,
@@ -191,25 +181,19 @@ class TracingMctsSimulator implements MctsSimulator {
         mapTiles: mapData,
         ruleset: ruleset,
       ),
-      SkipUnitTurnCommand() =>
-        const PersistentUnitActionResolver()
-            .skipUnitTurn(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            )
-            .state,
+      SkipUnitTurnCommand() ||
+      FortifyUnitCommand() => _applySimulationEngineUnitAction(
+        state: state,
+        command: command as DomainCommand,
+        actorPlayerId: actorPlayerId,
+        tick: tick,
+        mapData: mapData,
+        ruleset: ruleset,
+        engineSnapshot: engineSnapshot,
+      ),
       CancelUnitActionCommand() =>
         const PersistentUnitActionResolver()
             .cancelUnitAction(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            )
-            .state,
-      FortifyUnitCommand() =>
-        const PersistentUnitActionResolver()
-            .fortifyUnit(
               state: state,
               command: command,
               actorPlayerId: actorPlayerId,
@@ -359,6 +343,57 @@ class TracingMctsSimulator implements MctsSimulator {
   bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
+}
+
+typedef _OpponentPlanningInput = ({
+  int turn,
+  MapReadView mapData,
+  GameRuleset ruleset,
+  CanonicalGameSnapshot? engineSnapshot,
+});
+
+GameView _nextMctsView(PersistentGameState state, GameView previous) {
+  return GameView.fromPersistentState(
+    state,
+    forPlayerId: previous.forPlayerId,
+    turn: previous.turn + 1,
+    mapData: previous.mapData,
+    ruleset: previous.ruleset,
+    engineSnapshot: previous.engineSnapshot,
+    activeHostilePlayerIds: previous.activeHostilePlayerIds,
+    recentHostilePlayerIds: previous.recentHostilePlayerIds,
+    pressureTargetPlayerIds: previous.pressureTargetPlayerIds,
+    defaultNeutralPlayerIds: previous.defaultNeutralPlayerIds,
+    pendingCityAttackThreats: previous.pendingCityAttackThreats,
+    ignoreFogOfWar: !previous.visibility.isEnabled,
+  );
+}
+
+PersistentGameState _applySimulationEngineUnitAction({
+  required PersistentGameState state,
+  required DomainCommand command,
+  required String actorPlayerId,
+  required int tick,
+  required MapReadView mapData,
+  required GameRuleset ruleset,
+  required CanonicalGameSnapshot? engineSnapshot,
+}) {
+  final snapshot =
+      engineSnapshot ??
+      (throw StateError(
+        'MCTS unit actions require a canonical engine snapshot.',
+      ));
+  return const SimulationGameEngineAdapter()
+      .apply(
+        snapshot: snapshot,
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        commandTick: tick,
+        mapView: mapData,
+        ruleset: ruleset,
+      )
+      .state;
 }
 
 PersistentGameState _applyOpponentMove({

@@ -196,9 +196,15 @@ class ServerCommandReducer {
       case CancelUnitActionCommand():
         return _applyCancelUnitAction(snapshot, command, actorPlayerId);
       case SkipUnitTurnCommand():
-        return _applySkipUnitTurn(snapshot, command, actorPlayerId);
       case FortifyUnitCommand():
-        return _applyFortifyUnit(snapshot, command, actorPlayerId);
+        return _applyUnitActionEngine(
+          snapshot,
+          command as DomainCommand,
+          actorPlayerId,
+          commandTick,
+          loadedMap.mapView,
+          ruleset,
+        );
       case AutoExploreUnitCommand():
         return _applyAutoExplore(
           snapshot: snapshot,
@@ -248,17 +254,10 @@ class ServerCommandReducer {
           mapTiles: loadedMap.mapView,
         );
       case SetCitySpecializationCommand():
-      case StartBuildingCommand() ||
-          StartUnitProductionCommand() ||
-          StartCityProjectCommand() ||
-          StartWonderCommand():
-        return _applyProductionCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapView: loadedMap.mapView,
-          ruleset: ruleset,
-        );
+      case StartBuildingCommand():
+      case StartUnitProductionCommand():
+      case StartCityProjectCommand():
+      case StartWonderCommand():
       case RushProductionCommand():
         return _applyProductionCommand(
           snapshot: snapshot,
