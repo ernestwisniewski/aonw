@@ -90,10 +90,19 @@ final class SimulationGameEngineAdapter {
       snapshot: resultSnapshot,
       events: events,
       state: state.copyWith(
+        playerGold: _replacement(
+          domain.playerGold,
+          engineInput.domain.playerGold,
+        ),
         units: _replacement(domain.units, engineInput.domain.units),
         cities: _replacement(domain.cities, engineInput.domain.cities),
         artifacts: _replacement(domain.artifacts, engineInput.domain.artifacts),
         fogOfWar: _replacement(domain.fogOfWar, engineInput.domain.fogOfWar),
+        research: _replacement(domain.research, engineInput.domain.research),
+        wonderRegistry: _replacement(
+          domain.wonderRegistry,
+          engineInput.domain.wonderRegistry,
+        ),
         runtimeState: _projectRuntime(
           state.runtimeState,
           engineInput,

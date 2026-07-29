@@ -3,7 +3,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('rejects RushProduction until economy simulation supports it', () {
+  test('forwards RushProduction engine rejection through simulation', () {
     const command = RushProductionCommand('city_1');
     final result = EconomySimulation.run(
       config: const EconomySimulationConfig(
@@ -15,7 +15,7 @@ void main() {
     expect(result.appliedCommands, isEmpty);
     final rejection = result.rejectedCommandRecords.single;
     expect(rejection.command, command);
-    expect(rejection.reason, 'unsupported_command_for_simulation');
+    expect(rejection.reason, 'city_not_found');
   });
 }
 

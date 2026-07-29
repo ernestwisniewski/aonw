@@ -15,27 +15,16 @@ final class _EconomySimulationCommandApplier {
     required String actorPlayerId,
     required GameRuleset ruleset,
   }) {
+    if (command is DomainCommand && GameEngine.commandFamily(command) != null) {
+      return _applyEngineCommand(
+        tick: tick,
+        state: state,
+        command: command,
+        actorPlayerId: actorPlayerId,
+        ruleset: ruleset,
+      );
+    }
     switch (command) {
-      case UnitDomainCommand():
-        return _applyEngineCommand(
-          tick: tick,
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          ruleset: ruleset,
-        );
-      case FoundCityCommand():
-        final result = const PersistentCityFoundingResolver().foundCity(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: mapView,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-          reason: result.reason,
-        );
       case SelectTechnologyCommand():
         final result = const PersistentResearchCommandResolver()
             .selectTechnology(
@@ -51,127 +40,7 @@ final class _EconomySimulationCommandApplier {
           state: result.state,
           reason: result.reason,
         );
-      case StartBuildingCommand() ||
-          StartUnitProductionCommand() ||
-          StartCityProjectCommand() ||
-          StartWonderCommand():
-        return _applyProductionCommand(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          ruleset: ruleset,
-        );
-      case SetCitySpecializationCommand():
-        final result = const PersistentCityProductionResolver()
-            .setCitySpecialization(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case SelectWorkerImprovementCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .selectWorkerImprovement(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapView,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case AssignWorkerToHexCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .assignWorkerToHex(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapView,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case CancelWorkerJobCommand():
-        final result = const PersistentWorkerCommandResolver().cancelWorkerJob(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case CancelWorkerAssignmentCommand():
-        final result = const PersistentWorkerCommandResolver()
-            .cancelWorkerAssignment(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case AttackHexCommand():
-        return _applyEngineCommand(
-          tick: tick,
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          ruleset: ruleset,
-        );
-      case TileTappedCommand() ||
-          CityTappedCommand() ||
-          RushProductionCommand() ||
-          EndTurnCommand() ||
-          SubmitTurnCommand() ||
-          ResetUnitMovementCommand() ||
-          SetActivePlayerCommand() ||
-          ToggleMoveTargetingCommand() ||
-          StartCityFoundingCommand() ||
-          CancelCityFoundingCommand() ||
-          StartCityWorkedHexSelectionCommand() ||
-          CancelCityWorkedHexSelectionCommand() ||
-          ToggleWorkedHexCommand() ||
-          StartCityExpansionSelectionCommand() ||
-          CancelCityExpansionSelectionCommand() ||
-          SelectCityExpansionHexCommand() ||
-          StartWorkerActionSelectionCommand() ||
-          StartMerchantTradeRouteSelectionCommand() ||
-          CancelMerchantTradeRouteSelectionCommand() ||
-          StartMerchantMoveToCitySelectionCommand() ||
-          CancelMerchantMoveToCitySelectionCommand() ||
-          ConfirmWorkerImprovementCommand() ||
-          CancelWorkerActionSelectionCommand() ||
-          CancelResearchSelectionCommand() ||
-          SendDiplomaticProposalCommand() ||
-          RespondDiplomaticProposalCommand() ||
-          SendDiplomaticMessageCommand() ||
-          RespondDiplomaticMessageCommand() ||
-          DeclareWarCommand() ||
-          SendGoldGiftCommand() ||
-          StartArtifactExcavationCommand() ||
-          StoreArtifactInCityCommand() ||
-          TradeArtifactCommand() ||
-          OpenResourceTradeCommand() ||
-          OpenResourceExchangeCommand() ||
-          StartAttackTargetingCommand() ||
-          CancelAttackTargetingCommand() ||
-          StartCommanderMergeSelectionCommand() ||
-          CancelCommanderMergeSelectionCommand() ||
-          SelectTileCommand() ||
-          SelectUnitCommand() ||
-          SelectCityCommand() ||
-          FocusNextPendingActionCommand() ||
-          FocusTurnStartActionCommand():
+      default:
         return _ApplyCommandResult(
           accepted: false,
           state: state,

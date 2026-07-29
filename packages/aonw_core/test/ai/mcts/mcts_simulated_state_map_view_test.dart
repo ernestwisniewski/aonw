@@ -119,6 +119,10 @@ void main() {
       afterResearch.ownResearch.activeTechnologyId,
       TechnologyId.agriculture,
     );
+    expect(
+      afterResearch.engineSnapshot?.domain.research,
+      afterResearch.research,
+    );
     expect(afterResearch.research.forPlayer('player_2'), playerTwoResearch);
     expect(afterFullTurn.mapData, same(mapView));
     expect(afterFullTurn.resourceTradeAgreements, hasLength(1));

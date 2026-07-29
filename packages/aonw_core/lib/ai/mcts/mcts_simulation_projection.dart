@@ -14,10 +14,25 @@ final class MctsSimulationProjection {
     required Iterable<GameCity> cities,
     required ResearchState research,
   }) {
+    final canonicalDomain = view.engineSnapshot?.domain;
     return PersistentGameState.snapshot(
-      playerGold: {view.forPlayerId: view.ownGold},
-      playerWarWeariness: {view.forPlayerId: view.ownWarWeariness},
-      playerStabilityNet: {view.forPlayerId: view.ownStabilityNet},
+      playerColors: canonicalDomain?.playerColors ?? const {},
+      playerCountries: canonicalDomain?.playerCountries ?? const {},
+      playerGold: _withPlayerValue(
+        canonicalDomain?.playerGold,
+        playerId: view.forPlayerId,
+        value: view.ownGold,
+      ),
+      playerWarWeariness: _withPlayerValue(
+        canonicalDomain?.playerWarWeariness,
+        playerId: view.forPlayerId,
+        value: view.ownWarWeariness,
+      ),
+      playerStabilityNet: _withPlayerValue(
+        canonicalDomain?.playerStabilityNet,
+        playerId: view.forPlayerId,
+        value: view.ownStabilityNet,
+      ),
       units: units.toList(growable: false),
       cities: cities.toList(growable: false),
       artifacts: view.artifacts,
@@ -33,4 +48,37 @@ final class MctsSimulationProjection {
       wonderRegistry: view.wonderRegistry,
     );
   }
+
+  static GameView viewFromPersistentState(
+    PersistentGameState state, {
+    required GameView previousView,
+    required CanonicalGameSnapshot engineSnapshot,
+  }) {
+    return GameView.fromPersistentState(
+      state,
+      forPlayerId: previousView.forPlayerId,
+      turn: previousView.turn,
+      mapData: previousView.mapData,
+      ruleset: previousView.ruleset,
+      engineSnapshot: engineSnapshot,
+      activeHostilePlayerIds: previousView.activeHostilePlayerIds,
+      recentHostilePlayerIds: previousView.recentHostilePlayerIds,
+      pressureTargetPlayerIds: previousView.pressureTargetPlayerIds,
+      defaultNeutralPlayerIds: previousView.defaultNeutralPlayerIds,
+      pendingCityAttackThreats: previousView.pendingCityAttackThreats,
+      ignoreFogOfWar: !previousView.visibility.isEnabled,
+    );
+  }
+}
+
+Map<String, int> _withPlayerValue(
+  Map<String, int>? canonicalValues, {
+  required String playerId,
+  required int value,
+}) {
+  final values = {...?canonicalValues};
+  if (values.containsKey(playerId) || value != 0) {
+    values[playerId] = value;
+  }
+  return values;
 }

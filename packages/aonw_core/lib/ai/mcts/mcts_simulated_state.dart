@@ -4,45 +4,26 @@ import 'package:aonw_core/ai/mcts/mcts_simulated_combat_command_applier.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_economy_command_applier.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_movement_command_applier.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 class SimulatedState {
-  final GameView _baseView;
-  final List<GameUnit> ownUnits;
-  final List<GameUnit> visibleEnemyUnits;
-  final List<GameCity> ownCities;
-  final List<GameCity> rememberedEnemyCities;
-  final PlayerResearchState ownResearch;
+  final GameView view;
   final List<MctsAction> plannedActions;
   final Set<GameCommand> usedCommands;
   final int maxPlanningDepth;
   final bool planningEnded;
 
   SimulatedState({
-    required GameView view,
-    Iterable<GameUnit>? ownUnits,
-    Iterable<GameUnit>? visibleEnemyUnits,
-    Iterable<GameCity>? ownCities,
-    Iterable<GameCity>? rememberedEnemyCities,
-    PlayerResearchState? ownResearch,
+    required this.view,
     Iterable<MctsAction> plannedActions = const [],
     Iterable<GameCommand> usedCommands = const {},
     required this.maxPlanningDepth,
     this.planningEnded = false,
-  }) : _baseView = view,
-       ownUnits = List.unmodifiable(ownUnits ?? view.ownUnits),
-       visibleEnemyUnits = List.unmodifiable(
-         visibleEnemyUnits ?? view.visibleEnemyUnits,
-       ),
-       ownCities = List.unmodifiable(ownCities ?? view.ownCities),
-       rememberedEnemyCities = List.unmodifiable(
-         rememberedEnemyCities ?? view.rememberedEnemyCities,
-       ),
-       ownResearch = ownResearch ?? view.ownResearch,
-       plannedActions = List.unmodifiable(plannedActions),
+  }) : plannedActions = List.unmodifiable(plannedActions),
        usedCommands = Set.unmodifiable(usedCommands);
 
   factory SimulatedState.fromView(
@@ -52,38 +33,15 @@ class SimulatedState {
     return SimulatedState(view: view, maxPlanningDepth: maxPlanningDepth);
   }
 
-  GameView get view {
-    return GameView(
-      forPlayerId: _baseView.forPlayerId,
-      turn: _baseView.turn,
-      ownUnits: ownUnits,
-      ownCities: ownCities,
-      artifacts: _baseView.artifacts,
-      ownGold: _baseView.ownGold,
-      ownWarWeariness: _baseView.ownWarWeariness,
-      ownStabilityNet: _baseView.ownStabilityNet,
-      research: researchState,
-      ownResearch: ownResearch,
-      ownImprovements: _baseView.ownImprovements,
-      resourceTradeAgreements: _baseView.resourceTradeAgreements,
-      mapObjectiveHoldStatesByObjectiveId:
-          _baseView.mapObjectiveHoldStatesByObjectiveId,
-      diplomacy: _baseView.diplomacy,
-      visibleEnemyUnits: visibleEnemyUnits,
-      movementBlockingUnits: _currentMovementBlockingUnits(),
-      rememberedEnemyCities: rememberedEnemyCities,
-      activeHostilePlayerIds: _baseView.activeHostilePlayerIds,
-      recentHostilePlayerIds: _baseView.recentHostilePlayerIds,
-      pressureTargetPlayerIds: _baseView.pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: _baseView.defaultNeutralPlayerIds,
-      pendingCityAttackThreats: _baseView.pendingCityAttackThreats,
-      visibility: _baseView.visibility,
-      mapData: _baseView.mapData,
-      ruleset: _baseView.ruleset,
-      wonderRegistry: _baseView.wonderRegistry,
-      engineSnapshot: _baseView.engineSnapshot,
-    );
-  }
+  List<GameUnit> get ownUnits => view.ownUnits;
+
+  List<GameUnit> get visibleEnemyUnits => view.visibleEnemyUnits;
+
+  List<GameCity> get ownCities => view.ownCities;
+
+  List<GameCity> get rememberedEnemyCities => view.rememberedEnemyCities;
+
+  PlayerResearchState get ownResearch => view.ownResearch;
 
   int get depth => plannedActions.length;
 
@@ -95,68 +53,22 @@ class SimulatedState {
 
   late final List<GameUnit> visibleTargetableEnemyUnits = List.unmodifiable([
     for (final unit in visibleEnemyUnits)
-      if (_baseView.canTargetPlayer(unit.ownerPlayerId)) unit,
+      if (view.canTargetPlayer(unit.ownerPlayerId)) unit,
   ]);
 
   late final List<GameCity> rememberedTargetableEnemyCities =
       List.unmodifiable([
         for (final city in rememberedEnemyCities)
-          if (_baseView.canTargetPlayer(city.ownerPlayerId)) city,
+          if (view.canTargetPlayer(city.ownerPlayerId)) city,
       ]);
 
   bool hasCommand(GameCommand command) => usedCommands.contains(command);
-
-  List<GameUnit> _currentMovementBlockingUnits() {
-    final currentOwnById = {for (final unit in ownUnits) unit.id: unit};
-    final currentVisibleById = {
-      for (final unit in visibleEnemyUnits) unit.id: unit,
-    };
-    final baseVisibleEnemyIds = {
-      for (final unit in _baseView.visibleEnemyUnits) unit.id,
-    };
-    final blockers = <GameUnit>[];
-    final blockerIds = <String>{};
-
-    for (final unit in _baseView.movementBlockingUnits) {
-      final currentOwn = currentOwnById[unit.id];
-      if (currentOwn != null) {
-        blockers.add(currentOwn);
-        blockerIds.add(currentOwn.id);
-        continue;
-      }
-      if (unit.ownerPlayerId == _baseView.forPlayerId) continue;
-
-      final currentVisible = currentVisibleById[unit.id];
-      if (currentVisible != null) {
-        blockers.add(currentVisible);
-        blockerIds.add(currentVisible.id);
-        continue;
-      }
-      if (baseVisibleEnemyIds.contains(unit.id)) continue;
-
-      blockers.add(unit);
-      blockerIds.add(unit.id);
-    }
-
-    for (final unit in ownUnits) {
-      if (blockerIds.add(unit.id)) blockers.add(unit);
-    }
-    for (final unit in visibleEnemyUnits) {
-      if (blockerIds.add(unit.id)) blockers.add(unit);
-    }
-    return List.unmodifiable(blockers);
-  }
 
   SimulatedState apply(MctsAction action) {
     if (isTerminal) return this;
     if (action.endsPlanning) {
       return SimulatedState(
         view: view,
-        ownUnits: ownUnits,
-        visibleEnemyUnits: visibleEnemyUnits,
-        ownCities: ownCities,
-        rememberedEnemyCities: rememberedEnemyCities,
-        ownResearch: ownResearch,
         plannedActions: [...plannedActions, action],
         usedCommands: usedCommands,
         maxPlanningDepth: maxPlanningDepth,
@@ -166,22 +78,9 @@ class SimulatedState {
 
     final command = action.toCommand();
     if (command == null || usedCommands.contains(command)) return this;
-    final (
-      :nextOwnUnits,
-      :nextVisibleEnemyUnits,
-      :nextOwnCities,
-      :nextRememberedEnemyCities,
-      :nextOwnResearch,
-    ) = _applyCommand(
-      command,
-    );
+    final (:nextView) = _applyCommand(command);
     return SimulatedState(
-      view: view,
-      ownUnits: nextOwnUnits,
-      visibleEnemyUnits: nextVisibleEnemyUnits,
-      ownCities: nextOwnCities,
-      rememberedEnemyCities: nextRememberedEnemyCities,
-      ownResearch: nextOwnResearch,
+      view: nextView,
       plannedActions: [...plannedActions, action],
       usedCommands: {...usedCommands, command},
       maxPlanningDepth: maxPlanningDepth,
@@ -191,61 +90,26 @@ class SimulatedState {
 
   MctsSimulatedCommandApplication _applyCommand(GameCommand command) {
     if (_movementCommandApplier.supportsUnitAction(command)) {
-      return _unitCommandApplication(
-        _movementCommandApplier.applyUnitAction(command),
-      );
+      return _movementCommandApplier.applyUnitAction(command);
+    }
+    if (command is DomainCommand &&
+        switch (GameEngine.commandFamily(command)) {
+          GameEngineCommandFamily.city ||
+          GameEngineCommandFamily.production ||
+          GameEngineCommandFamily.worker ||
+          GameEngineCommandFamily.artifactTrade => true,
+          _ => false,
+        }) {
+      return _economyCommandApplier.applyEngineCommand(command, depth + 1);
     }
     return switch (command) {
       MoveUnitCommand() => (
-        nextOwnUnits: _movementCommandApplier.applyMoveUnit(command),
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: ownCities,
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
+        nextView: _movementCommandApplier.applyMoveUnit(command).nextView,
       ),
       AttackHexCommand() => _applyEngineCombatCommand(command),
-      FoundCityCommand() => _economyCommandApplier.applyFoundCity(command),
-      SelectTechnologyCommand() => (
-        nextOwnUnits: ownUnits,
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: ownCities,
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: _economyCommandApplier.applySelectTechnology(command),
+      SelectTechnologyCommand() => _economyCommandApplier.applySelectTechnology(
+        command,
       ),
-      StartBuildingCommand() => (
-        nextOwnUnits: ownUnits,
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: _economyCommandApplier.applyStartBuilding(command),
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
-      ),
-      StartUnitProductionCommand() => (
-        nextOwnUnits: ownUnits,
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: _economyCommandApplier.applyStartUnitProduction(command),
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
-      ),
-      StartCityProjectCommand() => (
-        nextOwnUnits: ownUnits,
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: _economyCommandApplier.applyStartCityProject(command),
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
-      ),
-      SetCitySpecializationCommand() => (
-        nextOwnUnits: ownUnits,
-        nextVisibleEnemyUnits: visibleEnemyUnits,
-        nextOwnCities: _economyCommandApplier.applySetCitySpecialization(
-          command,
-        ),
-        nextRememberedEnemyCities: rememberedEnemyCities,
-        nextOwnResearch: ownResearch,
-      ),
-      SelectWorkerImprovementCommand() =>
-        _economyCommandApplier.applySelectWorkerImprovement(command),
-      AssignWorkerToHexCommand() =>
-        _economyCommandApplier.applyAssignWorkerToHex(command),
       _ => _unchangedCommandApplication,
     };
   }
@@ -253,16 +117,6 @@ class SimulatedState {
   MctsSimulatedCommandApplication _applyEngineCombatCommand(
     AttackHexCommand command,
   ) => _combatCommandApplier.applyAttackHex(command, depth + 1);
-
-  MctsSimulatedCommandApplication _unitCommandApplication(
-    List<GameUnit> units,
-  ) => (
-    nextOwnUnits: units,
-    nextVisibleEnemyUnits: visibleEnemyUnits,
-    nextOwnCities: ownCities,
-    nextRememberedEnemyCities: rememberedEnemyCities,
-    nextOwnResearch: ownResearch,
-  );
 
   MctsSimulatedEconomyCommandApplier get _economyCommandApplier {
     return MctsSimulatedEconomyCommandApplier(
@@ -295,15 +149,8 @@ class SimulatedState {
     );
   }
 
-  ResearchState get researchState {
-    return _baseView.research.updatePlayer(_baseView.forPlayerId, ownResearch);
-  }
+  ResearchState get researchState => view.research;
 
-  MctsSimulatedCommandApplication get _unchangedCommandApplication => (
-    nextOwnUnits: ownUnits,
-    nextVisibleEnemyUnits: visibleEnemyUnits,
-    nextOwnCities: ownCities,
-    nextRememberedEnemyCities: rememberedEnemyCities,
-    nextOwnResearch: ownResearch,
-  );
+  MctsSimulatedCommandApplication get _unchangedCommandApplication =>
+      (nextView: view);
 }

@@ -71,36 +71,6 @@ class GameStateReducer {
         environment.startMerchantMoveToCitySelection(state, command),
       CancelMerchantMoveToCitySelectionCommand() =>
         environment.cancelMerchantMoveToCitySelection(state, command),
-      StartArtifactExcavationCommand() => environment.startArtifactExcavation(
-        state,
-        command,
-      ),
-      StoreArtifactInCityCommand() => environment.storeArtifactInCity(
-        state,
-        command,
-      ),
-      TradeArtifactCommand() => environment.tradeArtifact(state, command),
-      OpenResourceTradeCommand() => environment.openResourceTrade(
-        state,
-        command,
-      ),
-      OpenResourceExchangeCommand() => environment.openResourceExchange(
-        state,
-        command,
-      ),
-      FoundCityCommand() => environment.foundCity(state, command),
-      StartBuildingCommand() => environment.startBuilding(state, command),
-      StartUnitProductionCommand() => environment.startUnitProduction(
-        state,
-        command,
-      ),
-      StartCityProjectCommand() => environment.startCityProject(state, command),
-      StartWonderCommand() => environment.startWonder(state, command),
-      SetCitySpecializationCommand() => environment.setCitySpecialization(
-        state,
-        command,
-      ),
-      RushProductionCommand() => environment.rushProduction(state, command),
       SelectTechnologyCommand() => environment.selectTechnology(state, command),
       CancelResearchSelectionCommand() => environment.cancelResearchSelection(
         state,
@@ -126,33 +96,11 @@ class GameStateReducer {
         environment.startCityWorkedHexSelection(state, command),
       CancelCityWorkedHexSelectionCommand() =>
         environment.cancelCityWorkedHexSelection(state, command),
-      ToggleWorkedHexCommand() => environment.toggleWorkedHex(state, command),
       StartCityExpansionSelectionCommand() =>
         environment.startCityExpansionSelection(state, command),
       CancelCityExpansionSelectionCommand() =>
         environment.cancelCityExpansionSelection(state, command),
-      SelectCityExpansionHexCommand() => environment.selectCityExpansionHex(
-        state,
-        command,
-      ),
-      StartWorkerActionSelectionCommand() =>
-        environment.startWorkerActionSelection(state, command),
-      SelectWorkerImprovementCommand() => environment.selectWorkerImprovement(
-        state,
-        command,
-      ),
-      ConfirmWorkerImprovementCommand() => environment.confirmWorkerImprovement(
-        state,
-        command,
-      ),
-      CancelWorkerActionSelectionCommand() =>
-        environment.cancelWorkerActionSelection(state, command),
-      CancelWorkerJobCommand() => environment.cancelWorkerJob(state, command),
-      AssignWorkerToHexCommand() => environment.assignWorkerToHex(
-        state,
-        command,
-      ),
-      CancelWorkerAssignmentCommand() => environment.cancelWorkerAssignment(
+      WorkerInteractionCommand() => environment.workerInteraction(
         state,
         command,
       ),

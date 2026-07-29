@@ -15,6 +15,8 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/canonical_command_test_dispatch.dart';
+
 MapData _map(int cols, int rows) => MapData(
   cols: cols,
   rows: rows,
@@ -54,14 +56,17 @@ GameCity _city({
   );
 }
 
-/// Helper: dispatch a command through the reducer.
 GameStateTransition _dispatch(
   GameStateReducer reducer,
   GameState state,
-  GameCommand command,
-) {
-  return reducer.reduce(state, command);
-}
+  GameCommand command, {
+  GameCommandContext context = const GameCommandContext(),
+}) => dispatchCanonicalTestCommand(
+  reducer: reducer,
+  state: state,
+  command: command,
+  context: context,
+);
 
 GameState _withFog(GameState state, MapData mapData) {
   return state.copyWith(
@@ -109,21 +114,17 @@ void main() {
           map,
         );
 
-        // 1st tap: unit selected + move active
         state = _dispatch(reducer, state, const TileTappedCommand(0, 0)).state;
         expect(state.selection?.type, GameSelectionType.unit);
         expect(state.moveCommandActive, isTrue);
 
-        // 2nd tap in move mode on own tile: cancel move, unit still selected
         state = _dispatch(reducer, state, const TileTappedCommand(0, 0)).state;
         expect(state.selection?.type, GameSelectionType.unit);
         expect(state.moveCommandActive, isFalse);
 
-        // 3rd tap with unit selected but no move: switches to tile
         state = _dispatch(reducer, state, const TileTappedCommand(0, 0)).state;
         expect(state.selection?.type, GameSelectionType.tile);
 
-        // 4th tap: unit selected + move auto-activated again
         state = _dispatch(reducer, state, const TileTappedCommand(0, 0)).state;
         expect(state.selection?.type, GameSelectionType.unit);
         expect(state.moveCommandActive, isTrue);
@@ -142,12 +143,10 @@ void main() {
         map,
       );
 
-      // Select unit (auto-enables move targeting)
       state = _dispatch(reducer, state, const TileTappedCommand(0, 0)).state;
       expect(state.selection?.type, GameSelectionType.unit);
       expect(state.moveCommandActive, isTrue);
 
-      // Tap adjacent tile — preview
       final previewTransition = _dispatch(
         reducer,
         state,
@@ -158,7 +157,6 @@ void main() {
       expect(state.movePreview?.targetRow, 0);
       expect(state.units.single.col, 0); // not moved yet
 
-      // Tap same tile again — confirm move
       final confirmTransition = _dispatch(
         reducer,
         state,
@@ -600,7 +598,8 @@ void main() {
         );
         expect(transition.state.units.single.col, 0);
 
-        final contextualTransition = reducer.reduce(
+        final contextualTransition = _dispatch(
+          reducer,
           state,
           MoveUnitCommand(playerTwoCommander.id, 1, 0),
           context: const GameCommandContext(actorPlayerId: 'player_2'),
@@ -621,13 +620,15 @@ void main() {
         activePlayerCanAct: true,
       );
 
-      final rejected = reducer.reduce(
+      final rejected = _dispatch(
+        reducer,
         state,
         StartBuildingCommand(city.id, CityBuildingType.granary),
       );
       expect(rejected.state.cities.single.productionQueue, isNull);
 
-      final accepted = reducer.reduce(
+      final accepted = _dispatch(
+        reducer,
         state,
         StartBuildingCommand(city.id, CityBuildingType.granary),
         context: const GameCommandContext(actorPlayerId: 'player_2'),
@@ -643,7 +644,6 @@ void main() {
     test('active player cannot inspect tiles hidden by fog of war', () {
       final map = _map(6, 6);
       final reducer = GameStateReducer(mapData: map);
-      // Commander at (0,0) — fog prevents seeing (5,5) without visibility
       var state = GameState(
         units: [_commander()],
         activePlayerId: 'player_1',

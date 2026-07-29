@@ -1,18 +1,12 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/artifact/artifact_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_expansion_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
-import 'package:aonw/game/domain/reducer/city/city_worked_hex_reducer.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/merchant_trade_route_reducer.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/resource_trade_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
 import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/submit_turn_reducer.dart';
-import 'package:aonw/game/domain/reducer/worker/worker_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
 extension ReducerEnvironmentDispatch on ReducerEnvironment {
@@ -49,135 +43,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     GameState state,
     CancelMerchantMoveToCitySelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
-
-  GameStateTransition startArtifactExcavation(
-    GameState state,
-    StartArtifactExcavationCommand command,
-  ) {
-    return ArtifactReducer.startExcavation(state, command, context: context);
-  }
-
-  GameStateTransition storeArtifactInCity(
-    GameState state,
-    StoreArtifactInCityCommand command,
-  ) {
-    return ArtifactReducer.storeInCity(state, command, context: context);
-  }
-
-  GameStateTransition tradeArtifact(
-    GameState state,
-    TradeArtifactCommand command,
-  ) {
-    return ArtifactReducer.tradeArtifact(state, command, context: context);
-  }
-
-  GameStateTransition openResourceTrade(
-    GameState state,
-    OpenResourceTradeCommand command,
-  ) {
-    return ResourceTradeReducer.openTrade(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
-  GameStateTransition openResourceExchange(
-    GameState state,
-    OpenResourceExchangeCommand command,
-  ) {
-    return ResourceTradeReducer.openExchange(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
-  GameStateTransition foundCity(GameState state, FoundCityCommand command) {
-    return CityFoundingReducer.confirmCityFounding(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
-  GameStateTransition startBuilding(
-    GameState state,
-    StartBuildingCommand command,
-  ) {
-    return CityProductionReducer.startBuilding(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
-  GameStateTransition startUnitProduction(
-    GameState state,
-    StartUnitProductionCommand command,
-  ) {
-    return CityProductionReducer.startUnitProduction(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
-  GameStateTransition startCityProject(
-    GameState state,
-    StartCityProjectCommand command,
-  ) {
-    return CityProductionReducer.startCityProject(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
-  GameStateTransition startWonder(GameState state, StartWonderCommand command) {
-    return CityProductionReducer.startWonder(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
-  GameStateTransition setCitySpecialization(
-    GameState state,
-    SetCitySpecializationCommand command,
-  ) {
-    return CityProductionReducer.setCitySpecialization(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
-  GameStateTransition rushProduction(
-    GameState state,
-    RushProductionCommand command,
-  ) {
-    return CityProductionReducer.rushProduction(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
 
   GameStateTransition selectTechnology(
     GameState state,
@@ -262,19 +127,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition toggleWorkedHex(
-    GameState state,
-    ToggleWorkedHexCommand command,
-  ) {
-    return CityWorkedHexReducer.toggleWorkedHex(
-      state,
-      command,
-      mapData,
-      context: context,
-      ruleset: ruleset,
-    );
-  }
-
   GameStateTransition startCityExpansionSelection(
     GameState state,
     StartCityExpansionSelectionCommand command,
@@ -297,102 +149,24 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition selectCityExpansionHex(
-    GameState state,
-    SelectCityExpansionHexCommand command,
-  ) => CityExpansionReducer.selectExpansionHexWithEnvironment(
-    state,
-    command,
-    this,
-  );
-
-  GameStateTransition startWorkerActionSelection(
-    GameState state,
-    StartWorkerActionSelectionCommand command,
-  ) {
-    return GameStateTransition(
-      state: InteractionReducer.startWorkerActionSelection(
-        state,
-        command,
-        context: context,
-      ),
-    );
-  }
-
-  GameStateTransition selectWorkerImprovement(
-    GameState state,
-    SelectWorkerImprovementCommand command,
-  ) {
-    return WorkerReducer.selectWorkerImprovement(
-      state,
-      command,
-      mapData,
-      context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: paceBalance,
-    );
-  }
-
-  GameStateTransition confirmWorkerImprovement(
-    GameState state,
-    ConfirmWorkerImprovementCommand command,
-  ) {
-    return WorkerReducer.confirmWorkerImprovement(
-      state,
-      command,
-      mapData,
-      context: context,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: paceBalance,
-    );
-  }
-
-  GameStateTransition cancelWorkerActionSelection(
-    GameState state,
-    CancelWorkerActionSelectionCommand command,
-  ) {
-    return GameStateTransition(
-      state: InteractionReducer.cancelWorkerActionSelection(state, command),
-    );
-  }
-
-  GameStateTransition cancelWorkerJob(
-    GameState state,
-    CancelWorkerJobCommand command,
-  ) {
-    return WorkerReducer.cancelWorkerJob(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
-  GameStateTransition assignWorkerToHex(
-    GameState state,
-    AssignWorkerToHexCommand command,
-  ) {
-    return WorkerReducer.assignWorkerToHex(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
-  GameStateTransition cancelWorkerAssignment(
-    GameState state,
-    CancelWorkerAssignmentCommand command,
-  ) {
-    return WorkerReducer.cancelWorkerAssignment(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
+  GameStateTransition workerInteraction(GameState state, GameCommand command) =>
+      GameStateTransition(
+        state: switch (command) {
+          StartWorkerActionSelectionCommand() =>
+            InteractionReducer.startWorkerActionSelection(
+              state,
+              command,
+              context: context,
+            ),
+          SelectWorkerImprovementCommand() =>
+            InteractionReducer.selectWorkerImprovement(state, command),
+          CancelWorkerActionSelectionCommand() =>
+            InteractionReducer.cancelWorkerActionSelection(state, command),
+          _ => throw UnsupportedError(
+            '${command.runtimeType} is not a worker interaction command',
+          ),
+        },
+      );
 
   GameStateTransition startAttackTargeting(
     GameState state,

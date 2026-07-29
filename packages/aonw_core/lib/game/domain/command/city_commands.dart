@@ -1,11 +1,20 @@
 part of 'game_command.dart';
 
+/// A player-authored command targeting one city.
+sealed class CityTargetDomainCommand extends DomainCommand {
+  const CityTargetDomainCommand();
+
+  String get cityId;
+}
+
 /// Player founds a city using the settler unit [founderId].
-final class FoundCityCommand extends DomainCommand {
+final class FoundCityCommand extends UnitDomainCommand {
   FoundCityCommand(this.founderId, {required List<CityHex> controlledHexes})
     : controlledHexes = List<CityHex>.unmodifiable(controlledHexes);
 
   final String founderId;
+  @override
+  String get unitId => founderId;
   final List<CityHex> controlledHexes;
 
   @override
@@ -28,9 +37,10 @@ final class FoundCityCommand extends DomainCommand {
 }
 
 /// Player starts building [buildingType] in city [cityId].
-final class StartBuildingCommand extends DomainCommand {
+final class StartBuildingCommand extends CityTargetDomainCommand {
   const StartBuildingCommand(this.cityId, this.buildingType);
 
+  @override
   final String cityId;
   final CityBuildingType buildingType;
 
@@ -45,9 +55,10 @@ final class StartBuildingCommand extends DomainCommand {
 }
 
 /// Player starts producing [unitType] in city [cityId].
-final class StartUnitProductionCommand extends DomainCommand {
+final class StartUnitProductionCommand extends CityTargetDomainCommand {
   const StartUnitProductionCommand(this.cityId, this.unitType);
 
+  @override
   final String cityId;
   final GameUnitType unitType;
 
@@ -62,9 +73,10 @@ final class StartUnitProductionCommand extends DomainCommand {
 }
 
 /// Player starts a continuous [projectType] in city [cityId].
-final class StartCityProjectCommand extends DomainCommand {
+final class StartCityProjectCommand extends CityTargetDomainCommand {
   const StartCityProjectCommand(this.cityId, this.projectType);
 
+  @override
   final String cityId;
   final CityProjectType projectType;
 
@@ -79,9 +91,10 @@ final class StartCityProjectCommand extends DomainCommand {
 }
 
 /// Player starts building [wonderType] in city [cityId].
-final class StartWonderCommand extends DomainCommand {
+final class StartWonderCommand extends CityTargetDomainCommand {
   const StartWonderCommand(this.cityId, this.wonderType);
 
+  @override
   final String cityId;
   final WonderType wonderType;
 
@@ -96,9 +109,10 @@ final class StartWonderCommand extends DomainCommand {
 }
 
 /// Player sets the long-term specialization for city [cityId].
-final class SetCitySpecializationCommand extends DomainCommand {
+final class SetCitySpecializationCommand extends CityTargetDomainCommand {
   const SetCitySpecializationCommand(this.cityId, this.specialization);
 
+  @override
   final String cityId;
   final CitySpecializationType specialization;
 
@@ -114,9 +128,10 @@ final class SetCitySpecializationCommand extends DomainCommand {
 }
 
 /// Player spends gold to add one turn of production to [cityId]'s queue.
-final class RushProductionCommand extends DomainCommand {
+final class RushProductionCommand extends CityTargetDomainCommand {
   const RushProductionCommand(this.cityId);
 
+  @override
   final String cityId;
 
   @override
@@ -178,9 +193,10 @@ final class CancelCityWorkedHexSelectionCommand extends GameIntent {
 }
 
 /// Player toggles whether a city manually works the hex at ([col], [row]).
-final class ToggleWorkedHexCommand extends DomainCommand {
+final class ToggleWorkedHexCommand extends CityTargetDomainCommand {
   const ToggleWorkedHexCommand(this.cityId, this.col, this.row);
 
+  @override
   final String cityId;
   final int col;
   final int row;
@@ -225,9 +241,10 @@ final class CancelCityExpansionSelectionCommand extends GameIntent {
 }
 
 /// Player chooses which hex a city should claim on its next territory growth.
-final class SelectCityExpansionHexCommand extends DomainCommand {
+final class SelectCityExpansionHexCommand extends CityTargetDomainCommand {
   const SelectCityExpansionHexCommand(this.cityId, this.col, this.row);
 
+  @override
   final String cityId;
   final int col;
   final int row;

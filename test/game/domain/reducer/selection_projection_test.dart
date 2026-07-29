@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
@@ -35,7 +35,12 @@ void main() {
       playerColors: {'player_1': 0xFF123456},
     );
 
-    final selection = CityProductionReducer.citySelection(state, city, mapData);
+    final selection = CitySelectionProjector.project(
+      state: state,
+      city: city,
+      mapTiles: mapData,
+      ruleset: GameRuleset.defaults,
+    );
 
     expect(selection.type, GameSelectionType.city);
     expect(selection.city, same(city));

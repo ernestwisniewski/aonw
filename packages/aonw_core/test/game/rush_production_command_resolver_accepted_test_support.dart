@@ -135,7 +135,6 @@ void _expectAcceptedRushSlices(
   _RushKernelScenario scenario,
   DomainState domainBefore,
   RushProductionCommandResult direct,
-  PersistentCityProductionResult persistent,
   DomainCityProductionResult domain,
 ) {
   final acceptance = scenario.acceptance!;
@@ -144,10 +143,9 @@ void _expectAcceptedRushSlices(
     scenario.state,
     domainBefore,
     direct,
-    persistent,
     domain,
   );
-  _expectAcceptedRushImmutability(scenario.state, direct, persistent, domain);
+  _expectAcceptedRushImmutability(scenario.state, direct, domain);
   switch (acceptance) {
     case _RushKernelAcceptance.building:
       _expectCompletedBuilding(scenario.state, direct);
@@ -163,7 +161,6 @@ void _expectAcceptedRushIdentities(
   PersistentGameState persistentBefore,
   DomainState domainBefore,
   RushProductionCommandResult direct,
-  PersistentCityProductionResult persistent,
   DomainCityProductionResult domain,
 ) {
   final changes = switch (acceptance) {
@@ -198,33 +195,11 @@ void _expectAcceptedRushIdentities(
     changes.registry,
   );
 
-  expect(persistent.state, isNot(same(persistentBefore)));
-  _expectAdapterSliceIdentities(
-    before: persistentBefore,
-    after: persistent.state,
-    changes: changes,
-  );
   expect(domain.state, isNot(same(domainBefore)));
   _expectDomainSliceIdentities(
     before: domainBefore,
     after: domain.state,
     changes: changes,
-  );
-}
-
-void _expectAdapterSliceIdentities({
-  required PersistentGameState before,
-  required PersistentGameState after,
-  required ({bool units, bool research, bool registry}) changes,
-}) {
-  expect(after.cities, isNot(same(before.cities)));
-  expect(after.playerGold, isNot(same(before.playerGold)));
-  _expectSliceIdentity(after.units, before.units, changes.units);
-  _expectSliceIdentity(after.research, before.research, changes.research);
-  _expectSliceIdentity(
-    after.wonderRegistry,
-    before.wonderRegistry,
-    changes.registry,
   );
 }
 
@@ -251,7 +226,6 @@ void _expectSliceIdentity(Object after, Object before, bool changed) {
 void _expectAcceptedRushImmutability(
   PersistentGameState before,
   RushProductionCommandResult direct,
-  PersistentCityProductionResult persistent,
   DomainCityProductionResult domain,
 ) {
   expect(() => direct.cities.clear(), throwsUnsupportedError);
@@ -261,32 +235,17 @@ void _expectAcceptedRushImmutability(
     throwsUnsupportedError,
   );
   expect(() => direct.events.clear(), throwsUnsupportedError);
-  expect(() => persistent.state.cities.clear(), throwsUnsupportedError);
-  expect(() => persistent.state.units.clear(), throwsUnsupportedError);
-  expect(
-    () => persistent.state.playerGold[rushCharacterizationPlayerId] = 999,
-    throwsUnsupportedError,
-  );
   expect(() => domain.state.cities.clear(), throwsUnsupportedError);
   expect(() => domain.state.units.clear(), throwsUnsupportedError);
   expect(
     () => domain.state.playerGold[rushCharacterizationPlayerId] = 999,
     throwsUnsupportedError,
   );
-  expect(() => persistent.events.clear(), throwsUnsupportedError);
   expect(() => domain.events.clear(), throwsUnsupportedError);
-  for (final research in [
-    direct.research,
-    persistent.state.research,
-    domain.state.research,
-  ]) {
+  for (final research in [direct.research, domain.state.research]) {
     _expectResearchImmutable(research);
   }
-  for (final registry in [
-    direct.wonderRegistry,
-    persistent.state.wonderRegistry,
-    domain.state.wonderRegistry,
-  ]) {
+  for (final registry in [direct.wonderRegistry, domain.state.wonderRegistry]) {
     _expectRegistryImmutable(registry);
   }
   expect(direct.cities.last, same(before.cities.last));

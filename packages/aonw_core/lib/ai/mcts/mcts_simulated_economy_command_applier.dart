@@ -1,6 +1,7 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -25,28 +26,9 @@ final class MctsSimulatedEconomyCommandApplier {
   final List<GameCity> rememberedEnemyCities;
   final PlayerResearchState ownResearch;
 
-  MctsSimulatedCommandApplication applyFoundCity(FoundCityCommand command) {
-    final result = CityFoundingCommandResolver.foundCity(
-      units: [...ownUnits, ...visibleEnemyUnits],
-      cities: [...ownCities, ...rememberedEnemyCities],
-      cityFoundingDraft: null,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-      mapTiles: view.mapData,
-    );
-    if (!result.accepted) return unchangedCommandApplication;
-    return (
-      nextOwnUnits: List<GameUnit>.unmodifiable(
-        result.units.take(ownUnits.length),
-      ),
-      nextVisibleEnemyUnits: visibleEnemyUnits,
-      nextOwnCities: ownCities,
-      nextRememberedEnemyCities: rememberedEnemyCities,
-      nextOwnResearch: ownResearch,
-    );
-  }
-
-  PlayerResearchState applySelectTechnology(SelectTechnologyCommand command) {
+  MctsSimulatedCommandApplication applySelectTechnology(
+    SelectTechnologyCommand command,
+  ) {
     final result = SelectTechnologyResolver.selectTechnology(
       research: _researchState,
       cities: ownCities,
@@ -59,140 +41,98 @@ final class MctsSimulatedEconomyCommandApplier {
       // separate, behavior-changing fix with its own characterization.
       paceBalance: PaceBalance.unlimited,
     );
-    return result.accepted
-        ? result.research.forPlayer(command.playerId)
-        : ownResearch;
-  }
-
-  MctsSimulatedCommandApplication applySelectWorkerImprovement(
-    SelectWorkerImprovementCommand command,
-  ) {
-    final result = const PersistentWorkerCommandResolver()
-        .selectWorkerImprovement(
-          state: _persistentState(),
-          command: command,
-          actorPlayerId: view.forPlayerId,
-          mapTiles: view.mapData,
-          cityRuleset: view.ruleset.city,
-          technologyRuleset: view.ruleset.technology,
-          paceBalance: view.ruleset.paceBalance,
-        );
     if (!result.accepted) return unchangedCommandApplication;
-    return _applicationFromPersistent(result.state);
+    final currentEngineSnapshot = view.engineSnapshot;
+    final nextEngineSnapshot = currentEngineSnapshot?.copyWith(
+      domain: currentEngineSnapshot.domain.copyWith(research: result.research),
+    );
+    return (
+      nextView: GameView(
+        forPlayerId: view.forPlayerId,
+        turn: view.turn,
+        ownUnits: view.ownUnits,
+        ownCities: view.ownCities,
+        artifacts: view.artifacts,
+        ownGold: view.ownGold,
+        ownWarWeariness: view.ownWarWeariness,
+        ownStabilityNet: view.ownStabilityNet,
+        research: result.research,
+        ownResearch: result.research.forPlayer(view.forPlayerId),
+        ownImprovements: view.ownImprovements,
+        resourceTradeAgreements: view.resourceTradeAgreements,
+        mapObjectiveHoldStatesByObjectiveId:
+            view.mapObjectiveHoldStatesByObjectiveId,
+        diplomacy: view.diplomacy,
+        visibleEnemyUnits: view.visibleEnemyUnits,
+        movementBlockingUnits: view.movementBlockingUnits,
+        rememberedEnemyCities: view.rememberedEnemyCities,
+        activeHostilePlayerIds: view.activeHostilePlayerIds,
+        recentHostilePlayerIds: view.recentHostilePlayerIds,
+        pressureTargetPlayerIds: view.pressureTargetPlayerIds,
+        defaultNeutralPlayerIds: view.defaultNeutralPlayerIds,
+        pendingCityAttackThreats: view.pendingCityAttackThreats,
+        visibility: view.visibility,
+        mapData: view.mapData,
+        ruleset: view.ruleset,
+        wonderRegistry: view.wonderRegistry,
+        engineSnapshot: nextEngineSnapshot,
+      ),
+    );
   }
 
-  MctsSimulatedCommandApplication applyAssignWorkerToHex(
-    AssignWorkerToHexCommand command,
+  MctsSimulatedCommandApplication applyEngineCommand(
+    DomainCommand command,
+    int commandTick,
   ) {
-    final result = const PersistentWorkerCommandResolver().assignWorkerToHex(
+    final engineSnapshot =
+        view.engineSnapshot ??
+        (throw StateError(
+          'MCTS city-economy commands require a canonical engine snapshot.',
+        ));
+    final result = const SimulationGameEngineAdapter().apply(
+      snapshot: engineSnapshot,
       state: _persistentState(),
       command: command,
       actorPlayerId: view.forPlayerId,
-      mapTiles: view.mapData,
+      commandTick: commandTick,
+      mapView: view.mapData,
+      ruleset: view.ruleset,
     );
     if (!result.accepted) return unchangedCommandApplication;
-    return _applicationFromPersistent(result.state);
-  }
-
-  List<GameCity> applyStartBuilding(StartBuildingCommand command) {
-    final result = CityProductionCommandResolver.startBuilding(
-      cities: ownCities,
-      research: _researchState,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-      mapTiles: view.mapData,
-      cityRuleset: view.ruleset.city,
-      technologyRuleset: view.ruleset.technology,
-      paceBalance: view.ruleset.paceBalance,
+    return _applicationFromPersistent(
+      result.state,
+      engineSnapshot: result.snapshot,
     );
-    return result.accepted ? result.cities : ownCities;
   }
 
-  List<GameCity> applyStartUnitProduction(StartUnitProductionCommand command) {
-    final result = CityProductionCommandResolver.startUnitProduction(
-      cities: ownCities,
-      units: ownUnits,
-      artifacts: view.artifacts,
-      fieldImprovements: view.ownImprovements,
-      research: _researchState,
-      resourceTradeAgreements: view.resourceTradeAgreements,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-      mapView: view.mapData,
-      cityRuleset: view.ruleset.city,
-      technologyRuleset: view.ruleset.technology,
-      paceBalance: view.ruleset.paceBalance,
-    );
-    return result.accepted ? result.cities : ownCities;
-  }
+  MctsSimulatedCommandApplication get unchangedCommandApplication =>
+      (nextView: view);
 
-  List<GameCity> applyStartCityProject(StartCityProjectCommand command) {
-    final result = CityProductionCommandResolver.startCityProject(
-      cities: ownCities,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-      cityRuleset: view.ruleset.city,
-      paceBalance: view.ruleset.paceBalance,
-    );
-    return result.accepted ? result.cities : ownCities;
-  }
-
-  List<GameCity> applySetCitySpecialization(
-    SetCitySpecializationCommand command,
-  ) {
-    final result = CityProductionCommandResolver.setCitySpecialization(
-      cities: ownCities,
-      research: _researchState,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-    );
-    return result.accepted ? result.cities : ownCities;
-  }
-
-  MctsSimulatedCommandApplication get unchangedCommandApplication => (
-    nextOwnUnits: ownUnits,
-    nextVisibleEnemyUnits: visibleEnemyUnits,
-    nextOwnCities: ownCities,
-    nextRememberedEnemyCities: rememberedEnemyCities,
-    nextOwnResearch: ownResearch,
-  );
-
-  ResearchState get _researchState {
-    return view.research.updatePlayer(view.forPlayerId, ownResearch);
-  }
+  ResearchState get _researchState => view.research;
 
   PersistentGameState _persistentState() {
     return MctsSimulationProjection.persistentStateFromView(
       view,
-      units: [...ownUnits, ...visibleEnemyUnits],
+      units: view.movementBlockingUnits,
       cities: [...ownCities, ...rememberedEnemyCities],
       research: _researchState,
     );
   }
 
   MctsSimulatedCommandApplication _applicationFromPersistent(
-    PersistentGameState state,
-  ) {
-    final nextView = GameView.fromPersistentState(
+    PersistentGameState state, {
+    CanonicalGameSnapshot? engineSnapshot,
+  }) {
+    final nextView = MctsSimulationProjection.viewFromPersistentState(
       state,
-      forPlayerId: view.forPlayerId,
-      turn: view.turn,
-      mapData: view.mapData,
-      ruleset: view.ruleset,
-      engineSnapshot: view.engineSnapshot,
-      activeHostilePlayerIds: view.activeHostilePlayerIds,
-      recentHostilePlayerIds: view.recentHostilePlayerIds,
-      pressureTargetPlayerIds: view.pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: view.defaultNeutralPlayerIds,
-      pendingCityAttackThreats: view.pendingCityAttackThreats,
-      ignoreFogOfWar: !view.visibility.isEnabled,
+      previousView: view,
+      engineSnapshot:
+          engineSnapshot ??
+          (view.engineSnapshot ??
+              (throw StateError(
+                'MCTS simulation requires a canonical engine snapshot.',
+              ))),
     );
-    return (
-      nextOwnUnits: nextView.ownUnits,
-      nextVisibleEnemyUnits: nextView.visibleEnemyUnits,
-      nextOwnCities: nextView.ownCities,
-      nextRememberedEnemyCities: nextView.rememberedEnemyCities,
-      nextOwnResearch: nextView.ownResearch,
-    );
+    return (nextView: nextView);
   }
 }

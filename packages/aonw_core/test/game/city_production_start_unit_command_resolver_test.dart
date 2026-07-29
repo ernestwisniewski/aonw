@@ -1,7 +1,7 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
-import 'persistent_city_production_start_unit_characterization_test_support.dart';
+import 'city_production_start_unit_test_support.dart';
 
 void main() {
   group('CityProductionCommandResolver.startUnitProduction', () {
@@ -149,68 +149,6 @@ void main() {
       expect(cities.first.productionOverflow, 100);
     });
   });
-
-  group('startUnitProduction adapters', () {
-    test('preserve persistent/domain parity and structural sharing', () {
-      final agreement = unitCharacterizationIronImport();
-      final persistent = unitCharacterizationState(
-        cities: unitCharacterizationCitiesWithTarget(
-          unitCharacterizationCity(productionOverflow: 100),
-        ),
-        research: unitCharacterizationResearch({TechnologyId.writing}),
-        resourceTradeAgreements: [agreement],
-      );
-      final domain = _domainFromPersistent(persistent);
-
-      final results = _startAdapters(
-        persistent: persistent,
-        domain: domain,
-        command: const StartUnitProductionCommand(
-          'city_1',
-          GameUnitType.warship,
-        ),
-        mapView: unitCharacterizationMap(coastal: true),
-        cityRuleset: _customUnitRuleset(),
-        technologyRuleset: _customUnitTechnologyRuleset(),
-        paceBalance: PaceBalance.standard60,
-      );
-
-      expect(results.persistent.accepted, isTrue);
-      expect(results.domain.accepted, isTrue);
-      expect(results.persistent.reason, isNull);
-      expect(results.domain.reason, isNull);
-      expect(results.persistent.events, isEmpty);
-      expect(results.persistent.state.cities, results.domain.state.cities);
-      _expectPersistentAcceptedSharing(persistent, results.persistent.state);
-      _expectDomainAcceptedSharing(domain, results.domain.state);
-    });
-
-    test('preserve complete state identity on rejection', () {
-      final persistent = unitCharacterizationState(
-        cities: unitCharacterizationCitiesWithTarget(
-          unitCharacterizationCity(id: 'other_city'),
-        ),
-      );
-      final domain = _domainFromPersistent(persistent);
-      final results = _startAdapters(
-        persistent: persistent,
-        domain: domain,
-        command: const StartUnitProductionCommand(
-          'missing_city',
-          GameUnitType.warrior,
-        ),
-        mapView: unitCharacterizationMap(),
-      );
-
-      expect(results.persistent.accepted, isFalse);
-      expect(results.domain.accepted, isFalse);
-      expect(results.persistent.reason, 'city_not_found');
-      expect(results.domain.reason, 'city_not_found');
-      expect(results.persistent.state, same(persistent));
-      expect(results.domain.state, same(domain));
-      expect(results.persistent.events, isEmpty);
-    });
-  });
 }
 
 CityProductionCommandResult _startKernel({
@@ -255,70 +193,6 @@ void _expectKernelRejected({
   expect(result.cities, same(state.cities));
 }
 
-({PersistentCityProductionResult persistent, DomainCityProductionResult domain})
-_startAdapters({
-  required PersistentGameState persistent,
-  required DomainState domain,
-  required StartUnitProductionCommand command,
-  required MapReadView mapView,
-  CityRuleset cityRuleset = CityRulesets.standard,
-  TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-  PaceBalance paceBalance = PaceBalance.unlimited,
-}) {
-  return (
-    persistent: const PersistentCityProductionResolver().startUnitProduction(
-      state: persistent,
-      command: command,
-      actorPlayerId: unitCharacterizationPlayerId,
-      mapView: mapView,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: paceBalance,
-    ),
-    domain: const DomainCityProductionResolver().startUnitProduction(
-      state: domain,
-      command: command,
-      actorPlayerId: unitCharacterizationPlayerId,
-      mapView: mapView,
-      cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
-      paceBalance: paceBalance,
-    ),
-  );
-}
-
-DomainState _domainFromPersistent(PersistentGameState state) {
-  return DomainState.snapshot(
-    turn: 7,
-    matchRules: MatchRules.standard,
-    participants: const [
-      Player(
-        id: unitCharacterizationPlayerId,
-        name: 'One',
-        colorValue: 0xFF336699,
-        country: PlayerCountry.poland,
-      ),
-      Player(
-        id: unitCharacterizationOtherPlayerId,
-        name: 'Two',
-        colorValue: 0xFF993333,
-        country: PlayerCountry.france,
-      ),
-    ],
-    playerGold: state.playerGold,
-    playerWarWeariness: state.playerWarWeariness,
-    playerStabilityNet: state.playerStabilityNet,
-    units: state.units,
-    cities: state.cities,
-    artifacts: state.artifacts,
-    fieldImprovements: state.fieldImprovements,
-    fogOfWar: state.fogOfWar,
-    research: state.research,
-    wonderRegistry: state.wonderRegistry,
-    resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-  );
-}
-
 CityRuleset _customUnitRuleset() {
   final warship = CityRulesets.standard.unitDefinitionFor(GameUnitType.warship);
   return CityRulesets.standard.copyWith(
@@ -359,31 +233,4 @@ TechnologyRuleset _customUnitTechnologyRuleset() {
       ),
     },
   );
-}
-
-void _expectPersistentAcceptedSharing(
-  PersistentGameState before,
-  PersistentGameState after,
-) {
-  expect(after, isNot(same(before)));
-  expect(after.cities, isNot(same(before.cities)));
-  expect(after.cities.first, isNot(same(before.cities.first)));
-  expect(after.cities.last, same(before.cities.last));
-  expect(after.units, same(before.units));
-  expect(after.artifacts, same(before.artifacts));
-  expect(after.fieldImprovements, same(before.fieldImprovements));
-  expect(after.research, same(before.research));
-  expect(after.runtimeState, same(before.runtimeState));
-}
-
-void _expectDomainAcceptedSharing(DomainState before, DomainState after) {
-  expect(after, isNot(same(before)));
-  expect(after.cities, isNot(same(before.cities)));
-  expect(after.cities.first, isNot(same(before.cities.first)));
-  expect(after.cities.last, same(before.cities.last));
-  expect(after.units, same(before.units));
-  expect(after.artifacts, same(before.artifacts));
-  expect(after.fieldImprovements, same(before.fieldImprovements));
-  expect(after.research, same(before.research));
-  expect(after.resourceTradeAgreements, same(before.resourceTradeAgreements));
 }

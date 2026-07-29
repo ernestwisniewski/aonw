@@ -1,7 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -82,41 +80,26 @@ void main() {
       final mapData = _map7x7();
       final settler = _settler(col: 3, row: 3);
 
-      final stateWithUnit = GameState(
+      final scheduled = GameState(
         playerCountries: const {'player_1': PlayerCountry.france},
-        units: [settler],
+        units: [
+          settler.copyWithCityFoundingJob(
+            CityFoundingJob(
+              center: const CityHex(col: 3, row: 3),
+              controlledHexes: const [
+                CityHex(col: 3, row: 2),
+                CityHex(col: 4, row: 3),
+              ],
+              remainingTurns: 1,
+              totalTurns: 1,
+            ),
+          ),
+        ],
         activePlayerId: 'player_1',
-      ).copyWithInteraction(selection: GameSelection.unit(settler));
-
-      final started = CityFoundingReducer.startCityFounding(
-        stateWithUnit,
-        mapData,
-      );
-      final stateWithDraft = started.copyWithInteraction(
-        cityFoundingDraft: started.cityFoundingDraft!.copyWith(
-          controlledHexes: const [
-            CityHex(col: 3, row: 2),
-            CityHex(col: 4, row: 3),
-          ],
-        ),
       );
 
-      expect(
-        stateWithDraft.cityFoundingDraft,
-        isNotNull,
-        reason: 'Draft should be set after startCityFounding',
-      );
-
-      final scheduled = CityFoundingReducer.confirmCityFounding(
-        stateWithDraft,
-        FoundCityCommand(
-          settler.id,
-          controlledHexes: stateWithDraft.cityFoundingDraft!.controlledHexes,
-        ),
-        mapData,
-      );
       final transition = EndTurnReducer.advanceCitiesForPlayer(
-        scheduled.state,
+        scheduled,
         'player_1',
         mapData,
       );

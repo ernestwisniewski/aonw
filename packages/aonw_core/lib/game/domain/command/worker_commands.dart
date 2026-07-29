@@ -1,7 +1,11 @@
 part of 'game_command.dart';
 
+/// Shared presentation boundary for the worker improvement picker.
+abstract interface class WorkerInteractionCommand {}
+
 /// Player begins worker action selection for [unitId].
-final class StartWorkerActionSelectionCommand extends GameIntent {
+final class StartWorkerActionSelectionCommand extends GameIntent
+    implements WorkerInteractionCommand {
   const StartWorkerActionSelectionCommand(this.unitId);
 
   final String unitId;
@@ -15,9 +19,11 @@ final class StartWorkerActionSelectionCommand extends GameIntent {
 }
 
 /// Player chooses the intended worker improvement type.
-final class SelectWorkerImprovementCommand extends DomainCommand {
+final class SelectWorkerImprovementCommand extends UnitDomainCommand
+    implements WorkerInteractionCommand {
   const SelectWorkerImprovementCommand(this.unitId, this.improvementType);
 
+  @override
   final String unitId;
   final FieldImprovementType improvementType;
 
@@ -33,9 +39,10 @@ final class SelectWorkerImprovementCommand extends DomainCommand {
 }
 
 /// Player confirms the selected worker improvement on the current tile.
-final class ConfirmWorkerImprovementCommand extends DomainCommand {
+final class ConfirmWorkerImprovementCommand extends UnitDomainCommand {
   const ConfirmWorkerImprovementCommand(this.unitId, {this.improvementType});
 
+  @override
   final String unitId;
   final FieldImprovementType? improvementType;
 
@@ -51,7 +58,8 @@ final class ConfirmWorkerImprovementCommand extends DomainCommand {
 }
 
 /// Player cancels worker action selection for [unitId].
-final class CancelWorkerActionSelectionCommand extends GameIntent {
+final class CancelWorkerActionSelectionCommand extends GameIntent
+    implements WorkerInteractionCommand {
   const CancelWorkerActionSelectionCommand(this.unitId);
 
   final String unitId;
@@ -65,9 +73,10 @@ final class CancelWorkerActionSelectionCommand extends GameIntent {
 }
 
 /// Player cancels the worker's active improvement job.
-final class CancelWorkerJobCommand extends DomainCommand {
+final class CancelWorkerJobCommand extends UnitDomainCommand {
   const CancelWorkerJobCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -79,9 +88,10 @@ final class CancelWorkerJobCommand extends DomainCommand {
 }
 
 /// Player assigns the worker to the current improved city tile for bonus yield.
-final class AssignWorkerToHexCommand extends DomainCommand {
+final class AssignWorkerToHexCommand extends UnitDomainCommand {
   const AssignWorkerToHexCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -93,9 +103,10 @@ final class AssignWorkerToHexCommand extends DomainCommand {
 }
 
 /// Player detaches the worker from its active tile assignment.
-final class CancelWorkerAssignmentCommand extends DomainCommand {
+final class CancelWorkerAssignmentCommand extends UnitDomainCommand {
   const CancelWorkerAssignmentCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override

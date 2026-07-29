@@ -17,6 +17,8 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/canonical_command_test_dispatch.dart';
+
 MapData _emptyMap() => MapData(cols: 5, rows: 5, tiles: []);
 
 MapData _landMap() => MapData(
@@ -67,7 +69,6 @@ void main() {
   setUp(() {
     reducer = GameStateReducer(mapData: _emptyMap());
   });
-  // GameStateTransition
 
   group('GameStateTransition', () {
     test('holds state and defaults to empty uiEffects and events', () {
@@ -100,10 +101,8 @@ void main() {
         fromRow: 1,
         steps: [step],
       );
-      expect(effect, isA<RendererEffect>());
       expect(effect.unitId, 'u1');
-      expect(effect.fromCol, 0);
-      expect(effect.fromRow, 1);
+      expect((effect.fromCol, effect.fromRow), (0, 1));
       expect(effect.steps, equals(const [step]));
     });
 
@@ -113,14 +112,12 @@ void main() {
         defenderUnitId: 'defender',
         attackerKilled: true,
       );
-      expect(effect, isA<RendererEffect>());
       expect(effect.attackerUnitId, 'attacker');
       expect(effect.defenderUnitId, 'defender');
       expect(effect.attackerKilled, isTrue);
       expect(effect.defenderKilled, isFalse);
     });
   });
-  // Stub commands
 
   group('stub commands (no-op)', () {
     const state = GameState(activePlayerId: 'p1');
@@ -146,7 +143,11 @@ void main() {
 
     for (final cmd in stubCommands) {
       test('${cmd.runtimeType} returns unchanged state', () {
-        final result = reducer.reduce(state, cmd);
+        final result = dispatchCanonicalTestCommand(
+          reducer: reducer,
+          state: state,
+          command: cmd,
+        );
         expect(result.state, equals(state));
         expect(result.uiEffects, isEmpty);
       });
@@ -183,7 +184,6 @@ void main() {
       expect(result.state.selection?.tile?.row, 3);
     });
   });
-  // EndTurnCommand
 
   group('EndTurnCommand', () {
     test('always emits TurnEndedEvent even when no state data changes', () {
@@ -203,12 +203,11 @@ void main() {
         playerGold: const {'p1': 5},
       );
 
-      final queued = reducer
-          .reduce(
-            state,
-            const StartCityProjectCommand('c1', CityProjectType.wealth),
-          )
-          .state;
+      final queued = dispatchCanonicalTestCommand(
+        reducer: reducer,
+        state: state,
+        command: const StartCityProjectCommand('c1', CityProjectType.wealth),
+      ).state;
       final result = reducer.reduce(queued, const EndTurnCommand('p1'));
 
       expect(result.state.playerGold['p1'], 6);
@@ -235,12 +234,14 @@ void main() {
           ),
         );
 
-        final queued = reducer
-            .reduce(
-              state,
-              const StartCityProjectCommand('c1', CityProjectType.research),
-            )
-            .state;
+        final queued = dispatchCanonicalTestCommand(
+          reducer: reducer,
+          state: state,
+          command: const StartCityProjectCommand(
+            'c1',
+            CityProjectType.research,
+          ),
+        ).state;
         final result = reducer.reduce(queued, const EndTurnCommand('p1'));
 
         expect(
@@ -319,7 +320,6 @@ void main() {
       expect(result.events, isEmpty);
     });
   });
-  // SetActivePlayerCommand
 
   group('SetActivePlayerCommand', () {
     test('updates activePlayerId and activePlayerCanAct', () {

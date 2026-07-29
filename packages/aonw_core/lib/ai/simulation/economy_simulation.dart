@@ -3,6 +3,7 @@ import 'package:aonw_core/ai/simulation/economy_simulation_command_staleness.dar
 import 'package:aonw_core/ai/simulation/economy_simulation_command_stats.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -26,7 +27,6 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 
 part 'economy_simulation_command_applier.dart';
-part 'economy_simulation_command_applier_production.dart';
 part 'economy_simulation_hostility_memory.dart';
 part 'economy_simulation_setup.dart';
 part 'economy_simulation_strategy_selector.dart';

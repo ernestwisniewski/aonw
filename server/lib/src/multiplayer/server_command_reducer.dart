@@ -7,20 +7,12 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
-part 'server_command_reducer_artifact.dart';
-part 'server_command_reducer_city.dart';
-part 'server_command_reducer_city_expansion.dart';
-part 'server_command_reducer_city_founding.dart';
 part 'server_command_reducer_diplomacy.dart';
-part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
-part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
-part 'server_command_reducer_resource_trade.dart';
 part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
-part 'server_command_reducer_worker.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 
@@ -181,6 +173,25 @@ class ServerCommandReducer {
       case SkipUnitTurnCommand():
       case FortifyUnitCommand():
       case AttackHexCommand():
+      case FoundCityCommand():
+      case ToggleWorkedHexCommand():
+      case SelectCityExpansionHexCommand():
+      case StartBuildingCommand():
+      case StartUnitProductionCommand():
+      case StartCityProjectCommand():
+      case StartWonderCommand():
+      case SetCitySpecializationCommand():
+      case RushProductionCommand():
+      case SelectWorkerImprovementCommand():
+      case ConfirmWorkerImprovementCommand():
+      case CancelWorkerJobCommand():
+      case AssignWorkerToHexCommand():
+      case CancelWorkerAssignmentCommand():
+      case StartArtifactExcavationCommand():
+      case StoreArtifactInCityCommand():
+      case TradeArtifactCommand():
+      case OpenResourceTradeCommand():
+      case OpenResourceExchangeCommand():
         return _applyDomainCommandEngine(
           snapshot,
           command as DomainCommand,
@@ -189,45 +200,11 @@ class ServerCommandReducer {
           loadedMap.mapView,
           ruleset,
         );
-      case OpenResourceTradeCommand():
-        return _applyOpenResourceTrade(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-        );
-      case OpenResourceExchangeCommand():
-        return _applyOpenResourceExchange(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-        );
       case DiplomaticCommand():
         return _applyDiplomacyCommand(
           snapshot: snapshot,
           command: command,
           actorPlayerId: actorPlayerId,
-        );
-      case FoundCityCommand():
-        return _applyCityFoundingCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-        );
-      case SetCitySpecializationCommand():
-      case StartBuildingCommand():
-      case StartUnitProductionCommand():
-      case StartCityProjectCommand():
-      case StartWonderCommand():
-      case RushProductionCommand():
-        return _applyProductionCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapView: loadedMap.mapView,
-          ruleset: ruleset,
         );
       case SelectTechnologyCommand():
         return _applySelectTechnologyCommand(
@@ -236,66 +213,6 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
           ruleset: ruleset,
-        );
-      case ToggleWorkedHexCommand():
-        return _applyToggleWorkedHexCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          ruleset: ruleset,
-        );
-      case SelectCityExpansionHexCommand():
-        return _applySelectCityExpansionHexCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-          ruleset: ruleset,
-        );
-      case SelectWorkerImprovementCommand():
-        return _applySelectWorkerImprovement(
-          snapshot,
-          command,
-          actorPlayerId,
-          loadedMap.mapView,
-          ruleset,
-        );
-      case ConfirmWorkerImprovementCommand():
-        return _applyConfirmWorkerImprovement(
-          snapshot,
-          command,
-          actorPlayerId,
-          loadedMap.mapView,
-          ruleset,
-        );
-      case CancelWorkerJobCommand():
-        return _applyCancelWorkerJob(snapshot, command, actorPlayerId);
-      case AssignWorkerToHexCommand():
-        return _applyAssignWorkerToHex(
-          snapshot,
-          command,
-          actorPlayerId,
-          loadedMap.mapView,
-        );
-      case CancelWorkerAssignmentCommand():
-        return _applyCancelWorkerAssignment(snapshot, command, actorPlayerId);
-      case StartArtifactExcavationCommand():
-        return _applyStartArtifactExcavationCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-      case StoreArtifactInCityCommand():
-        return _applyStoreArtifactInCityCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-      case TradeArtifactCommand():
-        return _applyTradeArtifactCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
         );
       case ResetUnitMovementCommand():
         return _CommandApplication.reject(

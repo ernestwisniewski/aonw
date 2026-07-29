@@ -19,6 +19,13 @@ GameState acceptedEngineCommandInteractionSource({
     GameEngineCommandFamily.unitAction => _unitAction(currentState, command),
     GameEngineCommandFamily.movement => _movement(currentState, command),
     GameEngineCommandFamily.combat => _combat(currentState, command),
+    GameEngineCommandFamily.city ||
+    GameEngineCommandFamily.production ||
+    GameEngineCommandFamily.worker ||
+    GameEngineCommandFamily.artifactTrade => _cityEconomy(
+      currentState,
+      command,
+    ),
   };
 }
 
@@ -32,7 +39,11 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
     return switch (family) {
       GameEngineCommandFamily.unitAction ||
       GameEngineCommandFamily.movement ||
-      GameEngineCommandFamily.combat => GameStateTransition(
+      GameEngineCommandFamily.combat ||
+      GameEngineCommandFamily.city ||
+      GameEngineCommandFamily.production ||
+      GameEngineCommandFamily.worker ||
+      GameEngineCommandFamily.artifactTrade => GameStateTransition(
         state: acceptedEngineCommandInteractionSource(
           currentState: currentState,
           command: command,
@@ -42,6 +53,32 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
       null => reduce(currentState, command, context: context),
     };
   }
+}
+
+GameState _cityEconomy(GameState state, DomainCommand command) {
+  return switch (command) {
+    FoundCityCommand(:final founderId) => _clearOwnedInteraction(
+      state,
+      founderId,
+      clearDraft: true,
+    ),
+    SelectWorkerImprovementCommand(:final unitId) ||
+    ConfirmWorkerImprovementCommand(:final unitId) ||
+    AssignWorkerToHexCommand(:final unitId) => _clearOwnedInteraction(
+      state,
+      unitId,
+      clearPending: true,
+      clearMoveTargetingUnconditionally: true,
+    ),
+    StartArtifactExcavationCommand() ||
+    StoreArtifactInCityCommand() ||
+    TradeArtifactCommand() => state.copyWithInteraction(
+      selection: null,
+      movePreview: null,
+      moveCommandActive: false,
+    ),
+    _ => state,
+  };
 }
 
 GameState _unitAction(GameState state, DomainCommand command) {

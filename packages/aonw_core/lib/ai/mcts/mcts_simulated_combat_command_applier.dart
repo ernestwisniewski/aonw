@@ -45,7 +45,7 @@ final class MctsSimulatedCombatCommandApplier {
           if (!reviewedUnitIds.contains(blocker.id)) blocker,
       ],
       cities: [...ownCities, ...rememberedEnemyCities],
-      research: view.research.updatePlayer(view.forPlayerId, ownResearch),
+      research: view.research,
     );
     final result = const SimulationGameEngineAdapter().apply(
       snapshot: engineSnapshot,
@@ -60,34 +60,14 @@ final class MctsSimulatedCombatCommandApplier {
           : CombatCommandVisibilityMode.unrestricted,
     );
     if (!result.accepted) return _unchangedCommandApplication;
-    final nextView = GameView.fromPersistentState(
+    final nextView = MctsSimulationProjection.viewFromPersistentState(
       result.state,
-      forPlayerId: view.forPlayerId,
-      turn: view.turn,
-      mapData: view.mapData,
-      ruleset: view.ruleset,
+      previousView: view,
       engineSnapshot: result.snapshot,
-      activeHostilePlayerIds: view.activeHostilePlayerIds,
-      recentHostilePlayerIds: view.recentHostilePlayerIds,
-      pressureTargetPlayerIds: view.pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: view.defaultNeutralPlayerIds,
-      pendingCityAttackThreats: view.pendingCityAttackThreats,
-      ignoreFogOfWar: !view.visibility.isEnabled,
     );
-    return (
-      nextOwnUnits: nextView.ownUnits,
-      nextVisibleEnemyUnits: nextView.visibleEnemyUnits,
-      nextOwnCities: nextView.ownCities,
-      nextRememberedEnemyCities: nextView.rememberedEnemyCities,
-      nextOwnResearch: nextView.ownResearch,
-    );
+    return (nextView: nextView);
   }
 
-  MctsSimulatedCommandApplication get _unchangedCommandApplication => (
-    nextOwnUnits: ownUnits,
-    nextVisibleEnemyUnits: visibleEnemyUnits,
-    nextOwnCities: ownCities,
-    nextRememberedEnemyCities: rememberedEnemyCities,
-    nextOwnResearch: ownResearch,
-  );
+  MctsSimulatedCommandApplication get _unchangedCommandApplication =>
+      (nextView: view);
 }

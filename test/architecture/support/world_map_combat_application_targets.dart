@@ -134,24 +134,6 @@ const _applicationTargets = [
   _Target(
     path:
         'packages/aonw_core/lib/game/domain/trade/'
-        'persistent_resource_trade_resolver.dart',
-    owner: 'PersistentResourceTradeResolver',
-    boundaries: [
-      _Boundary.method(
-        'openGoldForResourceTrade',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        'openResourceForResourceTrade',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/trade/'
         'domain_resource_trade_command_resolver.dart',
     owner: 'DomainResourceTradeCommandResolver',
     boundaries: [
@@ -162,22 +144,6 @@ const _applicationTargets = [
       ),
       _Boundary.method(
         'openResourceForResourceTrade',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-    ],
-  ),
-  _Target(
-    path: 'lib/game/domain/reducer/diplomacy/resource_trade_reducer.dart',
-    owner: 'ResourceTradeReducer',
-    boundaries: [
-      _Boundary.method(
-        'openTrade',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        'openExchange',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),

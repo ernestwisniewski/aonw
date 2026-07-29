@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/advance_turn_snapshot.dart';
+import 'package:aonw/game/application/services/local_city_economy_command_resolver.dart';
 import 'package:aonw/game/application/services/local_combat_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
@@ -68,24 +69,24 @@ class LocalCommandResolver {
       );
     }
     if (engineFamily == GameEngineCommandFamily.combat) {
-      final combat =
-          LocalCombatCommandResolver(
-            mapView: reducer.mapData,
-            ruleset: reducer.ruleset,
-          ).resolve(
-            baseSnapshot: baseSnapshot,
-            currentState: currentState,
-            command: command as AttackHexCommand,
-            savedAt: savedAt,
-            context: effectiveContext,
-          );
-      return LocalCommandResolution(
-        snapshot: combat.snapshot,
-        state: combat.state,
-        events: combat.events,
-        uiEffects: combat.uiEffects,
+      return _resolveCombat(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command as AttackHexCommand,
+        savedAt: savedAt,
         context: effectiveContext,
-        combatAnimations: combat.combatAnimations,
+      );
+    }
+    if (engineFamily == GameEngineCommandFamily.city ||
+        engineFamily == GameEngineCommandFamily.production ||
+        engineFamily == GameEngineCommandFamily.worker ||
+        engineFamily == GameEngineCommandFamily.artifactTrade) {
+      return _resolveCityEconomy(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command as DomainCommand,
+        savedAt: savedAt,
+        context: effectiveContext,
       );
     }
     return _resolveReducerCommand(
@@ -172,6 +173,61 @@ class LocalCommandResolver {
       events: movement.events,
       uiEffects: movement.uiEffects,
       context: context,
+    );
+  }
+
+  LocalCommandResolution _resolveCityEconomy({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    final resolution =
+        LocalCityEconomyCommandResolver(
+          mapView: reducer.mapData,
+          ruleset: reducer.ruleset,
+        ).resolve(
+          baseSnapshot: baseSnapshot,
+          currentState: currentState,
+          command: command,
+          savedAt: savedAt,
+          context: context,
+        );
+    return LocalCommandResolution(
+      snapshot: resolution.snapshot,
+      state: resolution.state,
+      events: resolution.events,
+      uiEffects: const [],
+      context: context,
+    );
+  }
+
+  LocalCommandResolution _resolveCombat({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required AttackHexCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    final combat =
+        LocalCombatCommandResolver(
+          mapView: reducer.mapData,
+          ruleset: reducer.ruleset,
+        ).resolve(
+          baseSnapshot: baseSnapshot,
+          currentState: currentState,
+          command: command,
+          savedAt: savedAt,
+          context: context,
+        );
+    return LocalCommandResolution(
+      snapshot: combat.snapshot,
+      state: combat.state,
+      events: combat.events,
+      uiEffects: combat.uiEffects,
+      context: context,
+      combatAnimations: combat.combatAnimations,
     );
   }
 

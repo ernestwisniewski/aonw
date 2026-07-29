@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -217,7 +218,7 @@ void main() {
   });
 
   group('TracingMctsSimulator city founding parity', () {
-    test('schedules city founding like PersistentCityFoundingResolver', () {
+    test('schedules city founding like the canonical game engine', () {
       final settler = GameUnit.produced(
         id: 'settler_1',
         ownerPlayerId: 'player_1',
@@ -516,62 +517,14 @@ void main() {
   });
 
   group('TracingMctsSimulator city production parity', () {
-    test(
-      'starts building production like PersistentCityProductionResolver',
-      () {
-        final state = PersistentGameState(cities: [_city()]);
-        const command = StartBuildingCommand(
-          'city_1',
-          CityBuildingType.granary,
-        );
-
-        final persistent = const PersistentCityProductionResolver()
-            .startBuilding(
-              state: state,
-              command: command,
-              actorPlayerId: 'player_1',
-              mapTiles: WorldMapReadView(_worldMap()),
-            );
-        final simulated = _simulate(state, command);
-
-        expect(persistent.accepted, isTrue);
-        expect(
-          _cityById(simulated.ownCities, 'city_1').productionQueue,
-          _cityById(persistent.state.cities, 'city_1').productionQueue,
-        );
-      },
-    );
-
-    test('leaves city unchanged when building is locked', () {
+    test('starts building production like the canonical game engine', () {
       final state = PersistentGameState(cities: [_city()]);
-      const command = StartBuildingCommand('city_1', CityBuildingType.workshop);
+      const command = StartBuildingCommand('city_1', CityBuildingType.granary);
 
-      final persistent = const PersistentCityProductionResolver().startBuilding(
-        state: state,
-        command: command,
-        actorPlayerId: 'player_1',
-        mapTiles: WorldMapReadView(_worldMap()),
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
       );
-      final simulated = _simulate(state, command);
-
-      expect(persistent.accepted, isFalse);
-      expect(_cityById(simulated.ownCities, 'city_1'), _city());
-    });
-
-    test('starts unit production like PersistentCityProductionResolver', () {
-      final state = PersistentGameState(cities: [_city()]);
-      const command = StartUnitProductionCommand(
-        'city_1',
-        GameUnitType.warrior,
-      );
-
-      final persistent = const PersistentCityProductionResolver()
-          .startUnitProduction(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_1',
-            mapView: WorldMapReadView(_worldMap()),
-          );
       final simulated = _simulate(state, command);
 
       expect(persistent.accepted, isTrue);
@@ -581,19 +534,51 @@ void main() {
       );
     });
 
-    test('starts city project like PersistentCityProductionResolver', () {
+    test('leaves city unchanged when building is locked', () {
+      final state = PersistentGameState(cities: [_city()]);
+      const command = StartBuildingCommand('city_1', CityBuildingType.workshop);
+
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
+      final simulated = _simulate(state, command);
+
+      expect(persistent.accepted, isFalse);
+      expect(_cityById(simulated.ownCities, 'city_1'), _city());
+    });
+
+    test('starts unit production like the canonical game engine', () {
+      final state = PersistentGameState(cities: [_city()]);
+      const command = StartUnitProductionCommand(
+        'city_1',
+        GameUnitType.warrior,
+      );
+
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
+      final simulated = _simulate(state, command);
+
+      expect(persistent.accepted, isTrue);
+      expect(
+        _cityById(simulated.ownCities, 'city_1').productionQueue,
+        _cityById(persistent.state.cities, 'city_1').productionQueue,
+      );
+    });
+
+    test('starts city project like the canonical game engine', () {
       final state = PersistentGameState(cities: [_city()]);
       const command = StartCityProjectCommand(
         'city_1',
         CityProjectType.research,
       );
 
-      final persistent = const PersistentCityProductionResolver()
-          .startCityProject(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_1',
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
       expect(persistent.accepted, isTrue);
@@ -608,11 +593,9 @@ void main() {
       final state = PersistentGameState(cities: [city]);
       const command = StartBuildingCommand('city_1', CityBuildingType.granary);
 
-      final persistent = const PersistentCityProductionResolver().startBuilding(
-        state: state,
-        command: command,
-        actorPlayerId: 'player_1',
-        mapTiles: WorldMapReadView(_worldMap()),
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
       );
       final simulated = _simulate(state, command);
 
@@ -623,7 +606,7 @@ void main() {
       );
     });
 
-    test('sets city specialization like PersistentCityProductionResolver', () {
+    test('sets city specialization like the canonical game engine', () {
       final state = PersistentGameState(
         cities: [
           _city(buildings: {CityBuildingType.workshop}),
@@ -635,12 +618,10 @@ void main() {
         CitySpecializationType.industry,
       );
 
-      final persistent = const PersistentCityProductionResolver()
-          .setCitySpecialization(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_1',
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
       expect(persistent.accepted, isTrue);
@@ -657,12 +638,10 @@ void main() {
         CitySpecializationType.industry,
       );
 
-      final persistent = const PersistentCityProductionResolver()
-          .setCitySpecialization(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_1',
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
       expect(persistent.accepted, isFalse);
@@ -713,7 +692,7 @@ void main() {
   });
 
   group('TracingMctsSimulator worker parity', () {
-    test('starts worker improvement like PersistentWorkerCommandResolver', () {
+    test('starts worker improvement like the canonical game engine', () {
       final state = PersistentGameState(
         units: [_worker()],
         cities: [
@@ -727,17 +706,17 @@ void main() {
         FieldImprovementType.farm,
       );
 
-      final persistent = _resolvePersistentWorkerImprovement(state, command);
+      final canonical = _resolveWorkerImprovement(state, command);
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(canonical.accepted, isTrue);
       expect(
         _unitById(simulated.ownUnits, 'worker_1'),
-        _unitById(persistent.state.units, 'worker_1'),
+        _unitById(canonical.state.units, 'worker_1'),
       );
     });
 
-    test('assigns worker like PersistentWorkerCommandResolver', () {
+    test('assigns worker like the canonical game engine', () {
       final state = PersistentGameState(
         units: [_worker()],
         cities: [
@@ -754,13 +733,13 @@ void main() {
       );
       const command = AssignWorkerToHexCommand('worker_1');
 
-      final persistent = _resolvePersistentWorkerAssignment(state, command);
+      final canonical = _resolveWorkerAssignment(state, command);
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(canonical.accepted, isTrue);
       expect(
         _unitById(simulated.ownUnits, 'worker_1'),
-        _unitById(persistent.state.units, 'worker_1'),
+        _unitById(canonical.state.units, 'worker_1'),
       );
     });
   });
@@ -923,16 +902,11 @@ void main() {
   });
 }
 
-PersistentCityFoundingResult _resolvePersistentFounding(
+SimulationGameEngineResult _resolvePersistentFounding(
   PersistentGameState state,
   FoundCityCommand command,
 ) {
-  return const PersistentCityFoundingResolver().foundCity(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapTiles: WorldMapReadView(_worldMap()),
-  );
+  return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
 PersistentTurnCombatResult _resolvePersistentCombat(
@@ -974,30 +948,18 @@ PersistentResearchCommandResult _resolvePersistentResearch(
   );
 }
 
-PersistentWorkerCommandResult _resolvePersistentWorkerImprovement(
+SimulationGameEngineResult _resolveWorkerImprovement(
   PersistentGameState state,
   SelectWorkerImprovementCommand command,
 ) {
-  return const PersistentWorkerCommandResolver().selectWorkerImprovement(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapTiles: WorldMapReadView(_worldMap()),
-    cityRuleset: GameRuleset.defaults.city,
-    technologyRuleset: GameRuleset.defaults.technology,
-  );
+  return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
-PersistentWorkerCommandResult _resolvePersistentWorkerAssignment(
+SimulationGameEngineResult _resolveWorkerAssignment(
   PersistentGameState state,
   AssignWorkerToHexCommand command,
 ) {
-  return const PersistentWorkerCommandResolver().assignWorkerToHex(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapTiles: WorldMapReadView(_worldMap()),
-  );
+  return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
 PersistentTurnEconomyResult _advancePersistentEconomy(

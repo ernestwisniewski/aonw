@@ -81,16 +81,11 @@ void main() {
         FieldImprovementType.farm,
       );
 
-      final persistent = const PersistentWorkerCommandResolver()
-          .selectWorkerImprovement(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_2',
-            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
-            cityRuleset: GameRuleset.defaults.city,
-            technologyRuleset: GameRuleset.defaults.technology,
-            paceBalance: GameRuleset.defaults.paceBalance,
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+        actorPlayerId: 'player_2',
+      );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
             persistent.state,
@@ -125,16 +120,11 @@ void main() {
         improvementType: FieldImprovementType.farm,
       );
 
-      final persistent = const PersistentWorkerCommandResolver()
-          .confirmWorkerImprovement(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_2',
-            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
-            cityRuleset: GameRuleset.defaults.city,
-            technologyRuleset: GameRuleset.defaults.technology,
-            paceBalance: GameRuleset.defaults.paceBalance,
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+        actorPlayerId: 'player_2',
+      );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
             persistent.state,
@@ -166,13 +156,11 @@ void main() {
       final state = MctsSimulatorParityFixtures.opponentWorkerState();
       const command = AssignWorkerToHexCommand('worker_2');
 
-      final persistent = const PersistentWorkerCommandResolver()
-          .assignWorkerToHex(
-            state: state,
-            command: command,
-            actorPlayerId: 'player_2',
-            mapTiles: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
-          );
+      final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+        actorPlayerId: 'player_2',
+      );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
             persistent.state,

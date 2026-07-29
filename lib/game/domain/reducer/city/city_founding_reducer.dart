@@ -1,8 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -97,55 +95,5 @@ abstract final class CityFoundingReducer {
         controlledHexes: [...draft.controlledHexes, target],
       ),
     );
-  }
-
-  static GameStateTransition confirmCityFounding(
-    GameState state,
-    FoundCityCommand command,
-    MapTileLookup mapTiles, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    if (!context.canAct || (!context.hasActor && !state.activePlayerCanAct)) {
-      return GameStateTransition(state: state);
-    }
-
-    final result = CityFoundingCommandResolver.foundCity(
-      units: state.units,
-      cities: state.cities,
-      cityFoundingDraft: state.cityFoundingDraft,
-      command: command,
-      actorPlayerId: _actorPlayerId(state, command, context),
-      mapTiles: mapTiles,
-    );
-    if (!result.accepted) return GameStateTransition(state: state);
-
-    var next = state.copyWith(units: result.units);
-    if (!identical(result.cityFoundingDraft, state.cityFoundingDraft)) {
-      next = next.copyWithInteraction(
-        cityFoundingDraft: result.cityFoundingDraft,
-      );
-    }
-    if (state.selectedUnitId == command.founderId) {
-      final updatedFounder = next.unitById(command.founderId)!;
-      final founderTile = mapTiles.tileAt(
-        updatedFounder.col,
-        updatedFounder.row,
-      );
-      next = next.copyWithInteraction(
-        selection: GameSelection.unit(updatedFounder, tile: founderTile),
-      );
-    }
-
-    return GameStateTransition(state: next);
-  }
-
-  static String _actorPlayerId(
-    GameState state,
-    FoundCityCommand command,
-    GameCommandContext context,
-  ) {
-    if (context.hasActor) return context.actorPlayerId!;
-    if (state.activePlayerId.isNotEmpty) return state.activePlayerId;
-    return state.unitById(command.founderId)?.ownerPlayerId ?? '';
   }
 }

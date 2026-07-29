@@ -81,18 +81,6 @@ abstract final class _GameStateTapReducer {
   ) {
     final pendingAction = state.pendingAction;
     return switch (pendingAction) {
-      PendingCityWorkedHexSelection() => _toggleWorkedHex(
-        state,
-        command,
-        pendingAction,
-        environment,
-      ),
-      PendingCityExpansionSelection() => _selectExpansionHex(
-        state,
-        command,
-        pendingAction,
-        environment,
-      ),
       PendingAttackTargeting() => _selectTileAttackTarget(
         state,
         command,
@@ -120,34 +108,6 @@ abstract final class _GameStateTapReducer {
       null => null,
       _ => GameStateTransition(state: state),
     };
-  }
-
-  static GameStateTransition _toggleWorkedHex(
-    GameState state,
-    TileTappedCommand command,
-    PendingCityWorkedHexSelection pendingAction,
-    ReducerEnvironment environment,
-  ) {
-    return environment.toggleWorkedHex(
-      state,
-      ToggleWorkedHexCommand(pendingAction.cityId, command.col, command.row),
-    );
-  }
-
-  static GameStateTransition _selectExpansionHex(
-    GameState state,
-    TileTappedCommand command,
-    PendingCityExpansionSelection pendingAction,
-    ReducerEnvironment environment,
-  ) {
-    return environment.selectCityExpansionHex(
-      state,
-      SelectCityExpansionHexCommand(
-        pendingAction.cityId,
-        command.col,
-        command.row,
-      ),
-    );
   }
 
   static GameStateTransition _selectTileAttackTarget(

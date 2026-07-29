@@ -131,12 +131,13 @@ final class MctsSimulatorParityFixtures {
     PersistentGameState state,
     DomainCommand command, {
     MapReadView? mapView,
+    String actorPlayerId = 'player_1',
   }) {
     return const SimulationGameEngineAdapter().apply(
       snapshot: engineSnapshot(state),
       state: state,
       command: command,
-      actorPlayerId: 'player_1',
+      actorPlayerId: actorPlayerId,
       commandTick: 0,
       mapView: mapView ?? WorldMapReadView(worldMap()),
       ruleset: GameRuleset.defaults,

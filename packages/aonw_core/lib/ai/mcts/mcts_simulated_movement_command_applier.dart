@@ -1,9 +1,9 @@
 import 'package:aonw_core/ai/game_view.dart';
+import 'package:aonw_core/ai/mcts/mcts_simulated_command_application.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -20,7 +20,7 @@ final class MctsSimulatedMovementCommandApplier {
   final List<GameCity> ownCities;
   final List<GameCity> rememberedEnemyCities;
 
-  List<GameUnit> applyMoveUnit(MoveUnitCommand command) {
+  MctsSimulatedCommandApplication applyMoveUnit(MoveUnitCommand command) {
     return _applyEngineMovement(command);
   }
 
@@ -29,16 +29,16 @@ final class MctsSimulatedMovementCommandApplier {
       command is SkipUnitTurnCommand ||
       command is FortifyUnitCommand;
 
-  List<GameUnit> applyUnitAction(GameCommand command) {
+  MctsSimulatedCommandApplication applyUnitAction(GameCommand command) {
     return switch (command) {
       final CancelUnitActionCommand value => _applyEngineMovement(value),
       final SkipUnitTurnCommand value => _applyEngineMovement(value),
       final FortifyUnitCommand value => _applyEngineMovement(value),
-      _ => ownUnits,
+      _ => (nextView: view),
     };
   }
 
-  List<GameUnit> _applyEngineMovement(DomainCommand command) {
+  MctsSimulatedCommandApplication _applyEngineMovement(DomainCommand command) {
     final engineSnapshot =
         view.engineSnapshot ??
         (throw StateError(
@@ -64,11 +64,14 @@ final class MctsSimulatedMovementCommandApplier {
     );
     if (!result.accepted ||
         !identical(result.state.artifacts, state.artifacts)) {
-      return ownUnits;
+      return (nextView: view);
     }
-    return [
-      for (final ownUnit in ownUnits)
-        result.state.units.byId(ownUnit.id) ?? ownUnit,
-    ];
+    return (
+      nextView: MctsSimulationProjection.viewFromPersistentState(
+        result.state,
+        previousView: view,
+        engineSnapshot: result.snapshot,
+      ),
+    );
   }
 }

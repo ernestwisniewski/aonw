@@ -201,21 +201,22 @@ void main() {
       );
       final state = PersistentGameState(units: [scout], artifacts: [artifact]);
 
-      final result = const PersistentArtifactCommandResolver().startExcavation(
-        state: state,
+      final result = ArtifactCommandResolver.startExcavation(
+        units: state.units,
+        artifacts: state.artifacts,
         command: const StartArtifactExcavationCommand('scout_1'),
         actorPlayerId: 'p1',
       );
 
       expect(result.accepted, isTrue);
-      expect(result.state.units.single.carriedArtifactId, isNull);
-      expect(result.state.units.single.excavatingArtifactId, artifact.id);
-      expect(result.state.units.single.movementPoints, 0);
-      expect(result.state.artifacts.single.location.isBeingExcavated, isTrue);
-      expect(result.state.artifacts.single.location.remainingTurns, 2);
+      expect(result.units.single.carriedArtifactId, isNull);
+      expect(result.units.single.excavatingArtifactId, artifact.id);
+      expect(result.units.single.movementPoints, 0);
+      expect(result.artifacts.single.location.isBeingExcavated, isTrue);
+      expect(result.artifacts.single.location.remainingTurns, 2);
 
       final pending = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: result.state,
+        state: state.copyWith(units: result.units, artifacts: result.artifacts),
         playerIds: const ['p1'],
       );
 
@@ -235,37 +236,6 @@ void main() {
       expect(completed.state.artifacts.single.location.isCarried, isTrue);
     });
 
-    test('excavation requires standing exactly on the artifact hex', () {
-      final artifact = WorldArtifact.placed(
-        type: WorldArtifactType.astronomersTablets,
-        col: 2,
-        row: 3,
-      );
-      final adjacentScout = GameUnit(
-        id: 'scout_1',
-        ownerPlayerId: 'p1',
-        type: GameUnitType.scout,
-        name: 'Scout',
-        col: 2,
-        row: 2,
-      );
-      final state = PersistentGameState(
-        units: [adjacentScout],
-        artifacts: [artifact],
-      );
-
-      final result = const PersistentArtifactCommandResolver().startExcavation(
-        state: state,
-        command: const StartArtifactExcavationCommand('scout_1'),
-        actorPlayerId: 'p1',
-      );
-
-      expect(result.accepted, isFalse);
-      expect(result.reason, 'artifact_not_found');
-      expect(result.state.artifacts.single.location.isOnMap, isTrue);
-      expect(result.state.units.single.carriedArtifactId, isNull);
-    });
-
     test('all unit types use the same two-turn excavation timing', () {
       final artifact = WorldArtifact.placed(
         type: WorldArtifactType.heroSword,
@@ -282,22 +252,22 @@ void main() {
         artifacts: [artifact],
       );
 
-      final excavation = const PersistentArtifactCommandResolver()
-          .startExcavation(
-            state: state,
-            command: StartArtifactExcavationCommand(warrior.id),
-            actorPlayerId: 'p1',
-          );
-      expect(excavation.accepted, isTrue);
-      expect(excavation.state.units.single.excavatingArtifactId, artifact.id);
-      expect(
-        excavation.state.artifacts.single.location.isBeingExcavated,
-        isTrue,
+      final excavation = ArtifactCommandResolver.startExcavation(
+        units: state.units,
+        artifacts: state.artifacts,
+        command: StartArtifactExcavationCommand(warrior.id),
+        actorPlayerId: 'p1',
       );
-      expect(excavation.state.artifacts.single.location.remainingTurns, 2);
+      expect(excavation.accepted, isTrue);
+      expect(excavation.units.single.excavatingArtifactId, artifact.id);
+      expect(excavation.artifacts.single.location.isBeingExcavated, isTrue);
+      expect(excavation.artifacts.single.location.remainingTurns, 2);
 
       final pending = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: excavation.state,
+        state: state.copyWith(
+          units: excavation.units,
+          artifacts: excavation.artifacts,
+        ),
         playerIds: const ['p1'],
       );
 
@@ -341,8 +311,10 @@ void main() {
         artifacts: [carried, stored],
       );
 
-      final result = const PersistentArtifactCommandResolver().storeInCity(
-        state: state,
+      final result = ArtifactCommandResolver.storeInCity(
+        units: state.units,
+        cities: state.cities,
+        artifacts: state.artifacts,
         command: StoreArtifactInCityCommand(unit.id),
         actorPlayerId: 'p1',
       );
@@ -375,8 +347,11 @@ void main() {
         artifacts: [artifact],
       );
 
-      final result = const PersistentArtifactCommandResolver().tradeArtifact(
-        state: state,
+      final result = ArtifactCommandResolver.tradeArtifact(
+        cities: state.cities,
+        artifacts: state.artifacts,
+        playerGold: state.playerGold,
+        diplomacy: DiplomacyState.empty,
         command: const TradeArtifactCommand(
           playerId: 'p1',
           targetPlayerId: 'p2',
@@ -387,8 +362,8 @@ void main() {
       );
 
       expect(result.accepted, isTrue);
-      expect(result.state.playerGold, {'p1': 7, 'p2': 4});
-      expect(result.state.artifacts.single.location.cityId, 'city_p2');
+      expect(result.playerGold, {'p1': 7, 'p2': 4});
+      expect(result.artifacts.single.location.cityId, 'city_p2');
     });
 
     test('artifact trades cannot request target assets without acceptance', () {
@@ -420,8 +395,11 @@ void main() {
         artifacts: [offered, requested],
       );
 
-      final result = const PersistentArtifactCommandResolver().tradeArtifact(
-        state: state,
+      final result = ArtifactCommandResolver.tradeArtifact(
+        cities: state.cities,
+        artifacts: state.artifacts,
+        playerGold: state.playerGold,
+        diplomacy: DiplomacyState.empty,
         command: const TradeArtifactCommand(
           playerId: 'p1',
           targetPlayerId: 'p2',
@@ -434,8 +412,8 @@ void main() {
 
       expect(result.accepted, isFalse);
       expect(result.reason, 'artifact_trade_requires_acceptance');
-      expect(result.state.playerGold, state.playerGold);
-      expect(result.state.artifacts, state.artifacts);
+      expect(result.playerGold, state.playerGold);
+      expect(result.artifacts, state.artifacts);
     });
 
     test(

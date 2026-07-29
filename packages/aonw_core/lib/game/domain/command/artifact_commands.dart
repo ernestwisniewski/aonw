@@ -1,8 +1,9 @@
 part of 'game_command.dart';
 
-final class StartArtifactExcavationCommand extends DomainCommand {
+final class StartArtifactExcavationCommand extends UnitDomainCommand {
   const StartArtifactExcavationCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -13,9 +14,10 @@ final class StartArtifactExcavationCommand extends DomainCommand {
   int get hashCode => Object.hash(StartArtifactExcavationCommand, unitId);
 }
 
-final class StoreArtifactInCityCommand extends DomainCommand {
+final class StoreArtifactInCityCommand extends UnitDomainCommand {
   const StoreArtifactInCityCommand(this.unitId, {this.cityId});
 
+  @override
   final String unitId;
   final String? cityId;
 

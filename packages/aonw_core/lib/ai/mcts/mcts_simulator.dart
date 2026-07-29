@@ -10,7 +10,6 @@ import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
 import 'package:aonw_core/application.dart';
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -47,11 +46,6 @@ class TracingMctsSimulator implements MctsSimulator {
     if (!simulateTurnEconomy) {
       return SimulatedState(
         view: state.view,
-        ownUnits: state.ownUnits,
-        visibleEnemyUnits: state.visibleEnemyUnits,
-        ownCities: state.ownCities,
-        rememberedEnemyCities: state.rememberedEnemyCities,
-        ownResearch: state.ownResearch,
         plannedActions: state.plannedActions,
         usedCommands: state.usedCommands,
         maxPlanningDepth: state.maxPlanningDepth,
@@ -183,15 +177,6 @@ class TracingMctsSimulator implements MctsSimulator {
       );
     }
     return switch (command) {
-      FoundCityCommand() =>
-        const PersistentCityFoundingResolver()
-            .foundCity(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapData,
-            )
-            .state,
       SelectTechnologyCommand() =>
         const PersistentResearchCommandResolver()
             .selectTechnology(
@@ -201,81 +186,6 @@ class TracingMctsSimulator implements MctsSimulator {
               mapTiles: mapData,
               ruleset: ruleset.technology,
               paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      StartBuildingCommand() =>
-        const PersistentCityProductionResolver()
-            .startBuilding(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapData,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      StartUnitProductionCommand() =>
-        const PersistentCityProductionResolver()
-            .startUnitProduction(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapView: mapData,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      StartCityProjectCommand() =>
-        const PersistentCityProductionResolver()
-            .startCityProject(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              cityRuleset: ruleset.city,
-              paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      SetCitySpecializationCommand() =>
-        const PersistentCityProductionResolver()
-            .setCitySpecialization(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            )
-            .state,
-      SelectWorkerImprovementCommand() =>
-        const PersistentWorkerCommandResolver()
-            .selectWorkerImprovement(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapData,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      ConfirmWorkerImprovementCommand() =>
-        const PersistentWorkerCommandResolver()
-            .confirmWorkerImprovement(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapData,
-              cityRuleset: ruleset.city,
-              technologyRuleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            )
-            .state,
-      AssignWorkerToHexCommand() =>
-        const PersistentWorkerCommandResolver()
-            .assignWorkerToHex(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapData,
             )
             .state,
       _ => state,

@@ -91,14 +91,6 @@ PersistentGameState _stateWithQueue(
 void _expectRushKernelParity(_RushKernelScenario scenario) {
   final mapTiles = rushCharacterizationMap();
   final direct = _resolveRushKernel(scenario, mapTiles);
-  final persistent = const PersistentCityProductionResolver().rushProduction(
-    state: scenario.state,
-    command: scenario.command,
-    actorPlayerId: scenario.actorPlayerId,
-    mapTiles: mapTiles,
-    wonderRuleset: scenario.wonderRuleset,
-    paceBalance: scenario.paceBalance,
-  );
   final domainBefore = _domainFromPersistent(scenario.state);
   final domain = const DomainCityProductionResolver().rushProduction(
     state: domainBefore,
@@ -109,18 +101,12 @@ void _expectRushKernelParity(_RushKernelScenario scenario) {
     paceBalance: scenario.paceBalance,
   );
 
-  _expectRushOutcome(scenario, direct, persistent, domain);
+  _expectRushOutcome(scenario, direct, domain);
   if (!scenario.accepted) {
-    _expectRejectedRushSlices(
-      scenario.state,
-      domainBefore,
-      direct,
-      persistent,
-      domain,
-    );
+    _expectRejectedRushSlices(scenario.state, domainBefore, direct, domain);
     return;
   }
-  _expectAcceptedRushSlices(scenario, domainBefore, direct, persistent, domain);
+  _expectAcceptedRushSlices(scenario, domainBefore, direct, domain);
 }
 
 RushProductionCommandResult _resolveRushKernel(
@@ -151,26 +137,17 @@ RushProductionCommandResult _resolveRushKernel(
 void _expectRushOutcome(
   _RushKernelScenario scenario,
   RushProductionCommandResult direct,
-  PersistentCityProductionResult persistent,
   DomainCityProductionResult domain,
 ) {
   expect(direct.accepted, scenario.accepted);
-  expect(persistent.accepted, direct.accepted);
   expect(domain.accepted, direct.accepted);
   expect(direct.reason, scenario.reason);
-  expect(persistent.reason, direct.reason);
   expect(domain.reason, direct.reason);
-  expect(persistent.state.cities, direct.cities);
   expect(domain.state.cities, direct.cities);
-  expect(persistent.state.units, direct.units);
   expect(domain.state.units, direct.units);
-  expect(persistent.state.playerGold, direct.playerGold);
   expect(domain.state.playerGold, direct.playerGold);
-  expect(persistent.state.research, direct.research);
   expect(domain.state.research, direct.research);
-  expect(persistent.state.wonderRegistry, direct.wonderRegistry);
   expect(domain.state.wonderRegistry, direct.wonderRegistry);
-  expect(_eventJson(persistent.events), _eventJson(direct.events));
   expect(_eventJson(domain.events), _eventJson(direct.events));
 }
 
@@ -178,7 +155,6 @@ void _expectRejectedRushSlices(
   PersistentGameState persistentBefore,
   DomainState domainBefore,
   RushProductionCommandResult direct,
-  PersistentCityProductionResult persistent,
   DomainCityProductionResult domain,
 ) {
   expect(direct.cities, same(persistentBefore.cities));
@@ -187,7 +163,6 @@ void _expectRejectedRushSlices(
   expect(direct.research, same(persistentBefore.research));
   expect(direct.wonderRegistry, same(persistentBefore.wonderRegistry));
   expect(direct.events, isEmpty);
-  expect(persistent.state, same(persistentBefore));
   expect(domain.state, same(domainBefore));
 }
 

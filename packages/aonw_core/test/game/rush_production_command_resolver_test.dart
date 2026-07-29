@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
-import 'persistent_city_production_rush_characterization_test_support.dart';
+import 'rush_production_test_support.dart';
 
 part 'rush_production_command_resolver_test_support.dart';
 part 'rush_production_command_resolver_accepted_test_support.dart';
