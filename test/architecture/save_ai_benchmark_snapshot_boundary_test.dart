@@ -8,6 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 const _benchmarkPath = 'tool/run_save_ai_benchmark.dart';
 const _reportModelsPath = 'tool/run_save_ai_benchmark/report_models.dart';
 const _runtimeSmokePath = 'tool/run_save_ai_benchmark/runtime_smoke.dart';
+const _syntheticHelpersPath =
+    'tool/run_save_ai_benchmark/benchmark_synthetic_helpers.dart';
+const _cliHelpersPath = 'tool/run_save_ai_benchmark/cli_helpers.dart';
+const _targetHelpersPath =
+    'tool/run_save_ai_benchmark/benchmark_target_helpers.dart';
 
 void main() {
   test('save AI benchmark preparation uses canonical snapshot state', () {
@@ -45,6 +50,20 @@ void main() {
     expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
   });
+
+  for (final path in const [
+    _syntheticHelpersPath,
+    _cliHelpersPath,
+    _targetHelpersPath,
+  ]) {
+    test('$path uses canonical or explicit lossless snapshot state only', () {
+      final unit = _unitAt(path);
+
+      expect(_propertyReadCount(unit, 'save'), 0);
+      expect(_propertyReadCount(unit, 'persistentState'), 0);
+      expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    });
+  }
 }
 
 CompilationUnit _unitAt(String path) =>

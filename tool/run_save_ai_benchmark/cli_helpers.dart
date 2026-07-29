@@ -191,7 +191,9 @@ Future<SaveSnapshot> _loadSnapshot(File file) async {
 }
 
 Future<MapData> _loadMap(SaveSnapshot snapshot, String? mapPath) async {
-  final file = File(mapPath ?? 'assets/maps/${snapshot.save.mapName}/map.json');
+  final file = File(
+    mapPath ?? 'assets/maps/${snapshot.metadata.world.name}/map.json',
+  );
   if (!await file.exists()) {
     throw _UsageException(
       'Map file not found: ${file.path}. Pass --map <path> if this is a saved map.',

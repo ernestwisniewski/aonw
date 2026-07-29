@@ -209,10 +209,7 @@ bool _hasHostileRelation(
   String attackerId,
   String defenderId,
 ) {
-  final status = state.runtimeState.diplomacy.statusBetween(
-    attackerId,
-    defenderId,
-  );
+  final status = state.diplomacy.statusBetween(attackerId, defenderId);
   return status == DiplomaticRelationStatus.hostile ||
       status == DiplomaticRelationStatus.war;
 }
@@ -227,7 +224,7 @@ Set<String> _pendingHostilePlayerIds({
   required String playerId,
 }) {
   final hostilePlayerIds = <String>{};
-  for (final attack in snapshot.runtimeState.intendedAttacks) {
+  for (final attack in snapshot.domain.intendedAttacks) {
     if (attack.declaringPlayerId == playerId) continue;
     if (_targetsPlayer(snapshot, playerId: playerId, attack: attack)) {
       hostilePlayerIds.add(attack.declaringPlayerId);
@@ -264,7 +261,7 @@ List<PendingCityAttackThreat> _pendingCityAttackThreats({
 }) {
   final unitsById = {for (final unit in snapshot.units) unit.id: unit};
   final threats = <PendingCityAttackThreat>[];
-  for (final attack in snapshot.runtimeState.intendedAttacks) {
+  for (final attack in snapshot.domain.intendedAttacks) {
     if (attack.declaringPlayerId == playerId) continue;
     final attacker = unitsById[attack.attackerUnitId];
     if (attacker == null || attacker.ownerPlayerId == playerId) continue;

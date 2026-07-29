@@ -52,7 +52,7 @@ _PreparedPlayer _prepareSyntheticPlayer({
   required Set<String> humanPlayerIds,
   required bool includeDeadline,
 }) {
-  final player = snapshot.save.players.firstWhere(
+  final player = snapshot.persistedPlayers.firstWhere(
     (candidate) => candidate.id == playerId,
   );
   return _PreparedPlayer.fromSnapshot(
