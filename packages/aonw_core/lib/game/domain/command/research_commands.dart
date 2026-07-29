@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player chooses [technologyId] as the active research target.
-final class SelectTechnologyCommand extends GameCommand {
+final class SelectTechnologyCommand extends DomainCommand {
   const SelectTechnologyCommand(this.playerId, this.technologyId);
 
   final String playerId;
@@ -19,7 +19,7 @@ final class SelectTechnologyCommand extends GameCommand {
 }
 
 /// Player dismisses research selection without choosing a technology.
-final class CancelResearchSelectionCommand extends GameCommand {
+final class CancelResearchSelectionCommand extends GameIntent {
   const CancelResearchSelectionCommand(this.playerId);
 
   final String playerId;

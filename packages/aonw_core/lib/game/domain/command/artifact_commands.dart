@@ -1,6 +1,6 @@
 part of 'game_command.dart';
 
-final class StartArtifactExcavationCommand extends GameCommand {
+final class StartArtifactExcavationCommand extends DomainCommand {
   const StartArtifactExcavationCommand(this.unitId);
 
   final String unitId;
@@ -13,7 +13,7 @@ final class StartArtifactExcavationCommand extends GameCommand {
   int get hashCode => Object.hash(StartArtifactExcavationCommand, unitId);
 }
 
-final class StoreArtifactInCityCommand extends GameCommand {
+final class StoreArtifactInCityCommand extends DomainCommand {
   const StoreArtifactInCityCommand(this.unitId, {this.cityId});
 
   final String unitId;
@@ -29,7 +29,7 @@ final class StoreArtifactInCityCommand extends GameCommand {
   int get hashCode => Object.hash(StoreArtifactInCityCommand, unitId, cityId);
 }
 
-final class TradeArtifactCommand extends GameCommand {
+final class TradeArtifactCommand extends DomainCommand {
   const TradeArtifactCommand({
     required this.playerId,
     required this.targetPlayerId,

@@ -22,7 +22,7 @@ class CommandCodec {
     required int tick,
     int? turn,
     required String actorPlayerId,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
     return WireCommand(
       matchId: matchId,
@@ -33,7 +33,7 @@ class CommandCodec {
     );
   }
 
-  GameCommand fromWire(WireCommand wire) {
+  DomainCommand fromWire(WireCommand wire) {
     return GameCommandSerializer.fromJson(wire.command);
   }
 
@@ -53,7 +53,7 @@ class EventCodec {
     String? actorPlayerId,
     int? tick,
     int? turn,
-    GameCommand? command,
+    DomainCommand? command,
     Iterable<WireMovementExecution> movementExecutions = const [],
   }) {
     return WireEvent(
@@ -81,7 +81,7 @@ class EventCodec {
     return events.map(GameEventSerializer.fromJson).toList();
   }
 
-  GameCommand? commandFromWire(WireEvent wire) {
+  DomainCommand? commandFromWire(WireEvent wire) {
     final command = wire.command;
     if (command == null) return null;
     return GameCommandSerializer.fromJson(command);

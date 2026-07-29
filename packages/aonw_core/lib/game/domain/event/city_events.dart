@@ -1,12 +1,12 @@
 part of 'game_event.dart';
 
-final class CityFoundedEvent extends GameEvent {
+final class CityFoundedEvent extends DomainEvent {
   const CityFoundedEvent({required this.cityId, required this.ownerPlayerId});
   final String cityId;
   final String ownerPlayerId;
 }
 
-final class CityBuiltBuildingEvent extends GameEvent {
+final class CityBuiltBuildingEvent extends DomainEvent {
   const CityBuiltBuildingEvent({
     required this.cityId,
     required this.buildingType,
@@ -15,7 +15,7 @@ final class CityBuiltBuildingEvent extends GameEvent {
   final CityBuildingType buildingType;
 }
 
-final class CityBuiltWonderEvent extends GameEvent {
+final class CityBuiltWonderEvent extends DomainEvent {
   const CityBuiltWonderEvent({
     required this.cityId,
     required this.ownerPlayerId,
@@ -27,7 +27,7 @@ final class CityBuiltWonderEvent extends GameEvent {
   final WonderType wonderType;
 }
 
-final class WonderProductionRefundedEvent extends GameEvent {
+final class WonderProductionRefundedEvent extends DomainEvent {
   const WonderProductionRefundedEvent({
     required this.cityId,
     required this.ownerPlayerId,
@@ -41,7 +41,7 @@ final class WonderProductionRefundedEvent extends GameEvent {
   final int refundedProduction;
 }
 
-final class CityProducedUnitEvent extends GameEvent {
+final class CityProducedUnitEvent extends DomainEvent {
   const CityProducedUnitEvent({
     required this.cityId,
     required this.unitType,
@@ -52,7 +52,7 @@ final class CityProducedUnitEvent extends GameEvent {
   final String producedUnitId;
 }
 
-final class CityClaimedHexEvent extends GameEvent {
+final class CityClaimedHexEvent extends DomainEvent {
   const CityClaimedHexEvent({
     required this.cityId,
     required this.col,

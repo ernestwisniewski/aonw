@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class DiplomaticProposalSentEvent extends GameEvent {
+final class DiplomaticProposalSentEvent extends DomainEvent {
   const DiplomaticProposalSentEvent({
     required this.proposalId,
     required this.fromPlayerId,
@@ -16,7 +16,7 @@ final class DiplomaticProposalSentEvent extends GameEvent {
   final int expiresOnTurn;
 }
 
-final class DiplomaticProposalRespondedEvent extends GameEvent {
+final class DiplomaticProposalRespondedEvent extends DomainEvent {
   const DiplomaticProposalRespondedEvent({
     required this.proposalId,
     required this.fromPlayerId,
@@ -32,7 +32,7 @@ final class DiplomaticProposalRespondedEvent extends GameEvent {
   final bool accepted;
 }
 
-final class DiplomaticProposalExpiredEvent extends GameEvent {
+final class DiplomaticProposalExpiredEvent extends DomainEvent {
   const DiplomaticProposalExpiredEvent({
     required this.proposalId,
     required this.fromPlayerId,
@@ -46,7 +46,7 @@ final class DiplomaticProposalExpiredEvent extends GameEvent {
   final DiplomaticProposalKind kind;
 }
 
-final class DiplomaticRelationChangedEvent extends GameEvent {
+final class DiplomaticRelationChangedEvent extends DomainEvent {
   const DiplomaticRelationChangedEvent({
     required this.playerAId,
     required this.playerBId,
@@ -64,7 +64,7 @@ final class DiplomaticRelationChangedEvent extends GameEvent {
   final int? expiresOnTurn;
 }
 
-final class DiplomaticMessageSentEvent extends GameEvent {
+final class DiplomaticMessageSentEvent extends DomainEvent {
   const DiplomaticMessageSentEvent({
     required this.messageId,
     required this.fromPlayerId,
@@ -82,7 +82,7 @@ final class DiplomaticMessageSentEvent extends GameEvent {
   final int expiresOnTurn;
 }
 
-final class DiplomaticMessageRespondedEvent extends GameEvent {
+final class DiplomaticMessageRespondedEvent extends DomainEvent {
   const DiplomaticMessageRespondedEvent({
     required this.messageId,
     required this.fromPlayerId,
@@ -104,7 +104,7 @@ final class DiplomaticMessageRespondedEvent extends GameEvent {
   final int? promiseDueTurn;
 }
 
-final class DiplomaticScoreChangedEvent extends GameEvent {
+final class DiplomaticScoreChangedEvent extends DomainEvent {
   const DiplomaticScoreChangedEvent({
     required this.playerAId,
     required this.playerBId,
@@ -122,7 +122,7 @@ final class DiplomaticScoreChangedEvent extends GameEvent {
   final String? sourceId;
 }
 
-final class DiplomaticPromiseBrokenEvent extends GameEvent {
+final class DiplomaticPromiseBrokenEvent extends DomainEvent {
   const DiplomaticPromiseBrokenEvent({
     required this.messageId,
     required this.playerAId,

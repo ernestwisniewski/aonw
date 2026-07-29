@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player issued a move order for [unitId] toward ([targetCol], [targetRow]).
-final class MoveUnitCommand extends GameCommand {
+final class MoveUnitCommand extends DomainCommand {
   const MoveUnitCommand(this.unitId, this.targetCol, this.targetRow);
 
   final String unitId;
@@ -21,7 +21,7 @@ final class MoveUnitCommand extends GameCommand {
 }
 
 /// Cancels the current action state owned by [unitId].
-final class CancelUnitActionCommand extends GameCommand {
+final class CancelUnitActionCommand extends DomainCommand {
   const CancelUnitActionCommand(this.unitId);
 
   final String unitId;
@@ -35,7 +35,7 @@ final class CancelUnitActionCommand extends GameCommand {
 }
 
 /// Puts [unitId] aside for the rest of the current turn.
-final class SkipUnitTurnCommand extends GameCommand {
+final class SkipUnitTurnCommand extends DomainCommand {
   const SkipUnitTurnCommand(this.unitId);
 
   final String unitId;
@@ -49,7 +49,7 @@ final class SkipUnitTurnCommand extends GameCommand {
 }
 
 /// Puts [unitId] into healing posture and spends its movement until recovered.
-final class FortifyUnitCommand extends GameCommand {
+final class FortifyUnitCommand extends DomainCommand {
   const FortifyUnitCommand(this.unitId);
 
   final String unitId;
@@ -63,7 +63,7 @@ final class FortifyUnitCommand extends GameCommand {
 }
 
 /// Starts automatic exploration for [unitId] until it is cancelled.
-final class AutoExploreUnitCommand extends GameCommand {
+final class AutoExploreUnitCommand extends DomainCommand {
   const AutoExploreUnitCommand(this.unitId);
 
   final String unitId;
@@ -77,7 +77,7 @@ final class AutoExploreUnitCommand extends GameCommand {
 }
 
 /// Opens the city picker for assigning a merchant trade route.
-final class StartMerchantTradeRouteSelectionCommand extends GameCommand {
+final class StartMerchantTradeRouteSelectionCommand extends GameIntent {
   const StartMerchantTradeRouteSelectionCommand(this.unitId);
 
   final String unitId;
@@ -93,7 +93,7 @@ final class StartMerchantTradeRouteSelectionCommand extends GameCommand {
 }
 
 /// Closes the city picker for assigning a merchant trade route.
-final class CancelMerchantTradeRouteSelectionCommand extends GameCommand {
+final class CancelMerchantTradeRouteSelectionCommand extends GameIntent {
   const CancelMerchantTradeRouteSelectionCommand(this.unitId);
 
   final String unitId;
@@ -109,7 +109,7 @@ final class CancelMerchantTradeRouteSelectionCommand extends GameCommand {
 }
 
 /// Assigns [unitId] to automatically trade with [destinationCityId].
-final class AssignMerchantTradeRouteCommand extends GameCommand {
+final class AssignMerchantTradeRouteCommand extends DomainCommand {
   const AssignMerchantTradeRouteCommand(this.unitId, this.destinationCityId);
 
   final String unitId;
@@ -127,7 +127,7 @@ final class AssignMerchantTradeRouteCommand extends GameCommand {
 }
 
 /// Opens the city picker for moving a merchant into one of the player's cities.
-final class StartMerchantMoveToCitySelectionCommand extends GameCommand {
+final class StartMerchantMoveToCitySelectionCommand extends GameIntent {
   const StartMerchantMoveToCitySelectionCommand(this.unitId);
 
   final String unitId;
@@ -143,7 +143,7 @@ final class StartMerchantMoveToCitySelectionCommand extends GameCommand {
 }
 
 /// Closes the city picker for moving a merchant into one of the player's cities.
-final class CancelMerchantMoveToCitySelectionCommand extends GameCommand {
+final class CancelMerchantMoveToCitySelectionCommand extends GameIntent {
   const CancelMerchantMoveToCitySelectionCommand(this.unitId);
 
   final String unitId;
@@ -159,7 +159,7 @@ final class CancelMerchantMoveToCitySelectionCommand extends GameCommand {
 }
 
 /// Queues [unitId] to travel into [destinationCityId] without creating a trade route.
-final class MoveMerchantToCityCommand extends GameCommand {
+final class MoveMerchantToCityCommand extends DomainCommand {
   const MoveMerchantToCityCommand(this.unitId, this.destinationCityId);
 
   final String unitId;
@@ -177,7 +177,7 @@ final class MoveMerchantToCityCommand extends GameCommand {
 }
 
 /// Resets unit movement for a new turn and advances queued paths.
-final class ResetUnitMovementCommand extends GameCommand {
+final class ResetUnitMovementCommand extends ServerSystemCommand {
   const ResetUnitMovementCommand({this.playerId});
 
   final String? playerId;
@@ -191,7 +191,7 @@ final class ResetUnitMovementCommand extends GameCommand {
 }
 
 /// Toggles whether the move-targeting mode is active.
-final class ToggleMoveTargetingCommand extends GameCommand {
+final class ToggleMoveTargetingCommand extends GameIntent {
   const ToggleMoveTargetingCommand();
 
   @override
@@ -202,7 +202,7 @@ final class ToggleMoveTargetingCommand extends GameCommand {
 }
 
 /// Player detaches a troop of [troopType] from unit [unitId].
-final class DetachTroopCommand extends GameCommand {
+final class DetachTroopCommand extends DomainCommand {
   const DetachTroopCommand(this.unitId, this.troopType);
 
   final String unitId;

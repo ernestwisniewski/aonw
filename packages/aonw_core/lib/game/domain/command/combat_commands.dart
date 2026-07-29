@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player begins combat targeting for [attackerUnitId].
-final class StartAttackTargetingCommand extends GameCommand {
+final class StartAttackTargetingCommand extends GameIntent {
   const StartAttackTargetingCommand(this.attackerUnitId);
 
   final String attackerUnitId;
@@ -16,7 +16,7 @@ final class StartAttackTargetingCommand extends GameCommand {
 }
 
 /// Player cancels combat targeting for [attackerUnitId].
-final class CancelAttackTargetingCommand extends GameCommand {
+final class CancelAttackTargetingCommand extends GameIntent {
   const CancelAttackTargetingCommand(this.attackerUnitId);
 
   final String attackerUnitId;
@@ -31,7 +31,7 @@ final class CancelAttackTargetingCommand extends GameCommand {
 }
 
 /// Player orders [attackerUnitId] to attack the unit on [defenderCol]/[defenderRow].
-final class AttackHexCommand extends GameCommand {
+final class AttackHexCommand extends DomainCommand {
   const AttackHexCommand(
     this.attackerUnitId,
     this.defenderCol,

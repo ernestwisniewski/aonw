@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class StabilityBandChangedEvent extends GameEvent {
+final class StabilityBandChangedEvent extends DomainEvent {
   const StabilityBandChangedEvent({
     required this.playerId,
     required this.previousBand,

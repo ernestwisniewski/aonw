@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player tapped a tile at [col], [row].
-final class TileTappedCommand extends GameCommand {
+final class TileTappedCommand extends GameIntent {
   const TileTappedCommand(this.col, this.row);
 
   final int col;
@@ -16,7 +16,7 @@ final class TileTappedCommand extends GameCommand {
 }
 
 /// Player tapped a city marker.
-final class CityTappedCommand extends GameCommand {
+final class CityTappedCommand extends GameIntent {
   const CityTappedCommand(this.cityId);
 
   final String cityId;
@@ -30,7 +30,7 @@ final class CityTappedCommand extends GameCommand {
 }
 
 /// Selects the tile at ([col], [row]).
-final class SelectTileCommand extends GameCommand {
+final class SelectTileCommand extends GameIntent {
   const SelectTileCommand(this.col, this.row);
 
   final int col;
@@ -45,7 +45,7 @@ final class SelectTileCommand extends GameCommand {
 }
 
 /// Selects the unit with [unitId].
-final class SelectUnitCommand extends GameCommand {
+final class SelectUnitCommand extends GameIntent {
   const SelectUnitCommand(this.unitId);
 
   final String unitId;
@@ -59,7 +59,7 @@ final class SelectUnitCommand extends GameCommand {
 }
 
 /// Selects the city with [cityId].
-final class SelectCityCommand extends GameCommand {
+final class SelectCityCommand extends GameIntent {
   const SelectCityCommand(this.cityId);
 
   final String cityId;
@@ -73,7 +73,7 @@ final class SelectCityCommand extends GameCommand {
 }
 
 /// Focuses the next pending action for [playerId].
-final class FocusNextPendingActionCommand extends GameCommand {
+final class FocusNextPendingActionCommand extends GameIntent {
   const FocusNextPendingActionCommand(
     this.playerId, {
     this.preferredObjectiveAdvice,
@@ -105,7 +105,7 @@ final class FocusNextPendingActionCommand extends GameCommand {
 }
 
 /// Focuses the first actionable turn-start target for [playerId].
-final class FocusTurnStartActionCommand extends GameCommand {
+final class FocusTurnStartActionCommand extends GameIntent {
   const FocusTurnStartActionCommand(this.playerId);
 
   final String playerId;

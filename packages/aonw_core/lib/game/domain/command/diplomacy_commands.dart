@@ -104,7 +104,7 @@ final class SendGoldGiftCommand extends DiplomaticCommand {
       Object.hash(SendGoldGiftCommand, playerId, targetPlayerId, amount);
 }
 
-final class OpenResourceTradeCommand extends GameCommand {
+final class OpenResourceTradeCommand extends DomainCommand {
   const OpenResourceTradeCommand({
     required this.playerId,
     required this.targetPlayerId,
@@ -143,7 +143,7 @@ final class OpenResourceTradeCommand extends GameCommand {
   );
 }
 
-final class OpenResourceExchangeCommand extends GameCommand {
+final class OpenResourceExchangeCommand extends DomainCommand {
   const OpenResourceExchangeCommand({
     required this.playerId,
     required this.targetPlayerId,

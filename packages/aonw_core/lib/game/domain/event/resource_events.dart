@@ -26,7 +26,7 @@ enum StrategicResourceDiscoveryPressure {
   }
 }
 
-final class StrategicResourceDiscoveredEvent extends GameEvent {
+final class StrategicResourceDiscoveredEvent extends DomainEvent {
   const StrategicResourceDiscoveredEvent({
     required this.playerId,
     required this.resourceType,

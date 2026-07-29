@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class MapObjectiveSecuredEvent extends GameEvent {
+final class MapObjectiveSecuredEvent extends DomainEvent {
   const MapObjectiveSecuredEvent({
     required this.playerId,
     required this.objectiveId,

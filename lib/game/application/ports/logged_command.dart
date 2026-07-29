@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
+import 'package:aonw/game/application/ports/logged_game_command_codec.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -51,7 +52,7 @@ class LoggedCommand {
       commandTick: json['commandTick'] as int? ?? 0,
       ignoreFogOfWar: json['ignoreFogOfWar'] as bool? ?? false,
       command: switch (json['command']) {
-        final Map<Object?, Object?> value => GameCommandSerializer.fromJson(
+        final Map<Object?, Object?> value => LoggedGameCommandCodec.fromJson(
           Map<String, dynamic>.from(value),
         ),
         null => null,
@@ -87,7 +88,7 @@ class LoggedCommand {
       'commandTick': commandTick,
       'ignoreFogOfWar': ignoreFogOfWar,
       if (command case final command?)
-        'command': GameCommandSerializer.toJson(command),
+        'command': LoggedGameCommandCodec.toJson(command),
       'events': events.map(GameEventSerializer.toJson).toList(),
       'activity': activity.map((entry) => entry.toJson()).toList(),
     };

@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player begins commander-merge selection for [commanderUnitId].
-final class StartCommanderMergeSelectionCommand extends GameCommand {
+final class StartCommanderMergeSelectionCommand extends GameIntent {
   const StartCommanderMergeSelectionCommand(this.commanderUnitId);
 
   final String commanderUnitId;
@@ -17,7 +17,7 @@ final class StartCommanderMergeSelectionCommand extends GameCommand {
 }
 
 /// Player cancels commander-merge selection for [commanderUnitId].
-final class CancelCommanderMergeSelectionCommand extends GameCommand {
+final class CancelCommanderMergeSelectionCommand extends GameIntent {
   const CancelCommanderMergeSelectionCommand(this.commanderUnitId);
 
   final String commanderUnitId;

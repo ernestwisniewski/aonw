@@ -283,7 +283,7 @@ class NetworkCommandTransport implements CommandTransport {
         context: context,
       );
     }
-
+    final domainCommand = command as DomainCommand;
     final actor = context.actorPlayerId ?? actorPlayerId;
     final retryable = _retryableCommand;
     final turn =
@@ -291,7 +291,7 @@ class NetworkCommandTransport implements CommandTransport {
             retryable.isSameCommand(
               saveId: saveId,
               actorPlayerId: actor,
-              command: command,
+              command: domainCommand,
             )
         ? retryable.turn
         : await _turnFor(saveId);
@@ -299,7 +299,7 @@ class NetworkCommandTransport implements CommandTransport {
       saveId: saveId,
       actorPlayerId: actor,
       turn: turn,
-      command: command,
+      command: domainCommand,
     );
     final wire = outgoing.wire;
     final WireCommandAck ack;
@@ -323,10 +323,10 @@ class NetworkCommandTransport implements CommandTransport {
           currentState: _stateFromSnapshot(
             snapshot: snapshot,
             currentState: currentState,
-            command: command,
+            command: domainCommand,
             interactionSource: currentState,
           ),
-          command: command,
+          command: domainCommand,
           context: context,
           staleTickRetries: staleTickRetries + 1,
         );
@@ -336,7 +336,7 @@ class NetworkCommandTransport implements CommandTransport {
         return _reloadAfterStaleCommand(
           saveId: saveId,
           currentState: currentState,
-          command: command,
+          command: domainCommand,
         );
       }
       rethrow;
@@ -349,7 +349,7 @@ class NetworkCommandTransport implements CommandTransport {
         return _snapshotRecoveryResult(
           saveId: saveId,
           currentState: currentState,
-          command: command,
+          command: domainCommand,
           snapshot: snapshot,
           offset: effectiveOffset,
         );
@@ -358,7 +358,7 @@ class NetworkCommandTransport implements CommandTransport {
       final nextState = _stateFromSnapshot(
         snapshot: snapshot,
         currentState: currentState,
-        command: command,
+        command: domainCommand,
         interactionSource: currentState,
       );
       final hasRejectionEvent = ack.events.any(
@@ -386,13 +386,13 @@ class NetworkCommandTransport implements CommandTransport {
 
     final localTransition = localReducer.reduce(
       currentState,
-      command,
+      domainCommand,
       context: context,
     );
     final nextState = _stateFromSnapshot(
       snapshot: snapshot,
       currentState: currentState,
-      command: command,
+      command: domainCommand,
       interactionSource: localTransition.state,
     );
 
@@ -416,7 +416,7 @@ class NetworkCommandTransport implements CommandTransport {
     required String saveId,
     required String actorPlayerId,
     required int? turn,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
     final retryable = _retryableCommand;
     if (retryable != null &&
@@ -486,7 +486,7 @@ class NetworkCommandTransport implements CommandTransport {
   Future<CommandTransportResult> _reloadAfterStaleCommand({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
   }) async {
     final snapshot = await gameRepository.load(saveId);
     _rememberSnapshot(saveId, snapshot);
@@ -507,7 +507,7 @@ class NetworkCommandTransport implements CommandTransport {
   CommandTransportResult _snapshotRecoveryResult({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required SaveSnapshot snapshot,
     required int offset,
   }) {
@@ -590,7 +590,7 @@ class NetworkCommandTransport implements CommandTransport {
 
   bool _activePlayerCanActAfter({
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required SaveSnapshot snapshot,
   }) {
     if (command case SubmitTurnCommand(
@@ -604,7 +604,7 @@ class NetworkCommandTransport implements CommandTransport {
   GameState _stateFromSnapshot({
     required SaveSnapshot snapshot,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required GameState interactionSource,
   }) {
     final authoritative = snapshot.toGameState(
@@ -626,7 +626,7 @@ class _RetryableServerCommand {
   final String saveId;
   final String actorPlayerId;
   final int? turn;
-  final GameCommand command;
+  final DomainCommand command;
   final WireCommand wire;
   final String clientMessageId;
 
@@ -643,7 +643,7 @@ class _RetryableServerCommand {
     required String saveId,
     required String actorPlayerId,
     required int? turn,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
     return this.saveId == saveId &&
         this.actorPlayerId == actorPlayerId &&
@@ -654,7 +654,7 @@ class _RetryableServerCommand {
   bool isSameCommand({
     required String saveId,
     required String actorPlayerId,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
     return this.saveId == saveId &&
         this.actorPlayerId == actorPlayerId &&

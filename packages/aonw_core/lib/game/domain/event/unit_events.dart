@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class UnitMovedEvent extends GameEvent {
+final class UnitMovedEvent extends DomainEvent {
   const UnitMovedEvent({
     required this.unitId,
     required this.fromCol,
@@ -15,7 +15,7 @@ final class UnitMovedEvent extends GameEvent {
   final int toRow;
 }
 
-final class UnitGainedExperienceEvent extends GameEvent {
+final class UnitGainedExperienceEvent extends DomainEvent {
   const UnitGainedExperienceEvent({
     required this.unitId,
     required this.ownerPlayerId,

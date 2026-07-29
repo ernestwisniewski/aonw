@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player ends their turn.
-final class EndTurnCommand extends GameCommand {
+final class EndTurnCommand extends DomainCommand {
   const EndTurnCommand(this.playerId);
 
   final String playerId;
@@ -18,7 +18,7 @@ final class EndTurnCommand extends GameCommand {
 ///
 /// Unlike [EndTurnCommand], this only marks readiness. The server decides when
 /// all submitted players advance through the simultaneous turn pipeline.
-final class SubmitTurnCommand extends GameCommand {
+final class SubmitTurnCommand extends DomainCommand {
   const SubmitTurnCommand(this.playerId);
 
   final String playerId;
@@ -32,7 +32,7 @@ final class SubmitTurnCommand extends GameCommand {
 }
 
 /// Sets the active player, optionally granting action rights.
-final class SetActivePlayerCommand extends GameCommand {
+final class SetActivePlayerCommand extends ServerSystemCommand {
   const SetActivePlayerCommand(this.playerId, {required this.canAct});
 
   final String playerId;

@@ -22,3 +22,8 @@ part 'stability_events.dart';
 sealed class GameEvent {
   const GameEvent();
 }
+
+/// An authoritative fact emitted by an accepted game-state transition.
+sealed class DomainEvent extends GameEvent {
+  const DomainEvent();
+}

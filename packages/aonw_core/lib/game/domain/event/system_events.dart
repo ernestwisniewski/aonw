@@ -53,7 +53,7 @@ final class PlayerKickedEvent extends GameEvent {
   final int timeoutStreak;
 }
 
-final class CivilizationMetEvent extends GameEvent {
+final class CivilizationMetEvent extends DomainEvent {
   const CivilizationMetEvent({
     required this.playerId,
     required this.metPlayerId,

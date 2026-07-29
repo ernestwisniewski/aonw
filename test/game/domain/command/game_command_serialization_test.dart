@@ -1,31 +1,28 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GameCommandSerializer', () {
-    GameCommand roundTrip(GameCommand cmd) {
+    DomainCommand roundTrip(DomainCommand cmd) {
       final json = GameCommandSerializer.toJson(cmd);
       return GameCommandSerializer.fromJson(json);
     }
 
     group('toJson — type discriminator', () {
-      test('TileTappedCommand has type field', () {
+      test('MoveUnitCommand has type field', () {
         final json = GameCommandSerializer.toJson(
-          const TileTappedCommand(1, 2),
+          const MoveUnitCommand('u', 1, 2),
         );
         expect(json['type'], isA<String>());
         expect(json['type'], isNotEmpty);
       });
 
       test('every command type produces a non-empty type field', () {
-        final commands = <GameCommand>[
-          const TileTappedCommand(0, 0),
-          const CityTappedCommand('c'),
+        final commands = <DomainCommand>[
           const MoveUnitCommand('u', 0, 0),
           const CancelUnitActionCommand('u'),
           const SkipUnitTurnCommand('u'),
@@ -40,39 +37,17 @@ void main() {
           ),
           const RushProductionCommand('c'),
           const SelectTechnologyCommand('p', TechnologyId.agriculture),
-          const CancelResearchSelectionCommand('p'),
           const DetachTroopCommand('u', TroopType.warrior),
           const EndTurnCommand('p'),
           const SubmitTurnCommand('p'),
-          const ResetUnitMovementCommand(),
-          const ResetUnitMovementCommand(playerId: 'p'),
-          const SetActivePlayerCommand('p', canAct: true),
-          const ToggleMoveTargetingCommand(),
-          const StartCityFoundingCommand(),
-          const CancelCityFoundingCommand(),
-          const StartCityWorkedHexSelectionCommand('c'),
-          const CancelCityWorkedHexSelectionCommand('c'),
-          const StartCityExpansionSelectionCommand('c'),
-          const CancelCityExpansionSelectionCommand('c'),
           const SelectCityExpansionHexCommand('c', 1, 2),
           const ToggleWorkedHexCommand('c', 1, 2),
-          const StartWorkerActionSelectionCommand('u'),
           const SelectWorkerImprovementCommand('u', FieldImprovementType.farm),
           const ConfirmWorkerImprovementCommand('u'),
-          const CancelWorkerActionSelectionCommand('u'),
           const CancelWorkerJobCommand('u'),
           const AssignWorkerToHexCommand('u'),
           const CancelWorkerAssignmentCommand('u'),
-          const StartAttackTargetingCommand('u'),
-          const CancelAttackTargetingCommand('u'),
           const AttackHexCommand('u', 1, 2),
-          const StartCommanderMergeSelectionCommand('commander'),
-          const CancelCommanderMergeSelectionCommand('commander'),
-          const SelectTileCommand(0, 0),
-          const SelectUnitCommand('u'),
-          const SelectCityCommand('c'),
-          const FocusNextPendingActionCommand('p'),
-          const FocusTurnStartActionCommand('p'),
         ];
         for (final cmd in commands) {
           final json = GameCommandSerializer.toJson(cmd);
@@ -90,16 +65,6 @@ void main() {
       });
     });
     group('round-trip', () {
-      test('TileTappedCommand', () {
-        const original = TileTappedCommand(3, 5);
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CityTappedCommand', () {
-        const original = CityTappedCommand('city-42');
-        expect(roundTrip(original), equals(original));
-      });
-
       test('MoveUnitCommand', () {
         const original = MoveUnitCommand('unit-7', 4, 8);
         expect(roundTrip(original), equals(original));
@@ -228,11 +193,6 @@ void main() {
         expect(roundTrip(original), equals(original));
       });
 
-      test('CancelResearchSelectionCommand', () {
-        const original = CancelResearchSelectionCommand('player-1');
-        expect(roundTrip(original), equals(original));
-      });
-
       test('DetachTroopCommand — warrior', () {
         const original = DetachTroopCommand('unit-1', TroopType.warrior);
         expect(roundTrip(original), equals(original));
@@ -258,61 +218,6 @@ void main() {
         expect(roundTrip(original), equals(original));
       });
 
-      test('ResetUnitMovementCommand — all players', () {
-        const original = ResetUnitMovementCommand();
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('ResetUnitMovementCommand — single player', () {
-        const original = ResetUnitMovementCommand(playerId: 'player-1');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('SetActivePlayerCommand — canAct: true', () {
-        const original = SetActivePlayerCommand('player-2', canAct: true);
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('SetActivePlayerCommand — canAct: false', () {
-        const original = SetActivePlayerCommand('player-3', canAct: false);
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('ToggleMoveTargetingCommand', () {
-        const original = ToggleMoveTargetingCommand();
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('StartCityFoundingCommand', () {
-        const original = StartCityFoundingCommand();
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelCityFoundingCommand', () {
-        const original = CancelCityFoundingCommand();
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('StartCityWorkedHexSelectionCommand', () {
-        const original = StartCityWorkedHexSelectionCommand('city-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelCityWorkedHexSelectionCommand', () {
-        const original = CancelCityWorkedHexSelectionCommand('city-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('StartCityExpansionSelectionCommand', () {
-        const original = StartCityExpansionSelectionCommand('city-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelCityExpansionSelectionCommand', () {
-        const original = CancelCityExpansionSelectionCommand('city-7');
-        expect(roundTrip(original), equals(original));
-      });
-
       test('SelectCityExpansionHexCommand', () {
         const original = SelectCityExpansionHexCommand('city-7', 1, 2);
         expect(roundTrip(original), equals(original));
@@ -320,11 +225,6 @@ void main() {
 
       test('ToggleWorkedHexCommand', () {
         const original = ToggleWorkedHexCommand('city-7', 1, 2);
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('StartWorkerActionSelectionCommand', () {
-        const original = StartWorkerActionSelectionCommand('unit-7');
         expect(roundTrip(original), equals(original));
       });
 
@@ -338,11 +238,6 @@ void main() {
 
       test('ConfirmWorkerImprovementCommand', () {
         const original = ConfirmWorkerImprovementCommand('unit-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelWorkerActionSelectionCommand', () {
-        const original = CancelWorkerActionSelectionCommand('unit-7');
         expect(roundTrip(original), equals(original));
       });
 
@@ -361,16 +256,6 @@ void main() {
         expect(roundTrip(original), equals(original));
       });
 
-      test('StartAttackTargetingCommand', () {
-        const original = StartAttackTargetingCommand('unit-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelAttackTargetingCommand', () {
-        const original = CancelAttackTargetingCommand('unit-7');
-        expect(roundTrip(original), equals(original));
-      });
-
       test('AttackHexCommand', () {
         const original = AttackHexCommand('unit-7', 3, 4);
         expect(roundTrip(original), equals(original));
@@ -385,85 +270,8 @@ void main() {
         );
         expect(roundTrip(original), equals(original));
       });
-
-      test('StartCommanderMergeSelectionCommand', () {
-        const original = StartCommanderMergeSelectionCommand('commander-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('CancelCommanderMergeSelectionCommand', () {
-        const original = CancelCommanderMergeSelectionCommand('commander-7');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('SelectTileCommand', () {
-        const original = SelectTileCommand(2, 9);
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('SelectUnitCommand', () {
-        const original = SelectUnitCommand('unit-99');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('SelectCityCommand', () {
-        const original = SelectCityCommand('city-5');
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('FocusNextPendingActionCommand', () {
-        const original = FocusNextPendingActionCommand(
-          'player-x',
-          preferredObjectiveAdvice: GameObjectiveAdvice.improveField,
-          actionStep: -1,
-        );
-        expect(roundTrip(original), equals(original));
-      });
-
-      test('FocusTurnStartActionCommand', () {
-        const original = FocusTurnStartActionCommand('player-x');
-        expect(roundTrip(original), equals(original));
-      });
     });
     group('toJson payload', () {
-      test('TileTappedCommand encodes col and row', () {
-        final json = GameCommandSerializer.toJson(
-          const TileTappedCommand(3, 5),
-        );
-        expect(json['col'], 3);
-        expect(json['row'], 5);
-      });
-
-      test(
-        'FocusNextPendingActionCommand encodes preferred objective advice',
-        () {
-          final json = GameCommandSerializer.toJson(
-            const FocusNextPendingActionCommand(
-              'player-x',
-              preferredObjectiveAdvice: GameObjectiveAdvice.improveField,
-            ),
-          );
-
-          expect(json['preferredObjectiveAdvice'], 'improveField');
-          expect(json.containsKey('actionStep'), isFalse);
-        },
-      );
-
-      test('FocusNextPendingActionCommand encodes non-default action step', () {
-        final json = GameCommandSerializer.toJson(
-          const FocusNextPendingActionCommand('player-x', actionStep: -1),
-        );
-
-        expect(json['actionStep'], -1);
-      });
-
-      test('CityTappedCommand encodes cityId', () {
-        final json = GameCommandSerializer.toJson(
-          const CityTappedCommand('city-42'),
-        );
-        expect(json['cityId'], 'city-42');
-      });
-
       test('MoveUnitCommand encodes unitId, targetCol, targetRow', () {
         final json = GameCommandSerializer.toJson(
           const MoveUnitCommand('unit-7', 4, 8),
@@ -554,20 +362,6 @@ void main() {
         expect(json['technologyId'], 'mining');
       });
 
-      test('CancelResearchSelectionCommand encodes playerId', () {
-        final json = GameCommandSerializer.toJson(
-          const CancelResearchSelectionCommand('player-1'),
-        );
-        expect(json['playerId'], 'player-1');
-      });
-
-      test('StartCityWorkedHexSelectionCommand encodes cityId', () {
-        final json = GameCommandSerializer.toJson(
-          const StartCityWorkedHexSelectionCommand('city-1'),
-        );
-        expect(json['cityId'], 'city-1');
-      });
-
       test('SelectCityExpansionHexCommand encodes cityId and coordinates', () {
         final json = GameCommandSerializer.toJson(
           const SelectCityExpansionHexCommand('city-1', 1, 2),
@@ -600,29 +394,6 @@ void main() {
         );
         expect(json['type'], 'SubmitTurn');
         expect(json['playerId'], 'player-1');
-      });
-
-      test('SetActivePlayerCommand encodes canAct', () {
-        final json = GameCommandSerializer.toJson(
-          const SetActivePlayerCommand('player-2', canAct: false),
-        );
-        expect(json['playerId'], 'player-2');
-        expect(json['canAct'], false);
-      });
-
-      test('ResetUnitMovementCommand omits null playerId', () {
-        final json = GameCommandSerializer.toJson(
-          const ResetUnitMovementCommand(),
-        );
-        expect(json['type'], 'ResetUnitMovement');
-        expect(json.containsKey('playerId'), isFalse);
-      });
-
-      test('ResetUnitMovementCommand encodes playerId when scoped', () {
-        final json = GameCommandSerializer.toJson(
-          const ResetUnitMovementCommand(playerId: 'player-2'),
-        );
-        expect(json['playerId'], 'player-2');
       });
 
       test('AttackHexCommand encodes attackerUnitId and defender hex', () {
@@ -692,23 +463,6 @@ void main() {
         );
       });
 
-      test('wrong payload type reports command field', () {
-        expect(
-          () => GameCommandSerializer.fromJson({
-            'type': 'SetActivePlayer',
-            'playerId': 'p1',
-            'canAct': 'yes',
-          }),
-          throwsA(
-            isA<ArgumentError>().having(
-              (error) => error.name,
-              'name',
-              'SetActivePlayer.canAct',
-            ),
-          ),
-        );
-      });
-
       test('unknown enum payload reports command field', () {
         expect(
           () => GameCommandSerializer.fromJson({
@@ -738,22 +492,6 @@ void main() {
               (error) => error.name,
               'name',
               'StartCityProject.projectType',
-            ),
-          ),
-        );
-      });
-
-      test('empty optional string reports command field', () {
-        expect(
-          () => GameCommandSerializer.fromJson({
-            'type': 'ResetUnitMovement',
-            'playerId': '',
-          }),
-          throwsA(
-            isA<ArgumentError>().having(
-              (error) => error.name,
-              'name',
-              'ResetUnitMovement.playerId',
             ),
           ),
         );

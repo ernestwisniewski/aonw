@@ -1,7 +1,7 @@
 part of 'game_command.dart';
 
 /// Player founds a city using the settler unit [founderId].
-final class FoundCityCommand extends GameCommand {
+final class FoundCityCommand extends DomainCommand {
   FoundCityCommand(this.founderId, {required List<CityHex> controlledHexes})
     : controlledHexes = List<CityHex>.unmodifiable(controlledHexes);
 
@@ -28,7 +28,7 @@ final class FoundCityCommand extends GameCommand {
 }
 
 /// Player starts building [buildingType] in city [cityId].
-final class StartBuildingCommand extends GameCommand {
+final class StartBuildingCommand extends DomainCommand {
   const StartBuildingCommand(this.cityId, this.buildingType);
 
   final String cityId;
@@ -45,7 +45,7 @@ final class StartBuildingCommand extends GameCommand {
 }
 
 /// Player starts producing [unitType] in city [cityId].
-final class StartUnitProductionCommand extends GameCommand {
+final class StartUnitProductionCommand extends DomainCommand {
   const StartUnitProductionCommand(this.cityId, this.unitType);
 
   final String cityId;
@@ -62,7 +62,7 @@ final class StartUnitProductionCommand extends GameCommand {
 }
 
 /// Player starts a continuous [projectType] in city [cityId].
-final class StartCityProjectCommand extends GameCommand {
+final class StartCityProjectCommand extends DomainCommand {
   const StartCityProjectCommand(this.cityId, this.projectType);
 
   final String cityId;
@@ -79,7 +79,7 @@ final class StartCityProjectCommand extends GameCommand {
 }
 
 /// Player starts building [wonderType] in city [cityId].
-final class StartWonderCommand extends GameCommand {
+final class StartWonderCommand extends DomainCommand {
   const StartWonderCommand(this.cityId, this.wonderType);
 
   final String cityId;
@@ -96,7 +96,7 @@ final class StartWonderCommand extends GameCommand {
 }
 
 /// Player sets the long-term specialization for city [cityId].
-final class SetCitySpecializationCommand extends GameCommand {
+final class SetCitySpecializationCommand extends DomainCommand {
   const SetCitySpecializationCommand(this.cityId, this.specialization);
 
   final String cityId;
@@ -114,7 +114,7 @@ final class SetCitySpecializationCommand extends GameCommand {
 }
 
 /// Player spends gold to add one turn of production to [cityId]'s queue.
-final class RushProductionCommand extends GameCommand {
+final class RushProductionCommand extends DomainCommand {
   const RushProductionCommand(this.cityId);
 
   final String cityId;
@@ -128,7 +128,7 @@ final class RushProductionCommand extends GameCommand {
 }
 
 /// Player begins the city-founding flow.
-final class StartCityFoundingCommand extends GameCommand {
+final class StartCityFoundingCommand extends GameIntent {
   const StartCityFoundingCommand();
 
   @override
@@ -139,7 +139,7 @@ final class StartCityFoundingCommand extends GameCommand {
 }
 
 /// Player cancels the city-founding flow.
-final class CancelCityFoundingCommand extends GameCommand {
+final class CancelCityFoundingCommand extends GameIntent {
   const CancelCityFoundingCommand();
 
   @override
@@ -150,7 +150,7 @@ final class CancelCityFoundingCommand extends GameCommand {
 }
 
 /// Player begins choosing manually worked hexes for a city on the map.
-final class StartCityWorkedHexSelectionCommand extends GameCommand {
+final class StartCityWorkedHexSelectionCommand extends GameIntent {
   const StartCityWorkedHexSelectionCommand(this.cityId);
 
   final String cityId;
@@ -164,7 +164,7 @@ final class StartCityWorkedHexSelectionCommand extends GameCommand {
 }
 
 /// Player cancels manual worked-hex selection for a city.
-final class CancelCityWorkedHexSelectionCommand extends GameCommand {
+final class CancelCityWorkedHexSelectionCommand extends GameIntent {
   const CancelCityWorkedHexSelectionCommand(this.cityId);
 
   final String cityId;
@@ -178,7 +178,7 @@ final class CancelCityWorkedHexSelectionCommand extends GameCommand {
 }
 
 /// Player toggles whether a city manually works the hex at ([col], [row]).
-final class ToggleWorkedHexCommand extends GameCommand {
+final class ToggleWorkedHexCommand extends DomainCommand {
   const ToggleWorkedHexCommand(this.cityId, this.col, this.row);
 
   final String cityId;
@@ -197,7 +197,7 @@ final class ToggleWorkedHexCommand extends GameCommand {
 }
 
 /// Player begins choosing the next expansion hex for a city on the map.
-final class StartCityExpansionSelectionCommand extends GameCommand {
+final class StartCityExpansionSelectionCommand extends GameIntent {
   const StartCityExpansionSelectionCommand(this.cityId);
 
   final String cityId;
@@ -211,7 +211,7 @@ final class StartCityExpansionSelectionCommand extends GameCommand {
 }
 
 /// Player cancels next-expansion selection for a city.
-final class CancelCityExpansionSelectionCommand extends GameCommand {
+final class CancelCityExpansionSelectionCommand extends GameIntent {
   const CancelCityExpansionSelectionCommand(this.cityId);
 
   final String cityId;
@@ -225,7 +225,7 @@ final class CancelCityExpansionSelectionCommand extends GameCommand {
 }
 
 /// Player chooses which hex a city should claim on its next territory growth.
-final class SelectCityExpansionHexCommand extends GameCommand {
+final class SelectCityExpansionHexCommand extends DomainCommand {
   const SelectCityExpansionHexCommand(this.cityId, this.col, this.row);
 
   final String cityId;

@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class UnitAttackedEvent extends GameEvent {
+final class UnitAttackedEvent extends DomainEvent {
   const UnitAttackedEvent({
     required this.attackerUnitId,
     required this.attackerOwnerPlayerId,
@@ -14,7 +14,7 @@ final class UnitAttackedEvent extends GameEvent {
   final String defenderOwnerPlayerId;
 }
 
-final class CombatResolvedEvent extends GameEvent {
+final class CombatResolvedEvent extends DomainEvent {
   const CombatResolvedEvent({
     required this.attackerUnitId,
     required this.defenderUnitId,
@@ -26,7 +26,7 @@ final class CombatResolvedEvent extends GameEvent {
   final CombatOutcome outcome;
 }
 
-final class UnitKilledEvent extends GameEvent {
+final class UnitKilledEvent extends DomainEvent {
   const UnitKilledEvent({
     required this.unitId,
     required this.ownerPlayerId,
@@ -38,7 +38,7 @@ final class UnitKilledEvent extends GameEvent {
   final String? attackerUnitId;
 }
 
-final class UnitRetreatedEvent extends GameEvent {
+final class UnitRetreatedEvent extends DomainEvent {
   const UnitRetreatedEvent({
     required this.unitId,
     required this.ownerPlayerId,
@@ -56,7 +56,7 @@ final class UnitRetreatedEvent extends GameEvent {
   final int toRow;
 }
 
-final class CityAttackedEvent extends GameEvent {
+final class CityAttackedEvent extends DomainEvent {
   const CityAttackedEvent({
     required this.attackerUnitId,
     required this.attackerOwnerPlayerId,
@@ -70,7 +70,7 @@ final class CityAttackedEvent extends GameEvent {
   final String cityOwnerPlayerId;
 }
 
-final class CityCapturedEvent extends GameEvent {
+final class CityCapturedEvent extends DomainEvent {
   const CityCapturedEvent({
     required this.cityId,
     required this.previousOwnerPlayerId,
@@ -82,7 +82,7 @@ final class CityCapturedEvent extends GameEvent {
   final String newOwnerPlayerId;
 }
 
-final class CityDestroyedEvent extends GameEvent {
+final class CityDestroyedEvent extends DomainEvent {
   const CityDestroyedEvent({
     required this.cityId,
     required this.previousOwnerPlayerId,

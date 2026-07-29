@@ -77,34 +77,6 @@ const _rolePolicy = <String, _CommandRole>{
   'TradeArtifactCommand': _CommandRole.domain,
 };
 
-const _expectedCurrentSerializedIntents = <String>[
-  'CancelAttackTargetingCommand',
-  'CancelCityExpansionSelectionCommand',
-  'CancelCityFoundingCommand',
-  'CancelCityWorkedHexSelectionCommand',
-  'CancelCommanderMergeSelectionCommand',
-  'CancelMerchantMoveToCitySelectionCommand',
-  'CancelMerchantTradeRouteSelectionCommand',
-  'CancelResearchSelectionCommand',
-  'CancelWorkerActionSelectionCommand',
-  'CityTappedCommand',
-  'FocusNextPendingActionCommand',
-  'FocusTurnStartActionCommand',
-  'SelectCityCommand',
-  'SelectTileCommand',
-  'SelectUnitCommand',
-  'StartAttackTargetingCommand',
-  'StartCityExpansionSelectionCommand',
-  'StartCityFoundingCommand',
-  'StartCityWorkedHexSelectionCommand',
-  'StartCommanderMergeSelectionCommand',
-  'StartMerchantMoveToCitySelectionCommand',
-  'StartMerchantTradeRouteSelectionCommand',
-  'StartWorkerActionSelectionCommand',
-  'TileTappedCommand',
-  'ToggleMoveTargetingCommand',
-];
-
 void main() {
   test('every concrete game command has one explicit boundary role', () {
     final inventory = _GameCommandInventory.build(
@@ -122,7 +94,9 @@ void main() {
       isEmpty,
       reason: 'The role policy may only classify concrete GameCommand types.',
     );
-    expect(inventory.serializedIntents, _expectedCurrentSerializedIntents);
+    expect(inventory.commandsOutsideTypedRoot, isEmpty);
+    expect(inventory.serializedIntents, isEmpty);
+    expect(inventory.serializedSystemCommands, isEmpty);
   });
 
   test('inventory includes concrete indirect command subclasses', () {
@@ -215,6 +189,7 @@ final class _GameCommandInventory {
           _GameCommandInventoryEntry(
             className: className,
             role: rolePolicy[className],
+            typedRoot: _typedRoot(className, declarations),
             serialized: serializerNames.contains(className),
             localHandlers: _semanticCommandPaths(
               sources,
@@ -255,12 +230,25 @@ final class _GameCommandInventory {
       if (entry.role == _CommandRole.intent && entry.serialized)
         entry.className,
   ];
+
+  List<String> get serializedSystemCommands => [
+    for (final entry in entries)
+      if (entry.role == _CommandRole.system && entry.serialized)
+        entry.className,
+  ];
+
+  List<String> get commandsOutsideTypedRoot => [
+    for (final entry in entries)
+      if (entry.role != null && entry.typedRoot != entry.role!.typedRoot)
+        '${entry.className}: ${entry.typedRoot ?? 'untyped'}',
+  ];
 }
 
 final class _GameCommandInventoryEntry {
   const _GameCommandInventoryEntry({
     required this.className,
     required this.role,
+    required this.typedRoot,
     required this.serialized,
     required this.localHandlers,
     required this.serverHandlers,
@@ -269,6 +257,7 @@ final class _GameCommandInventoryEntry {
 
   final String className;
   final _CommandRole? role;
+  final String? typedRoot;
   final bool serialized;
 
   /// Reducer paths with an AST command pattern or `is` guard.
@@ -279,6 +268,14 @@ final class _GameCommandInventoryEntry {
 
   /// Core AI paths with an AST command pattern or `is` guard.
   final List<String> aiConsumers;
+}
+
+extension on _CommandRole {
+  String get typedRoot => switch (this) {
+    _CommandRole.intent => 'GameIntent',
+    _CommandRole.domain => 'DomainCommand',
+    _CommandRole.system => 'ServerSystemCommand',
+  };
 }
 
 List<String> _commandLibraryPaths(String source) {
@@ -346,6 +343,21 @@ Set<String> _commandHierarchyNames(
     currentName = declarations[currentName]?.parentName;
   }
   return names;
+}
+
+String? _typedRoot(
+  String className,
+  Map<String, _CommandDeclaration> declarations,
+) {
+  final hierarchy = _commandHierarchyNames(className, declarations);
+  for (final root in const [
+    'GameIntent',
+    'DomainCommand',
+    'ServerSystemCommand',
+  ]) {
+    if (hierarchy.contains(root)) return root;
+  }
+  return null;
 }
 
 List<String> _semanticCommandPaths(
