@@ -5,9 +5,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
-import 'package:aonw/game/domain/reducer/unit/unit_command_validator.dart';
-import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -19,11 +16,9 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'movement_reducer_auto_explore.dart';
-part 'movement_reducer_direct_move.dart';
 part 'movement_reducer_move_preview.dart';
 part 'movement_selection_projector.dart';
 part 'movement_reducer_turn_reset.dart';
-part 'movement_reducer_unit_action_state.dart';
 
 abstract final class MovementReducer {
   static GameState toggleMoveTargetingWithEnvironment(
@@ -41,47 +36,6 @@ abstract final class MovementReducer {
     return handleMoveTargetTile(
       state,
       targetTile,
-      environment.mapData,
-      context: environment.context,
-      fogOfWarService: environment.fogOfWarService,
-    );
-  }
-
-  static GameStateTransition moveUnitWithEnvironment(
-    GameState state,
-    MoveUnitCommand command,
-    ReducerEnvironment environment,
-  ) {
-    return moveUnit(
-      state,
-      command,
-      environment.mapData,
-      context: environment.context,
-      fogOfWarService: environment.fogOfWarService,
-    );
-  }
-
-  static GameStateTransition cancelUnitActionWithEnvironment(
-    GameState state,
-    CancelUnitActionCommand command,
-    ReducerEnvironment environment,
-  ) {
-    return cancelUnitAction(
-      state,
-      command,
-      environment.mapData,
-      context: environment.context,
-    );
-  }
-
-  static GameStateTransition autoExploreUnitWithEnvironment(
-    GameState state,
-    AutoExploreUnitCommand command,
-    ReducerEnvironment environment,
-  ) {
-    return autoExploreUnit(
-      state,
-      command,
       environment.mapData,
       context: environment.context,
       fogOfWarService: environment.fogOfWarService,
@@ -176,83 +130,6 @@ abstract final class MovementReducer {
     );
   }
 
-  /// Applies an explicit movement command without relying on presentation
-  /// selection state or the two-tap move preview flow.
-  static GameStateTransition moveUnit(
-    GameState state,
-    MoveUnitCommand command,
-    MapTraversalView mapView, {
-    GameCommandContext context = const GameCommandContext(),
-    FogOfWarService fogOfWarService = const FogOfWarService(),
-    MovementCommandVisibilityMode visibilityMode =
-        MovementCommandVisibilityMode.authoritative,
-  }) {
-    return _DirectMoveProcessor.run(
-      state,
-      command,
-      mapView,
-      context: context,
-      fogOfWarService: fogOfWarService,
-      visibilityMode: visibilityMode,
-    );
-  }
-
-  /// Cancels transient action state owned by a unit: movement plans, worker
-  /// work, worker assignment, city founding draft, and unit-targeted modes.
-  static GameStateTransition cancelUnitAction(
-    GameState state,
-    CancelUnitActionCommand command,
-    MapTileLookup mapTiles, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    final validation = UnitCommandValidator.controllableUnit(
-      state,
-      unitId: command.unitId,
-      context: context,
-    );
-    if (validation is! ValidUnit) return GameStateTransition(state: state);
-    final unit = validation.unit;
-    final wasFortified = unit.isFortified;
-    final input = _captureUnitActionInput(state);
-    final result = UnitActionCommandResolver.cancelUnitAction(
-      units: input.units,
-      artifacts: input.artifacts,
-      interaction: _persistedUnitActionInteraction(state),
-      command: command,
-      actorPlayerId: unit.ownerPlayerId,
-    );
-    if (!result.accepted) return GameStateTransition(state: state);
-    final updatedUnit = result.units.byId(unit.id)!;
-    final cleanup =
-        _UnitActionStateCleanup(
-            _applyUnitActionResult(state, result, input),
-            unit,
-            updatedUnit,
-            mapTiles,
-          )
-          ..clearMoveTargetingOwnedByUnit()
-          ..refreshSelection()
-          ..activateMoveTargetingWhenReady(wasFortified);
-
-    return GameStateTransition(state: cleanup.state);
-  }
-
-  static GameStateTransition autoExploreUnit(
-    GameState state,
-    AutoExploreUnitCommand command,
-    MapTraversalView mapView, {
-    GameCommandContext context = const GameCommandContext(),
-    FogOfWarService fogOfWarService = const FogOfWarService(),
-  }) {
-    return _AutoExploreProcessor.run(
-      state,
-      command,
-      mapView,
-      context: context,
-      fogOfWarService: fogOfWarService,
-    );
-  }
-
   /// Resets MP for a player's units and processes queued paths.
   static GameStateTransition resetUnitMovementForNewTurn(
     GameState state,
@@ -295,11 +172,6 @@ abstract final class MovementReducer {
     }
     final city = state.cityAt(step.col, step.row);
     return city?.ownerPlayerId == unit.ownerPlayerId;
-  }
-
-  static bool _moveStateBelongsToUnit(GameState state, String unitId) {
-    return state.selectedUnitId == unitId ||
-        state.movePreview?.unitId == unitId;
   }
 
   static bool _canAutoActivateMoveTargeting(GameState state, GameUnit unit) {

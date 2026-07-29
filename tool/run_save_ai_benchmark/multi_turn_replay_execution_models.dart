@@ -1,17 +1,7 @@
 part of '../run_save_ai_benchmark.dart';
 
 PersistentGameState _replayPersistentState(GameState state) =>
-    PersistentGameState.snapshot(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      units: state.units,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
+    state.toPersistentState();
 
 Map<String, int> _replayDominationHoldTurns(PersistentGameState state) =>
     state.runtimeState.dominationHoldTurnsByPlayerId;

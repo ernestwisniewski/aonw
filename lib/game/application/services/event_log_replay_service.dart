@@ -1,7 +1,8 @@
 import 'package:aonw/game/application/ports/event_log.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 
 enum AuthoritativeSnapshotRequiredReason { redactedCommand, missingGameTurn }
 
@@ -29,26 +30,37 @@ final class AuthoritativeSnapshotRequiredException implements Exception {
 
 class EventLogReplayResult {
   final GameState state;
+  final SaveSnapshot snapshot;
   final int offset;
 
-  const EventLogReplayResult({required this.state, required this.offset});
+  const EventLogReplayResult({
+    required this.state,
+    required this.snapshot,
+    required this.offset,
+  });
 }
 
 class EventLogReplayService {
   final EventLog eventLog;
-  final GameStateReducer reducer;
+  final LocalCommandResolver commandResolver;
 
-  const EventLogReplayService({required this.eventLog, required this.reducer});
+  EventLogReplayService({
+    required this.eventLog,
+    required GameStateReducer reducer,
+  }) : commandResolver = LocalCommandResolver(reducer: reducer);
 
   Future<EventLogReplayResult> replaySinceSnapshot({
     required String saveId,
+    required SaveSnapshot snapshot,
     required GameState state,
-    required int offset,
-    MatchRules matchRules = MatchRules.standard,
   }) async {
+    var currentSnapshot = snapshot;
     var currentState = state;
-    var currentOffset = offset;
-    await for (final logged in eventLog.readSince(saveId, offset: offset + 1)) {
+    var currentOffset = snapshot.eventLogOffset;
+    await for (final logged in eventLog.readSince(
+      saveId,
+      offset: currentOffset + 1,
+    )) {
       if (logged.offset <= currentOffset) continue;
       if (logged.offset != currentOffset + 1) {
         throw StateError(
@@ -69,17 +81,24 @@ class EventLogReplayService {
           reason: AuthoritativeSnapshotRequiredReason.missingGameTurn,
         );
       }
-      final transition = reducer.reduce(
-        currentState,
-        command,
+      final resolved = commandResolver.resolve(
+        baseSnapshot: currentSnapshot,
+        currentState: currentState,
+        command: command,
+        savedAt: logged.timestamp,
         context: logged.toCommandContext(
-          victoryRules: matchRules.victory,
-          paceBalance: matchRules.paceBalance,
+          victoryRules: currentSnapshot.domain.matchRules.victory,
+          paceBalance: currentSnapshot.domain.matchRules.paceBalance,
         ),
       );
-      currentState = transition.state;
+      currentSnapshot = resolved.snapshot.withEventLogOffset(logged.offset);
+      currentState = resolved.state;
       currentOffset = logged.offset;
     }
-    return EventLogReplayResult(state: currentState, offset: currentOffset);
+    return EventLogReplayResult(
+      state: currentState,
+      snapshot: currentSnapshot,
+      offset: currentOffset,
+    );
   }
 }

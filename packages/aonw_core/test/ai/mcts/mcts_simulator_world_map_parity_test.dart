@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -5,7 +6,7 @@ import 'mcts_simulator_parity_support.dart';
 
 void main() {
   group('TracingMctsSimulator opponent WorldMap command parity', () {
-    test('auto-explores with the dedicated persistent adapter', () {
+    test('auto-explores through the canonical engine adapter', () {
       final mapData = MctsSimulatorParityFixtures.explorationMapData();
       final scout = GameUnit.produced(
         id: 'scout_2',
@@ -31,18 +32,21 @@ void main() {
       );
       const command = AutoExploreUnitCommand('scout_2');
 
-      final persistent = const PersistentAutoExploreCommandResolver().resolve(
+      final engine = const SimulationGameEngineAdapter().apply(
+        snapshot: MctsSimulatorParityFixtures.engineSnapshot(state),
         state: state,
         command: command,
         actorPlayerId: 'player_2',
-        mapData: WorldMapReadView(
+        commandTick: 0,
+        mapView: WorldMapReadView(
           MctsSimulatorParityFixtures.worldMap(mapData: mapData),
         ),
-        phase: AutoExploreCommandPhase.direct,
+        ruleset: GameRuleset.defaults,
+        movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
       );
       final expected =
           MctsSimulatorParityFixtures.advancePersistentEconomyForPlayers(
-            persistent.state,
+            engine.state,
             mapData: mapData,
           );
       final simulated = MctsSimulatorParityFixtures.advanceSimulatedTurn(
@@ -56,9 +60,8 @@ void main() {
         ),
       );
 
-      expect(persistent.accepted, isTrue);
-      expect(persistent.events.single, isA<UnitMovedEvent>());
-      expect(persistent.execution, isNotNull);
+      expect(engine.accepted, isTrue);
+      expect(engine.events.single, isA<UnitMovedEvent>());
       expect(
         MctsSimulatorParityFixtures.unitById(
           simulated.view.movementBlockingUnits,

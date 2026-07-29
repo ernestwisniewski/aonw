@@ -8,6 +8,7 @@ import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
+import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -63,12 +64,24 @@ class LocalCommandTransport implements CommandTransport {
     final latestOffset = await eventLog.latestOffset(saveId);
     final timestamp = clock.nowUtc();
     final resolver = LocalCommandResolver(reducer: reducer);
+    final authoritativeCommand =
+        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
+          currentState,
+          command,
+          context,
+        );
+    final commandToApply = authoritativeCommand ?? command;
+    final movementPresentationOrigin =
+        command is TileTappedCommand && authoritativeCommand is MoveUnitCommand
+        ? LocalMovementPresentationOrigin.previewConfirmation
+        : LocalMovementPresentationOrigin.direct;
     final resolved = resolver.resolve(
       baseSnapshot: baseSnapshot,
       currentState: currentState,
-      command: command,
+      command: commandToApply,
       savedAt: timestamp,
       context: context,
+      movementPresentationOrigin: movementPresentationOrigin,
     );
 
     return _persistResolution(
@@ -76,11 +89,10 @@ class LocalCommandTransport implements CommandTransport {
       baseSnapshot: baseSnapshot,
       latestOffset: latestOffset,
       timestamp: timestamp,
-      resolver: resolver,
       resolved: resolved,
       currentState: currentState,
       command: command,
-      context: context,
+      authoritativeCommand: authoritativeCommand,
     );
   }
 
@@ -89,33 +101,23 @@ class LocalCommandTransport implements CommandTransport {
     required SaveSnapshot baseSnapshot,
     required int latestOffset,
     required DateTime timestamp,
-    required LocalCommandResolver resolver,
     required LocalCommandResolution resolved,
     required GameState currentState,
     required GameCommand command,
-    required GameCommandContext context,
+    required GameCommand? authoritativeCommand,
   }) async {
-    final resolvedAuthoritativeCommand =
-        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-          currentState,
-          command,
-          resolved.context,
-        );
     final shouldLogCommand =
-        resolvedAuthoritativeCommand != null ||
+        authoritativeCommand != null ||
         AuthoritativeCommandPolicy.shouldLogForReplay(currentState, command);
     final offset = shouldLogCommand ? latestOffset + 1 : latestOffset;
-    final commandToLog = resolvedAuthoritativeCommand ?? command;
+    final commandToLog = authoritativeCommand ?? command;
 
     await _appendCommandIfNeeded(
       saveId: saveId,
-      baseSnapshot: baseSnapshot,
+      turn: baseSnapshot.domain.turn,
       currentState: currentState,
       commandToLog: commandToLog,
-      authoritativeCommand: resolvedAuthoritativeCommand,
       resolved: resolved,
-      resolver: resolver,
-      context: context,
       timestamp: timestamp,
       offset: offset,
       shouldLog: shouldLogCommand,
@@ -167,43 +169,31 @@ class LocalCommandTransport implements CommandTransport {
 
   Future<void> _appendCommandIfNeeded({
     required String saveId,
-    required SaveSnapshot baseSnapshot,
+    required int turn,
     required GameState currentState,
     required GameCommand commandToLog,
-    required GameCommand? authoritativeCommand,
     required LocalCommandResolution resolved,
-    required LocalCommandResolver resolver,
-    required GameCommandContext context,
     required DateTime timestamp,
     required int offset,
     required bool shouldLog,
   }) async {
     if (!shouldLog) return;
 
-    final logResolution = authoritativeCommand == null
-        ? resolved
-        : resolver.resolve(
-            baseSnapshot: baseSnapshot,
-            currentState: currentState,
-            command: authoritativeCommand,
-            savedAt: timestamp,
-            context: context,
-          );
     await eventLog.append(
       saveId,
       LoggedCommand(
         offset: offset,
         timestamp: timestamp,
-        turn: baseSnapshot.domain.turn,
-        actorPlayerId: logResolution.context.actorPlayerId,
-        canAct: logResolution.context.canAct,
-        commandTick: logResolution.context.commandTick,
-        ignoreFogOfWar: logResolution.context.ignoreFogOfWar,
+        turn: turn,
+        actorPlayerId: resolved.context.actorPlayerId,
+        canAct: resolved.context.canAct,
+        commandTick: resolved.context.commandTick,
+        ignoreFogOfWar: resolved.context.ignoreFogOfWar,
         command: commandToLog,
-        events: logResolution.events,
+        events: resolved.events,
         activity: GameActivityEventProjector.project(
-          events: logResolution.events,
-          state: logResolution.state,
+          events: resolved.events,
+          state: resolved.state,
           previousState: currentState,
         ),
       ),

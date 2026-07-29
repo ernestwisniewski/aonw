@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/application/engine/movement_execution_delta.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 
@@ -8,12 +9,14 @@ sealed class GameEngineResult {
   factory GameEngineResult.accepted({
     required CanonicalGameSnapshot snapshot,
     List<DomainEvent> events = const [],
+    MovementExecutionDelta movementDelta = MovementExecutionDelta.empty,
   }) {
     return GameEngineAccepted._(
       snapshot: snapshot,
       events: events.isEmpty
           ? const []
           : List<DomainEvent>.unmodifiable(events),
+      movementDelta: movementDelta,
     );
   }
 
@@ -26,17 +29,25 @@ sealed class GameEngineResult {
 
   CanonicalGameSnapshot get snapshot;
   List<DomainEvent> get events;
+  MovementExecutionDelta get movementDelta;
 }
 
 /// Accepted transition with its next snapshot and ordered domain facts.
 final class GameEngineAccepted extends GameEngineResult {
-  const GameEngineAccepted._({required this.snapshot, required this.events});
+  const GameEngineAccepted._({
+    required this.snapshot,
+    required this.events,
+    required this.movementDelta,
+  });
 
   @override
   final CanonicalGameSnapshot snapshot;
 
   @override
   final List<DomainEvent> events;
+
+  @override
+  final MovementExecutionDelta movementDelta;
 }
 
 /// Rejected transition. The snapshot is the unchanged input snapshot.
@@ -48,6 +59,9 @@ final class GameEngineRejected extends GameEngineResult {
 
   @override
   List<DomainEvent> get events => const [];
+
+  @override
+  MovementExecutionDelta get movementDelta => MovementExecutionDelta.empty;
 
   final String reason;
 }

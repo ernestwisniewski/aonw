@@ -14,12 +14,14 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/movement_engine_test_driver.dart';
+
 part 'movement_reducer_map_lookup_tests.dart';
 
 void main() {
   _registerCanonicalMapLookupActionTests();
 
-  test('previews and confirms movement through a canonical traversal view', () {
+  test('previews and executes movement through a canonical traversal view', () {
     final world = _canonicalWorld(cols: 4);
     final MapTraversalView mapView = WorldMapReadView(world);
     final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
@@ -43,9 +45,9 @@ void main() {
       targetTile,
       mapView,
     );
-    final confirmed = MovementReducer.handleMoveTargetTile(
+    final confirmed = resolveMovementCommandForTest(
       previewed.state,
-      targetTile,
+      MoveUnitCommand(unit.id, targetTile.col, targetTile.row),
       mapView,
     );
     final movedUnit = confirmed.state.units.single;
@@ -95,7 +97,7 @@ void main() {
       isFalse,
     );
 
-    final result = MovementReducer.moveUnit(
+    final result = resolveMovementCommandForTest(
       state,
       MoveUnitCommand(unit.id, 1, 0),
       mapView,
@@ -127,7 +129,7 @@ void main() {
     ]);
   });
 
-  test('queues a canonical preview at zero movement without jumping', () {
+  test('queues a canonical move at zero movement without jumping', () {
     final world = _canonicalWorld(cols: 4);
     final MapTraversalView mapView = WorldMapReadView(world);
     final unit = GameUnit.startingCommander(
@@ -149,9 +151,9 @@ void main() {
       targetTile,
       mapView,
     );
-    final confirmed = MovementReducer.handleMoveTargetTile(
+    final confirmed = resolveMovementCommandForTest(
       previewed.state,
-      targetTile,
+      MoveUnitCommand(unit.id, targetTile.col, targetTile.row),
       mapView,
     );
     final queuedUnit = confirmed.state.units.single;
@@ -175,73 +177,70 @@ void main() {
     ]);
   });
 
-  test(
-    'confirmation animates the current partial route after a new blocker',
-    () {
-      final world = _canonicalWorld(cols: 3, rows: 2);
-      final MapTraversalView mapView = WorldMapReadView(world);
-      final unit = GameUnit.startingCommander(
-        ownerPlayerId: 'player_1',
-      ).copyWith(movementPoints: 3);
-      final blocker = GameUnit.startingWarrior(
-        ownerPlayerId: 'player_1',
-        col: 1,
-        row: 0,
-      );
-      final state = GameState(
-        activePlayerId: 'player_1',
-        units: [unit],
-        fogOfWar: _originFog(),
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(unit),
-          moveCommandActive: true,
-        ),
-      );
-      final targetTile = mapView.tileAt(2, 0)!;
-      final previewed = MovementReducer.handleMoveTargetTile(
-        state,
-        targetTile,
-        mapView,
-      );
+  test('execution animates the current partial route after a new blocker', () {
+    final world = _canonicalWorld(cols: 3, rows: 2);
+    final MapTraversalView mapView = WorldMapReadView(world);
+    final unit = GameUnit.startingCommander(
+      ownerPlayerId: 'player_1',
+    ).copyWith(movementPoints: 3);
+    final blocker = GameUnit.startingWarrior(
+      ownerPlayerId: 'player_1',
+      col: 1,
+      row: 0,
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [unit],
+      fogOfWar: _originFog(),
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(unit),
+        moveCommandActive: true,
+      ),
+    );
+    final targetTile = mapView.tileAt(2, 0)!;
+    final previewed = MovementReducer.handleMoveTargetTile(
+      state,
+      targetTile,
+      mapView,
+    );
 
-      final confirmed = MovementReducer.handleMoveTargetTile(
-        previewed.state.copyWith(units: [unit, blocker]),
-        targetTile,
-        mapView,
-      );
-      final movedUnit = confirmed.state.unitById(unit.id)!;
-      final animation = confirmed.uiEffects
-          .whereType<AnimateUnitMoveEffect>()
-          .single;
+    final confirmed = resolveMovementCommandForTest(
+      previewed.state.copyWith(units: [unit, blocker]),
+      MoveUnitCommand(unit.id, targetTile.col, targetTile.row),
+      mapView,
+    );
+    final movedUnit = confirmed.state.unitById(unit.id)!;
+    final animation = confirmed.uiEffects
+        .whereType<AnimateUnitMoveEffect>()
+        .single;
 
-      expect(previewed.state.movePreview?.canMoveNow, isTrue);
-      expect(previewed.state.movePreview?.path, const [
-        (col: 0, row: 0),
-        (col: 1, row: 0),
-        (col: 2, row: 0),
-      ]);
-      expect((movedUnit.col, movedUnit.row), (2, 1));
-      expect(movedUnit.movementPoints, 0);
-      expect(movedUnit.queuedPath?.targetCol, 2);
-      expect(movedUnit.queuedPath?.targetRow, 0);
-      expect(
-        [for (final step in movedUnit.queuedPath!.steps) (step.col, step.row)],
-        const [(0, 0), (0, 1), (1, 1), (2, 1), (2, 0)],
-      );
-      expect(
-        [for (final step in animation.steps) (step.col, step.row)],
-        const [(0, 1), (1, 1), (2, 1)],
-      );
-      expect(animation.steps.last.coord, (
-        col: movedUnit.col,
-        row: movedUnit.row,
-      ));
-      expect(confirmed.state.moveCommandActive, isFalse);
-      expect(confirmed.events.single, isA<UnitMovedEvent>());
-    },
-  );
+    expect(previewed.state.movePreview?.canMoveNow, isTrue);
+    expect(previewed.state.movePreview?.path, const [
+      (col: 0, row: 0),
+      (col: 1, row: 0),
+      (col: 2, row: 0),
+    ]);
+    expect((movedUnit.col, movedUnit.row), (2, 1));
+    expect(movedUnit.movementPoints, 0);
+    expect(movedUnit.queuedPath?.targetCol, 2);
+    expect(movedUnit.queuedPath?.targetRow, 0);
+    expect(
+      [for (final step in movedUnit.queuedPath!.steps) (step.col, step.row)],
+      const [(0, 0), (0, 1), (1, 1), (2, 1), (2, 0)],
+    );
+    expect(
+      [for (final step in animation.steps) (step.col, step.row)],
+      const [(0, 1), (1, 1), (2, 1)],
+    );
+    expect(animation.steps.last.coord, (
+      col: movedUnit.col,
+      row: movedUnit.row,
+    ));
+    expect(confirmed.state.moveCommandActive, isFalse);
+    expect(confirmed.events.single, isA<UnitMovedEvent>());
+  });
 
-  test('confirmation uses the current full route after a blocker leaves', () {
+  test('execution uses the current full route after a blocker leaves', () {
     final world = _canonicalWorld(cols: 3, rows: 2);
     final MapTraversalView mapView = WorldMapReadView(world);
     final unit = GameUnit.startingCommander(
@@ -268,9 +267,9 @@ void main() {
       mapView,
     );
 
-    final confirmed = MovementReducer.handleMoveTargetTile(
+    final confirmed = resolveMovementCommandForTest(
       previewed.state.copyWith(units: [unit]),
-      targetTile,
+      MoveUnitCommand(unit.id, targetTile.col, targetTile.row),
       mapView,
     );
     final movedUnit = confirmed.state.units.single;
@@ -317,7 +316,7 @@ void main() {
       interaction: GameInteractionState(selection: GameSelection.unit(scout)),
     );
 
-    final result = MovementReducer.autoExploreUnit(
+    final result = resolveMovementCommandForTest(
       state,
       AutoExploreUnitCommand(scout.id),
       mapView,

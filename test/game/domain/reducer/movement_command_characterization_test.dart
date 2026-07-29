@@ -1,8 +1,6 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -11,12 +9,13 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/movement_engine_test_driver.dart';
 
 void main() {
   group('local movement animation characterization', () {
@@ -31,8 +30,7 @@ void main() {
           fogOfWar: _visibleFog(cols: 6),
         );
         final beforeUnits = state.units;
-
-        final result = MovementReducer.moveUnit(
+        final result = resolveMovementCommandForTest(
           state,
           MoveUnitCommand(mover.id, 3, 0),
           _map(cols: 6),
@@ -78,8 +76,7 @@ void main() {
     test('animates only the executed prefix and queues the full path', () {
       final mover = _mover(movementPoints: 2);
       final state = _state(mover, fogOfWar: _visibleFog(cols: 5));
-
-      final result = MovementReducer.moveUnit(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 4, 0),
         _map(cols: 5),
@@ -153,7 +150,7 @@ void main() {
         ),
       );
 
-      final result = MovementReducer.moveUnit(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 3, 0),
         _map(cols: 6),
@@ -168,7 +165,7 @@ void main() {
       expect(result.events, isEmpty);
       expect(result.uiEffects, isEmpty);
       expect(result.state.movePreview, isNull);
-      expect(result.state.moveCommandActive, isTrue);
+      expect(result.state.moveCommandActive, isFalse);
       expect(result.state.pendingAction, same(pending));
       expect(result.state.cityFoundingDraft, same(draft));
       expect(result.state.selection?.unit, same(queued));
@@ -181,7 +178,7 @@ void main() {
         fogOfWar: _originOnlyFog(),
       ).copyWith(activePlayerId: '');
 
-      final result = MovementReducer.moveUnit(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 4, 0),
         _map(cols: 5),
@@ -211,7 +208,7 @@ void main() {
         ),
       );
 
-      final result = MovementReducer.moveUnit(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 1, 0),
         _map(cols: 2),
@@ -221,57 +218,51 @@ void main() {
     });
   });
 
-  group('local and persistent movement convergence', () {
-    test('fortified zero-MP unit is rejected consistently', () {
+  group('local canonical movement boundary', () {
+    test('fortified zero-MP unit is rejected atomically', () {
       final mover = _mover(movementPoints: 0, posture: UnitPosture.fortified);
-      final pair = _runBoth(
-        _state(mover),
+      final state = _state(mover);
+      final result = resolveMovementCommandForTest(
+        state,
         MoveUnitCommand(mover.id, 1, 0),
         _map(cols: 3),
       );
 
-      expect(pair.local.state, same(pair.localInput));
-      expect(pair.local.events, isEmpty);
-      expect(pair.local.uiEffects, isEmpty);
-      expect(pair.persistent.accepted, isFalse);
-      expect(pair.persistent.reason, 'unit_unavailable');
-      expect(pair.persistent.state, same(pair.persistentInput));
-      expect(pair.persistent.events, isEmpty);
+      expect(result.state, same(state));
+      expect(result.events, isEmpty);
+      expect(result.uiEffects, isEmpty);
     });
 
-    test('invalid origin is rejected consistently', () {
+    test('invalid origin is rejected atomically', () {
       final mover = _mover(col: -1, movementPoints: 5);
-      final pair = _runBoth(
-        _state(mover),
+      final state = _state(mover);
+      final result = resolveMovementCommandForTest(
+        state,
         MoveUnitCommand(mover.id, 0, 0),
         _map(cols: 3),
       );
 
-      expect(pair.local.state, same(pair.localInput));
-      expect(pair.local.events, isEmpty);
-      expect(pair.local.uiEffects, isEmpty);
-      expect(pair.persistent.accepted, isFalse);
-      expect(pair.persistent.reason, 'unit_out_of_bounds');
-      expect(pair.persistent.state, same(pair.persistentInput));
-      expect(pair.persistent.events, isEmpty);
+      expect(result.state, same(state));
+      expect(result.events, isEmpty);
+      expect(result.uiEffects, isEmpty);
     });
 
-    test('hidden target at distance three moves in both reducers', () {
+    test('hidden target at distance three preserves exact evidence', () {
       final mover = _mover(movementPoints: 5);
       final state = _state(mover, fogOfWar: _originOnlyFog());
-      final pair = _runBoth(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 3, 0),
         _map(cols: 4),
       );
 
-      final localMover = pair.local.state.units.single;
+      final localMover = result.state.units.single;
       expect(
         (localMover.col, localMover.row, localMover.movementPoints),
         (3, 0, 2),
       );
-      expect(pair.local.uiEffects, hasLength(1));
-      final animation = pair.local.uiEffects.single as AnimateUnitMoveEffect;
+      expect(result.uiEffects, hasLength(1));
+      final animation = result.uiEffects.single as AnimateUnitMoveEffect;
       expect(
         (animation.unitId, animation.fromCol, animation.fromRow),
         (mover.id, 0, 0),
@@ -281,9 +272,9 @@ void main() {
         (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
         (col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
       ]);
-      expect(pair.local.events, hasLength(1));
-      expect(pair.local.events.single, isA<UnitMovedEvent>());
-      final localEvent = pair.local.events.single as UnitMovedEvent;
+      expect(result.events, hasLength(1));
+      expect(result.events.single, isA<UnitMovedEvent>());
+      final localEvent = result.events.single as UnitMovedEvent;
       expect(
         (
           localEvent.unitId,
@@ -294,64 +285,35 @@ void main() {
         ),
         (mover.id, 0, 0, 3, 0),
       );
-      expect(pair.persistent.accepted, isTrue);
-      expect(pair.persistent.reason, isNull);
-      expect(
-        (
-          pair.persistent.state.units.first.col,
-          pair.persistent.state.units.first.row,
-          pair.persistent.state.units.first.movementPoints,
-        ),
-        (3, 0, 2),
-      );
-      expect(pair.persistent.events, hasLength(1));
-      final persistentEvent = pair.persistent.events.single as UnitMovedEvent;
-      expect(
-        (
-          persistentEvent.unitId,
-          persistentEvent.fromCol,
-          persistentEvent.fromRow,
-          persistentEvent.toCol,
-          persistentEvent.toRow,
-        ),
-        (mover.id, 0, 0, 3, 0),
-      );
     });
 
-    test('far hidden target is rejected consistently', () {
+    test('far hidden target is rejected atomically', () {
       final mover = _mover(movementPoints: 5);
       final state = _state(mover, fogOfWar: _originOnlyFog());
-      final pair = _runBoth(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 4, 0),
         _map(cols: 5),
       );
 
-      expect(pair.local.state, same(pair.localInput));
-      expect(pair.local.events, isEmpty);
-      expect(pair.local.uiEffects, isEmpty);
-      expect(pair.persistent.accepted, isFalse);
-      expect(pair.persistent.reason, 'move_path_not_found');
-      expect(pair.persistent.state, same(pair.persistentInput));
-      expect(pair.persistent.events, isEmpty);
+      expect(result.state, same(state));
+      expect(result.events, isEmpty);
+      expect(result.uiEffects, isEmpty);
     });
 
-    test('missing fog entry exposes the blocker consistently', () {
+    test('missing fog entry exposes the blocker atomically', () {
       final mover = _mover(movementPoints: 5);
       final blocker = _enemy(col: 1);
       final state = _state(mover, additionalUnits: [blocker]);
-      final pair = _runBoth(
+      final result = resolveMovementCommandForTest(
         state,
         MoveUnitCommand(mover.id, 1, 0),
         _map(cols: 2),
       );
 
-      expect(pair.local.state, same(pair.localInput));
-      expect(pair.local.events, isEmpty);
-      expect(pair.local.uiEffects, isEmpty);
-      expect(pair.persistent.accepted, isFalse);
-      expect(pair.persistent.reason, 'move_target_occupied');
-      expect(pair.persistent.state, same(pair.persistentInput));
+      expect(result.state, same(state));
+      expect(result.events, isEmpty);
+      expect(result.uiEffects, isEmpty);
     });
   });
 }
@@ -465,36 +427,3 @@ MapTraversalView _map({required int cols}) => WorldMapReadView(
     ],
   ),
 );
-
-_MovementPair _runBoth(
-  GameState state,
-  MoveUnitCommand command,
-  MapTraversalView map,
-) {
-  final persistentInput = state.toPersistentState();
-  return _MovementPair(
-    localInput: state,
-    persistentInput: persistentInput,
-    local: MovementReducer.moveUnit(state, command, map),
-    persistent: const PersistentMoveUnitResolver().resolve(
-      state: persistentInput,
-      command: command,
-      actorPlayerId: 'player_1',
-      mapData: map,
-    ),
-  );
-}
-
-final class _MovementPair {
-  const _MovementPair({
-    required this.localInput,
-    required this.persistentInput,
-    required this.local,
-    required this.persistent,
-  });
-
-  final GameState localInput;
-  final PersistentGameState persistentInput;
-  final GameStateTransition local;
-  final PersistentMoveUnitResult persistent;
-}

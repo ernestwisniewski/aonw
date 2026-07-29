@@ -11,7 +11,7 @@ void _registerArtifactCarrierDirectMoveTest() {
       activePlayerId: 'player_1',
     );
 
-    final result = MovementReducer.moveUnit(
+    final result = resolveMovementCommandForTest(
       state,
       const MoveUnitCommand('carrier_1', 1, 0),
       roughMap,
@@ -43,7 +43,7 @@ void _registerArtifactCarrierPreviewTests() {
     expect(result.uiEffects.whereType<ShowHudFeedbackEffect>(), isEmpty);
   });
 
-  test('confirm completes spend-turn entry into own rough city center', () {
+  test('engine completes spend-turn entry into own rough city center', () {
     final roughMap = _artifactCarrierRoughCityMap();
     final carrier = _artifactCarrier();
     final state = _artifactCarrierSelectedState(carrier);
@@ -54,9 +54,9 @@ void _registerArtifactCarrierPreviewTests() {
       targetTile,
       roughMap,
     );
-    final confirmed = MovementReducer.handleMoveTargetTile(
+    final confirmed = resolveMovementCommandForTest(
       previewed.state,
-      targetTile,
+      MoveUnitCommand(carrier.id, targetTile.col, targetTile.row),
       roughMap,
     );
     final moved = confirmed.state.units.single;

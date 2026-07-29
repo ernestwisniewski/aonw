@@ -16,6 +16,8 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/movement_engine_test_driver.dart';
+
 part 'movement_reducer_artifact_city_entry_tests.dart';
 
 MapData _map(
@@ -122,7 +124,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('commander_player_1'),
           mapData,
@@ -157,7 +159,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('worker_1'),
           mapData,
@@ -194,7 +196,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('settler_1'),
           mapData,
@@ -233,7 +235,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('scout_1'),
           mapData,
@@ -263,7 +265,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           skippedState,
           const CancelUnitActionCommand('commander_player_1'),
           mapData,
@@ -286,7 +288,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('commander_player_1'),
           mapData,
@@ -319,7 +321,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.autoExploreUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const AutoExploreUnitCommand('scout_1'),
           mapData,
@@ -357,7 +359,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.autoExploreUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const AutoExploreUnitCommand('scout_1'),
           mapData,
@@ -403,12 +405,12 @@ void main() {
           fogOfWar: _fog(discovered: knownHexes, visible: knownHexes),
         );
 
-        final firstResult = MovementReducer.autoExploreUnit(
+        final firstResult = resolveMovementCommandForTest(
           state,
           const AutoExploreUnitCommand('scout_1'),
           mapData,
         );
-        final secondResult = MovementReducer.autoExploreUnit(
+        final secondResult = resolveMovementCommandForTest(
           firstResult.state,
           const AutoExploreUnitCommand('scout_2'),
           mapData,
@@ -457,7 +459,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.cancelUnitAction(
+        final result = resolveMovementCommandForTest(
           state,
           const CancelUnitActionCommand('scout_1'),
           mapData,
@@ -485,7 +487,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.moveUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const MoveUnitCommand('scout_1', 2, 1),
           mapData,
@@ -509,7 +511,7 @@ void main() {
           activePlayerId: 'player_1',
         );
 
-        final result = MovementReducer.moveUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const MoveUnitCommand('commander_player_1', 1, 0),
           mapData,
@@ -538,7 +540,7 @@ void main() {
           ),
         );
 
-        final result = MovementReducer.moveUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const MoveUnitCommand('commander_player_1', 1, 0),
           mapData,
@@ -564,7 +566,7 @@ void main() {
         final warrior = _warrior(id: 'warrior_1');
         final state = GameState(units: [warrior], activePlayerId: 'player_1');
 
-        final result = MovementReducer.moveUnit(
+        final result = resolveMovementCommandForTest(
           state,
           const MoveUnitCommand('warrior_1', 1, 0),
           roughMap,
@@ -974,10 +976,10 @@ void main() {
         expect(result.state.selection?.unit?.id, commander.id);
       });
     });
-    // handleMoveTargetTile — confirm (second tap)
+    // Preview intent followed by authoritative movement command.
 
-    group('handleMoveTargetTile — confirm move', () {
-      test('confirms move on second tap', () {
+    group('handleMoveTargetTile — execute previewed move', () {
+      test('executes the previewed move', () {
         final commander = _commander();
         final state = GameState(
           units: [commander],
@@ -997,10 +999,9 @@ void main() {
         );
         expect(s1.state.movePreview, isNotNull);
 
-        // Second tap: confirm
-        final s2 = MovementReducer.handleMoveTargetTile(
+        final s2 = resolveMovementCommandForTest(
           s1.state,
-          tileData,
+          MoveUnitCommand(commander.id, tileData.col, tileData.row),
           mapData,
         );
         expect(s2.state.units.single.col, 1);
@@ -1011,7 +1012,7 @@ void main() {
         );
       });
 
-      test('unit position updates after confirmation', () {
+      test('unit position updates after execution', () {
         final commander = _commander();
         final state = GameState(
           units: [commander],
@@ -1027,9 +1028,9 @@ void main() {
           tileData,
           mapData,
         );
-        final s2 = MovementReducer.handleMoveTargetTile(
+        final s2 = resolveMovementCommandForTest(
           s1.state,
-          tileData,
+          MoveUnitCommand(commander.id, tileData.col, tileData.row),
           mapData,
         );
         final movedUnit = s2.state.units.single;
@@ -1037,7 +1038,7 @@ void main() {
         expect(movedUnit.row, 0);
       });
 
-      test('preview is cleared after confirmation', () {
+      test('preview is cleared after execution', () {
         final commander = _commander();
         final state = GameState(
           units: [commander],
@@ -1053,9 +1054,9 @@ void main() {
           tileData,
           mapData,
         );
-        final s2 = MovementReducer.handleMoveTargetTile(
+        final s2 = resolveMovementCommandForTest(
           s1.state,
-          tileData,
+          MoveUnitCommand(commander.id, tileData.col, tileData.row),
           mapData,
         );
         expect(s2.state.movePreview, isNull);
@@ -1077,9 +1078,9 @@ void main() {
           tileData,
           mapData,
         );
-        final s2 = MovementReducer.handleMoveTargetTile(
+        final s2 = resolveMovementCommandForTest(
           s1.state,
-          tileData,
+          MoveUnitCommand(commander.id, tileData.col, tileData.row),
           mapData,
         );
         expect(s2.state.selection?.type, GameSelectionType.unit);
@@ -1103,9 +1104,9 @@ void main() {
           tileData,
           mapData,
         );
-        final s2 = MovementReducer.handleMoveTargetTile(
+        final s2 = resolveMovementCommandForTest(
           s1.state,
-          tileData,
+          MoveUnitCommand(commander.id, tileData.col, tileData.row),
           mapData,
         );
         expect(s2.state.units.single.movementPoints, lessThan(initialMP));
@@ -1444,7 +1445,7 @@ void main() {
         expect(result.state.selection?.unit?.col, 3);
       });
 
-      test('confirming a target at 0 MP queues the path without moving', () {
+      test('executing a target at 0 MP queues the path without moving', () {
         final commander = _commander(movementPoints: 0);
         final start = GameState(
           units: [commander],
@@ -1469,12 +1470,11 @@ void main() {
         expect(previewed.state.movePreview, isNotNull);
         expect(previewed.state.movePreview?.targetCol, 2);
 
-        // Second tap on the same tile confirms; with 0 MP every step is
-        // unreachable this turn, so _confirmMovePreview should queue the path
-        // and leave the unit in place.
-        final confirmed = MovementReducer.handleMoveTargetTile(
+        // With 0 MP every step is unreachable this turn, so the authoritative
+        // movement command queues the path and leaves the unit in place.
+        final confirmed = resolveMovementCommandForTest(
           previewed.state,
-          tile,
+          MoveUnitCommand(commander.id, tile.col, tile.row),
           mapData,
         );
         final updated = confirmed.state.units.single;

@@ -221,11 +221,13 @@ bool _isIndexedMapViewDeclaration(VariableDeclaration? declaration) {
 }
 
 bool _receivesLocalMapView(ArgumentList? arguments) {
-  if (arguments == null || arguments.arguments.length != 1) {
-    return false;
-  }
-  final argument = arguments.arguments.single;
-  return argument is SimpleIdentifier && argument.name == 'mapView';
+  if (arguments == null) return false;
+  final mapViewArguments = arguments.arguments
+      .whereType<NamedExpression>()
+      .where((argument) => argument.name.label.name == 'mapView');
+  if (mapViewArguments.length != 1) return false;
+  final expression = mapViewArguments.single.expression;
+  return expression is SimpleIdentifier && expression.name == 'mapView';
 }
 
 List<String> _economyCommandApplierMapViewViolations(
@@ -258,23 +260,44 @@ List<String> _economyCommandApplierMapViewViolations(
     }
   }
 
+  final engineSnapshotFields = <VariableDeclaration>[];
+  for (final field in declaration.body.members.whereType<FieldDeclaration>()) {
+    engineSnapshotFields.addAll(
+      field.fields.variables.where(
+        (variable) => variable.name.lexeme == 'engineSnapshot',
+      ),
+    );
+  }
+  if (engineSnapshotFields.length != 1) {
+    violations.add(
+      '$path command applier must declare one engineSnapshot field',
+    );
+  } else {
+    final fields =
+        engineSnapshotFields.single.parent as VariableDeclarationList;
+    if (fields.type?.toSource() != 'CanonicalGameSnapshot') {
+      violations.add(
+        '$path command applier engineSnapshot must be CanonicalGameSnapshot',
+      );
+    }
+  }
+
   final constructors = declaration.body.members
       .whereType<ConstructorDeclaration>()
       .where((constructor) => constructor.name == null)
       .toList();
+  final parameters = constructors.singleOrNull?.parameters.parameters;
   final hasFieldConstructor =
       constructors.length == 1 &&
-      constructors.single.constKeyword != null &&
-      constructors.single.parameters.parameters.length == 1 &&
-      constructors.single.parameters.parameters.single
-          is FieldFormalParameter &&
-      (constructors.single.parameters.parameters.single as FieldFormalParameter)
-              .name
-              .lexeme ==
-          'mapView';
+      parameters?.length == 2 &&
+      parameters![0] is FieldFormalParameter &&
+      parameters[1] is FieldFormalParameter &&
+      (parameters[0] as FieldFormalParameter).name.lexeme == 'mapView' &&
+      (parameters[1] as FieldFormalParameter).name.lexeme == 'engineSnapshot';
   if (!hasFieldConstructor) {
     violations.add(
-      '$path command applier must have one const constructor over mapView',
+      '$path command applier must have one constructor over mapView and '
+      'engineSnapshot',
     );
   }
   return violations;
@@ -302,7 +325,7 @@ final class _EconomyRunMapViewVisitor extends RecursiveAstVisitor<void> {
     if (node.methodName.name == 'validateMapDataTileInvariants') {
       tileValidationInvocations.add(node);
     }
-    if (node.methodName.name == '_EconomySimulationCommandApplier') {
+    if (node.methodName.name == '_economySimulationCommandApplierForSetup') {
       commandApplierCalls.add(node.argumentList);
     }
     super.visitMethodInvocation(node);

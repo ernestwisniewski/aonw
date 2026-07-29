@@ -8,17 +8,13 @@ import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 part 'server_command_reducer_artifact.dart';
-part 'server_command_reducer_auto_explore.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_city_founding.dart';
 part 'server_command_reducer_combat.dart';
-part 'server_command_reducer_detachment.dart';
 part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
-part 'server_command_reducer_merchant_routing.dart';
-part 'server_command_reducer_movement.dart';
 part 'server_command_reducer_outcome.dart';
 part 'server_command_reducer_production.dart';
 part 'server_command_reducer_research.dart';
@@ -178,11 +174,20 @@ class ServerCommandReducer {
           ruleset: ruleset,
         );
       case MoveUnitCommand():
-        return _applyMoveUnit(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapView: loadedMap.mapView,
+      case CancelUnitActionCommand():
+      case AutoExploreUnitCommand():
+      case AssignMerchantTradeRouteCommand():
+      case MoveMerchantToCityCommand():
+      case DetachTroopCommand():
+      case SkipUnitTurnCommand():
+      case FortifyUnitCommand():
+        return _applyDomainCommandEngine(
+          snapshot,
+          command as DomainCommand,
+          actorPlayerId,
+          commandTick,
+          loadedMap.mapView,
+          ruleset,
         );
       case AttackHexCommand():
         return _applyCombatCommand(
@@ -192,39 +197,6 @@ class ServerCommandReducer {
           commandTick: commandTick,
           mapTiles: loadedMap.mapView,
           ruleset: ruleset,
-        );
-      case CancelUnitActionCommand():
-        return _applyCancelUnitAction(snapshot, command, actorPlayerId);
-      case SkipUnitTurnCommand():
-      case FortifyUnitCommand():
-        return _applyUnitActionEngine(
-          snapshot,
-          command as DomainCommand,
-          actorPlayerId,
-          commandTick,
-          loadedMap.mapView,
-          ruleset,
-        );
-      case AutoExploreUnitCommand():
-        return _applyAutoExplore(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapView: loadedMap.mapView,
-        );
-      case AssignMerchantTradeRouteCommand():
-        return _applyAssignMerchantRoute(
-          snapshot,
-          command,
-          actorPlayerId,
-          loadedMap.mapView,
-        );
-      case MoveMerchantToCityCommand():
-        return _applyMoveMerchantToCity(
-          snapshot,
-          command,
-          actorPlayerId,
-          loadedMap.mapView,
         );
       case OpenResourceTradeCommand():
         return _applyOpenResourceTrade(
@@ -273,13 +245,6 @@ class ServerCommandReducer {
           actorPlayerId: actorPlayerId,
           mapTiles: loadedMap.mapView,
           ruleset: ruleset,
-        );
-      case DetachTroopCommand():
-        return _applyDetachTroopCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
         );
       case ToggleWorkedHexCommand():
         return _applyToggleWorkedHexCommand(

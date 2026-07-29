@@ -410,17 +410,18 @@ void _appendFailingPlannerFindings(
   }
 }
 
-GameStateTransition _reduceSyntheticCommand(
+_BenchmarkCommandTransition _reduceSyntheticCommand(
   _PreparedPlayer prepared,
   GameCommand command,
 ) {
-  final reducer = GameStateReducer(
-    mapData: prepared.context.mapData,
+  final dispatcher = _BenchmarkCommandDispatcher(
+    snapshot: prepared.snapshot.canonical,
+    mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );
-  return reducer.reduce(
-    prepared._executionInitialState(),
-    command,
+  return dispatcher.apply(
+    state: prepared._executionInitialState(),
+    command: command,
     context: _commandContext(
       playerId: prepared.player.id,
       aiContext: prepared.context,
@@ -433,13 +434,14 @@ bool _syntheticCommandChangesState(
   GameCommand command,
 ) {
   final state = prepared._executionInitialState();
-  final reducer = GameStateReducer(
-    mapData: prepared.context.mapData,
+  final dispatcher = _BenchmarkCommandDispatcher(
+    snapshot: prepared.snapshot.canonical,
+    mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );
-  final transition = reducer.reduce(
-    state,
-    command,
+  final transition = dispatcher.apply(
+    state: state,
+    command: command,
     context: _commandContext(
       playerId: prepared.player.id,
       aiContext: prepared.context,

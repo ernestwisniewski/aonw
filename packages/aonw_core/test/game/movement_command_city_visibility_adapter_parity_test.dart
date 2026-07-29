@@ -33,7 +33,7 @@ void main() {
       expect(authoritative.kernel.units, same(states.kernel.units));
       expect(authoritative.kernel.events, isEmpty);
       expect(authoritative.kernel.execution, isNull);
-      expect(authoritative.persistent.state, same(states.persistent));
+      expect(authoritative.engine.snapshot, same(states.engine));
       expect(authoritative.domain.state, same(states.domain));
       expectRejectedMovementIdentity(
         states,

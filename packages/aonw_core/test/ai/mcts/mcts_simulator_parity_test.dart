@@ -5,7 +5,7 @@ import 'mcts_simulator_parity_support.dart';
 
 void main() {
   group('TracingMctsSimulator movement parity', () {
-    test('applies reachable movement like PersistentMoveUnitResolver', () {
+    test('applies reachable movement like the canonical game engine', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -16,17 +16,20 @@ void main() {
       final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
       const command = MoveUnitCommand('warrior_1', 1, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       _expectSameMovementState(
         _unitById(simulated.ownUnits, 'warrior_1'),
-        _unitById(persistent.state.units, 'warrior_1'),
+        _unitById(engine.state.units, 'warrior_1'),
       );
     });
 
-    test('applies partial movement and queued path like resolver', () {
+    test('applies partial movement and queued path like the engine', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -37,13 +40,16 @@ void main() {
       final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
       const command = MoveUnitCommand('warrior_1', 2, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       _expectSameMovementState(
         _unitById(simulated.ownUnits, 'warrior_1'),
-        _unitById(persistent.state.units, 'warrior_1'),
+        _unitById(engine.state.units, 'warrior_1'),
       );
       expect(_unitById(simulated.ownUnits, 'warrior_1').queuedPath, isNotNull);
     });
@@ -60,24 +66,24 @@ void main() {
       const command = MoveUnitCommand('warrior_1', 2, 0);
       final mapData = _highCostMapData();
 
-      final persistent = _resolvePersistent(
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
         state,
         command,
         mapView: mapData.indexedReadView(),
       );
       final simulated = _simulate(state, command, mapData: mapData);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       _expectSameMovementState(
         _unitById(simulated.ownUnits, 'warrior_1'),
-        _unitById(persistent.state.units, 'warrior_1'),
+        _unitById(engine.state.units, 'warrior_1'),
       );
       expect(_unitById(simulated.ownUnits, 'warrior_1').col, 1);
       expect(_unitById(simulated.ownUnits, 'warrior_1').movementPoints, 0);
       expect(_unitById(simulated.ownUnits, 'warrior_1').queuedPath, isNotNull);
     });
 
-    test('leaves unit in place when resolver rejects occupied target', () {
+    test('leaves unit in place when the engine rejects occupied target', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -98,14 +104,17 @@ void main() {
       );
       const command = MoveUnitCommand('warrior_1', 1, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isFalse);
+      expect(engine.accepted, isFalse);
       expect(_unitById(simulated.ownUnits, 'warrior_1'), unit);
     });
 
-    test('approaches visible opponent-occupied target like resolver', () {
+    test('approaches visible opponent-occupied target like the engine', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -126,13 +135,16 @@ void main() {
       );
       const command = MoveUnitCommand('warrior_1', 2, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       _expectSameMovementState(
         _unitById(simulated.ownUnits, 'warrior_1'),
-        _unitById(persistent.state.units, 'warrior_1'),
+        _unitById(engine.state.units, 'warrior_1'),
       );
     });
 
@@ -157,13 +169,16 @@ void main() {
       );
       const command = MoveUnitCommand('warrior_1', 2, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       _expectSameMovementState(
         _unitById(simulated.ownUnits, 'warrior_1'),
-        _unitById(persistent.state.units, 'warrior_1'),
+        _unitById(engine.state.units, 'warrior_1'),
       );
       expect(
         _unitById(simulated.ownUnits, 'warrior_1').queuedPath?.targetCol,
@@ -173,7 +188,7 @@ void main() {
   });
 
   group('TracingMctsSimulator unit action parity', () {
-    test('cancels fortification like PersistentUnitActionResolver', () {
+    test('cancels fortification like the canonical game engine', () {
       final unit = GameUnit(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -187,13 +202,16 @@ void main() {
       const command = CancelUnitActionCommand('warrior_1');
       final state = PersistentGameState(units: [unit]);
 
-      final persistent = _resolvePersistentUnitAction(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
+      expect(engine.accepted, isTrue);
       expect(
         _unitById(simulated.ownUnits, 'warrior_1').toJson(),
-        _unitById(persistent.state.units, 'warrior_1').toJson(),
+        _unitById(engine.state.units, 'warrior_1').toJson(),
       );
     });
   });
@@ -847,7 +865,6 @@ void main() {
         units: [settler, warrior],
         fogOfWar: _visibleFog(),
       );
-
       final simulated = _advanceSimulatedTurn(state);
 
       expect(_maybeUnitById(simulated.ownUnits, 'settler_1'), isNull);
@@ -904,30 +921,6 @@ void main() {
       expect(_cityById(simulated.ownCities, 'city_1'), city);
     });
   });
-}
-
-PersistentMoveUnitResult _resolvePersistent(
-  PersistentGameState state,
-  MoveUnitCommand command, {
-  MapTraversalView? mapView,
-}) {
-  return const PersistentMoveUnitResolver().resolve(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapData: mapView ?? WorldMapReadView(_worldMap()),
-  );
-}
-
-PersistentUnitActionResult _resolvePersistentUnitAction(
-  PersistentGameState state,
-  CancelUnitActionCommand command,
-) {
-  return const PersistentUnitActionResolver().cancelUnitAction(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-  );
 }
 
 PersistentCityFoundingResult _resolvePersistentFounding(
@@ -1030,6 +1023,7 @@ SimulatedState _simulate(
     turn: 1,
     mapData: actualMapData,
     ruleset: GameRuleset.defaults,
+    engineSnapshot: MctsSimulatorParityFixtures.engineSnapshot(state),
   );
   return const TracingMctsSimulator().applyAction(
     SimulatedState.fromView(view, maxPlanningDepth: 4),

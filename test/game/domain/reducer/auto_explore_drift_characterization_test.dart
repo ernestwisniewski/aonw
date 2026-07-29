@@ -1,9 +1,7 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -12,12 +10,13 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/movement_engine_test_driver.dart';
 
 void main() {
   group('local auto-explore rejection atomicity', () {
@@ -34,7 +33,7 @@ void main() {
         fogOfWar: _fog(discovered: _lineHexes(2), visible: _lineHexes(2)),
         interaction: _ownedInteraction(_autoExploreUnitId),
       );
-      final pair = _runBoth(
+      final pair = _resolveAutoExplore(
         input,
         _map(
           cols: 3,
@@ -44,7 +43,7 @@ void main() {
         ),
       );
 
-      _expectAtomicRejection(pair, persistentReason: 'auto_explore_no_target');
+      _expectAtomicRejection(pair);
     });
 
     test('over-capacity target keeps the exact local state without HUD', () {
@@ -53,7 +52,7 @@ void main() {
         fogOfWar: _originOnlyFog(),
         interaction: _ownedInteraction(_autoExploreUnitId),
       );
-      final pair = _runBoth(
+      final pair = _resolveAutoExplore(
         input,
         _map(
           cols: 2,
@@ -63,10 +62,7 @@ void main() {
         ),
       );
 
-      _expectAtomicRejection(
-        pair,
-        persistentReason: 'unit_movement_capacity_insufficient',
-      );
+      _expectAtomicRejection(pair);
     });
 
     test('invalid origin keeps the exact local state', () {
@@ -75,9 +71,9 @@ void main() {
         fogOfWar: FogOfWarState.empty,
         interaction: _ownedInteraction(_autoExploreUnitId),
       );
-      final pair = _runBoth(input, _map(cols: 2));
+      final pair = _resolveAutoExplore(input, _map(cols: 2));
 
-      _expectAtomicRejection(pair, persistentReason: 'unit_out_of_bounds');
+      _expectAtomicRejection(pair);
     });
   });
 
@@ -94,9 +90,8 @@ void main() {
         fogOfWar: _originOnlyFog(),
         interaction: interaction,
       );
-      final pair = _runBoth(input, _map(cols: 2));
+      final pair = _resolveAutoExplore(input, _map(cols: 2));
 
-      expect(pair.persistent.accepted, isTrue);
       expect(pair.local.state.pendingAction, isNull);
       expect(pair.local.state.cityFoundingDraft, isNull);
       expect(pair.local.state.moveCommandActive, isFalse);
@@ -104,12 +99,6 @@ void main() {
       expect(
         pair.local.state.selection?.unit,
         same(pair.local.state.units.single),
-      );
-      expect(pair.persistent.state.runtimeState.pendingAction, isNull);
-      expect(pair.persistent.state.runtimeState.cityFoundingDraft, isNull);
-      expect(
-        pair.local.state.toPersistentState().toJson(),
-        pair.persistent.state.toJson(),
       );
     });
 
@@ -120,25 +109,12 @@ void main() {
         fogOfWar: _originOnlyFog(),
         interaction: interaction,
       );
-      final pair = _runBoth(input, _map(cols: 2));
+      final pair = _resolveAutoExplore(input, _map(cols: 2));
 
-      expect(pair.persistent.accepted, isTrue);
       expect(pair.local.state.pendingAction, same(interaction.pendingAction));
       expect(
         pair.local.state.cityFoundingDraft,
         same(interaction.cityFoundingDraft),
-      );
-      expect(
-        pair.persistent.state.runtimeState.pendingAction,
-        same(interaction.pendingAction),
-      );
-      expect(
-        pair.persistent.state.runtimeState.cityFoundingDraft,
-        same(interaction.cityFoundingDraft),
-      );
-      expect(
-        pair.local.state.toPersistentState().toJson(),
-        pair.persistent.state.toJson(),
       );
     });
 
@@ -163,23 +139,14 @@ void main() {
         ),
       );
 
-      final pair = _runBoth(input, _map(cols: 2));
+      final pair = _resolveAutoExplore(input, _map(cols: 2));
 
       expect(pair.local.state.pendingAction, isNull);
       expect(pair.local.state.cityFoundingDraft, same(unrelatedDraft));
-      expect(pair.persistent.state.runtimeState.pendingAction, isNull);
-      expect(
-        pair.persistent.state.runtimeState.cityFoundingDraft,
-        same(pair.persistentInput.runtimeState.cityFoundingDraft),
-      );
-      expect(
-        pair.local.state.toPersistentState().toJson(),
-        pair.persistent.state.toJson(),
-      );
     });
   });
 
-  test('local and persistent reject atomically when canAct is false', () {
+  test('local engine rejects atomically when canAct is false', () {
     final scout = _scout();
     final input = _state(
       scout,
@@ -190,37 +157,21 @@ void main() {
         moveCommandActive: true,
       ),
     ).copyWith(activePlayerCanAct: false);
-    final persistentInput = input.toPersistentState();
-
-    final local = MovementReducer.autoExploreUnit(
+    final local = resolveMovementCommandForTest(
       input,
       const AutoExploreUnitCommand(_autoExploreUnitId),
       _map(cols: 2),
       context: const GameCommandContext(canAct: false),
     );
-    final persistent = const PersistentAutoExploreCommandResolver().resolve(
-      state: persistentInput,
-      command: const AutoExploreUnitCommand(_autoExploreUnitId),
-      actorPlayerId: _actorId,
-      mapData: _map(cols: 2),
-      phase: AutoExploreCommandPhase.direct,
-      canAct: false,
-    );
-
     expect(local.state, same(input));
     expect(local.events, isEmpty);
     expect(local.uiEffects, isEmpty);
-    expect(persistent.accepted, isFalse);
-    expect(persistent.reason, 'unit_not_controlled');
-    expect(persistent.state, same(persistentInput));
-    expect(persistent.events, isEmpty);
-    expect(persistent.execution, isNull);
   });
 
   test('explicit actor overrides active player and rejects atomically', () {
     final input = _state(_scout(), fogOfWar: _originOnlyFog());
 
-    final result = MovementReducer.autoExploreUnit(
+    final result = resolveMovementCommandForTest(
       input,
       const AutoExploreUnitCommand(_autoExploreUnitId),
       _map(cols: 2),
@@ -244,29 +195,29 @@ void main() {
     );
     final map = _map(cols: 5);
 
-    final local = MovementReducer.autoExploreUnit(
+    final local = resolveMovementCommandForTest(
       projected,
       const AutoExploreUnitCommand(_autoExploreUnitId),
       map,
     );
-    final authoritativeInput = projected.toPersistentState().copyWith(
+    final authoritativeInput = projected.copyWith(
       units: [projected.units.single, hiddenBlocker],
     );
-    final persistent = const PersistentAutoExploreCommandResolver().resolve(
-      state: authoritativeInput,
-      command: const AutoExploreUnitCommand(_autoExploreUnitId),
-      actorPlayerId: _actorId,
-      mapData: map,
-      phase: AutoExploreCommandPhase.direct,
+    final authoritative = resolveMovementCommandForTest(
+      authoritativeInput,
+      const AutoExploreUnitCommand(_autoExploreUnitId),
+      map,
     );
 
-    expect(persistent.accepted, isTrue);
     final localScout = local.state.units.single;
-    final persistentScout = persistent.state.units.first;
-    expect((localScout.col, persistentScout.col), (2, 1));
+    final authoritativeScout = authoritative.state.units.first;
+    expect((localScout.col, authoritativeScout.col), (2, 1));
     expect(local.events.single, isA<UnitMovedEvent>());
-    expect(persistent.events.single, isA<UnitMovedEvent>());
-    expect(_stepSnapshots(persistent.execution!.steps), const [
+    expect(authoritative.events.single, isA<UnitMovedEvent>());
+    final authoritativeAnimation = authoritative.uiEffects
+        .whereType<AnimateUnitMoveEffect>()
+        .single;
+    expect(_stepSnapshots(authoritativeAnimation.steps), const [
       (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
     ]);
     final localEvent = local.events.single as UnitMovedEvent;
@@ -290,7 +241,7 @@ void main() {
       (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
       (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
     ]);
-    final event = persistent.events.single as UnitMovedEvent;
+    final event = authoritative.events.single as UnitMovedEvent;
     expect(
       (event.unitId, event.fromCol, event.fromRow, event.toCol, event.toRow),
       (_autoExploreUnitId, 0, 0, 1, 0),
@@ -404,35 +355,18 @@ MapTraversalView _map({
   );
 }
 
-_AutoExplorePair _runBoth(GameState input, MapTraversalView map) {
-  final persistentInput = input.toPersistentState();
+_AutoExplorePair _resolveAutoExplore(GameState input, MapTraversalView map) {
   return (
     localInput: input,
-    persistentInput: persistentInput,
-    local: MovementReducer.autoExploreUnit(
+    local: resolveMovementCommandForTest(
       input,
       const AutoExploreUnitCommand(_autoExploreUnitId),
       map,
     ),
-    persistent: const PersistentAutoExploreCommandResolver().resolve(
-      state: persistentInput,
-      command: const AutoExploreUnitCommand(_autoExploreUnitId),
-      actorPlayerId: _actorId,
-      mapData: map,
-      phase: AutoExploreCommandPhase.direct,
-    ),
   );
 }
 
-void _expectAtomicRejection(
-  _AutoExplorePair pair, {
-  required String persistentReason,
-}) {
-  expect(pair.persistent.accepted, isFalse);
-  expect(pair.persistent.reason, persistentReason);
-  expect(pair.persistent.state, same(pair.persistentInput));
-  expect(pair.persistent.events, isEmpty);
-  expect(pair.persistent.execution, isNull);
+void _expectAtomicRejection(_AutoExplorePair pair) {
   expect(pair.local.state, same(pair.localInput));
   expect(pair.local.events, isEmpty);
   expect(pair.local.uiEffects, isEmpty);
@@ -450,9 +384,4 @@ List<({int col, int row, int enterCost, int cumulativeCost})> _stepSnapshots(
     ),
 ];
 
-typedef _AutoExplorePair = ({
-  GameState localInput,
-  PersistentGameState persistentInput,
-  GameStateTransition local,
-  PersistentAutoExploreCommandResult persistent,
-});
+typedef _AutoExplorePair = ({GameState localInput, GameStateTransition local});

@@ -15,11 +15,14 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -27,6 +30,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
@@ -48,6 +52,7 @@ part 'run_save_ai_benchmark/multi_turn_replay_cycle_models.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_player_report.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_execution_models.dart';
 part 'run_save_ai_benchmark/execution_models.dart';
+part 'run_save_ai_benchmark/engine_command_dispatcher.dart';
 part 'run_save_ai_benchmark/cli_helpers.dart';
 part 'run_save_ai_benchmark/benchmark_synthetic_helpers.dart';
 part 'run_save_ai_benchmark/benchmark_target_helpers.dart';
@@ -348,8 +353,9 @@ class _PreparedPlayer {
   }
 
   _ExecutionRun _executePlan(AiTurnPlan plan) {
-    final reducer = GameStateReducer(
-      mapData: context.mapData,
+    final dispatcher = _BenchmarkCommandDispatcher(
+      snapshot: snapshot.canonical,
+      mapView: context.mapData,
       ruleset: context.ruleset,
     );
     var state = _executionInitialState();
@@ -374,24 +380,24 @@ class _PreparedPlayer {
       }
 
       final dispatchStopwatch = Stopwatch()..start();
-      final transition = reducer.reduce(
-        state,
-        command,
+      final transition = dispatcher.apply(
+        state: state,
+        command: command,
         context: _commandContext(playerId: player.id, aiContext: context),
       );
       dispatchStopwatch.stop();
       dispatchDuration += dispatchStopwatch.elapsed;
-      eventCounts.add(transition);
+      eventCounts.addEvents(transition.events);
 
-      if (transition.state == state) {
+      if (!transition.accepted) {
         if (command is MoveUnitCommand &&
-            _rejectionReasons(transition).isEmpty &&
+            transition.rejectionReasons.isEmpty &&
             _staleMoveDiagnostic(command, state) != null) {
           skippedStale.add(command);
           continue;
         }
         rejected.add(command);
-        rejectedReasons.addAll(_rejectionReasons(transition));
+        rejectedReasons.addAll(transition.rejectionReasons);
         continue;
       }
 
@@ -401,14 +407,14 @@ class _PreparedPlayer {
 
     final terminalCommand = _terminalFor(snapshot.session.gameMode, player.id);
     final terminalStopwatch = Stopwatch()..start();
-    final terminalTransition = reducer.reduce(
-      state,
-      terminalCommand,
+    final terminalTransition = dispatcher.apply(
+      state: state,
+      command: terminalCommand,
       context: _commandContext(playerId: player.id, aiContext: context),
     );
     terminalStopwatch.stop();
     dispatchDuration += terminalStopwatch.elapsed;
-    eventCounts.add(terminalTransition);
+    eventCounts.addEvents(terminalTransition.events);
     final terminalChangedState = terminalTransition.state != state;
     totalStopwatch.stop();
 

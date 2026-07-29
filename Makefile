@@ -451,7 +451,10 @@ format-check: dependencies
 	@files=$$(git ls-files -- '*.dart' \
 		':(exclude)server/lib/src/generated/**' \
 		':(exclude)server/test/integration/test_tools/**' \
-		':(exclude)packages/aonw_server_client/lib/src/protocol/**'); \
+		':(exclude)packages/aonw_server_client/lib/src/protocol/**' | \
+		while IFS= read -r file; do \
+			if test -f "$$file"; then printf '%s\n' "$$file"; fi; \
+		done); \
 		test -n "$$files" || { echo "No tracked Dart files found."; exit 1; }; \
 		dart format --output=none --set-exit-if-changed $$files
 

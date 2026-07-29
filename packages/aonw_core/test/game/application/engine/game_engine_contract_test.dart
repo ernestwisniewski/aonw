@@ -63,6 +63,22 @@ void main() {
     expect((result as GameEngineRejected).reason, 'unsupported_domain_command');
   });
 
+  test('dispatcher classifies only migrated command families', () {
+    expect(
+      GameEngine.commandFamily(const MoveUnitCommand('unit-1', 1, 0)),
+      GameEngineCommandFamily.movement,
+    );
+    expect(
+      GameEngine.commandFamily(const SkipUnitTurnCommand('unit-1')),
+      GameEngineCommandFamily.unitAction,
+    );
+    expect(
+      GameEngine.commandFamily(const FortifyUnitCommand('unit-1')),
+      GameEngineCommandFamily.unitAction,
+    );
+    expect(GameEngine.commandFamily(const EndTurnCommand('player-1')), isNull);
+  });
+
   test('system diagnostics remain outside authoritative domain events', () {
     const GameEvent diagnostic = CommandRejectedEvent(reason: 'denied');
 

@@ -12,6 +12,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/movement_engine_test_driver.dart';
+
 void main() {
   test('starts and assigns a trade route through a canonical map view', () {
     final merchant = _merchant(col: 0);
@@ -32,7 +34,7 @@ void main() {
       const StartMerchantTradeRouteSelectionCommand('merchant_1'),
       mapView,
     );
-    final assigned = MerchantTradeRouteReducer.assignRoute(
+    final assigned = resolveMovementCommandForTest(
       started.state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
       mapView,
@@ -91,7 +93,7 @@ void main() {
       const StartMerchantMoveToCitySelectionCommand('merchant_1'),
       mapView,
     );
-    final moved = MerchantTradeRouteReducer.moveToCity(
+    final moved = resolveMovementCommandForTest(
       started.state,
       const MoveMerchantToCityCommand('merchant_1', 'destination'),
       mapView,
@@ -145,7 +147,7 @@ void main() {
       ),
     );
 
-    final result = MerchantTradeRouteReducer.assignRoute(
+    final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
       WorldMapReadView(_worldMap()),
@@ -182,7 +184,7 @@ void main() {
       ),
     );
 
-    final result = MerchantTradeRouteReducer.assignRoute(
+    final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
       WorldMapReadView(_worldMap()),
@@ -210,12 +212,8 @@ void main() {
       'destination',
     );
 
-    final first = MerchantTradeRouteReducer.assignRoute(
-      state,
-      command,
-      mapView,
-    );
-    final repeated = MerchantTradeRouteReducer.assignRoute(
+    final first = resolveMovementCommandForTest(state, command, mapView);
+    final repeated = resolveMovementCommandForTest(
       first.state,
       command,
       mapView,
@@ -237,8 +235,8 @@ void main() {
     final mapView = WorldMapReadView(_worldMap());
     const command = MoveMerchantToCityCommand('merchant_1', 'destination');
 
-    final first = MerchantTradeRouteReducer.moveToCity(state, command, mapView);
-    final repeated = MerchantTradeRouteReducer.moveToCity(
+    final first = resolveMovementCommandForTest(state, command, mapView);
+    final repeated = resolveMovementCommandForTest(
       first.state,
       command,
       mapView,
@@ -258,7 +256,7 @@ void main() {
       ),
     );
 
-    final result = MerchantTradeRouteReducer.assignRoute(
+    final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
       WorldMapReadView(_worldMap()),

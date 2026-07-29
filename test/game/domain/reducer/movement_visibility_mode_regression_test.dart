@@ -1,6 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -11,6 +10,8 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/movement_engine_test_driver.dart';
 
 void main() {
   test(
@@ -36,7 +37,7 @@ void main() {
         ),
       );
 
-      final result = MovementReducer.moveUnit(
+      final result = resolveMovementCommandForTest(
         state,
         const MoveUnitCommand('mover', 2, 0),
         _map(),

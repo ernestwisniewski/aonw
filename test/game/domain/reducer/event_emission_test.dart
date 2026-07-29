@@ -2,7 +2,6 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -11,6 +10,8 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/movement_engine_test_driver.dart';
 
 MapData _map(int cols, int rows) => MapData(
   cols: cols,
@@ -59,13 +60,13 @@ GameUnit _settler({int col = 3, int row = 3}) => GameUnit.startingCommander(
 );
 void main() {
   group('Event emission from reducers', () {
-    test('MovementReducer.moveUnit emits UnitMovedEvent', () {
+    test('resolveMovementCommandForTest emits UnitMovedEvent', () {
       final mapData = _map(5, 5);
       final unit = _commander(col: 2, row: 3);
       final state = GameState(units: [unit], activePlayerId: 'player_1');
 
       final command = MoveUnitCommand(unit.id, 3, 3);
-      final transition = MovementReducer.moveUnit(state, command, mapData);
+      final transition = resolveMovementCommandForTest(state, command, mapData);
 
       expect(transition.events, hasLength(1));
       final event = transition.events.first;

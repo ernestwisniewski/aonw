@@ -11,7 +11,7 @@ void _registerCanonicalMapLookupActionTests() {
   final actions = <({String name, _UnitAction apply})>[
     (
       name: 'cancel',
-      apply: (state, mapTiles, unit) => MovementReducer.cancelUnitAction(
+      apply: (state, mapTiles, unit) => resolveMovementCommandForTest(
         state,
         CancelUnitActionCommand(unit.id),
         mapTiles,
@@ -71,7 +71,7 @@ void _registerMissingCanonicalTileSelectionTest() {
         interaction: GameInteractionState(selection: GameSelection.unit(unit)),
       );
 
-      final result = MovementReducer.cancelUnitAction(
+      final result = resolveMovementCommandForTest(
         state,
         CancelUnitActionCommand(unit.id),
         mapTiles,

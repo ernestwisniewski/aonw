@@ -1,6 +1,8 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/advance_turn_snapshot.dart';
-import 'package:aonw/game/application/services/local_unit_action_projection.dart';
+import 'package:aonw/game/application/services/local_movement_command_resolver.dart';
+import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
+import 'package:aonw/game/application/services/local_unit_action_command_resolver.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -9,7 +11,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 class LocalCommandResolution {
@@ -39,14 +40,15 @@ class LocalCommandResolver {
     required GameCommand command,
     required DateTime savedAt,
     GameCommandContext context = const GameCommandContext(),
+    LocalMovementPresentationOrigin movementPresentationOrigin =
+        LocalMovementPresentationOrigin.direct,
   }) {
-    final effectiveContext = context.copyWith(
-      combatSeedTurn: baseSnapshot.domain.turn,
-      paceBalance: baseSnapshot.domain.matchRules.paceBalance,
-      victoryRules: baseSnapshot.domain.matchRules.victory,
-    );
-    if (command is SkipUnitTurnCommand || command is FortifyUnitCommand) {
-      return _resolveEngineUnitAction(
+    final effectiveContext = _effectiveContext(baseSnapshot, context);
+    final engineFamily = command is DomainCommand
+        ? GameEngine.commandFamily(command)
+        : null;
+    if (engineFamily == GameEngineCommandFamily.unitAction) {
+      return _resolveUnitAction(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command as DomainCommand,
@@ -54,25 +56,47 @@ class LocalCommandResolver {
         context: effectiveContext,
       );
     }
+    if (engineFamily == GameEngineCommandFamily.movement) {
+      return _resolveMovement(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command as DomainCommand,
+        savedAt: savedAt,
+        context: effectiveContext,
+        presentationOrigin: movementPresentationOrigin,
+      );
+    }
+    return _resolveReducerCommand(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      savedAt: savedAt,
+      context: effectiveContext,
+    );
+  }
+
+  LocalCommandResolution _resolveReducerCommand({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required GameCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
     if (command is SubmitTurnCommand &&
         _rejectSubmitTurn(
           baseSnapshot: baseSnapshot,
           command: command,
-          actorPlayerId: effectiveContext.actorPlayerId,
+          actorPlayerId: context.actorPlayerId,
         )) {
       return LocalCommandResolution(
         snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(currentState),
         state: currentState,
         events: const [],
         uiEffects: const [],
-        context: effectiveContext,
+        context: context,
       );
     }
-    final transition = reducer.reduce(
-      currentState,
-      command,
-      context: effectiveContext,
-    );
+    final transition = reducer.reduce(currentState, command, context: context);
     final resolved = _resolveCommand(
       baseSnapshot: baseSnapshot,
       command: command,
@@ -85,147 +109,75 @@ class LocalCommandResolver {
       state: resolved.state,
       events: [...transition.events, ...resolved.events],
       uiEffects: [...transition.uiEffects, ...resolved.uiEffects],
-      context: effectiveContext,
+      context: context,
     );
   }
 
-  LocalCommandResolution _resolveEngineUnitAction({
+  GameCommandContext _effectiveContext(
+    SaveSnapshot snapshot,
+    GameCommandContext context,
+  ) {
+    return context.copyWith(
+      combatSeedTurn: snapshot.domain.turn,
+      paceBalance: snapshot.domain.matchRules.paceBalance,
+      victoryRules: snapshot.domain.matchRules.victory,
+    );
+  }
+
+  LocalCommandResolution _resolveMovement({
     required SaveSnapshot baseSnapshot,
     required GameState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
+    required LocalMovementPresentationOrigin presentationOrigin,
   }) {
-    if (!context.canAct ||
-        (!context.hasActor && !currentState.activePlayerCanAct)) {
-      return _unchangedEngineResolution(
-        baseSnapshot: baseSnapshot,
-        currentState: currentState,
-        savedAt: savedAt,
-        context: context,
-      );
-    }
-    final actorPlayerId = _unitActionActorPlayerId(
-      snapshot: baseSnapshot,
-      state: currentState,
-      command: command,
-      context: context,
-    );
-    final result = _applyUnitActionEngine(
-      snapshot: baseSnapshot,
-      command: command,
-      actorPlayerId: actorPlayerId,
-      context: context,
-    );
-    return _engineUnitActionResolution(
-      result: result,
-      baseSnapshot: baseSnapshot,
-      currentState: currentState,
-      command: command,
-      savedAt: savedAt,
-      context: context,
-    );
-  }
-
-  GameEngineResult _applyUnitActionEngine({
-    required SaveSnapshot snapshot,
-    required DomainCommand command,
-    required String actorPlayerId,
-    required GameCommandContext context,
-  }) {
-    return const GameEngine().apply(
-      snapshot: snapshot.canonical,
-      command: command,
-      context: GameEngineContext(
-        actorPlayerId: actorPlayerId,
-        mapView: reducer.mapData,
-        ruleset: reducer.ruleset,
-        commandTick: context.commandTick,
-      ),
-    );
-  }
-
-  LocalCommandResolution _engineUnitActionResolution({
-    required GameEngineResult result,
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
-    required DomainCommand command,
-    required DateTime savedAt,
-    required GameCommandContext context,
-  }) {
-    if (result is GameEngineRejected) {
-      return _unchangedEngineResolution(
-        baseSnapshot: baseSnapshot,
-        currentState: currentState,
-        savedAt: savedAt,
-        context: context,
-      );
-    }
-    if (identical(result.snapshot, baseSnapshot.canonical)) {
-      return _unchangedEngineResolution(
-        baseSnapshot: baseSnapshot,
-        currentState: currentState,
-        savedAt: savedAt,
-        context: context,
-      );
-    }
-    final snapshot = baseSnapshot.withUnitActionEngineProjection(
-      units: result.snapshot.domain.units,
-      artifacts: result.snapshot.domain.artifacts,
-      interaction: result.snapshot.interaction,
-      savedAt: savedAt,
-    );
-    final state = projectLocalUnitActionPresentation(
-      reducer: reducer,
-      currentState: currentState,
-      baseSnapshot: baseSnapshot.canonical,
-      resultSnapshot: result.snapshot,
-      command: command,
-    );
+    final movement =
+        LocalMovementCommandResolver(
+          mapView: reducer.mapData,
+          ruleset: reducer.ruleset,
+        ).resolve(
+          baseSnapshot: baseSnapshot,
+          currentState: currentState,
+          command: command,
+          savedAt: savedAt,
+          context: context,
+          presentationOrigin: presentationOrigin,
+        );
     return LocalCommandResolution(
-      snapshot: snapshot,
-      state: state,
-      events: result.events,
+      snapshot: movement.snapshot,
+      state: movement.state,
+      events: movement.events,
+      uiEffects: movement.uiEffects,
+      context: context,
+    );
+  }
+
+  LocalCommandResolution _resolveUnitAction({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    final resolution =
+        LocalUnitActionCommandResolver(
+          mapView: reducer.mapData,
+          ruleset: reducer.ruleset,
+        ).resolve(
+          baseSnapshot: baseSnapshot,
+          currentState: currentState,
+          command: command,
+          savedAt: savedAt,
+          context: context,
+        );
+    return LocalCommandResolution(
+      snapshot: resolution.snapshot,
+      state: resolution.state,
+      events: resolution.events,
       uiEffects: const [],
       context: context,
     );
-  }
-
-  LocalCommandResolution _unchangedEngineResolution({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
-    required DateTime savedAt,
-    required GameCommandContext context,
-  }) {
-    return LocalCommandResolution(
-      snapshot: baseSnapshot.withUnitActionEngineProjection(
-        units: baseSnapshot.units,
-        artifacts: baseSnapshot.artifacts,
-        interaction: baseSnapshot.interaction,
-        savedAt: savedAt,
-      ),
-      state: currentState,
-      events: const [],
-      uiEffects: const [],
-      context: context,
-    );
-  }
-
-  String _unitActionActorPlayerId({
-    required SaveSnapshot snapshot,
-    required GameState state,
-    required DomainCommand command,
-    required GameCommandContext context,
-  }) {
-    final contextActor = context.actorPlayerId;
-    if (contextActor != null && contextActor.isNotEmpty) return contextActor;
-    if (state.activePlayerId.isNotEmpty) return state.activePlayerId;
-    final unitId = switch (command) {
-      SkipUnitTurnCommand(:final unitId) => unitId,
-      FortifyUnitCommand(:final unitId) => unitId,
-      _ => '',
-    };
-    return snapshot.domain.units.byId(unitId)?.ownerPlayerId ?? '';
   }
 
   _ResolvedLocalCommand _resolveCommand({

@@ -30,6 +30,7 @@ void main() {
       () => MctsSimulatorParityFixtures.advanceSimulatedTurn(
         state,
         simulator: simulator,
+        includeEngineSnapshot: false,
       ),
       throwsA(isA<StateError>()),
     );

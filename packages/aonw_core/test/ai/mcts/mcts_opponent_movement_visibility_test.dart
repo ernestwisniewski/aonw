@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -41,19 +42,26 @@ void main() {
         ),
       );
       const command = MoveUnitCommand('mover_2', 2, 0);
-      final pathingOnly = const PersistentMoveUnitResolver().resolve(
+      final pathingOnly = const SimulationGameEngineAdapter().apply(
+        snapshot: MctsSimulatorParityFixtures.engineSnapshot(state),
         state: state,
         command: command,
         actorPlayerId: 'player_2',
-        mapData: mapData.indexedReadView(),
-        visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
+        commandTick: 0,
+        mapView: mapData.indexedReadView(),
+        ruleset: GameRuleset.defaults,
+        movementVisibilityMode:
+            MovementCommandVisibilityMode.unrestrictedPathing,
       );
-      final omniscient = const PersistentMoveUnitResolver().resolve(
+      final omniscient = const SimulationGameEngineAdapter().apply(
+        snapshot: MctsSimulatorParityFixtures.engineSnapshot(state),
         state: state,
         command: command,
         actorPlayerId: 'player_2',
-        mapData: mapData.indexedReadView(),
-        visibilityMode: MovementCommandVisibilityMode.unrestricted,
+        commandTick: 0,
+        mapView: mapData.indexedReadView(),
+        ruleset: GameRuleset.defaults,
+        movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
       );
 
       final simulated = MctsSimulatorParityFixtures.advanceSimulatedTurn(

@@ -63,39 +63,14 @@ class GameStateReducer {
         command,
         environment,
       ),
-      MoveUnitCommand() => MovementReducer.moveUnitWithEnvironment(
-        state,
-        command,
-        environment,
-      ),
-      CancelUnitActionCommand() =>
-        MovementReducer.cancelUnitActionWithEnvironment(
-          state,
-          command,
-          environment,
-        ),
-      AutoExploreUnitCommand() =>
-        MovementReducer.autoExploreUnitWithEnvironment(
-          state,
-          command,
-          environment,
-        ),
       StartMerchantTradeRouteSelectionCommand() =>
         environment.startMerchantTradeRouteSelection(state, command),
       CancelMerchantTradeRouteSelectionCommand() =>
         environment.cancelMerchantTradeRouteSelection(state, command),
-      AssignMerchantTradeRouteCommand() => environment.assignMerchantTradeRoute(
-        state,
-        command,
-      ),
       StartMerchantMoveToCitySelectionCommand() =>
         environment.startMerchantMoveToCitySelection(state, command),
       CancelMerchantMoveToCitySelectionCommand() =>
         environment.cancelMerchantMoveToCitySelection(state, command),
-      MoveMerchantToCityCommand() => environment.moveMerchantToCity(
-        state,
-        command,
-      ),
       StartArtifactExcavationCommand() => environment.startArtifactExcavation(
         state,
         command,
@@ -131,7 +106,6 @@ class GameStateReducer {
         state,
         command,
       ),
-      DetachTroopCommand() => environment.detachTroop(state, command),
       EndTurnCommand() => environment.endTurn(state, command),
       SubmitTurnCommand() => environment.submitTurn(state, command),
       ResetUnitMovementCommand(:final playerId) =>

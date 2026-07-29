@@ -75,21 +75,21 @@ void main() {
         );
         expect(targetCost.value, greaterThan(capacity));
 
-        final pair = _runLegacyAndKernel(
+        final pair = _runTurnAndKernel(
           units: [scout],
           fogOfWar: _originOnlyFog(),
           mapData: map,
         );
-        expect(pair.legacy.changed, isFalse);
-        expect(pair.legacy.units, pair.kernelInput.units);
-        expect(pair.legacy.fogOfWar, same(pair.kernelInput.fogOfWar));
+        expect(pair.turn.changed, isFalse);
+        expect(pair.turn.units, pair.kernelInput.units);
+        expect(pair.turn.fogOfWar, same(pair.kernelInput.fogOfWar));
         expect(
-          pair.legacy.diplomacy,
+          pair.turn.diplomacy,
           same(pair.kernelInput.runtimeState.diplomacy),
         );
-        expect(pair.legacy.interaction, same(PersistedInteractionState.empty));
-        expect(pair.legacy.events, isEmpty);
-        expect(pair.legacy.executions, isEmpty);
+        expect(pair.turn.interaction, same(PersistedInteractionState.empty));
+        expect(pair.turn.events, isEmpty);
+        expect(pair.turn.executions, isEmpty);
         expect(pair.kernel.accepted, isFalse);
         expect(pair.kernel.reason, 'unit_movement_capacity_insufficient');
         expect(pair.kernel.state, same(pair.kernelInput));
@@ -115,15 +115,15 @@ void main() {
         fogOfWar: _originOnlyFog(),
         mapData: map,
       );
-      final fullState = _runLegacyAndKernel(
+      final fullState = _runTurnAndKernel(
         units: [scout, blocker],
         fogOfWar: _originOnlyFog(),
         mapData: map,
       );
 
       expect(projected.units.first.col, 2);
-      expect(fullState.legacy.units.first.col, 1);
-      expect(fullState.legacy.units.last, same(blocker));
+      expect(fullState.turn.units.first.col, 1);
+      expect(fullState.turn.units.last, same(blocker));
       expect(fullState.kernel.accepted, isTrue);
       expect(fullState.kernel.state.units.first.col, 1);
       expect(
@@ -145,21 +145,21 @@ void main() {
       final scout = _autoExploringScout(movementPoints: 2);
       final inputFog = _originOnlyFog();
 
-      final pair = _runLegacyAndKernel(
+      final pair = _runTurnAndKernel(
         units: [scout],
         fogOfWar: inputFog,
         mapData: _map(cols: 1),
       );
 
-      expect(pair.legacy.changed, isTrue);
-      expect(pair.legacy.units.single.posture, UnitPosture.active);
-      expect(pair.legacy.fogOfWar, same(inputFog));
+      expect(pair.turn.changed, isTrue);
+      expect(pair.turn.units.single.posture, UnitPosture.active);
+      expect(pair.turn.fogOfWar, same(inputFog));
       expect(
-        pair.legacy.units.map(_autoExploreTurnUnitSnapshot),
+        pair.turn.units.map(_autoExploreTurnUnitSnapshot),
         pair.kernel.state.units.map(_autoExploreTurnUnitSnapshot),
       );
-      expect(pair.legacy.events, pair.kernel.events);
-      expect(pair.legacy.executions, isEmpty);
+      expect(pair.turn.events, pair.kernel.events);
+      expect(pair.turn.executions, isEmpty);
     });
 
     test('finishes a queued path before choosing the next automatic route', () {

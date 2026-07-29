@@ -5,7 +5,6 @@ export 'unit/domain_unit_detachment_resolver.dart';
 export 'unit/game_unit.dart';
 export 'unit/game_unit_type.dart';
 export 'unit/merchant_trade_route.dart';
-export 'unit/persistent_unit_detachment_resolver.dart';
 export 'unit/starting_position_seed.dart';
 export 'unit/starting_units.dart';
 export 'unit/unit_capabilities.dart';

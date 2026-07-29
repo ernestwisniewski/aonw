@@ -79,17 +79,6 @@ const _interactionTargets = [
     ],
   ),
   _Target(
-    path: 'lib/game/domain/reducer/unit/unit_attachment_reducer.dart',
-    owner: 'UnitAttachmentReducer',
-    boundaries: [
-      _Boundary.method(
-        'detachTroop',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-    ],
-  ),
-  _Target(
     path: 'lib/game/domain/reducer/interaction/selection_reducer.dart',
     owner: 'SelectionReducer',
     boundaries: [
@@ -115,18 +104,6 @@ const _interactionTargets = [
       ),
       _Boundary.method(
         'handleCityTapped',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/unit/persistent_unit_detachment_resolver.dart',
-    owner: 'PersistentUnitDetachmentResolver',
-    boundaries: [
-      _Boundary.method(
-        'detachTroop',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),

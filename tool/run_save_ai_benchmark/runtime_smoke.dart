@@ -349,6 +349,12 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
   final MapReadView mapView;
   final GameRuleset ruleset;
   int _offset = 0;
+  late final _BenchmarkCommandDispatcher _dispatcher =
+      _BenchmarkCommandDispatcher(
+        snapshot: repository.snapshot.canonical,
+        mapView: mapView,
+        ruleset: ruleset,
+      );
 
   @override
   Future<CommandTransportResult> dispatch({
@@ -357,8 +363,11 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
     required GameCommand command,
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    final reducer = GameStateReducer(mapData: mapView, ruleset: ruleset);
-    final transition = reducer.reduce(currentState, command, context: context);
+    final transition = _dispatcher.apply(
+      state: currentState,
+      command: command,
+      context: context,
+    );
     _offset += 1;
     final nextSnapshot = repository.snapshot.withGameState(
       transition.state,

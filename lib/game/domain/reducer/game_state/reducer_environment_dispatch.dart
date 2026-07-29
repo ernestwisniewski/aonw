@@ -13,7 +13,6 @@ import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
 import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/submit_turn_reducer.dart';
-import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
 import 'package:aonw/game/domain/reducer/worker/worker_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
@@ -35,18 +34,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     CancelMerchantTradeRouteSelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelSelection(state, command);
 
-  GameStateTransition assignMerchantTradeRoute(
-    GameState state,
-    AssignMerchantTradeRouteCommand command,
-  ) {
-    return MerchantTradeRouteReducer.assignRoute(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
-
   GameStateTransition startMerchantMoveToCitySelection(
     GameState state,
     StartMerchantMoveToCitySelectionCommand command,
@@ -63,18 +50,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     GameState state,
     CancelMerchantMoveToCitySelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
-
-  GameStateTransition moveMerchantToCity(
-    GameState state,
-    MoveMerchantToCityCommand command,
-  ) {
-    return MerchantTradeRouteReducer.moveToCity(
-      state,
-      command,
-      mapData,
-      context: context,
-    );
-  }
 
   GameStateTransition startArtifactExcavation(
     GameState state,
@@ -228,16 +203,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
         command,
         context: context,
       ),
-    );
-  }
-
-  GameStateTransition detachTroop(GameState state, DetachTroopCommand command) {
-    return UnitAttachmentReducer.detachTroop(
-      state,
-      command,
-      mapData,
-      context: context,
-      fogOfWarService: fogOfWarService,
     );
   }
 

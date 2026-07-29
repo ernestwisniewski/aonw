@@ -3,14 +3,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 
 import 'movement_command_boundary_guard.dart';
 
-const _persistentResultFields = {
-  'accepted': 'bool',
-  'state': 'PersistentGameState',
-  'events': 'List<GameEvent>',
-  'execution': 'MovementCommandExecution?',
-  'reason': 'String?',
-};
-
 const _domainResultFields = {
   'accepted': 'bool',
   'state': 'DomainState',
@@ -18,14 +10,6 @@ const _domainResultFields = {
   'execution': 'MovementCommandExecution?',
   'reason': 'String?',
 };
-
-const _persistentResultParameters = [
-  _AdapterParameter('accepted', 'bool', required: true),
-  _AdapterParameter('state', 'PersistentGameState', required: true),
-  _AdapterParameter('events', 'List<GameEvent>', defaultValue: 'const []'),
-  _AdapterParameter('execution', 'MovementCommandExecution?'),
-  _AdapterParameter('reason', 'String?'),
-];
 
 const _domainResultParameters = [
   _AdapterParameter('accepted', 'bool', required: true),
@@ -51,22 +35,6 @@ const _resolveParameters = [
 List<String> movementAdapterPublicApiViolations(
   Map<String, String> sources,
 ) => [
-  ..._adapterFileViolations(
-    sources[movementPersistentAdapterPath],
-    path: movementPersistentAdapterPath,
-    resultClass: 'PersistentMoveUnitResult',
-    resultFields: _persistentResultFields,
-    resultParameters: _persistentResultParameters,
-    resolverClass: 'PersistentMoveUnitResolver',
-    resolverField: const MapEntry('fogOfWarService', 'FogOfWarService'),
-    resolverParameter: const _AdapterParameter(
-      'fogOfWarService',
-      'FogOfWarService',
-      defaultValue: 'const FogOfWarService()',
-    ),
-    stateType: 'PersistentGameState',
-    resultType: 'PersistentMoveUnitResult',
-  ),
   ..._adapterFileViolations(
     sources[movementDomainAdapterPath],
     path: movementDomainAdapterPath,

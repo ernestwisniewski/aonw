@@ -67,9 +67,8 @@ class BootstrapGameStateUseCase {
         try {
           final replayed = await replay.replaySinceSnapshot(
             saveId: saveId,
+            snapshot: snapshot,
             state: initialState,
-            offset: offset,
-            matchRules: snapshot.domain.matchRules,
           );
           initialState = replayed.state;
           offset = replayed.offset;

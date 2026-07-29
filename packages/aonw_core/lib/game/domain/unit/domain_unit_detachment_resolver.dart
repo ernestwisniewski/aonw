@@ -1,5 +1,7 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
+import 'package:aonw_core/game/domain/fog/fog_visibility_query.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/unit/detach_troop_resolver.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -29,6 +31,8 @@ final class DomainUnitDetachmentResolver {
     required DetachTroopCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
+    MovementCommandVisibilityMode visibilityMode =
+        MovementCommandVisibilityMode.authoritative,
   }) {
     final result = DetachTroopResolver.detachTroop(
       units: state.units,
@@ -39,6 +43,9 @@ final class DomainUnitDetachmentResolver {
       command: command,
       actorPlayerId: actorPlayerId,
       mapTiles: mapTiles,
+      visibility: visibilityMode.ignoresPathingFog
+          ? FogVisibilityQuery(playerId: '', state: state.fogOfWar)
+          : null,
       fogOfWarService: fogOfWarService,
     );
     if (!result.accepted) {

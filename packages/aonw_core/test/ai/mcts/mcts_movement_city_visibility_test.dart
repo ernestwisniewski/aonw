@@ -5,7 +5,7 @@ import 'mcts_simulator_parity_support.dart';
 
 void main() {
   group('TracingMctsSimulator movement city visibility', () {
-    test('rejects a route through a visible foreign city like resolver', () {
+    test('rejects a route through a visible foreign city like the engine', () {
       final unit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -26,10 +26,13 @@ void main() {
       );
       const command = MoveUnitCommand('warrior_1', 2, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isFalse);
+      expect(engine.accepted, isFalse);
       expect(_unitById(simulated.ownUnits, 'warrior_1'), unit);
     });
 
@@ -65,26 +68,17 @@ void main() {
       );
       const command = MoveUnitCommand('warrior_1', 1, 0);
 
-      final persistent = _resolvePersistent(state, command);
+      final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
+        state,
+        command,
+      );
       final simulated = _simulate(state, command);
 
-      expect(persistent.accepted, isTrue);
-      expect(persistent.state, same(state));
+      expect(engine.accepted, isTrue);
+      expect(engine.state, same(state));
       expect(_unitById(simulated.ownUnits, 'warrior_1'), unit);
     });
   });
-}
-
-PersistentMoveUnitResult _resolvePersistent(
-  PersistentGameState state,
-  MoveUnitCommand command,
-) {
-  return const PersistentMoveUnitResolver().resolve(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapData: WorldMapReadView(MctsSimulatorParityFixtures.worldMap()),
-  );
 }
 
 SimulatedState _simulate(PersistentGameState state, GameCommand command) {
@@ -94,6 +88,7 @@ SimulatedState _simulate(PersistentGameState state, GameCommand command) {
     turn: 1,
     mapData: MctsSimulatorParityFixtures.mapData(),
     ruleset: GameRuleset.defaults,
+    engineSnapshot: MctsSimulatorParityFixtures.engineSnapshot(state),
   );
   return const TracingMctsSimulator().applyAction(
     SimulatedState.fromView(view, maxPlanningDepth: 4),

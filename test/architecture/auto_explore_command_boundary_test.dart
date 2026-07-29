@@ -5,6 +5,10 @@ import 'support/movement_command_boundary_guard.dart';
 import 'support/movement_instance_reference_guard.dart';
 import 'support/static_member_reference_guard.dart';
 
+const autoExploreDomainAdapterPath =
+    'packages/aonw_core/lib/game/domain/movement/'
+    'domain_auto_explore_command_resolver.dart';
+
 void main() {
   test('auto-explore kernel and adapter expose only reviewed APIs', () {
     final sources = productionDartSources();
@@ -32,9 +36,7 @@ void main() {
         'resolve',
       ),
       const {
-        autoExplorePersistentAdapterPath: 1,
-        autoExploreLocalCallSite: 1,
-        autoExploreServerCallSite: 1,
+        autoExploreDomainAdapterPath: 1,
         autoExploreTurnContinuationCallSite: 1,
       },
     );
@@ -44,9 +46,7 @@ void main() {
         'AutoExploreCommandResolver',
       ),
       const {
-        autoExplorePersistentAdapterPath: 1,
-        autoExploreLocalCallSite: 1,
-        autoExploreServerCallSite: 1,
+        autoExploreDomainAdapterPath: 1,
         autoExploreTurnContinuationCallSite: 1,
       },
     );
@@ -68,33 +68,6 @@ void main() {
     );
     expect(
       movementInstanceMemberReferenceCountsByPath(
-        runtime,
-        'PersistentAutoExploreCommandResolver',
-        'resolve',
-      ),
-      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
-      reason: 'Only full-state AI compatibility consumers may use the adapter.',
-    );
-    expect(
-      movementConstructionReferenceCountsByPath(
-        runtime,
-        'PersistentAutoExploreCommandResolver',
-      ),
-      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
-    );
-
-    expect(
-      movementInstanceMemberReferenceCountsByPath(
-        runtime,
-        'PersistentUnitActionResolver',
-        'autoExploreUnit',
-      ),
-      isEmpty,
-      reason: 'The removed full-state AutoExplore route must not return.',
-    );
-
-    expect(
-      movementInstanceMemberReferenceCountsByPath(
         diagnostic,
         'AutoExploreCommandResolver',
         'resolve',
@@ -114,55 +87,6 @@ void main() {
     );
   });
 
-  test('direct consumers do not restore compatibility state bridges', () {
-    final sources = productionDartSources();
-    final local = sources[autoExploreLocalCallSite]!;
-    final server = sources[autoExploreServerCallSite]!;
-
-    expect(
-      namedTypeReferencesInSource(
-        local,
-        path: autoExploreLocalCallSite,
-      ).intersection(const {
-        'CanonicalGameSnapshot',
-        'DomainState',
-        'PersistentAutoExploreCommandResolver',
-        'PersistentAutoExploreCommandResult',
-        'PersistentGameState',
-        'PersistentMoveUnitResolver',
-        'PersistentMoveUnitResult',
-        'PersistentUnitActionResolver',
-        'PersistentUnitActionResult',
-      }),
-      isEmpty,
-    );
-    expect(
-      namedTypeReferencesInSource(
-        server,
-        path: autoExploreServerCallSite,
-      ).intersection(const {
-        'DomainState',
-        'PersistentAutoExploreCommandResolver',
-        'PersistentAutoExploreCommandResult',
-        'PersistentMoveUnitResolver',
-        'PersistentMoveUnitResult',
-        'PersistentUnitActionResolver',
-        'PersistentUnitActionResult',
-      }),
-      isEmpty,
-    );
-    for (final member in const {'toDomainState', 'toPersistentState'}) {
-      expect(
-        movementNamedMemberReferenceCountsByPath({
-          autoExploreLocalCallSite: local,
-          autoExploreServerCallSite: server,
-        }, member),
-        isEmpty,
-        reason: '$member must not bridge either direct consumer.',
-      );
-    }
-  });
-
   test(
     'turn continuation has no second planner, executor, or state bridge',
     () {
@@ -170,7 +94,6 @@ void main() {
       final continuationSources = {
         autoExploreTurnContinuationCallSite:
             sources[autoExploreTurnContinuationCallSite]!,
-        autoExploreLocalCallSite: sources[autoExploreLocalCallSite]!,
       };
 
       for (final entry in continuationSources.entries) {

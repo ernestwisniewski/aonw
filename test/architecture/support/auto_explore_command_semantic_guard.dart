@@ -93,22 +93,6 @@ const _autoExploreExpectedImports = <String, Set<String>>{
     'package:aonw_core/game/domain/movement/'
         'movement_command_path_constraints.dart',
   },
-  autoExplorePersistentAdapterPath: {
-    'package:aonw_core/game/domain/command/game_command.dart',
-    'package:aonw_core/game/domain/event/game_event.dart',
-    'package:aonw_core/game/domain/fog/fog_of_war_service.dart',
-    'package:aonw_core/game/domain/movement/auto_explore_command_phase.dart',
-    'package:aonw_core/game/domain/movement/'
-        'auto_explore_command_resolver.dart',
-    'package:aonw_core/game/domain/movement/auto_explore_command_result.dart',
-    'package:aonw_core/game/domain/movement/auto_explore_command_state.dart',
-    'package:aonw_core/game/domain/movement/movement_command_execution.dart',
-    'package:aonw_core/game/domain/movement/movement_command_state.dart',
-    'package:aonw_core/game/domain/runtime/game_runtime_state.dart',
-    'package:aonw_core/game/domain/state/canonical_game_snapshot.dart',
-    'package:aonw_core/game/domain/state/persistent_game_state.dart',
-    'package:aonw_core/map/domain/map_read_view.dart',
-  },
 };
 
 List<String> autoExploreClosedImportViolations(Map<String, String> sources) {

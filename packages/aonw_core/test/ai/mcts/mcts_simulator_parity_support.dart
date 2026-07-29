@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/domain.dart';
 
 List<CityHex> foundingHexes(int ac, int ar, int bc, int br) => [
@@ -55,6 +56,7 @@ final class MctsSimulatorParityFixtures {
     TracingMctsSimulator simulator = const TracingMctsSimulator(),
     MapData? mapData,
     bool ignoreFogOfWar = false,
+    bool includeEngineSnapshot = true,
   }) {
     final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
     final view = GameView.fromPersistentState(
@@ -63,10 +65,81 @@ final class MctsSimulatorParityFixtures {
       turn: 1,
       mapData: actualMapData,
       ruleset: GameRuleset.defaults,
+      engineSnapshot: includeEngineSnapshot ? engineSnapshot(state) : null,
       ignoreFogOfWar: ignoreFogOfWar,
     );
     return simulator.advanceTurn(
       SimulatedState.fromView(view, maxPlanningDepth: 4),
+    );
+  }
+
+  static CanonicalGameSnapshot engineSnapshot(PersistentGameState state) {
+    final playerIds = state.knownPlayerIds.isEmpty
+        ? const {'player_1'}
+        : state.knownPlayerIds;
+    final participants = [
+      for (final playerId in playerIds)
+        Player(
+          id: playerId,
+          name: playerId,
+          colorValue: state.playerColors[playerId] ?? 0,
+          country: state.playerCountries[playerId] ?? PlayerCountry.poland,
+        ),
+    ];
+    final runtime = state.runtimeState;
+    return CanonicalGameSnapshot.snapshot(
+      domain: DomainState.snapshot(
+        turn: 1,
+        matchRules: MatchRules.standard,
+        participants: participants,
+        playerGold: state.playerGold,
+        playerWarWeariness: state.playerWarWeariness,
+        playerStabilityNet: state.playerStabilityNet,
+        units: state.units,
+        cities: state.cities,
+        artifacts: state.artifacts,
+        fieldImprovements: state.fieldImprovements,
+        fogOfWar: state.fogOfWar,
+        research: state.research,
+        wonderRegistry: state.wonderRegistry,
+        intendedAttacks: runtime.intendedAttacks,
+        diplomacy: runtime.diplomacy,
+        resourceTradeAgreements: runtime.resourceTradeAgreements,
+        dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
+        culturalVictoryHoldTurnsByPlayerId:
+            runtime.culturalVictoryHoldTurnsByPlayerId,
+        mapObjectiveHoldStatesByObjectiveId:
+            runtime.mapObjectiveHoldStatesByObjectiveId,
+      ),
+      session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+      metadata: GameSnapshotMetadata(
+        id: 'mcts_parity',
+        schemaVersion: 3,
+        name: 'MCTS parity',
+        world: const WorldReference(name: 'test', source: MapSource.asset),
+        savedAtUtc: DateTime.utc(1970),
+        camera: GameSnapshotCamera.zero,
+      ),
+      interaction: PersistedInteractionState(
+        cityFoundingDraft: runtime.cityFoundingDraft,
+        pendingAction: runtime.pendingAction,
+      ),
+    );
+  }
+
+  static SimulationGameEngineResult resolveEngineCommand(
+    PersistentGameState state,
+    DomainCommand command, {
+    MapReadView? mapView,
+  }) {
+    return const SimulationGameEngineAdapter().apply(
+      snapshot: engineSnapshot(state),
+      state: state,
+      command: command,
+      actorPlayerId: 'player_1',
+      commandTick: 0,
+      mapView: mapView ?? WorldMapReadView(worldMap()),
+      ruleset: GameRuleset.defaults,
     );
   }
 

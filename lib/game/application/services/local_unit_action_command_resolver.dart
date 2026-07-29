@@ -1,0 +1,127 @@
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/local_unit_action_projection.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/application.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+
+final class LocalUnitActionCommandResolution {
+  const LocalUnitActionCommandResolution({
+    required this.snapshot,
+    required this.state,
+    required this.events,
+  });
+
+  final SaveSnapshot snapshot;
+  final GameState state;
+  final List<GameEvent> events;
+}
+
+final class LocalUnitActionCommandResolver {
+  const LocalUnitActionCommandResolver({
+    required this.mapView,
+    required this.ruleset,
+  });
+
+  final MapReadView mapView;
+  final GameRuleset ruleset;
+
+  LocalUnitActionCommandResolution resolve({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    if (!context.canAct ||
+        (!context.hasActor && !currentState.activePlayerCanAct)) {
+      return _unchanged(baseSnapshot, currentState, savedAt);
+    }
+    final result = const GameEngine().apply(
+      snapshot: baseSnapshot.canonical,
+      command: command,
+      context: GameEngineContext(
+        actorPlayerId: _actorPlayerId(
+          snapshot: baseSnapshot,
+          state: currentState,
+          command: command,
+          context: context,
+        ),
+        mapView: mapView,
+        ruleset: ruleset,
+        commandTick: context.commandTick,
+      ),
+    );
+    if (result is GameEngineRejected ||
+        identical(result.snapshot, baseSnapshot.canonical)) {
+      return _unchanged(baseSnapshot, currentState, savedAt);
+    }
+    return _accepted(
+      result: result,
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      savedAt: savedAt,
+    );
+  }
+
+  LocalUnitActionCommandResolution _accepted({
+    required GameEngineResult result,
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+  }) {
+    final snapshot = baseSnapshot.withUnitActionEngineProjection(
+      units: result.snapshot.domain.units,
+      artifacts: result.snapshot.domain.artifacts,
+      interaction: result.snapshot.interaction,
+      savedAt: savedAt,
+    );
+    return LocalUnitActionCommandResolution(
+      snapshot: snapshot,
+      state: projectLocalUnitActionPresentation(
+        mapView: mapView,
+        currentState: currentState,
+        baseSnapshot: baseSnapshot.canonical,
+        resultSnapshot: result.snapshot,
+        command: command,
+      ),
+      events: result.events,
+    );
+  }
+
+  LocalUnitActionCommandResolution _unchanged(
+    SaveSnapshot snapshot,
+    GameState state,
+    DateTime savedAt,
+  ) {
+    return LocalUnitActionCommandResolution(
+      snapshot: snapshot.withUnitActionEngineProjection(
+        units: snapshot.units,
+        artifacts: snapshot.artifacts,
+        interaction: snapshot.interaction,
+        savedAt: savedAt,
+      ),
+      state: state,
+      events: const [],
+    );
+  }
+
+  String _actorPlayerId({
+    required SaveSnapshot snapshot,
+    required GameState state,
+    required DomainCommand command,
+    required GameCommandContext context,
+  }) {
+    final contextActor = context.actorPlayerId;
+    if (contextActor != null && contextActor.isNotEmpty) return contextActor;
+    if (state.activePlayerId.isNotEmpty) return state.activePlayerId;
+    final unitId = (command as UnitDomainCommand).unitId;
+    return snapshot.domain.units.byId(unitId)?.ownerPlayerId ?? '';
+  }
+}

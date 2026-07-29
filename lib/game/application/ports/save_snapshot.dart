@@ -373,6 +373,43 @@ extension SaveSnapshotEngineProjection on SaveSnapshot {
     );
   }
 
+  /// Applies the reviewed movement-family slices without materializing
+  /// canonical roster or session defaults into the raw persistence envelope.
+  SaveSnapshot withMovementEngineProjection({
+    required CanonicalGameSnapshot resultSnapshot,
+    required DateTime savedAt,
+  }) {
+    final domain = resultSnapshot.domain;
+    final runtime = _rawState.runtimeState;
+    final interaction = resultSnapshot.interaction;
+    final runtimeChanged =
+        !identical(domain.diplomacy, runtime.diplomacy) ||
+        runtime.cityFoundingDraft != interaction.cityFoundingDraft ||
+        runtime.pendingAction != interaction.pendingAction;
+    final projectedRawState = _rawState.copyWith(
+      units: identical(domain.units, units) ? null : domain.units,
+      artifacts: identical(domain.artifacts, artifacts)
+          ? null
+          : domain.artifacts,
+      fogOfWar: identical(domain.fogOfWar, fogOfWar) ? null : domain.fogOfWar,
+      runtimeState: runtimeChanged
+          ? runtime.copyWith(
+              diplomacy: domain.diplomacy,
+              cityFoundingDraft: interaction.cityFoundingDraft,
+              pendingAction: interaction.pendingAction,
+            )
+          : null,
+    );
+    return SaveSnapshot._owned(
+      save: _ownedSave(save.copyWith(savedAt: savedAt.toUtc())),
+      rawState: projectedRawState,
+      eventLogOffset: eventLogOffset,
+      canonicalProjection: resultSnapshot.copyWith(
+        metadata: resultSnapshot.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
+      ),
+    );
+  }
+
   /// Changes only the replay offset while retaining any lossless canonical
   /// projection already attached to this snapshot.
   SaveSnapshot withEventLogOffset(int eventLogOffset) {

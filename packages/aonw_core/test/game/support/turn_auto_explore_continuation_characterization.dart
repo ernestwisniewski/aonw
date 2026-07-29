@@ -20,7 +20,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
           units: [scout, rival],
           fogOfWar: fog,
         );
-        final kernel = const PersistentAutoExploreCommandResolver().resolve(
+        final kernel = _resolveAutoExploreKernel(
           state: input,
           command: const AutoExploreUnitCommand('turn_auto_scout'),
           actorPlayerId: _playerId,
@@ -202,7 +202,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
   });
 }
 
-_LegacyKernelPair _runLegacyAndKernel({
+_TurnKernelPair _runTurnAndKernel({
   required List<GameUnit> units,
   required FogOfWarState fogOfWar,
   required MapTraversalView mapData,
@@ -217,14 +217,14 @@ _LegacyKernelPair _runLegacyAndKernel({
   );
   return (
     kernelInput: input,
-    legacy: _advance(
+    turn: _advance(
       units: units,
       cities: cities,
       fogOfWar: fogOfWar,
       diplomacy: diplomacy,
       mapData: mapData,
     ),
-    kernel: const PersistentAutoExploreCommandResolver().resolve(
+    kernel: _resolveAutoExploreKernel(
       state: input,
       command: AutoExploreUnitCommand(units.first.id),
       actorPlayerId: _playerId,
@@ -270,7 +270,7 @@ _KernelContinuationEvidence _resolveKernelContinuations({
   final events = <String>[];
   final executions = <String>[];
   for (final unitId in unitIds) {
-    final result = const PersistentAutoExploreCommandResolver().resolve(
+    final result = _resolveAutoExploreKernel(
       state: current,
       command: AutoExploreUnitCommand(unitId),
       actorPlayerId: _playerId,
@@ -323,10 +323,10 @@ void _expectImmutableEvidence(
   expect(() => executions.removeLast(), throwsUnsupportedError);
 }
 
-typedef _LegacyKernelPair = ({
+typedef _TurnKernelPair = ({
   PersistentGameState kernelInput,
-  TurnAutoExploreAdvance legacy,
-  PersistentAutoExploreCommandResult kernel,
+  TurnAutoExploreAdvance turn,
+  _AutoExploreKernelResult kernel,
 });
 
 typedef _KernelContinuationEvidence = ({
@@ -334,3 +334,64 @@ typedef _KernelContinuationEvidence = ({
   List<String> eventSnapshots,
   List<String> executionSnapshots,
 });
+
+typedef _AutoExploreKernelResult = ({
+  bool accepted,
+  PersistentGameState state,
+  List<GameEvent> events,
+  MovementCommandExecution? execution,
+  String? reason,
+});
+
+_AutoExploreKernelResult _resolveAutoExploreKernel({
+  required PersistentGameState state,
+  required AutoExploreUnitCommand command,
+  required String actorPlayerId,
+  required MapTraversalView mapData,
+  required AutoExploreCommandPhase phase,
+}) {
+  final result = const AutoExploreCommandResolver().resolve(
+    state: AutoExploreCommandState(
+      movement: MovementCommandState(
+        units: state.units,
+        cities: state.cities,
+        fogOfWar: state.fogOfWar,
+        diplomacy: state.runtimeState.diplomacy,
+        playerIds: state.knownPlayerIds,
+      ),
+      interaction: PersistedInteractionState(
+        cityFoundingDraft: state.runtimeState.cityFoundingDraft,
+        pendingAction: state.runtimeState.pendingAction,
+      ),
+    ),
+    command: command,
+    actorPlayerId: actorPlayerId,
+    mapData: mapData,
+    phase: phase,
+  );
+  if (!result.accepted) {
+    return (
+      accepted: false,
+      state: state,
+      events: const [],
+      execution: null,
+      reason: result.reason,
+    );
+  }
+  final runtime = state.runtimeState.copyWith(
+    diplomacy: result.diplomacy,
+    cityFoundingDraft: result.interaction.cityFoundingDraft,
+    pendingAction: result.interaction.pendingAction,
+  );
+  return (
+    accepted: true,
+    state: state.copyWith(
+      units: result.units,
+      fogOfWar: result.fogOfWar,
+      runtimeState: runtime,
+    ),
+    events: result.events,
+    execution: result.execution,
+    reason: null,
+  );
+}

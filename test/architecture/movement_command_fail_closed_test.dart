@@ -17,51 +17,30 @@ void main() {
         runtimeSources,
         'MovementCommandResolver',
       ),
-      const {
-        movementPersistentAdapterPath: 1,
-        movementDomainAdapterPath: 1,
-        movementAutoExploreKernelPath: 1,
-        movementLocalCallSite: 1,
-        movementServerCallSite: 1,
-        movementMctsProjectionConsumerPath: 1,
-      },
-    );
-    expect(
-      movementConstructionReferenceCountsByPath(
-        runtimeSources,
-        'PersistentMoveUnitResolver',
-      ),
-      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
+      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
     );
     expect(
       movementConstructionReferenceCountsByPath(
         runtimeSources,
         'DomainMoveUnitResolver',
       ),
-      isEmpty,
+      const {
+        'packages/aonw_core/lib/game/application/engine/'
+                'movement_engine_handler.dart':
+            1,
+      },
     );
 
     final reviewedCallSites = {
       for (final path in const {
-        movementPersistentAdapterPath,
         movementDomainAdapterPath,
         movementAutoExploreKernelPath,
-        movementLocalCallSite,
-        movementServerCallSite,
-        movementMctsProjectionConsumerPath,
       })
         path: sources[path]!,
     };
     expect(
       movementNamedMemberReferenceCountsByPath(reviewedCallSites, 'resolve'),
-      const {
-        movementPersistentAdapterPath: 1,
-        movementDomainAdapterPath: 1,
-        movementAutoExploreKernelPath: 1,
-        movementLocalCallSite: 1,
-        movementServerCallSite: 1,
-        movementMctsProjectionConsumerPath: 1,
-      },
+      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
       reason: 'Each reviewed boundary must contain only its kernel resolve.',
     );
   });
@@ -76,14 +55,6 @@ void main() {
       movementInstanceMemberReferenceCountsByPath(
         diagnostic,
         'MovementCommandResolver',
-        'resolve',
-      ),
-      const {movementDiagnosticWorkloadPath: 1},
-    );
-    expect(
-      movementInstanceMemberReferenceCountsByPath(
-        diagnostic,
-        'PersistentMoveUnitResolver',
         'resolve',
       ),
       const {movementDiagnosticWorkloadPath: 1},
@@ -106,20 +77,13 @@ void main() {
     expect(
       movementConstructionReferenceCountsByPath(
         diagnostic,
-        'PersistentMoveUnitResolver',
-      ),
-      const {movementDiagnosticWorkloadPath: 1},
-    );
-    expect(
-      movementConstructionReferenceCountsByPath(
-        diagnostic,
         'DomainMoveUnitResolver',
       ),
       const {movementDiagnosticWorkloadPath: 1},
     );
     expect(
       movementNamedMemberReferenceCountsByPath(diagnostic, 'resolve'),
-      const {movementDiagnosticWorkloadPath: 3},
+      const {movementDiagnosticWorkloadPath: 2},
     );
   });
 
@@ -212,18 +176,15 @@ final class ParallelMovementBridge {}
 
   test('adapter API guard rejects a parallel routing method', () {
     final sources = productionDartSources();
-    sources[movementPersistentAdapterPath] =
-        sources[movementPersistentAdapterPath]!.replaceFirst(
-          '  PersistentMoveUnitResult resolve({',
-          '''
-  PersistentMoveUnitResult applyLegacy() => throw UnimplementedError();
+    sources[movementDomainAdapterPath] = sources[movementDomainAdapterPath]!
+        .replaceFirst('  DomainMoveUnitResult resolve({', '''
+  DomainMoveUnitResult applyParallel() => throw UnimplementedError();
 
-  PersistentMoveUnitResult resolve({''',
-        );
+  DomainMoveUnitResult resolve({''');
 
     expect(
       movementAdapterPublicApiViolations(sources),
-      contains('PersistentMoveUnitResolver must not widen its public API'),
+      contains('DomainMoveUnitResolver must not widen its public API'),
     );
   });
 

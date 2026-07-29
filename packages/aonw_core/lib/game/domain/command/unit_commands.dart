@@ -1,9 +1,17 @@
 part of 'game_command.dart';
 
+/// A player-authored unit command routed through the canonical game engine.
+sealed class UnitDomainCommand extends DomainCommand {
+  const UnitDomainCommand();
+
+  String get unitId;
+}
+
 /// Player issued a move order for [unitId] toward ([targetCol], [targetRow]).
-final class MoveUnitCommand extends DomainCommand {
+final class MoveUnitCommand extends UnitDomainCommand {
   const MoveUnitCommand(this.unitId, this.targetCol, this.targetRow);
 
+  @override
   final String unitId;
   final int targetCol;
   final int targetRow;
@@ -21,9 +29,10 @@ final class MoveUnitCommand extends DomainCommand {
 }
 
 /// Cancels the current action state owned by [unitId].
-final class CancelUnitActionCommand extends DomainCommand {
+final class CancelUnitActionCommand extends UnitDomainCommand {
   const CancelUnitActionCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -35,9 +44,10 @@ final class CancelUnitActionCommand extends DomainCommand {
 }
 
 /// Puts [unitId] aside for the rest of the current turn.
-final class SkipUnitTurnCommand extends DomainCommand {
+final class SkipUnitTurnCommand extends UnitDomainCommand {
   const SkipUnitTurnCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -49,9 +59,10 @@ final class SkipUnitTurnCommand extends DomainCommand {
 }
 
 /// Puts [unitId] into healing posture and spends its movement until recovered.
-final class FortifyUnitCommand extends DomainCommand {
+final class FortifyUnitCommand extends UnitDomainCommand {
   const FortifyUnitCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -63,9 +74,10 @@ final class FortifyUnitCommand extends DomainCommand {
 }
 
 /// Starts automatic exploration for [unitId] until it is cancelled.
-final class AutoExploreUnitCommand extends DomainCommand {
+final class AutoExploreUnitCommand extends UnitDomainCommand {
   const AutoExploreUnitCommand(this.unitId);
 
+  @override
   final String unitId;
 
   @override
@@ -109,9 +121,10 @@ final class CancelMerchantTradeRouteSelectionCommand extends GameIntent {
 }
 
 /// Assigns [unitId] to automatically trade with [destinationCityId].
-final class AssignMerchantTradeRouteCommand extends DomainCommand {
+final class AssignMerchantTradeRouteCommand extends UnitDomainCommand {
   const AssignMerchantTradeRouteCommand(this.unitId, this.destinationCityId);
 
+  @override
   final String unitId;
   final String destinationCityId;
 
@@ -159,9 +172,10 @@ final class CancelMerchantMoveToCitySelectionCommand extends GameIntent {
 }
 
 /// Queues [unitId] to travel into [destinationCityId] without creating a trade route.
-final class MoveMerchantToCityCommand extends DomainCommand {
+final class MoveMerchantToCityCommand extends UnitDomainCommand {
   const MoveMerchantToCityCommand(this.unitId, this.destinationCityId);
 
+  @override
   final String unitId;
   final String destinationCityId;
 
@@ -202,9 +216,10 @@ final class ToggleMoveTargetingCommand extends GameIntent {
 }
 
 /// Player detaches a troop of [troopType] from unit [unitId].
-final class DetachTroopCommand extends DomainCommand {
+final class DetachTroopCommand extends UnitDomainCommand {
   const DetachTroopCommand(this.unitId, this.troopType);
 
+  @override
   final String unitId;
   final TroopType troopType;
 

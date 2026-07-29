@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 
 import 'measurement.dart';
@@ -9,8 +10,8 @@ const _movementUnitId = 'movement_benchmark_unit';
 const _movementStart = (col: 4, row: 4);
 const _movementTarget = (col: 7, row: 4);
 
-/// Resolves one authoritative move through the neutral kernel and both state
-/// adapters while exercising fog recomputation and diplomatic contact.
+/// Resolves one authoritative move through the neutral kernel, canonical
+/// adapter, and public game engine while exercising fog and contact updates.
 PerformanceCaseResult runMovementCommandWorkload({
   Iterable<int> scales = movementCommandScales,
   int timingSamples = 21,
@@ -80,7 +81,7 @@ _MovementCommandScaleResult _runMovementCommandScale(
 
 _MovementCommandBatch _executeMovementCommandBatch(
   _MovementCommandFixture fixture,
-  MapTraversalView mapView,
+  MapReadView mapView,
 ) {
   final counters = FogOfWarRecomputeCounters();
   final fogService = FogOfWarService(counters: counters);
@@ -90,13 +91,6 @@ _MovementCommandBatch _executeMovementCommandBatch(
     actorPlayerId: _movementActorId,
     mapData: mapView,
   );
-  final persistent = PersistentMoveUnitResolver(fogOfWarService: fogService)
-      .resolve(
-        state: fixture.persistentState,
-        command: fixture.command,
-        actorPlayerId: _movementActorId,
-        mapData: mapView,
-      );
   final domain =
       DomainMoveUnitResolver(
         commandResolver: MovementCommandResolver(fogOfWarService: fogService),
@@ -106,6 +100,19 @@ _MovementCommandBatch _executeMovementCommandBatch(
         actorPlayerId: _movementActorId,
         mapData: mapView,
       );
+  final engine = const GameEngine().apply(
+    snapshot: fixture.engineSnapshot,
+    command: fixture.command,
+    context: GameEngineContext(
+      actorPlayerId: _movementActorId,
+      mapView: mapView,
+      ruleset: GameRuleset.defaults,
+      commandTick: 0,
+    ),
+  );
+  final engineExecution = engine.movementDelta.executions.isEmpty
+      ? null
+      : engine.movementDelta.executions.single;
 
   return _MovementCommandBatch(
     outputs: [
@@ -119,13 +126,13 @@ _MovementCommandBatch _executeMovementCommandBatch(
         execution: kernel.execution,
       ),
       _normalizedMovementBoundary(
-        accepted: persistent.accepted,
-        reason: persistent.reason,
-        units: persistent.state.units,
-        fogOfWar: persistent.state.fogOfWar,
-        diplomacy: persistent.state.runtimeState.diplomacy,
-        events: persistent.events,
-        execution: persistent.execution,
+        accepted: engine is GameEngineAccepted,
+        reason: engine is GameEngineRejected ? engine.reason : null,
+        units: engine.snapshot.domain.units,
+        fogOfWar: engine.snapshot.domain.fogOfWar,
+        diplomacy: engine.snapshot.domain.diplomacy,
+        events: engine.events,
+        execution: engineExecution,
       ),
       _normalizedMovementBoundary(
         accepted: domain.accepted,
@@ -205,8 +212,8 @@ final class _MovementCommandFixture {
   const _MovementCommandFixture({
     required this.worldMap,
     required this.kernelState,
-    required this.persistentState,
     required this.domainState,
+    required this.engineSnapshot,
     required this.command,
   });
 
@@ -250,20 +257,6 @@ final class _MovementCommandFixture {
     ];
     const fogOfWar = FogOfWarState.empty;
     const diplomacy = DiplomacyState.empty;
-    final persistent = PersistentGameState.snapshot(
-      playerColors: const {
-        _movementActorId: 0xFF112233,
-        _movementOpponentId: 0xFF445566,
-      },
-      playerCountries: const {
-        _movementActorId: PlayerCountry.poland,
-        _movementOpponentId: PlayerCountry.france,
-      },
-      playerGold: const {_movementActorId: 10, _movementOpponentId: 10},
-      units: units,
-      fogOfWar: fogOfWar,
-      runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
-    );
     final domain = DomainState.snapshot(
       turn: 1,
       matchRules: MatchRules.standard,
@@ -295,8 +288,22 @@ final class _MovementCommandFixture {
         diplomacy: diplomacy,
         playerIds: const [_movementActorId, _movementOpponentId],
       ),
-      persistentState: persistent,
       domainState: domain,
+      engineSnapshot: CanonicalGameSnapshot.snapshot(
+        domain: domain,
+        session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+        metadata: GameSnapshotMetadata(
+          id: 'movement_performance',
+          schemaVersion: 3,
+          name: 'Movement performance',
+          world: const WorldReference(
+            name: 'performance',
+            source: MapSource.asset,
+          ),
+          savedAtUtc: DateTime.utc(1970),
+          camera: GameSnapshotCamera.zero,
+        ),
+      ),
       command: MoveUnitCommand(
         _movementUnitId,
         _movementTarget.col,
@@ -307,11 +314,11 @@ final class _MovementCommandFixture {
 
   final WorldMap worldMap;
   final MovementCommandState kernelState;
-  final PersistentGameState persistentState;
   final DomainState domainState;
+  final CanonicalGameSnapshot engineSnapshot;
   final MoveUnitCommand command;
 
-  MapTraversalView mapView() => WorldMapReadView(worldMap);
+  MapReadView mapView() => WorldMapReadView(worldMap);
 }
 
 final class _MovementCommandBatch {
@@ -338,10 +345,10 @@ final class _MovementCommandBatch {
       '${counters.unitMoveIncrementalCount}:${counters.unitMoveFallbackCount}';
 }
 
-final class _CountingMovementTraversal implements MapTraversalView {
+final class _CountingMovementTraversal implements MapReadView {
   _CountingMovementTraversal(this._delegate);
 
-  final MapTraversalView _delegate;
+  final MapReadView _delegate;
   final Set<String> _coordinates = {};
   int _calls = 0;
   int _hits = 0;
@@ -351,6 +358,24 @@ final class _CountingMovementTraversal implements MapTraversalView {
 
   @override
   int get rows => _delegate.rows;
+
+  @override
+  String? get mapName => _delegate.mapName;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  Iterable<MapObjectiveDefinition> get objectives => _delegate.objectives;
+
+  @override
+  int get tileCount => _delegate.tileCount;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains => _delegate.tileTerrains;
+
+  @override
+  Iterable<MapTileView> get tileViews => _delegate.tileViews;
 
   @override
   MapTileView? tileAt(int col, int row) {

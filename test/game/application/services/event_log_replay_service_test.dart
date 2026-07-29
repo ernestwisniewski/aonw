@@ -1,11 +1,14 @@
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
+import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,14 +35,16 @@ void main() {
       reducer: GameStateReducer(mapData: _map()),
     );
 
+    final state = GameState(units: [commander]);
     final replayed = await service.replaySinceSnapshot(
       saveId: 'save_1',
-      state: GameState(units: [commander]),
-      offset: 1,
+      snapshot: _snapshot(state, offset: 1),
+      state: state,
     );
 
     expect(replayed.offset, 2);
     expect(replayed.state.units.single.col, 1);
+    expect(replayed.state.moveCommandActive, isFalse);
   });
 
   test('throws when the event log has an offset gap', () async {
@@ -60,8 +65,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
+        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
         state: GameState(units: [commander]),
-        offset: 1,
       ),
       throwsA(isA<StateError>()),
     );
@@ -85,8 +90,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
+        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
         state: GameState(units: [commander]),
-        offset: 1,
       ),
       throwsA(
         isA<AuthoritativeSnapshotRequiredException>().having(
@@ -116,8 +121,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
+        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
         state: GameState(units: [commander]),
-        offset: 1,
       ),
       throwsA(
         isA<AuthoritativeSnapshotRequiredException>().having(
@@ -128,6 +133,22 @@ void main() {
       ),
     );
   });
+}
+
+SaveSnapshot _snapshot(GameState state, {required int offset}) {
+  return SaveSnapshot.fromGameState(
+    save: GameSave(
+      id: 'save_1',
+      name: 'Replay',
+      mapName: 'test',
+      turn: 1,
+      playerStates: const {'player_1': PlayerTurnState.active},
+      savedAt: DateTime.utc(2026, 4, 16),
+      camera: CameraState.zero,
+    ),
+    state: state,
+    eventLogOffset: offset,
+  );
 }
 
 class _MemoryEventLog implements EventLog {

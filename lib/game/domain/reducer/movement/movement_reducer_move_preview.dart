@@ -157,37 +157,9 @@ abstract final class _MovePreviewReducer {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
   }) {
-    final preview = state.movePreview;
-    final selected = state.selectedUnit;
-
-    if (preview == null || selected == null || selected.id != preview.unitId) {
-      return GameStateTransition(
-        state: MovementReducer._clearMoveTargeting(state),
-      );
-    }
-
-    final workState = state.copyWithInteraction(movePreview: null);
-    final transition = MovementReducer.moveUnit(
-      workState,
-      MoveUnitCommand(selected.id, preview.targetCol, preview.targetRow),
-      mapView,
-      context: context,
-      fogOfWarService: fogOfWarService,
-    );
-    final updatedUnit = transition.state.unitById(selected.id);
-    final completedNow = updatedUnit != null && updatedUnit.queuedPath == null;
-    final next = identical(transition.state, workState)
-        ? MovementReducer._clearMoveTargeting(transition.state)
-        : transition.state.copyWithInteraction(
-            moveCommandActive: completedNow,
-            movePreview: null,
-          );
-
-    return GameStateTransition(
-      state: next,
-      events: transition.events,
-      uiEffects: transition.uiEffects,
-    );
+    // Confirmation is converted into a canonical [MoveUnitCommand] by the
+    // command transport before the presentation reducer is entered.
+    return GameStateTransition(state: state);
   }
 
   static ShowHudFeedbackEffect? _blockedFeedback({

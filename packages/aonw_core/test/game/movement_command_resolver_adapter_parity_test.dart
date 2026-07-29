@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -59,7 +60,6 @@ void main() {
       const command = MoveUnitCommand(movementUnitId, 1, 0);
       final map = movementMap(cols: 3);
       final kernelCounters = FogOfWarRecomputeCounters();
-      final persistentCounters = FogOfWarRecomputeCounters();
       final domainCounters = FogOfWarRecomputeCounters();
 
       final kernel =
@@ -71,15 +71,16 @@ void main() {
             actorPlayerId: movementActorId,
             mapData: map,
           );
-      final persistent =
-          PersistentMoveUnitResolver(
-            fogOfWarService: FogOfWarService(counters: persistentCounters),
-          ).resolve(
-            state: states.persistent,
-            command: command,
-            actorPlayerId: movementActorId,
-            mapData: map,
-          );
+      final engine = const GameEngine().apply(
+        snapshot: states.engine,
+        command: command,
+        context: GameEngineContext(
+          actorPlayerId: movementActorId,
+          mapView: map,
+          ruleset: GameRuleset.defaults,
+          commandTick: 1,
+        ),
+      );
       final domain =
           DomainMoveUnitResolver(
             commandResolver: MovementCommandResolver(
@@ -93,11 +94,10 @@ void main() {
           );
 
       expect(
-        (kernel.accepted, persistent.accepted, domain.accepted),
+        (kernel.accepted, engine is GameEngineAccepted, domain.accepted),
         (true, true, true),
       );
       expect(kernelCounters.unitMoveIncrementalCount, 1);
-      expect(persistentCounters.unitMoveIncrementalCount, 1);
       expect(domainCounters.unitMoveIncrementalCount, 1);
     });
 
@@ -111,11 +111,11 @@ void main() {
       expect(results.kernel.units.first.queuedPath?.targetCol, 2);
       expect(results.kernel.events, isEmpty);
       expect(results.kernel.execution, isNull);
-      expect(results.persistent.execution, isNull);
+      expect(results.engine.movementDelta.executions, isEmpty);
       expect(results.domain.execution, isNull);
       expect(
-        results.persistent.state.fogOfWar,
-        same(states.persistent.fogOfWar),
+        results.engine.snapshot.domain.fogOfWar,
+        same(states.engine.domain.fogOfWar),
       );
       expect(results.domain.state.fogOfWar, same(states.domain.fogOfWar));
     });
@@ -236,7 +236,7 @@ void main() {
       );
 
       expect(results.kernel.accepted, isTrue);
-      expect(results.persistent.accepted, isTrue);
+      expect(results.engine, isA<GameEngineAccepted>());
       expect(results.domain.accepted, isTrue);
       expect(results.kernel.reason, isNull);
       expect(results.kernel.units, same(states.kernel.units));
@@ -244,7 +244,7 @@ void main() {
       expect(results.kernel.diplomacy, same(states.kernel.diplomacy));
       expect(results.kernel.events, isEmpty);
       expect(results.kernel.execution, isNull);
-      expect(results.persistent.state, same(states.persistent));
+      expect(results.engine.snapshot, same(states.engine));
       expect(results.domain.state, same(states.domain));
     });
 
@@ -267,7 +267,7 @@ void main() {
       );
 
       expect(results.kernel.accepted, isTrue);
-      expect(results.persistent.accepted, isTrue);
+      expect(results.engine, isA<GameEngineAccepted>());
       expect(results.domain.accepted, isTrue);
       expect(results.kernel.reason, isNull);
       expect(results.kernel.units, same(states.kernel.units));
@@ -275,7 +275,7 @@ void main() {
       expect(results.kernel.diplomacy, same(states.kernel.diplomacy));
       expect(results.kernel.events, isEmpty);
       expect(results.kernel.execution, isNull);
-      expect(results.persistent.state, same(states.persistent));
+      expect(results.engine.snapshot, same(states.engine));
       expect(results.domain.state, same(states.domain));
     });
 

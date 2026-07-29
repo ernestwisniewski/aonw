@@ -24,8 +24,8 @@ const _viewProjectorPath =
     'server/lib/src/multiplayer/player_match_view_projector.dart';
 const _serverTurnsPath =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
-const _serverAutoExplorePath =
-    'server/lib/src/multiplayer/server_command_reducer_auto_explore.dart';
+const _serverDomainEnginePath =
+    'server/lib/src/multiplayer/server_command_reducer_unit_action.dart';
 const _performancePath = 'tool/performance/turn_finalization_workload.dart';
 
 void main() {
@@ -176,12 +176,12 @@ List<_MutationScenario> _mutationScenarios() => [
     ],
   ),
   const _MutationScenario(
-    name: 'direct auto-explore must forward its movement execution',
-    physicalPaths: {_serverAutoExplorePath},
-    overrides: _autoExploreForwardingBypass,
+    name: 'server game engine must forward its movement executions',
+    physicalPaths: {_serverDomainEnginePath},
+    overrides: _engineMovementForwardingBypass,
     expectedViolationFragments: [
-      '_ServerCommandReducerAutoExplore._applyAutoExplore must forward '
-          'AutoExploreCommandResult.execution directly as movementExecutions',
+      '_ServerCommandReducerUnitAction._applyDomainCommandEngine must forward '
+          'MovementExecutionDelta.executions directly as movementExecutions',
     ],
   ),
 ];
@@ -225,14 +225,15 @@ Map<String, String> _transitiveHelperBypass(Map<String, String> sources) => {
   _virtualBypassHelperPath: _virtualBypassHelperSource,
 };
 
-Map<String, String> _autoExploreForwardingBypass(Map<String, String> sources) =>
-    {
-      _serverAutoExplorePath: _replaceOnce(
-        sources[_serverAutoExplorePath]!,
-        'movementExecutions: [?result.execution],',
-        'movementExecutions: const [],',
-      ),
-    };
+Map<String, String> _engineMovementForwardingBypass(
+  Map<String, String> sources,
+) => {
+  _serverDomainEnginePath: _replaceOnce(
+    sources[_serverDomainEnginePath]!,
+    'movementExecutions: result.movementDelta.executions,',
+    'movementExecutions: const [],',
+  ),
+};
 
 String _illegalCanonicalSource(String source) {
   return _wrappedCanonicalReceiverSource('''

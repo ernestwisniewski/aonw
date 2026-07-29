@@ -16,6 +16,14 @@ final class _EconomySimulationCommandApplier {
     required GameRuleset ruleset,
   }) {
     switch (command) {
+      case UnitDomainCommand():
+        return _applyEngineMovement(
+          tick: tick,
+          state: state,
+          command: command,
+          actorPlayerId: actorPlayerId,
+          ruleset: ruleset,
+        );
       case FoundCityCommand():
         final result = const PersistentCityFoundingResolver().foundCity(
           state: state,
@@ -64,36 +72,6 @@ final class _EconomySimulationCommandApplier {
           accepted: result.accepted,
           state: result.state,
         );
-      case MoveUnitCommand():
-        return _applyMoveUnit(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-      case AssignMerchantTradeRouteCommand():
-        final result = const PersistentMerchantTradeRouteResolver().assignRoute(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapData: mapView,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-          reason: result.reason,
-        );
-      case MoveMerchantToCityCommand():
-        final result = const PersistentMerchantTradeRouteResolver().moveToCity(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapData: mapView,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-          reason: result.reason,
-        );
       case SelectWorkerImprovementCommand():
         final result = const PersistentWorkerCommandResolver()
             .selectWorkerImprovement(
@@ -138,42 +116,6 @@ final class _EconomySimulationCommandApplier {
               command: command,
               actorPlayerId: actorPlayerId,
             );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case SkipUnitTurnCommand():
-      case FortifyUnitCommand():
-        return _applyEngineUnitAction(
-          tick: tick,
-          state: state,
-          command: command as DomainCommand,
-          actorPlayerId: actorPlayerId,
-          ruleset: ruleset,
-        );
-      case AutoExploreUnitCommand():
-        return _applyAutoExplore(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-      case CancelUnitActionCommand():
-        final result = const PersistentUnitActionResolver().cancelUnitAction(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-        );
-      case DetachTroopCommand():
-        final result = const PersistentUnitDetachmentResolver().detachTroop(
-          state: state,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: mapView,
-        );
         return _ApplyCommandResult(
           accepted: result.accepted,
           state: result.state,
@@ -240,7 +182,7 @@ final class _EconomySimulationCommandApplier {
     }
   }
 
-  _ApplyCommandResult _applyEngineUnitAction({
+  _ApplyCommandResult _applyEngineMovement({
     required int tick,
     required PersistentGameState state,
     required DomainCommand command,
@@ -255,46 +197,9 @@ final class _EconomySimulationCommandApplier {
       commandTick: tick,
       mapView: mapView,
       ruleset: ruleset,
+      movementVisibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
     );
     engineSnapshot = result.snapshot;
-    return _ApplyCommandResult(
-      accepted: result.accepted,
-      state: result.state,
-      reason: result.reason,
-    );
-  }
-
-  _ApplyCommandResult _applyMoveUnit({
-    required PersistentGameState state,
-    required MoveUnitCommand command,
-    required String actorPlayerId,
-  }) {
-    final result = const PersistentMoveUnitResolver().resolve(
-      state: state,
-      command: command,
-      actorPlayerId: actorPlayerId,
-      mapData: mapView,
-      visibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
-    );
-    return _ApplyCommandResult(
-      accepted: result.accepted,
-      state: result.state,
-      reason: result.reason,
-    );
-  }
-
-  _ApplyCommandResult _applyAutoExplore({
-    required PersistentGameState state,
-    required AutoExploreUnitCommand command,
-    required String actorPlayerId,
-  }) {
-    final result = const PersistentAutoExploreCommandResolver().resolve(
-      state: state,
-      command: command,
-      actorPlayerId: actorPlayerId,
-      mapData: mapView,
-      phase: AutoExploreCommandPhase.direct,
-    );
     return _ApplyCommandResult(
       accepted: result.accepted,
       state: result.state,

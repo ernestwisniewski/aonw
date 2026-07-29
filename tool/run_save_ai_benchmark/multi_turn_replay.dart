@@ -161,8 +161,9 @@ class _MultiTurnReplayRunner {
     required AiTurnPlan plan,
     required Set<String> humanPlayerIds,
   }) {
-    final reducer = GameStateReducer(
-      mapData: context.mapData,
+    final dispatcher = _BenchmarkCommandDispatcher(
+      snapshot: snapshot.canonical,
+      mapView: context.mapData,
       ruleset: context.ruleset,
     );
     var currentSnapshot = snapshot;
@@ -207,15 +208,14 @@ class _MultiTurnReplayRunner {
         playerId: player.id,
         aiContext: context,
       );
-      final transition = reducer.reduce(
-        currentState,
-        command,
+      final transition = dispatcher.apply(
+        state: currentState,
+        command: command,
         context: commandContext,
       );
-      eventCounts.add(transition);
-      if (transition.state == currentState) {
-        if (command is MoveUnitCommand &&
-            _rejectionReasons(transition).isEmpty) {
+      eventCounts.addEvents(transition.events);
+      if (!transition.accepted) {
+        if (command is MoveUnitCommand && transition.rejectionReasons.isEmpty) {
           final staleDiagnostic = _staleMoveDiagnostic(
             command,
             currentState,
@@ -248,12 +248,12 @@ class _MultiTurnReplayRunner {
       applied += 1;
     }
     final terminalCommand = _replayTerminalCommand(currentSnapshot, player);
-    final terminalTransition = reducer.reduce(
-      currentState,
-      terminalCommand,
+    final terminalTransition = dispatcher.apply(
+      state: currentState,
+      command: terminalCommand,
       context: _commandContext(playerId: player.id, aiContext: context),
     );
-    eventCounts.add(terminalTransition);
+    eventCounts.addEvents(terminalTransition.events);
     final terminalChangedState = terminalTransition.state != currentState;
     currentState = terminalTransition.state;
     final savedAt = _replaySavedAt(currentSnapshot);

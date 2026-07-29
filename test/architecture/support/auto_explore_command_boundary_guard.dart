@@ -9,18 +9,12 @@ const autoExploreResultPath =
 const autoExploreGuardPath =
     '${movementLibraryPath}auto_explore_command_guard.dart';
 const autoExploreResolverPath = movementAutoExploreKernelPath;
-const autoExplorePersistentAdapterPath =
-    '${movementLibraryPath}persistent_auto_explore_command_resolver.dart';
 const autoExplorePlannerDependencyPath =
     '${movementLibraryPath}scout_auto_explore_planner.dart';
 const autoExploreTargetDependencyPath =
     '${movementLibraryPath}scout_auto_explore_target.dart';
 const autoExploreDiagnosticWorkloadPath =
     'tool/performance/auto_explore_workload.dart';
-const autoExploreLocalCallSite =
-    'lib/game/domain/reducer/movement/movement_reducer_auto_explore.dart';
-const autoExploreServerCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_auto_explore.dart';
 const autoExploreTurnContinuationCallSite =
     'packages/aonw_core/lib/game/domain/turn/movement/'
     'turn_auto_explore_advancer.dart';
@@ -73,31 +67,6 @@ const _autoExploreResolveParameters = [
   _ParameterShape('canAct', 'bool', defaultValue: 'true'),
 ];
 
-const _persistentAutoExploreResultFields = {
-  'accepted': 'bool',
-  'state': 'PersistentGameState',
-  'events': 'List<GameEvent>',
-  'execution': 'MovementCommandExecution?',
-  'reason': 'String?',
-};
-
-const _persistentAutoExploreResultParameters = [
-  _ParameterShape('accepted', 'bool', required: true),
-  _ParameterShape('state', 'PersistentGameState', required: true),
-  _ParameterShape('events', 'List<GameEvent>', defaultValue: 'const []'),
-  _ParameterShape('execution', 'MovementCommandExecution?'),
-  _ParameterShape('reason', 'String?'),
-];
-
-const _persistentAutoExploreResolveParameters = [
-  _ParameterShape('state', 'PersistentGameState', required: true),
-  _ParameterShape('command', 'AutoExploreUnitCommand', required: true),
-  _ParameterShape('actorPlayerId', 'String', required: true),
-  _ParameterShape('mapData', 'MapTraversalView', required: true),
-  _ParameterShape('phase', 'AutoExploreCommandPhase', required: true),
-  _ParameterShape('canAct', 'bool', defaultValue: 'true'),
-];
-
 Map<String, String> autoExploreRuntimeSources(Map<String, String> sources) => {
   for (final entry in sources.entries)
     if (entry.key != autoExploreDiagnosticWorkloadPath) entry.key: entry.value,
@@ -127,9 +96,6 @@ List<String> autoExplorePublicApiViolations(Map<String, String> sources) => [
   ...autoExploreResultShapeViolations(sources[autoExploreResultPath]),
   ...autoExploreGuardShapeViolations(sources[autoExploreGuardPath]),
   ...autoExploreResolverShapeViolations(sources[autoExploreResolverPath]),
-  ...autoExplorePersistentAdapterShapeViolations(
-    sources[autoExplorePersistentAdapterPath],
-  ),
 ];
 
 List<String> autoExplorePhaseShapeViolations(String? source) {
@@ -367,105 +333,3 @@ List<String> autoExploreResolverShapeViolations(String? source) {
       'AutoExploreCommandResolver.resolve must expose its exact contract',
   ];
 }
-
-List<String> autoExplorePersistentAdapterShapeViolations(String? source) {
-  if (source == null) {
-    return const ['persistent auto-explore adapter must exist'];
-  }
-  final unit = parseString(
-    content: source,
-    path: autoExplorePersistentAdapterPath,
-  ).unit;
-  final result = _singleClass(unit, 'PersistentAutoExploreCommandResult');
-  final resolver = _singleClass(unit, 'PersistentAutoExploreCommandResolver');
-  final resultConstructor = _singleConstructor(result, '');
-  final resolverConstructor = _singleConstructor(resolver, '');
-  final resolve = _singleMethod(resolver, 'resolve');
-  return [
-    ..._persistentAutoExploreFileViolations(unit),
-    ..._persistentAutoExploreResultViolations(result, resultConstructor),
-    ..._persistentAutoExploreResolverViolations(resolver),
-    ..._persistentAutoExploreConstructorViolations(resolverConstructor),
-    ..._persistentAutoExploreResolveViolations(resolve),
-  ];
-}
-
-List<String> _persistentAutoExploreFileViolations(CompilationUnit unit) => [
-  if (!_hasExactTopLevelClasses(unit, const {
-    'PersistentAutoExploreCommandResult',
-    'PersistentAutoExploreCommandResolver',
-  }))
-    'persistent auto-explore file must declare only result and resolver',
-];
-
-List<String> _persistentAutoExploreResultViolations(
-  ClassDeclaration? result,
-  ConstructorDeclaration? constructor,
-) => [
-  if (!_isOnlyFinalClass(result))
-    'PersistentAutoExploreCommandResult must remain final',
-  if (!_hasExactFinalFields(result, _persistentAutoExploreResultFields))
-    'PersistentAutoExploreCommandResult must expose exact immutable fields',
-  if (!_sameSet(_constructorNames(result), const {''}) ||
-      _publicMethodNames(result).isNotEmpty)
-    'PersistentAutoExploreCommandResult must expose only its constructor',
-  if (constructor == null || constructor.constKeyword == null)
-    'PersistentAutoExploreCommandResult constructor must remain const',
-  if (constructor != null &&
-      !_hasExactNamedParameters(
-        constructor,
-        _persistentAutoExploreResultParameters,
-        inferredFieldTypes: _persistentAutoExploreResultFields,
-      ))
-    'PersistentAutoExploreCommandResult constructor must keep its contract',
-];
-
-List<String> _persistentAutoExploreResolverViolations(
-  ClassDeclaration? resolver,
-) => [
-  if (!_isOnlyFinalClass(resolver))
-    'PersistentAutoExploreCommandResolver must remain final',
-  if (!_hasExactFinalFields(resolver, const {
-    'fogOfWarService': 'FogOfWarService',
-  }))
-    'PersistentAutoExploreCommandResolver must own only fog service',
-  if (!_sameSet(_constructorNames(resolver), const {''}))
-    'PersistentAutoExploreCommandResolver must keep one constructor',
-  if (!_sameSet(_publicMethodNames(resolver), const {'method:resolve'}))
-    'PersistentAutoExploreCommandResolver must expose only resolve',
-];
-
-List<String> _persistentAutoExploreConstructorViolations(
-  ConstructorDeclaration? constructor,
-) => [
-  if (constructor == null || constructor.constKeyword == null)
-    'persistent adapter constructor must remain const',
-  if (constructor != null &&
-      !_hasExactNamedParameters(
-        constructor,
-        const [
-          _ParameterShape(
-            'fogOfWarService',
-            'FogOfWarService',
-            defaultValue: 'const FogOfWarService()',
-          ),
-        ],
-        inferredFieldTypes: const {'fogOfWarService': 'FogOfWarService'},
-      ))
-    'persistent adapter constructor must expose only fog service',
-];
-
-List<String> _persistentAutoExploreResolveViolations(
-  MethodDeclaration? resolve,
-) => [
-  if (resolve == null || resolve.isStatic)
-    'persistent adapter resolve must remain an instance method',
-  if (resolve?.returnType?.toSource() != 'PersistentAutoExploreCommandResult')
-    'persistent adapter resolve must return its exact result',
-  if (resolve != null &&
-      !_hasExactNamedParameters(
-        resolve,
-        _persistentAutoExploreResolveParameters,
-      ))
-    'persistent adapter resolve must expose its exact bounded contract',
-];

@@ -195,17 +195,7 @@ const _applicationTargets = [
         type: 'MapTraversalView',
       ),
       _Boundary.method(
-        'assignRoute',
-        parameter: 'mapView',
-        type: 'MapTraversalView',
-      ),
-      _Boundary.method(
         'startMoveToCitySelection',
-        parameter: 'mapView',
-        type: 'MapTraversalView',
-      ),
-      _Boundary.method(
-        'moveToCity',
         parameter: 'mapView',
         type: 'MapTraversalView',
       ),

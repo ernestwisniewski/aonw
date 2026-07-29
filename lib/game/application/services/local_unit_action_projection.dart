@@ -1,12 +1,12 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
 
 GameState projectLocalUnitActionPresentation({
-  required GameStateReducer reducer,
+  required MapReadView mapView,
   required GameState currentState,
   required CanonicalGameSnapshot baseSnapshot,
   required CanonicalGameSnapshot resultSnapshot,
@@ -31,7 +31,7 @@ GameState projectLocalUnitActionPresentation({
   final selection =
       GameSelection.unit(
         updatedUnit,
-        tile: reducer.mapData.tileAt(updatedUnit.col, updatedUnit.row),
+        tile: mapView.tileAt(updatedUnit.col, updatedUnit.row),
       ).withVisibleResources(
         playerId: targetingCleared.activePlayerId,
         research: targetingCleared.research,

@@ -29,7 +29,11 @@ abstract final class EconomySimulation {
   static void run(Config config) {
     final mapData = config.mapData;
     final mapView = mapData.indexedReadView();
-    _EconomySimulationCommandApplier(mapView);
+    _economySimulationCommandApplierForSetup(
+      config: config,
+      state: state,
+      mapView: mapView,
+    );
   }
 }
 ''', 'fixture.dart');
@@ -51,7 +55,11 @@ abstract final class EconomySimulation {
     validateMapDataTileInvariants(mapData);
     final mapView = mapData.indexedReadView();
     final duplicate = config.mapData.indexedReadView();
-    _EconomySimulationCommandApplier(mapView);
+    _economySimulationCommandApplierForSetup(
+      config: config,
+      state: state,
+      mapView: mapView,
+    );
     consume(duplicate);
   }
 }
@@ -73,7 +81,11 @@ abstract final class EconomySimulation {
     final mapData = config.mapData;
     validateMapDataTileInvariants(mapData);
     final mapView = mapData.indexedReadView();
-    _EconomySimulationCommandApplier(mapView);
+    _economySimulationCommandApplierForSetup(
+      config: config,
+      state: state,
+      mapView: mapView,
+    );
     consume(config.mapData);
   }
 }
@@ -151,8 +163,9 @@ final class _EconomySimulationCommandApplier {
       violations,
       containsAll([
         'fixture.dart command applier must declare one mapView field',
-        'fixture.dart command applier must have one const constructor over '
-            'mapView',
+        'fixture.dart command applier must declare one engineSnapshot field',
+        'fixture.dart command applier must have one constructor over mapView '
+            'and engineSnapshot',
       ]),
     );
   });

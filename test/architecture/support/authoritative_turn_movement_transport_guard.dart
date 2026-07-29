@@ -35,6 +35,8 @@ const _wireEventPath = 'packages/aonw_core/lib/protocol/wire_event.dart';
 const _wireAckPath = 'packages/aonw_core/lib/protocol/wire_command_ack.dart';
 const _localResolverPath =
     'lib/game/application/services/local_command_resolver.dart';
+const _localMovementProjectionPath =
+    'lib/game/application/services/local_movement_engine_projection.dart';
 const _queuedEffectBuilderPath =
     'lib/game/application/services/queued_movement_effect_builder.dart';
 const _liveServerEventPath = 'lib/api/transport/live_server_event.dart';
@@ -47,8 +49,8 @@ const _dispatcherPath =
     'lib/game/presentation/engine/game_effect_dispatcher.dart';
 const _serverTurnsPath =
     'server/lib/src/multiplayer/server_command_reducer_turns.dart';
-const _serverAutoExplorePath =
-    'server/lib/src/multiplayer/server_command_reducer_auto_explore.dart';
+const _serverDomainEnginePath =
+    'server/lib/src/multiplayer/server_command_reducer_unit_action.dart';
 const _movementAudiencePath =
     'server/lib/src/multiplayer/player_match_movement_audience.dart';
 const _viewProjectorPath =
@@ -85,6 +87,7 @@ const _expectedReferences = <String, Map<String, int>>{
   },
   'QueuedMovementEffectBuilder.fromExecutions': {
     '$_localResolverPath::LocalCommandResolver._finalizeSimultaneousTurn': 1,
+    '$_localMovementProjectionPath::projectLocalMovementEngineResult': 1,
     '$_ackEffectResolverPath::AcknowledgedCommandEffectResolver.resolve': 1,
     '$_externalEffectResolverPath::'
             'ExternalSnapshotRendererEffectResolver.resolve':
@@ -100,6 +103,7 @@ const _transportGraphRootPaths = {
   _wireEventPath,
   _wireAckPath,
   _localResolverPath,
+  _localMovementProjectionPath,
   _queuedEffectBuilderPath,
   _liveServerEventPath,
   _ackEffectResolverPath,
@@ -111,7 +115,7 @@ const _transportGraphRootPaths = {
   'lib/game/presentation/providers/game/game_state_provider.dart',
   _dispatcherPath,
   'server/lib/src/multiplayer/server_command_reducer.dart',
-  _serverAutoExplorePath,
+  _serverDomainEnginePath,
   _serverTurnsPath,
   'server/lib/src/multiplayer/server_command_reducer_outcome.dart',
   'server/lib/src/multiplayer/match_command_service.dart',
@@ -148,8 +152,9 @@ const _orderSensitiveOwners = {
   '$_canonicalPipelinePath::CanonicalTurnPipeline.simultaneousFinalize',
   '$_localResolverPath::LocalCommandResolver._finalizeSimultaneousTurn',
   '$_serverTurnsPath::ServerCommandReducerTurns._finalizeSimultaneousTurn',
-  '$_serverAutoExplorePath::'
-      '_ServerCommandReducerAutoExplore._applyAutoExplore',
+  '$_serverDomainEnginePath::'
+      '_ServerCommandReducerUnitAction._applyDomainCommandEngine',
+  '$_localMovementProjectionPath::projectLocalMovementEngineResult',
   '$_movementAudiencePath::'
       'PlayerMatchMovementAudience.annotateForStorage',
   '$_movementAudiencePath::'
@@ -256,7 +261,7 @@ authoritativeTurnMovementTransportAudit({
       ..._envelopeViolations(units),
       ..._projectorEgressViolations(units),
       ..._forwardingViolations(units),
-      ..._autoExploreForwardingViolations(units),
+      ..._engineMovementForwardingViolations(units),
       ..._rendererRetentionViolations(units),
     ]..sort();
 

@@ -40,12 +40,14 @@ part 'local_command_transport_test_support.dart';
 part 'local_command_transport_preview_fast_path_tests.dart';
 part 'local_command_transport_unit_action_tests.dart';
 part 'local_command_transport_worker_replay_tests.dart';
+part 'local_command_transport_movement_presentation_tests.dart';
 
 void main() {
   group('LocalCommandTransport', () {
     _registerWorkerReplayTests();
     _registerPreviewFastPathTests();
     _registerUnitActionTransportTests();
+    _registerMovementPresentationTransportTests();
 
     test(
       'logs command events and saves the updated repository snapshot',
@@ -86,65 +88,6 @@ void main() {
         expect(repository.snapshot.eventLogOffset, 1);
         expect(repository.snapshot.save.savedAt, DateTime.utc(2026, 4, 24, 12));
         expect(snapshotStore.latestSnapshot, isNull);
-      },
-    );
-
-    test(
-      'logs authoritative movement instead of tile tap confirmation',
-      () async {
-        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final save = _save(players: const [_player1]);
-        final mapData = _map();
-        final repository = _MemoryGameRepository(
-          SaveSnapshot(save: save, units: [commander]),
-        );
-        final eventLog = _MemoryEventLog();
-        final transport = LocalCommandTransport(
-          reducer: GameStateReducer(mapData: mapData),
-          gameRepository: repository,
-          eventLog: eventLog,
-          snapshotStore: _MemorySnapshotStore(),
-          clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
-        );
-        final selectedState = GameState(
-          units: [commander],
-          activePlayerId: 'player_1',
-          activePlayerCanAct: true,
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(
-              commander,
-              tile: mapData.tileAt(0, 0),
-            ),
-            moveCommandActive: true,
-          ),
-        );
-
-        final preview = await transport.dispatch(
-          saveId: save.id,
-          currentState: selectedState,
-          command: const TileTappedCommand(1, 0),
-          context: const GameCommandContext(actorPlayerId: 'player_1'),
-        );
-        final moved = await transport.dispatch(
-          saveId: save.id,
-          currentState: preview.state,
-          command: const TileTappedCommand(1, 0),
-          context: const GameCommandContext(actorPlayerId: 'player_1'),
-        );
-
-        expect(preview.offset, -1);
-        expect(preview.state.movePreview?.targetCol, 1);
-        expect(eventLog.commands, hasLength(1));
-        expect(
-          eventLog.commands.single.command,
-          isA<MoveUnitCommand>()
-              .having((command) => command.unitId, 'unitId', commander.id)
-              .having((command) => command.targetCol, 'targetCol', 1)
-              .having((command) => command.targetRow, 'targetRow', 0),
-        );
-        expect(moved.offset, 1);
-        expect(moved.state.units.single.col, 1);
-        expect(repository.snapshot.eventLogOffset, 1);
       },
     );
 

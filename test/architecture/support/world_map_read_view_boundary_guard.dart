@@ -20,7 +20,6 @@ const _mapTileViewMigrationPaths = {
   '$_gameDomain/fog/fog_visibility_query.dart',
   '$_gameDomain/hex/hex_coordinate.dart',
   '$_gameDomain/hex_assessment/hex_assessment_input.dart',
-  '$_gameDomain/movement/persistent_move_unit_resolver.dart',
   '$_gameDomain/movement/scout_auto_explore_planner.dart',
   '$_gameDomain/movement/unit_movement_pathfinder.dart',
   '$_gameDomain/technology/technology_boost_evaluator.dart',

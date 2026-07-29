@@ -26,14 +26,7 @@ void _registerProductionBoundaryTests() {
         'MovementCommandResolver',
         'resolve',
       ),
-      const {
-        movementPersistentAdapterPath: 1,
-        movementDomainAdapterPath: 1,
-        movementAutoExploreKernelPath: 1,
-        movementLocalCallSite: 1,
-        movementServerCallSite: 1,
-        movementMctsProjectionConsumerPath: 1,
-      },
+      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
       reason: 'Unexpected MovementCommandResolver.resolve call-sites.',
     );
     expect(
@@ -47,39 +40,31 @@ void _registerProductionBoundaryTests() {
     );
   });
 
-  test('movement adapters have only reviewed compatibility consumers', () {
+  test('canonical movement adapter has one reviewed engine consumer', () {
     final sources = movementRuntimeSources(productionDartSources());
 
-    expect(
-      movementInstanceMemberReferenceCountsByPath(
-        sources,
-        'PersistentMoveUnitResolver',
-        'resolve',
-      ),
-      const {movementMctsConsumerPath: 1, movementEconomyConsumerPath: 1},
-      reason:
-          'Only MCTS and economy simulation may use the persistent movement '
-          'adapter.',
-    );
     expect(
       movementInstanceMemberReferenceCountsByPath(
         sources,
         'DomainMoveUnitResolver',
         'resolve',
       ),
-      isEmpty,
-      reason: 'The Domain adapter must not become a production router.',
+      const {
+        'packages/aonw_core/lib/game/application/engine/'
+                'movement_engine_handler.dart':
+            1,
+      },
+      reason: 'The domain adapter must have one GameEngine composition point.',
     );
-    for (final adapter in const {
-      'PersistentMoveUnitResolver',
-      'DomainMoveUnitResolver',
-    }) {
-      expect(
-        staticMemberReferenceCountsByPath(sources, adapter, 'resolve'),
-        isEmpty,
-        reason: '$adapter must not gain a parallel static entry point.',
-      );
-    }
+    expect(
+      staticMemberReferenceCountsByPath(
+        sources,
+        'DomainMoveUnitResolver',
+        'resolve',
+      ),
+      isEmpty,
+      reason: 'DomainMoveUnitResolver must not gain a static entry point.',
+    );
   });
 
   test('movement kernel has an exact bounded API and closed import graph', () {
@@ -117,49 +102,6 @@ void _registerProductionBoundaryTests() {
       movementVisibilityBoundaryViolations(productionDartSources()),
       isEmpty,
     );
-  });
-
-  test('local and server movement do not restore full-state bridges', () {
-    final sources = productionDartSources();
-    final local = sources[movementLocalCallSite]!;
-    final serverRoot = sources[movementServerReducerPath]!;
-    final serverPart = sources[movementServerCallSite]!;
-
-    expect(
-      namedTypeReferencesInSource(
-        local,
-        path: movementLocalCallSite,
-      ).intersection(const {
-        'PersistentGameState',
-        'PersistentMoveUnitResolver',
-        'PersistentMoveUnitResult',
-        'DomainState',
-        'DomainMoveUnitResolver',
-        'DomainMoveUnitResult',
-      }),
-      isEmpty,
-    );
-    expect(_memberReferenceCount(local, 'toPersistentState'), 0);
-
-    for (final entry in {
-      movementServerReducerPath: serverRoot,
-      movementServerCallSite: serverPart,
-    }.entries) {
-      expect(
-        namedTypeReferencesInSource(
-          entry.value,
-          path: entry.key,
-        ).intersection(const {
-          'PersistentMoveUnitResolver',
-          'PersistentMoveUnitResult',
-          'DomainMoveUnitResolver',
-          'DomainMoveUnitResult',
-        }),
-        isEmpty,
-      );
-      expect(_memberReferenceCount(entry.value, 'toPersistentState'), 0);
-    }
-    expect(movementServerPartViolations(sources), isEmpty);
   });
 }
 
@@ -212,33 +154,6 @@ final applyMove = MovementCommandResolver.resolve;
         'resolve',
       ),
       const {'static.dart': 1},
-    );
-  });
-
-  test('adapter guard catches constructor aliases and member tear-offs', () {
-    final sources = <String, String>{
-      'direct.dart': '''
-void apply() => const PersistentMoveUnitResolver().resolve();
-''',
-      'alias.dart': '''
-typedef LegacyMove = PersistentMoveUnitResolver;
-final makeMove = LegacyMove.new;
-void apply() => makeMove().resolve();
-''',
-      'tear_off.dart': '''
-final makeMove = PersistentMoveUnitResolver.new;
-final resolver = makeMove();
-final applyMove = resolver.resolve;
-''',
-    };
-
-    expect(
-      movementInstanceMemberReferenceCountsByPath(
-        sources,
-        'PersistentMoveUnitResolver',
-        'resolve',
-      ),
-      const {'direct.dart': 1, 'alias.dart': 1, 'tear_off.dart': 1},
     );
   });
 

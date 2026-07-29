@@ -27,18 +27,8 @@ abstract final class _GameStateTapReducer {
         pendingAction,
         environment,
       ),
-      PendingMerchantTradeRouteSelection() => _assignMerchantRoute(
-        state,
-        command,
-        pendingAction,
-        environment,
-      ),
-      PendingMerchantMoveToCitySelection() => _moveMerchantToCity(
-        state,
-        command,
-        pendingAction,
-        environment,
-      ),
+      PendingMerchantTradeRouteSelection() ||
+      PendingMerchantMoveToCitySelection() => GameStateTransition(state: state),
       null => _selectTappedCity(state, city, environment),
       _ => GameStateTransition(state: state),
     };
@@ -325,30 +315,6 @@ abstract final class _GameStateTapReducer {
         city.center.row,
       ),
       environment,
-    );
-  }
-
-  static GameStateTransition _assignMerchantRoute(
-    GameState state,
-    CityTappedCommand command,
-    PendingMerchantTradeRouteSelection pendingAction,
-    ReducerEnvironment environment,
-  ) {
-    return environment.assignMerchantTradeRoute(
-      state,
-      AssignMerchantTradeRouteCommand(pendingAction.unitId, command.cityId),
-    );
-  }
-
-  static GameStateTransition _moveMerchantToCity(
-    GameState state,
-    CityTappedCommand command,
-    PendingMerchantMoveToCitySelection pendingAction,
-    ReducerEnvironment environment,
-  ) {
-    return environment.moveMerchantToCity(
-      state,
-      MoveMerchantToCityCommand(pendingAction.unitId, command.cityId),
     );
   }
 

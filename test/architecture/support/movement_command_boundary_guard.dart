@@ -18,26 +18,17 @@ const movementVisibilityPath =
     '${movementLibraryPath}unit_movement_visibility_rules.dart';
 const movementVisibilityModePath =
     '${movementLibraryPath}movement_command_visibility_mode.dart';
-const movementPersistentAdapterPath =
-    '${movementLibraryPath}persistent_move_unit_resolver.dart';
 const movementDomainAdapterPath =
     '${movementLibraryPath}domain_move_unit_resolver.dart';
-const movementLocalCallSite =
-    'lib/game/domain/reducer/movement/movement_reducer_direct_move.dart';
 const movementLegacyVisibilityPath =
     'lib/game/domain/movement/unit_movement_visibility_rules.dart';
-const movementServerCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_movement.dart';
 const movementServerReducerPath =
     'server/lib/src/multiplayer/server_command_reducer.dart';
-const movementMctsConsumerPath =
-    'packages/aonw_core/lib/ai/mcts/mcts_simulator.dart';
+const movementServerCallSite =
+    'server/lib/src/multiplayer/server_command_reducer_movement.dart';
 const movementMctsProjectionConsumerPath =
     'packages/aonw_core/lib/ai/mcts/'
     'mcts_simulated_movement_command_applier.dart';
-const movementEconomyConsumerPath =
-    'packages/aonw_core/lib/ai/simulation/'
-    'economy_simulation_command_applier.dart';
 const movementDiagnosticWorkloadPath =
     'tool/performance/movement_command_workload.dart';
 

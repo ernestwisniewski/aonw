@@ -5,7 +5,6 @@ import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -19,6 +18,7 @@ import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/movement_engine_test_driver.dart';
 part 'city_reducer_rush_production_tests.dart';
 part 'city_reducer_founding_confirmation_tests.dart';
 
@@ -900,7 +900,7 @@ void main() {
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
-      final result = UnitAttachmentReducer.detachTroop(state, command, mapData);
+      final result = resolveMovementCommandForTest(state, command, mapData);
 
       expect(result.state.units, hasLength(2));
       final updatedSource = result.state.units.firstWhere(
@@ -920,7 +920,7 @@ void main() {
       const state = GameState(activePlayerId: 'player_1');
       const command = DetachTroopCommand('ghost_unit', TroopType.warrior);
 
-      final result = UnitAttachmentReducer.detachTroop(state, command, mapData);
+      final result = resolveMovementCommandForTest(state, command, mapData);
 
       expect(result.state, same(state));
     });
@@ -941,7 +941,7 @@ void main() {
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
-      final result = UnitAttachmentReducer.detachTroop(state, command, mapData);
+      final result = resolveMovementCommandForTest(state, command, mapData);
 
       expect(result.state, same(state));
     });
@@ -962,7 +962,7 @@ void main() {
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
-      final result = UnitAttachmentReducer.detachTroop(state, command, mapData);
+      final result = resolveMovementCommandForTest(state, command, mapData);
 
       expect(result.state.selection?.type, GameSelectionType.unit);
       expect(result.state.selection?.unit?.id, commander.id);
@@ -985,7 +985,7 @@ void main() {
       );
       final command = DetachTroopCommand(commander.id, TroopType.warrior);
 
-      final result = UnitAttachmentReducer.detachTroop(state, command, mapData);
+      final result = resolveMovementCommandForTest(state, command, mapData);
 
       expect(result.state.moveCommandActive, isFalse);
       expect(result.state.cityFoundingDraft, isNull);

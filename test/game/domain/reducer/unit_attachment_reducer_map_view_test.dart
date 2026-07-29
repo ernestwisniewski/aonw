@@ -2,7 +2,6 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/game/domain/reducer/unit/unit_attachment_reducer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -13,6 +12,8 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/movement_engine_test_driver.dart';
 
 void main() {
   test('detaches a troop and recomputes fog through canonical map lookup', () {
@@ -73,7 +74,7 @@ void main() {
     );
     final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
 
-    final result = UnitAttachmentReducer.detachTroop(
+    final result = resolveMovementCommandForTest(
       state,
       const DetachTroopCommand('commander_1', TroopType.warrior),
       mapTiles,
@@ -116,7 +117,7 @@ void main() {
     final state = GameState(activePlayerId: '', units: [commander]);
     final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
 
-    final result = UnitAttachmentReducer.detachTroop(
+    final result = resolveMovementCommandForTest(
       state,
       const DetachTroopCommand('commander_1', TroopType.warrior),
       mapTiles,

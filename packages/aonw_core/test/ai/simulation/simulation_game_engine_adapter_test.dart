@@ -10,6 +10,8 @@ void main() {
         playerColors: const {'player_1': 1},
         playerCountries: const {'player_1': PlayerCountry.poland},
         playerGold: const {'player_1': 17},
+        playerWarWeariness: const {'player_1': 4},
+        playerStabilityNet: const {'player_1': -2},
         units: [
           GameUnit(
             id: 'unit_1',
@@ -21,6 +23,16 @@ void main() {
             movementPoints: 3,
           ),
         ],
+        artifacts: const [
+          WorldArtifact(
+            id: 'artifact_1',
+            type: WorldArtifactType.heroSword,
+            location: WorldArtifactLocation.map(col: 1, row: 1),
+          ),
+        ],
+        wonderRegistry: WonderRegistry(
+          completedBy: const {WonderType.greatLibrary: 'player_1'},
+        ),
         runtimeState: GameRuntimeState.snapshot(
           pendingAction: const PendingResearchSelection(
             ownerPlayerId: 'player_1',
@@ -50,6 +62,16 @@ void main() {
         ),
       );
       expect(result.state.playerGold, same(state.playerGold));
+      expect(
+        result.snapshot.domain.playerWarWeariness,
+        state.playerWarWeariness,
+      );
+      expect(
+        result.snapshot.domain.playerStabilityNet,
+        state.playerStabilityNet,
+      );
+      expect(result.snapshot.domain.artifacts, state.artifacts);
+      expect(result.snapshot.domain.wonderRegistry, state.wonderRegistry);
     },
   );
 

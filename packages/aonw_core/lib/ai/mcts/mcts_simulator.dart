@@ -165,13 +165,18 @@ class TracingMctsSimulator implements MctsSimulator {
     required _OpponentPlanningInput input,
   }) {
     final (:turn, :mapData, :ruleset, :engineSnapshot) = input;
-    return switch (command) {
-      MoveUnitCommand() => _applyOpponentMove(
+    if (_isMovementEngineCommand(command)) {
+      return _applySimulationEngineMovement(
         state: state,
-        command: command,
+        command: command as DomainCommand,
         actorPlayerId: actorPlayerId,
+        tick: tick,
         mapData: mapData,
-      ),
+        ruleset: ruleset,
+        engineSnapshot: engineSnapshot,
+      );
+    }
+    return switch (command) {
       AttackHexCommand() => _applyOpponentAttack(
         state: state,
         command: command,
@@ -180,30 +185,6 @@ class TracingMctsSimulator implements MctsSimulator {
         tick: tick,
         mapTiles: mapData,
         ruleset: ruleset,
-      ),
-      SkipUnitTurnCommand() ||
-      FortifyUnitCommand() => _applySimulationEngineUnitAction(
-        state: state,
-        command: command as DomainCommand,
-        actorPlayerId: actorPlayerId,
-        tick: tick,
-        mapData: mapData,
-        ruleset: ruleset,
-        engineSnapshot: engineSnapshot,
-      ),
-      CancelUnitActionCommand() =>
-        const PersistentUnitActionResolver()
-            .cancelUnitAction(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-            )
-            .state,
-      AutoExploreUnitCommand() => _applyOpponentAutoExplore(
-        state: state,
-        command: command,
-        actorPlayerId: actorPlayerId,
-        mapData: mapData,
       ),
       FoundCityCommand() =>
         const PersistentCityFoundingResolver()
@@ -352,6 +333,10 @@ typedef _OpponentPlanningInput = ({
   CanonicalGameSnapshot? engineSnapshot,
 });
 
+bool _isMovementEngineCommand(GameCommand command) {
+  return command is UnitDomainCommand;
+}
+
 GameView _nextMctsView(PersistentGameState state, GameView previous) {
   return GameView.fromPersistentState(
     state,
@@ -369,7 +354,7 @@ GameView _nextMctsView(PersistentGameState state, GameView previous) {
   );
 }
 
-PersistentGameState _applySimulationEngineUnitAction({
+PersistentGameState _applySimulationEngineMovement({
   required PersistentGameState state,
   required DomainCommand command,
   required String actorPlayerId,
@@ -392,40 +377,7 @@ PersistentGameState _applySimulationEngineUnitAction({
         commandTick: tick,
         mapView: mapData,
         ruleset: ruleset,
-      )
-      .state;
-}
-
-PersistentGameState _applyOpponentMove({
-  required PersistentGameState state,
-  required MoveUnitCommand command,
-  required String actorPlayerId,
-  required MapTraversalView mapData,
-}) {
-  return const PersistentMoveUnitResolver()
-      .resolve(
-        state: state,
-        command: command,
-        actorPlayerId: actorPlayerId,
-        mapData: mapData,
-        visibilityMode: MovementCommandVisibilityMode.unrestricted,
-      )
-      .state;
-}
-
-PersistentGameState _applyOpponentAutoExplore({
-  required PersistentGameState state,
-  required AutoExploreUnitCommand command,
-  required String actorPlayerId,
-  required MapTraversalView mapData,
-}) {
-  return const PersistentAutoExploreCommandResolver()
-      .resolve(
-        state: state,
-        command: command,
-        actorPlayerId: actorPlayerId,
-        mapData: mapData,
-        phase: AutoExploreCommandPhase.direct,
+        movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
       )
       .state;
 }

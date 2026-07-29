@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -7,13 +8,13 @@ const movementUnitId = 'mover';
 
 typedef MovementStates = ({
   MovementCommandState kernel,
-  PersistentGameState persistent,
+  CanonicalGameSnapshot engine,
   DomainState domain,
 });
 
 typedef MovementResults = ({
   MovementCommandResult kernel,
-  PersistentMoveUnitResult persistent,
+  GameEngineResult engine,
   DomainMoveUnitResult domain,
 });
 
@@ -27,24 +28,6 @@ MovementStates movementStates({
   final diplomacy = DiplomacyState.empty.addContact(
     movementActorId,
     'sentinel',
-  );
-  final persistent = PersistentGameState.snapshot(
-    playerColors: const {
-      movementActorId: 0xFF112233,
-      movementOpponentId: 0xFF445566,
-    },
-    playerCountries: const {
-      movementActorId: PlayerCountry.poland,
-      movementOpponentId: PlayerCountry.france,
-    },
-    playerGold: const {movementActorId: 17, movementOpponentId: 23},
-    units: units,
-    cities: cities,
-    fogOfWar: fogOfWar,
-    runtimeState: GameRuntimeState.snapshot(
-      diplomacy: diplomacy,
-      submittedPlayerIds: const {'sentinel'},
-    ),
   );
   final domain = DomainState.snapshot(
     turn: 7,
@@ -77,7 +60,7 @@ MovementStates movementStates({
       diplomacy: domain.diplomacy,
       playerIds: const [movementActorId, movementOpponentId],
     ),
-    persistent: persistent,
+    engine: _engineSnapshot(domain),
     domain: domain,
   );
 }
@@ -85,7 +68,7 @@ MovementStates movementStates({
 MovementResults resolveMovement(
   MovementStates states,
   MoveUnitCommand command,
-  MapTraversalView map, {
+  MapReadView map, {
   MovementCommandVisibilityMode visibilityMode =
       MovementCommandVisibilityMode.authoritative,
 }) {
@@ -97,12 +80,16 @@ MovementResults resolveMovement(
       mapData: map,
       visibilityMode: visibilityMode,
     ),
-    persistent: const PersistentMoveUnitResolver().resolve(
-      state: states.persistent,
+    engine: const GameEngine().apply(
+      snapshot: states.engine,
       command: command,
-      actorPlayerId: movementActorId,
-      mapData: map,
-      visibilityMode: visibilityMode,
+      context: GameEngineContext(
+        actorPlayerId: movementActorId,
+        mapView: map,
+        ruleset: GameRuleset.defaults,
+        commandTick: 1,
+        movementVisibilityMode: visibilityMode,
+      ),
     ),
     domain: const DomainMoveUnitResolver().resolve(
       state: states.domain,
@@ -119,22 +106,19 @@ void expectAcceptedMovementParity(
   MovementResults results,
 ) {
   expect(results.kernel.accepted, isTrue);
-  expect(results.persistent.accepted, isTrue);
+  expect(results.engine, isA<GameEngineAccepted>());
   expect(results.domain.accepted, isTrue);
   expect(results.kernel.reason, isNull);
-  expect(results.persistent.reason, isNull);
   expect(results.domain.reason, isNull);
-  expect(results.persistent.state.units, results.kernel.units);
+  final engine = results.engine as GameEngineAccepted;
+  expect(engine.snapshot.domain.units, results.kernel.units);
   expect(results.domain.state.units, results.kernel.units);
-  expect(results.persistent.state.fogOfWar, results.kernel.fogOfWar);
+  expect(engine.snapshot.domain.fogOfWar, results.kernel.fogOfWar);
   expect(results.domain.state.fogOfWar, results.kernel.fogOfWar);
-  expect(
-    results.persistent.state.runtimeState.diplomacy,
-    results.kernel.diplomacy,
-  );
+  expect(engine.snapshot.domain.diplomacy, results.kernel.diplomacy);
   expect(results.domain.state.diplomacy, results.kernel.diplomacy);
   expect(
-    executionSnapshot(results.persistent.execution),
+    executionSnapshot(_engineExecution(engine)),
     executionSnapshot(results.kernel.execution),
   );
   expect(
@@ -144,14 +128,14 @@ void expectAcceptedMovementParity(
   if (before.kernel.units.length > 1) {
     expect(results.kernel.units.last, same(before.kernel.units.last));
     expect(
-      results.persistent.state.units.last,
-      same(before.persistent.units.last),
+      engine.snapshot.domain.units.last,
+      same(before.engine.domain.units.last),
     );
     expect(results.domain.state.units.last, same(before.domain.units.last));
   }
   expect(
-    results.persistent.state.playerGold,
-    same(before.persistent.playerGold),
+    engine.snapshot.domain.playerGold,
+    same(before.engine.domain.playerGold),
   );
   expect(results.domain.state.playerGold, same(before.domain.playerGold));
 }
@@ -162,17 +146,17 @@ void expectRejectedMovementIdentity(
   required String reason,
 }) {
   expect(results.kernel.accepted, isFalse);
-  expect(results.persistent.accepted, isFalse);
+  expect(results.engine, isA<GameEngineRejected>());
   expect(results.domain.accepted, isFalse);
   expect(results.kernel.reason, reason);
-  expect(results.persistent.reason, reason);
+  expect((results.engine as GameEngineRejected).reason, reason);
   expect(results.domain.reason, reason);
   expect(results.kernel.units, same(states.kernel.units));
   expect(results.kernel.fogOfWar, same(states.kernel.fogOfWar));
   expect(results.kernel.diplomacy, same(states.kernel.diplomacy));
   expect(results.kernel.events, isEmpty);
   expect(results.kernel.execution, isNull);
-  expect(results.persistent.state, same(states.persistent));
+  expect(results.engine.snapshot, same(states.engine));
   expect(results.domain.state, same(states.domain));
 }
 
@@ -181,7 +165,7 @@ void expectAcceptedMovementIdentity(
   MovementResults results,
 ) {
   expect(results.kernel.accepted, isTrue);
-  expect(results.persistent.accepted, isTrue);
+  expect(results.engine, isA<GameEngineAccepted>());
   expect(results.domain.accepted, isTrue);
   expect(results.kernel.reason, isNull);
   expect(results.kernel.units, same(states.kernel.units));
@@ -189,8 +173,34 @@ void expectAcceptedMovementIdentity(
   expect(results.kernel.diplomacy, same(states.kernel.diplomacy));
   expect(results.kernel.events, isEmpty);
   expect(results.kernel.execution, isNull);
-  expect(results.persistent.state, same(states.persistent));
+  expect(results.engine.snapshot, same(states.engine));
   expect(results.domain.state, same(states.domain));
+}
+
+MovementCommandExecution? _engineExecution(GameEngineAccepted result) {
+  final executions = result.movementDelta.executions;
+  return executions.isEmpty ? null : executions.single;
+}
+
+CanonicalGameSnapshot _engineSnapshot(DomainState domain) {
+  return CanonicalGameSnapshot.snapshot(
+    domain: domain,
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.multiplayer,
+      turnStatesByPlayerId: const {
+        movementActorId: PlayerTurnState.active,
+        movementOpponentId: PlayerTurnState.active,
+      },
+    ),
+    metadata: GameSnapshotMetadata(
+      id: 'movement_parity',
+      schemaVersion: 3,
+      name: 'Movement parity',
+      world: const WorldReference(name: 'test', source: MapSource.asset),
+      savedAtUtc: DateTime.utc(2026, 7, 29),
+      camera: GameSnapshotCamera.zero,
+    ),
+  );
 }
 
 void expectMoveEvent(
@@ -258,7 +268,7 @@ FogOfWarState movementFog({required int visibleCols, int? discoveredCols}) {
   );
 }
 
-MapTraversalView movementMap({
+MapReadView movementMap({
   required int cols,
   int rows = 1,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},

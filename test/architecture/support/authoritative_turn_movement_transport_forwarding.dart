@@ -93,50 +93,31 @@ List<String> _forwardingViolations(
   return violations;
 }
 
-List<String> _autoExploreForwardingViolations(
+List<String> _engineMovementForwardingViolations(
   Map<String, ResolvedUnitResult> resolvedUnits,
 ) {
-  final method = _method(
-    resolvedUnits[_serverAutoExplorePath]?.unit,
-    '_ServerCommandReducerAutoExplore',
-    '_applyAutoExplore',
+  final forwarding = _constructorForwardingAudit(
+    resolvedUnits[_serverDomainEnginePath]?.unit,
+    ownerName: '_ServerCommandReducerUnitAction',
+    methodName: '_applyDomainCommandEngine',
+    constructedType: '_CommandApplication',
+    constructorName: 'accept',
+    argumentName: 'movementExecutions',
+    provenance: const _ProvenanceExpectation(
+      leafOwner: 'MovementExecutionDelta',
+      leafMember: 'executions',
+      intermediateMembers: [('GameEngineAccepted', 'movementDelta')],
+      sourceOwner: 'GameEngine',
+      sourceMember: 'apply',
+    ),
   );
-  if (method == null) {
-    return const [
-      '_ServerCommandReducerAutoExplore._applyAutoExplore must exist.',
-    ];
-  }
-  final calls = _InvocationCollector(
-    'ServerCommandReducer',
-    '_applicationFrom',
-  );
-  method.accept(calls);
-  final arguments = [
-    for (final call in calls.nodes)
-      ...call.argumentList.arguments.whereType<NamedExpression>().where(
-        (argument) => argument.name.label.name == 'movementExecutions',
-      ),
-  ];
-  final expression = arguments.singleOrNull?.expression;
-  final forwarded = switch (expression) {
-    ListLiteral(:final elements)
-        when elements.length == 1 && elements.single is NullAwareElement =>
-      (elements.single as NullAwareElement).value,
-    _ => null,
-  };
-  const provenance = _ProvenanceExpectation(
-    leafOwner: 'AutoExploreCommandResult',
-    leafMember: 'execution',
-    sourceOwner: 'AutoExploreCommandResolver',
-    sourceMember: 'resolve',
-  );
-  if (forwarded != null && _matchesProvenance(forwarded, method, provenance)) {
-    return const [];
-  }
-  return const [
-    '_ServerCommandReducerAutoExplore._applyAutoExplore must forward '
-        'AutoExploreCommandResult.execution directly as movementExecutions.',
-  ];
+  return forwarding.preservesProvenance
+      ? const []
+      : const [
+          '_ServerCommandReducerUnitAction._applyDomainCommandEngine must '
+              'forward MovementExecutionDelta.executions directly as '
+              'movementExecutions.',
+        ];
 }
 
 _ForwardingAudit _methodForwardingAudit(
