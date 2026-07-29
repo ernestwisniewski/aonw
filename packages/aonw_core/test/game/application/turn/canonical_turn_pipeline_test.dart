@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   group('CanonicalTurnPipeline', () {
     test(
-      'finalizes canonical session in stable player order',
+      'finalizes canonical session and full benchmark state in stable order',
       _preservesCanonicalBoundaries,
     );
     test(
@@ -48,6 +48,10 @@ void _preservesCanonicalBoundaries() {
   expect(snapshot.metadata.world, input.metadata.world);
   expect(snapshot.metadata.camera, input.metadata.camera);
   expect(snapshot.metadata.savedAtUtc, _finalizedAt);
+  expect(snapshot.domain.playerWarWeariness['p3'], 17);
+  expect(snapshot.domain.playerStabilityNet['p3'], -8);
+  expect(snapshot.domain.artifacts, input.domain.artifacts);
+  expect(snapshot.domain.wonderRegistry, input.domain.wonderRegistry);
   expect(
     result.events.whereType<PlayerTimedOutEvent>().map(
       (event) => event.playerId,
@@ -159,6 +163,8 @@ CanonicalGameSnapshot _canonicalInput() {
       turn: 1,
       matchRules: MatchRules.standard,
       participants: _players,
+      playerWarWeariness: const {'p3': 17},
+      playerStabilityNet: const {'p3': -9},
       units: [
         GameUnit.startingWarrior(
           ownerPlayerId: 'p1',
@@ -175,6 +181,16 @@ CanonicalGameSnapshot _canonicalInput() {
           declaringPlayerId: 'p1',
         ),
       ],
+      artifacts: const [
+        WorldArtifact(
+          id: 'benchmark_boundary_artifact',
+          type: WorldArtifactType.heroSword,
+          location: WorldArtifactLocation.stored(cityId: 'outside_scope'),
+        ),
+      ],
+      wonderRegistry: WonderRegistry(
+        completedBy: const {WonderType.greatWall: 'p3'},
+      ),
     ),
     session: MatchSessionState.snapshot(
       gameMode: GameMode.multiplayer,

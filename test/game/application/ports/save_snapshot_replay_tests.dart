@@ -1,7 +1,7 @@
 part of 'save_snapshot_test.dart';
 
 void _registerSaveSnapshotReplayTests() {
-  test('prepares and finalizes a replay turn losslessly', () {
+  test('prepares replay player turns losslessly', () {
     final snapshot = SaveSnapshot.fromGameState(
       save: _save().copyWith(
         turn: 8,
@@ -17,30 +17,17 @@ void _registerSaveSnapshotReplayTests() {
       state: const GameState(playerGold: {'p1': 9}),
       eventLogOffset: 4,
     );
-    final savedAt = DateTime.utc(2026, 7, 28, 12, 30, 1);
 
     final prepared = snapshot.withReplayPlayerTurnsReset();
-    final finalized = prepared.withReplayTurnFinalized(
-      state: PersistentGameState.snapshot(
-        playerGold: const {'p1': 10},
-        runtimeState: GameRuntimeState(turnStartedAt: savedAt),
-      ),
-      savedAt: savedAt,
-    );
 
     expect(prepared.session.turnStatesByPlayerId, const {
       'p1': PlayerTurnState.active,
       'p2': PlayerTurnState.active,
     });
-    expect(finalized.domain.turn, 9);
-    expect(finalized.session.turnStatesByPlayerId, const {
-      'p1': PlayerTurnState.active,
-      'p2': PlayerTurnState.active,
-    });
-    expect(finalized.metadata.savedAtUtc, savedAt);
-    expect(finalized.persistedTurnStartedAt, savedAt);
-    expect(finalized.eventLogOffset, 4);
-    expect(finalized.playerGold, {'p1': 10});
+    expect(prepared.domain.turn, snapshot.domain.turn);
+    expect(prepared.metadata, snapshot.metadata);
+    expect(prepared.eventLogOffset, 4);
+    expect(prepared.playerGold, {'p1': 9});
   });
 
   test('keeps persisted turn start distinct from canonical fallback', () {

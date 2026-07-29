@@ -302,62 +302,16 @@ class _MultiTurnReplayRunner {
     required DateTime savedAt,
     required MapReadView mapView,
   }) {
-    final ruleset = GameRuleset.defaults.copyWith(
-      paceBalance: snapshot.domain.matchRules.paceBalance,
+    final result = CanonicalTurnPipeline.simultaneousFinalize(
+      CanonicalTurnPipelineRequest.simultaneousFinalize(
+        snapshot: snapshot.withGameState(state).canonical,
+        playerIds: playerIds,
+        savedAt: savedAt,
+        mapView: mapView,
+        ruleset: GameRuleset.defaults,
+      ),
     );
-    final persistent = _replayPersistentState(state);
-    final combat = PersistentTurnCombatResolver.resolve(
-      turn: snapshot.domain.turn,
-      state: persistent,
-      mapTiles: mapView.mapTiles,
-      ruleset: ruleset,
-    );
-    final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: combat.state,
-      playerIds: playerIds,
-      mapData: mapView,
-      ruleset: ruleset,
-      mapObjectives: mapView.objectives,
-    );
-    final movement = PersistentTurnMovementProcessor.resetForPlayers(
-      state: economy.state,
-      playerIds: playerIds,
-      mapData: mapView,
-    );
-    const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns = _replayDominationHoldTurns(
-      movement.state,
-    );
-    final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
-      playerIds: playerIds,
-      state: movement.state,
-      mapData: mapView,
-      victoryRules: snapshot.domain.matchRules.victory,
-      previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-    );
-    final dominationEvents = dominationProgressCalculator
-        .thresholdReachedEvents(
-          playerIds: playerIds,
-          state: movement.state,
-          mapData: mapView,
-          victoryRules: snapshot.domain.matchRules.victory,
-          previousHoldTurnsByPlayerId: previousDominationHoldTurns,
-          nextHoldTurnsByPlayerId: dominationHoldTurns,
-        );
-    final runtimeState = _replayRuntimeAfterFinalization(
-      movement.state,
-      dominationHoldTurns: dominationHoldTurns,
-      savedAt: savedAt,
-    );
-    // Rebuild from the full post-turn persistent state.
-    // Combat, economy, movement, and fog updates are already present there.
-    // The runtime update only resets simultaneous-turn bookkeeping.
-    // SaveSnapshot preserves metadata and the existing event-log offset.
-    // This keeps the next replay cycle behaviorally continuous.
-    final nextSnapshot = snapshot.withReplayTurnFinalized(
-      state: movement.state.copyWith(runtimeState: runtimeState),
-      savedAt: savedAt,
-    );
+    final nextSnapshot = SaveSnapshot.fromCanonical(result.snapshot);
     final nextState = nextSnapshot.toGameState(
       activePlayerId: '',
       activePlayerCanAct: true,
@@ -365,16 +319,7 @@ class _MultiTurnReplayRunner {
     return _ResolvedReplayTurn(
       snapshot: nextSnapshot,
       state: nextState,
-      events: [
-        AllPlayersSubmittedEvent(
-          turn: snapshot.domain.turn,
-          playerIds: playerIds,
-        ),
-        ...combat.events,
-        ...economy.events,
-        ...dominationEvents,
-        for (final playerId in playerIds) TurnEndedEvent(playerId: playerId),
-      ],
+      events: result.events,
     );
   }
 }

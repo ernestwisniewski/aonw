@@ -1,22 +1,5 @@
 part of '../run_save_ai_benchmark.dart';
 
-PersistentGameState _replayPersistentState(GameState state) =>
-    state.toPersistentState();
-
-Map<String, int> _replayDominationHoldTurns(PersistentGameState state) =>
-    state.runtimeState.dominationHoldTurnsByPlayerId;
-
-GameRuntimeState _replayRuntimeAfterFinalization(
-  PersistentGameState state, {
-  required Map<String, int> dominationHoldTurns,
-  required DateTime savedAt,
-}) => state.runtimeState.copyWith(
-  submittedPlayerIds: const {},
-  intendedAttacks: const [],
-  dominationHoldTurnsByPlayerId: dominationHoldTurns,
-  turnStartedAt: savedAt,
-);
-
 class _StaleMoveDiagnostic {
   const _StaleMoveDiagnostic({
     required this.commandIndex,

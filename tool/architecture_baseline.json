@@ -1270,7 +1270,6 @@
       "legacyFiles": {},
       "declarations": {
         "tool/check_coverage.dart::class:_CoverageGate": 566,
-        "tool/run_save_ai_benchmark/multi_turn_replay.dart::class:_MultiTurnReplayRunner": 378,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,

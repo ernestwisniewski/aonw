@@ -10,6 +10,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'save_snapshot_replay_tests.dart';
+part 'save_snapshot_turn_start_tests.dart';
 
 void main() {
   group('SaveSnapshot', () {
@@ -453,6 +454,7 @@ void main() {
     });
 
     _registerSaveSnapshotReplayTests();
+    _registerSaveSnapshotTurnStartTests();
   });
 }
 

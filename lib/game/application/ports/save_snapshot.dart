@@ -168,7 +168,7 @@ final class SaveSnapshot {
       rawState: rawState,
       eventLogOffset: nextOffset,
       canonicalProjection: _projectionAfterUpdate(
-        _canonicalProjection,
+        canonical,
         save: save,
         state: rawState,
         eventLogOffset: nextOffset,
@@ -223,18 +223,6 @@ final class SaveSnapshot {
       }
     }
     return copyWith(save: save.copyWith(playerStates: playerStates));
-  }
-
-  /// Advances one completed benchmark replay turn without exposing [GameSave].
-  SaveSnapshot withReplayTurnFinalized({
-    required PersistentGameState state,
-    required DateTime savedAt,
-  }) {
-    return SaveSnapshot.fromPersistentState(
-      save: save.withNewTurn().copyWith(savedAt: savedAt.toUtc()),
-      state: state,
-      eventLogOffset: eventLogOffset,
-    );
   }
 
   GameState toGameState({
@@ -315,7 +303,7 @@ final class SaveSnapshot {
       rawState: nextState,
       eventLogOffset: nextOffset,
       canonicalProjection: _projectionAfterUpdate(
-        _canonicalProjection,
+        canonical,
         save: nextSave,
         state: nextState,
         eventLogOffset: nextOffset,

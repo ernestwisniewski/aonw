@@ -67,7 +67,7 @@ _StaleMoveDiagnostic? _staleMoveDiagnostic(
       ),
       blockerRelation: actorId.isEmpty || actorId == ownerId
           ? 'self'
-          : state.runtimeState.diplomacy.statusBetween(actorId, ownerId).name,
+          : state.diplomacy.statusBetween(actorId, ownerId).name,
       blockerPlanVisibility: planningView == null
           ? null
           : _planningVisibilityForUnit(planningView, blocker),

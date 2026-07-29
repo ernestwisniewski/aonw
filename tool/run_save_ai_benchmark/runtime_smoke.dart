@@ -348,7 +348,10 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
   final _RuntimeSmokeRepository repository;
   final MapReadView mapView;
   final GameRuleset ruleset;
-  int _offset = 0;
+  late final RuntimeSmokeOffsetSequence _offsetSequence =
+      RuntimeSmokeOffsetSequence(
+        initialOffset: repository.snapshot.eventLogOffset,
+      );
   late final _BenchmarkCommandDispatcher _dispatcher =
       _BenchmarkCommandDispatcher(
         snapshot: repository.snapshot.canonical,
@@ -368,10 +371,9 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
       command: command,
       context: context,
     );
-    _offset += 1;
     final nextSnapshot = repository.snapshot.withGameState(
       transition.state,
-      eventLogOffset: repository.snapshot.eventLogOffset + _offset,
+      eventLogOffset: _offsetSequence.next(),
     );
     repository.replace(nextSnapshot);
     return CommandTransportResult(
