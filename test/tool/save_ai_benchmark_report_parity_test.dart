@@ -1,3 +1,5 @@
+library;
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,6 +14,49 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+part 'save_ai_benchmark_report_parity_goldens.dart';
+
+const _replayEventsWithoutFinalization = <String, int>{
+  'total': 0,
+  'commandRejected': 0,
+  'unitAttacks': 0,
+  'combatResolved': 0,
+  'unitKills': 0,
+  'cityCaptures': 0,
+  'cityDestroyed': 0,
+  'allPlayersSubmitted': 0,
+};
+
+const _replayEventsAfterFinalization = <String, int>{
+  'total': 4,
+  'commandRejected': 0,
+  'unitAttacks': 0,
+  'combatResolved': 0,
+  'unitKills': 0,
+  'cityCaptures': 0,
+  'cityDestroyed': 0,
+  'allPlayersSubmitted': 1,
+};
+
+const _sparseReplayEventsAfterFinalization = <String, int>{
+  'total': 3,
+  'commandRejected': 0,
+  'unitAttacks': 0,
+  'combatResolved': 0,
+  'unitKills': 0,
+  'cityCaptures': 0,
+  'cityDestroyed': 0,
+  'allPlayersSubmitted': 1,
+};
+
+typedef _ReplayFixture = ({
+  String name,
+  GameSave save,
+  int startTurn,
+  List<List<String>> playerOrder,
+  List<List<Map<String, int>>> eventCounts,
+});
 
 void main() {
   test('preserves sparse roster and map reference benchmark output', () async {
@@ -100,6 +145,162 @@ void main() {
       );
     },
   );
+
+  test(
+    'replays normal and sparse rosters against pinned report goldens',
+    _verifyReplayParity,
+  );
+}
+
+Future<void> _verifyReplayParity() async {
+  for (final fixture in _replayFixtures()) {
+    await _verifyReplayFixture(fixture);
+  }
+}
+
+List<_ReplayFixture> _replayFixtures() => [
+  (
+    name: 'normal',
+    save: _sparseRosterSave().copyWith(
+      id: 'normal_roster',
+      turn: 7,
+      playerStates: const {
+        'human': PlayerTurnState.active,
+        'ai': PlayerTurnState.active,
+        'ai_beta': PlayerTurnState.active,
+      },
+      players: const [
+        Player(id: 'human', name: 'Human', colorValue: 0xFF2563EB),
+        Player(
+          id: 'ai',
+          name: 'AI',
+          colorValue: 0xFFDC2626,
+          kind: PlayerKind.ai,
+          ai: AiPlayer(strategyId: AiStrategyId.random, seed: 1),
+        ),
+        Player(
+          id: 'ai_beta',
+          name: 'AI Beta',
+          colorValue: 0xFF7C3AED,
+          kind: PlayerKind.ai,
+          ai: AiPlayer(strategyId: AiStrategyId.random, seed: 2),
+        ),
+      ],
+    ),
+    startTurn: 7,
+    playerOrder: const [
+      ['ai', 'ai_beta'],
+      ['ai', 'ai_beta'],
+    ],
+    eventCounts: const [
+      [_replayEventsWithoutFinalization, _replayEventsAfterFinalization],
+      [_replayEventsWithoutFinalization, _replayEventsAfterFinalization],
+    ],
+  ),
+  (
+    name: 'sparse',
+    save: _sparseRosterSave(),
+    startTurn: 1,
+    playerOrder: const [
+      ['ai'],
+      ['ai'],
+    ],
+    eventCounts: const [
+      [_sparseReplayEventsAfterFinalization],
+      [_sparseReplayEventsAfterFinalization],
+    ],
+  ),
+];
+
+Future<void> _verifyReplayFixture(_ReplayFixture fixture) async {
+  final directory = await Directory.systemTemp.createTemp(
+    'aonw-save-ai-benchmark-${fixture.name}-replay.',
+  );
+  addTearDown(() => directory.delete(recursive: true));
+  final saveFile = File('${directory.path}/snapshot.json');
+  final jsonFile = File('${directory.path}/report.json');
+  final markdownFile = File('${directory.path}/report.md');
+  await saveFile.writeAsString(
+    jsonEncode({
+      'state': SaveSnapshotCodec.toJson(SaveSnapshot(save: fixture.save)),
+    }),
+  );
+
+  final result = await _runReplayReport(
+    saveFile: saveFile,
+    jsonFile: jsonFile,
+    markdownFile: markdownFile,
+  );
+
+  expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+  final report =
+      jsonDecode(await jsonFile.readAsString()) as Map<String, dynamic>;
+  final replay = report['multiTurnReplay'] as Map<String, dynamic>;
+  expect(
+    _normalizedReplayJson(replay),
+    _replayJsonGolden(fixture: fixture, savePath: saveFile.path),
+  );
+  expect(
+    _normalizedReplayMarkdown(
+      _multiTurnMarkdown(await markdownFile.readAsString()),
+    ),
+    _replayMarkdownGolden(fixture),
+  );
+  _expectReplayCycles(report, fixture);
+}
+
+void _expectReplayCycles(Map<String, dynamic> report, _ReplayFixture fixture) {
+  final replay = report['multiTurnReplay'] as Map<String, dynamic>;
+  final cycles = replay['cycles'] as List<dynamic>;
+
+  expect(replay['startTurn'], fixture.startTurn);
+  expect(replay['endTurn'], fixture.startTurn + 2);
+  expect(cycles, hasLength(2));
+  for (var index = 0; index < cycles.length; index++) {
+    final cycle = cycles[index] as Map<String, dynamic>;
+    expect(cycle['startTurn'], fixture.startTurn + index);
+    expect(cycle['endTurn'], fixture.startTurn + index + 1);
+    final turns = (cycle['playerTurns'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+    expect(
+      turns.map((turn) => turn['playerId']).toList(),
+      fixture.playerOrder[index],
+    );
+    expect(
+      turns
+          .map(
+            (turn) =>
+                Map<String, int>.from(turn['events'] as Map<String, dynamic>),
+          )
+          .toList(),
+      fixture.eventCounts[index],
+    );
+    expect(
+      turns.map((turn) => turn['terminalChangedState']).toList(),
+      everyElement(isTrue),
+    );
+  }
+}
+
+Future<ProcessResult> _runReplayReport({
+  required File saveFile,
+  required File jsonFile,
+  required File markdownFile,
+}) {
+  return Process.run('dart', [
+    'run',
+    'tool/run_save_ai_benchmark.dart',
+    '--save',
+    saveFile.path,
+    '--strategy',
+    'random',
+    '--multi-turns',
+    '2',
+    '--json-out',
+    jsonFile.path,
+    '--markdown-out',
+    markdownFile.path,
+  ]);
 }
 
 GameSave _sparseRosterSave() {

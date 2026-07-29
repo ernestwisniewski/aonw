@@ -1,5 +1,32 @@
 part of '../run_save_ai_benchmark.dart';
 
+PersistentGameState _replayPersistentState(GameState state) =>
+    PersistentGameState.snapshot(
+      playerColors: state.playerColors,
+      playerCountries: state.playerCountries,
+      playerGold: state.playerGold,
+      units: state.units,
+      cities: state.cities,
+      fieldImprovements: state.fieldImprovements,
+      fogOfWar: state.fogOfWar,
+      research: state.research,
+      runtimeState: state.runtimeState,
+    );
+
+Map<String, int> _replayDominationHoldTurns(PersistentGameState state) =>
+    state.runtimeState.dominationHoldTurnsByPlayerId;
+
+GameRuntimeState _replayRuntimeAfterFinalization(
+  PersistentGameState state, {
+  required Map<String, int> dominationHoldTurns,
+  required DateTime savedAt,
+}) => state.runtimeState.copyWith(
+  submittedPlayerIds: const {},
+  intendedAttacks: const [],
+  dominationHoldTurnsByPlayerId: dominationHoldTurns,
+  turnStartedAt: savedAt,
+);
+
 class _StaleMoveDiagnostic {
   const _StaleMoveDiagnostic({
     required this.commandIndex,
@@ -78,7 +105,7 @@ class _StaleMoveDiagnostic {
 
 class _ReplayTurnResult {
   const _ReplayTurnResult({
-    required this.save,
+    required this.snapshot,
     required this.state,
     required this.applied,
     required this.rejected,
@@ -91,7 +118,7 @@ class _ReplayTurnResult {
     required this.rejectedCommandDescriptions,
   });
 
-  final GameSave save;
+  final SaveSnapshot snapshot;
   final GameState state;
   final int applied;
   final int rejected;
@@ -106,12 +133,12 @@ class _ReplayTurnResult {
 
 class _ResolvedReplayTurn {
   const _ResolvedReplayTurn({
-    required this.save,
+    required this.snapshot,
     required this.state,
     required this.events,
   });
 
-  final GameSave save;
+  final SaveSnapshot snapshot;
   final GameState state;
   final List<GameEvent> events;
 }

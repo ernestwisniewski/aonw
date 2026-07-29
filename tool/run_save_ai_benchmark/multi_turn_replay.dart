@@ -21,33 +21,37 @@ class _MultiTurnReplayRunner {
 
   _MultiTurnReplayReport run() {
     final humanPlayerIds = {
-      for (final player in snapshot.save.players)
+      for (final player in snapshot.persistedPlayers)
         if (player.kind == PlayerKind.human) player.id,
     };
     final aiPlayers = [
-      for (final player in snapshot.save.players)
+      for (final player in snapshot.persistedPlayers)
         if (player.kind == PlayerKind.ai && player.ai != null) player,
     ];
     final profile = profiles.firstWhere(
       (profile) => profile.name == 'auto',
       orElse: () => profiles.first,
     );
-    var save = _resetPlayerTurns(snapshot.save);
-    var state = _prepareCycleState(
+    // Build state before changing replay turn metadata.
+    // Sparse snapshots can derive fallback state participants.
+    // That state remains part of the replay aggregate.
+    // The reset below applies only to persisted roster turn states.
+    var state = _prepareReplayCycleState(
       snapshot.toGameState(activePlayerId: '', activePlayerCanAct: true),
-      save: save,
+      snapshot: snapshot,
       humanPlayerIds: humanPlayerIds,
     );
+    var replaySnapshot = snapshot.withReplayPlayerTurnsReset();
     final startHumanCities = _cityCountOwnedBy(state.cities, humanPlayerIds);
     final cycleReports = <_MultiTurnCycleReport>[];
 
     for (var cycle = 1; cycle <= cycles; cycle++) {
-      state = _prepareCycleState(
+      state = _prepareReplayCycleState(
         state,
-        save: save,
+        snapshot: replaySnapshot,
         humanPlayerIds: humanPlayerIds,
       );
-      final cycleStartTurn = save.turn;
+      final cycleStartTurn = replaySnapshot.domain.turn;
       final cycleStartHumanCities = _cityCountOwnedBy(
         state.cities,
         humanPlayerIds,
@@ -55,11 +59,7 @@ class _MultiTurnReplayRunner {
       final playerTurns = <_MultiTurnPlayerReport>[];
 
       for (final player in aiPlayers) {
-        final turnSnapshot = SaveSnapshot.fromGameState(
-          save: save,
-          state: state,
-          eventLogOffset: snapshot.eventLogOffset,
-        );
+        final turnSnapshot = replaySnapshot.withGameState(state);
         final prepared = _PreparedPlayer.fromSnapshot(
           snapshot: turnSnapshot,
           player: player,
@@ -74,7 +74,7 @@ class _MultiTurnReplayRunner {
         planningStopwatch.stop();
 
         final replay = _executeReplayTurn(
-          save: save,
+          snapshot: replaySnapshot,
           state: state,
           player: player,
           view: prepared.view,
@@ -82,7 +82,7 @@ class _MultiTurnReplayRunner {
           plan: plan,
           humanPlayerIds: humanPlayerIds,
         );
-        save = replay.save;
+        replaySnapshot = replay.snapshot;
         state = replay.state;
         playerTurns.add(
           _MultiTurnPlayerReport(
@@ -130,7 +130,7 @@ class _MultiTurnReplayRunner {
         _MultiTurnCycleReport(
           index: cycle,
           startTurn: cycleStartTurn,
-          endTurn: save.turn,
+          endTurn: replaySnapshot.domain.turn,
           humanCitiesStart: cycleStartHumanCities,
           humanCitiesEnd: _cityCountOwnedBy(state.cities, humanPlayerIds),
           playerTurns: playerTurns,
@@ -140,8 +140,8 @@ class _MultiTurnReplayRunner {
 
     return _MultiTurnReplayReport(
       savePath: savePath,
-      startTurn: snapshot.save.turn,
-      endTurn: save.turn,
+      startTurn: snapshot.domain.turn,
+      endTurn: replaySnapshot.domain.turn,
       startHumanCities: startHumanCities,
       endHumanCities: _cityCountOwnedBy(state.cities, humanPlayerIds),
       endHumanCityStates: _humanCityEndStates(
@@ -153,7 +153,7 @@ class _MultiTurnReplayRunner {
   }
 
   _ReplayTurnResult _executeReplayTurn({
-    required GameSave save,
+    required SaveSnapshot snapshot,
     required GameState state,
     required Player player,
     required GameView view,
@@ -165,7 +165,7 @@ class _MultiTurnReplayRunner {
       mapData: context.mapData,
       ruleset: context.ruleset,
     );
-    var currentSave = save;
+    var currentSnapshot = snapshot;
     var currentState = state;
     final eventCounts = _ExecutionEventCounts();
     var applied = 0;
@@ -193,7 +193,7 @@ class _MultiTurnReplayRunner {
           currentState,
           planningView: view,
           player: player,
-          players: currentSave.players,
+          players: currentSnapshot.persistedPlayers,
           humanPlayerIds: humanPlayerIds,
           commandIndex: commandIndex,
         );
@@ -221,7 +221,7 @@ class _MultiTurnReplayRunner {
             currentState,
             planningView: view,
             player: player,
-            players: currentSave.players,
+            players: currentSnapshot.persistedPlayers,
             humanPlayerIds: humanPlayerIds,
             commandIndex: commandIndex,
           );
@@ -247,8 +247,7 @@ class _MultiTurnReplayRunner {
       currentState = transition.state;
       applied += 1;
     }
-
-    final terminalCommand = _terminalFor(currentSave.gameMode, player.id);
+    final terminalCommand = _replayTerminalCommand(currentSnapshot, player);
     final terminalTransition = reducer.reduce(
       currentState,
       terminalCommand,
@@ -257,31 +256,32 @@ class _MultiTurnReplayRunner {
     eventCounts.add(terminalTransition);
     final terminalChangedState = terminalTransition.state != currentState;
     currentState = terminalTransition.state;
+    final savedAt = _replaySavedAt(currentSnapshot);
 
     if (terminalCommand is SubmitTurnCommand) {
-      final playerIds = _activePlayerIds(currentSave);
+      final playerIds = _replayActivePlayerIds(currentSnapshot);
       if (playerIds.isNotEmpty &&
           playerIds.every(currentState.submittedPlayerIds.contains)) {
         final finalized = _finalizeSimultaneousTurn(
-          save: currentSave,
+          snapshot: currentSnapshot,
           state: currentState,
           playerIds: playerIds,
-          savedAt: _syntheticSavedAt(currentSave, cycles: 1),
+          savedAt: savedAt,
           mapView: context.mapData,
         );
-        currentSave = finalized.save;
+        currentSnapshot = finalized.snapshot;
         currentState = finalized.state;
         eventCounts.addEvents(finalized.events);
       }
     } else if (terminalCommand is EndTurnCommand) {
-      currentSave = currentSave
+      currentSnapshot = currentSnapshot
           .withPlayerFinished(player.id)
-          .copyWith(savedAt: _syntheticSavedAt(currentSave, cycles: 1));
+          .withSavedAt(savedAt);
     }
 
     executionStopwatch.stop();
     return _ReplayTurnResult(
-      save: currentSave,
+      snapshot: currentSnapshot,
       state: currentState,
       applied: applied,
       rejected: rejected,
@@ -296,28 +296,18 @@ class _MultiTurnReplayRunner {
   }
 
   _ResolvedReplayTurn _finalizeSimultaneousTurn({
-    required GameSave save,
+    required SaveSnapshot snapshot,
     required GameState state,
     required List<String> playerIds,
     required DateTime savedAt,
     required MapReadView mapView,
   }) {
     final ruleset = GameRuleset.defaults.copyWith(
-      paceBalance: save.matchRules.paceBalance,
+      paceBalance: snapshot.domain.matchRules.paceBalance,
     );
-    final persistent = PersistentGameState.snapshot(
-      playerColors: state.playerColors,
-      playerCountries: state.playerCountries,
-      playerGold: state.playerGold,
-      units: state.units,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      fogOfWar: state.fogOfWar,
-      research: state.research,
-      runtimeState: state.runtimeState,
-    );
+    final persistent = _replayPersistentState(state);
     final combat = PersistentTurnCombatResolver.resolve(
-      turn: save.turn,
+      turn: snapshot.domain.turn,
       state: persistent,
       mapTiles: mapView.mapTiles,
       ruleset: ruleset,
@@ -335,13 +325,14 @@ class _MultiTurnReplayRunner {
       mapData: mapView,
     );
     const dominationProgressCalculator = DominationProgressCalculator();
-    final previousDominationHoldTurns =
-        movement.state.runtimeState.dominationHoldTurnsByPlayerId;
+    final previousDominationHoldTurns = _replayDominationHoldTurns(
+      movement.state,
+    );
     final dominationHoldTurns = dominationProgressCalculator.advanceHoldTurns(
       playerIds: playerIds,
       state: movement.state,
       mapData: mapView,
-      victoryRules: save.matchRules.victory,
+      victoryRules: snapshot.domain.matchRules.victory,
       previousHoldTurnsByPlayerId: previousDominationHoldTurns,
     );
     final dominationEvents = dominationProgressCalculator
@@ -349,27 +340,36 @@ class _MultiTurnReplayRunner {
           playerIds: playerIds,
           state: movement.state,
           mapData: mapView,
-          victoryRules: save.matchRules.victory,
+          victoryRules: snapshot.domain.matchRules.victory,
           previousHoldTurnsByPlayerId: previousDominationHoldTurns,
           nextHoldTurnsByPlayerId: dominationHoldTurns,
         );
-    final runtimeState = movement.state.runtimeState.copyWith(
-      submittedPlayerIds: const {},
-      intendedAttacks: const [],
-      dominationHoldTurnsByPlayerId: dominationHoldTurns,
-      turnStartedAt: savedAt,
+    final runtimeState = _replayRuntimeAfterFinalization(
+      movement.state,
+      dominationHoldTurns: dominationHoldTurns,
+      savedAt: savedAt,
     );
-    final nextSave = save.withNewTurn().copyWith(savedAt: savedAt);
-    final nextState = SaveSnapshot.fromPersistentState(
-      save: nextSave,
+    // Rebuild from the full post-turn persistent state.
+    // Combat, economy, movement, and fog updates are already present there.
+    // The runtime update only resets simultaneous-turn bookkeeping.
+    // SaveSnapshot preserves metadata and the existing event-log offset.
+    // This keeps the next replay cycle behaviorally continuous.
+    final nextSnapshot = snapshot.withReplayTurnFinalized(
       state: movement.state.copyWith(runtimeState: runtimeState),
-    ).toGameState(activePlayerId: '', activePlayerCanAct: true);
-
+      savedAt: savedAt,
+    );
+    final nextState = nextSnapshot.toGameState(
+      activePlayerId: '',
+      activePlayerCanAct: true,
+    );
     return _ResolvedReplayTurn(
-      save: nextSave,
+      snapshot: nextSnapshot,
       state: nextState,
       events: [
-        AllPlayersSubmittedEvent(turn: save.turn, playerIds: playerIds),
+        AllPlayersSubmittedEvent(
+          turn: snapshot.domain.turn,
+          playerIds: playerIds,
+        ),
         ...combat.events,
         ...economy.events,
         ...dominationEvents,
@@ -378,3 +378,47 @@ class _MultiTurnReplayRunner {
     );
   }
 }
+
+GameState _prepareReplayCycleState(
+  GameState state, {
+  required SaveSnapshot snapshot,
+  required Set<String> humanPlayerIds,
+}) {
+  if (snapshot.session.gameMode != GameMode.multiplayer) return state;
+  return state
+      .copyWith(
+        activePlayerId: '',
+        activePlayerCanAct: true,
+        submittedPlayerIds: {
+          for (final playerId in humanPlayerIds)
+            if (playerId.isNotEmpty) playerId,
+        },
+      )
+      .copyWithInteraction(
+        moveCommandActive: false,
+        movePreview: null,
+        cityFoundingDraft: null,
+        pendingAction: null,
+      );
+}
+
+List<String> _replayActivePlayerIds(SaveSnapshot snapshot) {
+  final ids = snapshot.persistedPlayers
+      .map((player) => player.id)
+      .where((playerId) => playerId.isNotEmpty)
+      .toList();
+  if (ids.isNotEmpty) return ids..sort();
+  return snapshot.session.turnStatesByPlayerId.keys
+      .where((playerId) => playerId.isNotEmpty)
+      .toList()
+    ..sort();
+}
+
+DateTime _syntheticReplaySavedAt(DateTime savedAt, {required int cycles}) =>
+    savedAt.toUtc().add(Duration(seconds: cycles));
+
+DateTime _replaySavedAt(SaveSnapshot snapshot) =>
+    _syntheticReplaySavedAt(snapshot.metadata.savedAtUtc, cycles: 1);
+
+GameCommand _replayTerminalCommand(SaveSnapshot snapshot, Player player) =>
+    _terminalFor(snapshot.session.gameMode, player.id);

@@ -190,6 +190,40 @@ final class SaveSnapshot {
     return copyWith(save: save.withPlayerFinished(playerId));
   }
 
+  /// Resets the persisted roster for an isolated benchmark replay cycle.
+  ///
+  /// This deliberately follows the legacy save roster rather than canonical
+  /// fallback participants so sparse historical snapshots keep their replay
+  /// semantics.
+  SaveSnapshot withReplayPlayerTurnsReset() {
+    final playerIds = persistedPlayers
+        .map((player) => player.id)
+        .where((playerId) => playerId.isNotEmpty);
+    final playerStates = {
+      for (final playerId in playerIds) playerId: PlayerTurnState.active,
+    };
+    if (playerStates.isEmpty) {
+      for (final playerId in session.turnStatesByPlayerId.keys) {
+        if (playerId.isNotEmpty) {
+          playerStates[playerId] = PlayerTurnState.active;
+        }
+      }
+    }
+    return copyWith(save: save.copyWith(playerStates: playerStates));
+  }
+
+  /// Advances one completed benchmark replay turn without exposing [GameSave].
+  SaveSnapshot withReplayTurnFinalized({
+    required PersistentGameState state,
+    required DateTime savedAt,
+  }) {
+    return SaveSnapshot.fromPersistentState(
+      save: save.withNewTurn().copyWith(savedAt: savedAt.toUtc()),
+      state: state,
+      eventLogOffset: eventLogOffset,
+    );
+  }
+
   GameState toGameState({
     String activePlayerId = '',
     bool activePlayerCanAct = true,

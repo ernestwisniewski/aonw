@@ -66,51 +66,6 @@ List<String> _sortedStrings(Iterable<String> values) {
   return values.toSet().toList()..sort();
 }
 
-GameSave _resetPlayerTurns(GameSave save) {
-  return save.copyWith(
-    playerStates: {
-      for (final playerId in _activePlayerIds(save))
-        playerId: PlayerTurnState.active,
-    },
-  );
-}
-
-GameState _prepareCycleState(
-  GameState state, {
-  required GameSave save,
-  required Set<String> humanPlayerIds,
-}) {
-  if (save.gameMode != GameMode.multiplayer) return state;
-  return state
-      .copyWith(
-        activePlayerId: '',
-        activePlayerCanAct: true,
-        submittedPlayerIds: {
-          for (final playerId in humanPlayerIds)
-            if (playerId.isNotEmpty) playerId,
-        },
-      )
-      .copyWithInteraction(
-        moveCommandActive: false,
-        movePreview: null,
-        cityFoundingDraft: null,
-        pendingAction: null,
-      );
-}
-
-List<String> _activePlayerIds(GameSave save) {
-  final ids = save.players
-      .map((player) => player.id)
-      .where((id) => id.isNotEmpty)
-      .toList();
-  if (ids.isNotEmpty) return ids..sort();
-  return save.playerStates.keys.where((id) => id.isNotEmpty).toList()..sort();
-}
-
-DateTime _syntheticSavedAt(GameSave save, {required int cycles}) {
-  return save.savedAt.toUtc().add(Duration(seconds: cycles));
-}
-
 int _cityCountOwnedBy(Iterable<GameCity> cities, Set<String> playerIds) {
   return cities.where((city) => playerIds.contains(city.ownerPlayerId)).length;
 }
