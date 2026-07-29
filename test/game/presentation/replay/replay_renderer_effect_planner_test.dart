@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/replay/replay_renderer_effect_planner.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -12,6 +13,57 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ReplayRendererEffectPlanner', () {
+    test('upcasts combat geometry only for historical replay steps', () {
+      final attacker = GameUnit(
+        id: 'attacker',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: 'Attacker',
+        col: 2,
+        row: 4,
+      );
+      final defender = GameUnit(
+        id: 'defender',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.warrior,
+        name: 'Defender',
+        col: 3,
+        row: 4,
+      );
+
+      final effects = ReplayRendererEffectPlanner.effectsForStep(
+        commandEffects: const [],
+        events: [
+          CombatResolvedEvent(
+            attackerUnitId: 'attacker',
+            defenderUnitId: 'defender',
+            outcome: CombatOutcome(
+              attackerUnitId: 'attacker',
+              defenderUnitId: 'defender',
+              attackerHpAfter: 7,
+              defenderHpAfter: 0,
+              attackerKilled: false,
+              defenderKilled: true,
+              steps: [AttackStep(damage: 10)],
+            ),
+          ),
+        ],
+        previousState: GameState(units: [attacker, defender]),
+        state: GameState(units: [attacker]),
+      );
+
+      final animation = effects.whereType<PlayCombatAnimationEffect>().single;
+      expect(
+        (
+          animation.attackerFromCol,
+          animation.attackerFromRow,
+          animation.attackerToCol,
+          animation.attackerToRow,
+        ),
+        (2, 4, 3, 4),
+      );
+    });
+
     test('adds movement effect for auto-exploring scout state deltas', () {
       final scout = _scout(col: 1, row: 1);
       final movedScout = scout.copyWith(col: 2, row: 1);

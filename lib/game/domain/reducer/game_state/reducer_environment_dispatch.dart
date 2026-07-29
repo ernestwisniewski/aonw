@@ -4,7 +4,6 @@ import 'package:aonw/game/domain/reducer/city/city_expansion_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_production_reducer.dart';
 import 'package:aonw/game/domain/reducer/city/city_worked_hex_reducer.dart';
-import 'package:aonw/game/domain/reducer/combat/combat_reducer.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/merchant_trade_route_reducer.dart';
 import 'package:aonw/game/domain/reducer/diplomacy/resource_trade_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -415,10 +414,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     return GameStateTransition(
       state: InteractionReducer.cancelAttackTargeting(state, command),
     );
-  }
-
-  GameStateTransition attackHex(GameState state, AttackHexCommand command) {
-    return CombatReducer.attackHexWithEnvironment(state, command, this);
   }
 
   GameStateTransition startCommanderMergeSelection(

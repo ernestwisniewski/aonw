@@ -1,3 +1,6 @@
+export 'game/application/engine/combat_animation_fact.dart';
+export 'game/application/engine/combat_animation_fact_codec.dart';
+export 'game/application/engine/combat_engine_handler.dart';
 export 'game/application/engine/game_engine.dart';
 export 'game/application/engine/game_engine_context.dart';
 export 'game/application/engine/game_engine_result.dart';

@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/application/engine/combat_animation_fact.dart';
 import 'package:aonw_core/game/application/engine/movement_execution_delta.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
@@ -10,6 +11,7 @@ sealed class GameEngineResult {
     required CanonicalGameSnapshot snapshot,
     List<DomainEvent> events = const [],
     MovementExecutionDelta movementDelta = MovementExecutionDelta.empty,
+    List<CombatAnimationFact> combatAnimations = const [],
   }) {
     return GameEngineAccepted._(
       snapshot: snapshot,
@@ -17,6 +19,9 @@ sealed class GameEngineResult {
           ? const []
           : List<DomainEvent>.unmodifiable(events),
       movementDelta: movementDelta,
+      combatAnimations: combatAnimations.isEmpty
+          ? const []
+          : List<CombatAnimationFact>.unmodifiable(combatAnimations),
     );
   }
 
@@ -30,6 +35,7 @@ sealed class GameEngineResult {
   CanonicalGameSnapshot get snapshot;
   List<DomainEvent> get events;
   MovementExecutionDelta get movementDelta;
+  List<CombatAnimationFact> get combatAnimations;
 }
 
 /// Accepted transition with its next snapshot and ordered domain facts.
@@ -38,6 +44,7 @@ final class GameEngineAccepted extends GameEngineResult {
     required this.snapshot,
     required this.events,
     required this.movementDelta,
+    required this.combatAnimations,
   });
 
   @override
@@ -48,6 +55,9 @@ final class GameEngineAccepted extends GameEngineResult {
 
   @override
   final MovementExecutionDelta movementDelta;
+
+  @override
+  final List<CombatAnimationFact> combatAnimations;
 }
 
 /// Rejected transition. The snapshot is the unchanged input snapshot.
@@ -62,6 +72,9 @@ final class GameEngineRejected extends GameEngineResult {
 
   @override
   MovementExecutionDelta get movementDelta => MovementExecutionDelta.empty;
+
+  @override
+  List<CombatAnimationFact> get combatAnimations => const [];
 
   final String reason;
 }

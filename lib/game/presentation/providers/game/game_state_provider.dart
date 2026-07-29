@@ -7,6 +7,7 @@ import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
+import 'package:aonw/game/application/services/live_snapshot_presentation_policy.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
@@ -30,6 +31,7 @@ import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
+import 'package:aonw_core/game/application/engine/combat_animation_fact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -429,15 +431,13 @@ class GameStateNotifier extends _$GameStateNotifier {
       snapshot: snapshot,
       offset: incomingOffset,
     );
-
-    final liveEvents = presentation.canPresentLiveTransition
-        ? liveEvent?.events ?? const <GameEvent>[]
-        : const <GameEvent>[];
+    final presentedLiveEvent = _presentedLiveEvent(presentation, liveEvent);
     await _presentExternalSnapshot(
       previousState: previousState,
       nextState: nextState,
-      events: liveEvents,
+      events: presentedLiveEvent?.events ?? const <GameEvent>[],
       movementExecutions: presentation.movementExecutions,
+      combatAnimations: presentedLiveEvent?.combatAnimations ?? const [],
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: ref.read(activeRendererViewModelProvider),
@@ -486,6 +486,11 @@ class GameStateNotifier extends _$GameStateNotifier {
     await liveEvents?.close();
   }
 }
+
+LiveServerEvent? _presentedLiveEvent(
+  LiveSnapshotPresentationDecision presentation,
+  LiveServerEvent? event,
+) => presentation.canPresentLiveTransition ? event : null;
 
 String _multiplayerCacheKey(String userId, String saveId) {
   return multiplayerSnapshotCacheKey(userId: userId, matchId: saveId);

@@ -87,26 +87,6 @@ const _turnCombatTargets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
-        'attackHex',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_clearAttackInteractionState',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_refreshSelection',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_refreshUnit',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
     ],
   ),
   _Target(
@@ -162,14 +142,6 @@ const _turnCombatTargets = [
         type: 'MapTileLookup',
         nullable: true,
       ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/combat/persistent_combat_command_resolver.dart',
-    owner: 'PersistentCombatCommandResolver',
-    boundaries: [
-      _Boundary.method('resolve', parameter: 'mapTiles', type: 'MapTileLookup'),
     ],
   ),
   _Target(

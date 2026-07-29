@@ -11,13 +11,18 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+part 'replay_service_combat_test.dart';
 
 void main() {
   group('ReplayService', () {
@@ -47,6 +52,8 @@ void main() {
         DateTime.utc(2026, 4, 24, 12, 1),
       );
     });
+
+    _registerCombatReplayTest();
 
     test('infers actors for legacy merchant replay commands', () {
       final merchant = GameUnit.produced(
@@ -354,6 +361,10 @@ SaveSnapshot _snapshot({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
   List<WorldArtifact> artifacts = const [],
+  FogOfWarState fogOfWar = FogOfWarState.empty,
+  List<Player> players = const [
+    Player(id: 'p1', name: 'Alice', colorValue: 0xFF4A7FC4),
+  ],
 }) {
   return SaveSnapshot(
     save: GameSave(
@@ -365,11 +376,12 @@ SaveSnapshot _snapshot({
       playerStates: const {'p1': PlayerTurnState.active},
       savedAt: DateTime.utc(2026, 4, 24, 12),
       camera: CameraState.zero,
-      players: const [Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4)],
+      players: players,
     ),
     units: units,
     cities: cities,
     artifacts: artifacts,
+    fogOfWar: fogOfWar,
   );
 }
 

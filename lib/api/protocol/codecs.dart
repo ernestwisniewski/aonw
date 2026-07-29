@@ -2,6 +2,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -73,12 +74,22 @@ class EventCodec {
     return wire.events.map(GameEventSerializer.fromJson).toList();
   }
 
+  List<CombatAnimationFact> combatAnimationFactsFromWire(WireEvent wire) {
+    return CombatAnimationFactCodec.fromEventPayloads(wire.events);
+  }
+
   List<Map<String, dynamic>> eventsToJsonList(Iterable<GameEvent> events) {
     return events.map(GameEventSerializer.toJson).toList();
   }
 
   List<GameEvent> eventsFromJsonList(Iterable<Map<String, dynamic>> events) {
     return events.map(GameEventSerializer.fromJson).toList();
+  }
+
+  List<CombatAnimationFact> combatAnimationFactsFromJsonList(
+    Iterable<Map<String, dynamic>> events,
+  ) {
+    return CombatAnimationFactCodec.fromEventPayloads(events);
   }
 
   DomainCommand? commandFromWire(WireEvent wire) {

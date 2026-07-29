@@ -29,6 +29,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'game_actions_provider.g.dart';
+part 'game_actions_provider_presentations.dart';
 part 'game_actions_provider_turns.dart';
 
 /// Coordinates player commands with the active save and renderer view model.
@@ -69,6 +70,7 @@ class GameCommandController extends _$GameCommandController {
         previousState: record.previousState,
         uiEffects: record.result.uiEffects,
         events: record.result.events,
+        combatAnimations: record.result.combatAnimations,
       );
     });
   }
@@ -83,6 +85,7 @@ class GameCommandController extends _$GameCommandController {
             state: presentation.state,
             uiEffects: presentation.uiEffects,
             events: presentation.events,
+            combatAnimations: presentation.combatAnimations,
           ),
         ),
       ),
@@ -317,6 +320,7 @@ class GameCommandController extends _$GameCommandController {
         previousState: previousState,
         l10n: renderer.l10n,
         turn: eventTurn,
+        combatAnimations: result.combatAnimations,
       );
       _playCommandAndTransitionSounds(
         command: command,
@@ -449,20 +453,9 @@ class GameCommandController extends _$GameCommandController {
 
   void _showArtifactGuidance(_CommandDispatchRecord record) {
     if (!ref.mounted) return;
-    final previousState = record.previousState;
-    if (previousState == null) return;
-    final languageSettings = ref.read(languageSettingsProvider);
-    final locale =
-        languageSettings.locale ??
-        resolveGameLocale(
-          ui.PlatformDispatcher.instance.locales,
-          AppLocalizations.supportedLocales,
-        );
-    final l10n = lookupAppLocalizations(locale);
-    final content = ArtifactGuidanceResolver(l10n: l10n).resolve(
-      previousState: previousState,
-      state: record.result.state,
-      events: record.result.events,
+    final content = _artifactGuidanceContent(
+      record,
+      languageSettings: ref.read(languageSettingsProvider),
     );
     if (content == null) return;
     ref.read(hudFeedbackProvider.notifier).show(content);
@@ -484,16 +477,4 @@ class GameCommandController extends _$GameCommandController {
       return;
     }
   }
-}
-
-class _CommandDispatchRecord {
-  final GameCommand command;
-  final GameState? previousState;
-  final DispatchCommandResult result;
-
-  const _CommandDispatchRecord({
-    required this.command,
-    required this.previousState,
-    required this.result,
-  });
 }

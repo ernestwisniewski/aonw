@@ -203,7 +203,7 @@ class SimulatedState {
         nextRememberedEnemyCities: rememberedEnemyCities,
         nextOwnResearch: ownResearch,
       ),
-      AttackHexCommand() => _combatCommandApplier.applyAttackHex(command),
+      AttackHexCommand() => _applyEngineCombatCommand(command),
       FoundCityCommand() => _economyCommandApplier.applyFoundCity(command),
       SelectTechnologyCommand() => (
         nextOwnUnits: ownUnits,
@@ -249,6 +249,10 @@ class SimulatedState {
       _ => _unchangedCommandApplication,
     };
   }
+
+  MctsSimulatedCommandApplication _applyEngineCombatCommand(
+    AttackHexCommand command,
+  ) => _combatCommandApplier.applyAttackHex(command, depth + 1);
 
   MctsSimulatedCommandApplication _unitCommandApplication(
     List<GameUnit> units,

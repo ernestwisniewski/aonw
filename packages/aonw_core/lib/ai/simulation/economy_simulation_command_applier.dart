@@ -17,7 +17,7 @@ final class _EconomySimulationCommandApplier {
   }) {
     switch (command) {
       case UnitDomainCommand():
-        return _applyEngineMovement(
+        return _applyEngineCommand(
           tick: tick,
           state: state,
           command: command,
@@ -121,13 +121,11 @@ final class _EconomySimulationCommandApplier {
           state: result.state,
         );
       case AttackHexCommand():
-        return _applyAttackCommand(
-          turn: turn,
+        return _applyEngineCommand(
           tick: tick,
           state: state,
           command: command,
           actorPlayerId: actorPlayerId,
-          mapTiles: mapTiles,
           ruleset: ruleset,
         );
       case TileTappedCommand() ||
@@ -182,7 +180,7 @@ final class _EconomySimulationCommandApplier {
     }
   }
 
-  _ApplyCommandResult _applyEngineMovement({
+  _ApplyCommandResult _applyEngineCommand({
     required int tick,
     required PersistentGameState state,
     required DomainCommand command,
@@ -198,6 +196,7 @@ final class _EconomySimulationCommandApplier {
       mapView: mapView,
       ruleset: ruleset,
       movementVisibilityMode: MovementCommandVisibilityMode.unrestrictedPathing,
+      combatVisibilityMode: CombatCommandVisibilityMode.unrestricted,
     );
     engineSnapshot = result.snapshot;
     return _ApplyCommandResult(
@@ -205,47 +204,6 @@ final class _EconomySimulationCommandApplier {
       state: result.state,
       events: result.events,
       reason: result.reason,
-    );
-  }
-
-  _ApplyCommandResult _applyAttackCommand({
-    required int turn,
-    required int tick,
-    required PersistentGameState state,
-    required AttackHexCommand command,
-    required String actorPlayerId,
-    required MapTileLookup mapTiles,
-    required GameRuleset ruleset,
-  }) {
-    final withIntent = state.copyWith(
-      runtimeState: state.runtimeState.copyWith(
-        intendedAttacks: [
-          IntendedAttack(
-            attackerUnitId: command.attackerUnitId,
-            defenderCol: command.defenderCol,
-            defenderRow: command.defenderRow,
-            declaredAtTick: tick,
-            declaringPlayerId: actorPlayerId,
-          ),
-        ],
-      ),
-    );
-    final result = PersistentTurnCombatResolver.resolve(
-      turn: turn,
-      state: withIntent,
-      mapTiles: mapTiles,
-      ruleset: ruleset,
-    );
-    final nextState = result.state.copyWith(
-      runtimeState: result.state.runtimeState.copyWith(
-        intendedAttacks: const [],
-      ),
-    );
-    return _ApplyCommandResult(
-      accepted: result.events.isNotEmpty,
-      state: nextState,
-      events: result.events,
-      reason: result.events.isEmpty ? 'attack_not_resolved' : null,
     );
   }
 }

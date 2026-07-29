@@ -1,7 +1,7 @@
 part of '../run_save_ai_benchmark.dart';
 
-final class _BenchmarkCommandTransition {
-  const _BenchmarkCommandTransition({
+final class BenchmarkCommandTransition {
+  const BenchmarkCommandTransition({
     required this.accepted,
     required this.state,
     required this.events,
@@ -16,8 +16,8 @@ final class _BenchmarkCommandTransition {
   final List<String> rejectionReasons;
 }
 
-final class _BenchmarkCommandDispatcher {
-  _BenchmarkCommandDispatcher({
+final class BenchmarkCommandDispatcher {
+  BenchmarkCommandDispatcher({
     required CanonicalGameSnapshot snapshot,
     required MapReadView mapView,
     required GameRuleset ruleset,
@@ -31,7 +31,7 @@ final class _BenchmarkCommandDispatcher {
   final GameRuleset _ruleset;
   final GameStateReducer _reducer;
 
-  _BenchmarkCommandTransition apply({
+  BenchmarkCommandTransition apply({
     required GameState state,
     required GameCommand command,
     required GameCommandContext context,
@@ -47,7 +47,7 @@ final class _BenchmarkCommandDispatcher {
       );
     }
     final transition = _reducer.reduce(state, command, context: context);
-    return _BenchmarkCommandTransition(
+    return BenchmarkCommandTransition(
       accepted: transition.state != state,
       state: transition.state,
       events: transition.events,
@@ -56,7 +56,7 @@ final class _BenchmarkCommandDispatcher {
     );
   }
 
-  _BenchmarkCommandTransition _applyEngineCommand({
+  BenchmarkCommandTransition _applyEngineCommand({
     required GameState state,
     required DomainCommand command,
     required GameCommandContext context,
@@ -72,12 +72,15 @@ final class _BenchmarkCommandDispatcher {
       movementVisibilityMode: context.ignoreFogOfWar
           ? MovementCommandVisibilityMode.unrestricted
           : MovementCommandVisibilityMode.authoritative,
+      combatVisibilityMode: context.ignoreFogOfWar
+          ? CombatCommandVisibilityMode.unrestricted
+          : CombatCommandVisibilityMode.authoritative,
     );
     _engineSnapshot = result.snapshot;
     final nextState = result.accepted
         ? state.copyWithPersistentState(result.state)
         : state;
-    return _BenchmarkCommandTransition(
+    return BenchmarkCommandTransition(
       accepted: result.accepted && nextState != state,
       state: nextState,
       events: result.events,

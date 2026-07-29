@@ -126,6 +126,10 @@ class GameEffectDispatcher {
       case PlayCombatAnimationEffect(
         :final attackerUnitId,
         :final defenderUnitId,
+        :final attackerFromCol,
+        :final attackerFromRow,
+        :final attackerToCol,
+        :final attackerToRow,
         :final attackerKilled,
         :final defenderKilled,
         :final defenderRetaliated,
@@ -133,6 +137,10 @@ class GameEffectDispatcher {
         _focusCombatCamera(
           attackerUnitId: attackerUnitId,
           defenderUnitId: defenderUnitId,
+          attackerFromCol: attackerFromCol,
+          attackerFromRow: attackerFromRow,
+          attackerToCol: attackerToCol,
+          attackerToRow: attackerToRow,
         );
         await _unitAnimationController.animateUnitCombat(
           attackerUnitId: attackerUnitId,
@@ -171,12 +179,36 @@ class GameEffectDispatcher {
   void _focusCombatCamera({
     required String attackerUnitId,
     required String defenderUnitId,
+    required int? attackerFromCol,
+    required int? attackerFromRow,
+    required int? attackerToCol,
+    required int? attackerToRow,
   }) {
-    final worldPoint =
-        _unitAnimationController.unitWorldPosition(attackerUnitId) ??
-        _unitAnimationController.unitWorldPosition(defenderUnitId);
-    if (worldPoint == null) return;
-    _cameraController.centerOnWorldPoint(worldPoint);
+    final attackerPoint = _unitAnimationController.unitWorldPosition(
+      attackerUnitId,
+    );
+    if (attackerPoint != null) {
+      _cameraController.centerOnWorldPoint(attackerPoint);
+      return;
+    }
+    if (attackerFromCol != null &&
+        attackerFromRow != null &&
+        _canAutoFocusMapTarget(attackerFromCol, attackerFromRow)) {
+      _cameraController.jumpToTile(attackerFromCol, attackerFromRow);
+      return;
+    }
+    final defenderPoint = _unitAnimationController.unitWorldPosition(
+      defenderUnitId,
+    );
+    if (defenderPoint != null) {
+      _cameraController.centerOnWorldPoint(defenderPoint);
+      return;
+    }
+    if (attackerToCol != null &&
+        attackerToRow != null &&
+        _canAutoFocusMapTarget(attackerToCol, attackerToRow)) {
+      _cameraController.jumpToTile(attackerToCol, attackerToRow);
+    }
   }
 
   Future<void> _handleUnitMove(

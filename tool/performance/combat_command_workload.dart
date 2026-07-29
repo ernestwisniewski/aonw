@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 
 import 'measurement.dart';
@@ -16,8 +17,9 @@ final _combatRuleset = GameRuleset.defaults.copyWith(
   combat: const CombatRuleset(varianceRange: 0, retreatThresholdPercent: 0),
 );
 
-/// Resolves one deterministic instant combat through the neutral kernel and
-/// both state-boundary adapters while unrelated entities increase by scale.
+/// Resolves one deterministic instant combat through the neutral kernel,
+/// canonical adapter, and the public game engine while unrelated entities
+/// increase by scale.
 PerformanceCaseResult runCombatCommandWorkload({
   Iterable<int> scales = combatCommandScales,
   int timingSamples = 21,
@@ -49,27 +51,31 @@ _CombatCommandScaleResult _runCombatCommandScale(int scale, int timingSamples) {
   final counted = _executeCountedBoundaries(fixture);
 
   _executeKernelBoundary(fixture, fixture.mapTiles);
-  _executePersistentBoundary(fixture, fixture.mapTiles);
+  _executeEngineBoundary(fixture, fixture.mapTiles);
   _executeDomainBoundary(fixture, fixture.mapTiles);
 
   final kernelSamples = <Duration>[];
-  final persistentSamples = <Duration>[];
+  final engineSamples = <Duration>[];
   final domainSamples = <Duration>[];
   for (var run = 0; run < timingSamples; run++) {
     final kernel = measureSync(
       () => _executeKernelBoundary(fixture, fixture.mapTiles),
     );
-    final persistent = measureSync(
-      () => _executePersistentBoundary(fixture, fixture.mapTiles),
+    final engine = measureSync(
+      () => _executeEngineBoundary(fixture, fixture.mapTiles),
     );
     final domain = measureSync(
       () => _executeDomainBoundary(fixture, fixture.mapTiles),
     );
     kernelSamples.add(kernel.elapsed);
-    persistentSamples.add(persistent.elapsed);
+    engineSamples.add(engine.elapsed);
     domainSamples.add(domain.elapsed);
     _verifyBoundaryOutput(counted.kernel.output, kernel.value);
-    _verifyBoundaryOutput(counted.persistent.output, persistent.value);
+    _verifyBoundaryOutput(
+      counted.engine.output,
+      engine.value,
+      expectedFullFogRecomputes: 0,
+    );
     _verifyBoundaryOutput(counted.domain.output, domain.value);
   }
 
@@ -130,7 +136,7 @@ _CombatCommandScaleResult _runCombatCommandScale(int scale, int timingSamples) {
     },
     observations: {
       'kernelTiming': timingObservation(kernelSamples),
-      'persistentAdapterTiming': timingObservation(persistentSamples),
+      'engineTiming': timingObservation(engineSamples),
       'domainAdapterTiming': timingObservation(domainSamples),
     },
   );
@@ -140,20 +146,20 @@ _CountedCombatBoundaries _executeCountedBoundaries(
   _CombatCommandFixture fixture,
 ) {
   final kernelMap = _CountingCombatMapTiles(fixture.mapTiles);
-  final persistentMap = _CountingCombatMapTiles(fixture.mapTiles);
+  final engineMap = _CountingCombatMapTiles(fixture.mapTiles);
   final domainMap = _CountingCombatMapTiles(fixture.mapTiles);
   return _CountedCombatBoundaries(
     kernel: _executeKernelBoundary(fixture, kernelMap),
-    persistent: _executePersistentBoundary(fixture, persistentMap),
+    engine: _executeEngineBoundary(fixture, engineMap),
     domain: _executeDomainBoundary(fixture, domainMap),
     tileLookupCalls: {
       'kernel': kernelMap.calls,
-      'persistent': persistentMap.calls,
+      'engine': engineMap.calls,
       'domain': domainMap.calls,
     },
     tileLookupHits: {
       'kernel': kernelMap.hits,
-      'persistent': persistentMap.hits,
+      'engine': engineMap.hits,
       'domain': domainMap.hits,
     },
   );
@@ -189,30 +195,29 @@ _CombatBoundaryExecution _executeKernelBoundary(
   );
 }
 
-_CombatBoundaryExecution _executePersistentBoundary(
+_CombatBoundaryExecution _executeEngineBoundary(
   _CombatCommandFixture fixture,
-  MapTileLookup mapTiles,
+  MapReadView mapTiles,
 ) {
   final counters = FogOfWarRecomputeCounters();
-  final result =
-      PersistentCombatCommandResolver(
-        fogOfWarService: FogOfWarService(counters: counters),
-      ).resolve(
-        state: fixture.persistentState,
-        command: _combatCommand,
-        actorPlayerId: _combatActorId,
-        turn: _combatTurn,
-        commandTick: _combatCommandTick,
-        mapTiles: mapTiles,
-        ruleset: _combatRuleset,
-      );
+  final result = const GameEngine().apply(
+    snapshot: fixture.snapshot,
+    command: _combatCommand,
+    context: GameEngineContext(
+      actorPlayerId: _combatActorId,
+      commandTick: _combatCommandTick,
+      mapView: mapTiles,
+      ruleset: _combatRuleset,
+    ),
+  );
+  final domain = result.snapshot.domain;
   return _CombatBoundaryExecution(
     output: _normalizedCombatBoundary(
-      accepted: result.accepted,
-      reason: result.reason,
-      units: result.state.units,
-      fogOfWar: result.state.fogOfWar,
-      diplomacy: result.state.runtimeState.diplomacy,
+      accepted: result is GameEngineAccepted,
+      reason: result is GameEngineRejected ? result.reason : null,
+      units: domain.units,
+      fogOfWar: domain.fogOfWar,
+      diplomacy: domain.diplomacy,
       events: result.events,
     ),
     fogCounters: counters,
@@ -309,10 +314,11 @@ GameUnit? _unitById(List<GameUnit> units, String unitId) {
 
 void _verifyBoundaryOutput(
   Map<String, Object?> expected,
-  _CombatBoundaryExecution actual,
-) {
+  _CombatBoundaryExecution actual, {
+  int expectedFullFogRecomputes = 1,
+}) {
   if (stableDigest(expected) != stableDigest(actual.output) ||
-      actual.fogCounters.fullRecomputeCount != 1 ||
+      actual.fogCounters.fullRecomputeCount != expectedFullFogRecomputes ||
       actual.fogCounters.playerRecomputeCount != 0 ||
       actual.fogCounters.unitMoveIncrementalCount != 0 ||
       actual.fogCounters.unitMoveFallbackCount != 0) {

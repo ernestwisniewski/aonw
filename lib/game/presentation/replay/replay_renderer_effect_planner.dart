@@ -2,7 +2,9 @@ import 'package:aonw/game/application/services/queued_movement_effect_builder.da
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
+import 'package:aonw/game/presentation/replay/historical_combat_animation_fact_upcaster.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
@@ -15,6 +17,7 @@ abstract final class ReplayRendererEffectPlanner {
     required Iterable<GameEvent> events,
     required GameState state,
     required GameState previousState,
+    Iterable<CombatAnimationFact>? combatAnimations,
     AppLocalizations? l10n,
   }) {
     final replayCommandEffects = [
@@ -36,6 +39,13 @@ abstract final class ReplayRendererEffectPlanner {
       state: state,
       previousState: previousState,
       l10n: l10n,
+      combatAnimations:
+          combatAnimations ??
+          HistoricalCombatAnimationFactUpcaster.fromEvents(
+            events: events,
+            state: state,
+            previousState: previousState,
+          ),
     );
   }
 

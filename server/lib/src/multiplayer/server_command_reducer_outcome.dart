@@ -6,10 +6,12 @@ final class ServerCommandReduction {
     this.nextSnapshot,
     Iterable<GameEvent> events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
+    Iterable<CombatAnimationFact> combatAnimations = const [],
     this.outcome,
     this.reason,
   }) : events = _ownedList(events),
        movementExecutions = _ownedList(movementExecutions),
+       combatAnimations = _ownedList(combatAnimations),
        assert(
          !accepted || (nextSnapshot != null && outcome != null),
          'Accepted reductions must expose their canonical result.',
@@ -19,6 +21,7 @@ final class ServerCommandReduction {
   final CanonicalGameSnapshot? nextSnapshot;
   final List<GameEvent> events;
   final List<MovementCommandExecution> movementExecutions;
+  final List<CombatAnimationFact> combatAnimations;
   final GameOutcome? outcome;
   final String? reason;
 }
@@ -37,6 +40,7 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
       nextSnapshot: nextSnapshot,
       events: result.events,
       movementExecutions: result.movementExecutions,
+      combatAnimations: result.combatAnimations,
       outcome: _gameOutcome(
         match: match,
         domain: nextSnapshot.domain,

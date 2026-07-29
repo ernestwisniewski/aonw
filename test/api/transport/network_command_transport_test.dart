@@ -7,14 +7,17 @@ import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -75,6 +78,8 @@ void main() {
   });
 
   group('NetworkCommandTransport', () {
+    _registerEngineFamilyRoutingTests();
+
     test(
       'posts a WireCommand and applies the server snapshot response',
       () async {
@@ -1072,94 +1077,6 @@ class _ScriptedCommandDispatcher implements WireCommandDispatcher {
     sentCommands.add(command);
     return handler(command);
   }
-}
-
-class _FakeCommandServer implements WireCommandDispatcher {
-  final GameStateReducer reducer = GameStateReducer(mapData: _map());
-  final CommandCodec commandCodec = const CommandCodec();
-  final EventCodec eventCodec = const EventCodec();
-  final SnapshotCodec snapshotCodec = const SnapshotCodec();
-  final List<_SentCommand> sentCommands = [];
-  GameSave save;
-  GameState state;
-  SaveSnapshot? nextAcceptedSnapshot;
-  WireMovementExecutionList nextMovementExecutions;
-  WireCommandAck? lastAck;
-  Object? nextError;
-  int offset = 0;
-
-  _FakeCommandServer({
-    required this.save,
-    required this.state,
-    this.nextAcceptedSnapshot,
-    WireMovementExecutionList? nextMovementExecutions,
-    this.nextError,
-  }) : nextMovementExecutions =
-           nextMovementExecutions ?? WireMovementExecutionList(const []);
-
-  @override
-  Future<WireCommandAck> send({
-    required String saveId,
-    required AuthToken token,
-    required int afterOffset,
-    required WireCommand wire,
-    required String clientMessageId,
-  }) async {
-    sentCommands.add(
-      _SentCommand(
-        saveId: saveId,
-        token: token,
-        afterOffset: afterOffset,
-        wire: wire,
-        clientMessageId: clientMessageId,
-      ),
-    );
-    final error = nextError;
-    if (error != null) {
-      nextError = null;
-      throw error;
-    }
-    offset += 1;
-
-    final command = commandCodec.fromWire(wire);
-    final transition = reducer.reduce(
-      state,
-      command,
-      context: commandCodec.contextFromWire(wire),
-    );
-    final movementExecutions = nextMovementExecutions;
-    nextMovementExecutions = WireMovementExecutionList(const []);
-    state = transition.state;
-    final snapshot =
-        nextAcceptedSnapshot ??
-        SaveSnapshot.fromGameState(
-          save: save.copyWith(
-            savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
-          ),
-          state: state,
-          eventLogOffset: offset,
-        );
-    nextAcceptedSnapshot = null;
-    save = snapshot.save;
-    state = snapshot.toGameState(
-      activePlayerId: state.activePlayerId,
-      activePlayerCanAct: state.activePlayerCanAct,
-    );
-    return lastAck = WireCommandAck(
-      matchId: wire.matchId,
-      accepted: true,
-      offset: offset,
-      snapshot: snapshotCodec.toWire(matchId: wire.matchId, snapshot: snapshot),
-      events: eventCodec.eventsToJsonList(transition.events),
-      movementExecutions: movementExecutions,
-    );
-  }
-
-  SaveSnapshot get snapshot => SaveSnapshot.fromGameState(
-    save: save,
-    state: state,
-    eventLogOffset: offset,
-  );
 }
 
 class _SnapshotRepository implements GameRepository {

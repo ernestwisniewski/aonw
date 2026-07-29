@@ -348,9 +348,7 @@ class _LiveEventSubscriptionController {
 
   void _handleMessage(sp.MultiplayerServerMessage message) {
     final ack = message.ack;
-    if (ack != null) {
-      _completeNextAck(ack);
-    }
+    if (ack != null) _completeNextAck(ack);
 
     final match = message.match;
     if (match != null) {
@@ -375,6 +373,7 @@ class _LiveEventSubscriptionController {
         LiveServerEvent.fromWire(
           wire: event,
           events: eventCodec.eventsFromWire(event),
+          combatAnimations: eventCodec.combatAnimationFactsFromWire(event),
           snapshot: saveSnapshot,
         ),
       );

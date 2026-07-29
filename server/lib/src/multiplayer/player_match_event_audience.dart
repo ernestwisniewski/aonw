@@ -1,4 +1,7 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 
 /// Server-owned recipient metadata embedded only in canonical event storage.
 ///
@@ -7,6 +10,7 @@ import 'package:aonw_core/game/domain/event.dart';
 /// field and any other unrecognized fields before data crosses the network.
 abstract final class PlayerMatchEventAudience {
   static const _audiencePlayerIdsKey = '_serverAudiencePlayerIds';
+  static const _combatAnimationKey = '_serverCombatAnimation';
 
   /// Serializes domain events with the exact set of match participants allowed
   /// to receive each payload.
@@ -20,27 +24,43 @@ abstract final class PlayerMatchEventAudience {
     required Iterable<String> participantPlayerIds,
     required GameEventOwnershipIndex previous,
     required GameEventOwnershipIndex next,
+    Iterable<CombatAnimationFact> combatAnimations = const [],
+    FogOfWarState previousFog = FogOfWarState.empty,
+    FogOfWarState nextFog = FogOfWarState.empty,
   }) {
+    final orderedEvents = List<GameEvent>.unmodifiable(events);
     final participants =
         participantPlayerIds
             .where((playerId) => playerId.isNotEmpty)
             .toSet()
             .toList()
           ..sort();
+    final combat = _reviewCombat(
+      events: orderedEvents,
+      facts: combatAnimations,
+      participants: participants,
+      previous: previous,
+      next: next,
+      previousFog: previousFog,
+      nextFog: nextFog,
+    );
     return List.unmodifiable([
-      for (final event in events)
+      for (var eventIndex = 0; eventIndex < orderedEvents.length; eventIndex++)
         {
-          ...GameEventSerializer.toJson(event),
+          ...GameEventSerializer.toJson(orderedEvents[eventIndex]),
           _audiencePlayerIdsKey: [
             for (final playerId in participants)
-              if (_isVisibleTo(
-                event,
-                playerId: playerId,
-                previous: previous,
-                next: next,
-              ))
+              if (combat.audience.contains(playerId) ||
+                  _isVisibleTo(
+                    orderedEvents[eventIndex],
+                    playerId: playerId,
+                    previous: previous,
+                    next: next,
+                  ))
                 playerId,
           ],
+          if (combat.fact?.eventIndex == eventIndex)
+            _combatAnimationKey: CombatAnimationFactCodec.toJson(combat.fact!),
         },
     ]);
   }
@@ -55,18 +75,36 @@ abstract final class PlayerMatchEventAudience {
     required String recipientPlayerId,
   }) {
     final projected = <Map<String, dynamic>>[];
+    var canonicalEventIndex = 0;
     for (final canonical in canonicalEvents) {
       final rawAudience = canonical[_audiencePlayerIdsKey];
-      if (rawAudience == null) continue;
+      if (rawAudience == null) {
+        canonicalEventIndex += 1;
+        continue;
+      }
       if (rawAudience is! List<Object?> ||
           rawAudience.any((playerId) => playerId is! String)) {
         throw const FormatException(
           'Invalid server-owned multiplayer event audience metadata.',
         );
       }
-      if (!rawAudience.contains(recipientPlayerId)) continue;
+      if (!rawAudience.contains(recipientPlayerId)) {
+        canonicalEventIndex += 1;
+        continue;
+      }
       final domainEvent = GameEventSerializer.fromJson(canonical);
-      projected.add(GameEventSerializer.toJson(domainEvent));
+      final payload = GameEventSerializer.toJson(domainEvent);
+      final rawCombat = canonical[_combatAnimationKey];
+      if (rawCombat != null) {
+        final fact = CombatAnimationFactCodec.fromJson(
+          rawCombat,
+          eventIndex: canonicalEventIndex,
+        );
+        payload[CombatAnimationFactCodec.eventPayloadKey] =
+            CombatAnimationFactCodec.toJson(fact);
+      }
+      projected.add(payload);
+      canonicalEventIndex += 1;
     }
     return List.unmodifiable(projected);
   }
@@ -84,4 +122,90 @@ abstract final class PlayerMatchEventAudience {
       next: next,
     );
   }
+}
+
+({CombatAnimationFact? fact, Set<String> audience}) _reviewCombat({
+  required List<GameEvent> events,
+  required Iterable<CombatAnimationFact> facts,
+  required List<String> participants,
+  required GameEventOwnershipIndex previous,
+  required GameEventOwnershipIndex next,
+  required FogOfWarState previousFog,
+  required FogOfWarState nextFog,
+}) {
+  final fact = _validatedCombatFact(events, facts);
+  if (fact == null) return (fact: null, audience: const {});
+  final owners = {
+    previous.unitOwner(fact.attackerUnitId),
+    next.unitOwner(fact.attackerUnitId),
+    previous.unitOwner(fact.defenderId),
+    next.unitOwner(fact.defenderId),
+    previous.cityOwner(fact.defenderId),
+    next.cityOwner(fact.defenderId),
+  }..removeWhere((playerId) => playerId == null || playerId.isEmpty);
+  final origin = HexCoordinate(
+    col: fact.attackerFromCol,
+    row: fact.attackerFromRow,
+  );
+  final target = HexCoordinate(
+    col: fact.attackerToCol,
+    row: fact.attackerToRow,
+  );
+  final audience = {
+    for (final playerId in participants)
+      if (owners.contains(playerId) ||
+          _canSeeCombat(
+            playerId,
+            origin: origin,
+            target: target,
+            previousFog: previousFog,
+            nextFog: nextFog,
+          ))
+        playerId,
+  };
+  return (fact: fact, audience: Set.unmodifiable(audience));
+}
+
+CombatAnimationFact? _validatedCombatFact(
+  List<GameEvent> events,
+  Iterable<CombatAnimationFact> facts,
+) {
+  final ordered = List<CombatAnimationFact>.unmodifiable(facts);
+  if (ordered.isEmpty) return null;
+  if (ordered.length != 1) {
+    throw const FormatException(
+      'A stored command may expose exactly one combat animation fact.',
+    );
+  }
+  final fact = ordered.single;
+  if (fact.eventIndex < 0 || fact.eventIndex >= events.length) {
+    throw const FormatException(
+      'Combat animation fact references an invalid event index.',
+    );
+  }
+  final event = events[fact.eventIndex];
+  if (event is! CombatResolvedEvent ||
+      event.attackerUnitId != fact.attackerUnitId ||
+      event.defenderUnitId != fact.defenderId) {
+    throw const FormatException(
+      'Combat animation fact does not match its combat event.',
+    );
+  }
+  return fact;
+}
+
+bool _canSeeCombat(
+  String playerId, {
+  required HexCoordinate origin,
+  required HexCoordinate target,
+  required FogOfWarState previousFog,
+  required FogOfWarState nextFog,
+}) {
+  final visibleBefore =
+      previousFog.isVisible(playerId, origin) &&
+      previousFog.isVisible(playerId, target);
+  final visibleAfter =
+      nextFog.isVisible(playerId, origin) &&
+      nextFog.isVisible(playerId, target);
+  return visibleBefore || visibleAfter;
 }

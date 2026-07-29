@@ -1,66 +1,66 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('combat command adapter parity', () {
-    test('instant result matches kernel at both state boundaries', () {
-      final states = _states();
+    test('instant result matches kernel at both canonical boundaries', () {
+      final domain = _domain();
       final results = _resolveAll(
-        states,
+        domain,
         const AttackHexCommand('attacker', 1, 0),
       );
 
       _expectAcceptedParity(results);
+      expect(results.engine.snapshot.session.submittedPlayerIds, const {
+        'player_2',
+      });
       expect(
-        results.persistent.state.runtimeState.submittedPlayerIds,
-        states.persistent.runtimeState.submittedPlayerIds,
-      );
-      expect(
-        results.persistent.state.runtimeState.turnStartedAt,
-        states.persistent.runtimeState.turnStartedAt,
+        results.engine.snapshot.session.turnStartedAt,
+        DateTime.utc(2026, 7, 20),
       );
       expect(
         results.domain.state.playerWarWeariness,
-        same(states.domain.playerWarWeariness),
+        same(domain.playerWarWeariness),
       );
       expect(
         results.domain.state.mapObjectiveHoldStatesByObjectiveId,
-        same(states.domain.mapObjectiveHoldStatesByObjectiveId),
+        same(domain.mapObjectiveHoldStatesByObjectiveId),
       );
     });
 
     test('rejection preserves complete state and kernel slice identities', () {
-      final states = _states();
+      final domain = _domain();
       final results = _resolveAll(
-        states,
+        domain,
         const AttackHexCommand('attacker', 1, 0),
         actorPlayerId: 'player_2',
       );
 
       expect(results.kernel.reason, 'attacker_not_controlled');
-      expect(results.persistent.reason, 'attacker_not_controlled');
-      expect(results.domain.reason, 'attacker_not_controlled');
-      expect(results.persistent.state, same(states.persistent));
-      expect(results.domain.state, same(states.domain));
-      expect(results.kernel.units, same(states.domain.units));
-      expect(results.kernel.cities, same(states.domain.cities));
-      expect(results.kernel.artifacts, same(states.domain.artifacts));
-      expect(results.kernel.fogOfWar, same(states.domain.fogOfWar));
       expect(
-        results.kernel.intendedAttacks,
-        same(states.domain.intendedAttacks),
+        (results.engine as GameEngineRejected).reason,
+        'attacker_not_controlled',
       );
-      expect(results.kernel.diplomacy, same(states.domain.diplomacy));
+      expect(results.domain.reason, 'attacker_not_controlled');
+      expect(results.engine.snapshot.domain, same(domain));
+      expect(results.domain.state, same(domain));
+      expect(results.kernel.units, same(domain.units));
+      expect(results.kernel.cities, same(domain.cities));
+      expect(results.kernel.artifacts, same(domain.artifacts));
+      expect(results.kernel.fogOfWar, same(domain.fogOfWar));
+      expect(results.kernel.intendedAttacks, same(domain.intendedAttacks));
+      expect(results.kernel.diplomacy, same(domain.diplomacy));
       expect(
         results.kernel.resourceTradeAgreements,
-        same(states.domain.resourceTradeAgreements),
+        same(domain.resourceTradeAgreements),
       );
     });
 
     test('both adapters preserve city-center self-occupancy semantics', () {
-      final states = _states(attackerOnEnemyCityCenter: true);
+      final domain = _domain(attackerOnEnemyCityCenter: true);
       final results = _resolveAll(
-        states,
+        domain,
         const AttackHexCommand('attacker', 1, 0),
       );
 
@@ -70,28 +70,29 @@ void main() {
         hasLength(1),
       );
       expect(
-        results.persistent.events.whereType<CityAttackedEvent>(),
+        results.engine.events.whereType<CityAttackedEvent>(),
         hasLength(1),
       );
       expect(
         results.domain.events.whereType<CityAttackedEvent>(),
         hasLength(1),
       );
-      expect(results.persistent.state.cities.single.ownerPlayerId, 'player_1');
+      expect(
+        results.engine.snapshot.domain.cities.single.ownerPlayerId,
+        'player_1',
+      );
       expect(results.domain.state.cities.single.ownerPlayerId, 'player_1');
     });
   });
 }
 
-typedef _CombatStates = ({PersistentGameState persistent, DomainState domain});
-
 typedef _CombatResults = ({
   CombatCommandResult kernel,
-  PersistentCombatCommandResult persistent,
+  GameEngineResult engine,
   DomainCombatCommandResult domain,
 });
 
-_CombatStates _states({bool attackerOnEnemyCityCenter = false}) {
+DomainState _domain({bool attackerOnEnemyCityCenter = false}) {
   final units = attackerOnEnemyCityCenter
       ? [_unit('attacker', 'player_1', 1)]
       : [
@@ -126,11 +127,26 @@ _CombatStates _states({bool attackerOnEnemyCityCenter = false}) {
     ),
   ];
   final fog = _visibleFog();
-  final runtime = GameRuntimeState.snapshot(
-    submittedPlayerIds: const {'player_2'},
-    timeoutStreaksByPlayerId: const {'player_2': 2},
+  return DomainState.snapshot(
+    turn: 7,
+    matchRules: MatchRules.standard,
+    participants: const [
+      Player(id: 'player_1', name: 'One', colorValue: 1),
+      Player(
+        id: 'player_2',
+        name: 'Two',
+        colorValue: 2,
+        country: PlayerCountry.japan,
+      ),
+    ],
+    playerGold: const {'player_1': 10, 'player_2': 20},
+    playerWarWeariness: const {'player_2': 3},
+    playerStabilityNet: const {'player_2': 4},
+    units: units,
+    cities: cities,
+    artifacts: artifacts,
+    fogOfWar: fog,
     intendedAttacks: attacks,
-    diplomacy: DiplomacyState.empty,
     dominationHoldTurnsByPlayerId: const {'player_2': 3},
     culturalVictoryHoldTurnsByPlayerId: const {'player_2': 4},
     mapObjectiveHoldStatesByObjectiveId: const {
@@ -140,63 +156,14 @@ _CombatStates _states({bool attackerOnEnemyCityCenter = false}) {
         holdTurns: 2,
       ),
     },
-    turnStartedAt: DateTime.utc(2026, 7, 20),
-  );
-  return (
-    persistent: PersistentGameState.snapshot(
-      playerColors: const {'player_1': 1, 'player_2': 2},
-      playerCountries: const {
-        'player_1': PlayerCountry.poland,
-        'player_2': PlayerCountry.japan,
-      },
-      playerGold: const {'player_1': 10, 'player_2': 20},
-      playerWarWeariness: const {'player_2': 3},
-      playerStabilityNet: const {'player_2': 4},
-      units: units,
-      cities: cities,
-      artifacts: artifacts,
-      fogOfWar: fog,
-      runtimeState: runtime,
-    ),
-    domain: DomainState.snapshot(
-      turn: 7,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: 'player_1', name: 'One', colorValue: 1),
-        Player(
-          id: 'player_2',
-          name: 'Two',
-          colorValue: 2,
-          country: PlayerCountry.japan,
-        ),
-      ],
-      playerGold: const {'player_1': 10, 'player_2': 20},
-      playerWarWeariness: const {'player_2': 3},
-      playerStabilityNet: const {'player_2': 4},
-      units: units,
-      cities: cities,
-      artifacts: artifacts,
-      fogOfWar: fog,
-      intendedAttacks: attacks,
-      dominationHoldTurnsByPlayerId: const {'player_2': 3},
-      culturalVictoryHoldTurnsByPlayerId: const {'player_2': 4},
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'sentinel': MapObjectiveHoldState(
-          objectiveId: 'sentinel',
-          playerId: 'player_2',
-          holdTurns: 2,
-        ),
-      },
-    ),
   );
 }
 
 _CombatResults _resolveAll(
-  _CombatStates states,
+  DomainState domain,
   AttackHexCommand command, {
   String actorPlayerId = 'player_1',
 }) {
-  final domain = states.domain;
   final map = _map();
   return (
     kernel: const CombatCommandResolver().resolve(
@@ -217,13 +184,15 @@ _CombatResults _resolveAll(
       commandTick: 13,
       mapTiles: map,
     ),
-    persistent: const PersistentCombatCommandResolver().resolve(
-      state: states.persistent,
+    engine: const GameEngine().apply(
+      snapshot: _snapshot(domain),
       command: command,
-      actorPlayerId: actorPlayerId,
-      turn: domain.turn,
-      commandTick: 13,
-      mapTiles: map,
+      context: GameEngineContext(
+        actorPlayerId: actorPlayerId,
+        commandTick: 13,
+        mapView: map,
+        ruleset: GameRuleset.defaults,
+      ),
     ),
     domain: const DomainCombatCommandResolver().resolve(
       state: domain,
@@ -237,36 +206,52 @@ _CombatResults _resolveAll(
 
 void _expectAcceptedParity(_CombatResults results) {
   expect(results.kernel.accepted, isTrue);
-  expect(results.persistent.accepted, isTrue);
+  expect(results.engine, isA<GameEngineAccepted>());
   expect(results.domain.accepted, isTrue);
   expect(results.kernel.reason, isNull);
-  expect(results.persistent.reason, isNull);
   expect(results.domain.reason, isNull);
-  expect(results.persistent.state.units, results.kernel.units);
+  expect(results.engine.snapshot.domain.units, results.kernel.units);
   expect(results.domain.state.units, results.kernel.units);
-  expect(results.persistent.state.cities, results.kernel.cities);
+  expect(results.engine.snapshot.domain.cities, results.kernel.cities);
   expect(results.domain.state.cities, results.kernel.cities);
-  expect(results.persistent.state.artifacts, results.kernel.artifacts);
+  expect(results.engine.snapshot.domain.artifacts, results.kernel.artifacts);
   expect(results.domain.state.artifacts, results.kernel.artifacts);
-  expect(results.persistent.state.fogOfWar, results.kernel.fogOfWar);
+  expect(results.engine.snapshot.domain.fogOfWar, results.kernel.fogOfWar);
   expect(results.domain.state.fogOfWar, results.kernel.fogOfWar);
   expect(
-    results.persistent.state.runtimeState.intendedAttacks,
+    results.engine.snapshot.domain.intendedAttacks,
     results.kernel.intendedAttacks,
   );
   expect(results.domain.state.intendedAttacks, results.kernel.intendedAttacks);
-  expect(
-    results.persistent.state.runtimeState.diplomacy,
-    results.kernel.diplomacy,
-  );
+  expect(results.engine.snapshot.domain.diplomacy, results.kernel.diplomacy);
   expect(results.domain.state.diplomacy, results.kernel.diplomacy);
   expect(
-    results.persistent.events.map(GameEventSerializer.toJson),
+    results.engine.events.map(GameEventSerializer.toJson),
     results.kernel.events.map(GameEventSerializer.toJson),
   );
   expect(
     results.domain.events.map(GameEventSerializer.toJson),
     results.kernel.events.map(GameEventSerializer.toJson),
+  );
+}
+
+CanonicalGameSnapshot _snapshot(DomainState domain) {
+  return CanonicalGameSnapshot.snapshot(
+    domain: domain,
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.hotSeat,
+      submittedPlayerIds: const {'player_2'},
+      timeoutStreaksByPlayerId: const {'player_2': 2},
+      turnStartedAt: DateTime.utc(2026, 7, 20),
+    ),
+    metadata: GameSnapshotMetadata(
+      id: 'combat-parity',
+      schemaVersion: 3,
+      name: 'Combat parity',
+      world: const WorldReference(name: 'combat', source: MapSource.asset),
+      savedAtUtc: DateTime.utc(2026, 7, 20),
+      camera: GameSnapshotCamera.zero,
+    ),
   );
 }
 
@@ -300,7 +285,7 @@ FogOfWarState _visibleFog() {
   );
 }
 
-MapTileLookup _map() {
+MapReadView _map() {
   return WorldMapReadView(
     WorldMap(
       cols: 3,

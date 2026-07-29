@@ -3,6 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
@@ -12,6 +13,7 @@ abstract final class ExternalSnapshotRendererEffectResolver {
     required GameState nextState,
     required Iterable<GameEvent> events,
     required Iterable<MovementCommandExecution> movementExecutions,
+    Iterable<CombatAnimationFact> combatAnimations = const [],
     String? viewerPlayerId,
     int? turn,
     AppLocalizations? l10n,
@@ -43,6 +45,7 @@ abstract final class ExternalSnapshotRendererEffectResolver {
         l10n: l10n,
         viewerPlayerId: viewerPlayerId,
         turn: turn,
+        combatAnimations: combatAnimations,
       ),
     ];
     return effects.isEmpty

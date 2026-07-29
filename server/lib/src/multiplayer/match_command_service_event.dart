@@ -25,6 +25,7 @@ WireEvent _acceptedCommandEventForStorage({
       participantPlayerIds: participantPlayerIds,
       previous: previous,
       next: next,
+      combatAnimations: reduction.combatAnimations,
     ),
     movementExecutions: PlayerMatchMovementAudience.annotateForStorage(
       executions: reduction.movementExecutions,

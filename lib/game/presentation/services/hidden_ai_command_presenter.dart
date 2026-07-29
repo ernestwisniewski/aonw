@@ -47,6 +47,7 @@ final class HiddenAiCommandPresenter {
         commandState: result.state,
         uiEffects: result.uiEffects,
         events: result.events,
+        combatAnimations: result.combatAnimations,
         turn: _eventTurnFor(result),
       );
     }
@@ -58,6 +59,7 @@ final class HiddenAiCommandPresenter {
       ),
       uiEffects: result.uiEffects,
       events: result.events,
+      combatAnimations: result.combatAnimations,
       snapshot: result.snapshot,
       offset: result.offset,
       storedSnapshot: result.storedSnapshot,

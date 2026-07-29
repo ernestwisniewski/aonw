@@ -8,6 +8,7 @@ import 'package:aonw/api/transport/wire_command_message_id.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -383,11 +384,10 @@ class NetworkCommandTransport implements CommandTransport {
       );
     }
     _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
-
-    final localTransition = localReducer.reduce(
+    final localTransition = localReducer.acceptedNetworkCommandTransition(
       currentState,
       domainCommand,
-      context: context,
+      context,
     );
     final nextState = _stateFromSnapshot(
       snapshot: snapshot,
@@ -395,7 +395,6 @@ class NetworkCommandTransport implements CommandTransport {
       command: domainCommand,
       interactionSource: localTransition.state,
     );
-
     return CommandTransportResult(
       state: nextState,
       uiEffects: AcknowledgedCommandEffectResolver.resolve(
@@ -407,6 +406,7 @@ class NetworkCommandTransport implements CommandTransport {
       snapshot: snapshot,
       offset: effectiveOffset,
       events: eventCodec.eventsFromJsonList(ack.events),
+      combatAnimations: eventCodec.combatAnimationFactsFromJsonList(ack.events),
       storedSnapshot: true,
     );
   }

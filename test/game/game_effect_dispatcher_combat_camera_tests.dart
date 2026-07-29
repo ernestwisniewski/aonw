@@ -1,5 +1,61 @@
 part of 'game_effect_dispatcher_test.dart';
 
+class _FakeCameraController extends GameCameraController {
+  ({int col, int row})? lastJump;
+  ({int col, int row, double duration})? lastSmooth;
+  Vector2? lastCenteredWorldPoint;
+  double? lastShakeIntensity;
+  double? lastShakeDuration;
+  bool following = false;
+  int followCallCount = 0;
+  int stopFollowCallCount = 0;
+  final List<String>? eventLog;
+
+  _FakeCameraController({this.eventLog})
+    : super(camera: CameraComponent(), mapData: _map());
+
+  @override
+  void centerOnWorldPoint(Vector2 worldPoint) {
+    lastCenteredWorldPoint = worldPoint.clone();
+    eventLog?.add('focus');
+  }
+
+  @override
+  void jumpToTile(int col, int row) {
+    lastJump = (col: col, row: row);
+    eventLog?.add('focus');
+  }
+
+  @override
+  Future<void> smoothToTile(
+    int col,
+    int row, {
+    double duration = 0.48,
+    Curve curve = Curves.easeInOutCubic,
+  }) {
+    lastSmooth = (col: col, row: row, duration: duration);
+    return Future<void>.value();
+  }
+
+  @override
+  void followWorldPoint(Vector2? Function() point) {
+    following = true;
+    followCallCount++;
+  }
+
+  @override
+  void stopFollowingWorldPoint() {
+    following = false;
+    stopFollowCallCount++;
+  }
+
+  @override
+  void shake({double intensity = 8.0, double duration = 0.28}) {
+    lastShakeIntensity = intensity;
+    lastShakeDuration = duration;
+  }
+}
+
 void _registerCombatCameraTests() {
   test(
     'focuses the visible attacker before dispatching combat animation',
@@ -55,6 +111,29 @@ void _registerCombatCameraTests() {
         'hidden_attacker',
         'visible_defender',
       ]);
+      expect(harness.eventLog, ['focus', 'animate']);
+    },
+  );
+
+  test(
+    'focuses canonical attacker hex before animation after marker removal',
+    () async {
+      final harness = _CombatCameraHarness(
+        visiblePositions: {'attacker': null, 'defender': null},
+      );
+      addTearDown(harness.animationController.dispose);
+
+      await harness.dispatcher.handleEffect(
+        const PlayCombatAnimationEffect(
+          attackerUnitId: 'attacker',
+          defenderUnitId: 'defender',
+          attackerFromCol: 1,
+          attackerFromRow: 0,
+        ),
+      );
+
+      expect(harness.cameraController.lastJump, (col: 1, row: 0));
+      expect(harness.animationController.positionRequests, ['attacker']);
       expect(harness.eventLog, ['focus', 'animate']);
     },
   );

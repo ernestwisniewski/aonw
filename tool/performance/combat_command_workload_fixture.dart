@@ -6,8 +6,8 @@ final class _CombatCommandFixture {
     required this.artifacts,
     required this.mapTiles,
     required this.kernelState,
-    required this.persistentState,
     required this.domainState,
+    required this.snapshot,
   });
 
   factory _CombatCommandFixture.forScale(int scale) {
@@ -43,21 +43,6 @@ final class _CombatCommandFixture {
         ),
     ];
     final fogOfWar = _combatVisibleFog();
-    final persistent = PersistentGameState.snapshot(
-      playerColors: const {
-        _combatActorId: 0xFF112233,
-        _combatOpponentId: 0xFF445566,
-      },
-      playerCountries: const {
-        _combatActorId: PlayerCountry.poland,
-        _combatOpponentId: PlayerCountry.france,
-      },
-      playerGold: const {_combatActorId: 10, _combatOpponentId: 10},
-      units: units,
-      artifacts: artifacts,
-      fogOfWar: fogOfWar,
-      runtimeState: GameRuntimeState.snapshot(),
-    );
     final domain = DomainState.snapshot(
       turn: _combatTurn,
       matchRules: MatchRules.standard,
@@ -95,17 +80,31 @@ final class _CombatCommandFixture {
         resourceTradeAgreements: domain.resourceTradeAgreements,
         playerIds: domain.participants.map((player) => player.id),
       ),
-      persistentState: persistent,
       domainState: domain,
+      snapshot: CanonicalGameSnapshot.snapshot(
+        domain: domain,
+        session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+        metadata: GameSnapshotMetadata(
+          id: 'combat-benchmark',
+          schemaVersion: 3,
+          name: 'Combat benchmark',
+          world: const WorldReference(
+            name: 'combat-benchmark',
+            source: MapSource.asset,
+          ),
+          savedAtUtc: DateTime.utc(2026, 7, 29),
+          camera: GameSnapshotCamera.zero,
+        ),
+      ),
     );
   }
 
   final int entityCount;
   final List<WorldArtifact> artifacts;
-  final MapTileLookup mapTiles;
+  final MapReadView mapTiles;
   final CombatCommandState kernelState;
-  final PersistentGameState persistentState;
   final DomainState domainState;
+  final CanonicalGameSnapshot snapshot;
 }
 
 FogOfWarState _combatVisibleFog() {
@@ -127,7 +126,7 @@ FogOfWarState _combatVisibleFog() {
   );
 }
 
-MapTileLookup _combatMap() {
+MapReadView _combatMap() {
   return WorldMapReadView(
     WorldMap(
       cols: 5,
@@ -146,12 +145,36 @@ MapTileLookup _combatMap() {
   );
 }
 
-final class _CountingCombatMapTiles implements MapTileLookup {
+final class _CountingCombatMapTiles implements MapReadView {
   _CountingCombatMapTiles(this._delegate);
 
-  final MapTileLookup _delegate;
+  final MapReadView _delegate;
   int calls = 0;
   int hits = 0;
+
+  @override
+  int get cols => _delegate.cols;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  String? get mapName => _delegate.mapName;
+
+  @override
+  Iterable<MapObjectiveDefinition> get objectives => _delegate.objectives;
+
+  @override
+  int get rows => _delegate.rows;
+
+  @override
+  int get tileCount => _delegate.tileCount;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains => _delegate.tileTerrains;
+
+  @override
+  Iterable<MapTileView> get tileViews => _delegate.tileViews;
 
   @override
   MapTileView? tileAt(int col, int row) {
@@ -175,21 +198,21 @@ final class _CombatBoundaryExecution {
 final class _CountedCombatBoundaries {
   const _CountedCombatBoundaries({
     required this.kernel,
-    required this.persistent,
+    required this.engine,
     required this.domain,
     required this.tileLookupCalls,
     required this.tileLookupHits,
   });
 
   final _CombatBoundaryExecution kernel;
-  final _CombatBoundaryExecution persistent;
+  final _CombatBoundaryExecution engine;
   final _CombatBoundaryExecution domain;
   final Map<String, int> tileLookupCalls;
   final Map<String, int> tileLookupHits;
 
   Map<String, _CombatBoundaryExecution> get outputs => {
     'kernel': kernel,
-    'persistent': persistent,
+    'engine': engine,
     'domain': domain,
   };
 }

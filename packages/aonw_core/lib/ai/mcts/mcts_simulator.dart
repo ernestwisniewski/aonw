@@ -9,6 +9,7 @@ import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -164,9 +165,14 @@ class TracingMctsSimulator implements MctsSimulator {
     required int tick,
     required _OpponentPlanningInput input,
   }) {
-    final (:turn, :mapData, :ruleset, :engineSnapshot) = input;
-    if (_isMovementEngineCommand(command)) {
-      return _applySimulationEngineMovement(
+    final mapData = input.mapData;
+    final ruleset = input.ruleset;
+    final engineSnapshot = input.engineSnapshot;
+    final family = command is DomainCommand
+        ? GameEngine.commandFamily(command)
+        : null;
+    if (family != null) {
+      return _applySimulationEngineCommand(
         state: state,
         command: command as DomainCommand,
         actorPlayerId: actorPlayerId,
@@ -177,15 +183,6 @@ class TracingMctsSimulator implements MctsSimulator {
       );
     }
     return switch (command) {
-      AttackHexCommand() => _applyOpponentAttack(
-        state: state,
-        command: command,
-        actorPlayerId: actorPlayerId,
-        turn: turn,
-        tick: tick,
-        mapTiles: mapData,
-        ruleset: ruleset,
-      ),
       FoundCityCommand() =>
         const PersistentCityFoundingResolver()
             .foundCity(
@@ -285,42 +282,6 @@ class TracingMctsSimulator implements MctsSimulator {
     };
   }
 
-  PersistentGameState _applyOpponentAttack({
-    required PersistentGameState state,
-    required AttackHexCommand command,
-    required String actorPlayerId,
-    required int turn,
-    required int tick,
-    required MapTileLookup mapTiles,
-    required GameRuleset ruleset,
-  }) {
-    final withIntent = state.copyWith(
-      runtimeState: state.runtimeState.copyWith(
-        intendedAttacks: [
-          IntendedAttack(
-            attackerUnitId: command.attackerUnitId,
-            defenderCol: command.defenderCol,
-            defenderRow: command.defenderRow,
-            declaredAtTick: tick,
-            declaringPlayerId: actorPlayerId,
-            cityConquestAction: command.cityConquestAction,
-          ),
-        ],
-      ),
-    );
-    final result = PersistentTurnCombatResolver.resolve(
-      turn: turn,
-      state: withIntent,
-      mapTiles: mapTiles,
-      ruleset: ruleset,
-    );
-    return result.state.copyWith(
-      runtimeState: result.state.runtimeState.copyWith(
-        intendedAttacks: const [],
-      ),
-    );
-  }
-
   bool _isTerminal(GameCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
@@ -332,10 +293,6 @@ typedef _OpponentPlanningInput = ({
   GameRuleset ruleset,
   CanonicalGameSnapshot? engineSnapshot,
 });
-
-bool _isMovementEngineCommand(GameCommand command) {
-  return command is UnitDomainCommand;
-}
 
 GameView _nextMctsView(PersistentGameState state, GameView previous) {
   return GameView.fromPersistentState(
@@ -354,7 +311,7 @@ GameView _nextMctsView(PersistentGameState state, GameView previous) {
   );
 }
 
-PersistentGameState _applySimulationEngineMovement({
+PersistentGameState _applySimulationEngineCommand({
   required PersistentGameState state,
   required DomainCommand command,
   required String actorPlayerId,
@@ -366,7 +323,7 @@ PersistentGameState _applySimulationEngineMovement({
   final snapshot =
       engineSnapshot ??
       (throw StateError(
-        'MCTS unit actions require a canonical engine snapshot.',
+        'MCTS engine commands require a canonical engine snapshot.',
       ));
   return const SimulationGameEngineAdapter()
       .apply(
@@ -378,6 +335,7 @@ PersistentGameState _applySimulationEngineMovement({
         mapView: mapData,
         ruleset: ruleset,
         movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
+        combatVisibilityMode: CombatCommandVisibilityMode.unrestricted,
       )
       .state;
 }

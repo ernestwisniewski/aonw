@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 
 import 'map_boundary_source_guard.dart';
 
@@ -9,16 +10,38 @@ const combatCommandResolverPath =
 const combatCommandStatePath = '${combatLibraryPath}combat_command_state.dart';
 const combatCommandResultPath =
     '${combatLibraryPath}combat_command_result.dart';
-const combatPersistentAdapterPath =
-    '${combatLibraryPath}persistent_combat_command_resolver.dart';
 const combatDomainAdapterPath =
     '${combatLibraryPath}domain_combat_command_resolver.dart';
+const combatEngineHandlerPath =
+    'packages/aonw_core/lib/game/application/engine/'
+    'combat_engine_handler.dart';
 const combatLocalCallSite =
-    'lib/game/domain/reducer/combat/combat_reducer.dart';
+    'lib/game/application/services/local_combat_command_resolver.dart';
 const combatServerCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_combat.dart';
+    'server/lib/src/multiplayer/server_command_reducer_unit_action.dart';
 const combatPerformanceWorkloadPath =
     'tool/performance/combat_command_workload.dart';
+const combatAnimationFactCodecPath =
+    'packages/aonw_core/lib/game/application/engine/'
+    'combat_animation_fact_codec.dart';
+const combatEventCodecPath = 'lib/api/protocol/codecs.dart';
+const combatAnimationFactUpcasterPath =
+    'lib/game/presentation/replay/'
+    'historical_combat_animation_fact_upcaster.dart';
+const combatReplayEffectPlannerPath =
+    'lib/game/presentation/replay/replay_renderer_effect_planner.dart';
+const combatRendererSequenceBuilderPath =
+    'lib/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
+const combatExternalSnapshotResolverPath =
+    'lib/game/presentation/providers/game/'
+    'external_snapshot_renderer_effect_resolver.dart';
+const combatGameActionsProviderPath =
+    'lib/game/presentation/providers/game/game_actions_provider.dart';
+const combatHiddenAiPlaybackPath =
+    'lib/game/presentation/services/hidden_ai_renderer_playback.dart';
+const combatGameStateRendererEffectsPath =
+    'lib/game/presentation/providers/game/'
+    'game_state_provider_renderer_effects.dart';
 const persistentTurnCombatResolverPath =
     'packages/aonw_core/lib/game/domain/turn/'
     'persistent_turn_combat_resolver.dart';
@@ -32,12 +55,7 @@ const combatCommandKernelPaths = {
   combatCommandResultPath,
 };
 
-const combatCommandRuntimeCallSites = {
-  combatPersistentAdapterPath,
-  combatDomainAdapterPath,
-  combatLocalCallSite,
-  combatServerCallSite,
-};
+const combatCommandRuntimeCallSites = {combatDomainAdapterPath};
 
 const combatCommandAllCallSites = {
   ...combatCommandRuntimeCallSites,
@@ -150,6 +168,76 @@ List<String> removedPersistentCombatBridgeViolations(
       ..addAll(_persistentCombatBridgeDeclarationViolations(unit, entry.key));
   }
   return violations..sort();
+}
+
+List<String> staticCallNamedArgumentViolations(
+  Map<String, String> sources, {
+  required String targetType,
+  required String methodName,
+  required String argumentName,
+  required Map<String, int> expectedCalls,
+}) {
+  final violations = <String>[];
+  final actualCalls = <String, int>{};
+  final targetTypes = typeNamesBackedBy(sources, {targetType});
+  for (final entry in sources.entries) {
+    final unit = parseString(content: entry.value, path: entry.key).unit;
+    final collector = _StaticMethodInvocationCollector(targetTypes, methodName);
+    unit.accept(collector);
+    if (collector.invocations.isNotEmpty) {
+      actualCalls[entry.key] = collector.invocations.length;
+    }
+    for (final invocation in collector.invocations) {
+      final namedArguments = invocation.argumentList.arguments
+          .whereType<NamedExpression>()
+          .where((argument) => argument.name.label.name == argumentName)
+          .length;
+      if (namedArguments == 1) continue;
+      final line = unit.lineInfo
+          .getLocation(invocation.methodName.offset)
+          .lineNumber;
+      violations.add(
+        '${entry.key}:$line $targetType.$methodName must pass exactly one '
+        '$argumentName named argument',
+      );
+    }
+  }
+  if (!_sameCounts(actualCalls, expectedCalls)) {
+    violations.add(
+      '$targetType.$methodName call inventory changed: '
+      'expected $expectedCalls, found $actualCalls',
+    );
+  }
+  return violations..sort();
+}
+
+bool _sameCounts(Map<String, int> actual, Map<String, int> expected) {
+  if (actual.length != expected.length) return false;
+  for (final entry in expected.entries) {
+    if (actual[entry.key] != entry.value) return false;
+  }
+  return true;
+}
+
+final class _StaticMethodInvocationCollector extends RecursiveAstVisitor<void> {
+  _StaticMethodInvocationCollector(this.targetTypes, this.methodName);
+
+  final Set<String> targetTypes;
+  final String methodName;
+  final List<MethodInvocation> invocations = [];
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final target = node.target?.toSource();
+    if (node.methodName.name == methodName &&
+        target != null &&
+        targetTypes.any(
+          (type) => target == type || target.endsWith('.$type'),
+        )) {
+      invocations.add(node);
+    }
+    super.visitMethodInvocation(node);
+  }
 }
 
 Iterable<String> _persistentCombatBridgeDeclarationViolations(

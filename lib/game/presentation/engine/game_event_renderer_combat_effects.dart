@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/combat_hex_alert_effect_factory.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -19,6 +20,7 @@ abstract final class GameEventRendererCombatEffects {
     CombatResolvedEvent event, {
     String? viewerPlayerId,
     int? turn,
+    CombatAnimationFact? animationFact,
   }) {
     final attacker =
         (previousState ?? state).unitById(event.attackerUnitId) ??
@@ -59,15 +61,7 @@ abstract final class GameEventRendererCombatEffects {
     if (!combatVisible) return const [];
 
     final effects = <RendererEffect>[
-      PlayCombatAnimationEffect(
-        attackerUnitId: event.attackerUnitId,
-        defenderUnitId: event.defenderUnitId,
-        attackerKilled: event.outcome.attackerKilled,
-        defenderKilled: event.outcome.defenderKilled,
-        defenderRetaliated: event.outcome.steps.any(
-          (step) => step is RetaliationStep,
-        ),
-      ),
+      ..._combatAnimationEffects(event, animationFact),
       const ShakeCameraEffect(),
     ];
     var defenderDamage = 0;
@@ -346,4 +340,31 @@ abstract final class GameEventRendererCombatEffects {
       state.colorForPlayer(playerId) ?? Player.palette.first,
     );
   }
+}
+
+List<RendererEffect> _combatAnimationEffects(
+  CombatResolvedEvent event,
+  CombatAnimationFact? animationFact,
+) {
+  if (animationFact == null) return const [];
+  return [_combatAnimationEffect(event, animationFact)];
+}
+
+PlayCombatAnimationEffect _combatAnimationEffect(
+  CombatResolvedEvent event,
+  CombatAnimationFact animationFact,
+) {
+  return PlayCombatAnimationEffect(
+    attackerUnitId: event.attackerUnitId,
+    defenderUnitId: event.defenderUnitId,
+    attackerFromCol: animationFact.attackerFromCol,
+    attackerFromRow: animationFact.attackerFromRow,
+    attackerToCol: animationFact.attackerToCol,
+    attackerToRow: animationFact.attackerToRow,
+    attackerKilled: event.outcome.attackerKilled,
+    defenderKilled: event.outcome.defenderKilled,
+    defenderRetaliated: event.outcome.steps.any(
+      (step) => step is RetaliationStep,
+    ),
+  );
 }

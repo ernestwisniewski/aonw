@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/advance_turn_snapshot.dart';
+import 'package:aonw/game/application/services/local_combat_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/application/services/local_unit_action_command_resolver.dart';
@@ -18,6 +19,7 @@ class LocalCommandResolution {
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
+  final List<CombatAnimationFact> combatAnimations;
   final GameCommandContext context;
 
   const LocalCommandResolution({
@@ -26,6 +28,7 @@ class LocalCommandResolution {
     required this.events,
     required this.uiEffects,
     required this.context,
+    this.combatAnimations = const [],
   });
 }
 
@@ -44,9 +47,7 @@ class LocalCommandResolver {
         LocalMovementPresentationOrigin.direct,
   }) {
     final effectiveContext = _effectiveContext(baseSnapshot, context);
-    final engineFamily = command is DomainCommand
-        ? GameEngine.commandFamily(command)
-        : null;
+    final engineFamily = _engineFamily(command);
     if (engineFamily == GameEngineCommandFamily.unitAction) {
       return _resolveUnitAction(
         baseSnapshot: baseSnapshot,
@@ -64,6 +65,27 @@ class LocalCommandResolver {
         savedAt: savedAt,
         context: effectiveContext,
         presentationOrigin: movementPresentationOrigin,
+      );
+    }
+    if (engineFamily == GameEngineCommandFamily.combat) {
+      final combat =
+          LocalCombatCommandResolver(
+            mapView: reducer.mapData,
+            ruleset: reducer.ruleset,
+          ).resolve(
+            baseSnapshot: baseSnapshot,
+            currentState: currentState,
+            command: command as AttackHexCommand,
+            savedAt: savedAt,
+            context: effectiveContext,
+          );
+      return LocalCommandResolution(
+        snapshot: combat.snapshot,
+        state: combat.state,
+        events: combat.events,
+        uiEffects: combat.uiEffects,
+        context: effectiveContext,
+        combatAnimations: combat.combatAnimations,
       );
     }
     return _resolveReducerCommand(
@@ -295,6 +317,9 @@ class LocalCommandResolver {
         baseSnapshot.session.hasSubmitted(command.playerId);
   }
 }
+
+GameEngineCommandFamily? _engineFamily(GameCommand command) =>
+    command is DomainCommand ? GameEngine.commandFamily(command) : null;
 
 class _ResolvedLocalCommand {
   final SaveSnapshot snapshot;

@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 typedef HiddenAiRendererStateReader = GameState? Function();
@@ -41,6 +42,7 @@ final class HiddenAiRendererPlayback {
     required GameState commandState,
     required Iterable<UiEffect> uiEffects,
     required Iterable<GameEvent> events,
+    Iterable<CombatAnimationFact> combatAnimations = const [],
     int? turn,
   }) async {
     final rendererState = withActionContext(
@@ -54,6 +56,7 @@ final class HiddenAiRendererPlayback {
       previousState: previousRendererState,
       l10n: localizationReader(),
       turn: turn,
+      combatAnimations: combatAnimations,
     );
 
     if (rendererEffects.isNotEmpty) {

@@ -123,7 +123,6 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       );
       return;
     }
-
     final step = widget.timeline.steps[targetIndex - 1];
     final previousState = _displayState(step.previousState);
     final effects = ReplayRendererEffectPlanner.effectsForStep(
@@ -131,6 +130,7 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       events: step.events,
       state: state,
       previousState: previousState,
+      combatAnimations: step.combatAnimations,
       l10n: widget.l10n,
     );
     if (_shouldFastForwardStep(step, effects, state, previousState)) {

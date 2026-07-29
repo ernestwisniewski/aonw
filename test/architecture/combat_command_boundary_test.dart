@@ -16,13 +16,7 @@ void main() {
           'CombatCommandResolver',
           'resolve',
         ),
-        const {
-          combatPersistentAdapterPath: 1,
-          combatDomainAdapterPath: 1,
-          combatLocalCallSite: 1,
-          combatServerCallSite: 1,
-          combatPerformanceWorkloadPath: 1,
-        },
+        const {combatDomainAdapterPath: 1, combatPerformanceWorkloadPath: 1},
         reason: 'Unexpected CombatCommandResolver.resolve call-sites.',
       );
       expect(
@@ -30,13 +24,7 @@ void main() {
           sources,
           'CombatCommandResolver',
         ),
-        const {
-          combatPersistentAdapterPath: 1,
-          combatDomainAdapterPath: 1,
-          combatLocalCallSite: 1,
-          combatServerCallSite: 1,
-          combatPerformanceWorkloadPath: 1,
-        },
+        const {combatDomainAdapterPath: 1, combatPerformanceWorkloadPath: 1},
         reason:
             'Every resolver construction must stay inside its exact reviewed '
             'call-site.',
@@ -56,12 +44,7 @@ void main() {
       };
       expect(
         movementNamedMemberReferenceCountsByPath(runtimeReviewed, 'resolve'),
-        const {
-          combatPersistentAdapterPath: 1,
-          combatDomainAdapterPath: 1,
-          combatLocalCallSite: 1,
-          combatServerCallSite: 1,
-        },
+        const {combatDomainAdapterPath: 1},
         reason:
             'A reviewed runtime boundary must contain only its one kernel '
             'resolve reference.',
@@ -71,78 +54,65 @@ void main() {
           combatPerformanceWorkloadPath:
               sources[combatPerformanceWorkloadPath]!,
         }, 'resolve'),
-        const {combatPerformanceWorkloadPath: 3},
+        const {combatPerformanceWorkloadPath: 2},
         reason:
             'The combat workload must benchmark exactly the neutral, '
-            'persistent, and domain resolver boundaries.',
+            'domain, and GameEngine boundaries.',
       );
     });
 
-    test('legacy adapters have no runtime routing consumers', () {
-      final sources = productionDartSources();
-      final runtime = combatCommandRuntimeSources(sources);
+    test(
+      'legacy adapter is removed and canonical adapter has one consumer',
+      () {
+        final sources = productionDartSources();
+        final runtime = combatCommandRuntimeSources(sources);
 
-      for (final adapter in const {
-        'PersistentCombatCommandResolver',
-        'DomainCombatCommandResolver',
-      }) {
+        expect(
+          sources.keys,
+          isNot(contains(endsWith('persistent_combat_command_resolver.dart'))),
+        );
+
         expect(
           movementInstanceMemberReferenceCountsByPath(
             runtime,
-            adapter,
+            'DomainCombatCommandResolver',
             'resolve',
           ),
-          isEmpty,
-          reason: '$adapter must not route a runtime command.',
+          const {combatEngineHandlerPath: 1},
+          reason:
+              'The canonical combat adapter must have exactly one GameEngine '
+              'consumer.',
         );
         expect(
-          movementConstructionReferenceCountsByPath(runtime, adapter),
-          isEmpty,
-          reason: '$adapter must not be constructed by runtime production.',
+          movementConstructionReferenceCountsByPath(
+            runtime,
+            'DomainCombatCommandResolver',
+          ),
+          const {combatEngineHandlerPath: 1},
         );
-        expect(
-          staticMemberReferenceCountsByPath(runtime, adapter, 'resolve'),
-          isEmpty,
-          reason: '$adapter must not gain a static runtime route.',
-        );
-      }
 
-      final workload = {
-        combatPerformanceWorkloadPath: sources[combatPerformanceWorkloadPath]!,
-      };
-      for (final adapter in const {
-        'PersistentCombatCommandResolver',
-        'DomainCombatCommandResolver',
-      }) {
+        final workload = {
+          combatPerformanceWorkloadPath:
+              sources[combatPerformanceWorkloadPath]!,
+        };
         expect(
           movementInstanceMemberReferenceCountsByPath(
             workload,
-            adapter,
+            'DomainCombatCommandResolver',
             'resolve',
           ),
           {combatPerformanceWorkloadPath: 1},
         );
-        expect(movementConstructionReferenceCountsByPath(workload, adapter), {
-          combatPerformanceWorkloadPath: 1,
-        });
-      }
-
-      final forbiddenAdapterTypes = typeNamesBackedBy(sources, const {
-        'PersistentCombatCommandResolver',
-        'PersistentCombatCommandResult',
-      });
-      for (final path in const {combatLocalCallSite, combatServerCallSite}) {
         expect(
-          namedTypeReferencesInSource(
-            sources[path]!,
-            path: path,
-          ).intersection(forbiddenAdapterTypes),
-          isEmpty,
-          reason: '$path must not restore the persistent combat adapter.',
+          movementConstructionReferenceCountsByPath(
+            workload,
+            'DomainCombatCommandResolver',
+          ),
+          {combatPerformanceWorkloadPath: 1},
         );
-      }
-      expect(removedPersistentCombatBridgeViolations(sources), isEmpty);
-    });
+        expect(removedPersistentCombatBridgeViolations(sources), isEmpty);
+      },
+    );
 
     test('turn combat has exactly three canonical orchestration sites', () {
       final sources = productionDartSources();
@@ -181,6 +151,53 @@ void main() {
         isEmpty,
       );
       expect(combatCommandKernelBoundaryViolations(sources), isEmpty);
+    });
+
+    test('combat engine-family routing has an exact reviewed inventory', () {
+      final sources = productionDartSources();
+
+      expect(
+        staticMemberReferenceCountsByPath(
+          sources,
+          'GameEngineCommandFamily',
+          'combat',
+        ),
+        const {
+          'lib/game/application/services/'
+                  'accepted_engine_command_interaction_source.dart':
+              2,
+          'lib/game/application/services/local_command_resolver.dart': 1,
+          'packages/aonw_core/lib/game/application/engine/game_engine.dart': 2,
+        },
+        reason:
+            'Every combat family branch must remain an explicit reviewed '
+            'GameEngine route.',
+      );
+      expect(
+        movementInstanceMemberReferenceCountsByPath(
+          sources,
+          'CombatReducer',
+          'attackHex',
+        ),
+        isEmpty,
+        reason: 'Authoritative combat must not return to the UI reducer.',
+      );
+      expect(
+        sources.containsKey(
+          'server/lib/src/multiplayer/server_command_reducer_combat.dart',
+        ),
+        isFalse,
+        reason: 'Server combat must stay in the shared engine composition.',
+      );
+      final legacyServerBridge = [
+        for (final entry in sources.entries)
+          ...sourceSymbolReferenceViolations(
+            entry.value,
+            entry.key,
+            symbol: '_applyCombatCommand',
+          ),
+      ];
+      expect(legacyServerBridge, isEmpty);
     });
   });
 

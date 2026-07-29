@@ -353,7 +353,7 @@ class _PreparedPlayer {
   }
 
   _ExecutionRun _executePlan(AiTurnPlan plan) {
-    final dispatcher = _BenchmarkCommandDispatcher(
+    final dispatcher = BenchmarkCommandDispatcher(
       snapshot: snapshot.canonical,
       mapView: context.mapData,
       ruleset: context.ruleset,

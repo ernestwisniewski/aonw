@@ -51,6 +51,10 @@ class AnimateUnitMoveEffect extends RendererEffect {
 class PlayCombatAnimationEffect extends RendererEffect {
   final String attackerUnitId;
   final String defenderUnitId;
+  final int? attackerFromCol;
+  final int? attackerFromRow;
+  final int? attackerToCol;
+  final int? attackerToRow;
   final bool attackerKilled;
   final bool defenderKilled;
   final bool defenderRetaliated;
@@ -58,6 +62,10 @@ class PlayCombatAnimationEffect extends RendererEffect {
   const PlayCombatAnimationEffect({
     required this.attackerUnitId,
     required this.defenderUnitId,
+    this.attackerFromCol,
+    this.attackerFromRow,
+    this.attackerToCol,
+    this.attackerToRow,
     this.attackerKilled = false,
     this.defenderKilled = false,
     this.defenderRetaliated = true,

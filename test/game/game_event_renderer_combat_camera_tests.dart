@@ -41,12 +41,23 @@ void _registerCityCombatCameraEffectTests() {
       state: state,
       previousState: previousState,
       turn: 31,
+      combatAnimations: [
+        combatAnimationFact(
+          attackerId: 'attacker',
+          defenderId: 'defender',
+          fromCol: 2,
+          fromRow: 3,
+          toCol: 4,
+          toRow: 5,
+        ),
+      ],
     );
 
     final combat = effects[0] as PlayCombatAnimationEffect;
     expect(combat.attackerUnitId, 'attacker');
     expect(combat.defenderUnitId, 'defender');
     expect(combat.defenderRetaliated, isTrue);
+    expect((combat.attackerFromCol, combat.attackerFromRow), (2, 3));
 
     final shake = effects[1] as ShakeCameraEffect;
     expect(shake.intensity, 8.0);
@@ -126,6 +137,16 @@ void _registerCityCombatCameraEffectTests() {
       ],
       state: state,
       previousState: previousState,
+      combatAnimations: [
+        combatAnimationFact(
+          attackerId: 'attacker',
+          defenderId: 'city_1',
+          fromCol: 2,
+          fromRow: 3,
+          toCol: 4,
+          toRow: 5,
+        ),
+      ],
     );
 
     expect(effects[0], isA<PlayCombatAnimationEffect>());
@@ -219,7 +240,7 @@ void _registerCityCombatCameraEffectTests() {
     expect(focus.col, 4);
     expect(focus.row, 5);
     expect(focus.duration, 0.36);
-    expect(effects[1], isA<PlayCombatAnimationEffect>());
-    expect(effects[2], isA<ShakeCameraEffect>());
+    expect(effects.whereType<PlayCombatAnimationEffect>(), isEmpty);
+    expect(effects[1], isA<ShakeCameraEffect>());
   });
 }

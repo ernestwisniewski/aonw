@@ -36,3 +36,265 @@ WireMovementExecutionList _twoStepMovementExecutions(String unitId) {
     ),
   ]);
 }
+
+void _registerEngineFamilyRoutingTests() {
+  for (final fixture in [
+    (
+      name: 'movement',
+      command: const MoveUnitCommand('attacker', 1, 0) as DomainCommand,
+    ),
+    (
+      name: 'combat',
+      command: const AttackHexCommand('attacker', 1, 0) as DomainCommand,
+    ),
+  ]) {
+    test('routes accepted ${fixture.name} through its engine family without '
+        'the legacy reducer', () async {
+      final attacker = GameUnit.produced(
+        id: 'attacker',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        col: 0,
+        row: 0,
+      );
+      final defender = GameUnit.produced(
+        id: 'defender',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.warrior,
+        col: 1,
+        row: 0,
+      );
+      final before = GameState(
+        units: [attacker, defender],
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+        interaction: const GameInteractionState(
+          pendingAction: PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'attacker',
+            defenderCol: 1,
+            defenderRow: 0,
+          ),
+        ),
+      );
+      final after = before.copyWith(
+        units: fixture.name == 'movement'
+            ? [attacker.copyWith(col: 1, row: 0), defender]
+            : [attacker],
+        interaction: const GameInteractionState(),
+      );
+      final snapshot = SaveSnapshot.fromGameState(
+        save: _save(),
+        state: after,
+        eventLogOffset: 1,
+      );
+      const snapshotCodec = SnapshotCodec();
+      final dispatcher = _ScriptedCommandDispatcher(
+        (sentCommand) => WireCommandAck(
+          matchId: sentCommand.saveId,
+          accepted: true,
+          offset: 1,
+          snapshot: snapshotCodec.toWire(
+            matchId: sentCommand.saveId,
+            snapshot: snapshot,
+          ),
+          events: fixture.name == 'combat'
+              ? _projectedCombatEventPayloads()
+              : const [],
+          movementExecutions: WireMovementExecutionList(const []),
+        ),
+      );
+      final reducer = _FailingAuthoritativeReducer();
+      final transport = NetworkCommandTransport(
+        commandDispatcher: dispatcher,
+        token: AuthToken('jwt-token'),
+        actorPlayerId: 'player_1',
+        tickGenerator: ClientTickGenerator(),
+        localReducer: reducer,
+        gameRepository: _SnapshotRepository(
+          SaveSnapshot.fromGameState(
+            save: _save(),
+            state: before,
+            eventLogOffset: 0,
+          ),
+        ),
+      );
+
+      final result = await transport.dispatch(
+        saveId: 'save_1',
+        currentState: before,
+        command: fixture.command,
+      );
+
+      expect(reducer.calls, 0);
+      expect(result.snapshot?.eventLogOffset, snapshot.eventLogOffset);
+      if (fixture.name == 'combat') {
+        expect(result.state.pendingAction, isNull);
+        expect(result.combatAnimations, const [
+          CombatAnimationFact(
+            eventIndex: 0,
+            attackerUnitId: 'attacker',
+            defenderId: 'defender',
+            attackerFromCol: 0,
+            attackerFromRow: 0,
+            attackerToCol: 1,
+            attackerToRow: 0,
+          ),
+        ]);
+      }
+    });
+  }
+}
+
+List<Map<String, dynamic>> _projectedCombatEventPayloads() {
+  return [
+    {
+      'type': 'CombatResolved',
+      'attackerUnitId': 'attacker',
+      'defenderUnitId': 'defender',
+      'outcome': {
+        'attackerUnitId': 'attacker',
+        'defenderUnitId': 'defender',
+        'attackerHpAfter': 10,
+        'defenderHpAfter': 0,
+        'attackerKilled': false,
+        'defenderKilled': true,
+        'defenderRetreated': false,
+        'steps': [
+          {'type': 'Attack', 'damage': 1, 'active': <String>[]},
+        ],
+      },
+      CombatAnimationFactCodec.eventPayloadKey: CombatAnimationFactCodec.toJson(
+        const CombatAnimationFact(
+          eventIndex: 0,
+          attackerUnitId: 'attacker',
+          defenderId: 'defender',
+          attackerFromCol: 0,
+          attackerFromRow: 0,
+          attackerToCol: 1,
+          attackerToRow: 0,
+        ),
+      ),
+    },
+  ];
+}
+
+final class _FailingAuthoritativeReducer extends GameStateReducer {
+  _FailingAuthoritativeReducer() : super(mapData: _map());
+
+  var calls = 0;
+
+  @override
+  GameStateTransition reduce(
+    GameState state,
+    GameCommand command, {
+    GameCommandContext context = const GameCommandContext(),
+  }) {
+    calls += 1;
+    throw StateError('Migrated engine command reached the legacy reducer.');
+  }
+}
+
+class _FakeCommandServer implements WireCommandDispatcher {
+  final GameStateReducer reducer = GameStateReducer(mapData: _map());
+  final CommandCodec commandCodec = const CommandCodec();
+  final EventCodec eventCodec = const EventCodec();
+  final SnapshotCodec snapshotCodec = const SnapshotCodec();
+  final List<_SentCommand> sentCommands = [];
+  GameSave save;
+  GameState state;
+  SaveSnapshot? nextAcceptedSnapshot;
+  WireMovementExecutionList nextMovementExecutions;
+  WireCommandAck? lastAck;
+  Object? nextError;
+  int offset = 0;
+
+  _FakeCommandServer({
+    required this.save,
+    required this.state,
+    this.nextAcceptedSnapshot,
+    WireMovementExecutionList? nextMovementExecutions,
+    this.nextError,
+  }) : nextMovementExecutions =
+           nextMovementExecutions ?? WireMovementExecutionList(const []);
+
+  @override
+  Future<WireCommandAck> send({
+    required String saveId,
+    required AuthToken token,
+    required int afterOffset,
+    required WireCommand wire,
+    required String clientMessageId,
+  }) async {
+    sentCommands.add(
+      _SentCommand(
+        saveId: saveId,
+        token: token,
+        afterOffset: afterOffset,
+        wire: wire,
+        clientMessageId: clientMessageId,
+      ),
+    );
+    final error = nextError;
+    if (error != null) {
+      nextError = null;
+      throw error;
+    }
+    offset += 1;
+
+    final command = commandCodec.fromWire(wire);
+    final context = commandCodec.contextFromWire(wire);
+    final resolution = GameEngine.commandFamily(command) != null
+        ? LocalCommandResolver(reducer: reducer).resolve(
+            baseSnapshot: snapshot,
+            currentState: state,
+            command: command,
+            savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
+            context: context,
+          )
+        : null;
+    final transition = resolution == null
+        ? reducer.reduce(state, command, context: context)
+        : GameStateTransition(
+            state: resolution.state,
+            events: resolution.events,
+            uiEffects: resolution.uiEffects,
+          );
+    final movementExecutions = nextMovementExecutions;
+    nextMovementExecutions = WireMovementExecutionList(const []);
+    state = transition.state;
+    final nextSnapshot =
+        nextAcceptedSnapshot ??
+        resolution?.snapshot.copyWith(eventLogOffset: offset) ??
+        SaveSnapshot.fromGameState(
+          save: save.copyWith(
+            savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
+          ),
+          state: state,
+          eventLogOffset: offset,
+        );
+    nextAcceptedSnapshot = null;
+    save = nextSnapshot.save;
+    state = nextSnapshot.toGameState(
+      activePlayerId: state.activePlayerId,
+      activePlayerCanAct: state.activePlayerCanAct,
+    );
+    return lastAck = WireCommandAck(
+      matchId: wire.matchId,
+      accepted: true,
+      offset: offset,
+      snapshot: snapshotCodec.toWire(
+        matchId: wire.matchId,
+        snapshot: nextSnapshot,
+      ),
+      events: eventCodec.eventsToJsonList(transition.events),
+      movementExecutions: movementExecutions,
+    );
+  }
+
+  SaveSnapshot get snapshot => SaveSnapshot.fromGameState(
+    save: save,
+    state: state,
+    eventLogOffset: offset,
+  );
+}

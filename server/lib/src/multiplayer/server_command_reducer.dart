@@ -11,7 +11,6 @@ part 'server_command_reducer_artifact.dart';
 part 'server_command_reducer_city.dart';
 part 'server_command_reducer_city_expansion.dart';
 part 'server_command_reducer_city_founding.dart';
-part 'server_command_reducer_combat.dart';
 part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_interaction.dart';
 part 'server_command_reducer_map_cache.dart';
@@ -181,6 +180,7 @@ class ServerCommandReducer {
       case DetachTroopCommand():
       case SkipUnitTurnCommand():
       case FortifyUnitCommand():
+      case AttackHexCommand():
         return _applyDomainCommandEngine(
           snapshot,
           command as DomainCommand,
@@ -188,15 +188,6 @@ class ServerCommandReducer {
           commandTick,
           loadedMap.mapView,
           ruleset,
-        );
-      case AttackHexCommand():
-        return _applyCombatCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          commandTick: commandTick,
-          mapTiles: loadedMap.mapView,
-          ruleset: ruleset,
         );
       case OpenResourceTradeCommand():
         return _applyOpenResourceTrade(
@@ -381,24 +372,29 @@ class _CommandApplication {
     required this.snapshot,
     this.events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
+    Iterable<CombatAnimationFact> combatAnimations = const [],
     this.reason,
-  }) : movementExecutions = _ownedList(movementExecutions);
+  }) : movementExecutions = _ownedList(movementExecutions),
+       combatAnimations = _ownedList(combatAnimations);
 
   final bool accepted;
   final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
   final List<MovementCommandExecution> movementExecutions;
+  final List<CombatAnimationFact> combatAnimations;
   final String? reason;
 
   factory _CommandApplication.accept({
     required CanonicalGameSnapshot snapshot,
     List<GameEvent> events = const [],
     Iterable<MovementCommandExecution> movementExecutions = const [],
+    Iterable<CombatAnimationFact> combatAnimations = const [],
   }) => _CommandApplication(
     accepted: true,
     snapshot: snapshot,
     events: events,
     movementExecutions: movementExecutions,
+    combatAnimations: combatAnimations,
   );
 
   factory _CommandApplication.reject({
@@ -414,6 +410,7 @@ class _CommandApplication {
       snapshot: nextSnapshot,
       events: events,
       movementExecutions: movementExecutions,
+      combatAnimations: combatAnimations,
       reason: reason,
     );
   }

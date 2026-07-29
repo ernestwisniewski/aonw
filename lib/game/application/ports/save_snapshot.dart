@@ -12,6 +12,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
+part 'save_snapshot_combat_engine_projection.dart';
+
 const _saveSnapshotAdapter = LegacyGameSnapshotAdapter();
 
 /// Frozen, lossless application boundary for persisted and wire snapshots.

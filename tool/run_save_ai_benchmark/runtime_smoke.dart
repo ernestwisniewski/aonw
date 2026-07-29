@@ -352,8 +352,8 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
       RuntimeSmokeOffsetSequence(
         initialOffset: repository.snapshot.eventLogOffset,
       );
-  late final _BenchmarkCommandDispatcher _dispatcher =
-      _BenchmarkCommandDispatcher(
+  late final BenchmarkCommandDispatcher _dispatcher =
+      BenchmarkCommandDispatcher(
         snapshot: repository.snapshot.canonical,
         mapView: mapView,
         ruleset: ruleset,

@@ -33,61 +33,6 @@ MapData _map() => MapData(
   ],
 );
 
-class _FakeCameraController extends GameCameraController {
-  ({int col, int row})? lastJump;
-  ({int col, int row, double duration})? lastSmooth;
-  Vector2? lastCenteredWorldPoint;
-  double? lastShakeIntensity;
-  double? lastShakeDuration;
-  bool following = false;
-  int followCallCount = 0;
-  int stopFollowCallCount = 0;
-  final List<String>? eventLog;
-
-  _FakeCameraController({this.eventLog})
-    : super(camera: CameraComponent(), mapData: _map());
-
-  @override
-  void centerOnWorldPoint(Vector2 worldPoint) {
-    lastCenteredWorldPoint = worldPoint.clone();
-    eventLog?.add('focus');
-  }
-
-  @override
-  void jumpToTile(int col, int row) {
-    lastJump = (col: col, row: row);
-  }
-
-  @override
-  Future<void> smoothToTile(
-    int col,
-    int row, {
-    double duration = 0.48,
-    Curve curve = Curves.easeInOutCubic,
-  }) {
-    lastSmooth = (col: col, row: row, duration: duration);
-    return Future<void>.value();
-  }
-
-  @override
-  void followWorldPoint(Vector2? Function() point) {
-    following = true;
-    followCallCount++;
-  }
-
-  @override
-  void stopFollowingWorldPoint() {
-    following = false;
-    stopFollowCallCount++;
-  }
-
-  @override
-  void shake({double intensity = 8.0, double duration = 0.28}) {
-    lastShakeIntensity = intensity;
-    lastShakeDuration = duration;
-  }
-}
-
 class _FakeUnitMarkerLayer extends UnitMarkerLayer {
   _FakeUnitMarkerLayer()
     : super(mapData: _map(), colorForPlayer: (_) => 0xFF0000FF);

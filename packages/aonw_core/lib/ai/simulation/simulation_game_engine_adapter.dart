@@ -1,8 +1,10 @@
 import 'package:aonw_core/application.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -36,6 +38,8 @@ final class SimulationGameEngineAdapter {
     required GameRuleset ruleset,
     MovementCommandVisibilityMode movementVisibilityMode =
         MovementCommandVisibilityMode.authoritative,
+    CombatCommandVisibilityMode combatVisibilityMode =
+        CombatCommandVisibilityMode.authoritative,
   }) {
     final engineInput = _engineInput(snapshot: snapshot, state: state);
     final result = const GameEngine().apply(
@@ -47,6 +51,7 @@ final class SimulationGameEngineAdapter {
         ruleset: ruleset,
         commandTick: commandTick,
         movementVisibilityMode: movementVisibilityMode,
+        combatVisibilityMode: combatVisibilityMode,
       ),
     );
     if (result is GameEngineRejected) {
@@ -80,40 +85,44 @@ final class SimulationGameEngineAdapter {
     required List<GameEvent> events,
   }) {
     final domain = resultSnapshot.domain;
-    final unitsChanged = !identical(domain.units, engineInput.domain.units);
-    final artifactsChanged = !identical(
-      domain.artifacts,
-      engineInput.domain.artifacts,
-    );
-    final fogChanged = !identical(domain.fogOfWar, engineInput.domain.fogOfWar);
-    final diplomacyChanged = !identical(
-      domain.diplomacy,
-      engineInput.domain.diplomacy,
-    );
-    final interactionChanged = !identical(
-      resultSnapshot.interaction,
-      engineInput.interaction,
-    );
-    var runtime = state.runtimeState;
-    if (diplomacyChanged) {
-      runtime = runtime.copyWith(diplomacy: domain.diplomacy);
-    }
-    if (interactionChanged) {
-      runtime = runtime.copyWith(
-        cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
-        pendingAction: resultSnapshot.interaction.pendingAction,
-      );
-    }
     return SimulationGameEngineResult(
       accepted: true,
       snapshot: resultSnapshot,
       events: events,
       state: state.copyWith(
-        units: unitsChanged ? domain.units : null,
-        artifacts: artifactsChanged ? domain.artifacts : null,
-        fogOfWar: fogChanged ? domain.fogOfWar : null,
-        runtimeState: diplomacyChanged || interactionChanged ? runtime : null,
+        units: _replacement(domain.units, engineInput.domain.units),
+        cities: _replacement(domain.cities, engineInput.domain.cities),
+        artifacts: _replacement(domain.artifacts, engineInput.domain.artifacts),
+        fogOfWar: _replacement(domain.fogOfWar, engineInput.domain.fogOfWar),
+        runtimeState: _projectRuntime(
+          state.runtimeState,
+          engineInput,
+          resultSnapshot,
+        ),
       ),
+    );
+  }
+
+  GameRuntimeState? _projectRuntime(
+    GameRuntimeState runtime,
+    CanonicalGameSnapshot engineInput,
+    CanonicalGameSnapshot resultSnapshot,
+  ) {
+    final input = engineInput.domain;
+    final result = resultSnapshot.domain;
+    final changed = [
+      !identical(result.diplomacy, input.diplomacy),
+      !identical(result.intendedAttacks, input.intendedAttacks),
+      !identical(result.resourceTradeAgreements, input.resourceTradeAgreements),
+      !identical(resultSnapshot.interaction, engineInput.interaction),
+    ].contains(true);
+    if (!changed) return null;
+    return runtime.copyWith(
+      diplomacy: result.diplomacy,
+      intendedAttacks: result.intendedAttacks,
+      resourceTradeAgreements: result.resourceTradeAgreements,
+      cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
+      pendingAction: resultSnapshot.interaction.pendingAction,
     );
   }
 
@@ -161,3 +170,6 @@ final class SimulationGameEngineAdapter {
     );
   }
 }
+
+T? _replacement<T extends Object>(T next, T current) =>
+    identical(next, current) ? null : next;

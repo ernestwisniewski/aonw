@@ -24,6 +24,7 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
         snapshot: result.snapshot,
         events: result.events,
         movementExecutions: result.movementDelta.executions,
+        combatAnimations: result.combatAnimations,
       ),
       final GameEngineRejected rejected => _CommandApplication.reject(
         snapshot: snapshot,

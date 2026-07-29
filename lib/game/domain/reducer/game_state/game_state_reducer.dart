@@ -164,7 +164,6 @@ class GameStateReducer {
         state,
         command,
       ),
-      AttackHexCommand() => environment.attackHex(state, command),
       StartCommanderMergeSelectionCommand() =>
         environment.startCommanderMergeSelection(state, command),
       CancelCommanderMergeSelectionCommand() =>

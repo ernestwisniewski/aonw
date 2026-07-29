@@ -139,6 +139,7 @@ class LocalCommandTransport implements CommandTransport {
       state: resolved.state,
       uiEffects: resolved.uiEffects,
       events: resolved.events,
+      combatAnimations: resolved.combatAnimations,
       snapshot: snapshot,
       offset: offset,
       storedSnapshot: storedSnapshot,

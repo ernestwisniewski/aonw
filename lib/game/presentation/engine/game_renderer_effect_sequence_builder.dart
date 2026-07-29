@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
 
 abstract final class GameRendererEffectSequenceBuilder {
@@ -12,6 +13,7 @@ abstract final class GameRendererEffectSequenceBuilder {
     GameState? previousState,
     AppLocalizations? l10n,
     int? turn,
+    Iterable<CombatAnimationFact> combatAnimations = const [],
   }) {
     final visibleCommandEffects = commandEffects.toList(growable: false);
     final commandCombatKeys = {
@@ -19,13 +21,16 @@ abstract final class GameRendererEffectSequenceBuilder {
           in visibleCommandEffects.whereType<PlayCombatAnimationEffect>())
         _combatKey(effect.attackerUnitId, effect.defenderUnitId),
     };
+    final orderedEvents = events.toList(growable: false);
+    final facts = combatAnimations.toList(growable: false);
     final eventEffects = GameEventRendererEffectMapper.effectsFor(
-      events: events,
+      events: orderedEvents,
       state: state,
       previousState: previousState,
       l10n: l10n,
       turn: turn,
       skipUnitMoveIds: _animatedUnitIds(visibleCommandEffects),
+      combatAnimations: facts,
     );
     return [
       ...visibleCommandEffects,

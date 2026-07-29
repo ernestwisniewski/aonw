@@ -410,11 +410,11 @@ void _appendFailingPlannerFindings(
   }
 }
 
-_BenchmarkCommandTransition _reduceSyntheticCommand(
+BenchmarkCommandTransition _reduceSyntheticCommand(
   _PreparedPlayer prepared,
   GameCommand command,
 ) {
-  final dispatcher = _BenchmarkCommandDispatcher(
+  final dispatcher = BenchmarkCommandDispatcher(
     snapshot: prepared.snapshot.canonical,
     mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
@@ -434,7 +434,7 @@ bool _syntheticCommandChangesState(
   GameCommand command,
 ) {
   final state = prepared._executionInitialState();
-  final dispatcher = _BenchmarkCommandDispatcher(
+  final dispatcher = BenchmarkCommandDispatcher(
     snapshot: prepared.snapshot.canonical,
     mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,

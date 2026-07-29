@@ -6,6 +6,7 @@ import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -71,6 +72,7 @@ class ReplayStep {
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
+  final List<CombatAnimationFact> combatAnimations;
   final int? originatingTurn;
 
   const ReplayStep({
@@ -81,6 +83,7 @@ class ReplayStep {
     required this.state,
     required this.events,
     required this.uiEffects,
+    this.combatAnimations = const [],
     this.originatingTurn,
   });
 
@@ -335,6 +338,7 @@ void _appendReplayStep(
       state: resolved.state,
       events: logged.events,
       uiEffects: resolved.uiEffects,
+      combatAnimations: resolved.combatAnimations,
       originatingTurn: originatingTurn,
     ),
   );

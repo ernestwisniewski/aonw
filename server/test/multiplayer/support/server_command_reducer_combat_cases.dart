@@ -80,7 +80,142 @@ void _registerServerCommandReducerCombatCommandTests() {
       expect(reduction.events.whereType<CityAttackedEvent>(), hasLength(1));
       expect(reduction.events.whereType<CityDestroyedEvent>(), hasLength(1));
     });
+
+    test('projects the authoritative combat sequence once to every visible '
+        'recipient', () async {
+      final projection = await _projectAuthoritativeCombatSequence();
+      _expectAuthoritativeCombatProjection(projection);
+    });
   });
+}
+
+Future<
+  ({ServerCommandTestReduction reduction, Map<String, WireEvent> projected})
+>
+_projectAuthoritativeCombatSequence() async {
+  const participantIds = ['player_1', 'player_2', 'observer', 'hidden'];
+  final visible = {
+    const HexCoordinate(col: 0, row: 0),
+    const HexCoordinate(col: 1, row: 0),
+  };
+  final players = [
+    for (var index = 0; index < participantIds.length; index++)
+      Player(
+        id: participantIds[index],
+        name: participantIds[index],
+        colorValue: index + 1,
+      ),
+  ];
+  final wirePlayers = [
+    for (var index = 0; index < participantIds.length; index++)
+      WirePlayer(
+        id: participantIds[index],
+        userId: 'user_$index',
+        name: participantIds[index],
+        colorValue: index + 1,
+        country: PlayerCountry.poland,
+        kind: WirePlayerKind.human,
+        connectionState: WirePlayerConnectionState.connected,
+      ),
+  ];
+  final state = PersistentGameState.snapshot(
+    playerColors: {
+      for (var index = 0; index < participantIds.length; index++)
+        participantIds[index]: index + 1,
+    },
+    units: [
+      _combatUnit('attacker', 'player_1', 0, 0),
+      _combatUnit('defender', 'player_2', 1, 0, type: GameUnitType.settler),
+    ],
+    fogOfWar: FogOfWarState(
+      players: {
+        for (final playerId in const ['player_1', 'player_2', 'observer'])
+          playerId: PlayerFogOfWar(playerId: playerId, visibleHexes: visible),
+        'hidden': PlayerFogOfWar(playerId: 'hidden'),
+      },
+    ),
+  );
+  final match = _runningMatch(players: wirePlayers);
+  final reduction = await _combatReducerDriver.reduce(
+    reducer: ServerCommandReducer(
+      mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
+    ),
+    match: match,
+    wireSnapshot: _snapshot(
+      state,
+      save: _save(
+        players: players,
+        playerStates: {
+          for (final playerId in participantIds)
+            playerId: PlayerTurnState.active,
+        },
+      ),
+    ),
+    wireCommand: _wireCommand(const AttackHexCommand('attacker', 1, 0)),
+    actorPlayerId: 'player_1',
+    now: DateTime.utc(2026, 6, 30, 12),
+  );
+  final next = reduction.nextSnapshot!;
+  final stored = PlayerMatchEventAudience.annotateForStorage(
+    events: reduction.events,
+    combatAnimations: reduction.reduction.combatAnimations,
+    participantPlayerIds: participantIds,
+    previous: GameEventOwnershipIndex.from(
+      reduction.previousSnapshot.domain.units,
+      reduction.previousSnapshot.domain.cities,
+    ),
+    next: GameEventOwnershipIndex.from(next.domain.units, next.domain.cities),
+    previousFog: reduction.previousSnapshot.domain.fogOfWar,
+    nextFog: next.domain.fogOfWar,
+  );
+  final wire = WireEvent(
+    matchId: match.id,
+    offset: 1,
+    timestamp: DateTime.utc(2026, 6, 30, 12),
+    actorPlayerId: 'player_1',
+    tick: 1,
+    turn: 1,
+    events: stored,
+    movementExecutions: WireMovementExecutionList(const []),
+  );
+  const projector = PlayerMatchViewProjector();
+  final projected = {
+    for (var index = 0; index < participantIds.length; index++)
+      participantIds[index]: projector.eventFor(
+        wire,
+        MatchRecipient(
+          userIdentifier: 'user_$index',
+          playerId: participantIds[index],
+        ),
+      ),
+  };
+  return (reduction: reduction, projected: projected);
+}
+
+void _expectAuthoritativeCombatProjection(
+  ({ServerCommandTestReduction reduction, Map<String, WireEvent> projected})
+  projection,
+) {
+  final (:reduction, :projected) = projection;
+  expect(
+    projected['player_1']!.events.map((event) => event['type']),
+    reduction.events.map((event) => GameEventSerializer.toJson(event)['type']),
+  );
+  expect(projected['player_2']!.events, projected['player_1']!.events);
+  expect(projected['observer']!.events, projected['player_1']!.events);
+  expect(
+    CombatAnimationFactCodec.fromEventPayloads(projected['observer']!.events),
+    reduction.reduction.combatAnimations,
+  );
+  expect(projected['hidden']!.events, isEmpty);
+  expect(
+    projected['hidden']!.toJson().toString(),
+    allOf(
+      isNot(contains('attacker')),
+      isNot(contains('defender')),
+      isNot(contains('attackerFromCol')),
+    ),
+  );
 }
 
 void _registerServerCommandReducerCombatPrivacyTests() {

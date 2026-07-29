@@ -11,6 +11,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/combat_animation_fixtures.dart';
+
 part 'game_event_renderer_combat_camera_tests.dart';
 
 void main() {
@@ -359,6 +361,7 @@ void main() {
         ],
         state: state,
         previousState: previousState,
+        combatAnimations: const [rendererCombatAnimationFact],
       );
 
       expect(effects, hasLength(6));

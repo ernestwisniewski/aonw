@@ -161,7 +161,7 @@ class _MultiTurnReplayRunner {
     required AiTurnPlan plan,
     required Set<String> humanPlayerIds,
   }) {
-    final dispatcher = _BenchmarkCommandDispatcher(
+    final dispatcher = BenchmarkCommandDispatcher(
       snapshot: snapshot.canonical,
       mapView: context.mapData,
       ruleset: context.ruleset,

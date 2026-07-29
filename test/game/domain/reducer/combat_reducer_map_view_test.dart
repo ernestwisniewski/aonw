@@ -3,12 +3,9 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/combat/combat_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -58,75 +55,6 @@ void main() {
     expect(preview.state.selection?.unit, same(attacker));
     expect(preview.events, isEmpty);
     expect(preview.uiEffects, isEmpty);
-  });
-
-  test('resolves unit combat through a canonical map lookup', () {
-    final attacker = _unit('attacker', 'player_1', 0, 0);
-    final defender = _unit('defender', 'player_2', 1, 0);
-    final state = GameState(
-      activePlayerId: 'player_1',
-      units: [attacker, defender],
-      fogOfWar: _visibleCombatFog(),
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(attacker),
-        pendingAction: const PendingAttackTargeting(
-          ownerPlayerId: 'player_1',
-          attackerUnitId: 'attacker',
-        ),
-      ),
-    );
-    final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
-    const command = AttackHexCommand('attacker', 1, 0);
-
-    final preview = CombatReducer.selectAttackTarget(
-      state,
-      command,
-      mapTiles,
-      combatRuleset: _combatRuleset,
-      context: _context,
-    );
-    final result = CombatReducer.attackHex(
-      preview.state,
-      command,
-      mapTiles,
-      combatRuleset: _combatRuleset,
-      context: _context,
-    );
-
-    final updatedAttacker = result.state.unitById('attacker')!;
-    final updatedDefender = result.state.unitById('defender')!;
-    expect(result.state.pendingAction, isNull);
-    expect(updatedAttacker.hitPoints, 5);
-    expect(updatedAttacker.movementPoints, 0);
-    expect(updatedDefender.hitPoints, 7);
-    expect(result.events.whereType<UnitAttackedEvent>(), hasLength(1));
-    expect(result.events.whereType<UnitGainedExperienceEvent>(), hasLength(2));
-    final resolved = result.events.whereType<CombatResolvedEvent>().single;
-    expect(
-      resolved.outcome.steps.whereType<ModifierAppliedStep>().map(
-        (step) => step.modifier,
-      ),
-      contains(
-        const TerrainModifier(
-          label: 'terrain.forest.defense',
-          target: CombatStatTarget.defense,
-          delta: 2,
-        ),
-      ),
-    );
-    expect(result.uiEffects.whereType<PlayCombatAnimationEffect>(), isEmpty);
-    expect(result.state.selection?.unit, same(updatedAttacker));
-    expect(result.state.selection?.tile?.col, 0);
-    expect(result.state.selection?.tile?.row, 0);
-    expect(result.state.selection?.tile?.resources, [ResourceType.wheat]);
-    expect(mapTiles.tileAt(0, 0)?.resources, [
-      ResourceType.oil,
-      ResourceType.wheat,
-    ]);
-    expect(
-      result.state.diplomacy.statusBetween('player_1', 'player_2'),
-      DiplomaticRelationStatus.hostile,
-    );
   });
 }
 

@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_catalog.dart';
 import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -25,23 +26,17 @@ abstract final class GameEventRendererEffectMapper {
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
-  }) {
-    final effects = <RendererEffect>[];
-    for (final event in events) {
-      effects.addAll(
-        _effectsForEvent(
-          event,
-          state,
-          previousState,
-          skipUnitMoveIds: skipUnitMoveIds,
-          l10n: l10n,
-          viewerPlayerId: viewerPlayerId,
-          turn: turn,
-        ),
-      );
-    }
-    return effects;
-  }
+    Iterable<CombatAnimationFact> combatAnimations = const [],
+  }) => _effectsForEvents(
+    events: events,
+    state: state,
+    previousState: previousState,
+    skipUnitMoveIds: skipUnitMoveIds,
+    l10n: l10n,
+    viewerPlayerId: viewerPlayerId,
+    turn: turn,
+    combatAnimations: combatAnimations,
+  );
 
   static List<RendererEffect> _effectsForEvent(
     GameEvent event,
@@ -51,8 +46,8 @@ abstract final class GameEventRendererEffectMapper {
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
+    CombatAnimationFact? combatAnimation,
   }) {
-    final localizations = l10n;
     return switch (GameEventDescriptor.forEvent(event).rendererEffectKind) {
       GameEventRendererEffectKind.unitMoved =>
         skipUnitMoveIds.contains((event as UnitMovedEvent).unitId) ||
@@ -113,9 +108,7 @@ abstract final class GameEventRendererEffectMapper {
             )
             ? [
                 ShowFloatingTextEffect(
-                  text: localizations == null
-                      ? '↩'
-                      : localizations.modeBannerAttackRetreatProgress,
+                  text: l10n?.modeBannerAttackRetreatProgress ?? '↩',
                   col: event.toCol,
                   row: event.toRow,
                   colorValue: _combatCueColor,
@@ -130,6 +123,7 @@ abstract final class GameEventRendererEffectMapper {
           event as CombatResolvedEvent,
           viewerPlayerId: viewerPlayerId,
           turn: turn,
+          animationFact: combatAnimation,
         ),
       GameEventRendererEffectKind.workerCompletedJob => _single(
         _workerCompletedJobEffect(
@@ -396,4 +390,37 @@ abstract final class GameEventRendererEffectMapper {
       null => null,
     };
   }
+}
+
+List<RendererEffect> _effectsForEvents({
+  required Iterable<GameEvent> events,
+  required GameState state,
+  required GameState? previousState,
+  required Set<String> skipUnitMoveIds,
+  required AppLocalizations? l10n,
+  required String? viewerPlayerId,
+  required int? turn,
+  required Iterable<CombatAnimationFact> combatAnimations,
+}) {
+  final effects = <RendererEffect>[];
+  final combatByEventIndex = {
+    for (final fact in combatAnimations) fact.eventIndex: fact,
+  };
+  var eventIndex = 0;
+  for (final event in events) {
+    effects.addAll(
+      GameEventRendererEffectMapper._effectsForEvent(
+        event,
+        state,
+        previousState,
+        skipUnitMoveIds: skipUnitMoveIds,
+        l10n: l10n,
+        viewerPlayerId: viewerPlayerId,
+        turn: turn,
+        combatAnimation: combatByEventIndex[eventIndex],
+      ),
+    );
+    eventIndex += 1;
+  }
+  return effects;
 }
