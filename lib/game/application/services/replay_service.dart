@@ -2,7 +2,6 @@ import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -264,15 +263,8 @@ class ReplayService {
         }
 
         final previousState = currentState;
-        final command = logged.command;
-        if (command == null) {
-          throw ReplayBuildException(
-            ReplayBuildFailureReason.corruptLog,
-            'Replay log entry ${logged.offset} has a redacted command; '
-            'deterministic replay is unavailable.',
-          );
-        }
-        final originatingTurn = logged.turn ?? currentSnapshot.domain.turn;
+        final command = _authoritativeReplayCommand(logged);
+        final originatingTurn = _originatingReplayTurn(logged);
         final commandContext = logged.toCommandContext(
           victoryRules: currentSnapshot.domain.matchRules.victory,
           paceBalance: currentSnapshot.domain.matchRules.paceBalance,
@@ -320,12 +312,35 @@ class ReplayService {
   }
 }
 
+DomainCommand _authoritativeReplayCommand(LoggedCommand logged) {
+  return switch (logged.command) {
+    final DomainCommand command => command,
+    null => throw ReplayBuildException(
+      ReplayBuildFailureReason.corruptLog,
+      'Replay log entry ${logged.offset} has a redacted command; '
+      'deterministic replay is unavailable.',
+    ),
+    _ => throw ReplayBuildException(
+      ReplayBuildFailureReason.corruptLog,
+      'Replay log entry ${logged.offset} contains a presentation intent.',
+    ),
+  };
+}
+
+int _originatingReplayTurn(LoggedCommand logged) {
+  return logged.turn ??
+      (throw ReplayBuildException(
+        ReplayBuildFailureReason.corruptLog,
+        'Replay log entry ${logged.offset} has no originating turn.',
+      ));
+}
+
 LocalCommandResolution _resolveReplayCommand({
   required LocalCommandResolver commandResolver,
   required LoggedCommand loggedCommand,
   required SaveSnapshot baseSnapshot,
   required GameState currentState,
-  required GameCommand command,
+  required DomainCommand command,
   required DateTime savedAt,
   required GameCommandContext context,
 }) {
@@ -335,49 +350,12 @@ LocalCommandResolution _resolveReplayCommand({
       state: currentState,
     ),
   );
-  if (command is! GameIntent) {
-    return commandResolver.resolve(
-      baseSnapshot: baseSnapshot,
-      currentState: currentState,
-      command: command,
-      savedAt: savedAt,
-      context: effectiveContext,
-    );
-  }
-  final intent = GameIntentResolver(
-    reducer: commandResolver.reducer,
-    context: effectiveContext,
-  ).resolve(currentState.interaction, command, currentState);
-  final interactionState = intent.interaction == currentState.interaction
-      ? currentState
-      : currentState.copyWith(interaction: intent.interaction);
-  final domainCommand = intent.domainCommand;
-  if (domainCommand == null) {
-    return LocalCommandResolution(
-      snapshot: baseSnapshot
-          .withSavedAt(savedAt)
-          .withGameState(interactionState),
-      state: interactionState,
-      events: const [],
-      uiEffects: intent.presentationFocus,
-      context: effectiveContext,
-    );
-  }
-  final domain = commandResolver.resolve(
+  return commandResolver.resolve(
     baseSnapshot: baseSnapshot,
-    currentState: interactionState,
-    command: domainCommand,
+    currentState: currentState,
+    command: command,
     savedAt: savedAt,
     context: effectiveContext,
-  );
-  return LocalCommandResolution(
-    snapshot: domain.snapshot,
-    state: domain.state,
-    events: domain.events,
-    uiEffects: [...intent.presentationFocus, ...domain.uiEffects],
-    context: domain.context,
-    combatAnimations: domain.combatAnimations,
-    movementExecutions: domain.movementExecutions,
   );
 }
 

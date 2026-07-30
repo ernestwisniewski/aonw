@@ -307,10 +307,9 @@ final class RunningMatchSnapshotCodec {
     if (next == previous) return source.wire;
     _requireMatchingRoster(
       _sameOrderedPlayers(
-            next.domain.participants,
-            previous.domain.participants,
-          ) &&
-          _hasCompleteTurnStateRoster(next),
+        next.domain.participants,
+        previous.domain.participants,
+      ),
     );
     _requireRepresentableRunningTurnStart(next);
     final legacy = _losslessMatchSnapshotCodec.encodeCanonical(next);

@@ -12,7 +12,7 @@ final class EconomySimulationCommandStats {
   var attack = 0;
   var rejected = 0;
 
-  void addApplied(GameCommand command) {
+  void addApplied(DomainCommand command) {
     meaningful += 1;
     switch (command) {
       case FoundCityCommand():
@@ -35,21 +35,14 @@ final class EconomySimulationCommandStats {
         move += 1;
       case AttackHexCommand():
         attack += 1;
-      case TileTappedCommand() ||
-          CityTappedCommand() ||
-          CancelUnitActionCommand() ||
+      case CancelUnitActionCommand() ||
           SkipUnitTurnCommand() ||
           FortifyUnitCommand() ||
           AutoExploreUnitCommand() ||
           RushProductionCommand() ||
           SelectTechnologyCommand() ||
-          CancelResearchSelectionCommand() ||
           DetachTroopCommand() ||
-          StartMerchantTradeRouteSelectionCommand() ||
-          CancelMerchantTradeRouteSelectionCommand() ||
           AssignMerchantTradeRouteCommand() ||
-          StartMerchantMoveToCitySelectionCommand() ||
-          CancelMerchantMoveToCitySelectionCommand() ||
           SendDiplomaticProposalCommand() ||
           RespondDiplomaticProposalCommand() ||
           SendDiplomaticMessageCommand() ||
@@ -63,29 +56,12 @@ final class EconomySimulationCommandStats {
           TradeArtifactCommand() ||
           OpenResourceTradeCommand() ||
           OpenResourceExchangeCommand() ||
-          ToggleMoveTargetingCommand() ||
-          StartCityFoundingCommand() ||
-          CancelCityFoundingCommand() ||
-          StartCityWorkedHexSelectionCommand() ||
-          CancelCityWorkedHexSelectionCommand() ||
           ToggleWorkedHexCommand() ||
-          StartCityExpansionSelectionCommand() ||
-          CancelCityExpansionSelectionCommand() ||
           SelectCityExpansionHexCommand() ||
-          StartWorkerActionSelectionCommand() ||
           ConfirmWorkerImprovementCommand() ||
-          CancelWorkerActionSelectionCommand() ||
           CancelWorkerJobCommand() ||
           CancelWorkerAssignmentCommand() ||
-          StartAttackTargetingCommand() ||
-          CancelAttackTargetingCommand() ||
-          StartCommanderMergeSelectionCommand() ||
-          CancelCommanderMergeSelectionCommand() ||
-          SelectTileCommand() ||
-          SelectUnitCommand() ||
-          SelectCityCommand() ||
-          FocusNextPendingActionCommand() ||
-          FocusTurnStartActionCommand():
+          SelectWorkerImprovementCommand():
         break;
     }
   }

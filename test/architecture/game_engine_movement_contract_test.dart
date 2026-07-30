@@ -153,6 +153,14 @@ Object secondMovementFamilySwitch(Object command) => switch (command) {
     expect(
       staticMemberReferenceCountsByPath(sources, 'GameEngine', 'commandFamily'),
       {
+        'packages/aonw_core/lib/ai/simulation/'
+                'economy_simulation_command_applier.dart':
+            1,
+        'packages/aonw_core/lib/ai/mcts/mcts_simulator.dart': 1,
+        'packages/aonw_core/lib/ai/mcts/mcts_simulated_state.dart': 1,
+        'lib/game/application/services/'
+                'accepted_engine_command_interaction_source.dart':
+            1,
         'lib/game/application/services/local_command_resolver.dart': 1,
         'tool/run_save_ai_benchmark/engine_command_dispatcher.dart': 1,
       },
@@ -164,7 +172,7 @@ Object secondMovementFamilySwitch(Object command) => switch (command) {
         'GameStateReducer',
         'reduce',
       ),
-      {'tool/run_save_ai_benchmark/engine_command_dispatcher.dart': 1},
+      isEmpty,
     );
     expect(
       instanceMemberReferenceCountsByPath(

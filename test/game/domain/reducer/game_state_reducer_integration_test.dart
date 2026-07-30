@@ -15,7 +15,7 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../support/canonical_command_test_dispatch.dart';
+import '../../../support/game_intent_test_resolver.dart';
 
 MapData _map(int cols, int rows) => MapData(
   cols: cols,
@@ -61,12 +61,7 @@ GameStateTransition _dispatch(
   GameState state,
   GameCommand command, {
   GameCommandContext context = const GameCommandContext(),
-}) => dispatchCanonicalTestCommand(
-  reducer: reducer,
-  state: state,
-  command: command,
-  context: context,
-);
+}) => resolveWithEffects(reducer, state, command, context: context);
 
 GameState _withFog(GameState state, MapData mapData) {
   return state.copyWith(

@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 
 typedef HiddenAiCommandDispatch =
     Future<DispatchCommandResult> Function(
@@ -48,6 +49,17 @@ final class HiddenAiCommandPresenter {
         commandState: result.state,
         uiEffects: result.uiEffects,
         events: result.events,
+        sourceId: sourceId,
+        eventOffset: result.offset,
+        movementExecutions: result.movementExecutions,
+        turn: _eventTurnFor(result),
+      );
+    } else if (result.movementExecutions.isNotEmpty) {
+      await rendererPlayback.playCommandEffects(
+        previousRendererState: previousRendererState,
+        commandState: result.state,
+        uiEffects: const [],
+        events: result.events.whereType<UnitMovedEvent>(),
         sourceId: sourceId,
         eventOffset: result.offset,
         movementExecutions: result.movementExecutions,

@@ -4,8 +4,6 @@ const _serverReducerPath =
     'server/lib/src/multiplayer/server_command_reducer.dart';
 const _serverMapCachePath =
     'server/lib/src/multiplayer/server_command_reducer_map_cache.dart';
-const _serverReducerTurnsPath =
-    'server/lib/src/multiplayer/server_command_reducer_turns.dart';
 const _serverReducerOutcomePath =
     'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
 final List<String> _serverReducerLibraryPaths = List<String>.unmodifiable([
@@ -18,14 +16,8 @@ final List<String> _serverReducerLibraryPaths = List<String>.unmodifiable([
 
 const _serverReducerMapContracts = [
   (
-    path: _serverReducerTurnsPath,
-    method: '_submitTurn',
-    parameter: 'mapView',
-    type: 'MapReadView',
-  ),
-  (
-    path: _serverReducerTurnsPath,
-    method: '_finalizeSimultaneousTurn',
+    path: _serverReducerPath,
+    method: '_applyTurnCommand',
     parameter: 'mapView',
     type: 'MapReadView',
   ),

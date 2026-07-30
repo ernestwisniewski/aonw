@@ -6,6 +6,12 @@ void _registerSplitHudTests() {
   _registerHudCombatCameraTests();
 }
 
+Future<void> _setActivePlayerWaiting(ProviderContainer container) {
+  return container
+      .read(gameStateProvider('save').notifier)
+      .syncActivePlayer(playerId: 'player_1', canAct: false);
+}
+
 void _registerHudCombatCameraTests() {
   testWidgets(
     'attack target focuses attacker before opening prediction popup',

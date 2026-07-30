@@ -370,8 +370,8 @@ void main() {
         const FocusTurnStartActionCommand('p'),
       ];
 
-      test('there are exactly 64 subtype instances', () {
-        expect(allSubtypes, hasLength(64));
+      test('there are exactly 62 subtype instances', () {
+        expect(allSubtypes, hasLength(62));
       });
 
       test('every subtype is a GameCommand', () {

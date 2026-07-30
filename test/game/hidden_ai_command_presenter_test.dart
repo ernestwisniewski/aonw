@@ -172,6 +172,79 @@ void main() {
       expect(result.state.activePlayerId, 'ai_1');
       expect(result.state.activePlayerCanAct, isTrue);
     });
+
+    test(
+      'presents canonical movement evidence from terminal commands',
+      () async {
+        final applied = <_AppliedTransition>[];
+        final beforeUnit = GameUnit.produced(
+          id: 'warrior_1',
+          ownerPlayerId: 'ai_1',
+          type: GameUnitType.warrior,
+          col: 1,
+          row: 1,
+        );
+        final presenter = HiddenAiCommandPresenter(
+          rendererStateReader: () =>
+              GameState(activePlayerId: 'human', units: [beforeUnit]),
+          localizationReader: () => null,
+          applyTransition: (state, effects) async {
+            applied.add(_AppliedTransition(state, effects));
+          },
+          dispatchTransition: (command, {required context}) async {
+            return DispatchCommandResult(
+              state: GameState(
+                activePlayerId: 'ai_1',
+                units: [beforeUnit.copyWith(col: 2)],
+              ),
+              events: const [
+                UnitMovedEvent(
+                  unitId: 'warrior_1',
+                  fromCol: 1,
+                  fromRow: 1,
+                  toCol: 2,
+                  toRow: 1,
+                ),
+              ],
+              movementExecutions: [
+                MovementCommandExecution(
+                  unitId: 'warrior_1',
+                  fromCol: 1,
+                  fromRow: 1,
+                  steps: [
+                    const UnitMovementStep(
+                      col: 2,
+                      row: 1,
+                      enterCost: 1,
+                      cumulativeCost: 1,
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+
+        await presenter.dispatchAndPresent(
+          currentState: const GameState(activePlayerId: 'ai_1'),
+          command: const EndTurnCommand('ai_1'),
+          context: const GameCommandContext(actorPlayerId: 'ai_1'),
+        );
+
+        expect(applied, hasLength(1));
+        final move = applied.single.effects.single as AnimateUnitMoveEffect;
+        expect(move.unitId, 'warrior_1');
+        expect(
+          move.steps.single,
+          const UnitMovementStep(
+            col: 2,
+            row: 1,
+            enterCost: 1,
+            cumulativeCost: 1,
+          ),
+        );
+      },
+    );
   });
 }
 

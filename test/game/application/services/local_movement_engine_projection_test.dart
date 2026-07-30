@@ -49,9 +49,12 @@ void main() {
     expect(result.events, [
       isA<UnitMovedEvent>().having((event) => event.toCol, 'toCol', 2),
     ]);
-    final effect = result.uiEffects.single as AnimateUnitMoveEffect;
-    expect((effect.unitId, effect.fromCol, effect.fromRow), ('mover', 0, 0));
-    expect(effect.steps.map((step) => step.col), [1, 2]);
+    final execution = result.movementExecutions.single;
+    expect(
+      (execution.unitId, execution.fromCol, execution.fromRow),
+      ('mover', 0, 0),
+    );
+    expect(execution.steps.map((step) => step.col), [1, 2]);
   });
 
   test('capacity rejection keeps state and projects stable HUD feedback', () {
@@ -209,8 +212,8 @@ void main() {
       expect(result.state.moveCommandActive, isFalse);
       expect(result.state.movePreview, isNull);
       expect(result.state.selection?.unit, same(result.state.units.single));
-      expect(result.uiEffects, hasLength(1));
-      expect(result.uiEffects.single, isA<AnimateUnitMoveEffect>());
+      expect(result.movementExecutions, hasLength(1));
+      expect(result.movementExecutions.single.unitId, 'scout');
     },
   );
 

@@ -7,7 +7,6 @@ import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -26,9 +25,10 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'replay_service_combat_test.dart';
-part 'replay_service_research_diplomacy_test.dart';
-part 'replay_service_turn_lifecycle_test.dart';
+part 'replay_service_combat_cases.dart';
+part 'replay_service_command_boundary_cases.dart';
+part 'replay_service_research_diplomacy_cases.dart';
+part 'replay_service_turn_lifecycle_cases.dart';
 
 void main() {
   group('ReplayService', () {
@@ -41,7 +41,7 @@ void main() {
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
-            command: const FocusTurnStartActionCommand('p1'),
+            command: const FortifyUnitCommand('warrior_p1'),
           ),
         ]),
       );
@@ -53,9 +53,11 @@ void main() {
       expect(timeline.steps.single.offset, 1);
       expect(timeline.steps.single.previousState.activePlayerId, isEmpty);
       expect(timeline.steps.single.state.activePlayerId, isEmpty);
-      expect(timeline.steps.single.state.selectedUnitId, 'warrior_p1');
-      expect(timeline.steps.single.uiEffects, hasLength(1));
-      expect(timeline.steps.single.uiEffects.single, isA<JumpCameraEffect>());
+      expect(
+        timeline.steps.single.state.units.single.posture,
+        UnitPosture.fortified,
+      );
+      expect(timeline.steps.single.uiEffects, isEmpty);
       expect(
         timeline.steps.single.metadata.savedAtUtc,
         DateTime.utc(2026, 4, 24, 12, 1),
@@ -63,6 +65,7 @@ void main() {
     });
 
     _registerCombatReplayTest();
+    _registerReplayCommandBoundaryTest();
     _registerResearchDiplomacyReplayTest();
 
     test('infers actors for legacy merchant replay commands', () {
@@ -313,31 +316,38 @@ void main() {
       );
     });
 
-    test(
-      'replays legacy command entries using the current save turn',
-      () async {
-        final service = _service(
-          replayStore: _MemoryReplayStore({
-            'save_1': _snapshot(units: [_actionableUnit()]),
-          }),
-          eventLog: _MemoryEventLog([
-            LoggedCommand(
-              offset: 1,
-              timestamp: DateTime.utc(2026, 4, 24, 12, 1),
-              turn: null,
-              command: const FocusTurnStartActionCommand('p1'),
-            ),
-          ]),
-        );
+    test('rejects command entries without an originating turn', () async {
+      final service = _service(
+        replayStore: _MemoryReplayStore({
+          'save_1': _snapshot(units: [_actionableUnit()]),
+        }),
+        eventLog: _MemoryEventLog([
+          LoggedCommand(
+            offset: 1,
+            timestamp: DateTime.utc(2026, 4, 24, 12, 1),
+            turn: null,
+            command: const FortifyUnitCommand('warrior_p1'),
+          ),
+        ]),
+      );
 
-        final timeline = await service.buildTimeline('save_1');
-
-        expect(timeline.steps, hasLength(1));
-        expect(timeline.steps.single.turn, 1);
-        expect(timeline.steps.single.state.activePlayerId, isEmpty);
-        expect(timeline.steps.single.state.selectedUnitId, 'warrior_p1');
-      },
-    );
+      await expectLater(
+        service.buildTimeline('save_1'),
+        throwsA(
+          isA<ReplayBuildException>()
+              .having(
+                (error) => error.reason,
+                'reason',
+                ReplayBuildFailureReason.corruptLog,
+              )
+              .having(
+                (error) => error.message,
+                'message',
+                contains('no originating turn'),
+              ),
+        ),
+      );
+    });
 
     test('rejects saves without replay seed snapshots', () async {
       final service = _service(

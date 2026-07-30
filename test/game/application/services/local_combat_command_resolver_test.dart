@@ -50,7 +50,7 @@ void main() {
         eventLogOffset: 19,
       );
       final savedAt = DateTime.utc(2026, 7, 29, 19);
-      final reducer = _NoCombatLegacyReducer();
+      final reducer = GameStateReducer(mapData: _map);
 
       final result = LocalCommandResolver(reducer: reducer).resolve(
         baseSnapshot: snapshot,
@@ -63,7 +63,6 @@ void main() {
         ),
       );
 
-      expect(reducer.combatCalls, 0);
       expect(result.events.map((event) => event.runtimeType), [
         UnitAttackedEvent,
         CombatResolvedEvent,
@@ -107,7 +106,7 @@ void main() {
       ),
     );
     final snapshot = SaveSnapshot.fromGameState(save: _save(), state: state);
-    final reducer = _NoCombatLegacyReducer();
+    final reducer = GameStateReducer(mapData: _map);
 
     final result = LocalCommandResolver(reducer: reducer).resolve(
       baseSnapshot: snapshot,
@@ -117,7 +116,6 @@ void main() {
       context: const GameCommandContext(actorPlayerId: 'player_1'),
     );
 
-    expect(reducer.combatCalls, 0);
     expect(result.state, same(state));
     expect(result.events, isEmpty);
     expect(result.uiEffects, [
@@ -128,25 +126,6 @@ void main() {
       ),
     ]);
   });
-}
-
-final class _NoCombatLegacyReducer extends GameStateReducer {
-  _NoCombatLegacyReducer() : super(mapData: _map);
-
-  var combatCalls = 0;
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    if (command is AttackHexCommand) {
-      combatCalls += 1;
-      throw StateError('Migrated combat reached the legacy reducer.');
-    }
-    return super.reduce(state, command, context: context);
-  }
 }
 
 GameUnit _unit(String id, String ownerPlayerId, int col) {

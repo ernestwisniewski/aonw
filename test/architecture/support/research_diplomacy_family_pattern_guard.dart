@@ -136,7 +136,7 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
       ),
       'packages/aonw_core/lib/game/application/engine/game_engine.dart': (
         occurrences: 4,
-        digest: -8430112838224068569,
+        digest: -8848840907978049475,
       ),
       'packages/aonw_core/lib/game/application/engine/'
           'research_engine_handler.dart': (
@@ -204,6 +204,10 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
       'tool/performance/ai_mcts_workload.dart': (
         occurrences: 2,
         digest: 4184325178705214729,
+      ),
+      'tool/performance/persistence_workload.dart': (
+        occurrences: 1,
+        digest: -1260836702068599836,
       ),
       'tool/performance/replay_workload.dart': (
         occurrences: 1,

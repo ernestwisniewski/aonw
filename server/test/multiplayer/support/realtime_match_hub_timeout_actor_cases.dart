@@ -165,7 +165,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       },
     );
 
-    test('rejects a participant missing its turn state', () async {
+    test('canonicalizes a participant missing its sparse turn state', () async {
       final fixture = await _createTimeoutActorFixture('save-player-only');
 
       final observation = await fixture.run(
@@ -180,10 +180,9 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             submittedPlayerIds: {fixture.highPlayerId},
           ),
         ),
-        expectRosterFailure: true,
       );
 
-      _expectTimeoutNoOp(observation);
+      _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
     test('accepts players present only in save.playerStates', () async {
@@ -223,7 +222,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectTimeoutNoOp(observation);
     });
 
-    test('rejects inconsistent active roster sources', () async {
+    test('uses submitted activity across sparse roster sources', () async {
       final fixture = await _createTimeoutActorFixture('inconsistent-active');
 
       final observation = await fixture.run(
@@ -236,10 +235,9 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             submittedPlayerIds: {fixture.lowPlayerId},
           ),
         ),
-        expectRosterFailure: true,
       );
 
-      _expectTimeoutNoOp(observation);
+      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
     });
   });
 }
@@ -320,7 +318,6 @@ final class _TimeoutActorFixture {
     WireMatch? match,
     GameSave? save,
     PersistentGameState? state,
-    bool expectRosterFailure = false,
   }) async {
     final arrangedState = state ?? this.state;
     final timedOutState = arrangedState.copyWith(
@@ -338,19 +335,7 @@ final class _TimeoutActorFixture {
     await store.saveState(before);
 
     final failures = await hub.advanceTimedOutTurns(store: store);
-    if (expectRosterFailure) {
-      expect(failures, hasLength(1));
-      expect(
-        failures.single.error,
-        isA<FormatException>().having(
-          (error) => error.message,
-          'message',
-          'Running snapshot roster must exactly match authoritative players.',
-        ),
-      );
-    } else {
-      expect(failures, isEmpty);
-    }
+    expect(failures, isEmpty);
 
     final after = (await store.findState(before.match.id))!;
     return _TimeoutActorObservation(

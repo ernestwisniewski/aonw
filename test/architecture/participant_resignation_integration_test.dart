@@ -37,7 +37,7 @@ void main() {
       );
     });
 
-    test('changes only the canonical session owned by resignation', () {
+    test('routes the resignation kick through the system engine', () {
       expect(_canonicalPatchViolations(_unitAt(_resignationPath)), isEmpty);
     });
 
@@ -96,7 +96,9 @@ void main() {
 
       expect(
         violations,
-        contains('canonical patch must write only the transition session'),
+        contains(
+          'resignation kick must route through the GameEngine system command',
+        ),
       );
       expect(
         violations,

@@ -16,7 +16,7 @@ final _savedAt = DateTime.utc(2026, 7, 29);
 
 /// Mirrors the local transport boundary without persistence side effects.
 ///
-/// Client-only interaction commands stay in the reducer. Authoritative
+/// Client-only interaction commands stay in [GameIntentResolver]. Authoritative
 /// commands, including commands derived from a tile or city intent, execute
 /// through [LocalCommandResolver] and therefore the canonical game engine.
 GameStateTransition dispatchCanonicalTestCommand({
@@ -57,13 +57,19 @@ GameStateTransition dispatchCanonicalTestCommand({
     );
   }
 
+  final domainCommand = authoritativeCommand ?? command;
+  if (domainCommand is! DomainCommand) {
+    throw StateError(
+      '${command.runtimeType} reached the authoritative test boundary.',
+    );
+  }
   final resolved = LocalCommandResolver(reducer: reducer).resolve(
     baseSnapshot: SaveSnapshot.fromGameState(
       save: _saveFor(state, context),
       state: state,
     ),
     currentState: state,
-    command: authoritativeCommand ?? command,
+    command: domainCommand,
     savedAt: _savedAt,
     context: context,
     movementPresentationOrigin:

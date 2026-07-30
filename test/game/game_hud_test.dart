@@ -1445,12 +1445,12 @@ void main() {
               freshTurn: true,
             ),
           );
+      await _setActivePlayerWaiting(container);
       await tester.pump();
       for (var i = 0; i < 5 && find.text('ALICE').evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 50));
       }
       expect(find.text('ALICE'), findsOneWidget);
-
       final gate = Completer<void>();
       repository.loadGate = gate;
 
@@ -1527,9 +1527,9 @@ void main() {
             freshTurn: true,
           ),
         );
+    await _setActivePlayerWaiting(container);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-
     expect(container.read(gameHandoffProvider)?.playerId, 'player_1');
     expect(find.text('ALICE'), findsOneWidget);
     expect(

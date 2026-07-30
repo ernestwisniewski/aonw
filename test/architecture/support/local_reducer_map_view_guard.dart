@@ -30,13 +30,10 @@ const _localReducerConstructionContracts =
         count: 1,
         mapSources: {'session.mapData.indexedReadView()'},
       ),
-      _saveAiBenchmarkPath: (count: 1, mapSources: {'context.mapData'}),
-      _multiTurnReplayPath: (count: 1, mapSources: {'context.mapData'}),
-      _benchmarkSyntheticHelpersPath: (
-        count: 2,
-        mapSources: {'prepared.context.mapData'},
-      ),
-      _runtimeSmokePath: (count: 1, mapSources: {'mapView'}),
+      _saveAiBenchmarkPath: (count: 0, mapSources: {}),
+      _multiTurnReplayPath: (count: 0, mapSources: {}),
+      _benchmarkSyntheticHelpersPath: (count: 0, mapSources: {}),
+      _runtimeSmokePath: (count: 0, mapSources: {}),
       _replayWorkloadPath: (count: 1, mapSources: {'mapView'}),
     };
 const _runAiTurnUseCaseConstructionContracts =
@@ -211,25 +208,6 @@ List<String> _localCommandResolverViolations(Map<String, String> sources) {
     );
   }
 
-  final requests = _NamedTypeConstructionCollector(
-    'CanonicalTurnPipelineRequest.simultaneousFinalize',
-  );
-  resolverUnit.accept(requests);
-  if (requests.calls.length != 1) {
-    violations.add(
-      '$_localCommandResolverPath must construct simultaneous-finalize request '
-      'exactly once; found ${requests.calls.length}',
-    );
-  } else {
-    final mapView = _namedArgument(requests.calls.single, 'mapView');
-    if (mapView?.toSource() != 'reducer.mapData') {
-      violations.add(
-        '$_localCommandResolverPath must pass reducer.mapData directly to '
-        'CanonicalTurnPipelineRequest.mapView',
-      );
-    }
-  }
-
   return violations;
 }
 
@@ -259,30 +237,6 @@ final class _TypeConstructionCollector extends RecursiveAstVisitor<void> {
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     if (node.constructorName.type.name.lexeme == typeName) {
-      calls.add(node.argumentList);
-    }
-    super.visitInstanceCreationExpression(node);
-  }
-}
-
-final class _NamedTypeConstructionCollector extends RecursiveAstVisitor<void> {
-  _NamedTypeConstructionCollector(this.constructorSource);
-
-  final String constructorSource;
-  final List<ArgumentList> calls = [];
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    final source = node.target == null
-        ? node.methodName.name
-        : '${node.target!.toSource()}.${node.methodName.name}';
-    if (source == constructorSource) calls.add(node.argumentList);
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (node.constructorName.toSource() == constructorSource) {
       calls.add(node.argumentList);
     }
     super.visitInstanceCreationExpression(node);

@@ -71,7 +71,12 @@ class LocalCommandTransport implements CommandTransport {
           command,
           context,
         );
-    final commandToApply = authoritativeCommand ?? command;
+    final commandToApply = switch (authoritativeCommand ?? command) {
+      final DomainCommand value => value,
+      _ => throw StateError(
+        '${command.runtimeType} reached the authoritative engine boundary.',
+      ),
+    };
     final movementPresentationOrigin =
         command is TileTappedCommand && authoritativeCommand is MoveUnitCommand
         ? LocalMovementPresentationOrigin.previewConfirmation

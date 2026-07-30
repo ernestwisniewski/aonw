@@ -31,8 +31,6 @@ void finalize(reducer) {
             'found 0',
         '$_localCommandResolverPath must reuse reducer.mapData without '
             'building another indexed view',
-        '$_localCommandResolverPath must pass reducer.mapData directly to '
-            'CanonicalTurnPipelineRequest.mapView',
       ]),
     );
   });
@@ -119,25 +117,24 @@ void prepare(mapData) {
   final mapView = mapData.indexedReadView();
 }
 void execute(context) {
-  GameStateReducer(mapData: context.mapData);
+  BenchmarkCommandDispatcher(mapView: context.mapData);
 }
 ''',
   _multiTurnReplayPath: '''
 void replay(context) {
-  GameStateReducer(mapData: context.mapData);
+  BenchmarkCommandDispatcher(mapView: context.mapData);
 }
 ''',
   _benchmarkSyntheticHelpersPath: '''
 void reduce(prepared) {
-  GameStateReducer(mapData: prepared.context.mapData);
+  BenchmarkCommandDispatcher(mapView: prepared.context.mapData);
 }
 void compare(prepared) {
-  GameStateReducer(mapData: prepared.context.mapData);
+  BenchmarkCommandDispatcher(mapView: prepared.context.mapData);
 }
 ''',
   _runtimeSmokePath: '''
 void create(mapView) {
-  GameStateReducer(mapData: mapView);
   RunAiTurnUseCase(mapData: mapView);
 }
 ''',

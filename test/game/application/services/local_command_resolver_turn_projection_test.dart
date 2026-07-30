@@ -3,7 +3,6 @@ import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +34,8 @@ void main() {
     );
 
     expect(result.state.units.single.col, 1);
-    expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), hasLength(1));
+    expect(result.movementExecutions, hasLength(1));
+    expect(result.movementExecutions.single.unitId, queuedUnit.id);
   });
 
   test('accepted turn owns persisted interaction and preserves selection', () {

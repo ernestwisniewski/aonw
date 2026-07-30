@@ -2,6 +2,8 @@ import 'package:aonw_core/ai/mcts/mcts_command_validator.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 const _rush = RushProductionCommand('city_1');
 const _simulator = TracingMctsSimulator();
 
@@ -81,7 +83,7 @@ void main() {
 }
 
 GameView _view() {
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       research: ResearchState(
         players: {

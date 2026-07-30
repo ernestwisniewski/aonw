@@ -12,6 +12,15 @@ const movementFamilyCommandTypes = {
 };
 
 const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
+  'lib/game/application/services/'
+      'accepted_engine_command_interaction_source.dart': {
+    'function:_movement::AssignMerchantTradeRouteCommand': 1,
+    'function:_movement::AutoExploreUnitCommand': 1,
+    'function:_movement::CancelUnitActionCommand': 1,
+    'function:_movement::DetachTroopCommand': 1,
+    'function:_movement::MoveMerchantToCityCommand': 1,
+    'function:_movement::MoveUnitCommand': 1,
+  },
   'lib/game/analysis/human_trace_analyzer.dart': {
     'class:HumanTraceAnalyzer/method:_isRepeatedAiCandidate::MoveUnitCommand':
         1,

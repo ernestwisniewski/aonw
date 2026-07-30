@@ -4,22 +4,14 @@ List<String> _canonicalPatchViolations(CompilationUnit unit) {
   final method = _runningResignationMethod(unit);
   if (method == null) return const [];
   final nextSnapshot = _variableInitializer(method.body, 'nextSnapshot');
-  final copy = nextSnapshot is MethodInvocation ? nextSnapshot : null;
-  final canonicalCopies = _targetedInvocations(
-    method.body,
-    target: 'canonicalSnapshot',
-    method: 'copyWith',
-  );
-  final arguments = copy == null
-      ? const <String, String>{}
-      : _namedArguments(copy.argumentList);
+  final systemCalls = _methodInvocations(unit, 'applySystem');
+  final source = unit.toSource();
   return [
-    if (copy?.target?.toSource() != 'canonicalSnapshot' ||
-        canonicalCopies.length != 1 ||
-        !identical(copy, canonicalCopies.single) ||
-        copy?.argumentList.arguments.length != 1 ||
-        !_sameStringMap(arguments, const {'session': 'transition.session'}))
-      'canonical patch must write only the transition session',
+    if (nextSnapshot?.toSource() !=
+            '_snapshotAfterResignationKick(canonicalSnapshot, player.id)' ||
+        systemCalls.length != 1 ||
+        !source.contains('command: KickParticipant('))
+      'resignation kick must route through the GameEngine system command',
   ];
 }
 

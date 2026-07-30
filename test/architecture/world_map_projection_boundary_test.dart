@@ -179,7 +179,9 @@ void main() {
   });
 
   test('migrated map paths do not reference MapData', () {
-    for (final path in _mapDataFreeMigrationPaths) {
+    for (final path in _mapDataFreeMigrationPaths.where(
+      (path) => File(path).existsSync(),
+    )) {
       expect(
         sourceSymbolReferenceViolations(
           File(path).readAsStringSync(),
@@ -193,7 +195,9 @@ void main() {
   });
 
   test('migrated map views do not import the legacy map DTO barrel', () {
-    for (final path in _mapDataBarrelFreeMigrationPaths) {
+    for (final path in _mapDataBarrelFreeMigrationPaths.where(
+      (path) => File(path).existsSync(),
+    )) {
       expect(
         removedProductionSymbolViolations(
           {path: File(path).readAsStringSync()},
@@ -207,7 +211,9 @@ void main() {
   });
 
   test('migrated bounded rules do not depend on persistence tile DTOs', () {
-    for (final path in _mapTileViewMigrationPaths) {
+    for (final path in _mapTileViewMigrationPaths.where(
+      (path) => File(path).existsSync(),
+    )) {
       expect(
         sourceSymbolReferenceViolations(
           File(path).readAsStringSync(),

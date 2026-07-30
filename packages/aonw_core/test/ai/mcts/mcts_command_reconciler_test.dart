@@ -4,6 +4,8 @@ import 'package:aonw_core/ai/mcts/mcts_command_validator.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 void main() {
   const simulator = TracingMctsSimulator();
 
@@ -77,7 +79,7 @@ AiContext _context({MapData? mapData}) {
 
 GameView _unitView() {
   final mapData = _unitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -110,7 +112,7 @@ GameView _unitView() {
 
 GameView _cityUnitView() {
   final mapData = _unitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       cities: const [
         GameCity(

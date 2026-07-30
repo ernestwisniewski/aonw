@@ -1,14 +1,12 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 const _playerId = 'player_1';
 const _enemyId = 'player_2';
 
 void main() {
-  List<CityHex> foundingHexes(int ac, int ar, int bc, int br) => [
-    CityHex(col: ac, row: ar),
-    CityHex(col: bc, row: br),
-  ];
   group('BasicPlanMctsActionGenerator', () {
     test('filters terminal and already used commands', () {
       const move = MoveUnitCommand('unit_1', 1, 0);
@@ -5161,7 +5159,7 @@ GameView _view({
   final researchState = research == null
       ? ResearchState.empty
       : ResearchState(players: {_playerId: research});
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: units,
       cities: cities,

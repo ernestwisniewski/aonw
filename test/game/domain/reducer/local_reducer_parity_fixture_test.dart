@@ -65,13 +65,15 @@ void _runFixture(ReducerParityFixture fixture) {
   final ruleset = GameRuleset.standard().copyWith(
     paceBalance: fixture.save.matchRules.paceBalance,
   );
+  final command = fixture.command;
+  expect(command, isA<DomainCommand>());
   final result =
       LocalCommandResolver(
         reducer: GameStateReducer(mapData: fixture.mapData, ruleset: ruleset),
       ).resolve(
         baseSnapshot: baseSnapshot,
         currentState: initialState,
-        command: fixture.command,
+        command: command as DomainCommand,
         savedAt: fixture.now,
         context: GameCommandContext(
           actorPlayerId: fixture.actorPlayerId,

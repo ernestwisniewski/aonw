@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 void main() {
   group('StateHeuristicEvaluator', () {
     test('scores stronger rollout state above weaker state', () {
@@ -1309,7 +1311,7 @@ void main() {
         const CommandMctsAction(MoveUnitCommand('settler_1', 3, 2)),
       );
       final ordinaryState = base.apply(
-        const CommandMctsAction(MoveUnitCommand('settler_1', 1, 2)),
+        const CommandMctsAction(MoveUnitCommand('settler_1', 0, 2)),
       );
 
       expect(
@@ -2012,16 +2014,9 @@ StrategicPlan _strategicPlan({
 }
 
 SimulatedState _state(PersistentGameState state, {MapData? mapData}) {
-  final actualMapData = mapData ?? _mapData();
-  return SimulatedState.fromView(
-    GameView.fromPersistentState(
-      state,
-      forPlayerId: 'player_1',
-      turn: 1,
-      mapData: actualMapData,
-      ruleset: GameRuleset.defaults,
-    ),
-    maxPlanningDepth: 4,
+  return MctsSimulatorParityFixtures.simulatedState(
+    state,
+    mapData: mapData ?? _mapData(),
   );
 }
 

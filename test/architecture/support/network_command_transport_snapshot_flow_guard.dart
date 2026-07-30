@@ -1,6 +1,9 @@
 part of '../network_command_transport_snapshot_boundary_test.dart';
 
-List<String> _networkResultFlowViolations(CompilationUnit unit) {
+List<String> _networkResultFlowViolations(
+  CompilationUnit unit,
+  CompilationUnit clientInteractionUnit,
+) {
   final transport = _classNamed(unit, 'NetworkCommandTransport');
   if (transport == null) {
     return const ['NetworkCommandTransport must remain declared.'];
@@ -8,10 +11,17 @@ List<String> _networkResultFlowViolations(CompilationUnit unit) {
 
   final violations = <String>[];
   final dispatch = _methodNamed(transport, '_dispatch');
-  final clientOnly = _methodNamed(transport, '_dispatchClientOnly');
+  final clientOnly = clientInteractionUnit.declarations
+      .whereType<ExtensionDeclaration>()
+      .expand((extension) => extension.body.members)
+      .whereType<MethodDeclaration>()
+      .singleWhere((method) => method.name.lexeme == '_dispatchClientOnly');
   final reload = _methodNamed(transport, '_reloadAfterStaleCommand');
   final recovery = _methodNamed(transport, '_snapshotRecoveryResult');
-  final allResults = _resultCreations(transport);
+  final allResults = [
+    ..._resultCreations(transport),
+    ..._resultCreations(clientOnly),
+  ];
   final dispatchResults = _resultCreations(dispatch);
   final serverManaged = dispatchResults.where(
     (creation) => _insideIfCalling(creation, 'isServerManaged'),

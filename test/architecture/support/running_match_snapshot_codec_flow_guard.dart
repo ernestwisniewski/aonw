@@ -250,8 +250,7 @@ bool _hasExactParticipantGuard(
       guards.single.argumentList.arguments.length == 1 &&
       guards.single.argumentList.arguments.single.toSource() ==
           '_sameOrderedPlayers(next.domain.participants, '
-              'previous.domain.participants) && '
-              '_hasCompleteTurnStateRoster(next)' &&
+              'previous.domain.participants)' &&
       guards.single.offset < conversions.single.offset;
 }
 

@@ -71,7 +71,8 @@ void main() {
         TerrainType.plains,
       );
 
-      final produced = reducer.reduce(
+      final produced = resolveGameIntent(
+        reducer,
         inspected.state,
         const StartUnitProductionCommand('city_1', GameUnitType.warrior),
       );

@@ -285,14 +285,13 @@ void _registerServerMapCacheBoundaryFixtures() {
   });
 
   test('server reducer guard rejects wide map contracts outside cache', () {
-    const turnsSource = '''
-extension Turns on ServerReducer {
-  void _submitTurn({required WorldMap mapView}) {}
-  void _finalizeSimultaneousTurn({required MapReadView mapView}) {}
+    const reducerSource = '''
+class ServerReducer {
+  void _applyTurnCommand({required WorldMap mapView}) {}
 }
 ''';
     final dependencyViolations = _serverReducerLibraryDependencyViolations(
-      {_serverReducerTurnsPath: turnsSource},
+      {_serverReducerPath: reducerSource},
       forbiddenTypeNames: const {
         'WorldMap',
         'WorldMapReadView',
@@ -300,7 +299,7 @@ extension Turns on ServerReducer {
       },
     );
     final contractViolations = _serverReducerMapContractViolations({
-      _serverReducerTurnsPath: turnsSource,
+      _serverReducerPath: reducerSource,
       _serverReducerOutcomePath: '''
 extension Outcome on ServerReducer {
   void _gameOutcome({required MapReadView mapView}) {}
@@ -310,12 +309,12 @@ extension Outcome on ServerReducer {
 
     expect(
       dependencyViolations,
-      contains('$_serverReducerTurnsPath must not reference WorldMap'),
+      contains('$_serverReducerPath must not reference WorldMap'),
     );
     expect(
       contractViolations,
       contains(
-        '$_serverReducerTurnsPath _submitTurn.mapView must have type '
+        '$_serverReducerPath _applyTurnCommand.mapView must have type '
         'MapReadView; found WorldMap',
       ),
     );

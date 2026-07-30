@@ -217,6 +217,7 @@ List<String> _canonicalReducerBoundaryViolations(
     'nextSnapshot': 'CanonicalGameSnapshot?',
     'events': 'List<GameEvent>',
     'movementExecutions': 'List<MovementCommandExecution>',
+    'combatAnimations': 'List<CombatAnimationFact>',
     'outcome': 'GameOutcome?',
     'reason': 'String?',
   };

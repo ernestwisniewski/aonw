@@ -17,6 +17,16 @@ part 'server_command_reducer_unit_action.dart';
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 
+DomainCommand? _decodePlayerDomainCommand(Map<String, dynamic> rawCommand) {
+  try {
+    return GameCommandSerializer.fromJson(rawCommand);
+  } on ArgumentError {
+    return null;
+  } on FormatException {
+    return null;
+  }
+}
+
 class ServerCommandReducer {
   ServerCommandReducer({
     MultiplayerMapCatalog mapCatalog = const FileMultiplayerMapCatalog(),
@@ -48,7 +58,10 @@ class ServerCommandReducer {
 
     final domain = snapshot.domain;
     final session = snapshot.session;
-    final command = GameCommandSerializer.fromJson(wireCommand.command);
+    final command = _decodePlayerDomainCommand(wireCommand.command);
+    if (command == null) {
+      return _reject('invalid_command_payload');
+    }
     if (wireCommand.turn != null && wireCommand.turn != domain.turn) {
       return _reject('stale_turn');
     }
@@ -146,7 +159,7 @@ class ServerCommandReducer {
   _CommandApplication _applyCommand({
     required CanonicalGameSnapshot snapshot,
     required WireMatch match,
-    required GameCommand command,
+    required DomainCommand command,
     required int commandTick,
     required String actorPlayerId,
     required DateTime now,
@@ -198,40 +211,11 @@ class ServerCommandReducer {
       case SelectTechnologyCommand():
         return _applyDomainCommandEngine(
           snapshot,
-          command as DomainCommand,
+          command,
           actorPlayerId,
           commandTick,
           loadedMap.mapView,
           ruleset,
-        );
-      case TileTappedCommand() ||
-          CityTappedCommand() ||
-          ToggleMoveTargetingCommand() ||
-          StartCityFoundingCommand() ||
-          CancelCityFoundingCommand() ||
-          StartCityWorkedHexSelectionCommand() ||
-          CancelCityWorkedHexSelectionCommand() ||
-          StartCityExpansionSelectionCommand() ||
-          CancelCityExpansionSelectionCommand() ||
-          StartWorkerActionSelectionCommand() ||
-          CancelWorkerActionSelectionCommand() ||
-          StartMerchantTradeRouteSelectionCommand() ||
-          CancelMerchantTradeRouteSelectionCommand() ||
-          StartMerchantMoveToCitySelectionCommand() ||
-          CancelMerchantMoveToCitySelectionCommand() ||
-          CancelResearchSelectionCommand() ||
-          StartAttackTargetingCommand() ||
-          CancelAttackTargetingCommand() ||
-          StartCommanderMergeSelectionCommand() ||
-          CancelCommanderMergeSelectionCommand() ||
-          SelectTileCommand() ||
-          SelectUnitCommand() ||
-          SelectCityCommand() ||
-          FocusNextPendingActionCommand() ||
-          FocusTurnStartActionCommand():
-        return _CommandApplication.reject(
-          snapshot: snapshot,
-          reason: 'client_only_command',
         );
     }
   }
@@ -291,7 +275,7 @@ class ServerCommandReducer {
   }
 }
 
-SubmitTurnCommand _submitTurnCommand(GameCommand command, String playerId) {
+SubmitTurnCommand _submitTurnCommand(DomainCommand command, String playerId) {
   return command is SubmitTurnCommand ? command : SubmitTurnCommand(playerId);
 }
 

@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -18,66 +15,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('SaveSnapshotCodec', () {
-    test('migrates a schema-2 fixture and round-trips as schema 3', () {
-      // Captured from an iOS schema-2 quickplay save; its opaque id was
-      // replaced while the persisted shape and values were retained.
-      final fixture =
-          jsonDecode(
-                File('test/fixtures/save_snapshot_v2.json').readAsStringSync(),
-              )
-              as Map<String, dynamic>;
-      final rawState = fixture['state'] as Map<String, dynamic>;
-      final rawSave = rawState['save'] as Map<String, dynamic>;
-      final rawRuleset = rawSave['ruleset'] as Map<String, dynamic>;
-      final rawVictory = rawRuleset['victory'] as Map<String, dynamic>;
-
-      final restored = SaveSnapshotCodec.fromJson(rawState);
-
-      expect(rawSave['schemaVersion'], 2);
-      expect(rawVictory, isNot(contains('culturalEnabled')));
-      expect(rawVictory, isNot(contains('culturalRequiredArtifacts')));
-      expect(rawVictory, isNot(contains('culturalHoldTurns')));
-      expect(restored.save.schemaVersion, gameSaveCurrentSchemaVersion);
-      expect(restored.save.id, 'fixture_v2_quickplay');
-      expect(restored.save.turn, 2);
-      expect(restored.save.gameMode, GameMode.multiplayer);
-      expect(restored.save.players.single.country, PlayerCountry.poland);
-      expect(restored.save.matchRules.victory.culturalEnabled, isTrue);
-      expect(restored.save.matchRules.victory.culturalRequiredArtifacts, 6);
-      expect(restored.save.matchRules.victory.culturalHoldTurns, 5);
-      expect(restored.playerColors, {'player_1': 4280640491});
-      expect(restored.eventLogOffset, 2);
-      expect(
-        restored.runtimeState.turnStartedAt,
-        DateTime.parse('2026-05-31T13:26:23.904895Z'),
-      );
-      expect(restored.artifacts, isEmpty);
-      expect(restored.playerWarWeariness, isEmpty);
-      expect(restored.playerStabilityNet, isEmpty);
-
-      final currentJson = SaveSnapshotCodec.toJson(restored);
-      final currentSave = currentJson['save'] as Map<String, dynamic>;
-      final roundTripped = SaveSnapshotCodec.fromJson(currentJson);
-
-      expect(currentSave['schemaVersion'], gameSaveCurrentSchemaVersion);
-      expect(SaveSnapshotCodec.toJson(roundTripped), currentJson);
-    });
-
-    test('preserves cultural rules already written by late schema 2', () {
+    test('rejects schema-2 snapshots without an upcaster', () {
       final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()));
       final save = json['save'] as Map<String, dynamic>;
       save['schemaVersion'] = 2;
-      final ruleset = save['ruleset'] as Map<String, dynamic>;
-      final victory = ruleset['victory'] as Map<String, dynamic>;
-      victory['culturalEnabled'] = false;
-      victory['culturalRequiredArtifacts'] = 9;
-      victory['culturalHoldTurns'] = 7;
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.save.matchRules.victory.culturalEnabled, isFalse);
-      expect(restored.save.matchRules.victory.culturalRequiredArtifacts, 9);
-      expect(restored.save.matchRules.victory.culturalHoldTurns, 7);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('Unsupported save schema version: 2'),
+          ),
+        ),
+      );
     });
 
     test('rejects unknown older and future save schemas', () {

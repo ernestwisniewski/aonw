@@ -89,9 +89,11 @@ const _allowedSwitchEventPaths = {
   'packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart',
 
   // Serialization is an explicit architecture exception.
+  'packages/aonw_core/lib/game/domain/event/artifact_event_serialization.dart',
   'packages/aonw_core/lib/game/domain/event/event_serialization.dart',
 
   // Legacy fanout that should be migrated behind GameEventDescriptor.
+  'lib/game/presentation/engine/artifact_event_renderer_effect_mapper.dart',
   'lib/game/presentation/formatters/diplomacy_history_presenter.dart',
   'lib/game/presentation/formatters/game_event_notification_city_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_combat_messages.dart',

@@ -23,13 +23,11 @@ final class BenchmarkCommandDispatcher {
     required GameRuleset ruleset,
   }) : _engineSnapshot = snapshot,
        _mapView = mapView,
-       _ruleset = ruleset,
-       _reducer = GameStateReducer(mapData: mapView, ruleset: ruleset);
+       _ruleset = ruleset;
 
   CanonicalGameSnapshot _engineSnapshot;
   final MapReadView _mapView;
   final GameRuleset _ruleset;
-  final GameStateReducer _reducer;
 
   CanonicalGameSnapshot get snapshot => _engineSnapshot;
 
@@ -38,23 +36,18 @@ final class BenchmarkCommandDispatcher {
     required GameCommand command,
     required GameCommandContext context,
   }) {
-    final family = command is DomainCommand
-        ? GameEngine.commandFamily(command)
-        : null;
-    if (family != null) {
+    if (command is DomainCommand && GameEngine.commandFamily(command) != null) {
       return _applyEngineCommand(
         state: state,
-        command: command as DomainCommand,
+        command: command,
         context: context,
       );
     }
-    final transition = _reducer.reduce(state, command, context: context);
     return BenchmarkCommandTransition(
-      accepted: transition.state != state,
-      state: transition.state,
-      events: transition.events,
-      uiEffects: transition.uiEffects,
-      rejectionReasons: _rejectionReasons(transition),
+      accepted: false,
+      state: state,
+      events: const [],
+      rejectionReasons: const ['unsupported_command_for_simulation'],
     );
   }
 

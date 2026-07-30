@@ -30,6 +30,8 @@ import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/game_intent_test_resolver.dart';
+
 MapData _minimalMap() => MapData(
   cols: 2,
   rows: 2,
@@ -266,7 +268,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -317,7 +319,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -357,7 +359,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -429,7 +431,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -478,7 +480,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -545,7 +547,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -606,7 +608,7 @@ void main() {
           mapData: map,
           onCommand: (command) async {
             commands.add(command);
-            final transition = reducer.reduce(state, command);
+            final transition = resolveGameIntent(reducer, state, command);
             state = transition.state;
             game.applyState(state);
           },
@@ -691,7 +693,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -750,7 +752,7 @@ void main() {
         mapData: map,
         onCommand: (command) async {
           commands.add(command);
-          final transition = reducer.reduce(state, command);
+          final transition = resolveGameIntent(reducer, state, command);
           state = transition.state;
           game.applyState(state);
         },
@@ -813,7 +815,7 @@ void main() {
           mapData: map,
           onCommand: (command) async {
             commands.add(command);
-            final transition = reducer.reduce(state, command);
+            final transition = resolveGameIntent(reducer, state, command);
             state = transition.state;
             game.applyState(state);
           },
@@ -1539,7 +1541,6 @@ void main() {
           onCommand: (_) async {},
         );
         addTearDown(game.disposeRenderer);
-
         game
           ..applyState(
             GameState(units: [commander], activePlayerId: 'player_1'),
@@ -3527,7 +3528,7 @@ void main() {
         game = GameRenderer(
           mapData: map,
           onCommand: (command) async {
-            final transition = reducer.reduce(state, command);
+            final transition = resolveWithEffects(reducer, state, command);
             state = transition.state;
             game.applyState(state);
             await game.handleEffects(transition.uiEffects.rendererEffects);
@@ -3541,7 +3542,6 @@ void main() {
         await game.onLoad();
         await Future<void>.delayed(Duration.zero);
         game.update(0);
-
         await game.handleTileTappedForTesting(_tile(map, 0, 0));
         expect(state.selection?.type, GameSelectionType.unit);
         expect(state.moveCommandActive, isTrue);

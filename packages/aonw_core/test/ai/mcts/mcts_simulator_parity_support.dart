@@ -127,6 +127,56 @@ final class MctsSimulatorParityFixtures {
     );
   }
 
+  static GameView viewFromPersistentState(
+    PersistentGameState state, {
+    required String forPlayerId,
+    required int turn,
+    required MapReadView mapData,
+    required GameRuleset ruleset,
+    Iterable<String> recentHostilePlayerIds = const [],
+    Iterable<String> activeHostilePlayerIds = const [],
+    Iterable<String> pressureTargetPlayerIds = const [],
+    Iterable<String> defaultNeutralPlayerIds = const [],
+    Iterable<PendingCityAttackThreat> pendingCityAttackThreats = const [],
+    Iterable<String> forcedVisibleEnemyUnitIds = const [],
+    bool ignoreFogOfWar = false,
+    bool ignoreDynamicFogOfWar = false,
+  }) {
+    return GameView.fromPersistentState(
+      state,
+      forPlayerId: forPlayerId,
+      turn: turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      engineSnapshot: engineSnapshot(state),
+      recentHostilePlayerIds: recentHostilePlayerIds,
+      activeHostilePlayerIds: activeHostilePlayerIds,
+      pressureTargetPlayerIds: pressureTargetPlayerIds,
+      defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+      pendingCityAttackThreats: pendingCityAttackThreats,
+      forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+      ignoreFogOfWar: ignoreFogOfWar,
+      ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+    );
+  }
+
+  static SimulatedState simulatedState(
+    PersistentGameState state, {
+    required MapReadView mapData,
+    int maxPlanningDepth = 4,
+  }) {
+    return SimulatedState.fromView(
+      viewFromPersistentState(
+        state,
+        forPlayerId: 'player_1',
+        turn: 1,
+        mapData: mapData,
+        ruleset: GameRuleset.defaults,
+      ),
+      maxPlanningDepth: maxPlanningDepth,
+    );
+  }
+
   static SimulationGameEngineResult resolveEngineCommand(
     PersistentGameState state,
     DomainCommand command, {

@@ -5,7 +5,6 @@ import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
@@ -58,7 +57,7 @@ void main() {
 
     final result =
         LocalCommandResolver(
-          reducer: _NoUnitActionLegacyReducer(mapData: _mapData()),
+          reducer: GameStateReducer(mapData: _mapData()),
         ).resolve(
           baseSnapshot: baseSnapshot,
           currentState: state,
@@ -107,7 +106,7 @@ void main() {
 
     final result =
         LocalCommandResolver(
-          reducer: _NoUnitActionLegacyReducer(mapData: _mapData()),
+          reducer: GameStateReducer(mapData: _mapData()),
         ).resolve(
           baseSnapshot: baseSnapshot,
           currentState: state,
@@ -157,10 +156,7 @@ void main() {
 
     final result =
         LocalCommandResolver(
-          reducer: _NoUnitActionLegacyReducer(
-            mapData: mapData,
-            ruleset: ruleset,
-          ),
+          reducer: GameStateReducer(mapData: mapData, ruleset: ruleset),
         ).resolve(
           baseSnapshot: baseSnapshot,
           currentState: baseSnapshot.toGameState(activePlayerId: 'player_1'),
@@ -241,22 +237,6 @@ GameSave _unitActionSave() => GameSave(
     Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
   ],
 );
-
-final class _NoUnitActionLegacyReducer extends GameStateReducer {
-  const _NoUnitActionLegacyReducer({required super.mapData, super.ruleset});
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    if (command is SkipUnitTurnCommand || command is FortifyUnitCommand) {
-      throw StateError('Migrated unit action reached the legacy reducer.');
-    }
-    return super.reduce(state, command, context: context);
-  }
-}
 
 MapData _mapData() => MapData(
   cols: 1,

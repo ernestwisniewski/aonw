@@ -78,7 +78,6 @@
         "packages/aonw_core/lib/ai/production_unit_policies.dart::class:_SettlerProductionPolicy/method:applyExpansionPlan": 86,
         "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 277,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 82,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 77,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_turn_row_factory.dart::class:_EconomySimulationTurnRowFactory/method:rowFor": 91,
         "packages/aonw_core/lib/ai/simulation/score_comeback_telemetry_fixture.dart::class:ScoreComebackTelemetryFixture/method:run": 83,
         "packages/aonw_core/lib/ai/strategic/city_site_planner.dart::class:CitySitePlanner/method:_assignSettlers": 72,
@@ -216,7 +215,7 @@
         "packages/aonw_core/lib/ai/production_wonder_scorer.dart::class:_WonderProductionScorer/method:_score": 14,
         "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 13,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 20,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 63,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 39,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_setup.dart::class:_EconomySimulationSetup/method:_tile": 12,
         "packages/aonw_core/lib/ai/strategic/city_site_planner.dart::class:CitySitePlanner/method:_assignSettlers": 21,
         "packages/aonw_core/lib/ai/strategic/defensive_stance_planning_engine.dart::class:_DefensiveStancePlanningEngine/method:compute": 11,
@@ -351,7 +350,7 @@
         "packages/aonw_core/lib/ai/production_unit_policies.dart::class:_SettlerProductionPolicy/method:applyStrategicMode": 25,
         "packages/aonw_core/lib/ai/simulation/economy_simulation.dart::class:EconomySimulation/method:run": 26,
         "packages/aonw_core/lib/ai/simulation/economy_simulation_command_staleness.dart::function:_isStaleAttackCommand": 26,
-        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 52,
+        "packages/aonw_core/lib/ai/simulation/economy_simulation_command_stats.dart::class:EconomySimulationCommandStats/method:addApplied": 28,
         "packages/aonw_core/lib/ai/strategic/city_site_planner.dart::class:CitySitePlanner/method:_assignSettlers": 34,
         "packages/aonw_core/lib/ai/strategic/defensive_stance_policies.dart::class:_DefenseAssignmentPolicy/method:baselineGarrisonCount": 21,
         "packages/aonw_core/lib/ai/strategic/frontier_clearing_planner.dart::class:FrontierClearingPlanner/method:compute": 19,
@@ -407,8 +406,8 @@
       "files": {
         "packages/aonw_core/test/ai/basic_strategy_test.dart": 7003,
         "packages/aonw_core/test/ai/game_view_test.dart": 596,
-        "packages/aonw_core/test/ai/mcts/mcts_action_generator_test.dart": 5245,
-        "packages/aonw_core/test/ai/mcts/mcts_evaluator_test.dart": 2127,
+        "packages/aonw_core/test/ai/mcts/mcts_action_generator_test.dart": 5243,
+        "packages/aonw_core/test/ai/mcts/mcts_evaluator_test.dart": 2122,
         "packages/aonw_core/test/ai/mcts/mcts_simulator_parity_test.dart": 1118,
         "packages/aonw_core/test/ai/mcts/mcts_strategy_test.dart": 1705,
         "packages/aonw_core/test/ai/strategic/city_site_planner_test.dart": 561,
@@ -618,7 +617,7 @@
         "lib/game/application/services/authoritative_command_policy.dart::class:AuthoritativeCommandPolicy/method:isClientOnly": 66,
         "lib/game/application/services/game_event_descriptor.dart::function:_describeGameEvent": 400,
         "lib/game/application/services/multiplayer_interaction_reconciler.dart::class:MultiplayerInteractionReconciler/method:reconcile": 62,
-        "lib/game/application/services/replay_service.dart::class:ReplayService/method:buildTimeline": 82,
+        "lib/game/application/services/replay_service.dart::class:ReplayService/method:buildTimeline": 75,
         "lib/game/application/services/replay_service.dart::class:ReplayStep/method:_inferActorPlayerId": 78,
         "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 71,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer/method:handleTileTapped": 66,
@@ -1148,7 +1147,7 @@
       "files": {
         "test/api/session/network_session_refresh_coordinator_test.dart": 821,
         "test/api/transport/live_event_subscription_test.dart": 736,
-        "test/api/transport/network_command_transport_test.dart": 1140,
+        "test/api/transport/network_command_transport_test.dart": 1136,
         "test/architecture/coverage_gate_test.dart": 682,
         "test/architecture/lint_configuration_guard_test.dart": 715,
         "test/editor/editor_grid_test.dart": 592,
@@ -1160,7 +1159,7 @@
         "test/game/domain/command/game_command_serialization_test.dart": 501,
         "test/game/domain/command/game_command_test.dart": 966,
         "test/game/domain/game_state_test.dart": 572,
-        "test/game/domain/reducer/game_state_reducer_integration_test.dart": 948,
+        "test/game/domain/reducer/game_state_reducer_integration_test.dart": 943,
         "test/game/domain/reducer/movement_reducer_test.dart": 1584,
         "test/game/domain/reducer/selection_reducer_test.dart": 724,
         "test/game/domain/reducer/turn_reducer_test.dart": 934,
@@ -1340,7 +1339,7 @@
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
         "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 92,
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 63,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65
@@ -1353,11 +1352,10 @@
         "server/lib/src/multiplayer/client_message_guard.dart::class:_PayloadBudget/method:visit": 12,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 11,
         "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 58
+        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 33
       },
       "cognitiveComplexity": {
-        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 25
+        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17
       }
     },
     "server_test": {

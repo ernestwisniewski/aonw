@@ -54,16 +54,18 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
     GameCommandContext context,
   ) {
     final family = GameEngine.commandFamily(command);
-    if (family != null) {
-      return GameStateTransition(
-        state: acceptedEngineCommandInteractionSource(
-          currentState: currentState,
-          command: command,
-          family: family,
-        ),
+    if (family == null) {
+      throw StateError(
+        '${command.runtimeType} has no canonical GameEngine family.',
       );
     }
-    return reduce(currentState, command, context: context);
+    return GameStateTransition(
+      state: acceptedEngineCommandInteractionSource(
+        currentState: currentState,
+        command: command,
+        family: family,
+      ),
+    );
   }
 }
 

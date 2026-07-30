@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 void main() {
   group('MctsSearch', () {
     test('selects the most visited high scoring action', () {
@@ -66,7 +68,7 @@ AiContext _context() {
 
 GameView _view() {
   final mapData = MapData(cols: 1, rows: 1, tiles: const []);
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     const PersistentGameState(),
     forPlayerId: 'player_1',
     turn: 1,

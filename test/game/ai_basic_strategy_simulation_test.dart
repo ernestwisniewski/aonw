@@ -14,6 +14,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/canonical_command_test_dispatch.dart';
+
 void main() {
   group('BasicStrategy simulation', () {
     test(
@@ -133,15 +135,23 @@ _SimulationResult _simulateBasicAiTurns({
 
     for (final command in plan.commands) {
       plannedCommands.add(command);
-      final transition = reducer.reduce(state, command, context: context);
+      final transition = dispatchCanonicalTestCommand(
+        reducer: reducer,
+        state: state,
+        command: command,
+        context: context,
+      );
       if (transition.state == state) continue;
       state = transition.state;
       appliedCommands.add(command);
     }
 
-    state = reducer
-        .reduce(state, EndTurnCommand(player.id), context: context)
-        .state;
+    state = dispatchCanonicalTestCommand(
+      reducer: reducer,
+      state: state,
+      command: EndTurnCommand(player.id),
+      context: context,
+    ).state;
   }
 
   return _SimulationResult(

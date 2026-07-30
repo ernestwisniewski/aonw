@@ -93,10 +93,7 @@ void main() {
             entry.key,
       };
 
-      expect(paths, {
-        'tool/performance/ai_strategy_workload.dart',
-        'tool/performance/turn_finalization_workload.dart',
-      });
+      expect(paths, {'tool/performance/turn_finalization_workload.dart'});
     });
   });
 }

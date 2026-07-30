@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 part 'mcts_strategy_test_support.dart';
 
 void main() {
@@ -14,12 +16,10 @@ void main() {
         config: MctsConfig(minimumBudget: Duration(seconds: 1)),
         fallback: _StaticStrategy(commands: [fallbackCommand]),
       );
-
       final plan = strategy.plan(
         _view(),
         _context(deadline: DateTime.now().subtract(const Duration(seconds: 1))),
       );
-
       expect(plan.commands, const [fallbackCommand]);
       expect(plan.debug?.strategyId, 'mcts');
     });
@@ -778,7 +778,7 @@ AiContext _context({
 
 GameView _view() {
   final mapData = MapData(cols: 1, rows: 1, tiles: const []);
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     const PersistentGameState(),
     forPlayerId: 'player_1',
     turn: 1,
@@ -789,7 +789,7 @@ GameView _view() {
 
 GameView _unitView() {
   final mapData = _unitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -822,7 +822,7 @@ GameView _unitView() {
 
 GameView _lateNoTargetView() {
   final mapData = _unitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       cities: const [
         GameCity(
@@ -863,7 +863,7 @@ GameView _lateNoTargetView() {
 
 GameView _cityUnitView() {
   final mapData = _unitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       cities: const [
         GameCity(
@@ -904,7 +904,7 @@ GameView _cityUnitView() {
 
 GameView _focusFireView({int turn = 1, bool extraEnemy = false}) {
   final mapData = _focusFireMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -971,7 +971,7 @@ GameView _civilianSupportView({
   bool withOwnCity = false,
 }) {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       cities: [
         if (withOwnCity)
@@ -1040,7 +1040,7 @@ GameView _civilianSupportView({
 
 GameView _reconSupportView() {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1082,7 +1082,7 @@ GameView _reconSupportView() {
 
 GameView _partialMoveReservationView() {
   final mapData = _partialMoveReservationMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1126,7 +1126,7 @@ GameView _partialMoveReservationView() {
 
 GameView _supportOriginReservationView() {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1168,7 +1168,7 @@ GameView _supportOriginReservationView() {
 
 GameView _alternateApproachReservationView({int scoutMovementPoints = 1}) {
   final mapData = _pressureMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1214,7 +1214,7 @@ GameView _alternateApproachReservationView({int scoutMovementPoints = 1}) {
 
 GameView _founderPressureSupportView() {
   final mapData = _pressureMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       cities: const [
         GameCity(
@@ -1283,7 +1283,7 @@ GameView _founderPressureSupportView() {
 
 GameView _warGoalSupportView({bool enemyAtTarget = false}) {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1334,7 +1334,7 @@ GameView _warGoalSupportView({bool enemyAtTarget = false}) {
 
 GameView _warGoalCitySupportView() {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1384,7 +1384,7 @@ GameView _warGoalCitySupportView() {
 
 GameView _pressureMoveSupportView() {
   final mapData = _wideUnitMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(
@@ -1427,7 +1427,7 @@ GameView _pressureMoveSupportView() {
 
 GameView _combatRetreatReservationView({bool enemyAtAdjacentTarget = false}) {
   final mapData = _pressureMap();
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       units: [
         GameUnit(

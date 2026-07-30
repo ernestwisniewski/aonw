@@ -5,7 +5,7 @@ const _interactionTargets = [
     path:
         'lib/game/domain/reducer/game_state/'
         'game_state_reducer_taps.dart',
-    owner: '_GameStateTapReducer',
+    owner: 'GameIntentTapResolver',
     boundaries: [
       _Boundary.method(
         '_cityFoundingDraftTileTap',

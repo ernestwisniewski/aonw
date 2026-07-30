@@ -243,7 +243,7 @@ final class MatchLifecycleStateAdapter {
     required String? winnerPlayerId,
   }) {
     if (endedAt != null || outcomeCondition != null || winnerPlayerId != null) {
-      throw FormatException(
+      throw const FormatException(
         'Non-terminal match lifecycle cannot retain terminal metadata.',
       );
     }

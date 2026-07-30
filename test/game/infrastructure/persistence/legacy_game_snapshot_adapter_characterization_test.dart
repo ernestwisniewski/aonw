@@ -1,35 +1,42 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/game/compatibility.dart';
+import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('schema-2 fixture is stable through the compatibility adapter', () {
-    final fixture =
-        jsonDecode(
-              File('test/fixtures/save_snapshot_v2.json').readAsStringSync(),
-            )
-            as Map<String, dynamic>;
-    final rawState = fixture['state'] as Map<String, dynamic>;
-    final rawSave = rawState['save'] as Map<String, dynamic>;
-
-    final migrated = SaveSnapshotCodec.fromJson(rawState);
-    final expectedSchema3 = SaveSnapshotCodec.toJson(migrated);
-    final firstOutput = _roundTripThroughCompatibility(migrated);
+  test('current snapshot is stable through the compatibility adapter', () {
+    final snapshot = SaveSnapshot(
+      save: GameSave(
+        id: 'current_snapshot',
+        name: 'Current snapshot',
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        turn: 2,
+        playerStates: const {'player_1': PlayerTurnState.active},
+        savedAt: DateTime.utc(2026, 5, 31, 13, 26, 23),
+        camera: CameraState.zero,
+        players: const [
+          Player(id: 'player_1', name: 'player_1', colorValue: 0xFF4a7fc4),
+        ],
+      ),
+      playerColors: const {'player_1': 0xFF4a7fc4},
+      playerCountries: const {'player_1': PlayerCountry.poland},
+      eventLogOffset: 2,
+    );
+    final expected = SaveSnapshotCodec.toJson(snapshot);
+    final firstOutput = _roundTripThroughCompatibility(snapshot);
     final secondOutput = _roundTripThroughCompatibility(
       SaveSnapshotCodec.fromJson(firstOutput),
     );
 
-    expect(rawSave['schemaVersion'], 2);
     expect(
       (firstOutput['save'] as Map<String, dynamic>)['schemaVersion'],
       gameSaveCurrentSchemaVersion,
     );
-    expect(firstOutput, expectedSchema3);
+    expect(firstOutput, expected);
     expect(secondOutput, firstOutput);
   });
 }

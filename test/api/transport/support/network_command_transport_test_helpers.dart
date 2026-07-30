@@ -16,6 +16,17 @@ NetworkCommandTransport _transport(
   );
 }
 
+GameSave _multiplayerSave() => _save().copyWith(
+  playerStates: const {
+    'player_1': PlayerTurnState.active,
+    'player_2': PlayerTurnState.active,
+  },
+  players: const [
+    Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4),
+    Player(id: 'player_2', name: 'Bob', colorValue: 0xFFd05b47),
+  ],
+);
+
 NetworkCommandConflictException _commandConflict(
   String errorCode, {
   int? nextTick,
@@ -104,7 +115,7 @@ void _registerEngineFamilyRoutingTests() {
           movementExecutions: WireMovementExecutionList(const []),
         ),
       );
-      final reducer = _FailingAuthoritativeReducer();
+      final reducer = GameStateReducer(mapData: _map());
       final transport = NetworkCommandTransport(
         commandDispatcher: dispatcher,
         token: AuthToken('jwt-token'),
@@ -126,7 +137,6 @@ void _registerEngineFamilyRoutingTests() {
         command: fixture.command,
       );
 
-      expect(reducer.calls, 0);
       expect(result.snapshot?.eventLogOffset, snapshot.eventLogOffset);
       if (fixture.name == 'combat') {
         expect(result.state.pendingAction, isNull);
@@ -182,7 +192,7 @@ void _registerEngineFamilyRoutingTests() {
         movementExecutions: WireMovementExecutionList(const []),
       ),
     );
-    final reducer = _FailingAuthoritativeReducer();
+    final reducer = GameStateReducer(mapData: _map());
     final transport = NetworkCommandTransport(
       commandDispatcher: dispatcher,
       token: AuthToken('jwt-token'),
@@ -203,7 +213,6 @@ void _registerEngineFamilyRoutingTests() {
       ),
     );
 
-    expect(reducer.calls, 0);
     expect(
       result.state.research.forPlayer('player_1').activeTechnologyId,
       TechnologyId.agriculture,
@@ -252,7 +261,7 @@ void _registerEngineFamilyRoutingTests() {
         movementExecutions: WireMovementExecutionList(const []),
       ),
     );
-    final reducer = _FailingAuthoritativeReducer();
+    final reducer = GameStateReducer(mapData: _map());
     final transport = NetworkCommandTransport(
       commandDispatcher: dispatcher,
       token: AuthToken('jwt-token'),
@@ -275,7 +284,6 @@ void _registerEngineFamilyRoutingTests() {
       ),
     );
 
-    expect(reducer.calls, 0);
     expect(result.state.diplomacy.pendingProposals.keys, ['proposal_1']);
     expect(
       result.state.pendingAction,
@@ -315,22 +323,6 @@ List<Map<String, dynamic>> _projectedCombatEventPayloads() {
       ),
     },
   ];
-}
-
-final class _FailingAuthoritativeReducer extends GameStateReducer {
-  _FailingAuthoritativeReducer() : super(mapData: _map());
-
-  var calls = 0;
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    calls += 1;
-    throw StateError('Migrated engine command reached the legacy reducer.');
-  }
 }
 
 class _FakeCommandServer implements WireCommandDispatcher {
@@ -382,35 +374,24 @@ class _FakeCommandServer implements WireCommandDispatcher {
 
     final command = commandCodec.fromWire(wire);
     final context = commandCodec.contextFromWire(wire);
-    final resolution = GameEngine.commandFamily(command) != null
-        ? LocalCommandResolver(reducer: reducer).resolve(
-            baseSnapshot: snapshot,
-            currentState: state,
-            command: command,
-            savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
-            context: context,
-          )
-        : null;
-    final transition = resolution == null
-        ? reducer.reduce(state, command, context: context)
-        : GameStateTransition(
-            state: resolution.state,
-            events: resolution.events,
-            uiEffects: resolution.uiEffects,
-          );
+    final resolution = LocalCommandResolver(reducer: reducer).resolve(
+      baseSnapshot: snapshot,
+      currentState: state,
+      command: command,
+      savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
+      context: context,
+    );
+    final transition = GameStateTransition(
+      state: resolution.state,
+      events: resolution.events,
+      uiEffects: resolution.uiEffects,
+    );
     final movementExecutions = nextMovementExecutions;
     nextMovementExecutions = WireMovementExecutionList(const []);
     state = transition.state;
     final nextSnapshot =
         nextAcceptedSnapshot ??
-        resolution?.snapshot.copyWith(eventLogOffset: offset) ??
-        SaveSnapshot.fromGameState(
-          save: save.copyWith(
-            savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
-          ),
-          state: state,
-          eventLogOffset: offset,
-        );
+        resolution.snapshot.copyWith(eventLogOffset: offset);
     nextAcceptedSnapshot = null;
     save = nextSnapshot.save;
     state = nextSnapshot.toGameState(

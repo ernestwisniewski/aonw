@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
+import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
@@ -30,7 +31,7 @@ GameStateTransition resolveGameIntent(
     return dispatchCanonicalTestCommand(
       reducer: reducer,
       state: state,
-      command: domainCommand,
+      command: command,
       context: context,
     );
   }
@@ -39,5 +40,31 @@ GameStateTransition resolveGameIntent(
         ? state
         : state.copyWith(interaction: resolution.interaction),
     uiEffects: resolution.presentationFocus,
+  );
+}
+
+GameStateTransition resolveWithEffects(
+  GameStateReducer reducer,
+  GameState state,
+  GameCommand command, {
+  GameCommandContext context = const GameCommandContext(),
+}) {
+  final transition = resolveGameIntent(
+    reducer,
+    state,
+    command,
+    context: context,
+  );
+  return GameStateTransition(
+    state: transition.state,
+    events: transition.events,
+    uiEffects: [
+      ...transition.uiEffects,
+      ...QueuedMovementEffectBuilder.fromUnitDelta(
+        beforeUnits: state.units,
+        afterUnits: transition.state.units,
+        inferDirectMoves: true,
+      ),
+    ],
   );
 }

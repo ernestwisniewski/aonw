@@ -165,7 +165,7 @@ void main() {
         const {
           'lib/game/application/services/'
                   'accepted_engine_command_interaction_source.dart':
-              2,
+              1,
           'lib/game/application/services/local_command_resolver.dart': 1,
           'packages/aonw_core/lib/game/application/engine/game_engine.dart': 2,
         },

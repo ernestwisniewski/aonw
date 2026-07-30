@@ -26,7 +26,7 @@ void main() {
         expect(stable['diplomaticContacts'], 3);
         expect(stable['fogFullRecomputes'], 0);
         expect(stable['fogPlayerRecomputes'], 0);
-        expect(stable['fogIncrementalRecomputes'], 3);
+        expect(stable['fogIncrementalRecomputes'], 2);
         expect(stable['fogFallbackRecomputes'], 0);
         expect(
           stable['tileLookupHits'],

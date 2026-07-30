@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:flutter/foundation.dart';
+import 'package:aonw_core/util/collection_equality.dart';
 
 GameState projectLocalCombatEngineResult({
   required GameState currentState,

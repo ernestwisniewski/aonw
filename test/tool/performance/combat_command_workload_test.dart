@@ -37,9 +37,9 @@ void main() {
       expect(stable['combatResolvedEvents'], 3);
       expect(stable['eventCount'], greaterThanOrEqualTo(6));
       expect(stable['diplomaticContacts'], 3);
-      expect(boundaryDigests.keys, ['kernel', 'persistent', 'domain']);
+      expect(boundaryDigests.keys, ['kernel', 'engine', 'domain']);
       expect(boundaryDigests.values.toSet(), hasLength(1));
-      expect(fogFullRecomputes.values.toSet(), {1});
+      expect(fogFullRecomputes.values.toSet(), {0, 1});
       expect(fogPlayerRecomputes.values.toSet(), {0});
       expect(calls.values.toSet(), hasLength(1));
       expect(hits.values.toSet(), hasLength(1));
@@ -48,7 +48,7 @@ void main() {
       }
       expect(timing.keys, {
         'kernelTiming',
-        'persistentAdapterTiming',
+        'engineTiming',
         'domainAdapterTiming',
       });
       for (final value in timing.values) {

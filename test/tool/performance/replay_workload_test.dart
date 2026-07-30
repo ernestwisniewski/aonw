@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../tool/performance/replay_workload.dart';
 
 void main() {
-  test('replays contiguous commands through the real reducer', () async {
+  test('replays contiguous commands through the canonical engine', () async {
     final result = await runReplayWorkload(timingSamples: 1);
     final sizes = result.stable['sizes']! as Map<String, Object?>;
 
@@ -15,10 +15,10 @@ void main() {
       expect(scale['events'], events);
       expect(scale['commandsYielded'], events);
       expect(scale['commandKinds'], {
-        'resetUnitMovement': events ~/ 4,
+        'endTurn': events ~/ 4,
         'selectTechnology': events ~/ 4,
-        'setActivePlayer': events ~/ 4,
         'skipUnitTurn': events ~/ 4,
+        'submitTurn': events ~/ 4,
       });
       expect(scale['commandDigest'], matches(RegExp(r'^[0-9a-f]{64}$')));
       expect(scale['steps'], events);

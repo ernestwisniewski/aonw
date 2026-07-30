@@ -80,13 +80,13 @@ void main() {
     });
 
     test(
-      'server annotation accepts events, participants, and indexes only',
+      'server annotation accepts only reviewed canonical audience inputs',
       () {
         const path = _audiencePath;
         final source = File(path).readAsStringSync();
 
         expect(
-          _requiredNamedParameterTypes(
+          _namedParameterTypes(
             source,
             path: path,
             className: 'PlayerMatchEventAudience',
@@ -97,6 +97,9 @@ void main() {
             'participantPlayerIds': 'Iterable<String>',
             'previous': 'GameEventOwnershipIndex',
             'next': 'GameEventOwnershipIndex',
+            'combatAnimations': 'Iterable<CombatAnimationFact>',
+            'previousFog': 'FogOfWarState',
+            'nextFog': 'FogOfWarState',
           },
         );
       },
@@ -197,6 +200,22 @@ Map<String, String?> _requiredNamedParameterTypes(
   required String className,
   required String methodName,
 }) {
+  return _namedParameterTypes(
+    source,
+    path: path,
+    className: className,
+    methodName: methodName,
+    requireEveryParameter: true,
+  );
+}
+
+Map<String, String?> _namedParameterTypes(
+  String source, {
+  required String path,
+  required String className,
+  required String methodName,
+  bool requireEveryParameter = false,
+}) {
   final unit = parseString(content: source, path: path).unit;
   final declarations = unit.declarations
       .whereType<ClassDeclaration>()
@@ -213,8 +232,9 @@ Map<String, String?> _requiredNamedParameterTypes(
   for (final parameter
       in methods.single.parameters?.parameters ?? const <FormalParameter>[]) {
     if (parameter is! DefaultFormalParameter ||
-        !parameter.isRequiredNamed ||
-        parameter.defaultValue != null) {
+        !parameter.isNamed ||
+        (requireEveryParameter &&
+            (!parameter.isRequiredNamed || parameter.defaultValue != null))) {
       return const {};
     }
     final normalized = parameter.parameter;

@@ -167,9 +167,7 @@ class GamePlayerControlController extends _$GamePlayerControlController {
     }
     if (!ref.mounted || result == null) return;
 
-    if (state != result.nextControl) {
-      state = result.nextControl;
-    }
+    _setAndSync(result.nextControl);
   }
 
   void _invalidateSave(String saveId) {

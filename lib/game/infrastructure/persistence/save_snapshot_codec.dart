@@ -3,7 +3,6 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/migrations/game_fog_of_war_state_migrator.dart';
 import 'package:aonw/game/infrastructure/persistence/migrations/game_research_state_migrator.dart';
 import 'package:aonw/game/infrastructure/persistence/migrations/game_runtime_state_migrator.dart';
-import 'package:aonw/game/infrastructure/persistence/migrations/game_save_migrator.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -18,6 +17,14 @@ abstract final class SaveSnapshotCodec {
   }
 
   static SaveSnapshot fromJson(Map<String, dynamic> json) {
+    final rawSave = json['save'] as Map<String, dynamic>;
+    final schemaVersion = rawSave['schemaVersion'];
+    if (schemaVersion != gameSaveCurrentSchemaVersion) {
+      throw StateError(
+        'Unsupported save schema version: $schemaVersion '
+        '(expected $gameSaveCurrentSchemaVersion)',
+      );
+    }
     final rawPlayerColors =
         json['playerColors'] as Map<String, dynamic>? ?? const {};
     final rawPlayerCountries =
@@ -62,9 +69,7 @@ abstract final class SaveSnapshotCodec {
     });
 
     return SaveSnapshot.fromPersistentState(
-      save: GameSave.fromJson(
-        GameSaveMigrator.migrate(json['save'] as Map<String, dynamic>),
-      ),
+      save: GameSave.fromJson(rawSave),
       state: rawPersistentState,
       eventLogOffset: json['eventLogOffset'] as int? ?? 0,
     );

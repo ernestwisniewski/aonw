@@ -314,12 +314,12 @@ void main() {
       );
     });
 
-    test('resets hot-seat AI movement before planning', () async {
+    test('uses hot-seat AI movement prepared by the turn engine', () async {
       final aiCommander = GameUnit.startingCommander(
         ownerPlayerId: 'player_2',
         col: 1,
         row: 0,
-      ).copyWith(movementPoints: 0).copyWithHitPoints(2);
+      ).copyWithHitPoints(2);
       final strategy = _CapturingStrategy(commands: const []);
       final transport = _RecordingCommandTransport();
       final useCase = _useCase(

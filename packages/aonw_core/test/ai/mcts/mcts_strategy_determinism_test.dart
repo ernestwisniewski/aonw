@@ -1,6 +1,8 @@
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+import 'mcts_simulator_parity_support.dart';
+
 void main() {
   group('MctsStrategy determinism', () {
     test('produces the same plan for the same seed and view', () {
@@ -36,7 +38,7 @@ AiContext _context({required int baseSeed}) {
 }
 
 GameView _view() {
-  return GameView.fromPersistentState(
+  return MctsSimulatorParityFixtures.viewFromPersistentState(
     PersistentGameState(
       playerGold: const {_playerId: 12, _enemyId: 8},
       units: [

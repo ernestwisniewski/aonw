@@ -1,10 +1,8 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_player_ids.dart';
-import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -19,24 +17,6 @@ class GameStateReducer {
     required this.mapData,
     this.ruleset = GameRuleset.defaults,
   });
-
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) => throw UnsupportedError(
-    'GameStateReducer no longer dispatches commands; use GameIntentResolver '
-    'for GameIntent and GameEngine for authoritative commands.',
-  );
-
-  GameStateTransition reduceWithEnvironment(
-    GameState state,
-    GameCommand command,
-    ReducerEnvironment environment,
-  ) => throw UnsupportedError(
-    'GameStateReducer no longer dispatches commands; use GameIntentResolver '
-    'for GameIntent and GameEngine for authoritative commands.',
-  );
 
   GameStateTransition syncActivePlayer(
     GameState state, {

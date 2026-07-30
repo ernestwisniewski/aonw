@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_movement_engine_projection.dart';
+import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -77,6 +78,7 @@ GameStateTransition resolveMovementCommandForTest(
     result: accepted,
     command: command,
     mapView: mapView,
+    presentationOrigin: _presentationOrigin(state, command),
   );
   return GameStateTransition(
     state: projection.state,
@@ -85,6 +87,19 @@ GameStateTransition resolveMovementCommandForTest(
       projection.movementExecutions,
     ),
   );
+}
+
+LocalMovementPresentationOrigin _presentationOrigin(
+  GameState state,
+  DomainCommand command,
+) {
+  final preview = state.movePreview;
+  return command is MoveUnitCommand &&
+          preview?.unitId == command.unitId &&
+          preview?.targetCol == command.targetCol &&
+          preview?.targetRow == command.targetRow
+      ? LocalMovementPresentationOrigin.previewConfirmation
+      : LocalMovementPresentationOrigin.direct;
 }
 
 bool _canAct(GameState state, GameCommandContext context) {

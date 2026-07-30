@@ -8,9 +8,7 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -28,8 +26,7 @@ void main() {
       () async {
         final before = _beforeState();
         final after = _afterState();
-        const camera = JumpCameraEffect(col: 3, row: 3);
-        final reducer = _EffectReducer([..._localMovementEffects(), camera]);
+        final reducer = GameStateReducer(mapData: _map());
         final dispatcher = _ScriptedDispatcher(
           (_) => _acceptedAck(
             after: after,
@@ -63,8 +60,7 @@ void main() {
     test('explicit empty suppresses local and inferred movement', () async {
       final before = _beforeState();
       final after = _afterState();
-      const camera = JumpCameraEffect(col: 3, row: 3);
-      final reducer = _EffectReducer([..._localMovementEffects(), camera]);
+      final reducer = GameStateReducer(mapData: _map());
       final dispatcher = _ScriptedDispatcher(
         (_) => _acceptedAck(
           after: after,
@@ -91,7 +87,7 @@ void main() {
     test('lost ACK retry commits and animates the stored plan once', () async {
       final before = _beforeState();
       final after = _afterState();
-      final reducer = _EffectReducer(_localMovementEffects());
+      final reducer = GameStateReducer(mapData: _map());
       final dispatcher = _CommitThenDropDispatcher(
         _acceptedAck(
           after: after,
@@ -121,7 +117,6 @@ void main() {
       );
 
       expect(dispatcher.commits, 1);
-      expect(reducer.calls, 0);
       expect(dispatcher.sent.map((value) => value.wire.tick), [31, 31]);
       expect(
         dispatcher.sent.map((value) => value.clientMessageId).toSet(),
@@ -134,7 +129,7 @@ void main() {
     test('catch-up snapshot prevents stored ACK movement replay', () async {
       final before = _beforeState();
       final after = _afterState();
-      final reducer = _EffectReducer(_localMovementEffects());
+      final reducer = GameStateReducer(mapData: _map());
       final dispatcher = _CommitThenDropDispatcher(
         _acceptedAck(
           after: after,
@@ -165,7 +160,6 @@ void main() {
       );
 
       expect(dispatcher.commits, 1);
-      expect(reducer.calls, 0);
       expect(retried.snapshot, isNotNull);
       expect(retried.movementExecutions, hasLength(3));
     });
@@ -231,29 +225,6 @@ GameState _afterState() {
   );
 }
 
-List<AnimateUnitMoveEffect> _localMovementEffects() {
-  return const [
-    AnimateUnitMoveEffect(
-      unitId: 'unit_a',
-      fromCol: 0,
-      fromRow: 0,
-      steps: [
-        UnitMovementStep(col: 0, row: 1, enterCost: 1, cumulativeCost: 1),
-        UnitMovementStep(col: 1, row: 1, enterCost: 1, cumulativeCost: 2),
-        UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 3),
-      ],
-    ),
-    AnimateUnitMoveEffect(
-      unitId: 'unit_b',
-      fromCol: 0,
-      fromRow: 1,
-      steps: [
-        UnitMovementStep(col: 1, row: 1, enterCost: 1, cumulativeCost: 1),
-      ],
-    ),
-  ];
-}
-
 WireMovementExecutionList _exactMovementExecutions() {
   return WireMovementExecutionList([
     _wireExecution('unit_a', 0, 0, 1, 0, enterCost: 7, cumulativeCost: 7),
@@ -316,23 +287,6 @@ _MovementSnapshot _movementSnapshot(MovementCommandExecution effect) {
     step.enterCost,
     step.cumulativeCost,
   );
-}
-
-final class _EffectReducer extends GameStateReducer {
-  _EffectReducer(this.effects) : super(mapData: _map());
-
-  final List<UiEffect> effects;
-  var calls = 0;
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    calls += 1;
-    return GameStateTransition(state: state, uiEffects: effects);
-  }
 }
 
 final class _SentCommand {

@@ -201,7 +201,7 @@ abstract final class EconomySimulation {
                 command: command,
               ),
             );
-            commandStats.addApplied(command);
+            commandStats.addApplied(command as DomainCommand);
           } else {
             rejectedCommands.add(command);
             rejectedCommandRecords.add(

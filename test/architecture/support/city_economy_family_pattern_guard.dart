@@ -79,6 +79,10 @@ const reviewedCityEconomyFamilyPatternSignatures =
         occurrences: 24,
         digest: 5437926357238653160,
       ),
+      'lib/game/application/services/game_intent_resolver.dart': (
+        occurrences: 2,
+        digest: 3281745417229852721,
+      ),
       'lib/game/application/services/'
           'local_city_economy_command_resolver.dart': (
         occurrences: 3,
@@ -92,10 +96,6 @@ const reviewedCityEconomyFamilyPatternSignatures =
       'lib/game/application/services/replay_service.dart': (
         occurrences: 19,
         digest: -8963395515821012448,
-      ),
-      'lib/game/domain/reducer/game_state/reducer_environment_dispatch.dart': (
-        occurrences: 1,
-        digest: 8577896251791231674,
       ),
       'lib/game/domain/reducer/interaction/interaction_reducer.dart': (
         occurrences: 1,
@@ -238,8 +238,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'packages/aonw_core/lib/ai/simulation/'
           'economy_simulation_command_stats.dart': (
-        occurrences: 19,
-        digest: 1328228049762439736,
+        occurrences: 20,
+        digest: 8550293528218054525,
       ),
       'packages/aonw_core/lib/ai/strategies/'
           'basic_strategy_artifact_logistics_planner.dart': (

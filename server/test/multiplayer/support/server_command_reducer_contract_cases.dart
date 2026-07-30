@@ -49,6 +49,30 @@ void _registerServerCommandReductionContractTests() {
 
 void _registerCanonicalReducerGuardTests() {
   group('ServerCommandReducer canonical rejection guards', () {
+    test(
+      'rejects a crafted presentation intent before loading a map',
+      () async {
+        final snapshot = _reducerGuardSnapshot();
+        final reduction = await ServerCommandReducer().reduce(
+          match: _runningMatch(),
+          snapshot: snapshot,
+          wireCommand: const WireCommand(
+            matchId: 'match_1',
+            tick: 1,
+            turn: 1,
+            actorPlayerId: 'player_1',
+            command: {'type': 'SelectUnit', 'unitId': 'unit_1'},
+          ),
+          actorPlayerId: 'player_1',
+          now: DateTime.utc(2026, 6, 30, 12),
+        );
+
+        expect(reduction.accepted, isFalse);
+        expect(reduction.reason, 'invalid_command_payload');
+        expect(reduction.nextSnapshot, isNull);
+      },
+    );
+
     for (final scenario in _commandGuardScenarios) {
       test('rejects ${scenario.name} before loading a map', () async {
         final reduction = await ServerCommandReducer().reduce(

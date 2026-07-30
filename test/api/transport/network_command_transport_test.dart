@@ -10,7 +10,6 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
@@ -896,7 +895,7 @@ void main() {
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       );
-      final server = _FakeCommandServer(save: _save(), state: state);
+      final server = _FakeCommandServer(save: _multiplayerSave(), state: state);
       final transport = _transport(server);
 
       final result = await transport.dispatch(
@@ -953,56 +952,53 @@ void main() {
       },
     );
 
-    test(
-      'emits queued movement animation effects from accepted snapshots',
-      () async {
-        final queued = queuedNetworkCommander();
-        final state = GameState(
-          units: [queued],
-          activePlayerId: 'player_1',
-          activePlayerCanAct: true,
-        );
-        final advancedSave = _save().copyWith(
-          turn: 2,
-          playerStates: const {'player_1': PlayerTurnState.active},
-        );
-        final server = _FakeCommandServer(
-          save: _save(),
-          state: state,
-          nextAcceptedSnapshot: SaveSnapshot.fromGameState(
-            save: advancedSave,
-            state: GameState(
-              units: [queued.copyWith(col: 2, row: 0).copyWithQueuedPath(null)],
-              activePlayerId: 'player_1',
-              activePlayerCanAct: true,
-            ),
-            eventLogOffset: 1,
+    test('exposes queued movement evidence from accepted snapshots', () async {
+      final queued = queuedNetworkCommander();
+      final state = GameState(
+        units: [queued],
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+      );
+      final advancedSave = _save().copyWith(
+        turn: 2,
+        playerStates: const {'player_1': PlayerTurnState.active},
+      );
+      final server = _FakeCommandServer(
+        save: _save(),
+        state: state,
+        nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+          save: advancedSave,
+          state: GameState(
+            units: [queued.copyWith(col: 2, row: 0).copyWithQueuedPath(null)],
+            activePlayerId: 'player_1',
+            activePlayerCanAct: true,
           ),
-          nextMovementExecutions: _twoStepMovementExecutions(queued.id),
-        );
-        final transport = _transport(server);
+          eventLogOffset: 1,
+        ),
+        nextMovementExecutions: _twoStepMovementExecutions(queued.id),
+      );
+      final transport = _transport(server);
 
-        final result = await transport.dispatch(
-          saveId: 'save_1',
-          currentState: state,
-          command: const SubmitTurnCommand('player_1'),
-        );
+      final result = await transport.dispatch(
+        saveId: 'save_1',
+        currentState: state,
+        command: const SubmitTurnCommand('player_1'),
+      );
 
-        expect(server.lastAck!.toJson()['movementExecutions'], hasLength(1));
-        final move = result.uiEffects.whereType<AnimateUnitMoveEffect>().single;
-        expect(move.unitId, 'commander_player_1');
-        expect((move.fromCol, move.fromRow), (0, 0));
-        expect(
-          [
-            for (final step in move.steps)
-              (step.col, step.row, step.enterCost, step.cumulativeCost),
-          ],
-          const [(1, 0, 1, 1), (2, 0, 1, 2)],
-        );
-        expect(result.state.units.single.col, 2);
-        expect(result.state.activePlayerCanAct, isTrue);
-      },
-    );
+      expect(server.lastAck!.toJson()['movementExecutions'], hasLength(1));
+      final move = result.movementExecutions.single;
+      expect(move.unitId, 'commander_player_1');
+      expect((move.fromCol, move.fromRow), (0, 0));
+      expect(
+        [
+          for (final step in move.steps)
+            (step.col, step.row, step.enterCost, step.cumulativeCost),
+        ],
+        const [(1, 0, 1, 1), (2, 0, 1, 2)],
+      );
+      expect(result.state.units.single.col, 2);
+      expect(result.state.activePlayerCanAct, isTrue);
+    });
   });
 }
 

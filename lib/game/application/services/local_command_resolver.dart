@@ -45,26 +45,31 @@ class LocalCommandResolver {
   LocalCommandResolution resolve({
     required SaveSnapshot baseSnapshot,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required DateTime savedAt,
     GameCommandContext context = const GameCommandContext(),
     LocalMovementPresentationOrigin movementPresentationOrigin =
         LocalMovementPresentationOrigin.direct,
   }) {
     final effectiveContext = _effectiveContext(baseSnapshot, context);
-    final engineFamily = _engineFamily(command);
+    final engineFamily = GameEngine.commandFamily(command);
+    if (engineFamily == null) {
+      throw StateError(
+        '${command.runtimeType} has no canonical GameEngine family.',
+      );
+    }
     return switch (engineFamily) {
       GameEngineCommandFamily.turn => _resolveTurn(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
-        command: command as DomainCommand,
+        command: command,
         savedAt: savedAt,
         context: effectiveContext,
       ),
       GameEngineCommandFamily.unitAction => _resolveUnitAction(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
-        command: command as DomainCommand,
+        command: command,
         savedAt: savedAt,
         context: effectiveContext,
       ),
@@ -83,17 +88,17 @@ class LocalCommandResolver {
   LocalCommandResolution _resolveRemainingFamily({
     required SaveSnapshot baseSnapshot,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
-    required GameEngineCommandFamily? engineFamily,
+    required GameEngineCommandFamily engineFamily,
     required LocalMovementPresentationOrigin movementPresentationOrigin,
   }) {
     return switch (engineFamily) {
       GameEngineCommandFamily.movement => _resolveMovement(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
-        command: command as DomainCommand,
+        command: command,
         savedAt: savedAt,
         context: context,
         presentationOrigin: movementPresentationOrigin,
@@ -111,38 +116,18 @@ class LocalCommandResolver {
       GameEngineCommandFamily.artifactTrade => _resolveCityEconomy(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
-        command: command as DomainCommand,
+        command: command,
         savedAt: savedAt,
         context: context,
       ),
-      _ => _resolveResearchDiplomacyOrReducer(
+      _ => _resolveResearchDiplomacy(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command,
         savedAt: savedAt,
         context: context,
-        engineFamily: engineFamily,
       ),
     };
-  }
-
-  LocalCommandResolution _resolveReducerCommand({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
-    required GameCommand command,
-    required DateTime savedAt,
-    required GameCommandContext context,
-  }) {
-    final transition = reducer.reduce(currentState, command, context: context);
-    return LocalCommandResolution(
-      snapshot: baseSnapshot
-          .withSavedAt(savedAt)
-          .withGameState(transition.state),
-      state: transition.state,
-      events: transition.events,
-      uiEffects: transition.uiEffects,
-      context: context,
-    );
   }
 }
 
@@ -257,7 +242,7 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     final snapshot = SaveSnapshot.fromCanonical(accepted.snapshot);
     final persistent = preservesRawTurnStart
         ? snapshot.rawPersistentState.copyWith(
-            runtimeState: snapshot.runtimeState.copyWith(
+            runtimeState: snapshot.rawPersistentState.runtimeState.copyWith(
               turnStartedAt: baseSnapshot.persistedTurnStartedAt,
             ),
           )
@@ -440,9 +425,6 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     );
   }
 }
-
-GameEngineCommandFamily? _engineFamily(GameCommand command) =>
-    command is DomainCommand ? GameEngine.commandFamily(command) : null;
 
 String _turnPlayerId(DomainCommand command) => switch (command) {
   SubmitTurnCommand(:final playerId) ||

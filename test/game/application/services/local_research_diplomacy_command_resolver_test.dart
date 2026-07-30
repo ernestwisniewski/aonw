@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,7 +45,7 @@ void main() {
 
       final result =
           LocalCommandResolver(
-            reducer: _NoResearchDiplomacyLegacyReducer(mapData: _mapData()),
+            reducer: GameStateReducer(mapData: _mapData()),
           ).resolve(
             baseSnapshot: baseSnapshot,
             currentState: state,
@@ -116,7 +116,7 @@ void main() {
 
       final result =
           LocalCommandResolver(
-            reducer: _NoResearchDiplomacyLegacyReducer(mapData: _mapData()),
+            reducer: GameStateReducer(mapData: _mapData()),
           ).resolve(
             baseSnapshot: baseSnapshot,
             currentState: state,
@@ -170,36 +170,17 @@ void main() {
     );
 
     final result =
-        LocalCommandResolver(
-          reducer: _NoResearchDiplomacyLegacyReducer(mapData: _mapData()),
+        GameIntentResolver(
+          reducer: GameStateReducer(mapData: _mapData()),
         ).resolve(
-          baseSnapshot: snapshot,
-          currentState: state,
-          command: const CancelResearchSelectionCommand('player_1'),
-          savedAt: DateTime.utc(2026, 7, 30, 14),
+          state.interaction,
+          const CancelResearchSelectionCommand('player_1'),
+          state,
         );
 
-    expect(result.state.pendingAction, isNull);
-    expect(result.snapshot.interaction.pendingAction, isNull);
+    expect(result.interaction.pendingAction, isNull);
+    expect(snapshot.interaction.pendingAction, isA<PendingResearchSelection>());
   });
-}
-
-final class _NoResearchDiplomacyLegacyReducer extends GameStateReducer {
-  const _NoResearchDiplomacyLegacyReducer({required super.mapData});
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    if (command is SelectTechnologyCommand || command is DiplomaticCommand) {
-      throw StateError(
-        'Migrated research or diplomacy reached the legacy reducer.',
-      );
-    }
-    return super.reduce(state, command, context: context);
-  }
 }
 
 MapData _mapData() => MapData(

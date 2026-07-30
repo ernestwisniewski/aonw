@@ -1,31 +1,7 @@
 part of 'local_movement_engine_projection_test.dart';
 
 LocalCommandResolver _resolver(MapReadView mapView) {
-  return LocalCommandResolver(
-    reducer: _NoMovementLegacyReducer(mapData: mapView),
-  );
-}
-
-final class _NoMovementLegacyReducer extends GameStateReducer {
-  const _NoMovementLegacyReducer({required super.mapData});
-
-  @override
-  GameStateTransition reduce(
-    GameState state,
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) {
-    if (command
-        case MoveUnitCommand() ||
-            CancelUnitActionCommand() ||
-            AutoExploreUnitCommand() ||
-            AssignMerchantTradeRouteCommand() ||
-            MoveMerchantToCityCommand() ||
-            DetachTroopCommand()) {
-      throw StateError('Migrated movement reached the legacy reducer.');
-    }
-    return super.reduce(state, command, context: context);
-  }
+  return LocalCommandResolver(reducer: GameStateReducer(mapData: mapView));
 }
 
 SaveSnapshot _snapshot(GameState state) {

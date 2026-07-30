@@ -124,13 +124,6 @@ String? _planningTargetOccupantId(GameView view, int col, int row) {
   return null;
 }
 
-List<String> _rejectionReasons(GameStateTransition transition) {
-  return [
-    for (final event in transition.events)
-      if (event case CommandRejectedEvent(:final reason)) reason,
-  ];
-}
-
 String _describeCommand(GameCommand command) {
   return switch (command) {
     MoveUnitCommand() =>

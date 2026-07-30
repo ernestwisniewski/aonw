@@ -3,6 +3,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/game_command_runtime_owner_guard.dart';
 import 'support/map_boundary_source_guard.dart';
 
 const _commandLibraryPath =
@@ -148,6 +149,43 @@ void main() {
         'server/lib/src/multiplayer/server_command_reducer.dart',
       ]);
     }
+  });
+
+  test('every typed command has one canonical runtime owner', () {
+    final sources = productionDartSources();
+    final inventory = _GameCommandInventory.build(
+      rolePolicy: _rolePolicy,
+      sources: sources,
+    );
+    final declarations = _commandDeclarations(
+      sources,
+      _commandLibraryPaths(sources[_commandLibraryPath]!),
+    );
+    final enginePatterns = runtimeDispatchTypeNameCounts(
+      sources[gameEnginePath]!,
+    );
+    expectCanonicalGameCommandRuntimeOwnership(
+      sources: sources,
+      domainOwnerCounts: {
+        for (final entry in inventory.entries)
+          if (entry.role == _CommandRole.domain)
+            entry.className: _matchingDispatchCount(
+              entry.className,
+              declarations,
+              enginePatterns,
+            ),
+      },
+      intentClassNames: {
+        for (final entry in inventory.entries)
+          if (entry.role == _CommandRole.intent) entry.className,
+      },
+      intentDispatchPaths: [
+        for (final entry in inventory.entries)
+          if (entry.role == _CommandRole.intent)
+            for (final path in {...entry.serverHandlers, ...entry.aiConsumers})
+              '${entry.className}: $path',
+      ],
+    );
   });
 }
 
@@ -407,6 +445,18 @@ Set<String> _dispatchTypeNamesIn(String source) {
     content: source,
   ).unit.accept(_DispatchTypeNameCollector(typeNames));
   return typeNames;
+}
+
+int _matchingDispatchCount(
+  String className,
+  Map<String, _CommandDeclaration> declarations,
+  Map<String, int> patternCounts,
+) {
+  final hierarchy = _commandHierarchyNames(className, declarations);
+  return hierarchy.fold(
+    0,
+    (count, typeName) => count + (patternCounts[typeName] ?? 0),
+  );
 }
 
 final class _IdentifierCollector extends RecursiveAstVisitor<void> {
