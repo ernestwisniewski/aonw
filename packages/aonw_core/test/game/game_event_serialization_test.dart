@@ -37,13 +37,6 @@ void main() {
           toCol: 2,
           toRow: 1,
         ),
-        FortifiedUnitThreatenedEvent(
-          unitId: 'warrior_1',
-          ownerPlayerId: 'player_1',
-          targets: const [
-            FortifiedUnitThreatTarget(unitId: 'warrior_2', col: 3, row: 1),
-          ],
-        ),
         CombatResolvedEvent(
           attackerUnitId: 'attacker',
           defenderUnitId: 'defender',
@@ -196,6 +189,21 @@ void main() {
           GameEventSerializer.toJson(event),
         );
       }
+    });
+
+    test('round-trips a fortification threat with detected units', () {
+      final event = FortifiedUnitThreatenedEvent(
+        unitId: 'warrior_1',
+        ownerPlayerId: 'player_1',
+        targets: const [
+          FortifiedUnitThreatTarget(unitId: 'warrior_2', col: 3, row: 1),
+        ],
+      );
+
+      expect(
+        GameEventSerializer.toJson(roundTrip(event)),
+        GameEventSerializer.toJson(event),
+      );
     });
 
     test('encodes system events through shared wire helpers', () {

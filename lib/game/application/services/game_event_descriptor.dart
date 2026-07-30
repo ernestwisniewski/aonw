@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/stability.dart';
 
 part 'game_event_descriptor_player_visibility.dart';
 part 'game_event_descriptor_artifact.dart';
+part 'game_event_descriptor_fortification.dart';
 part 'game_event_descriptor_types.dart';
 
 final class GameEventDescriptor {
@@ -44,6 +45,8 @@ final class GameEventDescriptor {
     if (event is ArtifactLifecycleEvent) {
       return artifactGameEventDescriptor(event);
     }
+    final unitPresentation = _unitPresentationDescriptor(event);
+    if (unitPresentation != null) return unitPresentation;
     return _describeGameEvent(event);
   }
 
@@ -151,36 +154,9 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
     activityCategories: const [GameEventActivityCategory.city],
     playerIdsResolver: _cityOwnerPlayerIds(cityId),
   ),
-  UnitMovedEvent(:final unitId) => GameEventDescriptor._(
-    activityWorthy: false,
-    messageGroup: GameEventMessageGroup.unit,
-    rendererEffectKind: GameEventRendererEffectKind.unitMoved,
-    unitIds: [unitId],
-    focusHints: [UnitGameEventFocusHint(unitId)],
-    playerIdsResolver: _unitOwnerPlayerIds(unitId),
+  UnitPresentationEvent() => throw StateError(
+    'Unit presentation event was not delegated.',
   ),
-  FortifiedUnitThreatenedEvent(
-    :final unitId,
-    :final ownerPlayerId,
-    :final targets,
-  ) =>
-    GameEventDescriptor._(
-      activityWorthy: false,
-      messageGroup: GameEventMessageGroup.unit,
-      rendererEffectKind: GameEventRendererEffectKind.fortifiedUnitThreatened,
-      unitIds: [unitId, for (final target in targets) target.unitId],
-      focusHints: [UnitGameEventFocusHint(unitId)],
-      playerIds: [ownerPlayerId],
-      showAsTopNotification: false,
-    ),
-  UnitGainedExperienceEvent(:final unitId, :final ownerPlayerId) =>
-    GameEventDescriptor._(
-      activityWorthy: false,
-      messageGroup: GameEventMessageGroup.unit,
-      unitIds: [unitId],
-      focusHints: [UnitGameEventFocusHint(unitId)],
-      playerIds: [ownerPlayerId],
-    ),
   UnitAttackedEvent(
     :final attackerUnitId,
     :final attackerOwnerPlayerId,
@@ -493,16 +469,8 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
       showAsTopNotification: false,
       playerIds: playerIds,
     ),
-  PlayerTimedOutEvent(:final playerId) => GameEventDescriptor._(
-    activityWorthy: true,
-    messageGroup: GameEventMessageGroup.system,
-    playerIds: [playerId],
-  ),
-  TurnAutoResolvedEvent(:final playerId) => GameEventDescriptor._(
-    activityWorthy: true,
-    messageGroup: GameEventMessageGroup.system,
-    playerIds: [playerId],
-  ),
+  PlayerTimedOutEvent(:final playerId) ||
+  TurnAutoResolvedEvent(:final playerId) ||
   PlayerKickedEvent(:final playerId) => GameEventDescriptor._(
     activityWorthy: true,
     messageGroup: GameEventMessageGroup.system,

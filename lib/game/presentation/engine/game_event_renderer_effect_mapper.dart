@@ -14,6 +14,10 @@ import 'package:aonw_core/game/domain/city/field_improvement_type.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/unit.dart';
+
+part 'fortification_threat_renderer_effect_mapper.dart';
+part 'unit_movement_renderer_effect_mapper.dart';
 
 abstract final class GameEventRendererEffectMapper {
   static const Duration _combatResultCueDelay = Duration(milliseconds: 180);
@@ -51,27 +55,12 @@ abstract final class GameEventRendererEffectMapper {
     CombatAnimationFact? combatAnimation,
   }) {
     return switch (GameEventDescriptor.forEvent(event).rendererEffectKind) {
-      GameEventRendererEffectKind.unitMoved =>
-        skipUnitMoveIds.contains((event as UnitMovedEvent).unitId) ||
-                (event.fromCol == event.toCol && event.fromRow == event.toRow)
-            ? const []
-            : [
-                AnimateUnitMoveEffect(
-                  unitId: event.unitId,
-                  fromCol: event.fromCol,
-                  fromRow: event.fromRow,
-                  steps: [
-                    UnitMovementStep(
-                      col: event.toCol,
-                      row: event.toRow,
-                      enterCost: 0,
-                      cumulativeCost: 0,
-                    ),
-                  ],
-                ),
-              ],
+      GameEventRendererEffectKind.unitMoved => unitMovementRendererEffects(
+        event as UnitMovedEvent,
+        skipUnitMoveIds,
+      ),
       GameEventRendererEffectKind.fortifiedUnitThreatened =>
-        _fortificationThreatEffects(
+        fortificationThreatRendererEffects(
           state,
           event as FortifiedUnitThreatenedEvent,
           previousState: previousState,
@@ -152,62 +141,6 @@ abstract final class GameEventRendererEffectMapper {
       ),
       GameEventRendererEffectKind.none => const [],
     };
-  }
-
-  static List<RendererEffect> _fortificationThreatEffects(
-    GameState state,
-    FortifiedUnitThreatenedEvent event, {
-    GameState? previousState,
-    String? viewerPlayerId,
-  }) {
-    final viewerId = viewerPlayerId ?? state.activePlayerId;
-    if (viewerId != event.ownerPlayerId) return const [];
-    final detectionState = previousState ?? state;
-    final fortifier = state.unitById(event.unitId);
-    if (fortifier == null ||
-        fortifier.ownerPlayerId != event.ownerPlayerId ||
-        !fortifier.isFortified) {
-      return const [];
-    }
-    final alerts = <RendererEffect>[];
-    for (final target in event.targets) {
-      final detectedEnemy = detectionState.unitById(target.unitId);
-      final currentEnemy = state.unitById(target.unitId);
-      if (detectedEnemy == null ||
-          currentEnemy == null ||
-          detectedEnemy.ownerPlayerId == event.ownerPlayerId ||
-          detectedEnemy.col != target.col ||
-          detectedEnemy.row != target.row ||
-          !_canRenderTransientAt(
-            detectionState,
-            target.col,
-            target.row,
-            viewerPlayerId: viewerPlayerId,
-          )) {
-        continue;
-      }
-      alerts.add(
-        ShowCombatHexAlertEffect(
-          id: 'fortification:${event.unitId}:${target.unitId}',
-          ownerPlayerId: event.ownerPlayerId,
-          col: currentEnemy.col,
-          row: currentEnemy.row,
-          kind: CombatHexAlertKind.fortificationThreat,
-          unitId: currentEnemy.id,
-          expiresAfter:
-              GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
-        ),
-      );
-    }
-    if (alerts.isEmpty) return const [];
-    return [
-      ...alerts,
-      SmoothCameraEffect(
-        col: fortifier.col,
-        row: fortifier.row,
-        duration: GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
-      ),
-    ];
   }
 
   static List<RendererEffect> _single(RendererEffect? effect) {

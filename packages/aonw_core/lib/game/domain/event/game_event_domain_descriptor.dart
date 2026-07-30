@@ -2,6 +2,8 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/event/game_event_ownership_index.dart';
 
+part 'fortification_event_domain_descriptor.dart';
+
 final class GameEventHostility {
   const GameEventHostility({
     required this.victimPlayerId,
@@ -37,6 +39,8 @@ final class GameEventDomainDescriptor {
            : Set.unmodifiable(visiblePlayerIds);
 
   factory GameEventDomainDescriptor.forEvent(GameEvent event) {
+    final unitPresentation = unitPresentationEventDomainDescriptor(event);
+    if (unitPresentation != null) return unitPresentation;
     return switch (event) {
       CityFoundedEvent(:final ownerPlayerId) => GameEventDomainDescriptor._(
         playerIds: [ownerPlayerId],
@@ -67,21 +71,9 @@ final class GameEventDomainDescriptor {
       MapObjectiveSecuredEvent(:final playerId) => GameEventDomainDescriptor._(
         playerIds: [playerId],
       ),
-      UnitMovedEvent(:final unitId) => GameEventDomainDescriptor._(
-        unitIds: [unitId],
+      UnitPresentationEvent() => throw StateError(
+        'Unit presentation event was not delegated.',
       ),
-      FortifiedUnitThreatenedEvent(
-        :final unitId,
-        :final ownerPlayerId,
-        :final targets,
-      ) =>
-        GameEventDomainDescriptor._(
-          playerIds: [ownerPlayerId],
-          unitIds: [unitId, for (final target in targets) target.unitId],
-          visiblePlayerIds: [ownerPlayerId],
-        ),
-      UnitGainedExperienceEvent(:final ownerPlayerId) =>
-        GameEventDomainDescriptor._(playerIds: [ownerPlayerId]),
       UnitAttackedEvent(
         :final attackerOwnerPlayerId,
         :final defenderOwnerPlayerId,

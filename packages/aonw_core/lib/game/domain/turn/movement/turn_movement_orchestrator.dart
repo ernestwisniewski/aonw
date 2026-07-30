@@ -48,30 +48,54 @@ abstract final class TurnMovementOrchestrator {
       mapData: context.mapData,
       fogOfWarService: context.fogOfWarService,
     );
-    final changed =
-        advanced.changed ||
-        advanced.events.isNotEmpty ||
-        !identical(diplomacy, state.diplomacy) ||
-        autoExplore.changed;
+    final changed = _movementChanged(
+      advanced: advanced,
+      diplomacyChanged: !identical(diplomacy, state.diplomacy),
+      autoExploreChanged: autoExplore.changed,
+    );
     if (!changed) return TurnMovementResult(state: state);
     final executions = [...advanced.executions, ...autoExplore.executions];
-    return TurnMovementResult(
-      state: TurnMovementState(
-        units: List.unmodifiable(autoExplore.units),
-        cities: state.cities,
-        diplomacy: autoExplore.diplomacy,
-        fogOfWar: autoExplore.fogOfWar,
-        interaction: autoExplore.interaction,
-      ),
-      changed: true,
-      events: _withMissingMovementEvents([
-        ...advanced.events,
-        ...autoExplore.events,
-      ], executions),
+    return _movementResult(
+      state: state,
+      advanced: advanced,
+      autoExplore: autoExplore,
       executions: executions,
     );
   }
 }
+
+TurnMovementResult _movementResult({
+  required TurnMovementState state,
+  required TurnUnitMovementAdvance advanced,
+  required TurnAutoExploreAdvance autoExplore,
+  required List<MovementCommandExecution> executions,
+}) {
+  return TurnMovementResult(
+    state: TurnMovementState(
+      units: List.unmodifiable(autoExplore.units),
+      cities: state.cities,
+      diplomacy: autoExplore.diplomacy,
+      fogOfWar: autoExplore.fogOfWar,
+      interaction: autoExplore.interaction,
+    ),
+    changed: true,
+    events: _withMissingMovementEvents([
+      ...advanced.events,
+      ...autoExplore.events,
+    ], executions),
+    executions: executions,
+  );
+}
+
+bool _movementChanged({
+  required TurnUnitMovementAdvance advanced,
+  required bool diplomacyChanged,
+  required bool autoExploreChanged,
+}) =>
+    advanced.changed ||
+    advanced.events.isNotEmpty ||
+    diplomacyChanged ||
+    autoExploreChanged;
 
 List<GameEvent> _withMissingMovementEvents(
   Iterable<GameEvent> events,

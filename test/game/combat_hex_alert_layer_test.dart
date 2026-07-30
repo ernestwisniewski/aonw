@@ -211,24 +211,27 @@ void main() {
       final layer = CombatHexAlertLayer();
       final parent = Component();
 
-      layer.show(
-        parent: parent,
-        effect: const ShowCombatHexAlertEffect(
-          id: 'fortification:guard:enemy',
-          unitId: 'enemy',
-          ownerPlayerId: 'player_1',
-          col: 4,
-          row: 5,
-          kind: CombatHexAlertKind.fortificationThreat,
-          expiresAfter: 0.85,
-        ),
-      );
-      layer.syncState(
-        parent: parent,
-        state: GameState(
-          units: [_movedUnit.copyWith(id: 'enemy', ownerPlayerId: 'player_2')],
-        ),
-      );
+      layer
+        ..show(
+          parent: parent,
+          effect: const ShowCombatHexAlertEffect(
+            id: 'fortification:guard:enemy',
+            unitId: 'enemy',
+            ownerPlayerId: 'player_1',
+            col: 4,
+            row: 5,
+            kind: CombatHexAlertKind.fortificationThreat,
+            expiresAfter: 0.85,
+          ),
+        )
+        ..syncState(
+          parent: parent,
+          state: GameState(
+            units: [
+              _movedUnit.copyWith(id: 'enemy', ownerPlayerId: 'player_2'),
+            ],
+          ),
+        );
 
       expect(layer.hasAlertForTesting('fortification:guard:enemy'), isTrue);
       expect(

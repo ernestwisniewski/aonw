@@ -82,11 +82,8 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
         }
       }
       if (unitId != null) {
-        unit = state.unitById(unitId);
-        final validatesOwner =
-            overlay.kind != CombatHexAlertKind.fortificationThreat;
-        if (unit == null ||
-            (validatesOwner && unit.ownerPlayerId != overlay.ownerPlayerId)) {
+        unit = _trackedUnit(state, overlay);
+        if (unit == null) {
           overlay.removeFromParent();
           _overlays.remove(entry.key);
           continue;
@@ -186,6 +183,13 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
 
   GameCity? _knownCityById(GameState state, String cityId) {
     return state.citiesKnownToActivePlayer.byId(cityId);
+  }
+
+  GameUnit? _trackedUnit(GameState state, CombatHexAlertOverlay overlay) {
+    final unit = state.unitById(overlay.unitId!);
+    if (unit == null) return null;
+    if (overlay.kind == CombatHexAlertKind.fortificationThreat) return unit;
+    return unit.ownerPlayerId == overlay.ownerPlayerId ? unit : null;
   }
 }
 

@@ -1,6 +1,10 @@
 part of 'game_event.dart';
 
-final class UnitMovedEvent extends DomainEvent {
+sealed class UnitPresentationEvent extends DomainEvent {
+  const UnitPresentationEvent();
+}
+
+final class UnitMovedEvent extends UnitPresentationEvent {
   const UnitMovedEvent({
     required this.unitId,
     required this.fromCol,
@@ -37,7 +41,7 @@ final class FortifiedUnitThreatTarget {
   int get hashCode => Object.hash(unitId, col, row);
 }
 
-final class FortifiedUnitThreatenedEvent extends DomainEvent {
+final class FortifiedUnitThreatenedEvent extends UnitPresentationEvent {
   FortifiedUnitThreatenedEvent({
     required this.unitId,
     required this.ownerPlayerId,
@@ -49,7 +53,7 @@ final class FortifiedUnitThreatenedEvent extends DomainEvent {
   final List<FortifiedUnitThreatTarget> targets;
 }
 
-final class UnitGainedExperienceEvent extends DomainEvent {
+final class UnitGainedExperienceEvent extends UnitPresentationEvent {
   const UnitGainedExperienceEvent({
     required this.unitId,
     required this.ownerPlayerId,
