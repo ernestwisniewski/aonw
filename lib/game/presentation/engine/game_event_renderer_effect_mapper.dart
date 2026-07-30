@@ -2,6 +2,7 @@ import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/artifact_event_renderer_effect_mapper.dart';
+import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_combat_effects.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
@@ -69,6 +70,13 @@ abstract final class GameEventRendererEffectMapper {
                   ],
                 ),
               ],
+      GameEventRendererEffectKind.fortifiedUnitThreatened =>
+        _fortificationThreatEffects(
+          state,
+          event as FortifiedUnitThreatenedEvent,
+          previousState: previousState,
+          viewerPlayerId: viewerPlayerId,
+        ),
       GameEventRendererEffectKind.cityFounded => _single(
         _cityFoundedEffect(
           state,
@@ -144,6 +152,62 @@ abstract final class GameEventRendererEffectMapper {
       ),
       GameEventRendererEffectKind.none => const [],
     };
+  }
+
+  static List<RendererEffect> _fortificationThreatEffects(
+    GameState state,
+    FortifiedUnitThreatenedEvent event, {
+    GameState? previousState,
+    String? viewerPlayerId,
+  }) {
+    final viewerId = viewerPlayerId ?? state.activePlayerId;
+    if (viewerId != event.ownerPlayerId) return const [];
+    final detectionState = previousState ?? state;
+    final fortifier = state.unitById(event.unitId);
+    if (fortifier == null ||
+        fortifier.ownerPlayerId != event.ownerPlayerId ||
+        !fortifier.isFortified) {
+      return const [];
+    }
+    final alerts = <RendererEffect>[];
+    for (final target in event.targets) {
+      final detectedEnemy = detectionState.unitById(target.unitId);
+      final currentEnemy = state.unitById(target.unitId);
+      if (detectedEnemy == null ||
+          currentEnemy == null ||
+          detectedEnemy.ownerPlayerId == event.ownerPlayerId ||
+          detectedEnemy.col != target.col ||
+          detectedEnemy.row != target.row ||
+          !_canRenderTransientAt(
+            detectionState,
+            target.col,
+            target.row,
+            viewerPlayerId: viewerPlayerId,
+          )) {
+        continue;
+      }
+      alerts.add(
+        ShowCombatHexAlertEffect(
+          id: 'fortification:${event.unitId}:${target.unitId}',
+          ownerPlayerId: event.ownerPlayerId,
+          col: currentEnemy.col,
+          row: currentEnemy.row,
+          kind: CombatHexAlertKind.fortificationThreat,
+          unitId: currentEnemy.id,
+          expiresAfter:
+              GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
+        ),
+      );
+    }
+    if (alerts.isEmpty) return const [];
+    return [
+      ...alerts,
+      SmoothCameraEffect(
+        col: fortifier.col,
+        row: fortifier.row,
+        duration: GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
+      ),
+    ];
   }
 
   static List<RendererEffect> _single(RendererEffect? effect) {

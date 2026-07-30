@@ -14,6 +14,7 @@ enum GameEventMessageGroup {
 enum GameEventRendererEffectKind {
   none,
   unitMoved,
+  fortifiedUnitThreatened,
   cityFounded,
   cityProducedUnit,
   cityClaimedHex,

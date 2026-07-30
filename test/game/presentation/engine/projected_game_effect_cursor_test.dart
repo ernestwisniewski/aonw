@@ -5,6 +5,8 @@ import 'package:aonw/game/presentation/engine/domain_event_presentation_projecto
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -127,6 +129,65 @@ void main() {
     );
 
     expect(renderer.applied.whereType<JumpCameraEffect>(), hasLength(2));
+  });
+
+  test('reconnect does not repeat a fortification threat animation', () {
+    final fortifier = GameUnit(
+      id: 'fortifier',
+      ownerPlayerId: 'player_1',
+      type: GameUnitType.warrior,
+      name: 'Fortifier',
+      col: 2,
+      row: 2,
+      movementPoints: 0,
+      posture: UnitPosture.fortified,
+    );
+    final enemy = GameUnit(
+      id: 'enemy',
+      ownerPlayerId: 'player_2',
+      type: GameUnitType.warrior,
+      name: 'Enemy',
+      col: 3,
+      row: 2,
+    );
+    final state = GameState(
+      activePlayerId: 'player_1',
+      units: [fortifier, enemy],
+    );
+    final batch = DomainEventPresentationProjector.projectObservedBatch(
+      identity: const PresentationBatchIdentity(
+        sourceId: 'match_1',
+        eventOffset: 9,
+      ),
+      interactionEffects: const [],
+      events: [
+        FortifiedUnitThreatenedEvent(
+          unitId: 'fortifier',
+          ownerPlayerId: 'player_1',
+          targets: const [
+            FortifiedUnitThreatTarget(unitId: 'enemy', col: 3, row: 2),
+          ],
+        ),
+      ],
+      visibleMovementExecutions: const [],
+      state: state,
+      previousState: state,
+      viewerPlayerId: 'player_1',
+    );
+    final cursor = ProjectedGameEffectCursor()..activateSource('match_1');
+
+    expect(batch.domainEffects.map((item) => item.startOffset), const [
+      Duration.zero,
+      Duration.zero,
+    ]);
+    final firstDelivery = cursor.consume(batch.projectedEffects);
+    final reconnectDelivery = cursor.consume(batch.projectedEffects);
+
+    expect(firstDelivery, [
+      isA<ShowCombatHexAlertEffect>(),
+      isA<SmoothCameraEffect>(),
+    ]);
+    expect(reconnectDelivery, isEmpty);
   });
 
   test(

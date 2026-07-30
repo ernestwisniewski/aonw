@@ -17,6 +17,8 @@ abstract final class GameEffectLogicalTimeline {
       ShowFloatingTextEffect(:final delay) => delay + _transient,
       ShowCityProductionBubbleEffect(:final delay) => delay + _transient,
       ShakeCameraEffect(:final duration) => _seconds(duration),
+      ShowCombatHexAlertEffect(kind: CombatHexAlertKind.fortificationThreat) =>
+        Duration.zero,
       SpawnParticleBurstEffect() || ShowCombatHexAlertEffect() => _transient,
     };
   }

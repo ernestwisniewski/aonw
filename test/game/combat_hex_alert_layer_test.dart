@@ -207,6 +207,36 @@ void main() {
       expect(layer.hasAlertForTesting('attacker:unit_1'), isFalse);
     });
 
+    test('keeps a fortification marker attached to the detected enemy', () {
+      final layer = CombatHexAlertLayer();
+      final parent = Component();
+
+      layer.show(
+        parent: parent,
+        effect: const ShowCombatHexAlertEffect(
+          id: 'fortification:guard:enemy',
+          unitId: 'enemy',
+          ownerPlayerId: 'player_1',
+          col: 4,
+          row: 5,
+          kind: CombatHexAlertKind.fortificationThreat,
+          expiresAfter: 0.85,
+        ),
+      );
+      layer.syncState(
+        parent: parent,
+        state: GameState(
+          units: [_movedUnit.copyWith(id: 'enemy', ownerPlayerId: 'player_2')],
+        ),
+      );
+
+      expect(layer.hasAlertForTesting('fortification:guard:enemy'), isTrue);
+      expect(
+        layer.alertHexForTesting('fortification:guard:enemy'),
+        const CityHex(col: 6, row: 7),
+      );
+    });
+
     test('removes unit hex alerts when the unit disappears', () {
       final layer = CombatHexAlertLayer();
       final parent = Component();
@@ -312,6 +342,32 @@ void main() {
         );
 
       expect(layer.hasAlertForTesting('city_1'), isFalse);
+    });
+
+    test('expires a fortification threat after the camera transition', () {
+      final layer = CombatHexAlertLayer();
+      final parent = Component();
+
+      layer.show(
+        parent: parent,
+        effect: const ShowCombatHexAlertEffect(
+          id: 'fortification:guard_1:enemy_1',
+          ownerPlayerId: 'player_1',
+          col: 2,
+          row: 3,
+          kind: CombatHexAlertKind.fortificationThreat,
+          expiresAfter: 0.85,
+        ),
+      );
+
+      expect(layer.hasAlertForTesting('fortification:guard_1:enemy_1'), isTrue);
+      layer.update(0.84);
+      expect(layer.hasAlertForTesting('fortification:guard_1:enemy_1'), isTrue);
+      layer.update(0.02);
+      expect(
+        layer.hasAlertForTesting('fortification:guard_1:enemy_1'),
+        isFalse,
+      );
     });
   });
 }

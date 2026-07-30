@@ -159,6 +159,20 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
     focusHints: [UnitGameEventFocusHint(unitId)],
     playerIdsResolver: _unitOwnerPlayerIds(unitId),
   ),
+  FortifiedUnitThreatenedEvent(
+    :final unitId,
+    :final ownerPlayerId,
+    :final targets,
+  ) =>
+    GameEventDescriptor._(
+      activityWorthy: false,
+      messageGroup: GameEventMessageGroup.unit,
+      rendererEffectKind: GameEventRendererEffectKind.fortifiedUnitThreatened,
+      unitIds: [unitId, for (final target in targets) target.unitId],
+      focusHints: [UnitGameEventFocusHint(unitId)],
+      playerIds: [ownerPlayerId],
+      showAsTopNotification: false,
+    ),
   UnitGainedExperienceEvent(:final unitId, :final ownerPlayerId) =>
     GameEventDescriptor._(
       activityWorthy: false,

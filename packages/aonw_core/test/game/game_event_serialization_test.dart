@@ -37,6 +37,13 @@ void main() {
           toCol: 2,
           toRow: 1,
         ),
+        FortifiedUnitThreatenedEvent(
+          unitId: 'warrior_1',
+          ownerPlayerId: 'player_1',
+          targets: const [
+            FortifiedUnitThreatTarget(unitId: 'warrior_2', col: 3, row: 1),
+          ],
+        ),
         CombatResolvedEvent(
           attackerUnitId: 'attacker',
           defenderUnitId: 'defender',

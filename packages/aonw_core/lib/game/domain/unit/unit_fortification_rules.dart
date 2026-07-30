@@ -1,7 +1,6 @@
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -23,35 +22,11 @@ abstract final class UnitFortificationRules {
         .copyWithQueuedPath(null);
   }
 
-  static GameUnit recoverForNewTurn({
-    required GameUnit unit,
-    MapTileLookup? mapData,
-    Iterable<GameUnit>? units,
-    FogRevealCalculator revealCalculator = const FogRevealCalculator(),
-  }) {
+  static GameUnit recoverForNewTurn({required GameUnit unit}) {
     if (!unit.isFortified) return unit;
 
     if (!canHeal(unit)) {
-      if (mapData == null || units == null) {
-        return unit.copyWith(movementPoints: 0).copyWithQueuedPath(null);
-      }
-      if (!hasVisibleEnemy(
-        unit: unit,
-        mapData: mapData,
-        units: units,
-        revealCalculator: revealCalculator,
-      )) {
-        return unit.copyWith(movementPoints: 0).copyWithQueuedPath(null);
-      }
-      return unit
-          .copyWith(
-            movementPoints: UnitMovementBalance.maxMovementPointsFor(
-              type: unit.type,
-              carriedArtifactId: unit.carriedArtifactId,
-            ),
-            posture: UnitPosture.active,
-          )
-          .copyWithQueuedPath(null);
+      return unit.copyWith(movementPoints: 0).copyWithQueuedPath(null);
     }
 
     final healed = heal(unit, amount: healingPerTurn);
@@ -80,6 +55,20 @@ abstract final class UnitFortificationRules {
     required Iterable<GameUnit> units,
     FogRevealCalculator revealCalculator = const FogRevealCalculator(),
   }) {
+    return visibleEnemies(
+      unit: unit,
+      mapData: mapData,
+      units: units,
+      revealCalculator: revealCalculator,
+    ).isNotEmpty;
+  }
+
+  static List<GameUnit> visibleEnemies({
+    required GameUnit unit,
+    required MapTileLookup mapData,
+    required Iterable<GameUnit> units,
+    FogRevealCalculator revealCalculator = const FogRevealCalculator(),
+  }) {
     final source = FogOfWarService.unitRevealSource(
       playerId: unit.ownerPlayerId,
       unit: unit,
@@ -89,8 +78,9 @@ abstract final class UnitFortificationRules {
       mapData: mapData,
       sources: [source],
     );
-    if (visibleHexes.isEmpty) return false;
+    if (visibleHexes.isEmpty) return const [];
 
+    final visibleEnemies = <GameUnit>[];
     for (final other in units) {
       if (other.id == unit.id || other.ownerPlayerId == unit.ownerPlayerId) {
         continue;
@@ -98,9 +88,15 @@ abstract final class UnitFortificationRules {
       if (visibleHexes.contains(
         HexCoordinate(col: other.col, row: other.row),
       )) {
-        return true;
+        visibleEnemies.add(other);
       }
     }
-    return false;
+    visibleEnemies.sort((first, second) {
+      final idOrder = first.id.compareTo(second.id);
+      if (idOrder != 0) return idOrder;
+      final colOrder = first.col.compareTo(second.col);
+      return colOrder != 0 ? colOrder : first.row.compareTo(second.row);
+    });
+    return List.unmodifiable(visibleEnemies);
   }
 }

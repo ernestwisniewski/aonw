@@ -50,25 +50,15 @@ void main() {
     expect(validated.queuedPath, same(commander.queuedPath));
   });
 
-  test('checks fortified visibility through a canonical tile lookup', () {
-    final mapView = _canonicalMapView(cols: 5, rows: 1);
+  test('keeps fortified units idle when an enemy is visible', () {
     final warrior = GameUnit.startingWarrior(
       ownerPlayerId: 'player_1',
     ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
-    final visibleEnemy = GameUnit.startingWarrior(
-      ownerPlayerId: 'player_2',
-      col: 2,
-      row: 0,
-    );
 
-    final reset = UnitMovementTurnRules.resetForNewTurn(
-      warrior,
-      mapData: mapView,
-      allUnits: [warrior, visibleEnemy],
-    );
+    final reset = UnitMovementTurnRules.resetForNewTurn(warrior);
 
-    expect(reset.posture, UnitPosture.active);
-    expect(reset.movementPoints, greaterThan(0));
+    expect(reset.posture, UnitPosture.fortified);
+    expect(reset.movementPoints, 0);
   });
 }
 

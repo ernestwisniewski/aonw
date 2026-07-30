@@ -57,7 +57,7 @@ void main() {
       expect(updated.hitPoints, 8);
     });
 
-    test('healing unit spends movement when enemy is visible', () {
+    test('heals a threatened fortified unit without restoring movement', () {
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1')
           .copyWith(movementPoints: 0, posture: UnitPosture.fortified)
           .copyWithHitPoints(7);
@@ -96,6 +96,151 @@ void main() {
       expect(updated.posture, UnitPosture.fortified);
       expect(updated.movementPoints, 0);
       expect(updated.hitPoints, isNull);
+    });
+
+    test(
+      'keeps a healthy threatened unit fortified and emits visible targets',
+      () {
+        final warrior = GameUnit.startingWarrior(
+          ownerPlayerId: 'player_1',
+        ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
+        final laterEnemy = GameUnit(
+          id: 'enemy_b',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          name: GameUnitType.warrior.defaultNameToken,
+          col: 2,
+          row: 0,
+        );
+        final earlierEnemy = GameUnit(
+          id: 'enemy_a',
+          ownerPlayerId: 'player_2',
+          type: GameUnitType.warrior,
+          name: GameUnitType.warrior.defaultNameToken,
+          col: 1,
+          row: 0,
+        );
+
+        final result = PersistentTurnMovementProcessor.resetForPlayers(
+          state: PersistentGameState(
+            units: [warrior, laterEnemy, earlierEnemy],
+          ),
+          playerIds: const ['player_1'],
+          mapData: _mapData(cols: 5, rows: 5),
+        );
+
+        expect(result.state.units.first.posture, UnitPosture.fortified);
+        expect(result.state.units.first.movementPoints, 0);
+        final alert = result.events
+            .whereType<FortifiedUnitThreatenedEvent>()
+            .single;
+        expect(alert.unitId, warrior.id);
+        expect(alert.ownerPlayerId, 'player_1');
+        expect(alert.targets, const [
+          FortifiedUnitThreatTarget(unitId: 'enemy_a', col: 1, row: 0),
+          FortifiedUnitThreatTarget(unitId: 'enemy_b', col: 2, row: 0),
+        ]);
+      },
+    );
+
+    test('emits fortification alerts before automatic movement events', () {
+      final fortifier = GameUnit(
+        id: 'fortifier',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.warrior,
+        name: GameUnitType.warrior.defaultNameToken,
+        col: 0,
+        row: 0,
+        movementPoints: 0,
+        posture: UnitPosture.fortified,
+      );
+      final enemy = GameUnit(
+        id: 'enemy',
+        ownerPlayerId: 'player_2',
+        type: GameUnitType.warrior,
+        name: GameUnitType.warrior.defaultNameToken,
+        col: 1,
+        row: 0,
+      );
+      final mover =
+          GameUnit(
+            id: 'mover',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.warrior,
+            name: GameUnitType.warrior.defaultNameToken,
+            col: 0,
+            row: 2,
+            movementPoints: 0,
+          ).copyWithQueuedPath(
+            QueuedMovePath(
+              targetCol: 1,
+              targetRow: 2,
+              steps: const [
+                UnitMovementStep(
+                  col: 0,
+                  row: 2,
+                  enterCost: 0,
+                  cumulativeCost: 0,
+                ),
+                UnitMovementStep(
+                  col: 1,
+                  row: 2,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+              ],
+            ),
+          );
+
+      final result = PersistentTurnMovementProcessor.resetForPlayers(
+        state: PersistentGameState(units: [mover, enemy, fortifier]),
+        playerIds: const ['player_1'],
+        mapData: _mapData(cols: 4, rows: 4),
+      );
+
+      expect(result.events, hasLength(2));
+      expect(result.events.first, isA<FortifiedUnitThreatenedEvent>());
+      expect(result.events.last, isA<UnitMovedEvent>());
+    });
+
+    test('orders multiple fortification alerts by owner and unit identity', () {
+      GameUnit fortifier(String id, String ownerPlayerId, int row) => GameUnit(
+        id: id,
+        ownerPlayerId: ownerPlayerId,
+        type: GameUnitType.warrior,
+        name: GameUnitType.warrior.defaultNameToken,
+        col: 0,
+        row: row,
+        movementPoints: 0,
+        posture: UnitPosture.fortified,
+      );
+
+      final result = PersistentTurnMovementProcessor.resetForPlayers(
+        state: PersistentGameState(
+          units: [
+            fortifier('unit_z', 'player_1', 2),
+            GameUnit(
+              id: 'enemy',
+              ownerPlayerId: 'player_3',
+              type: GameUnitType.warrior,
+              name: GameUnitType.warrior.defaultNameToken,
+              col: 1,
+              row: 1,
+            ),
+            fortifier('unit_b', 'player_2', 1),
+            fortifier('unit_a', 'player_1', 0),
+          ],
+        ),
+        playerIds: const ['player_2', 'player_1'],
+        mapData: _mapData(cols: 4, rows: 4),
+      );
+
+      expect(
+        result.events.whereType<FortifiedUnitThreatenedEvent>().map(
+          (event) => event.unitId,
+        ),
+        ['unit_a', 'unit_z', 'unit_b'],
+      );
     });
 
     test('executes queued paths on new turn', () {

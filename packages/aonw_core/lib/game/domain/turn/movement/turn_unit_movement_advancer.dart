@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
@@ -15,11 +16,13 @@ final class TurnUnitMovementAdvance {
     required List<GameUnit> units,
     bool changed = false,
     Iterable<MovementCommandExecution> executions = const [],
+    Iterable<GameEvent> events = const [],
   }) {
     return TurnUnitMovementAdvance._(
       units: units,
       changed: changed,
       executions: executions.isEmpty ? const [] : List.unmodifiable(executions),
+      events: events.isEmpty ? const [] : List.unmodifiable(events),
     );
   }
 
@@ -27,11 +30,13 @@ final class TurnUnitMovementAdvance {
     required this.units,
     required this.changed,
     required this.executions,
+    required this.events,
   });
 
   final List<GameUnit> units;
   final bool changed;
   final List<MovementCommandExecution> executions;
+  final List<GameEvent> events;
 }
 
 abstract final class TurnUnitMovementAdvancer {
@@ -43,11 +48,14 @@ abstract final class TurnUnitMovementAdvancer {
     required Set<String> playerIds,
     required MapTraversalView mapData,
   }) {
+    final alerts = _fortificationAlerts(
+      units: units,
+      playerIds: playerIds,
+      mapData: mapData,
+    );
     final resetUnits = [
       for (final unit in units)
-        playerIds.contains(unit.ownerPlayerId)
-            ? _resetForNewTurn(unit, mapData: mapData, allUnits: units)
-            : unit,
+        playerIds.contains(unit.ownerPlayerId) ? _resetForNewTurn(unit) : unit,
     ];
     var changed = _unitsChanged(units, resetUnits);
     final finalUnits = <GameUnit>[];
@@ -75,6 +83,7 @@ abstract final class TurnUnitMovementAdvancer {
       units: finalUnits,
       changed: changed,
       executions: executions,
+      events: alerts,
     );
   }
 
@@ -127,17 +136,9 @@ abstract final class TurnUnitMovementAdvancer {
     );
   }
 
-  static GameUnit _resetForNewTurn(
-    GameUnit unit, {
-    required MapTileLookup mapData,
-    required Iterable<GameUnit> allUnits,
-  }) {
+  static GameUnit _resetForNewTurn(GameUnit unit) {
     if (unit.isFortified) {
-      return UnitFortificationRules.recoverForNewTurn(
-        unit: unit,
-        mapData: mapData,
-        units: allUnits,
-      );
+      return UnitFortificationRules.recoverForNewTurn(unit: unit);
     }
     final movementPoints = unit.isWorking
         ? 0
@@ -150,6 +151,47 @@ abstract final class TurnUnitMovementAdvancer {
         .copyWithQueuedPath(
           TurnQueuedPathAdvancer.shouldKeep(unit) ? unit.queuedPath : null,
         );
+  }
+
+  static List<GameEvent> _fortificationAlerts({
+    required List<GameUnit> units,
+    required Set<String> playerIds,
+    required MapTileLookup mapData,
+  }) {
+    final fortifiers =
+        units
+            .where(
+              (unit) =>
+                  playerIds.contains(unit.ownerPlayerId) && unit.isFortified,
+            )
+            .toList()
+          ..sort((first, second) {
+            final ownerOrder = first.ownerPlayerId.compareTo(
+              second.ownerPlayerId,
+            );
+            return ownerOrder != 0 ? ownerOrder : first.id.compareTo(second.id);
+          });
+    return [
+      for (final fortifier in fortifiers)
+        if (UnitFortificationRules.visibleEnemies(
+              unit: fortifier,
+              mapData: mapData,
+              units: units,
+            )
+            case final targets when targets.isNotEmpty)
+          FortifiedUnitThreatenedEvent(
+            unitId: fortifier.id,
+            ownerPlayerId: fortifier.ownerPlayerId,
+            targets: [
+              for (final target in targets)
+                FortifiedUnitThreatTarget(
+                  unitId: target.id,
+                  col: target.col,
+                  row: target.row,
+                ),
+            ],
+          ),
+    ];
   }
 
   static bool _unitsChanged(List<GameUnit> before, List<GameUnit> after) {

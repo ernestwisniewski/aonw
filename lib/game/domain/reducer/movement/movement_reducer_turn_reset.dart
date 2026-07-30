@@ -12,11 +12,7 @@ abstract final class _MovementTurnResetProcessor {
     final resetUnits = [
       for (final unit in currentUnits)
         (playerId == null || unit.ownerPlayerId == playerId)
-            ? UnitMovementTurnRules.resetForNewTurn(
-                unit,
-                mapData: mapView,
-                allUnits: currentUnits,
-              )
+            ? UnitMovementTurnRules.resetForNewTurn(unit)
             : unit,
     ];
 

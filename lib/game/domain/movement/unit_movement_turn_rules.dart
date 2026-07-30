@@ -6,17 +6,9 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class UnitMovementTurnRules {
-  static GameUnit resetForNewTurn(
-    GameUnit unit, {
-    MapTileLookup? mapData,
-    Iterable<GameUnit>? allUnits,
-  }) {
+  static GameUnit resetForNewTurn(GameUnit unit) {
     if (unit.isFortified) {
-      return UnitFortificationRules.recoverForNewTurn(
-        unit: unit,
-        mapData: mapData,
-        units: allUnits,
-      );
+      return UnitFortificationRules.recoverForNewTurn(unit: unit);
     }
 
     final resetMovementPoints = unit.isWorking

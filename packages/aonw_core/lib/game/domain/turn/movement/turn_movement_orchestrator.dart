@@ -50,6 +50,7 @@ abstract final class TurnMovementOrchestrator {
     );
     final changed =
         advanced.changed ||
+        advanced.events.isNotEmpty ||
         !identical(diplomacy, state.diplomacy) ||
         autoExplore.changed;
     if (!changed) return TurnMovementResult(state: state);
@@ -63,7 +64,10 @@ abstract final class TurnMovementOrchestrator {
         interaction: autoExplore.interaction,
       ),
       changed: true,
-      events: _withMissingMovementEvents(autoExplore.events, executions),
+      events: _withMissingMovementEvents([
+        ...advanced.events,
+        ...autoExplore.events,
+      ], executions),
       executions: executions,
     );
   }
@@ -88,7 +92,11 @@ List<GameEvent> _withMissingMovementEvents(
   for (final execution in executions) {
     byUnitId.putIfAbsent(execution.unitId, () => []).add(execution);
   }
+  final leadingAlerts = orderedEvents
+      .takeWhile((event) => event is FortifiedUnitThreatenedEvent)
+      .toList(growable: false);
   return [
+    ...leadingAlerts,
     for (final entry in byUnitId.entries)
       if (entry.value.last.steps.isNotEmpty &&
           !existing.contains(_executionKey(entry.key, entry.value)))
@@ -99,7 +107,7 @@ List<GameEvent> _withMissingMovementEvents(
           toCol: entry.value.last.destination.col,
           toRow: entry.value.last.destination.row,
         ),
-    ...orderedEvents,
+    ...orderedEvents.skip(leadingAlerts.length),
   ];
 }
 

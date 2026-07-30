@@ -70,6 +70,16 @@ final class GameEventDomainDescriptor {
       UnitMovedEvent(:final unitId) => GameEventDomainDescriptor._(
         unitIds: [unitId],
       ),
+      FortifiedUnitThreatenedEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final targets,
+      ) =>
+        GameEventDomainDescriptor._(
+          playerIds: [ownerPlayerId],
+          unitIds: [unitId, for (final target in targets) target.unitId],
+          visiblePlayerIds: [ownerPlayerId],
+        ),
       UnitGainedExperienceEvent(:final ownerPlayerId) =>
         GameEventDomainDescriptor._(playerIds: [ownerPlayerId]),
       UnitAttackedEvent(

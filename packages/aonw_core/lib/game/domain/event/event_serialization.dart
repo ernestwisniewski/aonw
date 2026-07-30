@@ -77,6 +77,20 @@ abstract final class GameEventSerializer {
           'toCol': toCol,
           'toRow': toRow,
         },
+      FortifiedUnitThreatenedEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final targets,
+      ) =>
+        {
+          'type': 'FortifiedUnitThreatened',
+          'unitId': unitId,
+          'ownerPlayerId': ownerPlayerId,
+          'targets': [
+            for (final target in targets)
+              {'unitId': target.unitId, 'col': target.col, 'row': target.row},
+          ],
+        },
       UnitGainedExperienceEvent(
         :final unitId,
         :final ownerPlayerId,
@@ -507,6 +521,17 @@ abstract final class GameEventSerializer {
         toCol: requiredIntField(json, type, 'toCol'),
         toRow: requiredIntField(json, type, 'toRow'),
       ),
+      'FortifiedUnitThreatened' => FortifiedUnitThreatenedEvent(
+        unitId: requiredStringField(json, type, 'unitId'),
+        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
+        targets: [
+          for (final value in requiredListField(json, type, 'targets'))
+            _fortifiedUnitThreatTargetFromJson(
+              requiredMapValue(value, '$type.targets[]'),
+              '$type.targets[]',
+            ),
+        ],
+      ),
       'UnitGainedExperience' => UnitGainedExperienceEvent(
         unitId: requiredStringField(json, type, 'unitId'),
         ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
@@ -831,6 +856,17 @@ abstract final class GameEventSerializer {
       pressure: pressure,
       nearestUnclaimedCol: optionalIntField(json, type, 'nearestUnclaimedCol'),
       nearestUnclaimedRow: optionalIntField(json, type, 'nearestUnclaimedRow'),
+    );
+  }
+
+  static FortifiedUnitThreatTarget _fortifiedUnitThreatTargetFromJson(
+    Map<String, dynamic> json,
+    String context,
+  ) {
+    return FortifiedUnitThreatTarget(
+      unitId: requiredStringField(json, context, 'unitId'),
+      col: requiredIntField(json, context, 'col'),
+      row: requiredIntField(json, context, 'row'),
     );
   }
 }

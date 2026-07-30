@@ -93,109 +93,36 @@ void main() {
       expect(reset.workerAssignment, worker.workerAssignment);
     });
 
-    test('fortified unit heals and stays idle while no enemy is visible', () {
+    test('fortified unit heals and stays idle', () {
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'p1')
           .copyWith(movementPoints: 0, posture: UnitPosture.fortified)
           .copyWithHitPoints(7);
-      final distantEnemy = GameUnit.startingWarrior(
-        ownerPlayerId: 'p2',
-        col: 4,
-        row: 4,
-      );
 
-      final reset = UnitMovementTurnRules.resetForNewTurn(
-        warrior,
-        mapData: _simpleMap(cols: 5, rows: 5),
-        allUnits: [warrior, distantEnemy],
-      );
+      final reset = UnitMovementTurnRules.resetForNewTurn(warrior);
 
       expect(reset.posture, UnitPosture.fortified);
       expect(reset.movementPoints, 0);
       expect(reset.hitPoints, 8);
     });
 
-    test('full-health fortified unit stays idle while no enemy is visible', () {
+    test('full-health fortified unit stays idle', () {
       final warrior = GameUnit.startingWarrior(
         ownerPlayerId: 'p1',
       ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
-      final distantEnemy = GameUnit.startingWarrior(
-        ownerPlayerId: 'p2',
-        col: 4,
-        row: 4,
-      );
 
-      final reset = UnitMovementTurnRules.resetForNewTurn(
-        warrior,
-        mapData: _simpleMap(cols: 5, rows: 5),
-        allUnits: [warrior, distantEnemy],
-      );
+      final reset = UnitMovementTurnRules.resetForNewTurn(warrior);
 
       expect(reset.posture, UnitPosture.fortified);
       expect(reset.movementPoints, 0);
       expect(reset.hitPoints, isNull);
     });
 
-    test(
-      'full-health fortified unit wakes when an enemy enters sight range',
-      () {
-        final warrior = GameUnit.startingWarrior(
-          ownerPlayerId: 'p1',
-        ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
-        final visibleEnemy = GameUnit.startingWarrior(
-          ownerPlayerId: 'p2',
-          col: 2,
-          row: 0,
-        );
-
-        final reset = UnitMovementTurnRules.resetForNewTurn(
-          warrior,
-          mapData: _simpleMap(cols: 5, rows: 5),
-          allUnits: [warrior, visibleEnemy],
-        );
-
-        expect(reset.posture, UnitPosture.active);
-        expect(
-          reset.movementPoints,
-          UnitMovementBalance.maxMovementPointsForType(GameUnitType.warrior),
-        );
-        expect(reset.hitPoints, isNull);
-      },
-    );
-
-    test(
-      'healing unit spends movement even when an enemy enters sight range',
-      () {
-        final warrior = GameUnit.startingWarrior(ownerPlayerId: 'p1')
-            .copyWith(movementPoints: 0, posture: UnitPosture.fortified)
-            .copyWithHitPoints(7);
-        final visibleEnemy = GameUnit.startingWarrior(
-          ownerPlayerId: 'p2',
-          col: 2,
-          row: 0,
-        );
-
-        final reset = UnitMovementTurnRules.resetForNewTurn(
-          warrior,
-          mapData: _simpleMap(cols: 5, rows: 5),
-          allUnits: [warrior, visibleEnemy],
-        );
-
-        expect(reset.posture, UnitPosture.fortified);
-        expect(reset.movementPoints, 0);
-        expect(reset.hitPoints, 8);
-      },
-    );
-
     test('healing unit stays fortified without movement when fully healed', () {
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'p1')
           .copyWith(movementPoints: 0, posture: UnitPosture.fortified)
           .copyWithHitPoints(9);
 
-      final reset = UnitMovementTurnRules.resetForNewTurn(
-        warrior,
-        mapData: _simpleMap(cols: 5, rows: 5),
-        allUnits: [warrior],
-      );
+      final reset = UnitMovementTurnRules.resetForNewTurn(warrior);
 
       expect(reset.posture, UnitPosture.fortified);
       expect(reset.movementPoints, 0);

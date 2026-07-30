@@ -35,6 +35,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
           hex: CityHex(col: effect.col, row: effect.row),
           kind: effect.kind,
           turn: effect.turn,
+          expiresAfter: effect.expiresAfter,
           reduceMotion: reduceMotion,
           ownerSubmittedAtAttack: effect.ownerSubmittedAtAttack,
         )
@@ -50,6 +51,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
       hex: CityHex(col: effect.col, row: effect.row),
       kind: effect.kind,
       turn: effect.turn,
+      expiresAfter: effect.expiresAfter,
       reduceMotion: reduceMotion,
       ownerSubmittedAtAttack: effect.ownerSubmittedAtAttack,
     )..priority = _priorityFor(effect.col, effect.row, effect.kind);
@@ -81,7 +83,10 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
       }
       if (unitId != null) {
         unit = state.unitById(unitId);
-        if (unit == null || unit.ownerPlayerId != overlay.ownerPlayerId) {
+        final validatesOwner =
+            overlay.kind != CombatHexAlertKind.fortificationThreat;
+        if (unit == null ||
+            (validatesOwner && unit.ownerPlayerId != overlay.ownerPlayerId)) {
           overlay.removeFromParent();
           _overlays.remove(entry.key);
           continue;
@@ -124,6 +129,17 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
   }
 
   @override
+  void update(double dt) {
+    super.update(dt);
+    for (final entry in _overlays.entries.toList()) {
+      entry.value.advanceLifetime(dt);
+      if (!entry.value.hasTimedOut) continue;
+      entry.value.removeFromParent();
+      _overlays.remove(entry.key);
+    }
+  }
+
+  @override
   void onRemove() {
     clear();
     super.onRemove();
@@ -157,6 +173,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
   static int _priorityFor(int col, int row, CombatHexAlertKind kind) {
     final kindLayer = switch (kind) {
       CombatHexAlertKind.attacker => 0,
+      CombatHexAlertKind.fortificationThreat => 1,
       CombatHexAlertKind.attacked => 2,
     };
     return MapPriority.perTile(
@@ -180,6 +197,7 @@ class CombatHexAlertOverlay extends Component {
   CityHex hex;
   CombatHexAlertKind kind;
   int? turn;
+  double? expiresAfter;
   bool reduceMotion;
   bool _lastOwnerSubmitted;
   int _submissionsRemaining;
@@ -194,6 +212,7 @@ class CombatHexAlertOverlay extends Component {
     required this.hex,
     required this.kind,
     this.turn,
+    this.expiresAfter,
     this.reduceMotion = false,
     bool ownerSubmittedAtAttack = false,
   }) : _lastOwnerSubmitted = ownerSubmittedAtAttack,
@@ -206,6 +225,7 @@ class CombatHexAlertOverlay extends Component {
     required CityHex hex,
     required CombatHexAlertKind kind,
     required int? turn,
+    required double? expiresAfter,
     required bool reduceMotion,
     required bool ownerSubmittedAtAttack,
   }) {
@@ -215,6 +235,7 @@ class CombatHexAlertOverlay extends Component {
     this.hex = hex;
     this.kind = kind;
     this.turn = turn;
+    this.expiresAfter = expiresAfter;
     this.reduceMotion = reduceMotion;
     _lastOwnerSubmitted = ownerSubmittedAtAttack;
     _submissionsRemaining = ownerSubmittedAtAttack ? 1 : 2;
@@ -235,6 +256,7 @@ class CombatHexAlertOverlay extends Component {
 
   void restartPulse() {
     _elapsed = 0;
+    _lifetimeElapsed = 0;
   }
 
   @override
@@ -254,8 +276,46 @@ class CombatHexAlertOverlay extends Component {
       _renderAttackerGlow(canvas, path, pulse);
       return;
     }
+    if (kind == CombatHexAlertKind.fortificationThreat) {
+      _renderFortificationThreatBorder(canvas, path, pulse);
+      return;
+    }
 
     _renderAttackedBorder(canvas, path, pulse);
+  }
+
+  void _renderFortificationThreatBorder(
+    Canvas canvas,
+    Path path,
+    double pulse,
+  ) {
+    final glowAlpha = reduceMotion
+        ? MapAlpha.soft
+        : (MapAlpha.faint + pulse * MapAlpha.regular).round();
+    final strokeAlpha = reduceMotion
+        ? MapAlpha.strong
+        : (MapAlpha.regular + pulse * (MapAlpha.full - MapAlpha.regular))
+              .round();
+    canvas
+      ..drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = MapStroke.glow + 1.2 + pulse * 2.0
+          ..strokeJoin = StrokeJoin.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2)
+          ..color = HudPalette.info.withAlpha(glowAlpha),
+      )
+      ..drawPath(
+        path,
+        HudPaint.stroke(
+          HudPalette.info,
+          alpha: strokeAlpha,
+          strokeWidth: MapStroke.bold + pulse * 1.15,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      );
   }
 
   void _renderAttackedBorder(Canvas canvas, Path path, double pulse) {
@@ -345,6 +405,16 @@ class CombatHexAlertOverlay extends Component {
     if (reduceMotion) return 0.55;
     final radians = (_elapsed / _pulsePeriod) * math.pi * 2;
     return (0.5 + math.sin(radians) * 0.5).clamp(0.0, 1.0).toDouble();
+  }
+
+  double _lifetimeElapsed = 0;
+  void advanceLifetime(double dt) {
+    _lifetimeElapsed += dt;
+  }
+
+  bool get hasTimedOut {
+    final duration = expiresAfter;
+    return duration != null && _lifetimeElapsed >= duration;
   }
 
   static const double _pulsePeriod = 0.92;

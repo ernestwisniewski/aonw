@@ -138,7 +138,7 @@ class ShowCityProductionBubbleEffect extends RendererEffect {
   });
 }
 
-enum CombatHexAlertKind { attacked, attacker }
+enum CombatHexAlertKind { attacked, attacker, fortificationThreat }
 
 class ShowCombatHexAlertEffect extends RendererEffect {
   final String id;
@@ -147,6 +147,7 @@ class ShowCombatHexAlertEffect extends RendererEffect {
   final int row;
   final CombatHexAlertKind kind;
   final int? turn;
+  final double? expiresAfter;
   final bool ownerSubmittedAtAttack;
   final String? unitId;
   final String? cityId;
@@ -158,6 +159,7 @@ class ShowCombatHexAlertEffect extends RendererEffect {
     required this.row,
     required this.kind,
     this.turn,
+    this.expiresAfter,
     this.ownerSubmittedAtAttack = false,
     this.unitId,
     this.cityId,

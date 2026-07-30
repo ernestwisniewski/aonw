@@ -229,6 +229,22 @@ void main() {
         );
       }
     });
+
+    test('routes fortification threats only to the fortifying player', () {
+      final descriptor = GameEventDomainDescriptor.forEvent(
+        FortifiedUnitThreatenedEvent(
+          unitId: 'fortifier',
+          ownerPlayerId: 'player_1',
+          targets: const [
+            FortifiedUnitThreatTarget(unitId: 'enemy', col: 3, row: 2),
+          ],
+        ),
+      );
+
+      expect(_isVisible(descriptor, 'player_1'), isTrue);
+      expect(_isVisible(descriptor, 'player_2'), isFalse);
+      expect(_isVisible(descriptor, 'observer'), isFalse);
+    });
   });
 }
 
