@@ -1,7 +1,6 @@
 import 'package:aonw_core/game/application/engine/combat_animation_fact.dart';
 import 'package:aonw_core/game/application/engine/game_engine_context.dart';
 import 'package:aonw_core/game/application/engine/game_engine_result.dart';
-import 'package:aonw_core/game/domain/combat/combat_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/combat/domain_combat_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -35,9 +34,7 @@ final class CombatEngineHandler {
       commandTick: context.commandTick,
       mapTiles: context.mapView,
       ruleset: context.ruleset,
-      ignoreFogOfWar:
-          context.combatVisibilityMode ==
-          CombatCommandVisibilityMode.unrestricted,
+      ignoreFogOfWar: context.combatVisibilityMode.ignoresFogOfWar,
     );
     if (!result.accepted) {
       return GameEngineResult.rejected(
